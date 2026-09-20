@@ -444,24 +444,47 @@ API supplies the reference leg** (Pinnacle + consensus, RESEARCH.md §4.3)
 — each provider used for the one leg only it can actually serve, per Tj's
 own instruction to use both together.
 
-- [ ] `data` module: `KeyRotator` (pure, provider-agnostic multi-key
+- [x] `data` module: `KeyRotator` (pure, provider-agnostic multi-key
       rotation: tries each key in order, marks a key cooling-down on 429
       honoring `Retry-After`, marks a key exhausted on 401, moves to the
-      next key automatically, throws a clear error only if every key is
-      out) + real unit tests.
-- [ ] `SharpApiClient implements NovigRepository`, wired through
-      `KeyRotator`, based on the real endpoint/response shape found.
-- [ ] Rewire `TheOddsApiClient` to take a `KeyRotator` instead of a single
-      key string, same rotation behavior. Update its existing tests.
-- [ ] `app` module: `ApiKeyStore` persistence (encrypted local storage —
-      these are Tj's real credentials), a Settings screen to add/view/
-      remove multiple keys per provider, and wire `ScannerViewModel` to
-      build real repositories from stored keys (falling back to sample
-      data per-leg, independently, when a provider has no keys yet — the
-      SAMPLE DATA banner should say which leg is sample vs. live, not just
-      yes/no).
-- [ ] Verify what this container can (engine+data tests), push, confirm
-      CI green for the app module (same standing limitation as always —
-      no Android SDK here).
-- [ ] Checkpoint through this in stages, not just at the end — this is a
-      big change touching every layer.
+      next key automatically, throws a clear `AllKeysExhaustedException`
+      only once every key is out) + 9 real unit tests, all green.
+- [x] `SharpApiClient implements NovigRepository`, wired through
+      `KeyRotator`, based on the real endpoint/response shape found
+      (`GET /odds?sportsbook=novig`, `X-API-Key` header, flat per-selection
+      rows grouped into 2-outcome markets). 9 real unit tests against
+      `MockWebServer` with SharpAPI-shaped fixtures, all green.
+- [x] Rewired `TheOddsApiClient` to take a `KeyRotator` instead of a single
+      key string, same rotation behavior (429→cooldown, 401→exhausted).
+      Existing tests updated (401-rotates, 429-rotates,
+      all-keys-exhausted cases added), all green.
+- [x] `app` module: `ApiKeyStore` (data-module interface) +
+      `EncryptedApiKeyStore` (DataStore Preferences + Android
+      Keystore-backed AES/256-GCM via `KeyCipher` — chose this over
+      `androidx.security:security-crypto`/`EncryptedSharedPreferences`
+      after research found it deprecated with no further releases
+      planned), a `SettingsScreen`/`SettingsViewModel` to add/view (masked)/
+      remove multiple keys per provider, and `ScannerViewModel` rewritten
+      to build real repositories per-leg from whatever keys are currently
+      stored, falling back to sample data independently per leg. The
+      SAMPLE DATA banner now names which leg(s) — Novig, reference, or
+      both — are still on sample data instead of one combined yes/no.
+      Wired into `MainActivity` with simple state-based navigation
+      (`rememberSaveable`, no nav library) — Settings ⚙ icon in the top
+      bar, rescans automatically on returning from Settings so newly-added
+      keys take effect immediately.
+- [x] Verified what this container can for real:
+      `./gradlew --configure-on-demand :engine:test :data:test` green
+      (all data/engine tests passing, including the new `KeyRotator`/
+      `SharpApiClient`/rewired `TheOddsApiClient` tests). Pushed; CI run
+      for the `app` module (no Android SDK locally, so this is the only
+      real compile check) — see run linked in the checkpoint this
+      completed under.
+- [x] Checkpointed through this in stages (data-module pieces, then
+      app-module pieces, then the final MainActivity wiring), not just at
+      the end.
+- [ ] Known v1 limitation, not solved by this request: sport is hardcoded
+      to NFL (`americanfootball_nfl`) in `ScannerViewModel` — The Odds
+      API's free tier is credit-limited per sport queried, so scanning
+      every sport by default would burn through it fast. A sport picker
+      is a reasonable follow-up if Tj wants other sports covered.
