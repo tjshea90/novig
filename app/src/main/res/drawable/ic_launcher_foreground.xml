@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- A simple watchful "V" / checkmark-eye glyph — placeholder branding, easy to replace later. -->
+    <path
+        android:fillColor="#22D3A5"
+        android:pathData="M30,40 L52,72 L78,32 L86,37 L54,86 L23,45 Z" />
+    <path
+        android:fillColor="#22D3A5"
+        android:pathData="M54,20 m-9,0 a9,9 0,1 1,18 0 a9,9 0,1 1,-18 0" />
+</vector>
