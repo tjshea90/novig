@@ -1,11 +1,18 @@
 package com.tjshea.vigilant.app
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
+import com.tjshea.vigilant.data.keys.ApiKeyStore
+import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.keys.KeyRotator
 import com.tjshea.vigilant.data.novig.NovigRepository
 import com.tjshea.vigilant.data.novig.SampleNovigRepository
+import com.tjshea.vigilant.data.novig.SharpApiClient
 import com.tjshea.vigilant.data.reference.ReferenceOddsRepository
 import com.tjshea.vigilant.data.reference.SampleReferenceOddsRepository
+import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.EvScanner
 import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.EvOpportunity
@@ -13,33 +20,31 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 
 sealed interface ScanUiState {
     data object Loading : ScanUiState
-    data class Loaded(val opportunities: List<EvOpportunity>, val isLiveData: Boolean) : ScanUiState
+    data class Loaded(val opportunities: List<EvOpportunity>, val novigIsLive: Boolean, val referenceIsLive: Boolean) : ScanUiState
     data class Error(val message: String) : ScanUiState
 }
 
 /**
- * Defaults to the sample repositories — real credentials for either leg (RESEARCH.md §4.1/§4.3)
- * plug in here once Tj has them (see the top-level status message and BRIEF.md for what that
- * needs). [isLiveData] exists specifically so the UI never presents sample data as if it were a
- * real scan (see [ScannerViewModel]'s doc comment for why that matters).
+ * Builds its repositories fresh on every scan, from whatever keys are currently stored (Tj's own
+ * request, 2026-09-20: type keys into the app, multiple per provider, automatic switching —
+ * [KeyRotator] is the switching, this class is what turns stored keys into a live [EvScanner]).
+ * A provider with no keys yet falls back to sample data for *that leg only* — [ScanUiState.Loaded]
+ * carries live/sample status per leg so the UI never claims a leg is live when it isn't.
  *
- * `@JvmOverloads` matters here, not just style: without it, Kotlin's default-parameter sugar only
- * exists at the call-site level — the compiled class still has a single 5-argument constructor,
- * and `by viewModels()`'s reflection-based default factory looks for a true zero-argument one. It
- * would compile fine and crash at runtime the first time this screen opened.
+ * Sport is hardcoded to NFL for this pass — The Odds API charges credits per sport queried
+ * (RESEARCH.md §4.3's free tier is ~16 calls/day total), so scanning every sport by default would
+ * burn through it fast. A sport picker is a reasonable follow-up, not solved here.
  */
-class ScannerViewModel @JvmOverloads constructor(
-    private val novigRepository: NovigRepository = SampleNovigRepository(),
-    private val referenceOddsRepository: ReferenceOddsRepository = SampleReferenceOddsRepository(),
-    private val sportKey: String = "sample",
-    private val devigMethod: DevigMethod = DevigMethod.MULTIPLICATIVE,
-    private val isLiveData: Boolean = novigRepository !is SampleNovigRepository,
-) : ViewModel() {
+class ScannerViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val scanner = EvScanner(novigRepository, referenceOddsRepository, sportKey, devigMethod)
+    private val apiKeyStore: ApiKeyStore = EncryptedApiKeyStore(application)
+    private val httpClient = OkHttpClient()
+    private val json = Json { ignoreUnknownKeys = true }
 
     private val _uiState = MutableStateFlow<ScanUiState>(ScanUiState.Loading)
     val uiState: StateFlow<ScanUiState> = _uiState.asStateFlow()
@@ -52,10 +57,39 @@ class ScannerViewModel @JvmOverloads constructor(
         viewModelScope.launch {
             _uiState.value = ScanUiState.Loading
             _uiState.value = try {
-                ScanUiState.Loaded(scanner.scan(), isLiveData)
+                val sharpKeys = apiKeyStore.getKeys(ApiProvider.SHARP_API)
+                val oddsApiKeys = apiKeyStore.getKeys(ApiProvider.THE_ODDS_API)
+
+                val novigRepository: NovigRepository = if (sharpKeys.isNotEmpty()) {
+                    SharpApiClient(httpClient, KeyRotator(sharpKeys), json)
+                } else {
+                    SampleNovigRepository()
+                }
+                val referenceRepository: ReferenceOddsRepository = if (oddsApiKeys.isNotEmpty()) {
+                    TheOddsApiClient(httpClient, KeyRotator(oddsApiKeys), json)
+                } else {
+                    SampleReferenceOddsRepository()
+                }
+
+                val scanner = EvScanner(
+                    novigRepository = novigRepository,
+                    referenceOddsRepository = referenceRepository,
+                    sportKey = DEFAULT_SPORT_KEY,
+                    devigMethod = DevigMethod.MULTIPLICATIVE,
+                )
+
+                ScanUiState.Loaded(
+                    opportunities = scanner.scan(),
+                    novigIsLive = sharpKeys.isNotEmpty(),
+                    referenceIsLive = oddsApiKeys.isNotEmpty(),
+                )
             } catch (e: Exception) {
                 ScanUiState.Error(e.message ?: e::class.java.simpleName)
             }
         }
+    }
+
+    private companion object {
+        const val DEFAULT_SPORT_KEY = "americanfootball_nfl"
     }
 }
