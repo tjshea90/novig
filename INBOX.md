@@ -501,3 +501,8 @@ Begin making the app functional, start by using SharpAPI free tier and the odds 
 <event>status= conclusion=</event>
 </task-notification>
 ```
+
+## 2026-09-20T20:40:31Z
+```
+Make the sports selection picker but do not load any odds at all for any sport until I select the sport or sports and press refresh or pull down to refresh gesture. Then push and trigger GitHub actions to make the apk
+```
