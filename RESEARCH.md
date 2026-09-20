@@ -236,18 +236,34 @@ normalization across many books:
 
 | Provider | Free tier | Cheapest paid tier w/ Novig real-time | Notes |
 |---|---|---|---|
-| **SharpAPI** | $0/mo, 12 req/min, **60s-delayed** raw odds (no fair-odds calc) | Hobby $79/mo — real-time + arb | Pro $229/mo adds +EV/middles/splits. Fair-odds/Pinnacle no-vig field is paid-only. |
-| **odds-api.io** | Not detailed in free tier | — | Sub-second via WebSocket on paid; explicitly states it **scrapes** Novig's public site ("not affiliated with NoVig"), not the official API — same legal footing as any scraper, see §7. |
-| **SportsGameOdds** | Free tier exists, limits unclear | $99–$499/mo | Object-counted billing (each returned item = 1 object). |
-| **OpticOdds, Betstamp, MetaBet** | Not confirmed | Not confirmed — reputationally enterprise-tier | Not deep-dived this pass; revisit only if 4.1 is a dead end. |
+| **SharpAPI** | $0/mo, 12 req/min, **DraftKings + FanDuel only** — see §4.2.2, Novig is NOT in the free tier despite earlier marketing-copy misreading | Hobby $79/mo — "Available on Hobby plan and above" per SharpAPI's own Novig product page | Pro $229/mo adds +EV/middles/splits specifically for Novig. Fair-odds/Pinnacle no-vig field is also paid-only. |
+| **odds-api.io** | 100 req/hour, no card — but scoped to **2 recreational bookmakers**, Novig not among them; also **new free signups are currently paused indefinitely** (checked 2026-09-20) | Paid tiers | Sub-second via WebSocket on paid; explicitly states it **scrapes** Novig's public site ("not affiliated with NoVig"), not the official API — same legal footing as any scraper, see §7. |
+| **SportsGameOdds** | Free tier exists, limits unclear | $99–$499/mo | Object-counted billing (each returned item = 1 object). Not deep-dived for Novig specifically. |
+| **OpticOdds** | **No standing free tier for Novig** — its own product page offers Novig only "on a trial basis," sales-gated (Book a Demo / Get Started → contact form), no public pricing | Not disclosed publicly | Checked 2026-09-20. |
+| **Betstamp** | **No standing free tier** — "Trial keys available for evaluation" via a demo request, no public pricing | Not disclosed publicly | Checked 2026-09-20. Delivered via API or their "PRO" odds screen — PRO strongly implies paid. |
+| **MetaBet** | Confirmed to include Novig (named alongside Kalshi/Polymarket) but **no pricing or free-tier info published** on their product page; their `/pricing` page 404'd | Unknown | Checked 2026-09-20 — would need direct contact to learn cost. |
 
-**Conclusion: no third-party reseller gets real-time Novig data under
-$30/mo.** The entire "under $30/mo and real-time" goal depends on §4.1
-panning out. If Novig's API access turns out to require a funded/approved
-account but is otherwise free, that's still a win. If it turns out to cost
-real money to obtain, the fallback is SharpAPI's free 60s-delayed tier —
-"real-time" in the request would then mean "as real-time as free gets,"
-worth flagging to Tj rather than silently downgrading the target.
+**Conclusion, corrected 2026-09-20 (superseding the original conclusion
+below, which was based on an unverified reading of SharpAPI's free tier):
+there is currently no $0/mo path to real Novig odds data from any
+researched provider, confirmed or otherwise.** Every reseller that has
+Novig either requires a paid plan outright (SharpAPI Hobby $79/mo,
+confirmed with an exact HTTP 403 and the vendor's own "Available on Hobby
+plan and above" wording) or gates it behind a sales-demo "trial" with no
+public pricing (OpticOdds, Betstamp) or undisclosed pricing entirely
+(MetaBet). The entire "under $30/mo and real-time" goal for the Novig leg
+specifically now depends on §4.1 (Novig's own official API) turning out to
+be free for individual/personal use — worth continuing to wait on their
+reply, since every paid alternative found clears $30/mo (SharpAPI Hobby
+alone is $79/mo). The Odds API/Pinnacle-consensus *reference* leg (§4.3) is
+unaffected and remains genuinely free — this only concerns the Novig leg
+itself.
+
+*(Original conclusion, kept for the record rather than deleted — this is
+exactly the mistake §4.2.2 documents, left visible on purpose:)* ~~No
+third-party reseller gets real-time Novig data under $30/mo... the
+fallback is SharpAPI's free 60s-delayed tier.~~ — **wrong**: SharpAPI's
+free tier never included Novig at all, at any delay.
 
 ### 4.2.1 Verified real endpoint shapes (2026-09-20, confirmed via
 docs.sharpapi.io directly before writing any client code against them —
