@@ -384,3 +384,32 @@ tier is the most realistic $0 path to real (if delayed) Novig data.
 
 **"Where is the apk" (2026-09-20T06:34:37Z) is done.** Vigilant v0.1.0 is a
 real, installable, signed APK Tj can download and sideload today.
+
+## Tj's request, 2026-09-20T19:49:13Z (his own words — full text in INBOX.md)
+
+> I found the API. I have to email and request the API.
+> Good question — API access is handled by our developer team. Send an
+> email to developers@novig.com. Include: who you are (and your
+> company/product, if applicable), what you're building, what data or
+> functionality you want, expected scale or usage. They review requests
+> and guide next steps from there.
+>
+> Make the email for me and request what I need for this app
+
+### Progress on this request
+
+Tj found the real, concrete process (from Novig's own support widget,
+apparently) that this session's web search never surfaced — a real
+correction/addition to §4.1.1, not just an email-drafting task.
+
+- [ ] Update RESEARCH.md §4.1.1 with this concrete finding: the actual
+      documented process is emailing developers@novig.com with 4 specific
+      pieces of info — this resolves "what's the process" even though
+      pricing/approval-likelihood is still unknown until they reply.
+- [ ] Draft the actual email, covering all 4 requested items honestly:
+      who Tj is (individual, personal project — not overselling as a
+      company), what Vigilant is, what data/functionality (read access to
+      live market data — REST + WebSocket order book — for the sports
+      Novig offers), and expected scale (single personal account, low
+      volume, well under documented rate limits).
+- [ ] Checkpoint.
