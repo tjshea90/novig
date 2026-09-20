@@ -42,6 +42,10 @@ object Devig {
      * plain bisection converges reliably; no closed form.
      */
     fun power(rawProbs: List<Double>): List<Double> {
+        require(rawProbs.sum() >= 1.0 - 1e-9) {
+            "Power method assumes real (non-negative) margin — raw probabilities summing to " +
+                "${rawProbs.sum()} imply arbitrage, which isn't a real book's line: $rawProbs"
+        }
         fun sumAtK(k: Double): Double = rawProbs.sumOf { Math.pow(it, k) }
 
         if (rawProbs.size == 1) return rawProbs // no vig to solve for on a single outcome
