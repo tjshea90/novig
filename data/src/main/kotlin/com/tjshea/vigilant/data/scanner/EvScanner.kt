@@ -21,17 +21,28 @@ import com.tjshea.vigilant.engine.TradeContext
  * see [novigMarketTypeToReferenceMarketKey]); player props aren't wired yet. Event matching is
  * [EventMatcher]'s simple normalized-name comparison, a known simplification (see its own doc
  * comment) — real production event reconciliation is a later problem, not a v0.1 one.
+ *
+ * Takes a *list* of sport keys (Tj's own request, 2026-09-20 — a multi-select sport picker, not
+ * one hardcoded sport): the reference leg is fetched once per selected sport and merged before
+ * matching. The Novig leg is fetched only once regardless of how many sports are selected — it
+ * isn't sport-scoped on SharpAPI's side (RESEARCH.md §4.2.1) — and naturally only produces
+ * opportunities for events that also appear in one of the fetched (selected-sport) reference
+ * lists, since matching requires both sides. An empty [sportKeys] list means nothing has been
+ * selected yet: [scan] returns immediately without touching either repository, so no odds ever
+ * load until the user has actually chosen at least one sport.
  */
 class EvScanner(
     private val novigRepository: NovigRepository,
     private val referenceOddsRepository: ReferenceOddsRepository,
-    private val sportKey: String,
+    private val sportKeys: List<String>,
     private val devigMethod: DevigMethod = DevigMethod.MULTIPLICATIVE,
 ) {
 
     suspend fun scan(): List<EvOpportunity> {
+        if (sportKeys.isEmpty()) return emptyList()
+
         val novigEvents = novigRepository.getOpenMarkets()
-        val referenceEvents = referenceOddsRepository.getOddsForSport(sportKey)
+        val referenceEvents = sportKeys.flatMap { referenceOddsRepository.getOddsForSport(it) }
 
         val opportunities = mutableListOf<EvOpportunity>()
         for (novigEvent in novigEvents) {
