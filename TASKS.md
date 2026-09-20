@@ -324,7 +324,19 @@ Play Store.
 - [x] Tj switched the default branch to `main` (2026-09-20T16:07:32Z).
       Confirmed via the API, confirmed `release.yml` is now registered,
       triggered the real release build.
-- [ ] Confirm the release run goes green, send Tj the Release page link as
-      plain tappable text on its own line — never inside a code block
-      (the exact mistake CLAUDE.md flags as already made once on
-      fantasy-football).
+- [x] First release run failed at the fingerprint-verification step —
+      real bug, not a false alarm: `apksigner`'s digest output has no
+      colons and is lowercase, unlike the colon-separated uppercase
+      BRIEF.md records (`keytool`'s convention). The build+signing itself
+      had already succeeded. Fixed by normalizing both sides before
+      comparing, recorded as a 5th build trap, re-triggered.
+- [x] Second run: every step green — build, signature verified against
+      BRIEF.md's recorded fingerprint, tag created server-side, GitHub
+      Release published with the signed APK attached (20MB,
+      `vigilant-v0.1.0.apk`). Ran `tools/record-release.sh v0.1.0 1` to
+      record it in `BUILDLOG.md` per the established process.
+- [x] Sent Tj the Release page link as plain tappable text, not in a code
+      block.
+
+**This request is done.** Vigilant v0.1.0 is a real, installable, signed
+APK Tj can download and sideload today.
