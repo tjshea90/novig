@@ -597,10 +597,7 @@ no-vig exchange") — so `sportsbook=novig` and the base URL/auth header our
       data), not a bug.
 - [x] `./gradlew --configure-on-demand :engine:test :data:test` — all
       green, including the new failure-reason test.
-- [ ] Push, confirm CI green for the `app` module (the Settings keyboard
-      fix is new `app`-module surface this container can't compile-check
-      locally).
-- [ ] Tell Tj the diagnosis, the two fixes, and what to try next (wait
-      ~1–2 minutes with no other SharpAPI activity, then refresh in the
-      app — the error message will now say exactly HTTP 429 vs. HTTP 401
-      if it happens again, which settles it either way).
+- [x] Pushed, confirmed CI green for the `app` module for real
+      (run https://github.com/tjshea90/novig/actions/runs/35538013562,
+      conclusion=success).
+- [x] Told Tj the diagnosis, the two fixes, and what to try next.
