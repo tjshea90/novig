@@ -77,11 +77,52 @@
       unbuilt on purpose — this request was scoped to the checkpoint/test
       system only).
 
-## Not yet started (deliberately out of scope for this request)
+## Not yet started (deliberately out of scope for the checkpoint-system request above)
 
-Tj's message also describes the eventual app itself — an Android 16 app,
-optimized for a Moto G 2026, that profits using the Novig sportsbook, with
-GitHub Actions building and signing the APK. None of that is started. It
-needs its own `TASKS.md` entry, in Tj's own words, the day he actually asks
-for it — this section is a pointer, not a task, so nobody mistakes "the
-checkpoint system is done" for "the app is started".
+Tj's first message also describes the eventual app itself — an Android 16
+app, optimized for a Moto G 2026, that profits using the Novig sportsbook,
+with GitHub Actions building and signing the APK. The checkpoint-system
+request above did not include building it.
+
+## Tj's request, 2026-09-20T04:36:03Z (his own words — full text in INBOX.md)
+
+> Research methods this app can use to find positive ev for novig sports
+> book odds constantly updating in real time to capture odds movements and
+> new positive EV bets. Currently I'm using oddsjam, but I cannot afford the
+> subscription. Look for a way to do something just like oddsjam, but
+> either free or less than 30 dollars per month. My goal is to build an app
+> that is equal to or better than oddsjam at finding positive EV bets on
+> novig. Begin deep research across the internet on what is needed for this
+> app and how to do it so we can begin building it. Maybe make a research
+> findings file permanently on GitHub in this repo so all research is
+> saved.
+
+### Progress on this request
+
+- [ ] Research what "positive EV" detection actually requires: a de-vigged
+      fair-odds/true-probability model, a source of sharp/consensus lines to
+      devig from, and a feed of Novig's own live odds to compare against.
+- [ ] Research how OddsJam and similar positive-EV tools (OddsJam, Odds
+      Report/BettingPros, Unabated, RebelBetting, the free
+      r/sportsbook/Discord scanners, etc.) actually source their data and
+      compute EV, as far as it's publicly documented — what they charge for
+      and why, so we know what we're actually trying to replace.
+- [ ] Find real, current options for a live odds-data feed usable at $0–$30/mo:
+      free/cheap odds APIs (The Odds API, OddsJam's own API tier, Pinnacle's
+      public-ish feed, sportsbook-scraping approaches and their ToS/legal
+      risk), and whether Novig itself exposes any API/websocket feed for its
+      own lines (it's a peer-to-peer exchange, which may change what's
+      available vs. a traditional book).
+- [ ] Research the actual math: devigging methods (multiplicative,
+      power/Shin, etc.), how to pick a fair-value reference line, EV
+      calculation, and how real-time line movement should be handled
+      (polling vs. streaming/websocket, update frequency vs. cost/battery on
+      a Moto G 2026).
+- [ ] Write findings into a permanent, cited research file in this repo
+      (not just chat) covering: data source options and their real costs/
+      limits, the EV math needed, an honest assessment of what's feasible at
+      or under $30/mo, and a recommended architecture to start building
+      against.
+- [ ] Checkpoint the research file. Do not start writing app code from this
+      request alone — architecture/build decisions still need Tj's
+      sign-off per BRIEF.md's TBD sections.
