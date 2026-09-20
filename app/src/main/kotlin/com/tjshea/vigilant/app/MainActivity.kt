@@ -30,15 +30,19 @@ class MainActivity : ComponentActivity() {
                         providerKeys = providerKeys,
                         onAddKey = settingsViewModel::addKey,
                         onRemoveKey = settingsViewModel::removeKey,
-                        onBack = {
-                            showSettings = false
-                            scannerViewModel.rescan()
-                        },
+                        // Deliberately does not auto-rescan — Tj's own instruction, 2026-09-20:
+                        // no odds load until he presses refresh or pulls to refresh, a newly added
+                        // key included. He presses refresh himself once back on the main screen.
+                        onBack = { showSettings = false },
                     )
                 } else {
                     val uiState by scannerViewModel.uiState.collectAsStateWithLifecycle()
+                    val selectedSports by scannerViewModel.selectedSports.collectAsStateWithLifecycle()
                     OpportunitiesScreen(
                         uiState = uiState,
+                        availableSports = scannerViewModel.availableSports,
+                        selectedSports = selectedSports,
+                        onToggleSport = scannerViewModel::toggleSport,
                         onRescan = scannerViewModel::rescan,
                         onOpenSettings = { showSettings = true },
                     )
