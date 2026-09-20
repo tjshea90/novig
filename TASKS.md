@@ -421,3 +421,47 @@ correction/addition to §4.1.1, not just an email-drafting task.
 and on Novig's reply. Once that lands, update RESEARCH.md §4.1.1 with the
 actual answer (free/paid/approved/conditions) — that's what finally
 resolves this open item for good.
+
+## Tj's request, 2026-09-20T20:14:38Z (his own words — full text in INBOX.md)
+
+> Begin making the app functional, start by using SharpAPI free tier and
+> the odds api. I have keys but make the app able for me to type in the
+> keys. Give me options to add multiple keys and make a system for the
+> app to switch keys automatically when my usage runs out on any key.
+
+### Progress on this request
+
+Researched real API shapes before writing clients (learned last session's
+lesson about guessing formats): SharpAPI's actual `GET /odds` endpoint
+(`https://api.sharpapi.io/api/v1/odds?sportsbook=novig`, `X-API-Key`
+header, flat per-selection JSON rows, 429 + `Retry-After`/
+`X-RateLimit-*` headers on rate-limit) and confirmed The Odds API's
+documented `x-requests-remaining`/`x-requests-used` headers.
+
+Architecture decision: **SharpAPI supplies the Novig leg** (its free tier
+uniquely includes Novig among ~40 books — RESEARCH.md §4.2), **The Odds
+API supplies the reference leg** (Pinnacle + consensus, RESEARCH.md §4.3)
+— each provider used for the one leg only it can actually serve, per Tj's
+own instruction to use both together.
+
+- [ ] `data` module: `KeyRotator` (pure, provider-agnostic multi-key
+      rotation: tries each key in order, marks a key cooling-down on 429
+      honoring `Retry-After`, marks a key exhausted on 401, moves to the
+      next key automatically, throws a clear error only if every key is
+      out) + real unit tests.
+- [ ] `SharpApiClient implements NovigRepository`, wired through
+      `KeyRotator`, based on the real endpoint/response shape found.
+- [ ] Rewire `TheOddsApiClient` to take a `KeyRotator` instead of a single
+      key string, same rotation behavior. Update its existing tests.
+- [ ] `app` module: `ApiKeyStore` persistence (encrypted local storage —
+      these are Tj's real credentials), a Settings screen to add/view/
+      remove multiple keys per provider, and wire `ScannerViewModel` to
+      build real repositories from stored keys (falling back to sample
+      data per-leg, independently, when a provider has no keys yet — the
+      SAMPLE DATA banner should say which leg is sample vs. live, not just
+      yes/no).
+- [ ] Verify what this container can (engine+data tests), push, confirm
+      CI green for the app module (same standing limitation as always —
+      no Android SDK here).
+- [ ] Checkpoint through this in stages, not just at the end — this is a
+      big change touching every layer.
