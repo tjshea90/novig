@@ -44,8 +44,8 @@ class SampleReferenceOddsRepository : ReferenceOddsRepository {
             // Live market with a genuine but tiny raw edge — small enough that Novig's live
             // taker fee should flip it net-negative (see EvScannerTest).
             ReferenceEvent(
-                homeTeam = "New York Liberty",
-                awayTeam = "Toronto Tempo",
+                homeTeam = "Toronto Tempo",
+                awayTeam = "New York Liberty",
                 commenceTimeIso = "2026-09-20T19:00:00-04:00",
                 quotesByMarket = mapOf(
                     "h2h" to listOf(
