@@ -40,14 +40,18 @@ class SharpApiClient(
             httpClient.newCall(request).await().use { response ->
                 when (response.code) {
                     429 -> {
-                        val retryAfterMs = (response.header("Retry-After")?.toLongOrNull()?.times(1000))
+                        val retryAfterHeader = response.header("Retry-After")
+                        val retryAfterMs = (retryAfterHeader?.toLongOrNull()?.times(1000))
                             ?: response.header("X-RateLimit-Reset")?.toLongOrNull()?.let { resetEpochSeconds ->
                                 (resetEpochSeconds * 1000 - System.currentTimeMillis()).coerceAtLeast(1_000)
                             }
                             ?: 60_000
-                        KeyAttemptResult.RateLimited(retryAfterMs)
+                        KeyAttemptResult.RateLimited(
+                            retryAfterMs,
+                            reason = "HTTP 429" + (retryAfterHeader?.let { ", Retry-After=${it}s" } ?: ""),
+                        )
                     }
-                    401, 403 -> KeyAttemptResult.Invalid
+                    401, 403 -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}")
                     else -> {
                         if (!response.isSuccessful) {
                             throw SharpApiException("SharpAPI request failed: HTTP ${response.code} — ${response.body?.string()}")
