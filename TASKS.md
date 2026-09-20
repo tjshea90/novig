@@ -99,30 +99,35 @@ request above did not include building it.
 
 ### Progress on this request
 
-- [ ] Research what "positive EV" detection actually requires: a de-vigged
+- [x] Research what "positive EV" detection actually requires: a de-vigged
       fair-odds/true-probability model, a source of sharp/consensus lines to
       devig from, and a feed of Novig's own live odds to compare against.
-- [ ] Research how OddsJam and similar positive-EV tools (OddsJam, Odds
-      Report/BettingPros, Unabated, RebelBetting, the free
-      r/sportsbook/Discord scanners, etc.) actually source their data and
-      compute EV, as far as it's publicly documented — what they charge for
-      and why, so we know what we're actually trying to replace.
-- [ ] Find real, current options for a live odds-data feed usable at $0–$30/mo:
-      free/cheap odds APIs (The Odds API, OddsJam's own API tier, Pinnacle's
-      public-ish feed, sportsbook-scraping approaches and their ToS/legal
-      risk), and whether Novig itself exposes any API/websocket feed for its
-      own lines (it's a peer-to-peer exchange, which may change what's
-      available vs. a traditional book).
-- [ ] Research the actual math: devigging methods (multiplicative,
-      power/Shin, etc.), how to pick a fair-value reference line, EV
-      calculation, and how real-time line movement should be handled
-      (polling vs. streaming/websocket, update frequency vs. cost/battery on
-      a Moto G 2026).
-- [ ] Write findings into a permanent, cited research file in this repo
-      (not just chat) covering: data source options and their real costs/
-      limits, the EV math needed, an honest assessment of what's feasible at
-      or under $30/mo, and a recommended architecture to start building
-      against.
-- [ ] Checkpoint the research file. Do not start writing app code from this
-      request alone — architecture/build decisions still need Tj's
-      sign-off per BRIEF.md's TBD sections.
+      Found: Novig itself has no built-in vig to strip (peer-to-peer, no
+      house margin) — the edge is crowd-convergence lag, not stale vig. See
+      `RESEARCH.md` §2.
+- [x] Research how OddsJam and similar positive-EV tools (OddsJam, Odds
+      Assist Pro, Sharp Lines, AVO, RebelBetting, etc.) actually source
+      their data and compute EV, as far as publicly documented, and what
+      they charge. See `RESEARCH.md` §8 — OddsJam Gold is $199.99/mo; Odds
+      Assist Pro is a free tool that already covers Novig and is worth a
+      hands-on trial before building further.
+- [x] Find real, current options for a live odds-data feed usable at
+      $0–$30/mo. Biggest finding: **Novig has its own official public API**
+      (REST/WebSocket/GraphQL, docs.novig.com) built for algo traders — see
+      `RESEARCH.md` §4.1. This is the key cost lever vs. paying a reseller
+      $79–$399/mo. Whether API credentials are actually free to obtain is
+      the #1 open item (§10.1) — not yet confirmed with Novig directly.
+- [x] Research the actual math: devigging methods (multiplicative,
+      additive, power, Shin — formulas recorded), EV calc adapted for
+      Novig's probability-price quoting, and real-time architecture for
+      Android (foreground service + single WebSocket + Doze-aware, battery-
+      conscious per BRIEF.md's Moto G 2026 constraint). See `RESEARCH.md`
+      §5–7.
+- [x] Write findings into a permanent, cited research file in this repo:
+      `RESEARCH.md` (data sources, EV math, fee structure, Android
+      architecture, competitive landscape, ranked list of open items).
+- [x] Checkpoint the research file. Did not start writing app code from
+      this request — architecture/build decisions still need Tj's sign-off
+      per BRIEF.md's TBD sections, and RESEARCH.md §10 lists what's still
+      unverified before that sign-off can happen for real (chiefly:
+      confirming with Novig whether API access is actually free).
