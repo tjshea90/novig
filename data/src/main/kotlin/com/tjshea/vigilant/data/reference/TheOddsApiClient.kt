@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.keys.KeyAttemptResult
+import com.tjshea.vigilant.data.keys.KeyRotator
 import com.tjshea.vigilant.engine.BookQuote
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -14,33 +16,49 @@ import okhttp3.Request
  * $30/mo for 20,000 credits; confirmed to include Pinnacle). This is the well-established public
  * v4 REST shape, unlike the Novig client's inferred one — this format is stable/widely documented.
  *
- * Requires an API key Tj signs up for himself at the-odds-api.com (free, no card needed for the
- * free tier) — this class does nothing useful without one. Not something this session can do on
- * Tj's behalf; see the top-level status message for the full "what you need to do" list.
+ * Requires at least one API key Tj signs up for himself at the-odds-api.com (free, no card needed
+ * for the free tier) — this class does nothing useful without one. Not something this session can
+ * do on Tj's behalf.
+ *
+ * [KeyRotator] gives automatic multi-key switching (Tj's own request, 2026-09-20): The Odds API
+ * returns 401 once a key's credit quota is exhausted for the period (also covers a bad/revoked
+ * key) and 429 if actually rate-limited — RESEARCH.md §4.3's confirmed `x-requests-remaining`
+ * header is informational only and isn't relied on here, since reacting to the real failure is
+ * simpler and just as correct as trying to predict exhaustion ahead of time.
  */
 class TheOddsApiClient(
     private val httpClient: OkHttpClient,
-    private val apiKey: String,
+    private val keyRotator: KeyRotator,
     private val json: Json,
     private val baseUrl: String = "https://api.the-odds-api.com/v4",
 ) : ReferenceOddsRepository {
 
     override suspend fun getOddsForSport(sportKey: String, marketKeys: List<String>): List<ReferenceEvent> {
-        val url = "$baseUrl/sports/$sportKey/odds".toHttpUrl().newBuilder()
-            .addQueryParameter("apiKey", apiKey)
-            .addQueryParameter("regions", "us,us2,eu")
-            .addQueryParameter("markets", marketKeys.joinToString(","))
-            .addQueryParameter("oddsFormat", "decimal")
-            .build()
+        return keyRotator.execute("The Odds API") { key ->
+            val url = "$baseUrl/sports/$sportKey/odds".toHttpUrl().newBuilder()
+                .addQueryParameter("apiKey", key)
+                .addQueryParameter("regions", "us,us2,eu")
+                .addQueryParameter("markets", marketKeys.joinToString(","))
+                .addQueryParameter("oddsFormat", "decimal")
+                .build()
 
-        val request = Request.Builder().url(url).get().build()
+            val request = Request.Builder().url(url).get().build()
 
-        httpClient.newCall(request).await().use { response ->
-            if (!response.isSuccessful) {
-                throw TheOddsApiException("The Odds API request failed: HTTP ${response.code} — ${response.body?.string()}")
+            httpClient.newCall(request).await().use { response ->
+                when (response.code) {
+                    429 -> {
+                        val retryAfterMs = response.header("Retry-After")?.toLongOrNull()?.times(1000) ?: 60_000
+                        KeyAttemptResult.RateLimited(retryAfterMs)
+                    }
+                    401 -> KeyAttemptResult.Invalid
+                    else -> {
+                        if (!response.isSuccessful) {
+                            throw TheOddsApiException("The Odds API request failed: HTTP ${response.code} — ${response.body?.string()}")
+                        }
+                        KeyAttemptResult.Success(parseEvents(response.body?.string().orEmpty(), json))
+                    }
+                }
             }
-            val body = response.body?.string().orEmpty()
-            return parseEvents(body, json)
         }
     }
 
