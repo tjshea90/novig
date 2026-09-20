@@ -60,9 +60,7 @@ fi
 } >> INBOX.md
 
 # Reuse the already-tested commit/secretscan/push path rather than a second
-# copy of it — this file's only job is getting the message onto disk. Pass
-# --text through so a blocked-secret or failed-push warning stays plain text
-# for the aggregator rather than pre-wrapped JSON nested inside more JSON.
+# copy of it — this file's only job is getting the message onto disk.
 if [ "$TEXT_MODE" -eq 1 ]; then
   bash tools/autosave.sh --text
 else
