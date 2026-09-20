@@ -215,15 +215,16 @@ in-app help widget rather than a public page). This doesn't resolve
 whether individual/personal requests actually get approved or what it
 costs — that's still unknown until Novig replies — but it fully answers
 "what's the actual process": **email developers@novig.com** with those
-four things. Tj sent that email 2026-09-20 (see the email itself, drafted
-this session — not stored in this repo, it's a one-off communication, not
-project documentation).
+four things. A draft covering all four was written for Tj this session
+(not stored in this repo — it's a one-off communication, not project
+documentation) for him to review and send himself.
 
-**Revised recommendation:** the email is sent — next step is simply
-waiting for Novig's reply and updating this file once there's a real
-answer (free vs. paid, approved vs. not, any conditions). Until then, plan
-around the same fallback as before: **SharpAPI's free, 60-second-delayed
-tier** is the most realistic $0 path to *some* real Novig data, with paid
+**Revised recommendation:** once Tj sends it, the next step is simply
+waiting for Novig's reply and updating this file with whatever comes back
+(free vs. paid, approved vs. not, any conditions) — that's the one thing
+that actually resolves this open item for good. Until then, plan around
+the same fallback as before: **SharpAPI's free, 60-second-delayed tier**
+is the most realistic $0 path to *some* real Novig data, with paid
 resellers ($79+/mo) as the next fallback if delayed data isn't good
 enough.
 
