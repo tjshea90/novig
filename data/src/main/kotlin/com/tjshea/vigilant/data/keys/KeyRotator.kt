@@ -7,11 +7,18 @@ import kotlinx.coroutines.sync.withLock
 sealed interface KeyAttemptResult<out T> {
     data class Success<T>(val value: T) : KeyAttemptResult<T>
 
-    /** Rate-limited (e.g. HTTP 429) — this key should recover, so it goes back in rotation after [retryAfterMs]. */
-    data class RateLimited(val retryAfterMs: Long) : KeyAttemptResult<Nothing>
+    /**
+     * Rate-limited (e.g. HTTP 429) — this key should recover, so it goes back in rotation after
+     * [retryAfterMs]. [reason] is a short, human-readable detail (e.g. "HTTP 429") a client can
+     * attach — surfaced in [AllKeysExhaustedException]'s message so a failure is diagnosable from
+     * the error text alone, not just by re-deriving it from server-side logs or screenshots (a
+     * real gap found 2026-09-20: a generic "rate-limited or invalid" message left it unclear which
+     * of the two actually happened, or why).
+     */
+    data class RateLimited(val retryAfterMs: Long, val reason: String? = null) : KeyAttemptResult<Nothing>
 
     /** Quota exhausted, revoked, or otherwise rejected (e.g. HTTP 401/403) — not retried automatically. */
-    data object Invalid : KeyAttemptResult<Nothing>
+    data class Invalid(val reason: String? = null) : KeyAttemptResult<Nothing>
 }
 
 sealed interface KeyStatus {
