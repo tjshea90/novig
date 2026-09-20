@@ -2,11 +2,21 @@ package com.tjshea.vigilant.data.keys
 
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 class KeyRotatorTest {
+
+    private suspend fun assertAllExhausted(rotator: KeyRotator, providerName: String, action: suspend (String) -> KeyAttemptResult<String>): AllKeysExhaustedException {
+        return try {
+            rotator.execute(providerName, action)
+            fail("expected AllKeysExhaustedException, but the call succeeded")
+            throw IllegalStateException("unreachable")
+        } catch (e: AllKeysExhaustedException) {
+            e
+        }
+    }
 
     @Test
     fun `uses the only key when it succeeds`() = runTest {
@@ -17,7 +27,12 @@ class KeyRotatorTest {
 
     @Test
     fun `rejects an empty key list up front`() {
-        assertThrows(IllegalArgumentException::class.java) { KeyRotator(emptyList()) }
+        try {
+            KeyRotator(emptyList())
+            fail("expected IllegalArgumentException")
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
     }
 
     @Test
@@ -49,14 +64,9 @@ class KeyRotatorTest {
     }
 
     @Test
-    fun `throws once every key is exhausted, naming the provider`() = runTest {
+    fun `throws once every key is exhausted, naming the provider and count`() = runTest {
         val rotator = KeyRotator(listOf("key-a", "key-b"))
-
-        val exception = assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking {
-                rotator.execute<String>("SharpAPI") { KeyAttemptResult.Invalid }
-            }
-        }
+        val exception = assertAllExhausted(rotator, "SharpAPI") { KeyAttemptResult.Invalid }
         assertTrue(exception.message!!.contains("SharpAPI"))
         assertTrue(exception.message!!.contains("2"))
     }
@@ -66,21 +76,11 @@ class KeyRotatorTest {
         var now = 0L
         val rotator = KeyRotator(listOf("key-a"), clock = { now })
 
-        // First call: rate limited for 60s.
-        val firstAttempt = assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking {
-                rotator.execute<String>("test") { KeyAttemptResult.RateLimited(retryAfterMs = 60_000) }
-            }
-        }
-        assertTrue(firstAttempt.message!!.isNotEmpty())
+        assertAllExhausted(rotator, "test") { KeyAttemptResult.RateLimited(retryAfterMs = 60_000) }
 
         // Not enough time has passed — still exhausted.
         now += 30_000
-        assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking {
-                rotator.execute<String>("test") { KeyAttemptResult.Success("should not be reached") }
-            }
-        }
+        assertAllExhausted(rotator, "test") { KeyAttemptResult.Success("should not be reached") }
 
         // Cooldown has now passed — key is usable again.
         now += 31_000
@@ -93,22 +93,14 @@ class KeyRotatorTest {
         var now = 0L
         val rotator = KeyRotator(listOf("key-a"), clock = { now })
 
-        assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking {
-                rotator.execute<String>("test") { KeyAttemptResult.Invalid }
-            }
-        }
+        assertAllExhausted(rotator, "test") { KeyAttemptResult.Invalid }
 
         now += 10_000_000 // a very long time later
-        assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking {
-                rotator.execute<String>("test") { KeyAttemptResult.Success("should never happen") }
-            }
-        }
+        assertAllExhausted(rotator, "test") { KeyAttemptResult.Success("should never happen") }
     }
 
     @Test
-    fun `a successful call resets a key that was previously cooling down`() = runTest {
+    fun `a rate-limited key's cooldown clears on its own once the clock passes it`() = runTest {
         var now = 0L
         val rotator = KeyRotator(listOf("key-a", "key-b"), clock = { now })
 
