@@ -25,9 +25,9 @@ set -uo pipefail
 D="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$D" || exit 0
 [ -d .git ] || exit 0
 
-# --text: emit warnings as plain text rather than as a JSON systemMessage, so
-# tools/hooks/save.sh can combine several repos into ONE JSON object. Two
-# JSON objects on hook stdout do not parse — see tools/hooks/emit.py.
+# --text: emit warnings as plain text rather than as a JSON systemMessage —
+# a manual convenience for running this by hand, not something the hook
+# path uses.
 TEXT_MODE=0
 for a in "$@"; do [ "$a" = "--text" ] && TEXT_MODE=1; done
 
