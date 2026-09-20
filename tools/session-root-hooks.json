@@ -1,12 +1,12 @@
 {
-  "_comment": "TEMPLATE — do not copy this file into place by hand. Install it with `bash tools/install-hooks.sh`, which substitutes __REPO_ROOT__ for the real container root and MERGES these entries into the target settings file instead of overwriting it. Every entry is tagged 'novig-checkpoint-hooks'; the installer only ever replaces entries carrying that tag (or matching the generic tools/resume.sh /tools/autosave.sh /tools/hooks/ /tools/ckpt.sh /tools/capture_inbox.sh paths, so a sibling repo's own install of the same pattern is recognised too rather than duplicated), so a user's own permissions, env and other projects' hooks survive. WHY NOT THIS REPO'S OWN .claude/settings.json: Claude Code on the web does not load hooks from a repo that sits in a subdirectory of the session root when several repos share one container — CLAUDE_PROJECT_DIR is unset and one project root is resolved for the whole session. The commands below glob every repo under that root, so one install protects every checkpoint-managed project in the container, and each entry point aggregates all of them into ONE JSON object (see tools/hooks/emit.py — two objects do not parse, and that would silently cost the entire session briefing).",
+  "_comment": "TEMPLATE — do not copy this file into place by hand. Install it with `bash tools/install-hooks.sh`, which substitutes __NOVIG_TOOLS__ for this repo's own absolute tools/ path and MERGES these entries into the session root's settings file instead of overwriting it. Every entry is tagged 'novig-checkpoint-hooks'; the installer only ever replaces entries carrying that tag, so a user's own permissions, env, and any OTHER project's hooks in the same settings file survive untouched. WHY NOT THIS REPO'S OWN .claude/settings.json: Claude Code on the web does not load hooks from a repo that sits in a subdirectory of the session root when several repos share one container — CLAUDE_PROJECT_DIR is unset and one project root is resolved for the whole session (confirmed on this account's other repos, running in the same kind of container). DELIBERATELY SCOPED TO THIS REPO ONLY: every command below is an absolute path into THIS repo's own tools/, never a glob over sibling directories. This account runs other repos (fantasy-football, Portfolio) side by side in the same container, and those are read-only as far as this project's work is concerned — these hooks must never cd into, commit to, or push from a directory that is not this one.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "for f in __REPO_ROOT__/*/tools/hooks/brief.sh; do [ -f \"$f\" ] && exec bash \"$f\"; done; true  # novig-checkpoint-hooks",
+            "command": "bash \"__NOVIG_TOOLS__/resume.sh\" 2>/dev/null || true  # novig-checkpoint-hooks",
             "timeout": 120,
             "statusMessage": "Reading where the last session stopped..."
           }
@@ -18,8 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "for f in __REPO_ROOT__/*/tools/hooks/inbox.sh; do [ -f \"$f\" ] && exec bash \"$f\"; done; true  # novig-checkpoint-hooks",
-            "timeout": 45,
+            "command": "bash \"__NOVIG_TOOLS__/capture_inbox.sh\" 2>/dev/null || true  # novig-checkpoint-hooks",
+            "timeout": 30,
             "statusMessage": "Saving your message before starting..."
           }
         ]
@@ -31,8 +31,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "for f in __REPO_ROOT__/*/tools/hooks/save.sh; do [ -f \"$f\" ] && exec bash \"$f\"; done; true  # novig-checkpoint-hooks",
-            "timeout": 90,
+            "command": "bash \"__NOVIG_TOOLS__/autosave.sh\" 2>/dev/null || true  # novig-checkpoint-hooks",
+            "timeout": 60,
             "statusMessage": "Checkpointing to GitHub..."
           }
         ]
@@ -43,8 +43,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "for f in __REPO_ROOT__/*/tools/hooks/save.sh; do [ -f \"$f\" ] && exec bash \"$f\"; done; true  # novig-checkpoint-hooks",
-            "timeout": 90,
+            "command": "bash \"__NOVIG_TOOLS__/autosave.sh\" 2>/dev/null || true  # novig-checkpoint-hooks",
+            "timeout": 60,
             "statusMessage": "Final checkpoint..."
           }
         ]
@@ -55,8 +55,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "for f in __REPO_ROOT__/*/tools/hooks/big.sh; do [ -f \"$f\" ] && exec bash \"$f\"; done; true  # novig-checkpoint-hooks",
-            "timeout": 90,
+            "command": "bash \"__NOVIG_TOOLS__/toobig.sh\" 2>/dev/null || true  # novig-checkpoint-hooks",
+            "timeout": 60,
             "statusMessage": "Session is large - saving before compaction..."
           }
         ]
