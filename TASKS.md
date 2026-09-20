@@ -159,3 +159,50 @@ request above did not include building it.
 - [x] Updated `RESEARCH.md` §8 (table + new §8.1) and §10 (open item 4
       resolved) with the deeper, hands-on-verified findings, cited.
 - [x] Checkpoint.
+
+## Tj's request, 2026-09-20T05:37:41Z (his own words — full text in INBOX.md)
+
+> Begin basic coding of this app. Give it a catchy name, not something
+> boring like "novig ev". Make a basic beta of the app, which should be
+> able to act like oddsjam by devigging odds and using sharp books like
+> Pinnacle or circa if possible or an average of major sports books. It
+> should be able to pull this data real time or as frequent as possible to
+> catch actual positive EV and not stale odds. Let me know if I need to do
+> anything
+
+### Progress on this request
+
+- [ ] Name the app and record it (BRIEF.md/this file) — something better
+      than "novig ev".
+- [ ] Make the toolchain decision BRIEF.md has been leaving as TBD (Kotlin
+      + Jetpack Compose vs. WebView+native shell) and pin real versions,
+      the way BRIEF.md's own "Toolchain" section says to do the day a build
+      actually depends on them — that day is today.
+- [ ] Scaffold the Android Gradle project: root build files, version
+      catalog, an `app` module (Compose UI, min/target/compile SDK per the
+      toolchain decision).
+- [ ] Build the devig/EV engine as its own plain-Kotlin module (multiplicative/
+      additive/power/Shin from RESEARCH.md §5, EV calc from §6) with real
+      unit tests — this is the part that can be verified for real in this
+      container (no Android SDK here, see below) and is the actual "acts
+      like OddsJam" logic Tj asked for.
+- [ ] Data layer: repository interfaces for (a) the Novig live-odds leg and
+      (b) the sharp/consensus reference leg, a sample/fixture-backed
+      implementation so the app runs and is demoable today without any live
+      keys, and real client scaffolding for The Odds API (Pinnacle
+      coverage, RESEARCH.md §4.3) and Novig's documented REST/WebSocket API
+      (RESEARCH.md §4.1) — wired up but inert until real credentials exist.
+- [ ] Basic Compose UI: one screen listing computed +EV opportunities.
+- [ ] Get real build/test verification where this container actually can
+      (JVM-only engine module compiles + unit tests run for real here; the
+      Android `app` module needs the Android SDK, which this container
+      doesn't have — set up a CI workflow that builds+tests on GitHub
+      Actions and confirm it goes green, per BRIEF.md's own model of "not a
+      build that happened inside this container"). Be explicit about which
+      parts were actually verified vs. not.
+- [ ] Tell Tj plainly what he needs to do: nothing blocks a demoable beta
+      on sample data, but going live needs (a) a free The Odds API key he
+      signs up for himself, and (b) contacting Novig for official API
+      credentials (RESEARCH.md §4.1/§10 — still unconfirmed whether this is
+      free). Do not silently skip mentioning this.
+- [ ] Checkpoint (and multiple times through this — this is a big change).
