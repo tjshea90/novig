@@ -572,3 +572,12 @@ Make the sports selection picker but do not load any odds at all for any sport u
 <event>run 35536752615: completed success</event>
 </task-notification>
 ```
+
+## 2026-09-20T20:51:13Z
+```
+<task-notification>
+<task-id>bss4tlz1c</task-id>
+<summary>Monitor event: "Poll release workflow run until completion"</summary>
+<event>run 35536855588: in_progress None</event>
+</task-notification>
+```
