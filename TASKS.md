@@ -252,3 +252,45 @@ request above did not include building it.
       chat, not just here.
 - [x] Checkpointed multiple times through this (engine, then data, then
       app+CI, then each CI fix) rather than only at the end.
+
+## Tj's request, 2026-09-20T06:34:37Z (his own words — full text in INBOX.md)
+
+> Where is the apk
+
+### Progress on this request
+
+The literal current answer (a debug build sitting as an unsigned CI
+artifact, requiring GitHub login) isn't the real deliverable CLAUDE.md's
+"Releasing" section describes — a signed Release with a plain tappable
+link. Treating this as the trigger for BRIEF.md's "the day real app code
+exists" ordered plan (keystore → real release workflow → `ship.sh` gate),
+since that day is today:
+
+- [ ] Generate the release signing keystore (`keytool`). Deliver it
+      directly to Tj (SendUserFile — he needs his own backup of this
+      regardless of who generates it; losing it with no copy would be the
+      exact catastrophic scenario BRIEF.md warns about) along with the
+      alias/passwords and SHA-256 fingerprint. **Confirmed this session:
+      this container's GitHub token is explicitly blocked from the
+      Actions-secrets API by the proxy** (403, "not permitted through this
+      proxy") — so Claude cannot add GitHub Secrets itself; Tj has to add
+      them via the repo's Settings UI. Give him exact secret names/values
+      and steps.
+- [ ] Record the certificate fingerprint in BRIEF.md immediately (never
+      the password) per CLAUDE.md's keystore rule.
+- [ ] Write a real release workflow: signs with the Secret-held keystore,
+      verifies the signing certificate on the built artifact, creates the
+      release tag and GitHub Release **server-side** in the workflow (not
+      pushed from this container — CLAUDE.md notes a Claude container gets
+      HTTP 403 pushing `refs/tags/*`, confirmed on Portfolio, no reason to
+      expect different here).
+- [ ] Fill in `ship.sh`'s real gate (versionCode strictly higher than
+      BUILDLOG.md's highest entry, trigger the workflow, confirm green via
+      `get_release_by_tag`) per CLAUDE.md's ordered steps.
+- [ ] Trigger the release workflow for real, confirm it goes green, and
+      send Tj the Release page link as plain tappable text on its own
+      line — never inside a code block (CLAUDE.md flags this exact mistake
+      as already made once on fantasy-football).
+- [ ] Cannot actually complete this end-to-end without Tj adding the
+      keystore secrets himself first — say so plainly rather than silently
+      stalling; this is the one step only he can do.
