@@ -77,6 +77,10 @@ object Devig {
      * down to negative as z -> 1, so bisection on [0, 1) converges to a unique root.
      */
     fun shin(rawProbs: List<Double>): List<Double> {
+        require(rawProbs.sum() >= 1.0 - 1e-9) {
+            "Shin's method assumes real (non-negative) margin — raw probabilities summing to " +
+                "${rawProbs.sum()} imply arbitrage, which isn't a real book's line: $rawProbs"
+        }
         if (rawProbs.size == 1) return rawProbs
 
         val sumRaw = rawProbs.sum()
