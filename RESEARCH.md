@@ -300,6 +300,53 @@ not guessed, per the lesson from an earlier session's CI failure)
   needed to build `SharpApiClient`, not every book included in the free
   response payload.
 
+### 4.2.2 Correction, 2026-09-20 (same day, later): SharpAPI's free tier
+does NOT include Novig — a real mistake in §4.2.1 above, found by Tj
+hitting it live
+
+§4.2.1 stated "Free tier is 12 req/min, ~40 books including Novig
+(confirmed...)" — that "confirmed" was wrong. It came from SharpAPI's
+general marketing copy ("43 sportsbooks with real-time odds aggregation,
+including exchanges and prediction markets") without checking whether that
+full catalog applies to every *tier*, not just the *platform overall*. It
+doesn't. This is exactly the "verify real facts before building against
+them" lesson this project has hit before (the EncryptedSharedPreferences
+deprecation, the SharpAPI endpoint shape itself) — this time the shape was
+right but the tier-gating wasn't checked, and it shipped into
+`SharpApiClient`/BRIEF.md's architecture decision anyway.
+
+**What actually happened:** `SharpApiClient`'s real request
+(`GET /odds?sportsbook=novig`, real `X-API-Key`) returned **HTTP 403**
+against Tj's real free-tier key (2026-09-20, via the app's own diagnostic
+error message added in v0.2.1 — see TASKS.md). Confirmed independently,
+not just from the app: Tj reproduced the identical 403 directly in
+SharpAPI's own Playground with the Sportsbook dropdown set to Novig
+specifically (his earlier Playground screenshots had it set to DraftKings,
+which is why they looked successful and didn't catch this).
+
+**Root cause, confirmed from SharpAPI's own product page**
+(`sharpapi.io/sportsbooks/novig-odds-api`): *"Available on Hobby plan and
+above."* The free tier is explicitly scoped to **DraftKings and FanDuel
+only** — not the ~40-book catalog the general marketing page describes.
+Novig specifically requires the **Hobby plan ($79/mo)** at minimum for raw
+odds; a separate mention elsewhere suggests Novig's +EV-detection feature
+specifically may need **Pro ($229/mo)** — the two are different features
+(raw odds vs. computed opportunities) and could plausibly have different
+tier floors; only the Hobby-plan raw-odds requirement was confirmed
+against Novig's own SharpAPI product page directly.
+
+**Practical effect:** `SharpApiClient` itself needs no code fix — the
+request shape, auth, and parsing were all correct (borne out by getting a
+real, well-formed 403 rather than a parse error or a 400). The Novig leg
+simply has no working data source right now on Tj's current (free) key,
+and correctly falls back to sample data with the per-leg banner saying so
+— this is `KeyRotator`/`SampleNovigRepository`'s fallback behavior working
+exactly as designed, not a bug surfacing a bug.
+
+See §4.2's corrected table and conclusion for what was researched as
+alternatives (OpticOdds, Betstamp, MetaBet, odds-api.io) — none found to
+have a genuine standing free tier that includes Novig, as of this check.
+
 ### 4.3 Reference-odds leg (fair-probability comparison, not Novig itself)
 
 Doesn't need to be sub-second — line consensus moves far slower than an
