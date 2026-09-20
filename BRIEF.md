@@ -80,13 +80,39 @@ from the moment a keystore is first generated:
 
 ## Toolchain
 
-**TBD.** No `build.gradle.kts`, no `package.json`, nothing pinned yet.
-Pin real versions here — AGP/Kotlin/compileSdk, or whatever the chosen stack
-turns out to be — the day a build actually depends on them, the same way
-Portfolio's `BRIEF.md` pins JDK 21 / Gradle 8.14.3 / AGP 8.13.2 / Kotlin
-2.3.10. An unpinned toolchain silently drifts to whatever a fresh container
-downloads, which is how "upgrading" a dependency turns into fighting a build
-failure that isn't a code problem.
+Pinned 2026-09-20, mirroring Portfolio's proven versions (see
+`gradle/libs.versions.toml` for the single source of truth — these numbers
+should never drift out of sync with each other):
+
+- **JDK 21**, **Gradle 8.14.3** (both confirmed already installed and
+  working in this dev container), **AGP 8.13.2**, **Kotlin 2.3.10**.
+- **compileSdk = targetSdk = 36** (Android 16, per the platform decision
+  above). **minSdk = 30** — the target device will ship far newer, but
+  there's no real cost to a little headroom for testing on whatever other
+  device is on hand.
+- **applicationId = `com.tjshea.vigilant`.** Permanent per the keystore
+  rule above — never change this once a keystore is generated against it.
+- **Module layout:** `engine` (plain Kotlin/JVM — the devig/EV math, zero
+  Android dependency on purpose) → `data` (plain Kotlin/JVM — repositories,
+  the Novig/The-Odds-API clients, also zero Android dependency) → `app`
+  (the actual Android module: Compose UI, manifest, eventually the
+  foreground WebSocket service from RESEARCH.md §7). Deliberate: keeping
+  `engine`/`data` Android-free is what lets their real logic be unit tested
+  in a container with no Android SDK — see the next point.
+
+**Known, permanent constraint on this dev container: no Android SDK.**
+`ANDROID_HOME`/`ANDROID_SDK_ROOT` are unset here and there's no `sdkmanager`
+— confirmed 2026-09-20, not expected to change. This is *why* the module
+split above exists: `engine` and `data` compile and run their real test
+suites here (`./gradlew --configure-on-demand :engine:test :data:test` —
+54 tests, all green as of this writing), but the `app` module can only be
+verified by CI (`.github/workflows/ci.yml`, which does have a full Android
+SDK via `android-actions/setup-android`). This matches this project's own
+release model (`CLAUDE.md`'s "Releasing" section) — GitHub Actions builds
+the real thing, not this container — so treat it as the expected shape,
+not a gap to keep re-flagging. Any session working on `app`-module code
+should confirm it via a pushed CI run, not assume compile-correctness from
+review alone.
 
 ## Build traps
 
