@@ -238,7 +238,58 @@ re-diagnose these from scratch:
   applied — don't "simplify" this back to ignoring fees, that's the exact
   failure mode this was built to avoid.
 - **The UI must never present sample/demo data as if it were live.**
-  `ScannerViewModel`/`OpportunitiesScreen` carry an explicit `isLiveData`
-  flag and render a visible banner when it's false. The app ships wired to
-  sample repositories by default (no live credentials exist yet) — keep
-  that flag wired correctly as real providers get plugged in.
+  `ScannerViewModel`/`OpportunitiesScreen` carry explicit `novigIsLive`/
+  `referenceIsLive` flags (one per leg, not one combined flag — see below)
+  and render a visible banner naming exactly which leg(s) are sample when
+  either is false. Keep both flags wired correctly as real providers get
+  plugged in or swapped.
+- **SharpAPI supplies the Novig leg, The Odds API supplies the reference
+  leg — wired 2026-09-20, each provider used only for the one leg it can
+  actually serve.** SharpAPI's free tier uniquely includes Novig among its
+  ~40 books (RESEARCH.md §4.2); The Odds API supplies Pinnacle/consensus
+  for the reference side (RESEARCH.md §4.3). `SharpApiClient implements
+  NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
+  — both live in `data`, both real (`MockWebServer`-tested against each
+  provider's actual documented response shape, not guessed), both fall
+  back independently to `SampleNovigRepository`/`SampleReferenceOddsRepository`
+  when that provider has no stored key yet.
+- **Automatic multi-key rotation: `KeyRotator` (`data/keys/KeyRotator.kt`),
+  provider-agnostic — Tj's own explicit request, 2026-09-20 ("make a
+  system for the app to switch keys automatically when my usage runs
+  out").** Holds a list of keys per provider, tries them in the order Tj
+  added them, and on each attempt: 429 → mark that key cooling down
+  (honoring `Retry-After`/rate-limit-reset headers when present, else a
+  60s default) and try the next key, auto-recovering once the cooldown
+  passes; 401/403 → mark that key exhausted permanently (never
+  auto-recovers — a human has to add a fresh key); success → use it and
+  remember it worked. Throws `AllKeysExhaustedException` only once every
+  key for that provider is rate-limited or invalid. Both `SharpApiClient`
+  and `TheOddsApiClient` are wired through the same `KeyRotator` — the
+  rotation logic itself has no provider-specific knowledge, only the
+  429/401 mapping in each client does.
+- **API keys are stored encrypted on-device, never in plaintext, never
+  committed.** Researched `androidx.security:security-crypto`
+  (`EncryptedSharedPreferences`) first and found it **deprecated** (every
+  API deprecated since 1.1.0, no further releases planned) — did not build
+  against it. Current approach instead: **Jetpack DataStore Preferences**
+  (`androidx.datastore:datastore-preferences:1.2.1`) for storage, encrypted
+  with **Android Keystore-backed AES/256-GCM** (`KeyCipher.kt`, plain
+  `javax.crypto`/`android.security.keystore` platform APIs, no Tink
+  dependency — deliberately avoids pulling in another library's API
+  surface that can't be verified locally, no Android SDK in this
+  container). `EncryptedApiKeyStore implements ApiKeyStore`
+  (`data/keys/ApiKeyStore.kt`'s interface) is the real Android-side
+  implementation; order is preserved (a JSON array, not a Set) since
+  `KeyRotator` depends on trying keys in the order Tj entered them. Added
+  and removed via the in-app `SettingsScreen`/`SettingsViewModel`, reached
+  from a ⚙ icon in `OpportunitiesScreen`'s top bar (simple state-based
+  navigation in `MainActivity`, no Navigation-Compose library needed for
+  two screens).
+- **Known v1 limitation: sport is hardcoded to NFL
+  (`americanfootball_nfl`) in `ScannerViewModel`.** The Odds API's free
+  tier is credit-limited per sport queried (RESEARCH.md §4.3) — looping
+  over every sport by default would burn through it fast for no benefit
+  most of the year. A sport picker is a reasonable follow-up if Tj wants
+  other sports covered; not solved as part of the 2026-09-20 "make it
+  functional" request, which was scoped to wiring real data + key
+  management, not sport coverage.
