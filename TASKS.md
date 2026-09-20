@@ -601,3 +601,25 @@ no-vig exchange") — so `sportsbook=novig` and the base URL/auth header our
       (run https://github.com/tjshea90/novig/actions/runs/35538013562,
       conclusion=success).
 - [x] Told Tj the diagnosis, the two fixes, and what to try next.
+
+## Tj's request, 2026-09-20T21:17:00Z (his own words — full text in INBOX.md)
+
+> Ship v0.2.1 now. I tried again same error
+
+Note: the retry that produced "same error" was still on v0.2.0 — the
+improved diagnostic message (which would say HTTP 429 vs. HTTP 401
+explicitly) isn't in a built APK yet, so this doesn't yet tell us which one
+it actually was. Once v0.2.1 is installed, the next failure (if any) will
+say definitively.
+
+### Progress on this request
+
+- [ ] Bump versionCode 2→3 / versionName 0.2.0→0.2.1 in
+      `app/build.gradle.kts` (BRIEF.md's rule — v0.2.0/code 2 is already
+      shipped).
+- [ ] Trigger `release.yml` via `workflow_dispatch`, confirm it goes
+      green, record it in `BUILDLOG.md` via `tools/record-release.sh`.
+- [ ] Send Tj the v0.2.1 Release link as plain tappable text, and remind
+      him the improved error message will now say HTTP 429 vs. HTTP 401
+      if the scan fails again — that's the piece that actually settles
+      root cause.
