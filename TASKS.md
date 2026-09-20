@@ -694,3 +694,31 @@ request.
       (still pending their reply) is the only remaining lead that could
       be free; every paid alternative clears $30/mo (SharpAPI Hobby alone
       is $79/mo).
+
+## Tj's question, 2026-09-20T22:05:00Z (his own words — full text in INBOX.md)
+
+> Also is there anything else useful that sharpapi has that I should keep
+> in the app
+
+### Progress on this request
+
+- [x] Cross-checked SharpAPI's pricing page and full endpoint/tier table
+      directly (not reused from the earlier research). Free tier confirmed
+      (again, consistent with the live 403): **12 req/min, exactly 2
+      sportsbooks (DraftKings + FanDuel), 60s-delayed, pre-match only, REST
+      only** — no live/in-play data, no opportunity-detection endpoints
+      (those need Hobby+/Pro+), no streaming (paid add-on only).
+- [x] One endpoint-tier claim from the docs page contradicted the pricing
+      page and the live 403 evidence (claimed `/odds` etc. cover "all
+      sportsbooks, no tier restrictions") — didn't trust it, since it's
+      directly contradicted by Tj's own real 403 and the pricing page's
+      explicit "2 sportsbooks" wording; noted as an unreliable summary,
+      not treated as fact.
+- [x] Concluded and told Tj honestly: **no, nothing in SharpAPI's free
+      tier is worth adding.** Its free book coverage (DraftKings +
+      FanDuel) is a strict subset of what The Odds API's free tier already
+      provides (which also includes Pinnacle) — so it would add zero new
+      capability to the reference leg, and the one thing it was picked for
+      (Novig) isn't available free at all. No code changes made —
+      `SharpApiClient` stays as-is, ready to work the moment there's a
+      paid key or a policy change, not removed.
