@@ -46,7 +46,7 @@ class TheOddsApiClient(
 
     companion object {
         fun parseEvents(rawJson: String, json: Json): List<ReferenceEvent> {
-            val events = json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(EventDto.serializer()), rawJson)
+            val events = json.decodeFromString(ListSerializer(EventDto.serializer()), rawJson)
             return events.map { it.toDomain() }
         }
     }
