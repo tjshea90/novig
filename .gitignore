@@ -4,13 +4,17 @@
 .env.local
 .env.*.local
 
-# The eventual release-signing keystore. Not created yet — see BRIEF.md.
-# Whatever it ends up being named, keystores must never be committed:
-# Android's signing model makes a leaked or replaced key catastrophic (see
-# CLAUDE.md's "Releasing" section, ported from this account's other Android
-# projects). Add the real filename here the moment the keystore exists.
+# Keystores are blocked by default — Android's signing model makes a leaked
+# or replaced REAL release key catastrophic (CLAUDE.md's "Releasing"
+# section). The one exception: app/keystore/vigilant-debug.jks is
+# INTENTIONALLY committed (Tj's explicit call, 2026-09-20, matching
+# fantasy-football's precedent — see BRIEF.md's keystore section for why).
+# It signs with Android's standard well-known debug password on purpose;
+# there is no real secret in it to protect. Any OTHER .jks/.keystore file
+# is still blocked — this negation names that one file, not the pattern.
 *.jks
 *.keystore
+!app/keystore/vigilant-debug.jks
 
 # Android/Gradle build output, once a build system exists. Harmless to keep
 # now — nothing on disk matches these yet.
