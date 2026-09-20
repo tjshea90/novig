@@ -32,12 +32,19 @@ no published pricing, and Novig's own Developer Relations job posting
 describes "high-touch," relationship-based onboarding, not self-serve.
 Going straight to Novig's API may still be the cheapest path *if* Tj asks
 and it turns out to be reachable — but plan for the realistic case that it
-isn't, rather than treating it as the default. **SharpAPI's free
-60-second-delayed tier is now the most realistic $0 path to real (if not
-sub-second) Novig data**, with paid resellers ($79+/mo) as the fallback if
-delayed data isn't good enough. The math/architecture below (§5-§7) is
-unaffected either way — only which data source actually supplies the
-Novig leg changes.
+isn't, rather than treating it as the default. **Correction, 2026-09-20
+(confirmed live, see §4.2.2): SharpAPI's free tier does NOT include
+Novig** — that was a misreading of their marketing copy, not a verified
+fact, and it's since been proven wrong by a real HTTP 403 against Tj's
+actual key. **There is currently no confirmed $0/mo path to real Novig
+data from any researched provider** — SharpAPI's own product page states
+Novig needs its Hobby plan ($79/mo) or above; OpticOdds/Betstamp offer
+Novig only via a sales-gated "trial," not a standing free tier; MetaBet has
+Novig but undisclosed pricing. Novig's own official API (§4.1, still
+pending their reply) is the only lead left that could plausibly still be
+free. The math/architecture below (§5-§7) is unaffected either way — only
+which data source actually supplies the Novig leg changes, and right now
+that source is sample data, with the app honest about it (BRIEF.md).
 
 *(Original framing from the first research pass, kept for context — the
 core insight, that a direct-from-Novig data source beats paying a
