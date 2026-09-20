@@ -1,13 +1,13 @@
-# CHECKPOINT 123 — read me first, then TASKS.md
+# CHECKPOINT 126 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T06:09:36Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `28dea40` (this checkpoint is the commit after it)
+**Written:** 2026-09-20T06:36:25Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `ad0e742` (this checkpoint is the commit after it)
 
 ## Just done
-CI confirmed fully green (run 35493330913): all tests across engine+data+app pass, assembleDebug succeeds, produced a real 9.3MB debug APK artifact. Fixed 3 real bugs along the way: android-actions/setup-android@v3 crashes on a removed legacy SDK package (dropped it, write license hashes directly instead), kotlinOptions.jvmTarget is a hard error on Kotlin 2.3.10 (migrated to the compilerOptions DSL), and ScannerViewModel's all-default constructor needed @JvmOverloads or by viewModels()'s reflection-based factory would crash at runtime despite compiling clean. Recorded all three in BRIEF.md's Build traps section. TASKS.md and BRIEF.md updated with final confirmed status.
+Wrote Tj's 'where is the apk' request into TASKS.md. Confirmed this container's GitHub token is explicitly blocked from the Actions-secrets API by the proxy (403) — Claude cannot create GitHub Secrets itself, so the keystore secrets step needs Tj's hands regardless of who generates the keystore file.
 
 ## Do this next
-The Vigilant beta is done and verified for this request: 79 total tests green (54 local + app module's via CI), real debug APK building in CI. Tell Tj the beta is ready, what he needs to do to go live (Odds API signup + contact Novig), and offer to watch the CI workflow going forward if he wants. Nothing else blocking — next real work is either going live (pending Tj's two action items) or Tj directing what to build next.
+Generate the release keystore, send it directly to Tj (he needs his own backup regardless), record the fingerprint in BRIEF.md, write a real release workflow (signs + verifies + creates the Release server-side), fill in ship.sh's real gate, and give Tj exact instructions for the one step only he can do: adding the keystore as GitHub secrets.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ The Vigilant beta is done and verified for this request: 79 total tests green (5
 
 ## Last ten checkpoints
 ```
+  6f8d067 ckpt 123: CI confirmed fully green (run 35493330913): all tests across engine+data+app p
   49c1307 ckpt 96: Built the first real app code: 'Vigilant' — a 3-module Gradle project (engine
   3edb9b3 ckpt 29: Wrote Tj's 'begin basic coding' request into TASKS.md (raw message already capt
   c361581 ckpt 26: Deep-dived Odds Assist Pro against Novig, hands-on (not just secondhand): loade
@@ -25,5 +26,5 @@ The Vigilant beta is done and verified for this request: 79 total tests green (5
   e870ad3 ckpt 12: Stood up the full checkpoint/handoff system for novig, adapted from fantasy-foo
 ```
 
-(26 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
