@@ -172,37 +172,72 @@ request above did not include building it.
 
 ### Progress on this request
 
-- [ ] Name the app and record it (BRIEF.md/this file) — something better
-      than "novig ev".
-- [ ] Make the toolchain decision BRIEF.md has been leaving as TBD (Kotlin
-      + Jetpack Compose vs. WebView+native shell) and pin real versions,
-      the way BRIEF.md's own "Toolchain" section says to do the day a build
-      actually depends on them — that day is today.
-- [ ] Scaffold the Android Gradle project: root build files, version
-      catalog, an `app` module (Compose UI, min/target/compile SDK per the
-      toolchain decision).
-- [ ] Build the devig/EV engine as its own plain-Kotlin module (multiplicative/
-      additive/power/Shin from RESEARCH.md §5, EV calc from §6) with real
-      unit tests — this is the part that can be verified for real in this
-      container (no Android SDK here, see below) and is the actual "acts
-      like OddsJam" logic Tj asked for.
-- [ ] Data layer: repository interfaces for (a) the Novig live-odds leg and
-      (b) the sharp/consensus reference leg, a sample/fixture-backed
-      implementation so the app runs and is demoable today without any live
-      keys, and real client scaffolding for The Odds API (Pinnacle
-      coverage, RESEARCH.md §4.3) and Novig's documented REST/WebSocket API
-      (RESEARCH.md §4.1) — wired up but inert until real credentials exist.
-- [ ] Basic Compose UI: one screen listing computed +EV opportunities.
-- [ ] Get real build/test verification where this container actually can
-      (JVM-only engine module compiles + unit tests run for real here; the
-      Android `app` module needs the Android SDK, which this container
-      doesn't have — set up a CI workflow that builds+tests on GitHub
-      Actions and confirm it goes green, per BRIEF.md's own model of "not a
-      build that happened inside this container"). Be explicit about which
-      parts were actually verified vs. not.
-- [ ] Tell Tj plainly what he needs to do: nothing blocks a demoable beta
-      on sample data, but going live needs (a) a free The Odds API key he
-      signs up for himself, and (b) contacting Novig for official API
-      credentials (RESEARCH.md §4.1/§10 — still unconfirmed whether this is
-      free). Do not silently skip mentioning this.
-- [ ] Checkpoint (and multiple times through this — this is a big change).
+- [x] Named the app **Vigilant** — a real word (watchful/alert, matching the
+      real-time-scanning purpose) with "vig" hidden inside as a pun. No
+      collision found with an existing betting-edge app of that name.
+      Recorded in BRIEF.md.
+- [x] Made the toolchain decision: **Kotlin + Jetpack Compose**, pinned
+      versions (JDK 21, Gradle 8.14.3, AGP 8.13.2, Kotlin 2.3.10,
+      compileSdk/targetSdk 36, minSdk 30, applicationId
+      `com.tjshea.vigilant`). Recorded in BRIEF.md's Toolchain section with
+      reasoning.
+- [x] Scaffolded a 3-module Gradle project: `engine` (plain Kotlin/JVM),
+      `data` (plain Kotlin/JVM), `app` (the actual Android/Compose module).
+      Gradle wrapper generated and committed.
+- [x] Built the devig/EV engine (`engine` module): `Odds`
+      (American/decimal/Novig-price conversions), `Devig` (multiplicative/
+      additive/power/Shin — RESEARCH.md §5), `Consensus` (prefers a sharp
+      book when fetched, else averages every book fetched — Tj's own
+      instruction, verbatim), `Fees` (Novig's fee schedule, RESEARCH.md §3
+      — parlay fee explicitly `Unknown`, never silently $0), `EvCalculator`
+      (RESEARCH.md §6's formulas). **29 unit tests, run for real in this
+      container, all green** — including a caught-and-fixed real bug (the
+      power/Shin devig solvers assumed positive margin; a bad 3-way test
+      fixture exposed it, fixed by adding an explicit guard rather than
+      just patching the test).
+- [x] Data layer (`data` module, also plain Kotlin/JVM so it's testable
+      here too): `NovigRepository`/`NovigApiClient` (real OAuth2 + REST
+      client for RESEARCH.md §4.1's documented API — field-shapes are
+      best-effort/inferred, flagged in code comments, RESEARCH.md §10 item
+      5), `NovigWebSocketLiveFeed` (real OkHttp WebSocket client for the
+      `tape` feed), `ReferenceOddsRepository`/`TheOddsApiClient` (real
+      client for The Odds API, RESEARCH.md §4.3 — this one's request/
+      response shape is the well-established public v4 format, higher
+      confidence than Novig's), `SampleNovigRepository`/
+      `SampleReferenceOddsRepository` (fixture data so the app runs today
+      with zero live credentials), `EvScanner` (ties a Novig board to a
+      reference line and produces ranked `EvOpportunity`s — this is the
+      actual "act like OddsJam" orchestration). **25 more unit tests, all
+      green**, including one built specifically to prove a real, positive
+      raw edge on a live market goes net-negative once Novig's live taker
+      fee is applied — the exact failure mode RESEARCH.md §3 warned about.
+      54 tests total across `engine`+`data`, all passing for real
+      (`./gradlew --configure-on-demand :engine:test :data:test`).
+- [x] Basic Compose UI (`app` module): one screen (`OpportunitiesScreen`)
+      listing ranked opportunities with Novig price/fair%/net-EV%/devig
+      method/reference books shown per row, a rescan button, and — since
+      the app defaults to sample data — a visible "SAMPLE DATA, not live"
+      banner so it can never be mistaken for a real scan.
+- [x] Got real build/test verification where this container actually can:
+      `engine`+`data` compile and their 54 tests pass for real, here. The
+      `app` module cannot be locally verified (no Android SDK in this dev
+      container — confirmed, recorded in BRIEF.md as a standing fact, not
+      re-discovered next session) — added `.github/workflows/ci.yml`
+      (installs a real Android SDK via `android-actions/setup-android`,
+      runs all unit tests, then `assembleDebug`) so the `app` module gets
+      real compile verification from the one place that actually has an
+      SDK, matching this project's own release model. **Not yet confirmed
+      green** — needs a push and a check of the Actions run; do that before
+      telling Tj the app module itself compiles, don't assume it from
+      review alone.
+- [ ] Push, confirm CI is actually green (fix anything it finds — this
+      container could not catch an `app`-module compile error, so treat a
+      first CI failure there as expected-possible, not alarming).
+- [ ] Tell Tj plainly what he needs to do to go from this sample-data beta
+      to live data: (a) sign up for a free The Odds API key himself
+      (self-serve, no card needed for the free tier) and (b) contact Novig
+      directly from his existing account to ask about official API access
+      (RESEARCH.md §4.1/§10 — still unconfirmed whether that's free or
+      what the process is). Neither blocks trying the beta today.
+- [x] Checkpointed multiple times through this (engine, then data, then
+      app+CI) rather than only at the end.
