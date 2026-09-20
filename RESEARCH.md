@@ -21,8 +21,30 @@ architecture is locked in. §8's Odds Assist Pro findings, by contrast,
 
 ## 1. Bottom line
 
-A free-or-near-free, better-than-OddsJam +EV tool **for Novig specifically**
-looks achievable, for one reason that most "OddsJam alternative" writeups
+**Updated 2026-09-20, second research pass — this is less optimistic than
+the first pass below and should be read first.** Novig does publish an
+official developer API (REST/WebSocket/GraphQL, §4.1) — but §4.1.1's
+research strongly suggests it's built and gated for **institutional market
+makers, liquidity providers, and B2B partners**, not individual retail
+developers, and is plausibly how Novig actually gets paid (institutions
+fund the commission-free retail product). There's no public signup form,
+no published pricing, and Novig's own Developer Relations job posting
+describes "high-touch," relationship-based onboarding, not self-serve.
+Going straight to Novig's API may still be the cheapest path *if* Tj asks
+and it turns out to be reachable — but plan for the realistic case that it
+isn't, rather than treating it as the default. **SharpAPI's free
+60-second-delayed tier is now the most realistic $0 path to real (if not
+sub-second) Novig data**, with paid resellers ($79+/mo) as the fallback if
+delayed data isn't good enough. The math/architecture below (§5-§7) is
+unaffected either way — only which data source actually supplies the
+Novig leg changes.
+
+*(Original framing from the first research pass, kept for context — the
+core insight, that a direct-from-Novig data source beats paying a
+reseller's markup, is still right in principle; §4.1.1 above is what
+changed is how *reachable* that direct source actually is):* A
+free-or-near-free, better-than-OddsJam +EV tool **for Novig specifically**
+looked achievable, for one reason that most "OddsJam alternative" writeups
 never consider because they're built for generic multi-book arbing: **Novig
 publishes its own official developer API** — REST, WebSocket, and GraphQL,
 OAuth 2.0, sub-second live order-book data — built explicitly for
@@ -31,9 +53,9 @@ single biggest cost lever available: every third-party odds aggregator
 (SharpAPI, OpticOdds, Betstamp, SportsGameOdds, odds-api.io) that resells
 Novig data is, per their own pages, pulling from this same surface (or
 scraping the public site) and marking it up to $79–$399/mo. Going straight
-to Novig's own API instead of through a reseller is the difference between
-"under $30/mo" and "free," **if** API credentials turn out to be free to
-obtain (see §4.1 — this is the one fact most worth confirming next).
+to Novig's own API instead of through a reseller would be the difference
+between "under $30/mo" and "free," **if** API credentials turn out to be
+free to obtain — now looking unlikely for an individual, see §4.1.1.
 
 Recommended shape of the app, in one paragraph: pull Novig's own live board
 directly from its WebSocket (`wss://api.novig.com/tape`) for the tradable
