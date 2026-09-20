@@ -276,14 +276,17 @@ re-diagnose these from scratch:
   to SharpAPI's Hobby plan, Novig's own API (§4.1) turns out to be free
   for individual use, or a different paid provider is chosen. The Novig
   leg falls back to sample data in the meantime, and the app is explicit
-  about that (per the per-leg sample-data banner rule below). The Odds
+  about that (per the per-leg sample-data banner rule above). The Odds
   API supplies Pinnacle/consensus for the reference side (RESEARCH.md
   §4.3) and is unaffected by this — that leg is live.
+
   `SharpApiClient implements NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
   — both live in `data`, both real (`MockWebServer`-tested against each
   provider's actual documented response shape, not guessed), both fall
   back independently to `SampleNovigRepository`/`SampleReferenceOddsRepository`
-  when that provider has no stored key yet.
+  when that provider has no stored key yet — which is exactly the
+  mechanism now keeping the Novig leg honest about being unauthorized
+  rather than silently degraded.
 - **Automatic multi-key rotation: `KeyRotator` (`data/keys/KeyRotator.kt`),
   provider-agnostic — Tj's own explicit request, 2026-09-20 ("make a
   system for the app to switch keys automatically when my usage runs
