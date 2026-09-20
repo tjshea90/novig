@@ -460,3 +460,8 @@ I switched it to main
 <event>run 35521984758: status=completed conclusion=success</event>
 </task-notification>
 ```
+
+## 2026-09-20T19:41:56Z
+```
+Remind me what I need to do to make the app work
+```
