@@ -483,8 +483,45 @@ own instruction to use both together.
 - [x] Checkpointed through this in stages (data-module pieces, then
       app-module pieces, then the final MainActivity wiring), not just at
       the end.
-- [ ] Known v1 limitation, not solved by this request: sport is hardcoded
-      to NFL (`americanfootball_nfl`) in `ScannerViewModel` — The Odds
-      API's free tier is credit-limited per sport queried, so scanning
-      every sport by default would burn through it fast. A sport picker
-      is a reasonable follow-up if Tj wants other sports covered.
+- [x] Known v1 limitation, resolved by the next request below (sport
+      picker): sport was hardcoded to NFL (`americanfootball_nfl`) in
+      `ScannerViewModel` — The Odds API's free tier is credit-limited per
+      sport queried, so scanning every sport by default would burn
+      through it fast.
+
+## Tj's request, 2026-09-20T20:40:31Z (his own words — full text in INBOX.md)
+
+> Make the sports selection picker but do not load any odds at all for
+> any sport until I select the sport or sports and press refresh or pull
+> down to refresh gesture. Then push and trigger GitHub actions to make
+> the apk
+
+### Progress on this request
+
+- [ ] `data` module: `Sport`/`SportsCatalog` (curated list of The Odds
+      API sport keys, pure Kotlin so it's shared by `EvScanner` and the
+      UI picker without an Android dependency).
+- [ ] `EvScanner` takes a `List<String>` of sport keys instead of one —
+      scans reference odds for every selected sport, merges the results,
+      matches against Novig's board same as before. Returns immediately
+      (no repository calls at all) when the list is empty. Update
+      `EvScannerTest` for the new constructor shape.
+- [ ] `ScannerViewModel`: replace the `init { rescan() }` auto-scan with
+      an explicit `Idle` state — nothing loads on app open. Add
+      multi-select sport state (`toggleSport`); `rescan()` only performs
+      a scan when at least one sport is selected, and is the single path
+      both the refresh button and the pull-to-refresh gesture call.
+- [ ] `OpportunitiesScreen`: a sport picker (multi-select chips) above the
+      opportunity list, wrap the content in Compose Material3's
+      `PullToRefreshBox` for the swipe-down gesture (in addition to the
+      existing FAB refresh button — both should trigger the same
+      `rescan()`), and a clear "select a sport, then refresh" idle state
+      instead of showing anything before the user acts.
+- [ ] Verify what this container can (`:engine:test :data:test`), push,
+      confirm CI green for the `app` module — the Compose
+      Material3-pull-to-refresh usage is new API surface this container
+      can't compile-check locally.
+- [ ] Checkpoint, then trigger the release GitHub Actions workflow
+      (`workflow_dispatch`) via the API, confirm it goes green, and send
+      Tj the new Release link (plain tappable text, not a code block —
+      CLAUDE.md's standing rule).
