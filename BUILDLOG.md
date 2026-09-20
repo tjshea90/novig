@@ -14,3 +14,4 @@ day that changes.
 |-----|------|------|---------------|
 | v0.1.0 | code 1 | 2026-09-20T16:13Z | First beta release — sample-data devig/EV scanner, no live credentials wired in yet
 | v0.2.0 | code 2 | 2026-09-20T20:53Z | Sport-selection picker — nothing loads until a sport is selected and refresh/pull-to-refresh is pressed. Live data wiring from the previous release (SharpAPI + The Odds API, multi-key auto-rotation, in-app Settings for keys) carries forward.
+| v0.2.1 | code 3 | 2026-09-20T21:25Z | Fixed 'Scan failed' bug report: Settings 'Add a key' field now disables autocorrect/autocapitalize (was silently on by default, a real risk for a typed API key); KeyRotator's exhaustion error now names the actual HTTP status (429 vs 401) instead of a generic 'rate-limited or invalid' message, so the next failure is self-diagnosing.
