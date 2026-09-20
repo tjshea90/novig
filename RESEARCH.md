@@ -529,9 +529,16 @@ research-session snapshot.
     the architecture
 
 1. **Can Tj actually get a Novig API client ID/secret, and is it free?**
-   (§4.1) — the single biggest unknown; everything else is a fallback if
-   this is a dead end. Next step: contact Novig directly (support/API
-   inquiry) from Tj's existing account.
+   (§4.1) — **narrowed, not resolved, 2026-09-20 (§4.1.1):** strong
+   circumstantial evidence (Novig's own DevRel job posting, its
+   institutional-market-maker-funded business model, a formal gated
+   Market Maker approval program, no public signup form anywhere) that
+   this is a B2B/institutional relationship, not a free individual
+   developer signup. Still not confirmed either way with an actual
+   real answer from Novig — that conversation hasn't happened yet. Next
+   step unchanged: Tj emails Novig directly and asks, but with
+   expectations now calibrated to "probably a sales conversation," not
+   "probably a signup form someone forgot to link."
 2. **Does SharpAPI's free tier's raw-odds set include Pinnacle** (§4.3) —
    determines whether the reference leg is genuinely $0/mo or needs The
    Odds API's $30/mo tier.
