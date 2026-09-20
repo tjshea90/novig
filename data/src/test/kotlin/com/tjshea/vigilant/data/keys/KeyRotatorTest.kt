@@ -56,7 +56,7 @@ class KeyRotatorTest {
 
         val result = rotator.execute<String>("test") { key ->
             attempted += key
-            if (key == "key-a") KeyAttemptResult.Invalid else KeyAttemptResult.Success("ok")
+            if (key == "key-a") KeyAttemptResult.Invalid() else KeyAttemptResult.Success("ok")
         }
 
         assertEquals("ok", result)
@@ -66,9 +66,16 @@ class KeyRotatorTest {
     @Test
     fun `throws once every key is exhausted, naming the provider and count`() = runTest {
         val rotator = KeyRotator(listOf("key-a", "key-b"))
-        val exception = assertAllExhausted(rotator, "SharpAPI") { KeyAttemptResult.Invalid }
+        val exception = assertAllExhausted(rotator, "SharpAPI") { KeyAttemptResult.Invalid() }
         assertTrue(exception.message!!.contains("SharpAPI"))
         assertTrue(exception.message!!.contains("2"))
+    }
+
+    @Test
+    fun `the exception names the actual last failure reason, not just a generic message`() = runTest {
+        val rotator = KeyRotator(listOf("key-a"))
+        val exception = assertAllExhausted(rotator, "SharpAPI") { KeyAttemptResult.Invalid(reason = "HTTP 401") }
+        assertTrue("exception message was: ${exception.message}", exception.message!!.contains("HTTP 401"))
     }
 
     @Test
