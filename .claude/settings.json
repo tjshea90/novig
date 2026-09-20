@@ -1,0 +1,66 @@
+{
+  "_comment": "This is the FALLBACK path, for when this repo IS the Claude Code session root (e.g. opened standalone, not side-by-side with other repos under one container). When several repos share a session root, Claude Code does not load hooks from here — see tools/install-hooks.sh, which merges the equivalent hooks into the session root's own settings file instead. Keep the two in sync by hand if either changes.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}/tools/resume.sh\" 2>/dev/null || true",
+            "timeout": 120,
+            "statusMessage": "Reading where the last session stopped..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}/tools/capture_inbox.sh\" 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "Saving your message before starting..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}/tools/autosave.sh\" 2>/dev/null || true",
+            "timeout": 60,
+            "statusMessage": "Checkpointing to GitHub..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}/tools/autosave.sh\" 2>/dev/null || true",
+            "timeout": 60,
+            "statusMessage": "Final checkpoint..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}/tools/toobig.sh\" 2>/dev/null || true",
+            "timeout": 60,
+            "statusMessage": "Session is large — saving before compaction..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+# Local secrets — keep real credentials out of the repo entirely; see
+# tools/secretscan.sh and CLAUDE.md's "Credentials" section.
+.env
+.env.local
+.env.*.local
+
+# The eventual release-signing keystore. Not created yet — see BRIEF.md.
+# Whatever it ends up being named, keystores must never be committed:
+# Android's signing model makes a leaked or replaced key catastrophic (see
+# CLAUDE.md's "Releasing" section, ported from this account's other Android
+# projects). Add the real filename here the moment the keystore exists.
+*.jks
+*.keystore
+
+# Android/Gradle build output, once a build system exists. Harmless to keep
+# now — nothing on disk matches these yet.
+build/
+.gradle/
+.kotlin/
+app/build/
+local.properties
+*.apk
+*.aab
+
+__pycache__/
+
+# OS / editor noise
+.DS_Store
+*.log
