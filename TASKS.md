@@ -543,3 +543,64 @@ own instruction to use both together.
       GitHub Release all succeeded), recorded it in `BUILDLOG.md` via
       `tools/record-release.sh`, and sent Tj the v0.2.0 Release link as
       plain tappable text (not a code block).
+
+## Tj's report, 2026-09-20T21:05:00Z (screenshots of v0.2.0's "Scan failed" error plus SharpAPI's dashboard/docs/Playground, his own words)
+
+> Look at the screenshots. The app gave an error. Diagnose and fix it. I
+> attached screenshots of websites on the sharpapi. Tell me what
+> information you need
+
+### Progress on this request
+
+App screenshot showed: "Scan failed — All 1 SharpAPI key(s) are
+rate-limited or invalid — add a new key or wait for a reset." (NFL
+selected, one refresh attempted). SharpAPI dashboard screenshots showed:
+1 key on the free tier ("1/1 keys"), that key's "Last used" timestamp
+recent, a successful 200 Playground response with "10/12 remaining"
+already shown on the free tier's 12 req/min budget, and confirmed Novig
+is genuinely listed under SharpAPI's "Exchanges" ("Novig — commission-free
+no-vig exchange") — so `sportsbook=novig` and the base URL/auth header our
+`SharpApiClient` already uses are correct per SharpAPI's own docs.
+
+- [x] Read `SharpApiClient.kt`'s actual request shape against the
+      Authentication/Base-URL doc screenshots: `X-API-Key` header,
+      `https://api.sharpapi.io/api/v1` base URL — both correct, ruled out
+      as the cause.
+- [x] Found a real, concrete bug while reading `SettingsScreen.kt`: the
+      "Add a key" `OutlinedTextField` had no `keyboardOptions` at all, so
+      it used Compose's default (autocorrect **enabled**) — a real risk
+      for a long random token like an API key, since the IME can silently
+      alter what's typed. Fixed: explicit `KeyboardOptions(capitalization
+      = None, autoCorrect = false, keyboardType = Password)` — text stays
+      visible (no `visualTransformation`), autocorrect/autocapitalize are
+      off.
+- [x] Found a real diagnostic gap in `KeyRotator`: `AllKeysExhaustedException`'s
+      message was generic ("rate-limited or invalid") with no way to tell
+      which one actually happened or why — meaning THIS exact bug report
+      could only be diagnosed from screenshots, not from the app's own
+      error text. Fixed: `KeyAttemptResult.RateLimited`/`Invalid` now
+      carry an optional `reason` (the real HTTP status, e.g. "HTTP 429,
+      Retry-After=45s" or "HTTP 401"), populated by both `SharpApiClient`
+      and `TheOddsApiClient`, and `KeyRotator` includes the last failure's
+      reason in the exception message. New test locks this in. Next time
+      this happens, the on-screen error itself will say which.
+- [x] Diagnosed the most likely root cause from the evidence available:
+      SharpAPI's free tier is 12 requests/minute, and the Playground
+      screenshots show Tj actively firing test "Recipe" calls (NBA
+      Moneylines, NFL Spreads, NHL Totals, etc.) around the same time as
+      the app's own refresh attempt — "10/12 remaining" after just Playground
+      testing alone means that budget was already most of the way
+      consumed before the app's own call. A real 429 from combined
+      Playground+app usage on the same 1-key free tier is the simplest
+      explanation consistent with every screenshot; the app's rejection
+      in that case is correct behavior (refusing to show stale/wrong
+      data), not a bug.
+- [x] `./gradlew --configure-on-demand :engine:test :data:test` — all
+      green, including the new failure-reason test.
+- [ ] Push, confirm CI green for the `app` module (the Settings keyboard
+      fix is new `app`-module surface this container can't compile-check
+      locally).
+- [ ] Tell Tj the diagnosis, the two fixes, and what to try next (wait
+      ~1–2 minutes with no other SharpAPI activity, then refresh in the
+      app — the error message will now say exactly HTTP 429 vs. HTTP 401
+      if it happens again, which settles it either way).
