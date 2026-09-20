@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -15,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.ScanUiState
+import com.tjshea.vigilant.data.scanner.Sport
 import com.tjshea.vigilant.engine.EvOpportunity
 import com.tjshea.vigilant.engine.FeeResult
 import com.tjshea.vigilant.engine.Odds
@@ -37,7 +41,14 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpportunitiesScreen(uiState: ScanUiState, onRescan: () -> Unit, onOpenSettings: () -> Unit) {
+fun OpportunitiesScreen(
+    uiState: ScanUiState,
+    availableSports: List<Sport>,
+    selectedSports: Set<Sport>,
+    onToggleSport: (Sport) -> Unit,
+    onRescan: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,14 +67,38 @@ fun OpportunitiesScreen(uiState: ScanUiState, onRescan: () -> Unit, onOpenSettin
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            SportPicker(availableSports, selectedSports, onToggleSport)
             if (uiState is ScanUiState.Loaded && (!uiState.novigIsLive || !uiState.referenceIsLive)) {
                 SampleDataBanner(uiState.novigIsLive, uiState.referenceIsLive)
             }
-            when (uiState) {
-                is ScanUiState.Loading -> LoadingState()
-                is ScanUiState.Error -> ErrorState(uiState.message)
-                is ScanUiState.Loaded -> OpportunityList(uiState.opportunities)
+            PullToRefreshBox(
+                isRefreshing = uiState is ScanUiState.Loading,
+                onRefresh = onRescan,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                when (uiState) {
+                    is ScanUiState.Idle -> IdleState(selectedSports.isEmpty())
+                    is ScanUiState.Loading -> LoadingState()
+                    is ScanUiState.Error -> ErrorState(uiState.message)
+                    is ScanUiState.Loaded -> OpportunityList(uiState.opportunities)
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun SportPicker(availableSports: List<Sport>, selectedSports: Set<Sport>, onToggleSport: (Sport) -> Unit) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(availableSports) { sport ->
+            FilterChip(
+                selected = sport in selectedSports,
+                onClick = { onToggleSport(sport) },
+                label = { Text(sport.displayName) },
+            )
         }
     }
 }
