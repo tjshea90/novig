@@ -27,10 +27,9 @@ D="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$D" || exit 0
 [ -d .git ] || exit 0
 
 # --text: this hook prints nothing of its own on the normal path (the
-# message is written to disk, not echoed back), but a warning relayed up
-# from autosave.sh must stay PLAIN TEXT so tools/hooks/inbox.sh can combine
-# several repos into ONE JSON object — see tools/hooks/emit.py for why two
-# JSON objects on hook stdout is a silent total loss, not just noise.
+# message is written to disk, not echoed back); this only controls the
+# shape of a warning relayed up from autosave.sh, for a human running this
+# by hand.
 TEXT_MODE=0
 for a in "$@"; do [ "$a" = "--text" ] && TEXT_MODE=1; done
 
