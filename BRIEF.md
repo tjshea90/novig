@@ -285,11 +285,26 @@ re-diagnose these from scratch:
   from a ⚙ icon in `OpportunitiesScreen`'s top bar (simple state-based
   navigation in `MainActivity`, no Navigation-Compose library needed for
   two screens).
-- **Known v1 limitation: sport is hardcoded to NFL
-  (`americanfootball_nfl`) in `ScannerViewModel`.** The Odds API's free
-  tier is credit-limited per sport queried (RESEARCH.md §4.3) — looping
-  over every sport by default would burn through it fast for no benefit
-  most of the year. A sport picker is a reasonable follow-up if Tj wants
-  other sports covered; not solved as part of the 2026-09-20 "make it
-  functional" request, which was scoped to wiring real data + key
-  management, not sport coverage.
+- **Resolved 2026-09-20 (was a known v1 limitation): sport is now a
+  multi-select picker, not hardcoded to NFL.** `data.scanner.SportsCatalog`
+  holds a curated subset of The Odds API's documented sport keys (not
+  exhaustive — RESEARCH.md §4.3); `EvScanner` takes a `List<String>` of
+  sport keys and fetches the reference leg once per selected sport,
+  merging the results before matching against Novig's board.
+- **Nothing loads until the user acts — Tj's own explicit instruction,
+  2026-09-20 ("do not load any odds at all for any sport until I select
+  the sport or sports and press refresh or pull down to refresh
+  gesture").** `ScannerViewModel` no longer auto-scans on init (starts in
+  a new `ScanUiState.Idle`); selecting a sport (`toggleSport`) only ever
+  updates local state, never triggers a fetch. `rescan()` is the single
+  path that touches a repository, and it's a no-op with zero sports
+  selected — both the FAB refresh button and Compose Material3's
+  `PullToRefreshBox` (the pull-down gesture) call the same `rescan()`, so
+  there's exactly one way odds ever load. This also means returning from
+  Settings after adding a key does **not** auto-rescan anymore (it did
+  briefly, for one request) — that would have silently violated this same
+  rule the moment a sport was already selected, so it was removed in the
+  same change that added the picker. `EvScanner.scan()` itself also
+  short-circuits to an empty result without calling either repository
+  when its sport-key list is empty, so the "don't load anything" guarantee
+  holds even if a future caller forgets to gate on the UI side.
