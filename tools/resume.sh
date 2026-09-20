@@ -23,23 +23,20 @@
 set -uo pipefail
 D="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$D" || exit 0
 
-# --text: print the briefing as plain text instead of wrapping it in JSON.
-# tools/hooks/brief.sh uses this so that N repos produce ONE JSON object
-# rather than N of them, which is not parseable JSON and would silently cost
-# the entire briefing. See tools/hooks/emit.py.
+# --text: print the briefing as plain text instead of wrapping it in JSON —
+# a manual convenience for a human eyeballing it directly
+# (`bash tools/resume.sh --text | less`), not something the hook path uses.
 TEXT_MODE=0
 for a in "$@"; do [ "$a" = "--text" ] && TEXT_MODE=1; done
 
 # SELF-REPAIR THE SAFETY NET.
-# If this is running from the hook, the hooks are obviously installed. But
-# CLAUDE.md also tells a session to run this BY HAND when the briefing did
-# not appear — and that is exactly the case where the hooks are missing and
-# every edit for the rest of the session would go unsaved. Idempotent and
-# silent when already correct, so it costs nothing in the normal case.
-# CLAUDE_HOOKS_ACTIVE is set by tools/hooks/lib.sh, i.e. when this is running
-# FROM the hook — in which case the hooks obviously work and there is
-# nothing to repair.
-[ -z "${CLAUDE_HOOKS_ACTIVE:-}" ] && bash tools/install-hooks.sh --quiet >/dev/null 2>&1
+# If this is running from the hook, the hooks are obviously already
+# installed and this is a cheap no-op (install-hooks.sh's own --check-style
+# comparison short-circuits). But CLAUDE.md also tells a session to run this
+# BY HAND when the briefing did not appear — and that is exactly the case
+# where the hooks are missing and every edit for the rest of the session
+# would go unsaved. Idempotent and silent when already correct either way.
+bash tools/install-hooks.sh --quiet >/dev/null 2>&1
 true
 
 BRIEF="$(
