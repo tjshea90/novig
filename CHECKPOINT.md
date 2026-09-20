@@ -1,13 +1,13 @@
-# CHECKPOINT 134 — read me first, then TASKS.md
+# CHECKPOINT 137 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T06:41:39Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `6c43e2d` (this checkpoint is the commit after it)
+**Written:** 2026-09-20T06:48:18Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `8fd8c73` (this checkpoint is the commit after it)
 
 ## Just done
-Fixed a real regression from the ship.sh rewrite: tools/test_resume.sh's hermetic suite greps ship.sh's no-build-system refusal message for the exact phrase 'nothing to build or release', which the rewrite had dropped. Restored the phrase in the refusal message (behavior was already correct — ship.sh does refuse cleanly with no app/build.gradle.kts — only the wording regressed). Verified: tools/test_resume.sh all green again (20/20), engine+data's 54 tests still green.
+Logged Tj's course-correction on release signing: checked Portfolio and fantasy-football directly rather than assume — fantasy-football signs with a committed debug-style keystore (well-known password, no secret needed) since it holds nothing sensitive; Portfolio's real workflow does use a secret. Tj wants the fantasy-football pattern for Vigilant. Updated TASKS.md with the plan; the earlier Secret-based keystore approach is now marked superseded.
 
 ## Do this next
-Same as before: blocked on Tj adding the 4 GitHub secrets before a real release can be triggered.
+Generate a new debug-style keystore for Vigilant, commit it directly to the repo, rewire app/build.gradle.kts and release.yml to sign with it (no secrets), correct BRIEF.md's now-stale keystore section, then actually trigger a real release this time since nothing should block it.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Same as before: blocked on Tj adding the 4 GitHub secrets before a real release 
 
 ## Last ten checkpoints
 ```
+  3bbf78a ckpt 134: Fixed a real regression from the ship.sh rewrite: tools/test_resume.sh's herme
   d115f2b ckpt 132: Built the real signed-release pipeline: generated Vigilant's permanent signing
   3fddc9e ckpt 126: Wrote Tj's 'where is the apk' request into TASKS.md. Confirmed this container'
   6f8d067 ckpt 123: CI confirmed fully green (run 35493330913): all tests across engine+data+app p
@@ -25,8 +26,7 @@ Same as before: blocked on Tj adding the 4 GitHub secrets before a real release 
   4ce2d00 ckpt 21: Wrote Tj's Odds Assist Pro deep-dive request into TASKS.md (raw message already
   5787e5b ckpt 18: Deep research on positive-EV betting for Novig, written to RESEARCH.md (new per
   1c3d806 ckpt 15: Wrote Tj's positive-EV research request into TASKS.md in his own words as untic
-  e870ad3 ckpt 12: Stood up the full checkpoint/handoff system for novig, adapted from fantasy-foo
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
