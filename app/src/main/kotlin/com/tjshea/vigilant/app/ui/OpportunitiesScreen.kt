@@ -10,12 +10,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -35,10 +37,17 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpportunitiesScreen(uiState: ScanUiState, onRescan: () -> Unit) {
+fun OpportunitiesScreen(uiState: ScanUiState, onRescan: () -> Unit, onOpenSettings: () -> Unit) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Vigilant") })
+            TopAppBar(
+                title = { Text("Vigilant") },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onRescan) {
@@ -47,8 +56,8 @@ fun OpportunitiesScreen(uiState: ScanUiState, onRescan: () -> Unit) {
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (uiState is ScanUiState.Loaded && !uiState.isLiveData) {
-                SampleDataBanner()
+            if (uiState is ScanUiState.Loaded && (!uiState.novigIsLive || !uiState.referenceIsLive)) {
+                SampleDataBanner(uiState.novigIsLive, uiState.referenceIsLive)
             }
             when (uiState) {
                 is ScanUiState.Loading -> LoadingState()
@@ -60,10 +69,14 @@ fun OpportunitiesScreen(uiState: ScanUiState, onRescan: () -> Unit) {
 }
 
 @Composable
-private fun SampleDataBanner() {
+private fun SampleDataBanner(novigIsLive: Boolean, referenceIsLive: Boolean) {
+    val missing = buildList {
+        if (!novigIsLive) add("Novig (add a SharpAPI key)")
+        if (!referenceIsLive) add("reference (add a The Odds API key)")
+    }
     Surface(color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f), modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "SAMPLE DATA — not live. See BRIEF.md for what's needed to go live.",
+            text = "SAMPLE DATA — ${missing.joinToString(" and ")} still on sample data. Add keys via ⚙ Settings.",
             modifier = Modifier.padding(8.dp),
             color = MaterialTheme.colorScheme.error,
             fontWeight = FontWeight.Bold,
