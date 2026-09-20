@@ -194,25 +194,38 @@ signup**:
   across markets — this is the kind of relationship the API is built for,
   not a form anyone fills out.
 - **No public waitlist, application form, or self-serve API-key dashboard**
-  was found anywhere — not on novig.com, not in the help center
-  (support.novig.us), not in press coverage. Every third-party reseller
-  that already has Novig data (SharpAPI, OpticOdds, Betstamp, etc.) is,
-  per the business-model finding above, most plausibly itself one of these
-  paying institutional/data-partner customers — i.e., they already did the
-  relationship-based onboarding Tj would need to do, at a scale that
-  supports reselling it.
+  was found anywhere via web search — not on novig.com, not in the help
+  center (support.novig.us), not in press coverage. Every third-party
+  reseller that already has Novig data (SharpAPI, OpticOdds, Betstamp,
+  etc.) is, per the business-model finding above, most plausibly itself
+  one of these paying institutional/data-partner customers — i.e., they
+  already did the relationship-based onboarding Tj would need to do, at a
+  scale that supports reselling it.
 
-**Revised recommendation:** still worth Tj emailing Novig directly and
-asking — it costs nothing to ask, and individuals occasionally do get
-limited/sandbox access others assume is closed — but go in with
-expectations calibrated to "this is likely a sales conversation, possibly
-with fees or minimum-activity requirements attached," not "this is a free
-developer signup that got missed in the docs." **This makes §4.2's
-paid-reseller fallback (SharpAPI, etc.) meaningfully more likely to be the
-real path to live Novig data than §1's original framing suggested** — and
-raises SharpAPI's **free**, 60-second-delayed tier specifically as the
-most realistic $0 path to *some* real (if not sub-second) Novig data,
-worth trying before assuming the official API is reachable at all.
+**Correction, same day (2026-09-20T19:49:13Z) — Tj found the real process,
+which this session's web search never surfaced:** Novig's own in-app/site
+support widget states plainly: *"API access is handled by our developer
+team. Send an email to **developers@novig.com**. Include: who you are (and
+your company/product, if applicable), what you're building, what data or
+functionality you want, expected scale or usage. They review requests and
+guide next steps from there."* So there **is** a real, concrete, always-
+available path in — a real email address, a real intake process — it's
+just not indexed anywhere web search reaches (likely gated behind the
+in-app help widget rather than a public page). This doesn't resolve
+whether individual/personal requests actually get approved or what it
+costs — that's still unknown until Novig replies — but it fully answers
+"what's the actual process": **email developers@novig.com** with those
+four things. Tj sent that email 2026-09-20 (see the email itself, drafted
+this session — not stored in this repo, it's a one-off communication, not
+project documentation).
+
+**Revised recommendation:** the email is sent — next step is simply
+waiting for Novig's reply and updating this file once there's a real
+answer (free vs. paid, approved vs. not, any conditions). Until then, plan
+around the same fallback as before: **SharpAPI's free, 60-second-delayed
+tier** is the most realistic $0 path to *some* real Novig data, with paid
+resellers ($79+/mo) as the next fallback if delayed data isn't good
+enough.
 
 ### 4.2 Third-party resellers (fallback if 4.1 turns out gated/paid)
 
