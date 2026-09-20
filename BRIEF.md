@@ -126,9 +126,28 @@ same wall doesn't re-diagnose it from scratch.
 
 ## Locked architecture decisions
 
-**None yet.** When real ones exist (a data source's priority order, a
-caching policy, an accounting/scoring method — whatever this app's
-equivalent turns out to be), record them here the way Portfolio's `BRIEF.md`
-does for its market-data source order, and cite *why*, not just *what* — the
-reasoning is what stops a future session from "simplifying" a decision that
-was actually load-bearing.
+- **Reference-line source order: prefer a sharp book (Pinnacle/Circa) alone
+  when fetched, else average every major book fetched.** Tj's own explicit
+  instruction (2026-09-20). Implemented in `engine`'s `Consensus` object —
+  do not quietly change this to "always average" or "always prefer a sharp
+  book" without checking with Tj first, since it was a specific ask, not a
+  default we picked.
+- **Devig method is a parameter, never hard-coded.** `DevigMethod` (engine)
+  supports multiplicative/additive/power/Shin, matching OddsJam's own
+  "pick your source of truth and method" model (RESEARCH.md §5) — and
+  directly motivated by RESEARCH.md §8.1's finding that Odds Assist Pro's
+  *undisclosed* method is exactly why its longshot edges can't be trusted
+  blindly. Don't collapse this back down to one hard-coded method.
+- **Novig's own fee must be netted into EV, and a fee we don't have a
+  formula for must never silently become $0.** `engine.Fees`/`FeeResult`
+  models this explicitly (`Unknown` for parlays, since that fee structure
+  isn't confirmed yet — RESEARCH.md §3/§10). A sample fixture
+  (`EvScannerTest`'s live-market case) exists specifically to prove a real,
+  positive raw edge can still net negative once Novig's live taker fee is
+  applied — don't "simplify" this back to ignoring fees, that's the exact
+  failure mode this was built to avoid.
+- **The UI must never present sample/demo data as if it were live.**
+  `ScannerViewModel`/`OpportunitiesScreen` carry an explicit `isLiveData`
+  flag and render a visible banner when it's false. The app ships wired to
+  sample repositories by default (no live credentials exist yet) — keep
+  that flag wired correctly as real providers get plugged in.
