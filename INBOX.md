@@ -237,3 +237,8 @@ Begin basic coding of this app. Give it a catchy name, not something boring like
 ```
 Where is the apk
 ```
+
+## 2026-09-20T06:45:23Z
+```
+On the other repos GitHub can make the apk without secret. It doesn't need to be secure
+```
