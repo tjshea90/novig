@@ -655,9 +655,32 @@ request.
       and press Send — does IT also 403, or does it succeed? If it
       succeeds, get the exact cURL from its "Code Snippets" tab (or a
       screenshot) so `SharpApiClient` can be matched to it exactly.
-- [ ] Act on whichever answer comes back: if the Playground itself 403s
-      on Novig, this is an account/tier limitation to report back (not a
-      code bug) — note it in RESEARCH.md §4.2.1 and tell Tj plainly,
-      since no client-side fix can work around an account-level
-      restriction. If the Playground succeeds, fix `SharpApiClient` to
-      match its real request shape and ship it.
+- [x] Answer came back: **Novig 403s in the Playground too** — "may not
+      have access." Confirms this is a real account/tier limitation on
+      SharpAPI's free plan, not a bug in `SharpApiClient`'s request shape
+      — no client-side fix can work around it. SharpAPI's own docs list
+      Novig under "Exchanges," and evidently free-tier access doesn't
+      extend there even though the endpoint/book is publicly listed.
+
+## Tj's request, 2026-09-20T21:52:00Z (his own words — full text in INBOX.md)
+
+> Novig showed 403 too. It says I may not have access. Research if other
+> apis have novig for free. Does the odds api have it?
+
+### Progress on this request
+
+- [ ] Update RESEARCH.md §4.2/§4.2.1 with the confirmed finding: SharpAPI's
+      free tier does NOT actually grant Novig access despite listing it —
+      this was previously marked "confirmed" from the docs page alone and
+      needs correcting now that it's been tested for real.
+- [ ] Re-verify (don't rely on the earlier session's summary) whether The
+      Odds API includes Novig at all, via their own current sports/books
+      listing.
+- [ ] Research current free/cheap alternatives for real Novig data:
+      re-check OpticOdds/Betstamp/MetaBet (previously "not confirmed, not
+      deep-dived"), odds-api.io's actual free-tier limits, and any other
+      provider not yet covered.
+- [ ] Report findings to Tj plainly, including whether any $0 path to
+      real Novig data actually exists right now, or whether the honest
+      answer is "paid reseller or Novig's own gated API are the only
+      routes."
