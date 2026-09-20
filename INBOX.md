@@ -54,3 +54,8 @@ portfolio repo
 ```
 Research methods this app can use to find positive ev for novig sports book odds constantly updating in real time to capture odds movements and new positive EV bets. Currently I'm using oddsjam, but I cannot afford the subscription. Look for a way to do something just like oddsjam, but either free or less than 30 dollars per month. My goal is to build an app that is equal to or better than oddsjam at finding positive EV bets on novig. Begin deep research across the internet on what is needed for this app and how to do it so we can begin building it. Maybe make a research findings file permanently on GitHub in this repo so all research is saved. 
 ```
+
+## 2026-09-20T05:01:28Z
+```
+Research odds assist pro. Does it actually find positive EV on novig? Is it as good as oddsjam?
+```
