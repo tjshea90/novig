@@ -35,19 +35,23 @@
       (Portfolio only), `test_resume.sh` (Portfolio only), `bootstrap.sh`,
       `ship.sh`, `record-release.sh`, and both `CLAUDE.md`/`BRIEF.md` files.
 - [x] Design the adapted system for novig: Portfolio's session-root hook
-      aggregator (confirmed the only one that actually fires in this
-      multi-repo container) as the mechanism, PLUS fantasy-football's
-      `INBOX.md`/`capture_inbox.sh` raw-message backstop layered on top as a
-      new `UserPromptSubmit` aggregator entry point (`tools/hooks/inbox.sh`)
-      that Portfolio's own template doesn't have. Documented the one known
-      cross-repo edge case this creates and why it self-heals — see
-      `tools/install-hooks.sh`'s header comment.
+      install (confirmed the only mechanism that actually fires hooks in
+      this multi-repo container) as the base, PLUS fantasy-football's
+      `INBOX.md`/`capture_inbox.sh` raw-message backstop layered in as a
+      fifth hook event (`UserPromptSubmit`) that Portfolio's own template
+      doesn't define. Deliberately dropped Portfolio's multi-repo
+      AGGREGATION piece (each hook globbing every repo under the session
+      root and running ITS `autosave.sh`, i.e. committing+pushing in it) —
+      that would mean this repo's infrastructure executing `git commit`/
+      `git push` inside fantasy-football's and Portfolio's real checkouts,
+      which are read-only for this project's work. novig's installed hooks
+      are absolute paths into this repo's own `tools/` only; verified this
+      empirically too (see CHECKPOINT.md and `tools/test_resume.sh` section 4).
 - [x] Implement `tools/`: `secretscan.sh`, `push.sh`, `unpushed.sh`,
       `autosave.sh`, `capture_inbox.sh`, `ckpt.sh`, `resume.sh`, `toobig.sh`,
-      `install-hooks.sh`, `session-root-hooks.json`,
-      `tools/hooks/{lib,brief,save,big,inbox}.sh` + `emit.py`,
-      `record-release.sh` (signature adapted — takes versionCode explicitly
-      since the toolchain isn't decided yet, see its own header).
+      `install-hooks.sh`, `session-root-hooks.json`, `record-release.sh`
+      (signature adapted — takes versionCode explicitly since the toolchain
+      isn't decided yet, see its own header).
 - [x] Write `.claude/settings.json` (standalone fallback), `.gitignore`,
       `bootstrap.sh`, `BRIEF.md` (honest about what's decided vs. TBD —
       Android 16/API 36, Moto G 2026, Novig-sportsbook-profit purpose are
