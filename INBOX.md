@@ -373,3 +373,15 @@ I switched it to main
 <event>run 35521738707: status=in_progress conclusion=null</event>
 </task-notification>
 ```
+
+## 2026-09-20T16:11:26Z
+```
+<task-notification>
+<task-id>bfjb0vi7p</task-id>
+<tool-use-id>toolu_01Tdmdynq1UVE13n5Vjwe1DE</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/3a500656-b7e7-51b5-b77f-978eafe5a88a/tasks/bfjb0vi7p.output</output-file>
+<status>completed</status>
+<summary>Monitor "Poll GitHub Actions Release workflow run until it completes" stream ended</summary>
+<event>run 35521738707: status=completed conclusion=failure</event>
+</task-notification>
+```
