@@ -350,20 +350,37 @@ open unknown — the docs.novig.com pages read last session only said
 "request your client ID and secret from Novig," with no pricing/process
 info. This is a real second pass at answering it, not a restatement.
 
-- [ ] Deep-dive: is there any public pricing/access-tier info for Novig's
-      NBX API (docs.novig.com) anywhere online — pricing pages, developer
-      forum posts, X/Twitter threads from people who've actually gotten
-      access, Novig's own help center, terms of service, or job/partner
-      postings that describe the process?
-- [ ] Find how actual traders/bots talk about getting access — Reddit,
-      Discord mentions, blog posts from anyone who's built against it.
-- [ ] Answer concretely: is it free, paid, tiered, invite-only,
-      contact-sales-only? What's the actual application process (a form,
-      an email, a minimum account balance/volume)?
-- [ ] Update RESEARCH.md §4.1 and §10 with whatever is actually found,
-      cited — including if the honest answer is "still not publicly
-      documented, here's the best next step."
-- [ ] Checkpoint.
+- [x] Deep-dive: checked Novig's own Developer Relations job posting
+      (Dreamwork listing), business-model/funding writeups (Series B press
+      coverage, AlleyWatch, etc.), CFTC exchange-rule filings, the help
+      center (support.novig.us), and searched for any public waitlist or
+      signup form.
+- [x] Found no Reddit/Discord/blog posts from anyone who's actually gotten
+      API access — nobody's written about using it publicly.
+- [x] Concrete-as-possible answer (still not 100% confirmed — Novig has
+      never published pricing): **probably not free, probably not
+      self-serve.** Novig's own DevRel job posting names the API's target
+      users as "market makers and liquidity providers, trading firms, and
+      B2B or embedded partners" with "high-touch" relationship-based
+      onboarding, not a signup form. Novig's business model explicitly
+      charges institutional market makers for access to retail order
+      flow — that's what funds commission-free retail trading, so giving
+      the API away free works against their own monetization. There's a
+      separate, formal "Market Maker" program requiring approval and a
+      signed agreement per Novig's CFTC filings. No public pricing, no
+      waitlist form, no self-serve dashboard found anywhere.
+- [x] Updated RESEARCH.md: new §4.1.1 with the full findings and sources,
+      §1's bottom line rewritten to lead with this (kept the original
+      framing below it for context, not deleted), §10 item 1 narrowed to
+      reflect what's now known vs. still genuinely unconfirmed.
+- [x] Checkpoint.
 
-**This request is done.** Vigilant v0.1.0 is a real, installable, signed
-APK Tj can download and sideload today.
+**Bottom line for Tj:** still worth emailing Novig directly and asking —
+costs nothing — but go in expecting a sales/partnership conversation, not
+a developer signup form. In the meantime, SharpAPI's free 60-second-delayed
+tier is the most realistic $0 path to real (if delayed) Novig data.
+
+## Earlier request closed out
+
+**"Where is the apk" (2026-09-20T06:34:37Z) is done.** Vigilant v0.1.0 is a
+real, installable, signed APK Tj can download and sideload today.
