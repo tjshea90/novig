@@ -24,8 +24,20 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        # GitHub-hosted ubuntu runners already ship an Android SDK with ANDROID_HOME set — no
+        # separate SDK-install action needed. (android-actions/setup-android@v3 was tried first
+        # and fails outright: it unconditionally tries to install the long-removed legacy "tools"
+        # package and crashes the whole step — a known issue with that action, not a problem with
+        # this project's own code. Writing the well-known license hashes directly is more robust
+        # than depending on that action or guessing at a cmdline-tools path.) With licenses
+        # accepted, AGP auto-downloads whatever specific platform/build-tools compileSdk 36 needs
+        # during the Gradle build itself.
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          mkdir -p "$ANDROID_HOME/licenses"
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
