@@ -34,12 +34,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlinOptions {
-        jvmTarget = "21"
-    }
-
     buildFeatures {
         compose = true
+    }
+}
+
+// `android.kotlinOptions { jvmTarget = "21" }` is a hard error on this Kotlin version — migrated
+// to the current compilerOptions DSL (see https://kotl.in/u1r8ln, hit for real in CI 2026-09-20).
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
