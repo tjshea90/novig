@@ -202,7 +202,8 @@ re-diagnose these from scratch:
   `list_workflows` and triggers successfully. If this ever regresses (a
   repo transfer, a new repo created fresh) the same fix applies — check
   `default_branch` on the repo via the API before assuming a
-  `workflow_dispatch` 404 is a workflow-syntax problem, which is what
+  `workflow_dispatch` 404 is a workflow-syntax problem, which is what it
+  looked like at first here.
   this isn't already known.
 
 ## Locked architecture decisions
