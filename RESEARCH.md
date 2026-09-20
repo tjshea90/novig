@@ -141,16 +141,56 @@ site-map read). Confirmed from the docs:
   historical convergence behavior, not useful for live scanning since it's
   daily-batch, not streaming.
 
-**UNVERIFIED and the single most important thing to confirm before
-committing to this architecture:** nothing in the docs states whether
-requesting a client ID/secret is free, requires an existing funded Novig
-trading account, or involves an approval process. Given the API is
-explicitly marketed at "developers and quantitative traders" building
-trading bots, and Tj already has a Novig account (he's currently betting
-there via OddsJam), the likely path is: **email/contact Novig from the
-account he already holds and ask for API access** — but this needs an
-actual conversation with Novig, not an assumption. This is the top action
-item, ranked above any of the code below.
+### 4.1.1 Second research pass, 2026-09-20T19:45:42Z: pricing/access model — not encouraging
+
+Tj asked directly: is the NBX API free, and how do you actually get it?
+This pass found real, converging evidence (not proof — Novig has never
+published pricing publicly) that the honest answer is **probably not free
+for an individual retail trader, and probably not a quick self-serve
+signup**:
+
+- **Novig's own Developer Relations Engineer job posting** (the role that
+  owns onboarding new API users) describes the API's target users as
+  "market makers and liquidity providers, trading firms, and B2B or
+  embedded partners" — an institutional/B2B list, retail traders not
+  mentioned. The role is described as providing "detailed, high-touch
+  support" to partners integrating the API — relationship-managed
+  onboarding, not a self-serve dashboard. No pricing, rate limits, or
+  formal signup process appears anywhere in the posting.
+  ([Dreamwork listing](https://www.dreamworkhq.com/job/aa4d9582-c6f9-4c36-83ab-3e19d76ac7b0))
+- **Novig's actual business model explains why:** multiple funding-round
+  writeups describe Novig as charging *institutional market makers and
+  liquidity providers* for access to retail order flow — that fee is
+  explicitly what funds commission-free trading for retail users. API
+  access to the live book is the product institutions pay for; giving it
+  away free to individual retail traders would work against the platform's
+  own monetization model, not just be an oversight in the docs.
+- **There is a formal, gated "Market Maker" program**, separate from
+  simple account signup: per Novig's CFTC exchange-rule filings, an
+  individual, group, or corporation must be **approved** and **sign an
+  agreement** with the exchange before being allowed to provide liquidity
+  across markets — this is the kind of relationship the API is built for,
+  not a form anyone fills out.
+- **No public waitlist, application form, or self-serve API-key dashboard**
+  was found anywhere — not on novig.com, not in the help center
+  (support.novig.us), not in press coverage. Every third-party reseller
+  that already has Novig data (SharpAPI, OpticOdds, Betstamp, etc.) is,
+  per the business-model finding above, most plausibly itself one of these
+  paying institutional/data-partner customers — i.e., they already did the
+  relationship-based onboarding Tj would need to do, at a scale that
+  supports reselling it.
+
+**Revised recommendation:** still worth Tj emailing Novig directly and
+asking — it costs nothing to ask, and individuals occasionally do get
+limited/sandbox access others assume is closed — but go in with
+expectations calibrated to "this is likely a sales conversation, possibly
+with fees or minimum-activity requirements attached," not "this is a free
+developer signup that got missed in the docs." **This makes §4.2's
+paid-reseller fallback (SharpAPI, etc.) meaningfully more likely to be the
+real path to live Novig data than §1's original framing suggested** — and
+raises SharpAPI's **free**, 60-second-delayed tier specifically as the
+most realistic $0 path to *some* real (if not sub-second) Novig data,
+worth trying before assuming the official API is reachable at all.
 
 ### 4.2 Third-party resellers (fallback if 4.1 turns out gated/paid)
 
