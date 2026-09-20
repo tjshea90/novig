@@ -478,3 +478,8 @@ Good question — API access is handled by our developer team.Send an email to <
 
 Make the email for me and request what I need for this app
 ```
+
+## 2026-09-20T20:14:38Z
+```
+Begin making the app functional, start by using SharpAPI free tier and the odds api. I have keys but make the app able for me to type in the keys. Give me options to add multiple keys and make a system for the app to switch keys automatically when my usage runs out on any key. 
+```
