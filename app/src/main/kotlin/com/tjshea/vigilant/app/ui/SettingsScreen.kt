@@ -108,6 +108,16 @@ private fun ProviderKeysSection(
                     onValueChange = { newKeyText = it },
                     label = { Text("Add a key") },
                     singleLine = true,
+                    // Real API keys are long random tokens — the IME's autocorrect/autocapitalize
+                    // can silently mangle a typed-in key (a bug found 2026-09-20 diagnosing a
+                    // "rate-limited or invalid" scan failure). No visualTransformation, so the key
+                    // stays visible for Tj to eyeball against the dashboard, but nothing "helps"
+                    // by correcting it.
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Password,
+                    ),
                     modifier = Modifier.weight(1f),
                 )
                 Button(
