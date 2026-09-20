@@ -1,14 +1,13 @@
 name: Release
 
 # Builds a SIGNED release APK and publishes it as a GitHub Release — the actual deliverable
-# CLAUDE.md's "Releasing" section describes (as opposed to ci.yml's unsigned debug build, which
+# CLAUDE.md's "Releasing" section describes (as opposed to ci.yml's assembleDebug build, which
 # only exists to verify the app compiles). Manual trigger only: a release is a deliberate act,
 # never a side effect of a routine push.
 #
-# Requires four repository secrets (BRIEF.md records the keystore's fingerprint, never the
-# password — see its "The rule that will apply the moment a keystore exists" section for how
-# these were generated and why Claude could not add them itself):
-#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+# No secrets needed — signs with app/keystore/vigilant-debug.jks, committed directly into the
+# repo (Tj's explicit call, 2026-09-20, matching fantasy-football's precedent). See BRIEF.md's
+# keystore section for why, and app/build.gradle.kts's signingConfigs comment for the mechanics.
 
 on:
   workflow_dispatch:
@@ -59,15 +58,7 @@ jobs:
             exit 1
           fi
 
-      - name: Decode signing keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release-signing.jks
-
       - name: Build signed release APK
-        env:
-          VIGILANT_KEYSTORE_PATH: release-signing.jks
-          VIGILANT_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          VIGILANT_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          VIGILANT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew :app:assembleRelease --console=plain
 
       - name: Verify the signing certificate matches BRIEF.md's recorded fingerprint
@@ -79,18 +70,14 @@ jobs:
           fi
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
           "$APKSIGNER" verify --print-certs "$APK" | tee signing-info.txt
-          EXPECTED="05:DB:E7:B7:EB:E7:31:51:A7:EE:90:54:AF:E5:CC:B9:11:47:42:8C:F6:F8:AA:2F:AF:0D:1D:89:E0:8E:74:77"
+          EXPECTED="AB:22:07:A8:6C:4E:59:18:BB:C1:A2:20:04:FB:14:42:B2:86:6E:6E:5A:B0:C3:D3:27:A7:EE:0E:AA:98:5C:C1"
           if ! grep -qi "$EXPECTED" signing-info.txt; then
-            echo "::error::Signing certificate does not match the fingerprint recorded in BRIEF.md — wrong keystore, or it was silently swapped. Refusing to publish."
+            echo "::error::Signing certificate does not match the fingerprint recorded in BRIEF.md — the committed keystore was changed unexpectedly. Refusing to publish."
             exit 1
           fi
           echo "Signing certificate verified against BRIEF.md's recorded fingerprint."
           mkdir -p release-out
           cp "$APK" "release-out/vigilant-${{ steps.version.outputs.tag }}.apk"
-
-      - name: Remove keystore file
-        if: always()
-        run: rm -f app/release-signing.jks
 
       - name: Create the release tag (server-side — this account's containers get HTTP 403 pushing refs/tags/*)
         run: |
@@ -109,6 +96,8 @@ jobs:
             Signed release build of Vigilant (versionCode ${{ steps.version.outputs.code }}).
 
             Signing certificate SHA-256:
-            `05:DB:E7:B7:EB:E7:31:51:A7:EE:90:54:AF:E5:CC:B9:11:47:42:8C:F6:F8:AA:2F:AF:0D:1D:89:E0:8E:74:77`
+            `AB:22:07:A8:6C:4E:59:18:BB:C1:A2:20:04:FB:14:42:B2:86:6E:6E:5A:B0:C3:D3:27:A7:EE:0E:AA:98:5C:C1`
+
+            Signed with a committed, non-secret keystore (see BRIEF.md) — fine for sideloading, not intended for Play Store distribution.
 
             This build ships wired to sample data by default — see the in-app banner and BRIEF.md for what's needed to go live.
