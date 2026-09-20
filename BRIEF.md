@@ -40,52 +40,75 @@ that used to say TBD are now filled in with the decisions made building it
   nothing places a trade yet), position tracking, or anything beyond
   finding and surfacing the edge — those remain open, ask before assuming.
 - **Distribution:** sideloaded signed release APK, built and signed by
-  GitHub Actions (not this container), matching Portfolio's model — see
-  `CLAUDE.md`'s "Releasing" section. Claude triggers the build via the
+  GitHub Actions (not this container). Claude triggers the build via the
   GitHub API and confirms it went green; Tj gets a link, not a raw file.
-  **Not wired up yet** — `.github/workflows/ci.yml` currently only builds a
-  debug APK and runs tests (no signing); see "Toolchain" below for why, and
-  "Releasing" in `CLAUDE.md` for the ordered steps still ahead (keystore,
-  a real release workflow, `ship.sh`'s real gate).
+  **Wired up 2026-09-20** — `.github/workflows/release.yml` builds, signs,
+  verifies the signature, tags, and publishes a GitHub Release, no secrets
+  needed (see the keystore section below for the model — this deliberately
+  does *not* match Portfolio's secret-based one; it matches
+  fantasy-football's committed-keystore one, Tj's explicit call).
 
 ## The rule that will apply the moment a keystore exists
 
 **Now true — the keystore was generated 2026-09-20.** This rule is in
 force starting now, ported from this account's other two Android projects
-where getting it wrong has cost real user data:
+where getting it wrong has cost real user data. Read this alongside the
+note right after it — the *security model* here is deliberately not
+Portfolio's, but the *permanence* rules below apply exactly the same way
+regardless of which model a keystore uses.
 
-- **Alias:** `vigilant`. **Valid until:** 2056-09-12 (30 years).
-- **SHA-256 fingerprint** (safe to record — public, not secret):
-  `05:DB:E7:B7:EB:E7:31:51:A7:EE:90:54:AF:E5:CC:B9:11:47:42:8C:F6:F8:AA:2F:AF:0D:1D:89:E0:8E:74:77`
-- The keystore file and its password were sent directly to Tj (this
-  container's GitHub token is explicitly blocked from the Actions-secrets
-  API — confirmed 2026-09-20, a 403 from the proxy — so Claude cannot
-  create GitHub Secrets itself; Tj adds `KEYSTORE_BASE64`,
-  `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` via the repo's Settings
-  UI himself). **The password itself is never recorded here or anywhere
-  in this repo** — only Tj and the GitHub Secret hold it.
+- **Committed directly into the repo:** `app/keystore/vigilant-debug.jks`.
+  **Alias:** `vigilant`. **Password:** Android's own standard well-known
+  debug password (`android`) — intentionally public, see below. **Valid
+  until:** 2056-09-12 (30 years).
+- **SHA-256 fingerprint:**
+  `AB:22:07:A8:6C:4E:59:18:BB:C1:A2:20:04:FB:14:42:B2:86:6E:6E:5A:B0:C3:D3:27:A7:EE:0E:AA:98:5C:C1`
+  — `release.yml` verifies every build's signature against this exact
+  value before publishing and refuses to publish on a mismatch.
 
-Android only performs a **data-preserving in-place update** when the
-package name AND the signing certificate both match. A new keystore forces
-an uninstall first, which **erases whatever the app has stored locally**
-(auth state, positions, cached lines — whatever it ends up persisting). So,
-from the moment a keystore is first generated:
+**Why this one is committed instead of a GitHub Secret (a real, deliberate
+tradeoff, not an oversight):** Tj's explicit instruction, 2026-09-20 —
+"the other repos GitHub can make the apk without secret, it doesn't need
+to be secure" — pointing at fantasy-football's `android/debug.keystore`,
+which is committed with the same standard public debug password for the
+same reason. Checked both other repos directly rather than assumed:
+Portfolio's real `android.yml` *does* use a Secret
+(`SIGNING_KEYSTORE_BASE64`); that's the model an earlier pass of this file
+followed and sent Tj a keystore for — **that Secret-based keystore is
+abandoned, unused, and superseded by this one.** What this tradeoff
+actually costs: because the password is public knowledge, anyone can
+generate a byte-identical keystore and sign an APK Android will accept as
+a legitimate in-place update over a real install — there is no real secret
+material here to protect. That's a fine trade for an app that (as of this
+writing) ships wired to sample data only and holds no real credentials.
+**Revisit this the day the app holds real Novig API credentials or
+anything else worth protecting** — switch back to a Secret-held keystore
+(Portfolio's model, already built once this session, easy to redo) rather
+than leaving a forgeable signing key on an app handling real trading
+credentials.
+
+Separately from *which* model is used, Android only performs a
+**data-preserving in-place update** when the package name AND the signing
+certificate both match. A new keystore forces an uninstall first, which
+**erases whatever the app has stored locally** (auth state, positions,
+cached lines — whatever it ends up persisting). So, from the moment a
+keystore is first generated — committed or secret-held, doesn't matter:
 
 - Never regenerate it. Sign every release with the same one.
 - Never change the applicationId once it's picked.
 - Always bump `versionCode` before shipping — Android refuses to install a
   build whose versionCode is not strictly higher than what's already
   installed.
-- Record its certificate fingerprint in this file the day it's generated,
-  the way Portfolio's `BRIEF.md` records its own — a keystore silently
-  swapped for a same-DN regeneration is not something a build failure
-  catches; only a fingerprint comparison does.
-- If it's kept in git secrets for GitHub Actions to sign with (Portfolio's
-  model): the moment the repo is ever considered for going public, check
-  whether the keystore or any secret ever touched a commit, the same way
-  Portfolio's `CLAUDE.md` flags for its own history. Cheap to check
-  (`git log --all --diff-filter=A --name-only -- '*.jks'`), expensive to
-  discover after the fact.
+- Record its certificate fingerprint in this file the day it's generated
+  or changed — a keystore silently swapped for a same-DN regeneration is
+  not something a build failure catches; only a fingerprint comparison
+  does. (This is exactly why `release.yml` checks it on every build.)
+- If a *future* keystore goes back to being Secret-held: the moment the
+  repo is ever considered for going public, check whether it or any
+  secret ever touched a commit, the same way Portfolio's `CLAUDE.md` flags
+  for its own history (`git log --all --diff-filter=A --name-only --
+  '*.jks'`) — not a concern for the current committed one, which is
+  public on purpose.
 
 ## Toolchain
 
