@@ -3,6 +3,7 @@ package com.tjshea.vigilant.data.reference
 import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.engine.BookQuote
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
