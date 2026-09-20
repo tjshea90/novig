@@ -139,17 +139,23 @@ request above did not include building it.
 
 ### Progress on this request
 
-- [ ] Deep-dive Odds Assist Pro specifically: what it actually is (company,
-      how long it's existed, reputation), how it claims to source/compute
-      Novig odds and EV, and whether that claim holds up to scrutiny (user
-      reviews, complaints, evidence it's real vs. marketing copy).
-      RESEARCH.md §8 only captured a shallow first pass on this — this
-      request asks for a real answer, not the same summary restated.
-- [ ] Compare it feature-by-feature against OddsJam specifically (not just
-      "is it free vs $199.99/mo") — coverage breadth, update speed/latency,
-      devig method transparency, bet tracking, alerting, UI/UX, reliability
-      — enough to give Tj an honest verdict he can act on.
-- [ ] Update `RESEARCH.md` §8 (and any other section this changes, e.g. §1's
-      bottom line if Odds Assist Pro turns out to already solve the ask) with
-      the deeper findings, cited.
-- [ ] Checkpoint.
+- [x] Deep-dive Odds Assist Pro specifically: company is Upper 9 Media LLC,
+      a small indie operation with thin public review history (1 Trustpilot
+      review). Verified **hands-on** (not just marketing copy) by loading
+      the live tool in the pre-installed Chromium and filtering it down to
+      Novig-only: it genuinely surfaces real, current, dated +EV
+      opportunities on Novig, for free, right now. See `RESEARCH.md` §8.1.
+- [x] Compare it feature-by-feature against OddsJam: fewer books (~12
+      state-gated vs. OddsJam's 50+), no disclosed devig method or
+      source-of-truth picker (OddsJam has both), no visible bet
+      tracking/CLV, free-tier row cap. Also found and flagged a real
+      substantive concern: its largest claimed edges cluster on extreme
+      longshot lines, exactly where simple (multiplicative) devigging is
+      known to overstate underdog value — the edge numbers shouldn't be
+      trusted blindly. See `RESEARCH.md` §8.1 for the full verdict and what
+      this means for what "equal to or better than OddsJam" should actually
+      prioritize building (disclosed/tunable devig + real bet tracking, not
+      just matching the free edge-list UI).
+- [x] Updated `RESEARCH.md` §8 (table + new §8.1) and §10 (open item 4
+      resolved) with the deeper, hands-on-verified findings, cited.
+- [x] Checkpoint.
