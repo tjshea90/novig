@@ -470,3 +470,11 @@ Remind me what I need to do to make the app work
 ```
 Research online about the novig  trading API see if it is free and how to use it
 ```
+
+## 2026-09-20T19:49:13Z
+```
+I found the API. I have to email and request the API. 
+Good question — API access is handled by our developer team.Send an email to <b><a href="mailto:developers@novig.com" rel="nofollow noopener noreferrer" target="_blank">developers@novig.com</a></b>Include:<br>• who you are (and your company/product, if applicable)<br>• what you’re building<br>• what data or functionality you want<br>• expected scale or usageThey review requests and guide next steps from there.
+
+Make the email for me and request what I need for this app
+```
