@@ -58,12 +58,14 @@ class KeyRotator(
 
     suspend fun <T> execute(providerName: String, action: suspend (key: String) -> KeyAttemptResult<T>): T {
         val triedKeys = mutableSetOf<String>()
+        var lastFailureDetail: String? = null
         while (true) {
             val key = mutex.withLock {
                 refreshCooldownsLocked()
                 states.firstOrNull { it.status is KeyStatus.Available && it.key !in triedKeys }?.key
             } ?: throw AllKeysExhaustedException(
-                "All ${states.size} $providerName key(s) are rate-limited or invalid — add a new key or wait for a reset."
+                "All ${states.size} $providerName key(s) are rate-limited or invalid — add a new key or wait for a reset." +
+                    (lastFailureDetail?.let { " Last failure: $it." } ?: "")
             )
 
             triedKeys += key
@@ -72,8 +74,14 @@ class KeyRotator(
                     markAvailable(key)
                     return result.value
                 }
-                is KeyAttemptResult.RateLimited -> markCoolingDown(key, result.retryAfterMs)
-                is KeyAttemptResult.Invalid -> markExhausted(key)
+                is KeyAttemptResult.RateLimited -> {
+                    lastFailureDetail = "rate-limited" + (result.reason?.let { " ($it)" } ?: "")
+                    markCoolingDown(key, result.retryAfterMs)
+                }
+                is KeyAttemptResult.Invalid -> {
+                    lastFailureDetail = "invalid" + (result.reason?.let { " ($it)" } ?: "")
+                    markExhausted(key)
+                }
             }
         }
     }
