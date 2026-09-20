@@ -23,30 +23,26 @@ android {
         versionName = "0.1.0"
     }
 
-    // Release signing comes entirely from environment variables, never from anything committed —
-    // set only inside .github/workflows/release.yml, which decodes the keystore from a GitHub
-    // Secret (see BRIEF.md's "The rule that will apply the moment a keystore exists"). Outside
-    // that workflow (a local or CI test build) VIGILANT_KEYSTORE_PATH is unset, so `release` just
-    // builds unsigned — correct for `ci.yml`'s assembleDebug-only verification, since nothing
-    // outside the real release workflow should ever be able to produce a signed APK.
-    val keystorePath = System.getenv("VIGILANT_KEYSTORE_PATH")
-    if (keystorePath != null) {
-        signingConfigs {
-            create("release") {
-                storeFile = file(keystorePath)
-                storePassword = System.getenv("VIGILANT_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("VIGILANT_KEY_ALIAS")
-                keyPassword = System.getenv("VIGILANT_KEY_PASSWORD")
-            }
+    // Signs with a keystore committed directly into the repo — Tj's explicit call (2026-09-20),
+    // matching fantasy-football's precedent: no GitHub Secret, no manual setup step, works the
+    // same locally and in CI. app/keystore/vigilant-debug.jks uses Android's standard well-known
+    // debug password on purpose — there's no real secret in it to protect. This is a deliberate
+    // security tradeoff (anyone can forge an "update" signed with this same public key), fine
+    // with nothing sensitive in the app yet — see BRIEF.md's keystore section for the reasoning
+    // and when to revisit it (the day this app holds real Novig API credentials).
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore/vigilant-debug.jks")
+            storePassword = "android"
+            keyAlias = "vigilant"
+            keyPassword = "android"
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (keystorePath != null) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
