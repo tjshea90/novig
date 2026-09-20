@@ -87,4 +87,31 @@ class EvScannerTest {
         val netEvs = opportunities.map { it.netEv ?: Double.NEGATIVE_INFINITY }
         assertEquals(netEvs.sortedDescending(), netEvs)
     }
+
+    @Test
+    fun `an empty sport-key list scans nothing and never touches either repository`() = runTest {
+        var novigCalled = false
+        var referenceCalled = false
+        val noSportScanner = EvScanner(
+            novigRepository = object : NovigRepository {
+                override suspend fun getOpenMarkets(limit: Int): List<NovigEvent> {
+                    novigCalled = true
+                    return SampleNovigRepository().getOpenMarkets(limit)
+                }
+            },
+            referenceOddsRepository = object : ReferenceOddsRepository {
+                override suspend fun getOddsForSport(sportKey: String, marketKeys: List<String>): List<ReferenceEvent> {
+                    referenceCalled = true
+                    return SampleReferenceOddsRepository().getOddsForSport(sportKey, marketKeys)
+                }
+            },
+            sportKeys = emptyList(),
+        )
+
+        val opportunities = noSportScanner.scan()
+
+        assertTrue(opportunities.isEmpty())
+        assertFalse("no sport selected must not fetch the Novig leg", novigCalled)
+        assertFalse("no sport selected must not fetch the reference leg", referenceCalled)
+    }
 }
