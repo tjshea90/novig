@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.reference
 
+import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
+import com.tjshea.vigilant.data.keys.KeyRotator
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -7,6 +9,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -27,9 +30,9 @@ class TheOddsApiClientTest {
         server.shutdown()
     }
 
-    private fun client() = TheOddsApiClient(
+    private fun client(keys: List<String> = listOf("test-key")) = TheOddsApiClient(
         httpClient = OkHttpClient(),
-        apiKey = "test-key",
+        keyRotator = KeyRotator(keys),
         json = json,
         baseUrl = server.url("/v4").toString().trimEnd('/'),
     )
@@ -98,7 +101,7 @@ class TheOddsApiClientTest {
     fun `sends the api key and requested markets as query parameters`() = runTest {
         server.enqueue(MockResponse().setBody(sampleBody))
 
-        client().getOddsForSport("americanfootball_nfl", marketKeys = listOf("h2h", "spreads"))
+        client(keys = listOf("test-key")).getOddsForSport("americanfootball_nfl", marketKeys = listOf("h2h", "spreads"))
 
         val request = server.takeRequest()
         val url = request.requestUrl!!
@@ -107,9 +110,40 @@ class TheOddsApiClientTest {
     }
 
     @Test(expected = TheOddsApiException::class)
-    fun `a non-2xx response throws instead of silently returning nothing`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(401).setBody("unauthorized"))
+    fun `a non-2xx, non-rate-limit, non-quota response throws instead of silently returning nothing`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(500).setBody("internal error"))
         client().getOddsForSport("americanfootball_nfl")
+    }
+
+    @Test
+    fun `a 401 (quota exhausted or bad key) rotates to the next key`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setBody(sampleBody))
+
+        val events = client(keys = listOf("exhausted-key", "fresh-key")).getOddsForSport("americanfootball_nfl")
+
+        assertEquals(1, events.size)
+        assertEquals("exhausted-key", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+        assertEquals("fresh-key", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+    }
+
+    @Test
+    fun `a 429 rotates to the next key`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "30"))
+        server.enqueue(MockResponse().setBody(sampleBody))
+
+        val events = client(keys = listOf("key-1", "key-2")).getOddsForSport("americanfootball_nfl")
+        assertEquals(1, events.size)
+    }
+
+    @Test
+    fun `throws AllKeysExhaustedException once every key is out of quota`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        assertThrows(AllKeysExhaustedException::class.java) {
+            kotlinx.coroutines.runBlocking { client(keys = listOf("key-1", "key-2")).getOddsForSport("americanfootball_nfl") }
+        }
     }
 
     @Test
