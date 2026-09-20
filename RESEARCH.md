@@ -476,9 +476,13 @@ research-session snapshot.
 3. **Novig's parlay fee structure** (§3) — only "TBD" piece of the fee
    model; low priority since pre-game straight bets (fee-free) are the
    sensible first build target anyway.
-4. **Hands-on trial of Odds Assist Pro against Novig** (§8) — changes
-   what the app's differentiator needs to be, doesn't change whether to
-   build it.
+4. ~~Hands-on trial of Odds Assist Pro against Novig~~ — **done, §8.1**:
+   confirmed working and free, but with an important caveat (undisclosed
+   devig method, large edges on longshot lines are suspect). New follow-up
+   from this: **run it for real over several days** (Tj's own state/account)
+   to see what fraction of flagged edges hold up, rather than trusting a
+   single snapshot — this is now the higher-value open item than the old
+   "does it even work" question was.
 5. Full field-level REST/WebSocket response schemas (exact JSON shape of
    order book / market-by-event payloads) — need to actually request a
    token and hit the API (or read the OpenAPI 3.1 spec docs.novig.com
