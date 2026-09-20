@@ -4,8 +4,8 @@ name: CI
 # compiled right now. The dev container this project is built in has no Android SDK (see
 # BRIEF.md's Toolchain section), so `engine` and `data` (plain Kotlin/JVM modules) are verified
 # locally with real unit tests, but `app` (Compose UI, AndroidManifest, etc.) is unverified until
-# this workflow runs. This is a debug/test build only — no signing, no release, no keystore. That
-# comes later per BRIEF.md's "Releasing" section, once a keystore exists.
+# this workflow runs. This builds the debug variant only — no release, no tag, no GitHub Release.
+# For an actual signed, installable release, see release.yml (BRIEF.md's "Releasing" section).
 
 on:
   push:
