@@ -1,6 +1,10 @@
 package com.tjshea.vigilant.data.scanner
 
+import com.tjshea.vigilant.data.novig.NovigEvent
+import com.tjshea.vigilant.data.novig.NovigRepository
 import com.tjshea.vigilant.data.novig.SampleNovigRepository
+import com.tjshea.vigilant.data.reference.ReferenceEvent
+import com.tjshea.vigilant.data.reference.ReferenceOddsRepository
 import com.tjshea.vigilant.data.reference.SampleReferenceOddsRepository
 import com.tjshea.vigilant.engine.Consensus
 import com.tjshea.vigilant.engine.DevigMethod
@@ -16,7 +20,7 @@ class EvScannerTest {
     private val scanner = EvScanner(
         novigRepository = SampleNovigRepository(),
         referenceOddsRepository = SampleReferenceOddsRepository(),
-        sportKey = "sample",
+        sportKeys = listOf("sample"),
         devigMethod = DevigMethod.MULTIPLICATIVE,
     )
 
