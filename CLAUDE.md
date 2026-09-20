@@ -43,6 +43,20 @@ It finds the session root itself, MERGES the hooks into whatever settings
 file is already there (preserving any other project's permissions, env, and
 hooks), and says what it did. Idempotent — safe to run any time.
 
+**Every hook this installs is an absolute path into THIS repo's own `tools/`
+directory, never a glob over sibling directories.** Portfolio's own version
+of this pattern has each hook scan every repo under the session root and run
+that repo's `resume.sh`/`autosave.sh` in turn, aggregating them into one
+combined briefing — a reasonable design there, since Portfolio owns all of
+those repos equally. It is the wrong shape here: `fantasy-football` and
+`Portfolio` are **read only** for this project's work, and `autosave.sh`'s
+whole job is `git add -A && git commit && git push`. Running it inside
+either of those repos' real checkouts — even as an unintended side effect of
+infrastructure built for this repo — would be exactly the kind of change to
+another repo this project must never make. So this repo's hooks touch
+nothing but itself, full stop; see the header of `tools/install-hooks.sh`
+for the reasoning in full.
+
 **If you forget, two things catch it for you** — `tools/ckpt.sh` and
 `tools/resume.sh` both repair the hooks before they do anything else. So a
 session that never reads this section still gets the safety net back the
@@ -65,15 +79,6 @@ safety net.
 ```bash
 bash tools/install-hooks.sh --check && echo installed || echo MISSING
 ```
-
-Because several repos in this container share one aggregator pattern
-(`tools/hooks/{brief,save,big,inbox}.sh`, see `tools/hooks/lib.sh`), one
-install protects every checkpoint-managed project present, and running any
-one repo's `install-hooks.sh` re-merges the shared entries rather than
-duplicating them. This repo additionally defines a `UserPromptSubmit` hook
-(the INBOX capture below) that the sibling repos do not — see the comment at
-the top of `tools/install-hooks.sh` for the one known edge case that follows
-from that, and why it self-heals rather than silently staying broken.
 
 ## Starting a session
 
