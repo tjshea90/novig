@@ -653,3 +653,12 @@ The app gave an error. Diagnose and fix it. I attached screenshots of websites o
 <event>run 35538013562: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-20T21:13:42Z
+```
+<task-notification>
+<task-id>byi56ma4f</task-id>
+<summary>Monitor event: "Poll CI run for the diagnostic fix until completion"</summary>
+<event>run 35538013562: in_progress None</event>
+</task-notification>
+```
