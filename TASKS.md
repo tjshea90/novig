@@ -626,3 +626,38 @@ say definitively.
 - [x] Sent Tj the v0.2.1 Release link as plain tappable text, and told
       him the improved error message will now say HTTP 429 vs. HTTP 401
       if the scan fails again.
+
+## Tj's screenshot, 2026-09-20T21:41:00Z (v0.2.1's improved error message)
+
+Screenshot shows: "Scan failed — All 1 SharpAPI key(s) are rate-limited or
+invalid — add a new key or wait for a reset. Last failure: invalid (HTTP
+403)." The v0.2.1 diagnostic fix worked exactly as designed — this settles
+the open question from the previous report for good: **it is not the 12
+req/min rate limit** (that would show HTTP 429). It's a 403 (Forbidden),
+meaning SharpAPI is authenticating the key but rejecting this specific
+request.
+
+### Progress on this request
+
+- [x] Ruled out rate-limiting definitively — the new diagnostic text did
+      its job.
+- [ ] Two live hypotheses for a 403 specifically (not 401, which would
+      mean a flat-out bad/revoked key): (a) the free tier's "Odds"
+      access doesn't actually extend to the Exchanges category Novig is
+      listed under (RESEARCH.md §4.2.1 already flagged the free tier's
+      exact book coverage as unconfirmed beyond the marketing page), or
+      (b) our request is missing a parameter SharpAPI's own Playground
+      sends automatically (its UI has Sport/League/Sportsbook fields —
+      our `SharpApiClient` only sends `sportsbook`+`limit`, no `sport`/
+      `league`). Need one piece of information from Tj to tell them
+      apart: set the Playground's Sportsbook dropdown to **Novig**
+      specifically (his earlier screenshots were mid-test on DraftKings)
+      and press Send — does IT also 403, or does it succeed? If it
+      succeeds, get the exact cURL from its "Code Snippets" tab (or a
+      screenshot) so `SharpApiClient` can be matched to it exactly.
+- [ ] Act on whichever answer comes back: if the Playground itself 403s
+      on Novig, this is an account/tier limitation to report back (not a
+      code bug) — note it in RESEARCH.md §4.2.1 and tell Tj plainly,
+      since no client-side fix can work around an account-level
+      restriction. If the Playground succeeds, fix `SharpApiClient` to
+      match its real request shape and ship it.
