@@ -89,10 +89,12 @@ class DevigTest {
 
     @Test
     fun `three outcome market devigs correctly with multiplicative and additive`() {
+        // Real vig (raw implied probabilities must sum to more than 1 — a book never offers an
+        // arbitrage against itself); Devig.power in particular assumes this, see its doc comment.
         val threeWay = listOf(
-            Odds.impliedProbability(2.5),
-            Odds.impliedProbability(3.4),
-            Odds.impliedProbability(3.9),
+            Odds.impliedProbability(2.0),
+            Odds.impliedProbability(3.0),
+            Odds.impliedProbability(4.0),
         )
         val multiplicativeFair = Devig.multiplicative(threeWay)
         assertEquals(1.0, multiplicativeFair.sum(), 1e-6)
