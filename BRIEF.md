@@ -106,12 +106,13 @@ should never drift out of sync with each other):
 split above exists: `engine` and `data` compile and run their real test
 suites here (`./gradlew --configure-on-demand :engine:test :data:test` —
 54 tests, all green as of this writing), but the `app` module can only be
-verified by CI (`.github/workflows/ci.yml`, which does have a full Android
-SDK via `android-actions/setup-android`). This matches this project's own
+verified by CI (`.github/workflows/ci.yml`). This matches this project's own
 release model (`CLAUDE.md`'s "Releasing" section) — GitHub Actions builds
 the real thing, not this container — so treat it as the expected shape,
-not a gap to keep re-flagging. Any session working on `app`-module code
-should confirm it via a pushed CI run, not assume compile-correctness from
+not a gap to keep re-flagging. **Confirmed green end-to-end 2026-09-20**
+(run 35493330913: all tests across all three modules pass, `assembleDebug`
+succeeds, a real debug APK was produced). Any session working on
+`app`-module code should confirm it via a pushed CI run, not assume compile-correctness from
 review alone.
 
 ## Build traps
