@@ -614,12 +614,15 @@ say definitively.
 
 ### Progress on this request
 
-- [ ] Bump versionCode 2→3 / versionName 0.2.0→0.2.1 in
+- [x] Bumped versionCode 2→3 / versionName 0.2.0→0.2.1 in
       `app/build.gradle.kts` (BRIEF.md's rule — v0.2.0/code 2 is already
       shipped).
-- [ ] Trigger `release.yml` via `workflow_dispatch`, confirm it goes
-      green, record it in `BUILDLOG.md` via `tools/record-release.sh`.
-- [ ] Send Tj the v0.2.1 Release link as plain tappable text, and remind
+- [x] Triggered `release.yml` via `workflow_dispatch`, confirmed it went
+      green for real
+      (run https://github.com/tjshea90/novig/actions/runs/35538568015 —
+      build, fingerprint verification, tag, and GitHub Release all
+      succeeded), recorded it in `BUILDLOG.md` via
+      `tools/record-release.sh`.
+- [x] Sent Tj the v0.2.1 Release link as plain tappable text, and told
       him the improved error message will now say HTTP 429 vs. HTTP 401
-      if the scan fails again — that's the piece that actually settles
-      root cause.
+      if the scan fails again.
