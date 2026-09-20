@@ -87,6 +87,7 @@ fun OpportunitiesScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SportPicker(availableSports: List<Sport>, selectedSports: Set<Sport>, onToggleSport: (Sport) -> Unit) {
     LazyRow(
