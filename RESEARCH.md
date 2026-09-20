@@ -648,19 +648,30 @@ research-session snapshot.
     the architecture
 
 1. **Can Tj actually get a Novig API client ID/secret, and is it free?**
-   (§4.1) — **narrowed, not resolved, 2026-09-20 (§4.1.1):** strong
-   circumstantial evidence (Novig's own DevRel job posting, its
-   institutional-market-maker-funded business model, a formal gated
-   Market Maker approval program, no public signup form anywhere) that
-   this is a B2B/institutional relationship, not a free individual
-   developer signup. Still not confirmed either way with an actual
-   real answer from Novig — that conversation hasn't happened yet. Next
-   step unchanged: Tj emails Novig directly and asks, but with
-   expectations now calibrated to "probably a sales conversation," not
-   "probably a signup form someone forgot to link."
-2. **Does SharpAPI's free tier's raw-odds set include Pinnacle** (§4.3) —
-   determines whether the reference leg is genuinely $0/mo or needs The
-   Odds API's $30/mo tier.
+   (§4.1) — **now the single most important open item, 2026-09-20 (§4.2.2):**
+   since SharpAPI's free tier turned out not to include Novig at all
+   (confirmed live, not just from docs), and every other researched
+   reseller is either paid-only or sales-gated with no public pricing,
+   this is the *only* remaining lead that could still make the Novig leg
+   free. Narrowed but not resolved as of §4.1.1: strong circumstantial
+   evidence (Novig's own DevRel job posting, its institutional-market-
+   maker-funded business model, a formal gated Market Maker approval
+   program, no public signup form anywhere) that this is a B2B/
+   institutional relationship, not a free individual developer signup.
+   Still not confirmed either way with an actual answer from Novig —
+   that conversation hasn't happened yet (email drafted and sent to Tj
+   to send himself, per TASKS.md's 2026-09-20T19:49:13Z entry). Next
+   step unchanged: wait for Novig's reply, with expectations calibrated
+   to "probably a sales conversation," not "probably a signup form
+   someone forgot to link."
+2. ~~Does SharpAPI's free tier's raw-odds set include Pinnacle~~ —
+   **resolved, 2026-09-20 (§4.2.2):** no. SharpAPI's own Novig product
+   page states the free tier is scoped to **DraftKings and FanDuel
+   only** — not the ~40-book catalog. That answers this for Pinnacle too
+   (it's not DraftKings or FanDuel), so the reference leg's free-tier
+   options are just The Odds API (§4.3, confirmed genuinely free,
+   confirmed to include Pinnacle) — which is exactly what's already
+   wired in as the reference-leg client, so no change needed there.
 3. **Novig's parlay fee structure** (§3) — only "TBD" piece of the fee
    model; low priority since pre-game straight bets (fee-free) are the
    sensible first build target anyway.
