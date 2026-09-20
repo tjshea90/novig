@@ -1,13 +1,13 @@
-# CHECKPOINT 29 — read me first, then TASKS.md
+# CHECKPOINT 96 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T05:39:58Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `abae6f7` (this checkpoint is the commit after it)
+**Written:** 2026-09-20T06:01:40Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `3047deb` (this checkpoint is the commit after it)
 
 ## Just done
-Wrote Tj's 'begin basic coding' request into TASKS.md (raw message already captured in INBOX.md). Confirmed local tooling: JDK 21 and Gradle 8.x present in this container, but no Android SDK/ANDROID_HOME — the Android app module's real compile verification will have to come from GitHub Actions CI, not this container, matching BRIEF.md's own 'not a build that happened inside this container' model. Picked app name 'Vigilant' (real word, hidden 'vig' pun, implies constant real-time watching — matches the real-time requirement) after a quick search turned up no collision with an existing betting-edge app of that name.
+Built the first real app code: 'Vigilant' — a 3-module Gradle project (engine/data plain-Kotlin, app Android+Compose). engine: devig math (multiplicative/additive/power/Shin), consensus (prefer sharp book else average, per Tj's own instruction), Novig fee model (parlay explicitly Unknown, never silently $0), EV calculator — 29 tests, all real and green, caught+fixed a real bug in the power/Shin solvers along the way (required positive margin, a bad test fixture exposed it). data: real OAuth2+REST+WebSocket client for Novig's documented API, real client for The Odds API, sample-data fallbacks, and EvScanner tying it together — 25 more tests, all green, including one proving a live market's positive raw edge goes net-negative once Novig's fee is applied. app: basic Compose UI (OpportunitiesScreen) wired to sample data by default with a visible SAMPLE DATA banner so it's never mistaken for live. Added .github/workflows/ci.yml since this container has no Android SDK and can't verify the app module locally — CI installs one via android-actions/setup-android. Updated BRIEF.md's Toolchain/Platform/Locked-architecture-decisions sections with everything decided (Kotlin+Compose, JDK21/Gradle8.14.3/AGP8.13.2/Kotlin2.3.10, compileSdk36/minSdk30, applicationId com.tjshea.vigilant).
 
 ## Do this next
-Build the app: toolchain decision + BRIEF.md update, Android Gradle scaffold, a plain-Kotlin devig/EV engine module with real unit tests (verifiable in this container), a data layer with sample-data + real-but-inert API client scaffolding for The Odds API and Novig's documented API, a basic Compose UI, and a CI workflow to get real Android-module build verification since this container can't do it locally. End by telling Tj plainly what he needs to do (Odds API signup, contacting Novig for credentials) — do not let that get lost.
+Push this and confirm the CI workflow actually goes green on the app module — this container could not verify Compose/manifest/AGP compile locally, only engine+data's 54 tests. Then tell Tj plainly: the beta runs today on sample data (nothing needed), but going live needs him to (1) sign up for a free The Odds API key and (2) contact Novig directly about official API access — still unconfirmed whether that's free (RESEARCH.md §10).
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Build the app: toolchain decision + BRIEF.md update, Android Gradle scaffold, a 
 
 ## Last ten checkpoints
 ```
+  3edb9b3 ckpt 29: Wrote Tj's 'begin basic coding' request into TASKS.md (raw message already capt
   c361581 ckpt 26: Deep-dived Odds Assist Pro against Novig, hands-on (not just secondhand): loade
   4ce2d00 ckpt 21: Wrote Tj's Odds Assist Pro deep-dive request into TASKS.md (raw message already
   5787e5b ckpt 18: Deep research on positive-EV betting for Novig, written to RESEARCH.md (new per
@@ -23,5 +24,5 @@ Build the app: toolchain decision + BRIEF.md update, Android Gradle scaffold, a 
   e870ad3 ckpt 12: Stood up the full checkpoint/handoff system for novig, adapted from fantasy-foo
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(66 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
