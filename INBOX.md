@@ -492,3 +492,12 @@ Begin making the app functional, start by using SharpAPI free tier and the odds 
 <event>status= conclusion=</event>
 </task-notification>
 ```
+
+## 2026-09-20T20:32:10Z
+```
+<task-notification>
+<task-id>bx0ci1klb</task-id>
+<summary>Monitor event: "Poll CI run status for feature branch until completion"</summary>
+<event>status= conclusion=</event>
+</task-notification>
+```
