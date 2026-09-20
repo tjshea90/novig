@@ -100,7 +100,7 @@ class KeyRotatorTest {
         var now = 0L
         val rotator = KeyRotator(listOf("key-a"), clock = { now })
 
-        assertAllExhausted(rotator, "test") { KeyAttemptResult.Invalid }
+        assertAllExhausted(rotator, "test") { KeyAttemptResult.Invalid() }
 
         now += 10_000_000 // a very long time later
         assertAllExhausted(rotator, "test") { KeyAttemptResult.Success("should never happen") }
