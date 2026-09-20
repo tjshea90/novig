@@ -402,14 +402,22 @@ Tj found the real, concrete process (from Novig's own support widget,
 apparently) that this session's web search never surfaced — a real
 correction/addition to §4.1.1, not just an email-drafting task.
 
-- [ ] Update RESEARCH.md §4.1.1 with this concrete finding: the actual
+- [x] Updated RESEARCH.md §4.1.1 with this concrete finding: the actual
       documented process is emailing developers@novig.com with 4 specific
       pieces of info — this resolves "what's the process" even though
       pricing/approval-likelihood is still unknown until they reply.
-- [ ] Draft the actual email, covering all 4 requested items honestly:
-      who Tj is (individual, personal project — not overselling as a
-      company), what Vigilant is, what data/functionality (read access to
-      live market data — REST + WebSocket order book — for the sports
-      Novig offers), and expected scale (single personal account, low
-      volume, well under documented rate limits).
-- [ ] Checkpoint.
+- [x] Drafted the actual email, covering all 4 requested items honestly:
+      individual/personal project (not overselling as a company), what
+      Vigilant is, read-only access to live market data (REST + WebSocket
+      `tape` feed) as the actual current need (no order-placement access
+      requested — the app doesn't auto-trade), and personal-scale usage
+      (single account, one connection, well under documented rate
+      limits). Sent to Tj as a file (not committed to the repo — a one-off
+      communication, not project documentation) with placeholders for his
+      name/account email since this session doesn't have those.
+- [x] Checkpoint.
+
+**Next real step, not something to act on now:** waiting on Tj to send it
+and on Novig's reply. Once that lands, update RESEARCH.md §4.1.1 with the
+actual answer (free/paid/approved/conditions) — that's what finally
+resolves this open item for good.
