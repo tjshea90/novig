@@ -258,12 +258,28 @@ re-diagnose these from scratch:
   and render a visible banner naming exactly which leg(s) are sample when
   either is false. Keep both flags wired correctly as real providers get
   plugged in or swapped.
-- **SharpAPI supplies the Novig leg, The Odds API supplies the reference
-  leg — wired 2026-09-20, each provider used only for the one leg it can
-  actually serve.** SharpAPI's free tier uniquely includes Novig among its
-  ~40 books (RESEARCH.md §4.2); The Odds API supplies Pinnacle/consensus
-  for the reference side (RESEARCH.md §4.3). `SharpApiClient implements
-  NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
+- **SharpAPI is wired to supply the Novig leg, The Odds API supplies the
+  reference leg — wired 2026-09-20, each provider used only for the one
+  leg it can actually serve.** **Correction, 2026-09-20 (later the same
+  day):** the original reasoning here — "SharpAPI's free tier uniquely
+  includes Novig among its ~40 books" — was wrong, and the wiring was
+  built on that wrong premise. Tested for real against Tj's own account:
+  SharpAPI's `sportsbook=novig` request returns **HTTP 403** on the free
+  tier, both from `SharpApiClient` and independently from SharpAPI's own
+  Playground. Their own product page confirms why: **"Available on Hobby
+  plan and above"** ($79/mo) — the free tier is scoped to DraftKings and
+  FanDuel only, not the ~40-book catalog the general marketing copy
+  implied. See RESEARCH.md §4.2/§4.2.2 for the full corrected picture and
+  what was researched as alternatives (none found free). `SharpApiClient`
+  itself is still correct code — real endpoint, real auth, real parsing —
+  it just has no working key for the Novig leg until Tj either upgrades
+  to SharpAPI's Hobby plan, Novig's own API (§4.1) turns out to be free
+  for individual use, or a different paid provider is chosen. The Novig
+  leg falls back to sample data in the meantime, and the app is explicit
+  about that (per the per-leg sample-data banner rule below). The Odds
+  API supplies Pinnacle/consensus for the reference side (RESEARCH.md
+  §4.3) and is unaffected by this — that leg is live.
+  `SharpApiClient implements NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
   — both live in `data`, both real (`MockWebServer`-tested against each
   provider's actual documented response shape, not guessed), both fall
   back independently to `SampleNovigRepository`/`SampleReferenceOddsRepository`
