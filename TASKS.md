@@ -312,7 +312,19 @@ Play Store.
       (anyone can forge an "update" signed with this same public key) that
       was fine to make with nothing sensitive in the app yet, and is worth
       revisiting the day the app holds real Novig API credentials.
-- [ ] Trigger the release workflow for real (nothing blocking it now),
-      confirm green, send Tj the Release page link as plain tappable text
-      on its own line — never inside a code block (the exact mistake
-      CLAUDE.md flags as already made once on fantasy-football).
+- [x] Tried to trigger the release workflow — hit a real, previously-
+      unknown blocker: `release.yml` 404'd because this repo's actual
+      GitHub default branch was never `main`, it was still
+      `claude/novig-checkpoint-tests-qqgnnb` from repo creation (GitHub
+      only registers `workflow_dispatch` workflows from the true default
+      branch). Tried to fix it myself via the API — the auto-mode
+      permission classifier blocked it outright as a repo-admin action.
+      Recorded as a 4th build trap in BRIEF.md, asked Tj to flip the
+      setting himself.
+- [x] Tj switched the default branch to `main` (2026-09-20T16:07:32Z).
+      Confirmed via the API, confirmed `release.yml` is now registered,
+      triggered the real release build.
+- [ ] Confirm the release run goes green, send Tj the Release page link as
+      plain tappable text on its own line — never inside a code block
+      (the exact mistake CLAUDE.md flags as already made once on
+      fantasy-football).
