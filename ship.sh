@@ -1,36 +1,30 @@
 #!/usr/bin/env bash
-# ship.sh — cut a release. Once there is an app, GITHUB BUILDS AND SIGNS IT;
-# this prepares and triggers that. See CLAUDE.md's "Releasing" section for
-# the full plan, ported from Portfolio's ship.sh/android.yml.
+# ship.sh — cut a release. GITHUB BUILDS AND SIGNS THE APK (release.yml);
+# this gates, bumps nothing itself, and pushes. See CLAUDE.md's "Releasing"
+# section for the full plan, ported from Portfolio's ship.sh/android.yml.
 #
 #   bash ship.sh "what changed this release"
 #
-# WHY THIS DOES SO LITTLE RIGHT NOW
+# WHAT THIS DOES NOT DO, ON PURPOSE
 # ------------------------------------
-# There is no Android project scaffold yet — no app/build.gradle.kts, no
-# signing keystore, no .github/workflows/*.yml for this repo. A ship.sh that
-# pretended to gate a build against files that don't exist would either
-# silently no-op (looks like success, isn't) or crash confusingly. Neither
-# is acceptable for the one command CLAUDE.md calls "the milestone gate", so
-# this refuses honestly and says exactly what to build first, the same way
-# every other gate below refuses honestly when a real condition fails.
+# This dev container has no Android SDK (BRIEF.md's Toolchain section) — so
+# unlike Portfolio's ship.sh, this cannot run the Android `app` module's own
+# tests/build locally as part of the gate. It runs the full suite of what
+# CAN be verified here (`engine`+`data`, plain-Kotlin, real unit tests), and
+# leans on `.github/workflows/ci.yml` — which DOES have a real SDK — having
+# already been confirmed green on the commit being shipped. This script does
+# not itself trigger or check that CI run; whoever runs `ship.sh` is
+# responsible for having confirmed it first (a Claude session doing so
+# checks via the GitHub MCP tools before calling this).
 #
-# THE REAL GATE TO WRITE, THE DAY THERE IS SOMETHING TO SHIP (mirror
-# Portfolio's ship.sh, which this account has already proven works):
-#   1. Run the fast checks (same discovery ckpt.sh uses).
-#   2. Run the FULL test suite (whatever the toolchain's real suite is —
-#      Gradle's testDebugUnitTest, or equivalent), not just the fast ones.
-#   3. Read versionCode/versionName from the real build file, and refuse
-#      unless versionCode is strictly higher than every code already in
-#      BUILDLOG.md (this file exists, empty, ready for the first entry —
-#      tools/record-release.sh already writes that entry once a run is
-#      green; see its own header for why it takes versionCode explicitly).
-#   4. Push (never a tag — confirmed elsewhere in this account that a Claude
-#      container gets HTTP 403 on refs/tags/* pushes; GitHub creates the tag
-#      itself from inside the Actions run instead).
-#   5. Write the "trigger the build, then record it" next step into
-#      CHECKPOINT.md via tools/ckpt.sh BEFORE ending, so an interruption
-#      between the push and the GitHub API call isn't a lost instruction.
+# This also does not trigger the release workflow or write BUILDLOG.md —
+# per tools/record-release.sh's own header, that only happens after a real
+# GitHub Actions run is confirmed green, which needs the MCP GitHub tools
+# this plain bash script doesn't have. ship.sh's job ends at "gated, bumped
+# nothing itself, pushed" — the calling session triggers
+# `.github/workflows/release.yml` (mcp__github__actions_run_trigger),
+# confirms green (mcp__github__get_release_by_tag), then runs
+# tools/record-release.sh.
 set -uo pipefail
 D="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; cd "$D" || exit 1
 
