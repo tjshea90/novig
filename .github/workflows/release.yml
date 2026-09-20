@@ -1,0 +1,114 @@
+name: Release
+
+# Builds a SIGNED release APK and publishes it as a GitHub Release — the actual deliverable
+# CLAUDE.md's "Releasing" section describes (as opposed to ci.yml's unsigned debug build, which
+# only exists to verify the app compiles). Manual trigger only: a release is a deliberate act,
+# never a side effect of a routine push.
+#
+# Requires four repository secrets (BRIEF.md records the keystore's fingerprint, never the
+# password — see its "The rule that will apply the moment a keystore exists" section for how
+# these were generated and why Claude could not add them itself):
+#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Accept Android SDK licenses
+        # Same approach as ci.yml — see that file's comment for why (android-actions/setup-android
+        # is broken; the SDK GitHub-hosted runners already ship is used directly instead).
+        run: |
+          mkdir -p "$ANDROID_HOME/licenses"
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license"
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Read version from app/build.gradle.kts
+        id: version
+        run: |
+          VERSION_NAME=$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | head -1 | sed -E 's/versionName = "([^"]+)"/\1/')
+          VERSION_CODE=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | head -1 | sed -E 's/versionCode = ([0-9]+)/\1/')
+          if [ -z "$VERSION_NAME" ] || [ -z "$VERSION_CODE" ]; then
+            echo "::error::Could not read versionName/versionCode from app/build.gradle.kts"
+            exit 1
+          fi
+          echo "name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse to overwrite an existing tag/release
+        run: |
+          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "::error::Tag ${{ steps.version.outputs.tag }} already exists — bump versionName/versionCode in app/build.gradle.kts before releasing again."
+            exit 1
+          fi
+
+      - name: Decode signing keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release-signing.jks
+
+      - name: Build signed release APK
+        env:
+          VIGILANT_KEYSTORE_PATH: release-signing.jks
+          VIGILANT_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          VIGILANT_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          VIGILANT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --console=plain
+
+      - name: Verify the signing certificate matches BRIEF.md's recorded fingerprint
+        run: |
+          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then
+            echo "::error::No release APK found after assembleRelease"
+            exit 1
+          fi
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs "$APK" | tee signing-info.txt
+          EXPECTED="05:DB:E7:B7:EB:E7:31:51:A7:EE:90:54:AF:E5:CC:B9:11:47:42:8C:F6:F8:AA:2F:AF:0D:1D:89:E0:8E:74:77"
+          if ! grep -qi "$EXPECTED" signing-info.txt; then
+            echo "::error::Signing certificate does not match the fingerprint recorded in BRIEF.md — wrong keystore, or it was silently swapped. Refusing to publish."
+            exit 1
+          fi
+          echo "Signing certificate verified against BRIEF.md's recorded fingerprint."
+          mkdir -p release-out
+          cp "$APK" "release-out/vigilant-${{ steps.version.outputs.tag }}.apk"
+
+      - name: Remove keystore file
+        if: always()
+        run: rm -f app/release-signing.jks
+
+      - name: Create the release tag (server-side — this account's containers get HTTP 403 pushing refs/tags/*)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Vigilant ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "Vigilant ${{ steps.version.outputs.tag }}"
+          files: release-out/*.apk
+          body: |
+            Signed release build of Vigilant (versionCode ${{ steps.version.outputs.code }}).
+
+            Signing certificate SHA-256:
+            `05:DB:E7:B7:EB:E7:31:51:A7:EE:90:54:AF:E5:CC:B9:11:47:42:8C:F6:F8:AA:2F:AF:0D:1D:89:E0:8E:74:77`
+
+            This build ships wired to sample data by default — see the in-app banner and BRIEF.md for what's needed to go live.
