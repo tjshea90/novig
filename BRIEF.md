@@ -21,28 +21,32 @@ that used to say TBD are now filled in with the decisions made building it
 
 ## What is actually decided
 
-- **Platform:** native Android, targeting API 36 (Android 16). Whether the
-  UI layer ends up Kotlin+Compose (Portfolio's approach), a WebView + thin
-  native shell (fantasy-football's approach), or something else is **TBD** —
-  make that call deliberately, in `TASKS.md`, before writing UI code, not by
-  drifting into one because it's what got typed first.
+- **Platform:** native Android, targeting API 36 (Android 16), **Kotlin +
+  Jetpack Compose** (Portfolio's approach, not fantasy-football's WebView
+  shell) — decided 2026-09-20: a live-updating, WebSocket-driven scanner
+  UI (RESEARCH.md §7) fits native Compose's state model and Android
+  background-service story much better than a WebView bridge would.
 - **Target hardware:** a Moto G 2026. Nothing about that device's specific
   chipset, RAM, or display has been researched yet as of this writing — "one
   cheap-tier phone" should probably be a real constraint on wake locks,
   polling frequency, and background work (the same battery discipline
   Portfolio's `CLAUDE.md` "full tests" protocol checks for), but the
   specifics need research before they're rules.
-- **Purpose:** interact with the Novig sportsbook with the goal of
-  profiting. What that means concretely — arbitrage detection, line
-  shopping, automated bet placement, position tracking, something else
-  entirely — is **TBD**. Do not assume a strategy that hasn't been
-  described; ask, or write the request into `TASKS.md` in Tj's own words the
-  way `CLAUDE.md` describes, rather than guessing and building the wrong
-  thing.
+- **Purpose:** find positive-EV opportunities on Novig — devig a reference
+  line (a sharp book like Pinnacle/Circa if fetched, else average whatever
+  major books were fetched — Tj's own instruction, 2026-09-20) and compare
+  it to Novig's live price, as close to real time as the data sources
+  allow. Not yet decided: automated bet placement (the engine computes EV,
+  nothing places a trade yet), position tracking, or anything beyond
+  finding and surfacing the edge — those remain open, ask before assuming.
 - **Distribution:** sideloaded signed release APK, built and signed by
   GitHub Actions (not this container), matching Portfolio's model — see
   `CLAUDE.md`'s "Releasing" section. Claude triggers the build via the
   GitHub API and confirms it went green; Tj gets a link, not a raw file.
+  **Not wired up yet** — `.github/workflows/ci.yml` currently only builds a
+  debug APK and runs tests (no signing); see "Toolchain" below for why, and
+  "Releasing" in `CLAUDE.md` for the ordered steps still ahead (keystore,
+  a real release workflow, `ship.sh`'s real gate).
 
 ## The rule that will apply the moment a keystore exists
 
