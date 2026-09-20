@@ -1,13 +1,13 @@
-# CHECKPOINT 298 — read me first, then TASKS.md
+# CHECKPOINT 308 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T21:42:29Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `c0e2953` (this checkpoint is the commit after it)
+**Written:** 2026-09-20T21:50:17Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `8a85470` (this checkpoint is the commit after it)
 
 ## Just done
-v0.2.1's diagnostic fix worked: Tj's retry now shows 'Last failure: invalid (HTTP 403)' instead of the old generic message — this settles that it's NOT the 12 req/min rate limit (that would be 429). It's a 403, meaning the key authenticates but SharpAPI is rejecting this specific request. Logged two live hypotheses in TASKS.md: (a) the free tier's book coverage may not actually extend to Novig despite being listed (RESEARCH.md §4.2.1 already flagged this as unconfirmed), or (b) SharpApiClient is missing a parameter the Playground sends automatically (sport/league, visible in its UI but not in our request).
+Researched and confirmed: there is no $0/mo path to real Novig odds data from any provider right now. SharpAPI's free tier was wrongly recorded as including Novig (a marketing-copy misread, not verified) — its own Novig product page says 'Available on Hobby plan and above' ($79/mo), and the free tier is actually scoped to DraftKings+FanDuel only, which also resolves the old open question about Pinnacle (it's not in the free tier either, same reason). Re-verified The Odds API directly: confirmed no Novig anywhere in their docs, direct answer to Tj's question. Checked OpticOdds/Betstamp/MetaBet/odds-api.io fresh: none has a standing free tier that includes Novig (sales-gated trials, undisclosed pricing, or free tier scoped to different books). Corrected RESEARCH.md (§1, §4.2, new §4.2.2, §10) and BRIEF.md's architecture-decision entry that had recorded the wrong premise as settled.
 
 ## Do this next
-Ask Tj to test the SharpAPI Playground with Sportsbook explicitly set to Novig (his screenshots were on DraftKings) and report whether it also 403s — that single test tells us whether this is an account/tier limitation or a fixable request-shape bug, before guessing further.
+Tell Tj plainly: no free Novig source exists among researched providers; Novig's own API (still awaiting their reply) is the only remaining lead that could be free, everything else found clears $30/mo. Nothing further queued unless he asks for something new or Novig replies.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Ask Tj to test the SharpAPI Playground with Sportsbook explicitly set to Novig (
 
 ## Last ten checkpoints
 ```
+  32c58c9 ckpt 298: v0.2.1's diagnostic fix worked: Tj's retry now shows 'Last failure: invalid (H
   8fe4bd2 ckpt 296: v0.2.1 shipped: contains the two fixes from the 'Scan failed' bug report (auto
   07d9c22 ckpt 288: Logged Tj's 'ship v0.2.1 now' request in TASKS.md, bumped versionCode 2->3 / v
   e074e62 ckpt 284: Confirmed CI green for real on the Scan-failed diagnosis/fix push (run 3553801
@@ -25,8 +26,7 @@ Ask Tj to test the SharpAPI Playground with Sportsbook explicitly set to Novig (
   d4ea339 ckpt 249: Fixed a real CI failure caught on the first push of the sport picker (run 3553
   2c1f31c ckpt 241: Built the sport-selection picker per Tj's explicit instruction: no odds load f
   92edb91 ckpt 229: Wrote Tj's new sport-picker request into TASKS.md before writing any code, per
-  1fe3119 ckpt 226: Confirmed CI green for the app module (run 35535815614, conclusion=success) �
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(9 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
