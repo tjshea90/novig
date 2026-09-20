@@ -242,3 +242,8 @@ Where is the apk
 ```
 On the other repos GitHub can make the apk without secret. It doesn't need to be secure
 ```
+
+## 2026-09-20T16:07:32Z
+```
+I switched it to main
+```
