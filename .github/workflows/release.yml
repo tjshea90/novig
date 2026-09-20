@@ -70,8 +70,13 @@ jobs:
           fi
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
           "$APKSIGNER" verify --print-certs "$APK" | tee signing-info.txt
+          # apksigner prints the digest as continuous lowercase hex, no colons — unlike keytool's
+          # colon-separated uppercase (which is what BRIEF.md records, matching Android tooling
+          # convention there). Normalize both sides before comparing rather than assume a format.
           EXPECTED="AB:22:07:A8:6C:4E:59:18:BB:C1:A2:20:04:FB:14:42:B2:86:6E:6E:5A:B0:C3:D3:27:A7:EE:0E:AA:98:5C:C1"
-          if ! grep -qi "$EXPECTED" signing-info.txt; then
+          EXPECTED_NORMALIZED=$(echo "$EXPECTED" | tr -d ':' | tr 'A-Z' 'a-z')
+          ACTUAL_NORMALIZED=$(grep -oE '[0-9a-fA-F]{64}' signing-info.txt | tr 'A-Z' 'a-z' | head -1)
+          if [ "$ACTUAL_NORMALIZED" != "$EXPECTED_NORMALIZED" ]; then
             echo "::error::Signing certificate does not match the fingerprint recorded in BRIEF.md — the committed keystore was changed unexpectedly. Refusing to publish."
             exit 1
           fi
