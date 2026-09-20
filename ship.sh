@@ -66,7 +66,7 @@ fi
 
 # ---- full suite of what this container can actually verify --------------------
 if [ ! -f app/build.gradle.kts ]; then
-  echo "  FAIL  no app/build.gradle.kts — nothing to ship."
+  echo "  FAIL  no app/build.gradle.kts — nothing to build or release."
   exit 1
 fi
 
