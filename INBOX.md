@@ -715,3 +715,12 @@ Ship v0.2.1 now. I tried again same error
 <event>run 35538568015: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-20T21:24:59Z
+```
+<task-notification>
+<task-id>be0j6xeqc</task-id>
+<summary>Monitor event: "Poll v0.2.1 release workflow run until completion"</summary>
+<event>run 35538568015: in_progress None</event>
+</task-notification>
+```
