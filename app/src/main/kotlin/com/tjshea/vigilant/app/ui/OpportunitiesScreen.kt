@@ -74,7 +74,7 @@ fun OpportunitiesScreen(
             PullToRefreshBox(
                 isRefreshing = uiState is ScanUiState.Loading,
                 onRefresh = onRescan,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
             ) {
                 when (uiState) {
                     is ScanUiState.Idle -> IdleState(selectedSports.isEmpty())
