@@ -1,0 +1,7 @@
+<resources>
+    <!-- Compose owns the real theme (see ui/Theme.kt) — this is just the platform window theme
+         so the launching Activity doesn't briefly show a default title bar before Compose draws. -->
+    <style name="Theme.Vigilant" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/launcher_background</item>
+    </style>
+</resources>
