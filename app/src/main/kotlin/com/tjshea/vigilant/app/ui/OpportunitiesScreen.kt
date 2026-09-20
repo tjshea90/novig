@@ -121,6 +121,25 @@ private fun SampleDataBanner(novigIsLive: Boolean, referenceIsLive: Boolean) {
 }
 
 @Composable
+private fun IdleState(noSportSelected: Boolean) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            if (noSportSelected) {
+                "Select at least one sport above, then press ↻ or pull down to refresh."
+            } else {
+                "Press ↻ or pull down to refresh to scan for opportunities."
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun LoadingState() {
     Column(
         modifier = Modifier.fillMaxSize(),
