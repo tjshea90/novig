@@ -247,3 +247,12 @@ On the other repos GitHub can make the apk without secret. It doesn't need to be
 ```
 I switched it to main
 ```
+
+## 2026-09-20T16:08:04Z
+```
+<task-notification>
+<task-id>bfjb0vi7p</task-id>
+<summary>Monitor event: "Poll GitHub Actions Release workflow run until it completes"</summary>
+<event>found run_id=35521738707</event>
+</task-notification>
+```
