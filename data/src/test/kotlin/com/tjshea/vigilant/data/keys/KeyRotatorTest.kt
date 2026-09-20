@@ -124,7 +124,7 @@ class KeyRotatorTest {
     @Test
     fun `snapshot reports current status of every key`() = runTest {
         val rotator = KeyRotator(listOf("key-a", "key-b"))
-        rotator.execute<String>("test") { key -> if (key == "key-a") KeyAttemptResult.Invalid else KeyAttemptResult.Success("ok") }
+        rotator.execute<String>("test") { key -> if (key == "key-a") KeyAttemptResult.Invalid() else KeyAttemptResult.Success("ok") }
 
         val snapshot = rotator.snapshot()
         assertEquals(2, snapshot.size)
