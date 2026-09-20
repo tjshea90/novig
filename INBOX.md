@@ -738,3 +738,8 @@ Ship v0.2.1 now. I tried again same error
 ```
 Novig showed 403 too. It says I may not have access. Research if other apis have novig for free. Does the odds api have it? 
 ```
+
+## 2026-09-20T21:50:31Z
+```
+Also is there anything else useful that sharpapi has that I should keep in the app
+```
