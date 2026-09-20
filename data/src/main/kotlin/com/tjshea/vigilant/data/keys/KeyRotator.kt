@@ -49,10 +49,7 @@ class KeyRotator(
     private val mutex = Mutex()
     private val states = keys.map { ApiKeyState(it, KeyStatus.Available) }.toMutableList()
 
-    suspend fun execute(providerName: String, action: suspend (key: String) -> KeyAttemptResult<Unit>): Unit =
-        executeAndReturn(providerName) { key -> action(key) }
-
-    suspend fun <T> executeAndReturn(providerName: String, action: suspend (key: String) -> KeyAttemptResult<T>): T {
+    suspend fun <T> execute(providerName: String, action: suspend (key: String) -> KeyAttemptResult<T>): T {
         val triedKeys = mutableSetOf<String>()
         while (true) {
             val key = mutex.withLock {
