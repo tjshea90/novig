@@ -498,30 +498,39 @@ own instruction to use both together.
 
 ### Progress on this request
 
-- [ ] `data` module: `Sport`/`SportsCatalog` (curated list of The Odds
+- [x] `data` module: `Sport`/`SportsCatalog` (curated list of The Odds
       API sport keys, pure Kotlin so it's shared by `EvScanner` and the
       UI picker without an Android dependency).
-- [ ] `EvScanner` takes a `List<String>` of sport keys instead of one —
+- [x] `EvScanner` takes a `List<String>` of sport keys instead of one —
       scans reference odds for every selected sport, merges the results,
       matches against Novig's board same as before. Returns immediately
-      (no repository calls at all) when the list is empty. Update
-      `EvScannerTest` for the new constructor shape.
-- [ ] `ScannerViewModel`: replace the `init { rescan() }` auto-scan with
-      an explicit `Idle` state — nothing loads on app open. Add
+      (no repository calls at all) when the list is empty — proven by a
+      new `EvScannerTest` using call-tracking fake repositories. Updated
+      the rest of `EvScannerTest` for the new constructor shape.
+- [x] `ScannerViewModel`: replaced the `init { rescan() }` auto-scan with
+      an explicit `Idle` state — nothing loads on app open. Added
       multi-select sport state (`toggleSport`); `rescan()` only performs
       a scan when at least one sport is selected, and is the single path
       both the refresh button and the pull-to-refresh gesture call.
-- [ ] `OpportunitiesScreen`: a sport picker (multi-select chips) above the
-      opportunity list, wrap the content in Compose Material3's
-      `PullToRefreshBox` for the swipe-down gesture (in addition to the
-      existing FAB refresh button — both should trigger the same
-      `rescan()`), and a clear "select a sport, then refresh" idle state
-      instead of showing anything before the user acts.
-- [ ] Verify what this container can (`:engine:test :data:test`), push,
-      confirm CI green for the `app` module — the Compose
-      Material3-pull-to-refresh usage is new API surface this container
-      can't compile-check locally.
-- [ ] Checkpoint, then trigger the release GitHub Actions workflow
-      (`workflow_dispatch`) via the API, confirm it goes green, and send
-      Tj the new Release link (plain tappable text, not a code block —
-      CLAUDE.md's standing rule).
+      Also removed the one-request-old auto-rescan-on-return-from-Settings
+      behavior, since it would silently violate this same "nothing loads
+      without an explicit refresh" rule whenever a sport was already
+      selected.
+- [x] `OpportunitiesScreen`: a sport picker (`FilterChip` row, multi-
+      select) above the opportunity list, content wrapped in Compose
+      Material3's `PullToRefreshBox` for the swipe-down gesture (verified
+      its real signature against docs before using it — matches what was
+      written), alongside the existing FAB refresh button — both call the
+      same `rescan()` — and a new `Idle` state with sport-aware hint text
+      ("select a sport" vs. "press refresh") instead of showing anything
+      before the user acts.
+- [x] Verified what this container can
+      (`./gradlew --configure-on-demand :engine:test :data:test`, green),
+      pushed, confirmed CI green for the `app` module (the new Compose
+      Material3 pull-to-refresh/FilterChip API surface this container
+      can't compile-check locally) — run linked in the checkpoint this
+      completed under.
+- [ ] Trigger the release GitHub Actions workflow (`workflow_dispatch`)
+      via the API, confirm it goes green, and send Tj the new Release
+      link (plain tappable text, not a code block — CLAUDE.md's standing
+      rule).
