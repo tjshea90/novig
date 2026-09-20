@@ -249,6 +249,41 @@ real money to obtain, the fallback is SharpAPI's free 60s-delayed tier —
 "real-time" in the request would then mean "as real-time as free gets,"
 worth flagging to Tj rather than silently downgrading the target.
 
+### 4.2.1 Verified real endpoint shapes (2026-09-20, confirmed via
+docs.sharpapi.io directly before writing any client code against them —
+not guessed, per the lesson from an earlier session's CI failure)
+
+- **SharpAPI odds endpoint:** `GET https://api.sharpapi.io/api/v1/odds`,
+  query param `sportsbook=novig` to scope to Novig, auth via `X-API-Key`
+  header (not a bearer token). Response is a flat JSON array of
+  per-selection rows (`{data: [...]}`), not pre-grouped into markets —
+  each row carries `sportsbook`, `home_team`, `away_team`, `market_type`,
+  `selection`, `odds_decimal` (and sometimes `odds_american`/
+  `odds_probability`), `is_live`. `SharpApiClient` groups rows by
+  (sportsbook, home_team, away_team, market_type, is_live) into 2-outcome
+  markets itself, skipping any group that isn't exactly 2 rows (Novig
+  markets are always exactly 2-sided — a group of any other size is a
+  parsing mismatch, not a market to render). Rate limiting: **HTTP 429**
+  with `Retry-After` (seconds) and/or `X-RateLimit-Reset` (epoch seconds)
+  headers when present; **401/403** for an invalid or missing key. Free
+  tier is 12 req/min, ~40 books including Novig (confirmed — this is the
+  reason SharpAPI was picked for the Novig leg specifically, see §4.2).
+- **The Odds API:** confirmed the documented `x-requests-remaining`/
+  `x-requests-used`/`x-requests-last` response headers are present on
+  every successful call (already-established v4 REST format, higher
+  confidence than SharpAPI's going in). **401** on an invalid/exhausted
+  key, **429** on true rate limiting (distinct from quota exhaustion) —
+  `TheOddsApiClient` maps 401→treat the key as exhausted (never
+  auto-recovers) and 429→cooldown (auto-recovers after `Retry-After` or a
+  60s default), matching `KeyRotator`'s general rate-limited-vs-invalid
+  distinction (BRIEF.md's "Locked architecture decisions").
+- Whether Pinnacle specifically is included in SharpAPI's **free** raw-odds
+  set (as opposed to just its paid fair-odds field) is still the one thing
+  from §4.3 below that was **not** resolved by this pass — this research
+  only confirmed the odds-endpoint shape and auth/rate-limit behavior
+  needed to build `SharpApiClient`, not every book included in the free
+  response payload.
+
 ### 4.3 Reference-odds leg (fair-probability comparison, not Novig itself)
 
 Doesn't need to be sub-second — line consensus moves far slower than an
