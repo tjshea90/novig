@@ -204,7 +204,16 @@ re-diagnose these from scratch:
   `default_branch` on the repo via the API before assuming a
   `workflow_dispatch` 404 is a workflow-syntax problem, which is what it
   looked like at first here.
-  this isn't already known.
+- **`apksigner verify --print-certs`'s SHA-256 digest output has no colons
+  and is lowercase** (`ab2207a8...`) — unlike `keytool -list -v`'s
+  colon-separated uppercase (`AB:22:07:A8:...`, what BRIEF.md's own
+  fingerprint above is written as, matching `keytool`'s convention). A
+  literal string comparison between the two formats fails even when the
+  certificate is exactly right — hit for real on the first release run
+  (2026-09-20), and cost nothing except confusion since the build itself
+  had already succeeded. `release.yml`'s verify step now strips colons and
+  lowercases both sides before comparing — don't go back to a literal
+  string match.
 
 ## Locked architecture decisions
 
