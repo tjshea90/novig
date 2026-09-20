@@ -59,3 +59,8 @@ Research methods this app can use to find positive ev for novig sports book odds
 ```
 Research odds assist pro. Does it actually find positive EV on novig? Is it as good as oddsjam?
 ```
+
+## 2026-09-20T05:37:41Z
+```
+Begin basic coding of this app. Give it a catchy name, not something boring like "novig ev". Make a basic beta of the app, which should be able to act like oddsjam by devigging odds and using sharp books like Pinnacle or circa if possible or an average of major sports books. It should be able to pull this data real time or as frequent as possible to catch actual positive EV and not stale odds. Let me know if I need to do anything
+```
