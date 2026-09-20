@@ -338,5 +338,32 @@ Play Store.
 - [x] Sent Tj the Release page link as plain tappable text, not in a code
       block.
 
+## Tj's request, 2026-09-20T19:45:42Z (his own words — full text in INBOX.md)
+
+> Research online about the novig trading API see if it is free and how to
+> use it
+
+### Progress on this request
+
+RESEARCH.md §4.1/§10 item 1 already flagged this as the single biggest
+open unknown — the docs.novig.com pages read last session only said
+"request your client ID and secret from Novig," with no pricing/process
+info. This is a real second pass at answering it, not a restatement.
+
+- [ ] Deep-dive: is there any public pricing/access-tier info for Novig's
+      NBX API (docs.novig.com) anywhere online — pricing pages, developer
+      forum posts, X/Twitter threads from people who've actually gotten
+      access, Novig's own help center, terms of service, or job/partner
+      postings that describe the process?
+- [ ] Find how actual traders/bots talk about getting access — Reddit,
+      Discord mentions, blog posts from anyone who's built against it.
+- [ ] Answer concretely: is it free, paid, tiered, invite-only,
+      contact-sales-only? What's the actual application process (a form,
+      an email, a minimum account balance/volume)?
+- [ ] Update RESEARCH.md §4.1 and §10 with whatever is actually found,
+      cited — including if the honest answer is "still not publicly
+      documented, here's the best next step."
+- [ ] Checkpoint.
+
 **This request is done.** Vigilant v0.1.0 is a real, installable, signed
 APK Tj can download and sideload today.
