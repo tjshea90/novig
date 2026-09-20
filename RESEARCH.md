@@ -322,20 +322,122 @@ an existing free tool covering Novig:
 | Tool | Novig coverage | Price | Notes |
 |---|---|---|---|
 | **OddsJam** | Yes (per its own site) | Gold $199.99/mo (EV+arb+middles); Trends $19.99/mo; Platinum ~$400–500/mo | The incumbent being replaced. Lets users pick devig method + source-of-truth book. |
-| **Odds Assist Pro** | **Yes, explicitly** — Novig odds feed into its EV calc | **Free** | 30s refresh, scans major US books + prediction markets including Novig, shows no-vig odds + ROI%, deep-links to bet slip. Worth a hands-on trial before building from scratch — this may already satisfy a chunk of the "free +EV on Novig" ask today, even if Tj still wants his own app long-term. |
+| **Odds Assist Pro** | **Yes, confirmed hands-on — see §8.1** | **Free** (no card; a free account unlocks more rows) | 30s refresh (claimed, unverified), undisclosed devig method. Real, live, currently-active Novig edges confirmed by direct testing 2026-09-20 — see §8.1 for the verdict on whether it's "as good as OddsJam." |
 | **Sharp Lines** | Free tier: DraftKings + FanDuel only, **no Novig** | Free (limited) / paid unclear | Free tier capped at 2% EV, 60s delay — not a Novig source. |
 | **AVO** | 70+ books claimed, Novig unconfirmed | Free "Explorer" tier (up to 2% edges) + paid | Worth checking directly for explicit Novig support. |
 | **RebelBetting** | Unconfirmed | $99+/mo | Not price-competitive with the $30/mo ceiling; deprioritize. |
 
-**Action item:** before writing any app code, actually try Odds Assist
-Pro's free tool against Novig for a few days — if it already does most of
-what Tj needs for $0, the app's differentiator needs to be something Odds
-Assist doesn't do (e.g. Novig-only focus with deeper order-book insight
-that a generic multi-book tool wouldn't bother with, automated
-bet-sizing/Kelly, a UI built for Tj's specific workflow, or trading
-automation via Novig's REST order endpoints that a read-only scanner
-wouldn't offer) rather than rebuilding an EV scanner that already exists
-for free.
+### 8.1 Odds Assist Pro deep-dive (2026-09-20, hands-on verified)
+
+Tj asked specifically: *does it actually find +EV on Novig, and is it as
+good as OddsJam?* Answered directly rather than restated from marketing
+copy — this required actually loading the live tool in a browser
+(pre-installed Chromium via Playwright) and reading real, current output,
+not just reading vendor pages about it.
+
+**Who runs it:** Upper 9 Media LLC (`oddsassist.com`, contact
+`hello@oddsassist.com`) — a small operation ("small team," "passionate
+sports fans" per their own about copy), not a funded/VC-backed company the
+way OddsJam is. Public review evidence is thin: exactly **one** Trustpilot
+review as of this research (5 stars, praises accuracy and says the
+reviewer "became a profitable bettor" using it for over a year) — a single
+data point is not a track record, and should be weighted as such.
+
+**Does it actually find +EV on Novig? Yes — confirmed live, not just
+claimed.** Loaded `pro.oddsassist.com/advantages/plus-ev` directly (no
+account, no signup), opened the "Sportsbooks" filter, and isolated the
+book list down to **Novig only** (deselecting the other 10 available-in-
+California books one at a time — the filter UI requires this, there's no
+single-click "Novig only" shortcut). With only Novig selected, the tool
+surfaced real, dated, currently-live opportunities, e.g. (captured
+2026-09-20, California region — results are state-filtered and will differ
+by state):
+
+| Event | Bet | Novig price (Am. odds) | No-Vig reference | Claimed edge |
+|---|---|---|---|---|
+| Miami Dolphins @ SF 49ers, 09/20 8:25 PM | Miami Dolphins ML | +809 | +666 | 18.73% |
+| New York Liberty @ Toronto Tempo, 09/20 7:00 PM | Toronto Tempo ML | +733 | +643 | 12.22% |
+| South Carolina @ Alabama, 09/26 11:00 PM | South Carolina ML | +400 | +349 | 11.47% |
+
+This is real: current games, a working Novig-specific filter, a
+distinct Novig logo tag on each row, live-updating numbers across repeated
+loads. **So yes — it works, and it's free.** Confirms/upgrades §10's old
+item 4 from "should trial" to "trialed, functional, positive result."
+
+**But read the edge numbers with real skepticism before trusting them —
+this is the substantive finding, not just "it works":** an 18.73% edge on
+a +809 (extreme-underdog) moneyline is a *huge* number — multiples of what
+a mature market like OddsJam's typically flags (real +EV edges are usually
+low single digits to maybe 5–8%; anything materially higher on a stale or
+thin line is a yellow flag, not a green one). §5 of this file already
+covers *why* that's suspicious: **multiplicative devigging — the simplest
+and most common method — specifically overstates underdog value**, exactly
+the favorite-longshot bias problem. Odds Assist doesn't disclose which
+devig method feeds its "No Vig Odds" column or which book(s) it references
+(no "source of truth" picker the way OddsJam has, per §5's close). A large
+apparent edge concentrated on extreme-longshot lines is at least partly
+consistent with "simple devig method run on a thin, longshot-heavy
+market," not necessarily "real, capturable mispricing." This doesn't mean
+the tool is fake or the numbers are wrong — it means **the edge number by
+itself isn't trustworthy without knowing the methodology**, which is
+exactly the kind of thing a from-scratch app can do better by *disclosing*
+its devig method and letting it be tuned (§5's recommendation already
+independent of this finding, now with a concrete reason why it matters).
+
+**Is it as good as OddsJam? No — but "as good" is the wrong frame for what
+it actually is.** Feature-by-feature, from what's directly observable:
+
+- **Coverage:** Odds Assist's own filter list shows ~12 books available in
+  California (BetOnline, BetUS, Bovada, Fliff, Kutt, MyBookie, Novig,
+  OG.com, Polymarket, ProphetX, Underdog, Kalshi) plus a longer
+  "unavailable in your state" list (BetMGM, Caesars, DraftKings, ESPN Bet,
+  Fanatics, FanDuel, Hard Rock, Pinnacle, BetParx, BetRivers, Bally Bet) —
+  book availability is **state-gated** on this tool, worth remembering when
+  judging results (a different state, Tj's actual one, may unlock more).
+  OddsJam scans 50+ books with no such regional gate on the tool itself
+  (regional legality is the sportsbook's problem, not the scanner's).
+- **Transparency:** OddsJam lets the user pick the devig method and
+  "source of truth" book; Odds Assist Pro discloses neither — a real gap
+  for a serious bettor who wants to trust the number, not just the flag.
+- **Free-tier row cap:** without an account, only ~3–4 rows are unblurred
+  at a time ("Sign up for free to see more positive ev bets" gates the
+  rest) — signup is stated to be a **free** account (no card mentioned),
+  not a paid unlock, but this wasn't verified by actually creating an
+  account (didn't create one on Tj's behalf without asking first).
+- **Depth:** the product has Arbitrage Bets, Live Arb Bets, Low Hold Bets,
+  Middles, and Moving Lines as separate free tools in its nav — broader
+  than a bare EV scanner — but no visible bet tracker or CLV tracking on
+  the pages checked, which OddsJam has natively.
+- **Novig sits in the free "SPORTS BETTING" section of the product, not
+  the paid "Prediction Markets Pro" ($19.99/mo) tier** — that paid tier is
+  a separate product for Kalshi/Polymarket-style event contracts (its own
+  nav items are "Earnings Mentions," "Politics Mentions," "Entertainment
+  Mentions" — corporate-earnings and politics contracts, nothing
+  sports-related). This resolves an apparent contradiction from the first
+  research pass (an Odds Assist review page said Novig is "missing an API
+  for traders" — that page reads as stale/uninformed marketing copy about
+  Novig in general, not evidence against Odds Assist's own free +EV tool,
+  which demonstrably works against Novig right now regardless of what that
+  one review page claims about Novig's API situation).
+
+**Verdict for Tj:** Odds Assist Pro is real, free, and does currently
+surface live Novig +EV opportunities — worth running alongside anything
+else while deciding what to build, and a legitimate reason to not rush
+into building a Novig scanner from zero if the goal is just "see +EV
+Novig bets today." It is not a full OddsJam replacement (undisclosed
+methodology, no source-of-truth control, no bet tracking/CLV, capped free
+rows, state-gated book list) — and it's exactly those specific gaps, not
+"build something free," that should define what "equal to or better than
+OddsJam" needs to mean for the app this repo is building: **methodology
+transparency (disclosed, tunable devig — §5) and real bet
+tracking/CLV are the two concrete features to prioritize over Odds Assist
+Pro, not just matching its edge-list UI.**
+
+**Action item:** before writing any app code, actually run Odds Assist
+Pro for a few real days (Tj's own state, his own account once he decides
+to sign up) to see what fraction of its flagged Novig edges are real vs.
+longshot-devig noise — this is a much stronger design input than a single
+research-session snapshot.
 
 ## 9. Legal / ToS posture
 
