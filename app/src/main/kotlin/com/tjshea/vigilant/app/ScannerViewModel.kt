@@ -25,8 +25,13 @@ sealed interface ScanUiState {
  * plug in here once Tj has them (see the top-level status message and BRIEF.md for what that
  * needs). [isLiveData] exists specifically so the UI never presents sample data as if it were a
  * real scan (see [ScannerViewModel]'s doc comment for why that matters).
+ *
+ * `@JvmOverloads` matters here, not just style: without it, Kotlin's default-parameter sugar only
+ * exists at the call-site level — the compiled class still has a single 5-argument constructor,
+ * and `by viewModels()`'s reflection-based default factory looks for a true zero-argument one. It
+ * would compile fine and crash at runtime the first time this screen opened.
  */
-class ScannerViewModel(
+class ScannerViewModel @JvmOverloads constructor(
     private val novigRepository: NovigRepository = SampleNovigRepository(),
     private val referenceOddsRepository: ReferenceOddsRepository = SampleReferenceOddsRepository(),
     private val sportKey: String = "sample",
