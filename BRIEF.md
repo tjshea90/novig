@@ -204,6 +204,21 @@ re-diagnose these from scratch:
   `default_branch` on the repo via the API before assuming a
   `workflow_dispatch` 404 is a workflow-syntax problem, which is what it
   looked like at first here.
+- **A sixth, found and fixed 2026-09-20: an explicit import of `weight`
+  from `androidx.compose.foundation.layout` breaks `Modifier.weight()`
+  instead of merely being redundant.** `Modifier.weight(1f)` inside a
+  `Column { }`/`Row { }` body resolves via `ColumnScope.weight`/
+  `RowScope.weight` — a *member* extension function on those scope
+  interfaces, found automatically through the lambda's implicit receiver,
+  never through an import (member extensions aren't top-level symbols, so
+  there is no valid import path to them at all). That same package also
+  has an unrelated **internal** top-level symbol literally named `weight`
+  (part of `RowColumnParentData`'s implementation) — an explicit
+  `import androidx.compose.foundation.layout.weight` binds to *that* one
+  instead, and every `Modifier.weight(...)` call site in the file then
+  fails with `Cannot access 'val RowColumnParentData?.weight: Float': it
+  is internal in file`. Caught for real by CI (run 35536648655) — the fix
+  is to delete the import, not add one; `Modifier.weight()` needs none.
 - **`apksigner verify --print-certs`'s SHA-256 digest output has no colons
   and is lowercase** (`ab2207a8...`) — unlike `keytool -list -v`'s
   colon-separated uppercase (`AB:22:07:A8:...`, what BRIEF.md's own
