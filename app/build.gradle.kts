@@ -23,9 +23,30 @@ android {
         versionName = "0.1.0"
     }
 
+    // Release signing comes entirely from environment variables, never from anything committed —
+    // set only inside .github/workflows/release.yml, which decodes the keystore from a GitHub
+    // Secret (see BRIEF.md's "The rule that will apply the moment a keystore exists"). Outside
+    // that workflow (a local or CI test build) VIGILANT_KEYSTORE_PATH is unset, so `release` just
+    // builds unsigned — correct for `ci.yml`'s assembleDebug-only verification, since nothing
+    // outside the real release workflow should ever be able to produce a signed APK.
+    val keystorePath = System.getenv("VIGILANT_KEYSTORE_PATH")
+    if (keystorePath != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("VIGILANT_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("VIGILANT_KEY_ALIAS")
+                keyPassword = System.getenv("VIGILANT_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
