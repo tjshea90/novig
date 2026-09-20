@@ -534,7 +534,12 @@ own instruction to use both together.
       the import; re-pushed; **CI confirmed green for real** on the fix
       (run https://github.com/tjshea90/novig/actions/runs/35536752615,
       conclusion=success).
-- [ ] Trigger the release GitHub Actions workflow (`workflow_dispatch`)
-      via the API, confirm it goes green, and send Tj the new Release
-      link (plain tappable text, not a code block — CLAUDE.md's standing
-      rule).
+- [x] Bumped versionCode 1→2 / versionName 0.1.0→0.2.0 (BRIEF.md's rule —
+      v0.1.0/code 1 was already shipped, `release.yml` refuses to
+      re-release an existing tag). Triggered `release.yml` via
+      `workflow_dispatch`, confirmed it went green for real
+      (run https://github.com/tjshea90/novig/actions/runs/35536855588,
+      conclusion=success — build, fingerprint verification, tag, and
+      GitHub Release all succeeded), recorded it in `BUILDLOG.md` via
+      `tools/record-release.sh`, and sent Tj the v0.2.0 Release link as
+      plain tappable text (not a code block).
