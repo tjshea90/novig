@@ -12,3 +12,4 @@ day that changes.
 
 | tag | code | when | what changed |
 |-----|------|------|---------------|
+| v0.1.0 | code 1 | 2026-09-20T16:13Z | First beta release — sample-data devig/EV scanner, no live credentials wired in yet
