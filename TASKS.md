@@ -526,10 +526,14 @@ own instruction to use both together.
       before the user acts.
 - [x] Verified what this container can
       (`./gradlew --configure-on-demand :engine:test :data:test`, green),
-      pushed, confirmed CI green for the `app` module (the new Compose
-      Material3 pull-to-refresh/FilterChip API surface this container
-      can't compile-check locally) — run linked in the checkpoint this
-      completed under.
+      pushed, confirmed CI green for the `app` module. First push actually
+      **failed CI for real** (run 35536648655): a stray
+      `import androidx.compose.foundation.layout.weight` resolved to an
+      unrelated internal symbol instead of the `ColumnScope.weight` member
+      extension it doesn't need an import for at all. Fixed by deleting
+      the import; re-pushed; **CI confirmed green for real** on the fix
+      (run https://github.com/tjshea90/novig/actions/runs/35536752615,
+      conclusion=success).
 - [ ] Trigger the release GitHub Actions workflow (`workflow_dispatch`)
       via the API, confirm it goes green, and send Tj the new Release
       link (plain tappable text, not a code block — CLAUDE.md's standing
