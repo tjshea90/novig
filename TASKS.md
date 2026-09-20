@@ -669,18 +669,28 @@ request.
 
 ### Progress on this request
 
-- [ ] Update RESEARCH.md §4.2/§4.2.1 with the confirmed finding: SharpAPI's
-      free tier does NOT actually grant Novig access despite listing it —
-      this was previously marked "confirmed" from the docs page alone and
-      needs correcting now that it's been tested for real.
-- [ ] Re-verify (don't rely on the earlier session's summary) whether The
-      Odds API includes Novig at all, via their own current sports/books
-      listing.
-- [ ] Research current free/cheap alternatives for real Novig data:
-      re-check OpticOdds/Betstamp/MetaBet (previously "not confirmed, not
-      deep-dived"), odds-api.io's actual free-tier limits, and any other
-      provider not yet covered.
-- [ ] Report findings to Tj plainly, including whether any $0 path to
-      real Novig data actually exists right now, or whether the honest
-      answer is "paid reseller or Novig's own gated API are the only
-      routes."
+- [x] Updated RESEARCH.md §4.2 (corrected table + conclusion), new §4.2.2
+      (the full corrected finding, sourced from SharpAPI's own Novig
+      product page: "Available on Hobby plan and above," free tier scoped
+      to DraftKings+FanDuel only), §1's bottom line, and §10 item 1
+      (bumped to the top open item)/item 2 (resolved — answers the
+      Pinnacle question too, since DraftKings/FanDuel-only rules Pinnacle
+      out of the free tier as well). Corrected BRIEF.md's "Locked
+      architecture decisions" entry that had recorded the wrong premise
+      as a settled decision.
+- [x] Re-verified The Odds API directly (their own betting-markets page,
+      not the earlier session's summary): **confirmed no Novig** anywhere
+      in their bookmaker/market documentation — direct answer to Tj's
+      question.
+- [x] Researched current alternatives fresh (not reusing stale "not
+      confirmed" notes): **OpticOdds** — Novig only via a sales-gated
+      "trial," no public pricing. **Betstamp** — "trial keys," demo-only,
+      no public pricing. **MetaBet** — confirmed to include Novig, but no
+      pricing published anywhere (their `/pricing` page 404s). **odds-api.io**
+      — free tier is 2 recreational bookmakers (not Novig), and new free
+      signups are currently paused entirely.
+- [x] Reported findings to Tj: **no $0/mo path to real Novig data exists
+      right now from any researched provider.** Novig's own official API
+      (still pending their reply) is the only remaining lead that could
+      be free; every paid alternative clears $30/mo (SharpAPI Hobby alone
+      is $79/mo).
