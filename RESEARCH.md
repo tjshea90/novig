@@ -8,11 +8,14 @@ overwrite prior findings, since a later session needs to see what an earlier
 one already ruled out and why.
 
 **Status as of 2026-09-20:** first research pass, done in response to Tj's
-request (see `TASKS.md` / `INBOX.md`, 2026-09-20T04:36:03Z). Nothing in this
-file has been built yet. Several load-bearing facts below (marked
-**UNVERIFIED**) come from third-party docs/blog summaries, not hands-on
-testing against Novig's real API — confirm them before architecture is
-locked in.
+request (see `TASKS.md` / `INBOX.md`, 2026-09-20T04:36:03Z), plus a second
+pass (2026-09-20T05:01:28Z) deep-diving Odds Assist Pro specifically (§8).
+Nothing in this file has been built yet. Several load-bearing facts below
+(marked **UNVERIFIED**) come from third-party docs/blog summaries, not
+hands-on testing against Novig's real API — confirm them before
+architecture is locked in. §8's Odds Assist Pro findings, by contrast,
+**are** hands-on verified (live browser session against the real site,
+2026-09-20) rather than secondhand — noted there explicitly.
 
 ---
 
