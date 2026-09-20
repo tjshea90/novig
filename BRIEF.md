@@ -117,13 +117,37 @@ review alone.
 
 ## Build traps
 
-**None recorded yet — there is nothing to build.** This section exists so
-the pattern is followed rather than invented later: the moment a build
-fails for a reason that isn't obviously a code bug (a proxy 429, a
-JAVA_TOOL_OPTIONS variable polluting version output, a concurrent-build
-lock collision — the classes of trap both sibling projects' `BRIEF.md`s
-record), write it here before moving on, so the next session that hits the
-same wall doesn't re-diagnose it from scratch.
+Three hit and fixed 2026-09-20, standing into the future — don't
+re-diagnose these from scratch:
+
+- **`android-actions/setup-android@v3` unconditionally fails.** It runs
+  `sdkmanager tools` as part of its own setup, and that package was
+  removed from the Android SDK repository years ago — the whole action
+  errors out on every run, before your workflow's own steps even start.
+  Fix (already in `.github/workflows/ci.yml`): don't use that action at
+  all. GitHub-hosted `ubuntu-latest` runners already ship an Android SDK
+  with `ANDROID_HOME` set — just write the license-acceptance hash files
+  directly (`$ANDROID_HOME/licenses/android-sdk-license` = the well-known
+  hash `24333f8a63b6825ea9c5514f83c2829b004d1fee`, plus
+  `android-sdk-preview-license`), and let AGP auto-download whatever
+  specific platform/build-tools `compileSdk` needs during the Gradle build
+  itself.
+- **`android { kotlinOptions { jvmTarget = "21" } }` is a hard compile
+  error on Kotlin 2.3.10** — that whole DSL path is gone. Use
+  `kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_21) } }` (import
+  `org.jetbrains.kotlin.gradle.dsl.JvmTarget`) as its own top-level block
+  in the module's `build.gradle.kts`, not inside `android { }`.
+- **A Kotlin class with an all-default-parameter constructor still only
+  has ONE constructor at the JVM level** unless it's annotated
+  `@JvmOverloads` — Kotlin's default-argument sugar is call-site only.
+  This bit `ScannerViewModel`: `by viewModels()`'s reflection-based
+  factory looks for a true zero-argument constructor, doesn't find one
+  without `@JvmOverloads`, and it's a **runtime** crash the first time the
+  screen opens — compiles clean, so neither `./gradlew build` nor a code
+  review that only checks for compile errors will catch it. Anywhere a
+  ViewModel (or anything else instantiated via reflection by an Android
+  framework class) has a default-only constructor, it needs
+  `@JvmOverloads`.
 
 ## Locked architecture decisions
 
