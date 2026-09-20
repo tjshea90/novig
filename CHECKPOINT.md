@@ -1,13 +1,13 @@
-# CHECKPOINT 179 — read me first, then TASKS.md
+# CHECKPOINT 183 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T16:14:27Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `58bbde3` (this checkpoint is the commit after it)
+**Written:** 2026-09-20T19:46:10Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `9040e62` (this checkpoint is the commit after it)
 
 ## Just done
-Release v0.1.0 published: build, signature verification, server-side tag creation, and GitHub Release publish all green on the re-run. Recorded in BUILDLOG.md via tools/record-release.sh. This closes out the 'where is the apk' request end to end — Tj has a real, signed, installable APK.
+Wrote Tj's Novig-trading-API-pricing research request into TASKS.md (raw message already captured in INBOX.md).
 
 ## Do this next
-Sample-data beta is shipped. Next real work is either going live (Tj's two action items from earlier: Odds API signup + contacting Novig about API access) or whatever Tj directs next.
+Deep research pass: is Novig's NBX API access free, how to get it, actual process — beyond what RESEARCH.md §4.1 already found (docs existed but no pricing/access info was in them). Update RESEARCH.md §4.1/§10 with findings.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Sample-data beta is shipped. Next real work is either going live (Tj's two actio
 
 ## Last ten checkpoints
 ```
+  35a13a2 ckpt 179: Release v0.1.0 published: build, signature verification, server-side tag creat
   4cf8327 ckpt 168: First release.yml run: assembleRelease itself succeeded (proves the app builds
   afbb1cf ckpt 155: Tj switched the repo's default branch to main. Confirmed via the API, confirme
   013f762 ckpt 145: Tried to trigger release.yml — got a 404, workflow not found. Diagnosed why:
@@ -25,8 +26,7 @@ Sample-data beta is shipped. Next real work is either going live (Tj's two actio
   d115f2b ckpt 132: Built the real signed-release pipeline: generated Vigilant's permanent signing
   3fddc9e ckpt 126: Wrote Tj's 'where is the apk' request into TASKS.md. Confirmed this container'
   6f8d067 ckpt 123: CI confirmed fully green (run 35493330913): all tests across engine+data+app p
-  49c1307 ckpt 96: Built the first real app code: 'Vigilant' — a 3-module Gradle project (engine
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
