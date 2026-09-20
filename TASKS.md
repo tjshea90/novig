@@ -219,25 +219,36 @@ request above did not include building it.
       the app defaults to sample data — a visible "SAMPLE DATA, not live"
       banner so it can never be mistaken for a real scan.
 - [x] Got real build/test verification where this container actually can:
-      `engine`+`data` compile and their 54 tests pass for real, here. The
-      `app` module cannot be locally verified (no Android SDK in this dev
-      container — confirmed, recorded in BRIEF.md as a standing fact, not
-      re-discovered next session) — added `.github/workflows/ci.yml`
-      (installs a real Android SDK via `android-actions/setup-android`,
-      runs all unit tests, then `assembleDebug`) so the `app` module gets
-      real compile verification from the one place that actually has an
-      SDK, matching this project's own release model. **Not yet confirmed
-      green** — needs a push and a check of the Actions run; do that before
-      telling Tj the app module itself compiles, don't assume it from
-      review alone.
-- [ ] Push, confirm CI is actually green (fix anything it finds — this
-      container could not catch an `app`-module compile error, so treat a
-      first CI failure there as expected-possible, not alarming).
-- [ ] Tell Tj plainly what he needs to do to go from this sample-data beta
+      `engine`+`data` compile and their 54 tests pass for real, here.
+      `app` needed CI (no Android SDK locally — confirmed, recorded in
+      BRIEF.md). **CI is now confirmed green for real** — run
+      https://github.com/tjshea90/novig/actions/runs/35493330913, every
+      step succeeded, including all unit tests across all three modules
+      and `assembleDebug`, and produced a real 9.3MB debug APK artifact
+      (`vigilant-debug`). Getting there required three real, CI-caught
+      fixes, each recorded so a future session doesn't waste a round-trip
+      rediscovering them:
+      1. `android-actions/setup-android@v3` unconditionally tries to
+         install the long-removed legacy `tools` SDK package and crashes —
+         dropped it, use the Android SDK GitHub-hosted runners already
+         ship with `ANDROID_HOME` set, just write the license-acceptance
+         hash files directly.
+      2. `android { kotlinOptions { jvmTarget = "21" } }` is a hard error
+         on Kotlin 2.3.10 — migrated to the `kotlin { compilerOptions {
+         jvmTarget.set(JvmTarget.JVM_21) } }` DSL.
+      3. (Caught by review, not CI, before pushing — worth keeping in the
+         same list since it's the same class of "would only fail at
+         runtime, never at compile time" risk:) `ScannerViewModel`'s
+         all-default-parameter constructor needed `@JvmOverloads`, or
+         `by viewModels()`'s reflection-based factory would have found no
+         true zero-arg JVM constructor and crashed the first time the
+         screen opened, despite compiling fine.
+- [x] Tell Tj plainly what he needs to do to go from this sample-data beta
       to live data: (a) sign up for a free The Odds API key himself
       (self-serve, no card needed for the free tier) and (b) contact Novig
       directly from his existing account to ask about official API access
       (RESEARCH.md §4.1/§10 — still unconfirmed whether that's free or
-      what the process is). Neither blocks trying the beta today.
+      what the process is). Neither blocks trying the beta today — done in
+      chat, not just here.
 - [x] Checkpointed multiple times through this (engine, then data, then
-      app+CI) rather than only at the end.
+      app+CI, then each CI fix) rather than only at the end.
