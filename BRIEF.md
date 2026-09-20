@@ -1,22 +1,23 @@
 # novig — standing rules and build traps
 
-Android app, Tj's own project, targeting **Android 16 (API 36)** and
-optimized for a **Moto G 2026**. Purpose: **profit using the Novig
-sportsbook** — a peer-to-peer betting exchange, not a traditional sportsbook,
-which is presumably why margin/pricing strategy matters enough to build an
-app around it. Ships as a signed release APK, not to the Play Store — the
-same distribution model as this account's other Android projects
-(fantasy-football, Portfolio).
+**App name: Vigilant.** Android app, Tj's own project, targeting **Android
+16 (API 36)** and optimized for a **Moto G 2026**. Purpose: **find and
+surface positive-EV opportunities on the Novig sportsbook** — a peer-to-peer
+betting exchange, not a traditional sportsbook, which changes what "positive
+EV" even means here (RESEARCH.md §2: there's no house vig on Novig's own
+board to strip out — the edge is the crowd not having converged to true
+probability yet, not a stale line). Ships as a signed release APK, not to
+the Play Store — the same distribution model as this account's other
+Android projects (fantasy-football, Portfolio).
 
-**This file is deliberately short right now.** The first piece of work on
-this project was not the app — it was standing up the checkpoint/handoff
-system in `tools/` (see `CLAUDE.md`), ported from and adapted for this
-project from the same pattern already proven on fantasy-football and
-Portfolio. No app code, no build system, and no architecture decisions exist
-yet. Sections below are marked **TBD** rather than filled with invented
-specifics — a BRIEF.md that states rules nobody actually decided is worse
-than one that admits what's still open, because a future session would
-trust it as settled ground truth.
+**Status as of 2026-09-20:** first real app code exists — a Gradle
+multi-module project (`engine`, `data`, `app`) with a working devig/EV
+engine (54 passing unit tests, verified for real in this dev container),
+data-layer scaffolding for both the Novig and reference-odds legs, and a
+basic Compose UI running on sample data. See `TASKS.md` for what's done vs.
+open, and RESEARCH.md for the research this was built from. Sections below
+that used to say TBD are now filled in with the decisions made building it
+— sections still genuinely open stay marked TBD rather than invented.
 
 ## What is actually decided
 
