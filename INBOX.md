@@ -412,3 +412,12 @@ I switched it to main
 <event>run 35521984758: status=in_progress conclusion=null</event>
 </task-notification>
 ```
+
+## 2026-09-20T16:13:10Z
+```
+<task-notification>
+<task-id>bm3qr090u</task-id>
+<summary>Monitor event: "Poll GitHub Actions Release workflow re-run until it completes"</summary>
+<event>run 35521984758: status=in_progress conclusion=null</event>
+</task-notification>
+```
