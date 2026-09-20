@@ -385,3 +385,12 @@ I switched it to main
 <event>run 35521738707: status=completed conclusion=failure</event>
 </task-notification>
 ```
+
+## 2026-09-20T16:12:41Z
+```
+<task-notification>
+<task-id>bm3qr090u</task-id>
+<summary>Monitor event: "Poll GitHub Actions Release workflow re-run until it completes"</summary>
+<event>found run_id=35521984758</event>
+</task-notification>
+```
