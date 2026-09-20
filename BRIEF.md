@@ -50,11 +50,20 @@ that used to say TBD are now filled in with the decisions made building it
 
 ## The rule that will apply the moment a keystore exists
 
-Not yet true — there is no keystore yet, because there is no app to sign.
-But the day one is generated (`keytool -genkeypair ...` or GitHub Actions
-generating it into a Secret), this rule is retroactively already in force,
-ported from this account's other two Android projects where getting it
-wrong has cost real user data:
+**Now true — the keystore was generated 2026-09-20.** This rule is in
+force starting now, ported from this account's other two Android projects
+where getting it wrong has cost real user data:
+
+- **Alias:** `vigilant`. **Valid until:** 2056-09-12 (30 years).
+- **SHA-256 fingerprint** (safe to record — public, not secret):
+  `05:DB:E7:B7:EB:E7:31:51:A7:EE:90:54:AF:E5:CC:B9:11:47:42:8C:F6:F8:AA:2F:AF:0D:1D:89:E0:8E:74:77`
+- The keystore file and its password were sent directly to Tj (this
+  container's GitHub token is explicitly blocked from the Actions-secrets
+  API — confirmed 2026-09-20, a 403 from the proxy — so Claude cannot
+  create GitHub Secrets itself; Tj adds `KEYSTORE_BASE64`,
+  `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` via the repo's Settings
+  UI himself). **The password itself is never recorded here or anywhere
+  in this repo** — only Tj and the GitHub Secret hold it.
 
 Android only performs a **data-preserving in-place update** when the
 package name AND the signing certificate both match. A new keystore forces
