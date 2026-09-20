@@ -64,19 +64,54 @@ else
   echo "  note  no fast checks exist yet"
 fi
 
-# ---- is there anything to actually build and release? -------------------------
-if [ -f app/build.gradle.kts ] || [ -f build.gradle.kts ] || [ -f package.json ] && [ -d app ]; then
-  echo "  FAIL  a build system now exists, but ship.sh has not been updated to gate"
-  echo "        it yet (full suite, versionCode check, GitHub Actions trigger)."
-  echo "        Write that gate now — see this file's own header for the shape to"
-  echo "        follow (Portfolio's ship.sh) — then re-run."
+# ---- full suite of what this container can actually verify --------------------
+if [ ! -f app/build.gradle.kts ]; then
+  echo "  FAIL  no app/build.gradle.kts — nothing to ship."
   exit 1
 fi
 
-echo "  FAIL  no Android project scaffold exists yet (no app/build.gradle.kts,"
-echo "        no build.gradle.kts) — there is nothing to build or release."
-echo "        Stand up the project first (see BRIEF.md's open TBDs and"
-echo "        CLAUDE.md's \"Releasing\" section for the order to do it in)."
-echo "        The checkpoint itself is still safe: 'bash tools/ckpt.sh \"$NOTE\" \"next\"'"
-echo "        records this work without claiming a release that doesn't exist."
-exit 1
+echo "  ..    running engine+data's full test suite (app module needs CI — see header)"
+if ! ./gradlew --configure-on-demand :engine:test :data:test --console=plain > /tmp/ship-gradle-test.log 2>&1; then
+  echo "  FAIL  engine/data tests are red. Log:"
+  tail -40 /tmp/ship-gradle-test.log
+  exit 1
+fi
+echo "  OK    engine+data tests green"
+
+# ---- versionCode must be strictly higher than every code already shipped ------
+VERSION_NAME="$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | head -1 | sed -E 's/versionName = "([^"]+)"/\1/')"
+VERSION_CODE="$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | head -1 | sed -E 's/versionCode = ([0-9]+)/\1/')"
+if [ -z "$VERSION_NAME" ] || [ -z "$VERSION_CODE" ]; then
+  echo "  FAIL  could not read versionName/versionCode from app/build.gradle.kts"
+  exit 1
+fi
+
+HIGHEST_SHIPPED=0
+if [ -f BUILDLOG.md ]; then
+  HIGHEST_SHIPPED="$(grep -oE '\| code [0-9]+' BUILDLOG.md | grep -oE '[0-9]+' | sort -n | tail -1)"
+  [ -z "$HIGHEST_SHIPPED" ] && HIGHEST_SHIPPED=0
+fi
+if [ "$VERSION_CODE" -le "$HIGHEST_SHIPPED" ]; then
+  echo "  FAIL  versionCode $VERSION_CODE is not higher than the highest shipped"
+  echo "        code in BUILDLOG.md ($HIGHEST_SHIPPED). Android refuses to install"
+  echo "        a build whose versionCode doesn't strictly increase — bump it in"
+  echo "        app/build.gradle.kts before shipping."
+  exit 1
+fi
+echo "  OK    versionCode $VERSION_CODE > highest shipped ($HIGHEST_SHIPPED); versionName $VERSION_NAME"
+
+# ---- push (never a tag — the release workflow creates it server-side) ---------
+if bash tools/push.sh; then
+  echo "  OK    pushed to GitHub"
+else
+  echo "  FAIL  push failed — see tools/push.sh output above"
+  exit 1
+fi
+
+bash tools/ckpt.sh "pre-release: $NOTE (versionCode $VERSION_CODE, v$VERSION_NAME)" \
+  "Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v$VERSION_NAME), then run: bash tools/record-release.sh v$VERSION_NAME $VERSION_CODE \"$NOTE\"" \
+  >/dev/null 2>&1
+
+echo ""
+echo "  ==    gated and pushed. Next: trigger release.yml, confirm green, then"
+echo "        tools/record-release.sh v$VERSION_NAME $VERSION_CODE \"$NOTE\""
