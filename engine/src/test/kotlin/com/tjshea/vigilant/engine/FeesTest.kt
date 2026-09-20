@@ -21,8 +21,9 @@ class FeesTest {
     @Test
     fun `live straight taker fee matches the documented formula`() {
         val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = false, context = TradeContext.LIVE_STRAIGHT))
+        check(fee is FeeResult.Known)
         // 0.03 * 0.5 * 0.5 = 0.0075
-        assertEquals(FeeResult.Known(0.0075), fee)
+        assertEquals(0.0075, fee.amountPerDollarStaked, 1e-9)
     }
 
     @Test
