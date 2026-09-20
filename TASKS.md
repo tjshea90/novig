@@ -266,31 +266,53 @@ link. Treating this as the trigger for BRIEF.md's "the day real app code
 exists" ordered plan (keystore → real release workflow → `ship.sh` gate),
 since that day is today:
 
-- [ ] Generate the release signing keystore (`keytool`). Deliver it
-      directly to Tj (SendUserFile — he needs his own backup of this
-      regardless of who generates it; losing it with no copy would be the
-      exact catastrophic scenario BRIEF.md warns about) along with the
-      alias/passwords and SHA-256 fingerprint. **Confirmed this session:
-      this container's GitHub token is explicitly blocked from the
-      Actions-secrets API by the proxy** (403, "not permitted through this
-      proxy") — so Claude cannot add GitHub Secrets itself; Tj has to add
-      them via the repo's Settings UI. Give him exact secret names/values
-      and steps.
-- [ ] Record the certificate fingerprint in BRIEF.md immediately (never
-      the password) per CLAUDE.md's keystore rule.
-- [ ] Write a real release workflow: signs with the Secret-held keystore,
-      verifies the signing certificate on the built artifact, creates the
-      release tag and GitHub Release **server-side** in the workflow (not
-      pushed from this container — CLAUDE.md notes a Claude container gets
-      HTTP 403 pushing `refs/tags/*`, confirmed on Portfolio, no reason to
-      expect different here).
-- [ ] Fill in `ship.sh`'s real gate (versionCode strictly higher than
-      BUILDLOG.md's highest entry, trigger the workflow, confirm green via
-      `get_release_by_tag`) per CLAUDE.md's ordered steps.
-- [ ] Trigger the release workflow for real, confirm it goes green, and
-      send Tj the Release page link as plain tappable text on its own
-      line — never inside a code block (CLAUDE.md flags this exact mistake
-      as already made once on fantasy-football).
-- [ ] Cannot actually complete this end-to-end without Tj adding the
-      keystore secrets himself first — say so plainly rather than silently
-      stalling; this is the one step only he can do.
+- [x] Generate the release signing keystore (`keytool`). Delivered
+      directly to Tj (SendUserFile), fingerprint recorded in BRIEF.md.
+      **Superseded below** — this Secret-based keystore is no longer used;
+      see the 2026-09-20T06:45:23Z follow-up.
+- [x] Wrote a real release workflow signing with a Secret-held keystore.
+      **Superseded below.**
+- [x] Filled in `ship.sh`'s real gate (versionCode vs. BUILDLOG.md, push,
+      hand off to the trigger+confirm+record sequence). Still valid —
+      the gate logic doesn't depend on which keystore approach is used.
+
+## Tj's follow-up, 2026-09-20T06:45:23Z (his own words — full text in INBOX.md)
+
+> On the other repos GitHub can make the apk without secret. It doesn't
+> need to be secure
+
+Checked both other repos directly rather than assume (`add_repo`, read
+access): **Portfolio's real `android.yml` does use a GitHub Secret**
+(`SIGNING_KEYSTORE_BASE64`) for its release keystore — so that's not the
+"no secret" model. **fantasy-football's `build.sh` is** — it signs with
+`android/debug.keystore`, committed straight into that public repo, using
+Android's standard well-known debug password (`android`/`android`,
+literally public by convention — every Android SDK install can generate a
+byte-identical one). No GitHub Secret needed because there's no actual
+secret material to protect. That's the pattern Tj means, and it's a
+reasonable, already-precedented call for an app that (right now) ships
+with sample data only, holds no real credentials, and isn't going through
+Play Store.
+
+- [x] Generated a fresh debug-style keystore for Vigilant (alias
+      `vigilant`, well-known password, **committed directly to the repo**
+      — not a secret). The earlier Secret-based keystore sent to Tj is
+      abandoned/unused; told him plainly so he doesn't think he still
+      needs to add those 4 secrets.
+- [x] Rewired `app/build.gradle.kts` to sign with the committed file
+      directly — no env vars, no secrets, works locally or in any CI run
+      with zero setup.
+- [x] Simplified `.github/workflows/release.yml` to match — no secret
+      decode step, runs on `workflow_dispatch` with nothing but a green
+      light needed.
+- [x] Corrected BRIEF.md's keystore section, which had recorded the now-
+      abandoned Secret-based approach as settled — replaced with the real,
+      current approach and why, so it doesn't mislead a future session.
+      Noted explicitly: this is a real, deliberate security tradeoff
+      (anyone can forge an "update" signed with this same public key) that
+      was fine to make with nothing sensitive in the app yet, and is worth
+      revisiting the day the app holds real Novig API credentials.
+- [ ] Trigger the release workflow for real (nothing blocking it now),
+      confirm green, send Tj the Release page link as plain tappable text
+      on its own line — never inside a code block (the exact mistake
+      CLAUDE.md flags as already made once on fantasy-football).
