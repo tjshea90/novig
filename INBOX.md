@@ -465,3 +465,8 @@ I switched it to main
 ```
 Remind me what I need to do to make the app work
 ```
+
+## 2026-09-20T19:45:42Z
+```
+Research online about the novig  trading API see if it is free and how to use it
+```
