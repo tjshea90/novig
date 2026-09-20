@@ -1,13 +1,13 @@
-# CHECKPOINT 126 — read me first, then TASKS.md
+# CHECKPOINT 132 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T06:36:25Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `ad0e742` (this checkpoint is the commit after it)
+**Written:** 2026-09-20T06:40:47Z · **tests:** 1 RED: test_resume.sh (0 green)
+**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `41a9c28` (this checkpoint is the commit after it)
 
 ## Just done
-Wrote Tj's 'where is the apk' request into TASKS.md. Confirmed this container's GitHub token is explicitly blocked from the Actions-secrets API by the proxy (403) — Claude cannot create GitHub Secrets itself, so the keystore secrets step needs Tj's hands regardless of who generates the keystore file.
+Built the real signed-release pipeline: generated Vigilant's permanent signing keystore (alias 'vigilant', 30yr validity, SHA-256 fingerprint recorded in BRIEF.md per its own keystore rule — password never recorded in-repo), sent the keystore file + password + base64 + setup instructions directly to Tj via SendUserFile (his own backup — this container's GitHub token is confirmed blocked from the Actions-secrets API, 403 from the proxy, so Claude cannot create the GitHub Secrets itself). Wired app/build.gradle.kts to read signing config from env vars (unsigned unless VIGILANT_KEYSTORE_PATH is set, which only release.yml sets). Wrote .github/workflows/release.yml: manual-trigger only, decodes the keystore from 4 GitHub Secrets, builds+signs, verifies the signing cert against BRIEF.md's recorded fingerprint before publishing (refuses to publish on a mismatch), creates the release tag server-side, publishes a GitHub Release with the APK attached. Filled in ship.sh's real gate (engine+data tests, versionCode-vs-BUILDLOG.md check, push, then hands off to the MCP-tool-driven trigger+confirm+record-release.sh sequence ckpt.sh can't do itself). Deleted the keystore material from the scratchpad after delivery. Local engine+data tests re-verified green after all build.gradle.kts changes (still 54/54).
 
 ## Do this next
-Generate the release keystore, send it directly to Tj (he needs his own backup regardless), record the fingerprint in BRIEF.md, write a real release workflow (signs + verifies + creates the Release server-side), fill in ship.sh's real gate, and give Tj exact instructions for the one step only he can do: adding the keystore as GitHub secrets.
+BLOCKED on Tj: cannot trigger a working release build until he adds the 4 GitHub secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) per the instructions sent with the keystore file. Once he confirms that's done: trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm green via mcp__github__get_release_by_tag (tag v0.1.0), run tools/record-release.sh v0.1.0 1 "first beta release", then send Tj the Release page link as plain tappable text, never in a code block.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Generate the release keystore, send it directly to Tj (he needs his own backup r
 
 ## Last ten checkpoints
 ```
+  3fddc9e ckpt 126: Wrote Tj's 'where is the apk' request into TASKS.md. Confirmed this container'
   6f8d067 ckpt 123: CI confirmed fully green (run 35493330913): all tests across engine+data+app p
   49c1307 ckpt 96: Built the first real app code: 'Vigilant' — a 3-module Gradle project (engine
   3edb9b3 ckpt 29: Wrote Tj's 'begin basic coding' request into TASKS.md (raw message already capt
@@ -26,5 +27,5 @@ Generate the release keystore, send it directly to Tj (he needs his own backup r
   e870ad3 ckpt 12: Stood up the full checkpoint/handoff system for novig, adapted from fantasy-foo
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
