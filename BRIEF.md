@@ -180,6 +180,27 @@ re-diagnose these from scratch:
   ViewModel (or anything else instantiated via reflection by an Android
   framework class) has a default-only constructor, it needs
   `@JvmOverloads`.
+- **A fourth one, found 2026-09-20, bigger than the others: this repo's
+  actual GitHub default branch is NOT `main`** — it's
+  `claude/novig-checkpoint-tests-qqgnnb`, an old session branch from when
+  this repo was first created (whichever branch existed at repo-creation
+  time became the default, and nothing ever changed it since — `main`
+  being "the only source of truth" per `CLAUDE.md` describes this repo's
+  own *intended* workflow, it was never actually a GitHub repo-settings
+  fact). This matters more than it looks: GitHub only registers a
+  `workflow_dispatch`-triggered workflow (shows it in the API/UI "Run
+  workflow" picker at all) once that workflow's YAML file exists on the
+  **actual GitHub default branch** — not just on `main`, and not on
+  whatever branch a session happens to be working from. `release.yml`
+  triggering with a 404 despite existing on `main` and the working branch
+  is this, not a workflow bug. **Fix:** change the repo's default branch
+  to `main` in GitHub's own repo settings (General → Default branch) —
+  this needs a human or an explicitly-authorized session, a Claude session
+  hit the auto-mode permission classifier blocking a repo-settings PATCH
+  call outright. Until that's done, `workflow_dispatch`-only workflows
+  added on any other branch **cannot be triggered via the API at all**,
+  which will look exactly like a permissions or workflow-syntax problem if
+  this isn't already known.
 
 ## Locked architecture decisions
 
