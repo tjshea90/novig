@@ -733,3 +733,8 @@ Ship v0.2.1 now. I tried again same error
 <event>run 35538568015: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-20T21:46:43Z
+```
+Novig showed 403 too. It says I may not have access. Research if other apis have novig for free. Does the odds api have it? 
+```
