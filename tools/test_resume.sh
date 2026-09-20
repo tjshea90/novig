@@ -19,9 +19,13 @@
 # hook-merge, checkpoint-numbering, secretscan and unpushed-refuses-to-guess
 # checks are the same shape (this account already proved that shape catches
 # real bugs). Everything Android/Gradle/keystore-specific is gone — none of
-# that exists in this project yet. Added: coverage for the raw-INBOX capture
-# path (tools/capture_inbox.sh + tools/hooks/inbox.sh), which Portfolio does
-# not have at all — it's ported from fantasy-football instead.
+# that exists in this project yet. Also gone: Portfolio's multi-repo hook
+# AGGREGATION tests — novig's hooks are deliberately scoped to this repo
+# only (see tools/install-hooks.sh's header for why: fantasy-football and
+# Portfolio are read-only for this project's work), so there is nothing to
+# aggregate and section 4 below instead proves that scoping holds. Added:
+# coverage for the raw-INBOX capture path (tools/capture_inbox.sh), ported
+# from fantasy-football, which Portfolio does not have at all.
 #
 #   bash tools/test_resume.sh        # 0 = the handoff is intact
 set -uo pipefail
@@ -45,46 +49,38 @@ export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER
 # A syntax error in a hook script is invisible: hooks swallow stderr, so the
 # safety net just quietly stops existing.
 RC=0
-for f in tools/*.sh tools/hooks/*.sh ship.sh bootstrap.sh; do
+for f in tools/*.sh ship.sh bootstrap.sh; do
   [ -f "$f" ] || continue
   bash -n "$f" 2>/dev/null || { echo "      bad syntax: $f"; RC=1; }
 done
 # Collect via a loop rather than handing bare globs to python3: this
-# project has no tools/*.py yet (only tools/hooks/*.py), and an
-# unmatched glob with nullglob off passes through as the literal string
-# "tools/*.py" — which then fails to open and reads as a syntax error that
-# isn't one.
+# project has no tools/*.py yet, and an unmatched glob with nullglob off
+# passes through as the literal string "tools/*.py" — which then fails to
+# open and reads as a syntax error that isn't one.
 PYFILES=()
-for f in tools/*.py tools/hooks/*.py; do [ -f "$f" ] && PYFILES+=("$f"); done
+for f in tools/*.py; do [ -f "$f" ] && PYFILES+=("$f"); done
 if [ "${#PYFILES[@]}" -gt 0 ]; then
   python3 -c "import ast,sys; [ast.parse(open(f).read()) for f in sys.argv[1:]]" "${PYFILES[@]}" 2>/dev/null || RC=1
 fi
 python3 -c "import json; json.load(open('tools/session-root-hooks.json'))" 2>/dev/null || RC=1
 check "$RC" "every script and the hook template parse"
 
-# ---- 2. fixtures --------------------------------------------------------------
-# Two throwaway repos that look like this one. Everything below runs against
-# these, never against the real checkout and never against the network: a
+# ---- 2. a fixture repo, never the real one -----------------------------------
+# A throwaway repo that looks like this one. Everything below runs against
+# this, never against the real checkout and never against the network: a
 # repo with no remote makes `git fetch` fail instantly, whereas the real one
 # would sit on a timeout per call whenever GitHub is unreachable — and this
 # test runs on EVERY checkpoint, so that would turn a fast checkpoint into a
 # slow one at exactly the wrong moment.
-FAKE="$TMP/root"; mkdir -p "$FAKE"
-for r in repoA repoB; do
-  mkdir -p "$FAKE/$r"
-  cp -r tools "$FAKE/$r/tools"
-  rm -f "$FAKE/$r"/tools/test_*.sh
-  cp CHECKPOINT.md TASKS.md INBOX.md bootstrap.sh "$FAKE/$r/" 2>/dev/null || true
-  ( cd "$FAKE/$r" && git init -q . && git add -A >/dev/null 2>&1 && git commit -qm init >/dev/null 2>&1 )
-done
-RA="$FAKE/repoA"
+FX="$TMP/repo"; mkdir -p "$FX"
+cp -r tools "$FX/tools"
+rm -f "$FX"/tools/test_*.sh
+cp CHECKPOINT.md TASKS.md INBOX.md bootstrap.sh "$FX/" 2>/dev/null || true
+( cd "$FX" && git init -q . && git add -A >/dev/null 2>&1 && git commit -qm init >/dev/null 2>&1 )
 
 # ---- 3. the briefing is exactly one JSON object ------------------------------
-# Hook stdout is parsed as ONE JSON document. This is the check that would
-# have caught the multi-repo bug this design exists to prevent: N repos
-# printing their own JSON is not JSON at all, and the whole session briefing
-# is dropped in silence.
-( cd "$RA" && bash tools/resume.sh ) >"$TMP/brief.json" 2>/dev/null
+# Hook stdout is parsed as ONE JSON document.
+( cd "$FX" && bash tools/resume.sh ) >"$TMP/brief.json" 2>/dev/null
 python3 - "$TMP/brief.json" <<'PY' >/dev/null 2>&1
 import json,sys
 d=json.load(open(sys.argv[1]))
@@ -93,89 +89,101 @@ assert d["hookSpecificOutput"]["additionalContext"].strip()
 PY
 check $? "resume.sh emits one parseable SessionStart object"
 
-( cd "$RA" && bash tools/resume.sh --text ) >"$TMP/brief.txt" 2>/dev/null
+( cd "$FX" && bash tools/resume.sh --text ) >"$TMP/brief.txt" 2>/dev/null
 if head -c 1 "$TMP/brief.txt" | grep -q '{'; then
   bad "resume.sh --text still wrapped the briefing in JSON"
 else
   [ -s "$TMP/brief.txt" ] && ok "resume.sh --text emits plain text" || bad "resume.sh --text emitted nothing"
 fi
 
-CLAUDE_REPO_ROOT="$FAKE" CLAUDE_HOOK_SETTINGS="$TMP/settings.json" \
-  bash "$RA/tools/hooks/brief.sh" >"$TMP/multi.json" 2>/dev/null
-python3 - "$TMP/multi.json" <<'PY' >/dev/null 2>&1
-import json,sys
-d=json.load(open(sys.argv[1]))          # fails outright if two objects were emitted
-c=d["hookSpecificOutput"]["additionalContext"]
-assert "repoA" in c and "repoB" in c, "both repos must appear in the briefing"
-PY
-check $? "two repos still emit ONE parseable object, both briefed"
-
-# ---- 4. the hook installer merges, never clobbers -----------------------------
+# ---- 4. the hook installer merges, never clobbers, and NEVER LEAVES THE REPO --
 # The naive version of this step is a plain `cp` over the user's own
-# settings file.
+# settings file. The naive version of the COMMANDS it installs is a glob
+# over every repo in the container, which is exactly what this design
+# deliberately does NOT do — see tools/install-hooks.sh's header. Both
+# properties are checked here.
 SET="$TMP/settings.json"
 cat > "$SET" <<'JSON'
 {"permissions": {"allow": ["Bash(ls:*)"]},
  "env": {"KEEP": "me"},
  "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "echo someone-elses-hook"}]}]}}
 JSON
-CLAUDE_HOOK_SETTINGS="$SET" CLAUDE_REPO_ROOT="$FAKE" bash tools/install-hooks.sh --quiet >/dev/null 2>&1
-python3 - "$SET" <<'PY' >/dev/null 2>&1
+( cd "$FX" && CLAUDE_HOOK_SETTINGS="$SET" bash tools/install-hooks.sh --quiet >/dev/null 2>&1 )
+python3 - "$SET" "$FX" <<'PY' >/dev/null 2>&1
 import json,sys
 d=json.load(open(sys.argv[1]))
+fx=sys.argv[2]
 assert d["permissions"]["allow"] == ["Bash(ls:*)"], "permissions were destroyed"
 assert d["env"]["KEEP"] == "me", "env was destroyed"
 cmds = [h["command"] for e in d["hooks"]["SessionStart"] for h in e["hooks"]]
 assert any("someone-elses-hook" in c for c in cmds), "another project's hook was destroyed"
-assert any("novig-checkpoint-hooks" in c for c in cmds), "our hook was not installed"
-assert all("__REPO_ROOT__" not in c for c in cmds), "placeholder was left unsubstituted"
+ours = [c for c in cmds if "novig-checkpoint-hooks" in c]
+assert ours, "our hook was not installed"
+assert all("__NOVIG_TOOLS__" not in c for c in ours), "placeholder was left unsubstituted"
+assert all(fx in c for c in ours), "our hook does not point at this repo's own tools/"
+assert all("*/" not in c and "for f in" not in c for c in ours), \
+    "our hook globs over sibling directories — it must touch only this repo"
 PY
-check $? "install-hooks merges: permissions, env and foreign hooks all survive"
+check $? "install-hooks merges (permissions/env/foreign hooks survive) and installs an absolute, repo-scoped path only"
 
-# A legacy entry — installed by a plain `cp`, so it carries no marker — must
-# be REPLACED, not kept alongside the new one. Keeping both puts the
-# double-JSON bug straight back into the live config.
+# All FIVE events end up scoped the same way, not just SessionStart.
+python3 - "$SET" "$FX" <<'PY' >/dev/null 2>&1
+import json,sys
+d=json.load(open(sys.argv[1])); fx=sys.argv[2]
+for event in ("SessionStart","UserPromptSubmit","PostToolUse","Stop","PreCompact"):
+    entries = d["hooks"].get(event, [])
+    cmds = [h["command"] for e in entries for h in e.get("hooks", [])]
+    ours = [c for c in cmds if "novig-checkpoint-hooks" in c]
+    assert ours, "no novig hook installed for %s" % event
+    assert all(fx in c and "*/" not in c for c in ours), "%s hook is not repo-scoped" % event
+PY
+check $? "every hook event (SessionStart/UserPromptSubmit/PostToolUse/Stop/PreCompact) is installed, repo-scoped"
+
+# A legacy/foreign entry carrying OUR marker from a stale prior install must
+# be REPLACED, not kept alongside the new one — never two copies of the same
+# hook firing for the same event.
 cat > "$SET" <<'JSON'
-{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "for d in /home/user/*/; do (cd \"$d\" && bash tools/resume.sh); done"}]}]}}
+{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "echo stale  # novig-checkpoint-hooks"}]}]}}
 JSON
-CLAUDE_HOOK_SETTINGS="$SET" CLAUDE_REPO_ROOT="$FAKE" bash tools/install-hooks.sh --quiet >/dev/null 2>&1
+( cd "$FX" && CLAUDE_HOOK_SETTINGS="$SET" bash tools/install-hooks.sh --quiet >/dev/null 2>&1 )
 python3 - "$SET" <<'LEGACY' >/dev/null 2>&1
 import json,sys
 d=json.load(open(sys.argv[1]))
 cmds=[h["command"] for x in d["hooks"]["SessionStart"] for h in x["hooks"]]
-assert len(cmds)==1, "legacy entry kept alongside the new one: %r" % cmds
-assert "novig-checkpoint-hooks" in cmds[0]
+assert len(cmds)==1, "stale marked entry kept alongside the new one: %r" % cmds
+assert "resume.sh" in cmds[0]
 LEGACY
-check $? "an untagged legacy hook entry is replaced, not duplicated"
+check $? "a stale marked entry is replaced, not duplicated"
 
-# A SIBLING repo's already-installed, differently-marked hook for the SAME
-# generic path must be recognised as ours too, not duplicated — this is the
-# actual multi-repo scenario (see tools/install-hooks.sh's header comment).
+BEFORE="$(cat "$SET")"
+( cd "$FX" && CLAUDE_HOOK_SETTINGS="$SET" bash tools/install-hooks.sh --quiet >/dev/null 2>&1 )
+[ "$BEFORE" = "$(cat "$SET")" ] && ok "install-hooks is idempotent" || bad "install-hooks rewrote an already-current file"
+( cd "$FX" && CLAUDE_HOOK_SETTINGS="$SET" bash tools/install-hooks.sh --check >/dev/null 2>&1 )
+check $? "install-hooks --check reports 'current' once installed"
+
+# A SIBLING repo's own, differently-scoped hooks in the same settings file
+# must be left completely alone by an install run from THIS repo — this is
+# the direct test of "never touches another repo's entries".
 cat > "$SET" <<'JSON'
-{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "for f in /home/user/*/tools/hooks/brief.sh; do [ -f \"$f\" ] && exec bash \"$f\"; done; true  # portfolio-checkpoint-hooks"}]}]}}
+{"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "bash /home/user/Portfolio/tools/resume.sh  # portfolio-checkpoint-hooks"}]}]}}
 JSON
-CLAUDE_HOOK_SETTINGS="$SET" CLAUDE_REPO_ROOT="$FAKE" bash tools/install-hooks.sh --quiet >/dev/null 2>&1
+( cd "$FX" && CLAUDE_HOOK_SETTINGS="$SET" bash tools/install-hooks.sh --quiet >/dev/null 2>&1 )
 python3 - "$SET" <<'SIB' >/dev/null 2>&1
 import json,sys
 d=json.load(open(sys.argv[1]))
 cmds=[h["command"] for x in d["hooks"]["SessionStart"] for h in x["hooks"]]
-assert len(cmds)==1, "a sibling repo's equivalent hook was kept alongside ours: %r" % cmds
+assert any("Portfolio" in c for c in cmds), "a sibling repo's own hook entry was removed"
+assert any("novig-checkpoint-hooks" in c for c in cmds), "our own hook was not added alongside it"
+assert len(cmds) == 2, "expected exactly the sibling's entry plus ours: %r" % cmds
 SIB
-check $? "a sibling repo's differently-marked hook for the same path is merged, not duplicated"
-
-BEFORE="$(cat "$SET")"
-CLAUDE_HOOK_SETTINGS="$SET" CLAUDE_REPO_ROOT="$FAKE" bash tools/install-hooks.sh --quiet >/dev/null 2>&1
-[ "$BEFORE" = "$(cat "$SET")" ] && ok "install-hooks is idempotent" || bad "install-hooks rewrote an already-current file"
-CLAUDE_HOOK_SETTINGS="$SET" CLAUDE_REPO_ROOT="$FAKE" bash tools/install-hooks.sh --check >/dev/null 2>&1
-check $? "install-hooks --check reports 'current' once installed"
+check $? "a sibling repo's own hook entry is left untouched, ours added alongside it"
 
 # ---- 5. checkpoint numbers only ever go up -----------------------------------
 # The shallow-clone regression: a fresh container has fewer commits than the
 # history it was cloned from, so a commit-count-based number could walk
 # BACKWARDS.
-FX="$RA"
 echo '# CHECKPOINT 9000 — read me first, then TASKS.md' > "$FX/CHECKPOINT.md"
-( cd "$FX" && CLAUDE_HOOK_SETTINGS="$TMP/fx-settings.json" CLAUDE_REPO_ROOT="$FAKE" \
+( cd "$FX" && CLAUDE_HOOK_SETTINGS="$TMP/fx-settings.json" \
     bash tools/ckpt.sh "self-test" "self-test" >/dev/null 2>&1 )
 GOT="$(sed -n '1s/^# CHECKPOINT \([0-9][0-9]*\).*/\1/p' "$FX/CHECKPOINT.md" 2>/dev/null || echo 0)"
 if [ "${GOT:-0}" -gt 9000 ]; then
@@ -208,7 +216,7 @@ printf '# INBOX\n' > "$IB/INBOX.md"
 ( cd "$IB" && git init -q . && git add -A >/dev/null 2>&1 && git commit -qm init >/dev/null 2>&1 )
 
 echo '{"prompt": "capture-me: does this reach disk before any tool call?"}' | \
-  ( cd "$IB" && CLAUDE_HOOK_SETTINGS="$TMP/ib-settings.json" CLAUDE_REPO_ROOT="$IB/.." bash tools/capture_inbox.sh >/dev/null 2>&1 )
+  ( cd "$IB" && bash tools/capture_inbox.sh >/dev/null 2>&1 )
 if grep -q 'capture-me: does this reach disk before any tool call?' "$IB/INBOX.md" 2>/dev/null; then
   ok "capture_inbox.sh writes the raw prompt to INBOX.md"
 else
@@ -225,30 +233,18 @@ check $? "capture_inbox.sh exits 0 on empty stdin (never blocks the prompt)"
 echo 'not json at all' | ( cd "$IB" && bash tools/capture_inbox.sh >/dev/null 2>&1 )
 check $? "capture_inbox.sh exits 0 on malformed JSON (never blocks the prompt)"
 
-# The aggregator: two repos, one UserPromptSubmit hook, one message, one
-# JSON object — same invariant as the SessionStart briefing above, just for
-# a different event.
-IROOT="$TMP/iroot"; mkdir -p "$IROOT/repoA" "$IROOT/repoB"
-for r in repoA repoB; do
-  cp -r tools "$IROOT/$r/tools"; rm -f "$IROOT/$r"/tools/test_*.sh
-  printf '# INBOX\n' > "$IROOT/$r/INBOX.md"
-  ( cd "$IROOT/$r" && git init -q . && git add -A >/dev/null 2>&1 && git commit -qm init >/dev/null 2>&1 )
-done
-echo '{"prompt": "two-repo capture check"}' | \
-  CLAUDE_REPO_ROOT="$IROOT" bash "$IROOT/repoA/tools/hooks/inbox.sh" >"$TMP/inbox.json" 2>/dev/null
-python3 - "$TMP/inbox.json" <<'PY' >/dev/null 2>&1
+# The installed hook set must actually wire UserPromptSubmit to
+# capture_inbox.sh — this is the one event Portfolio's own template doesn't
+# define at all, so it's worth checking explicitly rather than assuming the
+# generic install test above covered it.
+( cd "$IB" && CLAUDE_HOOK_SETTINGS="$TMP/ib-settings.json" bash tools/install-hooks.sh --quiet >/dev/null 2>&1 )
+python3 - "$TMP/ib-settings.json" <<'PY' >/dev/null 2>&1
 import json,sys
 d=json.load(open(sys.argv[1]))
-assert d["hookSpecificOutput"]["hookEventName"]=="UserPromptSubmit"
+cmds=[h["command"] for e in d["hooks"]["UserPromptSubmit"] for h in e["hooks"]]
+assert any("capture_inbox.sh" in c for c in cmds)
 PY
-RC1=$?
-grep -q 'two-repo capture check' "$IROOT/repoA/INBOX.md" 2>/dev/null; RC2=$?
-grep -q 'two-repo capture check' "$IROOT/repoB/INBOX.md" 2>/dev/null; RC3=$?
-if [ "$RC1" = 0 ] && [ "$RC2" = 0 ] && [ "$RC3" = 0 ]; then
-  ok "tools/hooks/inbox.sh captures the message into every repo, one parseable object"
-else
-  bad "tools/hooks/inbox.sh did not capture into all repos correctly" "json=$RC1 repoA=$RC2 repoB=$RC3"
-fi
+check $? "install-hooks wires UserPromptSubmit to capture_inbox.sh"
 
 # ---- 7. the secret scan still has teeth --------------------------------------
 S="$TMP/secret"; mkdir -p "$S"; cp -r tools "$S/tools"
