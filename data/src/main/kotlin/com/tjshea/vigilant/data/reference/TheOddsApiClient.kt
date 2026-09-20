@@ -47,10 +47,14 @@ class TheOddsApiClient(
             httpClient.newCall(request).await().use { response ->
                 when (response.code) {
                     429 -> {
-                        val retryAfterMs = response.header("Retry-After")?.toLongOrNull()?.times(1000) ?: 60_000
-                        KeyAttemptResult.RateLimited(retryAfterMs)
+                        val retryAfterHeader = response.header("Retry-After")
+                        val retryAfterMs = retryAfterHeader?.toLongOrNull()?.times(1000) ?: 60_000
+                        KeyAttemptResult.RateLimited(
+                            retryAfterMs,
+                            reason = "HTTP 429" + (retryAfterHeader?.let { ", Retry-After=${it}s" } ?: ""),
+                        )
                     }
-                    401 -> KeyAttemptResult.Invalid
+                    401 -> KeyAttemptResult.Invalid(reason = "HTTP 401")
                     else -> {
                         if (!response.isSuccessful) {
                             throw TheOddsApiException("The Odds API request failed: HTTP ${response.code} — ${response.body?.string()}")
