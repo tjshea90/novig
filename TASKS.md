@@ -131,3 +131,25 @@ request above did not include building it.
       per BRIEF.md's TBD sections, and RESEARCH.md §10 lists what's still
       unverified before that sign-off can happen for real (chiefly:
       confirming with Novig whether API access is actually free).
+
+## Tj's request, 2026-09-20T05:01:28Z (his own words — full text in INBOX.md)
+
+> Research odds assist pro. Does it actually find positive EV on novig? Is
+> it as good as oddsjam?
+
+### Progress on this request
+
+- [ ] Deep-dive Odds Assist Pro specifically: what it actually is (company,
+      how long it's existed, reputation), how it claims to source/compute
+      Novig odds and EV, and whether that claim holds up to scrutiny (user
+      reviews, complaints, evidence it's real vs. marketing copy).
+      RESEARCH.md §8 only captured a shallow first pass on this — this
+      request asks for a real answer, not the same summary restated.
+- [ ] Compare it feature-by-feature against OddsJam specifically (not just
+      "is it free vs $199.99/mo") — coverage breadth, update speed/latency,
+      devig method transparency, bet tracking, alerting, UI/UX, reliability
+      — enough to give Tj an honest verdict he can act on.
+- [ ] Update `RESEARCH.md` §8 (and any other section this changes, e.g. §1's
+      bottom line if Odds Assist Pro turns out to already solve the ask) with
+      the deeper findings, cited.
+- [ ] Checkpoint.
