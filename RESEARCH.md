@@ -540,6 +540,29 @@ section) — a gap explicitly flagged as untested when §4.4 first shipped,
 now closed for the direct-mode path (proxy mode still isn't, since a mock
 HTTP proxy would need HTTPS CONNECT tunneling to test for real).
 
+**Second real-world data point, 2026-09-22 (Tj tried a free residential-
+proxy trial, screenshot):** progress — the error changed from a 503 to
+`ProtocolException: Too many tunnel connections attempted: 21`, meaning a
+proxy was actually configured and being used (the error names "Novig
+(direct) key(s)," i.e. the proxy pool) rather than direct mode's zero-
+proxy path. This is a real, confirmed bug in `NovigGraphQlClient`'s own
+`Authenticator`, not a Novig-side or proxy-provider issue: it blindly
+re-attached the same `Proxy-Authorization` credentials on every 407
+challenge with no check for "already tried this," so once the proxy
+rejected the credentials once, OkHttp's own tunnel-building safety limit
+(`MAX_TUNNEL_ATTEMPTS = 21`) eventually tripped instead of a clean,
+diagnosable auth failure — a well-documented OkHttp gotcha (their own
+Authenticator recipe explicitly warns about it). Fixed: the authenticator
+now gives up after one rejected attempt instead of retrying forever, so a
+genuinely-bad/expired-trial credential now surfaces as a normal HTTP 407
+failure (which `KeyRotator` already handles — marks that proxy invalid,
+tries the next one) instead of this confusing exception. Two new unit
+tests exercise the authenticator directly (attaches credentials once,
+gives up on a repeat challenge) without needing a live HTTPS CONNECT
+tunnel. **Still open:** whether Tj's specific trial credentials are
+actually valid/active is unconfirmed — this fix makes a real credential
+problem visible, it doesn't fix a bad credential.
+
 ## 5. The math: devigging methods (with actual formulas)
 
 Devigging = stripping a book's margin/overround out of quoted odds to
