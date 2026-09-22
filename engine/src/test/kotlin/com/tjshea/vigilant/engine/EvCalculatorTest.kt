@@ -95,8 +95,9 @@ class EvCalculatorTest {
             reference = reference,
         )
 
-        check(result.fee is FeeResult.Known)
-        assertEquals(result.evPer1 - (result.fee as FeeResult.Known).amountPerDollarStaked, result.netEv!!, 1e-9)
+        val fee = result.fee
+        check(fee is FeeResult.Known)
+        assertEquals(result.evPer1 - fee.amountPerDollarStaked, result.netEv!!, 1e-9)
     }
 
     @Test
