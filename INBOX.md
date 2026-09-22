@@ -841,3 +841,15 @@ Also is there anything else useful that sharpapi has that I should keep in the a
 <event>run 35690476182: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:25:00Z
+```
+<task-notification>
+<task-id>b8xxazomv</task-id>
+<tool-use-id>toolu_01GgF4x8apwe7E3QdjhBT67w</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/74d1a98c-014f-544c-87ce-ed5fcf33b62f/tasks/b8xxazomv.output</output-file>
+<status>completed</status>
+<summary>Monitor "Release run 35690476182 (v0.3.0 signed build + GitHub Release)" stream ended</summary>
+<event>run 35690476182: completed success</event>
+</task-notification>
+```
