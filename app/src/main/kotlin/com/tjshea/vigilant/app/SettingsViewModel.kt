@@ -26,6 +26,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _uiState = MutableStateFlow<List<ProviderKeys>>(emptyList())
     val uiState: StateFlow<List<ProviderKeys>> = _uiState.asStateFlow()
 
+    private val _novigDirectModeEnabled = MutableStateFlow(false)
+    val novigDirectModeEnabled: StateFlow<Boolean> = _novigDirectModeEnabled.asStateFlow()
+
     init {
         refresh()
     }
@@ -33,6 +36,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun refresh() {
         viewModelScope.launch {
             _uiState.value = ApiProvider.entries.map { ProviderKeys(it, apiKeyStore.getKeys(it)) }
+            _novigDirectModeEnabled.value = apiKeyStore.isNovigDirectModeEnabled()
+        }
+    }
+
+    fun setNovigDirectModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            apiKeyStore.setNovigDirectModeEnabled(enabled)
+            refresh()
         }
     }
 
