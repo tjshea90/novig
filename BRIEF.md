@@ -283,11 +283,27 @@ re-diagnose these from scratch:
   *account* banned), but it requires a paid rotating-proxy subscription to
   avoid IP-based anti-bot blocking, and sits in a genuine ToS gray area now
   that Novig is CFTC-regulated (RESEARCH.md §9). Ships opt-in only — zero
-  proxies configured (the default) falls back to sample data for this leg,
-  same as every other provider, with the risk spelled out directly in the
-  Settings screen, not just in these docs. The Odds API supplies
-  Pinnacle/consensus for the reference side (RESEARCH.md §4.3) and is
-  unaffected — that leg is live whenever Tj has a key configured.
+  proxies configured *and* direct mode off (the default) falls back to
+  sample data for this leg, same as every other provider, with the risk
+  spelled out directly in the Settings screen, not just in these docs. The
+  Odds API supplies Pinnacle/consensus for the reference side (RESEARCH.md
+  §4.3) and is unaffected — that leg is live whenever Tj has a key
+  configured.
+
+  **A free "direct, no proxy" mode was added 2026-09-22 (RESEARCH.md
+  §4.4.1)**, after Tj asked whether a free alternative to paid proxies
+  existed (a VPN, or airplane-mode IP cycling). Real finding: the
+  reference package's hard proxy requirement was written for its own
+  continuous, high-frequency polling — this app's manual-refresh usage is
+  much lighter and may not need a pool at all, so it's worth trying free
+  first. `NovigGraphQlClient` now accepts zero proxies and connects
+  directly over whatever network the device is currently routed through
+  (a system-wide VPN, if active, works automatically — no per-app
+  configuration needed). A separate Settings toggle is the explicit
+  opt-in for this — proxies and direct mode are two independent ways to
+  go live, neither is a silent default. Direct mode has no pool to retry
+  with, so a rate-limit or rejection there fails immediately and visibly
+  (`NovigDirectAccessException`) rather than being silently swallowed.
 
   `NovigGraphQlClient implements NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
   — both live in `data`, both real (the GraphQL client's queries/parsing
