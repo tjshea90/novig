@@ -86,7 +86,11 @@ private fun ProviderKeysSection(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(entry.provider.displayName, style = MaterialTheme.typography.titleMedium)
             Text(
-                if (entry.keys.isEmpty()) "No keys yet — running on sample data for this leg." else "${entry.keys.size} key(s) — tried in this order, auto-switches when one runs out.",
+                when {
+                    entry.keys.isNotEmpty() -> "${entry.keys.size} key(s) — tried in this order, auto-switches when one runs out."
+                    entry.provider == ApiProvider.NOVIG_PROXY && novigDirectModeEnabled -> "No proxies added — running direct (no proxy) instead, per the toggle below."
+                    else -> "No keys yet — running on sample data for this leg."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
