@@ -489,6 +489,40 @@ best price — that's solving a different problem (liquidity summary, not
 "what's a fair current-price quote"), so this app didn't copy it directly;
 documented as a genuine best-effort choice, not a confirmed convention.
 
+#### 4.4.1 A free "direct, no proxy" mode, 2026-09-22T05:38:31Z
+
+Tj asked whether a free alternative to paid proxies existed — he has a VPN,
+and floated toggling airplane mode for a new carrier IP. Answered honestly,
+then acted on the real gap the question exposed:
+
+- **A VPN gives one non-rotating IP, not a pool.** It may work, may not —
+  commercial VPN IP ranges are commonly *already* on anti-bot blocklists
+  precisely because they're used for exactly this kind of thing. No way to
+  know without trying; costs nothing extra if Tj already has one.
+- **Airplane-mode IP cycling** only helps if the carrier assigns a fresh
+  public IP on reconnect — many carriers use CGNAT, where toggling may not
+  change the externally visible IP at all. It's also a manual, one-at-a-
+  time action outside the app's control; nothing to automate here.
+- **The bigger finding:** the reference package's hard `PROXIES`
+  requirement was written for its own continuous, high-frequency polling
+  use case. This app only calls Novig on a manual refresh — a much lighter
+  request volume that may not need a rotating pool at all. Worth trying
+  with zero proxies first, completely free, before assuming any of the
+  above is even necessary.
+
+**The real gap:** `NovigGraphQlClient` was built requiring at least one
+proxy, mirroring the reference package's own hard requirement — so none of
+this (VPN, home network, airplane-mode-cycled IP) was actually testable.
+Fixed: the client now accepts zero proxies and connects directly over
+whatever network Android is currently routed through — a system-wide VPN,
+if active, is picked up automatically with no per-app configuration, since
+that's just how the OS's default network route works. A new Settings
+toggle ("Try direct access (no proxy)") is the explicit opt-in for this,
+separate from the proxy list itself — same "never a silent default"
+posture as every other provider. Direct mode has no pool to fall back to,
+so a rate-limit or rejection there is a real, immediate failure
+(`NovigDirectAccessException`), not something silently retried.
+
 ## 5. The math: devigging methods (with actual formulas)
 
 Devigging = stripping a book's margin/overround out of quoted odds to
