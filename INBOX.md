@@ -1087,3 +1087,12 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35692802112: completed failure</event>
 </task-notification>
 ```
+
+## 2026-09-22T06:02:51Z
+```
+<task-notification>
+<task-id>bky1mbzxr</task-id>
+<summary>Monitor event: "Release run 35693108649 (v0.3.2, self-healing tag-check fix)"</summary>
+<event>run 35693108649: in_progress None</event>
+</task-notification>
+```
