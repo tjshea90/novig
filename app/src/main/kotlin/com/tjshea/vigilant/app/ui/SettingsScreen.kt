@@ -108,6 +108,24 @@ private fun ProviderKeysSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                        Text("Try direct access (no proxy)", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Free — uses your phone's current network as-is (a VPN active at the " +
+                                "system level works automatically, no setup needed here). No " +
+                                "rotating pool to fall back to, so it may get rate-limited sooner " +
+                                "than a real proxy subscription would. Costs nothing to try first.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = novigDirectModeEnabled, onCheckedChange = onSetNovigDirectModeEnabled)
+                }
             }
 
             entry.keys.forEach { key ->
