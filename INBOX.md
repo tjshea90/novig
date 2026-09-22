@@ -872,3 +872,12 @@ Are there any free proxies I can use for this? I have a VPN , and airplane mode 
 <event>run 35692029112: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:47:02Z
+```
+<task-notification>
+<task-id>bg5mechjm</task-id>
+<summary>Monitor event: "CI run 35692029112 (unit tests + assembleDebug) for the direct-mode addition"</summary>
+<event>run 35692029112: in_progress None</event>
+</task-notification>
+```
