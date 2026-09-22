@@ -911,3 +911,12 @@ Are there any free proxies I can use for this? I have a VPN , and airplane mode 
 <event>run 35692115606: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:48:26Z
+```
+<task-notification>
+<task-id>b97t2jjrh</task-id>
+<summary>Monitor event: "Release run 35692115606 (v0.3.1 signed build + GitHub Release)"</summary>
+<event>run 35692115606: in_progress None</event>
+</task-notification>
+```
