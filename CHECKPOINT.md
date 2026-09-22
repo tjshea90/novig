@@ -1,13 +1,13 @@
-# CHECKPOINT 316 — read me first, then TASKS.md
+# CHECKPOINT 317 — read me first, then TASKS.md
 
-**Written:** 2026-09-22T05:25:22Z · **tests:** all 1 fast checks green
-**Branch:** `claude/app-overhaul-novig-data-ut6a84` · **builds on:** `a937391` (this checkpoint is the commit after it)
+**Written:** 2026-09-22T05:45:28Z · **tests:** all 1 fast checks green
+**Branch:** `claude/app-overhaul-novig-data-ut6a84` · **builds on:** `bee5e5b` (this checkpoint is the commit after it)
 
 ## Just done
-Shipped v0.3.0 for real: confirmed CI green (run 35690359093) and release green (run 35690476182, signed APK 21.5MB, signature verified against BRIEF.md's recorded fingerprint, GitHub Release published), recorded in BUILDLOG.md. This closes out Tj's 'overhaul the app to use the novig data from the method attached' request end to end: NovigGraphQlClient (real, verified, unauthenticated direct-to-Novig-backend access), fee fix, EventMatcher order-independence fix, dead code removed, Settings UI wired with prominent risk disclosure, 95 tests green, docs updated.
+Added a free 'direct access, no proxy' opt-in path answering Tj's question about free proxy alternatives (VPN, airplane-mode IP cycling). NovigGraphQlClient now accepts an empty proxy list and connects directly instead of refusing to run (previously KeyRotator's own init check would have crashed on an empty list). New Settings toggle, separate from the proxy list, with honest copy about the tradeoff. ScannerViewModel/SettingsViewModel/SettingsScreen/MainActivity wired through. 97 tests green (2 new construction-regression tests).
 
 ## Do this next
-Report back to Tj: send the v0.3.0 Release link as plain tappable text, plus an honest summary of what changed and the real risk/cost tradeoff (proxies required, ToS gray area, no account risk since it's unauthenticated). Nothing further queued unless Tj asks for something new.
+Update BRIEF.md/RESEARCH.md with this addition and the honest technical reasoning (VPN = single non-rotating IP possibly already blocklisted; airplane mode depends on carrier NAT; this app's light manual-refresh volume may not need a pool at all), verify CI green for the app module, ship as v0.3.1, tell Tj it's ready to try for free.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Report back to Tj: send the v0.3.0 Release link as plain tappable text, plus an 
 
 ## Last ten checkpoints
 ```
+  684b84d ckpt 316: Shipped v0.3.0 for real: confirmed CI green (run 35690359093) and release gree
   d18bc8a ckpt 315: Confirmed CI green for real on the full overhaul (run 35690359093, conclusion=
   9e2539c ckpt 314: Updated BRIEF.md (Locked architecture decisions — NovigGraphQlClient replace
   2e79d94 ckpt 313: Built and verified NovigGraphQlClient (data module): real, direct GraphQL clie
@@ -25,8 +26,7 @@ Report back to Tj: send the v0.3.0 Release link as plain tappable text, plus an 
   32c58c9 ckpt 298: v0.2.1's diagnostic fix worked: Tj's retry now shows 'Last failure: invalid (H
   8fe4bd2 ckpt 296: v0.2.1 shipped: contains the two fixes from the 'Scan failed' bug report (auto
   07d9c22 ckpt 288: Logged Tj's 'ship v0.2.1 now' request in TASKS.md, bumped versionCode 2->3 / v
-  e074e62 ckpt 284: Confirmed CI green for real on the Scan-failed diagnosis/fix push (run 3553801
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(17 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
