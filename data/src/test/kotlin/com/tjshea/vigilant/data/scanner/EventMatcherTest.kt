@@ -17,12 +17,20 @@ class EventMatcherTest {
     }
 
     @Test
-    fun `does not match when home and away are swapped`() {
-        assertFalse(EventMatcher.matches("Alabama", "South Carolina", "South Carolina", "Alabama"))
+    fun `still matches when home and away are swapped`() {
+        // Order-independent on purpose (RESEARCH.md §4.4) — Novig's team names come from
+        // moneyline outcomes in whatever order the API returns them, not a documented home/away
+        // field, so two providers disagreeing on which side is "home" must not cause a miss.
+        assertTrue(EventMatcher.matches("Alabama", "South Carolina", "South Carolina", "Alabama"))
     }
 
     @Test
     fun `does not match different teams`() {
         assertFalse(EventMatcher.matches("Alabama", "South Carolina", "Alabama", "Georgia"))
+    }
+
+    @Test
+    fun `does not match a partial overlap with only one shared team`() {
+        assertFalse(EventMatcher.matches("Alabama", "South Carolina", "South Carolina", "Georgia"))
     }
 }
