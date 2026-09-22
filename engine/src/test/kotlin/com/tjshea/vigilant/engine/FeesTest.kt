@@ -34,8 +34,23 @@ class FeesTest {
     }
 
     @Test
-    fun `parlay fee is explicitly unknown, never silently zero`() {
+    fun `parlay taker fee matches the documented formula`() {
         val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = false, context = TradeContext.PARLAY))
-        assertTrue(fee is FeeResult.Unknown)
+        check(fee is FeeResult.Known)
+        // 0.10 * 0.5 * 0.5 = 0.025
+        assertEquals(0.025, fee.amountPerDollarStaked, 1e-9)
+    }
+
+    @Test
+    fun `parlay taker fee is more expensive than live straight taker fee at the same price`() {
+        val parlay = Fees.parlayTakerFee(0.5)
+        val liveStraight = Fees.liveStraightTakerFee(0.5)
+        assertTrue(parlay > liveStraight)
+    }
+
+    @Test
+    fun `parlay maker side is still free`() {
+        val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = true, context = TradeContext.PARLAY))
+        assertEquals(FeeResult.Known(0.0), fee)
     }
 }
