@@ -232,26 +232,40 @@ re-diagnose these from scratch:
 - **A seventh, found and fixed 2026-09-22: cancelling an in-flight
   `release.yml` run doesn't stop it instantly, and a step already running
   when the cancel signal arrives can still finish** — hit for real
-  triggering v0.3.2's release: a run stuck well past its normal ~60-75s
-  build time got cancelled, but its "create the release tag" step (`git
-  push origin "$tag"`) had *already* raced ahead and completed before the
-  cancellation took effect, while the next step ("create GitHub Release")
-  got cut off. Net effect: a real tag existed on GitHub with no Release
-  attached to it. Worse, the retry's own "refuse to overwrite" check didn't
-  catch this and let the same tag collide again, because that check ran
-  `git rev-parse` against the **local, shallow checkout** — which doesn't
-  reliably see a tag pushed to the remote moments earlier by a different
-  run. Fixed in `release.yml`: the check now queries the remote directly
-  (`git ls-remote --tags origin`), and if a tag exists with no GitHub
-  Release attached (the exact leftover-from-a-cancelled-run case), it
-  deletes that stale tag and proceeds automatically — a tag that already
-  has a real Release still refuses exactly as before. If a release run
-  looks stuck well past its normal duration, check whether other CI/release
-  runs are firing concurrently first (the autosave hook double-triggers
-  `ci.yml` on every push — once for the feature branch, once again when
-  `push.sh` fast-forwards `main`, since `ci.yml` has no branch filter — and
-  a burst of these can genuinely contend for this account's concurrent-job
-  quota) before assuming the build itself is broken.
+  shipping v0.3.2's release: a run got cancelled while its "create the
+  release tag" step (`git push origin "$tag"`) had *already* raced ahead
+  and completed, while the next step ("create GitHub Release") got cut
+  off mid-flight. Net effect: a real tag existed on GitHub with no Release
+  attached, and separately a draft Release existed with no real tag
+  attached (`softprops/action-gh-release` got interrupted before finishing).
+  The retry's own "refuse to overwrite" check didn't catch either leftover
+  and collided with them, because it ran `git rev-parse` against the
+  **local, shallow checkout** (doesn't reliably see a tag pushed to the
+  remote moments earlier by a different run) and `gh release view` matches
+  by the release's `tag_name` *field* (which a draft can carry even when
+  not attached to the real tag). Fixed in `release.yml`: the check now
+  queries the remote directly and self-heals both leftover cases (deletes
+  a bare tag with no Release; deletes a draft Release with no real tag)
+  automatically — anything genuinely published still refuses exactly as
+  before.
+  **Important correction to this trap's own original write-up, same
+  session:** the cancellation that started this whole chain was itself a
+  mistake, not a response to a real stuck build. Each of those release
+  runs actually completed in well under 3 minutes by GitHub's own
+  timestamps — confirmed only *after* Tj pointed out the "stuck 20+
+  minutes" claim was wrong. The false read came from treating the sum of
+  several `ScheduleWakeup` `delaySeconds` values as confirmed elapsed real
+  time, when a session's own scheduled-wakeup requests are not a reliable
+  clock — check a resource's own real timestamps (here, the workflow run's
+  `created_at`/`updated_at` from the GitHub API) before concluding
+  something has been running too long, never the sum of your own prior
+  wait requests. Compounding this: a `Monitor` task left running
+  concurrently with `ScheduleWakeup` was independently emitting a new
+  notification every 20 seconds regardless of whether anything had
+  changed (an unconditional `echo` inside the poll loop, not gated on a
+  state change) — worth remembering generally: a polling loop's `echo`
+  belongs on state changes, not unconditionally on every iteration, since
+  each line is a separate event.
 
 ## Locked architecture decisions
 
