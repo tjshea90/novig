@@ -853,3 +853,8 @@ Also is there anything else useful that sharpapi has that I should keep in the a
 <event>run 35690476182: completed success</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:28:00Z
+```
+Check on release run 35690476182 (v0.3.0) and the background Monitor task — if the release completed, record it in BUILDLOG.md via tools/record-release.sh and send Tj the Release link as plain tappable text along with the risk summary. If still running past ~12-15 minutes total, treat it as anomalously slow and investigate further (check job logs once available, consider whether it's hung).
+```
