@@ -262,35 +262,46 @@ re-diagnose these from scratch:
   and render a visible banner naming exactly which leg(s) are sample when
   either is false. Keep both flags wired correctly as real providers get
   plugged in or swapped.
-- **SharpAPI is wired to supply the Novig leg, The Odds API supplies the
-  reference leg — wired 2026-09-20, each provider used only for the one
-  leg it can actually serve.** **Correction, 2026-09-20 (later the same
-  day):** the original reasoning here — "SharpAPI's free tier uniquely
-  includes Novig among its ~40 books" — was wrong, and the wiring was
-  built on that wrong premise. Tested for real against Tj's own account:
-  SharpAPI's `sportsbook=novig` request returns **HTTP 403** on the free
-  tier, both from `SharpApiClient` and independently from SharpAPI's own
-  Playground. Their own product page confirms why: **"Available on Hobby
-  plan and above"** ($79/mo) — the free tier is scoped to DraftKings and
-  FanDuel only, not the ~40-book catalog the general marketing copy
-  implied. See RESEARCH.md §4.2/§4.2.2 for the full corrected picture and
-  what was researched as alternatives (none found free). `SharpApiClient`
-  itself is still correct code — real endpoint, real auth, real parsing —
-  it just has no working key for the Novig leg until Tj either upgrades
-  to SharpAPI's Hobby plan, Novig's own API (§4.1) turns out to be free
-  for individual use, or a different paid provider is chosen. The Novig
-  leg falls back to sample data in the meantime, and the app is explicit
-  about that (per the per-leg sample-data banner rule above). The Odds
-  API supplies Pinnacle/consensus for the reference side (RESEARCH.md
-  §4.3) and is unaffected by this — that leg is live.
+- **`NovigGraphQlClient` supplies the Novig leg (wired 2026-09-22,
+  superseding the SharpAPI wiring below), The Odds API supplies the
+  reference leg — each provider used only for the one leg it can actually
+  serve.** **History:** SharpAPI was originally wired for the Novig leg
+  (2026-09-20) on the premise its free tier uniquely included Novig among
+  ~40 books — wrong, proven by a real HTTP 403 against Tj's own account and
+  confirmed by SharpAPI's own product page ("Available on Hobby plan and
+  above," $79/mo; free tier is DraftKings/FanDuel only). `SharpApiClient`
+  was deleted 2026-09-22 (RESEARCH.md §4.2/§4.2.2) — dead code with no
+  future value once the free-tier path was proven categorically closed,
+  unlike `NovigApiClient` (kept dormant; still has future value if Novig's
+  official API reply ever lands). **The actual replacement, 2026-09-22
+  (RESEARCH.md §4.4):** Tj supplied a working, MIT-licensed, third-party
+  Python package (`novig-liquidity`) reverse-engineering unauthenticated
+  read access to Novig's own internal GraphQL backend
+  (`gql.novig.us/v1/graphql`) — verified directly against the package's
+  real source, not just a summary. **Real, disclosed tradeoff, not a free
+  lunch:** no account/login is involved (so it can't get Tj's Novig
+  *account* banned), but it requires a paid rotating-proxy subscription to
+  avoid IP-based anti-bot blocking, and sits in a genuine ToS gray area now
+  that Novig is CFTC-regulated (RESEARCH.md §9). Ships opt-in only — zero
+  proxies configured (the default) falls back to sample data for this leg,
+  same as every other provider, with the risk spelled out directly in the
+  Settings screen, not just in these docs. The Odds API supplies
+  Pinnacle/consensus for the reference side (RESEARCH.md §4.3) and is
+  unaffected — that leg is live whenever Tj has a key configured.
 
-  `SharpApiClient implements NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
-  — both live in `data`, both real (`MockWebServer`-tested against each
-  provider's actual documented response shape, not guessed), both fall
+  `NovigGraphQlClient implements NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
+  — both live in `data`, both real (the GraphQL client's queries/parsing
+  verified against the package's actual source and unit-tested against
+  fixture JSON matching that verified shape; `TheOddsApiClient`
+  `MockWebServer`-tested against its documented response shape), both fall
   back independently to `SampleNovigRepository`/`SampleReferenceOddsRepository`
-  when that provider has no stored key yet — which is exactly the
-  mechanism now keeping the Novig leg honest about being unauthorized
-  rather than silently degraded.
+  when that leg has no stored proxies/key yet — which is exactly the
+  mechanism keeping the Novig leg honest about running on sample data
+  rather than silently degraded. `NovigGraphQlClient`'s proxy pool reuses
+  `KeyRotator`/`ApiKeyStore`/the encrypted Settings-screen storage verbatim
+  (`ApiProvider.NOVIG_PROXY`) rather than building parallel plumbing for
+  what is functionally the same problem (a list of credentials to try in
+  order, rotating past ones that fail).
 - **Automatic multi-key rotation: `KeyRotator` (`data/keys/KeyRotator.kt`),
   provider-agnostic — Tj's own explicit request, 2026-09-20 ("make a
   system for the app to switch keys automatically when my usage runs
