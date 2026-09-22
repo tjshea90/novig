@@ -1,13 +1,13 @@
-# CHECKPOINT 311 — read me first, then TASKS.md
+# CHECKPOINT 312 — read me first, then TASKS.md
 
-**Written:** 2026-09-20T21:51:57Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-sports-research-n6jum5` · **builds on:** `22dfec4` (this checkpoint is the commit after it)
+**Written:** 2026-09-22T05:06:36Z · **tests:** all 1 fast checks green
+**Branch:** `claude/app-overhaul-novig-data-ut6a84` · **builds on:** `fb8fa3d` (this checkpoint is the commit after it)
 
 ## Just done
-Answered Tj's question about whether anything else in SharpAPI's free tier is worth keeping wired into the app. Confirmed the free tier's actual scope (12 req/min, exactly DraftKings+FanDuel, 60s-delayed, pre-match/REST only) directly from their pricing page. Its book coverage is a strict subset of The Odds API's already-free reference leg (which also has Pinnacle), so nothing free from SharpAPI adds real capability right now. Noted one contradictory claim from a docs-page summary and didn't trust it since it's directly contradicted by the live 403 Tj already hit.
+Reviewed Tj's overhaul request + all 3 attachments (briefing PDF + actual novig-liquidity v1.1.20 Python package source, extracted and read directly, not just the PDF summary). Confirmed the real, working, unauthenticated GraphQL access method to gql.novig.us. Reviewed existing app architecture end to end and decided overhaul-not-rewrite. Logged full plan into TASKS.md with the real ToS/proxy risk disclosed plainly, not buried.
 
 ## Do this next
-Nothing further queued unless Tj asks for something new. No code changes this round — pure research/answer.
+Implement NovigGraphQlClient in the data module (proxy pool via existing KeyRotator/ApiKeyStore infra, GraphQL query/parse logic, last-price-preferred outcome pricing, moneyline-outcome team-name extraction), update Fees.kt's parlay case, make EventMatcher order-independent, delete dead SharpApiClient, wire Settings UI, write real tests, run them, then docs+ship.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Nothing further queued unless Tj asks for something new. No code changes this ro
 
 ## Last ten checkpoints
 ```
+  78a67b4 ckpt 311: Answered Tj's question about whether anything else in SharpAPI's free tier is 
   ebb2cb7 ckpt 308: Researched and confirmed: there is no $0/mo path to real Novig odds data from 
   32c58c9 ckpt 298: v0.2.1's diagnostic fix worked: Tj's retry now shows 'Last failure: invalid (H
   8fe4bd2 ckpt 296: v0.2.1 shipped: contains the two fixes from the 'Scan failed' bug report (auto
@@ -23,9 +24,6 @@ Nothing further queued unless Tj asks for something new. No code changes this ro
   e074e62 ckpt 284: Confirmed CI green for real on the Scan-failed diagnosis/fix push (run 3553801
   68c4176 ckpt 278: Diagnosed and fixed Tj's 'Scan failed — rate-limited or invalid' report (v0.
   5417b81 ckpt 266: v0.2.0 shipped: sport-selection picker request is fully done end to end — da
-  9c59997 ckpt 256: Confirmed CI green for real on the sport-picker + fix push (run 35536752615, c
-  d4ea339 ckpt 249: Fixed a real CI failure caught on the first push of the sport picker (run 3553
-  2c1f31c ckpt 241: Built the sport-selection picker per Tj's explicit instruction: no odds load f
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
