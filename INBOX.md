@@ -1293,3 +1293,8 @@ Is there a free proxy I can try
 ```
 Check job-level detail (list_workflow_jobs) for release run 35693512531 (v0.3.2, retry #4) and how many workflow runs are still concurrently in_progress. If all real steps show success, fetch the release via get_release_by_tag, record it in BUILDLOG.md via tools/record-release.sh, and tell Tj the 503-classification fix is shipped, plus the honest read on what his 503 probably means and what to try next. If it's finally moved past the build step, good — if still stuck, this may need a longer wait yet given each check itself adds to the queue.
 ```
+
+## 2026-09-22T06:40:00Z
+```
+Check release run 35695667948 via list_workflow_jobs. If all real steps show success, fetch the release via get_release_by_tag, record it in BUILDLOG.md via tools/record-release.sh, and tell Tj v0.3.3 is shipped with an honest explanation of what the authenticator fix does and doesn't resolve for his proxy trial.
+```
