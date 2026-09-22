@@ -940,3 +940,34 @@ HTTP 503 from Novig on the first attempt.
       were confirmed elapsed real time). Release published
       (https://github.com/tjshea90/novig/releases/tag/v0.3.2, signed APK
       21.5MB, `vigilant-v0.3.2.apk`). Recorded in `BUILDLOG.md`.
+
+## Tj's screenshot, 2026-09-22 (v0.3.2, after trying a free residential-proxy trial)
+
+> "Scan failed — All 1 Novig (direct) key(s) are rate-limited or invalid —
+> add a new key or wait for a reset. Last failure: invalid
+> (ProtocolException: Too many tunnel connections attempted: 21)."
+
+Progress — a proxy is now actually configured and being used (the error
+names the proxy pool, not the zero-proxy direct-mode path). Different,
+new error, not the same 503.
+
+### Progress on this request
+
+- [x] Diagnosed and confirmed a real, well-known OkHttp bug in
+      `NovigGraphQlClient`'s own proxy `Authenticator`: it blindly
+      re-attached the same `Proxy-Authorization` credentials on every 407
+      challenge with no check for "already tried this," so a genuinely
+      rejected credential caused OkHttp's own tunnel-building safety limit
+      (`MAX_TUNNEL_ATTEMPTS = 21`) to trip instead of a clean, diagnosable
+      auth failure. Fixed: gives up after one rejected attempt, per
+      OkHttp's own documented Authenticator recipe.
+- [x] Two new unit tests exercising the authenticator directly (attaches
+      credentials on the first challenge; gives up on a repeat challenge)
+      — 103 tests total, all green.
+- [x] Updated RESEARCH.md §4.4.1 with the finding.
+- [ ] Ship as v0.3.3, verify CI green, confirm release green, record
+      BUILDLOG, tell Tj honestly: this fixes a real bug that was masking
+      the actual failure, but whether his specific trial proxy credentials
+      are valid is still unconfirmed — the next attempt will surface a
+      clean, readable reason if they're not (e.g. "HTTP 407") instead of
+      this exception.
