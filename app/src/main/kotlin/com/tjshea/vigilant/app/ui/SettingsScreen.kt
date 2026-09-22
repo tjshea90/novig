@@ -42,6 +42,8 @@ fun SettingsScreen(
     providerKeys: List<ProviderKeys>,
     onAddKey: (ApiProvider, String) -> Unit,
     onRemoveKey: (ApiProvider, String) -> Unit,
+    novigDirectModeEnabled: Boolean,
+    onSetNovigDirectModeEnabled: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -62,6 +64,8 @@ fun SettingsScreen(
                     entry = entry,
                     onAddKey = { key -> onAddKey(entry.provider, key) },
                     onRemoveKey = { key -> onRemoveKey(entry.provider, key) },
+                    novigDirectModeEnabled = novigDirectModeEnabled,
+                    onSetNovigDirectModeEnabled = onSetNovigDirectModeEnabled,
                 )
             }
         }
@@ -73,6 +77,8 @@ private fun ProviderKeysSection(
     entry: ProviderKeys,
     onAddKey: (String) -> Unit,
     onRemoveKey: (String) -> Unit,
+    novigDirectModeEnabled: Boolean,
+    onSetNovigDirectModeEnabled: (Boolean) -> Unit,
 ) {
     var newKeyText by remember(entry.provider) { mutableStateOf("") }
 
