@@ -7,9 +7,10 @@ import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
 import com.tjshea.vigilant.data.keys.ApiKeyStore
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.KeyRotator
+import com.tjshea.vigilant.data.novig.NovigGraphQlClient
+import com.tjshea.vigilant.data.novig.NovigLeagues
 import com.tjshea.vigilant.data.novig.NovigRepository
 import com.tjshea.vigilant.data.novig.SampleNovigRepository
-import com.tjshea.vigilant.data.novig.SharpApiClient
 import com.tjshea.vigilant.data.reference.ReferenceOddsRepository
 import com.tjshea.vigilant.data.reference.SampleReferenceOddsRepository
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
