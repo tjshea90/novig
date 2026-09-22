@@ -766,7 +766,7 @@ proxy subscription himself.
       `price_to_american`/`calculate_liquidity` formulas + the
       `novig.onelink.me`/`novig.com` deep-link formats verbatim from
       working code.
-- [ ] Reviewed the existing app's architecture (`engine`+`data`+`app`
+- [x] Reviewed the existing app's architecture (`engine`+`data`+`app`
       modules) end to end before deciding overhaul-vs-rewrite: the devig/EV
       math (`engine`), the `NovigRepository`/`ReferenceOddsRepository`
       provider-abstraction + `KeyRotator` multi-key-rotation + encrypted
@@ -774,7 +774,7 @@ proxy subscription himself.
       already-shipped infrastructure that this new access method slots
       into directly — decided **overhaul, not rewrite**: the problem was
       always "no free Novig data source," never "wrong architecture."
-- [ ] Add `NovigGraphQlClient` (`data` module): real client for the
+- [x] Add `NovigGraphQlClient` (`data` module): real client for the
       verified GraphQL endpoint/queries, proxy pool reusing the existing
       `KeyRotator`/`ApiKeyStore`/encrypted-Settings-screen infra verbatim
       (a proxy string is just another kind of rotated credential) rather
@@ -785,36 +785,53 @@ proxy subscription himself.
       matching (Novig's own schema has no explicit home/away team fields,
       only a free-text event `description` — PDF §6 flags this
       "matching/normalization" problem as the real hard part, not the API
-      calls).
-- [ ] Delete `SharpApiClient`+test (dead: confirmed 2026-09-20 that
+      calls). Also added `NovigLeagues` (Sport key → Novig league string
+      mapping, best-effort) since the GraphQL API is queried per-league,
+      unlike SharpAPI's single "give me everything" endpoint.
+- [x] Delete `SharpApiClient`+test (dead: confirmed 2026-09-20 that
       SharpAPI's free tier categorically can't reach Novig — no future
       value, unlike `NovigApiClient` which stays dormant pending Novig's
-      still-unanswered official-API email).
-- [ ] Update `Fees.kt`'s parlay case from `Unknown` to a real formula — the
+      still-unanswered official-API email). Updated `NovigApiClient.kt`'s
+      and `NovigLiveFeed.kt`'s doc comments to flag that the briefing found
+      a second, independently-verified source contradicting the
+      docs.novig.com-based OAuth assumption they were built on.
+- [x] Update `Fees.kt`'s parlay case from `Unknown` to a real formula — the
       briefing confirms it for the first time (`price × (1-price) × 0.10`,
       same shape as the already-confirmed live-straight-taker fee but a
       0.10 multiplier instead of 0.03) — resolves RESEARCH.md §10 item 3.
-- [ ] Make `EventMatcher` order-independent (home/away swapped shouldn't
+- [x] Make `EventMatcher` order-independent (home/away swapped shouldn't
       cause a false non-match across two providers with different
       conventions) — a real correctness bug this new client's team-name
       extraction would otherwise expose, worth fixing regardless of source.
-- [ ] Wire proxies into `SettingsScreen`/`SettingsViewModel`/
+- [x] Wire proxies into `SettingsScreen`/`SettingsViewModel`/
       `ScannerViewModel` the same way API keys already work, with clear
       warning copy directly above the input field (not a separate consent
       toggle — pasting in a real proxy subscription's credentials already
       is the deliberate, informed action).
-- [ ] Real unit tests against fixture JSON matching the verified query
+- [x] Real unit tests against fixture JSON matching the verified query
       shape exactly (proxy rotation, GraphQL parsing, price-source
       fallback, market-type mapping, team-name extraction) — run for real
-      in this container (`engine`+`data` are plain Kotlin/JVM).
-- [ ] Update `BRIEF.md`/`RESEARCH.md` with the new access method, the real
-      risk disclosure, and resolve the now-answered open items (§10 item 1
-      effectively superseded — a working free path exists even though
-      Novig's own official API answer never came; §10 item 3 resolved).
+      in this container (`engine`+`data` are plain Kotlin/JVM). **95 tests
+      total across engine+data, all green** — 22 new `NovigGraphQlClient`
+      tests, 2 new `NovigLeagues` tests, `EventMatcher`/`Fees`/
+      `EvCalculator` tests updated for the behavior changes above.
+- [x] Update `BRIEF.md`/`RESEARCH.md` with the new access method, the real
+      risk disclosure (new RESEARCH.md §4.4, §9 rewritten to distinguish
+      the actually-wired-in gray-area path from the still-dormant
+      "official API" clean case, §10 items 1/3 resolved, two new open
+      items for what's still best-effort/unconfirmed against real data).
 - [ ] Verify what this container can for real
-      (`./gradlew --configure-on-demand :engine:test :data:test`), push,
-      confirm CI green for the `app` module (no local Android SDK).
+      (`./gradlew --configure-on-demand :engine:test :data:test` — done,
+      95/95 green), push, confirm CI green for the `app` module (no local
+      Android SDK).
 - [ ] Bump version, ship, confirm the release build green, send Tj the
       Release link as plain tappable text — this is real, shippable work
       per CLAUDE.md's "Releasing" section, not left uncommitted-to-a-release.
-- [ ] Checkpoint through this in stages, not just at the end.
+- [x] Checkpoint through this in stages, not just at the end.
+- **Deliberately not built:** SportsGameOdds as a reference-leg client
+      (PDF §5's suggestion) — `TheOddsApiClient` already works, is already
+      confirmed live against Tj's own key (RESEARCH.md §4.3), and adding a
+      second unverified client for a leg that isn't broken would be scope
+      creep beyond what this request actually needed. Worth building later
+      if Tj specifically wants it (PDF's pitch: a devigged `fairOdds` field
+      supplied directly, permanent free tier) — not done here.
