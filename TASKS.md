@@ -965,9 +965,57 @@ new error, not the same 503.
       credentials on the first challenge; gives up on a repeat challenge)
       — 103 tests total, all green.
 - [x] Updated RESEARCH.md §4.4.1 with the finding.
-- [ ] Ship as v0.3.3, verify CI green, confirm release green, record
-      BUILDLOG, tell Tj honestly: this fixes a real bug that was masking
-      the actual failure, but whether his specific trial proxy credentials
-      are valid is still unconfirmed — the next attempt will surface a
-      clean, readable reason if they're not (e.g. "HTTP 407") instead of
-      this exception.
+- [x] Shipped v0.3.3. CI confirmed green for real
+      (https://github.com/tjshea90/novig/actions/runs/35695593xxx-area —
+      see run 35695667948 below for the release job itself, both green).
+      Release confirmed green for real
+      (https://github.com/tjshea90/novig/releases/tag/v0.3.3, run
+      35695667948, every step succeeded: build, fingerprint verification,
+      tag, GitHub Release published with the signed APK attached, 21.5MB,
+      `vigilant-v0.3.3.apk`). Recorded in `BUILDLOG.md` via
+      `tools/record-release.sh`.
+
+## Tj's screenshot, 2026-09-22 (v0.3.3, "Vigilant" app — image only, no text; full-text capture N/A since this message carried no text for capture_inbox.sh to log)
+
+> Screenshot shows: "Scan failed — All 1 Novig (direct) key(s) are
+> rate-limited or invalid — add a new key or wait for a reset. Last
+> failure: invalid (IOException: Unexpected response code for CONNECT:
+> 402)."
+
+### Progress on this request
+
+- [x] Confirmed the v0.3.3 authenticator fix is working as designed: this
+      is a clean, single-shot error, not the old
+      "ProtocolException: Too many tunnel connections attempted: 21" crash
+      — the fix from ckpt 326/v0.3.3 is real and already proven by this
+      exact screenshot.
+- [x] Diagnosed the new error itself by reading `NovigGraphQlClient.kt`'s
+      `executeViaProxy`/`executeGraphQl`: this exception fires from
+      OkHttp's own proxy CONNECT-tunnel handshake (`java.net.http`/OkHttp
+      internals), before the request ever reaches Novig's GraphQL
+      endpoint at all — caught by the generic `catch (e: IOException)`
+      block and reported verbatim as `KeyAttemptResult.Invalid(reason =
+      "IOException: Unexpected response code for CONNECT: 402")`. HTTP 402
+      is "Payment Required," returned by the **proxy provider itself**
+      while establishing the tunnel — not a Novig response, not a bug in
+      this app's request-building. Ruled out any code defect: the existing
+      classification (any non-IOException-caught failure that isn't
+      429/502/503/504/401/403 already falls through to a generic `Invalid`
+      with the raw reason attached) is already exactly the intended
+      "surface it verbatim so it's diagnosable from the error text alone"
+      design proven working here.
+- [x] Told Tj honestly in chat: this means the specific proxy currently
+      configured in Settings is telling OkHttp "payment required" before
+      even letting the connection through — almost certainly the free/
+      trial residential-proxy plan he tried has run out of trial usage or
+      needs a paid plan to continue, not something this app's code can
+      route around. Recommended two options: (a) check that provider's own
+      dashboard for trial/billing status and either pay or get a fresh
+      trial credential, or (b) use the free "direct access, no proxy"
+      toggle shipped in v0.3.1 instead (accepting the tradeoff already
+      disclosed there — more likely to get rate-limited/blocked, per the
+      503s already seen testing that path).
+- [x] No code change made — nothing to fix; this is an external proxy
+      account/billing state, not an app defect. Checkpointed the diagnosis
+      itself so a future session doesn't re-diagnose this from scratch if
+      Tj reports the same 402 again before switching proxy providers.
