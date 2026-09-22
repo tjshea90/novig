@@ -221,15 +221,15 @@ class NovigGraphQlClientTest {
     @Test
     fun `an outcome with no last price and no open orders is dropped`() {
         val outcome = NovigGraphQlClient.toNovigOutcome(
-            OutcomeDto(id = "x", description = "No Liquidity", last = null, available = null, orders = emptyList()),
+            GqlOutcomeDto(id = "x", description = "No Liquidity", last = null, available = null, orders = emptyList()),
         )
         assertNull(outcome)
     }
 
     @Test
     fun `a settled contract price at the boundary is dropped as garbage`() {
-        assertNull(NovigGraphQlClient.toNovigOutcome(OutcomeDto(id = "x", description = "Settled", last = 1.0)))
-        assertNull(NovigGraphQlClient.toNovigOutcome(OutcomeDto(id = "x", description = "Settled", last = 0.0)))
+        assertNull(NovigGraphQlClient.toNovigOutcome(GqlOutcomeDto(id = "x", description = "Settled", last = 1.0)))
+        assertNull(NovigGraphQlClient.toNovigOutcome(GqlOutcomeDto(id = "x", description = "Settled", last = 0.0)))
     }
 
     // --- matchup description parsing ------------------------------------------------------------

@@ -255,7 +255,7 @@ class NovigGraphQlClient(
          * [com.tjshea.vigilant.data.scanner.EvScanner]'s own doc comment) since Novig's `player`
          * field marks them explicitly and cleanly, unlike SharpAPI's flat rows.
          */
-        fun toNovigMarket(dto: MarketDto): NovigMarket? {
+        fun toNovigMarket(dto: GqlMarketDto): NovigMarket? {
             if (dto.player != null) return null
             val outcomes = dto.outcomes.mapNotNull(::toNovigOutcome)
             if (outcomes.size != 2) return null
@@ -277,7 +277,7 @@ class NovigGraphQlClient(
          * for a market with no trade history yet; an outcome with neither is skipped, same as any
          * other unparseable field in this client.
          */
-        fun toNovigOutcome(dto: OutcomeDto): NovigOutcome? {
+        fun toNovigOutcome(dto: GqlOutcomeDto): NovigOutcome? {
             val price = dto.last ?: dto.orders.filter { it.status == "OPEN" }.maxByOrNull { it.price }?.price
             if (price == null || price <= 0.0 || price >= 1.0) return null
             return NovigOutcome(outcomeId = dto.id, label = dto.description, price = price)
@@ -289,7 +289,7 @@ class NovigGraphQlClient(
          * human-readable, then falls back to strike/outcome-label heuristics modeled on the
          * reference package's own over/under keyword handling ([novig_base.py]'s `_get_line`).
          */
-        fun classifyMarketType(dto: MarketDto, outcomes: List<NovigOutcome>): String {
+        fun classifyMarketType(dto: GqlMarketDto, outcomes: List<NovigOutcome>): String {
             val rawType = dto.type?.lowercase().orEmpty()
             if ("moneyline" in rawType || rawType == "ml" || rawType == "h2h") return "MONEY"
             if ("spread" in rawType || rawType == "handicap") return "SPREAD"
@@ -424,7 +424,7 @@ data class OrderDto(
 )
 
 @Serializable
-data class OutcomeDto(
+data class GqlOutcomeDto(
     val id: String,
     val description: String = "",
     val last: Double? = null,
@@ -433,12 +433,12 @@ data class OutcomeDto(
 )
 
 @Serializable
-data class MarketDto(
+data class GqlMarketDto(
     val description: String = "",
     val type: String? = null,
     val strike: Double? = null,
     val player: PlayerDto? = null,
-    val outcomes: List<OutcomeDto> = emptyList(),
+    val outcomes: List<GqlOutcomeDto> = emptyList(),
 )
 
 @Serializable
@@ -446,7 +446,7 @@ data class MarketEventDto(
     val id: String,
     val description: String = "",
     val game: GameDto? = null,
-    val markets: List<MarketDto> = emptyList(),
+    val markets: List<GqlMarketDto> = emptyList(),
 )
 
 @Serializable
