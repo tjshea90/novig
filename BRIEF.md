@@ -229,6 +229,29 @@ re-diagnose these from scratch:
   had already succeeded. `release.yml`'s verify step now strips colons and
   lowercases both sides before comparing — don't go back to a literal
   string match.
+- **A seventh, found and fixed 2026-09-22: cancelling an in-flight
+  `release.yml` run doesn't stop it instantly, and a step already running
+  when the cancel signal arrives can still finish** — hit for real
+  triggering v0.3.2's release: a run stuck well past its normal ~60-75s
+  build time got cancelled, but its "create the release tag" step (`git
+  push origin "$tag"`) had *already* raced ahead and completed before the
+  cancellation took effect, while the next step ("create GitHub Release")
+  got cut off. Net effect: a real tag existed on GitHub with no Release
+  attached to it. Worse, the retry's own "refuse to overwrite" check didn't
+  catch this and let the same tag collide again, because that check ran
+  `git rev-parse` against the **local, shallow checkout** — which doesn't
+  reliably see a tag pushed to the remote moments earlier by a different
+  run. Fixed in `release.yml`: the check now queries the remote directly
+  (`git ls-remote --tags origin`), and if a tag exists with no GitHub
+  Release attached (the exact leftover-from-a-cancelled-run case), it
+  deletes that stale tag and proceeds automatically — a tag that already
+  has a real Release still refuses exactly as before. If a release run
+  looks stuck well past its normal duration, check whether other CI/release
+  runs are firing concurrently first (the autosave hook double-triggers
+  `ci.yml` on every push — once for the feature branch, once again when
+  `push.sh` fast-forwards `main`, since `ci.yml` has no branch filter — and
+  a burst of these can genuinely contend for this account's concurrent-job
+  quota) before assuming the build itself is broken.
 
 ## Locked architecture decisions
 
