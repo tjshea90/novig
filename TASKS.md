@@ -966,9 +966,8 @@ new error, not the same 503.
       — 103 tests total, all green.
 - [x] Updated RESEARCH.md §4.4.1 with the finding.
 - [x] Shipped v0.3.3. CI confirmed green for real
-      (https://github.com/tjshea90/novig/actions/runs/35695593xxx-area —
-      see run 35695667948 below for the release job itself, both green).
-      Release confirmed green for real
+      (https://github.com/tjshea90/novig/actions/runs/35695873352,
+      conclusion=success). Release confirmed green for real
       (https://github.com/tjshea90/novig/releases/tag/v0.3.3, run
       35695667948, every step succeeded: build, fingerprint verification,
       tag, GitHub Release published with the signed APK attached, 21.5MB,
