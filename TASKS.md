@@ -846,3 +846,38 @@ proxy subscription himself.
       creep beyond what this request actually needed. Worth building later
       if Tj specifically wants it (PDF's pitch: a devigged `fairOdds` field
       supplied directly, permanent free tier) — not done here.
+
+## Tj's question, 2026-09-22T05:38:31Z (his own words — full text in INBOX.md)
+
+> Are there any free proxies I can use for this? I have a VPN , and
+> airplane mode gives me a new ip I think
+
+### Progress on this request
+
+Answered honestly in chat: no real free substitute for a rotating-proxy
+*pool* exists (a VPN gives one non-rotating IP that may already be on
+anti-bot blocklists precisely because VPN IPs are commonly used for this;
+airplane-mode IP cycling depends on the carrier not using CGNAT, and can't
+be automated by the app). But found and am fixing a real gap this exposed:
+`NovigGraphQlClient` currently *requires* at least one proxy string
+configured before it'll attempt live data at all (`KeyRotator`'s own
+`init { require(keys.isNotEmpty()) }`) — so none of Tj's free options
+(VPN, home network, airplane-mode-cycled IP) are even testable today. The
+reference package's hard proxy requirement was written for continuous
+high-frequency polling; this app only calls Novig on a manual refresh, a
+much lighter volume that might just work directly.
+
+- [ ] Add a "direct access, no proxy" opt-in path: `NovigGraphQlClient`
+      constructed with zero proxies makes requests directly over whatever
+      network Android is currently routed through (a system-wide VPN app,
+      if active, included automatically — no per-app proxy config needed
+      for that to work) instead of refusing to run. A failure in this mode
+      has nothing to rotate to, so it propagates immediately as a clear
+      error rather than being silently retried.
+- [ ] New explicit Settings toggle for this (separate from the proxy list
+      — empty proxy list + toggle off still means sample data, unchanged
+      default; toggle on is the deliberate "try it free" action), with
+      honest copy: may get rate-limited faster than a real proxy pool
+      would, but costs nothing to try.
+- [ ] Real unit tests, run for real, then checkpoint/ship if this changes
+      shippable behavior.
