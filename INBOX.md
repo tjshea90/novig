@@ -769,3 +769,12 @@ Also is there anything else useful that sharpapi has that I should keep in the a
 <event>run 35690359093: completed success</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:22:59Z
+```
+<task-notification>
+<task-id>b8xxazomv</task-id>
+<summary>Monitor event: "Release run 35690476182 (v0.3.0 signed build + GitHub Release)"</summary>
+<event>run 35690476182: in_progress None</event>
+</task-notification>
+```
