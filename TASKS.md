@@ -820,13 +820,24 @@ proxy subscription himself.
       the actually-wired-in gray-area path from the still-dormant
       "official API" clean case, §10 items 1/3 resolved, two new open
       items for what's still best-effort/unconfirmed against real data).
-- [ ] Verify what this container can for real
+- [x] Verify what this container can for real
       (`./gradlew --configure-on-demand :engine:test :data:test` — done,
       95/95 green), push, confirm CI green for the `app` module (no local
-      Android SDK).
-- [ ] Bump version, ship, confirm the release build green, send Tj the
+      Android SDK). Confirmed for real:
+      https://github.com/tjshea90/novig/actions/runs/35690359093,
+      conclusion=success — engine+data+app all compiled, every unit test
+      passed, `assembleDebug` produced a real APK.
+- [x] Bump version, ship, confirm the release build green, send Tj the
       Release link as plain tappable text — this is real, shippable work
       per CLAUDE.md's "Releasing" section, not left uncommitted-to-a-release.
+      versionCode 3→4 / versionName 0.2.1→0.3.0. Triggered `release.yml`,
+      confirmed green for real
+      (https://github.com/tjshea90/novig/actions/runs/35690476182,
+      conclusion=success — signed build, signature verified against
+      BRIEF.md's recorded fingerprint, tag created server-side, GitHub
+      Release published with the signed APK attached, 21.5MB,
+      `vigilant-v0.3.0.apk`). Recorded in `BUILDLOG.md` via
+      `tools/record-release.sh`.
 - [x] Checkpoint through this in stages, not just at the end.
 - **Deliberately not built:** SportsGameOdds as a reference-leg client
       (PDF §5's suggestion) — `TheOddsApiClient` already works, is already
