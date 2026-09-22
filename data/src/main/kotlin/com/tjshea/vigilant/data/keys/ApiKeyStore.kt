@@ -1,8 +1,15 @@
 package com.tjshea.vigilant.data.keys
 
-/** The two providers Tj wires keys for (RESEARCH.md §4.2/§4.3) — SharpAPI for the Novig leg, The Odds API for the reference leg. */
+/**
+ * The providers Tj wires credentials for (RESEARCH.md §4). [NOVIG_PROXY] entries aren't API keys
+ * at all — they're rotating-proxy connection strings (`user:pass@host:port`) required by
+ * [com.tjshea.vigilant.data.novig.NovigGraphQlClient]; reusing [ApiKeyStore]/[KeyRotator] for them
+ * is deliberate (RESEARCH.md §4.4) rather than building a second, parallel storage/rotation
+ * mechanism for what is functionally the same problem (a list of credentials to try in order,
+ * rotating past ones that fail).
+ */
 enum class ApiProvider(val storageKey: String, val displayName: String) {
-    SHARP_API("sharp_api", "SharpAPI"),
+    NOVIG_PROXY("novig_proxy", "Novig (direct)"),
     THE_ODDS_API("the_odds_api", "The Odds API"),
 }
 
