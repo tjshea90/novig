@@ -867,17 +867,28 @@ reference package's hard proxy requirement was written for continuous
 high-frequency polling; this app only calls Novig on a manual refresh, a
 much lighter volume that might just work directly.
 
-- [ ] Add a "direct access, no proxy" opt-in path: `NovigGraphQlClient`
+- [x] Add a "direct access, no proxy" opt-in path: `NovigGraphQlClient`
       constructed with zero proxies makes requests directly over whatever
       network Android is currently routed through (a system-wide VPN app,
       if active, included automatically — no per-app proxy config needed
       for that to work) instead of refusing to run. A failure in this mode
       has nothing to rotate to, so it propagates immediately as a clear
-      error rather than being silently retried.
-- [ ] New explicit Settings toggle for this (separate from the proxy list
+      error rather than being silently retried (`NovigDirectAccessException`).
+      `ApiKeyStore` gained `isNovigDirectModeEnabled()`/
+      `setNovigDirectModeEnabled()` (a plain boolean, not a credential,
+      folded into the existing store rather than a whole new one) and
+      `EncryptedApiKeyStore` implements it via a plain (unencrypted —
+      not a secret) DataStore boolean preference.
+- [x] New explicit Settings toggle for this (separate from the proxy list
       — empty proxy list + toggle off still means sample data, unchanged
       default; toggle on is the deliberate "try it free" action), with
       honest copy: may get rate-limited faster than a real proxy pool
-      would, but costs nothing to try.
-- [ ] Real unit tests, run for real, then checkpoint/ship if this changes
-      shippable behavior.
+      would, but costs nothing to try. Wired through
+      `SettingsViewModel`/`SettingsScreen`/`MainActivity`/`ScannerViewModel`.
+- [x] Real unit tests, run for real — 97 tests green (2 new: constructs
+      cleanly with zero proxies / with proxies configured — the first is a
+      real regression test, since `KeyRotator` itself throws on an empty
+      key list, so direct mode has to be a real branch, not a pass-through).
+- [ ] Update BRIEF.md/RESEARCH.md (done — new RESEARCH.md §4.4.1, BRIEF.md's
+      architecture-decision bullet extended), verify app-module CI green,
+      ship as v0.3.1, tell Tj it's ready to try for free.
