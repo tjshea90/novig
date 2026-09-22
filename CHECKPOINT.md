@@ -1,13 +1,13 @@
-# CHECKPOINT 312 — read me first, then TASKS.md
+# CHECKPOINT 313 — read me first, then TASKS.md
 
-**Written:** 2026-09-22T05:06:36Z · **tests:** all 1 fast checks green
-**Branch:** `claude/app-overhaul-novig-data-ut6a84` · **builds on:** `fb8fa3d` (this checkpoint is the commit after it)
+**Written:** 2026-09-22T05:17:42Z · **tests:** all 1 fast checks green
+**Branch:** `claude/app-overhaul-novig-data-ut6a84` · **builds on:** `0dc85ed` (this checkpoint is the commit after it)
 
 ## Just done
-Reviewed Tj's overhaul request + all 3 attachments (briefing PDF + actual novig-liquidity v1.1.20 Python package source, extracted and read directly, not just the PDF summary). Confirmed the real, working, unauthenticated GraphQL access method to gql.novig.us. Reviewed existing app architecture end to end and decided overhaul-not-rewrite. Logged full plan into TASKS.md with the real ToS/proxy risk disclosed plainly, not buried.
+Built and verified NovigGraphQlClient (data module): real, direct GraphQL client for Novig's unauthenticated internal backend, reusing KeyRotator/ApiKeyStore for proxy rotation, last-price-preferred outcome pricing, moneyline-outcome-based team name extraction with description-parsing fallback, best-effort market-type classification. Made EventMatcher order-independent (real correctness fix). Updated Fees.kt's parlay case from Unknown to the now-confirmed 0.10-multiplier formula. Deleted dead SharpApiClient (confirmed no free Novig access). Wired ScannerViewModel + Settings UI (proxy field with prominent risk-disclosure copy, opt-in only). All 95 engine+data tests green (22 new NovigGraphQlClient tests covering price selection, market classification, team-name extraction, proxy parsing, GraphQL error handling).
 
 ## Do this next
-Implement NovigGraphQlClient in the data module (proxy pool via existing KeyRotator/ApiKeyStore infra, GraphQL query/parse logic, last-price-preferred outcome pricing, moneyline-outcome team-name extraction), update Fees.kt's parlay case, make EventMatcher order-independent, delete dead SharpApiClient, wire Settings UI, write real tests, run them, then docs+ship.
+Update BRIEF.md/RESEARCH.md with the new §4.4 access method + honest risk disclosure, resolve now-answered open items. Then evaluate adding SportsGameOdds as a reference-leg option (PDF §5). Then verify app-module CI, bump version, ship, send Tj the release link.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Implement NovigGraphQlClient in the data module (proxy pool via existing KeyRota
 
 ## Last ten checkpoints
 ```
+  1255f07 ckpt 312: Reviewed Tj's overhaul request + all 3 attachments (briefing PDF + actual novi
   78a67b4 ckpt 311: Answered Tj's question about whether anything else in SharpAPI's free tier is 
   ebb2cb7 ckpt 308: Researched and confirmed: there is no $0/mo path to real Novig odds data from 
   32c58c9 ckpt 298: v0.2.1's diagnostic fix worked: Tj's retry now shows 'Last failure: invalid (H
@@ -26,5 +27,5 @@ Implement NovigGraphQlClient in the data module (proxy pool via existing KeyRota
   5417b81 ckpt 266: v0.2.0 shipped: sport-selection picker request is fully done end to end — da
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(25 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
