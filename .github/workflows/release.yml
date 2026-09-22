@@ -52,10 +52,24 @@ jobs:
           echo "tag=v$VERSION_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Refuse to overwrite an existing tag/release
+        # Checks the REMOTE tag, not a local `git rev-parse` — a real bug found 2026-09-22:
+        # actions/checkout's shallow clone doesn't reliably see a tag pushed moments earlier by a
+        # different run (e.g. one cancelled mid-flight after its own tag-push step raced ahead of
+        # its release-publish step), so the local check can false-negative and let this step
+        # collide with that leftover tag. Self-heals the one case that's provably safe — a bare
+        # tag with no GitHub Release attached — by deleting and recreating it; anything with a
+        # real Release still refuses, exactly as before.
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
-            echo "::error::Tag ${{ steps.version.outputs.tag }} already exists — bump versionName/versionCode in app/build.gradle.kts before releasing again."
-            exit 1
+          TAG="${{ steps.version.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+              echo "::error::$TAG already has a published GitHub Release — bump versionName/versionCode in app/build.gradle.kts before releasing again."
+              exit 1
+            fi
+            echo "::warning::$TAG exists as a bare tag with no GitHub Release (leftover from a cancelled/interrupted prior run) — deleting it and proceeding."
+            git push origin ":refs/tags/$TAG"
           fi
 
       - name: Build signed release APK
