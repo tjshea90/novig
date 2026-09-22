@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -12,6 +13,8 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 private val Context.apiKeyDataStore by preferencesDataStore(name = "vigilant_api_keys")
+
+private val NOVIG_DIRECT_MODE_KEY = booleanPreferencesKey("novig_direct_mode_enabled")
 
 /**
  * The real, Android-side implementation of [ApiKeyStore] — DataStore Preferences for storage,
