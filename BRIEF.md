@@ -312,10 +312,13 @@ re-diagnose these from scratch:
   passes; 401/403 → mark that key exhausted permanently (never
   auto-recovers — a human has to add a fresh key); success → use it and
   remember it worked. Throws `AllKeysExhaustedException` only once every
-  key for that provider is rate-limited or invalid. Both `SharpApiClient`
+  key for that provider is rate-limited or invalid. `NovigGraphQlClient`
   and `TheOddsApiClient` are wired through the same `KeyRotator` — the
-  rotation logic itself has no provider-specific knowledge, only the
-  429/401 mapping in each client does.
+  rotation logic itself has no provider-specific knowledge, only each
+  client's own mapping to `KeyAttemptResult` does (429/401 for
+  `TheOddsApiClient`; connection failures/HTTP errors/malformed proxy
+  strings for `NovigGraphQlClient`, which rotates *proxies* through the
+  exact same mechanism as an API key — see the bullet above).
 - **API keys are stored encrypted on-device, never in plaintext, never
   committed.** Researched `androidx.security:security-crypto`
   (`EncryptedSharedPreferences`) first and found it **deprecated** (every
