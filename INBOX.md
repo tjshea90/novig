@@ -743,3 +743,8 @@ Novig showed 403 too. It says I may not have access. Research if other apis have
 ```
 Also is there anything else useful that sharpapi has that I should keep in the app
 ```
+
+## 2026-09-22T04:59:23Z
+```
+@"/root/.claude/uploads/74d1a98c-014f-544c-87ce-ed5fcf33b62f/73f2f680-novig_ev_scanner_briefing.pdf" @"/root/.claude/uploads/74d1a98c-014f-544c-87ce-ed5fcf33b62f/4e6fe64d-novig_liquidity-1.1.20.tar.gz" @"/root/.claude/uploads/74d1a98c-014f-544c-87ce-ed5fcf33b62f/ff36b47b-novig_liquidity-1.1.20-py3-none-any.whl.zip" Overhaul this app, or if it is more efficient or logical, start fresh and delete the old app. Read and review the attachments. Make the app use the novig data from the method attached. Build the app using this information
+```
