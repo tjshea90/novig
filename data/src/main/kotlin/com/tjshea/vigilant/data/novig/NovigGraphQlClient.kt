@@ -102,7 +102,7 @@ class NovigGraphQlClient(
         return when (val result = executeGraphQl(directClient, requestBody, parse)) {
             is KeyAttemptResult.Success -> result.value
             is KeyAttemptResult.RateLimited ->
-                throw NovigDirectAccessException("Novig rate-limited this request (no proxy configured to rotate to): ${result.reason}")
+                throw NovigDirectAccessException("Novig temporarily rejected this request (no proxy configured to rotate to): ${result.reason}")
             is KeyAttemptResult.Invalid ->
                 throw NovigDirectAccessException("Novig rejected this request (no proxy configured to rotate to): ${result.reason}")
         }
