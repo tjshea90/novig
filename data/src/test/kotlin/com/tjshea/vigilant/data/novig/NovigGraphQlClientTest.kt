@@ -45,6 +45,43 @@ class NovigGraphQlClientTest {
         assertEquals(8080, (parsed.proxy.address() as java.net.InetSocketAddress).port)
     }
 
+    @Test
+    fun `proxy authenticator attaches credentials on the first 407 challenge`() {
+        val parsed = NovigGraphQlClient.parseProxy("user1:secretpass@proxy.example.com:8080")
+        val request = Request.Builder().url("https://gql.novig.us/v1/graphql").build()
+        val challenge = Response.Builder()
+            .request(request).protocol(Protocol.HTTP_1_1).code(407).message("Proxy Authentication Required").build()
+
+        val retryRequest = parsed.authenticator.authenticate(null, challenge)
+
+        assertNotNull(retryRequest)
+        assertEquals(
+            okhttp3.Credentials.basic("user1", "secretpass"),
+            retryRequest!!.header("Proxy-Authorization"),
+        )
+    }
+
+    @Test
+    fun `proxy authenticator gives up after credentials are rejected once, instead of retrying forever`() {
+        // Real bug, hit for real on Tj's own device (2026-09-22): without this check, OkHttp's
+        // own tunnel-building safety limit eventually trips with
+        // ProtocolException("Too many tunnel connections attempted: 21") instead of a clean,
+        // diagnosable auth failure — the authenticator was blindly re-attaching the same
+        // credentials on every repeat 407 challenge, forever.
+        val parsed = NovigGraphQlClient.parseProxy("user1:secretpass@proxy.example.com:8080")
+        val firstRequest = Request.Builder().url("https://gql.novig.us/v1/graphql").build()
+        val firstChallenge = Response.Builder()
+            .request(firstRequest).protocol(Protocol.HTTP_1_1).code(407).message("Proxy Authentication Required").build()
+        val retryRequest = parsed.authenticator.authenticate(null, firstChallenge)!!
+
+        // The proxy challenges AGAIN even though this exact request already carried credentials.
+        val secondChallenge = Response.Builder()
+            .request(retryRequest).protocol(Protocol.HTTP_1_1).code(407).message("Proxy Authentication Required").build()
+        val secondAttempt = parsed.authenticator.authenticate(null, secondChallenge)
+
+        assertNull("must give up, not retry the same credentials forever", secondAttempt)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `rejects a proxy string with no at-sign`() {
         NovigGraphQlClient.parseProxy("user1:secretpass-proxy.example.com:8080")
