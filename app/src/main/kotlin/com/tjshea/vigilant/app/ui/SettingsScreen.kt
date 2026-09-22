@@ -84,6 +84,25 @@ private fun ProviderKeysSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            if (entry.provider == ApiProvider.NOVIG_PROXY) {
+                Text(
+                    "Unofficial, reverse-engineered access to Novig's own backend — no account " +
+                        "login involved, but it requires a real, paid rotating-proxy subscription " +
+                        "(format below) and sits in a ToS gray area now that Novig is a " +
+                        "CFTC-regulated exchange. Leave empty to keep using sample data for this " +
+                        "leg. See RESEARCH.md §4.4/§9 before adding one.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    "Format: username:password@host:port",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+
             entry.keys.forEach { key ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
