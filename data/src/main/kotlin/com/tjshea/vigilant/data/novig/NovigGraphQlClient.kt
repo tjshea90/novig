@@ -412,10 +412,22 @@ class NovigGraphQlClient(
                 ?: throw IllegalArgumentException("invalid port in '$hostPart'")
 
             val proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(host, port))
+            // A real bug, hit for real on Tj's own device (2026-09-22): OkHttp calls this
+            // Authenticator again every time the proxy responds with another 407, and blindly
+            // re-attaching the same credentials forever — with no check for "we already tried
+            // this" — means OkHttp's own tunnel-building safety limit eventually trips with
+            // ProtocolException("Too many tunnel connections attempted: 21") instead of a clean
+            // auth failure. This is a well-documented OkHttp gotcha (see their own Authenticator
+            // recipe): give up once a request that already carries our credentials gets
+            // challenged again, rather than retrying forever.
             val authenticator = Authenticator { _, response ->
-                response.request.newBuilder()
-                    .header("Proxy-Authorization", Credentials.basic(username, password))
-                    .build()
+                if (response.request.header("Proxy-Authorization") != null) {
+                    null
+                } else {
+                    response.request.newBuilder()
+                        .header("Proxy-Authorization", Credentials.basic(username, password))
+                        .build()
+                }
             }
             return ParsedProxy(proxy, authenticator)
         }
