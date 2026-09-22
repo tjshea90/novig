@@ -863,3 +863,12 @@ Check on release run 35690476182 (v0.3.0) and the background Monitor task — if
 ```
 Are there any free proxies I can use for this? I have a VPN , and airplane mode gives me a new ip I think
 ```
+
+## 2026-09-22T05:46:47Z
+```
+<task-notification>
+<task-id>bg5mechjm</task-id>
+<summary>Monitor event: "CI run 35692029112 (unit tests + assembleDebug) for the direct-mode addition"</summary>
+<event>run 35692029112: in_progress None</event>
+</task-notification>
+```
