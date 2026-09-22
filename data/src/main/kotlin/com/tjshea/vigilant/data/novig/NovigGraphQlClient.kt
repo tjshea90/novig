@@ -74,7 +74,7 @@ class NovigGraphQlClient(
 
     private suspend fun fetchEvent(eventId: String): NovigEvent? {
         return proxyRotator.execute("Novig (direct)") { proxyConfig ->
-            executeGraphQl(proxyConfig, marketRequestBody(eventId)) { raw -> parseMarketResponse(raw) }
+            executeGraphQl(proxyConfig, marketRequestBody(eventId, json)) { raw -> parseMarketResponse(raw, json) }
         }
     }
 
