@@ -120,28 +120,29 @@ class NovigGraphQlClient(
         }
     }
 
-    private fun parseLeagueResponse(raw: String): KeyAttemptResult<List<String>> {
-        val envelope = json.decodeFromString(LeagueResponseEnvelope.serializer(), raw)
-        if (isTimeoutError(envelope.errors)) {
-            return KeyAttemptResult.RateLimited(3_000, reason = "GraphQL time-limit-exceeded")
-        }
-        // Non-timeout GraphQL errors aren't this proxy's fault (matches the reference package's
-        // own __default_caller, which returns an empty result rather than rotating away from a
-        // working proxy over e.g. a bad league name).
-        if (!envelope.errors.isNullOrEmpty()) return KeyAttemptResult.Success(emptyList())
-        return KeyAttemptResult.Success(envelope.data?.event?.map { it.id } ?: emptyList())
-    }
-
-    private fun parseMarketResponse(raw: String): KeyAttemptResult<NovigEvent?> {
-        val envelope = json.decodeFromString(MarketResponseEnvelope.serializer(), raw)
-        if (isTimeoutError(envelope.errors)) {
-            return KeyAttemptResult.RateLimited(3_000, reason = "GraphQL time-limit-exceeded")
-        }
-        if (!envelope.errors.isNullOrEmpty()) return KeyAttemptResult.Success(null)
-        return KeyAttemptResult.Success(envelope.data?.event?.firstOrNull()?.let(::toNovigEvent))
-    }
-
     companion object {
+
+        fun parseLeagueResponse(raw: String, json: Json): KeyAttemptResult<List<String>> {
+            val envelope = json.decodeFromString(LeagueResponseEnvelope.serializer(), raw)
+            if (isTimeoutError(envelope.errors)) {
+                return KeyAttemptResult.RateLimited(3_000, reason = "GraphQL time-limit-exceeded")
+            }
+            // Non-timeout GraphQL errors aren't this proxy's fault (matches the reference
+            // package's own __default_caller, which returns an empty result rather than rotating
+            // away from a working proxy over e.g. a bad league name).
+            if (!envelope.errors.isNullOrEmpty()) return KeyAttemptResult.Success(emptyList())
+            return KeyAttemptResult.Success(envelope.data?.event?.map { it.id } ?: emptyList())
+        }
+
+        fun parseMarketResponse(raw: String, json: Json): KeyAttemptResult<NovigEvent?> {
+            val envelope = json.decodeFromString(MarketResponseEnvelope.serializer(), raw)
+            if (isTimeoutError(envelope.errors)) {
+                return KeyAttemptResult.RateLimited(3_000, reason = "GraphQL time-limit-exceeded")
+            }
+            if (!envelope.errors.isNullOrEmpty()) return KeyAttemptResult.Success(null)
+            return KeyAttemptResult.Success(envelope.data?.event?.firstOrNull()?.let(::toNovigEvent))
+        }
+
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
         private const val LEAGUE_QUERY = """
