@@ -416,6 +416,9 @@ class NovigGraphQlClient(
 
 data class ParsedProxy(val proxy: Proxy, val authenticator: Authenticator)
 
+/** A direct-mode (no proxy configured) request failed — nothing to rotate to, unlike proxy mode. */
+class NovigDirectAccessException(message: String) : Exception(message)
+
 @Serializable
 data class GraphQlErrorExtensionsDto(val code: String? = null)
 
