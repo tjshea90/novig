@@ -973,3 +973,12 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35692622514 job: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:55:55Z
+```
+<task-notification>
+<task-id>b71kl3tks</task-id>
+<summary>Monitor event: "CI run 35692622514 for the 503-classification fix"</summary>
+<event>run 35692622514 job: in_progress None</event>
+</task-notification>
+```
