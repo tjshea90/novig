@@ -21,6 +21,24 @@ architecture is locked in. §8's Odds Assist Pro findings, by contrast,
 
 ## 1. Bottom line
 
+**Updated 2026-09-22 (§4.4) — supersedes the "no $0/mo path exists" framing
+directly below.** Tj supplied a working, third-party, MIT-licensed Python
+package (`novig-liquidity`) that a briefing document built around it, and
+this session verified directly against the package's actual source code
+(not just the briefing's summary): it reverse-engineers **unauthenticated
+read access to Novig's own internal GraphQL backend**
+(`gql.novig.us/v1/graphql`). No account, no API key, no OAuth — genuinely
+$0, right now, for the Novig leg specifically. The real cost isn't Novig
+data itself, it's that reliable access requires a **paid rotating-proxy
+subscription** to avoid IP-based rate-limiting/anti-bot blocking, and this
+sits in a real ToS gray area (§4.4/§9) now that Novig is a CFTC-regulated
+exchange. This is now the app's actual Novig-leg data source
+(`NovigGraphQlClient`), opt-in only (empty proxy list → sample data, same
+pattern as every other provider) — see §4.4 for the full verified findings
+and §9 for the honest risk posture. Everything below this point in §1
+predates that discovery and is kept for context, not because it's still the
+live plan.
+
 **Updated 2026-09-20, second research pass — this is less optimistic than
 the first pass below and should be read first.** Novig does publish an
 official developer API (REST/WebSocket/GraphQL, §4.1) — but §4.1.1's
