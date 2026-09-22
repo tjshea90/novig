@@ -13,10 +13,7 @@ data class ReferenceProbabilities(
     val booksUsed: List<String>,
 )
 
-/**
- * Which Novig fee schedule applies (RESEARCH.md §3). PARLAY is included but not yet priced —
- * see [Fees.estimate].
- */
+/** Which Novig fee schedule applies (RESEARCH.md §3) — see [Fees.estimate]. */
 enum class TradeContext {
     PREGAME_STRAIGHT,
     LIVE_STRAIGHT,
