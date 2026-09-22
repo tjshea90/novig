@@ -1105,3 +1105,15 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35693108649: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T06:03:38Z
+```
+<task-notification>
+<task-id>bky1mbzxr</task-id>
+<tool-use-id>toolu_01Lh1zMGqowEyjZNQoRUFUVV</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/74d1a98c-014f-544c-87ce-ed5fcf33b62f/tasks/bky1mbzxr.output</output-file>
+<status>completed</status>
+<summary>Monitor "Release run 35693108649 (v0.3.2, self-healing tag-check fix)" stream ended</summary>
+<event>run 35693108649: completed failure</event>
+</task-notification>
+```
