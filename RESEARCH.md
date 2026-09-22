@@ -734,16 +734,45 @@ research-session snapshot.
 
 ## 9. Legal / ToS posture
 
-- **Novig's own API is the clean case** — it's built and marketed by Novig
-  specifically for algo traders automating strategies against their
-  exchange. Using it to power a personal scanner (or even automated
-  trading) is the API's intended use, not a gray area. Novig is a
-  CFTC-regulated Designated Contract Market operating in 47 states + DC
+**Updated 2026-09-22 (§4.4) — the actual data source in the app today is
+the direct GraphQL client, not Novig's official API, so this section's
+framing needs to be read against that, not against the "clean case"
+sub-bullet below, which describes a different (unconfirmed, dormant) path.**
+
+- **`NovigGraphQlClient` (§4.4, the leg actually wired in today) is a real,
+  disclosed gray area — be honest about this, don't round it up to
+  "clean."** It queries Novig's internal backend directly, unauthenticated,
+  through rotating proxies specifically chosen to avoid IP-based rate-
+  limiting/anti-bot detection. That's a materially different risk category
+  from a published, sanctioned public API — especially now that Novig is a
+  CFTC-regulated exchange with its own published rulebook (see below). Two
+  things meaningfully limit the downside, though, and are worth stating
+  plainly alongside the risk: (1) **no account or login is ever involved**
+  — there is nothing here that can get Tj's actual Novig account banned,
+  unlike a ToS violation on an authenticated endpoint would; (2) it's
+  **read-only** — no orders are ever placed through this path. What Novig
+  *can* do is block or blacklist the proxy IPs at any time without notice;
+  that's a real, standing possibility, not a hypothetical. This mirrors
+  what odds-aggregator/scraping tools commonly do industry-wide (see the
+  scraping-based-fallback bullet below, which already accepted this same
+  tradeoff for the *reference* leg before §4.4 existed) — not a novel or
+  unusually risky category of thing to build, but still a real one. The
+  app ships this opt-in only (empty proxy list → sample data), with the
+  risk stated in-app (Settings screen) as well as here, never as a silent
+  default.
+- **Novig's own official, credentialed API — if it exists and if Tj's
+  developers@novig.com email gets a "yes" — would be the clean case**: built
+  and marketed by Novig specifically for algo traders automating strategies
+  against their exchange, the API's intended use, not a gray area. Novig is
+  a CFTC-regulated Designated Contract Market operating in 47 states + DC
   ([CNBC](https://www.cnbc.com/2026/06/16/novig-wins-cftc-approval-as-competition-intensifies-in-sports-prediction-markets.html),
   [sportshandle.com](https://sportshandle.com/novig-launches-cftc-regulated-sports-prediction-market-in-47-states/)) —
   Nevada, Arizona, and Michigan are excluded; confirm the Moto G 2026's
   operating location isn't one of those three before assuming account
-  access works.
+  access works. `NovigApiClient`/`NovigLiveFeed` stay dormant, unwired,
+  ready for this path — but per §4.4 it's now unconfirmed whether this
+  official path is even reachable for an individual, separate from whether
+  its assumed field shapes are correct.
 - **The reference-odds leg** (§4.3, Pinnacle/consensus via a paid API like
   The Odds API) is licensed data via a paying customer relationship — also
   clean.
