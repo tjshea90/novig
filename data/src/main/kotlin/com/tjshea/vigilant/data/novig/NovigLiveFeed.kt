@@ -13,7 +13,16 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okhttp3.Response
 
-/** One parsed message off Novig's `tape` WebSocket. See RESEARCH.md §4.1/§7. */
+/**
+ * One parsed message off Novig's `tape` WebSocket. See RESEARCH.md §4.1/§7.
+ *
+ * Same caveat as [NovigApiClient] (RESEARCH.md §4.4): this shape was inferred from a
+ * doc-summarizing fetch of docs.novig.com, and a second, independently-verified source (real
+ * working code, not documentation) found that same doc site's assumed OAuth/developer-portal
+ * system "does not hold up." Treat this class as dormant and unconfirmed, not just its field
+ * shapes, until Novig's still-unanswered developers@novig.com reply settles whether this official,
+ * credentialed path exists at all.
+ */
 sealed interface NovigTapeEvent {
     data class OrderBookUpdate(
         val marketId: String,
