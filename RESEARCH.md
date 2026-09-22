@@ -823,6 +823,18 @@ sub-bullet below, which describes a different (unconfirmed, dormant) path.**
    order book / market-by-event payloads) — need to actually request a
    token and hit the API (or read the OpenAPI 3.1 spec docs.novig.com
    offers) once §1 is resolved, rather than inferring from doc summaries.
+6. **(new, §4.4)** `NovigGraphQlClient`'s team-name extraction and
+   market-type classification are best-effort, unconfirmed against a real
+   live response — the reference package never needed to solve either
+   problem (single-source liquidity filter, no cross-provider matching).
+   Needs verification the first time Tj actually configures proxies and
+   runs a real scan: does the moneyline-outcome-based team-name guess
+   actually match the reference leg's `home_team`/`away_team` naming
+   closely enough for `EventMatcher` to find real matches, and do the raw
+   `market.type` values turn out to be human-readable or opaque codes.
+7. **(new, §4.4)** What GraphQL `status` value Novig uses for live/in-play
+   markets — both verified queries hardcode `"OPEN_PREGAME"`; live-market
+   support would need this discovered/confirmed first, not guessed.
 
 None of the above blocks starting architecture/BRIEF.md decisions — they
 block finishing them. Do not start writing app code from this file alone
