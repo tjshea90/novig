@@ -246,8 +246,12 @@ re-diagnose these from scratch:
   blindly. Don't collapse this back down to one hard-coded method.
 - **Novig's own fee must be netted into EV, and a fee we don't have a
   formula for must never silently become $0.** `engine.Fees`/`FeeResult`
-  models this explicitly (`Unknown` for parlays, since that fee structure
-  isn't confirmed yet — RESEARCH.md §3/§10). A sample fixture
+  models this explicitly — `FeeResult.Unknown` still exists as a type and
+  the UI still has a code path for it, but as of 2026-09-22 every
+  `TradeContext` has a confirmed formula (pregame straight: $0; live
+  straight taker: `price × (1-price) × 0.03`; parlay taker:
+  `price × (1-price) × 0.10`, confirmed by the novig_ev_scanner briefing —
+  RESEARCH.md §3/§10 item 3; maker side is always $0). A sample fixture
   (`EvScannerTest`'s live-market case) exists specifically to prove a real,
   positive raw edge can still net negative once Novig's live taker fee is
   applied — don't "simplify" this back to ignoring fees, that's the exact
