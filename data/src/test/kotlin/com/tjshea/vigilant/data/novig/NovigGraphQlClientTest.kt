@@ -278,4 +278,106 @@ class NovigGraphQlClientTest {
     fun `returns null for a blank description`() {
         assertNull(NovigGraphQlClient.parseMatchupDescription(""))
     }
+
+    // --- direct (no proxy) mode over real HTTP, via MockWebServer -----------------------------
+    //
+    // These hit the real HTTP layer (unlike the parse-function tests above), closing the gap the
+    // proxy-mode path still has (a mock proxy would need HTTPS CONNECT tunneling to test for
+    // real). Direct mode's baseUrl is fully overridable, so MockWebServer stands in for
+    // gql.novig.us directly. Real bug this caught, 2026-09-22: Tj's own device hit a genuine
+    // HTTP 503 from Novig with direct mode on — 502/503/504 were lumped in with a hard "Invalid"
+    // rejection (same bucket as 401/403) instead of the more accurate "temporarily unavailable"
+    // (RateLimited) — fixed below, verified here.
+
+    private lateinit var server: MockWebServer
+
+    @Before
+    fun setUpMockServer() {
+        server = MockWebServer()
+        server.start()
+    }
+
+    @After
+    fun tearDownMockServer() {
+        server.shutdown()
+    }
+
+    private fun directClient(leagues: List<String> = listOf("NFL")) = NovigGraphQlClient(
+        leagues = leagues,
+        proxies = emptyList(),
+        json = json,
+        baseUrl = server.url("/v1/graphql").toString(),
+    )
+
+    private val leagueResponseBody = """
+        {"data": {"event": [
+            {"game": {"scheduled_start": "2026-09-21T17:00:00Z"}, "id": "11111111-1111-1111-1111-111111111111", "description": "Buffalo Bills @ Kansas City Chiefs"}
+        ]}}
+    """.trimIndent()
+
+    @Test
+    fun `direct mode fetches a real end-to-end league then market round trip`() = runTest {
+        server.enqueue(MockResponse().setBody(leagueResponseBody))
+        server.enqueue(MockResponse().setBody(moneylineEventJson))
+
+        val events = directClient().getOpenMarkets()
+
+        assertEquals(1, events.size)
+        assertEquals(2, events[0].markets.size)
+        assertEquals("11111111-1111-1111-1111-111111111111", events[0].eventId)
+    }
+
+    @Test
+    fun `a 503 from Novig fails immediately in direct mode with an accurate message`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(503))
+
+        val exception = try {
+            directClient().getOpenMarkets()
+            null
+        } catch (e: NovigDirectAccessException) {
+            e
+        }
+
+        assertTrue(exception != null)
+        assertTrue("expected 'temporarily rejected' wording for a 503, got: ${exception?.message}", exception!!.message!!.contains("temporarily rejected"))
+        assertTrue(exception.message!!.contains("HTTP 503"))
+    }
+
+    @Test
+    fun `a 403 from Novig fails immediately in direct mode as a hard rejection`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(403))
+
+        val exception = try {
+            directClient().getOpenMarkets()
+            null
+        } catch (e: NovigDirectAccessException) {
+            e
+        }
+
+        assertTrue(exception != null)
+        assertFalse("a 403 must not be worded as merely temporary", exception!!.message!!.contains("temporarily"))
+        assertTrue(exception.message!!.contains("HTTP 403"))
+    }
+
+    @Test
+    fun `a market-query failure for one event does not sink the whole league scan`() = runTest {
+        server.enqueue(
+            MockResponse().setBody(
+                """{"data": {"event": [
+                    {"game": {"scheduled_start": "2026-09-21T17:00:00Z"}, "id": "aaaa-1", "description": "Team A @ Team B"},
+                    {"game": {"scheduled_start": "2026-09-21T20:00:00Z"}, "id": "bbbb-2", "description": "Buffalo Bills @ Kansas City Chiefs"}
+                ]}}""",
+            ),
+        )
+        // MockWebServer dispatches enqueued responses in order per connection, but the two market
+        // requests fire concurrently — QueueDispatcher still serves them in enqueue order across
+        // whichever connections arrive, so this still deterministically pairs one failure with one
+        // success regardless of which event's request lands first.
+        server.enqueue(MockResponse().setResponseCode(503))
+        server.enqueue(MockResponse().setBody(moneylineEventJson))
+
+        val events = directClient().getOpenMarkets()
+
+        assertEquals(1, events.size)
+    }
 }
