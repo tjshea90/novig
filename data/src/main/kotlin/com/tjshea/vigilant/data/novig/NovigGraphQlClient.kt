@@ -145,6 +145,14 @@ class NovigGraphQlClient(
                 client.newCall(request).await().use { response ->
                     when {
                         response.code == 429 -> KeyAttemptResult.RateLimited(5_000, reason = "HTTP 429")
+                        // 502/503/504 are gateway/overload codes — Novig's endpoint is very likely
+                        // fronted by a CDN/anti-bot layer (RESEARCH.md §4.4/§9), and these commonly
+                        // mean "temporarily unavailable," not "permanently rejected." Worth trying
+                        // again (a different proxy in proxy mode; nothing to retry with in direct
+                        // mode, but at least the error says so accurately) rather than treated the
+                        // same as a 401/403 hard refusal.
+                        response.code in setOf(502, 503, 504) ->
+                            KeyAttemptResult.RateLimited(5_000, reason = "HTTP ${response.code}")
                         response.code == 401 || response.code == 403 ->
                             KeyAttemptResult.Invalid(reason = "HTTP ${response.code}")
                         !response.isSuccessful -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}")
