@@ -1009,3 +1009,15 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35692622514 job: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:56:58Z
+```
+<task-notification>
+<task-id>b71kl3tks</task-id>
+<tool-use-id>toolu_01XzaLsMhqpG56tWbKk9Peou</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/74d1a98c-014f-544c-87ce-ed5fcf33b62f/tasks/b71kl3tks.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI run 35692622514 for the 503-classification fix" stream ended</summary>
+<event>run 35692622514 job: completed success</event>
+</task-notification>
+```
