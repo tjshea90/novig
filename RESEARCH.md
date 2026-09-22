@@ -789,22 +789,16 @@ sub-bullet below, which describes a different (unconfirmed, dormant) path.**
     the architecture
 
 1. **Can Tj actually get a Novig API client ID/secret, and is it free?**
-   (§4.1) — **now the single most important open item, 2026-09-20 (§4.2.2):**
-   since SharpAPI's free tier turned out not to include Novig at all
-   (confirmed live, not just from docs), and every other researched
-   reseller is either paid-only or sales-gated with no public pricing,
-   this is the *only* remaining lead that could still make the Novig leg
-   free. Narrowed but not resolved as of §4.1.1: strong circumstantial
-   evidence (Novig's own DevRel job posting, its institutional-market-
-   maker-funded business model, a formal gated Market Maker approval
-   program, no public signup form anywhere) that this is a B2B/
-   institutional relationship, not a free individual developer signup.
-   Still not confirmed either way with an actual answer from Novig —
-   that conversation hasn't happened yet (email drafted and sent to Tj
-   to send himself, per TASKS.md's 2026-09-20T19:49:13Z entry). Next
-   step unchanged: wait for Novig's reply, with expectations calibrated
-   to "probably a sales conversation," not "probably a signup form
-   someone forgot to link."
+   (§4.1) — **superseded as the app's actual blocker, 2026-09-22 (§4.4):**
+   a working, verified, $0 access method exists via `NovigGraphQlClient`
+   (unauthenticated GraphQL, no account needed) — the app no longer waits
+   on this to have a real Novig-leg data source. Still genuinely open,
+   just lower-priority now: Tj's developers@novig.com email is still
+   unanswered, and a real reply would resolve whether the *official,
+   sanctioned* path (`NovigApiClient`/`NovigLiveFeed`, still dormant) is
+   ever reachable — worth having regardless, since it wouldn't carry
+   §4.4/§9's ToS-gray-area risk or ongoing proxy cost. Not blocking
+   anything today.
 2. ~~Does SharpAPI's free tier's raw-odds set include Pinnacle~~ —
    **resolved, 2026-09-20 (§4.2.2):** no. SharpAPI's own Novig product
    page states the free tier is scoped to **DraftKings and FanDuel
