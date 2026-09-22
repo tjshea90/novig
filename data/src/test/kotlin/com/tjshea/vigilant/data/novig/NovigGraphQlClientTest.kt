@@ -12,6 +12,21 @@ class NovigGraphQlClientTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
+    // --- direct (no proxy) mode construction -------------------------------------------------
+
+    @Test
+    fun `constructs cleanly with zero proxies configured (direct mode)`() {
+        // Regression test: KeyRotator itself throws on an empty key list, so the client must not
+        // hand an empty proxy list straight to KeyRotator — direct mode has to be a real branch,
+        // not just "pass an empty list through and hope."
+        NovigGraphQlClient(leagues = listOf("NFL"), proxies = emptyList(), json = json)
+    }
+
+    @Test
+    fun `constructs cleanly with one or more proxies configured`() {
+        NovigGraphQlClient(leagues = listOf("NFL"), proxies = listOf("user:pass@proxy.example.com:8080"), json = json)
+    }
+
     // --- proxy string parsing ---------------------------------------------------------------
 
     @Test
