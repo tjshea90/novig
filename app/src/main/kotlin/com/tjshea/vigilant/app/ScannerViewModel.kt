@@ -75,6 +75,7 @@ class ScannerViewModel(application: Application) : AndroidViewModel(application)
             _uiState.value = ScanUiState.Loading
             _uiState.value = try {
                 val proxies = apiKeyStore.getKeys(ApiProvider.NOVIG_PROXY)
+                val directModeEnabled = apiKeyStore.isNovigDirectModeEnabled()
                 val oddsApiKeys = apiKeyStore.getKeys(ApiProvider.THE_ODDS_API)
 
                 // Novig leagues are derived from whichever selected sports have a known mapping
@@ -82,8 +83,13 @@ class ScannerViewModel(application: Application) : AndroidViewModel(application)
                 // contributes nothing to the Novig leg, same "unmapped -> skip" pattern EvScanner
                 // already uses for market types.
                 val leagues = sports.mapNotNull { NovigLeagues.forSportKey(it.key) }
-                val novigRepository: NovigRepository = if (proxies.isNotEmpty() && leagues.isNotEmpty()) {
-                    NovigGraphQlClient(leagues, KeyRotator(proxies), json)
+                // Live either with configured proxies, or with the explicit "try it without a
+                // proxy" opt-in (Tj's own request, 2026-09-22T05:38:31Z) — either way an explicit
+                // choice, never a silent default; NovigGraphQlClient itself handles an empty
+                // proxy list by connecting directly instead of refusing to run.
+                val novigIsLive = (proxies.isNotEmpty() || directModeEnabled) && leagues.isNotEmpty()
+                val novigRepository: NovigRepository = if (novigIsLive) {
+                    NovigGraphQlClient(leagues, proxies, json)
                 } else {
                     SampleNovigRepository()
                 }
@@ -102,7 +108,7 @@ class ScannerViewModel(application: Application) : AndroidViewModel(application)
 
                 ScanUiState.Loaded(
                     opportunities = scanner.scan(),
-                    novigIsLive = proxies.isNotEmpty() && leagues.isNotEmpty(),
+                    novigIsLive = novigIsLive,
                     referenceIsLive = oddsApiKeys.isNotEmpty(),
                 )
             } catch (e: Exception) {
