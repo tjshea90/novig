@@ -889,6 +889,13 @@ much lighter volume that might just work directly.
       cleanly with zero proxies / with proxies configured — the first is a
       real regression test, since `KeyRotator` itself throws on an empty
       key list, so direct mode has to be a real branch, not a pass-through).
-- [ ] Update BRIEF.md/RESEARCH.md (done — new RESEARCH.md §4.4.1, BRIEF.md's
+- [x] Update BRIEF.md/RESEARCH.md (done — new RESEARCH.md §4.4.1, BRIEF.md's
       architecture-decision bullet extended), verify app-module CI green,
-      ship as v0.3.1, tell Tj it's ready to try for free.
+      ship as v0.3.1, tell Tj it's ready to try for free. CI confirmed green
+      for real (https://github.com/tjshea90/novig/actions/runs/35692029112,
+      conclusion=success). versionCode 4→5 / versionName 0.3.0→0.3.1.
+      Release confirmed green for real
+      (https://github.com/tjshea90/novig/actions/runs/35692115606,
+      conclusion=success — signed build, signature verified, tag created,
+      GitHub Release published with the signed APK attached, 21.5MB,
+      `vigilant-v0.3.1.apk`). Recorded in `BUILDLOG.md`.
