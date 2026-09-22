@@ -959,3 +959,8 @@ Are there any free proxies I can use for this? I have a VPN , and airplane mode 
 <event>run 35692115606: completed success</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:51:00Z
+```
+Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1). If tag creation and GitHub Release publish both show success, fetch the release via get_release_by_tag, record it in BUILDLOG.md via tools/record-release.sh, and send Tj the Release link as plain tappable text explaining the new free direct-access toggle.
+```
