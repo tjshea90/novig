@@ -1288,3 +1288,8 @@ It has the same 503
 ```
 Is there a free proxy I can try
 ```
+
+## 2026-09-22T06:21:18Z
+```
+Check job-level detail (list_workflow_jobs) for release run 35693512531 (v0.3.2, retry #4) and how many workflow runs are still concurrently in_progress. If all real steps show success, fetch the release via get_release_by_tag, record it in BUILDLOG.md via tools/record-release.sh, and tell Tj the 503-classification fix is shipped, plus the honest read on what his 503 probably means and what to try next. If it's finally moved past the build step, good — if still stuck, this may need a longer wait yet given each check itself adds to the queue.
+```
