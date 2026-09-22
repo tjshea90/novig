@@ -74,11 +74,16 @@ class ScannerViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             _uiState.value = ScanUiState.Loading
             _uiState.value = try {
-                val sharpKeys = apiKeyStore.getKeys(ApiProvider.SHARP_API)
+                val proxies = apiKeyStore.getKeys(ApiProvider.NOVIG_PROXY)
                 val oddsApiKeys = apiKeyStore.getKeys(ApiProvider.THE_ODDS_API)
 
-                val novigRepository: NovigRepository = if (sharpKeys.isNotEmpty()) {
-                    SharpApiClient(httpClient, KeyRotator(sharpKeys), json)
+                // Novig leagues are derived from whichever selected sports have a known mapping
+                // (NovigLeagues — RESEARCH.md §4.4); a selected sport with no mapping just
+                // contributes nothing to the Novig leg, same "unmapped -> skip" pattern EvScanner
+                // already uses for market types.
+                val leagues = sports.mapNotNull { NovigLeagues.forSportKey(it.key) }
+                val novigRepository: NovigRepository = if (proxies.isNotEmpty() && leagues.isNotEmpty()) {
+                    NovigGraphQlClient(leagues, KeyRotator(proxies), json)
                 } else {
                     SampleNovigRepository()
                 }
@@ -97,7 +102,7 @@ class ScannerViewModel(application: Application) : AndroidViewModel(application)
 
                 ScanUiState.Loaded(
                     opportunities = scanner.scan(),
-                    novigIsLive = sharpKeys.isNotEmpty(),
+                    novigIsLive = proxies.isNotEmpty() && leagues.isNotEmpty(),
                     referenceIsLive = oddsApiKeys.isNotEmpty(),
                 )
             } catch (e: Exception) {
