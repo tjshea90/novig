@@ -523,6 +523,23 @@ posture as every other provider. Direct mode has no pool to fall back to,
 so a rate-limit or rejection there is a real, immediate failure
 (`NovigDirectAccessException`), not something silently retried.
 
+**First real-world data point, 2026-09-22 (Tj's own device, screenshot):**
+direct mode's very first attempt got **HTTP 503** from Novig — consistent
+with the reference package's own "hard-fails without proxies" finding
+(§4.4), though a single data point doesn't prove it's a hard block rather
+than a transient origin issue; worth Tj trying again, and trying with his
+VPN on, before concluding proxies are strictly required. Real bug found
+diagnosing this: 502/503/504 were being lumped into the same bucket as a
+401/403 hard rejection, when they more accurately mean "temporarily
+unavailable" (very likely a CDN/anti-bot layer in front of
+`gql.novig.us`, per §9) — fixed to classify as rate-limited/retryable
+instead, and the direct-mode error message now says "temporarily
+rejected" for these instead of "rejected." Added real HTTP-layer tests via
+MockWebServer (`NovigGraphQlClientTest`'s new "direct mode over real HTTP"
+section) — a gap explicitly flagged as untested when §4.4 first shipped,
+now closed for the direct-mode path (proxy mode still isn't, since a mock
+HTTP proxy would need HTTPS CONNECT tunneling to test for real).
+
 ## 5. The math: devigging methods (with actual formulas)
 
 Devigging = stripping a book's margin/overround out of quoted odds to
