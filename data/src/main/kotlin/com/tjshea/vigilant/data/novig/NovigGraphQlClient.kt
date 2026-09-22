@@ -408,10 +408,10 @@ data class LeagueDataDto(val event: List<LeagueEventDto> = emptyList())
 data class LeagueResponseEnvelope(val data: LeagueDataDto? = null, val errors: List<GraphQlErrorDto>? = null)
 
 @Serializable
-data class GameDto(val scheduledStart: String = "")
+data class GameDto(@SerialName("scheduled_start") val scheduledStart: String = "")
 
 @Serializable
-data class PlayerDto(val fullName: String = "")
+data class PlayerDto(@SerialName("full_name") val fullName: String = "")
 
 @Serializable
 data class OrderDto(
@@ -419,7 +419,7 @@ data class OrderDto(
     val qty: Double = 0.0,
     val price: Double = 0.0,
     val originalQty: Double = 0.0,
-    val createdAt: String = "",
+    @SerialName("created_at") val createdAt: String = "",
 )
 
 @Serializable
