@@ -899,3 +899,44 @@ much lighter volume that might just work directly.
       conclusion=success — signed build, signature verified, tag created,
       GitHub Release published with the signed APK attached, 21.5MB,
       `vigilant-v0.3.1.apk`). Recorded in `BUILDLOG.md`.
+
+## Tj's screenshot, 2026-09-22 (v0.3.1's direct-mode toggle, his own words in chat)
+
+> "Scan failed — Novig rejected this request (no proxy configured to
+> rotate to): HTTP 503"
+
+He tried the new free direct-access toggle for real and hit a genuine
+HTTP 503 from Novig on the first attempt.
+
+### Progress on this request
+
+- [x] Diagnosed a real bug the screenshot exposed: 502/503/504 (gateway/
+      overload codes, very likely a CDN/anti-bot layer in front of
+      `gql.novig.us`) were lumped into the same hard-rejection bucket as
+      401/403, when they more accurately mean "temporarily unavailable."
+      Fixed: reclassified as rate-limited/retryable; the direct-mode error
+      message now says "temporarily rejected" for these instead of
+      "rejected."
+- [x] Added real HTTP-layer tests via MockWebServer for the direct-mode
+      path (`NovigGraphQlClientTest`'s new section) — closes a gap
+      explicitly flagged as untested when direct mode first shipped. 101
+      tests total, all green.
+- [x] Shipping this (v0.3.2) surfaced two real, unrelated `release.yml`
+      bugs, both found and fixed along the way (see BRIEF.md's 7th build
+      trap for the full account): the "refuse to overwrite" safety check
+      only looked at an unreliable local shallow-clone tag check instead
+      of the remote; a run cancelled mid-flight left a draft GitHub
+      Release with no real attached tag that the check didn't know how to
+      interpret and wrongly treated as a genuine published release. Fixed
+      both — the check now self-heals both provably-safe leftover cases
+      while still refusing a real published release.
+- [x] versionCode 5→6 / versionName 0.3.1→0.3.2. CI confirmed green for
+      real (https://github.com/tjshea90/novig/actions/runs/35693512531 —
+      note: earlier in this session I badly misjudged this same run as
+      "stuck for 20+ minutes" and repeatedly cancelled/retried it; the
+      real GitHub timestamps show it actually completed in under 3 minutes
+      each time — Tj caught this, and it's recorded here so a future
+      session doesn't trust cumulative `ScheduleWakeup` delays as if they
+      were confirmed elapsed real time). Release published
+      (https://github.com/tjshea90/novig/releases/tag/v0.3.2, signed APK
+      21.5MB, `vigilant-v0.3.2.apk`). Recorded in `BUILDLOG.md`.
