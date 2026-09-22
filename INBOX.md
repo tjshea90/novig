@@ -1255,3 +1255,12 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35693512531: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T06:10:25Z
+```
+<task-notification>
+<task-id>bj4crtu70</task-id>
+<summary>Monitor event: "Release run 35693512531 (v0.3.2, retry #4)"</summary>
+<event>run 35693512531: in_progress None</event>
+</task-notification>
+```
