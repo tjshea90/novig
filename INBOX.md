@@ -1075,3 +1075,15 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35692802112: in_progress None</event>
 </task-notification>
 ```
+
+## 2026-09-22T06:00:52Z
+```
+<task-notification>
+<task-id>bvye2h1vv</task-id>
+<tool-use-id>toolu_0175m1fAbzF2LAQG8mW7Hbsi</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/74d1a98c-014f-544c-87ce-ed5fcf33b62f/tasks/bvye2h1vv.output</output-file>
+<status>completed</status>
+<summary>Monitor "Release run 35692802112 (v0.3.2 retry after cancelling the stuck one)" stream ended</summary>
+<event>run 35692802112: completed failure</event>
+</task-notification>
+```
