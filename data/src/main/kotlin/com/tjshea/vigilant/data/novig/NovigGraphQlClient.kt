@@ -29,12 +29,17 @@ import okhttp3.RequestBody.Companion.toRequestBody
  *
  * **Real, disclosed risk — read RESEARCH.md §4.4/§9 before assuming this is a normal API client.**
  * There is no authentication of any kind (so this can't get Tj's own Novig *account* banned — it
- * never touches one), but Novig requires requests to come through rotating proxies to avoid
- * IP-based rate-limiting/anti-bot blocking, which is a real ToS gray area now that Novig is a
- * CFTC-regulated exchange. This is why [proxyRotator] isn't optional plumbing: with zero proxies
- * configured, [com.tjshea.vigilant.app.ScannerViewModel] never constructs this class at all and
- * falls back to sample data, the same opt-in pattern every other provider in this app already
- * uses — never a silent default.
+ * never touches one), but Novig's own package requires requests to come through rotating proxies
+ * to avoid IP-based rate-limiting/anti-bot blocking, which is a real ToS gray area now that Novig
+ * is a CFTC-regulated exchange. That requirement was written for the reference package's own
+ * continuous, high-frequency polling use case, though — this app only calls Novig on a manual
+ * refresh, a much lighter volume that may not need a proxy pool at all. So [proxies] is allowed to
+ * be empty: with zero proxies, requests go out directly over whatever network the device is
+ * currently routed through (a system-wide VPN, if the device has one active, included for free —
+ * no per-app proxy config needed for that). Either way, this class only ever gets constructed when
+ * [com.tjshea.vigilant.app.ScannerViewModel] sees an explicit opt-in (Tj's own request,
+ * 2026-09-22T05:38:31Z, after asking whether a free alternative to paid proxies existed) — never a
+ * silent default, same as every other provider in this app.
  *
  * Pregame-only, as shipped by the reference package (`status: "OPEN_PREGAME"` is hardcoded into
  * both queries) — matches this app's current scope (RESEARCH.md §4.4 open item: the live-market
@@ -42,10 +47,16 @@ import okhttp3.RequestBody.Companion.toRequestBody
  */
 class NovigGraphQlClient(
     private val leagues: List<String>,
-    private val proxyRotator: KeyRotator,
+    proxies: List<String>,
     private val json: Json,
     private val baseUrl: String = "https://gql.novig.us/v1/graphql",
 ) : NovigRepository {
+
+    private val proxyRotator: KeyRotator? = proxies.takeIf { it.isNotEmpty() }?.let(::KeyRotator)
+
+    // Reused across every direct-mode request in this client's lifetime — unlike the per-proxy
+    // client below, there's nothing proxy-specific to configure per attempt.
+    private val directClient: OkHttpClient by lazy { OkHttpClient() }
 
     // Mirrors the reference package's own asyncio.Semaphore(5) — a deliberate politeness/
     // anti-detection cap, not just a performance knob (RESEARCH.md §4.4).
@@ -60,25 +71,44 @@ class NovigGraphQlClient(
     }
 
     private suspend fun fetchLeague(league: String): List<NovigEvent> {
-        // A league-query failure (proxies exhausted/invalid) is allowed to propagate — every
-        // other league would fail identically, so surfacing one clear error beats silently
-        // returning zero events with no explanation (matches ScannerViewModel's error handling).
-        val eventIds = proxyRotator.execute("Novig (direct)") { proxyConfig ->
-            executeGraphQl(proxyConfig, leagueRequestBody(league, json)) { raw -> parseLeagueResponse(raw, json) }
-        }
+        // A league-query failure (proxies exhausted/invalid, or a direct-mode block) is allowed to
+        // propagate — every other league would fail identically, so surfacing one clear error
+        // beats silently returning zero events with no explanation (matches ScannerViewModel's
+        // error handling).
+        val eventIds = runGraphQl(leagueRequestBody(league, json)) { raw -> parseLeagueResponse(raw, json) }
         return coroutineScope {
             eventIds.map { eventId -> async { runCatching { fetchEvent(eventId) }.getOrNull() } }
                 .map { it.await() }
         }.filterNotNull()
     }
 
-    private suspend fun fetchEvent(eventId: String): NovigEvent? {
-        return proxyRotator.execute("Novig (direct)") { proxyConfig ->
-            executeGraphQl(proxyConfig, marketRequestBody(eventId, json)) { raw -> parseMarketResponse(raw, json) }
+    private suspend fun fetchEvent(eventId: String): NovigEvent? =
+        runGraphQl(marketRequestBody(eventId, json)) { raw -> parseMarketResponse(raw, json) }
+
+    /**
+     * Routes through [proxyRotator] (rotating past proxies that fail) when any are configured;
+     * with none, makes the request directly via [directClient]. Direct mode has no pool to rotate
+     * through, so a rate-limit or rejection there is a real, immediate failure, not something to
+     * silently retry — it propagates as [NovigDirectAccessException] with the same detail a
+     * proxy-mode failure would carry.
+     */
+    private suspend fun <T> runGraphQl(requestBody: String, parse: (String) -> KeyAttemptResult<T>): T {
+        val rotator = proxyRotator
+        if (rotator != null) {
+            return rotator.execute("Novig (direct)") { proxyConfig ->
+                executeViaProxy(proxyConfig, requestBody, parse)
+            }
+        }
+        return when (val result = executeGraphQl(directClient, requestBody, parse)) {
+            is KeyAttemptResult.Success -> result.value
+            is KeyAttemptResult.RateLimited ->
+                throw NovigDirectAccessException("Novig rate-limited this request (no proxy configured to rotate to): ${result.reason}")
+            is KeyAttemptResult.Invalid ->
+                throw NovigDirectAccessException("Novig rejected this request (no proxy configured to rotate to): ${result.reason}")
         }
     }
 
-    private suspend fun <T> executeGraphQl(
+    private suspend fun <T> executeViaProxy(
         proxyConfig: String,
         requestBody: String,
         parse: (String) -> KeyAttemptResult<T>,
@@ -96,6 +126,14 @@ class NovigGraphQlClient(
             .proxy(parsedProxy.proxy)
             .proxyAuthenticator(parsedProxy.authenticator)
             .build()
+        return executeGraphQl(client, requestBody, parse)
+    }
+
+    private suspend fun <T> executeGraphQl(
+        client: OkHttpClient,
+        requestBody: String,
+        parse: (String) -> KeyAttemptResult<T>,
+    ): KeyAttemptResult<T> {
         val request = Request.Builder()
             .url(baseUrl)
             .header("Content-Type", "application/json")
@@ -115,7 +153,8 @@ class NovigGraphQlClient(
                 }
             }
         } catch (e: IOException) {
-            // Dead/unreachable proxy, bad proxy auth, connect timeout, etc. — try the next proxy.
+            // Dead/unreachable proxy, bad proxy auth, connect timeout, etc. — try the next proxy
+            // (proxy mode) or surface immediately (direct mode, via runGraphQl above).
             KeyAttemptResult.Invalid(reason = (e::class.simpleName ?: "IOException") + (e.message?.let { ": $it" } ?: ""))
         }
     }
