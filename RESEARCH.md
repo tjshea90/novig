@@ -807,9 +807,11 @@ sub-bullet below, which describes a different (unconfirmed, dormant) path.**
    options are just The Odds API (§4.3, confirmed genuinely free,
    confirmed to include Pinnacle) — which is exactly what's already
    wired in as the reference-leg client, so no change needed there.
-3. **Novig's parlay fee structure** (§3) — only "TBD" piece of the fee
-   model; low priority since pre-game straight bets (fee-free) are the
-   sensible first build target anyway.
+3. ~~Novig's parlay fee structure~~ — **resolved, 2026-09-22 (§3/§4.4):**
+   `price × (1 - price) × 0.10` (same shape as the confirmed live-straight
+   taker fee, 0.10 multiplier instead of 0.03), confirmed by the briefing
+   Tj supplied. `Fees.kt`'s `PARLAY` case now returns a known fee instead
+   of `Unknown`.
 4. ~~Hands-on trial of Odds Assist Pro against Novig~~ — **done, §8.1**:
    confirmed working and free, but with an important caveat (undisclosed
    devig method, large edges on longshot lines are suspect). New follow-up
