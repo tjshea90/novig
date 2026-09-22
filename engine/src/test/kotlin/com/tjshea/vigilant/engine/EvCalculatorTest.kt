@@ -83,7 +83,7 @@ class EvCalculatorTest {
     }
 
     @Test
-    fun `an unpriced parlay fee never silently reports a net EV`() {
+    fun `a priced parlay fee is netted out like any other known fee`() {
         val reference = favoriteReference()
         val novig = NovigQuote(price = 0.3, isMaker = false, context = TradeContext.PARLAY)
 
@@ -96,9 +96,8 @@ class EvCalculatorTest {
             reference = reference,
         )
 
-        assertTrue(result.fee is FeeResult.Unknown)
-        assertNull(result.netEv)
-        assertFalse("without a known fee this must never be reported as positive EV", result.isPositiveEv)
+        check(result.fee is FeeResult.Known)
+        assertEquals(result.evPer1 - (result.fee as FeeResult.Known).amountPerDollarStaked, result.netEv!!, 1e-9)
     }
 
     @Test
