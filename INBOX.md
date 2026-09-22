@@ -1021,3 +1021,12 @@ Check job-level detail (list_workflow_jobs) for release run 35692115606 (v0.3.1)
 <event>run 35692622514 job: completed success</event>
 </task-notification>
 ```
+
+## 2026-09-22T05:58:26Z
+```
+<task-notification>
+<task-id>bvye2h1vv</task-id>
+<summary>Monitor event: "Release run 35692802112 (v0.3.2 retry after cancelling the stuck one)"</summary>
+<event>run 35692802112: in_progress None</event>
+</task-notification>
+```
