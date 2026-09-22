@@ -64,7 +64,7 @@ class NovigGraphQlClient(
         // other league would fail identically, so surfacing one clear error beats silently
         // returning zero events with no explanation (matches ScannerViewModel's error handling).
         val eventIds = proxyRotator.execute("Novig (direct)") { proxyConfig ->
-            executeGraphQl(proxyConfig, leagueRequestBody(league)) { raw -> parseLeagueResponse(raw) }
+            executeGraphQl(proxyConfig, leagueRequestBody(league, json)) { raw -> parseLeagueResponse(raw, json) }
         }
         return coroutineScope {
             eventIds.map { eventId -> async { runCatching { fetchEvent(eventId) }.getOrNull() } }
