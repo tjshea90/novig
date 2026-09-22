@@ -26,10 +26,13 @@ class MainActivity : ComponentActivity() {
 
                 if (showSettings) {
                     val providerKeys by settingsViewModel.uiState.collectAsStateWithLifecycle()
+                    val novigDirectModeEnabled by settingsViewModel.novigDirectModeEnabled.collectAsStateWithLifecycle()
                     SettingsScreen(
                         providerKeys = providerKeys,
                         onAddKey = settingsViewModel::addKey,
                         onRemoveKey = settingsViewModel::removeKey,
+                        novigDirectModeEnabled = novigDirectModeEnabled,
+                        onSetNovigDirectModeEnabled = settingsViewModel::setNovigDirectModeEnabled,
                         // Deliberately does not auto-rescan — Tj's own instruction, 2026-09-20:
                         // no odds load until he presses refresh or pulls to refresh, a newly added
                         // key included. He presses refresh himself once back on the main screen.
