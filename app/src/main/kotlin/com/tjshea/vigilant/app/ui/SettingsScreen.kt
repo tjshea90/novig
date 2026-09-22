@@ -125,7 +125,7 @@ private fun ProviderKeysSection(
                 OutlinedTextField(
                     value = newKeyText,
                     onValueChange = { newKeyText = it },
-                    label = { Text("Add a key") },
+                    label = { Text(if (entry.provider == ApiProvider.NOVIG_PROXY) "Add a proxy" else "Add a key") },
                     singleLine = true,
                     // Real API keys are long random tokens — the IME's autocorrect/autocapitalize
                     // can silently mangle a typed-in key (a bug found 2026-09-20 diagnosing a
