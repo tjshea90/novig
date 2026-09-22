@@ -7,15 +7,21 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 /**
- * Real REST client for Novig's own official API (RESEARCH.md §4.1 — base URL
- * `https://api.novig.com/nbx/v2`, OAuth2 via [NovigTokenProvider]).
+ * Real REST client for Novig's own official, credentialed API (RESEARCH.md §4.1 — base URL
+ * `https://api.novig.com/nbx/v2`, OAuth2 via [NovigTokenProvider]) — the *sanctioned* path,
+ * distinct from [com.tjshea.vigilant.data.novig.NovigGraphQlClient]'s unauthenticated, reverse-
+ * engineered access to Novig's internal backend (RESEARCH.md §4.4). Tj's email to
+ * developers@novig.com requesting real access is still unanswered as of §4.4 — this class stays
+ * dormant, unwired into [com.tjshea.vigilant.app.ScannerViewModel], until that reply lands.
  *
  * IMPORTANT — the response DTOs and [parseOpenMarkets] below are a best-effort shape inferred
- * from documentation summaries (docs.novig.com was read via a doc-summarizing fetch, not a real
- * authenticated response — RESEARCH.md §10 item 5 flags this explicitly as unconfirmed). This
- * class is real, wired, and ready — but the parsing almost certainly needs adjusting against an
- * actual response the first time real credentials exist. [parseOpenMarkets] is a standalone pure
- * function specifically so that fix is a one-file change once we can see real JSON.
+ * from documentation summaries. RESEARCH.md §4.4 found a second, independent, and more strongly
+ * verified source (working code, not a doc-summarizing fetch) reporting that `docs.novig.com`'s
+ * assumed OAuth/developer-portal system "does not hold up" — treat this class's very existence
+ * (a real, official, credentialed API distinct from the internal GraphQL backend) as *unconfirmed
+ * pending Novig's reply*, not just its field shapes. [parseOpenMarkets] is a standalone pure
+ * function specifically so fixing it is a one-file change once real JSON — or a real answer about
+ * whether this path exists at all — is in hand.
  */
 class NovigApiClient(
     private val httpClient: OkHttpClient,
