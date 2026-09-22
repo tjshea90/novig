@@ -26,8 +26,8 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
  * credential, but tightly coupled to the same Novig-provider Settings state this interface already
  * owns (Tj's own request, 2026-09-22T05:38:31Z, after asking whether a free alternative to paid
  * proxies existed for [com.tjshea.vigilant.data.novig.NovigGraphQlClient]). Folded in here rather
- * than a whole second store/interface for one flag; not a secret, so it doesn't need [KeyCipher]'s
- * encryption the way the credential lists above do.
+ * than a whole second store/interface for one flag; not a secret, so the Android-side
+ * implementation doesn't need to encrypt it the way the credential lists above are.
  */
 interface ApiKeyStore {
     suspend fun getKeys(provider: ApiProvider): List<String>
