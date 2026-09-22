@@ -395,6 +395,100 @@ individual exchange order book, so a 30–60s-delayed free tier is fine here:
   and the app should let the edge be inspected/tuned the way OddsJam lets
   users pick a "source of truth."
 
+### 4.4 The actual verified Novig access method, 2026-09-22 — resolves §10 item 1
+
+Tj supplied three attachments: a project briefing PDF, and the actual PyPI
+source distribution + wheel for `novig-liquidity` v1.1.20
+(`github.com/Hurteau101/Novig_Liquidity_Template`, author "Devon H", MIT
+licensed, 18+ releases Oct 2025 → Sep 2026). This session extracted and
+read the real package source directly (`novig_base.py`, `novig_api.py`,
+`models.py`) rather than trusting the briefing's summary alone — every
+claim below is verified against working code, not documentation or a
+third-party writeup.
+
+**Endpoint and auth:**
+
+- `POST https://gql.novig.us/v1/graphql` — Novig's own internal backend
+  (Hasura GraphQL Engine — query syntax uses `_eq`/`_in`/`_or`/`_and`
+  filters, a Hasura convention).
+- **Zero authentication of any kind.** The only header sent is
+  `Content-Type: application/json` — no API key, no OAuth, no Novig
+  account or login, no bearer token. This means using it **cannot get
+  Tj's own Novig account banned** the way violating an authenticated
+  endpoint's ToS could — no account is ever involved.
+- **This directly contradicts the earlier assumption (§4.1/§4.1.1) of an
+  official OAuth/developer-portal system at docs.novig.com.** That
+  assumption came from a doc-summarizing fetch, a weaker source than
+  working code read directly. It's not disproven — Novig's own DevRel job
+  posting and Market Maker program (§4.1.1) are independent evidence a
+  real credentialed API might still exist for institutional partners — but
+  `NovigApiClient`/`NovigLiveFeed`'s field shapes should be treated as
+  unconfirmed pending an actual reply to Tj's still-unanswered
+  developers@novig.com email, not as the working path. This session's
+  `NovigGraphQlClient` (the class now wired into `ScannerViewModel`) is a
+  **separate, independently-verified path** — the unauthenticated GraphQL
+  backend above, not the doc-summarized OAuth REST API.
+
+**Requires rotating proxies.** `novig_api.py` hard-fails at import time
+without a `PROXIES` env var (comma-separated `username:password@host:port`,
+HTTP Basic Auth to the proxy). This is a real signal of anti-bot/rate-limit
+protection on Novig's side, not an incidental implementation detail — see
+§9 for the risk posture this implies. **This is a real, ongoing cost**: a
+paid rotating-proxy subscription (residential or datacenter), not free
+infrastructure. Tj sources this himself; the app has no opinion on which
+provider, and ships with zero proxies configured by default.
+
+**Pregame only, as shipped.** Both GraphQL queries hardcode
+`status: "OPEN_PREGAME"`. The live/in-play status value is unknown and
+unconfirmed — matches this app's `NovigGraphQlClient`, which is pregame-
+only for the same reason (open item, see §10).
+
+**Read-only.** No order-placement endpoint exists anywhere in the package.
+Placing trades would require separately reverse-engineering authenticated,
+account-linked write access — a materially bigger lift and a materially
+bigger step up in both ToS risk and consequence (an account actually is
+involved this time) than reading public market data. Out of scope, not
+attempted.
+
+**The two verified GraphQL queries** (league query: list of `OPEN_PREGAME`
+events for a league; market query: full order book for one event, exact
+strings in `NovigGraphQlClient.kt`'s `LEAGUE_QUERY`/`MARKET_QUERY`
+constants) and the `price_to_american`/`calculate_liquidity` formulas the
+package uses were copied verbatim from the working code, not re-derived.
+
+**What `NovigGraphQlClient` had to solve that the reference package never
+needed to:** `novig-liquidity` is a single-source liquidity filter — it
+never needed to match a Novig event against a *different* provider's event,
+so it never had to solve team-name extraction. This app does (to line up
+against the reference-odds leg), and Novig's schema has **no explicit
+home/away team fields** — only a free-text event `description` and,
+per-market, per-outcome `description` strings. `NovigGraphQlClient` prefers
+a moneyline market's two outcome descriptions (almost certainly the literal
+team names) and falls back to splitting the event description on a common
+matchup separator (` @ `, ` at `, ` vs`/` vs.`) — genuinely best-effort,
+unconfirmed against a real live response, and exactly the
+"matching/normalization is the hard problem, not the API calls" risk the
+briefing called out. `EventMatcher` was also made order-independent
+(RESEARCH.md-adjacent code change) since which of the two names Novig's
+API returns first isn't a documented convention either.
+
+**Market-type classification is similarly best-effort.** Novig's raw
+`market.type` string values aren't documented anywhere; `NovigGraphQlClient`
+tries the raw string first (in case it happens to be human-readable) and
+falls back to a strike/outcome-label heuristic (over/under keywords → total,
+a strike present with no over/under → spread, no strike → moneyline) modeled
+on the reference package's own handling of the same ambiguity.
+
+**Outcome pricing:** each outcome exposes both a `last` (most recent trade
+price) and an `orders` list (currently OPEN resting orders, sorted by
+price). `NovigGraphQlClient` prefers `last` when present — it's the field
+Novig's own schema dedicates to "the current price" — falling back to the
+highest-price OPEN order for a market with no trade history yet. The
+reference package's own `highest_order` picks by *largest notional*, not
+best price — that's solving a different problem (liquidity summary, not
+"what's a fair current-price quote"), so this app didn't copy it directly;
+documented as a genuine best-effort choice, not a confirmed convention.
+
 ## 5. The math: devigging methods (with actual formulas)
 
 Devigging = stripping a book's margin/overround out of quoted odds to
