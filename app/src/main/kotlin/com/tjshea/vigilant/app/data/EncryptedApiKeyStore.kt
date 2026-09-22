@@ -42,4 +42,11 @@ class EncryptedApiKeyStore(
             prefs[prefKey] = json.encodeToString(ListSerializer(String.serializer()), encrypted)
         }
     }
+
+    override suspend fun isNovigDirectModeEnabled(): Boolean =
+        context.apiKeyDataStore.data.first()[NOVIG_DIRECT_MODE_KEY] ?: false
+
+    override suspend fun setNovigDirectModeEnabled(enabled: Boolean) {
+        context.apiKeyDataStore.edit { prefs -> prefs[NOVIG_DIRECT_MODE_KEY] = enabled }
+    }
 }
