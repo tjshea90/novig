@@ -722,3 +722,99 @@ request.
       (Novig) isn't available free at all. No code changes made —
       `SharpApiClient` stays as-is, ready to work the moment there's a
       paid key or a policy change, not removed.
+
+## Tj's request, 2026-09-22 (his own words — attachments, full text in INBOX.md)
+
+> Overhaul this app, or if it is more efficient or logical, start fresh
+> and delete the old app. Read and review the attachments. Make the app
+> use the novig data from the method attached. Build the app using this
+> information
+
+Attachments: `novig_ev_scanner_briefing.pdf` (a project briefing) plus the
+actual `novig-liquidity` PyPI package (`.tar.gz` sdist + `.whl`) it's based
+on — a real, MIT-licensed, third-party Python package (`github.com/
+Hurteau101/Novig_Liquidity_Template`) that reverse-engineers direct,
+**unauthenticated** read access to Novig's own internal GraphQL backend
+(`gql.novig.us/v1/graphql`, Hasura). This finally resolves this project's
+long-standing #1 blocker (RESEARCH.md §10 item 1) — no official
+Novig API reply has come back, but this is a different, already-working
+path. Read the actual package source (not just the PDF summary) to verify
+it firsthand before building anything on top of it.
+
+**Real risk, told to Tj plainly, not buried:** this queries Novig's
+internal backend directly with no login/account/API key of any kind — so
+it can't get *Tj's account* banned the way a ToS violation on an
+authenticated endpoint could — but it requires paid rotating residential
+proxies specifically to dodge IP-based rate-limiting/anti-bot blocking,
+which is a real ToS gray area now that Novig is a CFTC-regulated exchange.
+Novig could block or blacklist the proxy IPs at any time without notice.
+It's read-only, pregame-only, and mirrors what odds-aggregator tools
+commonly do — not something to refuse building — but it must ship as an
+explicit opt-in (no proxies configured → sample data, same pattern already
+used for every other provider), never a silent default, and Tj sources the
+proxy subscription himself.
+
+### Progress on this request
+
+- [x] Extracted and read the actual `novig-liquidity` v1.1.20 source
+      (`novig_base.py`, `novig_api.py`, `models.py`) — confirms the PDF's
+      claims exactly: `POST https://gql.novig.us/v1/graphql`, header is
+      only `Content-Type: application/json` (zero auth), hard-fails
+      without a `PROXIES` env var (`user:pass@host:port`, HTTP Basic Auth
+      to the proxy itself), queries hardcode `status: "OPEN_PREGAME"`
+      (pregame only), and got the exact two GraphQL query strings + the
+      `price_to_american`/`calculate_liquidity` formulas + the
+      `novig.onelink.me`/`novig.com` deep-link formats verbatim from
+      working code.
+- [ ] Reviewed the existing app's architecture (`engine`+`data`+`app`
+      modules) end to end before deciding overhaul-vs-rewrite: the devig/EV
+      math (`engine`), the `NovigRepository`/`ReferenceOddsRepository`
+      provider-abstraction + `KeyRotator` multi-key-rotation + encrypted
+      Settings-screen key storage (`data`+`app`) are all solid, tested,
+      already-shipped infrastructure that this new access method slots
+      into directly — decided **overhaul, not rewrite**: the problem was
+      always "no free Novig data source," never "wrong architecture."
+- [ ] Add `NovigGraphQlClient` (`data` module): real client for the
+      verified GraphQL endpoint/queries, proxy pool reusing the existing
+      `KeyRotator`/`ApiKeyStore`/encrypted-Settings-screen infra verbatim
+      (a proxy string is just another kind of rotated credential) rather
+      than building new plumbing, per-league concurrent event fetch,
+      `last`-trade-price-preferred outcome pricing (best-effort — exact
+      bid/ask semantics aren't documented anywhere, flagged honestly in
+      code), moneyline-outcome-based team-name extraction for cross-source
+      matching (Novig's own schema has no explicit home/away team fields,
+      only a free-text event `description` — PDF §6 flags this
+      "matching/normalization" problem as the real hard part, not the API
+      calls).
+- [ ] Delete `SharpApiClient`+test (dead: confirmed 2026-09-20 that
+      SharpAPI's free tier categorically can't reach Novig — no future
+      value, unlike `NovigApiClient` which stays dormant pending Novig's
+      still-unanswered official-API email).
+- [ ] Update `Fees.kt`'s parlay case from `Unknown` to a real formula — the
+      briefing confirms it for the first time (`price × (1-price) × 0.10`,
+      same shape as the already-confirmed live-straight-taker fee but a
+      0.10 multiplier instead of 0.03) — resolves RESEARCH.md §10 item 3.
+- [ ] Make `EventMatcher` order-independent (home/away swapped shouldn't
+      cause a false non-match across two providers with different
+      conventions) — a real correctness bug this new client's team-name
+      extraction would otherwise expose, worth fixing regardless of source.
+- [ ] Wire proxies into `SettingsScreen`/`SettingsViewModel`/
+      `ScannerViewModel` the same way API keys already work, with clear
+      warning copy directly above the input field (not a separate consent
+      toggle — pasting in a real proxy subscription's credentials already
+      is the deliberate, informed action).
+- [ ] Real unit tests against fixture JSON matching the verified query
+      shape exactly (proxy rotation, GraphQL parsing, price-source
+      fallback, market-type mapping, team-name extraction) — run for real
+      in this container (`engine`+`data` are plain Kotlin/JVM).
+- [ ] Update `BRIEF.md`/`RESEARCH.md` with the new access method, the real
+      risk disclosure, and resolve the now-answered open items (§10 item 1
+      effectively superseded — a working free path exists even though
+      Novig's own official API answer never came; §10 item 3 resolved).
+- [ ] Verify what this container can for real
+      (`./gradlew --configure-on-demand :engine:test :data:test`), push,
+      confirm CI green for the `app` module (no local Android SDK).
+- [ ] Bump version, ship, confirm the release build green, send Tj the
+      Release link as plain tappable text — this is real, shippable work
+      per CLAUDE.md's "Releasing" section, not left uncommitted-to-a-release.
+- [ ] Checkpoint through this in stages, not just at the end.
