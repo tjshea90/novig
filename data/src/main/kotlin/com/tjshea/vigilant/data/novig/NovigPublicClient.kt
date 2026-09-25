@@ -30,6 +30,9 @@ interface NovigSource {
     ): List<NovigMarket>
     suspend fun books(marketIds: Collection<String>): BookBatch
     suspend fun market(marketId: String): NovigMarket?
+
+    /** Which events' books matter right now. A streaming source subscribes to them; REST ignores it. */
+    fun focus(eventIds: Set<String>) {}
 }
 
 /** The result of fetching many books at once. A failure on some books never discards the rest. */
@@ -104,6 +107,9 @@ class NovigPublicClient(
             return json.decodeFromString(MarketDto.serializer(), body).toDomain()
         }
     }
+
+    /** The last book seen for [marketId], without any network. */
+    fun cached(marketId: String): NovigBook? = bookCache[marketId]?.book
 
     override suspend fun books(marketIds: Collection<String>): BookBatch = coroutineScope {
         val gate = Semaphore(maxConcurrent)

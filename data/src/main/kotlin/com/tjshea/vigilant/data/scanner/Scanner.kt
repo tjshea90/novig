@@ -134,6 +134,7 @@ class Scanner(
         var fetched = 0
         var notModified = 0
         if (currentPlan != null && currentPlan.markets.isNotEmpty()) {
+            novig.focus(currentPlan.markets.mapTo(HashSet()) { it.event.eventId })
             try {
                 val batch = novig.books(currentPlan.marketIds)
                 books = batch.books
