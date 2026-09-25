@@ -1481,3 +1481,18 @@ Start making the app  with the free public novig routes, with options to add my 
 <summary>Background command "Wait for v0.5.0 release workflow" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-25T12:36:10Z
+```
+I like the app UI so far. A few changes: 
+
+1) make it so it does not pull or request any odds from novig or any API in the app at all unless I manually press a button to scan for positive EV or manually pull to refresh. 
+
+2) review the attached screenshot, novig may be rate limiting my requests, see how to make the app have better efficiency and less chance of rate limiting. 
+
+3) research and read all of the documentation about the novig and the odds API sources used in the app. Optimize the app to meet the limits and specs of the providers. Make the app careful not to get banned or severely limited or restricted. 
+
+4) research and tell me the best way to have this app work without severe restriction on refreshing and being able to refresh odds many times per day. Consider all free apis or other ways to get updated odds from different sports books, especially sharp sports books. Research if there are other ways to pull these odds for free or very cheap. Consider if I should sign up for the odds API key on several email addresses and let the app use each key 
+
+5) do any and all research necessary to obtain the goal: I want this app to work for free or cheap by any means to find "fair" odds for many different markets and tell me all positive EV bets on novig, just like the oddsjam app. Right now it seems to work ok except it is rate limiting
+```
