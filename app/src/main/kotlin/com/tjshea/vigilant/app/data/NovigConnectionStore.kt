@@ -1,7 +1,6 @@
 package com.tjshea.vigilant.app.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.tjshea.vigilant.data.novig.signing.KeyVault
@@ -24,19 +23,12 @@ class NovigConnectionStore(private val context: Context) {
     private val readKeyId = stringPreferencesKey("novig_read_key_id")
     private val readAlias = stringPreferencesKey("novig_read_alias")
     private val subaccount = stringPreferencesKey("novig_subaccount_key_id")
-    private val streamOn = booleanPreferencesKey("novig_stream_enabled")
 
     suspend fun load(): NovigConnection? {
         val p = context.apiKeyDataStore.data.first()
         val id = p[readKeyId] ?: return null
         val alias = p[readAlias] ?: return null
         return NovigConnection(id, alias, p[subaccount] ?: "", createdSubaccount = false)
-    }
-
-    suspend fun streamEnabled(): Boolean = context.apiKeyDataStore.data.first()[streamOn] ?: true
-
-    suspend fun setStreamEnabled(on: Boolean) {
-        context.apiKeyDataStore.edit { it[streamOn] = on }
     }
 
     suspend fun save(c: NovigConnection) {

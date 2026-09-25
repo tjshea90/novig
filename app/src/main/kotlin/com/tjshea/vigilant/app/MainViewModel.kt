@@ -7,49 +7,46 @@ import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
-import com.tjshea.vigilant.data.novig.stream.StreamState
 import com.tjshea.vigilant.app.data.KeystoreVault
 import com.tjshea.vigilant.data.scanner.Opportunity
-import com.tjshea.vigilant.data.scanner.RefreshKind
-import com.tjshea.vigilant.data.scanner.RefreshReport
+import com.tjshea.vigilant.data.scanner.ScanProgress
+import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.SourceReport
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.currentCoroutineContext
 
 /** What the status line under the title shows. */
 data class ScanStatus(
-    val refreshing: Boolean = false,
-    /** A pull-to-refresh is running (drives the pull indicator). */
-    val manual: Boolean = false,
-    val novigAtMs: Long? = null,
-    val referenceAtMs: Long? = null,
+    /** A scan is running (Scan button or pull-to-refresh). */
+    val scanning: Boolean = false,
+    val progress: ScanProgress? = null,
+    val scannedAtMs: Long? = null,
     val creditsRemaining: Int? = null,
     val errors: List<String> = emptyList(),
-    val hasOddsKey: Boolean = false,
     val backoffSeconds: Int? = null,
     val booksFetched: Int = 0,
-    val booksNotModified: Int = 0,
+    val booksFromCache: Int = 0,
+    val booksViaKey: Int = 0,
+    val sources: List<SourceReport> = emptyList(),
+    /** Leagues picked since the last scan: nothing to show for them until the next one. */
+    val unscanned: Set<String> = emptySet(),
 )
 
-/** The Novig API key section of Settings, and the stream's health. */
+/** The Novig API key section of Settings. */
 data class NovigUi(
     val connection: NovigConnection? = null,
-    val streamEnabled: Boolean = true,
-    val stream: StreamState = StreamState.Off,
     val busy: Boolean = false,
     /** Progress or result text for setup/test. */
     val message: String? = null,
@@ -62,22 +59,19 @@ data class UiState(
     val feed: List<Opportunity> = emptyList(),
     val status: ScanStatus = ScanStatus(),
     val oddsApiKeys: List<String> = emptyList(),
+    val pinnapiKeys: List<String> = emptyList(),
     val bets: List<TrackedBet> = emptyList(),
     val loaded: Boolean = false,
     val novig: NovigUi = NovigUi(),
 )
 
 /**
- * The whole app's state. Network only happens in [runLiveLoop] (while the screen is visible,
- * driven by the Activity's lifecycle) and [refreshNow] (pull-to-refresh). Settings changes
- * re-price from what's cached, so they're instant and free.
+ * The whole app's state. Network happens in exactly one place, [scan], and only when Tj taps
+ * Scan or pulls to refresh (his rule, 2026-09-25): nothing fetches on launch, on a timer, on a
+ * tab change, or when a setting changes. Settings changes re-price from what the last scan
+ * fetched, so they're instant and free.
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-
-    private companion object {
-        const val STREAM_TICK_SECONDS = 2
-        const val STREAM_RETRY_MS = 60_000L
-    }
 
     private val c = (application as VigilantApp).container
 
@@ -89,17 +83,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            val settings = c.settingsStore.read()
+            val stored = c.settingsStore.read()
+            val settings = stored.migrate()
+            if (settings != stored) runCatching { c.settingsStore.update { settings } }
             val keys = c.keyStore.getKeys(ApiProvider.THE_ODDS_API)
+            val pinn = c.keyStore.getKeys(ApiProvider.PINNAPI)
             val bets = c.tracker.all()
             val connection = c.novigConnection.load()
-            val streamOn = c.novigConnection.streamEnabled()
-            if (connection != null && streamOn) c.useConnection(connection)
+            c.useConnection(connection)
             _state.update {
                 it.copy(
-                    settings = settings, oddsApiKeys = keys, bets = bets, loaded = true,
-                    status = it.status.copy(hasOddsKey = keys.isNotEmpty()),
-                    novig = it.novig.copy(connection = connection, streamEnabled = streamOn),
+                    settings = settings, oddsApiKeys = keys, pinnapiKeys = pinn, bets = bets, loaded = true,
+                    novig = it.novig.copy(connection = connection),
                 )
             }
         }
@@ -108,55 +103,63 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Refreshes Novig every [ScanSettings.novigRefreshSeconds] until cancelled. The Activity runs
-     * this inside `repeatOnLifecycle(STARTED)`, so it stops the moment the app leaves the screen:
-     * no background polling, no wake locks, nothing running while the phone is in a pocket.
-     */
-    suspend fun runLiveLoop() {
-        while (!_state.value.loaded) delay(50)
-        val watch = viewModelScope.launch { watchStream() }
-        try {
-            var failedAt = 0L
-            while (currentCoroutineContext().isActive) {
-                // Start the stream whenever one exists but isn't running: at launch, right after
-                // setup connects a key, or after the stream switch is turned back on.
-                c.stream?.let { if (it.state.value is StreamState.Off) it.connect() }
-                if (!pricesVisible) {
-                    delay(1_000)
-                    continue
+    /** One scan: Novig's board and prices plus fair odds from every enabled source. */
+    fun scan() {
+        val current = _state.value
+        if (!current.loaded || current.status.scanning) return
+        if (current.settings.leagues.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(status = it.status.copy(scanning = true, progress = ScanProgress("Starting"))) }
+            try {
+                val settings = _state.value.settings
+                val sources = c.referenceSources(settings, _state.value.oddsApiKeys, _state.value.pinnapiKeys)
+                val report = withContext(Dispatchers.Default) {
+                    c.scanner.scan(settings, sources) { p -> _state.update { it.copy(status = it.status.copy(progress = p)) } }
                 }
-                val report = refresh(RefreshKind.AUTO)
-                val stream = c.stream
-                val streamState = stream?.state?.value
-                // A dropped stream reconnects after a pause, never in a tight loop.
-                if (stream != null && streamState is StreamState.Failed) {
-                    if (failedAt == 0L) failedAt = System.currentTimeMillis()
-                    if (System.currentTimeMillis() - failedAt >= STREAM_RETRY_MS) {
-                        failedAt = 0L
-                        stream.close()
-                        stream.connect()
-                    }
-                } else {
-                    failedAt = 0L
-                }
-                // With the stream live every book is already in memory, so re-pricing every 2s
-                // costs no network. Without it, poll at the user's REST interval.
-                val base = if (streamState is StreamState.Live) STREAM_TICK_SECONDS else _state.value.settings.novigRefreshSeconds.coerceAtLeast(5)
-                delay(maxOf(base, report?.retryAfterSeconds ?: 0) * 1000L)
+                apply(report, settings)
+            } finally {
+                _state.update { it.copy(status = it.status.copy(scanning = false, progress = null)) }
             }
-        } finally {
-            watch.cancel()
-            // Off screen: drop the socket. Nothing stays connected in the background.
-            c.stream?.close()
         }
     }
 
-    private suspend fun watchStream() {
-        while (true) {
-            val s = c.stream?.state?.value ?: StreamState.Off
-            if (_state.value.novig.stream != s) _state.update { it.copy(novig = it.novig.copy(stream = s)) }
-            delay(1_000)
+    private suspend fun apply(report: ScanReport, settings: ScanSettings) {
+        val result = report.result
+        _state.update { s ->
+            s.copy(
+                result = result ?: s.result,
+                feed = (result ?: s.result)?.feed(s.settings) ?: emptyList(),
+                status = s.status.copy(
+                    scannedAtMs = if (result != null) result.computedAtMs else s.status.scannedAtMs,
+                    creditsRemaining = report.creditsRemaining ?: s.status.creditsRemaining,
+                    errors = report.errors,
+                    backoffSeconds = report.retryAfterSeconds,
+                    booksFetched = report.booksFetched + report.booksNotModified,
+                    booksFromCache = report.booksFromCache,
+                    booksViaKey = report.booksViaKey,
+                    sources = report.sources,
+                    unscanned = emptySet(),
+                ),
+            )
+        }
+        // A setting changed while the scan was in flight: re-price from cache so the screen never
+        // shows numbers computed under the old settings.
+        val latest = _state.value.settings
+        if (result != null && latest != settings) repriceNow(latest)
+        // Disk trouble (full storage) must never break a scan.
+        result?.let { runCatching { c.tracker.observe(it) } }
+    }
+
+    private suspend fun repriceNow(settings: ScanSettings) {
+        val repriced = withContext(Dispatchers.Default) { c.scanner.reprice(settings) }
+        val unscanned = c.scanner.unscannedLeagues(settings)
+        _state.update {
+            val r = repriced ?: it.result?.takeIf { settings.leagues.isNotEmpty() }
+            it.copy(
+                result = r,
+                feed = r?.feed(it.settings) ?: emptyList(),
+                status = it.status.copy(unscanned = if (it.result == null && repriced == null) emptySet() else unscanned),
+            )
         }
     }
 
@@ -174,9 +177,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Replace any earlier read key: its Keystore entry is no longer needed.
                 _state.value.novig.connection?.let { old -> if (old.readAlias != conn.readAlias) KeystoreVault.delete(old.readAlias) }
                 c.novigConnection.save(conn)
-                if (_state.value.novig.streamEnabled) c.useConnection(conn)
+                c.useConnection(conn)
                 _state.update {
-                    it.copy(novig = it.novig.copy(connection = conn, busy = false, message = "Connected. Prices now stream live from Novig while the app is open."))
+                    it.copy(novig = it.novig.copy(connection = conn, busy = false, message = "Connected. Scans now read Novig prices through your key's own rate limit."))
                 }
             } catch (e: NovigApiException) {
                 _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.advice)) }
@@ -205,14 +208,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setStreamEnabled(on: Boolean) {
-        viewModelScope.launch {
-            c.novigConnection.setStreamEnabled(on)
-            c.useConnection(if (on) _state.value.novig.connection else null)
-            _state.update { it.copy(novig = it.novig.copy(streamEnabled = on)) }
-        }
-    }
-
     /** Forgets the key on this phone. It stays registered on Novig until revoked in Novig's profile. */
     fun disconnectNovig() {
         viewModelScope.launch {
@@ -220,75 +215,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.useConnection(null)
             c.novigConnection.clear()
             conn?.let { KeystoreVault.delete(it.readAlias) }
-            _state.update { it.copy(novig = NovigUi(streamEnabled = it.novig.streamEnabled, message = "Disconnected. Back to Novig's public prices.")) }
+            _state.update { it.copy(novig = NovigUi(message = "Disconnected. Back to Novig's public prices.")) }
         }
     }
 
-    fun refreshNow() {
-        viewModelScope.launch {
-            _state.update { it.copy(status = it.status.copy(manual = true)) }
-            try {
-                refresh(RefreshKind.FULL)
-            } finally {
-                _state.update { it.copy(status = it.status.copy(manual = false)) }
-            }
-        }
-    }
-
-    /**
-     * Whether a screen that shows prices (+EV, Games) is in front. On Tracker or Settings the
-     * loop idles instead of fetching: no network or battery spent on prices nobody is looking at.
-     */
-    @Volatile
-    private var pricesVisible = true
-
-    fun setPricesVisible(visible: Boolean) {
-        val wasHidden = !pricesVisible
-        pricesVisible = visible
-        // Coming back to a price screen shouldn't wait out the rest of a long interval.
-        if (visible && wasHidden) viewModelScope.launch { refresh(RefreshKind.AUTO) }
-    }
-
-    private suspend fun refresh(kind: RefreshKind): RefreshReport? {
-        val settings = _state.value.settings
-        if (settings.leagues.isEmpty()) return null
-        _state.update { it.copy(status = it.status.copy(refreshing = true)) }
-        val report = withContext(Dispatchers.Default) {
-            c.scanner.refresh(settings, kind, c.referenceFor(_state.value.oddsApiKeys))
-        }
-        val result = report.result
-        _state.update { s ->
-            s.copy(
-                result = result ?: s.result,
-                feed = (result ?: s.result)?.feed(s.settings) ?: emptyList(),
-                status = ScanStatus(
-                    refreshing = false,
-                    manual = s.status.manual,
-                    novigAtMs = result?.computedAtMs ?: s.status.novigAtMs,
-                    referenceAtMs = s.settings.selectedLeagues.mapNotNull { report.referenceAtMs[it.oddsApiSportKey] }.minOrNull(),
-                    creditsRemaining = report.creditsRemaining,
-                    errors = report.errors,
-                    hasOddsKey = report.hasReferenceSource,
-                    backoffSeconds = report.retryAfterSeconds,
-                    booksFetched = report.booksFetched,
-                    booksNotModified = report.booksNotModified,
-                ),
-            )
-        }
-        // A setting changed while this refresh was in flight: re-price from cache so the screen
-        // never shows numbers computed under the old settings.
-        val latest = _state.value.settings
-        if (result != null && latest != settings && latest.leagues == settings.leagues) {
-            withContext(Dispatchers.Default) { c.scanner.reprice(latest) }?.let { r -> _state.update { it.copy(result = r, feed = r.feed(it.settings)) } }
-        }
-        // Disk trouble (full storage) must never kill the live loop.
-        result?.let { runCatching { c.tracker.observe(it) } }
-        return report
-    }
-
+    /** Saves a settings change and re-prices from the last scan. Never touches the network. */
     fun updateSettings(transform: (ScanSettings) -> ScanSettings) {
         viewModelScope.launch {
-            val before = _state.value.settings
             val next = settingsMutex.withLock {
                 // If the write fails, keep the change for this session rather than crash.
                 runCatching { c.settingsStore.update(transform) }.getOrElse { transform(_state.value.settings) }
@@ -297,14 +230,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
                 else it.copy(settings = next, feed = it.result?.feed(next) ?: emptyList())
             }
-            val needsFetch = next.leagues != before.leagues || next.includeLive != before.includeLive ||
-                next.daysAhead != before.daysAhead || next.referenceBooks != before.referenceBooks
-            if (needsFetch) {
-                refresh(if (next.referenceBooks != before.referenceBooks) RefreshKind.FULL else RefreshKind.AUTO)
-            } else {
-                val repriced = withContext(Dispatchers.Default) { c.scanner.reprice(next) }
-                if (repriced != null) _state.update { it.copy(result = repriced, feed = repriced.feed(next)) }
-            }
+            if (next.leagues.isNotEmpty()) repriceNow(next)
         }
     }
 
@@ -320,10 +246,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeOddsApiKey(key: String) = setOddsApiKeys(_state.value.oddsApiKeys - key)
 
+    /** pinnapi allows one free key per person; a new one replaces the old. */
+    fun setPinnapiKey(key: String?) {
+        val keys = listOfNotNull(key?.trim()?.takeIf { it.isNotEmpty() })
+        viewModelScope.launch {
+            c.keyStore.setKeys(ApiProvider.PINNAPI, keys)
+            _state.update { it.copy(pinnapiKeys = keys) }
+        }
+    }
+
     private fun setOddsApiKeys(keys: List<String>) {
         viewModelScope.launch {
             c.keyStore.setKeys(ApiProvider.THE_ODDS_API, keys)
-            _state.update { it.copy(oddsApiKeys = keys, status = it.status.copy(hasOddsKey = keys.isNotEmpty())) }
+            _state.update { it.copy(oddsApiKeys = keys) }
         }
     }
 
