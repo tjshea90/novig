@@ -184,6 +184,29 @@ fun SettingsScreen(
                 }
                 Hint(creditEstimate(s))
 
+                SwitchRow(
+                    "Sportsbook player props",
+                    "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Kalshi " +
+                        "where it has the same line. 1 credit per prop type per game.",
+                    s.useBookProps,
+                ) { v -> onUpdate { it.copy(useBookProps = v) } }
+                if (s.useBookProps) {
+                    if (MarketFamily.PLAYER_PROPS !in s.families) Hint("Turn on Player props under Markets below to use these.")
+                    Text("Prop types per game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                    ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
+                    Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                    ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else it.toString() }) { v ->
+                        onUpdate { it.copy(bookPropCreditsPerScan = v) }
+                    }
+                    Text("Only games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                    ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
+                    Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                    ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
+                        onUpdate { it.copy(bookPropReuseMinutes = v) }
+                    }
+                    Hint(bookPropEstimate(s))
+                }
+
                 SectionTitle("The Odds API books (${s.referenceBooks.size}/10)")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
@@ -305,11 +328,16 @@ private fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String,
 }
 
 
-/** What a scan costs in Odds API credits, so the free tier's 500 isn't a surprise. */
+/**
+ * What a scan costs in Odds API credits, so the free tier's 500 isn't a surprise. Only the main
+ * lines (moneyline, spread, total) are bought per league; 1st half, team totals and props are not.
+ */
 fun creditEstimate(s: ScanSettings): String {
-    val perScan = s.families.size.coerceAtLeast(1) * s.leagues.size.coerceAtLeast(1)
-    val base = "A scan that refreshes it costs about $perScan credit${if (perScan == 1) "" else "s"} " +
-        "(${s.leagues.size} league${if (s.leagues.size == 1) "" else "s"} × ${s.families.size} market type${if (s.families.size == 1) "" else "s"})."
+    val markets = TheOddsApiClient.marketsFor(s.families).size
+    if (markets == 0) return "No main-line markets are on, so game lines cost nothing."
+    val perScan = markets * s.leagues.size.coerceAtLeast(1)
+    val base = "Game lines cost about $perScan credit${if (perScan == 1) "" else "s"} per refresh " +
+        "(${s.leagues.size} league${if (s.leagues.size == 1) "" else "s"} × $markets market${if (markets == 1) "" else "s"})."
     return if (s.oddsApiReuseMinutes == 0) {
         "$base Every scan refreshes it."
     } else {
@@ -317,6 +345,22 @@ fun creditEstimate(s: ScanSettings): String {
         "$base Scanning as often as you like costs at most $perHour an hour."
     }
 }
+
+/** What sportsbook props cost, in the same terms as [creditEstimate]. */
+fun bookPropEstimate(s: ScanSettings): String {
+    if (s.bookPropCreditsPerScan <= 0) return "No credits are set aside for props, so none are bought."
+    val perGame = if (s.bookPropSet == BookPropSet.CORE) 4 else null
+    val games = perGame?.let { s.bookPropCreditsPerScan / it }
+    val reach = if (games != null) {
+        "about $perGame credits a game, so up to $games game${if (games == 1) "" else "s"} a scan"
+    } else {
+        "one credit per prop type Novig lists for the game (up to 18 in football)"
+    }
+    return "Props cost $reach, soonest games first, never more than ${s.bookPropCreditsPerScan} credits a scan. " +
+        "A game's props are re-used for ${minutesLabel(s.bookPropReuseMinutes)}, so scanning again sooner costs nothing for it."
+}
+
+fun minutesLabel(minutes: Int): String = if (minutes >= 60 && minutes % 60 == 0) "${minutes / 60}h" else "${minutes}m"
 
 /** Key list callbacks from the view model; the file pickers live in [SettingsScreen]. */
 class KeyActions(

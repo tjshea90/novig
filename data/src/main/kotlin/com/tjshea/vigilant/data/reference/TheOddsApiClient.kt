@@ -55,7 +55,7 @@ class TheOddsApiClient(
     override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMinutes.coerceAtLeast(0) * 60_000L
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        val markets = settings.families.mapNotNull { FAMILY_MARKETS[it] }.sorted()
+        val markets = marketsFor(settings.families)
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         return fetch(league.oddsApiSportKey, settings.referenceBooks, markets)
     }
@@ -185,6 +185,9 @@ class TheOddsApiClient(
         const val ID = "oddsapi"
         val ALL_MARKETS = listOf("h2h", "spreads", "totals")
         private val FAMILY_MARKETS = mapOf(MarketFamily.MONEYLINE to "h2h", MarketFamily.SPREAD to "spreads", MarketFamily.TOTAL to "totals")
+
+        /** The main-line markets a sport refresh buys: one credit each. Alt markets come from elsewhere. */
+        fun marketsFor(families: Collection<MarketFamily>): List<String> = families.mapNotNull { FAMILY_MARKETS[it] }.sorted()
         const val REMAINING = "x-requests-remaining"
         const val USED = "x-requests-used"
         const val LAST = "x-requests-last"
