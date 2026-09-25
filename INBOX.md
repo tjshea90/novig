@@ -1518,3 +1518,12 @@ I like the app UI so far. A few changes:
 <summary>Background command "Wait for the release workflow to finish" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-25T13:57:50Z
+```
+Does this repo have: 
+
+1) the "full tests" and "light tests" protocols
+
+2) rugged resumption checkpoint system for Claude code in case of interruption due to usage
+```
