@@ -19,8 +19,8 @@ android {
         // no real cost to a bit of headroom for testing on whatever other device is on hand.
         minSdk = 30
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.3.3"
+        versionCode = 8
+        versionName = "0.4.0"
     }
 
     // Signs with a keystore committed directly into the repo — Tj's explicit call (2026-09-20),
@@ -41,7 +41,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8: strips unused code (most of Compose/OkHttp we don't call) and optimizes what's
+            // left. A smaller, faster APK matters on a mid-range Moto G. Keep rules for the
+            // JSON-persisted settings/bets live in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -53,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
