@@ -35,6 +35,7 @@ import org.junit.Test
  * +EV first, and are read while the fair odds are still loading; the scan itself lives in
  * [ScanRunner], outside any screen.
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class StreamingScanTest {
 
     private var now = Fixtures.START_MS - 86_400_000L
@@ -188,7 +189,7 @@ class StreamingScanTest {
     @Test
     fun `the runner scans in the app's scope, streams progress and partials, and refuses a second start`() = runTest {
         val novig = Novig(edgeOn = setOf(2))
-        val runner = ScanRunner(Scanner(novig, clock = { now }), backgroundScope)
+        val runner = ScanRunner(Scanner(novig, clock = { now }), this)
         val seen = ArrayList<ScanReport?>()
         assertTrue(runner.start(settings, listOf(Fair())) { seen += it })
         assertTrue(runner.state.value.scanning)
@@ -209,7 +210,7 @@ class StreamingScanTest {
     @Test
     fun `a scan that blows up keeps the last good result on screen and says why`() = runTest {
         val novig = Novig(edgeOn = setOf(2))
-        val runner = ScanRunner(Scanner(novig, clock = { now }), backgroundScope)
+        val runner = ScanRunner(Scanner(novig, clock = { now }), this)
         runner.start(settings, listOf(Fair()))
         advanceUntilIdle()
         val good = runner.state.value.result!!
