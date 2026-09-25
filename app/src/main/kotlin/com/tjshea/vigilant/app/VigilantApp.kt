@@ -4,8 +4,12 @@ import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
 import com.tjshea.vigilant.app.data.KeystoreSigningKey
 import com.tjshea.vigilant.app.data.NovigConnectionStore
-import com.tjshea.vigilant.data.keys.ApiKeyStore
-import com.tjshea.vigilant.data.keys.KeyRotator
+import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.keys.FileApiKeyStore
+import com.tjshea.vigilant.data.keys.KeyPool
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageBook
+import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.NovigPublicClient
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
@@ -42,10 +46,18 @@ class AppContainer(app: Application) {
         .callTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    val keyStore: ApiKeyStore = EncryptedApiKeyStore(app)
+    /** Tj's keys as plain JSON in app storage: survives updates and restores from backup. */
+    val keyStore = FileApiKeyStore(File(app.filesDir, "api_keys.json"), json)
+
+    /** Where keys lived until v0.6.0 (Keystore-encrypted). Read once, to move them over. */
+    private val legacyKeyStore = EncryptedApiKeyStore(app)
+
+    /** Every call's usage, per provider and key, behind the meters and the key rotation. */
+    val usage = UsageMeter(JsonFileStore(File(app.filesDir, "usage.json"), UsageBook.serializer(), { UsageBook() }, json))
+
     val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
     val tracker = BetTracker(File(app.filesDir, "bets.json"))
-    val novig = NovigPublicClient(http, json)
+    val novig = NovigPublicClient(http, json, usage = usage)
     val novigConnection = NovigConnectionStore(app)
     val scanner = Scanner(novig)
 
@@ -58,35 +70,36 @@ class AppContainer(app: Application) {
     fun readKeyClient(connection: NovigConnection) =
         NovigSignedClient(http, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
 
-    private val polymarket = PolymarketClient(http, json)
-    private val kalshi = KalshiClient(http, json)
+    private val polymarket = PolymarketClient(http, json, usage = usage)
+    private val kalshi = KalshiClient(http, json, usage = usage)
+    private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
+    private val pinnacle = PinnapiClient(http, json, KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage))
 
-    private var oddsKeys: List<String>? = null
-    private var oddsApi: TheOddsApiClient? = null
-    private var pinnKey: String? = null
-    private var pinnacle: PinnapiClient? = null
+    /**
+     * Moves keys saved by v0.6.0 and earlier (encrypted with a Keystore key, which a backup
+     * restored onto another phone can't decrypt) into the plain key file, once. Safe to call on
+     * every launch: a provider that already has keys in the file is left alone.
+     */
+    suspend fun migrateKeys() {
+        for (provider in ApiProvider.entries) {
+            if (keyStore.getKeys(provider).isNotEmpty()) continue
+            val old = runCatching { legacyKeyStore.getKeys(provider) }.getOrDefault(emptyList())
+            if (old.isNotEmpty()) {
+                keyStore.setKeys(provider, old)
+                runCatching { legacyKeyStore.setKeys(provider, emptyList()) }
+            }
+        }
+    }
 
     /**
      * The fair-odds providers a scan should call, for the switches in Settings and the keys on
-     * this phone. Keyed clients live between scans (so [KeyRotator] remembers used-up keys and
-     * pinnapi remembers a 429) and are rebuilt only when the keys change.
+     * this phone. Clients live for the whole process; the key pools read the current keys on
+     * every call, so adding or removing a key takes effect on the next scan.
      */
-    @Synchronized
-    fun referenceSources(settings: ScanSettings, oddsApiKeys: List<String>, pinnapiKeys: List<String>): List<ReferenceSource> {
-        if (oddsApiKeys != oddsKeys) {
-            oddsKeys = oddsApiKeys
-            oddsApi = oddsApiKeys.takeIf { it.isNotEmpty() }?.let { TheOddsApiClient(http, KeyRotator(it), json) }
-        }
-        val pk = pinnapiKeys.firstOrNull()
-        if (pk != pinnKey) {
-            pinnKey = pk
-            pinnacle = pk?.let { PinnapiClient(http, json, it) }
-        }
-        return buildList {
-            if (settings.usePinnacle) pinnacle?.let(::add)
-            if (settings.usePolymarket) add(polymarket)
-            if (settings.useKalshi) add(kalshi)
-            if (settings.useOddsApi) oddsApi?.let(::add)
-        }
+    fun referenceSources(settings: ScanSettings): List<ReferenceSource> = buildList {
+        if (settings.usePinnacle && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) add(pinnacle)
+        if (settings.usePolymarket) add(polymarket)
+        if (settings.useKalshi) add(kalshi)
+        if (settings.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty()) add(oddsApi)
     }
 }
