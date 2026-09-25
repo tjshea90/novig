@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
-                VigilantRoot(state, vm, onScan = ::scan)
+                VigilantRoot(state, vm, onScan = { scan() })
             }
         }
     }
