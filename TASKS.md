@@ -1187,20 +1187,42 @@ slowed 1s"; 6 bets ≥1% EV, 88 prices checked. So the 15s auto-poll of ~44 publ
 books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge limit.
 
 ### Plan
-- [ ] R1 Manual-only: no network on launch, league toggle, settings change, tab
+- [x] R1 Manual-only: no network on launch, league toggle, settings change, tab
       change, or timer. Only the Scan button and pull-to-refresh fetch anything.
       No auto websocket. Settings changes re-price from cache only.
-- [ ] R2 Rate-limit-safe Novig fetching: client-side token bucket + low
+      *Done v0.6.0: `MainViewModel.scan` is the only fetch path; live loop and stream
+      wiring removed. Tests: `ScannerTest` "nothing is fetched before the first scan…",
+      "changing a pricing setting re-prices from cache with no network", "turning a source
+      off … drops its quotes on re-price, without a scan"; `ScreenshotTest`
+      "beforeTheFirstScanTheFeedAsksForOneAndTheButtonScans".*
+- [x] R2 Rate-limit-safe Novig fetching: client-side token bucket + low
       concurrency on public routes, global Retry-After pause, more paced
       retries, partial results served from cache with a clear message; with a
       Novig key, read books via signed per-key routes / one websocket snapshot
       instead of per-IP public routes.
-- [ ] R3 Provider docs re-read (Novig throttling/errors/public, The Odds API
+      *Done: `RateGate` (4/s, burst 10, 2 at a time, pause + halve after 429) shared by
+      catalog and books; signed `/v3/catalog/markets/{id}/book` with a key, public fallback.
+      Tests: `RateGateTest` (3), `NovigPublicClientTest` "books are paced…", "the catalog
+      shares the same pace…", "with a key, books come from the signed route…", "a refused
+      key finishes the scan on public routes…". Live: 544 books across NFL/MLB/NCAAF, 0 429s.*
+- [x] R3 Provider docs re-read (Novig throttling/errors/public, The Odds API
       limits/credits/terms) → encode limits in code; credits-aware reference
       reuse (don't re-pay for fair odds that are minutes old); only request
       the market families selected.
-- [ ] R4/R5 Research: free/cheap sharp + market odds sources (Kalshi,
+      *Done: Odds API re-use window (default 15m), only selected families, calls ≥1.5s
+      apart; pinnapi shares one call per sport and parks on 429; Polymarket/Kalshi paged
+      within their limits. Tests: `ScannerTest` "The Odds API is re-used inside its
+      window…", "changing the reference books makes the next scan pay…";
+      `TheOddsApiClientTest` "a scan asks only for the market families…", "back-to-back
+      calls are spaced out…"; `ExchangeClientsTest` pinnapi share/429 tests.*
+- [x] R4/R5 Research: free/cheap sharp + market odds sources (Kalshi,
       Polymarket, Pinnacle routes, other APIs, multi-key idea incl. ToS risk);
       write findings to RESEARCH.md with a clear recommendation; implement the
       best free source(s) if they check out.
+      *Done: RESEARCH.md §11 (+ §11.5 live results). `PolymarketClient`, `KalshiClient`,
+      `PinnapiClient` + multi-feed merge in `Planner` with a per-game line cap. Tests:
+      `ExchangeClientsTest` (17), `PlannerPricingTest` "quotes from every feed … pooled",
+      "a book two feeds both carry is priced once", "a date-only feed matches on the
+      Eastern date", "spreads and totals are capped per game"; live
+      `LiveNovigSmokeTest` "real scan - free sources match Novig games".*
 - [ ] R6 Tests (unit + screenshots), CI green, ship, report to Tj.
