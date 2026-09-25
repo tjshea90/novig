@@ -175,7 +175,13 @@ everything. The websocket (§6) is the right tool for broad coverage.
 
 ### 5.1 Measured live, 2026-09-25 (not in the docs)
 
-- **Burst limit on public routes.** A client that had just pulled a large catalog got
+- **Burst limit on public routes, measured properly (2026-09-25, later):** a burst of distinct
+  book requests at ~21/s got the first `429` (`Retry-After: 1`, "Error from cloudfront") after
+  ~100 requests. A steady 10/s saw ~6% 429s starting at ~36 requests. Tj's phone hit it with
+  ~44 books every 15s (4 at a time), plausibly on a shared carrier IP (CGNAT). v0.6.0 paces
+  public book reads at ≤4/s (burst ≤10, 2 at a time), pauses everything on Retry-After, and
+  only fetches on a manual scan.
+- **Burst limit on public routes (first observation).** A client that had just pulled a large catalog got
   `429` + `Retry-After: 1` on book requests at 4-way concurrency. The same pattern
   measured cold ran 30 books in 1.7s (~17/s) and 25 sequential books (~5/s) with no 429s.
   The limit is short and forgiving. `NovigPublicClient.books()` pauses for Retry-After and

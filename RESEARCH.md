@@ -937,3 +937,72 @@ None of the above blocks starting architecture/BRIEF.md decisions — they
 block finishing them. Do not start writing app code from this file alone
 per `TASKS.md`; architecture still needs Tj's sign-off once the open items
 above are resolved enough to make real decisions.
+
+## 11. Free and cheap odds sources, researched 2026-09-25 (Tj: "free or cheap by any means")
+
+**Why it came up:** v0.5.0 on Tj's phone hit Novig 429s (auto-poll of ~44 public books every
+15s). Tj asked for manual-only scans, provider-safe limits, and the best free/cheap way to get
+fair odds from sharp books many times a day. Everything below was checked live from this
+container or read from the provider's own docs the same day.
+
+### 11.1 Measured provider limits (encoded in the app, see NOVIG_API.md §5.1)
+
+| Provider | Limit (source) | What it means for a scan |
+|---|---|---|
+| Novig public routes | Per-IP CloudFront rule, undocumented. **Measured:** ~40–100 fast requests, then `429` + `Retry-After: 1`; at a steady 10/s about 6% get 429 | Pace books ≤4/s, burst ≤10, 2 at a time. A phone on a carrier IP shares that IP with other people (CGNAT), so the real budget can be lower |
+| Novig signed routes (key) | Per key: `read` bucket 64 burst, 16/s refill (docs); edge per-IP rule also applies | With a key, books come from per-key buckets instead of the shared public rule |
+| The Odds API | 500 credits/mo free. Cost = markets returned x regions (≤10 named books = 1 region). **Empty responses cost 0.** Burst 429s: "space requests over several seconds" (docs) | Re-use its odds for N minutes, ask only for the market families selected, one sport at a time |
+| Polymarket Gamma API | `/markets` 300 req/10s, `/events` 500/10s; over-limit requests are queued, not rejected (docs) | Effectively unlimited for a manual app. No key |
+| Kalshi public API | Basic tier 200 tokens/s, 10 per read = 20 reads/s; 429 with no cooldown (docs). Market data needs no key (verified) | 3 requests per league per scan. No key |
+| pinnapi (Pinnacle feed) | Trial: **free, no card, no expiry**, 20/min, 100/hour, **100/day** per key (docs) | One request = a whole sport's prematch Pinnacle board, so ~2 requests per scan |
+
+### 11.2 Sources compared
+
+- **Polymarket** (free, no key): deep US-sports game markets. Verified live on 2026-09-25: NFL
+  moneyline, many alternate spreads, and totals with 1¢ bid/ask spreads and $50k–$300k
+  liquidity per line (e.g. Ravens/Cowboys ML 0.62/0.63, $297k). Sharp in practice for NFL.
+  Leagues: NFL, NCAAF (cfb), NBA, MLB, NHL, WNBA, UFC, MLS, EPL. Query:
+  `GET gamma-api.polymarket.com/markets?closed=false&tag_id=<league tag>&sports_market_types=moneyline&sports_market_types=spreads&sports_market_types=totals&end_date_min=..&end_date_max=..&limit=100&offset=..`
+  (≈46KB gzipped per 100 markets). `bestBid`/`bestAsk` are for `outcomes[0]`; spreads carry
+  `line` for `outcomes[0]`.
+- **Kalshi** (free, no key): CFTC exchange. Series `KX{NFL,NCAAF,MLB}{GAME,SPREAD,TOTAL}`,
+  `KXNBAGAME`, `KXNHLGAME`, `KXMLSGAME`, `KXUFCFIGHT` had open markets. MLB quotes are 1¢ wide;
+  some NCAAF lines are very wide, so a spread/liquidity filter is required.
+  `GET api.elections.kalshi.com/trade-api/v2/events?series_ticker=..&status=open&with_nested_markets=true`.
+  Game = one market per team ("Carolina wins"); spread = "CAR wins by over 2.5" (Yes = CAR −2.5,
+  No = CLE +2.5, `floor_strike`); total = "over 45.5" (`floor_strike`). Dates only in the ticker
+  (`26SEP27` = ET date).
+- **pinnapi** (Pinnacle, free trial key): Pinnacle closed its own public API on 2025-07-23
+  (only bespoke commercial/academic access now). pinnapi is an independent feed (not
+  affiliated with Pinnacle) with a free, non-expiring trial: 100 requests/day.
+  `GET pinnapi.com/kit/v1/markets?sport_id=<5 football|6 baseball|3 basketball|4 hockey|8 MMA|1 soccer>&event_type=prematch`,
+  header `x-portal-apikey`. `periods.num_0.money_line {home, away, draw?}`,
+  `spreads{"<hdp>": {hdp(home), home, away}}`, `totals{"<pts>": {points, over, under}}`, decimal
+  odds. Paid plans start at $99/mo (over budget), so free trial only.
+- **The Odds API** (current): the free tier does include Pinnacle (Tj's own v0.5.0 screenshot shows
+  Pinnacle among the books used) plus the US books; 500 credits/mo. $30/mo = 20K credits is the
+  clean paid upgrade.
+- **OddsPapi**: free 250 requests/month, but **per game** (`/fixtures/{id}/odds`), so ~8 games a
+  day. Has Pinnacle/Circa/Singbet. Pro is $49/mo. Good only for spot-checking one game.
+- **Rejected:** SharpAPI (free tier is DK/FD only, Novig paid), OpticOdds/Betstamp/MetaBet (sales
+  gated), Pinnacle direct (closed), scraping sportsbooks' private web endpoints (ToS and
+  bot-blocking risk; not needed now that the free exchange and Pinnacle routes above exist).
+
+### 11.3 Multiple free Odds API keys on several emails
+
+The Odds API terms don't explicitly forbid more than one account, but they reserve the right to
+"terminate API access at any time without warning" if they "suspect abuse". Deliberately
+multiplying free accounts to get around the 500-credit quota is exactly what that clause covers,
+and all the keys come from one phone/IP, so they'd be easy to link and could be revoked
+together. Vigilant already rotates keys automatically if Tj adds several. **Recommendation: not
+needed.** Polymarket + Kalshi + pinnapi give sharp fair odds for free, and The Odds API becomes an
+occasional extra that one key covers. If more Odds API refreshes are wanted, the $30/mo 20K plan
+is the no-risk option.
+
+### 11.4 Recommendation, implemented in v0.6.0
+
+Fair odds from **Pinnacle (pinnapi free key) + Polymarket + Kalshi on every scan** (≈4–8
+requests per scan in total, all well inside free limits), with The Odds API re-used for up to
+N minutes to save credits. Novig books are paced to avoid its per-IP 429, and read through the
+signed per-key routes once Tj connects a Novig key. Nothing fetches except on Tj's Scan button or
+pull-to-refresh.
