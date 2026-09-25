@@ -60,6 +60,19 @@ android {
         compose = true
         buildConfig = true
     }
+
+    testOptions {
+        unitTests {
+            // Robolectric renders the real Compose screens on the JVM (no device in this
+            // project's dev container). `-Pscreenshots` writes PNGs to app/screenshots/.
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("roborazzi.test.record", project.hasProperty("screenshots").toString())
+                it.systemProperty("roborazzi.outputDir", rootProject.file("app/screenshots").absolutePath)
+                it.maxHeapSize = "2g"
+            }
+        }
+    }
 }
 
 // `android.kotlinOptions { jvmTarget = "21" }` is a hard error on this Kotlin version — migrated
@@ -92,5 +105,13 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    debugImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 }
