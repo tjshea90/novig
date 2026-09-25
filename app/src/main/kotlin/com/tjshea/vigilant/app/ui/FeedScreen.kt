@@ -13,13 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,6 +33,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.ScanStatus
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.Opportunity
@@ -47,7 +44,7 @@ import com.tjshea.vigilant.engine.FairSource
 @Composable
 fun FeedScreen(
     state: UiState,
-    onRefresh: () -> Unit,
+    onScan: () -> Unit,
     onToggleLeague: (String) -> Unit,
     onOpenSettings: () -> Unit,
     onTrack: (Opportunity, Double) -> Unit,
@@ -58,23 +55,24 @@ fun FeedScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Positive EV", fontWeight = FontWeight.Bold)
-                        StatusLine(state.status, streaming = state.novig.stream is com.tjshea.vigilant.data.novig.stream.StreamState.Live)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onRefresh) { Icon(Icons.Filled.Refresh, contentDescription = "Refresh everything") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+            Column {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text("Positive EV", fontWeight = FontWeight.Bold)
+                            StatusLine(state.status)
+                        }
+                    },
+                    actions = { ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                )
+                ScanProgressBar(state.status)
+            }
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.status.manual || (state.status.refreshing && state.result == null),
-            onRefresh = onRefresh,
+            isRefreshing = state.status.scanning,
+            onRefresh = onScan,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
             LazyColumn(
@@ -85,7 +83,7 @@ fun FeedScreen(
                 item(key = "leagues") {
                     LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
                 }
-                item(key = "summary") { FeedSummary(state, onOpenSettings) }
+                item(key = "summary") { FeedSummary(state, onScan, onOpenSettings) }
                 items(state.feed, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
@@ -94,52 +92,74 @@ fun FeedScreen(
     }
 
     selected?.let { o ->
-        // Show the freshest copy of the selected line: the loop may have re-priced it since the tap.
+        // Show the freshest copy of the selected line: a scan may have re-priced it since the tap.
         val live = state.result?.opportunities?.firstOrNull { it.key == o.key } ?: o
         OpportunitySheet(live, state.settings, onDismiss = { selected = null }, onTrack = { stake -> onTrack(live, stake); selected = null })
     }
 }
 
 @Composable
-private fun FeedSummary(state: UiState, onOpenSettings: () -> Unit) {
+private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -> Unit) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (state.loaded && !state.status.hasOddsKey) {
+        state.status.errors.take(3).forEach { Banner(it, color = Edge.colors.negative) }
+        if (state.status.unscanned.isNotEmpty() && !state.status.scanning) {
             Banner(
-                "Live Novig prices are on. Add a free The Odds API key to get fair odds and +EV.",
-                action = "Add key",
-                onAction = onOpenSettings,
+                "${state.status.unscanned.joinToString(", ")} not scanned yet.",
+                action = "Scan",
+                onAction = onScan,
             )
         }
-        state.status.errors.take(2).forEach { Banner(it, color = Edge.colors.negative) }
 
         val result = state.result
+        val status = state.status
         when {
             state.settings.leagues.isEmpty() ->
-                EmptyState("Pick a league", "Choose one or more leagues above to start scanning Novig.")
-            result == null ->
-                EmptyState("Scanning Novig…", "Pulling the board and matching it to the sportsbooks.")
-            !state.status.hasOddsKey -> EmptyState(
-                "Fair odds need a key",
-                "Novig's live prices for ${result.games.size} games are on the Games tab now. +EV needs fair " +
-                    "odds from the sportsbooks: add a free The Odds API key in Settings.",
-                action = "Open Settings",
-                onAction = onOpenSettings,
+                EmptyState("Pick a league", "Choose one or more leagues above, then tap Scan.")
+            result == null && status.scanning -> EmptyState(
+                "Scanning…",
+                "Reading Novig's board and fair odds from ${sourceNames(state).ifEmpty { "the free exchanges" }}. " +
+                    "Novig prices are read slowly on purpose, so it never rate-limits you.",
+            )
+            result == null -> EmptyState(
+                "Tap Scan to find +EV bets",
+                "Nothing is downloaded until you ask: tap Scan or pull down. Fair odds come from " +
+                    "${sourceNames(state).ifEmpty { "Polymarket and Kalshi" }}." +
+                    if (state.pinnapiKeys.isEmpty() && state.settings.usePinnacle) " Add a free Pinnacle key in Settings for sharper lines." else "",
+                action = "Scan now",
+                onAction = onScan,
             )
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games. " +
-                    "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Prices refresh every " +
-                    "${state.settings.novigRefreshSeconds}s while this screen is open.",
+                    "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices.",
+                action = if (result.stats.matchedEvents == 0) "Fair odds settings" else null,
+                onAction = onOpenSettings,
             )
             else -> Text(
                 "${state.feed.size} bets at +${Format.percent(state.settings.minEvPercent)} EV or better · " +
-                    "${result.stats.outcomesWithFair} prices checked · fair = ${fairSourceLabel(state.settings)}",
+                    "${result.stats.outcomesWithFair} prices checked · fair = ${fairSourceLabel(state.settings)}" +
+                    sourceSummary(status).let { if (it.isEmpty()) "" else " · $it" },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
+
+/** "Pinnacle, Polymarket, Kalshi": the sources the next scan will use. */
+private fun sourceNames(state: UiState): String {
+    val s = state.settings
+    return buildList {
+        if (s.usePinnacle && state.pinnapiKeys.isNotEmpty()) add("Pinnacle")
+        if (s.usePolymarket) add("Polymarket")
+        if (s.useKalshi) add("Kalshi")
+        if (s.useOddsApi && state.oddsApiKeys.isNotEmpty()) add("The Odds API")
+    }.joinToString(", ")
+}
+
+/** "Pinnacle 12 · Polymarket 14 · Kalshi 9 games": who matched what on the last scan. */
+fun sourceSummary(status: ScanStatus): String =
+    status.sources.filter { it.matched > 0 }.joinToString(" · ") { "${it.name} ${it.matched}" }.let { if (it.isEmpty()) it else "$it games" }
 
 fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
     FairSource.SHARP -> "sharp books"
