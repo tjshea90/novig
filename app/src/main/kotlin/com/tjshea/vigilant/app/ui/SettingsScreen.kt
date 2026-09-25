@@ -61,8 +61,8 @@ fun SettingsScreen(
     onRemoveKey: (String) -> Unit,
     onNovigConnect: (String, String) -> Unit = { _, _ -> },
     onNovigTest: () -> Unit = {},
-    onNovigStream: (Boolean) -> Unit = {},
     onNovigDisconnect: () -> Unit = {},
+    onPinnapiKey: (String?) -> Unit = {},
 ) {
     val s = state.settings
     Scaffold(
@@ -122,11 +122,11 @@ fun SettingsScreen(
                     FilterChip(
                         selected = key in s.sharpBooks,
                         onClick = { onUpdate { it.copy(sharpBooks = if (key in it.sharpBooks) it.sharpBooks - key else it.sharpBooks + key) } },
-                        label = { Text(TheOddsApiClient.KNOWN_BOOKMAKERS[key] ?: key) },
+                        label = { Text(TheOddsApiClient.bookTitle(key)) },
                     )
                 }
             }
-            Hint("A sharp book only counts if it's also in your reference books below.")
+            Hint("Pinnacle comes from your pinnapi key (or The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
 
             Text("Minimum books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
             ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
@@ -139,20 +139,45 @@ fun SettingsScreen(
             }
             Hint(s.devigMethod.blurb)
 
-            // ---- Reference books -------------------------------------------------------------
-            SectionTitle("Reference sportsbooks (${s.referenceBooks.size}/10)")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
-                    val on = key in s.referenceBooks
-                    FilterChip(
-                        selected = on,
-                        enabled = on || s.referenceBooks.size < TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION,
-                        onClick = { onUpdate { it.copy(referenceBooks = if (on) it.referenceBooks - key else it.referenceBooks + key) } },
-                        label = { Text(title) },
-                    )
+            // ---- Sources ------------------------------------------------------------------------
+            SectionTitle("Fair odds sources")
+            Hint("Each is called only when you scan. Polymarket and Kalshi need no key.")
+            SwitchRow(
+                "Pinnacle (pinnapi)",
+                if (state.pinnapiKeys.isEmpty()) "Needs a free key from pinnapi.com (100 requests a day, about 1–2 per scan)."
+                else "Key ${mask(state.pinnapiKeys.first())} · about 1–2 of its 100 daily requests per scan.",
+                s.usePinnacle,
+            ) { v -> onUpdate { it.copy(usePinnacle = v) } }
+            if (s.usePinnacle) PinnapiKeyRow(state.pinnapiKeys.firstOrNull(), onPinnapiKey)
+            SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
+            SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC.", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
+            SwitchRow(
+                "The Odds API",
+                if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Add a key below (500 free credits a month)."
+                else "US sportsbooks plus Pinnacle, from your key${if (state.oddsApiKeys.size > 1) "s" else ""} below.",
+                s.useOddsApi,
+            ) { v -> onUpdate { it.copy(useOddsApi = v) } }
+            if (s.useOddsApi) {
+                Text("Re-use The Odds API between scans for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, s.oddsApiReuseMinutes, { if (it == 0) "Every scan" else "${it}m" }) { v ->
+                    onUpdate { it.copy(oddsApiReuseMinutes = v) }
                 }
+                Hint(creditEstimate(s))
+
+                SectionTitle("The Odds API books (${s.referenceBooks.size}/10)")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
+                        val on = key in s.referenceBooks
+                        FilterChip(
+                            selected = on,
+                            enabled = on || s.referenceBooks.size < TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION,
+                            onClick = { onUpdate { it.copy(referenceBooks = if (on) it.referenceBooks - key else it.referenceBooks + key) } },
+                            label = { Text(title) },
+                        )
+                    }
+                }
+                Hint("Up to 10 books cost the same: one credit per market type per league.")
             }
-            Hint("Up to 10 books cost the same: 3 Odds API credits per sport per refresh (moneyline + spread + total).")
 
             // ---- Feed filters -----------------------------------------------------------------
             SectionTitle("+EV feed")
@@ -175,6 +200,9 @@ fun SettingsScreen(
                     )
                 }
             }
+            Text("Alternate lines per game: ${s.linesPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, { it.toString() }) { v -> onUpdate { it.copy(linesPerGame = v) } }
+            Hint("Spreads and totals each. Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
             Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
             SwitchRow(
@@ -200,16 +228,6 @@ fun SettingsScreen(
             ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
             Hint("Suggested stakes are capped at what Novig's book can actually fill at +EV.")
 
-            // ---- Refresh ----------------------------------------------------------------------
-            SectionTitle("Refresh")
-            Text("Novig prices, while the app is open", style = MaterialTheme.typography.bodyMedium)
-            ChoiceChips(ScanSettings.NOVIG_REFRESH_CHOICES, s.novigRefreshSeconds, { "${it}s" }) { v -> onUpdate { it.copy(novigRefreshSeconds = v) } }
-            Text("Fair odds (uses Odds API credits)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            ChoiceChips(ScanSettings.REFERENCE_REFRESH_CHOICES, s.referenceRefreshMinutes, { if (it == 0) "Pull only" else "${it}m" }) { v ->
-                onUpdate { it.copy(referenceRefreshMinutes = v) }
-            }
-            Hint(creditEstimate(s))
-
             // ---- Keys -------------------------------------------------------------------------
             SectionTitle("The Odds API keys")
             Hint("Free at the-odds-api.com (500 credits a month). Add several: when one runs out, the next is used automatically.")
@@ -234,12 +252,13 @@ fun SettingsScreen(
             }
 
             SectionTitle("Novig API key")
-            NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigStream, onNovigDisconnect)
+            NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect)
 
             SectionTitle("About")
             Hint(
-                "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com public routes · Fair odds: The Odds API. " +
-                    "Novig refreshes only while the app is on screen, so it never runs in the background.",
+                "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (pinnapi), " +
+                    "Polymarket, Kalshi, The Odds API. Nothing is fetched until you tap Scan or pull to refresh, " +
+                    "and nothing runs in the background.",
             )
         }
     }
@@ -271,13 +290,32 @@ private fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String,
 
 private fun mask(key: String): String = if (key.length <= 8) "••••" else key.take(4) + "••••••" + key.takeLast(4)
 
-/** A rough monthly credit burn for the current settings, so the free tier's 500 isn't a surprise. */
+/** What a scan costs in Odds API credits, so the free tier's 500 isn't a surprise. */
 fun creditEstimate(s: ScanSettings): String {
-    val perRefresh = 3 * s.leagues.size.coerceAtLeast(1)
-    return if (s.referenceRefreshMinutes == 0) {
-        "Each pull-to-refresh costs about $perRefresh credits (${s.leagues.size} league(s) × 3)."
+    val perScan = s.families.size.coerceAtLeast(1) * s.leagues.size.coerceAtLeast(1)
+    val base = "A scan that refreshes it costs about $perScan credit${if (perScan == 1) "" else "s"} " +
+        "(${s.leagues.size} league${if (s.leagues.size == 1) "" else "s"} × ${s.families.size} market type${if (s.families.size == 1) "" else "s"})."
+    return if (s.oddsApiReuseMinutes == 0) {
+        "$base Every scan refreshes it."
     } else {
-        val perHour = perRefresh * (60.0 / s.referenceRefreshMinutes)
-        "About ${perHour.roundToInt()} credits per hour the app is open. The free tier's 500 a month lasts ~${(500 / perHour).roundToInt()} open hours."
+        val perHour = perScan * (60 / s.oddsApiReuseMinutes)
+        "$base Scanning as often as you like costs at most $perHour an hour."
+    }
+}
+
+@Composable
+private fun PinnapiKeyRow(current: String?, onSet: (String?) -> Unit) {
+    var key by remember { mutableStateOf("") }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = key,
+            onValueChange = { key = it.trim() },
+            label = { Text(if (current == null) "pinnapi key" else "Replace pinnapi key") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+            modifier = Modifier.weight(1f),
+        )
+        Button(onClick = { onSet(key); key = "" }, enabled = key.length >= 8) { Text("Save") }
+        if (current != null) IconButton(onClick = { onSet(null) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove pinnapi key") }
     }
 }
