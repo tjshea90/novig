@@ -2,10 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network for scans only. Nothing runs in the background, so no foreground-service,
-         wake-lock or boot permissions are requested. -->
+    <!-- Network for scans only. A scan Tj starts keeps running when he switches apps: a
+         foreground service (dataSync) holds the process for exactly that scan, with a progress
+         notification and a partial wake lock (capped at 10 minutes), then stops itself. Nothing
+         runs on a timer or at boot, so there's no boot or exact-alarm permission. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".VigilantApp"
@@ -27,6 +33,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".ScanService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>
