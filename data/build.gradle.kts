@@ -16,6 +16,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    // Ed25519 + deterministic P-256 signing for Novig's NOVIG-V3 scheme, identical on every
+    // Android version and in JVM tests (lightweight API only; R8 strips the rest).
+    implementation(libs.bouncycastle)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
