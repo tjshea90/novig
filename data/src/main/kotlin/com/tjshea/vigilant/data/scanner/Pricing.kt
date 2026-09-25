@@ -76,12 +76,21 @@ data class ScanResult(
     val opportunities: List<Opportunity>,
     val stats: ScanStats,
     val computedAtMs: Long,
+    /**
+     * Set on a partial result, mid-scan: the scan's start. Its feed shows only Novig prices read
+     * since then, so a price from the last scan is never offered as a bet while the new one loads.
+     */
+    val freshSinceMs: Long? = null,
 ) {
+    /** True while the scan that produced this is still reading prices. */
+    val partial: Boolean get() = freshSinceMs != null
+
     /** The +EV feed: at or above the user's threshold, below the too-good-to-be-true cap, in the chosen order. */
     fun feed(settings: ScanSettings): List<Opportunity> = opportunities
         .filter { o ->
             val ev = o.evPercent ?: return@filter false
-            o.league.novigName in settings.leagues &&
+            (freshSinceMs == null || (o.bookFetchedAtMs ?: 0L) >= freshSinceMs) &&
+                o.league.novigName in settings.leagues &&
                 ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
                 (settings.includeLive || !o.isLive) &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }

@@ -126,7 +126,7 @@ class Scanner(
         val ordered = sources.sortedBy { SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
         val progress = Progress(ordered.sumOf { s -> leagues.count { s.supports(it) } } + 1, onProgress)
         progress.emit()
-        val pump = BookPump(settings, now, errors, progress, onPartial)
+        val pump = BookPump(settings, now, progress, onPartial)
 
         val sourceReports = coroutineScope {
             val catalogJob = async {
@@ -240,7 +240,6 @@ class Scanner(
     private inner class BookPump(
         private val settings: ScanSettings,
         private val now: Long,
-        private val errors: MutableList<String>,
         private val progress: Progress,
         private val onPartial: (ScanResult) -> Unit,
     ) {
