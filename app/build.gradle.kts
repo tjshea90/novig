@@ -93,6 +93,8 @@ kotlin {
 
 composeCompiler {
     stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("app/compose-stability.conf"))
+    // `-PcomposeReports` writes which composables can skip redraws to app/build/compose_compiler.
+    if (project.hasProperty("composeReports")) reportsDestination.set(layout.buildDirectory.dir("compose_compiler"))
 }
 
 dependencies {
