@@ -151,8 +151,9 @@ class PinnapiClient(
             val starts = e.str("starts")?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: return null
             val id = (e["event_id"] as? JsonPrimitive)?.content ?: return null
             val full = e["periods"].obj()?.get("num_0").obj() ?: return null
-            // `last` is the event's last price change in epoch seconds.
-            val updated = (e["last"] as? JsonPrimitive)?.longOrNull?.takeIf { it > 1_000_000_000L }?.times(1000) ?: fetchedAtMs
+            // Stamped with the fetch time: the price is Pinnacle's current one as of that call,
+            // however long ago it last moved.
+            val updated = fetchedAtMs
             val markets = ArrayList<RefBookMarket>()
 
             full["money_line"].obj()?.let { ml ->
