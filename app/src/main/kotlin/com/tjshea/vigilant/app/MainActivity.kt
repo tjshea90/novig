@@ -114,12 +114,16 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel) {
                 Tab.SETTINGS -> SettingsScreen(
                     state,
                     onUpdate = vm::updateSettings,
-                    onAddKey = vm::addOddsApiKey,
-                    onRemoveKey = vm::removeOddsApiKey,
+                    keys = com.tjshea.vigilant.app.ui.KeyActions(
+                        add = vm::addKey,
+                        remove = vm::removeKey,
+                        moveUp = vm::moveKeyUp,
+                        exportTo = vm::exportKeys,
+                        importFrom = vm::importKeys,
+                    ),
                     onNovigConnect = vm::connectNovig,
                     onNovigTest = vm::testNovig,
                     onNovigDisconnect = vm::disconnectNovig,
-                    onPinnapiKey = vm::setPinnapiKey,
                 )
             }
         }

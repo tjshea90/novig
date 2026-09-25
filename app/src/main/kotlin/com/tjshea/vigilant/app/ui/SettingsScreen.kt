@@ -13,12 +13,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -37,12 +39,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.BuildConfig
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.tjshea.vigilant.app.UiState
+import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -57,14 +64,14 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
     state: UiState,
     onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
-    onAddKey: (String) -> Unit,
-    onRemoveKey: (String) -> Unit,
+    keys: KeyActions = KeyActions(),
     onNovigConnect: (String, String) -> Unit = { _, _ -> },
     onNovigTest: () -> Unit = {},
     onNovigDisconnect: () -> Unit = {},
-    onPinnapiKey: (String?) -> Unit = {},
 ) {
     val s = state.settings
+    val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(keys.exportTo) }
+    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(keys.importFrom) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,6 +88,10 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
         ) {
+            // ---- Usage meters ------------------------------------------------------------------
+            SectionTitle("API usage")
+            UsageSection(state)
+
             // ---- Fair odds ---------------------------------------------------------------------
             SectionTitle("Fair odds source")
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -148,16 +159,25 @@ fun SettingsScreen(
                 else "Key ${mask(state.pinnapiKeys.first())} · about 1–2 of its 100 daily requests per scan.",
                 s.usePinnacle,
             ) { v -> onUpdate { it.copy(usePinnacle = v) } }
-            if (s.usePinnacle) PinnapiKeyRow(state.pinnapiKeys.firstOrNull(), onPinnapiKey)
+            if (s.usePinnacle) {
+                KeyListEditor(ApiProvider.PINNAPI, state.pinnapiKeys, keys, "Add a pinnapi key")
+                if (state.pinnapiKeys.size > 1) {
+                    Hint(
+                        "Heads up: pinnapi's terms forbid circumventing its rate limits, so using extra keys to get past " +
+                            "100 a day could get the keys suspended. Each key is still kept inside its own limit.",
+                    )
+                }
+            }
             SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
             SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC.", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
             SwitchRow(
                 "The Odds API",
-                if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Add a key below (500 free credits a month)."
-                else "US sportsbooks plus Pinnacle, from your key${if (state.oddsApiKeys.size > 1) "s" else ""} below.",
+                if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
+                else "US sportsbooks plus Pinnacle. Keys are used in order; the next takes over when one runs out.",
                 s.useOddsApi,
             ) { v -> onUpdate { it.copy(useOddsApi = v) } }
             if (s.useOddsApi) {
+                KeyListEditor(ApiProvider.THE_ODDS_API, state.oddsApiKeys, keys, "Add an Odds API key")
                 Text("Re-use The Odds API between scans for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
                 ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, s.oddsApiReuseMinutes, { if (it == 0) "Every scan" else "${it}m" }) { v ->
                     onUpdate { it.copy(oddsApiReuseMinutes = v) }
@@ -228,27 +248,15 @@ fun SettingsScreen(
             ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
             Hint("Suggested stakes are capped at what Novig's book can actually fill at +EV.")
 
-            // ---- Keys -------------------------------------------------------------------------
-            SectionTitle("The Odds API keys")
-            Hint("Free at the-odds-api.com (500 credits a month). Add several: when one runs out, the next is used automatically.")
-            state.oddsApiKeys.forEach { key ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(mask(key), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    IconButton(onClick = { onRemoveKey(key) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove key") }
-                }
-            }
-            var newKey by remember { mutableStateOf("") }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = newKey,
-                    onValueChange = { newKey = it.trim() },
-                    label = { Text("Add a key") },
-                    singleLine = true,
-                    // Autocorrect off: an IME "fixing" a random token silently breaks it (found 2026-09-20).
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
-                    modifier = Modifier.weight(1f),
-                )
-                Button(onClick = { onAddKey(newKey); newKey = "" }, enabled = newKey.length >= 8) { Text("Add") }
+            // ---- Keys backup ------------------------------------------------------------------
+            SectionTitle("Keys backup")
+            Hint(
+                "Keys are saved on this phone, kept through every app update, and included in Android's backup. " +
+                    "Export a copy to keep them even if the app is uninstalled.",
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { exporter.launch("vigilant-keys.json") }) { Text("Export keys") }
+                OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text("Import keys") }
             }
 
             SectionTitle("Novig API key")
@@ -288,7 +296,6 @@ private fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String,
     }
 }
 
-private fun mask(key: String): String = if (key.length <= 8) "••••" else key.take(4) + "••••••" + key.takeLast(4)
 
 /** What a scan costs in Odds API credits, so the free tier's 500 isn't a surprise. */
 fun creditEstimate(s: ScanSettings): String {
@@ -303,19 +310,39 @@ fun creditEstimate(s: ScanSettings): String {
     }
 }
 
+/** Key list callbacks from the view model; the file pickers live in [SettingsScreen]. */
+class KeyActions(
+    val add: (ApiProvider, String) -> Unit = { _, _ -> },
+    val remove: (ApiProvider, String) -> Unit = { _, _ -> },
+    val moveUp: (ApiProvider, String) -> Unit = { _, _ -> },
+    val exportTo: (android.net.Uri) -> Unit = {},
+    val importFrom: (android.net.Uri) -> Unit = {},
+)
+
+/** A provider's keys in rotation order (key 1 is always tried first), with add, remove, reorder. */
 @Composable
-private fun PinnapiKeyRow(current: String?, onSet: (String?) -> Unit) {
-    var key by remember { mutableStateOf("") }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = key,
-            onValueChange = { key = it.trim() },
-            label = { Text(if (current == null) "pinnapi key" else "Replace pinnapi key") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
-            modifier = Modifier.weight(1f),
-        )
-        Button(onClick = { onSet(key); key = "" }, enabled = key.length >= 8) { Text("Save") }
-        if (current != null) IconButton(onClick = { onSet(null) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove pinnapi key") }
+private fun KeyListEditor(provider: ApiProvider, keys: List<String>, actions: KeyActions, addLabel: String) {
+    Column(Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        keys.forEachIndexed { i, key ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("${i + 1}.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(end = 8.dp))
+                Text(UsageViews.mask(key), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
+                if (i > 0) IconButton(onClick = { actions.moveUp(provider, key) }) { Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Try this key earlier") }
+                IconButton(onClick = { actions.remove(provider, key) }) { Icon(Icons.Filled.Delete, contentDescription = "Remove key") }
+            }
+        }
+        var newKey by remember { mutableStateOf("") }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = newKey,
+                onValueChange = { newKey = it.trim() },
+                label = { Text(if (keys.isEmpty()) addLabel else "Add another key") },
+                singleLine = true,
+                // Autocorrect off: an IME "fixing" a random token silently breaks it (found 2026-09-20).
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+                modifier = Modifier.weight(1f),
+            )
+            Button(onClick = { actions.add(provider, newKey); newKey = "" }, enabled = newKey.length >= 8) { Text("Add") }
+        }
     }
 }

@@ -102,6 +102,7 @@ fun FeedScreen(
 @Composable
 private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -> Unit) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        UsageStrip(state)
         state.status.errors.take(3).forEach { Banner(it, color = Edge.colors.negative) }
         if (state.status.unscanned.isNotEmpty() && !state.status.scanning) {
             Banner(
