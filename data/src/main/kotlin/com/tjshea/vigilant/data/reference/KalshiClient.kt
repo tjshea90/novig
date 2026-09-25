@@ -79,6 +79,7 @@ class KalshiClient(
 
         /** `26SEP27CARCLE` → date, optional HHMM, and the team letters that follow. */
         private val CODE = Regex("^(\\d{2})([A-Z]{3})(\\d{2})(\\d{4})?([A-Z].*)$")
+        private val TEAM_CODE = Regex("^[A-Z][A-Z0-9]{1,4}$")
 
         fun familyOf(series: String): MarketFamily? = when {
             series.endsWith("SPREAD") -> MarketFamily.SPREAD
@@ -114,7 +115,7 @@ class KalshiClient(
             val core = subTitle?.substringBefore(" (")?.trim() ?: return null
             val a = core.substringBefore(" vs ", "").trim()
             val b = core.substringAfter(" vs ", "").trim()
-            return if (a.isEmpty() || b.isEmpty() || ' ' in a || ' ' in b) null else a.uppercase() to b.uppercase()
+            return if (TEAM_CODE.matches(a) && TEAM_CODE.matches(b)) a to b else null
         }
 
         private fun price(s: String?): Double? = s?.toDoubleOrNull()
@@ -132,10 +133,15 @@ class KalshiClient(
 
         private fun game(code: String, group: List<EventDto>, league: League, maxSpread: Double, now: Long): RefEvent? {
             val parsed = parseCode(group.first().event_ticker) ?: return null
-            val codes = group.firstNotNullOfOrNull { subTitleCodes(it.sub_title) } ?: return null
-            val (awayCode, homeCode) = codes
-
             val gameEvent = group.firstOrNull { familyOf(it.series_ticker ?: it.event_ticker.substringBefore('-')) == MarketFamily.MONEYLINE }
+            // Team codes, away first: the game markets' ticker suffixes in the order the event
+            // code lists them ("CARCLE"), else the "CAR vs CLE (Sep 27)" subtitle.
+            val codes = gameEvent?.markets?.map { it.ticker.substringAfterLast('-') }?.distinct()
+                ?.takeIf { it.size == 2 && it.all { c -> c in parsed.teams } }
+                ?.sortedBy { parsed.teams.indexOf(it) }?.let { it[0] to it[1] }
+                ?: group.firstNotNullOfOrNull { subTitleCodes(it.sub_title) }
+                ?: return null
+            val (awayCode, homeCode) = codes
             fun marketFor(code: String) = gameEvent?.markets?.firstOrNull { it.ticker.substringAfterLast('-').equals(code, true) }
 
             // Names: the game market's own names ("Carolina", "New York M", "Luis Hernandez"),
@@ -144,14 +150,15 @@ class KalshiClient(
             val gameTitled = gameEvent?.let { titleTeams(it.title) }
             fun name(code: String, index: Int): String? {
                 val base = marketFor(code)?.yes_sub_title?.takeIf { it.isNotBlank() } ?: gameTitled?.toList()?.get(index)
-                val nick = titled?.toList()?.get(index)?.let { t ->
+                val fromTitle = titled?.toList()?.get(index)
+                val nick = fromTitle?.let { t ->
                     val first = t.substringBefore(' ')
                     if (first.equals(code, true) && ' ' in t) t.substringAfter(' ').trim() else null
                 }
                 return when {
-                    base == null -> titled?.toList()?.get(index)
-                    nick != null && !base.contains(nick, true) -> "$base $nick"
-                    else -> base
+                    base != null && nick != null && !base.contains(nick, true) -> "$base $nick"
+                    base != null -> base
+                    else -> nick ?: fromTitle
                 }
             }
             val away = name(awayCode, 0) ?: return null
