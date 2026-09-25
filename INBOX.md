@@ -1592,3 +1592,8 @@ Continue
 <summary>Background command "Wait for the release workflow" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-25T16:22:22Z
+```
+Other major sports books offer props. See if you can make a market average then devig for the props. Make sure the app matches odds between different sports books, because they may have slightly different names of teams or ways of listing props.
+```
