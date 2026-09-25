@@ -159,14 +159,16 @@ object Planner {
      * earlier one's copy is the one priced.
      */
     fun matchEvents(events: List<NovigEvent>, references: Collection<RefSnapshot>): List<EventMatch> {
-        val found = LinkedHashMap<String, MutableList<Pair<RefEvent, Boolean>>>()
+        data class Found(val ref: RefEvent, val swapped: Boolean, val provider: String)
+
+        val found = LinkedHashMap<String, MutableList<Found>>()
         val byLeague = events.groupBy { it.league }
         for ((leagueName, leagueEvents) in byLeague) {
             val league = Leagues.byNovigName(leagueName) ?: continue
             for (snap in references) {
                 if (snap.sportKey != league.oddsApiSportKey) continue
                 for ((eventId, pair) in matchOne(league, leagueEvents, snap.events)) {
-                    found.getOrPut(eventId) { ArrayList() } += pair
+                    found.getOrPut(eventId) { ArrayList() } += Found(pair.first, pair.second, snap.provider.ifEmpty { "reference" })
                 }
             }
         }
@@ -178,15 +180,15 @@ object Planner {
                 out += EventMatch(league, e, null, false)
                 continue
             }
-            val (primary, primarySwapped) = list.first()
+            val primary = list.first()
             val merged = if (list.size == 1) {
-                primary
+                primary.ref
             } else {
                 // Orient every other feed like the first one before pooling their quotes.
-                val markets = list.flatMap { (ref, swapped) -> if (swapped == primarySwapped) ref.markets else ref.markets.map { it.flipped() } }
-                primary.copy(id = list.joinToString("+") { it.first.id }, markets = markets)
+                val markets = list.flatMap { f -> if (f.swapped == primary.swapped) f.ref.markets else f.ref.markets.map { it.flipped() } }
+                primary.ref.copy(id = list.joinToString("+") { it.ref.id }, markets = markets)
             }
-            out += EventMatch(league, e, merged, primarySwapped, list.map { (ref, _) -> ref.markets.firstOrNull()?.bookKey ?: ref.id.substringBefore(':') }.distinct())
+            out += EventMatch(league, e, merged, primary.swapped, list.map { it.provider }.distinct())
         }
         return out
     }
