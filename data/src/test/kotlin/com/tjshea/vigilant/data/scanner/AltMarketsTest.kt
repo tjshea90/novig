@@ -258,7 +258,7 @@ class AltMarketsTest {
                 "baseball_mlb",
                 listOf(
                     RefEvent(
-                        "k", "baseball_mlb", Fixtures.START_MS, home = "Detroit", away = "Pittsburgh",
+                        "k", "baseball_mlb", Fixtures.START_MS, home = "Detroit Tigers", away = "Pittsburgh Pirates",
                         markets = listOf(
                             // A 0.5 line in the first five innings must not price the 1st inning.
                             ou("pinnacle", LineKind.TOTAL, 1.20, 4.50, 0.5, period = 1),
