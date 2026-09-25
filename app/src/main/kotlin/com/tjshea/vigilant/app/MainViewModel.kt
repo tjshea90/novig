@@ -116,14 +116,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val report = withContext(Dispatchers.Default) {
                     c.scanner.scan(settings, sources) { p -> _state.update { it.copy(status = it.status.copy(progress = p)) } }
                 }
-                apply(report, settings)
+                applyReport(report, settings)
             } finally {
                 _state.update { it.copy(status = it.status.copy(scanning = false, progress = null)) }
             }
         }
     }
 
-    private suspend fun apply(report: ScanReport, settings: ScanSettings) {
+    private suspend fun applyReport(report: ScanReport, settings: ScanSettings) {
         val result = report.result
         _state.update { s ->
             s.copy(
@@ -152,14 +152,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun repriceNow(settings: ScanSettings) {
         val repriced = withContext(Dispatchers.Default) { c.scanner.reprice(settings) }
-        val unscanned = c.scanner.unscannedLeagues(settings)
+        // Before the first scan there's nothing "missing": the whole feed says tap Scan.
+        val unscanned = if (_state.value.status.scannedAtMs == null) emptySet() else c.scanner.unscannedLeagues(settings)
         _state.update {
-            val r = repriced ?: it.result?.takeIf { settings.leagues.isNotEmpty() }
-            it.copy(
-                result = r,
-                feed = r?.feed(it.settings) ?: emptyList(),
-                status = it.status.copy(unscanned = if (it.result == null && repriced == null) emptySet() else unscanned),
-            )
+            val r = repriced ?: it.result
+            it.copy(result = r, feed = r?.feed(it.settings) ?: emptyList(), status = it.status.copy(unscanned = unscanned))
         }
     }
 
