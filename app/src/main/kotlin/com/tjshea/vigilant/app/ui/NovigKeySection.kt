@@ -14,7 +14,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,48 +29,34 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.NovigUi
-import com.tjshea.vigilant.data.novig.stream.StreamState
 
 /**
  * Settings → Novig API. Not connected: the one-time setup (management key ID + its .pem file).
- * Connected: stream status, test, stream on/off, disconnect.
+ * Connected: what the key does for scans, test, disconnect.
  */
 @Composable
 fun NovigKeySection(
     novig: NovigUi,
     onConnect: (keyId: String, pem: String) -> Unit,
     onTest: () -> Unit,
-    onStreamEnabled: (Boolean) -> Unit,
     onDisconnect: () -> Unit,
 ) {
     val conn = novig.connection
     if (conn == null) {
         SetupForm(novig, onConnect)
     } else {
-        val stream = novig.stream
         Text(
             "Connected · read-only key ••••${conn.readKeyId.takeLast(4)}",
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            when (stream) {
-                is StreamState.Live -> "Live stream: ${stream.events} games subscribed, prices update instantly."
-                StreamState.Connecting -> "Connecting to Novig's stream…"
-                is StreamState.Failed -> "Stream dropped: ${stream.message} Using public prices; retrying every minute."
-                StreamState.Off -> if (novig.streamEnabled) "Stream starts when the +EV or Games screen is open." else "Stream off: using public prices."
-            },
+            "Scans read Novig's prices through this key's own rate limit (64 at once, 16 a second) " +
+                "instead of the public one your phone's network shares. If Novig refuses the key " +
+                "(VPN on, location check due), the scan falls back to public prices and says why.",
             style = MaterialTheme.typography.bodySmall,
-            color = when (stream) {
-                is StreamState.Live -> Edge.colors.positive
-                is StreamState.Failed -> Edge.colors.warning
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-            },
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 4.dp),
         )
-        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Live stream", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-            Switch(checked = novig.streamEnabled, onCheckedChange = onStreamEnabled)
-        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onTest, enabled = !novig.busy) { Text("Test key") }
             TextButton(onClick = onDisconnect, enabled = !novig.busy) { Text("Disconnect") }
@@ -106,8 +91,8 @@ private fun SetupForm(novig: NovigUi, onConnect: (String, String) -> Unit) {
     }
 
     Text(
-        "Optional. Public prices already work with no key. Connecting your Novig API key upgrades them to " +
-            "Novig's live stream: every price change arrives instantly instead of every few seconds.",
+        "Optional. Public prices already work with no key. Connecting your Novig API key lets scans read " +
+            "prices under your key's own rate limit, so big scans are faster and never throttled by a shared network.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
