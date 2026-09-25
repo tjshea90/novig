@@ -13,7 +13,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -89,36 +95,74 @@ fun LeagueChips(all: List<League>, selected: Set<String>, onToggle: (String) -> 
     }
 }
 
-/** "Novig live · 8s ago   Fair odds 4m ago   488 credits" */
+/** "Scanned 3m ago · 488 credits", or the scan's progress while one runs. */
 @Composable
-fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier, streaming: Boolean = false) {
-    val now = rememberNow()
+fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier) {
+    val now = rememberNow(15_000)
     val edge = Edge.colors
-    val novigFresh = streaming || (status.novigAtMs != null && now - status.novigAtMs < 60_000)
+    val scanned = status.scannedAtMs
+    val fresh = scanned != null && now - scanned < 2 * 60_000
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
             Modifier
                 .size(8.dp)
-                .background(if (novigFresh) edge.positive else edge.warning, CircleShape),
+                .background(
+                    when {
+                        status.scanning -> MaterialTheme.colorScheme.primary
+                        fresh -> edge.positive
+                        scanned != null -> edge.warning
+                        else -> MaterialTheme.colorScheme.outline
+                    },
+                    CircleShape,
+                ),
         )
         Text(
             buildString {
-                if (streaming) append("Novig live stream") else {
-                    append("Novig ")
-                    append(if (status.refreshing) "updating…" else Format.age(status.novigAtMs, now))
+                val p = status.progress
+                when {
+                    status.scanning && p != null && p.total > 0 -> append("${p.step} ${p.done}/${p.total}")
+                    status.scanning -> append("Scanning…")
+                    scanned == null -> append("Not scanned yet")
+                    else -> append("Scanned ${Format.age(scanned, now)}")
                 }
-                if (status.hasOddsKey) {
-                    append("  ·  Fair ")
-                    append(Format.age(status.referenceAtMs, now))
-                    status.creditsRemaining?.let { append("  ·  $it credits") }
-                }
-                status.backoffSeconds?.let { append("  ·  slowed ${it}s") }
+                status.creditsRemaining?.let { append("  ·  $it credits") }
+                status.backoffSeconds?.let { append("  ·  Novig slowed us ${it}s") }
             },
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+/** The one button that fetches anything. Shows a spinner while a scan runs. */
+@Composable
+fun ScanButton(scanning: Boolean, enabled: Boolean, onScan: () -> Unit, modifier: Modifier = Modifier) {
+    FilledTonalButton(
+        onClick = onScan,
+        enabled = enabled && !scanning,
+        modifier = modifier.padding(end = 8.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+    ) {
+        if (scanning) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+        }
+        Text(if (scanning) "  Scanning" else "  Scan", fontWeight = FontWeight.SemiBold)
+    }
+}
+
+/** A thin bar under the top bar while a scan runs, determinate once the step has a count. */
+@Composable
+fun ScanProgressBar(status: ScanStatus, modifier: Modifier = Modifier) {
+    if (!status.scanning) return
+    val p = status.progress
+    if (p != null && p.total > 0) {
+        LinearProgressIndicator(progress = { p.done.toFloat() / p.total }, modifier = modifier.fillMaxWidth())
+    } else {
+        LinearProgressIndicator(modifier = modifier.fillMaxWidth())
     }
 }
 
