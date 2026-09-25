@@ -51,7 +51,7 @@ class Scanner(
     private val catalogTtlMs: Long = 3 * 60_000L,
     private val referenceRetryMs: Long = 10 * 60_000L,
 ) {
-    private data class Catalog(val leagues: Set<String>, val includeLive: Boolean, val events: List<NovigEvent>, val markets: List<NovigMarket>, val fetchedAtMs: Long)
+    private data class Catalog(val leagues: Set<String>, val includeLive: Boolean, val daysAhead: Int, val events: List<NovigEvent>, val markets: List<NovigMarket>, val fetchedAtMs: Long)
 
     private val mutex = Mutex()
     private var catalog: Catalog? = null
@@ -103,7 +103,7 @@ class Scanner(
         // 2. Novig catalog.
         val c = catalog
         val catalogDue = kind == RefreshKind.FULL || c == null || c.leagues != settings.leagues ||
-            c.includeLive != settings.includeLive || now - c.fetchedAtMs >= catalogTtlMs
+            c.includeLive != settings.includeLive || c.daysAhead != settings.daysAhead || now - c.fetchedAtMs >= catalogTtlMs
         if (catalogDue && settings.leagues.isNotEmpty()) {
             try {
                 val statuses = buildList {
@@ -111,9 +111,11 @@ class Scanner(
                     if (settings.includeLive) add(NovigEvent.STATUS_LIVE)
                 }
                 val leagues = settings.leagues.toList()
-                val events = novig.events(leagues, statuses)
-                val markets = novig.markets(leagues, MarketFamily.entries.flatMap { it.novigTypes }, statuses)
-                catalog = Catalog(settings.leagues, settings.includeLive, events, markets, now)
+                // One extra day of slack past the horizon; Planner applies the exact cut.
+                val before = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
+                val events = novig.events(leagues, statuses, before)
+                val markets = novig.markets(leagues, MarketFamily.entries.flatMap { it.novigTypes }, statuses, before)
+                catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, events, markets, now)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -152,7 +154,9 @@ class Scanner(
     /** Re-price what's already fetched under new settings. No network. */
     suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
         val cat = catalog ?: return@withLock null
-        if (cat.leagues != settings.leagues || cat.includeLive != settings.includeLive) return@withLock lastResult
+        if (cat.leagues != settings.leagues || cat.includeLive != settings.includeLive || cat.daysAhead != settings.daysAhead) {
+            return@withLock lastResult
+        }
         val p = planFor(cat, settings, clock())
         Pricing.price(p, books, settings, clock()).also { lastResult = it }
     }

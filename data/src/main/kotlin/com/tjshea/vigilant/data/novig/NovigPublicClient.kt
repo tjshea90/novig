@@ -17,8 +17,13 @@ import java.util.Collections
 
 /** Everything the scanner needs from Novig. The public REST client implements it; tests fake it. */
 interface NovigSource {
-    suspend fun events(leagues: Collection<String>, statuses: Collection<String>): List<NovigEvent>
-    suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>): List<NovigMarket>
+    suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long? = null): List<NovigEvent>
+    suspend fun markets(
+        leagues: Collection<String>,
+        marketTypes: Collection<String>,
+        eventStatuses: Collection<String>,
+        startsBefore: Long? = null,
+    ): List<NovigMarket>
     suspend fun books(marketIds: Collection<String>): BookBatch
     suspend fun market(marketId: String): NovigMarket?
 }
@@ -64,10 +69,11 @@ class NovigPublicClient(
         },
     )
 
-    override suspend fun events(leagues: Collection<String>, statuses: Collection<String>): List<NovigEvent> =
+    override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?): List<NovigEvent> =
         paged("/v3/public/catalog/events", buildMap {
             if (leagues.isNotEmpty()) put("league", leagues.joinToString(","))
             if (statuses.isNotEmpty()) put("status", statuses.joinToString(","))
+            startsBefore?.let { put("startsBefore", it.toString()) }
             put("limit", "1000")
         }) { body -> json.decodeFromString(EventPageDto.serializer(), body).let { it.items.map(EventDto::toDomain) to it.next } }
 
@@ -75,11 +81,13 @@ class NovigPublicClient(
         leagues: Collection<String>,
         marketTypes: Collection<String>,
         eventStatuses: Collection<String>,
+        startsBefore: Long?,
     ): List<NovigMarket> =
         paged("/v3/public/catalog/markets", buildMap {
             if (leagues.isNotEmpty()) put("league", leagues.joinToString(","))
             if (marketTypes.isNotEmpty()) put("marketType", marketTypes.joinToString(","))
             if (eventStatuses.isNotEmpty()) put("eventStatus", eventStatuses.joinToString(","))
+            startsBefore?.let { put("startsBefore", it.toString()) }
             put("limit", "5000")
         }) { body -> json.decodeFromString(MarketPageDto.serializer(), body).let { it.items.map(MarketDto::toDomain) to it.next } }
 
