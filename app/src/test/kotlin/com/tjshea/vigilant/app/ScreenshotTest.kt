@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.app
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
@@ -72,5 +74,25 @@ class ScreenshotTest {
     @Test fun noKeyPointsToTheGamesTabInsteadOfClaimingZeroGames() {
         compose.setContent { VigilantTheme { FeedScreen(SampleScan.state(withKey = false), {}, {}, {}, { _, _ -> }) } }
         compose.onNodeWithText("Fair odds need a key").assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
+    @Test fun novigKeySetup() = shoot("6_novig_key_setup") {
+        androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
+            com.tjshea.vigilant.app.ui.NovigKeySection(NovigUi(), { _, _ -> }, {}, {}, {})
+        }
+    }
+
+    @Test fun novigKeyConnected() = shoot("6b_novig_key_connected") {
+        androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
+            com.tjshea.vigilant.app.ui.NovigKeySection(
+                NovigUi(
+                    connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("3f2504e0-4f89-11d3-9a0c-0305e82c9a1b", "a", "t", false),
+                    stream = com.tjshea.vigilant.data.novig.stream.StreamState.Live(0, 14),
+                    message = "Novig accepted the key (signature, clock and network all OK).",
+                ),
+                { _, _ -> }, {}, {}, {},
+            )
+        }
     }
 }
