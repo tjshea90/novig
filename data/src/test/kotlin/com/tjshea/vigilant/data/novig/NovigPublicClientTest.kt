@@ -114,6 +114,23 @@ class NovigPublicClientTest {
     }
 
     @Test
+    fun `a short Retry-After pauses and retries instead of dropping books`() = runTest {
+        val calls = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (calls.getAndIncrement() == 0) {
+                    MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
+                } else {
+                    MockResponse().setBody(Fixtures.mlBook.replace(Fixtures.ML_MARKET, request.requestUrl!!.pathSegments[4]))
+                }
+        }
+        val batch = client().books(listOf("m1", "m2", "m3"))
+        assertEquals(0, batch.failed)
+        assertEquals(3, batch.fetched)
+        assertNull(batch.retryAfterSeconds)
+    }
+
+    @Test
     fun `the edge's bare HTML 403 reads as a slow-down, not a bad request`() = runTest {
         server.enqueue(MockResponse().setResponseCode(403).setBody("<html>Request blocked</html>"))
         val batch = client().books(listOf("m1"))

@@ -5,6 +5,7 @@ import com.tjshea.vigilant.engine.FeeCharge
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.Serializable
@@ -14,6 +15,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 /** Everything the scanner needs from Novig. The public REST client implements it; tests fake it. */
 interface NovigSource {
@@ -103,20 +107,37 @@ class NovigPublicClient(
 
     override suspend fun books(marketIds: Collection<String>): BookBatch = coroutineScope {
         val gate = Semaphore(maxConcurrent)
-        val throttled = java.util.concurrent.atomic.AtomicReference<NovigHttpException?>(null)
+        val stop = AtomicReference<NovigHttpException?>(null)
+        val pauseUntil = AtomicLong(0)
+        val throttleHits = AtomicInteger(0)
         val results = marketIds.distinct().map { id ->
             async {
                 gate.withPermit {
-                    // Once Novig says slow down, stop sending. Serve whatever is cached instead.
-                    if (throttled.get() != null) return@withPermit BookFetch.Skipped(id)
-                    try {
-                        fetchBook(id)
-                    } catch (e: NovigHttpException) {
-                        if (e.code == 429 || e.code == 403) throttled.compareAndSet(null, e)
-                        BookFetch.Failed(id, e.message ?: "HTTP ${e.code}")
-                    } catch (e: IOException) {
-                        BookFetch.Failed(id, e.message ?: e.javaClass.simpleName)
+                    var retried = false
+                    while (true) {
+                        // Once Novig says slow down for long, stop sending. Serve whatever is cached.
+                        if (stop.get() != null) return@withPermit BookFetch.Skipped(id)
+                        val wait = pauseUntil.get() - System.currentTimeMillis()
+                        if (wait > 0) delay(wait)
+                        try {
+                            return@withPermit fetchBook(id)
+                        } catch (e: NovigHttpException) {
+                            val retryAfter = e.retryAfterSeconds ?: 1
+                            // Measured live 2026-09-25: the public edge answers a burst with 429 and
+                            // Retry-After: 1. A short pause and one retry recovers without dropping books.
+                            if (e.code == 429 && !retried && retryAfter <= SHORT_RETRY_SECONDS && throttleHits.incrementAndGet() <= MAX_SHORT_RETRIES) {
+                                pauseUntil.accumulateAndGet(System.currentTimeMillis() + retryAfter * 1000L) { a, b -> maxOf(a, b) }
+                                retried = true
+                                continue
+                            }
+                            if (e.code == 429 || e.code == 403) stop.compareAndSet(null, e)
+                            return@withPermit BookFetch.Failed(id, e.message ?: "HTTP ${e.code}")
+                        } catch (e: IOException) {
+                            return@withPermit BookFetch.Failed(id, e.message ?: e.javaClass.simpleName)
+                        }
                     }
+                    @Suppress("UNREACHABLE_CODE")
+                    BookFetch.Skipped(id)
                 }
             }
         }.map { it.await() }
@@ -134,7 +155,7 @@ class NovigPublicClient(
                 is BookFetch.Skipped -> bookCache[r.marketId]?.let { books[r.marketId] = it.book }
             }
         }
-        val t = throttled.get()
+        val t = stop.get()
         BookBatch(books, notModified, fetched, failed, t?.retryAfterSeconds ?: t?.let { 10 }, lastError ?: t?.message)
     }
 
@@ -206,6 +227,8 @@ class NovigPublicClient(
 
     companion object {
         const val MAX_CACHED_BOOKS = 3000
+        const val SHORT_RETRY_SECONDS = 5
+        const val MAX_SHORT_RETRIES = 3
         const val MAX_PAGES = 20
     }
 }

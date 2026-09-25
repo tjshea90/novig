@@ -90,6 +90,9 @@ object TeamMatcher {
         if (isSubsequence(a, concat)) s += 3
         if (a.first() == concat.first()) s += 2
         if (initials != a && (initials.startsWith(a) || a.startsWith(initials))) s += 3
+        // Schools: "UNM" = U + New Mexico, "NMSU" = New Mexico State + U, "UK" = U + Kentucky.
+        if (a.length >= 2 && a.first() == 'u' && a.drop(1) == initials) s += 9
+        if (a.length >= 3 && a.last() == 'u' && a.dropLast(1) == initials) s += 9
         return s
     }
 

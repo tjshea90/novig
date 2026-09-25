@@ -30,6 +30,12 @@ class TeamMatcherTest {
     }
 
     @Test
+    fun `school abbreviations with a U resolve - both live misses from 2026-09-25`() {
+        assertEquals(false, TeamMatcher.firstLabelIsAway("UK", "USA", "South Alabama", "Kentucky"))
+        assertEquals(false, TeamMatcher.firstLabelIsAway("NMSU", "UNM", "New Mexico", "New Mexico State"))
+    }
+
+    @Test
     fun `same-city teams are told apart by initials`() {
         assertEquals(true, TeamMatcher.firstLabelIsAway("LAR", "LAC", "Los Angeles Rams", "Los Angeles Chargers"))
         assertEquals(false, TeamMatcher.firstLabelIsAway("NYJ", "NYG", "New York Giants", "New York Jets"))
