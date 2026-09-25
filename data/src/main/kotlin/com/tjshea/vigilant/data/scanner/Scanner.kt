@@ -6,190 +6,294 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigSource
 import com.tjshea.vigilant.data.reference.RefSnapshot
+import com.tjshea.vigilant.data.reference.ReferenceException
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.atomic.AtomicInteger
 
-enum class RefreshKind {
-    /** Pull-to-refresh: reference odds for every selected sport, the Novig catalog, and books. */
-    FULL,
+/** Where a scan is, for the progress line. */
+data class ScanProgress(val step: String, val done: Int = 0, val total: Int = 0)
 
-    /** The live loop: books every tick; catalog and reference only when due or missing. */
-    AUTO,
-}
+/** How one fair-odds provider did on the last scan. */
+data class SourceReport(
+    val id: String,
+    val name: String,
+    /** Leagues it answered, fresh this scan or re-used from an earlier one. */
+    val fetched: Int,
+    val reused: Int,
+    /** Novig games it matched. */
+    val matched: Int,
+    val error: String?,
+)
 
-/** What happened on one refresh, for the status line. */
-data class RefreshReport(
+/** What happened on one scan, for the status line and banners. */
+data class ScanReport(
     val result: ScanResult?,
     val errors: List<String>,
-    /** Novig asked us to slow down: skip book refreshes for this many seconds. */
+    /** Set when Novig throttled the scan: it stopped early for this many seconds. */
     val retryAfterSeconds: Int?,
     val booksFetched: Int,
     val booksNotModified: Int,
+    /** Books Novig couldn't refresh this time, shown from the previous scan. */
+    val booksFromCache: Int,
+    val booksViaKey: Int,
     val novigCatalogAtMs: Long?,
-    val referenceAtMs: Map<String, Long>,
+    val sources: List<SourceReport>,
     val creditsRemaining: Int?,
-    val hasReferenceSource: Boolean,
 )
 
 /**
- * Holds everything fetched so far and decides what to refetch. The UI calls [refresh] on a timer
- * while the screen is visible, and [reprice] when a setting changes. Timing rules:
+ * Runs a scan when (and only when) Tj asks for one: the Scan button or pull-to-refresh (his rule,
+ * 2026-09-25). Nothing here runs on a timer. Per scan:
  *
- *  - Novig books: every AUTO tick (the caller's timer, default 15s). ETags make unchanged books cheap.
- *  - Novig catalog (events + markets): every [catalogTtlMs] (3 min), or right away when the league
- *    set or window changes. New alternate lines appear slowly; books move fast.
- *  - Reference odds: they cost Odds API credits. Fetched on FULL, when a sport has never been
- *    fetched, or when the user turned on auto-refresh and the interval has passed. A failed sport
- *    waits [referenceRetryMs] before an AUTO tick may retry it, so a dead key can't burn a retry
- *    every 15 seconds.
+ *  1. Novig catalog (events + markets): re-used for [catalogTtlMs] (3 min) if the leagues and
+ *     window haven't changed. New alternate lines appear slowly; prices move fast.
+ *  2. Fair odds from every enabled [ReferenceSource], providers in parallel, leagues one at a time
+ *     within a provider. A metered provider (The Odds API credits, pinnapi's 100/day) is re-used
+ *     for its [ReferenceSource.reuseMs]. A failed call keeps the previous snapshot while it's
+ *     younger than the stale limit, so one hiccup doesn't blank the feed.
+ *  3. Plan: match games, choose which Novig markets to price (capped per game).
+ *  4. Novig books for the plan, paced by [NovigSource.books] to stay under Novig's rate limits.
+ *
+ * [reprice] re-prices everything already fetched under new settings, with no network at all.
  */
 class Scanner(
     private val novig: NovigSource,
     private val clock: () -> Long = System::currentTimeMillis,
     private val catalogTtlMs: Long = 3 * 60_000L,
-    private val referenceRetryMs: Long = 10 * 60_000L,
 ) {
     private data class Catalog(val leagues: Set<String>, val includeLive: Boolean, val daysAhead: Int, val events: List<NovigEvent>, val markets: List<NovigMarket>, val fetchedAtMs: Long)
 
+    private data class Cached(val snapshot: RefSnapshot, val requestKey: String)
+
     private val mutex = Mutex()
     private var catalog: Catalog? = null
-    private val references = HashMap<String, RefSnapshot>()
-    private val referenceFailures = HashMap<String, Long>()
+
+    /** Latest snapshot per `"$sourceId|$league"`. */
+    private val references = HashMap<String, Cached>()
     private var creditsRemaining: Int? = null
     private var plan: Plan? = null
     private var planInputs: Any? = null
     private var books: Map<String, NovigBook> = emptyMap()
-    private var lastResult: ScanResult? = null
 
-    suspend fun refresh(settings: ScanSettings, kind: RefreshKind, reference: ReferenceSource?): RefreshReport = mutex.withLock {
+    suspend fun scan(
+        settings: ScanSettings,
+        sources: List<ReferenceSource>,
+        onProgress: (ScanProgress) -> Unit = {},
+    ): ScanReport = mutex.withLock {
         val now = clock()
         val errors = ArrayList<String>()
+        val leagues = settings.selectedLeagues
+        if (leagues.isEmpty()) return@withLock report(null, errors, null, null, emptyList())
 
-        // 1. Reference odds (credits).
-        if (reference != null) {
-            for (league in settings.selectedLeagues) {
-                val sport = league.oddsApiSportKey
-                val have = references[sport]
-                val failedAt = referenceFailures[sport]
-                val due = when (kind) {
-                    RefreshKind.FULL -> true
-                    RefreshKind.AUTO -> when {
-                        have == null -> failedAt == null || now - failedAt >= referenceRetryMs
-                        settings.referenceRefreshMinutes > 0 -> now - have.fetchedAtMs >= settings.referenceRefreshMinutes * 60_000L
-                        else -> false
+        val ordered = sources.sortedBy { SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+        val calls = ordered.sumOf { s -> leagues.count { s.supports(it) } } + 1
+        val done = AtomicInteger(0)
+        onProgress(ScanProgress("Novig board and fair odds", 0, calls))
+
+        val sourceReports = coroutineScope {
+            val catalogJob = async {
+                refreshCatalog(settings, now, errors)
+                onProgress(ScanProgress("Novig board and fair odds", done.incrementAndGet(), calls))
+            }
+            val jobs = ordered.map { source ->
+                async {
+                    fetchSource(source, leagues, settings, now, errors) {
+                        onProgress(ScanProgress("Novig board and fair odds", done.incrementAndGet(), calls))
                     }
                 }
-                if (!due) continue
-                try {
-                    // Stamp with our own clock: the auto-refresh interval (credits) must never
-                    // depend on what time a provider claims it answered.
-                    val snap = reference.odds(sport, settings.referenceBooks).copy(fetchedAtMs = now)
-                    references[sport] = snap
-                    referenceFailures.remove(sport)
-                    snap.creditsRemaining?.let { creditsRemaining = it }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: AllKeysExhaustedException) {
-                    referenceFailures[sport] = now
-                    errors += e.message ?: "Every Odds API key is used up"
-                    break // every sport would fail the same way
-                } catch (e: Exception) {
-                    referenceFailures[sport] = now
-                    errors += "${league.displayName} fair odds: ${e.message ?: e.javaClass.simpleName}"
-                }
             }
+            catalogJob.await()
+            jobs.map { it.await() }
         }
 
-        // 2. Novig catalog.
-        val c = catalog
-        val catalogDue = kind == RefreshKind.FULL || c == null || c.leagues != settings.leagues ||
-            c.includeLive != settings.includeLive || c.daysAhead != settings.daysAhead || now - c.fetchedAtMs >= catalogTtlMs
-        if (catalogDue && settings.leagues.isNotEmpty()) {
-            try {
-                val statuses = buildList {
-                    add(NovigEvent.STATUS_PREGAME)
-                    if (settings.includeLive) add(NovigEvent.STATUS_LIVE)
-                }
-                val leagues = settings.leagues.toList()
-                // One extra day of slack past the horizon; Planner applies the exact cut.
-                val before = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
-                val events = novig.events(leagues, statuses, before)
-                val markets = novig.markets(leagues, MarketFamily.entries.flatMap { it.novigTypes }, statuses, before)
-                catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, events, markets, now)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                errors += "Novig catalog: ${e.message ?: e.javaClass.simpleName}"
-            }
-        }
-
-        // 3. Plan (only rebuilt when its inputs changed).
         val cat = catalog
-        val currentPlan = if (cat != null && settings.leagues.isNotEmpty()) planFor(cat, settings, now) else null
+        val currentPlan = if (cat != null) planFor(cat, settings, now) else null
 
-        // 4. Books for the planned markets.
-        var retryAfter: Int? = null
         var fetched = 0
         var notModified = 0
+        var fromCache = 0
+        var viaKey = 0
+        var retryAfter: Int? = null
         if (currentPlan != null && currentPlan.markets.isNotEmpty()) {
-            novig.focus(currentPlan.markets.mapTo(HashSet()) { it.event.eventId })
             try {
-                val batch = novig.books(currentPlan.marketIds)
+                val batch = novig.books(currentPlan.marketIds) { d, t -> onProgress(ScanProgress("Novig prices", d, t)) }
                 books = batch.books
                 fetched = batch.fetched
                 notModified = batch.notModified
+                fromCache = batch.fromCache
+                viaKey = batch.viaKey
                 retryAfter = batch.retryAfterSeconds
-                if (batch.failed > 0 && batch.lastError != null) errors += "Novig books: ${batch.lastError}"
+                batch.keyProblem?.let { errors += "Novig key: $it Used public prices this scan." }
+                if (batch.failed > 0 && batch.lastError != null) {
+                    errors += "Novig prices: ${batch.lastError}" +
+                        if (fromCache > 0) " ($fromCache shown from the last scan)" else ""
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                errors += "Novig books: ${e.message ?: e.javaClass.simpleName}"
+                errors += "Novig prices: ${e.message ?: e.javaClass.simpleName}"
             }
         }
 
         val result = currentPlan?.let { Pricing.price(it, books, settings, now) }
-        if (result != null) lastResult = result
-        report(result, errors, retryAfter, fetched, notModified, reference != null)
-    }
-
-    /** Re-price what's already fetched under new settings. No network. */
-    suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
-        val cat = catalog ?: return@withLock null
-        if (cat.leagues != settings.leagues || cat.includeLive != settings.includeLive || cat.daysAhead != settings.daysAhead) {
-            return@withLock lastResult
-        }
-        val p = planFor(cat, settings, clock())
-        Pricing.price(p, books, settings, clock()).also { lastResult = it }
-    }
-
-    private fun planFor(cat: Catalog, settings: ScanSettings, now: Long): Plan {
-        val refs = settings.selectedLeagues.mapNotNull { l -> references[l.oddsApiSportKey]?.let { l.oddsApiSportKey to it } }.toMap()
-        // Identity of every input the plan depends on. The time horizon moves slowly, so it's
-        // bucketed to the hour; otherwise the plan would rebuild on every tick for nothing.
-        val inputs = listOf(
-            System.identityHashCode(cat), refs.values.map { System.identityHashCode(it) },
-            settings.leagues, settings.families, settings.includeLive, settings.daysAhead, now / 3_600_000L,
-        )
-        val existing = plan
-        if (existing != null && inputs == planInputs) return existing
-        return Planner.plan(cat.events, cat.markets, refs, settings, now).also {
-            plan = it
-            planInputs = inputs
-        }
-    }
-
-    private fun report(result: ScanResult?, errors: List<String>, retryAfter: Int?, fetched: Int, notModified: Int, hasRef: Boolean) =
-        RefreshReport(
+        val reports = sourceReports.map { r -> r.copy(matched = currentPlan?.events?.count { r.id in it.providers } ?: 0) }
+        ScanReport(
             result = result,
             errors = errors,
             retryAfterSeconds = retryAfter,
             booksFetched = fetched,
             booksNotModified = notModified,
+            booksFromCache = fromCache,
+            booksViaKey = viaKey,
             novigCatalogAtMs = catalog?.fetchedAtMs,
-            referenceAtMs = references.mapValues { it.value.fetchedAtMs },
+            sources = reports,
             creditsRemaining = creditsRemaining,
-            hasReferenceSource = hasRef,
         )
+    }
+
+    /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
+    suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
+        val cat = catalog ?: return@withLock null
+        if (settings.leagues.isEmpty()) return@withLock null
+        val now = clock()
+        Pricing.price(planFor(cat, settings, now), books, settings, now)
+    }
+
+    /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
+    suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = mutex.withLock {
+        settings.leagues - (catalog?.leagues ?: emptySet())
+    }
+
+    private suspend fun refreshCatalog(settings: ScanSettings, now: Long, errors: MutableList<String>) {
+        val c = catalog
+        val fresh = c != null && c.leagues == settings.leagues && c.includeLive == settings.includeLive &&
+            c.daysAhead == settings.daysAhead && now - c.fetchedAtMs < catalogTtlMs
+        if (fresh) return
+        try {
+            val statuses = buildList {
+                add(NovigEvent.STATUS_PREGAME)
+                if (settings.includeLive) add(NovigEvent.STATUS_LIVE)
+            }
+            val leagues = settings.leagues.toList()
+            // One extra day of slack past the horizon; Planner applies the exact cut.
+            val before = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
+            val events = novig.events(leagues, statuses, before)
+            // Every family, so switching one on later re-prices from cache instead of refetching.
+            val markets = novig.markets(leagues, MarketFamily.entries.flatMap { it.novigTypes }, statuses, before)
+            catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, events, markets, now)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            errors.addSync("Novig board: ${e.message ?: e.javaClass.simpleName}")
+        }
+    }
+
+    private suspend fun fetchSource(
+        source: ReferenceSource,
+        leagues: List<League>,
+        settings: ScanSettings,
+        now: Long,
+        errors: MutableList<String>,
+        onCall: () -> Unit,
+    ): SourceReport {
+        var fetched = 0
+        var reused = 0
+        var error: String? = null
+        val requestKey = requestKey(source, settings)
+        val reuseMs = source.reuseMs(settings)
+        for (league in leagues) {
+            if (!source.supports(league)) continue
+            val key = "${source.id}|${league.novigName}"
+            val have = synchronized(references) { references[key] }
+            if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs) {
+                reused++
+                onCall()
+                continue
+            }
+            if (error != null && source.metered) {
+                // A metered provider that just refused (limit, bad key) will refuse the next league too.
+                onCall()
+                continue
+            }
+            try {
+                val snap = source.odds(league, settings).let { it.copy(fetchedAtMs = minOf(it.fetchedAtMs, now).takeIf { t -> t > 0 } ?: now, provider = source.id) }
+                synchronized(references) { references[key] = Cached(snap, requestKey) }
+                snap.creditsRemaining?.let { creditsRemaining = it }
+                fetched++
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val message = when (e) {
+                    is AllKeysExhaustedException, is ReferenceException -> e.message ?: source.displayName
+                    else -> "${source.displayName} ${league.displayName}: ${e.message ?: e.javaClass.simpleName}"
+                }
+                if (error == null) errors.addSync(message)
+                error = message
+                // Keep a recent previous answer; drop one too old to call fair.
+                synchronized(references) {
+                    val old = references[key]
+                    if (old != null && now - old.snapshot.fetchedAtMs > settings.staleReferenceMinutes * 60_000L) references.remove(key)
+                }
+            }
+            onCall()
+        }
+        return SourceReport(source.id, source.displayName, fetched, reused, 0, error)
+    }
+
+    /** What a snapshot was asked for; a different ask can't re-use it. */
+    private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
+        "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
+        else -> "${settings.families.sorted()}|${settings.exchangeMaxSpread}|${settings.daysAhead}"
+    }
+
+    private fun planFor(cat: Catalog, settings: ScanSettings, now: Long): Plan {
+        val enabled = settings.enabledSources
+        val refs = synchronized(references) {
+            settings.selectedLeagues.flatMap { l ->
+                SOURCE_ORDER.filter { it in enabled }.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot }
+            }
+        }
+        // The Odds API's books follow the reference-book picker, even between scans.
+        val books = settings.referenceBooks.toSet()
+        val inputs = listOf(
+            System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
+            settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
+            now / 60_000L,
+        )
+        val existing = plan
+        if (existing != null && inputs == planInputs) return existing
+        val filtered = refs.map { snap ->
+            if (snap.provider != "oddsapi") snap
+            else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
+        }
+        return Planner.plan(cat.events, cat.markets, filtered, settings, now).also {
+            plan = it
+            planInputs = inputs
+        }
+    }
+
+    private fun report(result: ScanResult?, errors: List<String>, retryAfter: Int?, credits: Int?, sources: List<SourceReport>) = ScanReport(
+        result = result,
+        errors = errors,
+        retryAfterSeconds = retryAfter,
+        booksFetched = 0,
+        booksNotModified = 0,
+        booksFromCache = 0,
+        booksViaKey = 0,
+        novigCatalogAtMs = catalog?.fetchedAtMs,
+        sources = sources,
+        creditsRemaining = credits ?: creditsRemaining,
+    )
+
+    private fun MutableList<String>.addSync(s: String) = synchronized(this) { add(s) }
+
+    companion object {
+        /** Merge order: when two feeds carry the same book, the earlier one's quote is priced. */
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "oddsapi")
+    }
 }
