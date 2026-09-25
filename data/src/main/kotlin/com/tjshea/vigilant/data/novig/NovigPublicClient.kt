@@ -85,11 +85,13 @@ class NovigPublicClient(
     keyedRate: Double = 8.0,
     keyedBurst: Int = 16,
     private val keyedConcurrency: Int = 4,
-    private val sleep: suspend (Long) -> Unit = { delay(it) },
+    /** Pacing runs on real time even when [clock] is faked for timestamps. */
+    private val rateClock: () -> Long = System::currentTimeMillis,
+    sleep: suspend (Long) -> Unit = { delay(it) },
 ) : NovigSource {
 
-    private val publicGate = RateGate(publicRate, publicBurst, clock, sleep)
-    private val keyedGate = RateGate(keyedRate, keyedBurst, clock, sleep)
+    private val publicGate = RateGate(publicRate, publicBurst, rateClock, sleep)
+    private val keyedGate = RateGate(keyedRate, keyedBurst, rateClock, sleep)
 
     /** Signs book requests with the connected read-only key. Null = public routes only. */
     @Volatile
@@ -173,7 +175,7 @@ class NovigPublicClient(
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
                                 if (e.status == 429) {
-                                    keyedGate.pause(clock() + 1000L)
+                                    keyedGate.pause(rateClock() + 1000L)
                                     keyedGate.slowDown()
                                     if (retries++ < 2) continue
                                     return@run BookFetch.Failed(id, e.advice)
@@ -190,7 +192,7 @@ class NovigPublicClient(
                                 // twice; anything still missing is served from the last scan.
                                 if (e.code == 429 && retries < 2 && retryAfter <= SHORT_RETRY_SECONDS && throttleHits.incrementAndGet() <= MAX_SHORT_RETRIES) {
                                     retries++
-                                    rate.pause(clock() + retryAfter * 1000L)
+                                    rate.pause(rateClock() + retryAfter * 1000L)
                                     rate.slowDown()
                                     continue
                                 }

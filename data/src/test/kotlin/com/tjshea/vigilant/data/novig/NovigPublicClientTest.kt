@@ -2,7 +2,7 @@ package com.tjshea.vigilant.data.novig
 
 import com.tjshea.vigilant.data.Fixtures
 import com.tjshea.vigilant.engine.FeeCharge
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
@@ -29,7 +29,7 @@ class NovigPublicClientTest {
     private fun client() = NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now })
 
     @Test
-    fun `lists events and markets with no key or signature`() = runTest {
+    fun `lists events and markets with no key or signature`() = runBlocking {
         server.enqueue(MockResponse().setBody(Fixtures.novigEvents))
         server.enqueue(MockResponse().setBody(Fixtures.novigMarkets))
 
@@ -53,7 +53,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `follows the next cursor across pages`() = runTest {
+    fun `follows the next cursor across pages`() = runBlocking {
         server.enqueue(MockResponse().setBody("""{"items":[{"eventId":"a"}],"next":"cursor-1"}"""))
         server.enqueue(MockResponse().setBody("""{"items":[{"eventId":"b"}]}"""))
         val events = client().events(listOf("NFL"), emptyList())
@@ -63,7 +63,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `book levels aggregate by price and flip into take prices for the other side`() = runTest {
+    fun `book levels aggregate by price and flip into take prices for the other side`() = runBlocking {
         server.enqueue(MockResponse().setBody(Fixtures.novigMarkets))
         server.enqueue(MockResponse().setBody(Fixtures.mlBook).setHeader("ETag", "\"x-2020\""))
         val c = client()
@@ -79,7 +79,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `an unchanged book is revalidated with its ETag and served from cache on 304`() = runTest {
+    fun `an unchanged book is revalidated with its ETag and served from cache on 304`() = runBlocking {
         val hits = AtomicInteger()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
@@ -102,7 +102,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `a 429 stops the batch and keeps what was cached`() = runTest {
+    fun `a 429 stops the batch and keeps what was cached`() = runBlocking {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
                 MockResponse().setResponseCode(429).setHeader("Retry-After", "7").setBody("""{"code":"RATE_LIMIT_EXCEEDED","message":"slow"}""")
@@ -114,7 +114,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `a short Retry-After pauses and retries instead of dropping books`() = runTest {
+    fun `a short Retry-After pauses and retries instead of dropping books`() = runBlocking {
         val calls = AtomicInteger()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
@@ -131,7 +131,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `the edge's bare HTML 403 reads as a slow-down, not a bad request`() = runTest {
+    fun `the edge's bare HTML 403 reads as a slow-down, not a bad request`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(403).setBody("<html>Request blocked</html>"))
         val batch = client().books(listOf("m1"))
         assertEquals(30, batch.retryAfterSeconds)
@@ -139,7 +139,7 @@ class NovigPublicClientTest {
     }
 
     @Test
-    fun `a market with an unreadable fee keeps a null fee instead of pretending it's free`() = runTest {
+    fun `a market with an unreadable fee keeps a null fee instead of pretending it's free`() = runBlocking {
         server.enqueue(MockResponse().setBody("""{"items":[{"marketId":"m","fee":{"coefficient":"x","charged":"WHEN_LIVE"},"outcomes":[]}]}"""))
         assertNull(client().markets(emptyList(), emptyList(), emptyList()).single().fee)
     }
