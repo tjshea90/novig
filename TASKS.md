@@ -1155,3 +1155,52 @@ app — ship after milestone A even if nothing else lands):
 - [ ] First real The Odds API scan on device: confirm team matching vs real
       sportsbook names (Novig side verified live 3872/3872; the sportsbook side
       only against documented name formats).
+
+## Tj's request, 2026-09-25 ~12:35Z (his own words — full text + screenshot in INBOX.md)
+
+> I like the app UI so far. A few changes:
+> 1) make it so it does not pull or request any odds from novig or any API in
+> the app at all unless I manually press a button to scan for positive EV or
+> manually pull to refresh.
+> 2) review the attached screenshot, novig may be rate limiting my requests,
+> see how to make the app have better efficiency and less chance of rate
+> limiting.
+> 3) research and read all of the documentation about the novig and the odds
+> API sources used in the app. Optimize the app to meet the limits and specs
+> of the providers. Make the app careful not to get banned or severely
+> limited or restricted.
+> 4) research and tell me the best way to have this app work without severe
+> restriction on refreshing and being able to refresh odds many times per
+> day. Consider all free apis or other ways to get updated odds from
+> different sports books, especially sharp sports books. Research if there
+> are other ways to pull these odds for free or very cheap. Consider if I
+> should sign up for the odds API key on several email addresses and let the
+> app use each key
+> 5) do any and all research necessary to obtain the goal: I want this app to
+> work for free or cheap by any means to find "fair" odds for many different
+> markets and tell me all positive EV bets on novig, just like the oddsjam
+> app. Right now it seems to work ok except it is rate limiting
+
+Screenshot (v0.5.0, NFL): banner "Novig books: Novig is rate-limiting this device
+(HTTP 429), retry in 1s"; status "Novig updating… · Fair 33s ago · 488 credits ·
+slowed 1s"; 6 bets ≥1% EV, 88 prices checked. So the 15s auto-poll of ~44 public
+books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge limit.
+
+### Plan
+- [ ] R1 Manual-only: no network on launch, league toggle, settings change, tab
+      change, or timer. Only the Scan button and pull-to-refresh fetch anything.
+      No auto websocket. Settings changes re-price from cache only.
+- [ ] R2 Rate-limit-safe Novig fetching: client-side token bucket + low
+      concurrency on public routes, global Retry-After pause, more paced
+      retries, partial results served from cache with a clear message; with a
+      Novig key, read books via signed per-key routes / one websocket snapshot
+      instead of per-IP public routes.
+- [ ] R3 Provider docs re-read (Novig throttling/errors/public, The Odds API
+      limits/credits/terms) → encode limits in code; credits-aware reference
+      reuse (don't re-pay for fair odds that are minutes old); only request
+      the market families selected.
+- [ ] R4/R5 Research: free/cheap sharp + market odds sources (Kalshi,
+      Polymarket, Pinnacle routes, other APIs, multi-key idea incl. ToS risk);
+      write findings to RESEARCH.md with a clear recommendation; implement the
+      best free source(s) if they check out.
+- [ ] R6 Tests (unit + screenshots), CI green, ship, report to Tj.
