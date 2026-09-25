@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.novig.NovigText
+import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.LineKind
 import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.reference.RefSnapshot
@@ -48,7 +49,19 @@ data class PlannedMarket(
     val outcomes: List<PlannedOutcome>,
 )
 
-data class EventMatch(val league: League, val event: NovigEvent, val refEvent: RefEvent?, val refSwapped: Boolean)
+/**
+ * A Novig event and the reference quotes found for it. [refEvent] merges every provider that
+ * matched (Pinnacle, Polymarket, Kalshi, The Odds API) into one set of book quotes, oriented like
+ * the first provider's feed; [refSwapped] says whether that orientation is Novig's home/away
+ * reversed. [providers] lists who matched, for the UI.
+ */
+data class EventMatch(
+    val league: League,
+    val event: NovigEvent,
+    val refEvent: RefEvent?,
+    val refSwapped: Boolean,
+    val providers: List<String> = emptyList(),
+)
 
 data class Plan(
     val markets: List<PlannedMarket>,
@@ -92,10 +105,19 @@ object Planner {
 
     private const val STARTED_GRACE_MS = 2 * 60_000L
 
+    /** Single-feed form, keyed by sport: kept for callers that only ever had one provider. */
     fun plan(
         events: List<NovigEvent>,
         markets: List<NovigMarket>,
         references: Map<String, RefSnapshot>,
+        settings: ScanSettings,
+        now: Long,
+    ): Plan = plan(events, markets, references.values, settings, now)
+
+    fun plan(
+        events: List<NovigEvent>,
+        markets: List<NovigMarket>,
+        references: Collection<RefSnapshot>,
         settings: ScanSettings,
         now: Long,
     ): Plan {
@@ -127,50 +149,97 @@ object Planner {
         return Plan(planned, matches)
     }
 
-    /** Pairs every Novig event with its best reference event, one-to-one within a sport. */
-    fun matchEvents(events: List<NovigEvent>, references: Map<String, RefSnapshot>): List<EventMatch> {
-        data class Candidate(val event: NovigEvent, val ref: RefEvent, val score: Double, val closeness: Double, val swapped: Boolean, val gap: Long)
+    fun matchEvents(events: List<NovigEvent>, references: Map<String, RefSnapshot>): List<EventMatch> =
+        matchEvents(events, references.values)
 
-        val result = LinkedHashMap<String, EventMatch>()
+    /**
+     * Pairs every Novig event with its best event in each reference snapshot (one-to-one within a
+     * snapshot), then merges what matched. Snapshots earlier in [references] come first in the
+     * merge, so when two feeds carry the same book (Pinnacle direct and via The Odds API), the
+     * earlier one's copy is the one priced.
+     */
+    fun matchEvents(events: List<NovigEvent>, references: Collection<RefSnapshot>): List<EventMatch> {
+        val found = LinkedHashMap<String, MutableList<Pair<RefEvent, Boolean>>>()
         val byLeague = events.groupBy { it.league }
         for ((leagueName, leagueEvents) in byLeague) {
             val league = Leagues.byNovigName(leagueName) ?: continue
-            val refs = references[league.oddsApiSportKey]?.events.orEmpty()
-            val maxGap = league.maxStartGapHours * 3_600_000L
-            val candidates = ArrayList<Candidate>()
-            for (e in leagueEvents) {
-                val matchup = e.matchup ?: continue
-                for (r in refs) {
-                    val gap = abs(e.startsTs - r.commenceMs)
-                    if (gap > maxGap) continue
-                    val aa = TeamMatcher.similarity(matchup.away, r.away)
-                    val hh = TeamMatcher.similarity(matchup.home, r.home)
-                    val ah = TeamMatcher.similarity(matchup.away, r.home)
-                    val ha = TeamMatcher.similarity(matchup.home, r.away)
-                    val straight = if (aa >= MIN_TEAM_SIMILARITY && hh >= MIN_TEAM_SIMILARITY && aa + hh >= MIN_EVENT_SIMILARITY) aa + hh else 0.0
-                    val swapped = if (ah >= MIN_TEAM_SIMILARITY && ha >= MIN_TEAM_SIMILARITY && ah + ha >= MIN_EVENT_SIMILARITY) ah + ha else 0.0
-                    val best = maxOf(straight, swapped)
-                    if (best <= 0.0) continue
-                    val isSwapped = swapped > straight
-                    val close = if (isSwapped) {
-                        TeamMatcher.closeness(matchup.away, r.home) + TeamMatcher.closeness(matchup.home, r.away)
-                    } else {
-                        TeamMatcher.closeness(matchup.away, r.away) + TeamMatcher.closeness(matchup.home, r.home)
-                    }
-                    candidates += Candidate(e, r, best, close, isSwapped, gap)
+            for (snap in references) {
+                if (snap.sportKey != league.oddsApiSportKey) continue
+                for ((eventId, pair) in matchOne(league, leagueEvents, snap.events)) {
+                    found.getOrPut(eventId) { ArrayList() } += pair
                 }
             }
-            val usedRefs = HashSet<String>()
-            for (c in candidates.sortedWith(compareByDescending<Candidate> { it.score }.thenByDescending { it.closeness }.thenBy { it.gap })) {
-                if (c.event.eventId in result || c.ref.id in usedRefs) continue
-                result[c.event.eventId] = EventMatch(league, c.event, c.ref, c.swapped)
-                usedRefs += c.ref.id
+        }
+        val out = ArrayList<EventMatch>(events.size)
+        for (e in events) {
+            val league = Leagues.byNovigName(e.league) ?: continue
+            val list = found[e.eventId]
+            if (list.isNullOrEmpty()) {
+                out += EventMatch(league, e, null, false)
+                continue
             }
-            for (e in leagueEvents) {
-                if (e.eventId !in result) result[e.eventId] = EventMatch(league, e, null, false)
+            val (primary, primarySwapped) = list.first()
+            val merged = if (list.size == 1) {
+                primary
+            } else {
+                // Orient every other feed like the first one before pooling their quotes.
+                val markets = list.flatMap { (ref, swapped) -> if (swapped == primarySwapped) ref.markets else ref.markets.map { it.flipped() } }
+                primary.copy(id = list.joinToString("+") { it.first.id }, markets = markets)
+            }
+            out += EventMatch(league, e, merged, primarySwapped, list.map { (ref, _) -> ref.markets.firstOrNull()?.bookKey ?: ref.id.substringBefore(':') }.distinct())
+        }
+        return out
+    }
+
+    /** Novig event id → (matched reference event, whether home/away are reversed), for one feed. */
+    private fun matchOne(league: League, leagueEvents: List<NovigEvent>, refs: List<RefEvent>): Map<String, Pair<RefEvent, Boolean>> {
+        data class Candidate(val event: NovigEvent, val ref: RefEvent, val score: Double, val closeness: Double, val swapped: Boolean, val gap: Long)
+
+        val maxGap = league.maxStartGapHours * 3_600_000L
+        val candidates = ArrayList<Candidate>()
+        for (e in leagueEvents) {
+            val matchup = e.matchup ?: continue
+            for (r in refs) {
+                if (!sameStart(e, r, league, maxGap)) continue
+                val gap = abs(e.startsTs - r.commenceMs)
+                val aa = TeamMatcher.similarity(matchup.away, r.away)
+                val hh = TeamMatcher.similarity(matchup.home, r.home)
+                val ah = TeamMatcher.similarity(matchup.away, r.home)
+                val ha = TeamMatcher.similarity(matchup.home, r.away)
+                val straight = if (aa >= MIN_TEAM_SIMILARITY && hh >= MIN_TEAM_SIMILARITY && aa + hh >= MIN_EVENT_SIMILARITY) aa + hh else 0.0
+                val swapped = if (ah >= MIN_TEAM_SIMILARITY && ha >= MIN_TEAM_SIMILARITY && ah + ha >= MIN_EVENT_SIMILARITY) ah + ha else 0.0
+                val best = maxOf(straight, swapped)
+                if (best <= 0.0) continue
+                val isSwapped = swapped > straight
+                val close = if (isSwapped) {
+                    TeamMatcher.closeness(matchup.away, r.home) + TeamMatcher.closeness(matchup.home, r.away)
+                } else {
+                    TeamMatcher.closeness(matchup.away, r.away) + TeamMatcher.closeness(matchup.home, r.home)
+                }
+                candidates += Candidate(e, r, best, close, isSwapped, gap)
             }
         }
-        return result.values.toList()
+        val result = HashMap<String, Pair<RefEvent, Boolean>>()
+        val usedRefs = HashSet<String>()
+        for (c in candidates.sortedWith(compareByDescending<Candidate> { it.score }.thenByDescending { it.closeness }.thenBy { it.gap })) {
+            if (c.event.eventId in result || c.ref.id in usedRefs) continue
+            result[c.event.eventId] = c.ref to c.swapped
+            usedRefs += c.ref.id
+        }
+        return result
+    }
+
+    /**
+     * Whether two listings start close enough to be the same game. A feed that only knows the
+     * Eastern date (Kalshi's football and basketball codes) must agree on that date; football,
+     * with its loose placeholder times, may be a day off either way.
+     */
+    private fun sameStart(e: NovigEvent, r: RefEvent, league: League, maxGap: Long): Boolean {
+        val date = r.etDate ?: return abs(e.startsTs - r.commenceMs) <= maxGap
+        val novigDate = java.time.LocalDate.parse(KalshiClient.etDate(e.startsTs))
+        val refDate = runCatching { java.time.LocalDate.parse(date) }.getOrNull() ?: return false
+        val days = abs(java.time.temporal.ChronoUnit.DAYS.between(novigDate, refDate))
+        return days == 0L || (days == 1L && league.maxStartGapHours >= 24)
     }
 
     private fun sameLine(a: Double?, b: Double?): Boolean =
