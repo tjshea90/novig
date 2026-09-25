@@ -130,4 +130,20 @@ class ScreenshotTest {
             )
         }
     }
+
+    @Test fun anOldScanWarnsBeforeBettingAndOffersToScanAgain() {
+        val old = SampleScan.state().let { it.copy(status = it.status.copy(scannedAtMs = System.currentTimeMillis() - 25 * 60_000L)) }
+        var scans = 0
+        compose.setContent { VigilantTheme { FeedScreen(old, { scans++ }, {}, {}, { _, _ -> }) } }
+        compose.onNodeWithText("Scan again before betting", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Scan", useUnmergedTree = true).performClick()
+        assert(scans == 1)
+    }
+
+    @Test fun theFeedCanBeSortedBySoonest() {
+        var picked: com.tjshea.vigilant.data.scanner.FeedSort? = null
+        compose.setContent { VigilantTheme { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onSort = { picked = it }) } }
+        compose.onNodeWithText("Soonest").performClick()
+        assert(picked == com.tjshea.vigilant.data.scanner.FeedSort.START)
+    }
 }
