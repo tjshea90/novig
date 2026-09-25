@@ -1377,3 +1377,8 @@ Record any useful information for this project in your permanent memory. Maybe m
 
 Next step: review everything I sent and tell me what you need me to do to start making this app that scans for positive EV bets on novig
 ```
+
+## 2026-09-25T05:00:37Z
+```
+Start making the app  with the free public novig routes, with options to add my novig API key soon. I am leaving this project to Claude opus 5.5 ultracode. Show me what you can do. I want an app similar to oddsjam that can find me a market "fair" devigged price using either sharp sports books or average odds across books or a blend, and compare these to real time novig odds to find positive EV. Consider the oddsjam app and how it works and its ui. Model it after that. Make sure a rugged checkpoint system is in place with frequent saves of progress because usage will run out. Make this app as best as you can, with full tests of the final app for efficiency and function and optimal code for my moto g 2026. Then use GitHub actions to make the APK 
+```
