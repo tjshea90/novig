@@ -1342,3 +1342,25 @@ P3 → `OddsApiPropsTest` "a Novig prop prices at the books' devigged average…
 P5 settings → `CreditEstimateTest`, `ScreenshotTest.settingsOfferSportsbookPropsWithTheirCreditBudget`.
 Live: Novig + Kalshi real scan still clean (NFL 14/19, MLB 17/20); no Odds API key here, so the
 props calls themselves are fixture-tested only.
+
+## Tj's request, 2026-09-25 ~18:05Z — background scanning, faster scans / streaming results, OddsJam-like market coverage
+
+> A few things to investigate or change for this app:
+> 1) Make sure it can run in the background without stalling, because I will run the scan then
+> switch apps and let it scan in the background.
+> 2) research safe ways to speed up the scanning. Oddsjam refresh is very fast. This app is very
+> slow. If it is not possible to speed up, make the results show up in the app as they come in
+> (instead of showing all the results at the end of the scan)
+> 3) oddsjam scans a wide range of props and halftime / f5 markets. Try to make this app like
+> oddsjam and include markets most likely to have positive EV.
+
+### Plan
+- [ ] B1 Background: a scan started in the app keeps running when Tj switches apps (foreground
+      service while a scan runs, stops itself when done; no wake lock or polling when idle).
+- [ ] B2 Research why a scan is slow (where the time goes: Novig catalog/books pacing, reference
+      calls, sequential waits) and which speed-ups stay inside each provider's limits.
+- [ ] B3 Implement the safe speed-ups found in B2.
+- [ ] B4 Stream results: the feed fills in as each league/book batch is priced, not only at the end.
+- [ ] B5 Market coverage like OddsJam: widen props / 1H / F5 / other alt families that have a fair
+      source and are most likely +EV; default them on where sensible.
+- [ ] B6 Tests (unit + screenshots), CI, ship, report.
