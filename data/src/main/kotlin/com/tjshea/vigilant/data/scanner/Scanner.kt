@@ -8,6 +8,7 @@ import com.tjshea.vigilant.data.novig.NovigSource
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceException
 import com.tjshea.vigilant.data.reference.ReferenceSource
+import com.tjshea.vigilant.data.reference.ScanContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -114,7 +115,14 @@ class Scanner(
             }
             val jobs = ordered.map { source ->
                 async {
-                    fetchSource(source, leagues, settings, now, errors) {
+                    // A source that picks its games from Novig's board waits for the board.
+                    val context = if (source.needsCatalog) {
+                        catalogJob.await()
+                        catalog?.let { ScanContext(it.events, it.markets, now) } ?: ScanContext(now = now)
+                    } else {
+                        null
+                    }
+                    fetchSource(source, leagues, settings, now, errors, context) {
                         onProgress(ScanProgress("Novig board and fair odds", done.incrementAndGet(), calls))
                     }
                 }
@@ -214,6 +222,7 @@ class Scanner(
         settings: ScanSettings,
         now: Long,
         errors: MutableList<String>,
+        context: ScanContext?,
         onCall: () -> Unit,
     ): SourceReport {
         var fetched = 0
@@ -238,7 +247,8 @@ class Scanner(
             try {
                 // Stamped with our own clock: re-use windows (credits) must never depend on what
                 // time a provider claims it answered.
-                val snap = source.odds(league, settings).copy(fetchedAtMs = now, provider = source.id)
+                val snap = (if (context != null) source.odds(league, settings, context) else source.odds(league, settings))
+                    .copy(fetchedAtMs = now, provider = source.id)
                 synchronized(references) { references[key] = Cached(snap, requestKey) }
                 snap.creditsRemaining?.let { creditsRemaining = it }
                 fetched++
@@ -311,7 +321,7 @@ class Scanner(
 
     companion object {
         /** Merge order: when two feeds carry the same book, the earlier one's quote is priced. */
-        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "oddsapi")
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "oddsapi", "oddsapi_props")
 
         private val MAIN_TYPES = (MarketFamily.MONEYLINE.novigTypes + MarketFamily.SPREAD.novigTypes + MarketFamily.TOTAL.novigTypes).toSet()
     }

@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.reference
 
+import com.tjshea.vigilant.data.novig.NovigEvent
+import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.ScanSettings
 
@@ -109,7 +111,23 @@ interface ReferenceSource {
     fun reuseMs(settings: ScanSettings): Long = 0L
 
     suspend fun odds(league: League, settings: ScanSettings): RefSnapshot
+
+    /**
+     * True for a source that needs Novig's board first ([ScanContext]), e.g. to spend credits only
+     * on games Novig actually lists props for. The scanner waits for the catalog before calling it.
+     */
+    val needsCatalog: Boolean get() = false
+
+    /** [odds] with Novig's board for the league, for sources that [needsCatalog]. */
+    suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot = odds(league, settings)
 }
+
+/** What a scan already knows when a [ReferenceSource.needsCatalog] source runs. */
+data class ScanContext(
+    val novigEvents: List<NovigEvent> = emptyList(),
+    val novigMarkets: List<NovigMarket> = emptyList(),
+    val now: Long = System.currentTimeMillis(),
+)
 
 /** A provider refused or failed in a way the user should read as-is. */
 open class ReferenceException(message: String) : Exception(message)
