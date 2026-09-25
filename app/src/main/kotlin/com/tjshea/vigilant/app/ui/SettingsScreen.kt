@@ -220,7 +220,7 @@ fun SettingsScreen(
                         )
                     }
                 }
-                Hint("Up to 10 books cost the same: one credit per market type per league.")
+                Hint("Up to 10 books cost the same: one credit per market per league, and one per prop type per game for props.")
             }
 
             // ---- Feed filters -----------------------------------------------------------------

@@ -80,7 +80,7 @@ data class QuotaPolicy(
     companion object {
         val ODDS_API = QuotaPolicy(
             "oddsapi", "The Odds API", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 500,
-            rule = "500 credits a month per free key, reset on the 1st. A scan costs 1 credit per market type per league.",
+            rule = "500 credits a month per free key, reset on the 1st. Game lines cost 1 credit per market per league; sportsbook props 1 per prop type per game.",
         )
         val PINNAPI = QuotaPolicy(
             "pinnacle", "Pinnacle (pinnapi)", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 100,

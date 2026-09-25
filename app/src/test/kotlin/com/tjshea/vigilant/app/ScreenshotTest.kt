@@ -68,8 +68,15 @@ class ScreenshotTest {
 
     @Test fun tracker() = shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
 
-    @Config(qualifiers = "w393dp-h2200dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
+
+    @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
+        compose.setContent { VigilantTheme { SettingsScreen(SampleScan.state(), {}) } }
+        compose.onNodeWithText("Sportsbook player props").assertExists()
+        compose.onNodeWithText("Most credits per scan on props").assertExists()
+        compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
+    }
 
     @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
     @Test fun usageMeters() = shoot("5b_usage_meters") {
