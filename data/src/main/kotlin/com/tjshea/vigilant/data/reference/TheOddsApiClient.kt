@@ -16,6 +16,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * The Odds API v4 (RESEARCH.md §4.3, §11), the optional sportsbook leg: Pinnacle plus the major
@@ -58,21 +59,81 @@ class TheOddsApiClient(
 
     /** One sport's odds from the named [bookmakers]. Costs `markets.size` credits when anything comes back. */
     suspend fun fetch(sportKey: String, bookmakers: List<String>, markets: List<String> = ALL_MARKETS): RefSnapshot {
-        val books = bookmakers.filter { it != "novig" }.distinct().take(MAX_BOOKMAKERS_ONE_REGION)
-        require(books.isNotEmpty()) { "Pick at least one reference sportsbook" }
+        val books = pickBooks(bookmakers)
+        val answer = call(
+            path = "/sports/$sportKey/odds",
+            params = listOf("bookmakers" to books.joinToString(","), "markets" to markets.joinToString(","), "oddsFormat" to "decimal"),
+            // Cost = markets asked for x 1 region (<=10 named books), so the pool can skip a key
+            // that can't afford it before asking.
+            cost = markets.size,
+            what = sportKey,
+            notFound = emptyList(),
+            parse = { parseEvents(it, json) },
+            // Their rule: no events returned = no charge.
+            charged = { if (it.isEmpty()) 0 else markets.size },
+        )
+        return RefSnapshot(sportKey, answer.value, clock(), answer.remaining, answer.used, ID)
+    }
+
+    /**
+     * The sport's upcoming games (ids, teams, start times), no odds. Free: The Odds API doesn't
+     * charge credits for `/events`. [startsBeforeMs] trims the list to the games that matter.
+     */
+    suspend fun events(sportKey: String, startsBeforeMs: Long? = null): Answer<List<RefEvent>> =
+        call(
+            path = "/sports/$sportKey/events",
+            params = listOfNotNull(startsBeforeMs?.let { "commenceTimeTo" to isoSeconds(it) }),
+            cost = 0,
+            what = sportKey,
+            notFound = emptyList(),
+            parse = { parseEvents(it, json) },
+            charged = { 0 },
+        )
+
+    /**
+     * One game's odds for [markets] (player props) from the named [bookmakers]. Costs one credit
+     * per market that comes back (x 1 region); a market no book posts costs nothing. Null when
+     * the game is gone (404).
+     */
+    suspend fun eventOdds(sportKey: String, eventId: String, bookmakers: List<String>, markets: List<String>): Answer<RefEvent?> {
+        require(markets.isNotEmpty()) { "No markets to ask for" }
+        val books = pickBooks(bookmakers)
+        return call(
+            path = "/sports/$sportKey/events/$eventId/odds",
+            params = listOf("bookmakers" to books.joinToString(","), "markets" to markets.joinToString(","), "oddsFormat" to "decimal"),
+            cost = markets.size,
+            what = "$sportKey event $eventId",
+            notFound = null,
+            parse = { parseEvent(it, json) },
+            charged = { it?.let { e -> e.marketKeys.size } ?: 0 },
+        )
+    }
+
+    /** A call's result plus the key's credit headers. */
+    class Answer<T>(val value: T, val remaining: Int?, val used: Int?)
+
+    private fun pickBooks(bookmakers: List<String>): List<String> =
+        bookmakers.filter { it != "novig" }.distinct().take(MAX_BOOKMAKERS_ONE_REGION)
+            .also { require(it.isNotEmpty()) { "Pick at least one reference sportsbook" } }
+
+    private suspend fun <T> call(
+        path: String,
+        params: List<Pair<String, String>>,
+        cost: Int,
+        what: String,
+        notFound: T,
+        parse: (String) -> T,
+        charged: (T) -> Int,
+    ): Answer<T> {
         spacing.withLock {
             val wait = lastCallAt + minIntervalMs - System.currentTimeMillis()
             if (wait > 0) delay(wait)
             lastCallAt = System.currentTimeMillis()
         }
-        // Cost = markets asked for x 1 region (<=10 named books), so the pool can skip a key
-        // that can't afford it before asking.
-        return pool.execute(cost = markets.size) { key ->
-            val url = "$baseUrl/sports/$sportKey/odds".toHttpUrl().newBuilder()
+        return pool.execute(cost = cost) { key ->
+            val url = "$baseUrl$path".toHttpUrl().newBuilder()
                 .addQueryParameter("apiKey", key)
-                .addQueryParameter("bookmakers", books.joinToString(","))
-                .addQueryParameter("markets", markets.joinToString(","))
-                .addQueryParameter("oddsFormat", "decimal")
+                .apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }
                 .addQueryParameter("dateFormat", "iso")
                 .build()
 
@@ -94,30 +155,14 @@ class TheOddsApiClient(
                             KeyAttemptResult.Depleted("monthly credits used up")
                         else -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}" + errorCode(body)?.let { " $it" }.orEmpty())
                     }
-                    // An out-of-season or unknown sport isn't the key's fault, and costs nothing.
-                    404 -> KeyAttemptResult.Success(
-                        RefSnapshot(sportKey, emptyList(), clock(), remaining, used, ID),
-                        cost = last ?: 0, remaining = remaining, used = used,
-                    )
+                    // An out-of-season sport or a finished game isn't the key's fault, and costs nothing.
+                    404 -> KeyAttemptResult.Success(Answer(notFound, remaining, used), cost = last ?: 0, remaining = remaining, used = used)
                     else -> {
                         if (!response.isSuccessful) {
-                            throw TheOddsApiException("The Odds API failed for $sportKey: HTTP ${response.code} ${body.take(200)}")
+                            throw TheOddsApiException("The Odds API failed for $what: HTTP ${response.code} ${body.take(200)}")
                         }
-                        val events = parseEvents(body, json)
-                        KeyAttemptResult.Success(
-                            RefSnapshot(
-                                sportKey = sportKey,
-                                events = events,
-                                fetchedAtMs = clock(),
-                                creditsRemaining = remaining,
-                                creditsUsed = used,
-                                provider = ID,
-                            ),
-                            // Their rule: no events returned = no charge.
-                            cost = last ?: if (events.isEmpty()) 0 else markets.size,
-                            remaining = remaining,
-                            used = used,
-                        )
+                        val value = parse(body)
+                        KeyAttemptResult.Success(Answer(value, remaining, used), cost = last ?: charged(value), remaining = remaining, used = used)
                     }
                 }
             }
@@ -174,6 +219,12 @@ class TheOddsApiClient(
 
         fun parseEvents(rawJson: String, json: Json): List<RefEvent> =
             json.decodeFromString(ListSerializer(EventDto.serializer()), rawJson).map { it.toDomain() }
+
+        /** One game from the per-event odds endpoint (an object, not a list). */
+        fun parseEvent(rawJson: String, json: Json): RefEvent =
+            json.decodeFromString(EventDto.serializer(), rawJson).toDomain()
+
+        private fun isoSeconds(ms: Long): String = Instant.ofEpochMilli(ms).truncatedTo(ChronoUnit.SECONDS).toString()
 
         internal fun parseIsoMs(iso: String?): Long? = iso?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
     }
