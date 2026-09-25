@@ -37,10 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.scanner.Opportunity
-import com.tjshea.vigilant.data.scanner.OutcomeTarget
-import com.tjshea.vigilant.data.scanner.Pricing
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.Odds
@@ -128,8 +125,7 @@ fun OpportunityDetail(o: Opportunity, settings: ScanSettings, onTrack: (Double) 
                     color = Edge.colors.warning,
                 )
             }
-            val key = o.lineKey
-            val idx = key?.let { k -> sideIndex(o, k.sides) }
+            val idx = o.referenceIndex
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                 Text("Book", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("Odds", Modifier.width(64.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -200,18 +196,4 @@ fun OpportunityDetail(o: Opportunity, settings: ScanSettings, onTrack: (Double) 
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 24.dp),
         ) { Text("Open Novig") }
     }
-}
-
-/** Which column of the reference line this outcome is (its own side, or "Yes"'s side). */
-private fun sideIndex(o: Opportunity, sides: List<Side>): Int? {
-    val key = o.lineKey ?: return null
-    val target = com.tjshea.vigilant.data.scanner.Planner.run { null } ?: run {
-        // Recover this outcome's target from the fair probability: compare against each side.
-        null
-    }
-    // Pricing stores the target implicitly; re-derive it by matching probabilities.
-    val fair = o.fair ?: return null
-    val p = o.fairProbability ?: return null
-    val direct = fair.probabilities.indexOfFirst { kotlin.math.abs(it - p) < 1e-12 }
-    return direct.takeIf { it >= 0 && it < key.sides.size }.also { target }
 }

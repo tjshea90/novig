@@ -39,7 +39,20 @@ data class Opportunity(
     val fairUpdatedMs: Long?,
     val refEvent: RefEvent?,
     val lineKey: LineKey?,
+    /** Which reference side this outcome is priced from. */
+    val target: OutcomeTarget?,
 ) {
+    /** Column of this outcome in [FairLine.perBook] odds, or null for a 3-way "No" (a sum of sides). */
+    val referenceIndex: Int?
+        get() {
+            val k = lineKey ?: return null
+            return when (val t = target) {
+                is OutcomeTarget.Is -> k.sides.indexOf(t.side).takeIf { it >= 0 }
+                is OutcomeTarget.Yes -> k.sides.indexOf(t.side).takeIf { it >= 0 }
+                else -> null
+            }
+        }
+
     val key: String get() = "${market.marketId}/${outcome.outcomeId}"
     val evPercent: Double? get() = quote?.evPercent
     val eventName: String get() = event.description
@@ -134,6 +147,7 @@ object Pricing {
                     fairUpdatedMs = fair?.perBook?.filter { it.book.bookTitle in fair.booksUsed }?.mapNotNull { it.book.lastUpdateMs }?.maxOrNull(),
                     refEvent = pm.refEvent,
                     lineKey = pm.lineKey,
+                    target = po.target,
                 )
             }
         }
