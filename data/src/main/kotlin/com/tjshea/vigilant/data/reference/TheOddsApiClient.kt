@@ -2,7 +2,7 @@ package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
-import com.tjshea.vigilant.data.keys.KeyRotator
+import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -27,13 +27,14 @@ import java.time.Instant
  * is 1 credit per sport, all three are 3. Novig itself is never requested here: it's the thing
  * being priced, not a reference.
  *
- * Their docs ask clients to space requests out rather than burst, so calls are at least
- * [minIntervalMs] apart. [KeyRotator] switches keys automatically (Tj's 2026-09-20 request):
- * 401 (quota used up or bad key) retires a key, 429 cools it down.
+ * Their docs ask clients to space requests out rather than burst (429 above 30 calls/s), so calls
+ * are at least [minIntervalMs] apart. [KeyPool] picks the key (Tj's rotation rule): each call's
+ * `x-requests-remaining`/`x-requests-used`/`x-requests-last` headers feed the usage meter, a key
+ * that can't afford the next call is skipped, and `OUT_OF_USAGE_CREDITS` rests a key until the 1st.
  */
 class TheOddsApiClient(
     private val httpClient: OkHttpClient,
-    private val keyRotator: KeyRotator,
+    private val pool: KeyPool,
     private val json: Json,
     private val baseUrl: String = "https://api.the-odds-api.com/v4",
     private val clock: () -> Long = System::currentTimeMillis,
@@ -64,7 +65,9 @@ class TheOddsApiClient(
             if (wait > 0) delay(wait)
             lastCallAt = System.currentTimeMillis()
         }
-        return keyRotator.execute("The Odds API") { key ->
+        // Cost = markets asked for x 1 region (<=10 named books), so the pool can skip a key
+        // that can't afford it before asking.
+        return pool.execute(cost = markets.size) { key ->
             val url = "$baseUrl/sports/$sportKey/odds".toHttpUrl().newBuilder()
                 .addQueryParameter("apiKey", key)
                 .addQueryParameter("bookmakers", books.joinToString(","))
@@ -75,30 +78,45 @@ class TheOddsApiClient(
 
             httpClient.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
+                val remaining = response.intHeader(REMAINING)
+                val used = response.intHeader(USED)
+                val last = response.intHeader(LAST)
                 when (response.code) {
                     429 -> {
                         val retry = response.header("Retry-After")
                         KeyAttemptResult.RateLimited(
-                            retry?.toLongOrNull()?.times(1000) ?: 60_000,
+                            retry?.toLongOrNull()?.times(1000) ?: 2_000,
                             reason = "HTTP 429" + (retry?.let { ", Retry-After=${it}s" } ?: ""),
                         )
                     }
-                    401 -> KeyAttemptResult.Invalid(reason = "HTTP 401" + quotaHint(body))
-                    // An out-of-season or unknown sport isn't the key's fault.
-                    404 -> KeyAttemptResult.Success(RefSnapshot(sportKey, emptyList(), clock(), response.intHeader(REMAINING), response.intHeader(USED), ID))
+                    401, 403 -> when {
+                        body.contains("OUT_OF_USAGE_CREDITS") || body.contains("quota", ignoreCase = true) ->
+                            KeyAttemptResult.Depleted("monthly credits used up")
+                        else -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}" + errorCode(body)?.let { " $it" }.orEmpty())
+                    }
+                    // An out-of-season or unknown sport isn't the key's fault, and costs nothing.
+                    404 -> KeyAttemptResult.Success(
+                        RefSnapshot(sportKey, emptyList(), clock(), remaining, used, ID),
+                        cost = last ?: 0, remaining = remaining, used = used,
+                    )
                     else -> {
                         if (!response.isSuccessful) {
                             throw TheOddsApiException("The Odds API failed for $sportKey: HTTP ${response.code} ${body.take(200)}")
                         }
+                        val events = parseEvents(body, json)
                         KeyAttemptResult.Success(
                             RefSnapshot(
                                 sportKey = sportKey,
-                                events = parseEvents(body, json),
+                                events = events,
                                 fetchedAtMs = clock(),
-                                creditsRemaining = response.intHeader(REMAINING),
-                                creditsUsed = response.intHeader(USED),
+                                creditsRemaining = remaining,
+                                creditsUsed = used,
                                 provider = ID,
                             ),
+                            // Their rule: no events returned = no charge.
+                            cost = last ?: if (events.isEmpty()) 0 else markets.size,
+                            remaining = remaining,
+                            used = used,
                         )
                     }
                 }
@@ -106,10 +124,10 @@ class TheOddsApiClient(
         }
     }
 
-    private fun okhttp3.Response.intHeader(name: String): Int? = header(name)?.trim()?.toDoubleOrNull()?.toInt()
+    private fun errorCode(body: String): String? =
+        Regex("\"error_code\"\\s*:\\s*\"([A-Z_]+)\"").find(body)?.groupValues?.get(1)
 
-    private fun quotaHint(body: String): String =
-        if (body.contains("quota", ignoreCase = true)) " — monthly credits used up" else ""
+    private fun okhttp3.Response.intHeader(name: String): Int? = header(name)?.trim()?.toDoubleOrNull()?.toInt()
 
     companion object {
         const val ID = "oddsapi"
@@ -117,6 +135,7 @@ class TheOddsApiClient(
         private val FAMILY_MARKETS = mapOf(MarketFamily.MONEYLINE to "h2h", MarketFamily.SPREAD to "spreads", MarketFamily.TOTAL to "totals")
         const val REMAINING = "x-requests-remaining"
         const val USED = "x-requests-used"
+        const val LAST = "x-requests-last"
         const val MAX_BOOKMAKERS_ONE_REGION = 10
 
         /** Ten books = one region = 3 credits per sport refresh. Pinnacle is the sharp anchor. */
