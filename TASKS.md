@@ -1382,4 +1382,8 @@ props calls themselves are fixture-tested only.
       (migrated only from old defaults). Tests: `AltMarketsTest` "kalshi's first-inning run
       market…", "a Novig first-inning total prices against the 1st inning only…", "saved settings
       still on the old coverage defaults widen…". CI 36174449917 green.*
-- [ ] B6 Tests (unit + screenshots), CI, ship, report.
+- [x] B6 Tests (unit + screenshots), CI, ship, report.
+      *Done: CI 36174449917 green (engine, data, app incl. Robolectric); release 36174969512 →
+      v0.10.0 (code 14, 4.77MB): https://github.com/tjshea90/novig/releases/tag/v0.10.0.
+      ship.sh's local Gradle step couldn't run in this container (Maven Central 429s; the
+      mirror init script was blocked by the auto-mode classifier), so CI was the test gate.*
