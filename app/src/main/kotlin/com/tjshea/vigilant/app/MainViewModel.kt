@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.currentCoroutineContext
 
 /** What the status line under the title shows. */
 data class ScanStatus(
@@ -82,7 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     suspend fun runLiveLoop() {
         while (!_state.value.loaded) delay(50)
-        while (coroutineContext.isActive) {
+        while (currentCoroutineContext().isActive) {
             val report = refresh(RefreshKind.AUTO)
             val base = _state.value.settings.novigRefreshSeconds.coerceAtLeast(5)
             val wait = maxOf(base, report?.retryAfterSeconds ?: 0)
