@@ -77,7 +77,8 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.status.scanning,
+            // The progress bar under the top bar shows the scan; a pull just starts one.
+            isRefreshing = false,
             onRefresh = onScan,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {

@@ -71,7 +71,8 @@ fun FeedScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.status.scanning,
+            // The progress bar under the top bar shows the scan; a pull just starts one.
+            isRefreshing = false,
             onRefresh = onScan,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
@@ -128,12 +129,18 @@ private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -
                 action = "Scan now",
                 onAction = onScan,
             )
+            result.stats.matchedEvents == 0 && result.games.isNotEmpty() -> EmptyState(
+                "No fair odds for these games",
+                "Novig's prices for ${result.games.size} games are on the Games tab, but none of your fair-odds " +
+                    "sources listed them this scan. Check the sources in Settings (a Pinnacle or Odds API key " +
+                    "covers the most leagues).",
+                action = "Fair odds settings",
+                onAction = onOpenSettings,
+            )
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games. " +
                     "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices.",
-                action = if (result.stats.matchedEvents == 0) "Fair odds settings" else null,
-                onAction = onOpenSettings,
             )
             else -> Text(
                 "${state.feed.size} bets at +${Format.percent(state.settings.minEvPercent)} EV or better · " +
@@ -154,7 +161,7 @@ private fun sourceNames(state: UiState): String {
         if (s.usePolymarket) add("Polymarket")
         if (s.useKalshi) add("Kalshi")
         if (s.useOddsApi && state.oddsApiKeys.isNotEmpty()) add("The Odds API")
-    }.joinToString(", ")
+    }.let { if (it.size <= 1) it.joinToString("") else it.dropLast(1).joinToString(", ") + " and " + it.last() }
 }
 
 /** "Pinnacle 12 · Polymarket 14 · Kalshi 9 games": who matched what on the last scan. */
