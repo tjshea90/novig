@@ -221,7 +221,9 @@ class Scanner(
                 continue
             }
             try {
-                val snap = source.odds(league, settings).let { it.copy(fetchedAtMs = minOf(it.fetchedAtMs, now).takeIf { t -> t > 0 } ?: now, provider = source.id) }
+                // Stamped with our own clock: re-use windows (credits) must never depend on what
+                // time a provider claims it answered.
+                val snap = source.odds(league, settings).copy(fetchedAtMs = now, provider = source.id)
                 synchronized(references) { references[key] = Cached(snap, requestKey) }
                 snap.creditsRemaining?.let { creditsRemaining = it }
                 fetched++
