@@ -1028,3 +1028,39 @@ free keyless sources only (Polymarket + Kalshi), `linesPerGame` 2:
   trustworthy: prefer ones where Pinnacle or both exchanges agree.
 - pinnapi could not be exercised live (no key). Its parser follows the published docs, and
   league names are matched loosely with a whole-sport fallback.
+
+## 12. Provider quotas, resets and rules for key rotation and meters (researched 2026-09-25 ~14:05Z)
+
+Read from each provider's own docs the same day. Encoded in `data/keys/Quota.kt`.
+
+| Provider | Quota | Resets | What the API tells us | Refusals |
+|---|---|---|---|---|
+| The Odds API | Free: 500 credits/month per key. `GET /odds` costs **markets specified × regions** (10 named bookmakers = 1 region); **0 if no events come back**; `/sports` and `/events` are free | **1st of every month** (FAQ; time zone not stated, treated as UTC, and corrected from the headers) | Every response: `x-requests-remaining`, `x-requests-used`, `x-requests-last` (cost of that call) | `OUT_OF_USAGE_CREDITS` (quota used), `INVALID_KEY`, `DEACTIVATED_KEY`; `429 EXCEEDED_FREQ_LIMIT` above **30 calls/s** ("space out API calls over several seconds") |
+| pinnapi (trial) | 100 requests/day, 100/hour, 20/minute per key | Day window at **UTC midnight** ("429 with window=day until UTC midnight rolls over") | Nothing on success (no usage headers, no usage endpoint) → count locally | `429 {"error":"rate_limited","window":"minute"\|"hour"\|"day","limit":N,"retry_after_ms":M}` + `Retry-After`; `401 missing_key/invalid_key` |
+| Polymarket Gamma | 300 `/markets` requests per 10s; excess queued | Rolling | None | Throttled, not refused |
+| Kalshi | Basic tier 20 reads/s (200 tokens/s, 10 per read) | Rolling | None | 429 |
+| Novig public | Per-IP edge limit, undocumented (~40–100 fast requests, then 429 Retry-After 1) | Seconds | None | 429 / HTML 403 |
+| Novig signed | Per key: read 64 burst, 16/s | Seconds | `GET /v3/limits` (not called: costs a request) | 429 + Retry-After |
+
+**Rules that matter for multiple keys:**
+- **pinnapi terms:** "Don't attempt to disrupt, overload, reverse-engineer, or **circumvent the Service or its
+  rate limits**" and "We may suspend or terminate accounts that violate these terms." Rotating several
+  trial keys to get past 100/day is plausibly "circumventing its rate limits". The app supports it because
+  Tj asked, and warns in Settings; one key used within its limit carries no such risk.
+- **The Odds API:** no rule on multiple accounts in the FAQ; the terms' "suspect abuse" clause (§11.3) still
+  applies.
+- Both: the app never knowingly sends a call a key can't afford (pre-emptive skip), so rotation happens
+  before a refusal, not after one.
+
+**How the app meters (smart, per key, persisted in `usage.json`):**
+- The Odds API: trusts the headers after every call (used, remaining, limit = used + remaining). Before a
+  call it skips any key whose remaining is below the call's cost (families × 1 region). Period = calendar
+  month UTC; if the server's used count drops without a month change, the key's cycle is different
+  (e.g. a paid plan's billing date) and the ledger follows the server. A key refused with
+  OUT_OF_USAGE_CREDITS rests until the 1st; if it's still refused right after a reset, it's re-probed
+  every 6h instead of waiting another month.
+- pinnapi: counts requests per key per UTC day, and keeps call times for the 20/min and 100/hour windows;
+  a 429 uses the server's own `window` and `retry_after_ms`.
+- Rotation always starts from key 1: a key is used only when every key before it is spent or cooling
+  down, so when a period resets, key 1 is back in front automatically.
+- Keyless providers show requests today and any throttling.
