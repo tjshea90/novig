@@ -58,7 +58,7 @@ class LiveNovigSmokeTest {
         val plan = Planner.plan(events.values.toList(), markets, emptyMap(), s, System.currentTimeMillis())
         val batch = client.books(plan.marketIds.take(12))
         val r = Pricing.price(plan, batch.books, s, System.currentTimeMillis())
-        println("LIVE: planned ${plan.markets.size} Novig-only markets, fetched ${batch.fetched} books (${batch.failed} failed)")
+        println("LIVE: planned ${plan.markets.size} Novig-only markets, fetched ${batch.fetched} books (${batch.failed} failed, retryAfter=${batch.retryAfterSeconds}, last=${batch.lastError})")
         r.opportunities.take(8).forEach { println("LIVE BOARD: ${it.eventName} | ${it.selection} | take ${it.ladder.firstOrNull()?.price}") }
         assertTrue(batch.failed == 0)
     }
