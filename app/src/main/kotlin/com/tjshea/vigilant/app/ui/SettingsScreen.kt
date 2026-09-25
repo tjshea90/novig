@@ -51,6 +51,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.DevigMethod
