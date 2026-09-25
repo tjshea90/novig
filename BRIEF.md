@@ -303,9 +303,19 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
 - **Manual scans only (Tj, 2026-09-25, after Novig 429s on v0.5.0).** Nothing requests
   odds from Novig or any provider unless Tj taps **Scan** or pulls to refresh: not on
   launch, not on a timer, not on a tab or settings change (those re-price from the last
-  scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s, burst 10, 2 at a
-  time, pause on Retry-After, halve after a 429); with a key, books use the signed per-key
-  route instead. Don't reintroduce auto-refresh without asking.
+  scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s rising to at most 6/s
+  after clean runs, burst 10, 3 at a time, pause on Retry-After, halve and restart the ramp after
+  a 429); with a key, books use the signed per-key route instead (14/s, under the documented
+  16/s). Don't reintroduce auto-refresh without asking.
+- **A scan Tj starts runs to the end in the background, and streams (Tj, 2026-09-25 ~18:05Z;
+  v0.10.0, RESEARCH.md §15).** The scan lives in the app-lifetime `ScanRunner`, never in a
+  screen; `ScanService` (foreground service, `dataSync`) holds the process for exactly one scan,
+  with a progress notification and a 10-minute-capped partial wake lock, then stops itself; a
+  "scan done" notification only when Vigilant isn't on screen. Novig books are read while the
+  fair odds load (re-planned as each provider answers), most-promising first (open bets, last
+  scan's +EV and near misses, then props/period lines, then main lines), and every 8 books the
+  feed updates. Mid-scan the feed offers only prices read this scan. Still manual-only: no
+  timers, no boot receiver, nothing when idle.
 - **API keys: plain JSON in app storage, several per provider, rotated by a usage ledger (Tj,
   2026-09-25 ~14:00Z; "don't worry about security, they are free keys").** `api_keys.json`
   (survives updates, in Android backup, export/import), moved once from the old Keystore store.
@@ -316,8 +326,10 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   (pinnapi's terms forbid circumventing its rate limits: warned in Settings).
 - **Leagues and markets (Tj, 2026-09-25 ~15:20Z).** Chip order NFL, NCAAF, MLB, WNBA, NHL, then
   NBA, NCAAB, UFC, Boxing. Soccer, CFL, KBO and NPB are removed entirely (no 3-way markets remain).
-  Alternative markets priced where a fair source exists (RESEARCH.md §13): 1st-half/F5 spreads and
-  totals, team totals, and NFL/MLB/WNBA player props that Kalshi quotes on the same line. 1st-half
+  Alternative markets priced where a fair source exists (RESEARCH.md §13, §15): 1st-half/F5 spreads
+  and totals, MLB 1st-inning totals (NRFI/YRFI, Kalshi `KXMLBRFI`), team totals, and NFL/MLB/WNBA
+  player props that Kalshi quotes on the same line (incl. pitcher outs, earned runs, walks, pass
+  completions since v0.10.0). Defaults since v0.10.0: 8 props per game, 300 Novig reads per scan. 1st-half
   moneylines are deliberately not priced (3-way vs 2-way, FMV voids). Per-game caps
   (`linesPerGame`, `propsPerGame`) and a per-scan budget (`maxBooksPerScan`, main lines and open
   bets first) keep scans fast and under Novig's limit.

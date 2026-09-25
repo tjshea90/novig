@@ -181,6 +181,8 @@ everything. The websocket (§6) is the right tool for broad coverage.
   ~44 books every 15s (4 at a time), plausibly on a shared carrier IP (CGNAT). v0.6.0 paces
   public book reads at ≤4/s (burst ≤10, 2 at a time), pauses everything on Retry-After, and
   only fetches on a manual scan.
+- **v0.10.0 pacing** (RESEARCH.md §15): 4/s rising to at most 6/s after clean runs, 3 in flight;
+  any 429 halves the pace and restarts the ramp.
 - **Burst limit on public routes (first observation).** A client that had just pulled a large catalog got
   `429` + `Retry-After: 1` on book requests at 4-way concurrency. The same pattern
   measured cold ran 30 books in 1.7s (~17/s) and 25 sequential books (~5/s) with no 429s.
@@ -309,7 +311,13 @@ self-excluded, or trading halted, and it doesn't clear on its own.
 
 ## 11.1 How Vigilant uses the signed API
 
-**v0.6.0 (current):** no websocket. Tj asked for manual-only scans, so a scan with a key
+**v0.10.0 (current) pacing:** public book reads 4/s rising 0.5/s per 40 clean requests to at most
+6/s (a 429 halves it for a minute and restarts the ramp; 5 idle minutes restart it), 3 in flight;
+keyed reads 14/s, burst 40, 6 in flight (the `read` bucket is 64/16 per second). Books are read
+while the fair odds load and in most-promising-first order, a few at a time (RESEARCH.md §15).
+Still no websocket: it's the only way to OddsJam-class speed and needs Tj's `trading::read` key.
+
+**v0.6.0:** no websocket. Tj asked for manual-only scans, so a scan with a key
 connected reads each book through the signed REST route `GET /v3/catalog/markets/{id}/book`
 (same shape and ETag as the public one; `If-None-Match` is added after signing since it isn't
 part of the NOVIG-V3 string). That draws on the key's own `read` bucket (64 burst, 16/s),

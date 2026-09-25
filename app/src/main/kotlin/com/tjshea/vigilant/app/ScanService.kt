@@ -54,10 +54,16 @@ class ScanService : Service() {
         val container = (application as VigilantApp).container
         ensureChannels(this)
         // Always go foreground first: Android requires it within seconds of the start request,
-        // even when the scan has already ended by the time this runs.
-        ServiceCompat.startForeground(
-            this, ONGOING_ID, progressNotification(container.runner.state.value), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-        )
+        // even when the scan has already ended by the time this runs. If Android refuses (it only
+        // allows it from a visible app), stop cleanly: the scan still runs while Vigilant is open.
+        try {
+            ServiceCompat.startForeground(
+                this, ONGOING_ID, progressNotification(container.runner.state.value), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
+        } catch (e: RuntimeException) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         acquireWakeLock()
         if (watch == null) {
             watch = scope.launch {

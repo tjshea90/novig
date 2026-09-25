@@ -1165,3 +1165,104 @@ on Novig's `RUSHING_AND_RECEIVING_YARDS`.
 **Not verified live:** no Odds API key exists in the dev container, so the props calls are
 tested against recorded-shape fixtures only. First real scan with Tj's key is the live check.
 
+## 15. Background scans, scan speed, and OddsJam-style market coverage, researched 2026-09-25 ~18:10Z
+
+Tj (18:05Z): "Make sure it can run in the background without stalling… research safe ways to
+speed up the scanning. Oddsjam refresh is very fast. This app is very slow. If it is not possible
+to speed up, make the results show up in the app as they come in… oddsjam scans a wide range of
+props and halftime / f5 markets… include markets most likely to have positive EV."
+
+**Why a backgrounded scan stalled (v0.9.0).** The scan ran in the screen's `viewModelScope`. Once
+Tj switched apps, Vigilant had no foreground component, so Android ranked it a cached process:
+the cached-apps freezer (on by default since Android 14) suspends such a process within seconds,
+and its network is cut. Backing out of the app also destroyed the ViewModel, which cancelled the
+scan outright. **Fix (v0.10.0):** the scan runs in an app-lifetime `ScanRunner` (not tied to any
+screen), and a `dataSync` foreground service (`ScanService`) holds the process for exactly the
+length of one scan: a progress notification, a partial wake lock capped at 10 minutes (so a
+screen-off phone keeps the CPU up), and `stopSelf()` the moment the scan ends. Nothing is
+scheduled, polled or started at boot. Rules checked: an FGS must be started while the app is
+visible (it is: the Scan tap), must call `startForeground` within seconds (done first thing), and
+since Android 14 must declare its type (`dataSync` + `FOREGROUND_SERVICE_DATA_SYNC`); Android 15
+caps `dataSync` at 6 hours a day (`onTimeout` stops it; a scan is ~1 minute). Processes running an
+FGS keep network access under Doze and App Standby. Notifications need `POST_NOTIFICATIONS`
+(asked once, on the first Scan tap); without it the service still runs and only the notification
+is hidden.
+
+**Where the time went (v0.9.0, one NFL scan):**
+| Step | Calls | Pace | Time |
+| ---- | ----- | ---- | ---- |
+| Novig board (events + markets) | 2–4 pages | public gate | 1–3 s (re-used 3 min) |
+| Kalshi (18 NFL series) | 18+ | 2/s (measured 429s at ~3/s anonymous) | ~9 s |
+| Polymarket, The Odds API, pinnapi | 1–5 each | — | 1–3 s |
+| **Wait for every source, then** Novig books | 200 | 4/s, 2 in flight | ~50 s |
+Books waited for the slowest fair-odds source, and nothing was shown until the last book.
+
+**Why OddsJam is faster.** OddsJam runs servers that hold streaming feeds from every book and
+push already-priced results to the app; the phone does no fetching. Vigilant on a phone with no
+Novig key must read each Novig market's book with one REST call through Novig's per-IP public
+edge. There is **no bulk book route** in Novig's v3 API (re-checked: every catalog route in
+`openapi-v3-target.json`; `Market` carries no price fields), so a scan's cost is one request per
+market priced. The only OddsJam-class path is Novig's **websocket** (`GET /v3/ws`, `bbo` or `book`
+on whole events: one socket, every book pushed), which needs a `trading::read` key (NOVIG_API.md
+§6). The code for it exists (`NovigStream`, tested against a mock, never against the real API)
+and is the next step once Tj creates a key.
+
+**Safe speed-ups, implemented in v0.10.0:**
+1. **Pipelining.** Novig books start as soon as the board is in, planned from the fair odds
+   already known (the last scan's, until this scan's arrive) and re-planned whenever a provider
+   answers. The ~10–20 s of fair-odds fetching now overlaps the book reads instead of preceding
+   them. Each market is still read at most once per scan and never past the per-scan cap.
+2. **Most-promising first.** Order: open bets → last scan's +EV lines (by EV) → near misses
+   (≥ −2%) → lines never priced, props/period lines/team totals before main lines → lines that
+   were well below zero → games no fair source covers. On a rescan, last scan's edges are
+   re-checked within the first ~2 seconds.
+3. **Streaming.** Every 8 books the scan re-prices and publishes a partial result: the feed fills
+   in as prices land. Mid-scan, the feed offers only Novig prices read *this* scan (a stale price
+   is never offered as a bet); the Games tab keeps last scan's prices until each is re-read.
+4. **Pacing, still under every measured/documented limit.** Public book reads start at 4/s (as
+   before) and rise 0.5/s after every 40 clean requests to at most 6/s (measured: ~5/s steady
+   never drew a 429, 10/s did); any 429 halves the pace for a minute and restarts the ramp; 5 idle
+   minutes restart it too. Three requests in flight instead of two (at a phone's 300–500 ms per
+   request, two in flight couldn't reach 6/s). With a key, the signed book route runs at 14/s,
+   burst 40, 6 in flight (documented `read` bucket: 64 burst, 16/s).
+**Measured live (2026-09-25 ~18:45Z, this container's data-center IP):** the v0.10.0 public pacing
+(4/s ramping to 6/s, burst 10, 3 in flight) read 240 real NFL/MLB books in 45.2 s (5.3/s average,
+ramp reached 6/s) with **240 × 200, zero 429/403**; median latency 170 ms, p90 478 ms. The same
+240 at v0.9.0's fixed 4/s take 60 s. A phone on a carrier IP may see more 429s (shared IP); the
+ramp backs off on the first one.
+
+Net effect for a 300-book scan on public routes: first results in ~2–5 s instead of after the
+whole scan; the whole scan ~55–60 s for 50% more markets than v0.9.0's 200 (which took ~65 s
+including the wait for the fair odds).
+
+**Not done, and why:** faster public pacing (the edge limit is unpublished and per IP, and a
+carrier IP may be shared: v0.5.0 got 429s); scraping Novig's web app (ToS, and NOVIG_API.md §9
+retired that path); multiple IPs/proxies (signed routes refuse them with 451, and it's evasion).
+
+**Markets most likely to be +EV, and what was added.** OddsJam's own guidance and the exchange
+structure point the same way: main lines are the most efficient (every sharp book and bot prices
+them), while player props, period lines (1st half, first 5 innings, 1st inning) and team totals
+are thinner on Novig, move on news, and are where resting orders go stale. Novig lists (live,
+18:30Z): MLB `FIRST_INNING_TOTAL` ("PIT @ DET FIRST_INNING_TOTAL", Over/Under 0.5: NRFI/YRFI),
+`PITCHER_OUTS` 29, `EARNED_RUNS` 55, `WALKS` 64; NFL `PASSING_COMPLETIONS` 44, `KICKING_POINTS`
+31, `FIELD_GOALS_MADE` 26; plus `MONEY_1H` in both. Kalshi (free) prices five of these, all open
+and quoted live at 18:30Z:
+- `KXMLBRFI` "1st inning: Over 0.5 runs" (Yes = over; its `floor_strike` reads 1, so the line is
+  fixed at 0.5 in code) → `FIRST_INNING_TOTAL`, a new period (`PERIOD_FIRST_INNING`), in the
+  "1st half / F5 / NRFI" family. 1¢-wide quotes seen live.
+- `KXMLBOUTS` → `PITCHER_OUTS`, `KXMLBERA` → `EARNED_RUNS`, `KXMLBWA` ("walks allowed") →
+  `WALKS` (Novig's pitcher walks), `KXNFLPASSCOMP` → `PASSING_COMPLETIONS`. Same "Name: N+"
+  ladder shape as the other Kalshi props. These were sportsbook-only (paid credits) before; now
+  they have a free source and are read from Novig on every scan.
+Quote quality, measured live 18:50Z against the app's own filter (≤3¢ wide, ≥100 contracts each
+side): `KXMLBRFI` 16 of 44 open markets usable, `KXNFLPASSCOMP` 12 of 84; the pitcher ladders
+were mostly too thin that afternoon (`KXMLBOUTS` 0/24, `KXMLBERA` 1/108, `KXMLBWA` 0/70). Thin
+quotes are dropped, never priced, so these cost one Kalshi request each and add lines only when
+they tighten (typically nearer first pitch). NRFI and pass completions are the real additions today.
+Defaults widened because streaming makes coverage cheap to wait for: props per game 4 → 8, Novig
+reads per scan 200 → 300 (saved settings move only if still on the old defaults).
+
+**Still not priced:** `MONEY_1H` (Kalshi's `KXMLBF5`/`KXNFL1H` are 3-way with a tie; how Novig
+settles a tied half on its 2-way FMV market isn't documented), `KICKING_POINTS`/`FIELD_GOALS_MADE`
+without an Odds API key (no free source), NHL props (Kalshi's `KXNHLPTS`/`KXNHLGOAL`/`KXNHLSAVES`
+had no open events on 2026-09-25, preseason: shapes unverified), first-TD scorer (multi-way).

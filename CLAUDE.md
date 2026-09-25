@@ -249,7 +249,9 @@ unless Tj asks).
   `data/novig/RateGate`, `MainViewModel.scan`); keys, quotas and meters (`data/keys/`:
   `FileApiKeyStore`, `QuotaPolicy`/`UsageMeter`/`KeyPool`, `UsageViews`; `ui/UsageMeters`);
   persistence (`data/store/JsonFileStore`, `data/tracker/BetTracker`, `api_keys.json`,
-  `usage.json`, backup rules in `res/xml`).
+  `usage.json`, backup rules in `res/xml`); background scans (`data/scanner/ScanRunner`,
+  `app/ScanService` foreground service + notifications, `app/ScanText`) and streaming results
+  (`Scanner`'s book pump, `ScanResult.freshSinceMs`).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
