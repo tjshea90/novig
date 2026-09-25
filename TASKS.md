@@ -1133,6 +1133,14 @@ app — ship after milestone A even if nothing else lands):
 ### Milestone C — tracker + full tests + ship
 - [x] C1 bet tracker (log a bet from a card, settle, P/L + CLV-style stats),
       stored locally.
-- [ ] C2 full tests per CLAUDE.md (every module, efficiency, battery),
+- [x] C2 full tests per CLAUDE.md (every module, efficiency, battery),
       extend CLAUDE.md's test protocol with the real screens.
+      DONE: whole-app sweep found and fixed 4 fake-EV matching risks (school
+      qualifiers, city-only pairs, series next-day pricing, started-but-pregame
+      games) — 5 tests confirmed failing on pre-fix c8398ff — plus tracker write
+      churn, stale feed on league change, stream crash on missing Keystore key,
+      persistence crash paths, loop polling on non-price tabs, settings race,
+      missing pull indicator, per-card tickers, Compose stability (verified via
+      compiler report). 135 tests green (exit code + result XML checked);
+      LiveNovigSmokeTest 3872/3872 on the real catalog; R8 release builds.
 - [ ] C3 ship final version, send link.

@@ -301,6 +301,22 @@ edge refusal is a **`403` with an HTML body** (no `code`) that never reaches Nov
 servers. Treat an HTML 403 as "slow down", not "bad key". `423` means locked,
 self-excluded, or trading halted, and it doesn't clear on its own.
 
+## 11.1 How Vigilant uses the signed API (v0.5.0)
+
+- **Setup** (`data/.../novig/signing/NovigSetup.kt`): management key → `POST /v3/echo` →
+  reuse or open subaccount labeled `Vigilant` → mint `trading::read` key from a P-256
+  keypair generated in the Android Keystore → echo with it. The management key is never
+  stored. Only key IDs and Keystore aliases are saved (`NovigConnectionStore`).
+- **Stream** (`.../novig/stream/NovigStream.kt`): signed `GET /v3/ws`, `book` channel per
+  planned event, subscribed in chunks of ≤28 events under a local model of the `stream`
+  bucket. Gaps trigger `snapshot`. `HybridNovigSource` serves stream books and falls back to
+  paced REST. The app re-prices every 2s while live, and the socket closes whenever the app
+  leaves the screen.
+- **Verified offline only:** all 30 signing vectors, Novig's published signatures, and a mock
+  websocket speaking the documented protocol. **Not yet verified against the real API:** no
+  real key exists yet. The first real connect is the test. If it fails, the error text is
+  Novig's own `code`/`message` translated (`NovigApiException.advice`).
+
 ## 12. Still unknown / unverified
 
 1. The exact per-IP rate limit on public routes. Only the "throttled at edge" wording
