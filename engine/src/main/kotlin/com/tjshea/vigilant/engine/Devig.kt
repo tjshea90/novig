@@ -20,7 +20,18 @@ object Devig {
             DevigMethod.ADDITIVE -> additive(rawProbs)
             DevigMethod.POWER -> power(rawProbs)
             DevigMethod.SHIN -> shin(rawProbs)
+            DevigMethod.WORST_CASE -> worstCase(rawProbs)
         }
+    }
+
+    /**
+     * OddsJam's "worst case": for each outcome, the LOWEST fair probability any of the four real
+     * methods gives it. Deliberately does not sum to 1. It is a conservative per-side estimate,
+     * so an edge that survives it survives every method.
+     */
+    fun worstCase(rawProbs: List<Double>): List<Double> {
+        val all = listOf(multiplicative(rawProbs), additive(rawProbs), power(rawProbs), shin(rawProbs))
+        return rawProbs.indices.map { i -> all.minOf { it[i] } }
     }
 
     /** P_fair,i = (1/O_i) / sum_k(1/O_k) — spreads the vig proportionally to each outcome's own weight. */

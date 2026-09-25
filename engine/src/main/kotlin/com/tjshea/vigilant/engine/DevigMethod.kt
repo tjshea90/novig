@@ -1,20 +1,17 @@
 package com.tjshea.vigilant.engine
 
 /**
- * Which margin-removal method to use when turning a book's quoted (vig-inflated) odds into
- * fair probabilities. See RESEARCH.md §5 for the formulas and citations, and its own caveat:
- * these are re-derived from a secondary source, not a primary academic paper — sanity-checked
- * by the unit tests in DevigTest (sums to 1, reduces correctly at zero margin, etc.) but worth
- * re-verifying against a primary source before leaning on them for real bet sizing.
+ * Which margin-removal method turns a book's quoted (vig-inflated) odds into fair
+ * probabilities. See RESEARCH.md §5 for the formulas.
  *
- * Deliberately not hard-coded to one method (RESEARCH.md §5's own recommendation): OddsJam and
- * Sharp Lines both let the user pick, since methods disagree meaningfully on favorite-heavy
- * lines, and hiding that choice is exactly the transparency gap RESEARCH.md §8.1 flagged in
- * Odds Assist Pro.
+ * Never hard-code one method (BRIEF.md, locked decision). OddsJam lets the user pick, and the
+ * methods disagree most on favorite/longshot lines, which is exactly where edges get overstated
+ * (RESEARCH.md §8.1).
  */
-enum class DevigMethod {
-    MULTIPLICATIVE,
-    ADDITIVE,
-    POWER,
-    SHIN,
+enum class DevigMethod(val displayName: String, val blurb: String) {
+    MULTIPLICATIVE("Multiplicative", "Spreads the vig in proportion to each side's price. Simple, but overrates longshots."),
+    ADDITIVE("Additive", "Takes the same amount of vig off every side."),
+    POWER("Power", "Raises every side to one power so they sum to 100%. Handles the favorite-longshot bias well."),
+    SHIN("Shin", "Models the vig as protection against informed bettors. Strong on lopsided lines."),
+    WORST_CASE("Worst case", "Uses the least favorable fair price of all four methods. The most conservative option."),
 }
