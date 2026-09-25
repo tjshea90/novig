@@ -84,8 +84,8 @@ fun LeagueChips(all: List<League>, selected: Set<String>, onToggle: (String) -> 
         contentPadding = PaddingValues(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Selected leagues first, so what's active is always visible without scrolling.
-        items(all.sortedByDescending { it.novigName in selected }, key = { it.novigName }) { league ->
+        // Always Tj's order (NFL, NCAAF, MLB, WNBA, NHL, then the rest), so chips never jump around.
+        items(all, key = { it.novigName }) { league ->
             FilterChip(
                 selected = league.novigName in selected,
                 onClick = { onToggle(league.novigName) },

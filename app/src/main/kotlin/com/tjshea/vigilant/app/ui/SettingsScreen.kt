@@ -222,7 +222,15 @@ fun SettingsScreen(
             }
             Text("Alternate lines per game: ${s.linesPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, { it.toString() }) { v -> onUpdate { it.copy(linesPerGame = v) } }
-            Hint("Spreads and totals each. Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
+            Hint("Per spread, total and team total (full game and 1st half). Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
+            if (MarketFamily.PLAYER_PROPS in s.families) {
+                Text("Player props per game: ${s.propsPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, { it.toString() }) { v -> onUpdate { it.copy(propsPerGame = v) } }
+                Hint("NFL, MLB and WNBA props that Kalshi also prices, on the same line. The best-covered ones are checked first.")
+            }
+            Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
+            Hint("Keeps a big slate to about a minute. Past it, main lines and the soonest games come first; props wait.")
             Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
             SwitchRow(
