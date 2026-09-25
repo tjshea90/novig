@@ -143,7 +143,7 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, modifier: Modifier =
     val q = o.quote ?: return
     val fair = o.fairProbability ?: return
     val now = rememberNow(5_000)
-    val refStale = o.fairUpdatedMs != null && now - o.fairUpdatedMs > settings.staleReferenceMinutes * 60_000L
+    val refStale = o.fairUpdatedMs?.let { now - it > settings.staleReferenceMinutes * 60_000L } ?: false
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
