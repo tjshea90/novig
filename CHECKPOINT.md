@@ -1,23 +1,22 @@
-# CHECKPOINT 352 — read me first, then TASKS.md
+# CHECKPOINT 353 — read me first, then TASKS.md
 
-**Written:** 2026-09-25T12:47:45Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `db85bca` (this checkpoint is the commit after it)
+**Written:** 2026-09-25T12:51:14Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `f34da5b` (this checkpoint is the commit after it)
 
 ## Just done
-Research R3/R4/R5 saved: RESEARCH.md §11 (measured Novig public edge limit ~40-100 burst then 429 Retry-After 1; Odds API credit rules + ToS on multi-accounts; Polymarket + Kalshi free no-key game lines verified live with limits; pinnapi free Pinnacle trial 100/day no expiry; OddsPapi per-game 250/mo; recommendation). NOVIG_API.md §5.1 updated
+v0.6.0 in progress (build intentionally broken mid-refactor): ReferenceModels rewritten (ReferenceSource(league, settings), RefEvent.etDate/flipped, ExchangeQuote), League provider mappings (polymarketTag/kalshiSeries/pinnacleSportId), ScanSettings source toggles + oddsApiReuseMinutes (removed novigRefreshSeconds/referenceRefreshMinutes)
 
 ## Do this next
-Implement v0.6.0: R1 manual-only scans + R2 paced Novig reads (+signed book route with key) + Polymarket/Kalshi/pinnapi reference providers merged per Novig event + Odds API reuse window + settings UI
+Finish R1-R6: adapt TheOddsApiClient to ReferenceSource (id oddsapi, metered, only selected families); add PolymarketClient/KalshiClient/PinnapiClient + ApiProvider.PINNAPI; Planner multi-provider merge per Novig event; Scanner manual scan(settings, sources, onProgress) with Odds API reuse + 3-min catalog reuse; paced NovigPublicClient books (~4/s burst 10, concurrency 2) + signed book route with key; app: remove runLiveLoop/stream wiring, Scan button + pull-to-refresh + progress, Settings sources section; tests + screenshots; CI; ship v0.6.0 code 10
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M NOVIG_API.md
-     M RESEARCH.md
 
 ## Last ten checkpoints
 ```
+  760fce5 ckpt 352: Research R3/R4/R5 saved: RESEARCH.md §11 (measured Novig public edge limit ~4
   db85bca ckpt 351: Logged Tj's 2026-09-25 request (manual-only scans, Novig 429 rate limiting, pr
   1b18e1e ckpt 350: SHIPPED v0.5.0 (code 9): CI 36101866470 green, release 36102142715 green (4.6M
   ace6b60 ckpt 349: pre-release: v0.5.0: Novig API key support (one-time setup mints a phone-held 
@@ -27,5 +26,7 @@ Implement v0.6.0: R1 manual-only scans + R2 paced Novig reads (+signed book rout
   c8398ff ckpt 345: B2+B3 done: Novig key setup UI + Keystore read key + live websocket wired into
   8501708 ckpt 344: B2/B3 data side: NovigSetup (mgmt key -> echo -> reuse/open Vigilant subaccoun
   e12071d ckpt 343: SHIPPED v0.4.0 (code 8): CI 36100221957 green, release 36100439547 green, APK 
-  a5f4edc ckpt 342: B1 done: NOVIG-V3 signer (BouncyCastle) verified against all 30 Novig vectors 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
