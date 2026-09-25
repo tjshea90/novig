@@ -104,12 +104,12 @@ class ScannerTest {
     fun `prop stats only the sportsbooks price are fetched from Novig only when book props are on`() = runTest {
         val novig = FakeNovig()
         Scanner(novig, clock = { now }).scan(settings, emptyList())
-        assertTrue("PITCHER_STRIKEOUTS" in novig.lastTypes) // Kalshi prices it
-        assertTrue("PITCHER_OUTS" !in novig.lastTypes && "KICKING_POINTS" !in novig.lastTypes)
+        assertTrue("PITCHER_STRIKEOUTS" in novig.lastTypes && "PITCHER_OUTS" in novig.lastTypes) // Kalshi prices them
+        assertTrue("BATTING_STRIKEOUTS" !in novig.lastTypes && "KICKING_POINTS" !in novig.lastTypes)
 
         val withProps = FakeNovig()
         Scanner(withProps, clock = { now }).scan(settings, listOf(FakeProps(partial = false)))
-        assertTrue("PITCHER_OUTS" in withProps.lastTypes && "KICKING_POINTS" in withProps.lastTypes)
+        assertTrue("BATTING_STRIKEOUTS" in withProps.lastTypes && "KICKING_POINTS" in withProps.lastTypes)
     }
 
     @Test

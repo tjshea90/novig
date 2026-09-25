@@ -118,6 +118,21 @@ object ExchangeFixtures {
     ],"cursor":""}
     """.trimIndent()
 
+    /**
+     * Kalshi MLB, shapes copied from the live API 2026-09-25 ~18:30Z: the 1st-inning run market
+     * (its strike reads 1 though its title says "Over 0.5") and a pitcher's outs ladder.
+     */
+    val kalshiMlbFirstInning = """
+    {"events":[
+      {"event_ticker":"KXMLBRFI-26SEP251840PITDET","series_ticker":"KXMLBRFI","title":"Pittsburgh vs Detroit: First Inning Run","sub_title":"PIT vs DET (Sep 25)",
+       "markets":[
+        {"ticker":"KXMLBRFI-26SEP251840PITDET","title":"1st inning: Over 0.5 runs","yes_sub_title":"Over 0.5 runs in the 1st inning","yes_bid_dollars":"0.4500","yes_ask_dollars":"0.4600","floor_strike":1}]},
+      {"event_ticker":"KXMLBOUTS-26SEP251840PITDET","series_ticker":"KXMLBOUTS","title":"Pittsburgh vs Detroit: Outs Recorded","sub_title":"PIT vs DET (Sep 25)",
+       "markets":[
+        {"ticker":"KXMLBOUTS-26SEP251840PITDET-PITPSKENES30-16","title":"Paul Skenes: 16+ Outs Recorded?","yes_sub_title":"Paul Skenes: 16+","yes_bid_dollars":"0.5500","yes_ask_dollars":"0.5700","floor_strike":15.5}]}
+    ],"cursor":""}
+    """.trimIndent()
+
     /** pinnapi with a 1st half (num_1) and team totals, in their documented shape. */
     val pinnapiFootballPeriods = """
     {"sport_id":5,"events":[

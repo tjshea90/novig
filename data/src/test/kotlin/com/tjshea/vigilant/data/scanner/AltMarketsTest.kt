@@ -224,6 +224,61 @@ class AltMarketsTest {
         assertEquals(MarketFamily.SPREAD, KalshiClient.familyOf("KXNFLSPREAD"))
     }
 
+    // ---- NRFI / YRFI and the pitcher props added 2026-09-25 ~18:30Z ----------------------------
+
+    @Test
+    fun `kalshi's first-inning run market is the 1st inning over 0 point 5, and pitcher outs are props`() {
+        val events = json.decodeFromString(KalshiClient.PageDto.serializer(), ExchangeFixtures.kalshiMlbFirstInning).events
+        val g = KalshiClient.parse(events, Leagues.byNovigName("MLB")!!, 0.03, 0L).single()
+        assertEquals("Pittsburgh", g.away)
+        val rfi = g.markets.single { it.kind == LineKind.TOTAL }
+        assertEquals(RefBookMarket.PERIOD_FIRST_INNING, rfi.period)
+        assertEquals(0.5, rfi.line!!, 0.0) // not the "1" its strike field says
+        assertEquals(1 / 0.46, rfi.quotes.single { it.side == Side.OVER }.decimalOdds, 1e-12) // Yes = a run scores
+        assertEquals(1 / 0.55, rfi.quotes.single { it.side == Side.UNDER }.decimalOdds, 1e-12)
+        val outs = g.markets.single { it.kind == LineKind.PLAYER_PROP }
+        assertEquals("PITCHER_OUTS", outs.stat)
+        assertEquals("Paul Skenes", outs.subject)
+        assertEquals(15.5, outs.line!!, 0.0)
+        assertEquals(MarketFamily.FIRST_HALF, KalshiClient.familyOf("KXMLBRFI"))
+        listOf("KXMLBOUTS", "KXMLBERA", "KXMLBWA", "KXNFLPASSCOMP").forEach { assertEquals(it, MarketFamily.PLAYER_PROPS, KalshiClient.familyOf(it)) }
+        // Priced by a free source now, so they're read from Novig without sportsbook props too.
+        assertTrue(listOf("PITCHER_OUTS", "EARNED_RUNS", "WALKS", "PASSING_COMPLETIONS").none { it in PropStats.BOOK_ONLY_TYPES })
+        assertTrue("FIRST_INNING_TOTAL" in MarketFamily.FIRST_HALF.novigTypes)
+        assertTrue(listOf("KXMLBRFI", "KXMLBOUTS", "KXMLBERA", "KXMLBWA").all { it in Leagues.byNovigName("MLB")!!.kalshiSeries })
+        assertTrue("KXNFLPASSCOMP" in Leagues.byNovigName("NFL")!!.kalshiSeries)
+    }
+
+    @Test
+    fun `a Novig first-inning total prices against the 1st inning only, never the first five`() {
+        val mlb = NovigEvent(Fixtures.EVENT_ID, "BASEBALL", "MLB", "OPEN_PREGAME", "Pittsburgh Pirates @ Detroit Tigers", Fixtures.START_MS)
+        val nrfi = listOf(market("f1", "FIRST_INNING_TOTAL", "PIT @ DET FIRST_INNING_TOTAL", "o" to "Over 0.5", "u" to "Under 0.5"))
+        val refs = listOf(
+            RefSnapshot(
+                "baseball_mlb",
+                listOf(
+                    RefEvent(
+                        "k", "baseball_mlb", Fixtures.START_MS, home = "Detroit", away = "Pittsburgh",
+                        markets = listOf(
+                            // A 0.5 line in the first five innings must not price the 1st inning.
+                            ou("pinnacle", LineKind.TOTAL, 1.20, 4.50, 0.5, period = 1),
+                            ou("kalshi", LineKind.TOTAL, 1 / 0.46, 1 / 0.55, 0.5, period = RefBookMarket.PERIOD_FIRST_INNING),
+                        ),
+                    ),
+                ),
+                now,
+            ),
+        )
+        val plan = Planner.plan(listOf(mlb), nrfi, refs, s.copy(leagues = setOf("MLB")), now)
+        assertEquals(listOf("f1"), plan.marketIds)
+        val r = Pricing.price(plan, mapOf(book("f1", "o", 520, "u", 450)), s.copy(leagues = setOf("MLB")), now)
+        val over = r.opportunities.first { it.outcome.outcomeId == "o" }
+        assertEquals("1st Inning Total", over.marketLabel)
+        assertEquals("Over 0.5", over.selection)
+        assertEquals(0.46 / (0.46 + 0.55), over.fairProbability!!, 1e-12)
+        assertEquals(setOf("kalshi"), over.fair!!.averageBooksUsed.toSet())
+    }
+
     @Test
     fun `pinnacle's 1st half and team totals come from the same board`() {
         val events = (json.parseToJsonElement(ExchangeFixtures.pinnapiFootballPeriods).jsonObject["events"] as JsonArray).map { it as JsonObject }
