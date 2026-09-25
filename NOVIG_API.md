@@ -307,7 +307,18 @@ edge refusal is a **`403` with an HTML body** (no `code`) that never reaches Nov
 servers. Treat an HTML 403 as "slow down", not "bad key". `423` means locked,
 self-excluded, or trading halted, and it doesn't clear on its own.
 
-## 11.1 How Vigilant uses the signed API (v0.5.0)
+## 11.1 How Vigilant uses the signed API
+
+**v0.6.0 (current):** no websocket. Tj asked for manual-only scans, so a scan with a key
+connected reads each book through the signed REST route `GET /v3/catalog/markets/{id}/book`
+(same shape and ETag as the public one; `If-None-Match` is added after signing since it isn't
+part of the NOVIG-V3 string). That draws on the key's own `read` bucket (64 burst, 16/s),
+paced at 8/s burst 16, 4 at a time. Any refusal other than 429 (451 VPN/location, 401, 403
+JSON) switches the rest of that scan to the paced public route, reports Novig's advice once,
+and skips the key route for 10 minutes. `NovigStream`/`StreamBooks` remain in the code,
+tested but unwired. **Still unverified against the real API** (no key yet).
+
+**v0.5.0 (superseded):**
 
 - **Setup** (`data/.../novig/signing/NovigSetup.kt`): management key → `POST /v3/echo` →
   reuse or open subaccount labeled `Vigilant` → mint `trading::read` key from a P-256

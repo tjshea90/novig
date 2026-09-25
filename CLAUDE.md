@@ -242,9 +242,10 @@ unless Tj asks).
   ROI, CLV), Settings (`SettingsScreen`).
 - **Subsystems:** fair-odds math (`engine`: `FairValue`, `Devig`, `Fees`,
   `EvMath`); Novig data (`data/novig`: `NovigPublicClient`, `NovigText`);
-  reference odds (`data/reference/TheOddsApiClient`); matching and pricing
-  (`data/match/TeamMatcher`, `data/scanner/Planner` + `Pricing`); refresh timing
-  and credits (`data/scanner/Scanner`, `MainViewModel.runLiveLoop`); persistence
+  reference odds (`data/reference/`: `PinnapiClient`, `PolymarketClient`, `KalshiClient`,
+  `TheOddsApiClient`); matching and pricing (`data/match/TeamMatcher`,
+  `data/scanner/Planner` + `Pricing`); manual scans, pacing and credits
+  (`data/scanner/Scanner`, `data/novig/RateGate`, `MainViewModel.scan`); persistence
   (`data/store/JsonFileStore`, `data/tracker/BetTracker`, `EncryptedApiKeyStore`).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG

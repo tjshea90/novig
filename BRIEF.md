@@ -300,9 +300,18 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
 - **EV is always computed against Novig's executable taker price** (1 − best opposing bid,
   with depth), never last trade or mid. Stakes are fractional Kelly capped at +EV
   liquidity. Fees are read per market from Novig's `fee` object.
-- **No background work.** Novig refreshes only while the app is on screen
-  (`repeatOnLifecycle(STARTED)`). Odds API credits are spent only on pull-to-refresh, a
-  never-fetched sport, or the user's opt-in interval.
+- **Manual scans only (Tj, 2026-09-25, after Novig 429s on v0.5.0).** Nothing requests
+  odds from Novig or any provider unless Tj taps **Scan** or pulls to refresh: not on
+  launch, not on a timer, not on a tab or settings change (those re-price from the last
+  scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s, burst 10, 2 at a
+  time, pause on Retry-After, halve after a 429); with a key, books use the signed per-key
+  route instead. Don't reintroduce auto-refresh without asking.
+- **Fair odds come from several free sources, merged per game (v0.6.0, RESEARCH.md §11):**
+  Pinnacle via pinnapi (free key, 100 req/day), Polymarket and Kalshi (free, no key; count
+  as sharp by default when ≤3¢ wide with real depth), and The Odds API (optional, re-used
+  for `oddsApiReuseMinutes`). Spreads/totals are capped at `linesPerGame` per game because
+  each priced line is one Novig request. Multiple free Odds API accounts: advised against
+  (abuse clause), not needed.
 - **Reference-line source order: prefer a sharp book (Pinnacle/Circa) alone
   when fetched, else average every major book fetched.** Tj's own explicit
   instruction (2026-09-20). Implemented in `engine`'s `Consensus` object —
