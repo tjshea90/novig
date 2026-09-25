@@ -3,8 +3,10 @@ package com.tjshea.vigilant.data.reference
 import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
 import com.tjshea.vigilant.data.keys.KeyPool
+import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
+import com.tjshea.vigilant.data.scanner.PropStats
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -105,7 +107,8 @@ class TheOddsApiClient(
             what = "$sportKey event $eventId",
             notFound = null,
             parse = { parseEvent(it, json) },
-            charged = { it?.let { e -> e.marketKeys.size } ?: 0 },
+            // Only a fallback: the x-requests-last header is the real charge.
+            charged = { e -> e?.markets?.mapNotNull { it.stat }?.distinct()?.size ?: 0 },
         )
     }
 
@@ -243,7 +246,7 @@ private data class EventDto(
 ) {
     fun toDomain(): RefEvent {
         val markets = bookmakers.flatMap { book ->
-            book.markets.mapNotNull { m -> m.toDomain(book, home_team, away_team) }
+            book.markets.flatMap { m -> m.toDomain(book, home_team, away_team) }
         }
         return RefEvent(
             id = id,
@@ -270,12 +273,13 @@ private data class MarketDto(
     val last_update: String? = null,
     val outcomes: List<OutcomeDto> = emptyList(),
 ) {
-    fun toDomain(book: BookmakerDto, home: String, away: String): RefBookMarket? {
+    fun toDomain(book: BookmakerDto, home: String, away: String): List<RefBookMarket> {
+        PropStats.ODDS_API_MARKETS[key]?.let { stat -> return props(book, stat) }
         val kind = when (key) {
             "h2h" -> LineKind.MONEYLINE
             "spreads" -> LineKind.SPREAD
             "totals" -> LineKind.TOTAL
-            else -> return null
+            else -> return emptyList()
         }
         val quotes = outcomes.mapNotNull { o ->
             val side = when {
@@ -287,14 +291,51 @@ private data class MarketDto(
             }
             if (o.price <= 1.0) null else RefQuote(side, o.price, o.point)
         }
-        if (quotes.size != outcomes.size || quotes.size < 2) return null
-        return RefBookMarket(
-            bookKey = book.key,
-            bookTitle = book.title,
-            kind = kind,
-            quotes = quotes,
-            lastUpdateMs = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update),
+        if (quotes.size != outcomes.size || quotes.size < 2) return emptyList()
+        return listOf(
+            RefBookMarket(
+                bookKey = book.key,
+                bookTitle = book.title,
+                kind = kind,
+                quotes = quotes,
+                lastUpdateMs = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update),
+            ),
         )
+    }
+
+    /**
+     * A prop market lists every player's line in one flat outcome list:
+     * `{"name":"Over","description":"Josh Allen","price":1.87,"point":245.5}`. Each player and
+     * number becomes one over/under line; a player the book prices on one side only (or twice on
+     * one side) can't be devigged and is dropped. Yes/No markets are Over/Under 0.5.
+     */
+    private fun props(book: BookmakerDto, stat: String): List<RefBookMarket> {
+        val yesNo = key in PropStats.YES_NO
+        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double)
+        val legs = outcomes.mapNotNull { o ->
+            val player = o.description?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+            val over = when (o.name.trim().lowercase()) {
+                "over", "yes" -> true
+                "under", "no" -> false
+                else -> return@mapNotNull null
+            }
+            val point = if (yesNo) 0.5 else o.point ?: return@mapNotNull null
+            if (o.price <= 1.0 || !o.price.isFinite()) null else Leg(player, point, over, o.price)
+        }
+        val updated = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update)
+        return legs.groupBy { PlayerNames.key(it.player) to it.point }.values.mapNotNull { group ->
+            val over = group.singleOrNull { it.over } ?: return@mapNotNull null
+            val under = group.singleOrNull { !it.over } ?: return@mapNotNull null
+            RefBookMarket(
+                bookKey = book.key,
+                bookTitle = book.title,
+                kind = LineKind.PLAYER_PROP,
+                quotes = listOf(RefQuote(Side.OVER, over.price, over.point), RefQuote(Side.UNDER, under.price, under.point)),
+                lastUpdateMs = updated,
+                subject = over.player,
+                stat = stat,
+            )
+        }
     }
 }
 
@@ -303,4 +344,6 @@ private data class OutcomeDto(
     val name: String,
     val price: Double,
     val point: Double? = null,
+    /** Player props: the player's name. */
+    val description: String? = null,
 )
