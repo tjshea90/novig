@@ -6,7 +6,9 @@ import org.junit.Test
 
 class DevigTest {
 
-    private val allMethods = DevigMethod.values().toList()
+    // WORST_CASE deliberately doesn't sum to 1 (it's a per-side minimum), so the normalization
+    // invariants below apply to the four real methods only. It has its own tests at the bottom.
+    private val allMethods = DevigMethod.values().toList() - DevigMethod.WORST_CASE
 
     // -110/-110 is a standard two-way market: raw implied probabilities are equal, so every
     // method must land on exactly 50/50 once the vig is stripped out.
@@ -107,5 +109,17 @@ class DevigTest {
 
         val shinFair = Devig.shin(threeWay)
         assertEquals(1.0, shinFair.sum(), 1e-6)
+    }
+
+    @Test
+    fun `worst case takes the lowest fair probability any method gives each side`() {
+        val raw = asymmetricRawProbs
+        val worst = Devig.devig(raw, DevigMethod.WORST_CASE)
+        val real = allMethods.map { Devig.devig(raw, it) }
+        for (i in raw.indices) {
+            assertEquals(real.minOf { it[i] }, worst[i], 1e-12)
+        }
+        // Being a per-side minimum, it can only undershoot 1 — never overstate an edge.
+        assertTrue(worst.sum() <= 1.0 + 1e-9)
     }
 }

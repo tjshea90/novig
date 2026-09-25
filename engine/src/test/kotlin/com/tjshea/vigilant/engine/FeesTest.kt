@@ -1,56 +1,28 @@
 package com.tjshea.vigilant.engine
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FeesTest {
 
     @Test
-    fun `pregame straight trades are free for a taker`() {
-        val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = false, context = TradeContext.PREGAME_STRAIGHT))
-        assertEquals(FeeResult.Known(0.0), fee)
+    fun `game markets charge no taker fee pregame`() {
+        assertEquals(0.0, Fees.takerFee(0.5, MarketFee.GAME, eventLive = false), 0.0)
     }
 
     @Test
-    fun `maker side is always free regardless of context`() {
-        val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = true, context = TradeContext.LIVE_STRAIGHT))
-        assertEquals(FeeResult.Known(0.0), fee)
+    fun `game markets charge c P (1-P) once live - matches Novig's worked example`() {
+        // Novig docs: 10,000 contracts @ 0.50 on the game schedule = $0.75.
+        val perDollar = Fees.takerFee(0.5, MarketFee.GAME, eventLive = true)
+        assertEquals(0.75, perDollar * 10_000 * EvMath.CONTRACT_PAYOUT_DOLLARS, 1e-9)
+        // 10,000 @ 0.30 = $0.63.
+        assertEquals(0.63, Fees.takerFee(0.3, MarketFee.GAME, true) * 10_000 * 0.01, 1e-9)
     }
 
     @Test
-    fun `live straight taker fee matches the documented formula`() {
-        val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = false, context = TradeContext.LIVE_STRAIGHT))
-        check(fee is FeeResult.Known)
-        // 0.03 * 0.5 * 0.5 = 0.0075
-        assertEquals(0.0075, fee.amountPerDollarStaked, 1e-9)
-    }
-
-    @Test
-    fun `live straight taker fee is smaller at extreme prices than at even money`() {
-        val evenMoney = Fees.liveStraightTakerFee(0.5)
-        val extreme = Fees.liveStraightTakerFee(0.1)
-        assertTrue(extreme < evenMoney)
-    }
-
-    @Test
-    fun `parlay taker fee matches the documented formula`() {
-        val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = false, context = TradeContext.PARLAY))
-        check(fee is FeeResult.Known)
-        // 0.10 * 0.5 * 0.5 = 0.025
-        assertEquals(0.025, fee.amountPerDollarStaked, 1e-9)
-    }
-
-    @Test
-    fun `parlay taker fee is more expensive than live straight taker fee at the same price`() {
-        val parlay = Fees.parlayTakerFee(0.5)
-        val liveStraight = Fees.liveStraightTakerFee(0.5)
-        assertTrue(parlay > liveStraight)
-    }
-
-    @Test
-    fun `parlay maker side is still free`() {
-        val fee = Fees.estimate(NovigQuote(price = 0.5, isMaker = true, context = TradeContext.PARLAY))
-        assertEquals(FeeResult.Known(0.0), fee)
+    fun `NFL MLB NCAAF futures charge pregame too - the case the old Fees object missed`() {
+        // Novig docs: 10,000 @ 0.50 futures = $1.50, charged ALWAYS.
+        val perDollar = Fees.takerFee(0.5, MarketFee.FUTURES, eventLive = false)
+        assertEquals(1.5, perDollar * 10_000 * 0.01, 1e-9)
     }
 }

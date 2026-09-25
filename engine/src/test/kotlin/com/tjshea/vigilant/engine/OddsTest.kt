@@ -46,4 +46,14 @@ class OddsTest {
         assertThrows(IllegalArgumentException::class.java) { Odds.novigPriceToDecimalOdds(0.0) }
         assertThrows(IllegalArgumentException::class.java) { Odds.novigPriceToDecimalOdds(1.0) }
     }
+
+    @Test
+    fun `novig prices convert to american odds the way the live book reads`() {
+        // Verified 2026-09-25 on a live book: taking DAL at 0.385 is +160, BAL at 0.62 is -163.
+        assertEquals(160, Odds.probabilityToAmerican(0.385))
+        assertEquals(-163, Odds.probabilityToAmerican(0.62))
+        assertEquals("+160", Odds.formatAmerican(160))
+        assertEquals("-163", Odds.formatAmerican(-163))
+        assertEquals("+100", Odds.formatAmerican(-100))
+    }
 }
