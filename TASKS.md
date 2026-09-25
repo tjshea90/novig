@@ -1036,16 +1036,21 @@ new error, not the same 503.
 
 ### Progress on this request
 
-- [ ] Read the official Novig API v3 docs for real (docs.novig.com
+- [x] Read the official Novig API v3 docs for real (docs.novig.com
       llms.txt index, Overview, Account model, API keys, Signing,
       Quickstart/echo, Environments, Catalog, Order book / public stream,
       Rate limits, OpenAPI 3.1 spec) — not just the Overview page Tj pasted.
-- [ ] Write a permanent, cited API reference file in this repo that a fresh
+- [x] Write a permanent, cited API reference file in this repo that a fresh
       session can read cold (auth/signing, hosts, endpoints we need for
       read-only EV scanning, websocket channels, limits, what's unknown),
       and point BRIEF.md/RESEARCH.md/CLAUDE.md at it.
-- [ ] Compare against what's already built (`NovigApiClient`,
+- [x] Compare against what's already built (`NovigApiClient`,
       `NovigLiveFeed`, `NovigGraphQlClient`) — note what is now wrong/stale.
-- [ ] Tell Tj exactly what he needs to do (keys, account type, what to
+- [x] Tell Tj exactly what he needs to do (keys, account type, what to
       paste where) — no app code in this step; he asked for the plan.
+      Done: `NOVIG_API.md` (new). Pointers added in CLAUDE.md, BRIEF.md
+      and RESEARCH.md §1/§10. Verified live from this container: the public
+      `/v3/public/catalog/{events,markets,markets/{id}/book,.../trades}` and
+      `/v3/public/types/*` routes return real production data with no key.
+      Not verified: any signed route (Tj has no key yet).
 - [ ] Checkpoint.
