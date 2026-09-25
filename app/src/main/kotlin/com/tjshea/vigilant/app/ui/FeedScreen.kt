@@ -118,13 +118,15 @@ private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -
                 EmptyState("Pick a league", "Choose one or more leagues above, then tap Scan.")
             result == null && status.scanning -> EmptyState(
                 "Scanning…",
-                "Reading Novig's board and fair odds from ${sourceNames(state).ifEmpty { "the free exchanges" }}. " +
+                "Reading Novig's board" + sourceNames(state).let { if (it.isEmpty()) "" else " and fair odds from $it" } + ". " +
                     "Novig prices are read slowly on purpose, so it never rate-limits you.",
             )
             result == null -> EmptyState(
                 "Tap Scan to find +EV bets",
-                "Nothing is downloaded until you ask: tap Scan or pull down. Fair odds come from " +
-                    "${sourceNames(state).ifEmpty { "Polymarket and Kalshi" }}." +
+                "Nothing is downloaded until you ask: tap Scan or pull down. " +
+                    sourceNames(state).let {
+                        if (it.isEmpty()) "No fair-odds source is on (Settings), so a scan shows Novig's prices only." else "Fair odds come from $it."
+                    } +
                     if (state.pinnapiKeys.isEmpty() && state.settings.usePinnacle) " Add a free Pinnacle key in Settings for sharper lines." else "",
                 action = "Scan now",
                 onAction = onScan,
