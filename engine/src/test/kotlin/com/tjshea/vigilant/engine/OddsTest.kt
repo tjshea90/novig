@@ -38,13 +38,13 @@ class OddsTest {
     @Test
     fun `novig price to decimal odds inverts a probability quote`() {
         // Novig's own price format (RESEARCH.md §2): 0.524 means $0.524 staked to win $1.00.
-        assertEquals(1.0 / 0.524, Odds.novigPriceToDecimalOdds(0.524), 1e-9)
+        assertEquals(1.0 / 0.524, Odds.probabilityToDecimal(0.524), 1e-9)
     }
 
     @Test
     fun `novig price to decimal odds rejects values outside (0,1)`() {
-        assertThrows(IllegalArgumentException::class.java) { Odds.novigPriceToDecimalOdds(0.0) }
-        assertThrows(IllegalArgumentException::class.java) { Odds.novigPriceToDecimalOdds(1.0) }
+        assertThrows(IllegalArgumentException::class.java) { Odds.probabilityToDecimal(0.0) }
+        assertThrows(IllegalArgumentException::class.java) { Odds.probabilityToDecimal(1.0) }
     }
 
     @Test
