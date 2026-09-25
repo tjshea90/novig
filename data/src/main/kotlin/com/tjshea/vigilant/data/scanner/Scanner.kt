@@ -275,6 +275,7 @@ class Scanner(
     /** What a snapshot was asked for; a different ask can't re-use it. */
     private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
+        "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropHours}"
         else -> "${settings.families.sorted()}|${settings.exchangeMaxSpread}|${settings.daysAhead}"
     }
 
@@ -295,7 +296,7 @@ class Scanner(
         val existing = plan
         if (existing != null && inputs == planInputs) return existing
         val filtered = refs.map { snap ->
-            if (snap.provider != "oddsapi") snap
+            if (snap.provider != "oddsapi" && snap.provider != "oddsapi_props") snap
             else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
         return Planner.plan(cat.events, cat.markets, filtered, settings, now, pinned).also {

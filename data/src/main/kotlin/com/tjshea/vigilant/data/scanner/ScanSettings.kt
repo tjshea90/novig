@@ -6,6 +6,9 @@ import com.tjshea.vigilant.engine.FairSettings
 import com.tjshea.vigilant.engine.FairSource
 import kotlinx.serialization.Serializable
 
+/** How many prop types to request from the sportsbooks per game (each costs a credit). */
+enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
+
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
@@ -72,6 +75,19 @@ data class ScanSettings(
      * and later games wait. Keeps a big slate (college Saturday with props) to about a minute.
      */
     val maxBooksPerScan: Int = 200,
+    /**
+     * Player props from the major sportsbooks (DraftKings, FanDuel, BetMGM, …) via The Odds API,
+     * devigged book by book and averaged. Costs 1 credit per prop type per game.
+     */
+    val useBookProps: Boolean = true,
+    /** Which prop types to buy from the books: the core four per sport, or every one Novig lists. */
+    val bookPropSet: BookPropSet = BookPropSet.CORE,
+    /** Most Odds API credits one scan may spend on sportsbook props. */
+    val bookPropCreditsPerScan: Int = 24,
+    /** Only games starting within this many hours get sportsbook props (soonest first). */
+    val bookPropHours: Int = 24,
+    /** Re-use sportsbook props for this long between scans. */
+    val bookPropReuseMinutes: Int = 60,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
     val exchangeMaxSpread: Double = 0.03,
     val feedSort: FeedSort = FeedSort.EV,
@@ -115,6 +131,7 @@ data class ScanSettings(
             if (usePolymarket) add("polymarket")
             if (useKalshi) add("kalshi")
             if (useOddsApi) add("oddsapi")
+            if (useOddsApi && useBookProps) add("oddsapi_props")
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
@@ -124,6 +141,9 @@ data class ScanSettings(
         val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
         val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12)
         val MAX_BOOKS_CHOICES = listOf(100, 200, 400)
+        val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96)
+        val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
+        val BOOK_PROP_REUSE_CHOICES = listOf(30, 60, 120, 240)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
     }
 }
