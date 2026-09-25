@@ -5,15 +5,15 @@ package com.tjshea.vigilant.engine
  * using either sharp sports books or average odds across books or a blend", modeled on
  * OddsJam's fair-odds source picker.
  */
-enum class FairSource(val displayName: String) {
+enum class FairSource(val displayName: String, val shortName: String) {
     /** Only the books marked sharp (Pinnacle by default). */
-    SHARP("Sharp books"),
+    SHARP("Sharp books", "Sharp"),
 
     /** Every book quoting the line, each devigged, then averaged. */
-    MARKET_AVERAGE("Market average"),
+    MARKET_AVERAGE("Market average", "Average"),
 
     /** `sharpWeight x sharp + (1 - sharpWeight) x market average`. */
-    BLEND("Blend"),
+    BLEND("Blend", "Blend"),
 }
 
 data class FairSettings(
@@ -42,7 +42,7 @@ data class FairSettings(
 
         /** Books commonly treated as sharp that The Odds API carries. */
         val KNOWN_SHARP_CANDIDATES: List<String> =
-            listOf("pinnacle", "betonlineag", "lowvig", "betfair_ex_eu", "matchbook", "bookmaker")
+            listOf("pinnacle", "betonlineag", "lowvig", "betfair_ex_eu", "matchbook")
     }
 }
 

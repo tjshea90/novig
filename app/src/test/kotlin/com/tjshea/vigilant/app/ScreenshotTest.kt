@@ -1,11 +1,12 @@
 package com.tjshea.vigilant.app
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.FeedScreen
@@ -35,7 +36,8 @@ class ScreenshotTest {
     private fun shoot(name: String, dark: Boolean = true, content: @androidx.compose.runtime.Composable () -> Unit) {
         compose.setContent {
             VigilantTheme(darkTheme = dark) {
-                Box(Modifier.background(MaterialTheme.colorScheme.background)) { content() }
+                // A Surface, like the app's own Scaffold/sheet, so text gets the theme's content color.
+                Surface(color = MaterialTheme.colorScheme.background) { content() }
             }
         }
         compose.onRoot().captureRoboImage("screenshots/$name.png")
@@ -58,4 +60,17 @@ class ScreenshotTest {
 
     @Config(qualifiers = "w393dp-h2200dp-xxhdpi")
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}, {}, {}) }
+
+    @Test fun tappingACardOpensItsDetailWithTheBookBreakdown() {
+        val s = SampleScan.state()
+        compose.setContent { VigilantTheme { FeedScreen(s, {}, {}, {}, { _, _ -> }) } }
+        compose.onNodeWithText("Dallas Cowboys").performClick()
+        compose.onNodeWithText("FAIR ODDS: BLEND · POWER").assertIsDisplayed()
+        compose.onNodeWithText("Track").assertIsDisplayed()
+    }
+
+    @Test fun noKeyPointsToTheGamesTabInsteadOfClaimingZeroGames() {
+        compose.setContent { VigilantTheme { FeedScreen(SampleScan.state(withKey = false), {}, {}, {}, { _, _ -> }) } }
+        compose.onNodeWithText("Fair odds need a key").assertIsDisplayed()
+    }
 }

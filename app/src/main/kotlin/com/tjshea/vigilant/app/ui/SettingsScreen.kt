@@ -85,7 +85,7 @@ fun SettingsScreen(
                         selected = s.fairSource == source,
                         onClick = { onUpdate { it.copy(fairSource = source) } },
                         shape = SegmentedButtonDefaults.itemShape(i, FairSource.entries.size),
-                    ) { Text(source.displayName.substringBefore(" books")) }
+                    ) { Text(source.shortName, maxLines = 1) }
                 }
             }
             Hint(

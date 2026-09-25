@@ -116,6 +116,13 @@ private fun FeedSummary(state: UiState, onOpenSettings: () -> Unit) {
                 EmptyState("Pick a league", "Choose one or more leagues above to start scanning Novig.")
             result == null ->
                 EmptyState("Scanning Novig…", "Pulling the board and matching it to the sportsbooks.")
+            !state.status.hasOddsKey -> EmptyState(
+                "Fair odds need a key",
+                "Novig's live prices for ${result.games.size} games are on the Games tab now. +EV needs fair " +
+                    "odds from the sportsbooks: add a free The Odds API key in Settings.",
+                action = "Open Settings",
+                onAction = onOpenSettings,
+            )
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games. " +
