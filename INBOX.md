@@ -1527,3 +1527,8 @@ Does this repo have:
 
 2) rugged resumption checkpoint system for Claude code in case of interruption due to usage
 ```
+
+## 2026-09-25T14:35:30Z
+```
+For this app, make sure all my API keys are safely stored in the app, even when the app is updated to a new version. Make a meter that shows me how much of each api was used after every call, so I know how much is left. Make it so for any API I can add multiple keys and the app automatically rotates keys when each key is depleted, then automatically resets back to the first key in each rotation when a new month or new limit resets (per provider). It has to have a smart way to meter this. Make sure to read the policy and rules for each API used, and the app should be within each API limit so it doesn't get banned or restricted. Don't worry about security on the API keys, they are free keys and I'm not worried about them. They may be saved to storage. After all of this is done, run full tests on the app and find ways it can be more efficient or better ui. Make sure the logic is in line with popular apps like oddsjam. Checkpoint frequently because usage will probably run out
+```
