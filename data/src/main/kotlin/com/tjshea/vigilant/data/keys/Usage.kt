@@ -87,9 +87,9 @@ data class QuotaPolicy(
             perMinute = 20, perHour = 100,
             rule = "100 requests a day per trial key (20 a minute), reset at midnight UTC. About 1 per sport per scan.",
         )
-        val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "No quota. Read at 4 a second to stay under Novig's per-network limit.")
-        val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No quota or key. Allows 300 requests per 10 seconds.")
-        val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No quota or key. Allows 20 requests a second.")
+        val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
+        val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
+        val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
 
         val ALL = listOf(ODDS_API, PINNAPI, NOVIG, POLYMARKET, KALSHI)
     }
