@@ -275,6 +275,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 ),
             )
         }
+        // A setting changed while this refresh was in flight: re-price from cache so the screen
+        // never shows numbers computed under the old settings.
+        val latest = _state.value.settings
+        if (result != null && latest != settings && latest.leagues == settings.leagues) {
+            withContext(Dispatchers.Default) { c.scanner.reprice(latest) }?.let { r -> _state.update { it.copy(result = r, feed = r.feed(it.settings)) } }
+        }
         // Disk trouble (full storage) must never kill the live loop.
         result?.let { runCatching { c.tracker.observe(it) } }
         return report
