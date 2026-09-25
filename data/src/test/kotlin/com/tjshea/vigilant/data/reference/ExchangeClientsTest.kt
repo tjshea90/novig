@@ -108,7 +108,7 @@ class ExchangeClientsTest {
 
     @Test
     fun `a league polymarket doesn't list is never requested`() {
-        assertTrue(!PolymarketClient(OkHttpClient(), json).supports(Leagues.byNovigName("La Liga")!!))
+        assertTrue(!PolymarketClient(OkHttpClient(), json).supports(Leagues.byNovigName("Boxing")!!))
     }
 
     // ---- Kalshi ---------------------------------------------------------------------------------
