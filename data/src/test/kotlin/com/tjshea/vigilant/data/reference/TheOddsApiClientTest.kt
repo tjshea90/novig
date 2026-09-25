@@ -1,7 +1,9 @@
 package com.tjshea.vigilant.data.reference
 
+import com.tjshea.vigilant.data.Fixtures
 import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
 import com.tjshea.vigilant.data.keys.KeyRotator
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -9,6 +11,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -19,137 +22,91 @@ class TheOddsApiClientTest {
     private lateinit var server: MockWebServer
     private val json = Json { ignoreUnknownKeys = true }
 
-    @Before
-    fun setUp() {
-        server = MockWebServer()
-        server.start()
-    }
-
-    @After
-    fun tearDown() {
-        server.shutdown()
-    }
+    @Before fun setUp() { server = MockWebServer().also { it.start() } }
+    @After fun tearDown() { server.shutdown() }
 
     private fun client(keys: List<String> = listOf("test-key")) = TheOddsApiClient(
         httpClient = OkHttpClient(),
         keyRotator = KeyRotator(keys),
         json = json,
         baseUrl = server.url("/v4").toString().trimEnd('/'),
+        clock = { 42L },
     )
 
-    // Real The Odds API v4 response shape (RESEARCH.md §4.3).
-    private val sampleBody = """
-        [
-          {
-            "id": "evt-1",
-            "sport_key": "americanfootball_nfl",
-            "commence_time": "2026-09-20T20:25:00Z",
-            "home_team": "San Francisco 49ers",
-            "away_team": "Miami Dolphins",
-            "bookmakers": [
-              {
-                "key": "pinnacle",
-                "title": "Pinnacle",
-                "last_update": "2026-09-20T18:00:00Z",
-                "markets": [
-                  {
-                    "key": "h2h",
-                    "outcomes": [
-                      {"name": "Miami Dolphins", "price": 4.35},
-                      {"name": "San Francisco 49ers", "price": 1.29}
-                    ]
-                  }
-                ]
-              },
-              {
-                "key": "draftkings",
-                "title": "DraftKings",
-                "last_update": "2026-09-20T18:00:00Z",
-                "markets": [
-                  {
-                    "key": "h2h",
-                    "outcomes": [
-                      {"name": "Miami Dolphins", "price": 4.10},
-                      {"name": "San Francisco 49ers", "price": 1.33}
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-    """.trimIndent()
-
     @Test
-    fun `fetches and parses real-shaped odds into BookQuotes per event`() = runTest {
-        server.enqueue(MockResponse().setBody(sampleBody))
+    fun `parses every book's moneyline, spread and total with points and sides`() = runTest {
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "497").setHeader("x-requests-used", "3"))
 
-        val events = client().getOddsForSport("americanfootball_nfl")
+        val snap = client().odds("americanfootball_nfl", listOf("pinnacle", "draftkings"))
 
-        assertEquals(1, events.size)
-        val event = events[0]
-        assertEquals("San Francisco 49ers", event.homeTeam)
-        assertEquals("Miami Dolphins", event.awayTeam)
-
-        val h2h = event.quotesByMarket.getValue("h2h")
-        assertEquals(2, h2h.size)
-        val pinnacle = h2h.first { it.bookName == "Pinnacle" }
-        assertEquals(listOf(4.35, 1.29), pinnacle.decimalOddsByOutcome)
+        assertEquals(497, snap.creditsRemaining)
+        assertEquals(42L, snap.fetchedAtMs)
+        val e = snap.events.single()
+        assertEquals("Dallas Cowboys", e.home)
+        assertEquals(1790540700000L, e.commenceMs)
+        val pinSpread = e.markets.first { it.bookKey == "pinnacle" && it.kind == LineKind.SPREAD }
+        // The line is the HOME side's handicap: Dallas (home) +3.5.
+        assertEquals(3.5, pinSpread.line!!, 0.0)
+        assertEquals(-3.5, pinSpread.quotes.first { it.side == Side.AWAY }.point!!, 0.0)
+        val total = e.markets.first { it.kind == LineKind.TOTAL }
+        assertEquals(47.5, total.line!!, 0.0)
+        assertEquals(Side.OVER, total.quotes.first().side)
     }
 
     @Test
-    fun `sends the api key and requested markets as query parameters`() = runTest {
-        server.enqueue(MockResponse().setBody(sampleBody))
-
-        client(keys = listOf("test-key")).getOddsForSport("americanfootball_nfl", marketKeys = listOf("h2h", "spreads"))
-
-        val request = server.takeRequest()
-        val url = request.requestUrl!!
+    fun `asks for named bookmakers, never regions, and never Novig itself`() = runTest {
+        server.enqueue(MockResponse().setBody("[]"))
+        client().odds("americanfootball_nfl", listOf("pinnacle", "novig", "draftkings", "pinnacle"))
+        val url = server.takeRequest().requestUrl!!
+        assertEquals("pinnacle,draftkings", url.queryParameter("bookmakers"))
+        assertEquals(null, url.queryParameter("regions"))
+        assertEquals("h2h,spreads,totals", url.queryParameter("markets"))
         assertEquals("test-key", url.queryParameter("apiKey"))
-        assertEquals("h2h,spreads", url.queryParameter("markets"))
+    }
+
+    @Test
+    fun `caps bookmakers at ten so a refresh costs one region of credits`() = runTest {
+        server.enqueue(MockResponse().setBody("[]"))
+        client().odds("basketball_nba", (1..14).map { "book$it" })
+        assertEquals(10, server.takeRequest().requestUrl!!.queryParameter("bookmakers")!!.split(',').size)
+    }
+
+    @Test
+    fun `an out of season sport is an empty result, not a dead key`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(404).setBody("""{"message":"Unknown sport"}"""))
+        assertTrue(client().odds("basketball_wnba", listOf("pinnacle")).events.isEmpty())
     }
 
     @Test(expected = TheOddsApiException::class)
-    fun `a non-2xx, non-rate-limit, non-quota response throws instead of silently returning nothing`() = runTest {
+    fun `a server error throws instead of silently returning nothing`() = runTest {
         server.enqueue(MockResponse().setResponseCode(500).setBody("internal error"))
-        client().getOddsForSport("americanfootball_nfl")
+        client().odds("americanfootball_nfl", listOf("pinnacle"))
     }
 
     @Test
-    fun `a 401 (quota exhausted or bad key) rotates to the next key`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(401))
-        server.enqueue(MockResponse().setBody(sampleBody))
-
-        val events = client(keys = listOf("exhausted-key", "fresh-key")).getOddsForSport("americanfootball_nfl")
-
-        assertEquals(1, events.size)
-        assertEquals("exhausted-key", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
-        assertEquals("fresh-key", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+    fun `a 401 rotates to the next key`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"message":"Usage quota has been reached"}"""))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        val snap = client(keys = listOf("used-up", "fresh")).odds("americanfootball_nfl", listOf("pinnacle"))
+        assertFalse(snap.events.isEmpty())
+        assertEquals("used-up", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+        assertEquals("fresh", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
     }
 
     @Test
-    fun `a 429 rotates to the next key`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "30"))
-        server.enqueue(MockResponse().setBody(sampleBody))
-
-        val events = client(keys = listOf("key-1", "key-2")).getOddsForSport("americanfootball_nfl")
-        assertEquals(1, events.size)
-    }
-
-    @Test
-    fun `throws AllKeysExhaustedException once every key is out of quota`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(401))
-        server.enqueue(MockResponse().setResponseCode(401))
-
-        assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking { client(keys = listOf("key-1", "key-2")).getOddsForSport("americanfootball_nfl") }
+    fun `every key used up surfaces the quota reason`() {
+        server.enqueue(MockResponse().setResponseCode(401).setBody("Usage quota has been reached"))
+        server.enqueue(MockResponse().setResponseCode(401).setBody("Usage quota has been reached"))
+        val e = assertThrows(AllKeysExhaustedException::class.java) {
+            runBlocking { client(keys = listOf("a", "b")).odds("americanfootball_nfl", listOf("pinnacle")) }
         }
+        assertTrue(e.message!!.contains("credits used up"))
     }
 
     @Test
-    fun `parseEvents handles multiple bookmakers and markets standalone`() {
-        val events = TheOddsApiClient.parseEvents(sampleBody, json)
-        assertTrue(events.isNotEmpty())
-        assertEquals(2, events[0].quotesByMarket.getValue("h2h").size)
+    fun `outcomes that name neither team are dropped with their whole market`() {
+        val body = """[{"id":"x","commence_time":"2026-09-27T20:25:00Z","home_team":"A","away_team":"B","bookmakers":[
+            {"key":"k","title":"K","markets":[{"key":"h2h","outcomes":[{"name":"A","price":1.9},{"name":"Someone","price":1.9}]}]}]}]"""
+        assertTrue(TheOddsApiClient.parseEvents(body, json).single().markets.isEmpty())
     }
 }
