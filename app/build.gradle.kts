@@ -74,6 +74,15 @@ android {
     }
 }
 
+// Unit tests (incl. the Robolectric UI tests) run on the debug variant only: Compose's test
+// activity lives in ui-test-manifest, which is debugImplementation. Running them against release
+// too crashed every UI test in CI (run 36100015485) and would test nothing extra.
+androidComponents {
+    beforeVariants(selector().withBuildType("release")) { variant ->
+        (variant as com.android.build.api.variant.HasUnitTestBuilder).enableUnitTest = false
+    }
+}
+
 // `android.kotlinOptions { jvmTarget = "21" }` is a hard error on this Kotlin version — migrated
 // to the current compilerOptions DSL (see https://kotl.in/u1r8ln, hit for real in CI 2026-09-20).
 kotlin {
