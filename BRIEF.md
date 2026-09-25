@@ -314,6 +314,13 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   it can't afford a call, and rests a spent key until its provider's reset (1st of the month /
   midnight UTC), so rotation falls back to key 1 after each reset. Limits and ToS: RESEARCH.md §12
   (pinnapi's terms forbid circumventing its rate limits: warned in Settings).
+- **Leagues and markets (Tj, 2026-09-25 ~15:20Z).** Chip order NFL, NCAAF, MLB, WNBA, NHL, then
+  NBA, NCAAB, UFC, Boxing. Soccer, CFL, KBO and NPB are removed entirely (no 3-way markets remain).
+  Alternative markets priced where a fair source exists (RESEARCH.md §13): 1st-half/F5 spreads and
+  totals, team totals, and NFL/MLB/WNBA player props that Kalshi quotes on the same line. 1st-half
+  moneylines are deliberately not priced (3-way vs 2-way, FMV voids). Per-game caps
+  (`linesPerGame`, `propsPerGame`) and a per-scan budget (`maxBooksPerScan`, main lines and open
+  bets first) keep scans fast and under Novig's limit.
 - **Fair odds come from several free sources, merged per game (v0.6.0, RESEARCH.md §11):**
   Pinnacle via pinnapi (free key, 100 req/day), Polymarket and Kalshi (free, no key; count
   as sharp by default when ≤3¢ wide with real depth), and The Odds API (optional, re-used

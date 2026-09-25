@@ -1294,14 +1294,20 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
 > Npb
 
 ### Plan
-- [ ] A1 League list: NFL, NCAAF, MLB, WNBA, NHL first (in that order), then the rest; remove every
+- [x] A1 League list: NFL, NCAAF, MLB, WNBA, NHL first (in that order), then the rest; remove every
       soccer league, CFL, KBO, NPB from the app (list, sources, settings migration drops them from
       saved selections).
-- [ ] A2 Research: which alternative markets Novig lists for NFL/NCAAF/MLB/WNBA (player props,
+- [x] A2 Research: which alternative markets Novig lists for NFL/NCAAF/MLB/WNBA (player props,
       1st half / 1st 5 innings, team totals…) and which fair-odds sources price them (pinnapi
       periods + specials, Polymarket, Kalshi, The Odds API event markets and their credit cost).
-- [ ] A3 Implement the alternative markets that have a real fair-odds source: Novig parsing,
+- [x] A3 Implement the alternative markets that have a real fair-odds source: Novig parsing,
       reference parsing, matching (player names), planner/pricing, settings toggles, per-scan
       request/credit limits.
-- [ ] A4 UI: market filters for the new families, labels on cards/games.
-- [ ] A5 Tests (unit, live smoke, screenshots), CI, ship, report.
+- [x] A4 UI: market filters for the new families, labels on cards/games.
+- [x] A5 Tests (unit, live smoke, screenshots), CI, ship, report.
+      *Done: RESEARCH.md §13; `AltMarketsTest` (12: names, props same player/stat/line only,
+      props cap, team total with a swapped feed, 1H never vs full game, F5 label, budget, league
+      order + removals, migration, Kalshi props/TT/1H parse, pinnapi num_1 + team totals);
+      `NovigTextTest` subjectOf. Live (2026-09-25): NFL 14/16 games matched with 1H spread/total,
+      team totals and 10 prop stats priced; MLB 17/20 with F5, team totals, 5 prop stats; no
+      errors or 429s. Screenshot 1_feed shows a prop and a team total. Shipped as v0.8.0 (code 12).*
