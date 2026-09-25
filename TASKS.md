@@ -1104,13 +1104,15 @@ app — ship after milestone A even if nothing else lands):
 - [x] A3 `data`: scanner rework — match Novig markets to reference lines by
       team + line (spreads/totals need the same point), fetch books only for
       matched markets, league mapping Odds-API sport key ↔ Novig league.
-- [ ] A4 `app`: OddsJam-style UI — +EV feed cards (EV%, selection, Novig
+- [x] A4 `app`: OddsJam-style UI — +EV feed cards (EV%, selection, Novig
       price vs fair, liquidity at price, Kelly stake, market width, age),
       filters (league, market, min EV), detail sheet with per-book odds,
       auto-refresh of Novig books while visible (lifecycle-aware, stops in
       background), manual refresh for reference odds (credit-limited),
       Settings: fair-odds source/blend/devig method/bankroll/Kelly.
-- [ ] A5 retire GraphQL/proxy path (client, proxy settings, direct toggle).
+- [x] A5 retire GraphQL/proxy path (client, proxy settings, direct toggle).
+      DONE (A4+A5): compiles locally; ScreenshotTest renders all screens + 2
+      interaction tests (103 tests green). GraphQL/proxy/v2 clients deleted.
 - [ ] A6 CI green, ship v0.4.0, send link.
 
 ### Milestone B — Novig API key (opt-in, "soon")
@@ -1123,7 +1125,7 @@ app — ship after milestone A even if nothing else lands):
       event) used automatically when a trading/trading::read key is set.
 
 ### Milestone C — tracker + full tests + ship
-- [ ] C1 bet tracker (log a bet from a card, settle, P/L + CLV-style stats),
+- [x] C1 bet tracker (log a bet from a card, settle, P/L + CLV-style stats),
       stored locally.
 - [ ] C2 full tests per CLAUDE.md (every module, efficiency, battery),
       extend CLAUDE.md's test protocol with the real screens.

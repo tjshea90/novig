@@ -291,9 +291,18 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   books. Signed routes (Ed25519/P-256, `NOVIG-V3`) cover the real-time
   websocket. The app should only ever hold a `trading::read` key, never the
   money-moving `management` key, and never commit any key. **This repo is
-  public.** Signed routes refuse VPNs and proxies (HTTP 451). Until v3 is wired
-  in, the GraphQL/proxy client from 2026-09-22 is what the shipped app still
-  uses. It is superseded, not yet removed.
+  public.** Signed routes refuse VPNs and proxies (HTTP 451). Since v0.4.0
+  (2026-09-25) the app uses the public v3 routes. The GraphQL/proxy client and the
+  deprecated v2 OAuth client were deleted.
+- **Fair odds = per-book devig, then SHARP / MARKET_AVERAGE / BLEND** (Tj, 2026-09-25,
+  modeled on OddsJam). The 2026-09-20 rule ("prefer a sharp book, else average") is
+  SHARP with fallback on, still available. Default is BLEND 70% sharp with POWER devig.
+- **EV is always computed against Novig's executable taker price** (1 − best opposing bid,
+  with depth), never last trade or mid. Stakes are fractional Kelly capped at +EV
+  liquidity. Fees are read per market from Novig's `fee` object.
+- **No background work.** Novig refreshes only while the app is on screen
+  (`repeatOnLifecycle(STARTED)`). Odds API credits are spent only on pull-to-refresh, a
+  never-fetched sport, or the user's opt-in interval.
 - **Reference-line source order: prefer a sharp book (Pinnacle/Circa) alone
   when fetched, else average every major book fetched.** Tj's own explicit
   instruction (2026-09-20). Implemented in `engine`'s `Consensus` object —

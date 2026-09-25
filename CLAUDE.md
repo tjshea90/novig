@@ -237,12 +237,22 @@ fixed (a full test that finds nothing worth withholding ends with
 `ship.sh` per "Releasing" below — a light test does not ship on its own
 unless Tj asks).
 
-**Both protocols are written generically below because there is no app yet
-to name tabs, screens, or subsystems in.** The day real features exist,
-extend these sections the way Portfolio's `CLAUDE.md` names its own tabs
-(Live, Lineups, Roster, ...) and subsystems (recommendation/scoring,
-day-trading, network/caching, UI) — a future session should not have to
-rediscover what "sweep the whole app" means here from scratch every time.
+**The app's real surface (v0.4.0+), so "sweep the whole app" is concrete:**
+
+- **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), Games
+  (`GamesScreen`: board + per-game line table), Tracker (`TrackerScreen`: P/L,
+  ROI, CLV), Settings (`SettingsScreen`).
+- **Subsystems:** fair-odds math (`engine`: `FairValue`, `Devig`, `Fees`,
+  `EvMath`); Novig data (`data/novig`: `NovigPublicClient`, `NovigText`);
+  reference odds (`data/reference/TheOddsApiClient`); matching and pricing
+  (`data/match/TeamMatcher`, `data/scanner/Planner` + `Pricing`); refresh timing
+  and credits (`data/scanner/Scanner`, `MainViewModel.runLiveLoop`); persistence
+  (`data/store/JsonFileStore`, `data/tracker/BetTracker`, `EncryptedApiKeyStore`).
+- **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
+  (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
+  in `app/screenshots/`: this is the "Chromium check" for a Compose app.
+  `VIGILANT_LIVE=1 ... --tests '*LiveNovigSmokeTest'` re-verifies matching against
+  Novig's real catalog.
 
 ### Light tests — low usage, run after the session's own work is done
 
