@@ -14,9 +14,8 @@ enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
 }
 
 /**
- * Everything the user can tune, persisted as JSON. Defaults are chosen for a free Odds API key
- * on a Moto G: one league, Novig books every 15s while the app is open, reference odds only on
- * pull-to-refresh (each sport refresh costs 3 credits of the free 500 a month).
+ * Everything the user can tune, persisted as JSON. Nothing here triggers network on its own: the
+ * app only fetches when Tj taps Scan or pulls to refresh (his rule, 2026-09-25).
  */
 @Serializable
 data class ScanSettings(
@@ -37,12 +36,21 @@ data class ScanSettings(
     val daysAhead: Int = 3,
     val bankroll: Double = 1000.0,
     val kellyMultiplier: Double = 0.25,
-    /** How often Novig books refresh while the app is on screen. */
-    val novigRefreshSeconds: Int = 15,
-    /** 0 = only on pull-to-refresh. Otherwise re-pull reference odds this often while open. */
-    val referenceRefreshMinutes: Int = 0,
     /** A fair line older than this is flagged stale in the UI. */
     val staleReferenceMinutes: Int = 30,
+    // ---- Fair-odds sources (RESEARCH.md §11). Every fetch happens only on a manual scan. ----
+    /** Pinnacle via pinnapi's free key (100 requests/day). Needs a key in Settings. */
+    val usePinnacle: Boolean = true,
+    /** Polymarket's public game markets. Free, no key. */
+    val usePolymarket: Boolean = true,
+    /** Kalshi's public game markets. Free, no key. */
+    val useKalshi: Boolean = true,
+    /** The Odds API (500 credits/month free). */
+    val useOddsApi: Boolean = true,
+    /** Re-use The Odds API's last odds for this long instead of paying credits on every scan. */
+    val oddsApiReuseMinutes: Int = 15,
+    /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
+    val exchangeMaxSpread: Double = 0.05,
 ) {
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
@@ -58,8 +66,7 @@ data class ScanSettings(
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
 
     companion object {
-        val NOVIG_REFRESH_CHOICES = listOf(5, 10, 15, 30, 60)
-        val REFERENCE_REFRESH_CHOICES = listOf(0, 5, 10, 15, 30, 60)
+        val ODDS_API_REUSE_CHOICES = listOf(0, 5, 15, 30, 60)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
     }
 }
