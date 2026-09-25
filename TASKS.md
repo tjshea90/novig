@@ -1270,5 +1270,15 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
       skipped", "a wrong key is reported as refused"; `ExchangeClientsTest` pinnapi daily-429
       rotation + "with every pinnacle key spent…"; `ScreenshotTest`
       "theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse" + 5b_usage_meters.png.*
-- [ ] K6 Full tests (CLAUDE.md protocol): whole-app sweep, efficiency + UI improvements, logic
+- [x] K6 Full tests (CLAUDE.md protocol): whole-app sweep, efficiency + UI improvements, logic
       checked against OddsJam's model; fix with failing-first tests; ship; report.
+      *Done: fixes: (1) a Novig key missing from the Keystore (restore to a new phone) failed the
+      whole price read; now falls back to public prices (`NovigPublicClientTest` "a key that can't
+      sign…", failed before the fix); (2) open bets' lines pinned past the per-game cap so CLV
+      keeps updating (`PlannerPricingTest` cap test, pinned assertion); (3) stale-scan banner
+      (`ScreenshotTest` anOldScanWarnsBeforeBetting…); (4) Best EV / Soonest sort (`PlannerPricingTest`
+      "feed can be ordered by start time", `ScreenshotTest` theFeedCanBeSortedBySoonest);
+      (5) one credits number (usage strip) instead of a single key's; clearer summary and section
+      names. EV%, Kelly and devig checked against OddsJam's definitions. 190 tests green;
+      CI 36151518252; release 36151929213 → v0.7.0 (code 11):
+      https://github.com/tjshea90/novig/releases/tag/v0.7.0*
