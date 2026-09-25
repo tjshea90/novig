@@ -126,7 +126,7 @@ object SampleScan {
             settings = s,
             result = r,
             feed = r.feed(s),
-            status = ScanStatus(scannedAtMs = NOW - 60_000, creditsRemaining = 488, sources = if (withFair) sources else emptyList(), booksFetched = 14),
+            status = ScanStatus(scannedAtMs = NOW - 60_000, sources = if (withFair) sources else emptyList(), booksFetched = 14),
             oddsApiKeys = listOf("1234567890abcdef1234", "abcdefabcdefabcd5678"),
             pinnapiKeys = listOf("trial-key-sample-0001"),
             usage = usage(),

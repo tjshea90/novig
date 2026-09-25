@@ -34,7 +34,6 @@ data class ScanStatus(
     val scanning: Boolean = false,
     val progress: ScanProgress? = null,
     val scannedAtMs: Long? = null,
-    val creditsRemaining: Int? = null,
     val errors: List<String> = emptyList(),
     val backoffSeconds: Int? = null,
     val booksFetched: Int = 0,
@@ -141,7 +140,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 feed = (result ?: s.result)?.feed(s.settings) ?: emptyList(),
                 status = s.status.copy(
                     scannedAtMs = if (result != null) result.computedAtMs else s.status.scannedAtMs,
-                    creditsRemaining = report.creditsRemaining ?: s.status.creditsRemaining,
                     errors = report.errors,
                     backoffSeconds = report.retryAfterSeconds,
                     booksFetched = report.booksFetched + report.booksNotModified,
