@@ -237,4 +237,73 @@ class PlannerPricingTest {
         assertTrue(r.feed(s).isNotEmpty())
         assertTrue(r.feed(s.copy(leagues = setOf("MLB"))).isEmpty())
     }
+
+    // ---- several fair-odds feeds at once (v0.6.0) ------------------------------------------------
+
+    private fun exchangeMl(key: String, away: Double, home: Double) =
+        RefBookMarket(key, key, LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, away, null), RefQuote(Side.HOME, home, null)), now)
+
+    @Test
+    fun `quotes from every feed that matched a game are pooled, each flipped to one orientation`() {
+        // Polymarket lists the game straight; a Kalshi-like feed lists it the other way round.
+        val poly = RefEvent("pm:1", "americanfootball_nfl", Fixtures.START_MS, home = "Cowboys", away = "Ravens",
+            markets = listOf(exchangeMl("polymarket", away = 1 / 0.63, home = 1 / 0.38)))
+        val flipped = RefEvent("k:1", "americanfootball_nfl", Fixtures.START_MS, home = "Baltimore", away = "Dallas",
+            markets = listOf(exchangeMl("kalshi", away = 1 / 0.40, home = 1 / 0.61)))
+        val snaps = listOf(
+            RefSnapshot("americanfootball_nfl", listOf(poly), now, provider = "polymarket"),
+            RefSnapshot("americanfootball_nfl", listOf(flipped), now, provider = "kalshi"),
+        )
+        val avg = sharpOnly.copy(fairSource = FairSource.MARKET_AVERAGE, minBooks = 2)
+        val plan = Planner.plan(listOf(event), markets, snaps, avg, now)
+        assertEquals(listOf("polymarket", "kalshi"), plan.events.single().providers)
+        val dal = Pricing.price(plan, books, avg, now).opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        val p1 = (1 / (1 / 0.38)) / (0.63 + 0.38)
+        val p2 = (1 / (1 / 0.40)) / (0.40 + 0.61)
+        assertEquals((p1 + p2) / 2, dal.fairProbability!!, 1e-12)
+        assertEquals(setOf("polymarket", "kalshi"), dal.fair!!.averageBooksUsed.toSet())
+    }
+
+    @Test
+    fun `a book two feeds both carry is priced once, from the first feed`() {
+        val direct = RefEvent("pin:1", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens",
+            markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 2.40, null), RefQuote(Side.AWAY, 1.64, null)), now)))
+        val snaps = listOf(
+            RefSnapshot("americanfootball_nfl", listOf(direct), now, provider = "pinnacle"),
+            RefSnapshot("americanfootball_nfl", TheOddsApiClient.parseEvents(Fixtures.oddsApi, json), now, provider = "oddsapi"),
+        )
+        val r = Pricing.price(Planner.plan(listOf(event), markets, snaps, sharpOnly, now), books, sharpOnly, now)
+        val dal = r.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        val raw = listOf(1 / 2.40, 1 / 1.64)
+        assertEquals(raw[0] / raw.sum(), dal.fairProbability!!, 1e-12)
+    }
+
+    @Test
+    fun `a date-only feed matches on the Eastern date, never a different day`() {
+        val sun = RefEvent("k:sun", "americanfootball_nfl", 0L, home = "Dallas", away = "Baltimore", markets = emptyList(), etDate = "2026-09-27")
+        val m = Planner.matchEvents(listOf(event), listOf(RefSnapshot("americanfootball_nfl", listOf(sun), now, provider = "kalshi")))
+        assertEquals("k:sun", m.single().refEvent?.id)
+        val nba = NovigEvent("b", "BASKETBALL", "NBA", "OPEN_PREGAME", "Boston Celtics @ New York Knicks", Fixtures.START_MS)
+        val wrongDay = RefEvent("k:mon", "basketball_nba", 0L, home = "New York", away = "Boston", markets = emptyList(), etDate = "2026-09-28")
+        assertNull(Planner.matchEvents(listOf(nba), listOf(RefSnapshot("basketball_nba", listOf(wrongDay), now))).single().refEvent)
+    }
+
+    @Test
+    fun `spreads and totals are capped per game at the best-covered lines`() {
+        val lines = listOf(1.5, 2.5, 3.5, 4.5, 20.5)
+        val novigSpreads = lines.map { l ->
+            market("sp$l", "SPREAD", "d$l" to "DAL +$l", "b$l" to "BAL -$l")
+        }
+        // Every line quoted by the exchange; 3.5 also by Pinnacle; 2.5 is closest to even.
+        val ex = lines.map { l ->
+            val p = 0.5 + (l - 2.5) * 0.04
+            RefBookMarket("polymarket", "Polymarket", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1 / p, l), RefQuote(Side.AWAY, 1 / (1.02 - p), -l)), now)
+        }
+        val pin = RefBookMarket("pinnacle", "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1.93, 3.5), RefQuote(Side.AWAY, 1.95, -3.5)), now)
+        val ref = RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens", markets = ex + pin)
+        val snaps = listOf(RefSnapshot("americanfootball_nfl", listOf(ref), now))
+        val two = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2), now)
+        assertEquals(listOf("sp3.5", "sp2.5"), two.marketIds)
+        assertEquals(5, Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 5), now).marketIds.size)
+    }
 }
