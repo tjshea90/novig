@@ -31,3 +31,6 @@ __pycache__/
 # OS / editor noise
 .DS_Store
 *.log
+
+# Robolectric screenshots (regenerate: ./gradlew :app:testDebugUnitTest -Pscreenshots)
+app/screenshots/
