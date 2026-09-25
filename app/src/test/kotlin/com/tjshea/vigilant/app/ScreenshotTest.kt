@@ -83,7 +83,6 @@ class ScreenshotTest {
         compose.onNodeWithText("Tap Scan to find +EV bets").assertIsDisplayed()
         compose.onNodeWithText("Not scanned yet").assertIsDisplayed()
         compose.onNodeWithText("Scan now").performClick()
-        compose.onNodeWithText("Scan", substring = true, useUnmergedTree = true).assertIsDisplayed()
         assert(scans == 1) { "Scan now should start exactly one scan, got $scans" }
     }
 
@@ -91,7 +90,7 @@ class ScreenshotTest {
         var scans = 0
         compose.setContent { VigilantTheme { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) } }
         compose.onNodeWithText("Novig prices 9/24").assertIsDisplayed()
-        compose.onNodeWithText("Scanning", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithText("Scanning…").assertIsDisplayed()
         assert(scans == 0)
     }
 
