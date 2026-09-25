@@ -78,7 +78,7 @@ class TheOddsApiClientTest {
     }
 
     @Test
-    fun `back-to-back calls are spaced out as their docs ask`() = runTest {
+    fun `back-to-back calls are spaced out as their docs ask`() = runBlocking {
         server.enqueue(MockResponse().setBody("[]"))
         server.enqueue(MockResponse().setBody("[]"))
         val spaced = TheOddsApiClient(OkHttpClient(), KeyRotator(listOf("k")), json, server.url("/v4").toString().trimEnd('/'), minIntervalMs = 300)
@@ -86,6 +86,7 @@ class TheOddsApiClientTest {
         spaced.fetch("americanfootball_nfl", listOf("pinnacle"))
         spaced.fetch("baseball_mlb", listOf("pinnacle"))
         assertTrue(System.currentTimeMillis() - t0 >= 300)
+        Unit
     }
 
     @Test
