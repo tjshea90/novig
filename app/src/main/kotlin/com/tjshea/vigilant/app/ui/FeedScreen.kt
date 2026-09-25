@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.ScanStatus
 import com.tjshea.vigilant.app.UiState
+import com.tjshea.vigilant.data.scanner.FeedSort
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -48,6 +50,7 @@ fun FeedScreen(
     onToggleLeague: (String) -> Unit,
     onOpenSettings: () -> Unit,
     onTrack: (Opportunity, Double) -> Unit,
+    onSort: (FeedSort) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
@@ -84,7 +87,7 @@ fun FeedScreen(
                 item(key = "leagues") {
                     LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
                 }
-                item(key = "summary") { FeedSummary(state, onScan, onOpenSettings) }
+                item(key = "summary") { FeedSummary(state, now, onScan, onOpenSettings, onSort) }
                 items(state.feed, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
@@ -100,10 +103,15 @@ fun FeedScreen(
 }
 
 @Composable
-private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -> Unit) {
+private fun FeedSummary(state: UiState, now: Long, onScan: () -> Unit, onOpenSettings: () -> Unit, onSort: (FeedSort) -> Unit) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         UsageStrip(state)
         state.status.errors.take(3).forEach { Banner(it, color = Edge.colors.negative) }
+        val scannedAt = state.status.scannedAtMs
+        if (scannedAt != null && !state.status.scanning && now - scannedAt > STALE_SCAN_MS && state.feed.isNotEmpty()) {
+            // Manual scans age: an edge from 20 minutes ago may be gone. Say so before Tj bets it.
+            Banner("These prices are ${Format.age(scannedAt, now).removeSuffix(" ago")} old. Scan again before betting.", action = "Scan", onAction = onScan)
+        }
         if (state.status.unscanned.isNotEmpty() && !state.status.scanning) {
             Banner(
                 "${state.status.unscanned.joinToString(", ")} not scanned yet.",
@@ -145,13 +153,29 @@ private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games. " +
                     "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices.",
             )
-            else -> Text(
-                "${state.feed.size} bets at +${Format.percent(state.settings.minEvPercent)} EV or better · " +
-                    "${result.stats.outcomesWithFair} prices checked · fair = ${fairSourceLabel(state.settings)}" +
-                    sourceSummary(status).let { if (it.isEmpty()) "" else " · $it" },
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${state.feed.size} bet${if (state.feed.size == 1) "" else "s"} at +${Format.percent(state.settings.minEvPercent)} EV or better · " +
+                            "${result.stats.outcomesWithFair} prices checked",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    FeedSort.entries.forEach { sort ->
+                        val on = state.settings.feedSort == sort
+                        TextButton(onClick = { onSort(sort) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            Text(sort.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                                color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Text(
+                    "Fair: ${fairSourceLabel(state.settings)}" + sourceSummary(status).let { if (it.isEmpty()) "" else " · $it" },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -170,6 +194,9 @@ private fun sourceNames(state: UiState): String {
 /** "Pinnacle 12 · Polymarket 14 · Kalshi 9 games": who matched what on the last scan. */
 fun sourceSummary(status: ScanStatus): String =
     status.sources.filter { it.matched > 0 }.joinToString(" · ") { "${it.name} ${it.matched}" }.let { if (it.isEmpty()) it else "$it games" }
+
+/** Past this, a scan's prices get a "scan again" banner. */
+const val STALE_SCAN_MS = 10 * 60_000L
 
 fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
     FairSource.SHARP -> "sharp books"

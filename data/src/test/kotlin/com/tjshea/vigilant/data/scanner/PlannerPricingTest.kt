@@ -309,4 +309,14 @@ class PlannerPricingTest {
         val pinned = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2), now, pinned = setOf("sp20.5"))
         assertEquals(setOf("sp3.5", "sp2.5", "sp20.5"), pinned.marketIds.toSet())
     }
+
+    @Test
+    fun `the feed can be ordered by start time instead of EV`() {
+        val s = sharpOnly.copy(minEvPercent = -1.0, maxEvPercent = 1.0)
+        val r = Pricing.price(Planner.plan(listOf(event), markets, refs, s, now), books, s, now)
+        val byEv = r.feed(s)
+        assertEquals(byEv.sortedByDescending { it.evPercent }, byEv)
+        val later = r.feed(s.copy(feedSort = FeedSort.START))
+        assertEquals(later.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent }), later)
+    }
 }

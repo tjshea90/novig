@@ -108,6 +108,7 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel) {
                     onToggleLeague = vm::toggleLeague,
                     onOpenSettings = { tab = Tab.SETTINGS.ordinal },
                     onTrack = vm::trackBet,
+                    onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = vm::scan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)

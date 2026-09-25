@@ -81,7 +81,7 @@ data class ScanResult(
     val stats: ScanStats,
     val computedAtMs: Long,
 ) {
-    /** The +EV feed: at or above the user's threshold, below the too-good-to-be-true cap, best first. */
+    /** The +EV feed: at or above the user's threshold, below the too-good-to-be-true cap, in the chosen order. */
     fun feed(settings: ScanSettings): List<Opportunity> = opportunities
         .filter { o ->
             val ev = o.evPercent ?: return@filter false
@@ -90,7 +90,12 @@ data class ScanResult(
                 (settings.includeLive || !o.isLive) &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
         }
-        .sortedByDescending { it.evPercent }
+        .let { list ->
+            when (settings.feedSort) {
+                FeedSort.EV -> list.sortedByDescending { it.evPercent }
+                FeedSort.START -> list.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent })
+            }
+        }
 }
 
 /**

@@ -6,6 +6,9 @@ import com.tjshea.vigilant.engine.FairSettings
 import com.tjshea.vigilant.engine.FairSource
 import kotlinx.serialization.Serializable
 
+/** How the +EV feed is ordered (OddsJam offers the same two). */
+enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
+
 /** Which Novig market families to price. */
 enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
     MONEYLINE("Moneyline", listOf("MONEY", "MONEYLINE_3_WAY_WIN", "MONEYLINE_3_WAY_DRAW")),
@@ -56,6 +59,7 @@ data class ScanSettings(
     val linesPerGame: Int = 2,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
     val exchangeMaxSpread: Double = 0.03,
+    val feedSort: FeedSort = FeedSort.EV,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
