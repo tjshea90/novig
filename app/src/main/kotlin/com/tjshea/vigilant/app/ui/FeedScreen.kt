@@ -119,7 +119,7 @@ private fun FeedSummary(state: UiState, onScan: () -> Unit, onOpenSettings: () -
             result == null && status.scanning -> EmptyState(
                 "Scanning…",
                 "Reading Novig's board" + sourceNames(state).let { if (it.isEmpty()) "" else " and fair odds from $it" } + ". " +
-                    "Novig prices are read slowly on purpose, so it never rate-limits you.",
+                    "Novig prices are read at a steady pace to stay under Novig's rate limit.",
             )
             result == null -> EmptyState(
                 "Tap Scan to find +EV bets",
