@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.scanner
 
+import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
@@ -7,32 +8,46 @@ import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.novig.NovigText
 import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.RefBookMarket
 import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.Side
 import kotlin.math.abs
 
-/** How a Novig outcome's fair probability comes out of a reference line. */
+/** How a Novig outcome's fair probability comes out of a reference line: it IS this side. */
 sealed interface OutcomeTarget {
-    /** The outcome IS this side (moneyline team, spread team, over/under). */
+    /** The outcome is this side (moneyline team, spread team, over/under). */
     data class Is(val side: Side) : OutcomeTarget
-
-    /** A 3-way Yes/No market's "Yes": this side happens. */
-    data class Yes(val side: Side) : OutcomeTarget
-
-    /** A 3-way Yes/No market's "No": any other result. Not the other team (NOVIG_API.md §7). */
-    data class No(val side: Side) : OutcomeTarget
 }
 
-/** One reference line: every book's quote for the same event, market kind, and point. */
-data class LineKey(val refEventId: String, val kind: LineKind, val line: Double?, val threeWay: Boolean) {
+/**
+ * One reference line: every book's quote for the same event, market kind, period, subject (team
+ * side or player) and point.
+ */
+data class LineKey(
+    val refEventId: String,
+    val kind: LineKind,
+    val line: Double?,
+    val period: Int = 0,
+    val subject: String? = null,
+    val stat: String? = null,
+) {
     /** The order outcomes are fed to the devig math in. */
     val sides: List<Side>
         get() = when (kind) {
-            LineKind.MONEYLINE -> if (threeWay) listOf(Side.HOME, Side.AWAY, Side.DRAW) else listOf(Side.HOME, Side.AWAY)
-            LineKind.SPREAD -> listOf(Side.HOME, Side.AWAY)
-            LineKind.TOTAL -> listOf(Side.OVER, Side.UNDER)
+            LineKind.MONEYLINE, LineKind.SPREAD -> listOf(Side.HOME, Side.AWAY)
+            LineKind.TOTAL, LineKind.TEAM_TOTAL, LineKind.PLAYER_PROP -> listOf(Side.OVER, Side.UNDER)
         }
+
+    /** Whether a book's quote is on exactly this line. Players match by name ([PlayerNames]). */
+    fun matches(m: RefBookMarket): Boolean {
+        if (m.kind != kind || m.period != period || m.stat != stat) return false
+        if (!(line == null && m.line == null) && !(line != null && m.line != null && abs(m.line!! - line) < 1e-9)) return false
+        return when (kind) {
+            LineKind.PLAYER_PROP -> PlayerNames.same(m.subject, subject)
+            else -> m.subject == subject
+        }
+    }
 }
 
 data class PlannedOutcome(val outcome: NovigOutcome, val target: OutcomeTarget, val selection: String)
@@ -152,27 +167,47 @@ object Planner {
                 quoted += p to stats
             }
             // Every quoted line costs one Novig book request per scan. The exchanges quote dozens
-            // of alternates per game, so spreads and totals are capped at the best-covered lines:
-            // most books first, then closest to a coin flip (the main line).
-            planned += quoted.filter { it.first.kind == LineKind.MONEYLINE }.map { it.first }
-            for (kind in listOf(LineKind.SPREAD, LineKind.TOTAL)) {
-                val ranked = quoted.filter { it.first.kind == kind }
-                    .sortedWith(compareByDescending<Pair<PlannedMarket, LineStats>> { it.second.books }.thenBy { it.second.imbalance })
-                    .map { it.first }
-                val kept = ranked.take(settings.linesPerGame.coerceAtLeast(1))
-                planned += kept + ranked.filter { it.market.marketId in pinned && it !in kept }
+            // of alternates per game, so each group of lines (a spread, a total, one team's total)
+            // is capped at its best-covered lines: most books first, then closest to a coin flip
+            // (the main line). Props are capped per game the same way.
+            fun ranked(list: List<Pair<PlannedMarket, LineStats>>) =
+                list.sortedWith(compareByDescending<Pair<PlannedMarket, LineStats>> { it.second.books }.thenBy { it.second.imbalance }).map { it.first }
+            fun keep(list: List<Pair<PlannedMarket, LineStats>>, cap: Int): List<PlannedMarket> {
+                val order = ranked(list)
+                val kept = order.take(cap.coerceAtLeast(0))
+                return kept + order.filter { it.market.marketId in pinned && it !in kept }
             }
+            planned += quoted.filter { it.first.kind == LineKind.MONEYLINE }.map { it.first }
+            quoted.filter { it.first.kind != LineKind.MONEYLINE && it.first.kind != LineKind.PLAYER_PROP }
+                .groupBy { Triple(it.first.kind, it.first.lineKey?.period, it.first.lineKey?.subject) }
+                .values.forEach { planned += keep(it, settings.linesPerGame.coerceAtLeast(1)) }
+            planned += keep(quoted.filter { it.first.kind == LineKind.PLAYER_PROP }, settings.propsPerGame)
         }
-        return Plan(planned, matches)
+        return Plan(budget(planned, settings.maxBooksPerScan, pinned), matches)
+    }
+
+    /**
+     * Keeps a scan to [max] Novig reads: open bets first, then moneylines and main lines, then
+     * 1st-half and team totals, then props; soonest games first within each.
+     */
+    fun budget(planned: List<PlannedMarket>, max: Int, pinned: Set<String>): List<PlannedMarket> {
+        if (planned.size <= max) return planned
+        fun tier(p: PlannedMarket): Int = when {
+            p.market.marketId in pinned -> 0
+            p.kind == LineKind.MONEYLINE -> 1
+            (p.kind == LineKind.SPREAD || p.kind == LineKind.TOTAL) && (p.lineKey?.period ?: 0) == 0 -> 2
+            p.kind == LineKind.PLAYER_PROP -> 4
+            else -> 3
+        }
+        val keep = planned.sortedWith(compareBy<PlannedMarket>({ tier(it) }, { it.event.startsTs })).take(max).toHashSet()
+        return planned.filter { it in keep }
     }
 
     private data class LineStats(val books: Int, val imbalance: Double)
 
     /** How many books quote [key]'s line, and how far from 50/50 it is. Null when none do. */
     private fun lineStats(ref: RefEvent, key: LineKey): LineStats? {
-        val quotes = ref.markets.filter { mk ->
-            mk.kind == key.kind && mk.quotes.any { q -> q.side == Side.DRAW } == key.threeWay && sameLine(mk.line, key.line)
-        }
+        val quotes = ref.markets.filter { key.matches(it) }
         if (quotes.isEmpty()) return null
         val first = quotes.first().quotes
         val imbalance = if (first.size == 2) abs(1 / first[0].decimalOdds - 1 / first[1].decimalOdds) else 0.0
