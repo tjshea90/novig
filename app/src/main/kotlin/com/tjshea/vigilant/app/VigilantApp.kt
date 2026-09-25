@@ -6,20 +6,18 @@ import com.tjshea.vigilant.app.data.KeystoreSigningKey
 import com.tjshea.vigilant.app.data.NovigConnectionStore
 import com.tjshea.vigilant.data.keys.ApiKeyStore
 import com.tjshea.vigilant.data.keys.KeyRotator
-import com.tjshea.vigilant.data.novig.HybridNovigSource
 import com.tjshea.vigilant.data.novig.NovigPublicClient
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
-import com.tjshea.vigilant.data.novig.stream.NovigStream
+import com.tjshea.vigilant.data.reference.KalshiClient
+import com.tjshea.vigilant.data.reference.PinnapiClient
+import com.tjshea.vigilant.data.reference.PolymarketClient
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.tracker.BetTracker
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -31,8 +29,9 @@ class VigilantApp : Application() {
 
 /**
  * One of everything, for the life of the process. A single [OkHttpClient] shares one connection
- * pool across Novig and The Odds API, so each refresh reuses warm HTTP/2 connections instead of
- * paying a TLS handshake per request (a real battery cost on a phone radio).
+ * pool across Novig and every odds provider, so a scan reuses warm HTTP/2 connections instead of
+ * paying a TLS handshake per request (a real battery cost on a phone radio). Nothing here starts
+ * any network on its own: only a scan the user asks for does.
  */
 class AppContainer(app: Application) {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -48,45 +47,46 @@ class AppContainer(app: Application) {
     val tracker = BetTracker(File(app.filesDir, "bets.json"))
     val novig = NovigPublicClient(http, json)
     val novigConnection = NovigConnectionStore(app)
+    val scanner = Scanner(novig)
 
-    /** Outlives any one screen; the stream's subscribe pacing runs here. */
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-    /** Novig's websocket, present only once a read key is connected. */
-    @Volatile
-    var stream: NovigStream? = null
-        private set
-
-    val hybrid = HybridNovigSource(novig, { stream })
-    val scanner = Scanner(hybrid)
-
-    /** Builds (or tears down) the stream for a connection. Doesn't open the socket by itself. */
+    /** Book reads go through the connected key's own rate limit (or the public routes when null). */
     @Synchronized
     fun useConnection(connection: NovigConnection?) {
-        stream?.close()
-        stream = connection?.let {
-            val signer = NovigSignedClient(http, json, KeystoreSigningKey(it.readAlias, it.readKeyId))
-            NovigStream(http, signer, appScope)
-        }
+        novig.keyed = connection?.let(::readKeyClient)
     }
 
     fun readKeyClient(connection: NovigConnection) =
         NovigSignedClient(http, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
 
-    private var referenceKeys: List<String>? = null
-    private var reference: ReferenceSource? = null
+    private val polymarket = PolymarketClient(http, json)
+    private val kalshi = KalshiClient(http, json)
+
+    private var oddsKeys: List<String>? = null
+    private var oddsApi: TheOddsApiClient? = null
+    private var pinnKey: String? = null
+    private var pinnacle: PinnapiClient? = null
 
     /**
-     * The Odds API client for the current key list. Kept alive between refreshes so
-     * [KeyRotator] remembers which keys are used up; rebuilt only when the keys change.
+     * The fair-odds providers a scan should call, for the switches in Settings and the keys on
+     * this phone. Keyed clients live between scans (so [KeyRotator] remembers used-up keys and
+     * pinnapi remembers a 429) and are rebuilt only when the keys change.
      */
     @Synchronized
-    fun referenceFor(keys: List<String>): ReferenceSource? {
-        if (keys.isEmpty()) return null
-        if (keys != referenceKeys) {
-            referenceKeys = keys
-            reference = TheOddsApiClient(http, KeyRotator(keys), json)
+    fun referenceSources(settings: ScanSettings, oddsApiKeys: List<String>, pinnapiKeys: List<String>): List<ReferenceSource> {
+        if (oddsApiKeys != oddsKeys) {
+            oddsKeys = oddsApiKeys
+            oddsApi = oddsApiKeys.takeIf { it.isNotEmpty() }?.let { TheOddsApiClient(http, KeyRotator(it), json) }
         }
-        return reference
+        val pk = pinnapiKeys.firstOrNull()
+        if (pk != pinnKey) {
+            pinnKey = pk
+            pinnacle = pk?.let { PinnapiClient(http, json, it) }
+        }
+        return buildList {
+            if (settings.usePinnacle) pinnacle?.let(::add)
+            if (settings.usePolymarket) add(polymarket)
+            if (settings.useKalshi) add(kalshi)
+            if (settings.useOddsApi) oddsApi?.let(::add)
+        }
     }
 }
