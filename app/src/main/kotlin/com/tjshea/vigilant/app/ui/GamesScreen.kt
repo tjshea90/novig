@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,11 +44,11 @@ import com.tjshea.vigilant.data.scanner.PricedGame
 
 /**
  * OddsJam's "odds screen", for Novig: every game on the board, and inside a game every line with
- * Novig's live price next to the fair price. Works without an Odds API key (Novig column only).
+ * Novig's price from the last scan next to the fair price. Pull down (or Scan) to refresh.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (String) -> Unit) {
+fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (String) -> Unit, onScan: () -> Unit = {}) {
     var openEventId by rememberSaveable { mutableStateOf<String?>(null) }
     val games = state.result?.games.orEmpty()
     val open = games.firstOrNull { it.event.eventId == openEventId }
@@ -60,34 +61,53 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Games", fontWeight = FontWeight.Bold)
-                        StatusLine(state.status, streaming = state.novig.stream is com.tjshea.vigilant.data.novig.stream.StreamState.Live)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+            Column {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text("Games", fontWeight = FontWeight.Bold)
+                            StatusLine(state.status)
+                        }
+                    },
+                    actions = { ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                )
+                ScanProgressBar(state.status)
+            }
         },
     ) { padding ->
-        LazyColumn(
-            Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        PullToRefreshBox(
+            isRefreshing = state.status.scanning,
+            onRefresh = onScan,
+            modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
-            item(key = "leagues") {
-                LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
-            }
-            if (games.isEmpty()) {
-                item(key = "empty") {
-                    EmptyState(
-                        if (state.result == null) "Loading the board…" else "No games in the next ${state.settings.daysAhead} days",
-                        "Games from the leagues you picked show up here with Novig's live prices.",
-                    )
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item(key = "leagues") {
+                    LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
                 }
+                if (games.isEmpty()) {
+                    item(key = "empty") {
+                        when {
+                            state.result == null && state.status.scanning -> EmptyState("Scanning…", "Reading Novig's board.")
+                            state.result == null -> EmptyState(
+                                "Tap Scan to load the board",
+                                "Games from the leagues you picked show up here with Novig's prices and the fair line.",
+                                action = "Scan now",
+                                onAction = onScan,
+                            )
+                            else -> EmptyState(
+                                "No games in the next ${state.settings.daysAhead} days",
+                                "Games from the leagues you picked show up here with Novig's prices and the fair line.",
+                            )
+                        }
+                    }
+                }
+                items(games, key = { it.event.eventId }) { g -> GameRow(g, Modifier.padding(horizontal = 12.dp)) { openEventId = g.event.eventId } }
             }
-            items(games, key = { it.event.eventId }) { g -> GameRow(g, Modifier.padding(horizontal = 12.dp)) { openEventId = g.event.eventId } }
         }
     }
 }
@@ -110,7 +130,7 @@ private fun GameRow(g: PricedGame, modifier: Modifier, onClick: () -> Unit) {
                 )
                 Text(g.event.description, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
-                    if (g.refEvent == null) "Novig only · no sportsbook match yet" else "${g.outcomes.count { it.fairProbability != null }} prices vs fair",
+                    if (g.refEvent == null) "Novig only · no fair odds for this game" else "${g.outcomes.count { it.fairProbability != null }} prices vs fair",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (g.refEvent == null) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
