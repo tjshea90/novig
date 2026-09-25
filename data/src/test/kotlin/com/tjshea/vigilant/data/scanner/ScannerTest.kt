@@ -40,10 +40,11 @@ class ScannerTest {
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(
             NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", "NFL", "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", Fixtures.START_MS),
         ).also { catalogCalls++ }
+        var lastTypes: Collection<String> = emptyList()
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = listOf(
             NovigMarket(Fixtures.ML_MARKET, Fixtures.EVENT_ID, "MONEY", "OPEN", "DAL", Fixtures.START_MS, MarketFee.GAME,
                 listOf(NovigOutcome(Fixtures.ML_DAL, "DAL", "TBD"), NovigOutcome(Fixtures.ML_BAL, "BAL", "TBD"))),
-        )
+        ).also { lastTypes = marketTypes }
         override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch {
             bookCalls++
             lastBookIds = marketIds
@@ -98,6 +99,18 @@ class ScannerTest {
     }
 
     private val settings = ScanSettings(fairSource = FairSource.SHARP, minEvPercent = 0.0, sharpBooks = setOf("pinnacle"))
+
+    @Test
+    fun `prop stats only the sportsbooks price are fetched from Novig only when book props are on`() = runTest {
+        val novig = FakeNovig()
+        Scanner(novig, clock = { now }).scan(settings, emptyList())
+        assertTrue("PITCHER_STRIKEOUTS" in novig.lastTypes) // Kalshi prices it
+        assertTrue("PITCHER_OUTS" !in novig.lastTypes && "KICKING_POINTS" !in novig.lastTypes)
+
+        val withProps = FakeNovig()
+        Scanner(withProps, clock = { now }).scan(settings, listOf(FakeProps(partial = false)))
+        assertTrue("PITCHER_OUTS" in withProps.lastTypes && "KICKING_POINTS" in withProps.lastTypes)
+    }
 
     @Test
     fun `a source that needs the board gets it, and a partial answer is priced and reported`() = runTest {
