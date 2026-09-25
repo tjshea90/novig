@@ -136,7 +136,8 @@ class UsageMeter(
         if (now >= policy.nextReset(x.periodStart)) {
             x = x.copy(periodStart = policy.periodStart(now), used = 0, calls = 0, remaining = null, lastNote = null)
         }
-        if (x.depletedUntil != null && now >= x.depletedUntil) x = x.copy(depletedUntil = null)
+        // A hold that ran out means "try again": a remembered zero no longer applies.
+        if (x.depletedUntil != null && now >= x.depletedUntil) x = x.copy(depletedUntil = null, remaining = x.remaining?.takeIf { it > 0 })
         if (x.coolUntil != null && now >= x.coolUntil) x = x.copy(coolUntil = null)
         if (x.recent.any { now - it >= HOUR }) x = x.copy(recent = x.recent.filter { now - it < HOUR })
         return x
@@ -332,13 +333,14 @@ class KeyPool(
                     return r.value
                 }
                 is KeyAttemptResult.RateLimited -> {
-                    meter.recordThrottled(policy, key, r.retryAfterMs, r.reason ?: "slow down")
                     lastProblem = r.reason
                     // A burst limit (a second or two) is worth waiting out on the same key once.
                     if (r.retryAfterMs <= SHORT_WAIT_MS && shortWaits++ < 1) {
+                        meter.countKeyless(policy, calls = 1, throttled = 1)
                         delay(r.retryAfterMs)
                         continue
                     }
+                    meter.recordThrottled(policy, key, r.retryAfterMs, r.reason ?: "slow down")
                     tried += key
                 }
                 is KeyAttemptResult.Depleted -> {
