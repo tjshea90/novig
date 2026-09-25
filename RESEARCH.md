@@ -1006,3 +1006,25 @@ requests per scan in total, all well inside free limits), with The Odds API re-u
 N minutes to save credits. Novig books are paced to avoid its per-IP 429, and read through the
 signed per-key routes once Tj connects a Novig key. Nothing fetches except on Tj's Scan button or
 pull-to-refresh.
+
+### 11.5 Live results, v0.6.0 code against the real APIs (2026-09-25, from this container)
+
+`VIGILANT_LIVE=1 VIGILANT_LIVE_LEAGUES=NFL,MLB,NCAAF ./gradlew :data:test --tests '*LiveNovigSmokeTest*real scan*'`,
+free keyless sources only (Polymarket + Kalshi), `linesPerGame` 2:
+
+| League | Novig games | Matched to a fair line | Novig books read | 429s |
+|---|---|---|---|---|
+| NFL | 16 | 14 (Polymarket 14, Kalshi 14) | 70 | 0 |
+| MLB | 17 | 16 (Polymarket 15, Kalshi 16) | 78 | 0 |
+| NCAAF | 120 | 112 (Polymarket 19, Kalshi 112) | 396 | 0 |
+
+- Scan time here was ~1 book/s because this container's proxy adds 0.15–0.5s per request and
+  only 2 run at once. On a phone the 4/s pace is the limit: NFL ≈ 20s, a full Saturday of
+  NCAAF ≈ 100s (≈ 50s with a Novig key). Fewer `linesPerGame` or days ahead shortens it.
+- Typical NFL edges vs the two exchanges were 1–2%; college alternates showed 3–4% against
+  Kalshi alone. A quarter of tight Kalshi college alt quotes had under 38 contracts at the top,
+  so v0.6.0 requires ≥100 contracts on each side (`KalshiClient.MIN_TOP_SIZE`) and Polymarket
+  requires ≥$1,000 liquidity. Edges priced from one exchange only are still the least
+  trustworthy: prefer ones where Pinnacle or both exchanges agree.
+- pinnapi could not be exercised live (no key). Its parser follows the published docs, and
+  league names are matched loosely with a whole-sport fallback.
