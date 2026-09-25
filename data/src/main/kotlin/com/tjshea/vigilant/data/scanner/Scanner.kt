@@ -83,7 +83,9 @@ class Scanner(
                 }
                 if (!due) continue
                 try {
-                    val snap = reference.odds(sport, settings.referenceBooks)
+                    // Stamp with our own clock: the auto-refresh interval (credits) must never
+                    // depend on what time a provider claims it answered.
+                    val snap = reference.odds(sport, settings.referenceBooks).copy(fetchedAtMs = now)
                     references[sport] = snap
                     referenceFailures.remove(sport)
                     snap.creditsRemaining?.let { creditsRemaining = it }
