@@ -120,7 +120,20 @@ class KalshiClient(
 
         private fun price(s: String?): Double? = s?.toDoubleOrNull()
 
-        private fun tradable(m: MarketDto) = m.status == null || m.status == "active" || m.status == "open"
+        /**
+         * Open, and with real size on both sides of the top of the book. A 1¢-wide quote with 4
+         * contracts behind it (a quarter of tight college alt lines, seen live 2026-09-25) says
+         * nothing about the fair price. Missing size fields are given the benefit of the doubt.
+         */
+        private fun tradable(m: MarketDto): Boolean {
+            if (m.status != null && m.status != "active" && m.status != "open") return false
+            val bid = m.yes_bid_size_fp?.toDoubleOrNull()
+            val ask = m.yes_ask_size_fp?.toDoubleOrNull()
+            return (bid == null || bid >= MIN_TOP_SIZE) && (ask == null || ask >= MIN_TOP_SIZE)
+        }
+
+        /** Contracts ($1 payout each) needed on each side of the best quote. */
+        const val MIN_TOP_SIZE = 100.0
 
         /**
          * One [RefEvent] per game, merging its game, spread and total events (they share an event
@@ -253,5 +266,7 @@ class KalshiClient(
         val yes_ask_dollars: String? = null,
         val floor_strike: Double? = null,
         val status: String? = null,
+        val yes_bid_size_fp: String? = null,
+        val yes_ask_size_fp: String? = null,
     )
 }

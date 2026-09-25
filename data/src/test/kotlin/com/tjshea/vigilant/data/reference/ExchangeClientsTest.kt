@@ -131,6 +131,17 @@ class ExchangeClientsTest {
     }
 
     @Test
+    fun `a kalshi quote with only a few contracts behind it is not a fair price`() {
+        val thin = ExchangeFixtures.kalshiNflTotal.replace(
+            "\"floor_strike\":43.5,\"status\":\"active\"",
+            "\"floor_strike\":43.5,\"status\":\"active\",\"yes_bid_size_fp\":\"4.00\",\"yes_ask_size_fp\":\"9000.00\"",
+        )
+        assertTrue(thin != ExchangeFixtures.kalshiNflTotal)
+        val g = KalshiClient.parse(kalshiEvents(ExchangeFixtures.kalshiNflGame, thin), nfl, 0.03, 0L).single()
+        assertTrue(g.markets.none { it.kind == LineKind.TOTAL })
+    }
+
+    @Test
     fun `kalshi baseball codes give the exact Eastern start time`() {
         val games = KalshiClient.parse(kalshiEvents(ExchangeFixtures.kalshiMlbGame), mlb, 0.03, 0L)
         val pit = games.first { it.away == "Pittsburgh" }
