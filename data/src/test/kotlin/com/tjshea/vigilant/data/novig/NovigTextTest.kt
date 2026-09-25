@@ -31,7 +31,7 @@ class NovigTextTest {
     }
 
     @Test
-    fun `three way win markets name their team in the description`() {
+    fun `team totals and props name their team or player in the description`() {
         assertEquals("Patrick Mahomes", NovigText.subjectOf("Patrick Mahomes 233.5 PASSING_YARDS", "PASSING_YARDS"))
         assertEquals("Los Angeles Rams", NovigText.subjectOf("Los Angeles Rams 22.5 TEAM_TOTAL", "TEAM_TOTAL"))
         assertEquals("CJ Donaldson Jr.", NovigText.subjectOf("CJ Donaldson Jr. 0.5 TOUCHDOWNS", "TOUCHDOWNS"))

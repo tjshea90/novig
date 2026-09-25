@@ -95,4 +95,38 @@ object ExchangeFixtures {
        "periods":{"num_0":{"money_line":{"home":1.80,"away":2.10}}}}
     ]}
     """.trimIndent()
+
+    /** Carolina @ Cleveland props, team totals and 1st half, shaped like Kalshi's live answers (2026-09-25). */
+    val kalshiNflAlt = """
+    {"events":[
+      {"event_ticker":"KXNFLPASSYDS-26SEP27CARCLE","series_ticker":"KXNFLPASSYDS","title":"Carolina vs Cleveland: Passing Yards","sub_title":"CAR vs CLE (Sep 27)",
+       "markets":[
+        {"ticker":"KXNFLPASSYDS-26SEP27CARCLE-CARBYOUNG9-200","title":"Bryce Young: 200+ passing yards","yes_sub_title":"Bryce Young: 200+","yes_bid_dollars":"0.6200","yes_ask_dollars":"0.6400","floor_strike":199.5,"status":"active"},
+        {"ticker":"KXNFLPASSYDS-26SEP27CARCLE-CARBYOUNG9-225","title":"Bryce Young: 225+ passing yards","yes_sub_title":"Bryce Young: 225+","yes_bid_dollars":"0.4600","yes_ask_dollars":"0.5000","floor_strike":224.5,"status":"active"}]},
+      {"event_ticker":"KXNFLREC-26SEP27CARCLE","series_ticker":"KXNFLREC","title":"Carolina vs Cleveland: Receptions","sub_title":"CAR vs CLE (Sep 27)",
+       "markets":[
+        {"ticker":"KXNFLREC-26SEP27CARCLE-CLEQJUDKINS10-3","title":"Quinshon Judkins: 3+ receptions","yes_sub_title":"Quinshon Judkins: 3+","yes_bid_dollars":"0.4500","yes_ask_dollars":"0.4600","floor_strike":2.5,"status":"active"}]},
+      {"event_ticker":"KXNFLTEAMTOTAL-26SEP27CARCLE","series_ticker":"KXNFLTEAMTOTAL","title":"CAR Panthers vs CLE Browns: Team Total","sub_title":"CAR vs CLE (Sep 27)",
+       "markets":[
+        {"ticker":"KXNFLTEAMTOTAL-26SEP27CARCLE-CLE21","title":"Cleveland scores over 20.5 points","yes_sub_title":"Cleveland over 20.5 points scored","yes_bid_dollars":"0.5000","yes_ask_dollars":"0.5100","floor_strike":20.5,"status":"active"}]},
+      {"event_ticker":"KXNFL1HSPREAD-26SEP27CARCLE","series_ticker":"KXNFL1HSPREAD","title":"CAR Panthers vs CLE Browns: 1st Half Spread","sub_title":"CAR vs CLE (Sep 27)",
+       "markets":[
+        {"ticker":"KXNFL1HSPREAD-26SEP27CARCLE-CAR2","title":"CAR Panthers wins the 1st half by over 1.5 points?","yes_bid_dollars":"0.4000","yes_ask_dollars":"0.4100","floor_strike":1.5,"status":"active"}]},
+      {"event_ticker":"KXNFL1HTOTAL-26SEP27CARCLE","series_ticker":"KXNFL1HTOTAL","title":"CAR Panthers vs CLE Browns: 1st Half Total","sub_title":"CAR vs CLE (Sep 27)",
+       "markets":[
+        {"ticker":"KXNFL1HTOTAL-26SEP27CARCLE-22","title":"Will there be over 21.5 1H points scored?","yes_bid_dollars":"0.4800","yes_ask_dollars":"0.4900","floor_strike":21.5,"status":"active"}]}
+    ],"cursor":""}
+    """.trimIndent()
+
+    /** pinnapi with a 1st half (num_1) and team totals, in their documented shape. */
+    val pinnapiFootballPeriods = """
+    {"sport_id":5,"events":[
+      {"event_id":7,"league_name":"NFL","starts":"2026-09-27T20:25:00Z","home":"Dallas Cowboys","away":"Baltimore Ravens",
+       "periods":{
+         "num_0":{"money_line":{"home":2.45,"away":1.62},
+           "team_total":{"home":{"points":20.5,"over":1.95,"under":1.87},"away":{"points":24.5,"over":1.90,"under":1.92}},
+           "team_totals":{"home":{"20.5":{"points":20.5,"over":1.95,"under":1.87},"21.5":{"points":21.5,"over":2.10,"under":1.74}}}},
+         "num_1":{"spreads":{"1.5":{"hdp":1.5,"home":1.91,"away":1.93}},"totals":{"23.5":{"points":23.5,"over":1.94,"under":1.90}}}}}
+    ]}
+    """.trimIndent()
 }
