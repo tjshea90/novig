@@ -14,7 +14,6 @@ import com.tjshea.vigilant.engine.FairLine
 import com.tjshea.vigilant.engine.FairValue
 import com.tjshea.vigilant.engine.PositiveDepth
 import com.tjshea.vigilant.engine.TakeLevel
-import kotlin.math.abs
 
 /** One Novig outcome, priced. Every priced outcome is kept, +EV or not; the feed filters. */
 data class Opportunity(
@@ -42,15 +41,12 @@ data class Opportunity(
     /** Which reference side this outcome is priced from. */
     val target: OutcomeTarget?,
 ) {
-    /** Column of this outcome in [FairLine.perBook] odds, or null for a 3-way "No" (a sum of sides). */
+    /** Column of this outcome in [FairLine.perBook] odds. */
     val referenceIndex: Int?
         get() {
             val k = lineKey ?: return null
-            return when (val t = target) {
-                is OutcomeTarget.Is -> k.sides.indexOf(t.side).takeIf { it >= 0 }
-                is OutcomeTarget.Yes -> k.sides.indexOf(t.side).takeIf { it >= 0 }
-                else -> null
-            }
+            val t = target as? OutcomeTarget.Is ?: return null
+            return k.sides.indexOf(t.side).takeIf { it >= 0 }
         }
 
     val key: String get() = "${market.marketId}/${outcome.outcomeId}"
@@ -180,25 +176,14 @@ object Pricing {
     /** Every book's odds for one line, in [LineKey.sides] order; books missing a side are dropped. */
     fun bookPrices(ref: RefEvent, key: LineKey): List<BookPrices> =
         ref.markets
-            .filter { m ->
-                m.kind == key.kind &&
-                    (m.quotes.any { it.side == Side.DRAW }) == key.threeWay &&
-                    (key.line == null || (m.line != null && abs(m.line!! - key.line) < 1e-9))
-            }
+            .filter { key.matches(it) }
             .mapNotNull { m ->
                 val odds = key.sides.map { side -> m.quotes.firstOrNull { it.side == side }?.decimalOdds ?: return@mapNotNull null }
                 BookPrices(m.bookKey, m.bookTitle, odds, m.lastUpdateMs)
             }
             .distinctBy { it.bookKey }
 
-    fun probabilityFor(target: OutcomeTarget, key: LineKey, fair: FairLine): Double? {
-        fun p(side: Side): Double? = key.sides.indexOf(side).takeIf { it >= 0 }?.let { fair.probabilities[it] }
-        return when (target) {
-            is OutcomeTarget.Is -> p(target.side)
-            is OutcomeTarget.Yes -> p(target.side)
-            // "No" = every other result. Summing the other sides (rather than 1 − p) stays
-            // conservative under WORST_CASE devig, where the sides don't sum to 1.
-            is OutcomeTarget.No -> key.sides.filter { it != target.side }.mapNotNull { p(it) }.takeIf { it.size == key.sides.size - 1 }?.sum()
-        }
+    fun probabilityFor(target: OutcomeTarget, key: LineKey, fair: FairLine): Double? = when (target) {
+        is OutcomeTarget.Is -> key.sides.indexOf(target.side).takeIf { it >= 0 }?.let { fair.probabilities[it] }
     }
 }
