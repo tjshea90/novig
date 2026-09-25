@@ -1245,20 +1245,30 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
 > Checkpoint frequently because usage will probably run out
 
 ### Plan
-- [ ] K1 Key storage that survives updates (and restores): plain JSON in app storage (Tj: no
+- [x] K1 Key storage that survives updates (and restores): plain JSON in app storage (Tj: no
       security needed), migrated from the old Keystore-encrypted store on first launch, included
       in Android backup; export/import of keys to a file as a belt-and-braces copy.
-- [ ] K2 Re-read each provider's limits/policies (The Odds API quota + reset timing + headers,
+- [x] K2 Re-read each provider's limits/policies (The Odds API quota + reset timing + headers,
       pinnapi limits + reset + headers, Polymarket, Kalshi, Novig) → RESEARCH.md; encode them.
-- [ ] K3 Persistent per-key usage ledger + smart rotation for every keyed API (The Odds API,
+- [x] K3 Persistent per-key usage ledger + smart rotation for every keyed API (The Odds API,
       pinnapi): multiple keys each; server-reported remaining when the API sends it, local
       counting otherwise; skip a key before it runs out (cost of next call > remaining);
       depleted keys wait for their provider's reset (month / day / hour), then rotation starts
       again from key 1; survives app restarts.
-- [ ] K4 Usage meters UI: per provider and per key (used / limit, remaining, resets in …),
+- [x] K4 Usage meters UI: per provider and per key (used / limit, remaining, resets in …),
       updated after every call; keyless APIs (Novig, Polymarket, Kalshi) show requests this
       scan/today and any throttling.
-- [ ] K5 Tests for K1–K4 (ledger periods, rotation order, reset back to key 1, pre-emptive skip,
+- [x] K5 Tests for K1–K4 (ledger periods, rotation order, reset back to key 1, pre-emptive skip,
       persistence round trip, migration), screenshots.
+      *Done: `FileApiKeyStore` (api_keys.json, one-time move from the Keystore store in
+      `AppContainer.migrateKeys`, backup rules, export/import); `QuotaPolicy`/`UsageMeter`/`KeyPool`
+      (usage.json); meters in Settings + feed strip. Tests: `UsageMeterTest` (14: periods, rotation
+      from key 1, back to key 1 on the 1st, pre-emptive skip, 6h re-probe, billing-cycle follow,
+      pinnapi minute/day counting, refused key, restart persistence, keyless daily reset, pool
+      message, burst wait, meter view states), `FileApiKeyStoreTest` (3), `TheOddsApiClientTest`
+      "every call's usage headers land in the meter", "a key that can't afford the next call is
+      skipped", "a wrong key is reported as refused"; `ExchangeClientsTest` pinnapi daily-429
+      rotation + "with every pinnacle key spent…"; `ScreenshotTest`
+      "theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse" + 5b_usage_meters.png.*
 - [ ] K6 Full tests (CLAUDE.md protocol): whole-app sweep, efficiency + UI improvements, logic
       checked against OddsJam's model; fix with failing-first tests; ship; report.
