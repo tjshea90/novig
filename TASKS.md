@@ -1053,4 +1053,22 @@ new error, not the same 503.
       `/v3/public/catalog/{events,markets,markets/{id}/book,.../trades}` and
       `/v3/public/types/*` routes return real production data with no key.
       Not verified: any signed route (Tj has no key yet).
-- [ ] Checkpoint.
+- [x] Checkpoint.
+
+### Proposed next build (not started — waiting on Tj's go-ahead, see NOVIG_API.md §9)
+
+- [ ] Stage 1, no key needed: add a `NovigV3PublicClient` (`data` module)
+      over `/v3/public/...`. Use executable taker prices from the book
+      (1 − best opposing bid, with depth) and per-market `fee`. Make it the
+      default Novig leg. Retire the GraphQL/proxy path and its Settings UI.
+      Fix `Fees.kt` for NFL/MLB/NCAAF futures (0.06, charged pregame).
+- [ ] Stage 2, needs Tj's management key once: `NOVIG-V3` signer
+      (unit-tested against Novig's 30 signing vectors), an in-app
+      "Connect Novig" setup (import management PEM + key ID, then echo,
+      open a "vigilant" subaccount, then create a `trading::read` key held in
+      Android Keystore (P-256), then forget the management key), and a
+      websocket `bbo` subscription per selected event for real-time repricing.
+- [ ] Reference leg: Tj decides between staying on The Odds API free tier
+      (500 credits/mo) and its $30/mo tier. This is now the freshness
+      bottleneck, not Novig.
+
