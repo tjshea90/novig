@@ -1329,7 +1329,8 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
 - [x] P4 Matching across books: player names (suffixes, initials, accents, nicknames, "Last,
       First"), prop listing styles (Over/Under vs "N+" ladders vs Yes/No), stat names per book,
       team names; one-sided and alternate-only markets skipped.
-- [ ] P5 Settings (on/off, credits per scan, time window, re-use), tests, live check, ship, report.
+- [x] P5 Settings (on/off, credits per scan, time window, re-use), tests, live check, ship, report.
+      Shipped v0.9.0 (code 13): https://github.com/tjshea90/novig/releases/tag/v0.9.0
 
 Done (tests): P1 → RESEARCH.md §14 (market keys re-checked against their page; Novig stat names
 checked live). P2 → `OddsApiPropsTest` (game list free + props metered; only games with Novig
