@@ -188,6 +188,19 @@ class AltMarketsTest {
         assertEquals(setOf("NFL"), ScanSettings(leagues = setOf("EPL"), schema = 2).migrate().leagues)
     }
 
+    @Test
+    fun `saved settings still on the old coverage defaults widen, and Tj's own picks stay`() {
+        val old = ScanSettings(propsPerGame = 4, maxBooksPerScan = 200, schema = 3).migrate()
+        assertEquals(8, old.propsPerGame)
+        assertEquals(300, old.maxBooksPerScan)
+        val picked = ScanSettings(propsPerGame = 2, maxBooksPerScan = 400, schema = 3).migrate()
+        assertEquals(2, picked.propsPerGame)
+        assertEquals(400, picked.maxBooksPerScan)
+        assertEquals(4, picked.schema)
+        // A current file is left alone.
+        assertEquals(ScanSettings(propsPerGame = 4, schema = 4), ScanSettings(propsPerGame = 4, schema = 4).migrate())
+    }
+
     // ---- sources --------------------------------------------------------------------------------
 
     @Test

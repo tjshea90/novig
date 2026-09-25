@@ -250,11 +250,11 @@ fun SettingsScreen(
             if (MarketFamily.PLAYER_PROPS in s.families) {
                 Text("Player props per game: ${s.propsPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, { it.toString() }) { v -> onUpdate { it.copy(propsPerGame = v) } }
-                Hint("NFL, MLB and WNBA props that Kalshi also prices, on the same line. The best-covered ones are checked first.")
+                Hint("NFL, MLB and WNBA props that Kalshi or the sportsbooks also price, on the same line. The best-covered ones are checked first.")
             }
             Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
-            Hint("Keeps a big slate to about a minute. Past it, main lines and the soonest games come first; props wait.")
+            Hint("300 is about a minute. Results appear as they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and the soonest games come first.")
             Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
             SwitchRow(

@@ -69,13 +69,17 @@ data class ScanSettings(
      * so this is the main lever on scan time and Novig's rate limit.
      */
     val linesPerGame: Int = 2,
-    /** Player props priced per game, best-covered first (each one is a Novig request per scan). */
-    val propsPerGame: Int = 4,
+    /**
+     * Player props priced per game, best-covered first (each one is a Novig request per scan).
+     * 8 since v0.10.0 (was 4): props are where exchange prices lag most, and results now stream in.
+     */
+    val propsPerGame: Int = 8,
     /**
      * The most Novig prices one scan reads. Past it, main lines and the soonest games win; props
-     * and later games wait. Keeps a big slate (college Saturday with props) to about a minute.
+     * and later games wait. 300 since v0.10.0 (was 200): about a minute on public routes, with the
+     * likeliest +EV lines read first and shown as they land.
      */
-    val maxBooksPerScan: Int = 200,
+    val maxBooksPerScan: Int = 300,
     /**
      * Player props from the major sportsbooks (DraftKings, FanDuel, BetMGM, …) via The Odds API,
      * devigged book by book and averaged. Costs 1 credit per prop type per game.
@@ -111,6 +115,15 @@ data class ScanSettings(
                 schema = 3,
             )
         }
+        // v0.10.0: wider coverage by default (results now stream in as they're priced). Only
+        // values still at the old defaults move; anything Tj picked himself stays.
+        if (s.schema < 4) {
+            s = s.copy(
+                propsPerGame = if (s.propsPerGame == 4) 8 else s.propsPerGame,
+                maxBooksPerScan = if (s.maxBooksPerScan == 200) 300 else s.maxBooksPerScan,
+                schema = 4,
+            )
+        }
         return s
     }
 
@@ -141,7 +154,7 @@ data class ScanSettings(
         val ODDS_API_REUSE_CHOICES = listOf(0, 5, 15, 30, 60)
         val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
         val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12)
-        val MAX_BOOKS_CHOICES = listOf(100, 200, 400)
+        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400)
         val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96)
         val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
         val BOOK_PROP_REUSE_CHOICES = listOf(30, 60, 120, 240)
