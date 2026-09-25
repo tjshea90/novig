@@ -30,8 +30,12 @@ import java.time.temporal.ChronoUnit
  * is 1 credit per sport, all three are 3. Novig itself is never requested here: it's the thing
  * being priced, not a reference.
  *
+ * Player props come from the per-game endpoint ([eventOdds], RESEARCH.md §14), which the
+ * [OddsApiPropsSource] spends a strict per-scan budget on; the game list it matches against
+ * ([events]) is free.
+ *
  * Their docs ask clients to space requests out rather than burst (429 above 30 calls/s), so calls
- * are at least [minIntervalMs] apart. [KeyPool] picks the key (Tj's rotation rule): each call's
+ * are at least [minIntervalMs] apart (2 a second, 15x under their limit). [KeyPool] picks the key (Tj's rotation rule): each call's
  * `x-requests-remaining`/`x-requests-used`/`x-requests-last` headers feed the usage meter, a key
  * that can't afford the next call is skipped, and `OUT_OF_USAGE_CREDITS` rests a key until the 1st.
  */
@@ -41,7 +45,7 @@ class TheOddsApiClient(
     private val json: Json,
     private val baseUrl: String = "https://api.the-odds-api.com/v4",
     private val clock: () -> Long = System::currentTimeMillis,
-    private val minIntervalMs: Long = 1_500,
+    private val minIntervalMs: Long = 500,
 ) : ReferenceSource {
 
     override val id = ID
