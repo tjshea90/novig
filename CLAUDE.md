@@ -244,9 +244,11 @@ unless Tj asks).
   `EvMath`); Novig data (`data/novig`: `NovigPublicClient`, `NovigText`);
   reference odds (`data/reference/`: `PinnapiClient`, `PolymarketClient`, `KalshiClient`,
   `TheOddsApiClient`); matching and pricing (`data/match/TeamMatcher`,
-  `data/scanner/Planner` + `Pricing`); manual scans, pacing and credits
-  (`data/scanner/Scanner`, `data/novig/RateGate`, `MainViewModel.scan`); persistence
-  (`data/store/JsonFileStore`, `data/tracker/BetTracker`, `EncryptedApiKeyStore`).
+  `data/scanner/Planner` + `Pricing`); manual scans and pacing (`data/scanner/Scanner`,
+  `data/novig/RateGate`, `MainViewModel.scan`); keys, quotas and meters (`data/keys/`:
+  `FileApiKeyStore`, `QuotaPolicy`/`UsageMeter`/`KeyPool`, `UsageViews`; `ui/UsageMeters`);
+  persistence (`data/store/JsonFileStore`, `data/tracker/BetTracker`, `api_keys.json`,
+  `usage.json`, backup rules in `res/xml`).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.

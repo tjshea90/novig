@@ -306,6 +306,14 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s, burst 10, 2 at a
   time, pause on Retry-After, halve after a 429); with a key, books use the signed per-key
   route instead. Don't reintroduce auto-refresh without asking.
+- **API keys: plain JSON in app storage, several per provider, rotated by a usage ledger (Tj,
+  2026-09-25 ~14:00Z; "don't worry about security, they are free keys").** `api_keys.json`
+  (survives updates, in Android backup, export/import), moved once from the old Keystore store.
+  `UsageMeter` (`usage.json`) meters every call per key: server headers where sent (The Odds
+  API), local counts otherwise (pinnapi). `KeyPool` always starts at key 1, skips a key before
+  it can't afford a call, and rests a spent key until its provider's reset (1st of the month /
+  midnight UTC), so rotation falls back to key 1 after each reset. Limits and ToS: RESEARCH.md §12
+  (pinnapi's terms forbid circumventing its rate limits: warned in Settings).
 - **Fair odds come from several free sources, merged per game (v0.6.0, RESEARCH.md §11):**
   Pinnacle via pinnapi (free key, 100 req/day), Polymarket and Kalshi (free, no key; count
   as sharp by default when ≤3¢ wide with real depth), and The Odds API (optional, re-used

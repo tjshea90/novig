@@ -93,7 +93,7 @@ fun SettingsScreen(
             UsageSection(state)
 
             // ---- Fair odds ---------------------------------------------------------------------
-            SectionTitle("Fair odds source")
+            SectionTitle("Fair odds method")
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 FairSource.entries.forEachIndexed { i, source ->
                     SegmentedButton(
@@ -151,7 +151,7 @@ fun SettingsScreen(
             Hint(s.devigMethod.blurb)
 
             // ---- Sources ------------------------------------------------------------------------
-            SectionTitle("Fair odds sources")
+            SectionTitle("Where fair odds come from")
             Hint("Each is called only when you scan. Polymarket and Kalshi need no key.")
             SwitchRow(
                 "Pinnacle (pinnapi)",
