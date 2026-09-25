@@ -62,4 +62,37 @@ class LiveNovigSmokeTest {
         r.opportunities.take(8).forEach { println("LIVE BOARD: ${it.eventName} | ${it.selection} | take ${it.ladder.firstOrNull()?.price}") }
         assertTrue(batch.failed == 0)
     }
+
+    /**
+     * A real v0.6.0 scan with only the free, keyless sources: Novig's board, Polymarket and Kalshi
+     * fair odds, paced Novig books. Prints how many games each source matched, how many books the
+     * line cap asked for, how long it took, and the best edges found.
+     */
+    @Test
+    fun `real scan - free sources match Novig games and books stay paced`() = runBlocking {
+        assumeTrue(System.getenv("VIGILANT_LIVE") == "1")
+        val http = OkHttpClient()
+        val json = Json { ignoreUnknownKeys = true }
+        val novig = NovigPublicClient(http, json)
+        val scanner = com.tjshea.vigilant.data.scanner.Scanner(novig)
+        val sources = listOf(
+            com.tjshea.vigilant.data.reference.PolymarketClient(http, json),
+            com.tjshea.vigilant.data.reference.KalshiClient(http, json),
+        )
+        for (league in (System.getenv("VIGILANT_LIVE_LEAGUES") ?: "NFL,MLB").split(',')) {
+            val s = ScanSettings(leagues = setOf(league), minEvPercent = 0.0)
+            val t0 = System.currentTimeMillis()
+            val r = scanner.scan(s, sources)
+            val secs = (System.currentTimeMillis() - t0) / 1000.0
+            val res = r.result
+            println("LIVE SCAN $league: ${secs}s, novig games=${res?.stats?.novigEvents}, matched=${res?.stats?.matchedEvents}, " +
+                "markets=${res?.stats?.marketsPriced}, books fetched=${r.booksFetched}+${r.booksNotModified} cache=${r.booksFromCache}, errors=${r.errors}")
+            r.sources.forEach { println("LIVE SCAN $league source ${it.name}: leagues fetched=${it.fetched} matched=${it.matched} error=${it.error}") }
+            res?.games?.filter { it.refEvent == null }?.take(5)?.forEach { println("LIVE SCAN $league UNMATCHED: ${it.event.description}") }
+            res?.feed(s)?.take(6)?.forEach { o ->
+                println("LIVE SCAN $league EDGE: ${"%.2f".format((o.evPercent ?: 0.0) * 100)}% ${o.selection} (${o.marketLabel}) take ${o.quote?.price} fair ${"%.3f".format(o.fairProbability)} from ${o.fair?.booksUsed}")
+            }
+            assertTrue(r.errors.none { it.contains("429") })
+        }
+    }
 }
