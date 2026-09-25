@@ -53,4 +53,21 @@ class TeamMatcherTest {
         assertNull(TeamMatcher.firstLabelIsAway("XYZ", "QQQ", "Baltimore Ravens", "Dallas Cowboys"))
         assertTrue(TeamMatcher.abbreviationScore("Luis Hernandez", "Luis Hernandez") == 0)
     }
+
+    @Test
+    fun `a school qualifier on one side means a different school`() {
+        // Full test 2026-09-25: "Texas" used to score 1.0 against "Texas Tech Red Raiders".
+        assertTrue(TeamMatcher.similarity("Texas", "Texas Tech Red Raiders") < 0.5)
+        assertTrue(TeamMatcher.similarity("Kansas", "Kansas State Wildcats") < 0.5)
+        assertTrue(TeamMatcher.similarity("Kansas State", "Kansas Jayhawks") < 0.5)
+        assertTrue(TeamMatcher.similarity("Texas", "Texas A&M Aggies") < 0.5)
+        assertEquals(1.0, TeamMatcher.similarity("Texas A&M", "Texas A&M Aggies"), 0.0)
+        assertEquals(1.0, TeamMatcher.similarity("Mississippi State", "Mississippi State Bulldogs"), 0.0)
+        assertEquals(1.0, TeamMatcher.similarity("Texas", "Texas Longhorns"), 0.0)
+    }
+
+    @Test
+    fun `closeness prefers the name with fewer extra words`() {
+        assertTrue(TeamMatcher.closeness("Miami Florida", "Miami Hurricanes") > TeamMatcher.closeness("Miami Florida", "Miami (OH) RedHawks"))
+    }
 }

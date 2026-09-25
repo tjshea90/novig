@@ -28,6 +28,7 @@ object TeamMatcher {
         "new york" to "ny",
         "saint " to "st ",
         "manchester" to "man",
+        "a and m" to "am",
     )
 
     private val ALIASES = mapOf(

@@ -185,4 +185,48 @@ class PlannerPricingTest {
         assertEquals(dal.depth!!.dollarCost, dal.suggestedStake!!, 1e-9)
         assertTrue(Odds.probabilityToAmerican(dal.quote!!.price) == 160)
     }
+
+    private fun ref(id: String, sport: String, away: String, home: String, start: Long) =
+        RefEvent(id, sport, start, home = home, away = away, markets = emptyList())
+
+    @Test
+    fun `same-slot college games never cross-match on shared school words`() {
+        val t = Fixtures.START_MS
+        val novig = listOf(
+            NovigEvent("n1", "FOOTBALL", "NCAAF", "OPEN_PREGAME", "Texas @ Oklahoma", t),
+            NovigEvent("n2", "FOOTBALL", "NCAAF", "OPEN_PREGAME", "Texas Tech @ Oklahoma State", t),
+        )
+        val refs = mapOf("americanfootball_ncaaf" to RefSnapshot("americanfootball_ncaaf", listOf(
+            // Listed "wrong way round" first, so a first-come match would pick the wrong one.
+            ref("r2", "americanfootball_ncaaf", "Texas Tech Red Raiders", "Oklahoma State Cowboys", t),
+            ref("r1", "americanfootball_ncaaf", "Texas Longhorns", "Oklahoma Sooners", t),
+        ), now))
+        val m = Planner.matchEvents(novig, refs).associate { it.event.eventId to it.refEvent?.id }
+        assertEquals("r1", m["n1"])
+        assertEquals("r2", m["n2"])
+    }
+
+    @Test
+    fun `a missing game is never matched to a different game that shares only city names`() {
+        val t = Fixtures.START_MS
+        val novig = listOf(NovigEvent("n", "BASEBALL", "MLB", "OPEN_PREGAME", "New York Yankees @ Chicago Cubs", t))
+        val refs = mapOf("baseball_mlb" to RefSnapshot("baseball_mlb", listOf(ref("r", "baseball_mlb", "New York Mets", "Chicago White Sox", t)), now))
+        assertNull(Planner.matchEvents(novig, refs).single().refEvent)
+    }
+
+    @Test
+    fun `in a baseball series Friday's game is never priced with Saturday's line`() {
+        val fri = Fixtures.START_MS
+        val novig = listOf(NovigEvent("fri", "BASEBALL", "MLB", "OPEN_PREGAME", "Chicago Cubs @ Boston Red Sox", fri))
+        // The book feed no longer lists Friday's game; only Saturday's (24h later) remains.
+        val refs = mapOf("baseball_mlb" to RefSnapshot("baseball_mlb", listOf(ref("sat", "baseball_mlb", "Chicago Cubs", "Boston Red Sox", fri + 24 * 3_600_000L)), now))
+        assertNull(Planner.matchEvents(novig, refs).single().refEvent)
+    }
+
+    @Test
+    fun `a game past its start time is dropped even if the catalog still says pregame`() {
+        val started = event.copy(eventId = "started", startsTs = now - 10 * 60_000L)
+        assertTrue(Planner.eligibleEvents(listOf(started), sharpOnly, now).isEmpty())
+        assertEquals(1, Planner.eligibleEvents(listOf(started), sharpOnly.copy(includeLive = true), now).size)
+    }
 }

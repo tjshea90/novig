@@ -68,6 +68,12 @@ data class Plan(
 object Planner {
 
     private const val MIN_TEAM_SIMILARITY = 0.5
+
+    /**
+     * Both teams must clear [MIN_TEAM_SIMILARITY] AND together reach this. Two city-only matches
+     * (Yankees/Mets + Cubs/White Sox = 0.5 + 0.5) never pair a game with a different game.
+     */
+    private const val MIN_EVENT_SIMILARITY = 1.5
     private const val NOVIG_ONLY_EVENT_CAP = 40
 
     fun eligibleEvents(events: List<NovigEvent>, settings: ScanSettings, now: Long): List<NovigEvent> {
@@ -141,8 +147,8 @@ object Planner {
                     val hh = TeamMatcher.similarity(matchup.home, r.home)
                     val ah = TeamMatcher.similarity(matchup.away, r.home)
                     val ha = TeamMatcher.similarity(matchup.home, r.away)
-                    val straight = if (aa >= MIN_TEAM_SIMILARITY && hh >= MIN_TEAM_SIMILARITY) aa + hh else 0.0
-                    val swapped = if (ah >= MIN_TEAM_SIMILARITY && ha >= MIN_TEAM_SIMILARITY) ah + ha else 0.0
+                    val straight = if (aa >= MIN_TEAM_SIMILARITY && hh >= MIN_TEAM_SIMILARITY && aa + hh >= MIN_EVENT_SIMILARITY) aa + hh else 0.0
+                    val swapped = if (ah >= MIN_TEAM_SIMILARITY && ha >= MIN_TEAM_SIMILARITY && ah + ha >= MIN_EVENT_SIMILARITY) ah + ha else 0.0
                     val best = maxOf(straight, swapped)
                     if (best <= 0.0) continue
                     val isSwapped = swapped > straight
