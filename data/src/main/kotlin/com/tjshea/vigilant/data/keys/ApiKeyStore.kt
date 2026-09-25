@@ -6,6 +6,9 @@ package com.tjshea.vigilant.data.keys
  */
 enum class ApiProvider(val storageKey: String, val displayName: String) {
     THE_ODDS_API("the_odds_api", "The Odds API"),
+
+    /** pinnapi.com's Pinnacle feed. The free trial key allows 100 requests a day. */
+    PINNAPI("pinnapi", "Pinnacle (pinnapi)"),
 }
 
 /**

@@ -50,8 +50,20 @@ data class ScanSettings(
     /** Re-use The Odds API's last odds for this long instead of paying credits on every scan. */
     val oddsApiReuseMinutes: Int = 15,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
-    val exchangeMaxSpread: Double = 0.05,
+    val exchangeMaxSpread: Double = 0.03,
+    /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
+    val schema: Int = 0,
 ) {
+    /**
+     * Brings settings saved by an older version up to date. v0.6.0 (schema 2) made Polymarket and
+     * Kalshi sharp by default; a saved v0.5 file still says Pinnacle only, so they're added once.
+     */
+    fun migrate(): ScanSettings {
+        var s = this
+        if (s.schema < 2) s = s.copy(sharpBooks = s.sharpBooks + setOf("polymarket", "kalshi"), schema = 2)
+        return s
+    }
+
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
         method = devigMethod,

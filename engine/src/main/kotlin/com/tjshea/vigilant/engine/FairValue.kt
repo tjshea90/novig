@@ -38,11 +38,15 @@ data class FairSettings(
     }
 
     companion object {
-        val DEFAULT_SHARP_BOOKS: Set<String> = setOf("pinnacle")
+        /**
+         * Pinnacle, plus the two exchanges: their prices are set by traders with money on the
+         * line, and a tight (≤3¢) exchange quote is as sharp as a low-vig book (RESEARCH.md §11).
+         */
+        val DEFAULT_SHARP_BOOKS: Set<String> = setOf("pinnacle", "polymarket", "kalshi")
 
-        /** Books commonly treated as sharp that The Odds API carries. */
+        /** Books commonly treated as sharp: The Odds API's sharp books, plus the exchanges. */
         val KNOWN_SHARP_CANDIDATES: List<String> =
-            listOf("pinnacle", "betonlineag", "lowvig", "betfair_ex_eu", "matchbook")
+            listOf("pinnacle", "polymarket", "kalshi", "betonlineag", "lowvig", "betfair_ex_eu", "matchbook")
     }
 }
 
