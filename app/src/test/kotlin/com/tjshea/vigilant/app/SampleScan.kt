@@ -91,6 +91,20 @@ object SampleScan {
 
     private fun sportKey(league: String) = if (league == "NFL") "americanfootball_nfl" else "baseball_mlb"
 
+    /** An over/under on one team or player for game [id], quoted by Kalshi and Pinnacle. */
+    private fun overUnder(id: String, type: String, description: String, line: Double, bids: Pair<Int, Int>, kalshi: Pair<Double, Double>, kind: LineKind, subject: String, stat: String? = null) {
+        val mid = "$id-$type-$line"
+        market(mid, id, type, events.first { it.eventId == id }.startsTs, "$mid-o" to "Over ${Planner.fmt(line)}", "$mid-u" to "Under ${Planner.fmt(line)}")
+            .let { markets[markets.indexOf(it)] = it.copy(description = description) }
+        book(mid, "$mid-o", bids.first, "$mid-u", bids.second)
+        val list = refs.getValue("americanfootball_nfl")
+        val i = list.indexOfFirst { it.id == "r-$id" }
+        val extra = listOf("kalshi" to "Kalshi", "pinnacle" to "Pinnacle").mapIndexed { n, (key, title) ->
+            RefBookMarket(key, title, kind, listOf(RefQuote(Side.OVER, kalshi.first + n * 0.02, line), RefQuote(Side.UNDER, kalshi.second - n * 0.02, line)), NOW - 3 * 60_000, 0, subject, stat)
+        }
+        list[i] = list[i].copy(markets = list[i].markets + extra)
+    }
+
     init {
         game("NFL", "FOOTBALL", "g1", "Baltimore Ravens", "Dallas Cowboys", "BAL", "DAL", NOW + 50 * HOUR,
             mlBids = 380 to 615, refMl = 2.45 to 1.62,
@@ -101,6 +115,8 @@ object SampleScan {
             mlBids = 440 to 545, refMl = 2.20 to 1.72, total = Triple(44.5, 480 to 505, 1.95 to 1.92))
         game("MLB", "BASEBALL", "g4", "Chicago Cubs", "Boston Red Sox", "CHC", "BOS", NOW + 7 * HOUR,
             mlBids = 490 to 495, refMl = 1.98 to 1.90, total = Triple(8.5, 500 to 475, 2.02 to 1.84))
+        overUnder("g1", "PASSING_YARDS", "Lamar Jackson 224.5 PASSING_YARDS", 224.5, 455 to 500, 1.87 to 2.02, LineKind.PLAYER_PROP, "Lamar Jackson", "PASSING_YARDS")
+        overUnder("g1", "TEAM_TOTAL", "Dallas Cowboys 20.5 TEAM_TOTAL", 20.5, 520 to 470, 2.02 to 1.84, LineKind.TEAM_TOTAL, RefBookMarket.HOME)
         game("MLB", "BASEBALL", "g5", "Baltimore Orioles", "New York Yankees", "BAL", "NYY", NOW + 6 * HOUR,
             mlBids = 560 to 430, refMl = 1.70 to 2.25)
     }
