@@ -156,7 +156,7 @@ fun SettingsScreen(
             SwitchRow(
                 "Pinnacle (pinnapi)",
                 if (state.pinnapiKeys.isEmpty()) "Needs a free key from pinnapi.com (100 requests a day, about 1–2 per scan)."
-                else "Key ${mask(state.pinnapiKeys.first())} · about 1–2 of its 100 daily requests per scan.",
+                else "About 1–2 of a key's 100 daily requests per scan. Keys are used in order.",
                 s.usePinnacle,
             ) { v -> onUpdate { it.copy(usePinnacle = v) } }
             if (s.usePinnacle) {
