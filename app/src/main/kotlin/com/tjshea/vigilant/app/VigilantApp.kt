@@ -17,6 +17,7 @@ import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.PinnapiClient
 import com.tjshea.vigilant.data.reference.PolymarketClient
 import com.tjshea.vigilant.data.reference.ReferenceSource
+import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.Scanner
@@ -73,6 +74,8 @@ class AppContainer(app: Application) {
     private val polymarket = PolymarketClient(http, json, usage = usage)
     private val kalshi = KalshiClient(http, json, usage = usage)
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
+    /** Sportsbook player props: the same client, key pool and meter as the main lines. */
+    private val bookProps = OddsApiPropsSource(oddsApi)
     private val pinnacle = PinnapiClient(http, json, KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage))
 
     /**
@@ -100,6 +103,9 @@ class AppContainer(app: Application) {
         if (settings.usePinnacle && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) add(pinnacle)
         if (settings.usePolymarket) add(polymarket)
         if (settings.useKalshi) add(kalshi)
-        if (settings.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty()) add(oddsApi)
+        if (settings.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty()) {
+            add(oddsApi)
+            if (settings.useBookProps) add(bookProps)
+        }
     }
 }

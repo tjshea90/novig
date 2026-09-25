@@ -56,7 +56,7 @@ class AltMarketsTest {
         assertTrue(PlayerNames.same("CJ Donaldson Jr.", "C.J. Donaldson"))
         assertTrue(PlayerNames.same("A'ja Wilson", "Aja Wilson"))
         assertTrue(PlayerNames.same("Cam Ward", "Cameron Ward"))
-        assertFalse(PlayerNames.same("Marquise Brown", "Hollywood Brown"))
+        assertFalse(PlayerNames.same("Marquise Brown", "Antonio Brown"))
         assertFalse(PlayerNames.same("Josh Allen", "Kyle Allen"))
         assertFalse(PlayerNames.same("Bryce Young", "Bryce Young Jr. Smith"))
     }
