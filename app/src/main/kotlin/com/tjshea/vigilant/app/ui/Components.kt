@@ -95,7 +95,7 @@ fun LeagueChips(all: List<League>, selected: Set<String>, onToggle: (String) -> 
     }
 }
 
-/** "Scanned 3m ago · 488 credits", or the scan's progress while one runs. */
+/** "Scanned 3m ago", or the scan's progress while one runs. What's left per API is the usage strip. */
 @Composable
 fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier) {
     val now = rememberNow(15_000)
@@ -125,7 +125,6 @@ fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier) {
                     scanned == null -> append("Not scanned yet")
                     else -> append("Scanned ${Format.age(scanned, now)}")
                 }
-                status.creditsRemaining?.let { append("  ·  $it credits") }
                 status.backoffSeconds?.let { append("  ·  Novig slowed us ${it}s") }
             },
             style = MaterialTheme.typography.labelMedium,
