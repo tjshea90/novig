@@ -24,7 +24,7 @@ data class RefBookMarket(
     val kind: LineKind,
     val quotes: List<RefQuote>,
     val lastUpdateMs: Long?,
-    /** 0 = full game, 1 = 1st half (the first 5 innings in baseball). */
+    /** 0 = full game, 1 = 1st half (the first 5 innings in baseball), [PERIOD_FIRST_INNING]. */
     val period: Int = 0,
     /** [LineKind.TEAM_TOTAL]: "HOME" or "AWAY". [LineKind.PLAYER_PROP]: the player's name. */
     val subject: String? = null,
@@ -41,6 +41,13 @@ data class RefBookMarket(
             LineKind.SPREAD -> quotes.firstOrNull { it.side == Side.HOME }?.point
             LineKind.TOTAL, LineKind.TEAM_TOTAL, LineKind.PLAYER_PROP -> quotes.firstOrNull { it.side == Side.OVER }?.point
         }
+
+    companion object {
+        const val HOME_SUBJECT_PLACEHOLDER = 0 // (kept free: HOME/AWAY below are the team-total subjects)
+
+        /** Baseball's 1st inning (Novig's FIRST_INNING_TOTAL: "NRFI/YRFI", over/under 0.5 runs). */
+        const val PERIOD_FIRST_INNING = 3
+    }
 
     /** The same quote seen from the other team's side (home and away swapped). */
     fun flipped(): RefBookMarket = copy(
