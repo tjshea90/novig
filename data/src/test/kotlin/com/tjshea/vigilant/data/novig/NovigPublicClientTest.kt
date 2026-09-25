@@ -220,4 +220,23 @@ class NovigPublicClientTest {
         c.books(listOf("m4"))
         assertEquals(before + 1, server.requestCount)
     }
+
+    @Test
+    fun `a key that can't sign (missing from the phone's keystore) falls back to public prices`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = bookFor(request)
+        }
+        val broken = object : com.tjshea.vigilant.data.novig.signing.NovigSigningKey {
+            override val keyId = "kid-gone"
+            override val algorithm = com.tjshea.vigilant.data.novig.signing.NovigKeyAlgorithm.P256
+            override fun sign(message: ByteArray): ByteArray = error("Novig key alias is missing from the Keystore; run setup again")
+        }
+        val c = client().also {
+            it.keyed = com.tjshea.vigilant.data.novig.signing.NovigSignedClient(OkHttpClient(), json, broken, server.url("").toString().trimEnd('/'))
+        }
+        val batch = c.books(listOf("m1", "m2"))
+        assertEquals(2, batch.fetched)
+        assertEquals(0, batch.viaKey)
+        assertTrue(batch.keyProblem!!, batch.keyProblem!!.contains("connect it again"))
+    }
 }
