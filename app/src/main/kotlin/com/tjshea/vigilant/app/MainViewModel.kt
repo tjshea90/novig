@@ -10,6 +10,7 @@ import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
 import com.tjshea.vigilant.data.scanner.Opportunity
+import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
