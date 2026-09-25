@@ -16,8 +16,10 @@ the spec at `https://docs.novig.com/api-reference/spec-files/openapi-v3-target.j
 This repo is **public**, so the docs are summarized here, not copied in. Refetch
 them when you need exact field names.
 
-**Status (2026-09-25):** Tj has beta access. As of this writing he has **not yet**
-created any key. Nothing in `app/`/`data/` uses v3 yet (see §9).
+**Status (2026-09-25, later):** Vigilant v0.4.0 uses the public routes for all Novig
+data (`data/.../novig/NovigPublicClient.kt`). Tj has beta access but has **not yet**
+created a key, so no signed route has been exercised. §9 is now history: the stale
+v2/GraphQL clients it lists were deleted in v0.4.0.
 
 ---
 
@@ -170,6 +172,27 @@ everything. The websocket (§6) is the right tool for broad coverage.
   `"ATL"`). SPREAD names look like `"DAL +20.5"`. Map them to full names through the event
   `description`, and to the reference leg by team, never by array position (the
   outcomes array has **no fixed order**).
+
+### 5.1 Measured live, 2026-09-25 (not in the docs)
+
+- **Burst limit on public routes.** A client that had just pulled a large catalog got
+  `429` + `Retry-After: 1` on book requests at 4-way concurrency. The same pattern
+  measured cold ran 30 books in 1.7s (~17/s) and 25 sequential books (~5/s) with no 429s.
+  The limit is short and forgiving. `NovigPublicClient.books()` pauses for Retry-After and
+  retries each book up to twice. A Retry-After over 5s (or an HTML 403) stops the batch
+  and serves cached books.
+- **Outcome naming.** Across NFL/NCAAF/MLB/MLS/EPL/UFC, 3,871 of 3,871 live game-line
+  outcomes resolved to the correct team with `TeamMatcher` (abbreviations like DAL/MSST/
+  NMSU/UNM/UK/USA, fighter initials like "L. Hernandez", 3-way "Newcastle
+  MONEYLINE_3_WAY_WIN"). Re-check with `VIGILANT_LIVE=1 ./gradlew :data:test --tests
+  '*LiveNovigSmokeTest'`.
+- **TOTAL descriptions** read "BAL @ NYY t10.5". Outcomes are "Over 10.5" / "Under 10.5".
+- **Catalog size.** NCAAF game lines are ~5,000+ markets (2.3MB raw, ~375KB gzipped).
+  `startsBefore` (days-ahead window) cuts this a lot.
+- **The Odds API now lists Novig** as bookmaker `novig` (region `us_ex`), as of its
+  bookmaker page on 2026-09-25. It isn't needed, since we read Novig's own book directly. It must
+  never be used as a *reference* book (it's the thing being priced).
+  `TheOddsApiClient` filters it out.
 
 ## 6. Websocket: `GET /v3/ws` (signed; `trading` or `trading::read` key)
 

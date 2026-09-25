@@ -267,6 +267,22 @@ re-diagnose these from scratch:
   belongs on state changes, not unconditionally on every iteration, since
   each line is a separate event.
 
+### Build trap 6 (2026-09-25): building `app` locally is possible, but needs two local-only steps
+
+The container has no Android SDK by default and Maven Central answers 429 to Gradle here.
+Neither fix belongs in the repo:
+1. SDK: download `commandlinetools-linux-*_latest.zip` from dl.google.com into
+   `/opt/android-sdk/cmdline-tools/latest`, accept licenses, then
+   `sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"`.
+   Build with `ANDROID_HOME=/opt/android-sdk`.
+2. Mirror: `~/.gradle/init.d/mirror.gradle.kts` prepends
+   `https://maven-central.storage-download.googleapis.com/maven2/` (Google's Maven Central
+   mirror) to plugin and dependency repositories.
+With both in place, `./gradlew :engine:test :data:test :app:testDebugUnitTest` runs every test,
+including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every screen to
+`app/screenshots/` (gitignored), and `:app:assembleRelease` builds the R8-minified APK
+(~2.8MB). CI stays the authority on green.
+
 ## Locked architecture decisions
 
 - **Novig data comes from Novig's official v3 API. Read
