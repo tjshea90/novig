@@ -67,7 +67,7 @@ class NovigStream(
         _state.value = StreamState.Connecting
         val signed = signer.signedRequest("GET", "/v3/ws")
         val request = signed.newBuilder().url(wsUrl).build()
-        tokens = STREAM_CAPACITY - UPGRADE_COST
+        tokens = (STREAM_CAPACITY - UPGRADE_COST).toDouble()
         tokensAt = clock()
         socket = http.newWebSocket(request, Listener())
     }

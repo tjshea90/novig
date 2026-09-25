@@ -1116,8 +1116,12 @@ app — ship after milestone A even if nothing else lands):
 - [ ] A6 CI green, ship v0.4.0, send link.
 
 ### Milestone B — Novig API key (opt-in, "soon")
-- [ ] B1 `data`: `NOVIG-V3` signer (Ed25519 + P-256), tested against
-      Novig's published signing vectors.
+- [x] B1 `data`: `NOVIG-V3` signer (Ed25519 + P-256), tested against
+      Novig's published signing vectors. DONE: NovigV3Test — all 30 vectors'
+      string_to_sign exact, Novig's published signatures verify over our strings,
+      Ed25519/P-256 PEM round trips (BouncyCastle, deterministic ECDSA, DER).
+      NovigSignedClient (echo/subaccounts/keys) + plain-English 401/403/423/451
+      advice (NovigSignedClientTest). StreamBooks seq/gap logic (StreamBooksTest).
 - [ ] B2 `app`: Settings → Novig API: paste key ID + PEM (encrypted at rest),
       "Test connection" via `POST /v3/echo` with plain-English 401/451/423
       messages.
