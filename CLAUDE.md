@@ -19,10 +19,10 @@ because it already has.
 **The project's own standing rules** (what's actually decided about the
 platform, target hardware, and purpose; what's still open) are written in
 full in `BRIEF.md` and printed at session start by `bootstrap.sh`. As of
-this writing there is no app code and no build system yet — the first job on
-this project was standing up everything below. Do not treat `BRIEF.md`'s TBD
-sections as settled just because they're written down; they're marked TBD on
-purpose.
+this writing (2026-09-25) the app is **Vigilant v0.4+**: Kotlin + Compose,
+modules `engine` / `data` / `app`, built and released by GitHub Actions. Do not
+treat `BRIEF.md`'s remaining TBD sections as settled just because they're
+written down; they're marked TBD on purpose.
 
 ## FIRST ACTION OF EVERY SESSION — install the hooks, don't assume they exist
 
@@ -201,13 +201,11 @@ not hard-coded — see the comment in `tools/ckpt.sh`), records green or red
 honestly without gating, rewrites `CHECKPOINT.md`, commits and pushes.
 Skipping it is how a handoff loses a day even though every file was saved.
 
-**3. Milestone — `bash ship.sh "note"`.** The full release gate. Right now,
-before a build system exists, this mostly means "the same fast checks as
-`ckpt.sh`, plus an honest statement that there is nothing to build yet" —
-see `ship.sh`'s own header. Fill in the real gate (a full test suite,
-version-code monotonicity, the GitHub Actions trigger) the day there is an
-actual app to gate, following the shape already proven on Portfolio's
-`ship.sh`.
+**3. Milestone — `bash ship.sh "note"`.** The release gate: fast checks, the
+full Gradle test suite (everything CI runs when a local SDK exists, per
+BRIEF.md build trap 6), versionCode strictly above every BUILDLOG.md entry,
+then push. Then trigger `release.yml`, confirm the Release, and run
+`tools/record-release.sh` (see "Releasing").
 
 ## Before your usage runs out
 
@@ -354,26 +352,15 @@ Portfolio's `CLAUDE.md` "Releasing" section and `ship.sh`/`.github/workflows/and
 as the reference implementation once there is an actual Android project to
 build.
 
-**None of the mechanics below exist yet** — there is no `app/build.gradle.kts`,
-no signing keystore, no `.github/workflows/*.yml` for this repo. Build them
-in this order, the day real app code exists:
+**This is built and working** (since v0.1.0): `app/build.gradle.kts` signs with
+the committed keystore, `.github/workflows/release.yml` builds, verifies the
+certificate, tags server-side and publishes the Release, and `ship.sh` gates it.
+The order per release:
 
-1. Stand up the Android project scaffold and decide the toolchain (see
-   `BRIEF.md`'s open TBDs).
-2. Generate the signing keystore, record its certificate fingerprint in
-   `BRIEF.md` immediately (never regenerate it afterward — see `BRIEF.md`),
-   and add it to GitHub Secrets (never commit it — see `.gitignore`).
-3. Write `.github/workflows/android.yml` (or equivalent) modeled on
-   Portfolio's: build, sign with the Secret-held keystore, verify the
-   certificate on the artifact it just produced, create the release tag
-   server-side (a Claude container gets HTTP 403 pushing `refs/tags/*` —
-   confirmed on Portfolio, and there's no reason to expect this container's
-   egress policy to differ), publish as a GitHub Release.
-4. Fill in `ship.sh`'s real gate: a full test suite, a versionCode strictly
-   higher than every one in `BUILDLOG.md` (this file already exists, empty,
-   ready for the first entry), then trigger the workflow via
-   `mcp__github__actions_run_trigger` and confirm green via
-   `mcp__github__get_release_by_tag` before telling Tj anything.
+1. `bash ship.sh "note"` after CI (`ci.yml`) is green on the commit.
+2. Trigger `release.yml` on `main` (`mcp__github__actions_run_trigger`).
+3. Confirm with `mcp__github__get_release_by_tag`.
+4. `bash tools/record-release.sh vX.Y.Z <code> "note"`.
 5. Send Tj the Release page link — plain tappable text on its own line,
    **never inside a fenced code block**. A code block reads as copyable text
    in some clients but is not a clickable, long-press-copyable link the way
@@ -389,20 +376,18 @@ into the right account in that browser, not regenerating the link.
 
 ## Building the APK
 
-**Not possible yet.** `bash build.sh` does not exist because there is no
-Android project scaffold to build. Once one exists, add a `build.sh` (for a
-local debug build, mirroring fantasy-football's) or rely on `ship.sh`'s
-`--local` fallback (mirroring Portfolio's) — pick whichever matches the
-toolchain decision in `BRIEF.md`.
+CI builds the real release (see "Releasing"). A local build is possible once
+BRIEF.md build trap 6 is set up: `ANDROID_HOME=/opt/android-sdk ./gradlew
+:app:assembleRelease` (R8-minified, ~4.6MB). Use it to check a change compiles
+and to render screenshots, not to hand Tj an APK.
 
 ## This repo's visibility
 
-Not yet confirmed as part of this work — check with the GitHub tools
-available (repo visibility, e.g. via a repository-info call) before assuming
-public or private, since it changes both the secret-scanning stakes (a
-public repo makes a leaked credential immediately and permanently exposed —
-this account's fantasy-football repo is public and treats every checkpoint
-accordingly) and the Release-link behavior above.
+**Public** (confirmed 2026-09-25: the GitHub API answers anonymously). A leaked
+credential is exposed immediately and permanently, and Release links work for
+anyone. Test fixtures that must contain key-shaped text carry the scanner's
+`FAKE` marker on the same line (see `tools/secretscan.sh`); never commit a real
+key.
 
 ## Novig API — permanent research memory
 

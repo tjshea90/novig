@@ -70,13 +70,22 @@ if [ ! -f app/build.gradle.kts ]; then
   exit 1
 fi
 
-echo "  ..    running engine+data's full test suite (app module needs CI — see header)"
-if ! ./gradlew --configure-on-demand :engine:test :data:test --console=plain > /tmp/ship-gradle-test.log 2>&1; then
-  echo "  FAIL  engine/data tests are red. Log:"
+# With a local Android SDK (BRIEF.md build trap 6) run everything CI runs, including the
+# Robolectric UI tests; without one, engine+data only and CI covers `app`.
+if [ -n "${ANDROID_HOME:-}" ] && [ -d "${ANDROID_HOME}/platforms" ]; then
+  echo "  ..    running the full test suite (engine, data, app incl. UI tests)"
+  GRADLE_TASKS="test"
+else
+  echo "  ..    running engine+data's test suite (no local Android SDK; app is covered by CI)"
+  GRADLE_TASKS="--configure-on-demand :engine:test :data:test"
+fi
+# shellcheck disable=SC2086
+if ! ./gradlew $GRADLE_TASKS --console=plain > /tmp/ship-gradle-test.log 2>&1; then
+  echo "  FAIL  tests are red. Log:"
   tail -40 /tmp/ship-gradle-test.log
   exit 1
 fi
-echo "  OK    engine+data tests green"
+echo "  OK    tests green"
 
 # ---- versionCode must be strictly higher than every code already shipped ------
 VERSION_NAME="$(grep -oE 'versionName = "[^"]+"' app/build.gradle.kts | head -1 | sed -E 's/versionName = "([^"]+)"/\1/')"
