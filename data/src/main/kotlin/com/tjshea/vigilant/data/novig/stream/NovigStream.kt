@@ -65,8 +65,13 @@ class NovigStream(
     fun connect() {
         if (socket != null) return
         _state.value = StreamState.Connecting
-        val signed = signer.signedRequest("GET", "/v3/ws")
-        val request = signed.newBuilder().url(wsUrl).build()
+        val request = try {
+            signer.signedRequest("GET", "/v3/ws").newBuilder().url(wsUrl).build()
+        } catch (e: Exception) {
+            // The Keystore key is gone (e.g. settings restored onto a new phone) or unusable.
+            _state.value = StreamState.Failed("This phone can't sign with the saved Novig key. Reconnect it in Settings.", clock())
+            return
+        }
         tokens = (STREAM_CAPACITY - UPGRADE_COST).toDouble()
         tokensAt = clock()
         socket = http.newWebSocket(request, Listener())

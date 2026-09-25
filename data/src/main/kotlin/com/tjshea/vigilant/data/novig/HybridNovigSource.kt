@@ -47,7 +47,10 @@ class HybridNovigSource(
         }
         val due = synchronized(lastRest) { missing.filter { now - (lastRest[it] ?: 0L) >= restFallbackMs } }
         val restBatch = if (due.isNotEmpty()) rest.books(due) else null
-        synchronized(lastRest) { due.forEach { lastRest[it] = now } }
+        synchronized(lastRest) {
+            due.forEach { lastRest[it] = now }
+            if (lastRest.size > 5_000) lastRest.entries.removeIf { now - it.value > restFallbackMs }
+        }
         val cachedRest = missing.filter { it !in due }.mapNotNull { id -> rest.cached(id)?.let { id to it } }.toMap()
         return BookBatch(
             books = fromStream + cachedRest + (restBatch?.books ?: emptyMap()),

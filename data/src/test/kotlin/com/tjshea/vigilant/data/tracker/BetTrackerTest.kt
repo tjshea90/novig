@@ -73,4 +73,14 @@ class BetTrackerTest {
         val noPrice = dal(scan()).copy(quote = null)
         assertNull(t.track(noPrice, 5.0))
     }
+
+    @Test
+    fun `an unchanged scan doesn't rewrite the bets file`() = runTest {
+        val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
+        t.track(dal(scan()), stake = 10.0)
+        assertEquals(true, t.observe(scan()))
+        // Streaming re-prices every 2s: identical results must not touch the disk again.
+        assertEquals(false, t.observe(scan()))
+        assertEquals(true, t.observe(scan(pinDal = 2.30)))
+    }
 }

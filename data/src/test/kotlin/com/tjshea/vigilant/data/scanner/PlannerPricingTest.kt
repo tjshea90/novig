@@ -229,4 +229,12 @@ class PlannerPricingTest {
         assertTrue(Planner.eligibleEvents(listOf(started), sharpOnly, now).isEmpty())
         assertEquals(1, Planner.eligibleEvents(listOf(started), sharpOnly.copy(includeLive = true), now).size)
     }
+
+    @Test
+    fun `the feed drops a league the moment it's deselected, before any refetch`() {
+        val s = sharpOnly.copy(minEvPercent = 0.0)
+        val r = Pricing.price(Planner.plan(listOf(event), markets, refs, s, now), books, s, now)
+        assertTrue(r.feed(s).isNotEmpty())
+        assertTrue(r.feed(s.copy(leagues = setOf("MLB"))).isEmpty())
+    }
 }

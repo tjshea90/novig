@@ -93,4 +93,16 @@ class NovigStreamTest {
         until { stream.state.value is StreamState.Failed }
         assertTrue((stream.state.value as StreamState.Failed).message.contains("VPN"))
     }
+
+    @Test
+    fun `a key the phone can no longer sign with fails cleanly instead of crashing`() {
+        val broken = object : com.tjshea.vigilant.data.novig.signing.NovigSigningKey {
+            override val keyId = "k"
+            override val algorithm = com.tjshea.vigilant.data.novig.signing.NovigKeyAlgorithm.P256
+            override fun sign(message: ByteArray): ByteArray = error("Novig key alias is missing from the Keystore")
+        }
+        val stream = NovigStream(OkHttpClient(), NovigSignedClient(OkHttpClient(), Json, broken), scope)
+        stream.connect()
+        assertTrue((stream.state.value as StreamState.Failed).message.contains("Reconnect"))
+    }
 }

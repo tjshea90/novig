@@ -113,21 +113,18 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * Records the latest fair price for every pending bet the scan still sees, as long as the game
      * hasn't started. The last one written before the start is the closing line.
      */
-    suspend fun observe(result: ScanResult) {
+    suspend fun observe(result: ScanResult): Boolean {
         val now = clock()
         val byKey = result.opportunities.associateBy { it.market.marketId to it.outcome.outcomeId }
-        val current = store.read()
-        val touched = current.any { b ->
-            b.status == BetStatus.PENDING && now < b.startsTs && byKey[b.marketId to b.outcomeId]?.fairProbability != null
+        fun fresh(b: TrackedBet): Double? {
+            if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
+            val fair = byKey[b.marketId to b.outcomeId]?.fairProbability ?: return null
+            // Only a real change is worth a disk write. While streaming this runs every 2s.
+            return fair.takeIf { b.closingFair == null || kotlin.math.abs(it - b.closingFair) > 1e-9 }
         }
-        if (!touched) return
-        store.update { list ->
-            list.map { b ->
-                val o = byKey[b.marketId to b.outcomeId]
-                val fair = o?.fairProbability
-                if (b.status == BetStatus.PENDING && now < b.startsTs && fair != null) b.copy(closingFair = fair, closingSeenAtMs = now) else b
-            }
-        }
+        if (store.read().none { fresh(it) != null }) return false
+        store.update { list -> list.map { b -> fresh(b)?.let { b.copy(closingFair = it, closingSeenAtMs = now) } ?: b } }
+        return true
     }
 
     companion object {

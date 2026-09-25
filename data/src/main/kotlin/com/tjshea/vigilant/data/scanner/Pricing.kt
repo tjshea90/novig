@@ -85,7 +85,8 @@ data class ScanResult(
     fun feed(settings: ScanSettings): List<Opportunity> = opportunities
         .filter { o ->
             val ev = o.evPercent ?: return@filter false
-            ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
+            o.league.novigName in settings.leagues &&
+                ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
                 (settings.includeLive || !o.isLive) &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
         }
