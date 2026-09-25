@@ -67,6 +67,8 @@ class OddsApiPropsTest {
 
     private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
 
+    private fun keyUsage() = meter.flow.value.providers.getValue(QuotaPolicy.ODDS_API.id).keys.getValue("test-key")
+
     private fun client() = TheOddsApiClient(
         OkHttpClient(), KeyPool(QuotaPolicy.ODDS_API, { listOf("test-key") }, meter), json,
         server.url("/v4").toString().trimEnd('/'), clock = { now }, minIntervalMs = 0,
@@ -242,17 +244,20 @@ class OddsApiPropsTest {
         val c = client()
         val listed = c.events("americanfootball_nfl", now + 48 * hour)
         assertEquals(3, listed.value.size)
+        assertEquals(0, keyUsage().lastCost) // the game list costs nothing
         val odds = c.eventOdds("americanfootball_nfl", "oA", listOf("draftkings", "novig", "fanduel"), listOf("player_pass_yds", "player_receptions"))
         assertEquals(476, odds.remaining)
         val eventsCall = requests[0].requestUrl!!
-        assertEquals(Instant.ofEpochMilli(now + 48 * hour).toString().replace(".000", ""), eventsCall.queryParameter("commenceTimeTo"))
+        assertEquals("2026-09-27T09:06:40Z", eventsCall.queryParameter("commenceTimeTo"))
         val propsCall = requests[1].requestUrl!!
         assertEquals("draftkings,fanduel", propsCall.queryParameter("bookmakers"))
         assertEquals("player_pass_yds,player_receptions", propsCall.queryParameter("markets"))
         assertNull(propsCall.queryParameter("regions"))
         assertEquals("decimal", propsCall.queryParameter("oddsFormat"))
-        // The meter charged what the header said: 0 for the list, 2 for the props.
-        assertEquals(2, meter.book.value.providers[QuotaPolicy.ODDS_API.provider]!!.keys.values.single().used)
+        // The meter charged what the header said, and follows the server's count.
+        assertEquals(2, keyUsage().lastCost)
+        assertEquals(24, keyUsage().used)
+        assertEquals(476, keyUsage().remaining)
     }
 
     // ---- choosing games -----------------------------------------------------------------------
