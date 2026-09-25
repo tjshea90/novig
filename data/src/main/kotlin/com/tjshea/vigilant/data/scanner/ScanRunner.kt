@@ -4,11 +4,13 @@ import com.tjshea.vigilant.data.reference.ReferenceSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** A scan in flight, or the last one finished: what the screen and the scan notification show. */
 data class ScanRun(
@@ -47,6 +49,8 @@ class ScanRunner(private val scanner: Scanner, private val scope: CoroutineScope
         afterScan: suspend (ScanReport?) -> Unit = {},
     ): Boolean {
         if (job?.isActive == true) return false
+        // Shown again if this scan ends without a result of its own (Novig's board failed).
+        val before = _state.value.result?.takeIf { !it.partial }
         _state.update { it.copy(scanning = true, progress = ScanProgress("Starting"), settings = settings) }
         job = scope.launch {
             var report: ScanReport? = null
@@ -70,13 +74,13 @@ class ScanRunner(private val scanner: Scanner, private val scope: CoroutineScope
                     s.copy(
                         scanning = false,
                         progress = null,
-                        // A failed scan leaves the last good result up rather than a half-read one.
-                        result = done?.result ?: s.result?.takeIf { !it.partial },
+                        // A scan that failed leaves the last good result up, not a half-read one.
+                        result = done?.result ?: before,
                         report = done ?: s.report,
                         finished = s.finished + 1,
                     )
                 }
-                afterScan(done)
+                withContext(NonCancellable) { afterScan(done) }
             }
         }
         return true
