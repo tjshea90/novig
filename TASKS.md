@@ -1225,4 +1225,7 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
       "a book two feeds both carry is priced once", "a date-only feed matches on the
       Eastern date", "spreads and totals are capped per game"; live
       `LiveNovigSmokeTest` "real scan - free sources match Novig games".*
-- [ ] R6 Tests (unit + screenshots), CI green, ship, report to Tj.
+- [x] R6 Tests (unit + screenshots), CI green, ship, report to Tj.
+      *Done: 173 tests green locally and in CI run 36141456836; release run 36141782030
+      published v0.6.0 (code 10, 4.65MB): https://github.com/tjshea90/novig/releases/tag/v0.6.0.
+      Reported to Tj with the Q4/Q5 research answer and multi-key advice.*
