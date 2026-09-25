@@ -42,13 +42,6 @@ data class RefBookMarket(
             LineKind.TOTAL, LineKind.TEAM_TOTAL, LineKind.PLAYER_PROP -> quotes.firstOrNull { it.side == Side.OVER }?.point
         }
 
-    companion object {
-        const val HOME_SUBJECT_PLACEHOLDER = 0 // (kept free: HOME/AWAY below are the team-total subjects)
-
-        /** Baseball's 1st inning (Novig's FIRST_INNING_TOTAL: "NRFI/YRFI", over/under 0.5 runs). */
-        const val PERIOD_FIRST_INNING = 3
-    }
-
     /** The same quote seen from the other team's side (home and away swapped). */
     fun flipped(): RefBookMarket = copy(
         quotes = quotes.map {
@@ -64,6 +57,9 @@ data class RefBookMarket(
     companion object {
         const val HOME = "HOME"
         const val AWAY = "AWAY"
+
+        /** Baseball's 1st inning (Novig's FIRST_INNING_TOTAL: "NRFI/YRFI", over/under 0.5 runs). */
+        const val PERIOD_FIRST_INNING = 3
 
         fun flipSide(s: String?): String? = when (s) {
             HOME -> AWAY
