@@ -1653,3 +1653,14 @@ A few things to investigate or change for this app:
 <event>[exited with code 0]</event>
 </task-notification>
 ```
+
+## 2026-09-25T18:34:57Z
+```
+<task-notification>
+<task-id>bkef0et8w</task-id>
+<tool-use-id>toolu_01BGJTRdcL42V8fapzsFooMP</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/11c7e82a-35ad-51dc-8a28-9b3aea118644/tasks/bkef0et8w.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI on the new commit" completed (exit code 0)</summary>
+</task-notification>
+```
