@@ -1282,3 +1282,26 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
       names. EV%, Kelly and devig checked against OddsJam's definitions. 190 tests green;
       CI 36151518252; release 36151929213 → v0.7.0 (code 11):
       https://github.com/tjshea90/novig/releases/tag/v0.7.0*
+
+## Tj's request, 2026-09-25 ~15:20Z — alternative markets (props, halves), league order, remove leagues
+
+> Add alternative markets to NFL, wnba, MLB and ncaaf such as player props, halftime odds, etc.
+> Put these sports tabs in front of the others (from left to right): NFL, ncaaf, MLB, wnba, nhl.
+> remove the following sports from the app entirely:
+> All soccer
+> Cfl
+> Kbo
+> Npb
+
+### Plan
+- [ ] A1 League list: NFL, NCAAF, MLB, WNBA, NHL first (in that order), then the rest; remove every
+      soccer league, CFL, KBO, NPB from the app (list, sources, settings migration drops them from
+      saved selections).
+- [ ] A2 Research: which alternative markets Novig lists for NFL/NCAAF/MLB/WNBA (player props,
+      1st half / 1st 5 innings, team totals…) and which fair-odds sources price them (pinnapi
+      periods + specials, Polymarket, Kalshi, The Odds API event markets and their credit cost).
+- [ ] A3 Implement the alternative markets that have a real fair-odds source: Novig parsing,
+      reference parsing, matching (player names), planner/pricing, settings toggles, per-scan
+      request/credit limits.
+- [ ] A4 UI: market filters for the new families, labels on cards/games.
+- [ ] A5 Tests (unit, live smoke, screenshots), CI, ship, report.
