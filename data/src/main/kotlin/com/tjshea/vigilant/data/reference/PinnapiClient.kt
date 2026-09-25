@@ -112,30 +112,28 @@ class PinnapiClient(
         fun leagueNames(league: League): Set<String> = when (league.novigName) {
             "NFL" -> setOf("nfl")
             "NCAAF" -> setOf("ncaa", "ncaaf", "ncaa football")
-            "CFL" -> setOf("cfl")
             "NBA" -> setOf("nba")
             "NCAAB" -> setOf("ncaa", "ncaab", "ncaa basketball")
             "WNBA" -> setOf("wnba")
             "MLB" -> setOf("mlb")
-            "KBO" -> setOf("korea - kbo league", "kbo")
-            "NPB" -> setOf("japan - npb", "npb")
             "NHL" -> setOf("nhl")
             "UFC" -> setOf("ufc")
             "Boxing" -> setOf("boxing", "boxing matches")
-            "EPL" -> setOf("england - premier league")
-            "MLS" -> setOf("usa - major league soccer")
-            "La Liga" -> setOf("spain - la liga")
-            "Bundesliga" -> setOf("germany - bundesliga")
-            "Serie A" -> setOf("italy - serie a")
-            "Ligue 1" -> setOf("france - ligue 1")
-            "Champions League" -> setOf("uefa - champions league")
-            "Europa League" -> setOf("uefa - europa league")
             else -> emptySet()
         }
 
         private fun JsonObject.str(k: String): String? = (this[k] as? JsonPrimitive)?.takeIf { it.isString }?.content
         private fun JsonObject.num(k: String): Double? = (this[k] as? JsonPrimitive)?.doubleOrNull
         private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
+
+        /** `{points, over, under}` -> (points, over, under) when all three are real prices. */
+        private fun ou(o: JsonObject?, pointsKey: String): Triple<Double, Double, Double>? {
+            o ?: return null
+            val pts = o.num(pointsKey) ?: return null
+            val over = o.num("over") ?: return null
+            val under = o.num("under") ?: return null
+            return if (over > 1.0 && under > 1.0) Triple(pts, over, under) else null
+        }
 
         fun parse(events: List<JsonObject>, league: League, fetchedAtMs: Long): List<RefEvent> {
             val names = leagueNames(league)
@@ -158,32 +156,34 @@ class PinnapiClient(
             full["money_line"].obj()?.let { ml ->
                 val h = ml.num("home")
                 val a = ml.num("away")
-                val d = ml.num("draw")
-                if (h != null && a != null && h > 1.0 && a > 1.0) {
-                    val quotes = buildList {
-                        add(RefQuote(Side.HOME, h, null))
-                        add(RefQuote(Side.AWAY, a, null))
-                        if (d != null && d > 1.0) add(RefQuote(Side.DRAW, d, null))
+                if (h != null && a != null && h > 1.0 && a > 1.0 && ml.num("draw") == null) {
+                    markets += RefBookMarket(ID, "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, h, null), RefQuote(Side.AWAY, a, null)), updated)
+                }
+            }
+            // Full game (num_0) and 1st half / first 5 innings (num_1), with every alternate line.
+            for ((periodKey, period) in listOf("num_0" to 0, "num_1" to 1)) {
+                val p = e["periods"].obj()?.get(periodKey).obj() ?: continue
+                p["spreads"].obj()?.values?.forEach { v ->
+                    val sp = v.obj() ?: return@forEach
+                    val hdp = sp.num("hdp") ?: return@forEach
+                    val h = sp.num("home") ?: return@forEach
+                    val a = sp.num("away") ?: return@forEach
+                    if (h > 1.0 && a > 1.0) {
+                        markets += RefBookMarket(ID, "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, h, hdp), RefQuote(Side.AWAY, a, -hdp)), updated, period)
                     }
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.MONEYLINE, quotes, updated)
+                }
+                p["totals"].obj()?.values?.forEach { v ->
+                    ou(v.obj(), "points")?.let { (pts, o, u) ->
+                        markets += RefBookMarket(ID, "Pinnacle", LineKind.TOTAL, listOf(RefQuote(Side.OVER, o, pts), RefQuote(Side.UNDER, u, pts)), updated, period)
+                    }
                 }
             }
-            full["spreads"].obj()?.values?.forEach { v ->
-                val sp = v.obj() ?: return@forEach
-                val hdp = sp.num("hdp") ?: return@forEach
-                val h = sp.num("home") ?: return@forEach
-                val a = sp.num("away") ?: return@forEach
-                if (h > 1.0 && a > 1.0) {
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, h, hdp), RefQuote(Side.AWAY, a, -hdp)), updated)
-                }
-            }
-            full["totals"].obj()?.values?.forEach { v ->
-                val t = v.obj() ?: return@forEach
-                val pts = t.num("points") ?: return@forEach
-                val o = t.num("over") ?: return@forEach
-                val u = t.num("under") ?: return@forEach
-                if (o > 1.0 && u > 1.0) {
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.TOTAL, listOf(RefQuote(Side.OVER, o, pts), RefQuote(Side.UNDER, u, pts)), updated)
+            // Team totals (full game): the main line per team, plus alternates when sent.
+            for ((sideKey, subject) in listOf("home" to RefBookMarket.HOME, "away" to RefBookMarket.AWAY)) {
+                val lines = listOfNotNull(full["team_total"].obj()?.get(sideKey).obj()) +
+                    full["team_totals"].obj()?.get(sideKey).obj()?.values?.mapNotNull { it.obj() }.orEmpty()
+                lines.mapNotNull { ou(it, "points") }.distinctBy { it.first }.forEach { (pts, o, u) ->
+                    markets += RefBookMarket(ID, "Pinnacle", LineKind.TEAM_TOTAL, listOf(RefQuote(Side.OVER, o, pts), RefQuote(Side.UNDER, u, pts)), updated, 0, subject)
                 }
             }
             return RefEvent("pin:$id", league.oddsApiSportKey, starts, home = home, away = away, markets = markets)

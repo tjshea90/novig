@@ -232,7 +232,6 @@ private data class MarketDto(
                 kind == LineKind.TOTAL && o.name.equals("Under", true) -> Side.UNDER
                 o.name == home -> Side.HOME
                 o.name == away -> Side.AWAY
-                o.name.equals("Draw", true) -> Side.DRAW
                 else -> return@mapNotNull null
             }
             if (o.price <= 1.0) null else RefQuote(side, o.price, o.point)
