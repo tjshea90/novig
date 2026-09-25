@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -31,6 +33,7 @@ class PolymarketClient(
     private val json: Json,
     private val baseUrl: String = "https://gamma-api.polymarket.com",
     private val clock: () -> Long = System::currentTimeMillis,
+    private val usage: UsageMeter? = null,
 ) : ReferenceSource {
 
     override val id = BOOK_KEY
@@ -61,6 +64,7 @@ class PolymarketClient(
             }.build()
             val items = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
+                usage?.countKeyless(QuotaPolicy.POLYMARKET, calls = 1, throttled = if (response.code == 429) 1 else 0)
                 if (!response.isSuccessful) throw ReferenceException("Polymarket HTTP ${response.code}")
                 json.decodeFromString(ListSerializer(MarketDto.serializer()), body)
             }

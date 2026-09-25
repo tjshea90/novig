@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.novig
 
 import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.engine.FeeCharge
@@ -88,6 +90,8 @@ class NovigPublicClient(
     /** Pacing runs on real time even when [clock] is faked for timestamps. */
     private val rateClock: () -> Long = System::currentTimeMillis,
     sleep: suspend (Long) -> Unit = { delay(it) },
+    /** Counts every request (and throttle) for the usage meter. */
+    private val usage: UsageMeter? = null,
 ) : NovigSource {
 
     private val publicGate = RateGate(publicRate, publicBurst, rateClock, sleep)
@@ -138,6 +142,7 @@ class NovigPublicClient(
         val request = Request.Builder().url("$baseUrl/v3/public/catalog/markets/$marketId").get().build()
         publicGate.acquire()
         http.newCall(request).await().use { response ->
+            count(response.code)
             if (response.code == 404) return null
             val body = response.body?.string().orEmpty()
             if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
@@ -256,6 +261,7 @@ class NovigPublicClient(
             ?: Request.Builder().url("$baseUrl/v3/public/catalog/markets/$marketId/book").get()
         val request = base.apply { cached?.etag?.let { header("If-None-Match", it) } }.build()
         http.newCall(request).await().use { response ->
+            count(response.code)
             if (response.code == 304 && cached != null) {
                 val refreshed = cached.book.copy(fetchedAtMs = clock())
                 bookCache[marketId] = cached.copy(book = refreshed)
@@ -290,6 +296,7 @@ class NovigPublicClient(
             publicGate.acquire()
             http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
+                count(response.code)
                 if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
                 val (items, next) = parse(body)
                 all += items
@@ -298,6 +305,10 @@ class NovigPublicClient(
             if (after == null) return all
         }
         return all
+    }
+
+    private suspend fun count(code: Int) {
+        usage?.countKeyless(QuotaPolicy.NOVIG, calls = 1, throttled = if (code == 429 || code == 403) 1 else 0)
     }
 
     private fun httpError(code: Int, body: String, retryAfter: String?): NovigHttpException {

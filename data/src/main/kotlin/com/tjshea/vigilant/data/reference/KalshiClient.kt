@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -33,6 +35,7 @@ class KalshiClient(
     private val json: Json,
     private val baseUrl: String = "https://api.elections.kalshi.com/trade-api/v2",
     private val clock: () -> Long = System::currentTimeMillis,
+    private val usage: UsageMeter? = null,
 ) : ReferenceSource {
 
     override val id = BOOK_KEY
@@ -61,6 +64,7 @@ class KalshiClient(
             }.build()
             val page = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
+                usage?.countKeyless(QuotaPolicy.KALSHI, calls = 1, throttled = if (response.code == 429) 1 else 0)
                 if (!response.isSuccessful) throw ReferenceException("Kalshi HTTP ${response.code}")
                 json.decodeFromString(PageDto.serializer(), body)
             }

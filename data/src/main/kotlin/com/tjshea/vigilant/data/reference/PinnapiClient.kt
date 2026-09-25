@@ -81,7 +81,7 @@ class PinnapiClient(
                                 ?: response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000)
                                 ?: 60_000L
                             if (window == "day" || window == "hour") {
-                                KeyAttemptResult.Depleted("${window}ly limit reached", waitMs)
+                                KeyAttemptResult.Depleted(if (window == "day") "daily limit reached" else "hourly limit reached", waitMs)
                             } else {
                                 KeyAttemptResult.RateLimited(waitMs, "per-minute limit")
                             }
