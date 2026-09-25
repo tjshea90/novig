@@ -138,4 +138,4 @@ jobs:
 
             Signed with a committed, non-secret keystore (see BRIEF.md) — fine for sideloading, not intended for Play Store distribution.
 
-            This build ships wired to sample data by default — see the in-app banner and BRIEF.md for what's needed to go live.
+            Live Novig prices come from Novig's official public API (no key needed). Fair odds need a free The Odds API key, added in Settings.
