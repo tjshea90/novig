@@ -1,22 +1,22 @@
-# CHECKPOINT 356 — read me first, then TASKS.md
+# CHECKPOINT 357 — read me first, then TASKS.md
 
-**Written:** 2026-09-25T13:18:33Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `66ac7f3` (this checkpoint is the commit after it)
+**Written:** 2026-09-25T13:29:58Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `9e1dbe0` (this checkpoint is the commit after it)
 
 ## Just done
-v0.6.0 app layer compiles + 15 screenshot/UI tests green: VM manual scan() with progress, settings changes reprice only (no network), migrate settings; MainActivity has no loop; Feed/Games Scan button + pull-to-refresh + progress bar + 'tap Scan' empty states; Settings: Fair odds sources (pinnapi key, Polymarket, Kalshi, Odds API reuse chips), alternate lines per game, refresh section removed; NovigKeySection without stream; AppContainer.referenceSources + novig.keyed
+v0.6.0 code complete: full ./gradlew test 173 pass/0 fail (2 live skipped); release APK 4.65MB builds; live scan verified (NFL 14/16 games matched via Polymarket+Kalshi, MLB 16/17, NCAAF 112/120, zero 429s); Kalshi top-of-book depth filter (>=100 contracts) + test; UI copy fixes (no-match state, list grammar, single progress indicator)
 
 ## Do this next
-Look at every screenshot PNG for layout bugs; then full ./gradlew test locally; update NOVIG_API/RESEARCH/BRIEF docs + TASKS ticks; bump v0.6.0 code 10; CI; ship; report to Tj with research answer
+Docs: NOVIG_API §5.1/§11.1 (signed book route, pacing, stream unwired), RESEARCH §11.4 live results, BRIEF manual-only rule, CLAUDE.md surface list; tick TASKS R1-R6 with tests; then push, CI green, ship.sh, release.yml, record-release, report to Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     D app/screenshots/1c_feed_no_key.png
 
 ## Last ten checkpoints
 ```
+  cd87838 ckpt 356: v0.6.0 app layer compiles + 15 screenshot/UI tests green: VM manual scan() wit
   14ff2f1 ckpt 355: v0.6.0 data tests green (156, 0 fail): ScannerTest rewritten for manual scan (
   471626d ckpt 354: v0.6.0 data layer compiles: PolymarketClient, KalshiClient, PinnapiClient (Ref
   2038b93 ckpt 353: v0.6.0 in progress (build intentionally broken mid-refactor): ReferenceModels 
@@ -26,8 +26,7 @@ Look at every screenshot PNG for layout bugs; then full ./gradlew test locally; 
   ace6b60 ckpt 349: pre-release: v0.5.0: Novig API key support (one-time setup mints a phone-held 
   0915546 ckpt 348: C2 full tests done + v0.5.0 (code 9) staged: settings-change-mid-refresh race 
   448b656 ckpt 347: Full test fix batch 2: tracker writes only on change (was every 2s tick), feed
-  39d5c9e ckpt 346: Full test, fix batch 1 (fake-EV risks): school-qualifier penalty (Texas vs Tex
 ```
 
-(11 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
