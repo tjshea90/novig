@@ -1098,7 +1098,7 @@ Read from each provider's own docs the same day. Encoded in `data/keys/Quota.kt`
   Pinnacle props need `include_specials=1` (separate events, unverified shape): not used yet.
 - **Polymarket:** no props or 1st-half markets for these leagues (only thin novelty markets).
 - **The Odds API:** props and period markets only via `/events/{id}/odds`, charged per event
-  (markets x regions each): too expensive for 500 credits/month. Not used.
+  (markets x regions each). Used for props since v0.9.0 under a strict per-scan budget: §14.
 
 **Not priced, on purpose:** 1st-half/first-5 **moneylines**. Kalshi's are 3-way (tie is a
 separate outcome, ~7% in NFL halves) while Novig's MONEY_1H is 2-way with `voids: FMV`, and how a
@@ -1109,3 +1109,59 @@ double-double) are also skipped.
 `429 {"error":{"code":"too_many_requests"}}` and kept refusing at 1 request/s for a while. The
 documented 20 reads/s is not what an anonymous client gets in a burst. The app paces Kalshi at
 2 requests/s (burst 4) and backs off on 429.
+
+## 14. Sportsbook player props and cross-book matching, researched 2026-09-25 ~16:30Z
+
+Tj (16:15Z): "Other major sports books offer props. See if you can make a market average then
+devig for the props. Make sure the app matches odds between different sports books."
+
+**Source: The Odds API per-game endpoint** (the only practical way to get DraftKings, FanDuel,
+BetMGM, Caesars, ESPN BET, Fanatics, BetRivers props on a free key):
+- `GET /v4/sports/{sport}/events?apiKey&dateFormat=iso&commenceTimeTo=…` — ids, teams, start
+  times, no odds. **Free** (doesn't count against the quota).
+- `GET /v4/sports/{sport}/events/{eventId}/odds?apiKey&bookmakers=…&markets=…&oddsFormat=decimal`
+  — cost = **unique markets returned x regions**; up to 10 named `bookmakers` = 1 region; a market
+  no book posts costs nothing. `x-requests-last` carries the real charge.
+- Outcome shape: `{"name":"Over","description":"Josh Allen","price":1.87,"point":245.5}` — one
+  flat list per market, every player in it, sometimes two numbers per player at one book.
+- Market keys (their betting-markets page, re-checked 16:30Z), each mapped to Novig's stat:
+  NFL `player_pass_yds, player_rush_yds, player_reception_yds, player_receptions` (the "Core 4"),
+  then `player_pass_tds, player_tds, player_anytime_td, player_pass_attempts,
+  player_pass_completions, player_rush_attempts, player_pass_interceptions,
+  player_rush_reception_yds, player_pass_rush_yds, player_reception_longest, player_rush_longest,
+  player_pass_longest_completion, player_kicking_points, player_field_goals`.
+  MLB `batter_hits, batter_total_bases, pitcher_strikeouts, batter_hits_runs_rbis`, then
+  `batter_home_runs, batter_rbis, batter_runs_scored, batter_stolen_bases, batter_strikeouts,
+  batter_walks, pitcher_hits_allowed, pitcher_earned_runs, pitcher_outs, pitcher_walks`.
+  WNBA `player_points, player_rebounds, player_assists, player_threes`, then
+  `player_points_rebounds_assists, player_double_double`.
+- Listing styles: most are Over/Under. `player_anytime_td` and `player_double_double` are
+  **Yes/No** (Yes = Over 0.5; Novig lists them as "Over 0.5 TOUCHDOWNS"/"Over 0.5
+  DOUBLE_DOUBLE", verified live). `*_alternate` ladders and `player_tds_over` are **Over only**
+  and can't be devigged: never requested. A player priced on one side only is dropped.
+- Novig's own names for all of these exist and were checked live (e.g. `WALKS` is pitcher walks,
+  `BATTING_WALKS` batter walks; `RUNS` is runs scored). NCAAF has no player props on Novig.
+
+**Budget (defaults):** Core 4 per game, 24 credits a scan (≈6 games), games starting within
+24h, soonest first across every league, only stats Novig lists for that game, each game's props
+re-used 60 min. 500 free credits ≈ 20 fresh prop scans a month per key on top of game lines;
+more keys rotate in (§12).
+
+**Fair price:** unchanged engine: each book devigged on its own, then averaged (Market average),
+or blended with the sharp books (Kalshi's same-line prop) under Blend. Averaging raw odds first
+and devigging once gives nearly the same number; per-book devig lets a stale or arbitrage-priced
+book (hold < 0) be dropped instead of skewing the average. Only books on Novig's exact number
+count (OddsJam's rule too); a book on 225.5 doesn't price Novig's 224.5.
+
+**Matching across books** (`PlayerNames`, only ever within one matched game): case, accents,
+punctuation, suffixes (Jr./III), joined initials (C.J./CJ), "Last, First", middle initials,
+spacing (St. Brown/St.Brown), first-name short forms (Mike/Michael, Gabe/Gabriel, Zach/Zachary…)
+and a few known nicknames (Hollywood/Marquise Brown, Kiké/Enrique Hernández, Jazz/Jasson
+Chisholm). Never a surname alone or an initial alone. Games match on teams and start time exactly
+as the main lines do (`Planner.matchEvents`); stats match through the per-source maps
+(`PropStats`), so "Rush + Rec Yds", `player_rush_reception_yds` and Kalshi's `KXNFLRRYDS` all land
+on Novig's `RUSHING_AND_RECEIVING_YARDS`.
+
+**Not verified live:** no Odds API key exists in the dev container, so the props calls are
+tested against recorded-shape fixtures only. First real scan with Tj's key is the live check.
+

@@ -1319,14 +1319,25 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
 > slightly different names of teams or ways of listing props.
 
 ### Plan
-- [ ] P1 Research how to get major sportsbooks' player props (The Odds API event odds: market keys
+- [x] P1 Research how to get major sportsbooks' player props (The Odds API event odds: market keys
       per sport, response shape, credit cost; any free alternative and its terms).
-- [ ] P2 Sportsbook props source: per-game prop odds from DraftKings/FanDuel/BetMGM/Caesars/etc.
+- [x] P2 Sportsbook props source: per-game prop odds from DraftKings/FanDuel/BetMGM/Caesars/etc.
       only for games Novig lists props for, soonest first, inside a per-scan credit budget, re-used
       for a while; every call metered and rotated through the key pool.
-- [ ] P3 Market-average devig for props (each book devigged on its own, then averaged; minimum
+- [x] P3 Market-average devig for props (each book devigged on its own, then averaged; minimum
       books), blended with sharp sources (Pinnacle, Kalshi) as for game lines.
-- [ ] P4 Matching across books: player names (suffixes, initials, accents, nicknames, "Last,
+- [x] P4 Matching across books: player names (suffixes, initials, accents, nicknames, "Last,
       First"), prop listing styles (Over/Under vs "N+" ladders vs Yes/No), stat names per book,
       team names; one-sided and alternate-only markets skipped.
 - [ ] P5 Settings (on/off, credits per scan, time window, re-use), tests, live check, ship, report.
+
+Done (tests): P1 → RESEARCH.md §14 (market keys re-checked against their page; Novig stat names
+checked live). P2 → `OddsApiPropsTest` (game list free + props metered; only games with Novig
+props, inside the window, soonest first across leagues, within credits; per-game re-use; props
+off = no calls; partial failure keeps what was bought) and `ScannerTest` (needs-catalog source
+gets the board; partial answer priced and reported; book-only stats fetched only when on).
+P3 → `OddsApiPropsTest` "a Novig prop prices at the books' devigged average…". P4 →
+`PlayerNamesTest` (3 of 4 fail on the old matcher) + parsing tests (Yes/No, one-sided, alternates).
+P5 settings → `CreditEstimateTest`, `ScreenshotTest.settingsOfferSportsbookPropsWithTheirCreditBudget`.
+Live: Novig + Kalshi real scan still clean (NFL 14/19, MLB 17/20); no Odds API key here, so the
+props calls themselves are fixture-tested only.

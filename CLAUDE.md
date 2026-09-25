@@ -243,7 +243,8 @@ unless Tj asks).
 - **Subsystems:** fair-odds math (`engine`: `FairValue`, `Devig`, `Fees`,
   `EvMath`); Novig data (`data/novig`: `NovigPublicClient`, `NovigText`);
   reference odds (`data/reference/`: `PinnapiClient`, `PolymarketClient`, `KalshiClient`,
-  `TheOddsApiClient`); matching and pricing (`data/match/TeamMatcher`,
+  `TheOddsApiClient`, `OddsApiPropsSource`); matching and pricing (`data/match/TeamMatcher`,
+  `data/match/PlayerNames`, `data/scanner/PropStats`,
   `data/scanner/Planner` + `Pricing`); manual scans and pacing (`data/scanner/Scanner`,
   `data/novig/RateGate`, `MainViewModel.scan`); keys, quotas and meters (`data/keys/`:
   `FileApiKeyStore`, `QuotaPolicy`/`UsageMeter`/`KeyPool`, `UsageViews`; `ui/UsageMeters`);

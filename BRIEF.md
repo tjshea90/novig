@@ -321,6 +321,12 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   moneylines are deliberately not priced (3-way vs 2-way, FMV voids). Per-game caps
   (`linesPerGame`, `propsPerGame`) and a per-scan budget (`maxBooksPerScan`, main lines and open
   bets first) keep scans fast and under Novig's limit.
+- **Sportsbook props (Tj, 2026-09-25 ~16:15Z; v0.9.0, RESEARCH.md §14).** Player props from
+  the books via The Odds API's per-game endpoint (`OddsApiPropsSource`), only for games Novig
+  lists props for, soonest first, inside `bookPropCreditsPerScan` (default 24), re-used per game
+  for `bookPropReuseMinutes`; only the stats Novig lists for the game are bought. Priced by the
+  same engine: each book devigged, averaged, blended with Kalshi. Players match across books by
+  `PlayerNames` (never surname-only). Needs an Odds API key; off switch in Settings.
 - **Fair odds come from several free sources, merged per game (v0.6.0, RESEARCH.md §11):**
   Pinnacle via pinnapi (free key, 100 req/day), Polymarket and Kalshi (free, no key; count
   as sharp by default when ≤3¢ wide with real depth), and The Odds API (optional, re-used
