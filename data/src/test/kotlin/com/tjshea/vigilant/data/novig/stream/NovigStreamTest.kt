@@ -39,6 +39,7 @@ class NovigStreamTest {
 
     private fun novigSide() = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {}
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(1000, null) }
         override fun onMessage(webSocket: WebSocket, text: String) {
             received += text
             val msg = Json.parseToJsonElement(text).jsonObject
