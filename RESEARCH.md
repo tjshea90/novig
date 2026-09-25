@@ -1064,3 +1064,48 @@ Read from each provider's own docs the same day. Encoded in `data/keys/Quota.kt`
 - Rotation always starts from key 1: a key is used only when every key before it is spent or cooling
   down, so when a period resets, key 1 is back in front automatically.
 - Keyless providers show requests today and any throttling.
+
+## 13. Alternative markets (props, 1st half / first 5, team totals), researched 2026-09-25 ~15:30Z
+
+**What Novig lists (live, pregame, next 4 days):**
+- NFL: player props dominate (RECEIVING_YARDS 1664, RECEPTIONS 847, RUSHING_YARDS 602, TOUCHDOWNS 373,
+  PASSING_YARDS 337, FIRST_TOUCHDOWN_SCORER 306, LONGEST_RECEPTION, RUSHING_AND_RECEIVING_YARDS,
+  PASSING_TOUCHDOWNS, RUSHING_ATTEMPTS, PASSING_ATTEMPTS, INTERCEPTIONS_THROWN…), TEAM_TOTAL,
+  SPREAD_1H, TOTAL_1H. NCAAF: SPREAD_1H, TOTAL_1H, MONEY_1H, TEAM_TOTAL (no player props).
+  MLB: HITS, TOTAL_BASES, HOME_RUNS, RBIS, RUNS, HITS_RUNS_RBIS, STOLEN_BASES, BATTING_STRIKEOUTS,
+  PITCHER_STRIKEOUTS, HITS_ALLOWED, EARNED_RUNS, PITCHER_OUTS, TEAM_TOTAL, TOTAL_1H/MONEY_1H/SPREAD_1H
+  ("1H" = first 5 innings), FIRST_INNING_TOTAL. WNBA: POINTS, REBOUNDS, ASSISTS,
+  THREE_POINTERS_MADE, POINTS_REBOUNDS_ASSISTS, DOUBLE_DOUBLE, MONEY_1H/SPREAD_1H/TOTAL_1H.
+- Shapes: props `"Patrick Mahomes 233.5 PASSING_YARDS"`, outcomes `Over 233.5`/`Under 233.5`;
+  team totals `"Los Angeles Rams 22.5 TEAM_TOTAL"` Over/Under; `SPREAD_1H` `"WSH +4.5 1H"` with
+  outcomes `WSH +4.5`/`SEA -4.5`; `TOTAL_1H` `"LAR @ DEN t21.5 1H"` Over/Under. Every one is
+  `voids: FMV` (a void settles at fair market value, not a refund).
+
+**Fair-odds sources for them:**
+- **Kalshi (free):** NFL `KXNFL1HSPREAD`, `KXNFL1HTOTAL`, `KXNFLTEAMTOTAL`, props `KXNFLPASSYDS`,
+  `KXNFLRSHYDS`, `KXNFLREC` (receptions), `KXNFLRECYDS`, `KXNFLRRYDS`, `KXNFLTD`, `KXNFLPASSTDS`,
+  `KXNFLPASSATT`, `KXNFLRSHATT`, `KXNFLPASSINT`, `KXNFLLONGREC`, `KXNFLLONGRSH`; NCAAF
+  `KXNCAAF1HSPREAD`, `KXNCAAF1HTOTAL`, `KXNCAAFTEAMTOTAL`; MLB `KXMLBF5SPREAD`, `KXMLBF5TOTAL`,
+  `KXMLBTEAMTOTAL`, `KXMLBKS`, `KXMLBTB`, `KXMLBHIT`, `KXMLBHR`, `KXMLBHRR`, `KXMLBRBI`, `KXMLBSB`,
+  `KXMLBHA`; WNBA `KXWNBA1HSPREAD`, `KXWNBA1HTOTAL`, `KXWNBATEAMTOTAL`, `KXWNBAPTS`, `KXWNBAREB`,
+  `KXWNBAAST`, `KXWNBA3PT` (none open late Sept). Props: market title `"Bryce Young: 150+ passing
+  yards"`, `floor_strike` 149.5, Yes = over; ladders at whole-number thresholds, so only Novig lines
+  that equal a Kalshi strike are priced (counting props match often; yardage less).
+  Team totals: `"Boston over 2.5 runs scored"`, ticker suffix team code + digits, `floor_strike`.
+  F5/1H spreads: `"Boston wins first 5 innings by over 2.5 runs?"`, suffix `BOS3`.
+- **Pinnacle via pinnapi:** the same single request per sport already carries `periods.num_1`
+  (1st half; 1st 5 innings in baseball) spreads/totals and `team_total` — no extra calls.
+  Pinnacle props need `include_specials=1` (separate events, unverified shape): not used yet.
+- **Polymarket:** no props or 1st-half markets for these leagues (only thin novelty markets).
+- **The Odds API:** props and period markets only via `/events/{id}/odds`, charged per event
+  (markets x regions each): too expensive for 500 credits/month. Not used.
+
+**Not priced, on purpose:** 1st-half/first-5 **moneylines**. Kalshi's are 3-way (tie is a
+separate outcome, ~7% in NFL halves) while Novig's MONEY_1H is 2-way with `voids: FMV`, and how a
+tied half settles isn't documented. Yes/No props with no two-sided source (first TD scorer,
+double-double) are also skipped.
+
+**Kalshi throttling, measured:** after ~130 unauthenticated requests in ~40s it answered
+`429 {"error":{"code":"too_many_requests"}}` and kept refusing at 1 request/s for a while. The
+documented 20 reads/s is not what an anonymous client gets in a burst. The app paces Kalshi at
+2 requests/s (burst 4) and backs off on 429.
