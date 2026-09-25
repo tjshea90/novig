@@ -67,19 +67,24 @@ data class Plan(
  */
 object Planner {
 
-    /** Novig NCAAF start times can be placeholders, so allow a generous window and prefer names. */
-    private const val MAX_START_GAP_MS = 36L * 3600 * 1000
     private const val MIN_TEAM_SIMILARITY = 0.5
     private const val NOVIG_ONLY_EVENT_CAP = 40
 
     fun eligibleEvents(events: List<NovigEvent>, settings: ScanSettings, now: Long): List<NovigEvent> {
         val horizon = now + settings.daysAhead.coerceAtLeast(1) * 24L * 3600 * 1000
         return events.filter { e ->
+            val pregameOk = e.status == NovigEvent.STATUS_PREGAME &&
+                // The catalog refreshes every few minutes, so a game can still read "pregame"
+                // after it has started. Past its start time it's live in practice: in-game fees
+                // apply and the sportsbooks' pregame lines no longer describe it.
+                (settings.includeLive || e.startsTs > now - STARTED_GRACE_MS)
             e.league in settings.leagues &&
                 e.startsTs <= horizon &&
-                (e.status == NovigEvent.STATUS_PREGAME || (settings.includeLive && e.status == NovigEvent.STATUS_LIVE))
+                (pregameOk || (settings.includeLive && e.status == NovigEvent.STATUS_LIVE))
         }
     }
+
+    private const val STARTED_GRACE_MS = 2 * 60_000L
 
     fun plan(
         events: List<NovigEvent>,
@@ -118,19 +123,20 @@ object Planner {
 
     /** Pairs every Novig event with its best reference event, one-to-one within a sport. */
     fun matchEvents(events: List<NovigEvent>, references: Map<String, RefSnapshot>): List<EventMatch> {
-        data class Candidate(val event: NovigEvent, val ref: RefEvent, val score: Double, val swapped: Boolean, val gap: Long)
+        data class Candidate(val event: NovigEvent, val ref: RefEvent, val score: Double, val closeness: Double, val swapped: Boolean, val gap: Long)
 
         val result = LinkedHashMap<String, EventMatch>()
         val byLeague = events.groupBy { it.league }
         for ((leagueName, leagueEvents) in byLeague) {
             val league = Leagues.byNovigName(leagueName) ?: continue
             val refs = references[league.oddsApiSportKey]?.events.orEmpty()
+            val maxGap = league.maxStartGapHours * 3_600_000L
             val candidates = ArrayList<Candidate>()
             for (e in leagueEvents) {
                 val matchup = e.matchup ?: continue
                 for (r in refs) {
                     val gap = abs(e.startsTs - r.commenceMs)
-                    if (gap > MAX_START_GAP_MS) continue
+                    if (gap > maxGap) continue
                     val aa = TeamMatcher.similarity(matchup.away, r.away)
                     val hh = TeamMatcher.similarity(matchup.home, r.home)
                     val ah = TeamMatcher.similarity(matchup.away, r.home)
@@ -138,11 +144,18 @@ object Planner {
                     val straight = if (aa >= MIN_TEAM_SIMILARITY && hh >= MIN_TEAM_SIMILARITY) aa + hh else 0.0
                     val swapped = if (ah >= MIN_TEAM_SIMILARITY && ha >= MIN_TEAM_SIMILARITY) ah + ha else 0.0
                     val best = maxOf(straight, swapped)
-                    if (best > 0.0) candidates += Candidate(e, r, best, swapped > straight, gap)
+                    if (best <= 0.0) continue
+                    val isSwapped = swapped > straight
+                    val close = if (isSwapped) {
+                        TeamMatcher.closeness(matchup.away, r.home) + TeamMatcher.closeness(matchup.home, r.away)
+                    } else {
+                        TeamMatcher.closeness(matchup.away, r.away) + TeamMatcher.closeness(matchup.home, r.home)
+                    }
+                    candidates += Candidate(e, r, best, close, isSwapped, gap)
                 }
             }
             val usedRefs = HashSet<String>()
-            for (c in candidates.sortedWith(compareByDescending<Candidate> { it.score }.thenBy { it.gap })) {
+            for (c in candidates.sortedWith(compareByDescending<Candidate> { it.score }.thenByDescending { it.closeness }.thenBy { it.gap })) {
                 if (c.event.eventId in result || c.ref.id in usedRefs) continue
                 result[c.event.eventId] = EventMatch(league, c.event, c.ref, c.swapped)
                 usedRefs += c.ref.id

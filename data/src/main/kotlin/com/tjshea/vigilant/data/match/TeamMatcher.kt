@@ -61,6 +61,31 @@ object TeamMatcher {
         val a = tokens(x)
         val b = tokens(y)
         if (a.isEmpty() || b.isEmpty()) return 0.0
+        val usedB = BooleanArray(b.size)
+        val usedA = BooleanArray(a.size)
+        var matched = 0
+        for ((ai, t) in a.withIndex()) {
+            val i = b.indices.firstOrNull { !usedB[it] && tokenMatch(t, b[it]) } ?: continue
+            usedB[i] = true
+            usedA[ai] = true
+            matched++
+        }
+        // A school qualifier on only one side ("Texas" vs "Texas Tech", "Kansas" vs "Kansas
+        // State") names a different team, not a mascot. Found in the 2026-09-25 full test.
+        val strayQualifiers = a.filterIndexed { i, t -> !usedA[i] && t in QUALIFIERS }.size +
+            b.filterIndexed { i, t -> !usedB[i] && t in QUALIFIERS }.size
+        return matched.toDouble() / min(a.size, b.size) - QUALIFIER_PENALTY * strayQualifiers
+    }
+
+    /**
+     * Tie-breaker between candidates [similarity] rates equally: the share of ALL tokens that
+     * matched, so "Texas" prefers "Texas Longhorns" (1 of 2) over "Texas Tech Red Raiders"
+     * (1 of 4) and "Miami Florida" prefers "Miami Hurricanes" over "Miami (OH) RedHawks".
+     */
+    fun closeness(x: String, y: String): Double {
+        val a = tokens(x)
+        val b = tokens(y)
+        if (a.isEmpty() || b.isEmpty()) return 0.0
         val used = BooleanArray(b.size)
         var matched = 0
         for (t in a) {
@@ -68,8 +93,15 @@ object TeamMatcher {
             used[i] = true
             matched++
         }
-        return matched.toDouble() / min(a.size, b.size)
+        return matched.toDouble() / maxOf(a.size, b.size)
     }
+
+    /** Tokens that change which school a name means. */
+    private val QUALIFIERS = setOf(
+        "st", "tech", "am", "southern", "northern", "eastern", "western", "central", "international",
+        "christian", "atlantic", "poly", "southeastern", "northwestern", "southwestern", "northeastern", "intl",
+    )
+    private const val QUALIFIER_PENALTY = 0.6
 
     /**
      * How well an abbreviation like "DAL", "MSST" or "LAR" fits a full name. Only meaningful for
