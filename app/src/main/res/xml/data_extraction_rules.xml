@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: same rule for cloud backup and phone-to-phone transfer. API keys live in
+     files/api_keys.json (plain JSON, Tj's call) so they restore; the Novig key connection
+     (a hardware-bound key) does not, and is set up again on the new phone. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>
