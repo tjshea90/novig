@@ -129,7 +129,7 @@ class ScannerTest {
         val novig = FakeNovig()
         val ref = FakeOddsApi()
         val steps = ArrayList<ScanProgress>()
-        val r = Scanner(novig, clock = { now }).scan(settings, listOf(ref)) { steps += it }
+        val r = Scanner(novig, clock = { now }).scan(settings, listOf(ref), onProgress = { steps += it })
         assertNotNull(r.result)
         assertEquals(488, r.creditsRemaining)
         assertEquals(1, ref.calls)

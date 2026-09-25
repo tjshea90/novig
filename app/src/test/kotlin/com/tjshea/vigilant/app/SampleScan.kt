@@ -177,6 +177,16 @@ object SampleScan {
     /** Launch state: nothing fetched, nothing will be until Scan. */
     fun fresh(s: ScanSettings = settings) = UiState(settings = s, loaded = true, bets = bets)
 
+    /** Mid-scan with results streaming in: the feed so far, fair odds still arriving. */
+    fun streaming(s: ScanSettings = settings): UiState {
+        val r = result(s).copy(freshSinceMs = NOW - 10_000)
+        return state(s).copy(
+            result = r,
+            feed = r.feed(s),
+            status = ScanStatus(scanning = true, progress = ScanProgress("Fair odds 3/5 · Novig prices", 40, 120), scannedAtMs = NOW - 20 * 60_000),
+        )
+    }
+
     /** Mid-scan, reading Novig books. */
     fun scanning(s: ScanSettings = settings) = fresh(s).copy(status = ScanStatus(scanning = true, progress = ScanProgress("Novig prices", 9, 24)))
 

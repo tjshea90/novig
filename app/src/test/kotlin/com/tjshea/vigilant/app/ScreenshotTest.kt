@@ -55,6 +55,20 @@ class ScreenshotTest {
 
     @Test fun feedScanning() = shoot("1d_feed_scanning") { FeedScreen(SampleScan.scanning(), {}, {}, {}, { _, _ -> }) }
 
+    @Test fun feedStreaming() {
+        val s = SampleScan.streaming()
+        shoot("1f_feed_streaming") { FeedScreen(s, {}, {}, {}, { _, _ -> }) }
+        // Results show while the scan runs, marked as a running count, with no "prices are old" banner.
+        compose.onNodeWithText("checked so far", substring = true).assertExists()
+        compose.onNodeWithText("Fair odds 3/5 · Novig prices 40/120", substring = true).assertExists()
+        compose.onAllNodesWithText("old. Scan again", substring = true).assertCountEquals(0)
+    }
+
+    @Test fun feedScanningBeforeFirstPrices() {
+        shoot("1g_feed_scanning_empty") { FeedScreen(SampleScan.scanning(), {}, {}, {}, { _, _ -> }) }
+        compose.onNodeWithText("Bets appear here as Novig's prices come in", substring = true).assertExists()
+    }
+
     @Test fun feedNoFairMatch() = shoot("1e_feed_no_fair") { FeedScreen(SampleScan.state(withFair = false), {}, {}, {}, { _, _ -> }) }
 
     @Test fun detail() {

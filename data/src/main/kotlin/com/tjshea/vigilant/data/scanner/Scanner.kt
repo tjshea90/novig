@@ -469,17 +469,17 @@ class Scanner(
 
     /**
      * The plan for [cat] under [settings], from every fair line known. [youngFairOnly] leaves out
-     * snapshots older than the stale limit: a line fetched an hour ago may still say which Novig
-     * books are worth reading first, but it must never price what the feed shows mid-scan.
+     * snapshots too old to price with: older than the stale limit and than that provider's own
+     * re-use window. A line fetched an hour ago may still say which Novig books are worth reading
+     * first, but it must never price what the feed shows mid-scan.
      */
     private fun planFor(cat: Catalog, settings: ScanSettings, now: Long, youngFairOnly: Boolean = false): Plan {
         val enabled = settings.enabledSources
-        val maxAge = settings.staleReferenceMinutes * 60_000L
         val refs = synchronized(references) {
             settings.selectedLeagues.flatMap { l ->
                 SOURCE_ORDER.filter { it in enabled }.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot }
             }
-        }.filter { !youngFairOnly || now - it.fetchedAtMs <= maxAge }
+        }.filter { !youngFairOnly || now - it.fetchedAtMs <= maxFairAgeMs(it.provider, settings) }
         // The Odds API's books follow the reference-book picker, even between scans.
         val books = settings.referenceBooks.toSet()
         val inputs = listOf(
@@ -493,6 +493,16 @@ class Scanner(
             else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
         return Planner.plan(cat.events, cat.markets, filtered, settings, now, pinned).also { plans[youngFairOnly] = inputs to it }
+    }
+
+    /** How old a provider's snapshot may be and still price: the stale limit, or its re-use window if longer. */
+    private fun maxFairAgeMs(provider: String, settings: ScanSettings): Long {
+        val reuse = when (provider) {
+            "oddsapi" -> settings.oddsApiReuseMinutes
+            "oddsapi_props" -> settings.bookPropReuseMinutes
+            else -> 0
+        }
+        return maxOf(settings.staleReferenceMinutes, reuse) * 60_000L
     }
 
     private fun report(result: ScanResult?, errors: List<String>, retryAfter: Int?, credits: Int?, sources: List<SourceReport>) = ScanReport(

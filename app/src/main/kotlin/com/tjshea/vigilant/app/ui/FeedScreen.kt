@@ -125,10 +125,11 @@ private fun FeedSummary(state: UiState, now: Long, onScan: () -> Unit, onOpenSet
         when {
             state.settings.leagues.isEmpty() ->
                 EmptyState("Pick a league", "Choose one or more leagues above, then tap Scan.")
-            result == null && status.scanning -> EmptyState(
+            status.scanning && state.feed.isEmpty() -> EmptyState(
                 "Scanning…",
                 "Reading Novig's board" + sourceNames(state).let { if (it.isEmpty()) "" else " and fair odds from $it" } + ". " +
-                    "Novig prices are read at a steady pace to stay under Novig's rate limit.",
+                    "Bets appear here as Novig's prices come in, likeliest edges first. " +
+                    "You can switch apps: the scan keeps going and tells you when it's done.",
             )
             result == null -> EmptyState(
                 "Tap Scan to find +EV bets",
@@ -157,7 +158,7 @@ private fun FeedSummary(state: UiState, now: Long, onScan: () -> Unit, onOpenSet
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         "${state.feed.size} bet${if (state.feed.size == 1) "" else "s"} ≥ +${Format.percent(state.settings.minEvPercent)} EV · " +
-                            "${result.stats.outcomesWithFair} checked",
+                            "${result.stats.outcomesWithFair} checked" + if (status.scanning) " so far" else "",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
