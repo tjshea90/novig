@@ -1143,4 +1143,15 @@ app — ship after milestone A even if nothing else lands):
       missing pull indicator, per-card tickers, Compose stability (verified via
       compiler report). 135 tests green (exit code + result XML checked);
       LiveNovigSmokeTest 3872/3872 on the real catalog; R8 release builds.
-- [ ] C3 ship final version, send link.
+- [x] C3 ship final version, send link. DONE: v0.5.0 (code 9) — CI 36101866470 green,
+      release 36102142715 green, https://github.com/tjshea90/novig/releases/tag/v0.5.0
+      (4.6MB), BUILDLOG recorded, link sent to Tj.
+
+### Next, when Tj reports back (not started)
+
+- [ ] First real Novig key connect: confirm NovigSetup + stream against the live API
+      (only verified offline/mock so far). If it fails, the on-screen error is
+      Novig's own code translated; fix from that.
+- [ ] First real The Odds API scan on device: confirm team matching vs real
+      sportsbook names (Novig side verified live 3872/3872; the sportsbook side
+      only against documented name formats).
