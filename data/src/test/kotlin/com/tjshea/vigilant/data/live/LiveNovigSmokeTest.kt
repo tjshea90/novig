@@ -89,6 +89,9 @@ class LiveNovigSmokeTest {
                 "markets=${res?.stats?.marketsPriced}, books fetched=${r.booksFetched}+${r.booksNotModified} cache=${r.booksFromCache}, errors=${r.errors}")
             r.sources.forEach { println("LIVE SCAN $league source ${it.name}: leagues fetched=${it.fetched} matched=${it.matched} error=${it.error}") }
             res?.games?.filter { it.refEvent == null }?.take(5)?.forEach { println("LIVE SCAN $league UNMATCHED: ${it.event.description}") }
+            res?.opportunities?.filter { it.fairProbability != null }?.groupBy { it.marketLabel }?.forEach { (label, list) ->
+                println("LIVE SCAN $league PRICED $label: ${list.size / 2} lines")
+            }
             res?.feed(s)?.take(6)?.forEach { o ->
                 println("LIVE SCAN $league EDGE: ${"%.2f".format((o.evPercent ?: 0.0) * 100)}% ${o.selection} (${o.marketLabel}) take ${o.quote?.price} fair ${"%.3f".format(o.fairProbability)} from ${o.fair?.booksUsed}")
             }
