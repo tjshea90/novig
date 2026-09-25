@@ -1554,3 +1554,14 @@ For this app, make sure all my API keys are safely stored in the app, even when 
 <summary>Background command "Wait for the release workflow" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-25T15:31:37Z
+```
+Add alternative markets to NFL, wnba, MLB  and ncaaf such as player props, halftime odds, etc.
+Put these sports tabs in front of the others (from left to right): NFL, ncaaf, MLB, wnba, nhl. remove the following sports from the app entirely: 
+
+All soccer
+Cfl
+Kbo
+Npb
+```
