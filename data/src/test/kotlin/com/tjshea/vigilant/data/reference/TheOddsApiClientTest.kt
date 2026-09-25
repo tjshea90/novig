@@ -2,7 +2,11 @@ package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.Fixtures
 import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
-import com.tjshea.vigilant.data.keys.KeyRotator
+import com.tjshea.vigilant.data.keys.KeyPool
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageBook
+import com.tjshea.vigilant.data.keys.UsageMeter
+import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -28,9 +32,13 @@ class TheOddsApiClientTest {
     @Before fun setUp() { server = MockWebServer().also { it.start() } }
     @After fun tearDown() { server.shutdown() }
 
+    private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
+
+    private fun pool(keys: List<String>) = KeyPool(QuotaPolicy.ODDS_API, { keys }, meter)
+
     private fun client(keys: List<String> = listOf("test-key")) = TheOddsApiClient(
         httpClient = OkHttpClient(),
-        keyRotator = KeyRotator(keys),
+        pool = pool(keys),
         json = json,
         baseUrl = server.url("/v4").toString().trimEnd('/'),
         clock = { 42L },
@@ -81,7 +89,7 @@ class TheOddsApiClientTest {
     fun `back-to-back calls are spaced out as their docs ask`() = runBlocking {
         server.enqueue(MockResponse().setBody("[]"))
         server.enqueue(MockResponse().setBody("[]"))
-        val spaced = TheOddsApiClient(OkHttpClient(), KeyRotator(listOf("k")), json, server.url("/v4").toString().trimEnd('/'), minIntervalMs = 300)
+        val spaced = TheOddsApiClient(OkHttpClient(), pool(listOf("k")), json, server.url("/v4").toString().trimEnd('/'), minIntervalMs = 300)
         val t0 = System.currentTimeMillis()
         spaced.fetch("americanfootball_nfl", listOf("pinnacle"))
         spaced.fetch("baseball_mlb", listOf("pinnacle"))
@@ -109,8 +117,8 @@ class TheOddsApiClientTest {
     }
 
     @Test
-    fun `a 401 rotates to the next key`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"message":"Usage quota has been reached"}"""))
+    fun `a used-up key rotates to the next key`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"message":"Usage quota has been reached","error_code":"OUT_OF_USAGE_CREDITS"}"""))
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
         val snap = client(keys = listOf("used-up", "fresh")).fetch("americanfootball_nfl", listOf("pinnacle"))
         assertFalse(snap.events.isEmpty())
@@ -125,7 +133,7 @@ class TheOddsApiClientTest {
         val e = assertThrows(AllKeysExhaustedException::class.java) {
             runBlocking { client(keys = listOf("a", "b")).fetch("americanfootball_nfl", listOf("pinnacle")) }
         }
-        assertTrue(e.message!!.contains("credits used up"))
+        assertTrue(e.message, e.message!!.contains("used up"))
     }
 
     @Test
@@ -133,5 +141,35 @@ class TheOddsApiClientTest {
         val body = """[{"id":"x","commence_time":"2026-09-27T20:25:00Z","home_team":"A","away_team":"B","bookmakers":[
             {"key":"k","title":"K","markets":[{"key":"h2h","outcomes":[{"name":"A","price":1.9},{"name":"Someone","price":1.9}]}]}]}]"""
         assertTrue(TheOddsApiClient.parseEvents(body, json).single().markets.isEmpty())
+    }
+
+    @Test
+    fun `every call's usage headers land in the meter, per key`() = runTest {
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "488").setHeader("x-requests-used", "12").setHeader("x-requests-last", "3"))
+        client(keys = listOf("k1", "k2")).fetch("americanfootball_nfl", listOf("pinnacle"))
+        val u = meter.flow.value.providers.getValue("oddsapi").keys.getValue("k1")
+        assertEquals(488, u.remaining)
+        assertEquals(12, u.used)
+        assertEquals(500, u.limit)
+        assertEquals(3, u.lastCost)
+    }
+
+    @Test
+    fun `a key that can't afford the next call is skipped before it's refused`() = runTest {
+        server.enqueue(MockResponse().setBody("[]").setHeader("x-requests-remaining", "2").setHeader("x-requests-used", "498").setHeader("x-requests-last", "0"))
+        server.enqueue(MockResponse().setBody("[]").setHeader("x-requests-remaining", "500").setHeader("x-requests-used", "0"))
+        val c = client(keys = listOf("low", "fresh"))
+        c.fetch("americanfootball_nfl", listOf("pinnacle"))          // learns: "low" has 2 left
+        c.fetch("americanfootball_nfl", listOf("pinnacle"))          // needs 3 (h2h,spreads,totals): goes straight to "fresh"
+        assertEquals("low", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+        assertEquals("fresh", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+    }
+
+    @Test
+    fun `a wrong key is reported as refused, not as used up`() {
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"message":"API key is not valid","error_code":"INVALID_KEY"}"""))
+        assertThrows(AllKeysExhaustedException::class.java) { runBlocking { client().fetch("americanfootball_nfl", listOf("pinnacle")) } }
+        val u = meter.flow.value.providers.getValue("oddsapi").keys.getValue("test-key")
+        assertTrue(u.lastNote!!.contains("INVALID_KEY"))
     }
 }

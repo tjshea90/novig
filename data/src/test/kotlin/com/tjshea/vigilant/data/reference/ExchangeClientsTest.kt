@@ -1,6 +1,11 @@
 package com.tjshea.vigilant.data.reference
 
+import com.tjshea.vigilant.data.keys.KeyPool
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageBook
+import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.Leagues
+import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.runBlocking
@@ -32,6 +37,11 @@ class ExchangeClientsTest {
     @After fun tearDown() { server.shutdown() }
 
     private fun base(path: String) = server.url(path).toString().trimEnd('/')
+
+    private fun meter(clock: () -> Long = System::currentTimeMillis) =
+        UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock)
+
+    private fun pinnPool(keys: List<String>, m: UsageMeter = meter()) = KeyPool(QuotaPolicy.PINNAPI, { keys }, m)
 
     // ---- ExchangeQuote --------------------------------------------------------------------------
 
@@ -193,7 +203,7 @@ class ExchangeClientsTest {
     @Test
     fun `pinnacle's board parses per league, with every alternate line`() = runBlocking {
         server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
-        val c = PinnapiClient(OkHttpClient(), json, "trial-key", base("/kit/v1"), clock = { 9L })
+        val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("trial-key")), base("/kit/v1"), clock = { 9L })
         val snap = c.odds(nfl, settings)
         val r = server.takeRequest()
         assertEquals("trial-key", r.getHeader("x-portal-apikey"))
@@ -210,7 +220,7 @@ class ExchangeClientsTest {
     @Test
     fun `NFL and NCAAF share one pinnacle request per scan`() = runBlocking {
         server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
-        val c = PinnapiClient(OkHttpClient(), json, "k", base("/kit/v1"), clock = { 9L })
+        val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("k")), base("/kit/v1"), clock = { 9L })
         c.odds(nfl, settings)
         val college = c.odds(Leagues.byNovigName("NCAAF")!!, settings)
         assertEquals(1, server.requestCount)
@@ -218,12 +228,26 @@ class ExchangeClientsTest {
     }
 
     @Test
-    fun `a pinnacle 429 parks the client until its retry time instead of retrying`() {
-        server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":"rate_limited","retry_after_ms":7200000}"""))
+    fun `a pinnacle daily 429 rests that key until pinnapi's retry time and rotates to the next`() {
+        server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":"rate_limited","window":"day","limit":100,"retry_after_ms":7200000}"""))
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        var now = 1_000L
+        val m = meter { now }
+        val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("k1", "k2"), m), base("/kit/v1"), clock = { now })
+        runBlocking { c.odds(nfl, settings) }
+        assertEquals("k1", server.takeRequest().getHeader("x-portal-apikey"))
+        assertEquals("k2", server.takeRequest().getHeader("x-portal-apikey"))
+        assertEquals(1_000L + 7_200_000L, m.flow.value.providers.getValue("pinnacle").keys.getValue("k1").depletedUntil)
+    }
+
+    @Test
+    fun `with every pinnacle key spent the scan says until when, without calling`() {
+        server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":"rate_limited","window":"day","limit":100,"retry_after_ms":7200000}"""))
         var now = 0L
-        val c = PinnapiClient(OkHttpClient(), json, "k", base("/kit/v1"), clock = { now })
+        val m = meter { now }
+        val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("k"), m), base("/kit/v1"), clock = { now }, shareMs = 0)
         val e = assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
-        assertTrue(e.message!!.contains("100 requests a day"))
+        assertTrue(e.message!!, e.message!!.contains("used up until in 2h 0m"))
         now = 3_600_000L
         assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
         assertEquals(1, server.requestCount)
@@ -232,8 +256,9 @@ class ExchangeClientsTest {
     @Test
     fun `a bad pinnacle key says so`() {
         server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"invalid_key"}"""))
-        val c = PinnapiClient(OkHttpClient(), json, "bad", base("/kit/v1"))
-        val e = assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
-        assertTrue(e.message!!.contains("rejected the key"))
+        val m = meter()
+        val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("bad"), m), base("/kit/v1"))
+        assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
+        assertTrue(m.flow.value.providers.getValue("pinnacle").keys.getValue("bad").lastNote!!.contains("key refused"))
     }
 }
