@@ -309,9 +309,6 @@ object Planner {
         return days == 0L || (days == 1L && league.maxStartGapHours >= 24)
     }
 
-    private fun sameLine(a: Double?, b: Double?): Boolean =
-        (a == null && b == null) || (a != null && b != null && abs(a - b) < 1e-9)
-
     /** Maps a Novig-side (away/home) to the reference feed's side, honoring a home/away swap. */
     private fun refSide(novigAway: Boolean, swapped: Boolean): Side =
         if (novigAway != swapped) Side.AWAY else Side.HOME
@@ -320,6 +317,44 @@ object Planner {
         val matchup = m.event.matchup ?: return null
         val refId = m.refEvent?.id ?: ""
         fun teamName(isAway: Boolean) = if (isAway) matchup.away else matchup.home
+        fun key(kind: LineKind, line: Double?, period: Int = 0, subject: String? = null, stat: String? = null) =
+            LineKey(refId, kind, line, period, subject, stat).takeIf { m.refEvent != null }
+        val baseball = m.league.oddsApiSportKey.startsWith("baseball")
+        val halfLabel = if (baseball) "F5" else "1H"
+
+        fun spread(period: Int, label: String): PlannedMarket? {
+            if (market.outcomes.size != 2) return null
+            val (o1, o2) = market.outcomes
+            val (l1, p1) = NovigText.parseSpreadOutcome(o1.name) ?: return null
+            val (l2, p2) = NovigText.parseSpreadOutcome(o2.name) ?: return null
+            if (abs(p1 + p2) > 1e-9) return null
+            val firstAway = TeamMatcher.firstLabelIsAway(l1, l2, matchup.away, matchup.home) ?: return null
+            val side1 = refSide(firstAway, m.refSwapped)
+            // The reference line is the HOME side's handicap in the reference feed's orientation.
+            val refHomePoint = if (side1 == Side.HOME) p1 else p2
+            return PlannedMarket(
+                m.league, m.event, m.refEvent, market, LineKind.SPREAD, key(LineKind.SPREAD, refHomePoint, period), label,
+                listOf(
+                    PlannedOutcome(o1, OutcomeTarget.Is(side1), "${teamName(firstAway)} ${signed(p1)}"),
+                    PlannedOutcome(o2, OutcomeTarget.Is(refSide(!firstAway, m.refSwapped)), "${teamName(!firstAway)} ${signed(p2)}"),
+                ),
+            )
+        }
+
+        /** Over/Under outcomes on one number. [who] prefixes the selection ("Rams Over 22.5"). */
+        fun overUnder(kind: LineKind, period: Int, label: String, subject: String? = null, stat: String? = null, who: String? = null): PlannedMarket? {
+            if (market.outcomes.size != 2) return null
+            val parsed = market.outcomes.map { o -> NovigText.parseTotalOutcome(o.name)?.let { o to it } ?: return null }
+            val point = parsed.first().second.second
+            if (parsed.any { abs(it.second.second - point) > 1e-9 } || parsed.map { it.second.first }.toSet().size != 2) return null
+            return PlannedMarket(
+                m.league, m.event, m.refEvent, market, kind, key(kind, point, period, subject, stat), label,
+                parsed.map { (o, p) ->
+                    val side = if (p.first) "Over" else "Under"
+                    PlannedOutcome(o, OutcomeTarget.Is(if (p.first) Side.OVER else Side.UNDER), listOfNotNull(who, "$side ${fmt(point)}").joinToString(" "))
+                },
+            )
+        }
 
         return when (market.marketType) {
             "MONEY" -> {
@@ -327,9 +362,7 @@ object Planner {
                 val (o1, o2) = market.outcomes
                 val firstAway = TeamMatcher.firstLabelIsAway(o1.name, o2.name, matchup.away, matchup.home) ?: return null
                 PlannedMarket(
-                    m.league, m.event, m.refEvent, market, LineKind.MONEYLINE,
-                    LineKey(refId, LineKind.MONEYLINE, null, threeWay = false).takeIf { m.refEvent != null },
-                    "Moneyline",
+                    m.league, m.event, m.refEvent, market, LineKind.MONEYLINE, key(LineKind.MONEYLINE, null), "Moneyline",
                     listOf(
                         PlannedOutcome(o1, OutcomeTarget.Is(refSide(firstAway, m.refSwapped)), teamName(firstAway)),
                         PlannedOutcome(o2, OutcomeTarget.Is(refSide(!firstAway, m.refSwapped)), teamName(!firstAway)),
@@ -337,66 +370,23 @@ object Planner {
                 )
             }
 
-            "SPREAD" -> {
-                if (market.outcomes.size != 2) return null
-                val (o1, o2) = market.outcomes
-                val (l1, p1) = NovigText.parseSpreadOutcome(o1.name) ?: return null
-                val (l2, p2) = NovigText.parseSpreadOutcome(o2.name) ?: return null
-                if (abs(p1 + p2) > 1e-9) return null
-                val firstAway = TeamMatcher.firstLabelIsAway(l1, l2, matchup.away, matchup.home) ?: return null
-                val side1 = refSide(firstAway, m.refSwapped)
-                // The reference line is the HOME side's handicap in the reference feed's orientation.
-                val refHomePoint = if (side1 == Side.HOME) p1 else p2
-                PlannedMarket(
-                    m.league, m.event, m.refEvent, market, LineKind.SPREAD,
-                    LineKey(refId, LineKind.SPREAD, refHomePoint, threeWay = false).takeIf { m.refEvent != null },
-                    "Spread",
-                    listOf(
-                        PlannedOutcome(o1, OutcomeTarget.Is(side1), "${teamName(firstAway)} ${signed(p1)}"),
-                        PlannedOutcome(o2, OutcomeTarget.Is(refSide(!firstAway, m.refSwapped)), "${teamName(!firstAway)} ${signed(p2)}"),
-                    ),
-                )
+            "SPREAD" -> spread(0, "Spread")
+            "SPREAD_1H" -> spread(1, "$halfLabel Spread")
+            "TOTAL" -> overUnder(LineKind.TOTAL, 0, "Total")
+            "TOTAL_1H" -> overUnder(LineKind.TOTAL, 1, "$halfLabel Total")
+
+            // "Los Angeles Rams 22.5 TEAM_TOTAL": which team, then its over/under.
+            "TEAM_TOTAL" -> {
+                val team = NovigText.subjectOf(market.description, market.marketType) ?: return null
+                val isAway = TeamMatcher.labelIsAway(team, matchup.away, matchup.home) ?: return null
+                val side = if (refSide(isAway, m.refSwapped) == Side.AWAY) RefBookMarket.AWAY else RefBookMarket.HOME
+                overUnder(LineKind.TEAM_TOTAL, 0, "Team Total", subject = side, who = teamName(isAway))
             }
 
-            "TOTAL" -> {
-                if (market.outcomes.size != 2) return null
-                val parsed = market.outcomes.map { o -> NovigText.parseTotalOutcome(o.name)?.let { o to it } ?: return null }
-                val point = parsed.first().second.second
-                if (parsed.any { abs(it.second.second - point) > 1e-9 } || parsed.map { it.second.first }.toSet().size != 2) return null
-                PlannedMarket(
-                    m.league, m.event, m.refEvent, market, LineKind.TOTAL,
-                    LineKey(refId, LineKind.TOTAL, point, threeWay = false).takeIf { m.refEvent != null },
-                    "Total",
-                    parsed.map { (o, p) ->
-                        PlannedOutcome(o, OutcomeTarget.Is(if (p.first) Side.OVER else Side.UNDER), "${if (p.first) "Over" else "Under"} ${fmt(point)}")
-                    },
-                )
-            }
-
-            "MONEYLINE_3_WAY_WIN", "MONEYLINE_3_WAY_DRAW" -> {
-                val draw = market.marketType == "MONEYLINE_3_WAY_DRAW"
-                val side: Side
-                val subject: String
-                if (draw) {
-                    side = Side.DRAW
-                    subject = "Draw"
-                } else {
-                    val team = NovigText.threeWayTeam(market.description) ?: return null
-                    val isAway = TeamMatcher.labelIsAway(team, matchup.away, matchup.home) ?: return null
-                    side = refSide(isAway, m.refSwapped)
-                    subject = "${teamName(isAway)} win"
-                }
-                val yes = market.outcomes.firstOrNull { it.name.equals("Yes", true) } ?: return null
-                val no = market.outcomes.firstOrNull { it.name.equals("No", true) } ?: return null
-                PlannedMarket(
-                    m.league, m.event, m.refEvent, market, LineKind.MONEYLINE,
-                    LineKey(refId, LineKind.MONEYLINE, null, threeWay = true).takeIf { m.refEvent != null },
-                    "3-way",
-                    listOf(
-                        PlannedOutcome(yes, OutcomeTarget.Yes(side), "$subject: Yes"),
-                        PlannedOutcome(no, OutcomeTarget.No(side), "$subject: No"),
-                    ),
-                )
+            // "Patrick Mahomes 233.5 PASSING_YARDS": a player's over/under on one stat.
+            in PropStats.NOVIG_TYPES -> {
+                val player = NovigText.subjectOf(market.description, market.marketType) ?: return null
+                overUnder(LineKind.PLAYER_PROP, 0, PropStats.displayName(market.marketType), subject = player, stat = market.marketType, who = player)
             }
 
             else -> null

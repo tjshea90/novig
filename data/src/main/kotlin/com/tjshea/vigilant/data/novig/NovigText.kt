@@ -12,7 +12,8 @@ import java.math.RoundingMode
  *  - MONEY:  outcomes "DAL" / "BAL", or "L. Hernandez" / "S. Dumas"
  *  - SPREAD: outcomes "BOS -3.5" / "CHC +3.5", "Coventry City +1.5" / "Newcastle -1.5"
  *  - TOTAL:  outcomes "Over 10.5" / "Under 10.5"
- *  - 3-way:  description "Newcastle MONEYLINE_3_WAY_WIN", outcomes "Yes" / "No"
+ *  - Team totals and props: description "Los Angeles Rams 22.5 TEAM_TOTAL" or
+ *    "Patrick Mahomes 233.5 PASSING_YARDS", outcomes "Over 22.5" / "Under 22.5"
  */
 object NovigText {
 
@@ -40,10 +41,16 @@ object NovigText {
         return over to (m.groupValues[2].toDoubleOrNull() ?: return null)
     }
 
-    /** "Newcastle MONEYLINE_3_WAY_WIN" -> "Newcastle". */
-    fun threeWayTeam(description: String): String? {
-        val suffix = " MONEYLINE_3_WAY_WIN"
-        return if (description.endsWith(suffix)) description.removeSuffix(suffix).trim().ifEmpty { null } else null
+    /**
+     * The team or player a one-subject market is about: "Patrick Mahomes 233.5 PASSING_YARDS" and
+     * "Los Angeles Rams 22.5 TEAM_TOTAL" give "Patrick Mahomes" and "Los Angeles Rams".
+     */
+    fun subjectOf(description: String, marketType: String): String? {
+        val body = description.trim().removeSuffix(marketType).trim()
+        val cut = body.lastIndexOf(' ')
+        if (cut <= 0) return null
+        if (body.substring(cut + 1).toDoubleOrNull() == null) return null
+        return body.substring(0, cut).trim().takeIf { it.isNotEmpty() }
     }
 
     /**
