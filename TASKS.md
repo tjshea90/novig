@@ -1311,3 +1311,22 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
       `NovigTextTest` subjectOf. Live (2026-09-25): NFL 14/16 games matched with 1H spread/total,
       team totals and 10 prop stats priced; MLB 17/20 with F5, team totals, 5 prop stats; no
       errors or 429s. Screenshot 1_feed shows a prop and a team total. Shipped as v0.8.0 (code 12).*
+
+## Tj's request, 2026-09-25 ~16:15Z — sportsbook props, market-average devig, robust matching
+
+> Other major sports books offer props. See if you can make a market average then devig for the
+> props. Make sure the app matches odds between different sports books, because they may have
+> slightly different names of teams or ways of listing props.
+
+### Plan
+- [ ] P1 Research how to get major sportsbooks' player props (The Odds API event odds: market keys
+      per sport, response shape, credit cost; any free alternative and its terms).
+- [ ] P2 Sportsbook props source: per-game prop odds from DraftKings/FanDuel/BetMGM/Caesars/etc.
+      only for games Novig lists props for, soonest first, inside a per-scan credit budget, re-used
+      for a while; every call metered and rotated through the key pool.
+- [ ] P3 Market-average devig for props (each book devigged on its own, then averaged; minimum
+      books), blended with sharp sources (Pinnacle, Kalshi) as for game lines.
+- [ ] P4 Matching across books: player names (suffixes, initials, accents, nicknames, "Last,
+      First"), prop listing styles (Over/Under vs "N+" ladders vs Yes/No), stat names per book,
+      team names; one-sided and alternate-only markets skipped.
+- [ ] P5 Settings (on/off, credits per scan, time window, re-use), tests, live check, ship, report.
