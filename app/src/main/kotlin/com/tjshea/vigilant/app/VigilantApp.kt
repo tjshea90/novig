@@ -2,15 +2,24 @@ package com.tjshea.vigilant.app
 
 import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
+import com.tjshea.vigilant.app.data.KeystoreSigningKey
+import com.tjshea.vigilant.app.data.NovigConnectionStore
 import com.tjshea.vigilant.data.keys.ApiKeyStore
 import com.tjshea.vigilant.data.keys.KeyRotator
+import com.tjshea.vigilant.data.novig.HybridNovigSource
 import com.tjshea.vigilant.data.novig.NovigPublicClient
+import com.tjshea.vigilant.data.novig.signing.NovigConnection
+import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
+import com.tjshea.vigilant.data.novig.stream.NovigStream
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.tracker.BetTracker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -38,7 +47,31 @@ class AppContainer(app: Application) {
     val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
     val tracker = BetTracker(File(app.filesDir, "bets.json"))
     val novig = NovigPublicClient(http, json)
-    val scanner = Scanner(novig)
+    val novigConnection = NovigConnectionStore(app)
+
+    /** Outlives any one screen; the stream's subscribe pacing runs here. */
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    /** Novig's websocket, present only once a read key is connected. */
+    @Volatile
+    var stream: NovigStream? = null
+        private set
+
+    val hybrid = HybridNovigSource(novig, { stream })
+    val scanner = Scanner(hybrid)
+
+    /** Builds (or tears down) the stream for a connection. Doesn't open the socket by itself. */
+    @Synchronized
+    fun useConnection(connection: NovigConnection?) {
+        stream?.close()
+        stream = connection?.let {
+            val signer = NovigSignedClient(http, json, KeystoreSigningKey(it.readAlias, it.readKeyId))
+            NovigStream(http, signer, appScope)
+        }
+    }
+
+    fun readKeyClient(connection: NovigConnection) =
+        NovigSignedClient(http, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
 
     private var referenceKeys: List<String>? = null
     private var reference: ReferenceSource? = null
