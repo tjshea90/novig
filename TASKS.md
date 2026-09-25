@@ -1018,3 +1018,34 @@ new error, not the same 503.
       account/billing state, not an app defect. Checkpointed the diagnosis
       itself so a future session doesn't re-diagnose this from scratch if
       Tj reports the same 402 again before switching proxy providers.
+
+## Tj's message, 2026-09-25 (his own words — full text + 4 screenshots in INBOX.md)
+
+> I now have access to novig API beta. [...] With the Sports Trading API,
+> you can programmatically access Novig markets, view live pricing and
+> market data, and place and manage orders directly on the exchange. [...]
+> Early access is gated. [...] Read-only accounts are supported. You can
+> create a separate read-only account to access market data without
+> enabling trading functionality. [...] RFQs are not currently supported.
+> [...] Record any useful information for this project in your permanent
+> memory. Maybe make a file on GitHub for permanent research memory that
+> Claude can see and understand even from fresh code sessions.
+>
+> Next step: review everything I sent and tell me what you need me to do to
+> start making this app that scans for positive EV bets on novig
+
+### Progress on this request
+
+- [ ] Read the official Novig API v3 docs for real (docs.novig.com
+      llms.txt index, Overview, Account model, API keys, Signing,
+      Quickstart/echo, Environments, Catalog, Order book / public stream,
+      Rate limits, OpenAPI 3.1 spec) — not just the Overview page Tj pasted.
+- [ ] Write a permanent, cited API reference file in this repo that a fresh
+      session can read cold (auth/signing, hosts, endpoints we need for
+      read-only EV scanning, websocket channels, limits, what's unknown),
+      and point BRIEF.md/RESEARCH.md/CLAUDE.md at it.
+- [ ] Compare against what's already built (`NovigApiClient`,
+      `NovigLiveFeed`, `NovigGraphQlClient`) — note what is now wrong/stale.
+- [ ] Tell Tj exactly what he needs to do (keys, account type, what to
+      paste where) — no app code in this step; he asked for the plan.
+- [ ] Checkpoint.
