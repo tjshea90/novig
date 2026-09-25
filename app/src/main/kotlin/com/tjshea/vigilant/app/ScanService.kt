@@ -23,6 +23,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 /**
@@ -54,19 +56,17 @@ class ScanService : Service() {
         // Always go foreground first: Android requires it within seconds of the start request,
         // even when the scan has already ended by the time this runs.
         ServiceCompat.startForeground(
-            this, ONGOING_ID, progressNotification(container.runner.state.value),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0,
+            this, ONGOING_ID, progressNotification(container.runner.state.value), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
         )
         acquireWakeLock()
         if (watch == null) {
             watch = scope.launch {
-                container.runner.state.collect { run ->
-                    if (run.scanning) {
-                        updateProgress(run)
-                    } else {
-                        finish(run, container.onScreen)
-                    }
-                }
+                // Progress while the scan runs; the first state that isn't scanning ends the watch.
+                val ended = container.runner.state
+                    .onEach { if (it.scanning) updateProgress(it) }
+                    .first { !it.scanning }
+                watch = null
+                finish(ended, container.onScreen)
             }
         }
         // A killed process takes the scan with it; there's nothing to resume, so don't restart.
@@ -177,7 +177,6 @@ class ScanService : Service() {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
         private fun ensureChannels(context: Context) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val nm = context.getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(
                 NotificationChannel(CHANNEL_SCAN, "Scan in progress", NotificationManager.IMPORTANCE_LOW).apply {
