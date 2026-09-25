@@ -26,27 +26,42 @@ data class League(
 )
 
 object Leagues {
+    /**
+     * In chip order. Tj's order (2026-09-25): NFL, NCAAF, MLB, WNBA, NHL first. Soccer, CFL, KBO and
+     * NPB were removed from the app at his request the same day.
+     */
     val ALL: List<League> = listOf(
-        League("NFL", "NFL", "americanfootball_nfl", "🏈", maxStartGapHours = 36, polymarketTag = 450, kalshiSeries = listOf("KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL"), pinnacleSportId = 5),
-        League("NCAAF", "NCAAF", "americanfootball_ncaaf", "🏈", maxStartGapHours = 36, polymarketTag = 100351, kalshiSeries = listOf("KXNCAAFGAME", "KXNCAAFSPREAD", "KXNCAAFTOTAL"), pinnacleSportId = 5),
+        League(
+            "NFL", "NFL", "americanfootball_nfl", "🏈", maxStartGapHours = 36, polymarketTag = 450, pinnacleSportId = 5,
+            kalshiSeries = listOf(
+                "KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL", "KXNFL1HSPREAD", "KXNFL1HTOTAL", "KXNFLTEAMTOTAL",
+                "KXNFLPASSYDS", "KXNFLRSHYDS", "KXNFLREC", "KXNFLRECYDS", "KXNFLRRYDS", "KXNFLTD", "KXNFLPASSTDS",
+                "KXNFLPASSATT", "KXNFLRSHATT", "KXNFLPASSINT", "KXNFLLONGREC", "KXNFLLONGRSH",
+            ),
+        ),
+        League(
+            "NCAAF", "NCAAF", "americanfootball_ncaaf", "🏈", maxStartGapHours = 36, polymarketTag = 100351, pinnacleSportId = 5,
+            kalshiSeries = listOf("KXNCAAFGAME", "KXNCAAFSPREAD", "KXNCAAFTOTAL", "KXNCAAF1HSPREAD", "KXNCAAF1HTOTAL", "KXNCAAFTEAMTOTAL"),
+        ),
+        League(
+            "MLB", "MLB", "baseball_mlb", "⚾", polymarketTag = 100381, pinnacleSportId = 6,
+            kalshiSeries = listOf(
+                "KXMLBGAME", "KXMLBSPREAD", "KXMLBTOTAL", "KXMLBF5SPREAD", "KXMLBF5TOTAL", "KXMLBTEAMTOTAL",
+                "KXMLBKS", "KXMLBTB", "KXMLBHIT", "KXMLBHR", "KXMLBHRR", "KXMLBRBI", "KXMLBSB", "KXMLBHA",
+            ),
+        ),
+        League(
+            "WNBA", "WNBA", "basketball_wnba", "🏀", polymarketTag = 100254, pinnacleSportId = 3,
+            kalshiSeries = listOf(
+                "KXWNBAGAME", "KXWNBASPREAD", "KXWNBATOTAL", "KXWNBA1HSPREAD", "KXWNBA1HTOTAL", "KXWNBATEAMTOTAL",
+                "KXWNBAPTS", "KXWNBAREB", "KXWNBAAST", "KXWNBA3PT",
+            ),
+        ),
+        League("NHL", "NHL", "icehockey_nhl", "🏒", polymarketTag = 899, kalshiSeries = listOf("KXNHLGAME", "KXNHLSPREAD", "KXNHLTOTAL"), pinnacleSportId = 4),
         League("NBA", "NBA", "basketball_nba", "🏀", polymarketTag = 745, kalshiSeries = listOf("KXNBAGAME", "KXNBASPREAD", "KXNBATOTAL"), pinnacleSportId = 3),
         League("NCAAB", "NCAAB", "basketball_ncaab", "🏀", kalshiSeries = listOf("KXNCAABGAME"), pinnacleSportId = 3),
-        League("WNBA", "WNBA", "basketball_wnba", "🏀", polymarketTag = 100254, kalshiSeries = listOf("KXWNBAGAME"), pinnacleSportId = 3),
-        League("MLB", "MLB", "baseball_mlb", "⚾", polymarketTag = 100381, kalshiSeries = listOf("KXMLBGAME", "KXMLBSPREAD", "KXMLBTOTAL"), pinnacleSportId = 6),
-        League("NHL", "NHL", "icehockey_nhl", "🏒", polymarketTag = 899, kalshiSeries = listOf("KXNHLGAME"), pinnacleSportId = 4),
         League("UFC", "UFC", "mma_mixed_martial_arts", "🥊", maxStartGapHours = 12, polymarketTag = 279, kalshiSeries = listOf("KXUFCFIGHT"), pinnacleSportId = 8),
         League("Boxing", "Boxing", "boxing_boxing", "🥊", maxStartGapHours = 12, pinnacleSportId = 9),
-        League("EPL", "Premier League", "soccer_epl", "⚽", pinnacleSportId = 1),
-        League("MLS", "MLS", "soccer_usa_mls", "⚽", pinnacleSportId = 1),
-        League("La Liga", "La Liga", "soccer_spain_la_liga", "⚽", pinnacleSportId = 1),
-        League("Bundesliga", "Bundesliga", "soccer_germany_bundesliga", "⚽", pinnacleSportId = 1),
-        League("Serie A", "Serie A", "soccer_italy_serie_a", "⚽", pinnacleSportId = 1),
-        League("Ligue 1", "Ligue 1", "soccer_france_ligue_one", "⚽", pinnacleSportId = 1),
-        League("Champions League", "Champions League", "soccer_uefa_champs_league", "⚽", pinnacleSportId = 1),
-        League("Europa League", "Europa League", "soccer_uefa_europa_league", "⚽", pinnacleSportId = 1),
-        League("CFL", "CFL", "americanfootball_cfl", "🏈", maxStartGapHours = 36, pinnacleSportId = 5),
-        League("KBO", "KBO", "baseball_kbo", "⚾", pinnacleSportId = 6),
-        League("NPB", "NPB", "baseball_npb", "⚾", pinnacleSportId = 6),
     )
 
     private val byNovig = ALL.associateBy { it.novigName }
