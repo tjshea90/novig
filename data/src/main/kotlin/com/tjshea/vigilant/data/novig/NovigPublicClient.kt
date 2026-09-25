@@ -113,7 +113,7 @@ class NovigPublicClient(
         val results = marketIds.distinct().map { id ->
             async {
                 gate.withPermit {
-                    var retried = false
+                    var retries = 0
                     while (true) {
                         // Once Novig says slow down for long, stop sending. Serve whatever is cached.
                         if (stop.get() != null) return@withPermit BookFetch.Skipped(id)
@@ -124,10 +124,11 @@ class NovigPublicClient(
                         } catch (e: NovigHttpException) {
                             val retryAfter = e.retryAfterSeconds ?: 1
                             // Measured live 2026-09-25: the public edge answers a burst with 429 and
-                            // Retry-After: 1. A short pause and one retry recovers without dropping books.
-                            if (e.code == 429 && !retried && retryAfter <= SHORT_RETRY_SECONDS && throttleHits.incrementAndGet() <= MAX_SHORT_RETRIES) {
-                                pauseUntil.accumulateAndGet(System.currentTimeMillis() + retryAfter * 1000L) { a, b -> maxOf(a, b) }
-                                retried = true
+                            // Retry-After: 1. A short pause and up to two paced retries recover
+                            // without dropping books; anything still missing is served from cache.
+                            if (e.code == 429 && retries < 2 && retryAfter <= SHORT_RETRY_SECONDS && throttleHits.incrementAndGet() <= MAX_SHORT_RETRIES) {
+                                retries++
+                                pauseUntil.accumulateAndGet(System.currentTimeMillis() + retryAfter * 1000L * retries) { a, b -> maxOf(a, b) }
                                 continue
                             }
                             if (e.code == 429 || e.code == 403) stop.compareAndSet(null, e)
@@ -228,7 +229,7 @@ class NovigPublicClient(
     companion object {
         const val MAX_CACHED_BOOKS = 3000
         const val SHORT_RETRY_SECONDS = 5
-        const val MAX_SHORT_RETRIES = 3
+        const val MAX_SHORT_RETRIES = 8
         const val MAX_PAGES = 20
     }
 }
