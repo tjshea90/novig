@@ -394,6 +394,18 @@ public repo makes a leaked credential immediately and permanently exposed —
 this account's fantasy-football repo is public and treats every checkpoint
 accordingly) and the Release-link behavior above.
 
+## Novig API — permanent research memory
+
+Novig's official API (v3, beta access since 2026-09-25) is documented for
+this project in **`NOVIG_API.md`**. It covers hosts, public vs. signed routes,
+the `NOVIG-V3` signing scheme, the websocket, book semantics ("taker price =
+1 − best opposing bid"), fees, location checks, and what's still unverified.
+Read it before writing or changing any Novig data code, and update it
+whenever something is verified or turns out wrong. It is the one place a
+fresh session learns this, so don't re-research what's already recorded there.
+`RESEARCH.md` holds the wider EV/market research. This repo is **public**:
+never commit a Novig key, PEM, or key ID paired with a private key.
+
 ## Project rules
 
 See `BRIEF.md` for the full list of what's actually decided about this

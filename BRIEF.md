@@ -269,6 +269,15 @@ re-diagnose these from scratch:
 
 ## Locked architecture decisions
 
+- **Novig data comes from Novig's official v3 API. Read
+  [`NOVIG_API.md`](NOVIG_API.md) before touching any Novig client code.**
+  (2026-09-25: Tj has beta access.) Public no-key routes cover the catalog and
+  books. Signed routes (Ed25519/P-256, `NOVIG-V3`) cover the real-time
+  websocket. The app should only ever hold a `trading::read` key, never the
+  money-moving `management` key, and never commit any key. **This repo is
+  public.** Signed routes refuse VPNs and proxies (HTTP 451). Until v3 is wired
+  in, the GraphQL/proxy client from 2026-09-22 is what the shipped app still
+  uses. It is superseded, not yet removed.
 - **Reference-line source order: prefer a sharp book (Pinnacle/Circa) alone
   when fetched, else average every major book fetched.** Tj's own explicit
   instruction (2026-09-20). Implemented in `engine`'s `Consensus` object —
