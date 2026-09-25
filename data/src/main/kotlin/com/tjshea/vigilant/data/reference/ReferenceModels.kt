@@ -80,8 +80,17 @@ interface ReferenceSource {
     /** True when each call spends a limited quota (credits), so callers should re-use results. */
     val metered: Boolean get() = false
 
+    /** Whether this provider lists [league] at all. A scan never calls [odds] for one it doesn't. */
+    fun supports(league: League): Boolean = true
+
+    /** How long a fetched snapshot may be re-used instead of calling again. 0 = fetch on every scan. */
+    fun reuseMs(settings: ScanSettings): Long = 0L
+
     suspend fun odds(league: League, settings: ScanSettings): RefSnapshot
 }
+
+/** A provider refused or failed in a way the user should read as-is. */
+class ReferenceException(message: String) : Exception(message)
 
 /**
  * Turns an exchange's two-sided quote into book-style decimal odds. Buying side A costs its ask;
