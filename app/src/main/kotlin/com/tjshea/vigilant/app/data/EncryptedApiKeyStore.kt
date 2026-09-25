@@ -1,7 +1,6 @@
 package com.tjshea.vigilant.app.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -12,15 +11,11 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
-private val Context.apiKeyDataStore by preferencesDataStore(name = "vigilant_api_keys")
-
-private val NOVIG_DIRECT_MODE_KEY = booleanPreferencesKey("novig_direct_mode_enabled")
+internal val Context.apiKeyDataStore by preferencesDataStore(name = "vigilant_api_keys")
 
 /**
- * The real, Android-side implementation of [ApiKeyStore] — DataStore Preferences for storage,
- * [KeyCipher] (Android Keystore-backed AES/GCM) for encryption before anything touches disk.
- * Order is preserved (a JSON array, not a Set) since [com.tjshea.vigilant.data.keys.KeyRotator]
- * tries keys in the order Tj added them.
+ * [ApiKeyStore] on Android: DataStore for storage, [KeyCipher] (Android Keystore AES/GCM) so no
+ * key is ever written to disk in the clear. Order is preserved: it's the order keys are tried in.
  */
 class EncryptedApiKeyStore(
     private val context: Context,
@@ -28,25 +23,15 @@ class EncryptedApiKeyStore(
 ) : ApiKeyStore {
 
     override suspend fun getKeys(provider: ApiProvider): List<String> {
-        val prefKey = stringPreferencesKey(provider.storageKey)
-        val raw = context.apiKeyDataStore.data.first()[prefKey] ?: return emptyList()
-        val encrypted = runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw) }
-            .getOrDefault(emptyList())
+        val raw = context.apiKeyDataStore.data.first()[stringPreferencesKey(provider.storageKey)] ?: return emptyList()
+        val encrypted = runCatching { json.decodeFromString(ListSerializer(String.serializer()), raw) }.getOrDefault(emptyList())
         return encrypted.mapNotNull { runCatching { KeyCipher.decrypt(it) }.getOrNull() }
     }
 
     override suspend fun setKeys(provider: ApiProvider, keys: List<String>) {
-        val prefKey = stringPreferencesKey(provider.storageKey)
         val encrypted = keys.map { KeyCipher.encrypt(it) }
         context.apiKeyDataStore.edit { prefs ->
-            prefs[prefKey] = json.encodeToString(ListSerializer(String.serializer()), encrypted)
+            prefs[stringPreferencesKey(provider.storageKey)] = json.encodeToString(ListSerializer(String.serializer()), encrypted)
         }
-    }
-
-    override suspend fun isNovigDirectModeEnabled(): Boolean =
-        context.apiKeyDataStore.data.first()[NOVIG_DIRECT_MODE_KEY] ?: false
-
-    override suspend fun setNovigDirectModeEnabled(enabled: Boolean) {
-        context.apiKeyDataStore.edit { prefs -> prefs[NOVIG_DIRECT_MODE_KEY] = enabled }
     }
 }

@@ -1090,7 +1090,7 @@ Plan (in priority order, so an interrupted session still leaves a shippable
 app — ship after milestone A even if nothing else lands):
 
 ### Milestone A — official public Novig leg + OddsJam-style fair odds (ship as v0.4.0)
-- [ ] A1 `data`: `NovigPublicClient` over `/v3/public/...` (NOVIG_API.md §5):
+- [x] A1 `data`: `NovigPublicClient` over `/v3/public/...` (NOVIG_API.md §5):
       events → game-line markets → books; executable taker price
       (1 − best opposing bid) + depth; per-market `fee`; ETag/304 book cache;
       decimal (not float-string) price parsing. MockWebServer tests with
@@ -1101,7 +1101,7 @@ app — ship after milestone A even if nothing else lands):
       Kelly stake. Unit tests. DONE: FairValue/Fees/EvMath + WORST_CASE devig;
       `./gradlew :engine:test` 34/34 green (FairValueTest, FeesTest, EvMathTest,
       DevigTest, OddsTest). Old Consensus/EvCalculator/Models removed.
-- [ ] A3 `data`: scanner rework — match Novig markets to reference lines by
+- [x] A3 `data`: scanner rework — match Novig markets to reference lines by
       team + line (spreads/totals need the same point), fetch books only for
       matched markets, league mapping Odds-API sport key ↔ Novig league.
 - [ ] A4 `app`: OddsJam-style UI — +EV feed cards (EV%, selection, Novig
