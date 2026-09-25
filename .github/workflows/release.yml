@@ -138,4 +138,4 @@ jobs:
 
             Signed with a committed, non-secret keystore (see BRIEF.md) — fine for sideloading, not intended for Play Store distribution.
 
-            Live Novig prices come from Novig's official public API (no key needed). Fair odds need a free The Odds API key, added in Settings.
+            Novig prices come from Novig's official API (no key needed). Fair odds come free from Polymarket and Kalshi; add a free Pinnacle (pinnapi) or The Odds API key in Settings for more. Nothing is fetched until you tap Scan.
