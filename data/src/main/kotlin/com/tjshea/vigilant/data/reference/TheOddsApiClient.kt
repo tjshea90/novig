@@ -3,6 +3,12 @@ package com.tjshea.vigilant.data.reference
 import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
 import com.tjshea.vigilant.data.keys.KeyRotator
+import com.tjshea.vigilant.data.scanner.League
+import com.tjshea.vigilant.data.scanner.MarketFamily
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -12,16 +18,18 @@ import okhttp3.Request
 import java.time.Instant
 
 /**
- * The Odds API v4 (RESEARCH.md §4.3), the fair-odds leg: Pinnacle plus the major US books.
+ * The Odds API v4 (RESEARCH.md §4.3, §11), the optional sportsbook leg: Pinnacle plus the major
+ * US books, on the free tier's 500 credits a month.
  *
- * Credit cost is `markets x regions`, and naming up to 10 bookmakers counts as ONE region (their
- * docs, verified 2026-09-25). So this always sends `bookmakers=` (at most 10) instead of
- * `regions=`, which makes a moneyline+spread+total call cost 3 credits instead of the 9 the old
- * `regions=us,us2,eu` call cost. Novig itself is never requested here: it's the thing being
- * priced, not a reference.
+ * Credit cost is `markets returned x regions`, and naming up to 10 bookmakers counts as ONE
+ * region (their docs, verified 2026-09-25). So this always sends `bookmakers=` (at most 10)
+ * instead of `regions=`, and asks only for the market families the user prices: moneyline only
+ * is 1 credit per sport, all three are 3. Novig itself is never requested here: it's the thing
+ * being priced, not a reference.
  *
- * [KeyRotator] switches keys automatically (Tj's 2026-09-20 request): 401 (quota used up or bad
- * key) retires a key, 429 cools it down.
+ * Their docs ask clients to space requests out rather than burst, so calls are at least
+ * [minIntervalMs] apart. [KeyRotator] switches keys automatically (Tj's 2026-09-20 request):
+ * 401 (quota used up or bad key) retires a key, 429 cools it down.
  */
 class TheOddsApiClient(
     private val httpClient: OkHttpClient,
@@ -29,16 +37,38 @@ class TheOddsApiClient(
     private val json: Json,
     private val baseUrl: String = "https://api.the-odds-api.com/v4",
     private val clock: () -> Long = System::currentTimeMillis,
+    private val minIntervalMs: Long = 1_500,
 ) : ReferenceSource {
 
-    override suspend fun odds(sportKey: String, bookmakers: List<String>): RefSnapshot {
+    override val id = ID
+    override val displayName = "The Odds API"
+    override val metered = true
+
+    override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMinutes.coerceAtLeast(0) * 60_000L
+
+    override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+        val markets = settings.families.mapNotNull { FAMILY_MARKETS[it] }.sorted()
+        if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
+        return fetch(league.oddsApiSportKey, settings.referenceBooks, markets)
+    }
+
+    private val spacing = Mutex()
+    private var lastCallAt = 0L
+
+    /** One sport's odds from the named [bookmakers]. Costs `markets.size` credits when anything comes back. */
+    suspend fun fetch(sportKey: String, bookmakers: List<String>, markets: List<String> = ALL_MARKETS): RefSnapshot {
         val books = bookmakers.filter { it != "novig" }.distinct().take(MAX_BOOKMAKERS_ONE_REGION)
         require(books.isNotEmpty()) { "Pick at least one reference sportsbook" }
+        spacing.withLock {
+            val wait = lastCallAt + minIntervalMs - System.currentTimeMillis()
+            if (wait > 0) delay(wait)
+            lastCallAt = System.currentTimeMillis()
+        }
         return keyRotator.execute("The Odds API") { key ->
             val url = "$baseUrl/sports/$sportKey/odds".toHttpUrl().newBuilder()
                 .addQueryParameter("apiKey", key)
                 .addQueryParameter("bookmakers", books.joinToString(","))
-                .addQueryParameter("markets", "h2h,spreads,totals")
+                .addQueryParameter("markets", markets.joinToString(","))
                 .addQueryParameter("oddsFormat", "decimal")
                 .addQueryParameter("dateFormat", "iso")
                 .build()
@@ -55,7 +85,7 @@ class TheOddsApiClient(
                     }
                     401 -> KeyAttemptResult.Invalid(reason = "HTTP 401" + quotaHint(body))
                     // An out-of-season or unknown sport isn't the key's fault.
-                    404 -> KeyAttemptResult.Success(RefSnapshot(sportKey, emptyList(), clock(), response.intHeader(REMAINING), response.intHeader(USED)))
+                    404 -> KeyAttemptResult.Success(RefSnapshot(sportKey, emptyList(), clock(), response.intHeader(REMAINING), response.intHeader(USED), ID))
                     else -> {
                         if (!response.isSuccessful) {
                             throw TheOddsApiException("The Odds API failed for $sportKey: HTTP ${response.code} ${body.take(200)}")
@@ -67,6 +97,7 @@ class TheOddsApiClient(
                                 fetchedAtMs = clock(),
                                 creditsRemaining = response.intHeader(REMAINING),
                                 creditsUsed = response.intHeader(USED),
+                                provider = ID,
                             ),
                         )
                     }
@@ -81,6 +112,9 @@ class TheOddsApiClient(
         if (body.contains("quota", ignoreCase = true)) " — monthly credits used up" else ""
 
     companion object {
+        const val ID = "oddsapi"
+        val ALL_MARKETS = listOf("h2h", "spreads", "totals")
+        private val FAMILY_MARKETS = mapOf(MarketFamily.MONEYLINE to "h2h", MarketFamily.SPREAD to "spreads", MarketFamily.TOTAL to "totals")
         const val REMAINING = "x-requests-remaining"
         const val USED = "x-requests-used"
         const val MAX_BOOKMAKERS_ONE_REGION = 10
@@ -111,6 +145,13 @@ class TheOddsApiClient(
             "mybookieag" to "MyBookie.ag",
             "betus" to "BetUS",
         )
+
+        /** Display names for every book key the app can show, sportsbooks and exchanges alike. */
+        fun bookTitle(key: String): String = when (key) {
+            PolymarketClient.BOOK_KEY -> "Polymarket"
+            KalshiClient.BOOK_KEY -> "Kalshi"
+            else -> KNOWN_BOOKMAKERS[key] ?: key
+        }
 
         fun parseEvents(rawJson: String, json: Json): List<RefEvent> =
             json.decodeFromString(ListSerializer(EventDto.serializer()), rawJson).map { it.toDomain() }
