@@ -156,8 +156,8 @@ private fun FeedSummary(state: UiState, now: Long, onScan: () -> Unit, onOpenSet
             else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${state.feed.size} bet${if (state.feed.size == 1) "" else "s"} at +${Format.percent(state.settings.minEvPercent)} EV or better · " +
-                            "${result.stats.outcomesWithFair} prices checked",
+                        "${state.feed.size} bet${if (state.feed.size == 1) "" else "s"} ≥ +${Format.percent(state.settings.minEvPercent)} EV · " +
+                            "${result.stats.outcomesWithFair} checked",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
