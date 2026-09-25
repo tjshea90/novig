@@ -10,7 +10,6 @@ import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
 import com.tjshea.vigilant.data.scanner.Opportunity
-import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -72,6 +71,10 @@ data class UiState(
  * Scan or pulls to refresh (his rule, 2026-09-25): nothing fetches on launch, on a timer, on a
  * tab change, or when a setting changes. Settings changes re-price from what the last scan
  * fetched, so they're instant and free.
+ *
+ * The scan itself runs in the app's [com.tjshea.vigilant.data.scanner.ScanRunner], not here, so it
+ * outlives this screen (Tj switches apps mid-scan); this only mirrors it: progress and partial
+ * results while it runs, the report when it ends.
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -101,6 +104,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     novig = it.novig.copy(connection = connection),
                 )
             }
+            // After the settings, so a scan still running (or finished) is shown under them.
+            follow()
         }
         viewModelScope.launch {
             c.tracker.flow.filterNotNull().collect { bets -> _state.update { it.copy(bets = bets) } }
@@ -110,39 +115,62 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** One scan: Novig's board and prices plus fair odds from every enabled source. */
+    /**
+     * One scan: Novig's board and prices plus fair odds from every enabled source. It runs in the
+     * app's runner under a foreground service, so it keeps going if Tj switches apps.
+     */
     fun scan() {
         val current = _state.value
-        if (!current.loaded || current.status.scanning) return
+        if (!current.loaded || c.runner.running) return
         if (current.settings.leagues.isEmpty()) return
-        viewModelScope.launch {
-            _state.update { it.copy(status = it.status.copy(scanning = true, progress = ScanProgress("Starting"))) }
-            try {
-                val settings = _state.value.settings
-                val sources = c.referenceSources(settings)
-                val now = System.currentTimeMillis()
-                // Open bets' lines are priced even past the per-game cap, so their closing value updates.
-                val pinned = _state.value.bets.filter { it.status == BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
-                val report = withContext(Dispatchers.Default) {
-                    c.scanner.scan(settings, sources, pinned) { p -> _state.update { it.copy(status = it.status.copy(progress = p)) } }
+        val settings = current.settings
+        val now = System.currentTimeMillis()
+        // Open bets' lines are priced even past the per-game cap, so their closing value updates.
+        val pinned = current.bets.filter { it.status == BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
+        val started = c.runner.start(settings, c.referenceSources(settings), pinned) { report ->
+            // Runs even with this screen gone. Disk trouble (full storage) must never break a scan.
+            report?.result?.let { runCatching { c.tracker.observe(it) } }
+            // Keyed calls saved as they happened; this saves the keyless request counters.
+            runCatching { c.usage.flush() }
+        }
+        if (started) ScanService.start(getApplication())
+    }
+
+    /** Mirrors the runner into the screen's state, for as long as this screen lives. */
+    private suspend fun follow() {
+        var seen = c.runner.state.value.finished
+        var first = true
+        c.runner.state.collect { run ->
+            val report = run.report
+            val ended = run.finished != seen
+            seen = run.finished
+            if (!run.scanning && report != null && (ended || first)) {
+                // A scan just ended, or this screen opened after one did.
+                applyReport(report, run.settings ?: _state.value.settings, run.result)
+            } else {
+                _state.update { s ->
+                    val r = run.result ?: s.result
+                    s.copy(
+                        result = r,
+                        feed = r?.feed(s.settings) ?: s.feed,
+                        status = s.status.copy(scanning = run.scanning, progress = run.progress),
+                    )
                 }
-                applyReport(report, settings)
-            } finally {
-                _state.update { it.copy(status = it.status.copy(scanning = false, progress = null)) }
-                // Keyed calls saved as they happened; this saves the keyless request counters.
-                runCatching { c.usage.flush() }
             }
+            first = false
         }
     }
 
-    private suspend fun applyReport(report: ScanReport, settings: ScanSettings) {
-        val result = report.result
+    private suspend fun applyReport(report: ScanReport, settings: ScanSettings, result: ScanResult?) {
         _state.update { s ->
+            val r = result ?: s.result
             s.copy(
-                result = result ?: s.result,
-                feed = (result ?: s.result)?.feed(s.settings) ?: emptyList(),
+                result = r,
+                feed = r?.feed(s.settings) ?: emptyList(),
                 status = s.status.copy(
-                    scannedAtMs = if (result != null) result.computedAtMs else s.status.scannedAtMs,
+                    scanning = false,
+                    progress = null,
+                    scannedAtMs = report.result?.computedAtMs ?: s.status.scannedAtMs,
                     errors = report.errors,
                     backoffSeconds = report.retryAfterSeconds,
                     booksFetched = report.booksFetched + report.booksNotModified,
@@ -157,8 +185,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // shows numbers computed under the old settings.
         val latest = _state.value.settings
         if (result != null && latest != settings) repriceNow(latest)
-        // Disk trouble (full storage) must never break a scan.
-        result?.let { runCatching { c.tracker.observe(it) } }
     }
 
     private suspend fun repriceNow(settings: ScanSettings) {
