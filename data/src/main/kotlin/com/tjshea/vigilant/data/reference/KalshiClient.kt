@@ -4,7 +4,11 @@ import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.League
+import com.tjshea.vigilant.data.novig.RateGate
 import com.tjshea.vigilant.data.scanner.MarketFamily
+import com.tjshea.vigilant.data.scanner.PropStats
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -36,6 +40,7 @@ class KalshiClient(
     private val baseUrl: String = "https://api.elections.kalshi.com/trade-api/v2",
     private val clock: () -> Long = System::currentTimeMillis,
     private val usage: UsageMeter? = null,
+    sleep: suspend (Long) -> Unit = { delay(it) },
 ) : ReferenceSource {
 
     override val id = BOOK_KEY
@@ -43,13 +48,35 @@ class KalshiClient(
 
     override fun supports(league: League) = league.kalshiSeries.isNotEmpty()
 
+    /**
+     * Anonymous reads get throttled well below the documented 20/s once a burst adds up (seen live
+     * 2026-09-25: 429 after ~130 requests in ~40s), so every request waits its turn here.
+     */
+    private val gate = RateGate(ratePerSecond = 2.0, burst = 4, sleep = sleep)
+
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val now = clock()
         val series = league.kalshiSeries.filter { s -> familyOf(s)?.let { it in settings.families } ?: false }
         val events = ArrayList<EventDto>()
-        for (s in series) events += fetchSeries(s)
+        var failure: Exception? = null
+        var fetched = 0
+        for (s in series) {
+            try {
+                events += fetchSeries(s)
+                fetched++
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // One series failing (or throttled) mustn't cost the others: keep what came back.
+                if (failure == null) failure = e
+                if (e is KalshiThrottled) break
+            }
+        }
+        if (fetched == 0 && failure != null) throw failure
         return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, now), now, provider = id)
     }
+
+    private class KalshiThrottled : ReferenceException("Kalshi is limiting requests right now; it'll be back on the next scan.")
 
     private suspend fun fetchSeries(series: String): List<EventDto> {
         val out = ArrayList<EventDto>()
@@ -62,15 +89,32 @@ class KalshiClient(
                 addQueryParameter("limit", "200")
                 cursor?.let { addQueryParameter("cursor", it) }
             }.build()
-            val page = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
-                val body = response.body?.string().orEmpty()
-                usage?.countKeyless(QuotaPolicy.KALSHI, calls = 1, throttled = if (response.code == 429) 1 else 0)
-                if (!response.isSuccessful) throw ReferenceException("Kalshi HTTP ${response.code}")
-                json.decodeFromString(PageDto.serializer(), body)
+            var page: PageDto? = null
+            for (attempt in 0..1) {
+                gate.acquire()
+                val result = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
+                    val body = response.body?.string().orEmpty()
+                    usage?.countKeyless(QuotaPolicy.KALSHI, calls = 1, throttled = if (response.code == 429) 1 else 0)
+                    when {
+                        response.code == 429 -> {
+                            val wait = response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000) ?: 2_000L
+                            gate.pause(System.currentTimeMillis() + wait)
+                            gate.slowDown()
+                            null
+                        }
+                        !response.isSuccessful -> throw ReferenceException("Kalshi HTTP ${response.code}")
+                        else -> json.decodeFromString(PageDto.serializer(), body)
+                    }
+                }
+                if (result != null) {
+                    page = result
+                    break
+                }
             }
-            out += page.events
-            cursor = page.cursor?.takeIf { it.isNotBlank() }
-            if (cursor == null || page.events.isEmpty()) return out
+            val got = page ?: throw KalshiThrottled()
+            out += got.events
+            cursor = got.cursor?.takeIf { it.isNotBlank() }
+            if (cursor == null || got.events.isEmpty()) return out
         }
         return out
     }
@@ -86,6 +130,9 @@ class KalshiClient(
         private val TEAM_CODE = Regex("^[A-Z][A-Z0-9]{1,4}$")
 
         fun familyOf(series: String): MarketFamily? = when {
+            series in PropStats.KALSHI_SERIES -> MarketFamily.PLAYER_PROPS
+            series.endsWith("TEAMTOTAL") -> MarketFamily.TEAM_TOTAL
+            listOf("1HSPREAD", "1HTOTAL", "F5SPREAD", "F5TOTAL").any { series.endsWith(it) } -> MarketFamily.FIRST_HALF
             series.endsWith("SPREAD") -> MarketFamily.SPREAD
             series.endsWith("TOTAL") -> MarketFamily.TOTAL
             series.endsWith("GAME") || series.endsWith("FIGHT") -> MarketFamily.MONEYLINE
@@ -210,24 +257,38 @@ class KalshiClient(
             }
 
             for (e in group) {
-                val family = familyOf(e.series_ticker ?: e.event_ticker.substringBefore('-'))
-                if (family != MarketFamily.SPREAD && family != MarketFamily.TOTAL) continue
+                val series = e.series_ticker ?: e.event_ticker.substringBefore('-')
+                val family = familyOf(series) ?: continue
+                if (family == MarketFamily.MONEYLINE) continue
+                val period = if (family == MarketFamily.FIRST_HALF) 1 else 0
+                val stat = PropStats.KALSHI_SERIES[series]
                 for (m in e.markets) {
                     if (!tradable(m)) continue
                     val strike = m.floor_strike ?: continue
                     // "Over X" loses at exactly X, unlike a sportsbook push, so only half points.
                     if (!PolymarketClient.isHalfPoint(strike)) continue
                     val (yes, no) = ExchangeQuote.toDecimal(price(m.yes_bid_dollars), price(m.yes_ask_dollars), maxSpread) ?: continue
-                    if (family == MarketFamily.TOTAL) {
-                        markets += RefBookMarket(BOOK_KEY, "Kalshi", LineKind.TOTAL, listOf(RefQuote(Side.OVER, yes, strike), RefQuote(Side.UNDER, no, strike)), now)
-                    } else {
-                        val teamCode = m.ticker.substringAfterLast('-').trimEnd { it.isDigit() }
-                        val favorite = sideOfCode(teamCode) ?: continue
-                        val dog = if (favorite == Side.AWAY) Side.HOME else Side.AWAY
-                        markets += RefBookMarket(
-                            BOOK_KEY, "Kalshi", LineKind.SPREAD,
-                            listOf(RefQuote(favorite, yes, -strike), RefQuote(dog, no, strike)), now,
-                        )
+                    val overUnder = listOf(RefQuote(Side.OVER, yes, strike), RefQuote(Side.UNDER, no, strike))
+                    val teamCode = m.ticker.substringAfterLast('-').trimEnd { it.isDigit() }
+                    markets += when {
+                        // "Bryce Young: 150+ passing yards": Yes = over 149.5.
+                        stat != null -> {
+                            val player = (m.yes_sub_title ?: m.title)?.takeIf { ':' in it }?.substringBefore(':')?.trim()
+                            if (player.isNullOrEmpty()) continue
+                            RefBookMarket(BOOK_KEY, "Kalshi", LineKind.PLAYER_PROP, overUnder, now, 0, player, stat)
+                        }
+                        // "Boston over 2.5 runs scored", ticker suffix BOS3.
+                        family == MarketFamily.TEAM_TOTAL -> {
+                            val side = sideOfCode(teamCode) ?: continue
+                            RefBookMarket(BOOK_KEY, "Kalshi", LineKind.TEAM_TOTAL, overUnder, now, 0, if (side == Side.AWAY) RefBookMarket.AWAY else RefBookMarket.HOME)
+                        }
+                        series.endsWith("SPREAD") -> {
+                            // "CAR wins by over 2.5": Yes = that team -2.5, No = the other +2.5.
+                            val favorite = sideOfCode(teamCode) ?: continue
+                            val dog = if (favorite == Side.AWAY) Side.HOME else Side.AWAY
+                            RefBookMarket(BOOK_KEY, "Kalshi", LineKind.SPREAD, listOf(RefQuote(favorite, yes, -strike), RefQuote(dog, no, strike)), now, period)
+                        }
+                        else -> RefBookMarket(BOOK_KEY, "Kalshi", LineKind.TOTAL, overUnder, now, period)
                     }
                 }
             }

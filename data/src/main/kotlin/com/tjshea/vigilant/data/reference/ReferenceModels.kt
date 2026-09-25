@@ -112,7 +112,7 @@ interface ReferenceSource {
 }
 
 /** A provider refused or failed in a way the user should read as-is. */
-class ReferenceException(message: String) : Exception(message)
+open class ReferenceException(message: String) : Exception(message)
 
 /**
  * Turns an exchange's two-sided quote into book-style decimal odds. Buying side A costs its ask;
