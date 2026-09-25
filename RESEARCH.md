@@ -21,6 +21,22 @@ architecture is locked in. §8's Odds Assist Pro findings, by contrast,
 
 ## 1. Bottom line
 
+**Updated 2026-09-25 — supersedes §4.4's proxy/GraphQL path and the §4.1
+"official API" guesses below. Full detail: [`NOVIG_API.md`](NOVIG_API.md).**
+Tj got Novig's official API beta. Reading the real v3 docs (not doc
+summaries) and hitting the API live from this container showed two things.
+First, Novig has **public, unauthenticated, officially documented** REST routes
+(`https://api.novig.com/v3/public/catalog/...`). They return the full catalog,
+live order books, and recent trades for **$0, with no key, no proxy, and no
+ToS gray area**. Verified returning real production NFL data on 2026-09-25.
+Second, the signed routes add a real-time websocket (`bbo`/`book`/`trades`
+pushes), plus orders and balances. They need an Ed25519/P-256 keypair that
+Tj registers from his Novig profile, and they **refuse VPNs and proxies**
+(HTTP 451). So the Novig leg is solved officially. The remaining cost and
+freshness bottleneck is the **reference (sharp-line) leg**. The Odds API
+free tier is 500 credits a month (§4.3). Everything below this paragraph
+predates the v3 docs and is kept for context.
+
 **Updated 2026-09-22 (§4.4) — supersedes the "no $0/mo path exists" framing
 directly below.** Tj supplied a working, third-party, MIT-licensed Python
 package (`novig-liquidity`) that a briefing document built around it, and
@@ -909,6 +925,13 @@ sub-bullet below, which describes a different (unconfirmed, dormant) path.**
 7. **(new, §4.4)** What GraphQL `status` value Novig uses for live/in-play
    markets — both verified queries hardcode `"OPEN_PREGAME"`; live-market
    support would need this discovered/confirmed first, not guessed.
+
+8. **(new, 2026-09-25)** Items 1, 5, 6 and 7 above are **superseded by
+   [`NOVIG_API.md`](NOVIG_API.md)**. The official v3 API is documented,
+   public routes are verified live, the full schemas are in the OpenAPI spec,
+   and event statuses are `OPEN_PREGAME/OPEN_INGAME/...`. Still open, per
+   NOVIG_API.md §12: the per-IP rate limit on public routes, and an
+   end-to-end signed call (needs Tj's key).
 
 None of the above blocks starting architecture/BRIEF.md decisions — they
 block finishing them. Do not start writing app code from this file alone
