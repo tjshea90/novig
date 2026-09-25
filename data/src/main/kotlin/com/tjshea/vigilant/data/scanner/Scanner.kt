@@ -111,7 +111,7 @@ class Scanner(
 
         val sourceReports = coroutineScope {
             val catalogJob = async {
-                refreshCatalog(settings, now, errors)
+                refreshCatalog(settings, catalogTypes(settings, ordered), now, errors)
                 onProgress(ScanProgress("Novig board and fair odds", done.incrementAndGet(), calls))
             }
             val jobs = ordered.map { source ->
@@ -190,9 +190,17 @@ class Scanner(
         settings.leagues - (catalog?.leagues ?: emptySet())
     }
 
-    private suspend fun refreshCatalog(settings: ScanSettings, now: Long, errors: MutableList<String>) {
-        val c = catalog
+    /**
+     * The Novig market types a scan needs. Prop stats only the sportsbooks price (pitcher outs,
+     * kicking points, …) are hundreds of markets a day, fetched only when that source is on.
+     */
+    private fun catalogTypes(settings: ScanSettings, sources: List<ReferenceSource>): Set<String> {
         val types = settings.novigMarketTypes.toSet()
+        return if (sources.any { it.id == "oddsapi_props" }) types else types - PropStats.BOOK_ONLY_TYPES
+    }
+
+    private suspend fun refreshCatalog(settings: ScanSettings, types: Set<String>, now: Long, errors: MutableList<String>) {
+        val c = catalog
         val fresh = c != null && c.leagues == settings.leagues && c.includeLive == settings.includeLive &&
             c.daysAhead == settings.daysAhead && c.types.containsAll(types) && now - c.fetchedAtMs < catalogTtlMs
         if (fresh) return

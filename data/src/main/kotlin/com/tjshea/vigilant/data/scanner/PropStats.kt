@@ -112,6 +112,9 @@ object PropStats {
     /** Novig market types fetched for the "Player props" family: every stat some source prices. */
     val NOVIG_TYPES: List<String> = (KALSHI_SERIES.values + ODDS_API_MARKETS.values).distinct()
 
+    /** Stats only the sportsbooks price: not worth fetching from Novig unless book props are on. */
+    val BOOK_ONLY_TYPES: Set<String> = ODDS_API_MARKETS.values.toSet() - KALSHI_SERIES.values.toSet()
+
     fun displayName(novigType: String): String =
         novigType.lowercase().split('_').joinToString(" ") { w ->
             when (w) {
