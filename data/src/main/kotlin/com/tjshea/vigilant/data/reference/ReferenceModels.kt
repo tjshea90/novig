@@ -133,6 +133,12 @@ data class ScanContext(
 open class ReferenceException(message: String) : Exception(message)
 
 /**
+ * A provider answered part of a request, then failed (e.g. the credits ran out halfway through a
+ * slate's props). [partial] is still worth pricing; the message is still worth showing.
+ */
+class PartialReferenceException(val partial: RefSnapshot, message: String) : ReferenceException(message)
+
+/**
  * Turns an exchange's two-sided quote into book-style decimal odds. Buying side A costs its ask;
  * buying side B costs `1 - bid(A)`. The gap between them plays the role of a book's vig, so the
  * normal devig math lands on the mid. Returns null for thin or lopsided markets that would only

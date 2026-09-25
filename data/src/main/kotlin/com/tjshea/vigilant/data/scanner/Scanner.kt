@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigSource
+import com.tjshea.vigilant.data.reference.PartialReferenceException
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceException
 import com.tjshea.vigilant.data.reference.ReferenceSource
@@ -254,6 +255,14 @@ class Scanner(
                 fetched++
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: PartialReferenceException) {
+                // What came back before the failure is kept; the failure is still reported.
+                synchronized(references) { references[key] = Cached(e.partial.copy(fetchedAtMs = now, provider = source.id), requestKey) }
+                e.partial.creditsRemaining?.let { creditsRemaining = it }
+                fetched++
+                val message = e.message ?: source.displayName
+                if (error == null) errors.addSync(message)
+                error = message
             } catch (e: Exception) {
                 val message = when (e) {
                     is AllKeysExhaustedException, is ReferenceException -> e.message ?: source.displayName
