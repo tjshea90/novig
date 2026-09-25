@@ -1298,3 +1298,82 @@ Check job-level detail (list_workflow_jobs) for release run 35693512531 (v0.3.2,
 ```
 Check release run 35695667948 via list_workflow_jobs. If all real steps show success, fetch the release via get_release_by_tag, record it in BUILDLOG.md via tools/record-release.sh, and tell Tj v0.3.3 is shipped with an honest explanation of what the authenticator fix does and doesn't resolve for his proxy trial.
 ```
+
+## 2026-09-25T02:45:40Z
+```
+I now have access to novig API beta. 
+
+Here is some documentation: 
+
+With the Sports Trading API, you can programmatically access Novig markets, view live pricing and market data, and place and manage orders directly on the exchange.
+
+View API Docs
+A few things to know:
+
+• Early access is gated. API access is currently only available to the Members receiving this email.
+
+• Read-only accounts are supported. You can create a separate read-only account to access market data without enabling trading functionality.
+
+• RFQs are not currently supported. Orders submitted through the API are not eligible to trade in RFQ markets.
+
+Here is the page in markdown:
+
+> ## Documentation Index
+> Fetch the complete documentation index at: https://docs.novig.com/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Overview
+
+> Trade sports contracts on the Novig exchange through our API.
+
+<div id="hero">
+  <div id="hero-body">
+    <h1>Just Sports</h1>
+
+    <p>
+      Place orders with signed REST requests. Watch the order book and your fills on one websocket.
+    </p>
+
+    <div id="hero-actions">
+      <a href="/api/quickstart">Quickstart</a>
+      <a href="/api-reference/spec-files/openapi-v3-target.json" className="hero-secondary">OpenAPI 3.1</a>
+    </div>
+  </div>
+</div>
+
+## Start
+
+<Steps>
+  <Step title={<a href="/api/concepts/account-model">Account model</a>}>
+    Each subaccount has its own balance and its own trading key.
+  </Step>
+
+  <Step title={<a href="/api/api-keys">Get a key</a>}>
+    You create your management key in your Novig profile. It opens and funds subaccounts but can't place orders.
+  </Step>
+
+  <Step title={<a href="/api/signing">Sign a request</a>}>
+    Sign every request with Ed25519 or P-256, and test your code against our 30 sample signatures.
+  </Step>
+
+  <Step title={<a href="/api/quickstart">Test your signature</a>}>
+    `POST /v3/echo` returns your body with a `200` when your signature is correct.
+  </Step>
+
+  <Step title={<a href="/api/subaccounts/manage">Open a subaccount</a>}>
+    Your management key opens a subaccount, registers its trading key, and funds it.
+  </Step>
+
+  <Step title={<a href="/api/execution/orders">Trade</a>}>
+    Find a market in the [catalog](/api/catalog), place an [order](/api/execution/orders), and follow it on the [private stream](/api/streaming/private).
+  </Step>
+</Steps>
+
+Hostnames for each environment are on [Environments](/api/environments). The full API is in the [OpenAPI document](/api-reference/spec-files/openapi-v3-target.json).
+
+Attached are screenshots to review.
+
+Record any useful information for this project in your permanent memory. Maybe make a file on GitHub for permanent research memory that Claude can see and understand even from fresh code sessions. 
+
+Next step: review everything I sent and tell me what you need me to do to start making this app that scans for positive EV bets on novig
+```
