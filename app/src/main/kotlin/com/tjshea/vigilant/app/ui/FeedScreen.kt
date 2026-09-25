@@ -60,7 +60,7 @@ fun FeedScreen(
                 title = {
                     Column {
                         Text("Positive EV", fontWeight = FontWeight.Bold)
-                        StatusLine(state.status)
+                        StatusLine(state.status, streaming = state.novig.stream is com.tjshea.vigilant.data.novig.stream.StreamState.Live)
                     }
                 },
                 actions = {

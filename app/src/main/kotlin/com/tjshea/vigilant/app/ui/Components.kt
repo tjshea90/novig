@@ -91,10 +91,10 @@ fun LeagueChips(all: List<League>, selected: Set<String>, onToggle: (String) -> 
 
 /** "Novig live · 8s ago   Fair odds 4m ago   488 credits" */
 @Composable
-fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier) {
+fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier, streaming: Boolean = false) {
     val now = rememberNow()
     val edge = Edge.colors
-    val novigFresh = status.novigAtMs != null && now - status.novigAtMs < 60_000
+    val novigFresh = streaming || (status.novigAtMs != null && now - status.novigAtMs < 60_000)
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
             Modifier
@@ -103,8 +103,10 @@ fun StatusLine(status: ScanStatus, modifier: Modifier = Modifier) {
         )
         Text(
             buildString {
-                append("Novig ")
-                append(if (status.refreshing) "updating…" else Format.age(status.novigAtMs, now))
+                if (streaming) append("Novig live stream") else {
+                    append("Novig ")
+                    append(if (status.refreshing) "updating…" else Format.age(status.novigAtMs, now))
+                }
                 if (status.hasOddsKey) {
                     append("  ·  Fair ")
                     append(Format.age(status.referenceAtMs, now))

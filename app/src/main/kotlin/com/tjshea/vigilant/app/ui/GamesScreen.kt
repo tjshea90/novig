@@ -64,7 +64,7 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                 title = {
                     Column {
                         Text("Games", fontWeight = FontWeight.Bold)
-                        StatusLine(state.status)
+                        StatusLine(state.status, streaming = state.novig.stream is com.tjshea.vigilant.data.novig.stream.StreamState.Live)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),

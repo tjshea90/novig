@@ -59,6 +59,10 @@ fun SettingsScreen(
     onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
     onAddKey: (String) -> Unit,
     onRemoveKey: (String) -> Unit,
+    onNovigConnect: (String, String) -> Unit = { _, _ -> },
+    onNovigTest: () -> Unit = {},
+    onNovigStream: (Boolean) -> Unit = {},
+    onNovigDisconnect: () -> Unit = {},
 ) {
     val s = state.settings
     Scaffold(
@@ -230,11 +234,7 @@ fun SettingsScreen(
             }
 
             SectionTitle("Novig API key")
-            Hint(
-                "Not needed: Vigilant reads Novig's official public prices with no key. Adding your Novig " +
-                    "beta key (coming next) switches prices to Novig's real-time stream. VPNs and proxies " +
-                    "are refused by Novig's signed routes.",
-            )
+            NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigStream, onNovigDisconnect)
 
             SectionTitle("About")
             Hint(

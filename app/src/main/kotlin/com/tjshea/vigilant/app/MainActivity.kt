@@ -109,7 +109,16 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel) {
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
-                Tab.SETTINGS -> SettingsScreen(state, onUpdate = vm::updateSettings, onAddKey = vm::addOddsApiKey, onRemoveKey = vm::removeOddsApiKey)
+                Tab.SETTINGS -> SettingsScreen(
+                    state,
+                    onUpdate = vm::updateSettings,
+                    onAddKey = vm::addOddsApiKey,
+                    onRemoveKey = vm::removeOddsApiKey,
+                    onNovigConnect = vm::connectNovig,
+                    onNovigTest = vm::testNovig,
+                    onNovigStream = vm::setStreamEnabled,
+                    onNovigDisconnect = vm::disconnectNovig,
+                )
             }
         }
     }
