@@ -61,14 +61,17 @@ class NovigHttpException(val code: Int, message: String, val retryAfterSeconds: 
  * Novig's REST routes (NOVIG_API.md §5), verified live 2026-09-25. Public routes need no key.
  *
  * Rate limits (Tj's phone got `429`s from v0.5.0's 15-second polling):
- *  - Every public request goes through one [RateGate]: ~[publicRate]/s, bursts of [publicBurst],
- *    [publicConcurrency] books at a time. Measured edge limit: ~40–100 fast requests, then
- *    `429 Retry-After: 1`, per IP, and a carrier IP may be shared (NOVIG_API.md §5.1).
+ *  - Every public request goes through one [RateGate]: [publicRate]/s to start, bursts of
+ *    [publicBurst], [publicConcurrency] books at a time. Measured edge limit: ~40–100 fast
+ *    requests, then `429 Retry-After: 1`, per IP; a steady 10/s drew 429s, ~5/s never did, and a
+ *    carrier IP may be shared (NOVIG_API.md §5.1). Clean runs raise the pace by 0.5/s every 40
+ *    books up to [publicMaxRate] (6/s, well under the 10/s that failed); any refusal drops it back.
  *  - A `429` pauses every request for its Retry-After and halves the rate for a minute. Each book
  *    gets two paced retries; a long Retry-After or an edge `403` stops the batch, and every book
  *    not refreshed is served from the last scan's copy.
  *  - With a key connected ([keyed]), books come from the signed route instead, which draws on the
- *    key's own `read` bucket (64 burst, 16/s refill) rather than the shared public edge. If the key
+ *    key's own `read` bucket (64 burst, 16/s refill, documented) rather than the shared public
+ *    edge, paced at [keyedRate]/s with bursts of [keyedBurst]: under both numbers. If the key
  *    route fails (VPN, location check, revoked key), the scan falls back to the public routes and
  *    says why.
  *
@@ -83,11 +86,13 @@ class NovigPublicClient(
     private val baseUrl: String = "https://api.novig.com",
     private val clock: () -> Long = System::currentTimeMillis,
     publicRate: Double = 4.0,
+    publicMaxRate: Double = 6.0,
     publicBurst: Int = 10,
-    private val publicConcurrency: Int = 2,
-    keyedRate: Double = 8.0,
-    keyedBurst: Int = 16,
-    private val keyedConcurrency: Int = 4,
+    // Three in flight: at a phone's ~300–500ms per request, two couldn't even reach 6/s.
+    private val publicConcurrency: Int = 3,
+    keyedRate: Double = 14.0,
+    keyedBurst: Int = 40,
+    private val keyedConcurrency: Int = 6,
     /** Pacing runs on real time even when [clock] is faked for timestamps. */
     private val rateClock: () -> Long = System::currentTimeMillis,
     sleep: suspend (Long) -> Unit = { delay(it) },
@@ -95,7 +100,7 @@ class NovigPublicClient(
     private val usage: UsageMeter? = null,
 ) : NovigSource {
 
-    private val publicGate = RateGate(publicRate, publicBurst, rateClock, sleep)
+    private val publicGate = RateGate(publicRate, publicBurst, rateClock, sleep, maxRate = publicMaxRate)
     private val keyedGate = RateGate(keyedRate, keyedBurst, rateClock, sleep)
 
     /** Signs book requests with the connected read-only key. Null = public routes only. */
@@ -176,7 +181,7 @@ class NovigPublicClient(
                             val rate = if (key != null) keyedGate else publicGate
                             rate.acquire()
                             try {
-                                return@run fetchBook(id, key)
+                                return@run fetchBook(id, key).also { rate.success() }
                             } catch (e: NovigApiException) {
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
@@ -310,6 +315,7 @@ class NovigPublicClient(
                 val body = response.body?.string().orEmpty()
                 count(response.code)
                 if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
+                publicGate.success()
                 val (items, next) = parse(body)
                 all += items
                 after = next
