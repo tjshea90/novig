@@ -1,33 +1,39 @@
 package com.tjshea.vigilant.engine
 
+/** When a market charges its taker (NOVIG_API.md §8). */
+enum class FeeCharge { ALWAYS, WHEN_LIVE }
+
 /**
- * Novig's own trading fees (RESEARCH.md §3, confirmed 2026-09-22 against the novig_ev_scanner
- * briefing — a source that read Novig's current fee page directly, higher confidence than the
- * earlier search-summary citation this superseded). Netting this out is what keeps the EV
- * calculator from flagging bets that look profitable but aren't once the fee is paid.
+ * A market's own fee schedule, read from its `fee` object on every Novig market. Novig says to
+ * read it per market and never derive it from a league table (NOVIG_API.md §8). That's why this
+ * is data, not a constant.
+ */
+data class MarketFee(
+    val coefficient: Double,
+    val makerCredit: Double,
+    val charged: FeeCharge,
+) {
+    companion object {
+        /** Novig's documented game-market schedule, used only by tests and sample data. */
+        val GAME = MarketFee(coefficient = 0.03, makerCredit = 0.5, charged = FeeCharge.WHEN_LIVE)
+
+        /** Novig's documented NFL/MLB/NCAAF futures schedule: charged pregame too. */
+        val FUTURES = MarketFee(coefficient = 0.06, makerCredit = 0.7, charged = FeeCharge.ALWAYS)
+    }
+}
+
+/**
+ * Novig's taker fee: `coefficient x P x (1 - P)` per contract, in dollars per $1 of payout
+ * (a contract pays 1¢; everything here is scaled to a $1 payout). Makers never pay.
  */
 object Fees {
 
-    /** Live-straight taker fee, per $1 of contract, at price [p] (a decimal probability in (0,1)). */
-    fun liveStraightTakerFee(p: Double): Double = 0.03 * p * (1.0 - p)
+    fun isCharged(fee: MarketFee, eventLive: Boolean): Boolean =
+        fee.charged == FeeCharge.ALWAYS || eventLive
 
-    /**
-     * Parlay ("RFQ combination contract") taker fee — same shape as [liveStraightTakerFee] but a
-     * 0.10 multiplier instead of 0.03 (meaningfully more expensive). Confirmed 2026-09-22,
-     * resolving RESEARCH.md §10 item 3's old "TBD" — previously this context returned
-     * [FeeResult.Unknown] rather than risk silently understating the fee.
-     */
-    fun parlayTakerFee(p: Double): Double = 0.10 * p * (1.0 - p)
-
-    fun estimate(novig: NovigQuote): FeeResult {
-        if (novig.isMaker) {
-            // Maker fee is $0 across every trade type Novig documents (RESEARCH.md §3).
-            return FeeResult.Known(0.0)
-        }
-        return when (novig.context) {
-            TradeContext.PREGAME_STRAIGHT -> FeeResult.Known(0.0)
-            TradeContext.LIVE_STRAIGHT -> FeeResult.Known(liveStraightTakerFee(novig.price))
-            TradeContext.PARLAY -> FeeResult.Known(parlayTakerFee(novig.price))
-        }
+    /** Taker fee per $1 of payout for a fill at [price]. */
+    fun takerFee(price: Double, fee: MarketFee, eventLive: Boolean): Double {
+        require(price > 0.0 && price < 1.0) { "price must be in (0,1), got $price" }
+        return if (isCharged(fee, eventLive)) fee.coefficient * price * (1.0 - price) else 0.0
     }
 }
