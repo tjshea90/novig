@@ -137,7 +137,7 @@ class UsageMeterTest {
         assertEquals(listOf("a", "b"), tried)
         meter.recordCall(odds, "b", 3, serverRemaining = 0, serverUsed = 500)
         val e = assertThrows(AllKeysExhaustedException::class.java) {
-            kotlinx.coroutines.runBlocking { pool.execute(3) { KeyAttemptResult.Success("never") } }
+            kotlinx.coroutines.runBlocking { pool.execute<String>(3) { KeyAttemptResult.Success("never") } }
         }
         assertTrue(e.message!!, e.message!!.contains("All 2 The Odds API keys are used up until Oct 1"))
     }
