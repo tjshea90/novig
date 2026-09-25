@@ -13,8 +13,10 @@ import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.scanner.Planner
 import com.tjshea.vigilant.data.scanner.Pricing
+import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.SourceReport
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.engine.MarketFee
@@ -32,9 +34,10 @@ object SampleScan {
     private val books = HashMap<String, NovigBook>()
     private val refs = HashMap<String, MutableList<RefEvent>>()
 
+    /** Pinnacle and both exchanges (the free sources), plus a few Odds API sportsbooks. */
     private val books10 = listOf(
-        "pinnacle" to "Pinnacle", "draftkings" to "DraftKings", "fanduel" to "FanDuel", "betmgm" to "BetMGM",
-        "williamhill_us" to "Caesars", "espnbet" to "ESPN BET", "betonlineag" to "BetOnline.ag",
+        "pinnacle" to "Pinnacle", "polymarket" to "Polymarket", "kalshi" to "Kalshi", "draftkings" to "DraftKings",
+        "fanduel" to "FanDuel", "betmgm" to "BetMGM", "williamhill_us" to "Caesars",
     )
 
     private fun market(id: String, event: String, type: String, start: Long, vararg o: Pair<String, String>) =
@@ -106,18 +109,32 @@ object SampleScan {
         return Pricing.price(plan, books, s, NOW)
     }
 
-    fun state(s: ScanSettings = settings, withKey: Boolean = true): UiState {
-        val r = if (withKey) result(s) else Pricing.price(Planner.plan(events, markets, emptyMap(), s, NOW), books, s, NOW)
+    private val sources = listOf(
+        SourceReport("pinnacle", "Pinnacle", 2, 0, 5, null),
+        SourceReport("polymarket", "Polymarket", 2, 0, 5, null),
+        SourceReport("kalshi", "Kalshi", 2, 0, 4, null),
+    )
+
+    /** After a scan. [withFair] false = no source matched anything (Novig prices only). */
+    fun state(s: ScanSettings = settings, withFair: Boolean = true): UiState {
+        val r = if (withFair) result(s) else Pricing.price(Planner.plan(events, markets, emptyMap(), s, NOW), books, s, NOW)
         return UiState(
             settings = s,
             result = r,
             feed = r.feed(s),
-            status = ScanStatus(novigAtMs = NOW - 4_000, referenceAtMs = NOW - 3 * 60_000, creditsRemaining = 488, hasOddsKey = withKey),
-            oddsApiKeys = if (withKey) listOf("1234567890abcdef1234") else emptyList(),
+            status = ScanStatus(scannedAtMs = NOW - 60_000, creditsRemaining = 488, sources = if (withFair) sources else emptyList(), booksFetched = 14),
+            oddsApiKeys = listOf("1234567890abcdef1234"),
+            pinnapiKeys = listOf("trial-key-sample-0001"),
             bets = bets,
             loaded = true,
         )
     }
+
+    /** Launch state: nothing fetched, nothing will be until Scan. */
+    fun fresh(s: ScanSettings = settings) = UiState(settings = s, loaded = true, bets = bets)
+
+    /** Mid-scan, reading Novig books. */
+    fun scanning(s: ScanSettings = settings) = fresh(s).copy(status = ScanStatus(scanning = true, progress = ScanProgress("Novig prices", 9, 24)))
 
     val bets = listOf(
         TrackedBet("b1", NOW - 26 * HOUR, "NFL", "New York Jets @ Chicago Bears", NOW - 20 * HOUR, "Moneyline", "New York Jets", "m", "o",

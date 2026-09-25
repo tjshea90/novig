@@ -49,7 +49,11 @@ class ScreenshotTest {
 
     @Test fun feedLight() = shoot("1b_feed_light", dark = false) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
 
-    @Test fun feedNoKey() = shoot("1c_feed_no_key") { FeedScreen(SampleScan.state(withKey = false), {}, {}, {}, { _, _ -> }) }
+    @Test fun feedBeforeFirstScan() = shoot("1c_feed_before_scan") { FeedScreen(SampleScan.fresh(), {}, {}, {}, { _, _ -> }) }
+
+    @Test fun feedScanning() = shoot("1d_feed_scanning") { FeedScreen(SampleScan.scanning(), {}, {}, {}, { _, _ -> }) }
+
+    @Test fun feedNoFairMatch() = shoot("1e_feed_no_fair") { FeedScreen(SampleScan.state(withFair = false), {}, {}, {}, { _, _ -> }) }
 
     @Test fun detail() {
         val s = SampleScan.state()
@@ -57,6 +61,8 @@ class ScreenshotTest {
     }
 
     @Test fun games() = shoot("3_games") { GamesScreen(SampleScan.state(), {}, {}) }
+
+    @Test fun gamesBeforeFirstScan() = shoot("3b_games_before_scan") { GamesScreen(SampleScan.fresh(), {}, {}) }
 
     @Test fun tracker() = shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
 
@@ -71,15 +77,28 @@ class ScreenshotTest {
         compose.onNodeWithText("Track").assertIsDisplayed()
     }
 
-    @Test fun noKeyPointsToTheGamesTabInsteadOfClaimingZeroGames() {
-        compose.setContent { VigilantTheme { FeedScreen(SampleScan.state(withKey = false), {}, {}, {}, { _, _ -> }) } }
-        compose.onNodeWithText("Fair odds need a key").assertIsDisplayed()
+    @Test fun beforeTheFirstScanTheFeedAsksForOneAndTheButtonScans() {
+        var scans = 0
+        compose.setContent { VigilantTheme { FeedScreen(SampleScan.fresh(), { scans++ }, {}, {}, { _, _ -> }) } }
+        compose.onNodeWithText("Tap Scan to find +EV bets").assertIsDisplayed()
+        compose.onNodeWithText("Not scanned yet").assertIsDisplayed()
+        compose.onNodeWithText("Scan now").performClick()
+        compose.onNodeWithText("Scan", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        assert(scans == 1) { "Scan now should start exactly one scan, got $scans" }
+    }
+
+    @Test fun whileScanningTheButtonIsBusyAndProgressShows() {
+        var scans = 0
+        compose.setContent { VigilantTheme { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) } }
+        compose.onNodeWithText("Novig prices 9/24").assertIsDisplayed()
+        compose.onNodeWithText("Scanning", substring = true, useUnmergedTree = true).assertIsDisplayed()
+        assert(scans == 0)
     }
 
     @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun novigKeySetup() = shoot("6_novig_key_setup") {
         androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
-            com.tjshea.vigilant.app.ui.NovigKeySection(NovigUi(), { _, _ -> }, {}, {}, {})
+            com.tjshea.vigilant.app.ui.NovigKeySection(NovigUi(), { _, _ -> }, {}, {})
         }
     }
 
@@ -88,10 +107,9 @@ class ScreenshotTest {
             com.tjshea.vigilant.app.ui.NovigKeySection(
                 NovigUi(
                     connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("3f2504e0-4f89-11d3-9a0c-0305e82c9a1b", "a", "t", false),
-                    stream = com.tjshea.vigilant.data.novig.stream.StreamState.Live(0, 14),
                     message = "Novig accepted the key (signature, clock and network all OK).",
                 ),
-                { _, _ -> }, {}, {}, {},
+                { _, _ -> }, {}, {},
             )
         }
     }
