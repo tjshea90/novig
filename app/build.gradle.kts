@@ -91,6 +91,10 @@ kotlin {
     }
 }
 
+composeCompiler {
+    stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("app/compose-stability.conf"))
+}
+
 dependencies {
     implementation(project(":engine"))
     implementation(project(":data"))

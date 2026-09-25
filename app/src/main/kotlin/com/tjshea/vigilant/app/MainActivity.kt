@@ -55,6 +55,12 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) { vm.runLiveLoop() }
         }
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.toasts.collect { android.widget.Toast.makeText(this@MainActivity, it, android.widget.Toast.LENGTH_SHORT).show() }
+            }
+        }
+
         setContent {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
@@ -75,6 +81,8 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 private fun VigilantRoot(state: UiState, vm: MainViewModel) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
+    val showingPrices = Tab.entries[tab] == Tab.EV || Tab.entries[tab] == Tab.GAMES
+    androidx.compose.runtime.LaunchedEffect(showingPrices) { vm.setPricesVisible(showingPrices) }
 
     Scaffold(
         bottomBar = {

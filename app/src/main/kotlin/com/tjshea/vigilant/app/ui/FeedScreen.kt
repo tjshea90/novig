@@ -53,6 +53,8 @@ fun FeedScreen(
     onTrack: (Opportunity, Double) -> Unit,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
+    // One coarse clock for every card's "stale" check, instead of a ticker per card.
+    val now = rememberNow(15_000)
 
     Scaffold(
         topBar = {
@@ -71,7 +73,7 @@ fun FeedScreen(
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.status.refreshing && state.result == null,
+            isRefreshing = state.status.manual || (state.status.refreshing && state.result == null),
             onRefresh = onRefresh,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
@@ -85,7 +87,7 @@ fun FeedScreen(
                 }
                 item(key = "summary") { FeedSummary(state, onOpenSettings) }
                 items(state.feed, key = { it.key }) { o ->
-                    OpportunityCard(o, state.settings, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
+                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
             }
         }
@@ -146,10 +148,9 @@ fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
 } + ", ${s.devigMethod.displayName.lowercase()} devig"
 
 @Composable
-fun OpportunityCard(o: Opportunity, settings: ScanSettings, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val q = o.quote ?: return
     val fair = o.fairProbability ?: return
-    val now = rememberNow(5_000)
     val refStale = o.fairUpdatedMs?.let { now - it > settings.staleReferenceMinutes * 60_000L } ?: false
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),

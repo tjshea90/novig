@@ -33,6 +33,8 @@ import kotlinx.coroutines.currentCoroutineContext
 /** What the status line under the title shows. */
 data class ScanStatus(
     val refreshing: Boolean = false,
+    /** A pull-to-refresh is running (drives the pull indicator). */
+    val manual: Boolean = false,
     val novigAtMs: Long? = null,
     val referenceAtMs: Long? = null,
     val creditsRemaining: Int? = null,
@@ -120,6 +122,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Start the stream whenever one exists but isn't running: at launch, right after
                 // setup connects a key, or after the stream switch is turned back on.
                 c.stream?.let { if (it.state.value is StreamState.Off) it.connect() }
+                if (!pricesVisible) {
+                    delay(1_000)
+                    continue
+                }
                 val report = refresh(RefreshKind.AUTO)
                 val stream = c.stream
                 val streamState = stream?.state?.value
@@ -219,7 +225,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refreshNow() {
-        viewModelScope.launch { refresh(RefreshKind.FULL) }
+        viewModelScope.launch {
+            _state.update { it.copy(status = it.status.copy(manual = true)) }
+            try {
+                refresh(RefreshKind.FULL)
+            } finally {
+                _state.update { it.copy(status = it.status.copy(manual = false)) }
+            }
+        }
+    }
+
+    /**
+     * Whether a screen that shows prices (+EV, Games) is in front. On Tracker or Settings the
+     * loop idles instead of fetching: no network or battery spent on prices nobody is looking at.
+     */
+    @Volatile
+    private var pricesVisible = true
+
+    fun setPricesVisible(visible: Boolean) {
+        val wasHidden = !pricesVisible
+        pricesVisible = visible
+        // Coming back to a price screen shouldn't wait out the rest of a long interval.
+        if (visible && wasHidden) viewModelScope.launch { refresh(RefreshKind.AUTO) }
     }
 
     private suspend fun refresh(kind: RefreshKind): RefreshReport? {
@@ -236,6 +263,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 feed = (result ?: s.result)?.feed(s.settings) ?: emptyList(),
                 status = ScanStatus(
                     refreshing = false,
+                    manual = s.status.manual,
                     novigAtMs = result?.computedAtMs ?: s.status.novigAtMs,
                     referenceAtMs = s.settings.selectedLeagues.mapNotNull { report.referenceAtMs[it.oddsApiSportKey] }.minOrNull(),
                     creditsRemaining = report.creditsRemaining,
@@ -247,15 +275,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 ),
             )
         }
-        result?.let { c.tracker.observe(it) }
+        // Disk trouble (full storage) must never kill the live loop.
+        result?.let { runCatching { c.tracker.observe(it) } }
         return report
     }
 
     fun updateSettings(transform: (ScanSettings) -> ScanSettings) {
         viewModelScope.launch {
             val before = _state.value.settings
-            val next = settingsMutex.withLock { c.settingsStore.update(transform) }
-            _state.update { it.copy(settings = next, feed = it.result?.feed(next) ?: emptyList()) }
+            val next = settingsMutex.withLock {
+                // If the write fails, keep the change for this session rather than crash.
+                runCatching { c.settingsStore.update(transform) }.getOrElse { transform(_state.value.settings) }
+            }
+            _state.update {
+                if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
+                else it.copy(settings = next, feed = it.result?.feed(next) ?: emptyList())
+            }
             val needsFetch = next.leagues != before.leagues || next.includeLive != before.includeLive ||
                 next.daysAhead != before.daysAhead || next.referenceBooks != before.referenceBooks
             if (needsFetch) {
@@ -286,15 +321,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** One-shot messages for a toast ("Tracked", save errors). */
+    private val _toasts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
+    val toasts: kotlinx.coroutines.flow.SharedFlow<String> = _toasts
+
     fun trackBet(o: Opportunity, stake: Double) {
-        viewModelScope.launch { c.tracker.track(o, stake) }
+        viewModelScope.launch {
+            val ok = runCatching { c.tracker.track(o, stake) }.getOrNull() != null
+            _toasts.tryEmit(if (ok) "Tracked ${o.selection} · ${com.tjshea.vigilant.app.ui.Format.money(stake)}" else "Couldn't save the bet")
+        }
     }
 
     fun settleBet(id: String, status: BetStatus) {
-        viewModelScope.launch { c.tracker.settle(id, status) }
+        viewModelScope.launch { if (runCatching { c.tracker.settle(id, status) }.isFailure) _toasts.tryEmit("Couldn't save") }
     }
 
     fun deleteBet(id: String) {
-        viewModelScope.launch { c.tracker.delete(id) }
+        viewModelScope.launch { if (runCatching { c.tracker.delete(id) }.isFailure) _toasts.tryEmit("Couldn't save") }
     }
 }
