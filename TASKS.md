@@ -1124,10 +1124,10 @@ app — ship after milestone A even if nothing else lands):
       Ed25519/P-256 PEM round trips (BouncyCastle, deterministic ECDSA, DER).
       NovigSignedClient (echo/subaccounts/keys) + plain-English 401/403/423/451
       advice (NovigSignedClientTest). StreamBooks seq/gap logic (StreamBooksTest).
-- [ ] B2 `app`: Settings → Novig API: paste key ID + PEM (encrypted at rest),
+- [x] B2 `app`: Settings → Novig API: paste key ID + PEM (encrypted at rest),
       "Test connection" via `POST /v3/echo` with plain-English 401/451/423
       messages.
-- [ ] B3 websocket live book feed (signed `GET /v3/ws`, `book` channel per
+- [x] B3 websocket live book feed (signed `GET /v3/ws`, `book` channel per
       event) used automatically when a trading/trading::read key is set.
 
 ### Milestone C — tracker + full tests + ship

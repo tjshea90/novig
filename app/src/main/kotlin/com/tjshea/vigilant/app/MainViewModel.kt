@@ -115,9 +115,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         while (!_state.value.loaded) delay(50)
         val watch = viewModelScope.launch { watchStream() }
         try {
-            c.stream?.connect()
             var failedAt = 0L
             while (currentCoroutineContext().isActive) {
+                // Start the stream whenever one exists but isn't running: at launch, right after
+                // setup connects a key, or after the stream switch is turned back on.
+                c.stream?.let { if (it.state.value is StreamState.Off) it.connect() }
                 val report = refresh(RefreshKind.AUTO)
                 val stream = c.stream
                 val streamState = stream?.state?.value
@@ -201,7 +203,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             c.novigConnection.setStreamEnabled(on)
             c.useConnection(if (on) _state.value.novig.connection else null)
-            if (on) c.stream?.connect()
             _state.update { it.copy(novig = it.novig.copy(streamEnabled = on)) }
         }
     }
