@@ -49,6 +49,11 @@ data class ScanSettings(
     val useOddsApi: Boolean = true,
     /** Re-use The Odds API's last odds for this long instead of paying credits on every scan. */
     val oddsApiReuseMinutes: Int = 15,
+    /**
+     * Spread and total lines priced per game (each). Every line is one Novig request per scan,
+     * so this is the main lever on scan time and Novig's rate limit.
+     */
+    val linesPerGame: Int = 2,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
     val exchangeMaxSpread: Double = 0.03,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
@@ -75,10 +80,20 @@ data class ScanSettings(
 
     val selectedLeagues: List<League> get() = Leagues.ALL.filter { it.novigName in leagues }
 
+    /** [com.tjshea.vigilant.data.reference.ReferenceSource.id]s the user has switched on. */
+    val enabledSources: Set<String>
+        get() = buildSet {
+            if (usePinnacle) add("pinnacle")
+            if (usePolymarket) add("polymarket")
+            if (useKalshi) add("kalshi")
+            if (useOddsApi) add("oddsapi")
+        }
+
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
 
     companion object {
         val ODDS_API_REUSE_CHOICES = listOf(0, 5, 15, 30, 60)
+        val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
     }
 }

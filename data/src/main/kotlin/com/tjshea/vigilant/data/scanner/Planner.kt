@@ -87,7 +87,11 @@ object Planner {
      * (Yankees/Mets + Cubs/White Sox = 0.5 + 0.5) never pair a game with a different game.
      */
     private const val MIN_EVENT_SIMILARITY = 1.5
-    private const val NOVIG_ONLY_EVENT_CAP = 40
+    /**
+     * Games with no reference match still show Novig's moneyline on the Games tab, but each costs a
+     * book request and can never be +EV, so only the next few are fetched.
+     */
+    private const val NOVIG_ONLY_EVENT_CAP = 20
 
     fun eligibleEvents(events: List<NovigEvent>, settings: ScanSettings, now: Long): List<NovigEvent> {
         val horizon = now + settings.daysAhead.coerceAtLeast(1) * 24L * 3600 * 1000
@@ -138,15 +142,38 @@ object Planner {
                 planned += ml
                 continue
             }
-            val quotedLines = m.refEvent.markets.mapTo(HashSet()) { Triple(it.kind, it.line, it.quotes.any { q -> q.side == Side.DRAW }) }
+            val quoted = ArrayList<Pair<PlannedMarket, LineStats>>()
             for (market in eventMarkets) {
                 val p = planMarket(m, market) ?: continue
                 val key = p.lineKey ?: continue
-                if (quotedLines.none { (kind, line, draw) -> kind == key.kind && draw == key.threeWay && sameLine(line, key.line) }) continue
-                planned += p
+                val stats = lineStats(m.refEvent, key) ?: continue // no reference book quotes this line
+                quoted += p to stats
+            }
+            // Every quoted line costs one Novig book request per scan. The exchanges quote dozens
+            // of alternates per game, so spreads and totals are capped at the best-covered lines:
+            // most books first, then closest to a coin flip (the main line).
+            planned += quoted.filter { it.first.kind == LineKind.MONEYLINE }.map { it.first }
+            for (kind in listOf(LineKind.SPREAD, LineKind.TOTAL)) {
+                planned += quoted.filter { it.first.kind == kind }
+                    .sortedWith(compareByDescending<Pair<PlannedMarket, LineStats>> { it.second.books }.thenBy { it.second.imbalance })
+                    .take(settings.linesPerGame.coerceAtLeast(1))
+                    .map { it.first }
             }
         }
         return Plan(planned, matches)
+    }
+
+    private data class LineStats(val books: Int, val imbalance: Double)
+
+    /** How many books quote [key]'s line, and how far from 50/50 it is. Null when none do. */
+    private fun lineStats(ref: RefEvent, key: LineKey): LineStats? {
+        val quotes = ref.markets.filter { mk ->
+            mk.kind == key.kind && mk.quotes.any { q -> q.side == Side.DRAW } == key.threeWay && sameLine(mk.line, key.line)
+        }
+        if (quotes.isEmpty()) return null
+        val first = quotes.first().quotes
+        val imbalance = if (first.size == 2) abs(1 / first[0].decimalOdds - 1 / first[1].decimalOdds) else 0.0
+        return LineStats(quotes.distinctBy { it.bookKey }.size, imbalance)
     }
 
     fun matchEvents(events: List<NovigEvent>, references: Map<String, RefSnapshot>): List<EventMatch> =
