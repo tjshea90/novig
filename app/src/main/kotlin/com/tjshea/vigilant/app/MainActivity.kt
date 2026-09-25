@@ -1,8 +1,10 @@
 package com.tjshea.vigilant.app
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,12 +47,16 @@ class MainActivity : ComponentActivity() {
 
     private val vm: MainViewModel by viewModels()
 
+    /** The system's "allow notifications?" prompt; the answer only affects the scan notifications. */
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         // No refresh loop: nothing is fetched until Tj taps Scan or pulls to refresh (his rule,
-        // 2026-09-25). Nothing runs in the background, and no request goes out on its own.
+        // 2026-09-25), and no request goes out on its own. A scan he starts keeps running if he
+        // switches apps (ScanService), then everything stops.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.toasts.collect { android.widget.Toast.makeText(this@MainActivity, it, android.widget.Toast.LENGTH_SHORT).show() }
@@ -60,9 +66,36 @@ class MainActivity : ComponentActivity() {
         setContent {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
-                VigilantRoot(state, vm)
+                VigilantRoot(state, vm, onScan = ::scan)
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        (application as VigilantApp).container.onScreen = true
+    }
+
+    override fun onStop() {
+        (application as VigilantApp).container.onScreen = false
+        super.onStop()
+    }
+
+    /**
+     * Scan, and the first time, ask to allow notifications (Android 13+): the progress while Tj is
+     * in another app and the "scan done" note need it. The scan runs either way.
+     */
+    private fun scan() {
+        val prefs = getSharedPreferences("ui", MODE_PRIVATE)
+        if (!ScanService.canNotify(this) && !prefs.getBoolean(ASKED_NOTIFICATIONS, false)) {
+            prefs.edit().putBoolean(ASKED_NOTIFICATIONS, true).apply()
+            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        vm.scan()
+    }
+
+    private companion object {
+        const val ASKED_NOTIFICATIONS = "asked_notifications"
     }
 }
 
@@ -74,7 +107,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 }
 
 @Composable
-private fun VigilantRoot(state: UiState, vm: MainViewModel) {
+private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
 
@@ -104,13 +137,13 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel) {
             when (Tab.entries[tab]) {
                 Tab.EV -> FeedScreen(
                     state = state,
-                    onScan = vm::scan,
+                    onScan = onScan,
                     onToggleLeague = vm::toggleLeague,
                     onOpenSettings = { tab = Tab.SETTINGS.ordinal },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                 )
-                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = vm::scan)
+                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
                 Tab.SETTINGS -> SettingsScreen(
                     state,
