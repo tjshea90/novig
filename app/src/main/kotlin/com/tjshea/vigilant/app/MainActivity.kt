@@ -49,12 +49,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Live prices only while the app is visible. STARTED ends when the app goes to the
-        // background or the screen turns off, which cancels the loop: zero background polling.
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) { vm.runLiveLoop() }
-        }
-
+        // No refresh loop: nothing is fetched until Tj taps Scan or pulls to refresh (his rule,
+        // 2026-09-25). Nothing runs in the background, and no request goes out on its own.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.toasts.collect { android.widget.Toast.makeText(this@MainActivity, it, android.widget.Toast.LENGTH_SHORT).show() }
@@ -81,8 +77,6 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 private fun VigilantRoot(state: UiState, vm: MainViewModel) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
-    val showingPrices = Tab.entries[tab] == Tab.EV || Tab.entries[tab] == Tab.GAMES
-    androidx.compose.runtime.LaunchedEffect(showingPrices) { vm.setPricesVisible(showingPrices) }
 
     Scaffold(
         bottomBar = {
@@ -110,12 +104,12 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel) {
             when (Tab.entries[tab]) {
                 Tab.EV -> FeedScreen(
                     state = state,
-                    onRefresh = vm::refreshNow,
+                    onScan = vm::scan,
                     onToggleLeague = vm::toggleLeague,
                     onOpenSettings = { tab = Tab.SETTINGS.ordinal },
                     onTrack = vm::trackBet,
                 )
-                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague)
+                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = vm::scan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
                 Tab.SETTINGS -> SettingsScreen(
                     state,
@@ -124,8 +118,8 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel) {
                     onRemoveKey = vm::removeOddsApiKey,
                     onNovigConnect = vm::connectNovig,
                     onNovigTest = vm::testNovig,
-                    onNovigStream = vm::setStreamEnabled,
                     onNovigDisconnect = vm::disconnectNovig,
+                    onPinnapiKey = vm::setPinnapiKey,
                 )
             }
         }
