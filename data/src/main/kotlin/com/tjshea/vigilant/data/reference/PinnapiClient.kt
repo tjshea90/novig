@@ -61,7 +61,7 @@ class PinnapiClient(
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val sport = league.pinnacleSportId ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val board = mutex.withLock { boardFor(sport) }
-        return RefSnapshot(league.oddsApiSportKey, parse(board.events, league), board.fetchedAtMs, provider = ID)
+        return RefSnapshot(league.oddsApiSportKey, parse(board.events, league, board.fetchedAtMs), board.fetchedAtMs, provider = ID)
     }
 
     private suspend fun boardFor(sport: Int): Board {
@@ -138,19 +138,21 @@ class PinnapiClient(
         private fun JsonObject.num(k: String): Double? = (this[k] as? JsonPrimitive)?.doubleOrNull
         private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
 
-        fun parse(events: List<JsonObject>, league: League): List<RefEvent> {
+        fun parse(events: List<JsonObject>, league: League, fetchedAtMs: Long): List<RefEvent> {
             val names = leagueNames(league)
             val named = events.filter { e -> e.str("league_name")?.trim()?.lowercase() in names }
             val pool = named.ifEmpty { events }
-            return pool.mapNotNull { event(it, league) }
+            return pool.mapNotNull { event(it, league, fetchedAtMs) }
         }
 
-        private fun event(e: JsonObject, league: League): RefEvent? {
+        private fun event(e: JsonObject, league: League, fetchedAtMs: Long): RefEvent? {
             val home = e.str("home")?.takeIf { it.isNotBlank() } ?: return null
             val away = e.str("away")?.takeIf { it.isNotBlank() } ?: return null
             val starts = e.str("starts")?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: return null
             val id = (e["event_id"] as? JsonPrimitive)?.content ?: return null
             val full = e["periods"].obj()?.get("num_0").obj() ?: return null
+            // `last` is the event's last price change in epoch seconds.
+            val updated = (e["last"] as? JsonPrimitive)?.longOrNull?.takeIf { it > 1_000_000_000L }?.times(1000) ?: fetchedAtMs
             val markets = ArrayList<RefBookMarket>()
 
             full["money_line"].obj()?.let { ml ->
@@ -163,7 +165,7 @@ class PinnapiClient(
                         add(RefQuote(Side.AWAY, a, null))
                         if (d != null && d > 1.0) add(RefQuote(Side.DRAW, d, null))
                     }
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.MONEYLINE, quotes, null)
+                    markets += RefBookMarket(ID, "Pinnacle", LineKind.MONEYLINE, quotes, updated)
                 }
             }
             full["spreads"].obj()?.values?.forEach { v ->
@@ -172,7 +174,7 @@ class PinnapiClient(
                 val h = sp.num("home") ?: return@forEach
                 val a = sp.num("away") ?: return@forEach
                 if (h > 1.0 && a > 1.0) {
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, h, hdp), RefQuote(Side.AWAY, a, -hdp)), null)
+                    markets += RefBookMarket(ID, "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, h, hdp), RefQuote(Side.AWAY, a, -hdp)), updated)
                 }
             }
             full["totals"].obj()?.values?.forEach { v ->
@@ -181,7 +183,7 @@ class PinnapiClient(
                 val o = t.num("over") ?: return@forEach
                 val u = t.num("under") ?: return@forEach
                 if (o > 1.0 && u > 1.0) {
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.TOTAL, listOf(RefQuote(Side.OVER, o, pts), RefQuote(Side.UNDER, u, pts)), null)
+                    markets += RefBookMarket(ID, "Pinnacle", LineKind.TOTAL, listOf(RefQuote(Side.OVER, o, pts), RefQuote(Side.UNDER, u, pts)), updated)
                 }
             }
             return RefEvent("pin:$id", league.oddsApiSportKey, starts, home = home, away = away, markets = markets)
