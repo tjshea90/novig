@@ -33,6 +33,7 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             status == 403 -> "Novig's edge refused the request (usually too many requests). Wait a minute."
             status == 409 -> "Novig already has that key or limit (one management key, one trading key per subaccount)."
             status == 429 -> "Novig asked us to slow down. Try again in a few seconds."
+            code == "SIGNING_FAILED" -> serverMessage ?: "The Novig key on this phone can't sign. Connect it again in Settings."
             else -> serverMessage ?: "Novig returned HTTP $status."
         }
 }

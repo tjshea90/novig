@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.engine.FeeCharge
 import com.tjshea.vigilant.engine.MarketFee
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -257,7 +258,18 @@ class NovigPublicClient(
         val cached = bookCache[marketId]
         // The signed route reads the same book from the key's own `read` bucket. If-None-Match
         // isn't part of the NOVIG-V3 signature, so it's added after signing.
-        val base = key?.signedRequest("GET", "/v3/catalog/markets/$marketId/book")?.newBuilder()
+        val signed = key?.let {
+            try {
+                it.signedRequest("GET", "/v3/catalog/markets/$marketId/book")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The key can't sign on this phone (its Keystore entry is gone, e.g. after a
+                // restore to a new phone). Treated like a refusal: this scan goes public.
+                throw NovigApiException(0, "SIGNING_FAILED", KEY_CANT_SIGN)
+            }
+        }
+        val base = signed?.newBuilder()
             ?: Request.Builder().url("$baseUrl/v3/public/catalog/markets/$marketId/book").get()
         val request = base.apply { cached?.etag?.let { header("If-None-Match", it) } }.build()
         http.newCall(request).await().use { response ->
@@ -326,6 +338,8 @@ class NovigPublicClient(
         runCatching { json.decodeFromString(ErrorDto.serializer(), body).code }.getOrNull()
 
     companion object {
+        const val KEY_CANT_SIGN = "The Novig key on this phone can't sign any more (normal after restoring to a new phone). " +
+            "Disconnect it in Settings and connect it again."
         const val MAX_CACHED_BOOKS = 3000
         const val SHORT_RETRY_SECONDS = 5
         const val MAX_SHORT_RETRIES = 8
