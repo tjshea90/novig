@@ -10,11 +10,13 @@ import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.novig.NovigSource
 import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.PartialReferenceException
 import com.tjshea.vigilant.data.reference.RefBookMarket
 import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.reference.RefQuote
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceSource
+import com.tjshea.vigilant.data.reference.ScanContext
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.engine.FairSource
@@ -79,7 +81,35 @@ class ScannerTest {
         }
     }
 
+    /** Sportsbook props, faked: needs Novig's board, and can fail after answering part of it. */
+    private class FakeProps(val partial: Boolean) : ReferenceSource {
+        var seen: ScanContext? = null
+        override val id = "oddsapi_props"
+        override val displayName = "Sportsbook props"
+        override val metered = true
+        override val needsCatalog = true
+        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot = error("needs Novig's board")
+        override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot {
+            seen = context
+            val snap = RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0, 470, 30)
+            if (partial) throw PartialReferenceException(snap, "Sportsbook props NFL: credits ran out")
+            return snap
+        }
+    }
+
     private val settings = ScanSettings(fairSource = FairSource.SHARP, minEvPercent = 0.0, sharpBooks = setOf("pinnacle"))
+
+    @Test
+    fun `a source that needs the board gets it, and a partial answer is priced and reported`() = runTest {
+        val props = FakeProps(partial = true)
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(props))
+        assertEquals(listOf(Fixtures.EVENT_ID), props.seen!!.novigEvents.map { it.eventId })
+        assertEquals(now, props.seen!!.now)
+        assertEquals(listOf("Sportsbook props NFL: credits ran out"), r.errors)
+        // What came back before the failure still prices the game.
+        assertNotNull(r.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.fairProbability)
+        assertEquals(1, r.sources.single().fetched)
+    }
 
     @Test
     fun `a scan fetches the board, fair odds and books once each, with progress`() = runTest {
