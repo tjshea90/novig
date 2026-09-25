@@ -37,75 +37,76 @@ object PropStats {
     )
 
     /**
-     * The Odds API's player-prop market keys (their "betting markets" page, 2026-09-25) for each
-     * Novig stat. Over/Under markets only, except the two Yes/No ones noted, which map Yes to
-     * Over 0.5. `*_alternate` ladders (Over only) can't be devigged and aren't requested.
+     * The Odds API's player-prop market keys (their "betting markets" page, re-checked 2026-09-25)
+     * for each Novig stat, per sport, in order of how widely the books post them. Over/Under
+     * markets, except the [YES_NO] ones, which map Yes to Over 0.5 (Novig lists "Over 0.5
+     * TOUCHDOWNS", "Over 0.5 DOUBLE_DOUBLE"). `*_alternate` ladders and "Over only" markets
+     * have no second side to devig, so they're never requested.
      */
-    val ODDS_API_MARKETS: Map<String, String> = mapOf(
-        // NFL
-        "player_pass_yds" to "PASSING_YARDS",
-        "player_rush_yds" to "RUSHING_YARDS",
-        "player_reception_yds" to "RECEIVING_YARDS",
-        "player_receptions" to "RECEPTIONS",
-        "player_pass_tds" to "PASSING_TOUCHDOWNS",
-        "player_pass_attempts" to "PASSING_ATTEMPTS",
-        "player_pass_completions" to "PASSING_COMPLETIONS",
-        "player_rush_attempts" to "RUSHING_ATTEMPTS",
-        "player_pass_interceptions" to "INTERCEPTIONS_THROWN",
-        "player_rush_reception_yds" to "RUSHING_AND_RECEIVING_YARDS",
-        "player_pass_rush_yds" to "PASSING_AND_RUSHING_YARDS",
-        "player_reception_longest" to "LONGEST_RECEPTION",
-        "player_rush_longest" to "LONGEST_RUSH",
-        "player_pass_longest_completion" to "LONGEST_COMPLETION",
-        "player_anytime_td" to "TOUCHDOWNS", // Yes/No
-        "player_kicking_points" to "KICKING_POINTS",
-        "player_field_goals" to "FIELD_GOALS_MADE",
-        // MLB
-        "batter_hits" to "HITS",
-        "batter_total_bases" to "TOTAL_BASES",
-        "batter_home_runs" to "HOME_RUNS",
-        "batter_rbis" to "RBIS",
-        "batter_runs_scored" to "RUNS",
-        "batter_hits_runs_rbis" to "HITS_RUNS_RBIS",
-        "batter_stolen_bases" to "STOLEN_BASES",
-        "batter_strikeouts" to "BATTING_STRIKEOUTS",
-        "batter_walks" to "BATTING_WALKS",
-        "pitcher_strikeouts" to "PITCHER_STRIKEOUTS",
-        "pitcher_hits_allowed" to "HITS_ALLOWED",
-        "pitcher_earned_runs" to "EARNED_RUNS",
-        "pitcher_outs" to "PITCHER_OUTS",
-        "pitcher_walks" to "WALKS",
-        // WNBA
-        "player_points" to "POINTS",
-        "player_rebounds" to "REBOUNDS",
-        "player_assists" to "ASSISTS",
-        "player_threes" to "THREE_POINTERS_MADE",
-        "player_points_rebounds_assists" to "POINTS_REBOUNDS_ASSISTS",
-        "player_double_double" to "DOUBLE_DOUBLE", // Yes/No
+    private val SPORT_MARKETS: Map<String, List<Pair<String, String>>> = mapOf(
+        "americanfootball_nfl" to listOf(
+            "player_pass_yds" to "PASSING_YARDS",
+            "player_rush_yds" to "RUSHING_YARDS",
+            "player_reception_yds" to "RECEIVING_YARDS",
+            "player_receptions" to "RECEPTIONS",
+            "player_pass_tds" to "PASSING_TOUCHDOWNS",
+            "player_tds" to "TOUCHDOWNS",
+            "player_anytime_td" to "TOUCHDOWNS",
+            "player_pass_attempts" to "PASSING_ATTEMPTS",
+            "player_pass_completions" to "PASSING_COMPLETIONS",
+            "player_rush_attempts" to "RUSHING_ATTEMPTS",
+            "player_pass_interceptions" to "INTERCEPTIONS_THROWN",
+            "player_rush_reception_yds" to "RUSHING_AND_RECEIVING_YARDS",
+            "player_pass_rush_yds" to "PASSING_AND_RUSHING_YARDS",
+            "player_reception_longest" to "LONGEST_RECEPTION",
+            "player_rush_longest" to "LONGEST_RUSH",
+            "player_pass_longest_completion" to "LONGEST_COMPLETION",
+            "player_kicking_points" to "KICKING_POINTS",
+            "player_field_goals" to "FIELD_GOALS_MADE",
+        ),
+        "baseball_mlb" to listOf(
+            "batter_hits" to "HITS",
+            "batter_total_bases" to "TOTAL_BASES",
+            "pitcher_strikeouts" to "PITCHER_STRIKEOUTS",
+            "batter_hits_runs_rbis" to "HITS_RUNS_RBIS",
+            "batter_home_runs" to "HOME_RUNS",
+            "batter_rbis" to "RBIS",
+            "batter_runs_scored" to "RUNS",
+            "batter_stolen_bases" to "STOLEN_BASES",
+            "batter_strikeouts" to "BATTING_STRIKEOUTS",
+            "batter_walks" to "BATTING_WALKS",
+            "pitcher_hits_allowed" to "HITS_ALLOWED",
+            "pitcher_earned_runs" to "EARNED_RUNS",
+            "pitcher_outs" to "PITCHER_OUTS",
+            "pitcher_walks" to "WALKS",
+        ),
+        "basketball_wnba" to listOf(
+            "player_points" to "POINTS",
+            "player_rebounds" to "REBOUNDS",
+            "player_assists" to "ASSISTS",
+            "player_threes" to "THREE_POINTERS_MADE",
+            "player_points_rebounds_assists" to "POINTS_REBOUNDS_ASSISTS",
+            "player_double_double" to "DOUBLE_DOUBLE",
+        ),
     )
 
-    /** The four props per sport that every major book posts: the cheap default. */
-    private val CORE: Map<String, List<String>> = mapOf(
-        "americanfootball_nfl" to listOf("player_pass_yds", "player_rush_yds", "player_reception_yds", "player_receptions"),
-        "baseball_mlb" to listOf("batter_hits", "batter_total_bases", "pitcher_strikeouts", "batter_hits_runs_rbis"),
-        "basketball_wnba" to listOf("player_points", "player_rebounds", "player_assists", "player_threes"),
-    )
+    /** Every Odds API prop key Vigilant uses, to its Novig stat. */
+    val ODDS_API_MARKETS: Map<String, String> = SPORT_MARKETS.values.flatten().toMap()
 
-    private val SPORT_PREFIX = mapOf(
-        "americanfootball_nfl" to listOf("player_"),
-        "baseball_mlb" to listOf("batter_", "pitcher_"),
-        "basketball_wnba" to listOf("player_"),
-    )
-    private val FOOTBALL_ONLY = setOf("player_pass_", "player_rush", "player_reception", "player_anytime_td", "player_kicking", "player_field_goals")
+    /** Yes/No markets: Yes is Over 0.5, No is Under 0.5. */
+    val YES_NO: Set<String> = setOf("player_anytime_td", "player_double_double")
 
-    /** The Odds API prop market keys to request for a sport. Empty: no book props for it. */
-    fun oddsApiMarkets(sportKey: String, set: BookPropSet): List<String> {
-        if (set == BookPropSet.CORE) return CORE[sportKey].orEmpty()
-        val prefixes = SPORT_PREFIX[sportKey] ?: return emptyList()
-        val football = sportKey == "americanfootball_nfl"
-        return ODDS_API_MARKETS.keys.filter { k ->
-            prefixes.any { k.startsWith(it) } && (football == FOOTBALL_ONLY.any { k.startsWith(it) })
-        }
+    /** How many of a sport's props [BookPropSet.CORE] buys: the four every major book posts. */
+    private const val CORE_COUNT = 4
+
+    /**
+     * The Odds API prop market keys to request for a sport, limited to the stats Novig actually
+     * lists for the game ([novigTypes], null = don't filter). Empty: no book props for it.
+     */
+    fun oddsApiMarkets(sportKey: String, set: BookPropSet, novigTypes: Set<String>? = null): List<String> {
+        val all = SPORT_MARKETS[sportKey].orEmpty()
+        val picked = if (set == BookPropSet.CORE) all.take(CORE_COUNT) else all
+        return picked.filter { novigTypes == null || it.second in novigTypes }.map { it.first }
     }
 
     /** Novig market types fetched for the "Player props" family: every stat some source prices. */
