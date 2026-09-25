@@ -215,8 +215,13 @@ private fun GameDetail(g: PricedGame, state: UiState, onBack: () -> Unit, onOpen
     }
 }
 
+/** Game-detail order: main lines, then 1st half / F5, team totals, then player props. */
 private fun order(type: String) = when (type) {
-    "MONEY", "MONEYLINE_3_WAY_WIN", "MONEYLINE_3_WAY_DRAW" -> 0
+    "MONEY" -> 0
     "SPREAD" -> 1
-    else -> 2
+    "TOTAL" -> 2
+    "SPREAD_1H" -> 3
+    "TOTAL_1H" -> 4
+    "TEAM_TOTAL" -> 5
+    else -> 6
 }
