@@ -1113,7 +1113,9 @@ app — ship after milestone A even if nothing else lands):
 - [x] A5 retire GraphQL/proxy path (client, proxy settings, direct toggle).
       DONE (A4+A5): compiles locally; ScreenshotTest renders all screens + 2
       interaction tests (103 tests green). GraphQL/proxy/v2 clients deleted.
-- [ ] A6 CI green, ship v0.4.0, send link.
+- [x] A6 CI green, ship v0.4.0, send link. DONE: CI run 36100221957 green; release run
+      36100439547 green; https://github.com/tjshea90/novig/releases/tag/v0.4.0 (2.86MB APK),
+      BUILDLOG recorded, link + 4 screenshots sent to Tj (SendUserFile).
 
 ### Milestone B — Novig API key (opt-in, "soon")
 - [x] B1 `data`: `NOVIG-V3` signer (Ed25519 + P-256), tested against
