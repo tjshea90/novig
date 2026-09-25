@@ -43,6 +43,32 @@ data class QuotaPolicy(
         return start.toInstant().toEpochMilli()
     }
 
+    /** A key's usage as of [now]: a new period starts fresh, expired holds are lifted. */
+    fun roll(u: KeyUsage, now: Long): KeyUsage {
+        var x = u
+        if (x.periodStart == 0L) x = x.copy(periodStart = periodStart(now))
+        if (now >= nextReset(x.periodStart)) {
+            x = x.copy(periodStart = periodStart(now), used = 0, calls = 0, remaining = null, lastNote = null, refused = false)
+        }
+        // A hold that ran out means "try again": a remembered zero no longer applies.
+        if (x.depletedUntil != null && now >= x.depletedUntil) {
+            x = x.copy(depletedUntil = null, remaining = x.remaining?.takeIf { it > 0 }, refused = false)
+        }
+        if (x.coolUntil != null && now >= x.coolUntil) x = x.copy(coolUntil = null)
+        if (x.recent.any { now - it >= UsageMeter.HOUR }) x = x.copy(recent = x.recent.filter { now - it < UsageMeter.HOUR })
+        return x
+    }
+
+    /** Whether an already-[roll]ed key can make a call costing [cost] now. */
+    fun usable(u: KeyUsage, cost: Int, now: Long): Boolean {
+        if (u.depletedUntil != null || u.coolUntil != null) return false
+        val left = u.left(this)
+        if (left != null && left < cost.coerceAtLeast(1)) return false
+        perMinute?.let { cap -> if (u.recent.count { now - it < UsageMeter.MINUTE } >= cap) return false }
+        perHour?.let { cap -> if (u.recent.size >= cap) return false }
+        return true
+    }
+
     fun nextReset(periodStart: Long): Long {
         val t = Instant.ofEpochMilli(periodStart).atZone(ZoneOffset.UTC)
         return when (period) {
@@ -89,6 +115,8 @@ data class KeyUsage(
     val lastNote: String? = null,
     /** Call times in the last hour, for per-minute and per-hour windows. */
     val recent: List<Long> = emptyList(),
+    /** The provider refused the key itself (wrong or deleted), not just its allowance. */
+    val refused: Boolean = false,
 ) {
     fun left(policy: QuotaPolicy): Int? = remaining ?: (limit ?: policy.defaultLimit)?.let { (it - used).coerceAtLeast(0) }
     fun allowance(policy: QuotaPolicy): Int? = limit ?: policy.defaultLimit
@@ -129,29 +157,6 @@ class UsageMeter(
         loaded = true
     }
 
-    /** A key's usage as of now: a new period starts fresh, expired holds are lifted. */
-    fun rolled(policy: QuotaPolicy, u: KeyUsage, now: Long): KeyUsage {
-        var x = u
-        if (x.periodStart == 0L) x = x.copy(periodStart = policy.periodStart(now))
-        if (now >= policy.nextReset(x.periodStart)) {
-            x = x.copy(periodStart = policy.periodStart(now), used = 0, calls = 0, remaining = null, lastNote = null)
-        }
-        // A hold that ran out means "try again": a remembered zero no longer applies.
-        if (x.depletedUntil != null && now >= x.depletedUntil) x = x.copy(depletedUntil = null, remaining = x.remaining?.takeIf { it > 0 })
-        if (x.coolUntil != null && now >= x.coolUntil) x = x.copy(coolUntil = null)
-        if (x.recent.any { now - it >= HOUR }) x = x.copy(recent = x.recent.filter { now - it < HOUR })
-        return x
-    }
-
-    private fun usable(policy: QuotaPolicy, u: KeyUsage, cost: Int, now: Long): Boolean {
-        if (u.depletedUntil != null || u.coolUntil != null) return false
-        val left = u.left(policy)
-        if (left != null && left < cost.coerceAtLeast(1)) return false
-        policy.perMinute?.let { cap -> if (u.recent.count { now - it < MINUTE } >= cap) return false }
-        policy.perHour?.let { cap -> if (u.recent.size >= cap) return false }
-        return true
-    }
-
     /**
      * The first key, in Tj's order, that can afford a call costing [cost] right now. Because it
      * always starts from key 1, rotation falls back to key 1 as soon as its period resets.
@@ -163,9 +168,9 @@ class UsageMeter(
         val updated = p.keys.toMutableMap()
         var chosen: String? = null
         for (k in keys) {
-            val u = rolled(policy, p.keys[k] ?: KeyUsage(), now)
+            val u = policy.roll(p.keys[k] ?: KeyUsage(), now)
             updated[k] = u
-            if (chosen == null && usable(policy, u, cost, now)) chosen = k
+            if (chosen == null && policy.usable(u, cost, now)) chosen = k
         }
         put(policy.id, p.copy(keys = updated))
         chosen
@@ -208,7 +213,7 @@ class UsageMeter(
 
     /** The key itself was refused (wrong, deleted, deactivated). Skipped until the next period. */
     suspend fun recordRejected(policy: QuotaPolicy, key: String, note: String) = edit(policy, key) { u, now ->
-        u.copy(depletedUntil = policy.nextReset(u.periodStart), lastNote = note, lastCallMs = now)
+        u.copy(depletedUntil = policy.nextReset(u.periodStart), refused = true, lastNote = note, lastCallMs = now)
     }
 
     /** Requests (and throttles) to any provider, for the "today" counters. In memory until [flush]. */
@@ -247,7 +252,7 @@ class UsageMeter(
             ensureLoaded()
             val now = clock()
             val p = provider(policy.id)
-            val u = rolled(policy, p.keys[key] ?: KeyUsage(), now)
+            val u = policy.roll(p.keys[key] ?: KeyUsage(), now)
             put(policy.id, p.copy(keys = p.keys + (key to change(u, now))))
             persist()
         }
