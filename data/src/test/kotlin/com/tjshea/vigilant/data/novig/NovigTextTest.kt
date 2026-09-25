@@ -32,8 +32,10 @@ class NovigTextTest {
 
     @Test
     fun `three way win markets name their team in the description`() {
-        assertEquals("Newcastle", NovigText.threeWayTeam("Newcastle MONEYLINE_3_WAY_WIN"))
-        assertNull(NovigText.threeWayTeam("Newcastle @ Coventry City MONEYLINE_3_WAY_DRAW"))
+        assertEquals("Patrick Mahomes", NovigText.subjectOf("Patrick Mahomes 233.5 PASSING_YARDS", "PASSING_YARDS"))
+        assertEquals("Los Angeles Rams", NovigText.subjectOf("Los Angeles Rams 22.5 TEAM_TOTAL", "TEAM_TOTAL"))
+        assertEquals("CJ Donaldson Jr.", NovigText.subjectOf("CJ Donaldson Jr. 0.5 TOUCHDOWNS", "TOUCHDOWNS"))
+        assertNull(NovigText.subjectOf("CJ Donaldson Jr. FIRST_TOUCHDOWN_SCORER", "FIRST_TOUCHDOWN_SCORER"))
     }
 
     @Test

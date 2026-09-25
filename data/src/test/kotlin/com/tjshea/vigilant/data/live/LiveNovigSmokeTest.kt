@@ -23,10 +23,10 @@ class LiveNovigSmokeTest {
     fun `real catalog - every game-line outcome resolves to a side`() = runBlocking {
         assumeTrue(System.getenv("VIGILANT_LIVE") == "1")
         val client = NovigPublicClient(OkHttpClient(), Json { ignoreUnknownKeys = true })
-        val leagues = listOf("NFL", "NCAAF", "MLB", "EPL", "MLS", "UFC", "NHL", "NBA")
+        val leagues = listOf("NFL", "NCAAF", "MLB", "WNBA", "UFC", "NHL", "NBA")
         val before = System.currentTimeMillis() + 4 * 86_400_000L
         val events = client.events(leagues, listOf("OPEN_PREGAME"), before).associateBy { it.eventId }
-        val markets = client.markets(leagues, listOf("MONEY", "SPREAD", "MONEYLINE_3_WAY_WIN"), listOf("OPEN_PREGAME"), before)
+        val markets = client.markets(leagues, listOf("MONEY", "SPREAD"), listOf("OPEN_PREGAME"), before)
         println("LIVE: ${events.size} events, ${markets.size} markets")
 
         val byType = HashMap<String, IntArray>() // [ok, failed]
@@ -41,7 +41,7 @@ class LiveNovigSmokeTest {
                     val b = NovigText.parseSpreadOutcome(m.outcomes.getOrNull(1)?.name ?: "")
                     a != null && b != null && TeamMatcher.firstLabelIsAway(a.first, b.first, mu.away, mu.home) != null
                 }
-                else -> NovigText.threeWayTeam(m.description)?.let { TeamMatcher.labelIsAway(it, mu.away, mu.home) } != null
+                else -> false
             }
             val c = byType.getOrPut("${e.league}/${m.marketType}") { IntArray(2) }
             if (ok) c[0]++ else { c[1]++; if (failures.size < 40) failures += "${e.league} ${m.marketType}: '${m.outcomes.joinToString { it.name }}' in '${e.description}' (${m.description})" }

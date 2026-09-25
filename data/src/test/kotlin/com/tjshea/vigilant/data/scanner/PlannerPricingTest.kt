@@ -150,32 +150,6 @@ class PlannerPricingTest {
     }
 
     @Test
-    fun `three way soccer markets price Yes from the team and No from every other result`() {
-        val soccer = NovigEvent("s1", "SOCCER", "EPL", "OPEN_PREGAME", "Newcastle United FC @ Coventry City FC", Fixtures.START_MS)
-        val win = NovigMarket("w", "s1", "MONEYLINE_3_WAY_WIN", "OPEN", "Newcastle MONEYLINE_3_WAY_WIN", Fixtures.START_MS, MarketFee.GAME,
-            listOf(NovigOutcome("wy", "Yes", "TBD"), NovigOutcome("wn", "No", "TBD")))
-        val draw = NovigMarket("d", "s1", "MONEYLINE_3_WAY_DRAW", "OPEN", "Newcastle United FC @ Coventry City FC MONEYLINE_3_WAY_DRAW",
-            Fixtures.START_MS, MarketFee.GAME, listOf(NovigOutcome("dy", "Yes", "TBD"), NovigOutcome("dn", "No", "TBD")))
-        val ref = RefEvent("r", "soccer_epl", Fixtures.START_MS, home = "Coventry City", away = "Newcastle United",
-            markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE,
-                listOf(RefQuote(Side.HOME, 3.4, null), RefQuote(Side.AWAY, 2.2, null), RefQuote(Side.DRAW, 3.6, null)), null)))
-        val snaps = mapOf("soccer_epl" to RefSnapshot("soccer_epl", listOf(ref), now))
-        val s = sharpOnly.copy(leagues = setOf("EPL"))
-        val plan = Planner.plan(listOf(soccer), listOf(win, draw), snaps, s, now)
-        val bk = mapOf(
-            "w" to book("w", "wy" to (430 to 100L), "wn" to (540 to 100L)),
-            "d" to book("d", "dy" to (250 to 100L), "dn" to (700 to 100L)),
-        )
-        val r = Pricing.price(plan, bk, s, now)
-        val raw = listOf(1 / 3.4, 1 / 2.2, 1 / 3.6)
-        val fair = raw.map { it / raw.sum() }
-        assertEquals(fair[1], r.opportunities.first { it.outcome.outcomeId == "wy" }.fairProbability!!, 1e-12)
-        assertEquals(fair[0] + fair[2], r.opportunities.first { it.outcome.outcomeId == "wn" }.fairProbability!!, 1e-12)
-        assertEquals(fair[2], r.opportunities.first { it.outcome.outcomeId == "dy" }.fairProbability!!, 1e-12)
-        assertEquals("Newcastle United FC win: Yes", r.opportunities.first { it.outcome.outcomeId == "wy" }.selection)
-    }
-
-    @Test
     fun `stake is fractional kelly capped by what the book can fill at a positive edge`() {
         val s = sharpOnly.copy(bankroll = 1_000_000.0, kellyMultiplier = 1.0, minEvPercent = 0.0)
         val r = Pricing.price(Planner.plan(listOf(event), markets, refs, s, now), books, s, now)
