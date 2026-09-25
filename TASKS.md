@@ -1072,3 +1072,57 @@ new error, not the same 503.
       (500 credits/mo) and its $30/mo tier. This is now the freshness
       bottleneck, not Novig.
 
+
+## Tj's request, 2026-09-25 (his own words — full text in INBOX.md)
+
+> Start making the app with the free public novig routes, with options to
+> add my novig API key soon. [...] Show me what you can do. I want an app
+> similar to oddsjam that can find me a market "fair" devigged price using
+> either sharp sports books or average odds across books or a blend, and
+> compare these to real time novig odds to find positive EV. Consider the
+> oddsjam app and how it works and its ui. Model it after that. Make sure a
+> rugged checkpoint system is in place with frequent saves of progress
+> because usage will run out. Make this app as best as you can, with full
+> tests of the final app for efficiency and function and optimal code for
+> my moto g 2026. Then use GitHub actions to make the APK
+
+Plan (in priority order, so an interrupted session still leaves a shippable
+app — ship after milestone A even if nothing else lands):
+
+### Milestone A — official public Novig leg + OddsJam-style fair odds (ship as v0.4.0)
+- [ ] A1 `data`: `NovigPublicClient` over `/v3/public/...` (NOVIG_API.md §5):
+      events → game-line markets → books; executable taker price
+      (1 − best opposing bid) + depth; per-market `fee`; ETag/304 book cache;
+      decimal (not float-string) price parsing. MockWebServer tests with
+      fixtures shaped like the live responses recorded 2026-09-25.
+- [ ] A2 `engine`: fair-odds source = SHARP / MARKET_AVERAGE / BLEND
+      (sharp weight %), devig per book then combine; `Fees` from the
+      market's own fee object (fixes NFL/MLB/NCAAF futures 0.06 pregame);
+      Kelly stake. Unit tests.
+- [ ] A3 `data`: scanner rework — match Novig markets to reference lines by
+      team + line (spreads/totals need the same point), fetch books only for
+      matched markets, league mapping Odds-API sport key ↔ Novig league.
+- [ ] A4 `app`: OddsJam-style UI — +EV feed cards (EV%, selection, Novig
+      price vs fair, liquidity at price, Kelly stake, market width, age),
+      filters (league, market, min EV), detail sheet with per-book odds,
+      auto-refresh of Novig books while visible (lifecycle-aware, stops in
+      background), manual refresh for reference odds (credit-limited),
+      Settings: fair-odds source/blend/devig method/bankroll/Kelly.
+- [ ] A5 retire GraphQL/proxy path (client, proxy settings, direct toggle).
+- [ ] A6 CI green, ship v0.4.0, send link.
+
+### Milestone B — Novig API key (opt-in, "soon")
+- [ ] B1 `data`: `NOVIG-V3` signer (Ed25519 + P-256), tested against
+      Novig's published signing vectors.
+- [ ] B2 `app`: Settings → Novig API: paste key ID + PEM (encrypted at rest),
+      "Test connection" via `POST /v3/echo` with plain-English 401/451/423
+      messages.
+- [ ] B3 websocket live book feed (signed `GET /v3/ws`, `book` channel per
+      event) used automatically when a trading/trading::read key is set.
+
+### Milestone C — tracker + full tests + ship
+- [ ] C1 bet tracker (log a bet from a card, settle, P/L + CLV-style stats),
+      stored locally.
+- [ ] C2 full tests per CLAUDE.md (every module, efficiency, battery),
+      extend CLAUDE.md's test protocol with the real screens.
+- [ ] C3 ship final version, send link.
