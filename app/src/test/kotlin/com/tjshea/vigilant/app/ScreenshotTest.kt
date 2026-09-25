@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -79,7 +81,9 @@ class ScreenshotTest {
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
         compose.setContent { VigilantTheme { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) } }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("in use").assertIsDisplayed()
+        // Key 1 of each keyed provider is the one the next call uses.
+        compose.onAllNodesWithText("in use").assertCountEquals(2)
+        compose.onNodeWithText("next").assertIsDisplayed()
         compose.onNodeWithText("142 requests today").assertIsDisplayed()
     }
 
