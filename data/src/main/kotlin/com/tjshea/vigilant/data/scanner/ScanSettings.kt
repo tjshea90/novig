@@ -11,9 +11,17 @@ enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
 /** Which Novig market families to price. */
 enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
-    MONEYLINE("Moneyline", listOf("MONEY", "MONEYLINE_3_WAY_WIN", "MONEYLINE_3_WAY_DRAW")),
+    MONEYLINE("Moneyline", listOf("MONEY")),
     SPREAD("Spread", listOf("SPREAD")),
     TOTAL("Total", listOf("TOTAL")),
+
+    /**
+     * 1st-half spreads and totals (the first 5 innings in baseball). 1st-half moneylines aren't
+     * priced: the fair sources quote them 3-way with a tie, Novig 2-way (RESEARCH.md §13).
+     */
+    FIRST_HALF("1st half / F5", listOf("SPREAD_1H", "TOTAL_1H")),
+    TEAM_TOTAL("Team totals", listOf("TEAM_TOTAL")),
+    PLAYER_PROPS("Player props", PropStats.NOVIG_TYPES),
 }
 
 /**
@@ -57,6 +65,13 @@ data class ScanSettings(
      * so this is the main lever on scan time and Novig's rate limit.
      */
     val linesPerGame: Int = 2,
+    /** Player props priced per game, best-covered first (each one is a Novig request per scan). */
+    val propsPerGame: Int = 4,
+    /**
+     * The most Novig prices one scan reads. Past it, main lines and the soonest games win; props
+     * and later games wait. Keeps a big slate (college Saturday with props) to about a minute.
+     */
+    val maxBooksPerScan: Int = 200,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
     val exchangeMaxSpread: Double = 0.03,
     val feedSort: FeedSort = FeedSort.EV,
@@ -70,6 +85,15 @@ data class ScanSettings(
     fun migrate(): ScanSettings {
         var s = this
         if (s.schema < 2) s = s.copy(sharpBooks = s.sharpBooks + setOf("polymarket", "kalshi"), schema = 2)
+        // v0.8.0: alternative markets on by default; soccer, CFL, KBO and NPB are gone from the app.
+        if (s.schema < 3) {
+            val kept = s.leagues.filterTo(HashSet()) { Leagues.byNovigName(it) != null }
+            s = s.copy(
+                families = s.families + setOf(MarketFamily.FIRST_HALF, MarketFamily.TEAM_TOTAL, MarketFamily.PLAYER_PROPS),
+                leagues = kept.ifEmpty { setOf("NFL") },
+                schema = 3,
+            )
+        }
         return s
     }
 
@@ -98,6 +122,8 @@ data class ScanSettings(
     companion object {
         val ODDS_API_REUSE_CHOICES = listOf(0, 5, 15, 30, 60)
         val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
+        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12)
+        val MAX_BOOKS_CHOICES = listOf(100, 200, 400)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
     }
 }
