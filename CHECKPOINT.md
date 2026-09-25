@@ -1,13 +1,13 @@
-# CHECKPOINT 383 — read me first, then TASKS.md
+# CHECKPOINT 384 — read me first, then TASKS.md
 
-**Written:** 2026-09-25T16:35:48Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `c7c4e0b` (this checkpoint is the commit after it)
+**Written:** 2026-09-25T16:38:09Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `1ed3120` (this checkpoint is the commit after it)
 
 ## Just done
-P2 core: TheOddsApiClient.events() (free) + eventOdds() + prop parsing (Over/Under by player, Yes/No -> Over/Under 0.5, one-sided dropped); PropStats per-sport verified keys (+player_tds); OddsApiPropsSource (needsCatalog, soonest-first budget across leagues, per-game reuse, only types Novig lists); PartialReferenceException kept by Scanner; data compiles
+P2/P4/P5 wiring: PlayerNames (nicknames incl. Hollywood/Marquise, Last-First, middle initials, spacing-insensitive, memoized); AppContainer adds OddsApiPropsSource when Odds API key + useBookProps; Settings UI for book props (switch, Core/All, credits/scan, hours, reuse, estimate); creditEstimate fixed to count only h2h/spreads/totals; app compiles
 
 ## Do this next
-PlayerNames nicknames + Last, First; AppContainer wiring; Settings UI; tests (client parse, props source budget/reuse/match, PlayerNames); RESEARCH §14; v0.9.0
+Tests: TheOddsApiClient props parse + events/eventOdds; OddsApiPropsSource budget/soonest/reuse/partial; PlayerNamesTest; Scanner partial; creditEstimate; then run full suite + screenshots; RESEARCH §14; docs; v0.9.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ PlayerNames nicknames + Last, First; AppContainer wiring; Settings UI; tests (cl
 
 ## Last ten checkpoints
 ```
+  9ac808a ckpt 383: P2 core: TheOddsApiClient.events() (free) + eventOdds() + prop parsing (Over/U
   062cf9d ckpt 382: P2 in progress: ScanContext/needsCatalog in ReferenceSource, Scanner waits for
   e812ace ckpt 381: Logged Tj's 2026-09-25 ~16:15Z request (sportsbook props, market average devig
   09d5cbe ckpt 380: SHIPPED v0.8.0 (code 12): CI 36158016075 green, release 36158521051 green, 4.7
@@ -25,8 +26,7 @@ PlayerNames nicknames + Last, First; AppContainer wiring; Settings UI; tests (cl
   6911ea9 ckpt 376: A1+A3 core compiles: leagues NFL,NCAAF,MLB,WNBA,NHL first, soccer/CFL/KBO/NPB 
   0fee52f ckpt 375: A2 research recorded: RESEARCH.md §13 (Novig alt market types + shapes per le
   37e727b ckpt 374: Logged Tj's 2026-09-25 ~15:20Z request (alt markets for NFL/NCAAF/MLB/WNBA, le
-  8c4a9a6 ckpt 373: SHIPPED v0.7.0 (code 11): CI 36151518252 green, release 36151929213 green, 4.7
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
