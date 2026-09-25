@@ -62,13 +62,13 @@ object Fixtures {
         }}
     """.trimIndent()
 
-    /** The Odds API: Pinnacle has DAL a clear bigger dog than Novig's 0.385 take price implies. */
+    /** The Odds API: Pinnacle's devigged DAL (~0.398) beats Novig's 0.385 take price: a ~3.4% edge. */
     val oddsApi = """
         [{"id":"ref-1","sport_key":"americanfootball_nfl","commence_time":"2026-09-27T20:25:00Z",
           "home_team":"Dallas Cowboys","away_team":"Baltimore Ravens",
           "bookmakers":[
             {"key":"pinnacle","title":"Pinnacle","last_update":"2026-09-25T02:00:00Z","markets":[
-              {"key":"h2h","outcomes":[{"name":"Baltimore Ravens","price":1.55},{"name":"Dallas Cowboys","price":2.55}]},
+              {"key":"h2h","outcomes":[{"name":"Baltimore Ravens","price":1.62},{"name":"Dallas Cowboys","price":2.45}]},
               {"key":"spreads","outcomes":[{"name":"Baltimore Ravens","price":1.95,"point":-3.5},{"name":"Dallas Cowboys","price":1.93,"point":3.5}]},
               {"key":"totals","outcomes":[{"name":"Over","price":1.91,"point":47.5},{"name":"Under","price":1.97,"point":47.5}]}]},
             {"key":"draftkings","title":"DraftKings","last_update":"2026-09-25T02:01:00Z","markets":[

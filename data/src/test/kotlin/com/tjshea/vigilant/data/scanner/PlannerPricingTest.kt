@@ -70,8 +70,8 @@ class PlannerPricingTest {
         val dal = r.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
         assertEquals("Dallas Cowboys", dal.selection)
 
-        // Pinnacle: BAL 1.55 / DAL 2.55, multiplicative devig.
-        val raw = listOf(1 / 2.55, 1 / 1.55) // [HOME=DAL, AWAY=BAL]
+        // Pinnacle: BAL 1.62 / DAL 2.45, multiplicative devig.
+        val raw = listOf(1 / 2.45, 1 / 1.62) // [HOME=DAL, AWAY=BAL]
         val fairDal = raw[0] / raw.sum()
         assertEquals(fairDal, dal.fairProbability!!, 1e-12)
         assertEquals(0.385, dal.quote!!.price, 1e-12)
@@ -112,7 +112,7 @@ class PlannerPricingTest {
         assertTrue(feed.isNotEmpty())
         assertTrue(feed.all { it.evPercent!! >= 0.0 })
         assertEquals(feed.sortedByDescending { it.evPercent }, feed)
-        // DAL at +160 vs a fair ~+155 on Pinnacle is a real (small) edge.
+        // DAL at +160 vs a fair ~+151 on Pinnacle is a real edge (~3.4%).
         assertTrue(feed.any { it.outcome.outcomeId == Fixtures.ML_DAL })
     }
 
@@ -121,12 +121,12 @@ class PlannerPricingTest {
         // Same game, but the reference feed lists Baltimore as home (e.g. a neutral site).
         val swapped = RefEvent("ref-x", "americanfootball_nfl", Fixtures.START_MS, home = "Baltimore Ravens", away = "Dallas Cowboys",
             markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE,
-                listOf(RefQuote(Side.HOME, 1.55, null), RefQuote(Side.AWAY, 2.55, null)), null)))
+                listOf(RefQuote(Side.HOME, 1.62, null), RefQuote(Side.AWAY, 2.45, null)), null)))
         val r = mapOf("americanfootball_nfl" to RefSnapshot("americanfootball_nfl", listOf(swapped), now))
         val plan = Planner.plan(listOf(event), markets, r, sharpOnly, now)
         val res = Pricing.price(plan, books, sharpOnly, now)
         val dal = res.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
-        val raw = listOf(1 / 1.55, 1 / 2.55) // HOME=BAL, AWAY=DAL in the reference feed
+        val raw = listOf(1 / 1.62, 1 / 2.45) // HOME=BAL, AWAY=DAL in the reference feed
         assertEquals(raw[1] / raw.sum(), dal.fairProbability!!, 1e-12)
     }
 
