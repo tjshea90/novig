@@ -150,4 +150,16 @@ class UsageMeterTest {
         assertEquals("ok", v)
         assertEquals(2, calls)
     }
+
+    @Test
+    fun `the meter view marks the key in use, the spent one, and totals what's left`() = runTest {
+        meter.recordCall(odds, "k1", 3, serverRemaining = 0, serverUsed = 500)
+        meter.recordCall(odds, "k2", 3, serverRemaining = 188, serverUsed = 312)
+        val v = UsageViews.build(odds, keys, meter.flow.value.providers["oddsapi"], now)
+        assertEquals(listOf(KeyState.SPENT, KeyState.ACTIVE, KeyState.STANDBY), v.keys.map { it.state })
+        assertEquals(0 + 188 + 500, v.totalLeft)
+        assertEquals(1, v.activeIndex)
+        assertEquals(Instant.parse("2026-10-01T00:00:00Z").toEpochMilli(), v.keys[0].until)
+        assertEquals("k1".let { UsageViews.mask(it) }, v.keys[0].masked)
+    }
 }

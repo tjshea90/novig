@@ -1,5 +1,9 @@
 package com.tjshea.vigilant.app
 
+import com.tjshea.vigilant.data.keys.KeyUsage
+import com.tjshea.vigilant.data.keys.ProviderUsage
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.novig.BidLevel
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigEvent
@@ -123,10 +127,34 @@ object SampleScan {
             result = r,
             feed = r.feed(s),
             status = ScanStatus(scannedAtMs = NOW - 60_000, creditsRemaining = 488, sources = if (withFair) sources else emptyList(), booksFetched = 14),
-            oddsApiKeys = listOf("1234567890abcdef1234"),
+            oddsApiKeys = listOf("1234567890abcdef1234", "abcdefabcdefabcd5678"),
             pinnapiKeys = listOf("trial-key-sample-0001"),
+            usage = usage(),
             bets = bets,
             loaded = true,
+        )
+    }
+
+    /** A ledger mid-month: key 1 of The Odds API partly used, key 2 untouched; a busy scan day. */
+    fun usage(now: Long = System.currentTimeMillis()): UsageBook {
+        val month = QuotaPolicy.ODDS_API.periodStart(now)
+        val day = QuotaPolicy.PINNAPI.periodStart(now)
+        return UsageBook(
+            mapOf(
+                "oddsapi" to ProviderUsage(
+                    keys = mapOf(
+                        "1234567890abcdef1234" to KeyUsage(periodStart = month, used = 312, remaining = 188, limit = 500, calls = 104, lastCallMs = now - 60_000, lastCost = 3),
+                    ),
+                    dayStart = day, callsToday = 6,
+                ),
+                "pinnacle" to ProviderUsage(
+                    keys = mapOf("trial-key-sample-0001" to KeyUsage(periodStart = day, used = 37, calls = 37, lastCallMs = now - 60_000, lastCost = 1)),
+                    dayStart = day, callsToday = 37,
+                ),
+                "novig" to ProviderUsage(dayStart = day, callsToday = 142),
+                "polymarket" to ProviderUsage(dayStart = day, callsToday = 12),
+                "kalshi" to ProviderUsage(dayStart = day, callsToday = 9),
+            ),
         )
     }
 

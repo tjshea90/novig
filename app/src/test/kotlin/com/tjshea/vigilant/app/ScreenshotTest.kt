@@ -67,7 +67,21 @@ class ScreenshotTest {
     @Test fun tracker() = shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
 
     @Config(qualifiers = "w393dp-h2200dp-xxhdpi")
-    @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}, {}, {}) }
+    @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
+
+    @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
+    @Test fun usageMeters() = shoot("5b_usage_meters") {
+        androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
+            com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state())
+        }
+    }
+
+    @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
+        compose.setContent { VigilantTheme { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) } }
+        compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("in use").assertIsDisplayed()
+        compose.onNodeWithText("142 requests today").assertIsDisplayed()
+    }
 
     @Test fun tappingACardOpensItsDetailWithTheBookBreakdown() {
         val s = SampleScan.state()
