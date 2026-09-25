@@ -38,7 +38,7 @@ class ScreenshotTest {
                 Box(Modifier.background(MaterialTheme.colorScheme.background)) { content() }
             }
         }
-        compose.onRoot().captureRoboImage("app/screenshots/$name.png")
+        compose.onRoot().captureRoboImage("screenshots/$name.png")
     }
 
     @Test fun feed() = shoot("1_feed") { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }

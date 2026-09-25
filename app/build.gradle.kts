@@ -68,7 +68,6 @@ android {
             isIncludeAndroidResources = true
             all {
                 it.systemProperty("roborazzi.test.record", project.hasProperty("screenshots").toString())
-                it.systemProperty("roborazzi.outputDir", rootProject.file("app/screenshots").absolutePath)
                 it.maxHeapSize = "2g"
             }
         }
