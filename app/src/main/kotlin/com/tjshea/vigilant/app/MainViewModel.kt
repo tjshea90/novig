@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
@@ -60,6 +61,8 @@ data class UiState(
     val status: ScanStatus = ScanStatus(),
     val oddsApiKeys: List<String> = emptyList(),
     val pinnapiKeys: List<String> = emptyList(),
+    /** Every provider's usage ledger, updated after each call (the meters). */
+    val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
     val loaded: Boolean = false,
     val novig: NovigUi = NovigUi(),
@@ -86,6 +89,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val stored = c.settingsStore.read()
             val settings = stored.migrate()
             if (settings != stored) runCatching { c.settingsStore.update { settings } }
+            runCatching { c.migrateKeys() }
+            c.usage.load()
             val keys = c.keyStore.getKeys(ApiProvider.THE_ODDS_API)
             val pinn = c.keyStore.getKeys(ApiProvider.PINNAPI)
             val bets = c.tracker.all()
@@ -101,6 +106,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             c.tracker.flow.filterNotNull().collect { bets -> _state.update { it.copy(bets = bets) } }
         }
+        viewModelScope.launch {
+            c.usage.flow.collect { u -> _state.update { it.copy(usage = u) } }
+        }
     }
 
     /** One scan: Novig's board and prices plus fair odds from every enabled source. */
@@ -112,13 +120,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(status = it.status.copy(scanning = true, progress = ScanProgress("Starting"))) }
             try {
                 val settings = _state.value.settings
-                val sources = c.referenceSources(settings, _state.value.oddsApiKeys, _state.value.pinnapiKeys)
+                val sources = c.referenceSources(settings)
                 val report = withContext(Dispatchers.Default) {
                     c.scanner.scan(settings, sources) { p -> _state.update { it.copy(status = it.status.copy(progress = p)) } }
                 }
                 applyReport(report, settings)
             } finally {
                 _state.update { it.copy(status = it.status.copy(scanning = false, progress = null)) }
+                // Keyed calls saved as they happened; this saves the keyless request counters.
+                runCatching { c.usage.flush() }
             }
         }
     }
@@ -235,27 +245,75 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         s.copy(leagues = if (league in s.leagues) s.leagues - league else s.leagues + league)
     }
 
-    fun addOddsApiKey(key: String) {
-        val trimmed = key.trim()
-        if (trimmed.isEmpty() || trimmed in _state.value.oddsApiKeys) return
-        setOddsApiKeys(_state.value.oddsApiKeys + trimmed)
+    fun keysFor(provider: ApiProvider): List<String> = when (provider) {
+        ApiProvider.THE_ODDS_API -> _state.value.oddsApiKeys
+        ApiProvider.PINNAPI -> _state.value.pinnapiKeys
     }
 
-    fun removeOddsApiKey(key: String) = setOddsApiKeys(_state.value.oddsApiKeys - key)
+    /** Adds a key at the end of the rotation (keys are tried in order: key 1 first). */
+    fun addKey(provider: ApiProvider, key: String) {
+        val trimmed = key.trim()
+        if (trimmed.isEmpty() || trimmed in keysFor(provider)) return
+        setKeys(provider, keysFor(provider) + trimmed)
+    }
 
-    /** pinnapi allows one free key per person; a new one replaces the old. */
-    fun setPinnapiKey(key: String?) {
-        val keys = listOfNotNull(key?.trim()?.takeIf { it.isNotEmpty() })
+    fun removeKey(provider: ApiProvider, key: String) = setKeys(provider, keysFor(provider) - key)
+
+    /** Moves a key one place earlier in the rotation. */
+    fun moveKeyUp(provider: ApiProvider, key: String) {
+        val list = keysFor(provider).toMutableList()
+        val i = list.indexOf(key)
+        if (i <= 0) return
+        list.removeAt(i)
+        list.add(i - 1, key)
+        setKeys(provider, list)
+    }
+
+    private fun setKeys(provider: ApiProvider, keys: List<String>) {
         viewModelScope.launch {
-            c.keyStore.setKeys(ApiProvider.PINNAPI, keys)
-            _state.update { it.copy(pinnapiKeys = keys) }
+            val saved = runCatching { c.keyStore.setKeys(provider, keys) }.isSuccess
+            if (!saved) _toasts.tryEmit("Couldn't save the key")
+            val clean = c.keyStore.getKeys(provider)
+            _state.update {
+                when (provider) {
+                    ApiProvider.THE_ODDS_API -> it.copy(oddsApiKeys = clean)
+                    ApiProvider.PINNAPI -> it.copy(pinnapiKeys = clean)
+                }
+            }
         }
     }
 
-    private fun setOddsApiKeys(keys: List<String>) {
+    /** Writes every key to a file Tj picked (survives even an uninstall). */
+    fun exportKeys(uri: android.net.Uri) {
         viewModelScope.launch {
-            c.keyStore.setKeys(ApiProvider.THE_ODDS_API, keys)
-            _state.update { it.copy(oddsApiKeys = keys) }
+            val ok = runCatching {
+                val text = c.keyStore.exportJson()
+                withContext(Dispatchers.IO) {
+                    getApplication<Application>().contentResolver.openOutputStream(uri, "wt")!!.use { it.write(text.toByteArray()) }
+                }
+            }.isSuccess
+            _toasts.tryEmit(if (ok) "Keys saved to the file" else "Couldn't write that file")
+        }
+    }
+
+    /** Adds the keys from an exported file to the ones already here. */
+    fun importKeys(uri: android.net.Uri) {
+        viewModelScope.launch {
+            val result = runCatching {
+                val text = withContext(Dispatchers.IO) {
+                    getApplication<Application>().contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }
+                }
+                c.keyStore.importJson(text)
+            }
+            val odds = c.keyStore.getKeys(ApiProvider.THE_ODDS_API)
+            val pinn = c.keyStore.getKeys(ApiProvider.PINNAPI)
+            _state.update { it.copy(oddsApiKeys = odds, pinnapiKeys = pinn) }
+            _toasts.tryEmit(
+                result.fold(
+                    onSuccess = { n -> if (n == 0) "No new keys in that file" else "Added $n key${if (n == 1) "" else "s"}" },
+                    onFailure = { e -> e.message ?: "Couldn't read that file" },
+                ),
+            )
         }
     }
 
