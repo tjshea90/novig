@@ -124,6 +124,8 @@ object Planner {
         references: Collection<RefSnapshot>,
         settings: ScanSettings,
         now: Long,
+        /** Market IDs always priced when quoted, past the per-game cap (lines Tj has bets on). */
+        pinned: Set<String> = emptySet(),
     ): Plan {
         val eligible = eligibleEvents(events, settings, now)
         val matches = matchEvents(eligible, references)
@@ -154,10 +156,11 @@ object Planner {
             // most books first, then closest to a coin flip (the main line).
             planned += quoted.filter { it.first.kind == LineKind.MONEYLINE }.map { it.first }
             for (kind in listOf(LineKind.SPREAD, LineKind.TOTAL)) {
-                planned += quoted.filter { it.first.kind == kind }
+                val ranked = quoted.filter { it.first.kind == kind }
                     .sortedWith(compareByDescending<Pair<PlannedMarket, LineStats>> { it.second.books }.thenBy { it.second.imbalance })
-                    .take(settings.linesPerGame.coerceAtLeast(1))
                     .map { it.first }
+                val kept = ranked.take(settings.linesPerGame.coerceAtLeast(1))
+                planned += kept + ranked.filter { it.market.marketId in pinned && it !in kept }
             }
         }
         return Plan(planned, matches)

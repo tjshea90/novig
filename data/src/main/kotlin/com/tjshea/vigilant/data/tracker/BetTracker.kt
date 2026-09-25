@@ -119,7 +119,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         fun fresh(b: TrackedBet): Double? {
             if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
             val fair = byKey[b.marketId to b.outcomeId]?.fairProbability ?: return null
-            // Only a real change is worth a disk write. While streaming this runs every 2s.
+            // Only a real change is worth a disk write.
             return fair.takeIf { b.closingFair == null || kotlin.math.abs(it - b.closingFair) > 1e-9 }
         }
         if (store.read().none { fresh(it) != null }) return false

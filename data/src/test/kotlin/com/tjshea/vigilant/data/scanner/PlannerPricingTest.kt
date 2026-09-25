@@ -305,5 +305,8 @@ class PlannerPricingTest {
         val two = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2), now)
         assertEquals(listOf("sp3.5", "sp2.5"), two.marketIds)
         assertEquals(5, Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 5), now).marketIds.size)
+        // A line Tj has a bet on is always priced, cap or not, so its closing value keeps updating.
+        val pinned = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2), now, pinned = setOf("sp20.5"))
+        assertEquals(setOf("sp3.5", "sp2.5", "sp20.5"), pinned.marketIds.toSet())
     }
 }

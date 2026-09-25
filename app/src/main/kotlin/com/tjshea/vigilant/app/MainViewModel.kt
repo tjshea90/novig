@@ -120,8 +120,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val settings = _state.value.settings
                 val sources = c.referenceSources(settings)
+                val now = System.currentTimeMillis()
+                // Open bets' lines are priced even past the per-game cap, so their closing value updates.
+                val pinned = _state.value.bets.filter { it.status == BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
                 val report = withContext(Dispatchers.Default) {
-                    c.scanner.scan(settings, sources) { p -> _state.update { it.copy(status = it.status.copy(progress = p)) } }
+                    c.scanner.scan(settings, sources, pinned) { p -> _state.update { it.copy(status = it.status.copy(progress = p)) } }
                 }
                 applyReport(report, settings)
             } finally {

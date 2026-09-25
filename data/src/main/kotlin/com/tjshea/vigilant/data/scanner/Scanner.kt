@@ -79,12 +79,16 @@ class Scanner(
     private var plan: Plan? = null
     private var planInputs: Any? = null
     private var books: Map<String, NovigBook> = emptyMap()
+    private var pinned: Set<String> = emptySet()
 
     suspend fun scan(
         settings: ScanSettings,
         sources: List<ReferenceSource>,
+        /** Markets always priced past the per-game line cap: the ones Tj has open bets on. */
+        pinned: Set<String> = emptySet(),
         onProgress: (ScanProgress) -> Unit = {},
     ): ScanReport = mutex.withLock {
+        this.pinned = pinned
         val now = clock()
         val errors = ArrayList<String>()
         val leagues = settings.selectedLeagues
@@ -265,7 +269,7 @@ class Scanner(
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
             settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
-            now / 60_000L,
+            pinned, now / 60_000L,
         )
         val existing = plan
         if (existing != null && inputs == planInputs) return existing
@@ -273,7 +277,7 @@ class Scanner(
             if (snap.provider != "oddsapi") snap
             else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
-        return Planner.plan(cat.events, cat.markets, filtered, settings, now).also {
+        return Planner.plan(cat.events, cat.markets, filtered, settings, now, pinned).also {
             plan = it
             planInputs = inputs
         }
