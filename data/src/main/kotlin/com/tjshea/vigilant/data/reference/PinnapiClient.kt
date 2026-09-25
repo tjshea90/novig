@@ -1,6 +1,9 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
+import com.tjshea.vigilant.data.keys.KeyAttemptResult
+import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.sync.Mutex
@@ -23,7 +26,9 @@ import java.time.Instant
  * itself, which closed its public API on 2025-07-23). The free trial key never expires but allows
  * **100 requests a day** (20/min, 100/hour). One request returns a whole sport's prematch board,
  * so NFL and NCAAF share one call; a sport fetched in the last [shareMs] is re-used rather than
- * re-requested, and a 429 parks the client until pinnapi's `retry_after_ms` instead of retrying.
+ * re-requested. [KeyPool] counts every request per key (pinnapi sends no usage headers) and skips a
+ * key before its daily/minute allowance runs out; a 429 rests the key for pinnapi's own
+ * `retry_after_ms`.
  *
  * Response shape (their docs): `{events:[{event_id, league_name, starts, home, away,
  * periods:{num_0:{money_line:{home,away,draw?}, spreads:{"<hdp>":{hdp,home,away}},
@@ -34,7 +39,7 @@ import java.time.Instant
 class PinnapiClient(
     private val http: OkHttpClient,
     private val json: Json,
-    private val key: String,
+    private val pool: KeyPool,
     private val baseUrl: String = "https://pinnapi.com/kit/v1",
     private val clock: () -> Long = System::currentTimeMillis,
     private val shareMs: Long = 60_000,
@@ -50,13 +55,6 @@ class PinnapiClient(
 
     private val mutex = Mutex()
     private val boards = HashMap<Int, Board>()
-    private var blockedUntil = 0L
-    private var blockedReason: String? = null
-
-    /** Requests actually sent this session (the free key allows 100 a day). */
-    @Volatile
-    var requestsSent = 0
-        private set
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val sport = league.pinnacleSportId ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
@@ -65,40 +63,41 @@ class PinnapiClient(
     }
 
     private suspend fun boardFor(sport: Int): Board {
-        val now = clock()
-        boards[sport]?.takeIf { now - it.fetchedAtMs < shareMs }?.let { return it }
-        if (now < blockedUntil) {
-            throw ReferenceException(blockedReason ?: "Pinnacle (pinnapi) asked to wait ${((blockedUntil - now) / 60_000).coerceAtLeast(1)} min")
-        }
+        boards[sport]?.takeIf { clock() - it.fetchedAtMs < shareMs }?.let { return it }
         val url = "$baseUrl/markets".toHttpUrl().newBuilder()
             .addQueryParameter("sport_id", sport.toString())
             .addQueryParameter("event_type", "prematch")
             .build()
-        requestsSent++
-        http.newCall(Request.Builder().url(url).header("x-portal-apikey", key).get().build()).await().use { response ->
-            val body = response.body?.string().orEmpty()
-            when {
-                response.code == 429 -> {
-                    val waitMs = retryAfterMs(body) ?: response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000) ?: 3_600_000L
-                    blockedUntil = clock() + waitMs
-                    blockedReason = "Pinnacle (pinnapi) limit reached: the free key allows 100 requests a day. Try again in ${formatWait(waitMs)}."
-                    throw ReferenceException(blockedReason!!)
+        val events = try {
+            pool.execute(cost = 1) { key ->
+                http.newCall(Request.Builder().url(url).header("x-portal-apikey", key).get().build()).await().use { response ->
+                    val body = response.body?.string().orEmpty()
+                    when {
+                        // pinnapi says which window was hit and exactly how long to wait.
+                        response.code == 429 -> {
+                            val err = runCatching { json.parseToJsonElement(body).jsonObject }.getOrNull()
+                            val window = (err?.get("window") as? JsonPrimitive)?.content
+                            val waitMs = (err?.get("retry_after_ms") as? JsonPrimitive)?.longOrNull
+                                ?: response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000)
+                                ?: 60_000L
+                            if (window == "day" || window == "hour") {
+                                KeyAttemptResult.Depleted("${window}ly limit reached", waitMs)
+                            } else {
+                                KeyAttemptResult.RateLimited(waitMs, "per-minute limit")
+                            }
+                        }
+                        response.code == 401 || response.code == 403 -> KeyAttemptResult.Invalid("HTTP ${response.code}, key refused")
+                        !response.isSuccessful -> throw ReferenceException("Pinnacle (pinnapi) HTTP ${response.code}")
+                        else -> KeyAttemptResult.Success(
+                            (json.parseToJsonElement(body).jsonObject["events"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty(),
+                        )
+                    }
                 }
-                response.code == 401 || response.code == 403 ->
-                    throw ReferenceException("Pinnacle (pinnapi) rejected the key (HTTP ${response.code}). Check it in Settings.")
-                !response.isSuccessful -> throw ReferenceException("Pinnacle (pinnapi) HTTP ${response.code}")
             }
-            val events = (json.parseToJsonElement(body).jsonObject["events"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty()
-            return Board(events, clock()).also { boards[sport] = it }
+        } catch (e: AllKeysExhaustedException) {
+            throw ReferenceException(e.message ?: "Pinnacle (pinnapi) keys are used up")
         }
-    }
-
-    private fun retryAfterMs(body: String): Long? =
-        runCatching { (json.parseToJsonElement(body).jsonObject["retry_after_ms"] as? JsonPrimitive)?.longOrNull }.getOrNull()
-
-    private fun formatWait(ms: Long): String = when {
-        ms >= 3_600_000 -> "${ms / 3_600_000}h ${(ms % 3_600_000) / 60_000}m"
-        else -> "${(ms / 60_000).coerceAtLeast(1)} min"
+        return Board(events, clock()).also { boards[sport] = it }
     }
 
     companion object {
