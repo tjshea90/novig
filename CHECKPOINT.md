@@ -1,13 +1,13 @@
-# CHECKPOINT 360 — read me first, then TASKS.md
+# CHECKPOINT 361 — read me first, then TASKS.md
 
-**Written:** 2026-09-25T13:38:00Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `8d0409d` (this checkpoint is the commit after it)
+**Written:** 2026-09-25T14:36:17Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-sports-api-setup-o4mlxh` · **builds on:** `1192f3a` (this checkpoint is the commit after it)
 
 ## Just done
-SHIPPED v0.6.0 (code 10): CI 36141456836 green, release 36141782030 green, 4.65MB APK, BUILDLOG recorded; release.yml notes template updated; TASKS R1-R6 all done
+Logged Tj's 2026-09-25 ~14:00Z request (keys survive updates, usage meters, multi-key rotation with per-provider resets, provider limits, then full tests) into TASKS.md as K1-K6
 
 ## Do this next
-Nothing open from Tj's 2026-09-25 12:35Z request. Next: wait for Tj's feedback from a real phone scan (first real pinnapi key and Novig key use are still unverified live); consider a Novig key live test once he connects one
+K2 research first (Odds API reset timing/headers, pinnapi headers/reset), then K1 storage, K3 ledger+rotation, K4 meters UI, K5 tests, K6 full tests + ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nothing open from Tj's 2026-09-25 12:35Z request. Next: wait for Tj's feedback f
 
 ## Last ten checkpoints
 ```
+  f68c0c6 ckpt 360: SHIPPED v0.6.0 (code 10): CI 36141456836 green, release 36141782030 green, 4.6
   4eebbd6 ckpt 359: pre-release: v0.6.0: manual-only scans (Scan button / pull to refresh, nothing
   5065c28 ckpt 358: Docs for v0.6.0: BRIEF (manual-only + multi-source locked decisions), CLAUDE.m
   28997ab ckpt 357: v0.6.0 code complete: full ./gradlew test 173 pass/0 fail (2 live skipped); re
@@ -26,7 +27,6 @@ Nothing open from Tj's 2026-09-25 12:35Z request. Next: wait for Tj's feedback f
   2038b93 ckpt 353: v0.6.0 in progress (build intentionally broken mid-refactor): ReferenceModels 
   760fce5 ckpt 352: Research R3/R4/R5 saved: RESEARCH.md §11 (measured Novig public edge limit ~4
   db85bca ckpt 351: Logged Tj's 2026-09-25 request (manual-only scans, Novig 429 rate limiting, pr
-  1b18e1e ckpt 350: SHIPPED v0.5.0 (code 9): CI 36101866470 green, release 36102142715 green (4.6M
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the

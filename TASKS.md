@@ -1229,3 +1229,36 @@ books from a phone IP (likely carrier CGNAT, shared) trips Novig's per-IP edge l
       *Done: 173 tests green locally and in CI run 36141456836; release run 36141782030
       published v0.6.0 (code 10, 4.65MB): https://github.com/tjshea90/novig/releases/tag/v0.6.0.
       Reported to Tj with the Q4/Q5 research answer and multi-key advice.*
+
+## Tj's request, 2026-09-25 ~14:00Z — keys that survive updates, usage meters, per-provider key rotation, then full tests
+
+> For this app, make sure all my API keys are safely stored in the app, even when the app is
+> updated to a new version. Make a meter that shows me how much of each api was used after every
+> call, so I know how much is left. Make it so for any API I can add multiple keys and the app
+> automatically rotates keys when each key is depleted, then automatically resets back to the
+> first key in each rotation when a new month or new limit resets (per provider). It has to have a
+> smart way to meter this. Make sure to read the policy and rules for each API used, and the app
+> should be within each API limit so it doesn't get banned or restricted. Don't worry about
+> security on the API keys, they are free keys and I'm not worried about them. They may be saved
+> to storage. After all of this is done, run full tests on the app and find ways it can be more
+> efficient or better ui. Make sure the logic is in line with popular apps like oddsjam.
+> Checkpoint frequently because usage will probably run out
+
+### Plan
+- [ ] K1 Key storage that survives updates (and restores): plain JSON in app storage (Tj: no
+      security needed), migrated from the old Keystore-encrypted store on first launch, included
+      in Android backup; export/import of keys to a file as a belt-and-braces copy.
+- [ ] K2 Re-read each provider's limits/policies (The Odds API quota + reset timing + headers,
+      pinnapi limits + reset + headers, Polymarket, Kalshi, Novig) → RESEARCH.md; encode them.
+- [ ] K3 Persistent per-key usage ledger + smart rotation for every keyed API (The Odds API,
+      pinnapi): multiple keys each; server-reported remaining when the API sends it, local
+      counting otherwise; skip a key before it runs out (cost of next call > remaining);
+      depleted keys wait for their provider's reset (month / day / hour), then rotation starts
+      again from key 1; survives app restarts.
+- [ ] K4 Usage meters UI: per provider and per key (used / limit, remaining, resets in …),
+      updated after every call; keyless APIs (Novig, Polymarket, Kalshi) show requests this
+      scan/today and any throttling.
+- [ ] K5 Tests for K1–K4 (ledger periods, rotation order, reset back to key 1, pre-emptive skip,
+      persistence round trip, migration), screenshots.
+- [ ] K6 Full tests (CLAUDE.md protocol): whole-app sweep, efficiency + UI improvements, logic
+      checked against OddsJam's model; fix with failing-first tests; ship; report.
