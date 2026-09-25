@@ -1619,3 +1619,14 @@ Other major sports books offer props. See if you can make a market average then 
 <summary>Background command "Poll release workflow until done" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-25T18:03:49Z
+```
+A few things to investigate or change for this app: 
+
+1) Make sure it can run in the background without stalling, because I will run the scan then switch apps and let it scan in the background. 
+
+2) research safe ways to speed up the scanning. Oddsjam refresh is very fast. This app is very slow. If it is not possible to speed up, make the results show up in the app as they come in (instead of showing all the results at the end of the scan) 
+
+3) oddsjam scans a wide range of props and halftime / f5 markets. Try to make this app like oddsjam and include markets most likely to have positive EV.
+```
