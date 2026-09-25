@@ -248,7 +248,7 @@ class OddsApiPropsTest {
         val odds = c.eventOdds("americanfootball_nfl", "oA", listOf("draftkings", "novig", "fanduel"), listOf("player_pass_yds", "player_receptions"))
         assertEquals(476, odds.remaining)
         val eventsCall = requests[0].requestUrl!!
-        assertEquals("2026-09-27T09:06:40Z", eventsCall.queryParameter("commenceTimeTo"))
+        assertEquals("2026-09-29T09:06:40Z", eventsCall.queryParameter("commenceTimeTo"))
         val propsCall = requests[1].requestUrl!!
         assertEquals("draftkings,fanduel", propsCall.queryParameter("bookmakers"))
         assertEquals("player_pass_yds,player_receptions", propsCall.queryParameter("markets"))
