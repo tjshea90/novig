@@ -143,4 +143,81 @@ class NovigPublicClientTest {
         server.enqueue(MockResponse().setBody("""{"items":[{"marketId":"m","fee":{"coefficient":"x","charged":"WHEN_LIVE"},"outcomes":[]}]}"""))
         assertNull(client().markets(emptyList(), emptyList(), emptyList()).single().fee)
     }
+
+    private fun bookFor(request: RecordedRequest) =
+        MockResponse().setBody(Fixtures.mlBook.replace(Fixtures.ML_MARKET, request.requestUrl!!.pathSegments.dropLast(1).last()))
+
+    @Test
+    fun `books are paced - never more than two in flight and no faster than the rate after the burst`() = runBlocking {
+        val inFlight = AtomicInteger()
+        val maxInFlight = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val n = inFlight.incrementAndGet()
+                maxInFlight.accumulateAndGet(n) { a, b -> maxOf(a, b) }
+                Thread.sleep(20)
+                inFlight.decrementAndGet()
+                return bookFor(request)
+            }
+        }
+        // 4/s with a burst of 2: six books need at least one second.
+        val c = NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), publicRate = 4.0, publicBurst = 2)
+        val progress = ArrayList<Int>()
+        val t0 = System.currentTimeMillis()
+        val batch = c.books((1..6).map { "m$it" }) { done, _ -> synchronized(progress) { progress += done } }
+        assertEquals(6, batch.fetched)
+        assertTrue(maxInFlight.get() <= 2)
+        assertTrue("took ${System.currentTimeMillis() - t0}ms", System.currentTimeMillis() - t0 >= 950)
+        assertEquals(6, progress.max())
+    }
+
+    @Test
+    fun `the catalog shares the same pace as books`() = runBlocking {
+        repeat(3) { server.enqueue(MockResponse().setBody("""{"items":[]}""")) }
+        val c = NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), publicRate = 2.0, publicBurst = 1)
+        val t0 = System.currentTimeMillis()
+        repeat(3) { c.events(listOf("NFL"), emptyList()) }
+        assertTrue(System.currentTimeMillis() - t0 >= 900)
+    }
+
+    private val fakeKey = object : com.tjshea.vigilant.data.novig.signing.NovigSigningKey {
+        override val keyId = "kid-read"
+        override val algorithm = com.tjshea.vigilant.data.novig.signing.NovigKeyAlgorithm.P256
+        override fun sign(message: ByteArray) = ByteArray(70)
+    }
+
+    private fun keyed(c: NovigPublicClient) = c.also {
+        it.keyed = com.tjshea.vigilant.data.novig.signing.NovigSignedClient(OkHttpClient(), json, fakeKey, server.url("").toString().trimEnd('/'))
+    }
+
+    @Test
+    fun `with a key, books come from the signed route and its own rate limit`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = bookFor(request)
+        }
+        val batch = keyed(client()).books(listOf("m1", "m2"))
+        assertEquals(2, batch.viaKey)
+        val r = server.takeRequest()
+        assertTrue(r.requestUrl!!.encodedPath.startsWith("/v3/catalog/markets/"))
+        assertEquals("kid-read", r.getHeader("Novig-Key-Id"))
+        assertNull(batch.keyProblem)
+    }
+
+    @Test
+    fun `a refused key finishes the scan on public routes and says why`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.requestUrl!!.encodedPath.startsWith("/v3/public/")) bookFor(request)
+                else MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK","message":"vpn"}""")
+        }
+        val c = keyed(client())
+        val batch = c.books(listOf("m1", "m2", "m3"))
+        assertEquals(3, batch.fetched)
+        assertEquals(0, batch.viaKey)
+        assertTrue(batch.keyProblem!!.contains("VPN"))
+        // The next scan doesn't keep knocking on the key route.
+        val before = server.requestCount
+        c.books(listOf("m4"))
+        assertEquals(before + 1, server.requestCount)
+    }
 }
