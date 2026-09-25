@@ -19,10 +19,14 @@ import com.tjshea.vigilant.data.reference.PolymarketClient
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.data.scanner.ScanRunner
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.tracker.BetTracker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -61,6 +65,17 @@ class AppContainer(app: Application) {
     val novig = NovigPublicClient(http, json, usage = usage)
     val novigConnection = NovigConnectionStore(app)
     val scanner = Scanner(novig)
+
+    /**
+     * Lives as long as the process, not a screen: a scan Tj starts keeps going when he switches
+     * apps or backs out of Vigilant. [ScanService] keeps the process alive while one runs.
+     */
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val runner = ScanRunner(scanner, appScope)
+
+    /** Whether Vigilant is on screen: a finished scan only notifies when it isn't. */
+    @Volatile
+    var onScreen = false
 
     /** Book reads go through the connected key's own rate limit (or the public routes when null). */
     @Synchronized
