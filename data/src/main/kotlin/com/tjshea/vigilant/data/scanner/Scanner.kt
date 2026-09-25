@@ -66,7 +66,15 @@ class Scanner(
     private val clock: () -> Long = System::currentTimeMillis,
     private val catalogTtlMs: Long = 3 * 60_000L,
 ) {
-    private data class Catalog(val leagues: Set<String>, val includeLive: Boolean, val daysAhead: Int, val events: List<NovigEvent>, val markets: List<NovigMarket>, val fetchedAtMs: Long)
+    private data class Catalog(
+        val leagues: Set<String>,
+        val includeLive: Boolean,
+        val daysAhead: Int,
+        val types: Set<String>,
+        val events: List<NovigEvent>,
+        val markets: List<NovigMarket>,
+        val fetchedAtMs: Long,
+    )
 
     private data class Cached(val snapshot: RefSnapshot, val requestKey: String)
 
@@ -175,8 +183,9 @@ class Scanner(
 
     private suspend fun refreshCatalog(settings: ScanSettings, now: Long, errors: MutableList<String>) {
         val c = catalog
+        val types = settings.novigMarketTypes.toSet()
         val fresh = c != null && c.leagues == settings.leagues && c.includeLive == settings.includeLive &&
-            c.daysAhead == settings.daysAhead && now - c.fetchedAtMs < catalogTtlMs
+            c.daysAhead == settings.daysAhead && c.types.containsAll(types) && now - c.fetchedAtMs < catalogTtlMs
         if (fresh) return
         try {
             val statuses = buildList {
@@ -187,9 +196,11 @@ class Scanner(
             // One extra day of slack past the horizon; Planner applies the exact cut.
             val before = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
             val events = novig.events(leagues, statuses, before)
-            // Every family, so switching one on later re-prices from cache instead of refetching.
-            val markets = novig.markets(leagues, MarketFamily.entries.flatMap { it.novigTypes }, statuses, before)
-            catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, events, markets, now)
+            // Only the families being priced: player props alone are thousands of markets a week.
+            // Main lines always come along (cheap), so turning those on and off re-prices from cache.
+            val wanted = types + MAIN_TYPES
+            val markets = novig.markets(leagues, wanted.toList(), statuses, before)
+            catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, wanted, events, markets, now)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -269,7 +280,7 @@ class Scanner(
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
             settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
-            pinned, now / 60_000L,
+            settings.propsPerGame, settings.maxBooksPerScan, pinned, now / 60_000L,
         )
         val existing = plan
         if (existing != null && inputs == planInputs) return existing
@@ -301,5 +312,7 @@ class Scanner(
     companion object {
         /** Merge order: when two feeds carry the same book, the earlier one's quote is priced. */
         val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "oddsapi")
+
+        private val MAIN_TYPES = (MarketFamily.MONEYLINE.novigTypes + MarketFamily.SPREAD.novigTypes + MarketFamily.TOTAL.novigTypes).toSet()
     }
 }
