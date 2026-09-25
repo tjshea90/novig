@@ -1095,10 +1095,12 @@ app — ship after milestone A even if nothing else lands):
       (1 − best opposing bid) + depth; per-market `fee`; ETag/304 book cache;
       decimal (not float-string) price parsing. MockWebServer tests with
       fixtures shaped like the live responses recorded 2026-09-25.
-- [ ] A2 `engine`: fair-odds source = SHARP / MARKET_AVERAGE / BLEND
+- [x] A2 `engine`: fair-odds source = SHARP / MARKET_AVERAGE / BLEND
       (sharp weight %), devig per book then combine; `Fees` from the
       market's own fee object (fixes NFL/MLB/NCAAF futures 0.06 pregame);
-      Kelly stake. Unit tests.
+      Kelly stake. Unit tests. DONE: FairValue/Fees/EvMath + WORST_CASE devig;
+      `./gradlew :engine:test` 34/34 green (FairValueTest, FeesTest, EvMathTest,
+      DevigTest, OddsTest). Old Consensus/EvCalculator/Models removed.
 - [ ] A3 `data`: scanner rework — match Novig markets to reference lines by
       team + line (spreads/totals need the same point), fetch books only for
       matched markets, league mapping Odds-API sport key ↔ Novig league.
