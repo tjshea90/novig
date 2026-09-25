@@ -237,7 +237,7 @@ class UsageMeter(
         val p = provider(policy.id)
         val next = keys.mapNotNull { k -> p.keys[k]?.let { u -> listOfNotNull(u.depletedUntil, u.coolUntil).maxOrNull() } }.filter { it > now }.minOrNull()
         val count = if (keys.size == 1) "Your ${policy.displayName} key is" else "All ${keys.size} ${policy.displayName} keys are"
-        count + " used up" + (next?.let { " until ${whenText(it, now)}" } ?: "") + "." +
+        count + " used up" + (next?.let { " " + untilText(it, now) } ?: "") + "." +
             (lastProblem?.let { " Last reply: $it." } ?: "")
     }
 
@@ -271,6 +271,10 @@ class UsageMeter(
         const val RESET_GRACE = 36 * HOUR
 
         private val DAY_FMT = DateTimeFormatter.ofPattern("MMM d", Locale.US)
+
+        /** "for another 3h 12m" for soon, "until Oct 1" for later. */
+        fun untilText(at: Long, now: Long): String =
+            if (at - now < 24 * HOUR) "for another ${whenText(at, now).removePrefix("in ")}" else "until ${whenText(at, now)}"
 
         /** "in 3h 12m" for soon, "Oct 1" for later (UTC). */
         fun whenText(at: Long, now: Long): String {

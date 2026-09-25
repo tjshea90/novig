@@ -247,7 +247,7 @@ class ExchangeClientsTest {
         val m = meter { now }
         val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("k"), m), base("/kit/v1"), clock = { now }, shareMs = 0)
         val e = assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
-        assertTrue(e.message!!, e.message!!.contains("used up until in 2h 0m"))
+        assertTrue(e.message!!, e.message!!.contains("used up for another 2h 0m"))
         now = 3_600_000L
         assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
         assertEquals(1, server.requestCount)
