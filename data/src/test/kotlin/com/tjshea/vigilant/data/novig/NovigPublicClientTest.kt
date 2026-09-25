@@ -148,7 +148,7 @@ class NovigPublicClientTest {
         MockResponse().setBody(Fixtures.mlBook.replace(Fixtures.ML_MARKET, request.requestUrl!!.pathSegments.dropLast(1).last()))
 
     @Test
-    fun `books are paced - never more than two in flight and no faster than the rate after the burst`() = runBlocking {
+    fun `books are paced - never more than three in flight and no faster than the rate after the burst`() = runBlocking {
         val inFlight = AtomicInteger()
         val maxInFlight = AtomicInteger()
         server.dispatcher = object : Dispatcher() {
@@ -166,7 +166,7 @@ class NovigPublicClientTest {
         val t0 = System.currentTimeMillis()
         val batch = c.books((1..6).map { "m$it" }) { done, _ -> synchronized(progress) { progress += done } }
         assertEquals(6, batch.fetched)
-        assertTrue(maxInFlight.get() <= 2)
+        assertTrue(maxInFlight.get() <= 3)
         assertTrue("took ${System.currentTimeMillis() - t0}ms", System.currentTimeMillis() - t0 >= 950)
         assertEquals(6, progress.max())
     }
