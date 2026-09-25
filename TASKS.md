@@ -1355,12 +1355,31 @@ props calls themselves are fixture-tested only.
 > oddsjam and include markets most likely to have positive EV.
 
 ### Plan
-- [ ] B1 Background: a scan started in the app keeps running when Tj switches apps (foreground
+- [x] B1 Background: a scan started in the app keeps running when Tj switches apps (foreground
       service while a scan runs, stops itself when done; no wake lock or polling when idle).
-- [ ] B2 Research why a scan is slow (where the time goes: Novig catalog/books pacing, reference
+      *Done: `ScanRunner` (app-lifetime scope) + `ScanService` (dataSync FGS, progress
+      notification, 10-min-capped wake lock, "scan done" note when off screen, stops itself).
+      Tests: `StreamingScanTest` "the runner scans in the app's scope…refuses a second start",
+      "a scan that blows up keeps the last good result…"; `ScanTextTest` (2).*
+- [x] B2 Research why a scan is slow (where the time goes: Novig catalog/books pacing, reference
       calls, sequential waits) and which speed-ups stay inside each provider's limits.
-- [ ] B3 Implement the safe speed-ups found in B2.
-- [ ] B4 Stream results: the feed fills in as each league/book batch is priced, not only at the end.
-- [ ] B5 Market coverage like OddsJam: widen props / 1H / F5 / other alt families that have a fair
+      *Done: RESEARCH.md §15 (books waited for the slowest source; no bulk book route in v3; the
+      websocket needs a key; live pacing check 240 books, 0 refusals).*
+- [x] B3 Implement the safe speed-ups found in B2.
+      *Done: book reads pipelined with the fair odds, most-promising-first order, public pace
+      4→6/s ramp (3 in flight), keyed 14/s. Tests: `StreamingScanTest` "Novig's prices are read
+      while a slow fair-odds source is still answering", "a rescan reads last scan's +EV lines
+      first…", "open bets are read before anything else", "a scan never reads more than the
+      per-scan limit"; `RateGateTest` (3 new ramp tests).*
+- [x] B4 Stream results: the feed fills in as each league/book batch is priced, not only at the end.
+      *Done: partial result every 8 books; mid-scan feed shows only prices read this scan. Tests:
+      `StreamingScanTest` "results stream in as Novig's prices land…", "mid-scan, last scan's
+      prices stay off the feed…"; `ScreenshotTest` feedStreaming, feedScanningBeforeFirstPrices.*
+- [x] B5 Market coverage like OddsJam: widen props / 1H / F5 / other alt families that have a fair
       source and are most likely +EV; default them on where sensible.
+      *Done: MLB NRFI/YRFI (`FIRST_INNING_TOTAL` vs Kalshi `KXMLBRFI`), pitcher outs / earned runs
+      / walks, NFL pass completions from Kalshi; props per game 4→8, reads per scan 200→300
+      (migrated only from old defaults). Tests: `AltMarketsTest` "kalshi's first-inning run
+      market…", "a Novig first-inning total prices against the 1st inning only…", "saved settings
+      still on the old coverage defaults widen…". CI 36174449917 green.*
 - [ ] B6 Tests (unit + screenshots), CI, ship, report.
