@@ -121,6 +121,9 @@ class KalshiClient(
 
     companion object {
         const val BOOK_KEY = "kalshi"
+
+        /** "Run in first inning" (KXMLBRFI): Yes = at least one run = over 0.5 (its strike reads 1). */
+        private const val RFI = "RFI"
         const val MAX_PAGES = 5
         private val ET: ZoneId = ZoneId.of("America/New_York")
         private val MONTHS = listOf("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
@@ -132,7 +135,7 @@ class KalshiClient(
         fun familyOf(series: String): MarketFamily? = when {
             series in PropStats.KALSHI_SERIES -> MarketFamily.PLAYER_PROPS
             series.endsWith("TEAMTOTAL") -> MarketFamily.TEAM_TOTAL
-            listOf("1HSPREAD", "1HTOTAL", "F5SPREAD", "F5TOTAL").any { series.endsWith(it) } -> MarketFamily.FIRST_HALF
+            listOf("1HSPREAD", "1HTOTAL", "F5SPREAD", "F5TOTAL", RFI).any { series.endsWith(it) } -> MarketFamily.FIRST_HALF
             series.endsWith("SPREAD") -> MarketFamily.SPREAD
             series.endsWith("TOTAL") -> MarketFamily.TOTAL
             series.endsWith("GAME") || series.endsWith("FIGHT") -> MarketFamily.MONEYLINE
@@ -260,11 +263,16 @@ class KalshiClient(
                 val series = e.series_ticker ?: e.event_ticker.substringBefore('-')
                 val family = familyOf(series) ?: continue
                 if (family == MarketFamily.MONEYLINE) continue
-                val period = if (family == MarketFamily.FIRST_HALF) 1 else 0
+                val firstInning = series.endsWith(RFI)
+                val period = when {
+                    firstInning -> RefBookMarket.PERIOD_FIRST_INNING
+                    family == MarketFamily.FIRST_HALF -> 1
+                    else -> 0
+                }
                 val stat = PropStats.KALSHI_SERIES[series]
                 for (m in e.markets) {
                     if (!tradable(m)) continue
-                    val strike = m.floor_strike ?: continue
+                    val strike = if (firstInning) 0.5 else m.floor_strike ?: continue
                     // "Over X" loses at exactly X, unlike a sportsbook push, so only half points.
                     if (!PolymarketClient.isHalfPoint(strike)) continue
                     val (yes, no) = ExchangeQuote.toDecimal(price(m.yes_bid_dollars), price(m.yes_ask_dollars), maxSpread) ?: continue

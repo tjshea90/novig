@@ -19,10 +19,11 @@ enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
     TOTAL("Total", listOf("TOTAL")),
 
     /**
-     * 1st-half spreads and totals (the first 5 innings in baseball). 1st-half moneylines aren't
-     * priced: the fair sources quote them 3-way with a tie, Novig 2-way (RESEARCH.md §13).
+     * 1st-half spreads and totals (the first 5 innings in baseball), and baseball's 1st-inning
+     * total (NRFI/YRFI). 1st-half moneylines aren't priced: the fair sources quote them 3-way with
+     * a tie, Novig 2-way (RESEARCH.md §13).
      */
-    FIRST_HALF("1st half / F5", listOf("SPREAD_1H", "TOTAL_1H")),
+    FIRST_HALF("1st half / F5 / NRFI", listOf("SPREAD_1H", "TOTAL_1H", "FIRST_INNING_TOTAL")),
     TEAM_TOTAL("Team totals", listOf("TEAM_TOTAL")),
     PLAYER_PROPS("Player props", PropStats.NOVIG_TYPES),
 }

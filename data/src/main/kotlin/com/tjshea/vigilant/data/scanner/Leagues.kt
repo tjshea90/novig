@@ -36,7 +36,7 @@ object Leagues {
             kalshiSeries = listOf(
                 "KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL", "KXNFL1HSPREAD", "KXNFL1HTOTAL", "KXNFLTEAMTOTAL",
                 "KXNFLPASSYDS", "KXNFLRSHYDS", "KXNFLREC", "KXNFLRECYDS", "KXNFLRRYDS", "KXNFLTD", "KXNFLPASSTDS",
-                "KXNFLPASSATT", "KXNFLRSHATT", "KXNFLPASSINT", "KXNFLLONGREC", "KXNFLLONGRSH",
+                "KXNFLPASSATT", "KXNFLRSHATT", "KXNFLPASSINT", "KXNFLLONGREC", "KXNFLLONGRSH", "KXNFLPASSCOMP",
             ),
         ),
         League(
@@ -46,8 +46,9 @@ object Leagues {
         League(
             "MLB", "MLB", "baseball_mlb", "⚾", polymarketTag = 100381, pinnacleSportId = 6,
             kalshiSeries = listOf(
-                "KXMLBGAME", "KXMLBSPREAD", "KXMLBTOTAL", "KXMLBF5SPREAD", "KXMLBF5TOTAL", "KXMLBTEAMTOTAL",
+                "KXMLBGAME", "KXMLBSPREAD", "KXMLBTOTAL", "KXMLBF5SPREAD", "KXMLBF5TOTAL", "KXMLBRFI", "KXMLBTEAMTOTAL",
                 "KXMLBKS", "KXMLBTB", "KXMLBHIT", "KXMLBHR", "KXMLBHRR", "KXMLBRBI", "KXMLBSB", "KXMLBHA",
+                "KXMLBOUTS", "KXMLBERA", "KXMLBWA",
             ),
         ),
         League(

@@ -374,6 +374,8 @@ object Planner {
             "SPREAD_1H" -> spread(1, "$halfLabel Spread")
             "TOTAL" -> overUnder(LineKind.TOTAL, 0, "Total")
             "TOTAL_1H" -> overUnder(LineKind.TOTAL, 1, "$halfLabel Total")
+            // "PIT @ DET FIRST_INNING_TOTAL", Over/Under 0.5: NRFI/YRFI.
+            "FIRST_INNING_TOTAL" -> overUnder(LineKind.TOTAL, RefBookMarket.PERIOD_FIRST_INNING, "1st Inning Total")
 
             // "Los Angeles Rams 22.5 TEAM_TOTAL": which team, then its over/under.
             "TEAM_TOTAL" -> {

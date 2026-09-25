@@ -20,6 +20,7 @@ object PropStats {
         "KXNFLPASSINT" to "INTERCEPTIONS_THROWN",
         "KXNFLLONGREC" to "LONGEST_RECEPTION",
         "KXNFLLONGRSH" to "LONGEST_RUSH",
+        "KXNFLPASSCOMP" to "PASSING_COMPLETIONS",
         // MLB
         "KXMLBKS" to "PITCHER_STRIKEOUTS",
         "KXMLBTB" to "TOTAL_BASES",
@@ -29,6 +30,10 @@ object PropStats {
         "KXMLBRBI" to "RBIS",
         "KXMLBSB" to "STOLEN_BASES",
         "KXMLBHA" to "HITS_ALLOWED",
+        // Pitcher lines, added 2026-09-25 ~18:30Z (open and liquid live; RESEARCH.md §15).
+        "KXMLBOUTS" to "PITCHER_OUTS",
+        "KXMLBERA" to "EARNED_RUNS",
+        "KXMLBWA" to "WALKS",
         // WNBA
         "KXWNBAPTS" to "POINTS",
         "KXWNBAREB" to "REBOUNDS",
