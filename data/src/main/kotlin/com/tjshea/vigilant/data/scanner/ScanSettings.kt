@@ -9,6 +9,9 @@ import kotlinx.serialization.Serializable
 /** How many prop types to request from the sportsbooks per game (each costs a credit). */
 enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
 
+/** Whose bets the mini window lists: Vigilant's scan, CrazyNinjaOdds' list, or both by EV. */
+enum class MiniSource(val displayName: String) { BOTH("Both"), VIGILANT("Vigilant"), CNO("CrazyNinjaOdds") }
+
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
