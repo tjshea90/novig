@@ -546,6 +546,7 @@ private fun VigilantRoot(
 }
 
 /** The CNO tab. CNO's list is read only while this is on screen and Vigilant is started. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun CnoTab(
     state: UiState,
