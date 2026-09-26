@@ -111,6 +111,18 @@ data class ScanSettings(
      * picture-in-picture window, so the results stay in view in Novig (Tj, 2026-09-26).
      */
     val miniWindow: Boolean = true,
+    /**
+     * CrazyNinjaOdds' +EV list in its own tab and the mini window (Tj, 2026-09-26; RESEARCH.md
+     * §18). The one thing Vigilant reads without a tap: only while it or its mini window is on
+     * screen, never more than once per 30 s, and never Novig or a keyed provider.
+     */
+    val cnoEnabled: Boolean = true,
+    /** Tj's CNO Shared View link (his filters), as normalized by CnoView; blank = Novig, CNO's defaults. */
+    val cnoViewUrl: String = "",
+    /** Seconds between automatic CNO reads while on screen; 0 = only when tapped. */
+    val cnoRefreshSeconds: Int = 60,
+    /** What the mini window lists. */
+    val miniSource: MiniSource = MiniSource.BOTH,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
