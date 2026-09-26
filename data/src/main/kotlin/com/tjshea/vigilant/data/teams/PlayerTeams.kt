@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,7 +25,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
@@ -95,13 +95,13 @@ class PlayerTeams(
     }
 
     /**
-     * Reads whatever [rows]' player bets need and isn't cached: each league's teams, then each
+     * Reads whatever [games] (league, event) need and isn't cached: each league's teams, then each
      * game's two rosters. Returns how many reads it made.
      */
-    suspend fun fill(rows: List<CnoRow>): Int = mutex.withLock {
+    suspend fun fill(games: List<Game>): Int = mutex.withLock {
         var reads = 0
         val now = clock()
-        val players = rows.filter { isPlayerBet(it) && espnPath(it.league) != null }
+        val players = games.filter { espnPath(it.league) != null }
         if (players.isEmpty()) return@withLock 0
         for (path in players.mapNotNull { espnPath(it.league) }.distinct()) {
             val have = _state.value.leagues[path]
@@ -110,8 +110,12 @@ class PlayerTeams(
             if (!due(url, now)) continue
             val teams = get(url)?.let(::parseTeams)
             reads++
-            if (teams != null && teams.isNotEmpty()) _state.update { it.copy(leagues = it.leagues + (path to LeagueTeams(teams, clock()))) }
-            else failedAt[url] = clock()
+            if (teams != null && teams.isNotEmpty()) {
+                _state.update { it.copy(leagues = it.leagues + (path to LeagueTeams(teams, clock()))) }
+                save()
+            } else {
+                failedAt[url] = clock()
+            }
             delay(GAP_MS)
         }
         val wanted = LinkedHashSet<Pair<String, EspnTeam>>()
@@ -130,28 +134,39 @@ class PlayerTeams(
             reads++
             if (players != null && players.isNotEmpty()) {
                 _state.update { it.copy(rosters = it.rosters + ("$path|${team.id}" to TeamRoster(team.abbreviation, players, clock()))) }
+                save()
             } else {
                 failedAt[url] = clock()
             }
             delay(GAP_MS)
         }
-        if (reads > 0) store?.let { disk -> runCatching { disk.update { _state.value } } }
         reads
     }
 
+    /** Each read is kept at once (a few KB), so a pass cut short loses nothing. */
+    private suspend fun save() {
+        val disk = store ?: return
+        val snapshot = _state.value
+        runCatching { disk.update { snapshot } }
+    }
+
     /**
-     * Keeps [rows]' teams filled until cancelled: a new list only costs reads for games not seen
-     * yet. The caller runs it only while the CNO scanner is on screen.
+     * Keeps the teams of [rows]' player bets filled until cancelled. Only a game not seen before
+     * starts reads (the list's own refreshes don't), and a failed one is tried again after
+     * [RETRY_MS]. The caller runs it only while the CNO scanner is on screen.
      */
     suspend fun keepFresh(rows: Flow<List<CnoRow>>) {
-        rows.distinctUntilChanged().collectLatest { list ->
-            // A game whose read failed gets another try once [RETRY_MS] has passed.
+        rows.map(::gamesOf).distinctUntilChanged().collectLatest { games ->
+            if (games.isEmpty()) return@collectLatest
             while (true) {
-                fill(list)
+                fill(games)
                 delay(RETRY_MS)
             }
         }
     }
+
+    /** A game with a player bet on the list. */
+    data class Game(val league: String, val event: String)
 
     private fun due(url: String, now: Long): Boolean = failedAt[url]?.let { now - it >= RETRY_MS } ?: true
 
@@ -201,6 +216,10 @@ class PlayerTeams(
             "EPL", "PREMIER LEAGUE", "ENGLISH PREMIER LEAGUE" -> "soccer/eng.1"
             else -> null
         }
+
+        /** The games of [rows]' player bets, in list order, once each. */
+        fun gamesOf(rows: List<CnoRow>): List<Game> =
+            rows.filter { isPlayerBet(it) && espnPath(it.league) != null }.map { Game(it.league, it.event) }.distinct()
 
         /** A player prop (CNO's market names start "Player …"), not a team or game bet. */
         fun isPlayerBet(row: CnoRow): Boolean =
