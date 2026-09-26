@@ -303,6 +303,13 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
 - **Fair odds = per-book devig, then SHARP / MARKET_AVERAGE / BLEND** (Tj, 2026-09-25,
   modeled on OddsJam). The 2026-09-20 rule ("prefer a sharp book, else average") is
   SHARP with fallback on, still available. Default is BLEND 70% sharp with POWER devig.
+  Since v0.11.0 (RESEARCH.md §16, from CrazyNinjaOdds): with 3+ books a component uses the
+  lower of the books' mean and median per side (outlier guard, on by default), and the feed
+  hides prices longer than +1000 by default (both switchable in Settings). Only fair odds
+  young enough to bet on ever price the feed, mid-scan, at the end, and on re-price.
+- **Rechecks are the one network action besides a scan** (v0.11.0): Tj taps Recheck to
+  re-read the feed's (≤40) or one bet's Novig books, with no fair-odds calls. Still nothing on
+  a timer.
 - **EV is always computed against Novig's executable taker price** (1 − best opposing bid,
   with depth), never last trade or mid. Stakes are fractional Kelly capped at +EV
   liquidity. Fees are read per market from Novig's `fee` object.
