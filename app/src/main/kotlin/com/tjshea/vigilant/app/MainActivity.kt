@@ -495,9 +495,8 @@ private fun VigilantRoot(
                     onRecheck = vm::recheck,
                     onMiniWindow = onMiniWindow,
                 )
-                Tab.CNO -> CnoScreen(
-                    state,
-                    onWatching = { on -> vm.watchCno("tab", on) },
+                Tab.CNO -> CnoTab(
+                    state, vm,
                     onRefresh = { vm.refreshCno() },
                     onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onMiniWindow = onMiniWindow,
