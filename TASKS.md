@@ -1451,4 +1451,7 @@ props calls themselves are fixture-tested only.
       rows now toggle. Tests: `MiniWindowTest` (4: paging, auto-enter rule + old settings,
       params/buttons, manifest), `ScreenshotTest` miniWindow/miniWindowSmall/NextShowsTheNextPage/
       Enlarged/BeforeAnyScan, theFeedHasAMiniWindowButton…, settingsOfferTheMiniWindowSwitch.*
-- [ ] D3 Tests (paging, when it opens, screenshots of the mini view), CI, ship, report.
+- [x] D3 Tests (paging, when it opens, screenshots of the mini view), CI, ship, report.
+      *Done: local 267 tests green (exit 0, 0 failures); CI 36214953291 green; ship.sh gate green;
+      release 36215186173 → v0.12.0 (code 16, 4.83MB):
+      https://github.com/tjshea90/novig/releases/tag/v0.12.0. Not device-tested (no emulator here).*
