@@ -1553,3 +1553,28 @@ book's odds for a tapped bet, in the widget too. Checked live (about 20 requests
 - **Novig deeplink.** `deeplink.aspx?line_id=…` shows a consent page once; with the cookie it sets
   (`BetaDeepLinkIntro=Read=1`) it answers 103 bytes: `location.replace('novigapp://events/<Novig
   event id>/cno')`. So a tapped bet can open Novig's app on that game.
+
+### 19.1 What was built (v0.14.0), and what the full test found
+
+- **Scanner choice** (Both / Vigilant only / CNO only), **filters posted to CNO** (Conservative
+  worst case, +150, 5+ books, 1%, 2 sides, complete book, 50 rows; the link's stricter values
+  win), **the app's own checks** (`CnoChecks`), **every book per bet with Vigilant's verdict**
+  (`CnoBooks`, CNO's game page; in the sheet and the widget's Books view), **refresh** real time /
+  5 s / 15 s / 30 s / 1 min / taps, **Open in Novig** via the deeplink.
+- **Live, after the build:** 48–50 Novig rows with the defaults, EV column "C-WC"; refresh = 1
+  request; top bets' books: Tyquan Thornton U19.5 +108 → 5 two-sided books, Vigilant 3.6% vs
+  CNO 3.5% (confirmed); Chuba Hubbard O14.5 +106 → 7 two-sided, 3.0% (confirmed). Refresh
+  postbacks honor changed filters (devig, odds cap, rows switched on the same session).
+- **Full-test fixes** (each with a test that fails on the old code): CNO labels Market consensus
+  "UW-WC", not "UMC-WC" (a false "CNO used another devig" banner); the books check judged
+  Novig's price even for another book's row; a stuck CNO was polled every 5 s on fixed
+  intervals; the list was rewritten to disk on every read (now when it changes, or once a
+  minute); the widget's Books view could stick on "Reading books…" after a refresh reordered the
+  list (now pinned to its bet, and it asks for its own books); "1 minute and 6 seconds ago" read
+  as unknown; the nav badge's clock recomposed every screen every 15 s; two Settings chip rows
+  printed "$it" (caught by eye in the screenshots, now asserted).
+- **Not done:** reading Novig's live book for a CNO bet (would need CNO's market matched to
+  Novig's, and Tj asked for the rest of the app to stay asleep in CNO-only mode); tracking a CNO
+  bet in the Tracker; a touchable overlay (the picture-in-picture window can't take taps on a
+  row, so Books + Next stand in for tapping).
+

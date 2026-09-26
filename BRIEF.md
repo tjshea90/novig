@@ -323,6 +323,20 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   Retry-After honored, one request per refresh after the first. It never touches Novig or a
   keyed provider, so the manual-scan rule below still holds for them. CNO's numbers are shown as
   CNO's (its EV, fair odds, age), never re-priced as Vigilant's.
+- **The CNO scanner (Tj, 2026-09-26 ~18:20Z; v0.14.0, RESEARCH.md §19).** A scanner choice:
+  Both / Vigilant only / **CNO only**, where Vigilant's scan and every API behind it are asleep
+  (Scan and Recheck refuse, the +EV and Games tabs and their settings are hidden; nothing of
+  theirs loads). CNO's filters are posted in CNO's own form on every read (a stricter value in
+  Tj's Shared View link wins): **Conservative worst-case devig** (the worse of CNO's two
+  worst-case methods), **odds up to +150** (Tj: no longshots), **5+ books**, 1% EV, 2 sides, a
+  complete sportsbook, 50 rows. The app re-checks every row (EV must follow from its fair odds,
+  no ⚠️ one-way devigs, EV ≤ 20%, Novig's fee on started games) and says how many it hid and why.
+  Tapping a bet reads CNO's game page: every book's odds for the bet and its other side, and
+  Vigilant's own verdict from the books pricing **both** sides (worst-case devig each, lower of
+  mean and median; 3+ books = confirmed, 1–2 = thin). The widget has Books/List for the same.
+  Refresh: real time (next read 12 s after CNO's last update, then every 3 s), 5 s, 15 s
+  (default), 30 s, 1 min, taps only; never two reads within 3 s; a stuck CNO (>10 min) is read
+  every 30 s. "Open in Novig" follows CNO's deeplink to `novigapp://events/<id>`.
 - **Rechecks are the one network action besides a scan** (v0.11.0): Tj taps Recheck to
   re-read the feed's (≤40) or one bet's Novig books, with no fair-odds calls. Still nothing on
   a timer.

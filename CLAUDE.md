@@ -256,8 +256,11 @@ unless Tj asks).
   `data/scanner/CrossCheck` link to CrazyNinjaOdds' devigger; RESEARCH.md §16); the mini window
   over Novig (`app/MiniWindow` picture-in-picture params and buttons, `ui/MiniFeed`,
   `MainActivity` PiP wiring; RESEARCH.md §17); CrazyNinjaOdds' list (`data/cno/`: `CnoView`,
-  `CnoPage`, `CnoClient`, `CnoFeed`; `ui/CnoScreen` tab + sheet, CNO rows in the mini window;
-  the one automatic read, paced to ≥30 s, only while on screen; RESEARCH.md §18,
+  `CnoPage`, `CnoClient` (filters posted in CNO's form), `CnoFeed` (real time/5 s/15 s, ≥3 s
+  apart, only while on screen), `CnoChecks` (the app's own screen), `CnoBooks` (a bet's books +
+  Vigilant's worst-case verdict); `ScanSettings.scanner` (Both / Vigilant only / CNO only, the
+  rest asleep); `ui/CnoScreen` tab + `CnoDetail`, CNO rows and Books in the mini window;
+  RESEARCH.md §18–19,
   `VIGILANT_LIVE=1 ... --tests '*LiveCnoSmokeTest'`).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG

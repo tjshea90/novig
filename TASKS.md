@@ -1530,13 +1530,20 @@ props calls themselves are fixture-tested only.
       (every book's odds for the bet); how often CNO's data actually updates (for 5 s / 15 s /
       real time); whether a row leads to its Novig market.
 - [x] F1 *done: RESEARCH.md §19.*
-- [ ] F2 Accuracy: CNO scanner filters sent to CNO and enforced in the app: worst-case devig,
+- [x] F2 Accuracy: CNO scanner filters sent to CNO and enforced in the app: worst-case devig,
       longest odds (+150 option, Tj's default), min books (no 1–2-book markets), market sides,
       min EV; re-check each row's EV from its fair odds and price; flag thin/suspect rows.
-- [ ] F3 CNO-only mode: choosing the CNO scanner puts Vigilant's scan and its APIs to sleep (no
+- [x] F3 CNO-only mode: choosing the CNO scanner puts Vigilant's scan and its APIs to sleep (no
       scan, no Novig/odds-API calls, tabs that need them hidden), and the floating widget runs on
       CNO alone.
-- [ ] F4 Refresh: 5 s, 15 s and "real time" (read as soon as CNO publishes new odds) options.
-- [ ] F5 Every book's odds for a tapped bet (CNO's game page), in the app and in the widget.
+- [x] F4 Refresh: 5 s, 15 s and "real time" (read as soon as CNO publishes new odds) options.
+- [x] F5 Every book's odds for a tapped bet (CNO's game page), in the app and in the widget.
+      *F2-F5 done: CnoFilters (CnoClientTest "every read posts the scanner's filters…", "a stricter
+      value in the Shared View link wins…"), CnoChecks (CnoChecksTest 6), ScannerMode + migration +
+      scan guard (MiniWindowTest "the scanner mode decides what runs…", ScreenshotTest
+      cnoOnlySettingsHideWhatsAsleep / bothScannersSettingsShowVigilantsSections), refresh
+      (CnoFeedTest real time / 5 s / stuck / back-off), CnoBooks (CnoBooksTest 10, CnoClientTest books
+      + Novig link), CNO tab/detail/widget Books (ScreenshotTest cno*, miniWindowBooks*). Live smoke
+      green twice.*
 - [ ] F6 Full test of the CNO scanner (CLAUDE.md protocol, scoped to CNO and all it touches), fix
       bugs with failing-first tests, CI, ship, report.
