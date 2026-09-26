@@ -211,6 +211,7 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
             val name = if (fullName.isEmpty()) "" else choices.firstOrNull {
                 measurer.measure(it, pickStyle, softWrap = false).size.width + lineWidth <= constraints.maxWidth
             } ?: choices.last()
+            println("DEBUGMEASURE max=${constraints.maxWidth} line='$lineText' $lineWidth " + choices.joinToString { "'$it'=" + measurer.measure(it, pickStyle, softWrap = false).size.width } + " style=${pickStyle.fontSize} ${pickStyle.fontWeight} ${pickStyle.letterSpacing} ${pickStyle.fontFamily}")
             Row(
                 Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
                 verticalAlignment = Alignment.CenterVertically,
