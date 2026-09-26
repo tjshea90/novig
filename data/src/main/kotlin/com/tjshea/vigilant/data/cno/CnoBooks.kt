@@ -169,8 +169,8 @@ object CnoBooks {
     enum class Verdict { CONFIRMED, SPLIT, THIN, NOT_CONFIRMED, NO_DATA }
 
     /** Checks [row] (its book's price, and Novig's taker fee if the game is [live]) against [view]. */
-    fun check(view: CnoBooksView, row: CnoRow, live: Boolean = false): Check =
-        check(view, row.odds, live, codeFor(row.book) ?: NOVIG)
+    fun check(view: CnoBooksView, row: CnoRow, live: Boolean = false, preferListOdds: Boolean = false): Check =
+        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds)
 
     /**
      * [listOdds] is the price in CNO's +EV list at book [judged]; [live] adds Novig's taker fee
@@ -201,7 +201,7 @@ object CnoBooks {
      * current price (newer than the game page's when the list was read after it).
      */
     fun agrees(view: CnoBooksView, row: CnoRow, live: Boolean, listReadAtMs: Long): Boolean =
-        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds = listReadAtMs > view.fetchedAtMs).verdict == Verdict.CONFIRMED
+        check(view, row, live, preferListOdds = listReadAtMs > view.fetchedAtMs).verdict == Verdict.CONFIRMED
 
     /** One book's fair probability for the first side: worst-case devig, or plain normalizing when there's no vig to remove. */
     fun fairFor(odds: Int, otherOdds: Int): Double? {
