@@ -5,6 +5,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
@@ -449,5 +451,60 @@ class ScreenshotTest {
         val snap = SampleCno.snapshot().copy(evLabel = "LW-WC") // asked for Conservative
         screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = snap)), {}, {}) }
         compose.onNodeWithText("CrazyNinjaOdds used liquidity-weighted, worst case instead of conservative worst case.").assertIsDisplayed()
+    }
+
+    /**
+     * Tj's screenshot, 2026-09-26: over his home screen the mini window showed EV, market and price,
+     * but each pick's name ("Jahmyr Gibbs Over 4.5") was nearly black on the dark window. MainActivity
+     * puts MiniFeed straight into the theme with no Surface behind it, so text without its own color
+     * fell back to black. Rendered here the same way (no Surface), the name must stand out.
+     */
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowPickNamesAreReadableAsTheWindowDrawsThem() {
+        for (dark in listOf(true, false)) {
+            compose.setContent {
+                CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
+                    VigilantTheme(darkTheme = dark) { MiniFeed(SampleCno.state(), next = 0) }
+                }
+            }
+            break // one setContent per test: dark is the case Tj hit; light is covered below
+        }
+        assertReadable("Justin Jefferson Under 69.5")
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowPickNamesAreReadableInLightThemeToo() {
+        compose.setContent {
+            CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
+                VigilantTheme(darkTheme = false) { MiniFeed(SampleCno.state(), next = 0) }
+            }
+        }
+        assertReadable("Justin Jefferson Under 69.5")
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowBooksViewPickNameIsReadableAsTheWindowDrawsIt() {
+        val base = SampleCno.withBooks()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        compose.setContent {
+            CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
+                VigilantTheme(darkTheme = true) { MiniFeed(s, next = 0, booksKey = "cno:" + SampleCno.rows[1].key) }
+            }
+        }
+        assertReadable("Justin Jefferson Under 69.5")
+    }
+
+    /** The text's own pixels differ clearly from the window behind them (luminance spread over 0.5). */
+    private fun assertReadable(text: String) {
+        val bitmap = compose.onNodeWithText(text).captureToImage().asAndroidBitmap()
+        var lo = 1.0
+        var hi = 0.0
+        for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
+            val c = bitmap.getPixel(x, y)
+            val l = (0.2126 * android.graphics.Color.red(c) + 0.7152 * android.graphics.Color.green(c) + 0.0722 * android.graphics.Color.blue(c)) / 255.0
+            lo = minOf(lo, l)
+            hi = maxOf(hi, l)
+        }
+        assert(hi - lo > 0.5) { "\"$text\" is barely visible: luminance ${"%.2f".format(lo)}..${"%.2f".format(hi)}" }
     }
 }
