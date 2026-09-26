@@ -176,20 +176,35 @@ class CnoFeed(
     val books: StateFlow<Map<String, CnoBooksState>> = _books.asStateFlow()
 
     private val booksMutex = Mutex()
+
+    /** When each row's books were last read successfully, and last tried at all (guarded by [booksMutex]). */
     private val booksReadAt = HashMap<String, Long>()
+    private val booksTriedAt = HashMap<String, Long>()
 
     /**
-     * Loads every book's price for [row], unless it was loaded under [BOOKS_TTL_MS] ago. One at a
-     * time: a second tap waits for the first.
+     * Loads every book's price for [row], unless it was loaded under [maxAgeMs] ago (a tap: a
+     * minute; the agreement lane: [AGREE_TTL_MS]). One at a time: a second tap waits for the first.
      */
-    suspend fun loadBooks(row: CnoRow, force: Boolean = false) = booksMutex.withLock {
+    suspend fun loadBooks(row: CnoRow, force: Boolean = false, maxAgeMs: Long = BOOKS_TTL_MS) = booksMutex.withLock {
         val key = row.key
         val now = clock()
-        val fresh = booksReadAt[key]?.let { now - it < BOOKS_TTL_MS } == true && _books.value[key]?.view != null
+        val fresh = booksReadAt[key]?.let { now - it < maxAgeMs } == true && _books.value[key]?.view != null
         if (fresh && !force) return@withLock
+        booksTriedAt[key] = now
         _books.update { it + (key to (it[key] ?: CnoBooksState()).copy(loading = true, error = null)) }
-        val result = runCatching { source.books(row) }
+        val result = try {
+            Result.success(source.books(row))
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            _books.update { it + (key to (it[key] ?: CnoBooksState()).copy(loading = false)) }
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
         result.onSuccess { booksReadAt[key] = clock() }
+        // CNO asked for a pause (busy, or refusing): no read of any kind until it's over.
+        (result.exceptionOrNull() as? CnoException)?.retryAfterSeconds?.let { sec ->
+            _state.update { it.copy(pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L)) }
+        }
         _books.update {
             it + (key to CnoBooksState(
                 loading = false,
@@ -200,13 +215,60 @@ class CnoFeed(
         }
     }
 
+    // ---- The green check: the top bets' books, read slowly in the background ---------------
+
+    /** Whether [row]'s books are due for the agreement lane: never read, stale, or a failed try long enough ago. */
+    private fun booksDueInMs(row: CnoRow, now: Long): Long {
+        val read = booksReadAt[row.key]
+        val tried = booksTriedAt[row.key]
+        val readDue = read?.let { it + AGREE_TTL_MS - now } ?: 0L
+        // The last try failed (tried after the last good read): wait before trying again.
+        val retryDue = if (tried != null && (read == null || tried > read)) tried + AGREE_RETRY_MS - now else 0L
+        return maxOf(0L, readDue, retryDue)
+    }
+
+    /**
+     * Keeps the books of the top [AGREE_TOP] bets in [rows] (best first) no older than
+     * [AGREE_TTL_MS], for the widget's green check (Tj, 2026-09-26: only "if it doesn't slow down
+     * the scanning a lot"). So it stays out of the list's way: one bet's game page at a time,
+     * [AGREE_GAP_MS] apart, never while a list read is running or CNO asked for a pause. Runs
+     * until cancelled; the caller runs it only alongside [watch].
+     */
+    suspend fun keepBooksFresh(rows: Flow<List<CnoRow>>) {
+        rows.distinctUntilChanged().collectLatest { list ->
+            val top = list.take(AGREE_TOP)
+            if (top.isEmpty()) awaitCancellation()
+            while (true) {
+                val now = clock()
+                val due = booksMutex.withLock { top.map { it to booksDueInMs(it, now) } }
+                val (next, wait) = due.minByOrNull { it.second } ?: awaitCancellation()
+                if (wait > 0) {
+                    delay(wait)
+                    continue
+                }
+                // The list first: wait out a running read or a pause CNO asked for.
+                val s = _state.value
+                val pause = s.pausedUntilMs?.let { it - clock() } ?: 0L
+                if (s.refreshing || pause > 0) {
+                    delay(maxOf(pause, 500L))
+                    continue
+                }
+                loadBooks(next, maxAgeMs = AGREE_TTL_MS)
+                delay(AGREE_GAP_MS)
+            }
+        }
+    }
+
     private val novigLinks = java.util.concurrent.ConcurrentHashMap<String, String>()
 
-    /** The Novig app link for [row]'s game, or null. Cached: a game's link doesn't change. */
+    /**
+     * The Novig app link for [row]: `novigapp://events/<outcome id>/cno`, which opens Novig with
+     * that exact bet in its bet slip (RESEARCH.md §20). Cached: a line's link doesn't change.
+     */
     suspend fun novigLink(row: CnoRow): String? {
         val key = row.betUrl ?: return null
         novigLinks[key]?.let { return it }
-        val link = runCatching { source.novigLink(row) }.getOrNull() ?: return null
+        val link = runCatching { source.novigLink(row) }.getOrNull()?.let(::appLink) ?: return null
         novigLinks[key] = link
         return link
     }
@@ -232,6 +294,28 @@ class CnoFeed(
 
         /** A bet's books are re-read after this long. */
         const val BOOKS_TTL_MS = 60_000L
+
+        /** The green check looks at this many of the best bets. */
+        const val AGREE_TOP = 12
+
+        /** …re-reading each one's books after this long… */
+        const val AGREE_TTL_MS = 5 * 60_000L
+
+        /** …a failed one after this long… */
+        const val AGREE_RETRY_MS = 2 * 60_000L
+
+        /** …and waits this long between two of them. */
+        const val AGREE_GAP_MS = 2_000L
+
+        private val NOVIG_WEB_BET = Regex("""^https://(?:www\.)?novig\.(?:com|us)/(events/[^?#]+)""", RegexOption.IGNORE_CASE)
+
+        /**
+         * CNO's link in the form Novig's app opens: CNO hands a desktop browser
+         * `https://novig.com/events/<outcome>/cno` and a phone `novigapp://events/<outcome>/cno`;
+         * only the second is certain to open the app. Anything else passes through.
+         */
+        fun appLink(link: String): String =
+            NOVIG_WEB_BET.find(link.trim())?.let { "novigapp://" + it.groupValues[1] } ?: link.trim()
 
         /** Refresh choices in Settings (seconds; [REALTIME]; 0 = only when tapped). */
         val REFRESH_CHOICES = listOf(REALTIME, 5, 15, 30, 60, 0)
