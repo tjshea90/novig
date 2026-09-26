@@ -10,8 +10,11 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.util.Rational
+import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoSnapshot
+import com.tjshea.vigilant.data.match.Picks
+import com.tjshea.vigilant.data.tracker.PlacedBet
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlin.math.roundToInt
@@ -43,6 +46,9 @@ object MiniWindow {
     const val NEXT = 3
     const val REFRESH = 4
     const val BOOKS = 5
+    /** Up / down a page (CNO's list; in the Books view, the bet above or below). */
+    const val UP = 6
+    const val DOWN = 7
 
     /** A CNO row whose odds are older than this (CNO's own age included) shows in the warning color. */
     const val CNO_OLD_MS = 5 * 60_000L
@@ -70,7 +76,41 @@ object MiniWindow {
         val cno: CnoPick? = null,
         /** The game has started (Novig's taker fee is already taken out of [ev]). */
         val live: Boolean = false,
+        val event: String = "",
+        val market: String = "",
+        val startsAtMs: Long? = null,
+        /** Novig's outcome id, for Vigilant's own bets (opens Novig's bet slip on it). */
+        val outcomeId: String? = null,
+        /** The player's team ("HOU"), for player bets whose team is known. */
+        val team: String? = null,
+        /** The green check: several books agree it's +EV ([com.tjshea.vigilant.data.cno.CnoBooks.agrees]). */
+        val agrees: Boolean = false,
+        /** Tj placed this bet at another line: that line, short ("O5.5"). */
+        val placedOther: String? = null,
+    ) {
+        /** The same bet at any line, in this game and market. */
+        val family: String get() = Picks.familyKey(event, market, title)
+    }
+
+    /** The key a CNO bet has in the widget (and in placed.json). */
+    fun cnoKey(row: com.tjshea.vigilant.data.cno.CnoRow): String = "cno:${row.key}"
+
+    /** A widget bet as a placed-bet record. */
+    fun placed(item: Item, now: Long): PlacedBet = PlacedBet(
+        key = item.key,
+        title = item.title,
+        detail = item.subtitle,
+        family = item.family,
+        odds = item.price,
+        placedAtMs = now,
+        startsAtMs = item.startsAtMs,
     )
+
+    /**
+     * Novig's app on a Vigilant bet: its outcome in Novig's bet slip (Novig's own link format,
+     * RESEARCH.md §20). CNO bets get theirs from CNO ([MainViewModel.novigLink]).
+     */
+    fun novigLink(item: Item): String? = item.outcomeId?.let { "novigapp://events/$it" }
 
     /** Whether the mini window lists CNO's rows (both scanners, or CNO only). */
     fun showsCno(settings: ScanSettings): Boolean = settings.cnoOn
@@ -87,12 +127,30 @@ object MiniWindow {
         val ours = if (showsVigilant(s)) state.feed.mapNotNull { it.miniItem(now) } else emptyList()
         val snap = state.cno.snapshot
         // CNO's rows only after the app's own checks (thin markets, odds cap, one-way devigs, …).
-        val theirs = if (snap == null) emptyList() else state.cnoPicks(now)?.picks?.map { it.miniItem(snap, now) } ?: emptyList()
-        return when {
+        val theirs = if (snap == null) emptyList() else state.cnoPicks(now)?.picks?.map { itemFor(it, snap, state, now) } ?: emptyList()
+        val all = when {
             theirs.isEmpty() -> ours
             ours.isEmpty() -> theirs
             else -> (ours + theirs).sortedByDescending { it.ev }
         }
+        // Placed bets are gone for good (Tj: "so the bet doesn't come back up after a refresh");
+        // the same bet at another line says so.
+        if (state.placed.isEmpty()) return all
+        val placed = state.placedKeys
+        val families = state.placedFamilies
+        return all.filter { it.key !in placed }.map { item ->
+            families[item.family]?.let { p -> item.copy(placedOther = Picks.shortLine(p.title)) } ?: item
+        }
+    }
+
+    /** One CNO bet as the widget (and the CNO tab's placed button) sees it. */
+    fun itemFor(pick: CnoPick, snap: CnoSnapshot, state: UiState, now: Long): Item {
+        val row = pick.row
+        val view = state.books[row.key]?.view
+        return pick.miniItem(snap, now).copy(
+            team = state.teams[row.key],
+            agrees = view != null && state.settings.cnoCheckBooks && CnoBooks.agrees(view, row, pick.live, snap.fetchedAtMs),
+        )
     }
 
     private fun Opportunity.miniItem(now: Long): Item? {
@@ -105,11 +163,15 @@ object MiniWindow {
             price = com.tjshea.vigilant.app.ui.Format.american(q.cost),
             available = depth?.takeIf { it.contracts > 0 }?.let { "$" + it.dollarCost.roundToInt() },
             old = priceIsOld(now),
+            event = eventName,
+            market = marketLabel,
+            startsAtMs = event.startsTs,
+            outcomeId = outcome.outcomeId,
         )
     }
 
     private fun CnoPick.miniItem(snap: CnoSnapshot, now: Long) = Item(
-        key = "cno:${row.key}",
+        key = cnoKey(row),
         ev = ev,
         title = row.bet,
         subtitle = "${row.market} · ${row.event}" + if (row.book != "Novig") " · ${row.book}" else "",
@@ -119,21 +181,19 @@ object MiniWindow {
         fromCno = true,
         cno = this,
         live = live,
+        event = row.event,
+        market = row.market,
+        startsAtMs = row.startsAtMs,
     )
 
     fun american(odds: Int): String = com.tjshea.vigilant.engine.Odds.formatAmerican(odds)
-
-    private val PICK_LINE = Regex("""^(.*?)\s*((?:Over|Under)\s+[\d.]+|[+\-−][\d.]+|Yes|No)$""", RegexOption.IGNORE_CASE)
 
     /**
      * A pick split into who and which side ("Justin Jefferson" + "Under 69.5", "Ohio" + "-33.5",
      * "" + "Under 8.5"), so a narrow window shortens the name and never the line Tj bets on.
      * Picks without a line ("Dallas Cowboys") come back whole.
      */
-    fun splitPick(title: String): Pair<String, String?> {
-        val m = PICK_LINE.find(title.trim()) ?: return title to null
-        return m.groupValues[1].trim() to m.groupValues[2]
-    }
+    fun splitPick(title: String): Pair<String, String?> = Picks.split(title)
 
     /**
      * Shorter names for a narrow window, longest first: the full name, then for a player an
@@ -153,27 +213,33 @@ object MiniWindow {
         settings.miniWindow && (status.scanning || status.rechecking || rows > 0)
 
     /**
-     * The rows of the feed on page [next] (wrapping), when [fit] rows fit the window. Empty for an
-     * empty feed. "Next" just counts taps, so a window resized mid-way still pages sensibly.
+     * The rows of the feed on page [next] when [fit] rows fit the window. Empty for an empty feed.
+     * [wrap] (Next): past the last page comes the first. Otherwise (Up / Down) it stops at either
+     * end. The page just counts taps, so a window resized mid-way still pages sensibly.
      */
-    fun page(size: Int, fit: Int, next: Int): IntRange {
+    fun page(size: Int, fit: Int, next: Int, wrap: Boolean = true): IntRange {
         if (size <= 0) return IntRange.EMPTY
         val per = fit.coerceAtLeast(1)
         val pages = (size + per - 1) / per
-        val p = ((next % pages) + pages) % pages
+        val p = if (wrap) ((next % pages) + pages) % pages else next.coerceIn(0, pages - 1)
         val start = p * per
         return start until minOf(size, start + per)
     }
+
+    /** How many pages [size] rows make at [fit] a page. */
+    fun pages(size: Int, fit: Int): Int = if (size <= 0) 0 else (size + fit.coerceAtLeast(1) - 1) / fit.coerceAtLeast(1)
 
     fun supported(context: Context): Boolean =
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     /**
-     * [cnoOnly]: the window lists only CNO's rows, so its buttons are Refresh, Books (every
-     * book's odds for the bet at the top, or back to the list when [books] is showing) and Next
-     * (a scan or recheck wouldn't change what it shows).
+     * [cnoOnly]: the window lists only CNO's rows, so its buttons are Up and Down (Tj, 2026-09-26:
+     * up and down instead of Next) and, as the third, Books (every book's odds for the bet at the
+     * top, or back to the list when [books] is showing), or Refresh when CNO is read only on a
+     * tap ([tapsOnly]). Picture-in-picture shows at most three buttons, and only once tapped:
+     * the floating widget ([FloatingWidget]) is the one with buttons always showing.
      */
-    fun params(context: Context, autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean = false, books: Boolean = false): PictureInPictureParams {
+    fun params(context: Context, autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean = false, books: Boolean = false, tapsOnly: Boolean = false): PictureInPictureParams {
         fun action(id: Int, icon: Int, title: String, enabled: Boolean = true): RemoteAction {
             val intent = PendingIntent.getBroadcast(
                 context, id,
@@ -187,9 +253,10 @@ object MiniWindow {
             .setActions(
                 if (cnoOnly) {
                     listOf(
-                        action(REFRESH, R.drawable.ic_recheck, "Refresh"),
-                        action(BOOKS, R.drawable.ic_books, if (books) "List" else "Books"),
-                        action(NEXT, R.drawable.ic_next, "Next"),
+                        if (tapsOnly && !books) action(REFRESH, R.drawable.ic_recheck, "Refresh")
+                        else action(BOOKS, R.drawable.ic_books, if (books) "List" else "Books"),
+                        action(UP, R.drawable.ic_up, "Up"),
+                        action(DOWN, R.drawable.ic_down, "Down"),
                     )
                 } else {
                     listOf(
