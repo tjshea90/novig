@@ -1805,3 +1805,10 @@ Is it possible to make a floating widget for this app or a picture in picture ty
 ```
 I like the following website for positive EV odds when I choose novig and a couple filters. Consider all possible ways to make this site's scanned odds display in this app, especially in the floating widget
 ```
+
+## 2026-09-26T15:34:03Z
+```
+I like the following website for positive EV odds when I choose novig and a couple filters. Consider all possible ways to make this site's scanned odds display in this app, especially in the floating widget
+
+https://crazyninjaodds.com/site/tools/positive-ev.aspx
+```
