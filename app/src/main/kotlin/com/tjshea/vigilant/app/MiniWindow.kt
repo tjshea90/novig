@@ -10,9 +10,8 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.util.Rational
-import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoSnapshot
-import com.tjshea.vigilant.data.scanner.MiniSource
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlin.math.roundToInt
@@ -43,6 +42,7 @@ object MiniWindow {
     const val RECHECK = 2
     const val NEXT = 3
     const val REFRESH = 4
+    const val BOOKS = 5
 
     /** A CNO row whose odds are older than this (CNO's own age included) shows in the warning color. */
     const val CNO_OLD_MS = 5 * 60_000L
@@ -66,12 +66,17 @@ object MiniWindow {
         /** The price may have moved: recheck (Vigilant) or refresh (CNO) before betting. */
         val old: Boolean = false,
         val fromCno: Boolean = false,
+        /** The CNO bet behind a CNO row (its books are what the Books view shows). */
+        val cno: CnoPick? = null,
+        /** The game has started (Novig's taker fee is already taken out of [ev]). */
+        val live: Boolean = false,
     )
 
-    /** Whether the mini window lists CNO's rows for these settings. */
-    fun showsCno(settings: ScanSettings): Boolean = settings.cnoEnabled && settings.miniSource != MiniSource.VIGILANT
+    /** Whether the mini window lists CNO's rows (both scanners, or CNO only). */
+    fun showsCno(settings: ScanSettings): Boolean = settings.cnoOn
 
-    fun showsVigilant(settings: ScanSettings): Boolean = settings.miniSource != MiniSource.CNO || !settings.cnoEnabled
+    /** Whether it lists Vigilant's own (both scanners, or Vigilant only). */
+    fun showsVigilant(settings: ScanSettings): Boolean = settings.vigilantOn
 
     /**
      * What the mini window lists: Vigilant's feed (in the feed's order), CNO's rows (CNO's
@@ -80,8 +85,9 @@ object MiniWindow {
     fun items(state: UiState, now: Long): List<Item> {
         val s = state.settings
         val ours = if (showsVigilant(s)) state.feed.mapNotNull { it.miniItem(now) } else emptyList()
-        val snap = state.cno.snapshot?.takeIf { showsCno(s) && it.url == state.cnoUrl }
-        val theirs = snap?.rows?.map { it.miniItem(snap, now) } ?: emptyList()
+        val snap = state.cno.snapshot
+        // CNO's rows only after the app's own checks (thin markets, odds cap, one-way devigs, …).
+        val theirs = if (snap == null) emptyList() else state.cnoPicks(now)?.picks?.map { it.miniItem(snap, now) } ?: emptyList()
         return when {
             theirs.isEmpty() -> ours
             ours.isEmpty() -> theirs
@@ -102,15 +108,17 @@ object MiniWindow {
         )
     }
 
-    private fun CnoRow.miniItem(snap: CnoSnapshot, now: Long) = Item(
-        key = "cno:$key",
+    private fun CnoPick.miniItem(snap: CnoSnapshot, now: Long) = Item(
+        key = "cno:${row.key}",
         ev = ev,
-        title = bet,
-        subtitle = "$market · $event" + if (book != "Novig") " · $book" else "",
-        price = american(odds),
-        available = available?.let { "$" + it.roundToInt() },
+        title = row.bet,
+        subtitle = "${row.market} · ${row.event}" + if (row.book != "Novig") " · ${row.book}" else "",
+        price = american(row.odds),
+        available = row.available?.let { "$" + it.roundToInt() },
         old = now - snap.dataAtMs > CNO_OLD_MS,
         fromCno = true,
+        cno = this,
+        live = live,
     )
 
     fun american(odds: Int): String = com.tjshea.vigilant.engine.Odds.formatAmerican(odds)
@@ -136,10 +144,11 @@ object MiniWindow {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     /**
-     * [cnoOnly]: the window lists only CNO's rows, so its buttons are Refresh and Next (a scan
-     * or recheck wouldn't change what it shows).
+     * [cnoOnly]: the window lists only CNO's rows, so its buttons are Refresh, Books (every
+     * book's odds for the bet at the top, or back to the list when [books] is showing) and Next
+     * (a scan or recheck wouldn't change what it shows).
      */
-    fun params(context: Context, autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean = false): PictureInPictureParams {
+    fun params(context: Context, autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean = false, books: Boolean = false): PictureInPictureParams {
         fun action(id: Int, icon: Int, title: String, enabled: Boolean = true): RemoteAction {
             val intent = PendingIntent.getBroadcast(
                 context, id,
@@ -154,6 +163,7 @@ object MiniWindow {
                 if (cnoOnly) {
                     listOf(
                         action(REFRESH, R.drawable.ic_recheck, "Refresh"),
+                        action(BOOKS, R.drawable.ic_books, if (books) "List" else "Books"),
                         action(NEXT, R.drawable.ic_next, "Next"),
                     )
                 } else {
