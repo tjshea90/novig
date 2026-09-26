@@ -70,7 +70,8 @@ class ResearchFeaturesTest {
 
     @Test
     fun `each priced outcome knows its own best bid and where to post a maker order`() {
-        val dal = price(balBid = 615, dalBid = 355).dal()
+        // Taking costs 1 − 0.560 = 0.44, well above fair (~0.40): a bid is the way in.
+        val dal = price(balBid = 560, dalBid = 355).dal()
         assertEquals(0.355, dal.bestBid!!, 1e-12)
         val bid = dal.makerBid(0.02)!!
         val fair = dal.fairProbability!!
@@ -79,7 +80,7 @@ class ResearchFeaturesTest {
         // One grid step higher would miss the 2% target.
         assertTrue(fair / (bid.price + 0.005) - 1 < 0.02)
         // Taking at 0.385 is already at least as cheap as any 2% bid: no maker suggestion.
-        val cheap = price(balBid = 615 + 200).dal()
+        val cheap = price(balBid = 615).dal()
         assertTrue(cheap.quote!!.cost <= cheap.fairProbability!! / 1.02)
         assertNull(cheap.makerBid(0.02))
     }
