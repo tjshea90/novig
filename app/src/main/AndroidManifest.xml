@@ -13,6 +13,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- The floating widget over Novig (FloatingWidget.kt): a small window Tj can touch, drawn
+         over other apps. Android asks him once ("Display over other apps"); without it the
+         widget is picture-in-picture. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- "Open Novig" opens Novig's app when it's installed (Android 11+ package visibility). -->
     <queries>
         <package android:name="us.novig.app" />
