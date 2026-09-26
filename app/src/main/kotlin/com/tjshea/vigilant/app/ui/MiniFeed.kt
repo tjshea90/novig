@@ -162,7 +162,7 @@ fun miniStatus(state: UiState, now: Long): String {
         !MiniWindow.showsCno(state.settings) -> null
         cno.refreshing -> "CNO reading…"
         cno.error != null && showsVigilant -> "CNO error"
-        cno.error != null -> cno.error
+        cno.error != null -> cno.error.orEmpty()
         snap != null -> "CNO " + Format.age(snap.dataAtMs, now).removeSuffix(" ago")
         showsVigilant -> null
         else -> "CrazyNinjaOdds"
@@ -176,8 +176,8 @@ private fun emptyText(state: UiState): String {
         state.status.scanning && MiniWindow.showsVigilant(state.settings) -> "Scanning… bets show here as they're found"
         !MiniWindow.showsVigilant(state.settings) -> when {
             cno.refreshing -> "Reading CrazyNinjaOdds…"
-            cno.error != null && cno.snapshot == null -> cno.error
             cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now"
+            cno.error != null -> cno.error.orEmpty()
             else -> "Tap the window, then Refresh"
         }
         state.result == null && cno.snapshot == null -> "Tap the window, then Scan"
