@@ -535,3 +535,32 @@ private fun VigilantRoot(
         )
     }
 }
+
+/** The CNO tab. CNO's list is read only while this is on screen and Vigilant is started. */
+@Composable
+private fun CnoTab(
+    state: UiState,
+    vm: MainViewModel,
+    onRefresh: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onMiniWindow: (() -> Unit)?,
+    onLoadBooks: (CnoRow, Boolean) -> Unit,
+    onOpenInNovig: (CnoRow) -> Unit,
+    onScanner: (ScannerMode) -> Unit,
+) {
+    LifecycleStartEffect(Unit) {
+        vm.watchCno("tab", true)
+        onStopOrDispose { vm.watchCno("tab", false) }
+    }
+    CnoScreen(
+        state,
+        onRefresh = onRefresh,
+        onOpenSettings = onOpenSettings,
+        onMiniWindow = onMiniWindow,
+        onLoadBooks = onLoadBooks,
+        onOpenInNovig = onOpenInNovig,
+        onScanner = onScanner,
+        onPlaced = vm::markPlaced,
+        onUnplace = vm::unmarkPlaced,
+    )
+}
