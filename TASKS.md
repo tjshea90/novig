@@ -1699,4 +1699,9 @@ props calls themselves are fixture-tested only.
       a moving window).
 - [ ] J4 "CNO error": find the real cause (live soak of the app's own read pattern: list + books
       lane + teams), fix it, and make the widget say what the error is instead of "CNO error".
+- [ ] J6 Tj's screenshot (CNO tab, 7:45): "notice the refresh symbol … Sometimes it is getting
+      stuck. I'm not sure if the data is refreshing." The pull-to-refresh arrow sits half-pulled
+      under the header. Make it always go away, and make it obvious when the list was last read
+      and that it's reading now.
 - [ ] J5 Tests (geometry + gestures + error cases), screenshots, full floor, ship, send the link.
+      ("Make sure you complete all tasks including the last two prompts I sent.")
