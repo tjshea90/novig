@@ -50,11 +50,14 @@ import com.tjshea.vigilant.app.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.tjshea.vigilant.app.UiState
+import com.tjshea.vigilant.data.cno.CnoFeed
+import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.MarketFamily
+import com.tjshea.vigilant.data.scanner.MiniSource
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.FairSettings
@@ -234,12 +237,40 @@ fun SettingsScreen(
             SectionTitle("Mini window")
             SwitchRow(
                 "Float over Novig",
-                "When you leave Vigilant with a scan running or bets on the feed, it shrinks to a small window that stays " +
+                "When you leave Vigilant with a scan running or bets to show, it shrinks to a small window that stays " +
                     "on top of Novig. Tap it for Scan, Recheck and Next; pinch or double-tap to enlarge; drag it to the " +
                     "bottom to close. The button next to Scan opens it any time.",
                 s.miniWindow,
             ) { v -> onUpdate { it.copy(miniWindow = v) } }
             Hint("If it never appears, turn on picture-in-picture for Vigilant in Android Settings › Apps › Special app access.")
+            if (s.cnoEnabled) {
+                Text("The mini window lists", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(MiniSource.entries, s.miniSource, { it.displayName }) { v -> onUpdate { it.copy(miniSource = v) } }
+                Hint(
+                    when (s.miniSource) {
+                        MiniSource.BOTH -> "Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first. Scan also refreshes CNO's."
+                        MiniSource.VIGILANT -> "Only Vigilant's own scan."
+                        MiniSource.CNO -> "Only CrazyNinjaOdds' list. Its buttons become Refresh and Next."
+                    },
+                )
+            }
+
+            // ---- CrazyNinjaOdds ------------------------------------------------------------------
+            SectionTitle("CrazyNinjaOdds")
+            SwitchRow(
+                "CrazyNinjaOdds' +EV list",
+                "CNO's +EV bets for your view, in the CNO tab and the mini window. Read only while Vigilant or its mini " +
+                    "window is on screen, at most once every 30 seconds.",
+                s.cnoEnabled,
+            ) { v -> onUpdate { it.copy(cnoEnabled = v) } }
+            if (s.cnoEnabled) {
+                CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
+                Text("Refresh", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, { if (it <= 0) "Tap only" else secondsLabel(it) }) { v ->
+                    onUpdate { it.copy(cnoRefreshSeconds = v) }
+                }
+                Hint("CNO updates its odds about once a minute. Each read is about 90 KB; nothing is read once Vigilant and its mini window are closed.")
+            }
 
             SectionTitle("+EV feed")
             var minEv by remember(s.minEvPercent) { mutableFloatStateOf((s.minEvPercent * 100).toFloat()) }
@@ -317,11 +348,48 @@ fun SettingsScreen(
             SectionTitle("About")
             Hint(
                 "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (pinnapi), " +
-                    "Polymarket, Kalshi, The Odds API. Nothing is fetched until you tap Scan or pull to refresh, " +
-                    "and nothing runs in the background.",
+                    "Polymarket, Kalshi, The Odds API · CNO list: crazyninjaodds.com. Nothing is fetched until you tap " +
+                    "Scan or pull to refresh, except CrazyNinjaOdds' list while Vigilant or its mini window is on screen. " +
+                    "Nothing runs in the background.",
             )
         }
     }
+}
+
+/** Tj's CNO Shared View link: paste, check, save. Blank means Novig with CNO's defaults. */
+@Composable
+private fun CnoViewEditor(saved: String, onSave: (String) -> Unit) {
+    var text by remember(saved) { mutableStateOf(saved) }
+    val normalized = CnoView.normalize(text)
+    val current = CnoView.normalize(saved) ?: CnoView.DEFAULT
+    Text("Your view: ${CnoView.describe(current)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it },
+        label = { Text("Shared View link") },
+        placeholder = { Text("Blank = Novig, CNO's recommended filters") },
+        singleLine = true,
+        isError = normalized == null,
+        supportingText = {
+            Text(
+                when {
+                    normalized == null -> "That isn't a CrazyNinjaOdds Positive EV link."
+                    text.isBlank() -> "Novig only, 3+ books, 2 sides."
+                    else -> CnoView.describe(normalized)
+                },
+            )
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = { onSave(if (text.isBlank()) "" else normalized!!) },
+            enabled = normalized != null && (if (text.isBlank()) "" else normalized) != saved,
+        ) { Text("Save") }
+        if (saved.isNotBlank()) OutlinedButton(onClick = { text = ""; onSave("") }) { Text("Use Novig default") }
+    }
+    Hint("On crazyninjaodds.com's Positive EV page: set your filters, open Shared View, tap Copy Link, and paste it here. The devig method stays CNO's default (a link doesn't carry it).")
 }
 
 @Composable
