@@ -1637,17 +1637,28 @@ props calls themselves are fixture-tested only.
       reads, cancellation no longer leaves "loading", memory capped at 150 bets). CnoAgreementTest 8.*
 - [x] H3 Data: player teams (`PlayerTeams`: ESPN teams + rosters, disk cache 24 h, lane inside
       the watch, soft-fails) + MockWebServer tests. *PlayerTeamsTest 5.*
-- [ ] H4 Data: Novig links: CNO https form → novigapp://, Vigilant rows → novigapp://events/<outcomeId>.
-      *CNO part done (CnoFeed.appLink, CnoAgreementTest); Vigilant rows in the app step.*
-- [ ] H5 App: nothing refreshes when the scanner is closed: CNO reads only while the CNO tab is on
+- [x] H4 Data: Novig links: CNO https form → novigapp://, Vigilant rows → novigapp://events/<outcomeId>.
+      *CnoFeed.appLink (CnoAgreementTest), MiniWindow.novigLink (MiniWindowTest "a Vigilant bet opens
+      Novig's bet slip on its own outcome"); MainActivity.launchNovig pins us.novig.app when installed.*
+- [x] H5 App: nothing refreshes when the scanner is closed: CNO reads only while the CNO tab is on
       screen or a widget is showing (and the screen is on); closing the widget / the app (swipe
       away, back out) stops everything; tests.
-- [ ] H6 App: floating widget (overlay): drag/resize/minimize/close, rows (tap = open that bet in
+      *CnoWatch (data) + MainViewModel.watchCno("tab"/"pip"/"overlay"); CnoTab + MiniFeed use
+      LifecycleStartEffect; FloatingWidget reports watching only while up, not a bubble, screen on
+      and unlocked; MainActivity.onDestroy hides it. CnoWatchTest (nothing before, nothing after
+      the last watcher; hand-over tab→widget doesn't restart), PlayerTeamsTest keepFresh cancel.*
+- [x] H6 App: floating widget (overlay): drag/resize/minimize/close, rows (tap = open that bet in
       Novig, ✓ = placed/hidden with Undo, long-press = every book), permanent bottom bar
       (Refresh / ▲ / ▼ / Books; Scan/Recheck in Both), team tags, green checks; permission
       flow; shows on leaving Vigilant / Open in Novig, hides on return; PiP fallback gets ▲/▼.
-- [ ] H7 App: CNO tab + sheet: team tags, green checks, Mark placed / Undo, placed list; Settings
-      (widget style, background books check, player teams).
+      *FloatingWidget + FloatingFeed; ScreenshotTest floating* 7 (buttons always there + Down/Up
+      scroll, tap opens + ✓ placed + Undo, teams + ✓ + light-theme contrast, long-press books,
+      bubble, Both bar, header buttons); MiniWindowTest PiP Books/Up/Down + no-wrap paging.
+      Not device-tested: overlay window, drag/resize, deep link into Novig need Tj's phone.*
+- [x] H7 App: CNO tab + sheet: team tags, green checks, Mark placed / Undo, placed list; Settings
+      (widget style, background books check, player teams). *CnoScreen (snackbar Undo, "Show the N
+      bets you placed" + "Not placed", overlay-permission banner), CnoDetail "I placed it",
+      SettingsScreen switches; ScreenshotTest settings/cno tests updated and green.*
 - [ ] H8 Screenshots + tests, docs (RESEARCH.md §20, BRIEF.md, CLAUDE.md surface, NOVIG_API.md
       deeplinks), light pass.
 - [ ] H9 Full test protocol on the whole app (CLAUDE.md), fix, CI, ship, send the link.
