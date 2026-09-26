@@ -34,10 +34,15 @@ data class CnoRow(
     val oneWay: Boolean = false,
 ) {
     /** One side at one book. CNO's game link names the side (`side_id`); the devig in it is dropped. */
-    val key: String get() = ((gameUrl?.replace(Regex("[&?]devig_method=\\d+"), "")) ?: "$event|$market|$bet") + "|" + book
+    val key: String get() = ((gameUrl?.replace(DEVIG_PARAM, "")) ?: "$event|$market|$bet") + "|" + book
 
     /** CNO's `side_id` for this bet (the row id on its game page). */
-    val sideId: String? get() = gameUrl?.let { Regex("[?&]side_id=(\\d+)").find(it)?.groupValues?.get(1) }
+    val sideId: String? get() = gameUrl?.let { SIDE_ID.find(it)?.groupValues?.get(1) }
+
+    private companion object {
+        val DEVIG_PARAM = Regex("[&?]devig_method=\\d+")
+        val SIDE_ID = Regex("[?&]side_id=(\\d+)")
+    }
 }
 
 /**
