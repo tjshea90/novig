@@ -112,6 +112,10 @@ data class UiState(
      */
     fun cnoPicks(now: Long): CnoScreened? =
         cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
+
+    /** [cnoPicks] without the bets Tj marked placed: what the CNO tab, its badge and the widgets list. */
+    fun cnoShown(now: Long): List<com.tjshea.vigilant.data.cno.CnoPick> =
+        cnoPicks(now)?.picks?.filter { MiniWindow.cnoKey(it.row) !in placedKeys }.orEmpty()
 }
 
 /**
@@ -208,7 +212,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** The bets whose books the green check reads: the list's best, placed ones left out. */
     private fun agreementRows(): Flow<List<CnoRow>> = state.map { s ->
         if (!s.settings.cnoCheckBooks) emptyList()
-        else s.cnoPicks(System.currentTimeMillis())?.picks?.filter { MiniWindow.cnoKey(it.row) !in s.placedKeys }?.map { it.row } ?: emptyList()
+        else s.cnoShown(System.currentTimeMillis()).map { it.row }
     }
 
     /** The rows whose players' teams are wanted (all of the list's player bets). */

@@ -119,7 +119,7 @@ fun CnoScreen(
     val snap = cno.snapshot?.takeIf { it.url == state.cnoUrl }
     val screened = state.cnoPicks(now)
     // Bets Tj placed are gone from the list (and the widget) until their game is over.
-    val picks = screened?.picks?.filter { MiniWindow.cnoKey(it.row) !in state.placedKeys }.orEmpty()
+    val picks = state.cnoShown(now)
     val placedHere = state.placed.filter { it.key.startsWith("cno:") }
     var showPlaced by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<CnoPick?>(null) }
