@@ -56,9 +56,14 @@ data class Opportunity(
 
     /**
      * Where to post a resting order instead of taking: the highest price that still makes
-     * [minEvPercent] if it fills. Makers pay no fee on Novig.
+     * [minEvPercent] if it fills. Makers pay no fee on Novig. Null when taking right now is
+     * already as cheap: there's no reason to wait for a fill at a worse price.
      */
-    fun makerBid(minEvPercent: Double): MakerBid? = fairProbability?.let { EvMath.makerBid(it, minEvPercent) }
+    fun makerBid(minEvPercent: Double): MakerBid? {
+        val bid = fairProbability?.let { EvMath.makerBid(it, minEvPercent) } ?: return null
+        val take = quote?.cost
+        return bid.takeIf { take == null || take > bid.price + 1e-9 }
+    }
 
     /** Novig's price for this line was read more than [Pricing.OLD_PRICE_MS] before [now]. */
     fun priceIsOld(now: Long): Boolean = bookFetchedAtMs == null || now - bookFetchedAtMs > Pricing.OLD_PRICE_MS

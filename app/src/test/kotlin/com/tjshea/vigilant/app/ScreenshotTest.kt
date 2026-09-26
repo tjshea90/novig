@@ -179,14 +179,22 @@ class ScreenshotTest {
     }
 
     @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
-    @Test fun detailFull() {
+    @Test fun detailMaker() {
         val s = SampleScan.state()
-        shoot("2b_detail_full") { OpportunityDetail(s.feed.first(), s.settings, onRecheck = {}) {} }
+        // A line that isn't +EV to take: the sheet suggests a maker bid instead.
+        val o = s.result!!.opportunities.first { it.quote != null && it.makerBid(0.02) != null && it.fair?.perBook?.any { b -> b.book.bookKey == "pinnacle" } == true }
+        shoot("2b_detail_maker") { OpportunityDetail(o, s.settings, onRecheck = {}) {} }
         compose.onNodeWithText("OR POST A BID (MAKER)").assertExists()
         compose.onNodeWithText("Bid up to").assertExists()
-        compose.onNodeWithText("Double-check on CrazyNinjaOdds (Pinnacle)").assertExists()
+        compose.onNodeWithText("Double-check on CrazyNinjaOdds (", substring = true).assertExists()
         compose.onNodeWithText("Recheck price").assertExists()
         compose.onNodeWithText("Novig price read just now", substring = true).assertExists()
+    }
+
+    @Test fun aBetAlreadyCheapToTakeGetsNoMakerSuggestion() {
+        val s = SampleScan.state()
+        screen { OpportunityDetail(s.feed.first(), s.settings) {} }
+        compose.onAllNodesWithText("OR POST A BID (MAKER)").assertCountEquals(0)
     }
 
     @Config(qualifiers = "w393dp-h4400dp-xxhdpi")

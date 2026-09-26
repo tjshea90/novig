@@ -78,6 +78,10 @@ class ResearchFeaturesTest {
         assertTrue(bid.evPercent >= 0.02)
         // One grid step higher would miss the 2% target.
         assertTrue(fair / (bid.price + 0.005) - 1 < 0.02)
+        // Taking at 0.385 is already at least as cheap as any 2% bid: no maker suggestion.
+        val cheap = price(balBid = 615 + 200).dal()
+        assertTrue(cheap.quote!!.cost <= cheap.fairProbability!! / 1.02)
+        assertNull(cheap.makerBid(0.02))
     }
 
     @Test
