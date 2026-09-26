@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -18,6 +19,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.FeedScreen
 import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalClock
+import com.tjshea.vigilant.app.ui.MiniFeed
 import com.tjshea.vigilant.app.ui.OpportunityDetail
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
@@ -212,5 +214,47 @@ class ScreenshotTest {
         screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onSort = { picked = it }) }
         compose.onNodeWithText("Soonest").performClick()
         assert(picked == com.tjshea.vigilant.data.scanner.FeedSort.START)
+    }
+
+    // ---- The mini window (picture-in-picture over Novig), at the sizes Android gives it ----
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowSmall() {
+        val s = SampleScan.state()
+        shoot("7_mini_window") { MiniFeed(s, next = 0) }
+        compose.onNodeWithText("${s.feed.size} +EV").assertIsDisplayed()
+        compose.onNodeWithText(s.feed.first().selection).assertIsDisplayed()
+        compose.onNodeWithText("/${s.feed.size}", substring = true).assertIsDisplayed() // more than fit: a page label
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowNextShowsTheNextPage() {
+        val s = SampleScan.state()
+        screen { MiniFeed(s, next = 1) }
+        compose.onAllNodesWithText(s.feed.first().selection).assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w360dp-h240dp-xxhdpi")
+    @Test fun miniWindowEnlarged() = shoot("7b_mini_window_large") { MiniFeed(SampleScan.streaming(), next = 0) }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowBeforeAnyScan() {
+        shoot("7c_mini_window_empty") { MiniFeed(SampleScan.fresh(), next = 0) }
+        compose.onNodeWithText("Tap the window, then Scan").assertIsDisplayed()
+    }
+
+    @Test fun theFeedHasAMiniWindowButtonWhenThePhoneSupportsIt() {
+        var opened = 0
+        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onMiniWindow = { opened++ }) }
+        compose.onNodeWithContentDescription("Mini window over Novig").performClick()
+        assert(opened == 1)
+    }
+
+    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
+    @Test fun settingsOfferTheMiniWindowSwitch() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Float over Novig").performClick()
+        assert(picked?.miniWindow == false) { "picked $picked" }
     }
 }
