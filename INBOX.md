@@ -1888,3 +1888,14 @@ Review the screenshot. Notice the floating widget doesn't say what the pick actu
 <summary>Background command "Poll CI for commit 7e9707d" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-26T19:55:14Z
+```
+<task-notification>
+<task-id>bvo50stmy</task-id>
+<tool-use-id>toolu_01CB5zgEbmP3azXd8Siy2RGQ</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/3426c198-3914-5eaa-935e-af529831b07f/tasks/bvo50stmy.output</output-file>
+<status>completed</status>
+<summary>Background command "Poll the release run until done" completed (exit code 0)</summary>
+</task-notification>
+```
