@@ -9,6 +9,10 @@ import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
+import com.tjshea.vigilant.data.cno.CnoConfig
+import com.tjshea.vigilant.data.cno.CnoFeed
+import com.tjshea.vigilant.data.cno.CnoState
+import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
@@ -22,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -67,13 +72,21 @@ data class UiState(
     val bets: List<TrackedBet> = emptyList(),
     val loaded: Boolean = false,
     val novig: NovigUi = NovigUi(),
-)
+    /** CrazyNinjaOdds' +EV list (its own tab, and the mini window). */
+    val cno: CnoState = CnoState(),
+) {
+    /** The CNO view to read: Tj's saved link, or Novig with CNO's defaults. */
+    val cnoUrl: String get() = CnoView.normalize(settings.cnoViewUrl) ?: CnoView.DEFAULT
+
+    val cnoConfig: CnoConfig get() = CnoConfig(loaded && settings.cnoEnabled, cnoUrl, settings.cnoRefreshSeconds)
+}
 
 /**
  * The whole app's state. Network happens in exactly one place, [scan], and only when Tj taps
  * Scan or pulls to refresh (his rule, 2026-09-25): nothing fetches on launch, on a timer, on a
  * tab change, or when a setting changes. Settings changes re-price from what the last scan
- * fetched, so they're instant and free.
+ * fetched, so they're instant and free. The one exception is CrazyNinjaOdds' list ([watchCno],
+ * Tj 2026-09-26): read while Vigilant or its mini window is on screen, paced by [CnoFeed].
  *
  * The scan itself runs in the app's [com.tjshea.vigilant.data.scanner.ScanRunner], not here, so it
  * outlives this screen (Tj switches apps mid-scan); this only mirrors it: progress and partial
@@ -115,6 +128,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch {
             c.usage.flow.collect { u -> _state.update { it.copy(usage = u) } }
+        }
+        viewModelScope.launch {
+            runCatching { c.cno.load() }
+            c.cno.state.collect { cno -> _state.update { it.copy(cno = cno) } }
+        }
+    }
+
+    /**
+     * Keeps CrazyNinjaOdds' list current until cancelled. [MainActivity] runs it only while it's
+     * started: on screen or as the mini window; leaving stops it.
+     */
+    suspend fun watchCno() = c.cno.watch(state.map { it.cnoConfig })
+
+    /** Re-reads CNO now (Refresh, pull down, the mini window's button), if 30 s have passed. */
+    fun refreshCno(quiet: Boolean = false) {
+        val current = _state.value
+        if (!current.loaded || !current.settings.cnoEnabled) return
+        viewModelScope.launch {
+            val wait = c.cno.waitForGapMs()
+            val read = c.cno.refresh(current.cnoUrl)
+            if (!read && !quiet && !_state.value.cno.refreshing) {
+                val seconds = ((wait + 999) / 1000).coerceAtLeast(1)
+                _toasts.tryEmit("CrazyNinjaOdds can be read again in ${seconds}s (it allows one read per ${CnoFeed.MIN_GAP_MS / 1000}s)")
+            }
         }
     }
 
