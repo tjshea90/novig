@@ -2,6 +2,8 @@ package com.tjshea.vigilant.data.cno
 
 import com.tjshea.vigilant.data.store.JsonFileStore
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,6 +109,13 @@ class CnoFeed(
             _state.update { it.copy(refreshing = false) }
             throw e
         } catch (e: Exception) {
+            // Cut short because nobody is looking any more (the tab or widget closed, the phone
+            // locked): the network layer reports that as a failed read, but it isn't one. Showing
+            // it was the "CNO error" Tj saw (2026-09-26).
+            if (!currentCoroutineContext().isActive) {
+                _state.update { it.copy(refreshing = false) }
+                throw kotlinx.coroutines.CancellationException("CNO read cancelled").apply { initCause(e) }
+            }
             val message = (e as? CnoException)?.message ?: "Couldn't read CrazyNinjaOdds (${e.message ?: e.javaClass.simpleName})"
             val retry = (e as? CnoException)?.retryAfterSeconds
             _state.update {
@@ -202,6 +211,12 @@ class CnoFeed(
             _books.update { it + (key to (it[key] ?: CnoBooksState()).copy(loading = false)) }
             throw e
         } catch (e: Exception) {
+            if (!currentCoroutineContext().isActive) {
+                // Cut short, not failed (see refresh).
+                if (triedBefore == null) booksTriedAt.remove(key) else booksTriedAt[key] = triedBefore
+                _books.update { it + (key to (it[key] ?: CnoBooksState()).copy(loading = false)) }
+                throw kotlinx.coroutines.CancellationException("CNO books read cancelled").apply { initCause(e) }
+            }
             Result.failure(e)
         }
         result.onSuccess { booksReadAt[key] = clock() }

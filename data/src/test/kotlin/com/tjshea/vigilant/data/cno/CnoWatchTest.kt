@@ -79,4 +79,57 @@ class CnoWatchTest {
         assertEquals(listOf(false, true, false), active)
         job.cancel()
     }
+
+    /**
+     * A source that answers slowly and, like OkHttp, reports a cancelled read as a network error
+     * (HTTP/2 "stream was reset: CANCEL", wrapped by CnoClient).
+     */
+    private class CutShortSource(val clock: () -> Long) : CnoSource {
+        override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot {
+            try {
+                kotlinx.coroutines.delay(2_000)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw CnoException("Couldn't reach CrazyNinjaOdds (stream was reset: CANCEL)")
+            }
+            return CnoSnapshot(url, emptyList(), clock())
+        }
+        override suspend fun books(row: CnoRow): CnoBooksView {
+            try {
+                kotlinx.coroutines.delay(2_000)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw CnoException("Couldn't reach CrazyNinjaOdds (stream was reset: CANCEL)")
+            }
+            return CnoBooksView(row.bet, null, null, false, emptyList(), clock())
+        }
+    }
+
+    @Test
+    fun `a read cut short because the scanner closed is not a CNO error`() = runTest {
+        val feed = CnoFeed(CutShortSource { currentTime }, clock = { currentTime })
+        val watch = CnoWatch()
+        val job = launch { watch.runWhileWatched { launch { feed.watch(MutableStateFlow(CnoConfig(true, "u", 5))) } } }
+        watch.set("overlay", true)
+        runCurrent()
+        advanceTimeBy(1_000) // mid-read
+        assertTrue(feed.state.value.refreshing)
+        watch.set("overlay", false) // widget closed / phone locked
+        runCurrent()
+        assertEquals(null, feed.state.value.error)
+        assertEquals(0, feed.state.value.errors)
+        assertFalse(feed.state.value.refreshing)
+        job.cancel()
+    }
+
+    @Test
+    fun `a books read cut short is not a books error`() = runTest {
+        val feed = CnoFeed(CutShortSource { currentTime }, clock = { currentTime })
+        val row = CnoRow(0.03, event = "A @ B", market = "M", bet = "X Over 1.5", odds = 110, book = "Novig", gameUrl = "g?side_id=1")
+        val job = launch { feed.loadBooks(row) }
+        runCurrent()
+        advanceTimeBy(1_000)
+        job.cancel()
+        runCurrent()
+        assertEquals(null, feed.books.value[row.key]?.error)
+        assertFalse(feed.books.value[row.key]?.loading ?: false)
+    }
 }
