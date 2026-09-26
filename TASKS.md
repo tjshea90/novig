@@ -1659,6 +1659,18 @@ props calls themselves are fixture-tested only.
       (widget style, background books check, player teams). *CnoScreen (snackbar Undo, "Show the N
       bets you placed" + "Not placed", overlay-permission banner), CnoDetail "I placed it",
       SettingsScreen switches; ScreenshotTest settings/cno tests updated and green.*
-- [ ] H8 Screenshots + tests, docs (RESEARCH.md §20, BRIEF.md, CLAUDE.md surface, NOVIG_API.md
-      deeplinks), light pass.
+- [x] H8 Screenshots + tests, docs (RESEARCH.md §20, BRIEF.md, CLAUDE.md surface, NOVIG_API.md
+      deeplinks), light pass. *Done: RESEARCH.md §20, NOVIG_API.md §9.1, BRIEF.md "The CNO widget,
+      and when CNO is read", CLAUDE.md surface list; 7 floating-widget screenshots checked by eye.*
 - [ ] H9 Full test protocol on the whole app (CLAUDE.md), fix, CI, ship, send the link.
+      *Fixes so far (each failing-first where a test can prove it): ESPN 403s a User-Agent naming
+      Vigilant (live) → OkHttp's own (PlayerTeamsTest UA test); a capped roster pass waited 30 min
+      for the rest of the slate (PlayerTeamsTest full-slate test, failed on old code); a books read
+      cut short by a new list counted as a failure (2-min wait) and re-priced lists restarted the
+      lane (CnoAgreementTest 2, failed on old code); teams lane restarted on re-order; widget
+      reopened as a paused bubble; CNO badge counted placed bets; +EV tab flags placed Vigilant
+      bets; teams.json pruned after 7 days; widget clamps on rotation; overlay permission cached;
+      stale "while Vigilant or its mini window is on screen" copy (Settings, CNO tab, docs);
+      "I placed it" hint only with its button. Forced full rerun: 388 tests, 0 failed, 3 skipped
+      (live), exit 0; live smoke (VIGILANT_LIVE=1): CNO 50 rows C-WC, top bet CONFIRMED 8 of 8,
+      novigapp:// outcome link, ESPN 39/40 player bets tagged. v0.15.0 code 20 set.*
