@@ -66,6 +66,9 @@ class CnoFeed(
 
     private val mutex = Mutex()
 
+    /** When the list was last written to disk (guarded by [mutex]). */
+    private var savedAtMs = Long.MIN_VALUE / 2
+
     /** Shows the list saved by the last read, before any network. */
     suspend fun load() {
         val cached = store?.let { runCatching { it.read().snapshot }.getOrNull() } ?: return
@@ -90,8 +93,14 @@ class CnoFeed(
         _state.update { it.copy(refreshing = true, lastAttemptMs = now) }
         try {
             val snap = source.fetch(url, filters)
+            val previous = _state.value.snapshot
             _state.update { it.copy(snapshot = snap, refreshing = false, error = null, errors = 0, pausedUntilMs = null) }
-            store?.let { s -> runCatching { s.update { CnoCache(snap) } } }
+            // The disk copy only has to survive a restart: write it when the list changed or a
+            // minute has passed, not on every 5-second read (flash wear, battery).
+            val changed = previous == null || previous.rows != snap.rows || previous.url != snap.url || previous.filters != snap.filters
+            if (store != null && (changed || now - savedAtMs >= SAVE_EVERY_MS)) {
+                if (runCatching { store.update { CnoCache(snap) } }.isSuccess) savedAtMs = now
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             _state.update { it.copy(refreshing = false) }
             throw e
@@ -129,9 +138,10 @@ class CnoFeed(
         if (config.intervalSeconds == 0) return null
         val next = when {
             s.error != null -> (s.lastAttemptMs ?: now) + errorBackoffMs(s.errors, config.intervalSeconds)
-            // CNO stuck (its updater down, per its FAQ): no point polling every 3 s.
-            config.intervalSeconds == REALTIME && snap != null && now - snap.dataAtMs > CnoChecks.STUCK_MS ->
-                (s.lastAttemptMs ?: now) + STUCK_POLL_MS
+            // CNO stuck (its updater down, per its FAQ): the same list again every few seconds is
+            // only data spent; look every 30 s (or the interval, if that's longer) until it moves.
+            snap != null && now - snap.dataAtMs > CnoChecks.STUCK_MS ->
+                (s.lastAttemptMs ?: now) + maxOf(STUCK_POLL_MS, config.intervalSeconds.coerceAtLeast(0) * 1000L)
             config.intervalSeconds == REALTIME && snap != null -> maxOf(
                 (s.lastAttemptMs ?: now) + REALTIME_POLL_MS,
                 snap.dataAtMs + CNO_MIN_UPDATE_MS,
@@ -189,7 +199,7 @@ class CnoFeed(
         }
     }
 
-    private val novigLinks = HashMap<String, String>()
+    private val novigLinks = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     /** The Novig app link for [row]'s game, or null. Cached: a game's link doesn't change. */
     suspend fun novigLink(row: CnoRow): String? {
@@ -215,6 +225,9 @@ class CnoFeed(
 
         /** The refresh setting's value for "real time". */
         const val REALTIME = -1
+
+        /** Write the list to disk at least this often while it's unchanged. */
+        const val SAVE_EVERY_MS = 60_000L
 
         /** A bet's books are re-read after this long. */
         const val BOOKS_TTL_MS = 60_000L
