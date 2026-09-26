@@ -46,7 +46,7 @@ data class PositiveDepth(
  */
 data class MakerBid(val price: Double, val evPercent: Double)
 
-/** Novig's price grid (NOVIG_API.md §6): 0.001 steps at the ends, 0.005 steps from 0.055 to 0.945. */
+/** Novig's price grid (NOVIG_API.md §7): 0.001 steps at the ends, 0.005 steps from 0.055 to 0.945. */
 object PriceGrid {
     /** The highest grid price at or below [p], or null below the grid's first step. */
     fun floor(p: Double): Double? {
