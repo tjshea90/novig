@@ -12,7 +12,7 @@ object CnoFixtures {
     const val GRID_PANEL = "${P}UpdatePanelGridView"
     const val SCRIPT_MANAGER = "${P}ScriptManager1"
 
-    fun page(action: String = "./positive-ev.aspx?site_id=17&amp;books_min=3") = """
+    fun page(action: String = "./positive-ev.aspx?site_id=17&amp;books_min=3", maxOdds: String = "", minBooks: String = "3") = """
         <!DOCTYPE html><html><head><title>Positive EV - CrazyNinjaOdds</title></head><body>
         <form method="post" action="$action" id="form1">
         <div class="aspNetHidden">
@@ -40,6 +40,16 @@ object CnoFixtures {
         <input id="live" type="checkbox" name="${P}ctl03${'$'}CheckBoxIsLive" />
         <input id="main" type="checkbox" name="${P}ctl03${'$'}CheckBoxIsMain" checked="checked" />
         <input name="${P}ctl03${'$'}TextBoxMinimumEVPercentage" type="text" value="0%" id="evmin" />
+        <input name="${P}ctl03${'$'}FilterMaximumOdds${'$'}TextBoxMaximumOdds" type="text" value="$maxOdds" id="oddsmax" />
+        <input name="${P}ctl03${'$'}FilterMaximumResultCount${'$'}TextBoxMaximumResultCount" type="text" id="limit" />
+        <select name="${P}ctl03${'$'}FilterDevigMethod${'$'}DropDownListDevigMethod" id="devig">
+            <option selected="selected" value="0">Liquidity-Weighted - Worst-case</option>
+            <option value="4">Unweighted Market Consensus - Worst-case</option>
+            <option value="8">Conservative - Worst-case</option>
+        </select>
+        <input name="${P}ctl03${'$'}FilterSubMarketSideCount${'$'}TextBoxMinimumSubMarketSideCount" type="text" value="2" id="sides" />
+        <input id="complete" type="checkbox" name="${P}ctl03${'$'}FilterSubMarketSideCount${'$'}CheckBoxRequireACompleteSportsbook" />
+        <input name="${P}ctl03${'$'}FilterOddsProviderCount${'$'}TextBoxMinimumOddsProviderCount" type="text" value="$minBooks" id="books" />
         <textarea id="clip" name="Text1" cols="40" rows="5" style="display: none">
         textbox_str</textarea>
         <input type="submit" name="$BUTTON" value="Update" onclick="before_updating();" id="upd" />
@@ -111,4 +121,25 @@ object CnoFixtures {
         Triple("pageTitle", "", "Positive EV - CrazyNinjaOdds"),
         Triple("dataItemJson", "ContentPlaceHolderMain_ContentPlaceHolderRight_TimerAjaxDelayedLoad", if (timerOff) "[false,1]" else "[true,1]"),
     )
+
+    const val GAME_HEADERS =
+        """<th data-class="expand" scope="col">Bet Name</th><th scope="col">Best</th><th scope="col">Fair Odds</th>""" +
+            """<th scope="col">FD</th><th scope="col">DK</th><th scope="col">PN</th><th scope="col">PX</th><th scope="col">NV</th><th scope="col">KI</th><th scope="col">PPp</th>"""
+
+    private fun gameRow(id: String, name: String, vararg cells: String) =
+        """<tr id="$id" style="background-color:White;"><td>$name</td>""" + cells.joinToString("") { "<td>${it.ifEmpty { "&nbsp;" }}</td>" } + "</tr>"
+
+    /**
+     * A game page's grid: Joe Receiver's receiving-yards lines. At 69.5 the Over is priced by
+     * FanDuel, DraftKings, Pinnacle and the exchanges, the Under only by Pinnacle, the exchanges
+     * and Novig (the sportsbooks list one side only).
+     */
+    fun gameGrid(withPinnacle: Boolean = true) = """
+        <span>Deeplinks</span><div><table class="footable" id="ContentPlaceHolderMain_ContentPlaceHolderRight_GridView1">
+        <thead><tr>$GAME_HEADERS</tr></thead><tbody>
+        ${gameRow("100", "Joe Receiver Over 29.5", "-1200", "-238 &#x26A0;&#xFE0F;", "-1400", "-1200", "", "", "", "", "")}
+        ${gameRow("101", "Joe Receiver Over 69.5", "-120", "-103", "-125", "-122", if (withPinnacle) "-118" else "", "-129 (${'$'}112)", "-127 (${'$'}127)", "-126 (${'$'}13,662)", "-120")}
+        ${gameRow("102", "Joe Receiver Under 69.5", "+120", "+109", "", "", if (withPinnacle) "+104" else "", "-107 (${'$'}53)", "+120 (${'$'}15)", "-103 (${'$'}106)", "")}
+        ${gameRow("103", "Joe Receiver Over 79.5", "+150", "+160", "+145", "+150", "", "", "", "", "")}
+        </tbody></table></div>"""
 }
