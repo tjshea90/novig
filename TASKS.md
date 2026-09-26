@@ -1524,11 +1524,12 @@ props calls themselves are fixture-tested only.
 > and fix bugs.
 
 ### Plan
-- [ ] F1 Research (live, first-hand): check CNO's EV = its fair odds vs the Novig price on real
+- [x] F1 Research (live, first-hand): check CNO's EV = its fair odds vs the Novig price on real
       rows; what CNO's devig choices mean (worst case, conservative, complete sportsbook, min
       books, market sides) and whether posted form values are honored; what CNO's game page shows
       (every book's odds for the bet); how often CNO's data actually updates (for 5 s / 15 s /
       real time); whether a row leads to its Novig market.
+- [x] F1 *done: RESEARCH.md §19.*
 - [ ] F2 Accuracy: CNO scanner filters sent to CNO and enforced in the app: worst-case devig,
       longest odds (+150 option, Tj's default), min books (no 1–2-book markets), market sides,
       min EV; re-check each row's EV from its fair odds and price; flag thin/suspect rows.
