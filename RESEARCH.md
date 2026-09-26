@@ -1310,10 +1310,10 @@ OddsAssist. Everything below is from the default all-books views unless it says 
   +2.5%; +250/−300 at +275 → 26.4%, −1.1% (`CrossCheckTest`).
 - **API:** the "Devigger API" (api.crazyninjaodds.com) is marked work-in-progress and only devigs;
   "APIs for providing sportsbook odds" are "coming in the future". CNO's odds come from
-  **OddsBlaze**, which a competitor's comparison page lists at **$29/mo with a ~2-minute throttle,
-  $249/mo for real time**, with Novig among its sources (second-hand, not verified on OddsBlaze's
-  own page, which renders client-side). robots.txt allows all with `Crawl-delay: 30`; no terms page
-  was found.
+  **OddsBlaze**, with Novig among its sources. *Corrected 2026-09-26 (§18.2): OddsBlaze's own
+  pricing starts at **$299/mo**, not the $29/mo a competitor's page claimed, and CNO **does** have
+  terms of service (a PDF linked from its footer) that forbid bots, scripts and scrapers.*
+  robots.txt allows all with `Crawl-delay: 30`.
 
 ### 16.2 OddsAssist Pro "+EV Bets": some real edges, but the headline numbers are longshot noise
 
