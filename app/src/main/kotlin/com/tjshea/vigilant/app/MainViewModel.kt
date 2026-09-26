@@ -23,13 +23,21 @@ import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.SourceReport
+import com.tjshea.vigilant.data.teams.PlayerTeams
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.PlacedBet
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -78,9 +86,21 @@ data class UiState(
     val novig: NovigUi = NovigUi(),
     /** CrazyNinjaOdds' +EV list (its own tab, and the mini window). */
     val cno: CnoState = CnoState(),
-    /** Every book's price for the CNO bets someone tapped, by row key. */
+    /** Every book's price for the CNO bets someone tapped (or the green-check lane read), by row key. */
     val books: Map<String, CnoBooksState> = emptyMap(),
+    /** Bets Tj marked placed: hidden from the widget and the CNO list until their game is over. */
+    val placed: List<PlacedBet> = emptyList(),
+    /** The team of each player bet on CNO's list, by row key ("HOU"), when ESPN's rosters say. */
+    val teams: Map<String, String> = emptyMap(),
+    /** CNO is being kept current right now: its tab or a widget is on screen. */
+    val cnoLive: Boolean = false,
 ) {
+    /** [placed]'s keys, for hiding them. */
+    val placedKeys: Set<String> by lazy { placed.mapTo(HashSet()) { it.key } }
+
+    /** [placed]'s families (the same bet at another line), for the "placed O5.5" tag. */
+    val placedFamilies: Map<String, PlacedBet> by lazy { placed.filter { it.family.isNotEmpty() }.associateBy { it.family } }
+
     /** The CNO view to read: Tj's saved link, or Novig with CNO's defaults. */
     val cnoUrl: String get() = CnoView.normalize(settings.cnoViewUrl) ?: CnoView.DEFAULT
 
@@ -150,13 +170,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             c.cno.books.collect { b -> _state.update { it.copy(books = b) } }
         }
+        viewModelScope.launch {
+            runCatching { c.placed.load() }
+            c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets) } }
+        }
+        viewModelScope.launch {
+            runCatching { c.teams.load() }
+            // Recomputed only when the list's rows, the switch or the rosters change.
+            combine(c.teams.state, state.map { (if (it.settings.cnoPlayerTeams && it.settings.cnoOn) it.cno.snapshot?.rows else null) }.distinctUntilChanged()) { cache, rows ->
+                rows?.mapNotNull { r -> PlayerTeams.playerOf(r)?.let { p -> cache.teamOf(r.league, r.event, p) }?.let { r.key to it } }?.toMap() ?: emptyMap()
+            }.flowOn(Dispatchers.Default).collect { t -> _state.update { if (it.teams == t) it else it.copy(teams = t) } }
+        }
+        // CNO, its books lane and its teams lane run together, only while someone is looking.
+        viewModelScope.launch {
+            cnoWatchers.map { it.isNotEmpty() }.distinctUntilChanged().collectLatest { active ->
+                _state.update { it.copy(cnoLive = active) }
+                if (!active) return@collectLatest
+                coroutineScope {
+                    launch { c.cno.watch(state.map { it.cnoConfig }) }
+                    launch { c.cno.keepBooksFresh(agreementRows()) }
+                    launch { c.teams.keepFresh(teamRows()) }
+                }
+            }
+        }
     }
 
     /**
-     * Keeps CrazyNinjaOdds' list current until cancelled. [MainActivity] runs it only while it's
-     * started: on screen or as the mini window; leaving stops it.
+     * Who is looking at CNO's list right now: "tab" (the CNO tab, Vigilant started), "pip" (the
+     * picture-in-picture window), "overlay" (the floating widget, screen on). CNO is read only
+     * while this isn't empty (Tj, 2026-09-26: "if I close the cno scanner or the app … nothing is
+     * refreshing in the background").
      */
-    suspend fun watchCno() = c.cno.watch(state.map { it.cnoConfig })
+    private val cnoWatchers = MutableStateFlow<Set<String>>(emptySet())
+
+    /** [MainActivity] and the widget say when they start and stop showing CNO's list. */
+    fun watchCno(who: String, on: Boolean) = cnoWatchers.update { if (on) it + who else it - who }
+
+    /** Whether anything is looking at CNO's list (tests, and the widget's status dot). */
+    val cnoWatched: Boolean get() = cnoWatchers.value.isNotEmpty()
+
+    /** The bets whose books the green check reads: the list's best, placed ones left out. */
+    private fun agreementRows(): Flow<List<CnoRow>> = state.map { s ->
+        if (!s.settings.cnoCheckBooks) emptyList()
+        else s.cnoPicks(System.currentTimeMillis())?.picks?.filter { MiniWindow.cnoKey(it.row) !in s.placedKeys }?.map { it.row } ?: emptyList()
+    }
+
+    /** The rows whose players' teams are wanted (all of the list's player bets). */
+    private fun teamRows(): Flow<List<CnoRow>> = state.map { s ->
+        if (!s.settings.cnoPlayerTeams) emptyList() else s.cno.snapshot?.takeIf { it.url == s.cnoUrl }?.rows ?: emptyList()
+    }
+
+    /** Marks a widget or CNO-tab bet placed: hidden from then on, through refreshes and restarts. */
+    fun markPlaced(item: MiniWindow.Item) {
+        viewModelScope.launch {
+            if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis())) }.isFailure) _toasts.tryEmit("Couldn't save that")
+        }
+    }
+
+    /** Undo, or "not placed after all": the bet shows again. */
+    fun unmarkPlaced(key: String) {
+        viewModelScope.launch { if (runCatching { c.placed.unmark(key) }.isFailure) _toasts.tryEmit("Couldn't save that") }
+    }
 
     /** Re-reads CNO now (Refresh, pull down, the mini window's button), if 3 s have passed. */
     fun refreshCno(quiet: Boolean = false) {
@@ -228,7 +302,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { runCatching { c.cno.loadBooks(row, force) } }
     }
 
-    /** The Novig app link for a CNO bet's game (`novigapp://events/…`), or null. */
+    /** The Novig app link that opens a CNO bet in Novig's bet slip (`novigapp://events/<outcome>/cno`), or null. */
     suspend fun novigLink(row: CnoRow): String? = withContext(Dispatchers.IO) { c.cno.novigLink(row) }
 
     /** Mirrors the runner into the screen's state, for as long as this screen lives. */
