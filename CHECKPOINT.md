@@ -1,13 +1,13 @@
-# CHECKPOINT 398 — read me first, then TASKS.md
+# CHECKPOINT 399 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T02:05:42Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-betting-research-dkp593` · **builds on:** `2e698b7` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T02:11:58Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-betting-research-dkp593` · **builds on:** `6276b67` (this checkpoint is the commit after it)
 
 ## Just done
-C2 data layer: ScanSettings.outlierGuard (default on) + maxOdds (default +1000, feed filter); Opportunity.bestBid/makerBid/priceIsOld; CrossCheck.devigger (CNO prefilled link); Scanner.recheck (<=40 books, no fair-odds calls); BetTracker averages skip VOID (failed pre-fix). ResearchFeaturesTest (6), ScannerTest recheck (2), BetTrackerTest void. engine+data green.
+C2 app layer: recheck (feed 'Recheck prices' + sheet 'Recheck price' + old-price banner offering Recheck), 'old price'/'stale fair' card labels, maker-bid section (only when a bid beats taking), CrazyNinjaOdds double-check link (Pinnacle first), Settings: outlier guard + longest odds; LocalClock pins screen time in tests. 256 tests green locally (2 live skipped), screenshots checked.
 
 ## Do this next
-App: MainViewModel.recheck + status; FeedScreen recheck button, old-price flag/banner by book age; OpportunitySheet recheck, maker bid, CNO link; Settings: outlier guard + max odds; screenshots; then RESEARCH.md §16
+Finish sweep of unread files (keys/usage, ScanService, Games/Tracker screens, reference clients, matching, RateGate, stream); then RESEARCH.md §16 + BRIEF/CLAUDE docs; CI; ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ App: MainViewModel.recheck + status; FeedScreen recheck button, old-price flag/b
 
 ## Last ten checkpoints
 ```
+  1e2cb8e ckpt 398: C2 data layer: ScanSettings.outlierGuard (default on) + maxOdds (default +1000
   4284bdd ckpt 397: C1/C2: fixed stale-fair pricing in Scanner (final result + reprice only from y
   b35fb87 ckpt 396: C1 started: local SDK + Maven/Robolectric mirror set up (build trap 6); full f
   449efd7 ckpt 395: Logged Tj's 2026-09-26 request (full tests, feature/scan improvements, OddsAss
@@ -25,8 +26,7 @@ App: MainViewModel.recheck + status; FeedScreen recheck button, old-price flag/b
   6c401d2 ckpt 391: CI 36173670267: only error was ScannerTest's trailing progress lambda binding 
   7469ec6 ckpt 390: B1-B5 code drafted (not compiled yet: local Gradle blocked by Maven Central 42
   180810d ckpt 389: Logged Tj's 2026-09-25 ~18:05Z request (background scan, speed/streaming, Odds
-  3528dbb ckpt 388: Shipped v0.9.0 (code 13): release.yml green, Release confirmed with vigilant-v
 ```
 
-(5 automatic checkpoint(s) since the last deliberate one — the
+(9 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
