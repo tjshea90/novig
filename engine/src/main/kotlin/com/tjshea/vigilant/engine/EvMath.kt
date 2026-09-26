@@ -39,7 +39,40 @@ data class PositiveDepth(
     val worstPrice: Double?,
 )
 
+/**
+ * A resting order to post instead of taking: on an exchange you can bid for the side yourself and
+ * wait for a fill, and makers pay no fee (NOVIG_API.md §8). [price] is the highest price on
+ * Novig's grid that still keeps [evPercent] at or above the target.
+ */
+data class MakerBid(val price: Double, val evPercent: Double)
+
+/** Novig's price grid (NOVIG_API.md §6): 0.001 steps at the ends, 0.005 steps from 0.055 to 0.945. */
+object PriceGrid {
+    /** The highest grid price at or below [p], or null below the grid's first step. */
+    fun floor(p: Double): Double? {
+        if (p < 0.001) return null
+        val milli = Math.floor(p * 1000 + 1e-9).toInt().coerceAtMost(999)
+        val snapped = if (milli in 51..949) {
+            // Mid-grid prices are multiples of 5 thousandths, starting at 0.055.
+            if (milli < 55) 50 else milli - milli % 5
+        } else {
+            milli
+        }
+        return snapped / 1000.0
+    }
+}
+
 object EvMath {
+
+    /**
+     * The best price to bid for an outcome with fair probability [fairProbability] and still make
+     * [minEvPercent]: fair / (1 + minEv), floored to Novig's grid. Makers pay no fee.
+     */
+    fun makerBid(fairProbability: Double, minEvPercent: Double): MakerBid? {
+        if (fairProbability <= 0.0 || fairProbability >= 1.0) return null
+        val price = PriceGrid.floor(fairProbability / (1.0 + minEvPercent.coerceAtLeast(0.0))) ?: return null
+        return MakerBid(price, fairProbability / price - 1.0)
+    }
 
     /** A contract pays 1¢. */
     const val CONTRACT_PAYOUT_DOLLARS = 0.01

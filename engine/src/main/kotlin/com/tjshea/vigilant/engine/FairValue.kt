@@ -31,6 +31,12 @@ data class FairSettings(
     val fallbackToAverage: Boolean = true,
     /** Fewest books a market-average component may be built from. */
     val minBooks: Int = 2,
+    /**
+     * With 3+ books in a component, each side's fair probability is the lower of the books' mean
+     * and median (CrazyNinjaOdds' "worst case between market average and median", RESEARCH.md
+     * §16). One stale or off-market book can pull a mean a long way; it can't pull the median.
+     */
+    val outlierGuard: Boolean = true,
 ) {
     init {
         require(sharpWeight in 0.0..1.0) { "sharpWeight must be in [0,1], got $sharpWeight" }
@@ -105,8 +111,11 @@ object FairValue {
         val sharp = perBook.filter { it.isSharp }
         val average = perBook
 
-        fun avg(list: List<BookFair>): List<Double> =
-            (0 until outcomeCount).map { i -> list.sumOf { it.fairProbabilities[i] } / list.size }
+        fun avg(list: List<BookFair>): List<Double> = (0 until outcomeCount).map { i ->
+            val probs = list.map { it.fairProbabilities[i] }
+            val mean = probs.sum() / probs.size
+            if (settings.outlierGuard && probs.size >= OUTLIER_GUARD_MIN_BOOKS) minOf(mean, median(probs)) else mean
+        }
 
         val averageOk = average.size >= settings.minBooks
 
@@ -133,6 +142,15 @@ object FairValue {
                 else -> null
             }
         }
+    }
+
+    /** The outlier guard needs a middle book to lean on. */
+    const val OUTLIER_GUARD_MIN_BOOKS = 3
+
+    fun median(values: List<Double>): Double {
+        val sorted = values.sorted()
+        val mid = sorted.size / 2
+        return if (sorted.size % 2 == 1) sorted[mid] else (sorted[mid - 1] + sorted[mid]) / 2.0
     }
 
     private fun devigBook(book: BookPrices, settings: FairSettings): BookFair? {
