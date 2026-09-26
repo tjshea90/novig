@@ -1872,3 +1872,8 @@ Make sure it is actually comparing the cno odds to fair odds based on the cno fe
 <summary>Background command "Poll the release run until done" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-26T19:35:30Z
+```
+Review the screenshot. Notice the floating widget doesn't say what the pick actually is. I need to be able to see the exact pick for each positive EV bet in the widget so I can choose it in novig without opening the full vigilant app
+```
