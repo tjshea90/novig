@@ -186,7 +186,7 @@ class ScreenshotTest {
         shoot("2b_detail_maker") { OpportunityDetail(o, s.settings, onRecheck = {}) {} }
         compose.onNodeWithText("OR POST A BID (MAKER)").assertExists()
         compose.onNodeWithText("Bid up to").assertExists()
-        compose.onNodeWithText("Double-check on CrazyNinjaOdds (", substring = true).assertExists()
+        compose.onNodeWithText("Double-check on CrazyNinjaOdds (Pinnacle)").assertExists()
         compose.onNodeWithText("Recheck price").assertExists()
         compose.onNodeWithText("Novig price read just now", substring = true).assertExists()
     }

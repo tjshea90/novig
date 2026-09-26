@@ -17,15 +17,20 @@ object CrossCheck {
     private const val DEVIGGER = "https://crazyninjaodds.com/Public/sportsbooks/sportsbook_devigger.aspx"
 
     /**
-     * The book used is the sharpest one behind the fair price: a sharp book if one fed it, else
-     * the lowest-hold book that did. Null when there's no two-sided reference line or no price.
+     * The book used is the sharpest one behind the fair price: Pinnacle if it fed it, else the
+     * lowest-hold sharp book, else the lowest-hold book. (An exchange's tight bid/ask reads as a
+     * low hold, but Pinnacle's line is the reference bettors check against.) Null when there's no
+     * two-sided reference line or no price.
      */
     fun devigger(o: Opportunity): DeviggerLink? {
         val fair = o.fair ?: return null
         val cost = o.quote?.cost ?: return null
         val idx = o.referenceIndex ?: return null
         val used = fair.perBook.filter { it.book.bookTitle in fair.booksUsed && it.book.decimalOdds.size == 2 }
-        val book = used.filter { it.isSharp }.minByOrNull { it.hold } ?: used.minByOrNull { it.hold } ?: return null
+        val book = used.firstOrNull { it.book.bookKey == "pinnacle" }
+            ?: used.filter { it.isSharp }.minByOrNull { it.hold }
+            ?: used.minByOrNull { it.hold }
+            ?: return null
         val odds = book.book.decimalOdds
         val legs = listOf(odds[idx], odds[1 - idx]).joinToString("/") { Odds.formatAmerican(Odds.decimalToAmerican(it)) }
         val final = Odds.formatAmerican(Odds.probabilityToAmerican(cost.coerceIn(0.001, 0.999)))
