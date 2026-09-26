@@ -389,7 +389,7 @@ private fun CnoViewEditor(saved: String, onSave: (String) -> Unit) {
         ) { Text("Save") }
         if (saved.isNotBlank()) OutlinedButton(onClick = { text = ""; onSave("") }) { Text("Use Novig default") }
     }
-    Hint("On crazyninjaodds.com's Positive EV page: set your filters, open Shared View, tap Copy Link, and paste it here. The devig method stays CNO's default (a link doesn't carry it).")
+    Hint("On crazyninjaodds.com's Positive EV page: set your filters, open Shared View, tap Copy Link, and paste it here. Shared View links don't include the devig method, so CNO's default (liquidity-weighted, worst case) is used.")
 }
 
 @Composable
