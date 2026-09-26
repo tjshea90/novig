@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,15 +47,19 @@ import kotlinx.coroutines.delay
 /** The current time, ticking every [periodMs] while on screen. Only the caller recomposes. */
 @Composable
 fun rememberNow(periodMs: Long = 1_000): Long {
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(periodMs) {
+    val clock = LocalClock.current
+    var now by remember(clock) { mutableLongStateOf(clock()) }
+    LaunchedEffect(periodMs, clock) {
         while (true) {
             delay(periodMs)
-            now = System.currentTimeMillis()
+            now = clock()
         }
     }
     return now
 }
+
+/** The screens' clock. Tests pin it, so "old price" and "stale" read the same on any day. */
+val LocalClock = staticCompositionLocalOf<() -> Long> { System::currentTimeMillis }
 
 /** OddsJam's signature green EV pill. */
 @Composable

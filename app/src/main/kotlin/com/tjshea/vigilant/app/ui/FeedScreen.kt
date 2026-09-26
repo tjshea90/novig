@@ -51,6 +51,8 @@ fun FeedScreen(
     onOpenSettings: () -> Unit,
     onTrack: (Opportunity, Double) -> Unit,
     onSort: (FeedSort) -> Unit = {},
+    /** Re-read these markets' Novig prices only (seconds, no fair-odds calls). */
+    onRecheck: (Collection<String>) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
@@ -87,7 +89,7 @@ fun FeedScreen(
                 item(key = "leagues") {
                     LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
                 }
-                item(key = "summary") { FeedSummary(state, now, onScan, onOpenSettings, onSort) }
+                item(key = "summary") { FeedSummary(state, now, onScan, onOpenSettings, onSort) { onRecheck(feedMarketIds(state)) } }
                 items(state.feed, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
@@ -98,19 +100,39 @@ fun FeedScreen(
     selected?.let { o ->
         // Show the freshest copy of the selected line: a scan may have re-priced it since the tap.
         val live = state.result?.opportunities?.firstOrNull { it.key == o.key } ?: o
-        OpportunitySheet(live, state.settings, onDismiss = { selected = null }, onTrack = { stake -> onTrack(live, stake); selected = null })
+        OpportunitySheet(
+            live, state.settings,
+            onDismiss = { selected = null },
+            onTrack = { stake -> onTrack(live, stake); selected = null },
+            onRecheck = { onRecheck(listOf(live.market.marketId)) }.takeIf { !state.status.scanning },
+            rechecking = state.status.rechecking,
+        )
     }
 }
 
 @Composable
-private fun FeedSummary(state: UiState, now: Long, onScan: () -> Unit, onOpenSettings: () -> Unit, onSort: (FeedSort) -> Unit) {
+private fun FeedSummary(
+    state: UiState,
+    now: Long,
+    onScan: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onSort: (FeedSort) -> Unit,
+    onRecheck: () -> Unit,
+) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         UsageStrip(state)
         state.status.errors.take(3).forEach { Banner(it, color = Edge.colors.negative) }
-        val scannedAt = state.status.scannedAtMs
-        if (scannedAt != null && !state.status.scanning && now - scannedAt > STALE_SCAN_MS && state.feed.isNotEmpty()) {
-            // Manual scans age: an edge from 20 minutes ago may be gone. Say so before Tj bets it.
-            Banner("These prices are ${Format.age(scannedAt, now).removeSuffix(" ago")} old. Scan again before betting.", action = "Scan", onAction = onScan)
+        val old = if (state.status.scanning) emptyList() else state.feed.filter { it.priceIsOld(now) }
+        if (old.isNotEmpty()) {
+            // Novig prices age: an edge from 20 minutes ago may be gone. Say so before Tj bets it,
+            // and offer the few-second recheck rather than a whole scan.
+            val oldest = old.mapNotNull { it.bookFetchedAtMs }.minOrNull()
+            Banner(
+                (if (old.size == state.feed.size) "These prices are" else "${old.size} of these prices are") +
+                    " up to ${Format.age(oldest, now).removeSuffix(" ago")} old. Recheck them (a few seconds) or scan again before betting.",
+                action = if (state.status.rechecking) null else "Recheck",
+                onAction = onRecheck,
+            )
         }
         if (state.status.unscanned.isNotEmpty() && !state.status.scanning) {
             Banner(
@@ -171,11 +193,19 @@ private fun FeedSummary(state: UiState, now: Long, onScan: () -> Unit, onOpenSet
                         }
                     }
                 }
-                Text(
-                    "Fair: ${fairSourceLabel(state.settings)}" + sourceSummary(status).let { if (it.isEmpty()) "" else " · $it" },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "Fair: ${fairSourceLabel(state.settings)}" + sourceSummary(status).let { if (it.isEmpty()) "" else " · $it" },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (!status.scanning) {
+                        TextButton(onClick = onRecheck, enabled = !status.rechecking, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            Text(if (status.rechecking) "Rechecking…" else "Recheck prices", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
             }
         }
     }
@@ -196,8 +226,8 @@ private fun sourceNames(state: UiState): String {
 fun sourceSummary(status: ScanStatus): String =
     status.sources.filter { it.matched > 0 }.joinToString(" · ") { "${it.name} ${it.matched}" }.let { if (it.isEmpty()) it else "$it games" }
 
-/** Past this, a scan's prices get a "scan again" banner. */
-const val STALE_SCAN_MS = 10 * 60_000L
+/** The feed's markets, best first: what "Recheck" re-reads (the scanner reads at most 40). */
+fun feedMarketIds(state: UiState): List<String> = state.feed.map { it.market.marketId }.distinct()
 
 fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
     FairSource.SHARP -> "sharp books"
@@ -225,7 +255,8 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                     color = if (o.isLive) Edge.colors.negative else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                if (refStale) Text("stale", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                if (refStale) Text("stale fair", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
