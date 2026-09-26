@@ -27,6 +27,8 @@ object CnoPage {
         val button: Pair<String, String>?,
         /** Where the form posts, relative to the page. */
         val action: String?,
+        /** Every checkbox's name, ticked or not (an unticked one isn't in [fields], but can be ticked). */
+        val checkboxes: List<String> = emptyList(),
     )
 
     /** One `length|type|id|content|` record of a delta reply. */
@@ -38,6 +40,7 @@ object CnoPage {
         val end = html.indexOf("</form>", start.range.last, ignoreCase = true).let { if (it < 0) html.length else it }
         val body = html.substring(start.range.last + 1, end)
         val fields = mutableListOf<Pair<String, String>>()
+        val checkboxes = mutableListOf<String>()
         var button: Pair<String, String>? = null
         // Inputs, selects and textareas in document order, as a browser serializes them.
         val tag = Regex("""<(input|select|textarea)\b([^>]*)>""", RegexOption.IGNORE_CASE)
@@ -53,7 +56,10 @@ object CnoPage {
                     when ((attrs["type"] ?: "text").lowercase()) {
                         "submit" -> if (name.endsWith("\$ButtonUpdate")) button = name to (attrs["value"] ?: "Update")
                         "button", "image", "reset", "file" -> Unit
-                        "checkbox", "radio" -> if ("checked" in attrs) fields += name to (attrs["value"] ?: "on")
+                        "checkbox", "radio" -> {
+                            if (attrs["type"].equals("checkbox", ignoreCase = true)) checkboxes += name
+                            if ("checked" in attrs) fields += name to (attrs["value"] ?: "on")
+                        }
                         else -> fields += name to (attrs["value"] ?: "")
                     }
                 }
@@ -80,7 +86,7 @@ object CnoPage {
         val timer = Regex("""Sys\.UI\._Timer,\s*\{[^}]*"uniqueID":"([^"]+)"""").find(html)?.groupValues?.get(1)
         val action = attributes(start.value.removePrefix("<form").removeSuffix(">"))["action"]
         if (timer == null && button == null) throw changed("no way to load the table")
-        return Form(fields, scriptManager, gridPanel, timer, button, action)
+        return Form(fields, scriptManager, gridPanel, timer, button, action, checkboxes)
     }
 
     /**
@@ -126,6 +132,7 @@ object CnoPage {
         val book = col { it.equals("Sportsbook", true) || it.equals("Book", true) }
         val fair = col { it.equals("Fair Odds", true) }
         val books = col { it.equals("Books", true) }
+        val extra = col { it.equals("Extra", true) }
         if (listOf(ev, event, market, bet, odds, book).any { it < 0 }) {
             if (headers.isEmpty()) return Table(emptyList(), null, note)
             throw changed("the table's columns changed (${headers.joinToString()})")
@@ -154,17 +161,26 @@ object CnoPage {
                     books = cells.getOrNull(books)?.let { text(it).toIntOrNull() },
                     gameUrl = link(cells[event], base),
                     betUrl = link(cells[book], base),
+                    // CNO's legend: ⚠️ = devigged from 1-way lines using an estimated juice.
+                    oneWay = WARNING in text(cells[ev] + " " + cells.getOrNull(extra).orEmpty() + " " + cells.getOrNull(fair).orEmpty()),
                 )
             }
             .toList()
         return Table(rows, headers[ev].removeSuffix("EV%").trim().takeIf { it.isNotEmpty() }, note)
     }
 
-    /** "Last Updated: 27 seconds ago" → 27. Null while CNO still says "Loading...". */
+    /**
+     * "Last Updated: 27 seconds ago" → 27; "1 minute and 6 seconds ago" → 66 (CNO writes both).
+     * Null while CNO still says "Loading...".
+     */
     fun lastUpdatedSeconds(html: String): Int? {
-        val m = Regex("""Last Updated:\s*(\d+|an?)\s+(second|minute|hour)s?\s+ago""", RegexOption.IGNORE_CASE).find(text(html)) ?: return null
-        val n = m.groupValues[1].toIntOrNull() ?: 1
-        return n * when (m.groupValues[2].lowercase()) { "hour" -> 3600; "minute" -> 60; else -> 1 }
+        val phrase = Regex("""Last Updated:\s*([^<]*?)\s+ago""", RegexOption.IGNORE_CASE).find(text(html))?.groupValues?.get(1) ?: return null
+        val parts = Regex("""(\d+|an?)\s+(day|hour|minute|second)s?""", RegexOption.IGNORE_CASE).findAll(phrase).toList()
+        if (parts.isEmpty()) return null
+        return parts.sumOf { m ->
+            val n = m.groupValues[1].toIntOrNull() ?: 1
+            n * when (m.groupValues[2].lowercase()) { "day" -> 86_400; "hour" -> 3600; "minute" -> 60; else -> 1 }
+        }
     }
 
     /** "+335 ($4)" → 335; "EVEN" → 100. */
@@ -225,6 +241,9 @@ object CnoPage {
             }
         }
     }
+
+    /** CNO's "⚠️" (warning sign, with or without the emoji variation selector). */
+    const val WARNING = "\u26A0"
 
     private fun changed(what: String) = CnoException("CrazyNinjaOdds' page changed ($what), so its list can't be read. Open it in the browser instead.")
 }
