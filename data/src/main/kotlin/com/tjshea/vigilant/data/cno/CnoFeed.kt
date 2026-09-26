@@ -98,8 +98,9 @@ class CnoFeed(
             // The disk copy only has to survive a restart: write it when the list changed or a
             // minute has passed, not on every 5-second read (flash wear, battery).
             val changed = previous == null || previous.rows != snap.rows || previous.url != snap.url || previous.filters != snap.filters
-            if (store != null && (changed || now - savedAtMs >= SAVE_EVERY_MS)) {
-                if (runCatching { store.update { CnoCache(snap) } }.isSuccess) savedAtMs = now
+            val disk = store
+            if (disk != null && (changed || now - savedAtMs >= SAVE_EVERY_MS)) {
+                if (runCatching { disk.update { CnoCache(snap) } }.isSuccess) savedAtMs = now
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             _state.update { it.copy(refreshing = false) }
