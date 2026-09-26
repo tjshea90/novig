@@ -1387,3 +1387,24 @@ props calls themselves are fixture-tested only.
       v0.10.0 (code 14, 4.77MB): https://github.com/tjshea90/novig/releases/tag/v0.10.0.
       ship.sh's local Gradle step couldn't run in this container (Maven Central 429s; the
       mirror init script was blocked by the auto-mode classifier), so CI was the test gate.*
+
+## Tj's request, 2026-09-26 ~01:47Z — full tests, better features/scanning, OddsAssist + CrazyNinjaOdds research
+
+> Run full tests on this app, try to improve the features and scanning, then research the following
+> websites:
+> https://pro.oddsassist.com/advantages/plus-ev
+> https://crazyninjaodds.com/site/tools/positive-ev.aspx
+> Figure out if these websites truly offer positive EV bets, and for novig. If so, can they somehow
+> be incorporated in my app or improve the app in any way?
+
+### Plan
+- [ ] C1 Full tests (CLAUDE.md protocol): automated floor, whole-app sweep (feed, games, tracker,
+      settings; engine, data/novig, reference, match, scanner, keys, store, background scan), fix
+      with failing-first tests.
+- [ ] C2 Improve features and scanning (what the sweep and the research below turn up).
+- [ ] C3 Research pro.oddsassist.com plus-EV: data sources, devig method, Novig coverage, whether
+      its +EV is real (hands-on in Chromium where possible), terms on reuse.
+- [ ] C4 Research crazyninjaodds.com positive-EV tool: what it computes (devig calculator vs. a
+      live feed), methods, Novig coverage, terms.
+- [ ] C5 Verdict + what (if anything) to incorporate into Vigilant; write RESEARCH.md section.
+- [ ] C6 Tests, CI, ship, report.
