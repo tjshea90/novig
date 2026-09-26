@@ -35,6 +35,9 @@ data class SourceReport(
     val error: String?,
 )
 
+/** What a [Scanner.recheck] read: [read] books refreshed, [failed] not (shown as they were). */
+data class RecheckReport(val result: ScanResult?, val read: Int, val failed: Int, val error: String?)
+
 /** What happened on one scan, for the status line and banners. */
 data class ScanReport(
     val result: ScanResult?,
@@ -355,6 +358,40 @@ class Scanner(
         )
     }
 
+    /**
+     * Re-reads just [marketIds]' Novig books (at most [MAX_RECHECK], paced like a scan) and
+     * re-prices against the last scan's fair odds. Seconds instead of a full scan: for checking
+     * that the feed's edges are still there right before betting. Null result before any scan.
+     */
+    suspend fun recheck(
+        settings: ScanSettings,
+        marketIds: Collection<String>,
+        onProgress: (Int, Int) -> Unit = { _, _ -> },
+    ): RecheckReport = mutex.withLock {
+        val cat = catalog ?: return@withLock RecheckReport(null, 0, 0, null)
+        val ids = marketIds.distinct().take(MAX_RECHECK)
+        val now = clock()
+        var error: String? = null
+        var read = 0
+        var failed = 0
+        if (ids.isNotEmpty()) {
+            try {
+                val batch = novig.books(ids) { d, t -> onProgress(d, t) }
+                books = HashMap(books).apply { putAll(batch.books) }
+                read = batch.fetched + batch.notModified
+                failed = batch.failed
+                error = batch.lastError ?: batch.keyProblem
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                failed = ids.size
+                error = e.message ?: e.javaClass.simpleName
+            }
+        }
+        val plan = planFor(cat, settings, now, youngFairOnly = true, fairAsOf = lastScanAtMs ?: now)
+        RecheckReport(Pricing.price(plan, books, settings, now), read, failed, error)
+    }
+
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
         val cat = catalog ?: return@withLock null
@@ -536,6 +573,9 @@ class Scanner(
 
         /** Books read between partial results: small enough that the feed moves every ~2 seconds. */
         const val CHUNK = 8
+
+        /** Most books one recheck reads: about seven seconds on Novig's public routes. */
+        const val MAX_RECHECK = 40
 
         /** A line this close below zero last scan is worth re-reading early: a tick can flip it. */
         const val NEAR_MISS_EV = -0.02
