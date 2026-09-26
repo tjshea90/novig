@@ -90,7 +90,7 @@ import com.tjshea.vigilant.engine.Odds
 /**
  * The CNO scanner (Tj, 2026-09-26; RESEARCH.md §18–19): CrazyNinjaOdds' +EV list for Tj's view,
  * read with the scanner's filters (worst-case devig, odds cap, fewest books), passed through the
- * app's own checks ([CnoChecks]), and kept current while this app or its mini window is on screen.
+ * app's own checks ([CnoChecks]), and kept current while this tab or a widget is on screen ([CnoWatch]).
  * Tapping a bet shows every book's odds for it and Vigilant's own worst-case check.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -233,8 +233,8 @@ fun CnoScreen(
                             )
                             snap == null && cno.error == null -> EmptyState(
                                 "Reading CrazyNinjaOdds…",
-                                "Its +EV list for your view appears here in a few seconds, and stays current while Vigilant " +
-                                    "or its mini window is on screen.",
+                                "Its +EV list for your view appears here in a few seconds, and stays current while this tab " +
+                                    "or a widget is on screen (nothing is read once you close them).",
                             )
                             screened != null && picks.isEmpty() -> EmptyState(
                                 "No +EV bets pass right now",
@@ -604,7 +604,8 @@ fun CnoDetail(
             if (view != null) TextButton(onClick = onReloadBooks, enabled = !books.loading) { Text(if (books.loading) "Reading…" else "Re-read books") }
         }
         Text(
-            "Open in Novig puts this bet in Novig's bet slip. \"I placed it\" hides it here and in the widget until the game is over.",
+            "Open in Novig puts this bet in Novig's bet slip." +
+                if (onPlaced != null) " \"I placed it\" hides it here and in the widget until the game is over." else "",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

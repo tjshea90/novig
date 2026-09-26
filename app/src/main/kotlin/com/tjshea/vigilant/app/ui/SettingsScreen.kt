@@ -423,9 +423,9 @@ fun SettingsScreen(
             SectionTitle("About")
             Hint(
                 "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (pinnapi), " +
-                    "Polymarket, Kalshi, The Odds API · CNO scanner: crazyninjaodds.com. Vigilant's scan fetches only when " +
-                    "you tap Scan or pull to refresh; CrazyNinjaOdds' list only while Vigilant or its mini window is on " +
-                    "screen. Nothing runs in the background.",
+                    "Polymarket, Kalshi, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
+                    "fetches only when you tap Scan or pull to refresh; CrazyNinjaOdds' list only while its tab or a widget is on " +
+                    "screen (and the screen is on). Nothing runs in the background.",
             )
         }
     }
@@ -444,7 +444,7 @@ fun refreshHint(s: ScanSettings): String {
     return when {
         seconds == CnoFeed.REALTIME -> "Reads again as soon as CNO can have new odds (it updates every 13–33 s), then every 3 s until they land."
         seconds <= 0 -> "Only when you tap Refresh or pull down."
-        else -> "Every ${secondsLabel(seconds)} while Vigilant or its mini window is on screen; CNO itself updates every 13–33 s."
+        else -> "Every ${secondsLabel(seconds)} while the CNO tab or a widget is on screen; CNO itself updates every 13–33 s."
     } + use + " Nothing is read once both are closed."
 }
 

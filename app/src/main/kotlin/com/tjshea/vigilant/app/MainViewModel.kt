@@ -123,7 +123,7 @@ data class UiState(
  * Scan or pulls to refresh (his rule, 2026-09-25): nothing fetches on launch, on a timer, on a
  * tab change, or when a setting changes. Settings changes re-price from what the last scan
  * fetched, so they're instant and free. The one exception is CrazyNinjaOdds' list ([watchCno],
- * Tj 2026-09-26): read while Vigilant or its mini window is on screen, paced by [CnoFeed].
+ * Tj 2026-09-26): read only while its tab or a widget is on screen ([watchCno]), paced by [CnoFeed].
  *
  * The scan itself runs in the app's [com.tjshea.vigilant.data.scanner.ScanRunner], not here, so it
  * outlives this screen (Tj switches apps mid-scan); this only mirrors it: progress and partial

@@ -53,7 +53,7 @@ data class CnoBooksState(
  *    after its last one, from its "Last Updated" line), then reads every 3 s until one lands:
  *    new odds within ~3 s of CNO publishing them, without reading the same list over and over;
  *  - fixed intervals (5 s, 15 s, …) read on the clock;
- *  - the timer ([watch]) runs only while the app or its mini window is on screen (the caller
+ *  - the timer ([watch]) runs only while the CNO tab or a widget is on screen ([CnoWatch]; the caller
  *    cancels it otherwise), backs off after failed reads (5 s doubling to 2 minutes) and honors
  *    Retry-After.
  */
@@ -155,7 +155,7 @@ class CnoFeed(
 
     /**
      * Keeps the configured view current until cancelled: the caller runs this only while
-     * Vigilant or its mini window is on screen. A config change (a new link, new filters, a new
+     * the CNO tab or a widget is on screen ([CnoWatch]). A config change (a new link, new filters, a new
      * interval) takes effect at once.
      */
     suspend fun watch(config: Flow<CnoConfig>) {
