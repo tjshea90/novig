@@ -5,8 +5,10 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
+        <exclude domain="file" path="cno.json" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
+        <exclude domain="file" path="cno.json" />
     </device-transfer>
 </data-extraction-rules>

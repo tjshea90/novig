@@ -4,6 +4,9 @@ import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
 import com.tjshea.vigilant.app.data.KeystoreSigningKey
 import com.tjshea.vigilant.app.data.NovigConnectionStore
+import com.tjshea.vigilant.data.cno.CnoCache
+import com.tjshea.vigilant.data.cno.CnoClient
+import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.FileApiKeyStore
 import com.tjshea.vigilant.data.keys.KeyPool
@@ -40,7 +43,8 @@ class VigilantApp : Application() {
  * One of everything, for the life of the process. A single [OkHttpClient] shares one connection
  * pool across Novig and every odds provider, so a scan reuses warm HTTP/2 connections instead of
  * paying a TLS handshake per request (a real battery cost on a phone radio). Nothing here starts
- * any network on its own: only a scan the user asks for does.
+ * any network on its own: only a scan the user asks for does, and CrazyNinjaOdds' list while
+ * Vigilant is on screen ([cno]).
  */
 class AppContainer(app: Application) {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -72,6 +76,12 @@ class AppContainer(app: Application) {
      */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val runner = ScanRunner(scanner, appScope)
+
+    /**
+     * CrazyNinjaOdds' +EV list (RESEARCH.md §18). It reads only while [MainActivity] is started
+     * (on screen, or as the mini window), at most once per 30 s; the last list is kept on disk.
+     */
+    val cno = CnoFeed(CnoClient(http), JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json))
 
     /** Whether Vigilant is on screen: a finished scan only notifies when it isn't. */
     @Volatile
