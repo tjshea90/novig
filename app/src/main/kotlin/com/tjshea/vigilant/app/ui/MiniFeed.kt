@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -245,9 +246,10 @@ internal fun MiniRow(
             Column {
                 Row(
                     Modifier.clearAndSetSemantics {
-                        text = AnnotatedString(
-                            listOfNotNull(if (item.agrees) "Books agree." else null, item.title, item.team?.let { "($it)" }).joinToString(" "),
-                        )
+                        text = AnnotatedString(item.title)
+                        // Read after the pick: "books agree, team HOU".
+                        val extras = listOfNotNull(if (item.agrees) "books agree" else null, item.team?.let { "team $it" })
+                        if (extras.isNotEmpty()) stateDescription = extras.joinToString(", ")
                     },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

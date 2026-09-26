@@ -208,7 +208,7 @@ class ScreenshotTest {
         compose.onAllNodesWithText("OR POST A BID (MAKER)").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
@@ -323,7 +323,7 @@ class ScreenshotTest {
 
     @Test fun cnoCardShowsTheBooksVerdictOnceLoaded() {
         screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.withBooks(), {}, {}) }
-        compose.onNodeWithText("✓ 3 books agree").assertIsDisplayed()
+        compose.onNodeWithText("✓ 3 of 3 books agree").assertIsDisplayed()
     }
 
     @Test fun cnoSheetAsksForTheBetsBooks() {
@@ -343,7 +343,7 @@ class ScreenshotTest {
         shoot("8e_cno_detail") {
             com.tjshea.vigilant.app.ui.CnoDetail(pick, s.cno.snapshot, s.settings, s.cnoUrl, s.books[pick.row.key], SampleScan.NOW)
         }
-        compose.onNodeWithText("✓ 3 books agree").assertIsDisplayed()
+        compose.onNodeWithText("✓ 3 of 3 books agree").assertIsDisplayed()
         compose.onNodeWithText("Pinnacle").assertIsDisplayed()
         compose.onNodeWithText("DraftKings").assertIsDisplayed() // one side only: listed, not counted
         compose.onNodeWithText("judged").assertIsDisplayed() // Novig's own row
@@ -375,7 +375,7 @@ class ScreenshotTest {
         var asked: com.tjshea.vigilant.data.cno.CnoRow? = null
         shootAsWindow("7f_mini_window_books") { MiniFeed(s, next = 0, booksKey = "cno:" + SampleCno.rows[1].key, onLoadBooks = { asked = it }) }
         assert(asked?.bet == "Justin Jefferson Under 69.5") { "asked $asked" }
-        compose.onNodeWithText("✓ 3 books agree", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("✓ 3 of 3 books agree", substring = true).assertIsDisplayed()
         compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
         compose.onNodeWithText("1/4").assertIsDisplayed()
     }

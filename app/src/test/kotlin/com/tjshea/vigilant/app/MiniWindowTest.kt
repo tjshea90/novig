@@ -114,13 +114,79 @@ class MiniWindowTest {
     }
 
     @Test
-    fun `with CNO's list alone the buttons are Refresh, Books and Next`() {
+    fun `with CNO's list alone the picture-in-picture buttons are Books, Up and Down, with Refresh when CNO is read only on a tap`() {
+        // Tj, 2026-09-26: up and down instead of Next.
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val cno = MiniWindow.params(context, autoEnter = true, scanning = true, cnoOnly = true)
-        assertEquals(listOf("Refresh", "Books", "Next"), cno.actions.map { it.title.toString() })
+        assertEquals(listOf("Books", "Up", "Down"), cno.actions.map { it.title.toString() })
         assertTrue(cno.actions.all { it.isEnabled })
         // In the Books view the same button goes back to the list.
-        assertEquals("List", MiniWindow.params(context, true, false, cnoOnly = true, books = true).actions[1].title.toString())
+        assertEquals("List", MiniWindow.params(context, true, false, cnoOnly = true, books = true).actions[0].title.toString())
+        // Nothing reads CNO by itself on "Tap only": Refresh takes the first place (the Books view keeps List).
+        assertEquals(listOf("Refresh", "Up", "Down"), MiniWindow.params(context, true, false, cnoOnly = true, tapsOnly = true).actions.map { it.title.toString() })
+        assertEquals("List", MiniWindow.params(context, true, false, cnoOnly = true, books = true, tapsOnly = true).actions[0].title.toString())
+    }
+
+    @Test
+    fun `Up and Down stop at the ends of the list instead of wrapping around`() {
+        assertEquals(0 until 3, MiniWindow.page(size = 7, fit = 3, next = -1, wrap = false))
+        assertEquals(6 until 7, MiniWindow.page(7, 3, 2, wrap = false))
+        assertEquals(6 until 7, MiniWindow.page(7, 3, 9, wrap = false)) // extra Downs stay on the last page
+        assertEquals(3, MiniWindow.pages(7, 3))
+        assertEquals(0, MiniWindow.pages(0, 3))
+    }
+
+    @Test
+    fun `a placed bet is gone from the widget through every refresh, and the same bet at another line says so`() {
+        val base = SampleCno.state()
+        val bowers = MiniWindow.items(base, SampleScan.NOW).first { it.title == "Brock Bowers Under 4.5" }
+        val placed = MiniWindow.placed(bowers, SampleScan.NOW)
+        assertEquals("cno:" + SampleCno.rows[3].key, placed.key)
+        assertEquals(SampleCno.rows[3].startsAtMs, placed.startsAtMs)
+        val after = base.copy(placed = listOf(placed))
+        assertTrue(MiniWindow.items(after, SampleScan.NOW).none { it.key == bowers.key })
+        // A refresh re-reads the list (a new snapshot, new price): still gone.
+        val refreshed = after.copy(cno = CnoState(snapshot = SampleCno.snapshot(readAgoMs = 1_000, rows = SampleCno.rows.map { if (it.key == SampleCno.rows[3].key) it.copy(odds = 105, ev = 0.05) else it })))
+        assertTrue(MiniWindow.items(refreshed, SampleScan.NOW).none { it.key == bowers.key })
+        // Bowers at another line (Under 5.5, a different CNO side) shows, tagged with the line Tj placed.
+        val other = SampleCno.rows[3].copy(bet = "Brock Bowers Under 5.5", gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=44")
+        val withOther = after.copy(cno = CnoState(snapshot = SampleCno.snapshot(rows = SampleCno.rows + other)))
+        assertEquals("U4.5", MiniWindow.items(withOther, SampleScan.NOW).first { it.title == "Brock Bowers Under 5.5" }.placedOther)
+        // Undo (the mark taken off): back on the list.
+        assertTrue(MiniWindow.items(after.copy(placed = emptyList()), SampleScan.NOW).any { it.key == bowers.key })
+    }
+
+    @Test
+    fun `player bets carry their team, and the green check only when the books agree`() {
+        val base = SampleCno.withBooks()
+        val jj = SampleCno.rows[1]
+        val s = base.copy(teams = mapOf(jj.key to "MIN"))
+        val item = MiniWindow.items(s, SampleScan.NOW).first { it.title == "Justin Jefferson Under 69.5" }
+        assertEquals("MIN", item.team)
+        assertTrue(item.agrees) // Pinnacle, ProphetX and Kalshi each make +117 +EV
+        // Without books read, or with the check switched off: no check.
+        assertFalse(MiniWindow.items(SampleCno.state().copy(teams = mapOf(jj.key to "MIN")), SampleScan.NOW).first { it.title == jj.bet }.agrees)
+        assertFalse(MiniWindow.items(s.copy(settings = s.settings.copy(cnoCheckBooks = false)), SampleScan.NOW).first { it.title == jj.bet }.agrees)
+        // Books that no longer agree once Novig's price in the newer list moved to -125.
+        val moved = s.copy(cno = CnoState(snapshot = SampleCno.snapshot(readAgoMs = 1_000, rows = SampleCno.rows.map { if (it.key == jj.key) it.copy(odds = -125, ev = 0.012, fairProbability = 0.5613) else it })))
+        assertFalse(MiniWindow.items(moved, SampleScan.NOW).firstOrNull { it.title == jj.bet }?.agrees ?: false)
+    }
+
+    @Test
+    fun `a Vigilant bet opens Novig's bet slip on its own outcome`() {
+        val o = SampleScan.state().feed.first()
+        val item = MiniWindow.items(SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = ScannerMode.VIGILANT)), SampleScan.NOW).first { it.key == o.key }
+        assertEquals("novigapp://events/${o.outcome.outcomeId}", MiniWindow.novigLink(item))
+        assertEquals(null, MiniWindow.novigLink(MiniWindow.items(SampleCno.state(), SampleScan.NOW).first { it.fromCno }))
+    }
+
+    @Test
+    fun `the manifest asks for display over other apps, for the floating widget`() {
+        val manifest = File("src/main/AndroidManifest.xml").readText()
+        assertTrue(manifest.contains("""<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />"""))
+        // Its settings default on; saved settings from before it existed read it as on too.
+        val old = Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"]}""")
+        assertTrue(old.floatingWidget && old.cnoCheckBooks && old.cnoPlayerTeams)
     }
 
     @Test
