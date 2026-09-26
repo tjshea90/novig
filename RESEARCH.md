@@ -1514,3 +1514,42 @@ with the owner." So way 4, the self-refreshing reader:
   itself (CNO's price is up to ~1 minute + the refresh interval old). The row's age is shown and
   goes amber after 5 minutes; Novig's own screen is the check before betting.
 
+
+## 19. Making the CNO scanner accurate, standalone and fast (2026-09-26 ~18:20–18:45Z)
+
+Tj: make sure CNO's rows are really +EV (no 1–2-book markets), worst-case devig, an odds cap of
++150, a CNO-only mode with the rest of the app asleep, 5 s / 15 s / real-time refresh, and every
+book's odds for a tapped bet, in the widget too. Checked live (about 20 requests):
+
+- **CNO's EV is its fair odds against the Novig price.** Every row checks out: EV = fair
+  probability × decimal price − 1 (Justin Jefferson U69.5 +120 vs fair +109 → 0.4785 × 2.20 − 1 =
+  5.26%, CNO 5.25%). CNO's fair is devigged from the other books, so the question is only how
+  trustworthy that consensus is.
+- **Devig choices** (CNO FAQ): Liquidity-Weighted (weighted by liquidity and limits, as game time
+  nears), Unweighted Market Consensus (plain average/median), and **Conservative = the worse of
+  those two methods' worst cases** ("most cautious … can hide legitimately profitable edges").
+  Worst-case = the longest fair value of multiplicative, additive/Shin and power. "Fair value is
+  calculated from the worst-case between market average and median." CNO's default is LW-WC.
+- **The form is the filter.** Posting the page's own form fields is honored: devig method 8
+  turned the EV column into "C-WC EV%", `TextBoxMaximumOdds=+150` capped odds, minimum books 5,
+  2 market sides, "Require a Complete Sportsbook", result count 200 → 139 rows, all Novig. So the
+  app can set these itself, whatever the Shared View link says.
+- **Thin markets are real.** The game page (`/site/browse/game.aspx?...&side_id=…`, loaded the same
+  way: page + timer postback) has one row per side and a column per book (FD, DK, CZR, MGM, BR,
+  BB, TSB, B365, FN, HR-*, FL, BV, BO, CS=Circa, PN=Pinnacle, PX=ProphetX, NV=Novig, KI=Kalshi,
+  ST-*=Sporttrade, PP=PrizePicks). For Justin Jefferson U69.5 (CNO: 7 books) the Over was priced
+  by 11 books (−120 to −135) but the **Under only by ProphetX −107, Kalshi −103 and Novig +120**:
+  sportsbooks listed only the Over. Two-sided books are what make a devig honest, so the app counts
+  them and redoes the worst-case devig itself on tap. The row whose `id` is the link's `side_id` is
+  the bet; the other side sits next to it. "⚠️" on a fair price = devigged from a one-way line
+  with an estimated juice (CNO's legend).
+- **Update cadence.** "Last Updated" read every ~11 s for a minute: CNO's odds changed at :17,
+  :50, :03, :29 (every 13–33 s, irregular). Reading faster than every few seconds gains nothing;
+  "real time" can only mean "within a few seconds of CNO publishing". CNO's FAQ: a "Last Update"
+  over 10 minutes means CNO has crashed. CNO's server also gives "1 minute and 6 seconds ago"
+  (compound), which v0.13.0's parser missed.
+- **Size.** No gzip (75 KB on the wire either way); a refresh reply is ~78 KB at 100 rows. At 5 s
+  that is ~60 MB/hour, so the app asks CNO for fewer rows (the result count) to cut it.
+- **Novig deeplink.** `deeplink.aspx?line_id=…` shows a consent page once; with the cookie it sets
+  (`BetaDeepLinkIntro=Read=1`) it answers 103 bytes: `location.replace('novigapp://events/<Novig
+  event id>/cno')`. So a tapped bet can open Novig's app on that game.
