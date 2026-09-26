@@ -113,7 +113,7 @@ object MiniWindow {
         fromCno = true,
     )
 
-    fun american(odds: Int): String = if (odds > 0) "+$odds" else "−${-odds}"
+    fun american(odds: Int): String = com.tjshea.vigilant.engine.Odds.formatAmerican(odds)
 
     /** Whether leaving Vigilant should shrink it to the mini window. [rows] is what it would list. */
     fun shouldAutoEnter(settings: ScanSettings, status: ScanStatus, rows: Int): Boolean =
