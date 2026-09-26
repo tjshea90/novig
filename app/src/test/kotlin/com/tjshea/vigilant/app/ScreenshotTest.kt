@@ -547,7 +547,12 @@ class ScreenshotTest {
 
     /** The drawn text containing [part] fits its space: no "…". */
     private fun assertNotCutOff(part: String) {
-        val node = compose.onNodeWithText(part, substring = true, useUnmergedTree = true).fetchSemanticsNode()
+        // The drawn Text (it has a layout), not the row's combined label for TalkBack.
+        val node = compose.onNode(
+            androidx.compose.ui.test.hasText(part, substring = true) and
+                androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
+        ).fetchSemanticsNode()
         val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
         node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
         val layout = layouts.single()
