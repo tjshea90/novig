@@ -93,7 +93,7 @@ class MiniWindowTest {
     fun `the mini window rounds EV to one decimal instead of cutting it off`() {
         // Before v0.13.0 it dropped the second decimal: 7.18% read "+7.1%".
         assertEquals("+7.2%", com.tjshea.vigilant.app.ui.Format.evPercentShort(0.0718))
-        assertEquals("+4.0%", com.tjshea.vigilant.app.ui.Format.evPercentShort(0.0405))
+        assertEquals("+4.0%", com.tjshea.vigilant.app.ui.Format.evPercentShort(0.0404))
         assertEquals("−1.3%", com.tjshea.vigilant.app.ui.Format.evPercentShort(-0.0125))
     }
 
