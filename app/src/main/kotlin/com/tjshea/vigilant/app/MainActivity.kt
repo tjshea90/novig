@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
                     MiniFeed(state, miniPage)
                 } else {
                     CompositionLocalProvider(LocalOpenNovig provides { openNovig() }) {
-                        VigilantRoot(state, vm, onScan = { scan() }, onMiniWindow = { enterMiniWindow() }.takeIf { MiniWindow.supported(this) })
+                        VigilantRoot(state, vm, onScan = { scan() }, onMiniWindow = { enterMiniWindow(); Unit }.takeIf { MiniWindow.supported(this) })
                     }
                 }
             }
