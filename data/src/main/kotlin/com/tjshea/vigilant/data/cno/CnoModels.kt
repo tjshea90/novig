@@ -51,7 +51,8 @@ enum class CnoDevig(val code: Int, val label: String, val displayName: String) {
     /** The worse of the other two: CNO's most cautious setting (Tj's default, 2026-09-26). */
     CONSERVATIVE(8, "C-WC", "Conservative"),
     LIQUIDITY_WEIGHTED(0, "LW-WC", "Liquidity-weighted"),
-    MARKET_CONSENSUS(4, "UMC-WC", "Market consensus"),
+    /** CNO labels its column "UW-WC" (seen live 2026-09-26). */
+    MARKET_CONSENSUS(4, "UW-WC", "Market consensus"),
 }
 
 /**

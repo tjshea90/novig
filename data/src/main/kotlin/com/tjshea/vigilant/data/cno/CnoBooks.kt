@@ -13,8 +13,8 @@ import com.tjshea.vigilant.engine.Odds
  * CNO's game page has a row per side and a column per book. Only books that price **both** sides
  * can be devigged honestly, so the check counts them, devigs each worst-case (the lowest fair
  * probability of multiplicative, additive, power and Shin), takes the lower of their mean and
- * median, and prices Novig against that. Novig's own column is left out (it's the price being
- * judged), and so are pick'em apps (PrizePicks: not two-sided odds).
+ * median, and prices the bet's book (Novig, nearly always) against that. The judged book's own
+ * column is left out, and so are pick'em apps (PrizePicks: not two-sided odds).
  */
 object CnoBooks {
 
@@ -39,8 +39,13 @@ object CnoBooks {
 
     fun name(code: String): String = names[code] ?: code
 
-    /** Whether a book's prices go into Vigilant's own fair value. */
-    fun usableForFair(code: String): Boolean = code != NOVIG && !code.startsWith("PP")
+    /** CNO's column code for a book as its +EV list names it ("Novig" → NV, "ProphetX" → PX). */
+    fun codeFor(book: String): String? =
+        names.entries.firstOrNull { it.value.equals(book, true) }?.key
+            ?: names.entries.firstOrNull { book.startsWith(it.value, true) || it.value.startsWith(book, true) }?.key
+
+    /** Whether a book's prices go into Vigilant's own fair value when [judged] is the book being judged. */
+    fun usableForFair(code: String, judged: String = NOVIG): Boolean = code != judged && !code.startsWith("PP")
 
     /**
      * The bet's row on CNO's game page (by [sideId], else by name) and its other side, with every
@@ -141,7 +146,7 @@ object CnoBooks {
         val oneSided: Int,
         /** Worst case of mean and median of each two-sided book's worst-case devig. */
         val fairProbability: Double?,
-        /** The Novig price judged: the game page's, else the list's. */
+        /** The price judged (Novig's, nearly always): the game page's, else the list's. */
         val novigOdds: Int,
         val ev: Double?,
         val verdict: Verdict,
@@ -149,14 +154,21 @@ object CnoBooks {
 
     enum class Verdict { CONFIRMED, THIN, NOT_CONFIRMED, NO_DATA }
 
-    /** [listOdds] is the price in CNO's +EV list; [live] adds Novig's taker fee (pregame is free). */
-    fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false): Check {
-        val usable = view.prices.filter { usableForFair(it.code) }
+    /** Checks [row] (its book's price, and Novig's taker fee if the game is [live]) against [view]. */
+    fun check(view: CnoBooksView, row: CnoRow, live: Boolean = false): Check =
+        check(view, row.odds, live, codeFor(row.book) ?: NOVIG)
+
+    /**
+     * [listOdds] is the price in CNO's +EV list at book [judged]; [live] adds Novig's taker fee
+     * (pregame is free; other books' fees aren't modeled).
+     */
+    fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false, judged: String = NOVIG): Check {
+        val usable = view.prices.filter { usableForFair(it.code, judged) }
         val pairs = usable.filter { it.twoSided }
         val fairs = pairs.mapNotNull { fairFor(it.odds!!, it.otherOdds!!) }
         val fair = if (fairs.isEmpty()) null else minOf(fairs.average(), median(fairs))
-        val novig = view.prices.firstOrNull { it.code == NOVIG }?.odds ?: listOdds
-        val ev = fair?.let { evAt(it, novig, live) }
+        val novig = view.prices.firstOrNull { it.code == judged }?.odds ?: listOdds
+        val ev = fair?.let { evAt(it, novig, live && judged == NOVIG) }
         val verdict = when {
             fairs.isEmpty() -> Verdict.NO_DATA
             fairs.size < MIN_TWO_SIDED -> Verdict.THIN
