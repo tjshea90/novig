@@ -33,12 +33,12 @@ class ScannerTest {
 
     private var now = Fixtures.START_MS - 86_400_000L
 
-    private inner class FakeNovig : NovigSource {
+    private inner class FakeNovig(val league: String = "NFL") : NovigSource {
         var catalogCalls = 0
         var bookCalls = 0
         var lastBookIds: Collection<String> = emptyList()
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(
-            NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", "NFL", "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", Fixtures.START_MS),
+            NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", league, "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", Fixtures.START_MS),
         ).also { catalogCalls++ }
         var lastTypes: Collection<String> = emptyList()
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = listOf(
@@ -56,7 +56,7 @@ class ScannerTest {
     }
 
     /** The Odds API, faked: metered, re-used for the settings' window. */
-    private class FakeOddsApi(val fail: Boolean = false) : ReferenceSource {
+    private class FakeOddsApi(var fail: Boolean = false) : ReferenceSource {
         var calls = 0
         override val id = "oddsapi"
         override val displayName = "The Odds API"
@@ -205,6 +205,26 @@ class ScannerTest {
         val r = Scanner(FakeNovig(), clock = { now }).scan(settings.copy(leagues = setOf("NFL", "MLB", "NBA")), listOf(ref))
         assertTrue(r.errors.single().contains("rate-limited or invalid"))
         assertEquals(1, ref.calls)
+    }
+
+    @Test
+    fun `a metered source that runs out never prices a later league from an hours-old snapshot`() = runTest {
+        // NFL is asked first; the game is in MLB. Scan 1 prices it; two hours later the key is
+        // spent, NFL fails, MLB is skipped, and MLB's only fair line is two hours old.
+        val ref = FakeOddsApi()
+        val scanner = Scanner(FakeNovig(league = "MLB"), clock = { now })
+        val s = settings.copy(leagues = setOf("NFL", "MLB"), oddsApiReuseMinutes = 0)
+        val first = scanner.scan(s, listOf(ref))
+        assertNotNull(first.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.fairProbability)
+
+        now += 2 * 3_600_000L
+        ref.fail = true
+        val second = scanner.scan(s, listOf(ref))
+        assertEquals(3, ref.calls) // NFL, MLB, then NFL again; MLB not retried on a spent key
+        val dal = second.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertNull("priced from a 2-hour-old line", dal.fairProbability)
+        // A setting change re-prices the same way: no stale line comes back.
+        assertNull(scanner.reprice(s.copy(kellyMultiplier = 0.5))!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.fairProbability)
     }
 
     @Test
