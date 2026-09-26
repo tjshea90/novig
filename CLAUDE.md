@@ -261,7 +261,12 @@ unless Tj asks).
   Vigilant's worst-case verdict); `ScanSettings.scanner` (Both / Vigilant only / CNO only, the
   rest asleep); `ui/CnoScreen` tab + `CnoDetail`, CNO rows and Books in the mini window;
   RESEARCH.md §18–19,
-  `VIGILANT_LIVE=1 ... --tests '*LiveCnoSmokeTest'`).
+  `VIGILANT_LIVE=1 ... --tests '*LiveCnoSmokeTest'`); the CNO widget and when CNO is read
+  (RESEARCH.md §20: `app/FloatingWidget` overlay window over Novig + `ui/FloatingFeed` (Up/Down
+  bar, tap = Novig bet slip, ✓ placed + Undo, hold = books, drag/resize/bubble), `data/cno/CnoWatch`
+  + `MainViewModel.watchCno` (tab / pip / overlay), `CnoFeed.keepBooksFresh` (green ✓ lane,
+  `CnoBooks.agrees`), `data/teams/PlayerTeams` (ESPN rosters, `teams.json`),
+  `data/tracker/PlacedBets` (`placed.json`), `data/match/Picks`; PiP fallback's Up/Down).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.

@@ -1589,3 +1589,54 @@ exactly as the app does. The name also used to be cut before its line ("Justin J
 now the side and line always show: "J. Jefferson Under 69.5" when needed, and in the smallest window
 the name on the first line with "Under 69.5" leading the second.
 
+
+## 20. The CNO widget: scroll buttons, taps, placed bets, teams, agreement, and reads only while watched (2026-09-26 ~20:15–21:00Z)
+
+Tj's six asks for the CNO widget: permanent up/down buttons instead of Next; nothing refreshing
+once the scanner or the app is closed; the player's team next to the name ("d. Schultz (hou)");
+a green check where several books agree on the fair value, if it doesn't slow scanning much; a
+way to mark a bet placed so it never comes back after a refresh; and tapping a bet to land on
+that exact bet in Novig. Checked first-hand from this container:
+
+- **Picture-in-picture can't do four of them.** Android draws its own menu when a PiP window is
+  tapped (at most ~3 `RemoteAction` buttons, shown only while tapped) and never passes touches
+  to the app's content. So no permanent buttons, no tapping a row, no per-row "placed" button.
+  §17 named the way out: an overlay window (`TYPE_APPLICATION_OVERLAY`, "Display over other
+  apps"). With the permission granted, Android 10–15's background-activity-launch rules exempt
+  the app while its overlay is visible, so the widget can open Novig or Vigilant, and the
+  overlay keeps the process at perceptible priority without a foreground service. Built as
+  `FloatingWidget` (a `ComposeView` in a `WindowManager` window with its own lifecycle owner;
+  `FLAG_NOT_FOCUSABLE | FLAG_NOT_TOUCH_MODAL`, so Novig keeps the keyboard and the back button
+  and gets every touch outside the widget). PiP stays the fallback.
+- **Novig's app links** (NOVIG_API.md §9.1): app.novig.us is Novig's Expo app built for the web;
+  its bundle holds the React Navigation linking config: `novigapp://events/:orderslip_outcomes?/
+  :partner_id?/:amount?` opens Home with those outcomes in the bet slip. **CNO's Novig deeplink is
+  exactly that, with an outcome id** (Dalton Schultz Over 5.5 receptions resolved to that outcome
+  in Novig's catalog), so §19's "Open in Novig to the game" was really "to the bet". A desktop
+  User-Agent gets `https://novig.com/events/<outcome>/cno` instead; the app rewrites that to
+  `novigapp://` and pins the intent to `us.novig.app` when installed.
+- **Player teams:** Novig's catalog has none (`"Jadarian Price 53.5 RUSHING_YARDS"`), nor has
+  CNO's list or game page (its player dropdown is names only). ESPN's free site API does:
+  `/apis/site/v2/sports/football/nfl/teams` (32 teams, `abbreviation`, `displayName`,
+  `location`) and `/teams/{id}/roster` (~390 KB raw, **~30 KB gzipped**; football groups players
+  by position under `items`, other sports list them flat). Two rosters per game, cached a day;
+  names matched with `PlayerNames.same` (suffixes, short first names); no match, or a match on
+  both teams, means no tag rather than a guess. College football's team list is 762 teams
+  (~100 KB gzipped, a week's cache).
+- **Agreement:** CNO's list row has only its fair odds and a book count; each book's price is on
+  the bet's game page (2 requests, ~65 KB). A lane reads the 12 best bets' pages one at a time,
+  at least 2 s apart, never while a list read is running or CNO asked for a pause, each again
+  after 5 minutes (2 after a failure): about 0.1 requests/s on top of the list, and the list
+  itself is never delayed. ✓ = CONFIRMED: 3+ books price both sides, their worst-case consensus
+  (lower of mean and median) makes Novig's price +EV, **and 3+ of them each do on their own**. A
+  new SPLIT verdict covers "consensus +EV, only 1–2 books alone" (possible with 3–4 books). The
+  check uses the list's Novig price when the list is newer than the game page.
+- **When CNO is read** (`CnoWatch`): v0.13–0.14 read CNO whenever `MainActivity` was started, so
+  the Tracker or Settings tab kept real-time reads going. Now only the CNO tab (started), the PiP
+  window, or the floating widget (up, not a bubble, screen on and unlocked) count; the list, the
+  green-check lane and the teams lane all stop together, in-flight requests cancelled. Closing
+  Vigilant (back or swipe from Recents) destroys the activity, which takes the widget down.
+
+**Not verified on a device** (there is none here): the overlay window itself, drag/resize, the
+permission flow (Android may grey the switch out for a sideloaded app: App info › ⋮ › Allow
+restricted settings), and where exactly Novig's app lands for `novigapp://events/<outcome>/cno`.
