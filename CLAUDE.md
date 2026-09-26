@@ -251,7 +251,9 @@ unless Tj asks).
   persistence (`data/store/JsonFileStore`, `data/tracker/BetTracker`, `api_keys.json`,
   `usage.json`, backup rules in `res/xml`); background scans (`data/scanner/ScanRunner`,
   `app/ScanService` foreground service + notifications, `app/ScanText`) and streaming results
-  (`Scanner`'s book pump, `ScanResult.freshSinceMs`).
+  (`Scanner`'s book pump, `ScanResult.freshSinceMs`); quick rechecks and bet-sheet extras
+  (`Scanner.recheck`, `MainViewModel.recheck`, `Opportunity.makerBid`/`priceIsOld`,
+  `data/scanner/CrossCheck` link to CrazyNinjaOdds' devigger; RESEARCH.md §16).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.

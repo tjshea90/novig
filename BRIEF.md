@@ -275,9 +275,15 @@ Neither fix belongs in the repo:
    `/opt/android-sdk/cmdline-tools/latest`, accept licenses, then
    `sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"`.
    Build with `ANDROID_HOME=/opt/android-sdk`.
-2. Mirror: `~/.gradle/init.d/mirror.gradle.kts` prepends
+2. Mirror: `~/.gradle/init.d/mirror.gradle.kts` puts
    `https://maven-central.storage-download.googleapis.com/maven2/` (Google's Maven Central
-   mirror) to plugin and dependency repositories.
+   mirror) first, inside `settingsEvaluated { }`, in `pluginManagement.repositories` and
+   `dependencyResolutionManagement.repositories` only (`remove(repo); addFirst(repo)`). Adding it
+   to project repositories (`allprojects { repositories }`) fails the build: settings
+   repositories are preferred here. Robolectric downloads its `android-all` jar at test time from
+   Maven Central too, so the same script sets
+   `tasks.withType<Test>().configureEach { systemProperty("robolectric.dependency.repo.url", mirror) }`
+   (confirmed working 2026-09-26: all 256 tests, screenshots included).
 With both in place, `./gradlew :engine:test :data:test :app:testDebugUnitTest` runs every test,
 including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every screen to
 `app/screenshots/` (gitignored), and `:app:assembleRelease` builds the R8-minified APK
