@@ -123,8 +123,8 @@ data class ScanSettings(
     val miniWindow: Boolean = true,
     /**
      * v0.13.0's on/off switch for CrazyNinjaOdds' list; read only by [migrate] now ([scanner]
-     * decides). The list is the one thing Vigilant reads without a tap: only while it or its
-     * mini window is on screen, and never Novig or a keyed provider (RESEARCH.md §18–19).
+     * decides). The list is the one thing Vigilant reads without a tap: only while its tab or a
+     * widget is on screen, and never Novig or a keyed provider (RESEARCH.md §18–20).
      */
     val cnoEnabled: Boolean = true,
     /** Tj's CNO Shared View link (his filters), as normalized by CnoView; blank = Novig, CNO's defaults. */
