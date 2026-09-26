@@ -1438,10 +1438,17 @@ props calls themselves are fixture-tested only.
 > see the scans while I have novig open
 
 ### Plan
-- [ ] D1 Research the options on Android 16 / Moto G: picture-in-picture, a draggable overlay
+- [x] D1 Research the options on Android 16 / Moto G: picture-in-picture, a draggable overlay
       ("display over other apps"), split screen, notifications; limits of each (touch, size,
       permissions, Novig touch-blocking risk, battery).
-- [ ] D2 Build the recommended one: a mini window that shows scan progress and the top +EV bets,
+      *Done: RESEARCH.md §17 (table); BRIEF.md decision: picture-in-picture.*
+- [x] D2 Build the recommended one: a mini window that shows scan progress and the top +EV bets,
       live, while Novig is open (auto when leaving Vigilant, a button to open it, actions to scan,
       recheck and page through bets), with a setting to turn it off.
+      *Done: `MiniWindow` (params, auto-enter rule, paging, Novig app intent), `MiniFeed`,
+      `MainActivity` wiring (auto-enter; Android 11 fallback; Scan/Recheck/Next receiver), manifest
+      (PiP, resizeable, `us.novig.app` query), Settings › Mini window, feed button; whole settings
+      rows now toggle. Tests: `MiniWindowTest` (4: paging, auto-enter rule + old settings,
+      params/buttons, manifest), `ScreenshotTest` miniWindow/miniWindowSmall/NextShowsTheNextPage/
+      Enlarged/BeforeAnyScan, theFeedHasAMiniWindowButton…, settingsOfferTheMiniWindowSwitch.*
 - [ ] D3 Tests (paging, when it opens, screenshots of the mini view), CI, ship, report.

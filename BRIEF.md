@@ -307,6 +307,10 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   lower of the books' mean and median per side (outlier guard, on by default), and the feed
   hides prices longer than +1000 by default (both switchable in Settings). Only fair odds
   young enough to bet on ever price the feed, mid-scan, at the end, and on re-price.
+- **Mini window over Novig (Tj, 2026-09-26; v0.12.0, RESEARCH.md §17):** picture-in-picture,
+  not a "display over other apps" overlay: no special permission, system-managed. It shrinks on
+  leaving the app only while a scan runs or bets are on the feed (Settings switch), and its
+  buttons (Scan, Recheck, Next) are the only way it acts. Split screen works too.
 - **Rechecks are the one network action besides a scan** (v0.11.0): Tj taps Recheck to
   re-read the feed's (≤40) or one bet's Novig books, with no fair-odds calls. Still nothing on
   a timer.

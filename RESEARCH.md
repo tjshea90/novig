@@ -1373,3 +1373,25 @@ bid on that side. It's shown only when that bid would be cheaper than taking now
   from them, however old (a two-hour-old Pinnacle line in the test). The final result and every
   re-price now use only fair odds young enough to bet on, like the mid-scan results already did.
 - Tracker averages (EV, CLV, beat-the-close) no longer count voided bets.
+
+## 17. Seeing scans while Novig is open: picture-in-picture vs. overlay vs. split screen (2026-09-26)
+
+Tj asked for "a floating widget … or a picture in picture type view so I can see the scans while
+I have novig open". Android offers four ways; what each costs:
+
+| Option | Permission | Interactive? | Size | Notes |
+|---|---|---|---|---|
+| **Picture-in-picture (built, v0.12.0)** | None (on by default per app; user can switch it off in Special app access) | No touches inside; up to 3 buttons when tapped, tap-to-expand | Starts small (a 3:2 window is roughly 180×120dp on a phone); pinch or double-tap to enlarge | System keeps it above any app, handles drag/resize/close. Android 12+ "auto-enter" shrinks the app on the way out. No extra service or battery cost: the scan's own foreground service already runs. |
+| Draggable overlay ("chat head") | "Display over other apps" (a trip to Settings); Android 14+ also wants a `specialUse` foreground service to keep it up | Yes: scroll, tap a bet | Anything we draw | Most flexible, most code. Apps that set `filterTouchesWhenObscured` ignore taps under an overlay; unknown whether Novig does. Worth building only if the PiP window proves too small. |
+| Split screen | None, nothing to build | Both apps fully | Half the screen each | Works today: Recents → Vigilant's icon → Split screen. `resizeableActivity` is now explicit and config changes don't recreate the screen. |
+| Notification / bubbles | Notifications | Pull-down only | Shade | Bubbles are for conversations; a richer "scan done" notification already exists. |
+
+The mini window shows scan progress and the feed's top bets (EV, selection, market and game,
+Novig price in American odds; an old price is in the warning color), as many as fit, with a
+"1–3/9" page label. Its buttons: **Scan**, **Recheck** (the feed's Novig prices, seconds) and
+**Next** (next page). It opens when Tj leaves Vigilant with a scan running or bets on the feed,
+from the button next to Scan, and from a bet's "Open Novig" (which now opens Novig's app,
+`us.novig.app`, when installed). Settings › Mini window turns the automatic part off. There is no
+device or emulator in the dev container: the window's content is screenshot-tested at PiP sizes,
+the Android side (auto-enter, buttons) is unit-tested for the parameters it hands Android, and the
+real behavior needs Tj's phone to confirm.
