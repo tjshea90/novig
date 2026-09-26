@@ -30,6 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,11 +51,17 @@ import kotlinx.coroutines.delay
 @Composable
 fun rememberNow(periodMs: Long = 1_000): Long {
     val clock = LocalClock.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     var now by remember(clock) { mutableLongStateOf(clock()) }
-    LaunchedEffect(periodMs, clock) {
-        while (true) {
-            delay(periodMs)
+    LaunchedEffect(periodMs, clock, lifecycle) {
+        // Ticks only while Vigilant is on screen: a scan running in the background keeps the
+        // process awake, and there's no reason for the screen's clocks to wake it too.
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             now = clock()
+            while (true) {
+                delay(periodMs)
+                now = clock()
+            }
         }
     }
     return now
