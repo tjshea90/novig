@@ -31,6 +31,9 @@ object CnoView {
         return builder.build().toString()
     }
 
+    /** Whether the view includes live games (Novig charges takers a fee on those; pregame is free). */
+    fun includesLive(link: String): Boolean = link.toHttpUrlOrNull()?.queryParameter("live") == "1"
+
     fun isCno(url: HttpUrl): Boolean = url.host == "crazyninjaodds.com" || url.host == "www.crazyninjaodds.com"
 
     private val books = mapOf(

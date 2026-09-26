@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -55,7 +56,6 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.EvQuote
 import com.tjshea.vigilant.engine.Odds
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * CrazyNinjaOdds' +EV list for Tj's view (Tj, 2026-09-26; RESEARCH.md §18): CNO's rows, CNO's EV
@@ -100,7 +100,7 @@ fun CnoScreen(
                         }
                     }
                     if (cno.refreshing) {
-                        CircularProgressIndicator(Modifier.padding(12.dp).width(24.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp), strokeWidth = 2.dp)
                     } else {
                         IconButton(onClick = onRefresh, enabled = on) {
                             Icon(Icons.Filled.Refresh, contentDescription = "Refresh CrazyNinjaOdds", tint = MaterialTheme.colorScheme.primary)
@@ -310,7 +310,7 @@ private fun CnoSheet(row: CnoRow, snap: CnoSnapshot?, settings: ScanSettings, vi
                 "CNO's numbers" + (snap?.let { " as of ${Format.age(it.dataAtMs, now)}" } ?: "") +
                     (snap?.evLabel?.let { ", ${evMethodName(it)} devig" } ?: "") +
                     ". The price and the dollars available were what Novig showed then: check them in Novig before betting." +
-                    if (viewUrl.toHttpUrlOrNull()?.queryParameter("live") == "1") " Live bets pay Novig's taker fee, which CNO's EV may not include." else "",
+                    if (CnoView.includesLive(viewUrl)) " Live bets pay Novig's taker fee, which CNO's EV may not include." else "",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
