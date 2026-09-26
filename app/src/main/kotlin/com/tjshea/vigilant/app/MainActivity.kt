@@ -286,6 +286,24 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
     }
 }
 
+/** The tab's icon with its bet count. Its own clock, so only the badge ticks, not the whole screen. */
+@Composable
+private fun TabIconWithCount(t: Tab, state: UiState) {
+    val count = when (t) {
+        Tab.EV -> state.feed.size
+        Tab.CNO -> {
+            val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
+            state.cnoPicks(now)?.picks?.size ?: 0
+        }
+        else -> 0
+    }
+    if (count > 0) {
+        BadgedBox(badge = { Badge { Text(if (count > 99) "99+" else count.toString()) } }) { TabIcon(t) }
+    } else {
+        TabIcon(t)
+    }
+}
+
 @Composable
 private fun TabIcon(t: Tab) {
     val description = if (t == Tab.CNO) "CrazyNinjaOdds" else t.label
@@ -309,7 +327,6 @@ private fun VigilantRoot(
     // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
     val tab = tabs.firstOrNull { it.name == tabName } ?: if (mode == ScannerMode.CNO) Tab.CNO else tabs.first()
     var detail by remember { mutableStateOf<Opportunity?>(null) }
-    val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
 
     Scaffold(
         bottomBar = {
@@ -318,18 +335,7 @@ private fun VigilantRoot(
                     NavigationBarItem(
                         selected = tab == t,
                         onClick = { tabName = t.name },
-                        icon = {
-                            val count = when (t) {
-                                Tab.EV -> state.feed.size
-                                Tab.CNO -> state.cnoPicks(now)?.picks?.size ?: 0
-                                else -> 0
-                            }
-                            if (count > 0) {
-                                BadgedBox(badge = { Badge { Text(if (count > 99) "99+" else count.toString()) } }) { TabIcon(t) }
-                            } else {
-                                TabIcon(t)
-                            }
-                        },
+                        icon = { TabIconWithCount(t, state) },
                         label = { Text(t.label) },
                     )
                 }

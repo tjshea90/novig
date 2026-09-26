@@ -87,7 +87,7 @@ fun MiniFeed(
                 val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
                 val item = items[i]
                 androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
-                MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}")
+                MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings))
             } else if (items.isEmpty()) {
                 Text(
                     emptyText(state),
@@ -101,7 +101,9 @@ fun MiniFeed(
                 val fit = (maxHeight / ROW).toInt().coerceAtLeast(1)
                 val rows = MiniWindow.page(items.size, fit, next)
                 Column(verticalArrangement = Arrangement.Top) {
-                    rows.forEach { i -> MiniRow(items[i]) }
+                    // The CNO tag only matters when both lists are mixed.
+                    val tag = MiniWindow.showsVigilant(state.settings)
+                    rows.forEach { i -> MiniRow(items[i], tag) }
                 }
                 if (rows.count() < items.size) {
                     Text(
@@ -120,10 +122,10 @@ fun MiniFeed(
 /** One CNO bet with every book's odds, sized for the mini window. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String) {
+private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String, tag: Boolean) {
     val pick = item.cno
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-        MiniRow(item)
+        MiniRow(item, tag)
         val view = books?.view
         val check = if (pick != null && view != null) CnoBooks.check(view, pick.row, pick.live) else null
         val judged = pick?.row?.book?.let { CnoBooks.codeFor(it) } ?: CnoBooks.NOVIG
@@ -168,7 +170,7 @@ private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: St
 }
 
 @Composable
-private fun MiniRow(item: MiniWindow.Item) {
+private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
     val tag = MaterialTheme.colorScheme.tertiary
     Row(Modifier.fillMaxWidth().height(ROW), verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -183,7 +185,7 @@ private fun MiniRow(item: MiniWindow.Item) {
             Text(item.title, fontSize = 11.sp, lineHeight = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 buildAnnotatedString {
-                    if (item.fromCno) {
+                    if (item.fromCno && showTag) {
                         withStyle(SpanStyle(color = tag, fontWeight = FontWeight.Bold)) { append("CNO ") }
                     }
                     append(item.subtitle)
