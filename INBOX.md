@@ -1965,3 +1965,8 @@ print(' '.join(f\"{r['id']}:{r['status']}:{r.get('conclusion')}\" for r in rs))"
 <summary>Background command "until grep -q "last:" /tmp/claude-0/-home-user-novig/a515d0f0-3ec8-511a-8585-7ea4531f065d/tasks/b42cw32po.output; do sleep 5; done; cat /tmp/claude-0/-home-user-novig/a515d0f0-3ec8-511a-8585-7ea4531f065d/tasks/b42cw32po.output" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-26T23:43:52Z
+```
+Make it so I can easily resize the widget by pulling out two finger gesture to enlarge or two finger pinch to shrink or by easily accessed corners that I can pull out to enlarge or in to shrink. Look at the bottom right of the widget in the screenshot. Something is there but it is cut off. If possible  find an easier way for me to drag and move the widget around the screen because the top bar is the only way right now and it is kind of small
+```
