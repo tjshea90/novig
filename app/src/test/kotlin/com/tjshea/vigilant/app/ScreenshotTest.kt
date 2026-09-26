@@ -261,4 +261,78 @@ class ScreenshotTest {
         compose.onNodeWithText("Float over Novig").performClick()
         assert(picked?.miniWindow == false) { "picked $picked" }
     }
+
+    // ---- CrazyNinjaOdds' list (RESEARCH.md §18): its tab, and in the mini window ----
+
+    @Test fun cnoTab() {
+        shoot("8_cno") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
+        compose.onNodeWithText("Walker Buehler Over 15.5").assertIsDisplayed()
+        compose.onNodeWithText("Novig · 3+ books", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Odds 49s old · every 1 min", substring = true).assertIsDisplayed()
+        compose.onAllNodesWithText("\$88.00").onFirst().assertIsDisplayed() // dollars available
+    }
+
+    @Test fun cnoTabLight() = shoot("8b_cno_light", dark = false) { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
+
+    @Test fun cnoTabFirstRead() {
+        shoot("8c_cno_reading") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(refreshing = true)), {}, {}) }
+        compose.onNodeWithText("Reading CrazyNinjaOdds…").assertIsDisplayed()
+    }
+
+    @Test fun cnoTabKeepsTheLastListThroughAnError() {
+        val cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot(readAgoMs = 180_000), error = "CrazyNinjaOdds answered HTTP 503")
+        shoot("8d_cno_error") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(cno = cno), {}, {}) }
+        compose.onNodeWithText("Showing the list from 3m ago", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Walker Buehler Over 15.5").assertIsDisplayed()
+    }
+
+    @Test fun cnoTabOff() {
+        val s = SampleCno.state()
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(s.copy(settings = s.settings.copy(cnoEnabled = false)), {}, {}) }
+        compose.onNodeWithText("CrazyNinjaOdds is off").assertIsDisplayed()
+        compose.onAllNodesWithText("Walker Buehler Over 15.5").assertCountEquals(0)
+    }
+
+    @Test fun cnoTabRefreshButton() {
+        var refreshed = 0
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), { refreshed++ }, {}) }
+        compose.onNodeWithContentDescription("Refresh CrazyNinjaOdds").performClick()
+        assert(refreshed == 1)
+    }
+
+    @Test fun cnoSheet() {
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
+        compose.onNodeWithText("Justin Jefferson Under 69.5").performClick()
+        compose.onNodeWithText("Every book on CNO").assertExists()
+        compose.onNodeWithText("check them in Novig before betting", substring = true).assertExists()
+        compose.onRoot().captureRoboImage("screenshots/8e_cno_sheet.png")
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowWithBothLists() {
+        val s = SampleCno.state()
+        shoot("7d_mini_window_both") { MiniFeed(s, next = 0) }
+        compose.onNodeWithText("${s.feed.size + SampleCno.rows.size} +EV").assertIsDisplayed()
+        compose.onNodeWithText("CNO", substring = true).assertExists()
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowWithCnoOnly() {
+        val base = SampleCno.state()
+        val s = base.copy(settings = base.settings.copy(miniSource = com.tjshea.vigilant.data.scanner.MiniSource.CNO))
+        shoot("7e_mini_window_cno") { MiniFeed(s, next = 0) }
+        compose.onNodeWithText("Walker Buehler Over 15.5").assertIsDisplayed()
+        compose.onNodeWithText("CNO 49s", substring = true).assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
+    @Test fun settingsOfferTheCnoListAndLink() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Shared View link").assertExists()
+        compose.onNodeWithText("The mini window lists").assertExists()
+        compose.onNodeWithText("Tap only").assertExists()
+        compose.onNodeWithText("CrazyNinjaOdds' +EV list").performClick()
+        assert(picked?.cnoEnabled == false) { "picked $picked" }
+    }
 }
