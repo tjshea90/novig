@@ -59,8 +59,12 @@ fun MiniFeed(
     val status = state.status
     val items = MiniWindow.items(state, now)
     val busy = status.scanning || status.rechecking || (MiniWindow.showsCno(state.settings) && state.cno.refreshing)
+    // The window draws this straight into the theme, with nothing behind it to set a text color: a
+    // Surface does, or text without its own color comes out black on the dark window (Tj's
+    // screenshot, 2026-09-26: every pick's name was unreadable).
+    androidx.compose.material3.Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(
-        modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 6.dp, vertical = 4.dp),
+        Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -117,7 +121,9 @@ fun MiniFeed(
             }
         }
     }
+    }
 }
+
 
 /** One CNO bet with every book's odds, sized for the mini window. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -182,7 +188,16 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
             maxLines = 1,
         )
         Column(Modifier.weight(1f)) {
-            Text(item.title, fontSize = 11.sp, lineHeight = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // The pick itself, what Tj taps in Novig: full contrast, always.
+            Text(
+                item.title,
+                fontSize = 12.sp,
+                lineHeight = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 buildAnnotatedString {
                     if (item.fromCno && showTag) {
