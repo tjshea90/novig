@@ -1503,3 +1503,39 @@ props calls themselves are fixture-tested only.
       36258827478 → v0.13.0 (code 17, 4.93MB): https://github.com/tjshea90/novig/releases/tag/v0.13.0.
       Release-notes template no longer says "nothing is fetched until you tap Scan". Not
       device-tested (no emulator here): the PiP refresh and CNO reads on the phone need Tj.*
+
+## Tj's request, 2026-09-26 ~18:20Z — make the CNO scanner accurate, standalone and fast
+
+> Make sure it is actually comparing the cno odds to fair odds based on the cno feed. Consider if
+> the bets it is showing me are truly positive EV. I don't want to take dangerous bets, especially
+> if only one or two other sports books offer the odds then it may be just a small market with
+> inaccurate odds. Optimize the cno scanner and make sure it is giving me good positive EV bets for
+> novig. I should be able to go to the cno scanner and it will work without using the other parts
+> of the app, for example if I choose the cno scanner, the other parts of the app using the other
+> apis should be asleep and not loading, and I should be able to use the cno scanner on the
+> floating widget as well. Make an option so I can set the odds to no more than +150, meaning I
+> want to take odds that are negative or up to +150. I don't like longshots. The cno scanner should
+> use worst case devigging if possible. The goal is to show me accurate, true positive EV bets,
+> regardless of the sport or market. Any market or sport is fine as long as it is positive EV.
+> Allow an option for 15 second refresh, 5 second refresh, and real time refresh for the cno
+> scanner if this is possible. Make it so if I press on any bet that it scanned, I can see the odds
+> for the same bet at whatever other sports books it found, even on the widget. Then run a full
+> test on this cno scanner to make sure it is working properly and efficient and smart. Look for
+> and fix bugs.
+
+### Plan
+- [ ] F1 Research (live, first-hand): check CNO's EV = its fair odds vs the Novig price on real
+      rows; what CNO's devig choices mean (worst case, conservative, complete sportsbook, min
+      books, market sides) and whether posted form values are honored; what CNO's game page shows
+      (every book's odds for the bet); how often CNO's data actually updates (for 5 s / 15 s /
+      real time); whether a row leads to its Novig market.
+- [ ] F2 Accuracy: CNO scanner filters sent to CNO and enforced in the app: worst-case devig,
+      longest odds (+150 option, Tj's default), min books (no 1–2-book markets), market sides,
+      min EV; re-check each row's EV from its fair odds and price; flag thin/suspect rows.
+- [ ] F3 CNO-only mode: choosing the CNO scanner puts Vigilant's scan and its APIs to sleep (no
+      scan, no Novig/odds-API calls, tabs that need them hidden), and the floating widget runs on
+      CNO alone.
+- [ ] F4 Refresh: 5 s, 15 s and "real time" (read as soon as CNO publishes new odds) options.
+- [ ] F5 Every book's odds for a tapped bet (CNO's game page), in the app and in the widget.
+- [ ] F6 Full test of the CNO scanner (CLAUDE.md protocol, scoped to CNO and all it touches), fix
+      bugs with failing-first tests, CI, ship, report.
