@@ -17,6 +17,7 @@ import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.CnoScreened
 import com.tjshea.vigilant.data.cno.CnoState
 import com.tjshea.vigilant.data.cno.CnoView
+import com.tjshea.vigilant.data.cno.CnoWatch
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
@@ -28,12 +29,10 @@ import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.PlacedBet
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -139,10 +138,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Who is looking at CNO's list right now: "tab" (the CNO tab, Vigilant started), "pip" (the
      * picture-in-picture window), "overlay" (the floating widget, screen on). CNO is read only
-     * while this isn't empty (Tj, 2026-09-26: "if I close the cno scanner or the app … nothing is
+     * while someone is (Tj, 2026-09-26: "if I close the cno scanner or the app … nothing is
      * refreshing in the background").
      */
-    private val cnoWatchers = MutableStateFlow<Set<String>>(emptySet())
+    private val cnoWatch = CnoWatch()
 
     /** One-shot messages for a toast ("Tracked", save errors). Declared before [init]: its coroutines can run at once. */
     private val _toasts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
@@ -195,23 +194,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         // CNO, its books lane and its teams lane run together, only while someone is looking.
         viewModelScope.launch {
-            cnoWatchers.map { it.isNotEmpty() }.distinctUntilChanged().collectLatest { active ->
-                _state.update { it.copy(cnoLive = active) }
-                if (!active) return@collectLatest
-                coroutineScope {
-                    launch { c.cno.watch(state.map { it.cnoConfig }) }
-                    launch { c.cno.keepBooksFresh(agreementRows()) }
-                    launch { c.teams.keepFresh(teamRows()) }
-                }
+            cnoWatch.runWhileWatched(onActive = { active -> _state.update { it.copy(cnoLive = active) } }) {
+                launch { c.cno.watch(state.map { it.cnoConfig }) }
+                launch { c.cno.keepBooksFresh(agreementRows()) }
+                launch { c.teams.keepFresh(teamRows()) }
             }
         }
     }
 
     /** [MainActivity] and the widget say when they start and stop showing CNO's list. */
-    fun watchCno(who: String, on: Boolean) = cnoWatchers.update { if (on) it + who else it - who }
-
-    /** Whether anything is looking at CNO's list (tests, and the widget's status dot). */
-    val cnoWatched: Boolean get() = cnoWatchers.value.isNotEmpty()
+    fun watchCno(who: String, on: Boolean) = cnoWatch.set(who, on)
 
     /** The bets whose books the green check reads: the list's best, placed ones left out. */
     private fun agreementRows(): Flow<List<CnoRow>> = state.map { s ->
