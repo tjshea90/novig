@@ -46,8 +46,9 @@ private val ROW = 30.dp
 /**
  * What the mini window (picture-in-picture) shows: the scan's status and as many of the best bets
  * as fit, best first: Vigilant's, CrazyNinjaOdds' (tagged CNO), or both (Settings). It takes no
- * touches, so "Next" (one of its buttons) pages through the rest. Small type on purpose: the
- * window starts small, and a pinch or double-tap enlarges it, which fits more rows.
+ * touches, so its buttons page through the rest: Up and Down with CNO alone, Next otherwise.
+ * Small type on purpose: the window starts small, and a pinch or double-tap enlarges it, which
+ * fits more rows. The floating widget ([FloatingFeed]) is the touchable version.
  *
  * [booksKey] (CNO only, the Books button): instead of the list, that bet with every book's odds
  * and Vigilant's check of it (the top bet if it's gone); Next moves to the next bet. Its books
@@ -60,6 +61,8 @@ fun MiniFeed(
     modifier: Modifier = Modifier,
     booksKey: String? = null,
     onLoadBooks: (com.tjshea.vigilant.data.cno.CnoRow) -> Unit = {},
+    /** The page shown, when it had to be pulled back inside the list (Up / Down paging). */
+    onPage: (Int) -> Unit = {},
 ) {
     val now = rememberNow(15_000)
     val status = state.status
@@ -109,7 +112,14 @@ fun MiniFeed(
                     )
                 } else {
                     val fit = (maxHeight / ROW).toInt().coerceAtLeast(1)
-                    val rows = MiniWindow.page(items.size, fit, next)
+                    // CNO alone pages with Up / Down (it stops at the ends); the others with Next.
+                    val upDown = !MiniWindow.showsVigilant(state.settings)
+                    val rows = MiniWindow.page(items.size, fit, next, wrap = !upDown)
+                    if (upDown) {
+                        // Taps past the last page don't pile up: Up works from the page shown.
+                        val last = MiniWindow.pages(items.size, fit) - 1
+                        androidx.compose.runtime.LaunchedEffect(next, last) { if (next > last || next < 0) onPage(next.coerceIn(0, maxOf(last, 0))) }
+                    }
                     Column(verticalArrangement = Arrangement.Top) {
                         // The CNO tag only matters when both lists are mixed.
                         val tag = MiniWindow.showsVigilant(state.settings)
@@ -134,7 +144,7 @@ fun MiniFeed(
 /** One CNO bet with every book's odds, sized for the mini window. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String, tag: Boolean) {
+internal fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String, tag: Boolean) {
     val pick = item.cno
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
         MiniRow(item, tag)
@@ -181,10 +191,20 @@ private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: St
     }
 }
 
+/**
+ * One bet in either widget: EV, the pick (a green ✓ in front when several books agree, the
+ * player's team after the name), market and game, price and dollars available. [trailing] is
+ * the floating widget's "placed" button.
+ */
 @Composable
-private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
+internal fun MiniRow(
+    item: MiniWindow.Item,
+    showTag: Boolean = true,
+    height: androidx.compose.ui.unit.Dp = ROW,
+    trailing: (@Composable () -> Unit)? = null,
+) {
     val tag = MaterialTheme.colorScheme.tertiary
-    Row(Modifier.fillMaxWidth().height(ROW), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().height(height), verticalAlignment = Alignment.CenterVertically) {
         Text(
             Format.evPercentShort(item.ev),
             Modifier.width(40.dp),
@@ -194,35 +214,48 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
             maxLines = 1,
         )
         // The pick itself, what Tj taps in Novig: full contrast, and its side and line ("Under 69.5")
-        // never cut off. Wide enough: "Justin Jefferson Under 69.5" (or "J. Jefferson Under 69.5")
-        // on one line. Too narrow for that: the name alone on the first line, and the line in bold
-        // at the start of the second, before market and game.
+        // never cut off. Wide enough: "Justin Jefferson (MIN) Under 69.5" (or "J. Jefferson (MIN)
+        // Under 69.5") on one line. Too narrow for that: the name alone on the first line, and the
+        // line in bold at the start of the second, before market and game.
         BoxWithConstraints(Modifier.weight(1f)) {
             val (fullName, line) = MiniWindow.splitPick(item.title)
             // Measured with exactly the style it's drawn in (the theme's letter spacing included).
             val pickStyle = LocalTextStyle.current.merge(
                 TextStyle(fontSize = 12.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface),
             )
+            val teamStyle = LocalTextStyle.current.merge(
+                TextStyle(fontSize = 9.sp, lineHeight = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant),
+            )
+            val checkStyle = pickStyle.copy(color = Edge.colors.positive)
             val measurer = rememberTextMeasurer()
-            fun width(text: String) = measurer.measure(text, pickStyle, softWrap = false).size.width
+            fun width(text: String, style: TextStyle = pickStyle) = measurer.measure(text, style, softWrap = false).size.width
             val max = constraints.maxWidth
-            val choices = MiniWindow.nameChoices(fullName, player = item.subtitle.startsWith("Player"))
+            val check = if (item.agrees) "✓ " else null
+            val team = item.team?.takeIf { fullName.isNotEmpty() }?.let { " ($it)" }
+            val extra = (check?.let { width(it, checkStyle) } ?: 0) + (team?.let { width(it, teamStyle) } ?: 0)
+            val choices = MiniWindow.nameChoices(fullName, player = item.subtitle.startsWith("Player") || item.team != null)
             val lineText = line?.let { (if (fullName.isNotEmpty()) " " else "") + it }
-            val lineWidth = lineText?.let(::width) ?: 0
-            val oneLine = fullName.isEmpty() || line == null || choices.any { width(it) + lineWidth <= max }
+            val lineWidth = lineText?.let { width(it) } ?: 0
+            val oneLine = fullName.isEmpty() || line == null || choices.any { width(it) + extra + lineWidth <= max }
             val name = when {
                 fullName.isEmpty() -> ""
-                oneLine -> choices.firstOrNull { width(it) + lineWidth <= max } ?: choices.last()
-                else -> choices.firstOrNull { width(it) <= max } ?: choices.last()
+                oneLine -> choices.firstOrNull { width(it) + extra + lineWidth <= max } ?: choices.last()
+                else -> choices.firstOrNull { width(it) + extra <= max } ?: choices.last()
             }
             Column {
                 Row(
-                    Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
+                    Modifier.clearAndSetSemantics {
+                        text = AnnotatedString(
+                            listOfNotNull(if (item.agrees) "Books agree." else null, item.title, item.team?.let { "($it)" }).joinToString(" "),
+                        )
+                    },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    if (check != null) Text(check, style = checkStyle, maxLines = 1, softWrap = false)
                     if (name.isNotEmpty()) {
                         Text(name, Modifier.weight(1f, fill = false), style = pickStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
+                    if (team != null) Text(team, style = teamStyle, maxLines = 1, softWrap = false)
                     if (oneLine && lineText != null) {
                         Text(lineText, style = pickStyle, maxLines = 1, softWrap = false)
                     }
@@ -231,6 +264,10 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
                     buildAnnotatedString {
                         if (!oneLine && line != null) {
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) { append(line) }
+                            append(" · ")
+                        }
+                        item.placedOther?.let {
+                            withStyle(SpanStyle(color = Edge.colors.warning, fontWeight = FontWeight.Bold)) { append("placed $it") }
                             append(" · ")
                         }
                         if (item.fromCno && showTag) {
@@ -260,6 +297,7 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
                 Text(it, fontSize = 9.sp, lineHeight = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             }
         }
+        trailing?.invoke()
     }
 }
 
