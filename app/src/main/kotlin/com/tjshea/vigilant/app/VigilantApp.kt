@@ -26,7 +26,11 @@ import com.tjshea.vigilant.data.scanner.ScanRunner
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
+import com.tjshea.vigilant.data.teams.PlayerTeams
+import com.tjshea.vigilant.data.teams.TeamsCache
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.PlacedBets
+import com.tjshea.vigilant.data.tracker.PlacedBook
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,8 +47,8 @@ class VigilantApp : Application() {
  * One of everything, for the life of the process. A single [OkHttpClient] shares one connection
  * pool across Novig and every odds provider, so a scan reuses warm HTTP/2 connections instead of
  * paying a TLS handshake per request (a real battery cost on a phone radio). Nothing here starts
- * any network on its own: only a scan the user asks for does, and CrazyNinjaOdds' list while
- * Vigilant is on screen ([cno]).
+ * any network on its own: only a scan the user asks for does, and CrazyNinjaOdds' list (with its
+ * books and player teams) while the CNO scanner is on screen ([cno], [teams]).
  */
 class AppContainer(app: Application) {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -82,6 +86,12 @@ class AppContainer(app: Application) {
      * (on screen, or as the mini window), at most once per 30 s; the last list is kept on disk.
      */
     val cno = CnoFeed(CnoClient(http), JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json))
+
+    /** Bets Tj marked placed in the widget or the CNO tab: hidden from both until their game is over. */
+    val placed = PlacedBets(JsonFileStore(File(app.filesDir, "placed.json"), PlacedBook.serializer(), { PlacedBook() }, json))
+
+    /** Player teams for CNO's player bets ("D. Schultz (HOU)"), from ESPN; read only alongside [cno]. */
+    val teams = PlayerTeams(http, json, JsonFileStore(File(app.filesDir, "teams.json"), TeamsCache.serializer(), { TeamsCache() }, json))
 
     /** Whether Vigilant is on screen: a finished scan only notifies when it isn't. */
     @Volatile

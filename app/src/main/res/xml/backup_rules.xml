@@ -2,8 +2,10 @@
 <!-- Android 11 and older. Everything the app saves is backed up (api_keys.json, settings,
      tracked bets, usage), except the Novig key connection: it points at a key inside this
      phone's secure hardware, which can't be restored anywhere else. cno.json is only a cache of
-     CrazyNinjaOdds' last list, re-read on the next launch. -->
+     CrazyNinjaOdds' last list, re-read on the next launch, and teams.json a cache of ESPN's
+     rosters. placed.json (bets Tj marked placed) is his own record and is backed up. -->
 <full-backup-content>
     <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
         <exclude domain="file" path="cno.json" />
+        <exclude domain="file" path="teams.json" />
 </full-backup-content>
