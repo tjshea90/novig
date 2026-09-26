@@ -556,7 +556,7 @@ class ScreenshotTest {
         val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
         node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
         val layout = layouts.single()
-        println("DEBUG '${layout.layoutInput.text}': layout ${layout.size} constraints ${layout.layoutInput.constraints} multiParagraph ${layout.multiParagraph.width} node ${node.boundsInRoot} row ${compose.onNodeWithText(part, substring = true).fetchSemanticsNode().boundsInRoot}")
+        println("DEBUG '${layout.layoutInput.text}': overflow=${layout.hasVisualOverflow} w=${layout.didOverflowWidth} h=${layout.didOverflowHeight} mpH=${layout.multiParagraph.height} size=${layout.size} lines=${layout.lineCount} ellipsized=${(0 until layout.lineCount).map { layout.isLineEllipsized(it) }}")
         assert(!layout.hasVisualOverflow && (0 until layout.lineCount).none { layout.isLineEllipsized(it) }) {
             "\"${layout.layoutInput.text}\" is cut off"
         }
