@@ -50,6 +50,15 @@ class ScreenshotTest {
         compose.onRoot().captureRoboImage("screenshots/$name.png")
     }
 
+    /**
+     * The mini window as MainActivity draws it: straight into the theme, no Surface behind it
+     * (a Surface here once hid unreadable pick names, 2026-09-26).
+     */
+    private fun shootAsWindow(name: String, dark: Boolean = true, content: @androidx.compose.runtime.Composable () -> Unit) {
+        screen(dark = dark) { content() }
+        compose.onRoot().captureRoboImage("screenshots/$name.png")
+    }
+
     /** Sets the content on [SampleScan]'s clock, so price ages read the same on any day. */
     private fun screen(dark: Boolean = true, now: Long = SampleScan.NOW, content: @androidx.compose.runtime.Composable () -> Unit) {
         compose.setContent {
@@ -219,13 +228,13 @@ class ScreenshotTest {
     // ---- The mini window (picture-in-picture over Novig), at the sizes Android gives it ----
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
-    @Test fun miniWindow() = shoot("7_mini_window") { MiniFeed(SampleScan.state(), next = 0) }
+    @Test fun miniWindow() = shootAsWindow("7_mini_window") { MiniFeed(SampleScan.state(), next = 0) }
 
     /** About the size Android opens a 3:2 picture-in-picture window at on a phone. */
     @Config(qualifiers = "w180dp-h120dp-xxhdpi")
     @Test fun miniWindowSmall() {
         val s = SampleScan.state()
-        shoot("7a_mini_window_small") { MiniFeed(s, next = 0) }
+        shootAsWindow("7a_mini_window_small") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("${s.feed.size} +EV").assertIsDisplayed()
         compose.onNodeWithText(s.feed.first().selection).assertIsDisplayed()
         compose.onNodeWithText("/${s.feed.size}", substring = true).assertIsDisplayed() // more than fit: a page label
@@ -239,11 +248,11 @@ class ScreenshotTest {
     }
 
     @Config(qualifiers = "w360dp-h240dp-xxhdpi")
-    @Test fun miniWindowEnlarged() = shoot("7b_mini_window_large") { MiniFeed(SampleScan.streaming(), next = 0) }
+    @Test fun miniWindowEnlarged() = shootAsWindow("7b_mini_window_large") { MiniFeed(SampleScan.streaming(), next = 0) }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
     @Test fun miniWindowBeforeAnyScan() {
-        shoot("7c_mini_window_empty") { MiniFeed(SampleScan.fresh(), next = 0) }
+        shootAsWindow("7c_mini_window_empty") { MiniFeed(SampleScan.fresh(), next = 0) }
         compose.onNodeWithText("Tap the window, then Scan").assertIsDisplayed()
     }
 
@@ -344,7 +353,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
     @Test fun miniWindowWithBothLists() {
         val s = SampleCno.state()
-        shoot("7d_mini_window_both") { MiniFeed(s, next = 0) }
+        shootAsWindow("7d_mini_window_both") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("${s.feed.size + SampleCno.kept.size} +EV").assertIsDisplayed()
         compose.onAllNodesWithText("CNO", substring = true).onFirst().assertExists()
     }
@@ -353,7 +362,7 @@ class ScreenshotTest {
     @Test fun miniWindowWithCnoOnly() {
         val base = SampleCno.state()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
-        shoot("7e_mini_window_cno") { MiniFeed(s, next = 0) }
+        shootAsWindow("7e_mini_window_cno") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
         compose.onNodeWithText("CNO 49s", substring = true).assertIsDisplayed()
         compose.onNodeWithText("${SampleCno.kept.size} +EV").assertIsDisplayed()
@@ -364,7 +373,7 @@ class ScreenshotTest {
         val base = SampleCno.withBooks()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
         var asked: com.tjshea.vigilant.data.cno.CnoRow? = null
-        shoot("7f_mini_window_books") { MiniFeed(s, next = 0, booksKey = "cno:" + SampleCno.rows[1].key, onLoadBooks = { asked = it }) }
+        shootAsWindow("7f_mini_window_books") { MiniFeed(s, next = 0, booksKey = "cno:" + SampleCno.rows[1].key, onLoadBooks = { asked = it }) }
         assert(asked?.bet == "Justin Jefferson Under 69.5") { "asked $asked" }
         compose.onNodeWithText("✓ 3 books agree", substring = true).assertIsDisplayed()
         compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
