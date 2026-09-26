@@ -129,6 +129,9 @@ class CnoFeed(
         if (config.intervalSeconds == 0) return null
         val next = when {
             s.error != null -> (s.lastAttemptMs ?: now) + errorBackoffMs(s.errors, config.intervalSeconds)
+            // CNO stuck (its updater down, per its FAQ): no point polling every 3 s.
+            config.intervalSeconds == REALTIME && snap != null && now - snap.dataAtMs > CnoChecks.STUCK_MS ->
+                (s.lastAttemptMs ?: now) + STUCK_POLL_MS
             config.intervalSeconds == REALTIME && snap != null -> maxOf(
                 (s.lastAttemptMs ?: now) + REALTIME_POLL_MS,
                 snap.dataAtMs + CNO_MIN_UPDATE_MS,
@@ -204,8 +207,11 @@ class CnoFeed(
         /** "Real time": poll this often while waiting for CNO's next update. */
         const val REALTIME_POLL_MS = 3_000L
 
-        /** CNO never published two updates closer than ~13 s apart (RESEARCH.md §19); wait 10. */
-        const val CNO_MIN_UPDATE_MS = 10_000L
+        /** CNO never published two updates closer than ~13 s apart (RESEARCH.md §19); wait 12. */
+        const val CNO_MIN_UPDATE_MS = 12_000L
+
+        /** "Real time" while CNO has stopped updating. */
+        const val STUCK_POLL_MS = 30_000L
 
         /** The refresh setting's value for "real time". */
         const val REALTIME = -1
