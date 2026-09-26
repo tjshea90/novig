@@ -59,4 +59,28 @@ class EvMathTest {
         assertEquals(1_000 * 0.25 * q.kellyFraction, uncapped, 1e-9)
         assertEquals(5.0, EvMath.suggestedStake(q, 1_000.0, 0.25, maxFillable = 5.0), 0.0)
     }
+
+    @Test
+    fun `prices snap down to Novig's grid`() {
+        assertEquals(0.003, PriceGrid.floor(0.0039)!!, 1e-12)
+        assertEquals(0.050, PriceGrid.floor(0.0549)!!, 1e-12) // no 0.051-0.054 on the grid
+        assertEquals(0.055, PriceGrid.floor(0.0551)!!, 1e-12)
+        assertEquals(0.395, PriceGrid.floor(0.3999)!!, 1e-12)
+        assertEquals(0.400, PriceGrid.floor(0.4)!!, 1e-12)
+        assertEquals(0.945, PriceGrid.floor(0.9499)!!, 1e-12)
+        assertEquals(0.951, PriceGrid.floor(0.9515)!!, 1e-12)
+        assertEquals(null, PriceGrid.floor(0.0005))
+    }
+
+    @Test
+    fun `a maker bid is the highest grid price that still clears the EV target`() {
+        // Fair 45%: a 2% target allows 44.12¢, so the bid is 44¢ (grid) for +2.27% EV.
+        val bid = EvMath.makerBid(0.45, 0.02)!!
+        assertEquals(0.44, bid.price, 1e-12)
+        assertEquals(0.45 / 0.44 - 1, bid.evPercent, 1e-12)
+        assertTrue(bid.evPercent >= 0.02)
+        // Longshot end of the grid keeps its 0.001 steps.
+        assertEquals(0.039, EvMath.makerBid(0.041, 0.03)!!.price, 1e-12)
+        assertEquals(null, EvMath.makerBid(1.0, 0.02))
+    }
 }

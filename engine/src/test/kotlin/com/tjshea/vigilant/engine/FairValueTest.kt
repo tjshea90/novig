@@ -3,6 +3,7 @@ package com.tjshea.vigilant.engine
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FairValueTest {
@@ -42,7 +43,7 @@ class FairValueTest {
 
     @Test
     fun `market average devigs every book on its own then averages`() {
-        val s = FairSettings(source = FairSource.MARKET_AVERAGE, method = DevigMethod.POWER)
+        val s = FairSettings(source = FairSource.MARKET_AVERAGE, method = DevigMethod.POWER, outlierGuard = false)
         val line = FairValue.compute(listOf(draftkings, pinnacle, fanduel), s)!!
         val expected = listOf(draftkings, pinnacle, fanduel).map { devigged(it, DevigMethod.POWER)[1] }.average()
         assertEquals(expected, line.probabilities[1], 1e-12)
@@ -80,5 +81,28 @@ class FairValueTest {
         val line = FairValue.compute(listOf(pinnacle, draftkings), s)!!
         val raw = pinnacle.decimalOdds.sumOf { 1 / it } - 1
         assertEquals(raw, line.hold, 1e-12)
+    }
+
+    @Test
+    fun `the outlier guard takes the lower of mean and median, so one off-market book can't inflate a side`() {
+        // Three books agree the dog is ~40%; one stale book has it at ~52%. The mean says 43%,
+        // the median 40%: the guard prices the dog at 40% and the favorite at its own lower value.
+        val books = listOf(book("a", -150, 130), book("b", -152, 132), book("c", -148, 128), book("stale", 105, -115))
+        val plain = FairValue.compute(books, FairSettings(source = FairSource.MARKET_AVERAGE, method = DevigMethod.MULTIPLICATIVE, outlierGuard = false))!!
+        val guarded = FairValue.compute(books, FairSettings(source = FairSource.MARKET_AVERAGE, method = DevigMethod.MULTIPLICATIVE))!!
+        val dogs = books.map { devigged(it, DevigMethod.MULTIPLICATIVE)[1] }
+        val favs = books.map { devigged(it, DevigMethod.MULTIPLICATIVE)[0] }
+        assertEquals(dogs.average(), plain.probabilities[1], 1e-12)
+        assertEquals(FairValue.median(dogs), guarded.probabilities[1], 1e-12)
+        assertEquals(minOf(favs.average(), FairValue.median(favs)), guarded.probabilities[0], 1e-12)
+        assertTrue(guarded.probabilities[1] < plain.probabilities[1] - 0.02)
+    }
+
+    @Test
+    fun `the outlier guard needs three books, so two books still average`() {
+        val s = FairSettings(source = FairSource.MARKET_AVERAGE, method = DevigMethod.MULTIPLICATIVE)
+        val line = FairValue.compute(listOf(draftkings, fanduel), s)!!
+        val expected = (devigged(draftkings, DevigMethod.MULTIPLICATIVE)[0] + devigged(fanduel, DevigMethod.MULTIPLICATIVE)[0]) / 2
+        assertEquals(expected, line.probabilities[0], 1e-12)
     }
 }
