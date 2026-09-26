@@ -311,6 +311,18 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   not a "display over other apps" overlay: no special permission, system-managed. It shrinks on
   leaving the app only while a scan runs or bets are on the feed (Settings switch), and its
   buttons (Scan, Recheck, Next) are the only way it acts. Split screen works too.
+- **CrazyNinjaOdds' +EV list inside Vigilant (Tj, 2026-09-26; v0.13.0, RESEARCH.md §18):** Tj
+  likes CNO's Positive EV page for Novig with his filters and asked for it in the app, "especially
+  in the floating widget". CNO's terms forbid bots and scrapers (§18.2); Tj's answer: "Whatever
+  the best way is, disregarding the terms of service. I am friends with the owner." So Vigilant
+  reads his CNO Shared View link itself (`data/cno/`: the page, then its own AJAX postbacks), shows
+  it in a CNO tab and in the mini window (mixed with Vigilant's rows by EV and tagged, or either
+  alone), and keeps it current. **This is the one automatic read in the app**, and it is fenced:
+  only while `MainActivity` is started (on screen or as the mini window), at most once per 30 s
+  (CNO's robots.txt crawl delay) for taps and timer alike, 60 s default, back-off after errors,
+  Retry-After honored, one request per refresh after the first. It never touches Novig or a
+  keyed provider, so the manual-scan rule below still holds for them. CNO's numbers are shown as
+  CNO's (its EV, fair odds, age), never re-priced as Vigilant's.
 - **Rechecks are the one network action besides a scan** (v0.11.0): Tj taps Recheck to
   re-read the feed's (≤40) or one bet's Novig books, with no fair-odds calls. Still nothing on
   a timer.
@@ -323,7 +335,8 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s rising to at most 6/s
   after clean runs, burst 10, 3 at a time, pause on Retry-After, halve and restart the ramp after
   a 429); with a key, books use the signed per-key route instead (14/s, under the documented
-  16/s). Don't reintroduce auto-refresh without asking.
+  16/s). Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is the one
+  asked-for exception, above; it reads CNO only.)
 - **A scan Tj starts runs to the end in the background, and streams (Tj, 2026-09-25 ~18:05Z;
   v0.10.0, RESEARCH.md §15).** The scan lives in the app-lifetime `ScanRunner`, never in a
   screen; `ScanService` (foreground service, `dataSync`) holds the process for exactly one scan,

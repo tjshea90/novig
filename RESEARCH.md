@@ -1489,3 +1489,28 @@ works the same for CNO rows as for Vigilant's own.
    its sizes ($1–$226) are what was on Novig at CNO's last refresh. A CNO row shown in Vigilant
    should say how old it is, and Vigilant's own Recheck (Novig's live book) is the check before
    betting.
+
+### 18.5 What was built (v0.13.0), after Tj's answer
+
+Tj, asked which way: "Whatever the best way is, disregarding the terms of service. I am friends
+with the owner." So way 4, the self-refreshing reader:
+
+- **`data/cno/`**: `CnoView` (his Shared View link, cleaned; Novig added when no book is set;
+  the filters read back in words), `CnoPage` (form fields as a browser posts them, the delta
+  format, the table found by column names), `CnoClient` (page + the loader timer's postback on the
+  first read; then the Refresh button's postback with the state the last reply handed back, so
+  one request per refresh; fresh page load if that fails or the session is 15 min idle; 429/503
+  and 403 become a pause), `CnoFeed` (no read within 30 s of the last, taps included; timer only
+  while watched; 2-minute back-off after an error; last list cached in `cno.json`, excluded from
+  backup).
+- **Verified live** (2026-09-26 ~17:05Z, `LiveCnoSmokeTest`): 100 Novig rows on the first read
+  (CNO's data 29 s old), and 100 again on the refresh 31 s later with 1 request (2 s old).
+- **In the app**: a CNO tab (rows with EV, price, dollars available, fair odds, books, a ¼-Kelly
+  stake from CNO's fair probability capped at the dollars available; a sheet with Open Novig and
+  CNO's every-book page), and the mini window listing both Vigilant's and CNO's rows by EV (CNO's
+  tagged), or either alone; with CNO alone its buttons are Refresh and Next. It reads only while
+  Vigilant is started, which includes the mini window over Novig; closing both stops it.
+- **Not done:** matching a CNO row to its Novig market to recheck the live price from Novig
+  itself (CNO's price is up to ~1 minute + the refresh interval old). The row's age is shown and
+  goes amber after 5 minutes; Novig's own screen is the check before betting.
+

@@ -237,7 +237,7 @@ unless Tj asks).
 
 **The app's real surface (v0.4.0+), so "sweep the whole app" is concrete:**
 
-- **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), Games
+- **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), CNO (`CnoScreen`), Games
   (`GamesScreen`: board + per-game line table), Tracker (`TrackerScreen`: P/L,
   ROI, CLV), Settings (`SettingsScreen`).
 - **Subsystems:** fair-odds math (`engine`: `FairValue`, `Devig`, `Fees`,
@@ -255,7 +255,10 @@ unless Tj asks).
   (`Scanner.recheck`, `MainViewModel.recheck`, `Opportunity.makerBid`/`priceIsOld`,
   `data/scanner/CrossCheck` link to CrazyNinjaOdds' devigger; RESEARCH.md §16); the mini window
   over Novig (`app/MiniWindow` picture-in-picture params and buttons, `ui/MiniFeed`,
-  `MainActivity` PiP wiring; RESEARCH.md §17).
+  `MainActivity` PiP wiring; RESEARCH.md §17); CrazyNinjaOdds' list (`data/cno/`: `CnoView`,
+  `CnoPage`, `CnoClient`, `CnoFeed`; `ui/CnoScreen` tab + sheet, CNO rows in the mini window;
+  the one automatic read, paced to ≥30 s, only while on screen; RESEARCH.md §18,
+  `VIGILANT_LIVE=1 ... --tests '*LiveCnoSmokeTest'`).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
