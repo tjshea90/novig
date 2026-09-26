@@ -1553,3 +1553,20 @@ props calls themselves are fixture-tested only.
       348 tests, 0 failed, 3 skipped (live), exit 0; live smoke green; CI 36264649883 green;
       release → v0.14.0 (code 18, 5.0MB): https://github.com/tjshea90/novig/releases/tag/v0.14.0.
       Not device-tested (no emulator here).*
+
+## Tj's request, 2026-09-26 (screenshot of the mini window over his home screen)
+
+> Review the screenshot. Notice the floating widget doesn't say what the pick actually is. I need
+> to be able to see the exact pick for each positive EV bet in the widget so I can choose it in
+> novig without opening the full vigilant app
+
+### Plan
+- [ ] G1 Cause: the pick name (e.g. "Jahmyr Gibbs Over 4.5") is drawn without a color; the mini
+      window (picture-in-picture) renders MiniFeed with no Surface behind it, so the text falls
+      back to black on the dark window. The market/price/EV lines set their own colors, so they
+      show. Screenshot tests wrapped MiniFeed in a Surface and never saw it.
+- [ ] G2 Fix: MiniFeed supplies its own background and text color; the pick name full-contrast
+      and bold, the line under it keeps market and game; a test that renders the window exactly
+      as MainActivity does (no Surface) and checks the pick name's pixels are light, confirmed
+      failing on v0.14.0's code.
+- [ ] G3 Full floor, CI, ship, send the link.
