@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
             if (!inMiniWindow) {
                 miniPage = 0
                 miniBooks = false
-                miniBookIndex = 0
+                miniBookKey = null
             }
         }
         ContextCompat.registerReceiver(this, miniButtons, IntentFilter(MiniWindow.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
                 if (inMiniWindow) {
-                    MiniFeed(state, miniPage, books = miniBookIndex.takeIf { miniBooks })
+                    MiniFeed(state, miniPage, booksKey = miniBookKey.takeIf { miniBooks }, onLoadBooks = { vm.loadBooks(it) })
                 } else {
                     CompositionLocalProvider(LocalOpenNovig provides { openNovig() }) {
                         VigilantRoot(
@@ -138,15 +138,11 @@ class MainActivity : ComponentActivity() {
     /** The mini window shows one CNO bet's books (its Books button) instead of the list. */
     private var miniBooks by mutableStateOf(false)
 
-    /** Which bet (in the window's list order) the Books view shows; Next moves it down. */
-    private var miniBookIndex by mutableIntStateOf(0)
-
-    /** Loads the books of the bet the Books view is on. */
-    private fun loadMiniBooks() {
-        val items = MiniWindow.items(vm.state.value, System.currentTimeMillis())
-        if (items.isEmpty()) return
-        items[miniBookIndex.mod(items.size)].cno?.let { vm.loadBooks(it.row) }
-    }
+    /**
+     * The bet the Books view shows, by key, so a refresh that reorders the list doesn't swap it
+     * for another; Next moves to the bet below it.
+     */
+    private var miniBookKey by mutableStateOf<String?>(null)
 
     /** The mini window's Scan / Recheck / Refresh / Books / Next buttons (PendingIntents back to this app only). */
     private val miniButtons = object : BroadcastReceiver() {
@@ -160,20 +156,21 @@ class MainActivity : ComponentActivity() {
                 MiniWindow.RECHECK -> vm.recheck(feedMarketIds(vm.state.value))
                 MiniWindow.REFRESH -> {
                     vm.refreshCno()
-                    if (miniBooks) loadMiniBooksFresh()
+                    // In the Books view, re-read that bet's books too.
+                    if (miniBooks) miniItems().firstOrNull { it.key == miniBookKey }?.cno?.let { vm.loadBooks(it.row, force = true) }
                 }
                 MiniWindow.BOOKS -> {
                     miniBooks = !miniBooks
-                    if (miniBooks) {
-                        miniBookIndex = 0
-                        loadMiniBooks()
-                    }
+                    if (miniBooks) miniBookKey = miniItems().firstOrNull()?.key
                     val st = vm.state.value
                     updateMiniWindow(autoEnter(st), st.status.scanning, cnoOnly(st))
                 }
                 MiniWindow.NEXT -> if (miniBooks) {
-                    miniBookIndex++
-                    loadMiniBooks()
+                    val items = miniItems()
+                    if (items.isNotEmpty()) {
+                        val at = items.indexOfFirst { it.key == miniBookKey }
+                        miniBookKey = items[(at + 1).mod(items.size)].key
+                    }
                 } else {
                     miniPage++
                 }
@@ -181,11 +178,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun loadMiniBooksFresh() {
-        val items = MiniWindow.items(vm.state.value, System.currentTimeMillis())
-        if (items.isEmpty()) return
-        items[miniBookIndex.mod(items.size)].cno?.let { vm.loadBooks(it.row, force = true) }
-    }
+    private fun miniItems() = MiniWindow.items(vm.state.value, System.currentTimeMillis())
 
     /** Whether leaving Vigilant shrinks it to the mini window: something to watch, and the switch on. */
     private fun autoEnter(s: UiState): Boolean =

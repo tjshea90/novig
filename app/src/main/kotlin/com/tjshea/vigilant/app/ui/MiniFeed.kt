@@ -43,11 +43,18 @@ private val ROW = 30.dp
  * touches, so "Next" (one of its buttons) pages through the rest. Small type on purpose: the
  * window starts small, and a pinch or double-tap enlarges it, which fits more rows.
  *
- * [books] (CNO only, the Books button): instead of the list, the bet at that index with every
- * book's odds and Vigilant's check of it; Next moves to the next bet.
+ * [booksKey] (CNO only, the Books button): instead of the list, that bet with every book's odds
+ * and Vigilant's check of it (the top bet if it's gone); Next moves to the next bet. Its books
+ * are asked for ([onLoadBooks]) as soon as it shows.
  */
 @Composable
-fun MiniFeed(state: UiState, next: Int, modifier: Modifier = Modifier, books: Int? = null) {
+fun MiniFeed(
+    state: UiState,
+    next: Int,
+    modifier: Modifier = Modifier,
+    booksKey: String? = null,
+    onLoadBooks: (com.tjshea.vigilant.data.cno.CnoRow) -> Unit = {},
+) {
     val now = rememberNow(15_000)
     val status = state.status
     val items = MiniWindow.items(state, now)
@@ -76,9 +83,11 @@ fun MiniFeed(state: UiState, next: Int, modifier: Modifier = Modifier, books: In
             }
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(top = 2.dp)) {
-            if (books != null && items.isNotEmpty()) {
-                val i = books.mod(items.size)
-                MiniBooks(items[i], state.books[items[i].cno?.row?.key], "${i + 1}/${items.size}")
+            if (booksKey != null && items.isNotEmpty()) {
+                val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
+                val item = items[i]
+                androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
+                MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}")
             } else if (items.isEmpty()) {
                 Text(
                     emptyText(state),

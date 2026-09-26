@@ -360,22 +360,25 @@ class ScreenshotTest {
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
-    @Test fun miniWindowBooks() {
+    @Test fun miniWindowBooksAsksForTheBetsBooks() {
         val base = SampleCno.withBooks()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
-        shoot("7f_mini_window_books") { MiniFeed(s, next = 0, books = 0) }
+        var asked: com.tjshea.vigilant.data.cno.CnoRow? = null
+        shoot("7f_mini_window_books") { MiniFeed(s, next = 0, booksKey = "cno:" + SampleCno.rows[1].key, onLoadBooks = { asked = it }) }
+        assert(asked?.bet == "Justin Jefferson Under 69.5") { "asked $asked" }
         compose.onNodeWithText("✓ 3 books agree", substring = true).assertIsDisplayed()
         compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
         compose.onNodeWithText("1/4").assertIsDisplayed()
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
-    @Test fun miniWindowBooksWhileLoading() {
+    @Test fun miniWindowBooksStaysOnItsBetAndShowsLoading() {
         val base = SampleCno.state()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
-        screen { MiniFeed(s, next = 0, books = 1) }
+        screen { MiniFeed(s, next = 0, booksKey = "cno:" + SampleCno.rows[2].key) }
         compose.onNodeWithText("Reading books…").assertIsDisplayed()
-        compose.onNodeWithText("Ohio -33.5").assertIsDisplayed() // Next moved to the second bet
+        compose.onNodeWithText("Ohio -33.5").assertIsDisplayed()
+        compose.onNodeWithText("2/4").assertIsDisplayed()
     }
 
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
