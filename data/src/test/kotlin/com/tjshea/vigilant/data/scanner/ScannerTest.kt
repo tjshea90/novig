@@ -266,4 +266,34 @@ class ScannerTest {
         assertEquals(2, r.result!!.opportunities.size)
         assertEquals(0.385, r.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.ladder.first().price, 1e-12)
     }
+
+    @Test
+    fun `a recheck re-reads only the asked books and re-prices against the last scan's fair odds`() = runTest {
+        val novig = FakeNovig()
+        val ref = FakeOddsApi()
+        val scanner = Scanner(novig, clock = { now })
+        assertNull(scanner.recheck(settings, listOf(Fixtures.ML_MARKET)).result) // nothing to recheck before a scan
+        assertEquals(0, novig.bookCalls)
+
+        scanner.scan(settings, listOf(ref))
+        now += 5 * 60_000
+        val r = scanner.recheck(settings, listOf(Fixtures.ML_MARKET, Fixtures.ML_MARKET))
+        assertEquals(2, novig.bookCalls)
+        assertEquals(listOf(Fixtures.ML_MARKET), novig.lastBookIds.toList())
+        assertEquals(1, ref.calls) // no fair-odds call
+        assertEquals(1, novig.catalogCalls)
+        val dal = r.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertEquals(now, dal.bookFetchedAtMs)
+        assertNotNull(dal.fairProbability)
+        assertEquals(1, r.read)
+    }
+
+    @Test
+    fun `a recheck never reads more than its cap`() = runTest {
+        val novig = FakeNovig()
+        val scanner = Scanner(novig, clock = { now })
+        scanner.scan(settings, emptyList())
+        scanner.recheck(settings, (1..100).map { "m$it" })
+        assertEquals(Scanner.MAX_RECHECK, novig.lastBookIds.size)
+    }
 }

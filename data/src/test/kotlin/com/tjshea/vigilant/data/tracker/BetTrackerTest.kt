@@ -83,4 +83,18 @@ class BetTrackerTest {
         assertEquals(false, t.observe(scan()))
         assertEquals(true, t.observe(scan(pinDal = 2.30)))
     }
+
+    @Test
+    fun `a voided bet counts toward nothing but the bet count`() {
+        fun bet(id: String, ev: Double, status: BetStatus, closing: Double?) = TrackedBet(
+            id, 0, "NFL", "A @ B", Fixtures.START_MS, "Moneyline", "A", "m", "o",
+            price = 0.5, cost = 0.5, fairAtBet = 0.5 * (1 + ev), evPercentAtBet = ev, stake = 10.0, status = status, closingFair = closing,
+        )
+        val bets = listOf(bet("1", 0.03, BetStatus.WON, 0.52), bet("2", 0.50, BetStatus.VOID, 0.40))
+        val s = BetTracker.stats(bets)
+        assertEquals(2, s.bets)
+        assertEquals(0.03, s.averageEv!!, 1e-12)
+        assertEquals(0.52 / 0.5 - 1, s.averageClv!!, 1e-12)
+        assertEquals(1.0, s.beatClosePercent!!, 1e-12)
+    }
 }
