@@ -189,6 +189,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Novig price read just now", substring = true).assertExists()
     }
 
+    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
     @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
