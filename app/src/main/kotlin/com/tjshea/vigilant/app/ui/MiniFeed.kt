@@ -27,8 +27,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import com.tjshea.vigilant.app.MiniWindow
 import com.tjshea.vigilant.app.UiState
+import com.tjshea.vigilant.data.cno.CnoBooks
+import com.tjshea.vigilant.data.cno.CnoBooksState
 
 /** Height of one bet in the mini window: two short lines. */
 private val ROW = 30.dp
@@ -38,9 +42,12 @@ private val ROW = 30.dp
  * as fit, best first: Vigilant's, CrazyNinjaOdds' (tagged CNO), or both (Settings). It takes no
  * touches, so "Next" (one of its buttons) pages through the rest. Small type on purpose: the
  * window starts small, and a pinch or double-tap enlarges it, which fits more rows.
+ *
+ * [books] (CNO only, the Books button): instead of the list, the bet at that index with every
+ * book's odds and Vigilant's check of it; Next moves to the next bet.
  */
 @Composable
-fun MiniFeed(state: UiState, next: Int, modifier: Modifier = Modifier) {
+fun MiniFeed(state: UiState, next: Int, modifier: Modifier = Modifier, books: Int? = null) {
     val now = rememberNow(15_000)
     val status = state.status
     val items = MiniWindow.items(state, now)
@@ -69,7 +76,10 @@ fun MiniFeed(state: UiState, next: Int, modifier: Modifier = Modifier) {
             }
         }
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(top = 2.dp)) {
-            if (items.isEmpty()) {
+            if (books != null && items.isNotEmpty()) {
+                val i = books.mod(items.size)
+                MiniBooks(items[i], state.books[items[i].cno?.row?.key], "${i + 1}/${items.size}")
+            } else if (items.isEmpty()) {
                 Text(
                     emptyText(state),
                     Modifier.align(Alignment.Center),
@@ -91,6 +101,55 @@ fun MiniFeed(state: UiState, next: Int, modifier: Modifier = Modifier) {
                         fontSize = 9.sp,
                         lineHeight = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** One CNO bet with every book's odds, sized for the mini window. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String) {
+    val pick = item.cno
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+        MiniRow(item)
+        val view = books?.view
+        val check = if (pick != null && view != null) CnoBooks.check(view, pick.row.odds, pick.live) else null
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                when {
+                    pick == null -> "Books are for CNO bets"
+                    check != null -> verdictLabel(check).first + (check.ev?.let { " · ${Format.evPercentShort(it)}" } ?: "")
+                    books?.loading == true || books == null -> "Reading books…"
+                    else -> books.error ?: "No books"
+                },
+                Modifier.weight(1f),
+                fontSize = 10.sp,
+                lineHeight = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = check?.let { verdictLabel(it).second } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(position, fontSize = 9.sp, lineHeight = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (view != null) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                view.prices.forEach { p ->
+                    val novig = p.code == CnoBooks.NOVIG
+                    Text(
+                        "${p.code} ${p.odds?.let { MiniWindow.american(it) } ?: "—"}/${p.otherOdds?.let { MiniWindow.american(it) } ?: "—"}",
+                        fontSize = 9.sp,
+                        lineHeight = 10.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = if (novig) FontWeight.Bold else FontWeight.Normal,
+                        color = when {
+                            novig -> MaterialTheme.colorScheme.primary
+                            p.twoSided && CnoBooks.usableForFair(p.code) -> MaterialTheme.colorScheme.onSurface
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
                 }
             }
