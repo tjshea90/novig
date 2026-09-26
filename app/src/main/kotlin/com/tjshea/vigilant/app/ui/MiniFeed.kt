@@ -321,13 +321,25 @@ fun miniStatus(state: UiState, now: Long): String {
     val theirs = when {
         !MiniWindow.showsCno(state.settings) -> null
         cno.refreshing -> "CNO reading…"
-        cno.error != null && showsVigilant -> "CNO error"
+        // What went wrong, in a word or two ("CNO error" alone told Tj nothing, 2026-09-26).
+        cno.error != null && showsVigilant -> cnoErrorShort(cno.error)
         cno.error != null -> cno.error.orEmpty()
         snap != null -> "CNO " + Format.age(snap.dataAtMs, now).removeSuffix(" ago")
         showsVigilant -> null
         else -> "CrazyNinjaOdds"
     }
     return listOfNotNull(ours, theirs).joinToString(" · ").ifEmpty { "Vigilant" }
+}
+
+/** CNO's last error in a few words, for a status line with no room for the whole message. */
+fun cnoErrorShort(error: String): String = when {
+    error.contains("Couldn't reach", ignoreCase = true) -> "CNO offline, retrying"
+    error.contains("busy", ignoreCase = true) -> "CNO busy, waiting"
+    error.contains("refused", ignoreCase = true) -> "CNO refused, waiting"
+    error.contains("changed", ignoreCase = true) || error.contains("had no table", ignoreCase = true) ||
+        error.contains("restarted", ignoreCase = true) || error.contains("answered with an error", ignoreCase = true) -> "CNO page problem"
+    error.contains("HTTP", ignoreCase = true) -> "CNO " + (Regex("""HTTP \d+""").find(error)?.value ?: "error")
+    else -> "CNO error"
 }
 
 /** What an empty widget says. [floating]: its buttons always show, so no "tap the window". */
