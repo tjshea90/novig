@@ -389,6 +389,11 @@ class ScreenshotTest {
         compose.onNodeWithText("Longest odds").assertExists()
         compose.onNodeWithText("+150").assertExists()
         compose.onNodeWithText("Fewest books behind the fair price").assertExists()
+        // The chips read as numbers (a first draft printed "${'$'}it+" on every one).
+        compose.onNodeWithText("5+").assertExists()
+        compose.onNodeWithText("10+").assertExists()
+        compose.onNodeWithText("50").assertExists()
+        compose.onAllNodesWithText("${'$'}it", substring = true).assertCountEquals(0)
         compose.onNodeWithText("Real time").assertExists()
         compose.onNodeWithText("Tap only").assertExists()
         compose.onNodeWithText("CNO only").performClick()

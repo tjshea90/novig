@@ -126,7 +126,7 @@ fun SettingsScreen(
                 ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "No cap" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
                 Hint(if (f.maxOdds > 0) "Favorites and underdogs up to +${f.maxOdds} only: no longshots." else "Any odds, longshots included.")
                 Text("Fewest books behind the fair price", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "${'$'}it+" }) { v -> onCno { it.copy(minBooks = v) } }
+                ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "$it+" }) { v -> onCno { it.copy(minBooks = v) } }
                 Hint("A fair price from one or two books can be a small market's mistake. Tap any bet to see which books price both sides and Vigilant's own check.")
                 Text("Minimum EV", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.CNO_MIN_EV_CHOICES, f.minEv, { Format.percent(it, 0) }) { v -> onCno { it.copy(minEv = v) } }
@@ -141,7 +141,7 @@ fun SettingsScreen(
                 ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, ::secondsLabel) { v -> onUpdate { it.copy(cnoRefreshSeconds = v) } }
                 Hint(refreshHint(s))
                 Text("Rows per read", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "${'$'}it" }) { v -> onCno { it.copy(rows = v) } }
+                ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "$it" }) { v -> onCno { it.copy(rows = v) } }
                 Hint("CNO sends its best-EV rows first; fewer rows is less data per read.")
                 CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
             }
