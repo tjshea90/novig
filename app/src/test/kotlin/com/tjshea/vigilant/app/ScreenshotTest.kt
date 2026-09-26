@@ -570,7 +570,9 @@ class ScreenshotTest {
     /** CNO only, with [extra] more bets than [SampleCno] so the list scrolls. */
     private fun floatingState(extra: Int = 6): UiState {
         val more = (1..extra).map { i ->
-            SampleCno.rows[3].copy(ev = 0.02 - i * 0.001, bet = "Player$i Over ${i}.5", gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=${100 + i}")
+            // +100, so a fair probability of (1 + EV) / 2 keeps each row's EV consistent (the app checks it).
+            val ev = 0.03 - i * 0.001
+            SampleCno.rows[3].copy(ev = ev, fairProbability = (1 + ev) / 2, bet = "Player$i Over ${i}.5", gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=${100 + i}")
         }
         val base = SampleCno.withBooks(SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot(rows = SampleCno.rows + more))))
         return base.copy(
@@ -584,7 +586,7 @@ class ScreenshotTest {
             androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(8.dp)) {
                 com.tjshea.vigilant.app.ui.FloatingFeed(
                     s, actions,
-                    if (minimized) androidx.compose.ui.Modifier else androidx.compose.ui.Modifier.androidxSize(300, 290),
+                    if (minimized) androidx.compose.ui.Modifier else androidx.compose.ui.Modifier.androidxSize(FloatingWidget.DEFAULT_W_DP, FloatingWidget.DEFAULT_H_DP),
                     minimized = minimized,
                 )
             }
@@ -595,7 +597,7 @@ class ScreenshotTest {
     private fun androidx.compose.ui.Modifier.androidxSize(w: Int, h: Int) =
         this.then(androidx.compose.ui.Modifier.size(w.dp, h.dp))
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetKeepsItsButtonsAndScrollsAPageAtATime() {
         floating("9_floating_widget", floatingState())
         // Always there, no tap needed (picture-in-picture can't do this).
@@ -614,7 +616,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertIsDisplayed()
     }
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetTapOpensTheBetAndItsCheckMarksItPlacedWithUndo() {
         var opened: MiniWindow.Item? = null
         var placed: MiniWindow.Item? = null
@@ -634,7 +636,7 @@ class ScreenshotTest {
         compose.onAllNodesWithText("UNDO").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetShowsTeamsAndGreenChecks() {
         floating("9b_floating_widget_light", floatingState(), dark = false)
         // Jefferson's books agree (Pinnacle, ProphetX, Kalshi): ✓; his team is known: (MIN).
@@ -646,7 +648,7 @@ class ScreenshotTest {
         assertReadable("Justin Jefferson Under 69.5")
     }
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetHoldingABetShowsEveryBook() {
         floating("9c_floating_books", floatingState())
         compose.onNodeWithText("Justin Jefferson Under 69.5").performTouchInput { longClick() }
@@ -660,7 +662,7 @@ class ScreenshotTest {
         compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
     }
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetShrinksToABubble() {
         var expanded = false
         floating("9d_floating_bubble", floatingState(), minimized = true, actions = com.tjshea.vigilant.app.ui.FloatingActions(onExpand = { expanded = true }))
@@ -669,7 +671,7 @@ class ScreenshotTest {
         assert(expanded)
     }
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetWithBothScannersHasScanAndRecheck() {
         val s = floatingState().let { it.copy(settings = it.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)) }
         floating("9e_floating_both", s)
@@ -677,7 +679,7 @@ class ScreenshotTest {
         compose.onAllNodesWithContentDescription("Refresh").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
     @Test fun floatingWidgetHeaderClosesShrinksAndOpensTheApp() {
         var closed = false
         var shrunk = false
