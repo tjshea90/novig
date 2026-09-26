@@ -1545,5 +1545,11 @@ props calls themselves are fixture-tested only.
       (CnoFeedTest real time / 5 s / stuck / back-off), CnoBooks (CnoBooksTest 10, CnoClientTest books
       + Novig link), CNO tab/detail/widget Books (ScreenshotTest cno*, miniWindowBooks*). Live smoke
       green twice.*
-- [ ] F6 Full test of the CNO scanner (CLAUDE.md protocol, scoped to CNO and all it touches), fix
+- [x] F6 Full test of the CNO scanner (CLAUDE.md protocol, scoped to CNO and all it touches), fix
       bugs with failing-first tests, CI, ship, report.
+      *Done: fixes in RESEARCH.md §19.1 (UW-WC label, judged-book check, stuck polling, cache write
+      throttle, widget Books pinned + self-loading, compound age, badge recomposition, "$it" chips);
+      new CnoFeedTest stuck/disk tests confirmed failing on the pre-fix CnoFeed. Forced full rerun
+      348 tests, 0 failed, 3 skipped (live), exit 0; live smoke green; CI 36264649883 green;
+      release → v0.14.0 (code 18, 5.0MB): https://github.com/tjshea90/novig/releases/tag/v0.14.0.
+      Not device-tested (no emulator here).*
