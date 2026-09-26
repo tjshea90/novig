@@ -106,6 +106,11 @@ data class ScanSettings(
      * reliable on longshots, which is where the biggest fake edges show up (RESEARCH.md §8.1, §16).
      */
     val maxOdds: Int = 1000,
+    /**
+     * Leaving Vigilant with a scan running or bets on the feed shrinks it to a floating
+     * picture-in-picture window, so the results stay in view in Novig (Tj, 2026-09-26).
+     */
+    val miniWindow: Boolean = true,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {

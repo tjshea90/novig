@@ -13,6 +13,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- "Open Novig" opens Novig's app when it's installed (Android 11+ package visibility). -->
+    <queries>
+        <package android:name="us.novig.app" />
+    </queries>
+
     <application
         android:name=".VigilantApp"
         android:allowBackup="true"
@@ -24,9 +29,15 @@
         android:theme="@style/Theme.Vigilant"
         android:supportsRtl="true">
 
+        <!-- The mini window: picture-in-picture over Novig (MiniWindow.kt). configChanges keeps
+             the activity alive through the resize instead of recreating it; resizeable also lets
+             Tj run Vigilant and Novig side by side in split screen. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:theme="@style/Theme.Vigilant">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
