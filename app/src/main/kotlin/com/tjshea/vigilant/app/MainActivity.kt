@@ -36,11 +36,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.FeedScreen
 import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalOpenNovig
@@ -50,6 +52,7 @@ import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.app.ui.feedMarketIds
+import com.tjshea.vigilant.data.scanner.MiniSource
 import com.tjshea.vigilant.data.scanner.Opportunity
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -66,13 +69,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // No refresh loop: nothing is fetched until Tj taps Scan or pulls to refresh (his rule,
-        // 2026-09-25), and no request goes out on its own. A scan he starts keeps running if he
+        // No refresh loop for Novig or the odds providers: nothing is fetched until Tj taps Scan
+        // or pulls to refresh (his rule, 2026-09-25). A scan he starts keeps running if he
         // switches apps (ScanService), then everything stops.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.toasts.collect { android.widget.Toast.makeText(this@MainActivity, it, android.widget.Toast.LENGTH_SHORT).show() }
             }
+        }
+        // The one exception (Tj, 2026-09-26): CrazyNinjaOdds' list stays current while Vigilant is
+        // started, which includes the mini window over Novig (a paused, still-visible activity).
+        // Leaving stops it; CnoFeed paces it to one read per 30 s at most.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) { vm.watchCno() }
         }
 
         // The mini window (picture-in-picture over Novig): its buttons, its "am I small?" state, and
@@ -86,9 +95,9 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.state
-                    .map { MiniWindow.shouldAutoEnter(it.settings, it.status, it.feed.size) to it.status.scanning }
+                    .map { Triple(autoEnter(it), it.status.scanning, cnoOnly(it)) }
                     .distinctUntilChanged()
-                    .collect { (auto, scanning) -> updateMiniWindow(auto, scanning) }
+                    .collect { (auto, scanning, cnoOnly) -> updateMiniWindow(auto, scanning, cnoOnly) }
             }
         }
 
@@ -116,27 +125,39 @@ class MainActivity : ComponentActivity() {
     /** Taps on the mini window's Next button; each shows the next page of bets. */
     private var miniPage by mutableIntStateOf(0)
 
-    /** The mini window's Scan / Recheck / Next buttons (PendingIntents back to this app only). */
+    /** The mini window's Scan / Recheck / Refresh / Next buttons (PendingIntents back to this app only). */
     private val miniButtons = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.getIntExtra(MiniWindow.EXTRA_BUTTON, 0)) {
-                MiniWindow.SCAN -> vm.scan()
+                MiniWindow.SCAN -> {
+                    vm.scan()
+                    // Showing both lists: Scan freshens CNO's too (if its 30 s have passed).
+                    if (MiniWindow.showsCno(vm.state.value.settings)) vm.refreshCno(quiet = true)
+                }
                 MiniWindow.RECHECK -> vm.recheck(feedMarketIds(vm.state.value))
+                MiniWindow.REFRESH -> vm.refreshCno()
                 MiniWindow.NEXT -> miniPage++
             }
         }
     }
 
-    private fun updateMiniWindow(autoEnter: Boolean, scanning: Boolean) {
+    /** Whether leaving Vigilant shrinks it to the mini window: something to watch, and the switch on. */
+    private fun autoEnter(s: UiState): Boolean =
+        MiniWindow.shouldAutoEnter(s.settings, s.status, MiniWindow.items(s, System.currentTimeMillis()).size)
+
+    /** The mini window lists CNO alone, so its buttons are Refresh and Next. */
+    private fun cnoOnly(s: UiState): Boolean = s.settings.cnoEnabled && s.settings.miniSource == MiniSource.CNO
+
+    private fun updateMiniWindow(autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean) {
         if (!MiniWindow.supported(this)) return
-        runCatching { setPictureInPictureParams(MiniWindow.params(this, autoEnter, scanning)) }
+        runCatching { setPictureInPictureParams(MiniWindow.params(this, autoEnter, scanning, cnoOnly)) }
     }
 
     /** Shrinks to the mini window now. False if this phone or its settings don't allow it. */
     private fun enterMiniWindow(): Boolean {
         val s = vm.state.value
         val ok = MiniWindow.supported(this) &&
-            runCatching { enterPictureInPictureMode(MiniWindow.params(this, MiniWindow.shouldAutoEnter(s.settings, s.status, s.feed.size), s.status.scanning)) }
+            runCatching { enterPictureInPictureMode(MiniWindow.params(this, autoEnter(s), s.status.scanning, cnoOnly(s))) }
                 .getOrDefault(false)
         if (!ok) {
             android.widget.Toast.makeText(this, "Picture-in-picture is off for Vigilant (Android Settings › Apps › Special app access)", android.widget.Toast.LENGTH_LONG).show()
@@ -149,16 +170,17 @@ class MainActivity : ComponentActivity() {
         super.onUserLeaveHint()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             val s = vm.state.value
-            if (MiniWindow.supported(this) && MiniWindow.shouldAutoEnter(s.settings, s.status, s.feed.size)) {
-                runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning)) }
+            if (MiniWindow.supported(this) && autoEnter(s)) {
+                runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning, cnoOnly(s))) }
             }
         }
     }
 
     /** Novig's app (or site), with Vigilant floating over it when the mini window is on. */
     private fun openNovig() {
-        if (vm.state.value.settings.miniWindow && MiniWindow.supported(this)) {
-            runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, vm.state.value.status.scanning)) }
+        val s = vm.state.value
+        if (s.settings.miniWindow && MiniWindow.supported(this)) {
+            runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning, cnoOnly(s))) }
         }
         runCatching { startActivity(MiniWindow.novigIntent(this)) }
     }
@@ -191,11 +213,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Tab(val label: String, val icon: ImageVector) {
+private enum class Tab(val label: String, val icon: ImageVector? = null, val drawable: Int? = null) {
     EV("+EV", Icons.Filled.Star),
+    CNO("CNO", drawable = R.drawable.ic_cno),
     GAMES("Games", Icons.Filled.DateRange),
     TRACKER("Tracker", Icons.AutoMirrored.Filled.List),
     SETTINGS("Settings", Icons.Filled.Settings),
+}
+
+@Composable
+private fun TabIcon(t: Tab) {
+    val description = if (t == Tab.CNO) "CrazyNinjaOdds" else t.label
+    when {
+        t.icon != null -> Icon(t.icon, contentDescription = description)
+        t.drawable != null -> Icon(painterResource(t.drawable), contentDescription = description)
+    }
 }
 
 @Composable
@@ -211,11 +243,15 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit, 
                         selected = tab == i,
                         onClick = { tab = i },
                         icon = {
-                            val count = if (t == Tab.EV) state.feed.size else 0
+                            val count = when (t) {
+                                Tab.EV -> state.feed.size
+                                Tab.CNO -> if (state.settings.cnoEnabled) state.cno.snapshot?.takeIf { it.url == state.cnoUrl }?.rows?.size ?: 0 else 0
+                                else -> 0
+                            }
                             if (count > 0) {
-                                BadgedBox(badge = { Badge { Text(if (count > 99) "99+" else count.toString()) } }) { Icon(t.icon, contentDescription = t.label) }
+                                BadgedBox(badge = { Badge { Text(if (count > 99) "99+" else count.toString()) } }) { TabIcon(t) }
                             } else {
-                                Icon(t.icon, contentDescription = t.label)
+                                TabIcon(t)
                             }
                         },
                         label = { Text(t.label) },
@@ -235,6 +271,12 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit, 
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onRecheck = vm::recheck,
+                    onMiniWindow = onMiniWindow,
+                )
+                Tab.CNO -> CnoScreen(
+                    state,
+                    onRefresh = { vm.refreshCno() },
+                    onOpenSettings = { tab = Tab.SETTINGS.ordinal },
                     onMiniWindow = onMiniWindow,
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
