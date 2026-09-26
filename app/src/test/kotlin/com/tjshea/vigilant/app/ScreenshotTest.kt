@@ -94,7 +94,7 @@ class ScreenshotTest {
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
-        screen { SettingsScreen(SampleScan.state(), {}) } }
+        screen { SettingsScreen(SampleScan.state(), {}) }
         compose.onNodeWithText("Sportsbook player props").assertExists()
         compose.onNodeWithText("Most credits per scan on props").assertExists()
         compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
@@ -108,7 +108,7 @@ class ScreenshotTest {
     }
 
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
-        screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) } }
+        screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
         // Key 1 of each keyed provider is the one the next call uses.
         compose.onAllNodesWithText("in use").assertCountEquals(2)
@@ -118,7 +118,7 @@ class ScreenshotTest {
 
     @Test fun tappingACardOpensItsDetailWithTheBookBreakdown() {
         val s = SampleScan.state()
-        screen { FeedScreen(s, {}, {}, {}, { _, _ -> }) } }
+        screen { FeedScreen(s, {}, {}, {}, { _, _ -> }) }
         compose.onNodeWithText("Dallas Cowboys").performClick()
         compose.onNodeWithText("FAIR ODDS: BLEND · POWER").assertIsDisplayed()
         compose.onNodeWithText("Track").assertIsDisplayed()
@@ -126,7 +126,7 @@ class ScreenshotTest {
 
     @Test fun beforeTheFirstScanTheFeedAsksForOneAndTheButtonScans() {
         var scans = 0
-        screen { FeedScreen(SampleScan.fresh(), { scans++ }, {}, {}, { _, _ -> }) } }
+        screen { FeedScreen(SampleScan.fresh(), { scans++ }, {}, {}, { _, _ -> }) }
         compose.onNodeWithText("Tap Scan to find +EV bets").assertIsDisplayed()
         compose.onNodeWithText("Not scanned yet").assertIsDisplayed()
         compose.onNodeWithText("Scan now").performClick()
@@ -135,7 +135,7 @@ class ScreenshotTest {
 
     @Test fun whileScanningTheButtonIsBusyAndProgressShows() {
         var scans = 0
-        screen { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) } }
+        screen { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) }
         compose.onNodeWithText("Novig prices 9/24").assertIsDisplayed()
         compose.onNodeWithText("Scanning…").assertIsDisplayed()
         assert(scans == 0)
@@ -200,7 +200,7 @@ class ScreenshotTest {
 
     @Test fun theFeedCanBeSortedBySoonest() {
         var picked: com.tjshea.vigilant.data.scanner.FeedSort? = null
-        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onSort = { picked = it }) } }
+        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onSort = { picked = it }) }
         compose.onNodeWithText("Soonest").performClick()
         assert(picked == com.tjshea.vigilant.data.scanner.FeedSort.START)
     }
