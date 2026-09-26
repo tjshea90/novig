@@ -1,6 +1,6 @@
 package com.tjshea.vigilant.data.teams
 
-import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.awaitText
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.match.Picks
@@ -183,9 +183,8 @@ class PlayerTeams(
         // or a browser's (checked live 2026-09-26; RESEARCH.md §20).
         val request = Request.Builder().url(url).get().build()
         return try {
-            http.newCall(request).await().use { r ->
-                if (!r.isSuccessful) null else r.body?.string()?.let { runCatching { json.parseToJsonElement(it) }.getOrNull() }
-            }
+            // Read on OkHttp's thread: this runs in the app's main-thread scope.
+            http.newCall(request).awaitText().takeIf { it.isSuccessful }?.let { runCatching { json.parseToJsonElement(it.body) }.getOrNull() }
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {

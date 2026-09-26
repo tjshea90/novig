@@ -1,13 +1,13 @@
 package com.tjshea.vigilant.data.cno
 
-import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.HttpText
+import com.tjshea.vigilant.data.awaitText
 import com.tjshea.vigilant.engine.Odds
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
 import java.io.IOException
 
 /** Reads CNO: the +EV list for a view, a bet's books, a bet's Novig link. [CnoClient] in the app; fakes in tests. */
@@ -94,10 +94,7 @@ class CnoClient(
             .header("Cookie", "BetaDeepLinkIntro=Read=1")
             .build()
         val html = try {
-            http.newCall(request).await().use { response ->
-                check(response)
-                response.body?.string().orEmpty()
-            }
+            http.newCall(request).awaitText().also(::check).body
         } catch (e: IOException) {
             throw unreachable(e)
         }
@@ -110,11 +107,7 @@ class CnoClient(
         val pageUrl = url.toHttpUrl()
         val request = Request.Builder().url(pageUrl).get().header("User-Agent", USER_AGENT).build()
         val cookies = LinkedHashMap<String, String>()
-        val html = http.newCall(request).await().use { response ->
-            check(response)
-            keepCookies(response, cookies)
-            response.body?.string().orEmpty()
-        }
+        val html = http.newCall(request).awaitText().also { check(it); keepCookies(it, cookies) }.body
         val form = CnoPage.form(html)
         val postUrl = form.action?.let { pageUrl.resolve(it) } ?: pageUrl
         return Session(url, postUrl, cookies, form, LinkedHashMap(form.fields.toMap()), clock())
@@ -164,11 +157,7 @@ class CnoClient(
             .header("Referer", s.view)
             .apply { if (s.cookies.isNotEmpty()) header("Cookie", s.cookies.entries.joinToString("; ") { "${it.key}=${it.value}" }) }
             .build()
-        val reply = http.newCall(request).await().use { response ->
-            check(response)
-            keepCookies(response, s.cookies)
-            response.body?.string().orEmpty()
-        }
+        val reply = http.newCall(request).awaitText().also { check(it); keepCookies(it, s.cookies) }.body
         val records = CnoPage.delta(reply)
         records.firstOrNull { it.type == "error" }?.let { throw CnoException("CrazyNinjaOdds answered with an error: ${it.content.take(120)}") }
         if (records.any { it.type == "pageRedirect" }) throw CnoException("CrazyNinjaOdds restarted the page")
@@ -209,7 +198,7 @@ class CnoClient(
 
     private fun unreachable(e: IOException) = CnoException("Couldn't reach CrazyNinjaOdds (${e.message ?: "network error"})", cause = e)
 
-    private fun check(response: Response) {
+    private fun check(response: HttpText) {
         if (response.isSuccessful) return
         val retry = response.header("Retry-After")?.trim()?.toIntOrNull()
         throw when (response.code) {
@@ -219,8 +208,8 @@ class CnoClient(
         }
     }
 
-    private fun keepCookies(response: Response, into: MutableMap<String, String>) {
-        response.headers("Set-Cookie").forEach { header ->
+    private fun keepCookies(response: HttpText, into: MutableMap<String, String>) {
+        response.headers.values("Set-Cookie").forEach { header ->
             val pair = header.substringBefore(';')
             val name = pair.substringBefore('=').trim()
             if (name.isNotEmpty() && '=' in pair) into[name] = pair.substringAfter('=').trim()
