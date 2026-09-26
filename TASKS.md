@@ -1498,4 +1498,8 @@ props calls themselves are fixture-tested only.
             rounding which fails on the old truncation), ScreenshotTest +10 (cno tab/light/reading/
             error/off/refresh/sheet, mini both/CNO-only, settings). Full floor: 308 tests, 0 failed,
             3 skipped (live), exit 0. Docs: BRIEF.md decision, RESEARCH.md §18.5, CLAUDE.md surface.*
-- [ ] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.
+- [x] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.
+      *Done: CI 36258578827 green on 84d75e5; ship.sh gate green (full suite); release
+      36258827478 → v0.13.0 (code 17, 4.93MB): https://github.com/tjshea90/novig/releases/tag/v0.13.0.
+      Release-notes template no longer says "nothing is fetched until you tap Scan". Not
+      device-tested (no emulator here): the PiP refresh and CNO reads on the phone need Tj.*
