@@ -522,4 +522,14 @@ class ScreenshotTest {
         }
         assert(hi - lo > 0.5) { "\"$text\" is barely visible: luminance ${"%.2f".format(lo)}..${"%.2f".format(hi)}" }
     }
+
+    /** At the size Android first opens the window, a long pick still shows its full line. */
+    @Config(qualifiers = "w180dp-h120dp-xxhdpi")
+    @Test fun miniWindowSmallKeepsThePicksLine() {
+        val base = SampleCno.state()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        shootAsWindow("7g_mini_window_small_cno") { MiniFeed(s, next = 0) }
+        compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed() // the whole pick, for TalkBack
+        compose.onNodeWithText(" Under 69.5", useUnmergedTree = true).assertIsDisplayed()
+    }
 }

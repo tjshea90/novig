@@ -130,4 +130,15 @@ class MiniWindowTest {
         assertTrue(manifest.contains("""<package android:name="${MiniWindow.NOVIG_PACKAGE}" />"""))
         assertEquals("us.novig.app", MiniWindow.NOVIG_PACKAGE)
     }
+
+    @Test
+    fun `a pick splits into name and line, so the line Tj bets on is never cut off`() {
+        assertEquals("Justin Jefferson" to "Under 69.5", MiniWindow.splitPick("Justin Jefferson Under 69.5"))
+        assertEquals("Jahmyr Gibbs" to "Over 4.5", MiniWindow.splitPick("Jahmyr Gibbs Over 4.5"))
+        assertEquals("Ohio" to "-33.5", MiniWindow.splitPick("Ohio -33.5"))
+        assertEquals("Long Island University" to "+36.5", MiniWindow.splitPick("Long Island University +36.5"))
+        assertEquals("" to "Under 8.5", MiniWindow.splitPick("Under 8.5"))
+        assertEquals("Charlotte FC" to "No", MiniWindow.splitPick("Charlotte FC No"))
+        assertEquals("Dallas Cowboys" to null, MiniWindow.splitPick("Dallas Cowboys"))
+    }
 }

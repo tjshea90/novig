@@ -18,6 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -188,16 +191,37 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
             maxLines = 1,
         )
         Column(Modifier.weight(1f)) {
-            // The pick itself, what Tj taps in Novig: full contrast, always.
-            Text(
-                item.title,
-                fontSize = 12.sp,
-                lineHeight = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            // The pick itself, what Tj taps in Novig: full contrast, always, and its side and line
+            // ("Under 69.5") never cut off; only the name shortens in a narrow window.
+            val (name, line) = MiniWindow.splitPick(item.title)
+            Row(
+                Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (name.isNotEmpty()) {
+                    Text(
+                        name,
+                        Modifier.weight(1f, fill = false),
+                        fontSize = 12.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (line != null) {
+                    Text(
+                        (if (name.isNotEmpty()) " " else "") + line,
+                        fontSize = 12.sp,
+                        lineHeight = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
             Text(
                 buildAnnotatedString {
                     if (item.fromCno && showTag) {

@@ -123,6 +123,18 @@ object MiniWindow {
 
     fun american(odds: Int): String = com.tjshea.vigilant.engine.Odds.formatAmerican(odds)
 
+    private val PICK_LINE = Regex("""^(.*?)\s*((?:Over|Under)\s+[\d.]+|[+\-−][\d.]+|Yes|No)$""", RegexOption.IGNORE_CASE)
+
+    /**
+     * A pick split into who and which side ("Justin Jefferson" + "Under 69.5", "Ohio" + "-33.5",
+     * "" + "Under 8.5"), so a narrow window shortens the name and never the line Tj bets on.
+     * Picks without a line ("Dallas Cowboys") come back whole.
+     */
+    fun splitPick(title: String): Pair<String, String?> {
+        val m = PICK_LINE.find(title.trim()) ?: return title to null
+        return m.groupValues[1].trim() to m.groupValues[2]
+    }
+
     /** Whether leaving Vigilant should shrink it to the mini window. [rows] is what it would list. */
     fun shouldAutoEnter(settings: ScanSettings, status: ScanStatus, rows: Int): Boolean =
         settings.miniWindow && (status.scanning || status.rechecking || rows > 0)
