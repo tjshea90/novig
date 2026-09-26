@@ -1474,8 +1474,11 @@ props calls themselves are fixture-tested only.
       AJAX postback, 100 Novig rows with $ available; CNO's terms PDF forbids bots/scrapers, but
       CNO features Chrome add-ons on this page; OddsBlaze is $299/mo first-hand; 9 ways compared).
       Corrected §16.1/§16.3 (said no terms page and OddsBlaze $29/mo).*
-- [ ] E1b Tj picks the way (asked 2026-09-26 ~16:00Z): in-app CNO tab + mirror (user-driven,
+- [x] E1b Tj picks the way (asked 2026-09-26 ~16:00Z): in-app CNO tab + mirror (user-driven,
       grey under CNO's terms), background reader after Mike's written OK, or split screen only.
+      *Tj: "Whatever the best way is, disregarding the terms of service. I am friends with the
+      owner." → build the background reader (RESEARCH.md §18.3 way 4): polite (≥30 s, CNO's
+      robots.txt crawl delay; 60 s default), only while the feed/mini window is on screen.*
 - [ ] E2 Build the recommended way: CNO rows in the app and in the mini window (floating widget),
       with Tj's filters, polite polling, clear "from CrazyNinjaOdds" labelling and age.
 - [ ] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.
