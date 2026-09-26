@@ -34,6 +34,10 @@ object Picks {
         return listOfNotNull(who.trim().lowercase(), way).joinToString(" ")
     }
 
+    /** [family] within one game and market: what a placed bet is matched against at other lines. */
+    fun familyKey(event: String, market: String, title: String): String =
+        "${event.trim().lowercase()}|${market.trim().lowercase()}|${family(title)}"
+
     /** The side and line in short form ("O5.5", "U69.5", "-3.5", "Yes"), for a small tag. */
     fun shortLine(title: String): String {
         val line = split(title).second ?: return title
