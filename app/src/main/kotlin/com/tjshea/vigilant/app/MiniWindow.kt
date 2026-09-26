@@ -135,6 +135,17 @@ object MiniWindow {
         return m.groupValues[1].trim() to m.groupValues[2]
     }
 
+    /**
+     * A shorter name for a narrow window: a player keeps an initial and the surname ("Justin
+     * Jefferson" → "J. Jefferson", "Amon-Ra St. Brown" → "A. St. Brown"); a team its last word
+     * ("Dallas Cowboys" → "Cowboys"). One-word names stay.
+     */
+    fun shortName(name: String, player: Boolean): String {
+        val words = name.trim().split(Regex("\\s+"))
+        if (words.size < 2) return name.trim()
+        return if (player) "${words.first().first()}. ${words.drop(1).joinToString(" ")}" else words.last()
+    }
+
     /** Whether leaving Vigilant should shrink it to the mini window. [rows] is what it would list. */
     fun shouldAutoEnter(settings: ScanSettings, status: ScanStatus, rows: Int): Boolean =
         settings.miniWindow && (status.scanning || status.rechecking || rows > 0)

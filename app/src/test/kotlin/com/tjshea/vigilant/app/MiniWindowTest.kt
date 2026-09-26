@@ -140,5 +140,10 @@ class MiniWindowTest {
         assertEquals("" to "Under 8.5", MiniWindow.splitPick("Under 8.5"))
         assertEquals("Charlotte FC" to "No", MiniWindow.splitPick("Charlotte FC No"))
         assertEquals("Dallas Cowboys" to null, MiniWindow.splitPick("Dallas Cowboys"))
+        // Shorter names for a narrow window: players keep an initial, teams their last word.
+        assertEquals("J. Jefferson", MiniWindow.shortName("Justin Jefferson", player = true))
+        assertEquals("A. St. Brown", MiniWindow.shortName("Amon-Ra St. Brown", player = true))
+        assertEquals("Cowboys", MiniWindow.shortName("Dallas Cowboys", player = false))
+        assertEquals("Ohio", MiniWindow.shortName("Ohio", player = false))
     }
 }

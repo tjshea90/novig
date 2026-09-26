@@ -531,5 +531,6 @@ class ScreenshotTest {
         shootAsWindow("7g_mini_window_small_cno") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed() // the whole pick, for TalkBack
         compose.onNodeWithText(" Under 69.5", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithText("J. Jefferson", useUnmergedTree = true).assertIsDisplayed() // shortened, not "Ju…"
     }
 }

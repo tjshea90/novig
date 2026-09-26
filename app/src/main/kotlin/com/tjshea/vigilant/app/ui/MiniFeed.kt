@@ -22,6 +22,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -193,7 +195,17 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
         Column(Modifier.weight(1f)) {
             // The pick itself, what Tj taps in Novig: full contrast, always, and its side and line
             // ("Under 69.5") never cut off; only the name shortens in a narrow window.
-            val (name, line) = MiniWindow.splitPick(item.title)
+            val (fullName, line) = MiniWindow.splitPick(item.title)
+            val pickStyle = TextStyle(fontSize = 12.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold)
+            val measurer = rememberTextMeasurer()
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+            // Full name if it fits beside the line, else "J. Jefferson" / "Cowboys", else cut with "…".
+            val lineWidth = line?.let { measurer.measure((if (fullName.isNotEmpty()) " " else "") + it, pickStyle).size.width } ?: 0
+            val name = if (fullName.isEmpty() || measurer.measure(fullName, pickStyle).size.width + lineWidth <= constraints.maxWidth) {
+                fullName
+            } else {
+                MiniWindow.shortName(fullName, player = item.subtitle.startsWith("Player"))
+            }
             Row(
                 Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
                 verticalAlignment = Alignment.CenterVertically,
@@ -221,6 +233,7 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
                         softWrap = false,
                     )
                 }
+            }
             }
             Text(
                 buildAnnotatedString {
