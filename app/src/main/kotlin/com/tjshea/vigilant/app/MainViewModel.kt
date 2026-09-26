@@ -42,6 +42,8 @@ data class ScanStatus(
     val sources: List<SourceReport> = emptyList(),
     /** Leagues picked since the last scan: nothing to show for them until the next one. */
     val unscanned: Set<String> = emptySet(),
+    /** A recheck (a few Novig prices re-read, no fair-odds calls) is running. */
+    val rechecking: Boolean = false,
 )
 
 /** The Novig API key section of Settings. */
@@ -122,7 +124,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun scan() {
         val current = _state.value
-        if (!current.loaded || c.runner.running) return
+        if (!current.loaded || c.runner.running || current.status.rechecking) return
         if (current.settings.leagues.isEmpty()) return
         val settings = current.settings
         val now = System.currentTimeMillis()
@@ -135,6 +137,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             runCatching { c.usage.flush() }
         }
         if (started) ScanService.start(getApplication())
+    }
+
+    /**
+     * Re-reads just these markets' Novig prices (the feed's, or one bet's) and re-prices against
+     * the last scan's fair odds: a few seconds, no fair-odds calls or credits. For checking an
+     * edge is still there right before betting it.
+     */
+    fun recheck(marketIds: Collection<String>) {
+        val current = _state.value
+        if (!current.loaded || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(status = it.status.copy(rechecking = true)) }
+            val outcome = runCatching { withContext(Dispatchers.IO) { c.scanner.recheck(_state.value.settings, marketIds) } }
+            val report = outcome.getOrNull()
+            _state.update { s ->
+                val r = report?.result ?: s.result
+                s.copy(result = r, feed = r?.feed(s.settings) ?: s.feed, status = s.status.copy(rechecking = false))
+            }
+            runCatching { c.usage.flush() }
+            _toasts.tryEmit(
+                when {
+                    report == null -> "Recheck failed: ${outcome.exceptionOrNull()?.message ?: "unknown error"}"
+                    report.error != null && report.read == 0 -> "Recheck: ${report.error}"
+                    report.failed > 0 -> "Rechecked ${report.read} price${if (report.read == 1) "" else "s"}, ${report.failed} not refreshed"
+                    else -> "Rechecked ${report.read} price${if (report.read == 1) "" else "s"}"
+                },
+            )
+        }
     }
 
     /** Mirrors the runner into the screen's state, for as long as this screen lives. */
