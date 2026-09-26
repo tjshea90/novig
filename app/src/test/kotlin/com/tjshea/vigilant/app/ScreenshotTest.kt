@@ -404,8 +404,14 @@ class ScreenshotTest {
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
         compose.onNodeWithText("Bankroll & Kelly", ignoreCase = true).assertExists()
-        // Both scanners on: the same sections are there (the check above isn't vacuous).
-        screen { SettingsScreen(base, {}) }
+    }
+
+    /** The other half of the check above: with both scanners on, those sections are there. */
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
+    @Test fun bothScannersSettingsShowVigilantsSections() {
+        screen { SettingsScreen(SampleScan.state(), {}) }
         compose.onNodeWithText("Fair odds method", ignoreCase = true).assertExists()
+        compose.onNodeWithText("API usage", ignoreCase = true).assertExists()
+        compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
     }
 }
