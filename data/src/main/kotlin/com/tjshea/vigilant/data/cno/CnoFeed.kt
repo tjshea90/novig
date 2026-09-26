@@ -213,6 +213,12 @@ class CnoFeed(
                     ?: if (result.getOrNull() == null) "This bet isn't on CNO's game page any more" else null,
             ))
         }
+        // A long session sees hundreds of bets come and go: keep the newest [BOOKS_KEEP].
+        if (_books.value.size > BOOKS_KEEP) {
+            val drop = booksTriedAt.entries.sortedBy { it.value }.take(_books.value.size - BOOKS_KEEP).map { it.key }.toSet() - key
+            drop.forEach { booksReadAt.remove(it); booksTriedAt.remove(it) }
+            _books.update { it - drop }
+        }
     }
 
     // ---- The green check: the top bets' books, read slowly in the background ---------------
@@ -294,6 +300,9 @@ class CnoFeed(
 
         /** A bet's books are re-read after this long. */
         const val BOOKS_TTL_MS = 60_000L
+
+        /** Books kept in memory for this many bets at most. */
+        const val BOOKS_KEEP = 150
 
         /** The green check looks at this many of the best bets. */
         const val AGREE_TOP = 12
