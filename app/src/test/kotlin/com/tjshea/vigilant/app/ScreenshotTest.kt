@@ -2,12 +2,14 @@ package com.tjshea.vigilant.app
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -15,6 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.FeedScreen
 import com.tjshea.vigilant.app.ui.GamesScreen
+import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.OpportunityDetail
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
@@ -38,13 +41,18 @@ class ScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
     private fun shoot(name: String, dark: Boolean = true, content: @androidx.compose.runtime.Composable () -> Unit) {
-        compose.setContent {
-            VigilantTheme(darkTheme = dark) {
-                // A Surface, like the app's own Scaffold/sheet, so text gets the theme's content color.
-                Surface(color = MaterialTheme.colorScheme.background) { content() }
-            }
+        screen(dark = dark) {
+            // A Surface, like the app's own Scaffold/sheet, so text gets the theme's content color.
+            Surface(color = MaterialTheme.colorScheme.background) { content() }
         }
         compose.onRoot().captureRoboImage("screenshots/$name.png")
+    }
+
+    /** Sets the content on [SampleScan]'s clock, so price ages read the same on any day. */
+    private fun screen(dark: Boolean = true, now: Long = SampleScan.NOW, content: @androidx.compose.runtime.Composable () -> Unit) {
+        compose.setContent {
+            CompositionLocalProvider(LocalClock provides { now }) { VigilantTheme(darkTheme = dark) { content() } }
+        }
     }
 
     @Test fun feed() = shoot("1_feed") { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
@@ -61,7 +69,7 @@ class ScreenshotTest {
         // Results show while the scan runs, marked as a running count, with no "prices are old" banner.
         compose.onNodeWithText("checked so far", substring = true).assertExists()
         compose.onNodeWithText("Fair odds 3/5 · Novig prices 40/120", substring = true).assertExists()
-        compose.onAllNodesWithText("old. Scan again", substring = true).assertCountEquals(0)
+        compose.onAllNodesWithText("Recheck them", substring = true).assertCountEquals(0)
     }
 
     @Test fun feedScanningBeforeFirstPrices() {
@@ -86,7 +94,7 @@ class ScreenshotTest {
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
-        compose.setContent { VigilantTheme { SettingsScreen(SampleScan.state(), {}) } }
+        screen { SettingsScreen(SampleScan.state(), {}) } }
         compose.onNodeWithText("Sportsbook player props").assertExists()
         compose.onNodeWithText("Most credits per scan on props").assertExists()
         compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
@@ -100,7 +108,7 @@ class ScreenshotTest {
     }
 
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
-        compose.setContent { VigilantTheme { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) } }
+        screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) } }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
         // Key 1 of each keyed provider is the one the next call uses.
         compose.onAllNodesWithText("in use").assertCountEquals(2)
@@ -110,7 +118,7 @@ class ScreenshotTest {
 
     @Test fun tappingACardOpensItsDetailWithTheBookBreakdown() {
         val s = SampleScan.state()
-        compose.setContent { VigilantTheme { FeedScreen(s, {}, {}, {}, { _, _ -> }) } }
+        screen { FeedScreen(s, {}, {}, {}, { _, _ -> }) } }
         compose.onNodeWithText("Dallas Cowboys").performClick()
         compose.onNodeWithText("FAIR ODDS: BLEND · POWER").assertIsDisplayed()
         compose.onNodeWithText("Track").assertIsDisplayed()
@@ -118,7 +126,7 @@ class ScreenshotTest {
 
     @Test fun beforeTheFirstScanTheFeedAsksForOneAndTheButtonScans() {
         var scans = 0
-        compose.setContent { VigilantTheme { FeedScreen(SampleScan.fresh(), { scans++ }, {}, {}, { _, _ -> }) } }
+        screen { FeedScreen(SampleScan.fresh(), { scans++ }, {}, {}, { _, _ -> }) } }
         compose.onNodeWithText("Tap Scan to find +EV bets").assertIsDisplayed()
         compose.onNodeWithText("Not scanned yet").assertIsDisplayed()
         compose.onNodeWithText("Scan now").performClick()
@@ -127,7 +135,7 @@ class ScreenshotTest {
 
     @Test fun whileScanningTheButtonIsBusyAndProgressShows() {
         var scans = 0
-        compose.setContent { VigilantTheme { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) } }
+        screen { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) } }
         compose.onNodeWithText("Novig prices 9/24").assertIsDisplayed()
         compose.onNodeWithText("Scanning…").assertIsDisplayed()
         assert(scans == 0)
@@ -152,18 +160,47 @@ class ScreenshotTest {
         }
     }
 
-    @Test fun anOldScanWarnsBeforeBettingAndOffersToScanAgain() {
-        val old = SampleScan.state().let { it.copy(status = it.status.copy(scannedAtMs = System.currentTimeMillis() - 25 * 60_000L)) }
-        var scans = 0
-        compose.setContent { VigilantTheme { FeedScreen(old, { scans++ }, {}, {}, { _, _ -> }) } }
-        compose.onNodeWithText("Scan again before betting", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Scan", useUnmergedTree = true).performClick()
-        assert(scans == 1)
+    @Test fun oldPricesWarnBeforeBettingAndOfferAQuickRecheck() {
+        var rechecked: Collection<String>? = null
+        screen(now = SampleScan.NOW + 25 * 60_000L) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onRecheck = { rechecked = it }) }
+        compose.onNodeWithText("These prices are up to 25m old. Recheck them", substring = true).assertIsDisplayed()
+        compose.onAllNodesWithText("old price", substring = true).onFirst().assertIsDisplayed()
+        compose.onNodeWithText("Recheck", useUnmergedTree = true).performClick()
+        assert(rechecked == SampleScan.state().feed.map { it.market.marketId }.distinct()) { "rechecked $rechecked" }
+    }
+
+    @Test fun freshPricesHaveNoWarningAndTheFeedCanStillBeRechecked() {
+        var rechecked: Collection<String>? = null
+        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onRecheck = { rechecked = it }) }
+        compose.onAllNodesWithText("Recheck them", substring = true).assertCountEquals(0)
+        compose.onAllNodesWithText("old price", substring = true).assertCountEquals(0)
+        compose.onNodeWithText("Recheck prices").performClick()
+        assert(rechecked!!.isNotEmpty())
+    }
+
+    @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
+    @Test fun detailFull() {
+        val s = SampleScan.state()
+        shoot("2b_detail_full") { OpportunityDetail(s.feed.first(), s.settings, onRecheck = {}) {} }
+        compose.onNodeWithText("OR POST A BID (MAKER)").assertExists()
+        compose.onNodeWithText("Bid up to").assertExists()
+        compose.onNodeWithText("Double-check on CrazyNinjaOdds (Pinnacle)").assertExists()
+        compose.onNodeWithText("Recheck price").assertExists()
+        compose.onNodeWithText("Novig price read just now", substring = true).assertExists()
+    }
+
+    @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Outlier guard").assertExists()
+        compose.onNodeWithText("Longest odds shown: +1000").assertExists()
+        compose.onNodeWithText("Any").performClick()
+        assert(picked?.maxOdds == 0) { "picked $picked" }
     }
 
     @Test fun theFeedCanBeSortedBySoonest() {
         var picked: com.tjshea.vigilant.data.scanner.FeedSort? = null
-        compose.setContent { VigilantTheme { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onSort = { picked = it }) } }
+        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onSort = { picked = it }) } }
         compose.onNodeWithText("Soonest").performClick()
         assert(picked == com.tjshea.vigilant.data.scanner.FeedSort.START)
     }
