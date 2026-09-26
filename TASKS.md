@@ -1603,13 +1603,48 @@ props calls themselves are fixture-tested only.
 > After all of this is done, run full tes protocol on the app
 
 ### Plan
-- [ ] H0 Read the CNO widget code (MiniWindow, MiniFeed, MainActivity PiP, CnoFeed, CnoBooks,
-      CnoScreen) and decide how each item fits the picture-in-picture window's limits.
-- [ ] H1 Up/down scroll buttons, permanently at the bottom of the widget, replacing Next.
-- [ ] H2 Nothing refreshes once the CNO scanner / app is closed (audit CnoFeed watch lifecycle,
-      ScanService, PiP dismiss, back/home/swipe-away; test it).
-- [ ] H3 Team designation next to player names in the widget, e.g. "D. Schultz (HOU)".
-- [ ] H4 Green check where several books agree on fair value (only if cheap for scanning).
-- [ ] H5 Mark a bet as placed / hide it; persists across refreshes and restarts.
-- [ ] H6 Tap a bet → that exact bet in the Novig app (as deep as Novig's links allow).
-- [ ] H7 Full test protocol on the whole app (CLAUDE.md), fix, CI, ship, send the link.
+- [x] H0 Research (2026-09-26 ~20:15-20:45Z, live, first-hand; RESEARCH.md §20 to write):
+      - The widget is picture-in-picture: it takes **no touches** (Android draws its own menu on
+        a tap, max ~3 buttons, and only while tapped). Permanent up/down buttons, tapping a bet,
+        and a "placed" button per bet are impossible there. They need a real floating overlay
+        ("Display over other apps", TYPE_APPLICATION_OVERLAY), which RESEARCH.md §17 already
+        named as the upgrade. Decision: build the overlay as the widget whenever CNO is on
+        (Both / CNO only) and the permission is granted; PiP stays as the fallback (and for
+        Vigilant only, unchanged).
+      - Novig's app routes (from its Expo/React Navigation linking config in app.novig.us's JS
+        bundle): `novigapp://events/:orderslip_outcomes?/:partner_id?/:amount?` (Home + bet slip),
+        `event-markets/:event_id`, `autofill/:market_id?outcome_id=&wager=`, `players/:player_id`.
+        CNO's deeplink (mobile UA) answers `novigapp://events/<id>/cno` and the id is a Novig
+        **outcome id** (checked: Dalton Schultz Over 5.5 receptions), so "Open in Novig" already
+        drops that exact bet into Novig's bet slip; RESEARCH.md §19 misread it as an event id.
+        A desktop UA gets `https://novig.com/events/<id>/cno` instead (normalize to novigapp://).
+      - Player teams: not in Novig's public catalog (markets say "Jadarian Price 53.5
+        RUSHING_YARDS", no team) nor in CNO's list or game page. ESPN's free site API has them:
+        `/apis/site/v2/sports/{sport}/{league}/teams` (32 NFL teams, abbreviations) and
+        `/teams/{id}/roster` (~30 KB gzipped, displayName + shortName "D. Schultz"). Two rosters
+        per game, cached a day.
+      - "Books agree": CNO's list has only fair odds + a book count; every book's price is on
+        CNO's game page (2 requests per bet). So the green check needs a background lane that
+        reads the top bets' game pages slowly, after the list, cached 5 min, only while the
+        scanner is on screen; `CnoBooks.check` already devigs each two-sided book.
+- [ ] H1 Data: placed bets (`PlacedBets`, placed.json, kept through refreshes/restarts/backup,
+      expire after the game) + tests.
+- [ ] H2 Data: books agreement: per-book +EV count, new SPLIT verdict (green ✓ = CONFIRMED = 3+
+      two-sided books whose consensus is +EV and 3+ of them individually +EV); background
+      agreement lane in CnoFeed (top bets, one game page at a time, ≥2 s apart, 5-min TTL,
+      only inside the watch) + tests incl. "never runs when not watched".
+- [ ] H3 Data: player teams (`PlayerTeams`: ESPN teams + rosters, disk cache 24 h, lane inside
+      the watch, soft-fails) + MockWebServer tests.
+- [ ] H4 Data: Novig links: CNO https form → novigapp://, Vigilant rows → novigapp://events/<outcomeId>.
+- [ ] H5 App: nothing refreshes when the scanner is closed: CNO reads only while the CNO tab is on
+      screen or a widget is showing (and the screen is on); closing the widget / the app (swipe
+      away, back out) stops everything; tests.
+- [ ] H6 App: floating widget (overlay): drag/resize/minimize/close, rows (tap = open that bet in
+      Novig, ✓ = placed/hidden with Undo, long-press = every book), permanent bottom bar
+      (Refresh / ▲ / ▼ / Books; Scan/Recheck in Both), team tags, green checks; permission
+      flow; shows on leaving Vigilant / Open in Novig, hides on return; PiP fallback gets ▲/▼.
+- [ ] H7 App: CNO tab + sheet: team tags, green checks, Mark placed / Undo, placed list; Settings
+      (widget style, background books check, player teams).
+- [ ] H8 Screenshots + tests, docs (RESEARCH.md §20, BRIEF.md, CLAUDE.md surface, NOVIG_API.md
+      deeplinks), light pass.
+- [ ] H9 Full test protocol on the whole app (CLAUDE.md), fix, CI, ship, send the link.
