@@ -138,6 +138,19 @@ data class ScanSettings(
     @SerialName("miniSource") val scanner: ScannerMode = ScannerMode.BOTH,
     /** The CNO scanner's filters: worst-case devig, odds cap, fewest books, … (RESEARCH.md §19). */
     val cnoFilters: CnoFilters = CnoFilters(),
+    /**
+     * With CNO on, the widget is a floating window drawn over other apps (needs Android's "Display
+     * over other apps"): scroll buttons always showing, tap a bet to open it in Novig, mark bets
+     * placed (Tj, 2026-09-26). Off, or without that permission: the picture-in-picture window.
+     */
+    val floatingWidget: Boolean = true,
+    /**
+     * The green check: the best CNO bets' books are read in the background (one game page every
+     * few seconds, each re-read after 5 minutes) to see whether several books agree (RESEARCH.md §20).
+     */
+    val cnoCheckBooks: Boolean = true,
+    /** Player bets show the player's team ("D. Schultz (HOU)"), from ESPN's rosters. */
+    val cnoPlayerTeams: Boolean = true,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
