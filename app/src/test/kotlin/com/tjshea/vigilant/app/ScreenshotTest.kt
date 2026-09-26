@@ -399,10 +399,13 @@ class ScreenshotTest {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
         shoot("5c_settings_cno_only") { SettingsScreen(s, {}) }
-        compose.onAllNodesWithText("Fair odds method").assertCountEquals(0)
-        compose.onAllNodesWithText("API usage").assertCountEquals(0)
-        compose.onAllNodesWithText("Novig API key").assertCountEquals(0)
-        compose.onNodeWithText("CNO scanner").assertExists()
-        compose.onNodeWithText("Bankroll & Kelly").assertExists()
+        compose.onAllNodesWithText("Fair odds method", ignoreCase = true).assertCountEquals(0)
+        compose.onAllNodesWithText("API usage", ignoreCase = true).assertCountEquals(0)
+        compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
+        compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
+        compose.onNodeWithText("Bankroll & Kelly", ignoreCase = true).assertExists()
+        // Both scanners on: the same sections are there (the check above isn't vacuous).
+        screen { SettingsScreen(base, {}) }
+        compose.onNodeWithText("Fair odds method", ignoreCase = true).assertExists()
     }
 }

@@ -123,7 +123,7 @@ fun SettingsScreen(
                     } + " Worst case = the longest fair odds of multiplicative, additive/Shin and power.",
                 )
                 Text("Longest odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "Any" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
+                ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "No cap" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
                 Hint(if (f.maxOdds > 0) "Favorites and underdogs up to +${f.maxOdds} only: no longshots." else "Any odds, longshots included.")
                 Text("Fewest books behind the fair price", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "${'$'}it+" }) { v -> onCno { it.copy(minBooks = v) } }
