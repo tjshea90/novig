@@ -360,7 +360,7 @@ class Scanner(
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()
-        Pricing.price(planFor(cat, settings, lastScanAtMs ?: now, youngFairOnly = true), books, settings, now)
+        Pricing.price(planFor(cat, settings, now, youngFairOnly = true, fairAsOf = lastScanAtMs ?: now), books, settings, now)
     }
 
     /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
@@ -478,21 +478,22 @@ class Scanner(
      * The plan for [cat] under [settings], from every fair line known. [youngFairOnly] leaves out
      * snapshots too old to price with: older than the stale limit and than that provider's own
      * re-use window. A line fetched an hour ago may still say which Novig books are worth reading
-     * first, but it must never price what the feed shows mid-scan.
+     * first, but it must never price what the feed shows. Age is judged as of [fairAsOf] (the
+     * scan's own time when re-pricing later); which games are still pregame, as of [now].
      */
-    private fun planFor(cat: Catalog, settings: ScanSettings, now: Long, youngFairOnly: Boolean = false): Plan {
+    private fun planFor(cat: Catalog, settings: ScanSettings, now: Long, youngFairOnly: Boolean = false, fairAsOf: Long = now): Plan {
         val enabled = settings.enabledSources
         val refs = synchronized(references) {
             settings.selectedLeagues.flatMap { l ->
                 SOURCE_ORDER.filter { it in enabled }.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot }
             }
-        }.filter { !youngFairOnly || now - it.fetchedAtMs <= maxFairAgeMs(it.provider, settings) }
+        }.filter { !youngFairOnly || fairAsOf - it.fetchedAtMs <= maxFairAgeMs(it.provider, settings) }
         // The Odds API's books follow the reference-book picker, even between scans.
         val books = settings.referenceBooks.toSet()
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
             settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
-            settings.propsPerGame, settings.maxBooksPerScan, pinned, now / 60_000L,
+            settings.propsPerGame, settings.maxBooksPerScan, pinned, now / 60_000L, fairAsOf / 60_000L,
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
         val filtered = refs.map { snap ->
