@@ -1578,3 +1578,14 @@ book's odds for a tapped bet, in the widget too. Checked live (about 20 requests
   bet in the Tracker; a touchable overlay (the picture-in-picture window can't take taps on a
   row, so Books + Next stand in for tapping).
 
+### 19.2 The mini window didn't show the pick (v0.14.1)
+
+Tj's screenshot over his home screen: EV, market, game and price were there, but each pick's name
+("Jahmyr Gibbs Over 4.5") was nearly black on the dark window. Picture-in-picture draws MiniFeed
+straight into the theme with no Surface, so text without its own color fell back to black; the
+screenshot tests drew it inside a Surface and never saw it. Fixed (MiniFeed has its own Surface,
+the name is bold at full contrast) and pinned by a pixel-contrast test that renders the window
+exactly as the app does. The name also used to be cut before its line ("Justin Jefferson Under …");
+now the side and line always show: "J. Jefferson Under 69.5" when needed, and in the smallest window
+the name on the first line with "Under 69.5" leading the second.
+

@@ -1561,12 +1561,21 @@ props calls themselves are fixture-tested only.
 > novig without opening the full vigilant app
 
 ### Plan
-- [ ] G1 Cause: the pick name (e.g. "Jahmyr Gibbs Over 4.5") is drawn without a color; the mini
+- [x] G1 Cause: the pick name (e.g. "Jahmyr Gibbs Over 4.5") is drawn without a color; the mini
       window (picture-in-picture) renders MiniFeed with no Surface behind it, so the text falls
       back to black on the dark window. The market/price/EV lines set their own colors, so they
       show. Screenshot tests wrapped MiniFeed in a Surface and never saw it.
-- [ ] G2 Fix: MiniFeed supplies its own background and text color; the pick name full-contrast
+- [x] G2 Fix: MiniFeed supplies its own background and text color; the pick name full-contrast
       and bold, the line under it keeps market and game; a test that renders the window exactly
       as MainActivity does (no Surface) and checks the pick name's pixels are light, confirmed
       failing on v0.14.0's code.
+      *G1-G2 done: MiniFeed draws its own Surface (text color), the pick name bold at full contrast;
+      its side and line never cut (MiniWindow.splitPick): "J. Jefferson Under 69.5" when the full
+      name doesn't fit (MiniWindow.nameChoices), and in the smallest window the name on line 1 and
+      the line in bold leading line 2. Tests: ScreenshotTest miniWindowPickNamesAreReadableAsTheWindowDrawsThem
+      + miniWindowBooksViewPickNameIsReadableAsTheWindowDrawsIt (pixel contrast; both FAILED on
+      v0.14.0: luminance 0.00..0.05), miniWindowPickNamesAreReadableInLightThemeToo,
+      miniWindowSmallKeepsThePicksLine, miniWindowShortensNamesThatDontFitAtTheUsualSize (no "…" on
+      the name); MiniWindowTest splitPick/nameChoices; widget screenshots now drawn like the real
+      window (no Surface). Forced full rerun: 354 tests, 0 failed, 3 skipped (live), exit 0.*
 - [ ] G3 Full floor, CI, ship, send the link.
