@@ -1,13 +1,13 @@
-# CHECKPOINT 396 — read me first, then TASKS.md
+# CHECKPOINT 397 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T01:57:08Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-betting-research-dkp593` · **builds on:** `7ba613f` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T02:03:02Z · **tests:** all 1 fast checks green
+**Branch:** `claude/positive-ev-betting-research-dkp593` · **builds on:** `c516ef3` (this checkpoint is the commit after it)
 
 ## Just done
-C1 started: local SDK + Maven/Robolectric mirror set up (build trap 6); full floor green locally (237 tests, 2 live skipped). Research so far: CNO lists Novig with liquidity ($5-$15 rows, 4.8-6.1% EV), disclosed worst-case avg/median devig; OddsAssist consensus top rows are +2400..+4900 longshots on OG/Kalshi/ESPN Bet (28-76%), its Pinnacle page shows sane 2.7-4.9%. Found scanner bug: metered source that fails on league 1 skips later leagues without dropping their stale snapshots, and the final result prices with them.
+C1/C2: fixed stale-fair pricing in Scanner (final result + reprice only from young fair odds; ScannerTest 'a metered source that runs out…' failed before); engine: outlier guard (min of mean/median, 3+ books, default on), Novig PriceGrid + EvMath.makerBid; CrossCheckTest pins worst-case devig/EV to CNO's devigger (4 lines, all match)
 
 ## Do this next
-Fix the stale-snapshot bug (failing test first), finish sweep (keys, store, tracker, UI, background), then features: median outlier guard, max-odds filter, maker bid price, devigger cross-check link
+Data: ScanSettings outlierGuard + maxOdds (default +1000) feed filter; Scanner.recheck(ids); CNO devigger URL builder; Opportunity maker plan; BetTracker averages skip VOID; then app UI wiring + settings + screenshots
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Fix the stale-snapshot bug (failing test first), finish sweep (keys, store, trac
 
 ## Last ten checkpoints
 ```
+  b35fb87 ckpt 396: C1 started: local SDK + Maven/Robolectric mirror set up (build trap 6); full f
   449efd7 ckpt 395: Logged Tj's 2026-09-26 request (full tests, feature/scan improvements, OddsAss
   aa9d099 ckpt 394: SHIPPED v0.10.0 (code 14): release 36174969512 green, Release confirmed with v
   1e820db ckpt 393: pre-release: v0.10.0 (code 14): scans keep running in the background (foregrou
@@ -25,8 +26,7 @@ Fix the stale-snapshot bug (failing test first), finish sweep (keys, store, trac
   180810d ckpt 389: Logged Tj's 2026-09-25 ~18:05Z request (background scan, speed/streaming, Odds
   3528dbb ckpt 388: Shipped v0.9.0 (code 13): release.yml green, Release confirmed with vigilant-v
   4fe72d2 ckpt 387: pre-release: v0.9.0: sportsbook player props (DraftKings/FanDuel/BetMGM/Caesar
-  a621d44 ckpt 386: Docs (RESEARCH §14, BRIEF sportsbook-props decision, CLAUDE surface list, TAS
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
