@@ -131,6 +131,9 @@ class CnoPageTest {
         assertEquals(60, CnoPage.lastUpdatedSeconds(CnoFixtures.info("a minute ago")))
         assertEquals(3600, CnoPage.lastUpdatedSeconds(CnoFixtures.info("1 hour ago")))
         assertNull(CnoPage.lastUpdatedSeconds("Last Updated: Loading..."))
+        // Seen live 2026-09-26 (v0.13.0 read this as unknown).
+        assertEquals(66, CnoPage.lastUpdatedSeconds(CnoFixtures.info("1 minute and 6 seconds ago")))
+        assertEquals(3720, CnoPage.lastUpdatedSeconds(CnoFixtures.info("1 hour and 2 minutes ago")))
     }
 
     @Test
@@ -140,5 +143,14 @@ class CnoPageTest {
         assertEquals(-133, CnoPage.parseOdds("−133"))
         assertEquals(100, CnoPage.parseOdds("EVEN"))
         assertNull(CnoPage.parseOdds("N/A"))
+    }
+
+    @Test
+    fun `CNO's warning sign marks a row devigged from one-way lines`() {
+        val warned = CnoFixtures.row("3.10%", "9/27/2026 5:00:00 PM", "Football", "NFL", "A @ B", "Moneyline", "B", "+110 (\$10)", "Novig", "+104 &#x26A0;&#xFE0F;", "4")
+        val rows = CnoPage.table(CnoFixtures.grid(listOf(warned) + CnoFixtures.rows.take(1)), base).rows
+        assertTrue(rows[0].oneWay)
+        assertTrue(!rows[1].oneWay)
+        assertEquals(104, rows[0].fairOdds)
     }
 }
