@@ -1481,4 +1481,14 @@ props calls themselves are fixture-tested only.
       robots.txt crawl delay; 60 s default), only while the feed/mini window is on screen.*
 - [ ] E2 Build the recommended way: CNO rows in the app and in the mini window (floating widget),
       with Tj's filters, polite polling, clear "from CrazyNinjaOdds" labelling and age.
+      - [x] E2a data layer `data/cno/`: `CnoView` (Shared View link → URL, filters in words),
+            `CnoPage` (form, delta, table by header names), `CnoClient` (GET + loader postback,
+            then one Refresh postback per read; session reuse, fallback, 429/503 pause),
+            `CnoFeed` (≥30 s between reads, interval timer only while watched, error back-off,
+            disk cache). *Tests: CnoPageTest 8, CnoViewTest 5, CnoClientTest 6, CnoFeedTest 7 (all
+            green); LiveCnoSmokeTest (VIGILANT_LIVE=1) green against the real site 2026-09-26
+            ~17:05Z: 100 Novig rows, refresh = 1 request.*
+      - [ ] E2b app: settings (switch, link, refresh interval, mini window source), CNO tab + sheet,
+            mini window rows mixed with Vigilant's (tagged), Refresh button in the mini window,
+            watch only while started (incl. PiP), BRIEF.md exception to manual-only for CNO.
 - [ ] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.

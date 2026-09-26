@@ -1,13 +1,13 @@
-# CHECKPOINT 408 — read me first, then TASKS.md
+# CHECKPOINT 409 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T15:43:08Z · **tests:** all 1 fast checks green
-**Branch:** `claude/odds-display-integration-8qnsaq` · **builds on:** `56f797e` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T16:55:23Z · **tests:** all 1 fast checks green
+**Branch:** `claude/odds-display-integration-8qnsaq` · **builds on:** `5a2903b` (this checkpoint is the commit after it)
 
 ## Just done
-E1 done: RESEARCH.md §18 (how CNO's page/filters/table work, its terms forbid scrapers, CNO's featured add-ons, OddsBlaze $299/mo first-hand, 9 ways compared, recommendation); fixed wrong §16.1/§16.3 claims
+E2a: CNO data layer (CnoView/CnoPage/CnoClient/CnoFeed) + 26 tests green + live smoke green (100 Novig rows, refresh = 1 request)
 
 ## Do this next
-E1b: Tj chooses in-app CNO tab + mini-window mirror (user-driven) vs. background reader after CNO's written OK vs. split screen; then E2 builds the chosen way
+E2b: app side: ScanSettings fields (cnoEnabled, cnoViewUrl, cnoRefreshSeconds, miniSource), AppContainer.cno, MainViewModel state + watch/refresh, CNO tab, MiniFeed merged rows, PiP Refresh action, Settings section, tests + screenshots
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ E1b: Tj chooses in-app CNO tab + mini-window mirror (user-driven) vs. background
 
 ## Last ten checkpoints
 ```
+  3cdc233 ckpt 408: E1 done: RESEARCH.md §18 (how CNO's page/filters/table work, its terms forbid
   e1facc2 ckpt 407: Logged Tj's 2026-09-26T15:34Z request (CrazyNinjaOdds' positive-EV rows in the
   7104c43 ckpt 406: SHIPPED v0.12.0 (code 16): mini window over Novig; CI 36214953291 + release 36
   b58cbed ckpt 405: pre-release: v0.12.0: mini window over Novig (picture-in-picture): scan progre
@@ -26,8 +27,7 @@ E1b: Tj chooses in-app CNO tab + mini-window mirror (user-driven) vs. background
   a5f567c ckpt 401: pre-release: v0.11.0: full-test fixes (stale fair odds never price the feed; v
   420fc11 ckpt 400: C1-C5 done: RESEARCH.md §16 (CNO real Novig +EV at $5-15 depth; OddsAssist he
   efee7d7 ckpt 399: C2 app layer: recheck (feed 'Recheck prices' + sheet 'Recheck price' + old-pri
-  1e2cb8e ckpt 398: C2 data layer: ScanSettings.outlierGuard (default on) + maxOdds (default +1000
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(17 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
