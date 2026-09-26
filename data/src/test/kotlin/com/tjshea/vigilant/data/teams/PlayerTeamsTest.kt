@@ -56,6 +56,14 @@ class PlayerTeamsTest {
                 if (fail) return MockResponse().setResponseCode(500)
                 // ESPN's CDN refuses a User-Agent naming the app (or a browser's, from an app).
                 if (request.getHeader("User-Agent").orEmpty().contains("Vigilant")) return MockResponse().setResponseCode(403).setBody("<HTML>Access Denied</HTML>")
+                // A 24-team league for the full-slate test: teams 1..24, one player each.
+                Regex("""^/hockey/nhl/teams/(\d+)/roster$""").find(path)?.let { m ->
+                    return MockResponse().setBody("""{"athletes":[{"displayName":"Skater ${m.groupValues[1]}"}]}""")
+                }
+                if (path.startsWith("/hockey/nhl/teams?")) {
+                    val list = (1..24).joinToString(",") { """{"team":{"id":"$it","abbreviation":"T$it","displayName":"Team $it"}}""" }
+                    return MockResponse().setBody("""{"sports":[{"leagues":[{"teams":[$list]}]}]}""")
+                }
                 return when {
                     path.startsWith("/football/nfl/teams?") -> MockResponse().setBody(teams)
                     path == "/football/nfl/teams/34/roster" -> MockResponse().setBody(houston)
@@ -128,6 +136,17 @@ class PlayerTeamsTest {
         assertEquals(3, t.fill(PlayerTeams.gamesOf(listOf(row("Dalton Schultz Over 5.5")))))
         assertEquals("HOU", t.state.value.teamOf("NFL", "Houston Texans @ Indianapolis Colts", "Dalton Schultz"))
         assertTrue(agents.isNotEmpty() && agents.all { it.startsWith("okhttp/") })
+    }
+
+    @Test
+    fun `a full slate (more rosters than one pass reads) gets every team at once, not half now and half in 30 minutes`() = runBlocking {
+        val t = teamsClient()
+        // 12 games, 24 rosters + the team list: more than one pass's 20 reads.
+        val rows = MutableStateFlow((1..12).map { g -> row("Skater ${2 * g} Over 0.5", event = "Team ${2 * g - 1} @ Team ${2 * g}", league = "NHL") })
+        val job = launch { t.keepFresh(rows) }
+        withTimeout(15_000) { while (t.state.value.rosters.size < 24) delay(50) }
+        job.cancel()
+        assertEquals("T24", t.state.value.teamOf("NHL", "Team 23 @ Team 24", "Skater 24"))
     }
 
     @Test

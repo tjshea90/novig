@@ -165,8 +165,9 @@ class PlayerTeams(
         rows.map(::gamesOf).distinctUntilChanged { a, b -> a.toSet() == b.toSet() }.collectLatest { games ->
             if (games.isEmpty()) return@collectLatest
             while (true) {
-                fill(games)
-                delay(RETRY_MS)
+                // A pass that stopped at its cap goes on at once; otherwise only failed reads are left.
+                val reads = fill(games)
+                delay(if (reads >= MAX_READS_PER_PASS) GAP_MS else RETRY_MS)
             }
         }
     }
