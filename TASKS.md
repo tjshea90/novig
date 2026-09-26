@@ -1677,3 +1677,26 @@ props calls themselves are fixture-tested only.
       36271444846 green on 0d37c74, release 36271632576 → v0.15.0 (code 20, 5.1MB):
       https://github.com/tjshea90/novig/releases/tag/v0.15.0. Not device-tested (no emulator here):
       the overlay window, its permission flow, and where Novig's app lands need Tj's phone.*
+
+## Tj's request, 2026-09-26 ~23:45Z — resize/move the floating widget more easily; "CNO error"
+
+> Make it so I can easily resize the widget by pulling out two finger gesture to enlarge or two
+> finger pinch to shrink or by easily accessed corners that I can pull out to enlarge or in to
+> shrink. Look at the bottom right of the widget in the screenshot. Something is there but it is
+> cut off. If possible find an easier way for me to drag and move the widget around the screen
+> because the top bar is the only way right now and it is kind of small
+>
+> Also it says cno error at the top. Figure that out
+
+### Plan
+- [ ] J1 Cut-off thing at the bottom right = v0.15.0's resize grip, drawn inside the 12 dp rounded
+      corner (the corner clips it). Replace it.
+- [ ] J2 Resize: two fingers anywhere on the widget (spread = bigger, pinch = smaller), and four
+      big corner handles drawn in a frame around the widget (drag out = bigger, in = smaller).
+- [ ] J3 Move: two fingers anywhere also move it; the whole frame border and a taller top bar
+      drag it with one finger. Screen coordinates (MotionEvent raw x/y), not the widget's own,
+      so it follows the finger exactly (the v0.15.0 top-bar drag used local deltas, which lag
+      a moving window).
+- [ ] J4 "CNO error": find the real cause (live soak of the app's own read pattern: list + books
+      lane + teams), fix it, and make the widget say what the error is instead of "CNO error".
+- [ ] J5 Tests (geometry + gestures + error cases), screenshots, full floor, ship, send the link.

@@ -1,13 +1,13 @@
-# CHECKPOINT 435 — read me first, then TASKS.md
+# CHECKPOINT 436 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T21:07:31Z · **tests:** all 1 fast checks green
-**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `5a3fb73` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T23:46:49Z · **tests:** all 1 fast checks green
+**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `fde5851` (this checkpoint is the commit after it)
 
 ## Just done
-SHIPPED v0.15.0 (code 20): floating CNO widget, placed bets, teams, green checks, reads only while watched; CI 36271444846 green; release 36271632576
+Logged Tj's request: pinch/corner resize, easier move, cut-off bottom-right grip, 'CNO error' (J1-J5)
 
 ## Do this next
-Wait for Tj's device feedback on the floating widget (permission flow, drag/resize, Novig bet-slip deep link); nothing else open
+J4 first: live soak of CnoFeed+books lane against the real CNO to catch the error; then J1-J3 TouchFrame in FloatingWidget
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Wait for Tj's device feedback on the floating widget (permission flow, drag/resi
 
 ## Last ten checkpoints
 ```
+  cd1f331 ckpt 435: SHIPPED v0.15.0 (code 20): floating CNO widget, placed bets, teams, green chec
   0d37c74 ckpt 434: pre-release: v0.15.0: CNO widget you can touch (floating over Novig): Up/Down 
   df36b8b ckpt 433: H9 full test: fixes + forced full rerun 388 tests 0 failed 3 skipped exit 0; v
   d43058c ckpt 432: full test: ESPN 403s a Vigilant User-Agent (live) -> OkHttp default UA; capped
@@ -26,7 +27,6 @@ Wait for Tj's device feedback on the floating widget (permission flow, drag/resi
   5ba9dfd ckpt 428: CnoWatch (data) runs CNO+lanes only while watched (CnoWatchTest); MiniWindowTe
   ac53aad ckpt 427: H5-H7 first build compiles: VM watcher set (tab/pip/overlay) runs CNO watch + 
   f9ae87e ckpt 426: H1-H3 data layer: PlacedBets, CnoBooks agreement (SPLIT) + CnoFeed.keepBooksFr
-  3ba6ab1 ckpt 425: H0 research done: PiP can't take touches -> overlay widget; CNO deeplink = Nov
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
