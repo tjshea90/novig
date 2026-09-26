@@ -33,7 +33,8 @@ enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
 
 /**
  * Everything the user can tune, persisted as JSON. Nothing here triggers network on its own: the
- * app only fetches when Tj taps Scan or pulls to refresh (his rule, 2026-09-25).
+ * app only fetches when Tj taps Scan or pulls to refresh (his rule, 2026-09-25). The one
+ * exception is CrazyNinjaOdds' list ([cnoEnabled]), kept current while on screen (Tj, 2026-09-26).
  */
 @Serializable
 data class ScanSettings(
