@@ -5,8 +5,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
@@ -461,13 +459,10 @@ class ScreenshotTest {
      */
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
     @Test fun miniWindowPickNamesAreReadableAsTheWindowDrawsThem() {
-        for (dark in listOf(true, false)) {
-            compose.setContent {
-                CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
-                    VigilantTheme(darkTheme = dark) { MiniFeed(SampleCno.state(), next = 0) }
-                }
+        compose.setContent {
+            CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
+                VigilantTheme(darkTheme = true) { MiniFeed(SampleCno.state(), next = 0) }
             }
-            break // one setContent per test: dark is the case Tj hit; light is covered below
         }
         assertReadable("Justin Jefferson Under 69.5")
     }
@@ -494,16 +489,27 @@ class ScreenshotTest {
         assertReadable("Justin Jefferson Under 69.5")
     }
 
-    /** The text's own pixels differ clearly from the window behind them (luminance spread over 0.5). */
+    /**
+     * The text's own pixels differ clearly from the window behind them (luminance spread over 0.5).
+     * Draws the Compose view into a bitmap (captureToImage times out under Robolectric) and reads
+     * the node's bounds.
+     */
     private fun assertReadable(text: String) {
-        val bitmap = compose.onNodeWithText(text).captureToImage().asAndroidBitmap()
+        compose.waitForIdle()
+        val bounds = compose.onNodeWithText(text).fetchSemanticsNode().boundsInRoot
+        val activity = (compose as androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>).activity as android.app.Activity
+        val content = activity.findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0)
+        val bitmap = android.graphics.Bitmap.createBitmap(content.width, content.height, android.graphics.Bitmap.Config.ARGB_8888)
+        content.draw(android.graphics.Canvas(bitmap))
         var lo = 1.0
         var hi = 0.0
-        for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
-            val c = bitmap.getPixel(x, y)
-            val l = (0.2126 * android.graphics.Color.red(c) + 0.7152 * android.graphics.Color.green(c) + 0.0722 * android.graphics.Color.blue(c)) / 255.0
-            lo = minOf(lo, l)
-            hi = maxOf(hi, l)
+        for (y in bounds.top.toInt().coerceAtLeast(0) until bounds.bottom.toInt().coerceAtMost(bitmap.height)) {
+            for (x in bounds.left.toInt().coerceAtLeast(0) until bounds.right.toInt().coerceAtMost(bitmap.width)) {
+                val c = bitmap.getPixel(x, y)
+                val l = (0.2126 * android.graphics.Color.red(c) + 0.7152 * android.graphics.Color.green(c) + 0.0722 * android.graphics.Color.blue(c)) / 255.0
+                lo = minOf(lo, l)
+                hi = maxOf(hi, l)
+            }
         }
         assert(hi - lo > 0.5) { "\"$text\" is barely visible: luminance ${"%.2f".format(lo)}..${"%.2f".format(hi)}" }
     }
