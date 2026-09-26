@@ -63,64 +63,64 @@ fun MiniFeed(
     // Surface does, or text without its own color comes out black on the dark window (Tj's
     // screenshot, 2026-09-26: every pick's name was unreadable).
     androidx.compose.material3.Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    Column(
-        Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 4.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(6.dp).background(
-                    if (busy) MaterialTheme.colorScheme.primary else Edge.colors.positive,
-                    CircleShape,
-                ),
-            )
-            Text(
-                miniStatus(state, now),
-                Modifier.weight(1f).padding(start = 4.dp),
-                fontSize = 10.sp,
-                lineHeight = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (items.isNotEmpty()) {
-                Text("${items.size} +EV", fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive)
-            }
-        }
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(top = 2.dp)) {
-            if (booksKey != null && items.isNotEmpty()) {
-                val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
-                val item = items[i]
-                androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
-                MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings))
-            } else if (items.isEmpty()) {
-                Text(
-                    emptyText(state),
-                    Modifier.align(Alignment.Center),
-                    fontSize = 11.sp,
-                    lineHeight = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 4.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(6.dp).background(
+                        if (busy) MaterialTheme.colorScheme.primary else Edge.colors.positive,
+                        CircleShape,
+                    ),
                 )
-            } else {
-                val fit = (maxHeight / ROW).toInt().coerceAtLeast(1)
-                val rows = MiniWindow.page(items.size, fit, next)
-                Column(verticalArrangement = Arrangement.Top) {
-                    // The CNO tag only matters when both lists are mixed.
-                    val tag = MiniWindow.showsVigilant(state.settings)
-                    rows.forEach { i -> MiniRow(items[i], tag) }
+                Text(
+                    miniStatus(state, now),
+                    Modifier.weight(1f).padding(start = 4.dp),
+                    fontSize = 10.sp,
+                    lineHeight = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (items.isNotEmpty()) {
+                    Text("${items.size} +EV", fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive)
                 }
-                if (rows.count() < items.size) {
+            }
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().padding(top = 2.dp)) {
+                if (booksKey != null && items.isNotEmpty()) {
+                    val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
+                    val item = items[i]
+                    androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
+                    MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings))
+                } else if (items.isEmpty()) {
                     Text(
-                        "${rows.first + 1}–${rows.last + 1}/${items.size}",
-                        Modifier.align(Alignment.BottomEnd),
-                        fontSize = 9.sp,
-                        lineHeight = 10.sp,
+                        emptyText(state),
+                        Modifier.align(Alignment.Center),
+                        fontSize = 11.sp,
+                        lineHeight = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
                     )
+                } else {
+                    val fit = (maxHeight / ROW).toInt().coerceAtLeast(1)
+                    val rows = MiniWindow.page(items.size, fit, next)
+                    Column(verticalArrangement = Arrangement.Top) {
+                        // The CNO tag only matters when both lists are mixed.
+                        val tag = MiniWindow.showsVigilant(state.settings)
+                        rows.forEach { i -> MiniRow(items[i], tag) }
+                    }
+                    if (rows.count() < items.size) {
+                        Text(
+                            "${rows.first + 1}–${rows.last + 1}/${items.size}",
+                            Modifier.align(Alignment.BottomEnd),
+                            fontSize = 9.sp,
+                            lineHeight = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
-    }
     }
 }
 
