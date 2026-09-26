@@ -99,7 +99,7 @@ class CnoFeed(
         if (!config.enabled) return null
         val s = _state.value
         val gap = waitForGapMs(now)
-        if (s.snapshot?.url != config.url && s.lastAttemptMs == null) return gap
+        // A view never read (first launch, or a new link): now. Unless it just failed: then back off.
         if (s.snapshot?.url != config.url && s.error == null) return gap
         if (config.intervalSeconds <= 0) return null
         val interval = config.intervalSeconds * 1000L
