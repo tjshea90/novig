@@ -1970,3 +1970,8 @@ print(' '.join(f\"{r['id']}:{r['status']}:{r.get('conclusion')}\" for r in rs))"
 ```
 Make it so I can easily resize the widget by pulling out two finger gesture to enlarge or two finger pinch to shrink or by easily accessed corners that I can pull out to enlarge or in to shrink. Look at the bottom right of the widget in the screenshot. Something is there but it is cut off. If possible  find an easier way for me to drag and move the widget around the screen because the top bar is the only way right now and it is kind of small
 ```
+
+## 2026-09-26T23:46:13Z
+```
+Also it says cno error at the top. Figure that out
+```
