@@ -1795,3 +1795,8 @@ Figure out if these websites truly offer positive EV bets, and for novig. If so,
 <summary>The container running this session was restarted before background work reported back: "Rerun tests with Robolectric mirror" (task byc9u9pry). That work is lost — no result or further notification will arrive for it. Re-create it if still needed (a long-running server or watcher that nothing is waiting on does not need restarting now), or tell the user what was lost.</summary>
 </task-notification>
 ```
+
+## 2026-09-26T03:18:36Z
+```
+Is it possible to make a floating widget for this app or a picture in picture type view so I can see the scans while I have novig open
+```
