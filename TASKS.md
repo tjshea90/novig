@@ -1578,4 +1578,38 @@ props calls themselves are fixture-tested only.
       miniWindowSmallKeepsThePicksLine, miniWindowShortensNamesThatDontFitAtTheUsualSize (no "…" on
       the name); MiniWindowTest splitPick/nameChoices; widget screenshots now drawn like the real
       window (no Surface). Forced full rerun: 354 tests, 0 failed, 3 skipped (live), exit 0.*
-- [ ] G3 Full floor, CI, ship, send the link.
+- [x] G3 Full floor, CI, ship, send the link.
+      *Done: release v0.14.1 (code 19, 5.0MB): https://github.com/tjshea90/novig/releases/tag/v0.14.1;
+      recorded in BUILDLOG.md by the next session (the shipping session was cut off after the
+      release went green).*
+
+## Tj's request, 2026-09-26 ~20:15Z — CNO widget: scroll buttons, no background refresh, teams, agreement checks, placed bets, deep link
+
+> For the cno scanner in this app, do the following:
+> 1) make it so there are permanent up and down buttons on the bottom of the cno scanner widget
+>    that scroll the bets instead of the current next page button.
+> 2) make sure if I close the cno scanner or the app that nothing is refreshing in the background.
+> 3) on the cno scanner widget, put small team designations next to player names. For example,
+>    d. Schultz (hou). That way I know what team to look for in the novig app.
+> 4) put small green checks next to bets in the cno widget where several books agree on the fair
+>    value price, but only do this if it doesn't slow down the scanning a lot.
+> 5) if possible, in the cno scanner widget, make it so I can press a bet to let me know that I
+>    already placed that bet. I want to be able to track which bets on the scanner I already made,
+>    so I don't place them twice. Maybe a button to remove the bet from the scanner widget so I
+>    don't see it anymore after I place the bet, but this has to persist even through refreshes
+>    so the bet doesn't come back up after a refresh if I already placed the bet.
+> 6) if possible, on the cno scanner widget, make it so I can tap a bet and it will bring me to
+>    that exact bet in the novig app so I can place it immediately.
+> After all of this is done, run full tes protocol on the app
+
+### Plan
+- [ ] H0 Read the CNO widget code (MiniWindow, MiniFeed, MainActivity PiP, CnoFeed, CnoBooks,
+      CnoScreen) and decide how each item fits the picture-in-picture window's limits.
+- [ ] H1 Up/down scroll buttons, permanently at the bottom of the widget, replacing Next.
+- [ ] H2 Nothing refreshes once the CNO scanner / app is closed (audit CnoFeed watch lifecycle,
+      ScanService, PiP dismiss, back/home/swipe-away; test it).
+- [ ] H3 Team designation next to player names in the widget, e.g. "D. Schultz (HOU)".
+- [ ] H4 Green check where several books agree on fair value (only if cheap for scanning).
+- [ ] H5 Mark a bet as placed / hide it; persists across refreshes and restarts.
+- [ ] H6 Tap a bet → that exact bet in the Novig app (as deep as Novig's links allow).
+- [ ] H7 Full test protocol on the whole app (CLAUDE.md), fix, CI, ship, send the link.
