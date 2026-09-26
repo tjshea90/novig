@@ -59,7 +59,7 @@ class CnoBooksTest {
         // (PrizePicks isn't counted at all: pick'em lines aren't odds).
         assertEquals(3, c.twoSided)
         assertEquals(2, c.oneSided)
-        val fairs = listOf(-118 to 104, -107 to -129, -103 to -126).map { (mine, theirs) ->
+        val fairs = listOf(104 to -118, -107 to -129, -103 to -126).map { (mine, theirs) ->
             Devig.worstCase(listOf(1 / Odds.americanToDecimal(mine), 1 / Odds.americanToDecimal(theirs)))[0]
         }
         val median = fairs.sorted()[1]
