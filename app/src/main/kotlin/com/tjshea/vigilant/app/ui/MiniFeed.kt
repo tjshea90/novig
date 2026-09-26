@@ -328,17 +328,20 @@ fun miniStatus(state: UiState, now: Long): String {
     return listOfNotNull(ours, theirs).joinToString(" · ").ifEmpty { "Vigilant" }
 }
 
-private fun emptyText(state: UiState): String {
+/** What an empty widget says. [floating]: its buttons always show, so no "tap the window". */
+internal fun emptyText(state: UiState, floating: Boolean = false): String {
     val cno = state.cno
+    val tap = if (floating) "Tap" else "Tap the window, then"
     return when {
         state.status.scanning && MiniWindow.showsVigilant(state.settings) -> "Scanning… bets show here as they're found"
         !MiniWindow.showsVigilant(state.settings) -> when {
             cno.refreshing -> "Reading CrazyNinjaOdds…"
             cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now"
             cno.error != null -> cno.error.orEmpty()
-            else -> "Tap the window, then Refresh"
+            state.settings.cnoRefreshSeconds == 0 -> "$tap Refresh"
+            else -> "Waiting for CrazyNinjaOdds…"
         }
-        state.result == null && cno.snapshot == null -> "Tap the window, then Scan"
+        state.result == null && cno.snapshot == null -> "$tap Scan"
         else -> "No +EV right now"
     }
 }
