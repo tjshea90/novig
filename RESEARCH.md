@@ -1623,6 +1623,12 @@ that exact bet in Novig. Checked first-hand from this container:
   names matched with `PlayerNames.same` (suffixes, short first names); no match, or a match on
   both teams, means no tag rather than a guess. College football's team list is 762 teams
   (~100 KB gzipped, a week's cache).
+  **ESPN's CDN (Akamai) answers 403 "Access Denied" to any User-Agent naming Vigilant, and to a
+  browser User-Agent sent by OkHttp; OkHttp's own (`okhttp/4.12.0`) goes through** (checked live,
+  full test 2026-09-26), so the roster reads send no custom User-Agent. Live after the fix: 14
+  games, 20 reads in the first pass, 39 of 40 player bets tagged (Dalton Schultz (HOU), Justin
+  Jefferson (MIN), Gabby Williams (GS)); the 40th was past the first pass's 20-read cap, which
+  now carries straight on instead of waiting 30 minutes.
 - **Agreement:** CNO's list row has only its fair odds and a book count; each book's price is on
   the bet's game page (2 requests, ~65 KB). A lane reads the 12 best bets' pages one at a time,
   at least 2 s apart, never while a list read is running or CNO asked for a pause, each again
