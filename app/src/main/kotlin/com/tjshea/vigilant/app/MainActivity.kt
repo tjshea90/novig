@@ -152,9 +152,15 @@ class MainActivity : ComponentActivity() {
     /** What the picture-in-picture parameters depend on. */
     private data class MiniParams(val autoEnter: Boolean, val scanning: Boolean, val cnoOnly: Boolean, val tapsOnly: Boolean)
 
+    /**
+     * Android's "Display over other apps" for Vigilant, read when Vigilant comes to the front
+     * (the only time it can have changed: Tj flips it in Android's settings, then comes back).
+     */
+    private var overlayAllowed = false
+
     /** The widget is the floating one: CNO on, the setting on, and Android's permission given. */
     private fun useFloating(s: UiState): Boolean =
-        s.settings.cnoOn && s.settings.floatingWidget && FloatingWidget.allowed(this)
+        s.settings.cnoOn && s.settings.floatingWidget && overlayAllowed
 
     /** The floating widget's content: the app's state, and what its buttons and rows do. */
     @androidx.compose.runtime.Composable
@@ -237,7 +243,8 @@ class MainActivity : ComponentActivity() {
     private fun showWidget(moveBack: Boolean): Boolean {
         val s = vm.state.value
         if (s.settings.cnoOn && s.settings.floatingWidget) {
-            if (FloatingWidget.allowed(this)) {
+            overlayAllowed = FloatingWidget.allowed(this)
+            if (overlayAllowed) {
                 if (widget.show()) {
                     if (moveBack) moveTaskToBack(true)
                     return true
@@ -385,6 +392,11 @@ class MainActivity : ComponentActivity() {
         (application as VigilantApp).container.onScreen = true
         // The full app is back in front: no need for the widget over it.
         if (::widget.isInitialized) widget.hide()
+        val allowed = FloatingWidget.allowed(this)
+        if (allowed != overlayAllowed) {
+            overlayAllowed = allowed
+            updateMiniWindow()
+        }
     }
 
     override fun onStop() {
