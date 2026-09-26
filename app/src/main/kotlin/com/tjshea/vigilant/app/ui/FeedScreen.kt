@@ -104,7 +104,7 @@ fun FeedScreen(
                 }
                 item(key = "summary") { FeedSummary(state, now, onScan, onOpenSettings, onSort) { onRecheck(feedMarketIds(state)) } }
                 items(state.feed, key = { it.key }) { o ->
-                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
+                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), placed = o.key in state.placedKeys) { selected = o }
                 }
             }
         }
@@ -249,7 +249,7 @@ fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
 } + ", ${s.devigMethod.displayName.lowercase()} devig"
 
 @Composable
-fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier: Modifier = Modifier, placed: Boolean = false, onClick: () -> Unit) {
     val q = o.quote ?: return
     val fair = o.fairProbability ?: return
     val refStale = o.fairUpdatedMs?.let { now - it > settings.staleReferenceMinutes * 60_000L } ?: false
@@ -268,6 +268,8 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                     color = if (o.isLive) Edge.colors.negative else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
+                // Marked placed in the floating widget: it's gone from there, and flagged here.
+                if (placed) Text("✓ placed ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.positive, fontWeight = FontWeight.Bold)
                 if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
                 if (refStale) Text("stale fair", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
             }
