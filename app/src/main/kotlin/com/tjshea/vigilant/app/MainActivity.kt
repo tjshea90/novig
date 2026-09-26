@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -44,6 +45,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.FeedScreen
+import com.tjshea.vigilant.app.ui.FloatingActions
+import com.tjshea.vigilant.app.ui.FloatingFeed
 import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalOpenNovig
 import com.tjshea.vigilant.app.ui.MiniFeed
@@ -78,12 +81,10 @@ class MainActivity : ComponentActivity() {
                 vm.toasts.collect { android.widget.Toast.makeText(this@MainActivity, it, android.widget.Toast.LENGTH_SHORT).show() }
             }
         }
-        // The one exception (Tj, 2026-09-26): CrazyNinjaOdds' list stays current while Vigilant is
-        // started, which includes the mini window over Novig (a paused, still-visible activity).
-        // Leaving stops it; CnoFeed paces it to one read per 30 s at most.
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) { vm.watchCno() }
-        }
+        // The one exception (Tj, 2026-09-26): CrazyNinjaOdds' list stays current while someone is
+        // looking at it: the CNO tab (Vigilant started), the picture-in-picture window, or the
+        // floating widget with the screen on. Each says so to vm.watchCno; closing them stops it.
+        widget = FloatingWidget(this, onWatching = { vm.watchCno("overlay", it) }) { w -> FloatingContent(w) }
 
         // The mini window (picture-in-picture over Novig): its buttons, its "am I small?" state, and
         // parameters kept in step with the scan so Android can shrink Vigilant on the way out.
@@ -100,9 +101,9 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.state
-                    .map { Triple(autoEnter(it), it.status.scanning, cnoOnly(it)) }
+                    .map { MiniParams(autoEnter(it) && !useFloating(it), it.status.scanning, cnoOnly(it), it.settings.cnoRefreshSeconds == 0) }
                     .distinctUntilChanged()
-                    .collect { (auto, scanning, cnoOnly) -> updateMiniWindow(auto, scanning, cnoOnly) }
+                    .collect { updateMiniWindow() }
             }
         }
 
@@ -110,13 +111,25 @@ class MainActivity : ComponentActivity() {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
                 if (inMiniWindow) {
-                    MiniFeed(state, miniPage, booksKey = miniBookKey.takeIf { miniBooks }, onLoadBooks = { vm.loadBooks(it) })
+                    // The picture-in-picture window counts as looking at CNO's list while it shows it.
+                    if (MiniWindow.showsCno(state.settings)) {
+                        LifecycleStartEffect(Unit) {
+                            vm.watchCno("pip", true)
+                            onStopOrDispose { vm.watchCno("pip", false) }
+                        }
+                    }
+                    MiniFeed(
+                        state, miniPage,
+                        booksKey = miniBookKey.takeIf { miniBooks },
+                        onLoadBooks = { vm.loadBooks(it) },
+                        onPage = { miniPage = it },
+                    )
                 } else {
                     CompositionLocalProvider(LocalOpenNovig provides { openNovig() }) {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },
-                            onMiniWindow = { enterMiniWindow(); Unit }.takeIf { MiniWindow.supported(this) },
+                            onMiniWindow = { showWidget(moveBack = true); Unit }.takeIf { MiniWindow.supported(this) || state.settings.cnoOn },
                             onOpenInNovig = ::openInNovig,
                         )
                     }
@@ -127,7 +140,116 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         runCatching { unregisterReceiver(miniButtons) }
+        // Vigilant closed (backed out, or swiped away in Recents): the widget goes with it, and
+        // with it every CNO read (Tj, 2026-09-26: "nothing is refreshing in the background").
+        widget.hide()
         super.onDestroy()
+    }
+
+    /** The floating widget over other apps (null only before onCreate). */
+    private lateinit var widget: FloatingWidget
+
+    /** What the picture-in-picture parameters depend on. */
+    private data class MiniParams(val autoEnter: Boolean, val scanning: Boolean, val cnoOnly: Boolean, val tapsOnly: Boolean)
+
+    /** The widget is the floating one: CNO on, the setting on, and Android's permission given. */
+    private fun useFloating(s: UiState): Boolean =
+        s.settings.cnoOn && s.settings.floatingWidget && FloatingWidget.allowed(this)
+
+    /** The floating widget's content: the app's state, and what its buttons and rows do. */
+    @androidx.compose.runtime.Composable
+    private fun FloatingContent(w: FloatingWidget) {
+        VigilantTheme {
+            val state by vm.state.collectAsStateWithLifecycle()
+            FloatingFeed(
+                state,
+                FloatingActions(
+                    onClose = { w.hide() },
+                    onMinimize = { w.minimize(); w.save() },
+                    onExpand = { w.expand() },
+                    onOpenApp = { openApp() },
+                    onDrag = { dx, dy -> w.moveBy(dx, dy) },
+                    onDragEnd = { w.save() },
+                    onResize = { dw, dh -> w.resizeBy(dw, dh) },
+                    onRefresh = { vm.refreshCno(quiet = true) },
+                    onScan = {
+                        vm.scan()
+                        vm.refreshCno(quiet = true)
+                    },
+                    onRecheck = { vm.recheck(feedMarketIds(vm.state.value)) },
+                    onOpenBet = { item -> openBet(item) },
+                    onPlaced = { item -> vm.markPlaced(item) },
+                    onUndoPlaced = { key -> vm.unmarkPlaced(key) },
+                    onLoadBooks = { row -> vm.loadBooks(row) },
+                ),
+                androidx.compose.ui.Modifier.fillMaxSize(),
+                minimized = w.minimized,
+                opening = w.opening,
+            )
+        }
+    }
+
+    /** Vigilant back in front (the widget's "open" button). */
+    private fun openApp() {
+        runCatching {
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            )
+        }
+    }
+
+    /**
+     * A widget bet in Novig's app, in its bet slip: CNO's link for a CNO bet (looked up once,
+     * then cached), Novig's own outcome link for Vigilant's. Novig's home when there's no link.
+     */
+    private fun openBet(item: MiniWindow.Item) {
+        val row = item.cno?.row
+        if (row == null) {
+            launchNovig(MiniWindow.novigLink(item))
+            return
+        }
+        widget.opening = item.key
+        lifecycleScope.launch {
+            val link = runCatching { vm.novigLink(row) }.getOrNull()
+            if (widget.opening == item.key) widget.opening = null
+            launchNovig(link)
+        }
+    }
+
+    /** Opens [link] in Novig's app (never a browser when the app is installed), else Novig itself. */
+    private fun launchNovig(link: String?) {
+        val installed = packageManager.getLaunchIntentForPackage(MiniWindow.NOVIG_PACKAGE) != null
+        val opened = link != null && runCatching {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link))
+                    .apply { if (installed && link.startsWith("novigapp://")) setPackage(MiniWindow.NOVIG_PACKAGE) }
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }.isSuccess
+        if (!opened) runCatching { startActivity(MiniWindow.novigIntent(this)) }
+    }
+
+    /**
+     * Shrinks to the widget: the floating one when it's in use (Vigilant steps back, the widget
+     * stays over whatever is under it), else picture-in-picture. False if neither is possible.
+     */
+    private fun showWidget(moveBack: Boolean): Boolean {
+        val s = vm.state.value
+        if (s.settings.cnoOn && s.settings.floatingWidget) {
+            if (FloatingWidget.allowed(this)) {
+                if (widget.show()) {
+                    if (moveBack) moveTaskToBack(true)
+                    return true
+                }
+            } else if (moveBack) {
+                // Asked for the widget by its button: send Tj to the switch, once per tap.
+                android.widget.Toast.makeText(this, "Allow Vigilant to display over other apps for the floating widget (or switch it off in Settings for picture-in-picture)", android.widget.Toast.LENGTH_LONG).show()
+                runCatching { startActivity(FloatingWidget.permissionIntent(this)) }
+                return false
+            }
+        }
+        return enterMiniWindow()
     }
 
     private var inMiniWindow by mutableStateOf(false)
@@ -162,23 +284,25 @@ class MainActivity : ComponentActivity() {
                 MiniWindow.BOOKS -> {
                     miniBooks = !miniBooks
                     if (miniBooks) miniBookKey = miniItems().firstOrNull()?.key
-                    val st = vm.state.value
-                    updateMiniWindow(autoEnter(st), st.status.scanning, cnoOnly(st))
+                    updateMiniWindow()
                 }
-                MiniWindow.NEXT -> if (miniBooks) {
-                    val items = miniItems()
-                    if (items.isNotEmpty()) {
-                        val at = items.indexOfFirst { it.key == miniBookKey }
-                        miniBookKey = items[(at + 1).mod(items.size)].key
-                    }
-                } else {
-                    miniPage++
-                }
+                MiniWindow.NEXT -> if (miniBooks) stepBook(+1) else miniPage++
+                // CNO alone: Up / Down a page (the list stops at its ends), or a bet in the Books view.
+                MiniWindow.UP -> if (miniBooks) stepBook(-1) else miniPage = (miniPage - 1).coerceAtLeast(0)
+                MiniWindow.DOWN -> if (miniBooks) stepBook(+1) else miniPage++
             }
         }
     }
 
     private fun miniItems() = MiniWindow.items(vm.state.value, System.currentTimeMillis())
+
+    /** The Books view moves to the bet [by] rows down (wrapping, as Next always has). */
+    private fun stepBook(by: Int) {
+        val items = miniItems()
+        if (items.isEmpty()) return
+        val at = items.indexOfFirst { it.key == miniBookKey }.coerceAtLeast(0)
+        miniBookKey = items[(at + by).mod(items.size)].key
+    }
 
     /** Whether leaving Vigilant shrinks it to the mini window: something to watch, and the switch on. */
     private fun autoEnter(s: UiState): Boolean =
@@ -187,16 +311,22 @@ class MainActivity : ComponentActivity() {
     /** CNO only: the mini window lists CNO alone, with Refresh, Books and Next. */
     private fun cnoOnly(s: UiState): Boolean = s.settings.scanner == ScannerMode.CNO
 
-    private fun updateMiniWindow(autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean) {
+    /** The picture-in-picture parameters for now: auto-enter only when the floating widget isn't the one in use. */
+    private fun pipParams(auto: Boolean = true): android.app.PictureInPictureParams {
+        val s = vm.state.value
+        val cno = cnoOnly(s)
+        return MiniWindow.params(this, auto && autoEnter(s) && !useFloating(s), s.status.scanning, cno, miniBooks && cno, tapsOnly = s.settings.cnoRefreshSeconds == 0)
+    }
+
+    private fun updateMiniWindow() {
         if (!MiniWindow.supported(this)) return
-        runCatching { setPictureInPictureParams(MiniWindow.params(this, autoEnter, scanning, cnoOnly, miniBooks && cnoOnly)) }
+        runCatching { setPictureInPictureParams(pipParams()) }
     }
 
     /** Shrinks to the mini window now. False if this phone or its settings don't allow it. */
     private fun enterMiniWindow(): Boolean {
-        val s = vm.state.value
         val ok = MiniWindow.supported(this) &&
-            runCatching { enterPictureInPictureMode(MiniWindow.params(this, autoEnter(s), s.status.scanning, cnoOnly(s))) }
+            runCatching { enterPictureInPictureMode(pipParams()) }
                 .getOrDefault(false)
         if (!ok) {
             android.widget.Toast.makeText(this, "Picture-in-picture is off for Vigilant (Android Settings › Apps › Special app access)", android.widget.Toast.LENGTH_LONG).show()
@@ -204,14 +334,20 @@ class MainActivity : ComponentActivity() {
         return ok
     }
 
-    /** Android 12+ shrinks to the mini window by itself (auto-enter); Android 11 needs asking. */
+    /**
+     * Leaving Vigilant (Home, Recents): the floating widget comes up by itself when it's the one
+     * in use and there's something to watch; otherwise Android 12+ shrinks to picture-in-picture
+     * by itself (auto-enter), and Android 11 needs asking.
+     */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            val s = vm.state.value
-            if (MiniWindow.supported(this) && autoEnter(s)) {
-                runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning, cnoOnly(s))) }
-            }
+        val s = vm.state.value
+        if (useFloating(s)) {
+            if (autoEnter(s)) widget.show()
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && MiniWindow.supported(this) && autoEnter(s)) {
+            runCatching { enterPictureInPictureMode(pipParams()) }
         }
     }
 
@@ -222,29 +358,33 @@ class MainActivity : ComponentActivity() {
     private fun openInNovig(row: CnoRow) {
         lifecycleScope.launch {
             val link = vm.novigLink(row)
-            val s = vm.state.value
-            if (s.settings.miniWindow && MiniWindow.supported(this@MainActivity)) {
-                runCatching { enterPictureInPictureMode(MiniWindow.params(this@MainActivity, true, s.status.scanning, cnoOnly(s))) }
-            }
-            val opened = link != null && runCatching {
-                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }.isSuccess
-            if (!opened) runCatching { startActivity(MiniWindow.novigIntent(this@MainActivity)) }
+            floatOverNovig()
+            launchNovig(link)
         }
     }
 
     /** Novig's app (or site), with Vigilant floating over it when the mini window is on. */
     private fun openNovig() {
-        val s = vm.state.value
-        if (s.settings.miniWindow && MiniWindow.supported(this)) {
-            runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning, cnoOnly(s))) }
-        }
+        floatOverNovig()
         runCatching { startActivity(MiniWindow.novigIntent(this)) }
+    }
+
+    /** Before opening Novig: the widget over it, when the mini window setting is on. */
+    private fun floatOverNovig() {
+        val s = vm.state.value
+        if (!s.settings.miniWindow) return
+        if (useFloating(s)) {
+            widget.show()
+        } else if (MiniWindow.supported(this)) {
+            runCatching { enterPictureInPictureMode(pipParams()) }
+        }
     }
 
     override fun onStart() {
         super.onStart()
         (application as VigilantApp).container.onScreen = true
+        // The full app is back in front: no need for the widget over it.
+        if (::widget.isInitialized) widget.hide()
     }
 
     override fun onStop() {
@@ -357,6 +497,7 @@ private fun VigilantRoot(
                 )
                 Tab.CNO -> CnoScreen(
                     state,
+                    onWatching = { on -> vm.watchCno("tab", on) },
                     onRefresh = { vm.refreshCno() },
                     onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onMiniWindow = onMiniWindow,
