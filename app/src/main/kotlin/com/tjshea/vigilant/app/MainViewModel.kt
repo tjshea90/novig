@@ -9,8 +9,12 @@ import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
+import com.tjshea.vigilant.data.cno.CnoBooksState
+import com.tjshea.vigilant.data.cno.CnoChecks
 import com.tjshea.vigilant.data.cno.CnoConfig
 import com.tjshea.vigilant.data.cno.CnoFeed
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.cno.CnoScreened
 import com.tjshea.vigilant.data.cno.CnoState
 import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.scanner.Opportunity
@@ -74,11 +78,21 @@ data class UiState(
     val novig: NovigUi = NovigUi(),
     /** CrazyNinjaOdds' +EV list (its own tab, and the mini window). */
     val cno: CnoState = CnoState(),
+    /** Every book's price for the CNO bets someone tapped, by row key. */
+    val books: Map<String, CnoBooksState> = emptyMap(),
 ) {
     /** The CNO view to read: Tj's saved link, or Novig with CNO's defaults. */
     val cnoUrl: String get() = CnoView.normalize(settings.cnoViewUrl) ?: CnoView.DEFAULT
 
-    val cnoConfig: CnoConfig get() = CnoConfig(loaded && settings.cnoEnabled, cnoUrl, settings.cnoRefreshSeconds)
+    val cnoConfig: CnoConfig get() = CnoConfig(loaded && settings.cnoOn, cnoUrl, settings.cnoRefreshSeconds, settings.cnoFilters)
+
+    /**
+     * CNO's list for the current link, through the app's own checks with the current filters
+     * (so a changed filter applies at once, before CNO's next read). Null when CNO is off or
+     * nothing was read for this link yet.
+     */
+    fun cnoPicks(now: Long): CnoScreened? =
+        cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
 }
 
 /**
@@ -133,6 +147,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             runCatching { c.cno.load() }
             c.cno.state.collect { cno -> _state.update { it.copy(cno = cno) } }
         }
+        viewModelScope.launch {
+            c.cno.books.collect { b -> _state.update { it.copy(books = b) } }
+        }
     }
 
     /**
@@ -141,13 +158,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     suspend fun watchCno() = c.cno.watch(state.map { it.cnoConfig })
 
-    /** Re-reads CNO now (Refresh, pull down, the mini window's button), if 30 s have passed. */
+    /** Re-reads CNO now (Refresh, pull down, the mini window's button), if 3 s have passed. */
     fun refreshCno(quiet: Boolean = false) {
         val current = _state.value
-        if (!current.loaded || !current.settings.cnoEnabled) return
+        if (!current.loaded || !current.settings.cnoOn) return
         viewModelScope.launch {
             val wait = c.cno.waitForGapMs()
-            val read = c.cno.refresh(current.cnoUrl)
+            val read = c.cno.refresh(current.cnoUrl, current.settings.cnoFilters)
             if (!read && !quiet && !_state.value.cno.refreshing) {
                 val seconds = ((wait + 999) / 1000).coerceAtLeast(1)
                 _toasts.tryEmit("CrazyNinjaOdds can be read again in ${seconds}s (it allows one read per ${CnoFeed.MIN_GAP_MS / 1000}s)")
@@ -161,7 +178,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun scan() {
         val current = _state.value
-        if (!current.loaded || c.runner.running || current.status.rechecking) return
+        // CNO only: Vigilant's scanner and every API behind it stay asleep.
+        if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking) return
         if (current.settings.leagues.isEmpty()) return
         val settings = current.settings
         val now = System.currentTimeMillis()
@@ -183,7 +201,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun recheck(marketIds: Collection<String>) {
         val current = _state.value
-        if (!current.loaded || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
         viewModelScope.launch {
             _state.update { it.copy(status = it.status.copy(rechecking = true)) }
             val outcome = runCatching { withContext(Dispatchers.IO) { c.scanner.recheck(_state.value.settings, marketIds) } }
@@ -203,6 +221,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
     }
+
+    /** Every book's price for a CNO bet (its game page): the sheet and the widget's Books view. */
+    fun loadBooks(row: CnoRow, force: Boolean = false) {
+        if (!_state.value.settings.cnoOn) return
+        viewModelScope.launch { runCatching { c.cno.loadBooks(row, force) } }
+    }
+
+    /** The Novig app link for a CNO bet's game (`novigapp://events/…`), or null. */
+    suspend fun novigLink(row: CnoRow): String? = withContext(Dispatchers.IO) { c.cno.novigLink(row) }
 
     /** Mirrors the runner into the screen's state, for as long as this screen lives. */
     private suspend fun follow() {
