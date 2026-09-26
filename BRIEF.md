@@ -310,7 +310,8 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
 - **Mini window over Novig (Tj, 2026-09-26; v0.12.0, RESEARCH.md §17):** picture-in-picture,
   not a "display over other apps" overlay: no special permission, system-managed. It shrinks on
   leaving the app only while a scan runs or bets are on the feed (Settings switch), and its
-  buttons (Scan, Recheck, Next) are the only way it acts. Split screen works too.
+  buttons (Scan, Recheck, Next) are the only way it acts. Split screen works too. *Since v0.15.0
+  the CNO widget is a floating overlay instead when Tj allows it (below).*
 - **CrazyNinjaOdds' +EV list inside Vigilant (Tj, 2026-09-26; v0.13.0, RESEARCH.md §18):** Tj
   likes CNO's Positive EV page for Novig with his filters and asked for it in the app, "especially
   in the floating widget". CNO's terms forbid bots and scrapers (§18.2); Tj's answer: "Whatever
@@ -322,7 +323,8 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   (CNO's robots.txt crawl delay) for taps and timer alike, 60 s default, back-off after errors,
   Retry-After honored, one request per refresh after the first. It never touches Novig or a
   keyed provider, so the manual-scan rule below still holds for them. CNO's numbers are shown as
-  CNO's (its EV, fair odds, age), never re-priced as Vigilant's.
+  CNO's (its EV, fair odds, age), never re-priced as Vigilant's. *(Pacing and when it reads were
+  revised in v0.14.0 and v0.15.0: see the next two entries.)*
 - **The CNO scanner (Tj, 2026-09-26 ~18:20Z; v0.14.0, RESEARCH.md §19).** A scanner choice:
   Both / Vigilant only / **CNO only**, where Vigilant's scan and every API behind it are asleep
   (Scan and Recheck refuse, the +EV and Games tabs and their settings are hidden; nothing of
@@ -336,7 +338,24 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   mean and median; 3+ books = confirmed, 1–2 = thin). The widget has Books/List for the same.
   Refresh: real time (next read 12 s after CNO's last update, then every 3 s), 5 s, 15 s
   (default), 30 s, 1 min, taps only; never two reads within 3 s; a stuck CNO (>10 min) is read
-  every 30 s. "Open in Novig" follows CNO's deeplink to `novigapp://events/<id>`.
+  every 30 s. "Open in Novig" follows CNO's deeplink to `novigapp://events/<id>/cno`, where
+  `<id>` is a Novig **outcome** id: Novig's app opens with that exact bet in its bet slip
+  (RESEARCH.md §20).
+- **The CNO widget, and when CNO is read (Tj, 2026-09-26 ~20:15Z; v0.15.0, RESEARCH.md §20).**
+  With CNO on, the widget is a **floating window drawn over other apps** (Android's "Display over
+  other apps", asked once; `FloatingWidget` + `ui/FloatingFeed`) because picture-in-picture takes
+  no touches: Up/Down always at the bottom, tap a bet = Novig's bet slip on it, ✓ = placed (hidden
+  from the widget and the CNO tab through refreshes and restarts, `placed.json`, backed up, gone
+  12 h after the game starts; Undo), hold = every book. Picture-in-picture stays the fallback (no
+  permission, or the switch off) and is unchanged for Vigilant only; with CNO alone its buttons
+  are Books/Refresh, Up, Down. **CNO is read only while someone is looking** (`CnoWatch`): the CNO
+  tab with Vigilant started, the picture-in-picture window, or the floating widget while it's up,
+  not shrunk to a bubble, and the screen on and unlocked. Other tabs, a closed widget, a locked
+  phone, or Vigilant closed (backed out or swiped away) read nothing. Two slow lanes run only
+  alongside the list: the **green ✓** (the 12 best bets' CNO game pages, one every ≥2 s, each
+  again after 5 min; ✓ = 3+ two-sided books whose consensus is +EV and 3+ of which say so alone)
+  and **player teams** from ESPN's free rosters (the one non-CNO read in CNO-only mode; two small
+  reads per new game, cached a day in `teams.json`). Both have a switch in Settings.
 - **Rechecks are the one network action besides a scan** (v0.11.0): Tj taps Recheck to
   re-read the feed's (≤40) or one bet's Novig books, with no fair-odds calls. Still nothing on
   a timer.

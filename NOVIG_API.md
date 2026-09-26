@@ -280,6 +280,27 @@ everything. The websocket (§6) is the right tool for broad coverage.
 | `engine/.../Fees.kt` | Partly stale. Take the coefficient and `charged` from each market's `fee` object. Futures on NFL/MLB/NCAAF charge 0.06 **pregame**. |
 | `EvScanner` / `EventMatcher` | Still valid in shape. Feed them executable taker prices from the book (§7), and team names from event `description` plus outcome abbreviations (§5 quirks). |
 
+## 9.1 Novig's app links (verified 2026-09-26 from app.novig.us's JS bundle)
+
+Novig's app is Expo / React Native; app.novig.us is the same code for the web. Its React
+Navigation linking config (prefixes `novigapp://` and `https://novig.onelink.me/JHQQ`):
+
+| Path | Screen | Params |
+| ---- | ------ | ------ |
+| `events/:orderslip_outcomes?/:partner_id?/:amount?` | Home, with the bet slip | outcome ids, comma-separated; a partner tag; an amount (unverified unit: not used) |
+| `event-markets/:event_id` | one event's markets | |
+| `tournament-event-markets/:event_id` | a futures event | |
+| `players/:player_id` | a player | |
+| `autofill/:market_id` | a market, prefilled | query `outcome_id`, `wager` |
+| `deposit/...`, `bonus`, `purchase`, `rewards` | account screens | |
+
+CrazyNinjaOdds' deeplink for a Novig row answers `novigapp://events/<outcomeId>/cno` to a phone
+browser (`https://novig.com/events/<outcomeId>/cno` to a desktop one): the id is the **outcome**
+(checked: CNO's Dalton Schultz Over 5.5 receptions line → that outcome in
+`/v3/public/catalog/markets?event=…`). So opening it puts that exact bet in Novig's bet slip.
+Vigilant's own rows use `novigapp://events/<outcomeId>` the same way. Not checked on a device
+(there's none here): the screen it lands on is inferred from the linking config.
+
 ## 10. Historical data: free, public, no key (useful for CLV and backtests)
 
 `https://data.novig.com/reporting/trade-data/index.json` lists dates.
