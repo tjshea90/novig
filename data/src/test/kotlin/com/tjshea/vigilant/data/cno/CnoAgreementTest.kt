@@ -50,15 +50,16 @@ class CnoAgreementTest {
 
     @Test
     fun `books whose consensus says +EV but only two of which do alone are split, not green`() {
-        // Three books: two near 48% fair, one at 40%. Median 48% > 45.5% → consensus +EV, but only two agree alone.
+        // Three books: two near 47.5% fair, one near 44%. The consensus (~46.4%) beats Novig's 45.5%,
+        // but only two of the three books do on their own.
         val split = CnoBooksView("X Under 1.5", "X Over 1.5", null, false, listOf(
-            price("PN", 104, -118), price("PX", -107, -129), price("KI", 150, -170),
+            price("PN", 104, -118), price("PX", -107, -129), price("KI", 118, -138),
         ), 1L)
         val c = CnoBooks.check(split, 120)
         assertEquals(3, c.twoSided)
         assertEquals(2, c.agreeing)
-        assertTrue(c.ev!! > 0 || c.verdict == CnoBooks.Verdict.NOT_CONFIRMED)
-        assertFalse(c.verdict == CnoBooks.Verdict.CONFIRMED)
+        assertTrue(c.ev!! > 0)
+        assertEquals(CnoBooks.Verdict.SPLIT, c.verdict)
         assertFalse(CnoBooks.agrees(split, row(1), live = false, listReadAtMs = 0L))
     }
 
