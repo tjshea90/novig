@@ -52,7 +52,8 @@ import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.app.ui.feedMarketIds
-import com.tjshea.vigilant.data.scanner.MiniSource
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.scanner.Opportunity
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -89,7 +90,11 @@ class MainActivity : ComponentActivity() {
         inMiniWindow = isInPictureInPictureMode
         addOnPictureInPictureModeChangedListener { info ->
             inMiniWindow = info.isInPictureInPictureMode
-            if (!inMiniWindow) miniPage = 0
+            if (!inMiniWindow) {
+                miniPage = 0
+                miniBooks = false
+                miniBookIndex = 0
+            }
         }
         ContextCompat.registerReceiver(this, miniButtons, IntentFilter(MiniWindow.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
         lifecycleScope.launch {
@@ -105,10 +110,15 @@ class MainActivity : ComponentActivity() {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
                 if (inMiniWindow) {
-                    MiniFeed(state, miniPage)
+                    MiniFeed(state, miniPage, books = miniBookIndex.takeIf { miniBooks })
                 } else {
                     CompositionLocalProvider(LocalOpenNovig provides { openNovig() }) {
-                        VigilantRoot(state, vm, onScan = { scan() }, onMiniWindow = { enterMiniWindow(); Unit }.takeIf { MiniWindow.supported(this) })
+                        VigilantRoot(
+                            state, vm,
+                            onScan = { scan() },
+                            onMiniWindow = { enterMiniWindow(); Unit }.takeIf { MiniWindow.supported(this) },
+                            onOpenInNovig = ::openInNovig,
+                        )
                     }
                 }
             }
@@ -125,7 +135,20 @@ class MainActivity : ComponentActivity() {
     /** Taps on the mini window's Next button; each shows the next page of bets. */
     private var miniPage by mutableIntStateOf(0)
 
-    /** The mini window's Scan / Recheck / Refresh / Next buttons (PendingIntents back to this app only). */
+    /** The mini window shows one CNO bet's books (its Books button) instead of the list. */
+    private var miniBooks by mutableStateOf(false)
+
+    /** Which bet (in the window's list order) the Books view shows; Next moves it down. */
+    private var miniBookIndex by mutableIntStateOf(0)
+
+    /** Loads the books of the bet the Books view is on. */
+    private fun loadMiniBooks() {
+        val items = MiniWindow.items(vm.state.value, System.currentTimeMillis())
+        if (items.isEmpty()) return
+        items[miniBookIndex.mod(items.size)].cno?.let { vm.loadBooks(it.row) }
+    }
+
+    /** The mini window's Scan / Recheck / Refresh / Books / Next buttons (PendingIntents back to this app only). */
     private val miniButtons = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.getIntExtra(MiniWindow.EXTRA_BUTTON, 0)) {
@@ -135,22 +158,45 @@ class MainActivity : ComponentActivity() {
                     if (MiniWindow.showsCno(vm.state.value.settings)) vm.refreshCno(quiet = true)
                 }
                 MiniWindow.RECHECK -> vm.recheck(feedMarketIds(vm.state.value))
-                MiniWindow.REFRESH -> vm.refreshCno()
-                MiniWindow.NEXT -> miniPage++
+                MiniWindow.REFRESH -> {
+                    vm.refreshCno()
+                    if (miniBooks) loadMiniBooksFresh()
+                }
+                MiniWindow.BOOKS -> {
+                    miniBooks = !miniBooks
+                    if (miniBooks) {
+                        miniBookIndex = 0
+                        loadMiniBooks()
+                    }
+                    val st = vm.state.value
+                    updateMiniWindow(autoEnter(st), st.status.scanning, cnoOnly(st))
+                }
+                MiniWindow.NEXT -> if (miniBooks) {
+                    miniBookIndex++
+                    loadMiniBooks()
+                } else {
+                    miniPage++
+                }
             }
         }
+    }
+
+    private fun loadMiniBooksFresh() {
+        val items = MiniWindow.items(vm.state.value, System.currentTimeMillis())
+        if (items.isEmpty()) return
+        items[miniBookIndex.mod(items.size)].cno?.let { vm.loadBooks(it.row, force = true) }
     }
 
     /** Whether leaving Vigilant shrinks it to the mini window: something to watch, and the switch on. */
     private fun autoEnter(s: UiState): Boolean =
         MiniWindow.shouldAutoEnter(s.settings, s.status, MiniWindow.items(s, System.currentTimeMillis()).size)
 
-    /** The mini window lists CNO alone, so its buttons are Refresh and Next. */
-    private fun cnoOnly(s: UiState): Boolean = s.settings.cnoEnabled && s.settings.miniSource == MiniSource.CNO
+    /** CNO only: the mini window lists CNO alone, with Refresh, Books and Next. */
+    private fun cnoOnly(s: UiState): Boolean = s.settings.scanner == ScannerMode.CNO
 
     private fun updateMiniWindow(autoEnter: Boolean, scanning: Boolean, cnoOnly: Boolean) {
         if (!MiniWindow.supported(this)) return
-        runCatching { setPictureInPictureParams(MiniWindow.params(this, autoEnter, scanning, cnoOnly)) }
+        runCatching { setPictureInPictureParams(MiniWindow.params(this, autoEnter, scanning, cnoOnly, miniBooks && cnoOnly)) }
     }
 
     /** Shrinks to the mini window now. False if this phone or its settings don't allow it. */
@@ -173,6 +219,24 @@ class MainActivity : ComponentActivity() {
             if (MiniWindow.supported(this) && autoEnter(s)) {
                 runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning, cnoOnly(s))) }
             }
+        }
+    }
+
+    /**
+     * A CNO bet's game in Novig's app (CNO's deeplink resolves to `novigapp://events/<id>`), with
+     * Vigilant floating over it when the mini window is on. Falls back to Novig's app or site.
+     */
+    private fun openInNovig(row: CnoRow) {
+        lifecycleScope.launch {
+            val link = vm.novigLink(row)
+            val s = vm.state.value
+            if (s.settings.miniWindow && MiniWindow.supported(this@MainActivity)) {
+                runCatching { enterPictureInPictureMode(MiniWindow.params(this@MainActivity, true, s.status.scanning, cnoOnly(s))) }
+            }
+            val opened = link != null && runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isSuccess
+            if (!opened) runCatching { startActivity(MiniWindow.novigIntent(this@MainActivity)) }
         }
     }
 
