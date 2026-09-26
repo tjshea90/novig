@@ -4,7 +4,7 @@ import android.util.Rational
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.data.cno.CnoState
-import com.tjshea.vigilant.data.scanner.MiniSource
+import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -59,25 +59,41 @@ class MiniWindowTest {
     }
 
     @Test
-    fun `both lists merge best EV first with CNO's rows tagged, or either list alone`() {
+    fun `both lists merge best EV first with CNO's checked rows tagged, or either list alone`() {
         val base = SampleCno.state()
         val both = MiniWindow.items(base, SampleScan.NOW)
-        assertEquals(base.feed.size + SampleCno.rows.size, both.size)
+        assertEquals(base.feed.size + SampleCno.kept.size, both.size)
         assertEquals(both.sortedByDescending { it.ev }, both)
-        assertEquals(SampleCno.rows.size, both.count { it.fromCno })
+        assertEquals(SampleCno.kept.sorted(), both.filter { it.fromCno }.map { it.title }.sorted()) // Buehler (4 books) and Perdomo (+167) are out
         val bowers = both.first { it.title == "Brock Bowers Under 4.5" }
         assertEquals("+100", bowers.price)
         assertEquals("\$109", bowers.available)
         assertEquals("Player Receptions · Las Vegas Raiders @ New Orleans Saints", bowers.subtitle)
         assertFalse(bowers.old)
+        assertEquals("Brock Bowers Under 4.5", bowers.cno!!.row.bet)
 
-        val ours = MiniWindow.items(base.copy(settings = base.settings.copy(miniSource = MiniSource.VIGILANT)), SampleScan.NOW)
-        assertEquals(base.feed.map { it.key }, ours.map { it.key }) // the feed's own order
-        val theirs = MiniWindow.items(base.copy(settings = base.settings.copy(miniSource = MiniSource.CNO)), SampleScan.NOW)
-        assertEquals(SampleCno.rows.map { it.bet }, theirs.map { it.title }) // CNO's order
-        // CNO off: its rows go, even with "CNO only" picked.
-        val off = base.copy(settings = base.settings.copy(cnoEnabled = false, miniSource = MiniSource.CNO))
-        assertEquals(base.feed.size, MiniWindow.items(off, SampleScan.NOW).size)
+        val ours = MiniWindow.items(base.copy(settings = base.settings.copy(scanner = ScannerMode.VIGILANT)), SampleScan.NOW)
+        assertEquals(base.feed.map { it.key }, ours.map { it.key }) // Vigilant only: the feed's own order, no CNO
+        val theirs = MiniWindow.items(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO)), SampleScan.NOW)
+        assertEquals(SampleCno.kept, theirs.map { it.title }) // CNO only: no Vigilant rows, best EV first
+    }
+
+    @Test
+    fun `the scanner mode decides what runs: CNO only hides Vigilant's list, Vigilant only never shows CNO`() {
+        val s = ScanSettings()
+        assertTrue(s.cnoOn && s.vigilantOn)
+        assertFalse(s.copy(scanner = ScannerMode.CNO).vigilantOn)
+        assertFalse(s.copy(scanner = ScannerMode.VIGILANT).cnoOn)
+        // v0.13.0 saved "miniSource"; its value carries over, and its CNO switch (off) becomes Vigilant only.
+        val json = Json { ignoreUnknownKeys = true }
+        assertEquals(ScannerMode.CNO, json.decodeFromString(ScanSettings.serializer(), """{"miniSource":"CNO","schema":4}""").migrate().scanner)
+        assertEquals(ScannerMode.VIGILANT, json.decodeFromString(ScanSettings.serializer(), """{"cnoEnabled":false,"schema":4}""").migrate().scanner)
+        assertEquals(15, json.decodeFromString(ScanSettings.serializer(), """{"cnoRefreshSeconds":60,"schema":4}""").migrate().cnoRefreshSeconds)
+        assertEquals(30, json.decodeFromString(ScanSettings.serializer(), """{"cnoRefreshSeconds":30,"schema":4}""").migrate().cnoRefreshSeconds)
+        // New installs: Conservative worst case, up to +150, 5+ books.
+        assertEquals(150, s.cnoFilters.maxOdds)
+        assertEquals(5, s.cnoFilters.minBooks)
+        assertEquals(com.tjshea.vigilant.data.cno.CnoDevig.CONSERVATIVE, s.cnoFilters.devig)
     }
 
     @Test
@@ -98,11 +114,13 @@ class MiniWindowTest {
     }
 
     @Test
-    fun `with CNO's list alone the buttons are Refresh and Next`() {
+    fun `with CNO's list alone the buttons are Refresh, Books and Next`() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val cno = MiniWindow.params(context, autoEnter = true, scanning = true, cnoOnly = true)
-        assertEquals(listOf("Refresh", "Next"), cno.actions.map { it.title.toString() })
+        assertEquals(listOf("Refresh", "Books", "Next"), cno.actions.map { it.title.toString() })
         assertTrue(cno.actions.all { it.isEnabled })
+        // In the Books view the same button goes back to the list.
+        assertEquals("List", MiniWindow.params(context, true, false, cnoOnly = true, books = true).actions[1].title.toString())
     }
 
     @Test

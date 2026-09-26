@@ -1,5 +1,8 @@
 package com.tjshea.vigilant.app
 
+import com.tjshea.vigilant.data.cno.CnoBookPrice
+import com.tjshea.vigilant.data.cno.CnoBooksState
+import com.tjshea.vigilant.data.cno.CnoBooksView
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.CnoSnapshot
 import com.tjshea.vigilant.data.cno.CnoState
@@ -23,4 +26,27 @@ object SampleCno {
         CnoSnapshot(url, rows, SampleScan.NOW - readAgoMs, cnoAgeSeconds = 29, evLabel = "LW-WC")
 
     fun state(base: UiState = SampleScan.state(), cno: CnoState = CnoState(snapshot = snapshot())): UiState = base.copy(cno = cno)
+
+    /** The rows the default filters keep: Buehler has 4 books, Perdomo is +167; the other four pass. */
+    val kept = listOf("Justin Jefferson Under 69.5", "Ohio -33.5", "Brock Bowers Under 4.5", "Amon-Ra St. Brown Under 0.5")
+
+    /** Justin Jefferson Under 69.5 on CNO's game page: sportsbooks list only the Over; Pinnacle and two exchanges price both. */
+    fun jeffersonBooks() = CnoBooksView(
+        bet = "Justin Jefferson Under 69.5",
+        otherBet = "Justin Jefferson Over 69.5",
+        cnoFair = 105,
+        prices = listOf(
+            CnoBookPrice("PN", 100, null, -122, null),
+            CnoBookPrice("PX", -107, 53.0, -129, 112.0),
+            CnoBookPrice("KI", -103, 106.0, -126, 13_662.0),
+            CnoBookPrice("NV", 117, 88.0, -127, 127.0),
+            CnoBookPrice("FD", null, null, -125, null),
+            CnoBookPrice("DK", null, null, -122, null),
+            CnoBookPrice("CZR", null, null, -124, null),
+        ),
+        fetchedAtMs = SampleScan.NOW - 5_000,
+    )
+
+    fun withBooks(base: UiState = state()): UiState =
+        base.copy(books = mapOf(rows[1].key to CnoBooksState(view = jeffersonBooks())))
 }
