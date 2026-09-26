@@ -116,7 +116,8 @@ private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: St
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
         MiniRow(item)
         val view = books?.view
-        val check = if (pick != null && view != null) CnoBooks.check(view, pick.row.odds, pick.live) else null
+        val check = if (pick != null && view != null) CnoBooks.check(view, pick.row, pick.live) else null
+        val judged = pick?.row?.book?.let { CnoBooks.codeFor(it) } ?: CnoBooks.NOVIG
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 when {
@@ -138,7 +139,7 @@ private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: St
         if (view != null) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 view.prices.forEach { p ->
-                    val novig = p.code == CnoBooks.NOVIG
+                    val novig = p.code == judged
                     Text(
                         "${p.code} ${p.odds?.let { MiniWindow.american(it) } ?: "—"}/${p.otherOdds?.let { MiniWindow.american(it) } ?: "—"}",
                         fontSize = 9.sp,
@@ -147,7 +148,7 @@ private fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: St
                         fontWeight = if (novig) FontWeight.Bold else FontWeight.Normal,
                         color = when {
                             novig -> MaterialTheme.colorScheme.primary
-                            p.twoSided && CnoBooks.usableForFair(p.code) -> MaterialTheme.colorScheme.onSurface
+                            p.twoSided && CnoBooks.usableForFair(p.code, judged) -> MaterialTheme.colorScheme.onSurface
                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
                     )

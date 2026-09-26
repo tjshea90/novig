@@ -322,7 +322,7 @@ fun verdictLabel(check: CnoBooks.Check): Pair<String, Color> = when (check.verdi
 private fun CnoCard(pick: CnoPick, snap: CnoSnapshot, settings: ScanSettings, books: CnoBooksState?, now: Long, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val row = pick.row
     val old = now - snap.dataAtMs > MiniWindow.CNO_OLD_MS
-    val check = books?.view?.let { CnoBooks.check(it, row.odds, pick.live) }
+    val check = books?.view?.let { CnoBooks.check(it, row, pick.live) }
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
@@ -408,7 +408,7 @@ fun CnoDetail(
 ) {
     val row = pick.row
     val view = books?.view
-    val check = view?.let { CnoBooks.check(it, row.odds, pick.live) }
+    val check = view?.let { CnoBooks.check(it, row, pick.live) }
     Column(
         Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -445,7 +445,7 @@ fun CnoDetail(
             check != null -> VerdictCard(check, row, view.otherBet)
         }
         if (view != null) {
-            BookTable(view.prices, view.otherBet)
+            BookTable(view.prices, view.otherBet, CnoBooks.codeFor(row.book) ?: CnoBooks.NOVIG)
             Text(
                 "Books read ${Format.age(view.fetchedAtMs, now)}" + (books.error?.let { " · re-read failed: $it" } ?: ""),
                 style = MaterialTheme.typography.labelSmall,
@@ -505,9 +505,9 @@ private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
     }
 }
 
-/** Every book's odds for the bet and its other side, sharp books first. */
+/** Every book's odds for the bet and its other side, sharp books first; [judged] is the bet's own book. */
 @Composable
-private fun BookTable(prices: List<CnoBookPrice>, otherBet: String?) {
+private fun BookTable(prices: List<CnoBookPrice>, otherBet: String?, judged: String) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.fillMaxWidth()) {
             Text("Book", Modifier.weight(1.4f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -516,8 +516,8 @@ private fun BookTable(prices: List<CnoBookPrice>, otherBet: String?) {
             Text("Fair", Modifier.weight(0.7f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         prices.forEach { p ->
-            val novig = p.code == CnoBooks.NOVIG
-            val counted = CnoBooks.usableForFair(p.code) && p.twoSided
+            val novig = p.code == judged
+            val counted = CnoBooks.usableForFair(p.code, judged) && p.twoSided
             val dim = if (counted || novig) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             Row(
                 Modifier.fillMaxWidth()
@@ -538,7 +538,7 @@ private fun BookTable(prices: List<CnoBookPrice>, otherBet: String?) {
             }
         }
         Text(
-            "Fair = that book's odds devigged worst case. Only books pricing both sides count; Novig is the price being judged.",
+            "Fair = that book's odds devigged worst case. Only books pricing both sides count; ${CnoBooks.name(judged)} is the price being judged.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
