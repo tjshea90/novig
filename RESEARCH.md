@@ -706,6 +706,7 @@ an existing free tool covering Novig:
 |---|---|---|---|
 | **OddsJam** | Yes (per its own site) | Gold $199.99/mo (EV+arb+middles); Trends $19.99/mo; Platinum ~$400–500/mo | The incumbent being replaced. Lets users pick devig method + source-of-truth book. |
 | **Odds Assist Pro** | **Yes, confirmed hands-on — see §8.1** | **Free** (no card; a free account unlocks more rows) | 30s refresh (claimed, unverified), undisclosed devig method. Real, live, currently-active Novig edges confirmed by direct testing 2026-09-20 — see §8.1 for the verdict on whether it's "as good as OddsJam." |
+| **CrazyNinjaOdds** | **Yes, with liquidity per row — see §16.1** | Free (donations) | Disclosed method (worst case of mean/median, min books). Real Novig edges, but $5–$15 deep. |
 | **Sharp Lines** | Free tier: DraftKings + FanDuel only, **no Novig** | Free (limited) / paid unclear | Free tier capped at 2% EV, 60s delay — not a Novig source. |
 | **AVO** | 70+ books claimed, Novig unconfirmed | Free "Explorer" tier (up to 2% edges) + paid | Worth checking directly for explicit Novig support. |
 | **RebelBetting** | Unconfirmed | $99+/mo | Not price-competitive with the $30/mo ceiling; deprioritize. |
@@ -1266,3 +1267,109 @@ reads per scan 200 → 300 (saved settings move only if still on the old default
 settles a tied half on its 2-way FMV market isn't documented), `KICKING_POINTS`/`FIELD_GOALS_MADE`
 without an Odds API key (no free source), NHL props (Kalshi's `KXNHLPTS`/`KXNHLGOAL`/`KXNHLSAVES`
 had no open events on 2026-09-25, preseason: shapes unverified), first-TD scorer (multi-way).
+
+## 16. OddsAssist Pro and CrazyNinjaOdds, re-checked 2026-09-26 (~01:50–02:30Z)
+
+Tj asked: do `pro.oddsassist.com/advantages/plus-ev` and
+`crazyninjaodds.com/site/tools/positive-ev.aspx` truly offer +EV bets, for Novig, and can the app
+use them? How this was checked: CrazyNinjaOdds (CNO) loaded once in the pre-installed Chromium
+(its table renders server-side); OddsAssist's server-rendered HTML read with `curl` and parsed.
+A second Chromium session (to filter each tool to Novig only) was blocked by the session's
+permission classifier, so this pass did **not** re-run §8.1's hands-on Novig-only filter on
+OddsAssist. Everything below is from the default all-books views unless it says otherwise.
+
+### 16.1 CrazyNinjaOdds "Positive EV": yes, real, and it covers Novig
+
+- **Free** (donation-supported; supporter tiers from $5/mo). "Last Updated: 56 seconds ago" at load.
+- **Books:** 25+ including **Novig**, ProphetX, Kalshi, Pinnacle, Circa (NV), Bet365, DraftKings,
+  FanDuel, BetMGM, Caesars, Fanatics, BetRivers, Hard Rock, Fliff, PrizePicks.
+- **Liquidity is shown for exchanges**: a Novig row reads `+108 ($5)`, the dollars available at
+  that price. Vigilant already shows the same thing ("$X fillable at +EV", from the full ladder).
+- **Methodology is disclosed** (unlike OddsAssist): "Fair value is calculated from the worst-case
+  between market average and median." Three weightings (Liquidity-Weighted: more weight to
+  high-limit books; Unweighted Market Consensus; Conservative), each with worst-case /
+  multiplicative / additive-Shin / power devig. Filters: min/max odds, min liquidity, min EV,
+  min books (recommended 3), min market sides (recommended 2), mainlines only, start window.
+- **Snapshot** (default filters, all books, top ~70 rows): EV 4.3%–15.8%, mostly player props at
+  Bet365 / BetRivers / Bally, fair prices from 3–15 books. **Three Novig rows:**
+  | Game | Bet | Novig (size) | Fair | Books | EV |
+  |---|---|---|---|---|---|
+  | SEA @ WAS | Jaxon Smith-Njigba Under 6.5 receptions | +108 ($5) | −104 | 15 | 6.06% |
+  | PIT @ CLE (Thu) | Over 38.5 | +111 ($5) | +101 | 3 | 5.06% |
+  | CAR @ CLE | Tetairoa McMillan Under 4.5 receptions | +115 ($15) | +105 | 13 | 4.76% |
+- **Verdict:** the edges are real by the standard every +EV tool uses (Novig price beats a
+  multi-book devigged consensus, conservatively computed). They are also **tiny in dollars**: $5–$15
+  of liquidity at those prices is $0.25–$0.75 of expected profit per bet. That is the Novig +EV
+  reality, not a CNO flaw: the lag is on thin props, and the size isn't there. The larger lever on
+  an exchange is posting your own bid (§16.4).
+- **Its devigger agrees with Vigilant's math.** CNO's devigger reads
+  `sportsbook_devigger.aspx?autofill=1&LegOdds=<this side>/<other side>&FinalOdds=<price>` and
+  computes on load (worst case by default; the `DevigMethod` parameter is ignored). Four lines
+  checked against Vigilant's engine, all equal to CNO's printed tenth of a percent: +120/−140 at
+  +130 → 43.4% fair, −0.1% EV; +330/−450 at +400 → 19.9%, −0.4%; −110/−110 at +105 → 50.0%,
+  +2.5%; +250/−300 at +275 → 26.4%, −1.1% (`CrossCheckTest`).
+- **API:** the "Devigger API" (api.crazyninjaodds.com) is marked work-in-progress and only devigs;
+  "APIs for providing sportsbook odds" are "coming in the future". CNO's odds come from
+  **OddsBlaze**, which a competitor's comparison page lists at **$29/mo with a ~2-minute throttle,
+  $249/mo for real time**, with Novig among its sources (second-hand, not verified on OddsBlaze's
+  own page, which renders client-side). robots.txt allows all with `Crawl-delay: 30`; no terms page
+  was found.
+
+### 16.2 OddsAssist Pro "+EV Bets": some real edges, but the headline numbers are longshot noise
+
+- Free; 3 rows readable without an account, the rest blurred behind a free sign-up.
+- **Default (all books) top rows, none of them Novig:** Missouri State ML **+4900** at OG.com vs
+  no-vig +2736 → "76.32%"; Illinois ML **+2400** at Kalshi vs +1683 → "40.24%"; Robert Morris ML
+  **+3000** at ESPN Bet vs +2314 → "28.41%". Blurred rows: 14%–27% on +862 to +2736 lines. CNO
+  had the same Illinois game at 5.3% on a *spread* (Bally Bet, 12 books): the big numbers are the
+  favorite–longshot problem from §8.1 (thin longshot books, simple devig), not money on the table.
+- **Its "Pinnacle +EV" page** (`/advantages/plus-ev-pinnacle`, Pinnacle alone as the truth) looks
+  sane: Browns ML +133 at Kalshi and OG.com vs +122 → 4.9%; JMU/ODU Over 44.5 +104 vs −106 → 4.83%;
+  others 2.7%–4.5%. Whether exchange fees are netted isn't stated; Kalshi's taker fee
+  (0.07 × P × (1 − P) per contract, about 1.7¢ at +133) would eat most of that 4.9%.
+- Devig method still undisclosed (§8.1). Novig is in its book list, and §8.1's 2026-09-20
+  hands-on found Novig rows (e.g. Dolphins ML +809, "18.73%"): also longshots.
+- **Terms of service:** "Use automated tools or bots without our permission" and "scrape, or
+  reverse-engineer our systems" are prohibited; content is "for personal use only". So it can't be
+  a data source for the app.
+
+### 16.3 Can they be incorporated? What was taken instead (v0.11.0)
+
+Neither can be a live feed inside Vigilant: OddsAssist forbids it, CNO has no odds API (its odds
+are OddsBlaze's), and scraping either would be fragile and only as fresh as their servers. Vigilant
+already reads Novig's own book directly, which is fresher than either site's copy of it. What
+they do better was adopted:
+
+1. **Outlier guard** (CNO's rule): with 3+ books behind a fair price, each side uses the lower of
+   the books' mean and median. One stale book can pull a mean; it can't pull a median. On by
+   default (`FairSettings.outlierGuard`, `FairValueTest`).
+2. **Longest-odds cap** (both sites' biggest "edges" are longshots): the feed hides prices longer
+   than +1000 by default; +300/+500/+2000/Any in Settings (`ScanSettings.maxOdds`).
+3. **Recheck**: re-read only the feed's Novig books (≤40, about 7 s, no fair-odds calls) or one
+   bet's, right before betting. Cards say "old price" past 10 minutes and the banner offers the
+   recheck (`Scanner.recheck`, `ScannerTest`).
+4. **Maker bid** (§16.4) in the bet sheet.
+5. **"Double-check on CrazyNinjaOdds"** in the bet sheet: opens CNO's devigger prefilled with the
+   reference line (Pinnacle when it's in the line) and Novig's price, for an independent second
+   opinion in one tap (`CrossCheck`, `ResearchFeaturesTest`).
+
+Not adopted: liquidity-weighted consensus (Vigilant's sharp/average blend already weights
+Pinnacle and the exchanges; per-book limits aren't published), OddsBlaze (a 2-minute throttle at
+$29 is slower than Vigilant's own reads; worth a look only as a cheaper prop-odds source than
+The Odds API's credits, if its pricing checks out first-hand).
+
+### 16.4 Why a maker bid matters on Novig
+
+Both tools only ever say "take this price". On an exchange you can also post your own bid and wait,
+and Novig's makers pay no fee (NOVIG_API.md §8). With the take side holding $5–$15 at +EV prices
+(§16.1), the bet sheet now shows the highest price on Novig's grid that still clears the EV target
+(at least 2%: a resting order tends to fill when the line moves against it) and the current best
+bid on that side. It's shown only when that bid would be cheaper than taking now.
+
+### 16.5 Also found in this pass (full test, 2026-09-26)
+
+- **Bug, fixed:** a metered source (pinnapi's 100/day, The Odds API) that refused on the first
+  league skipped the rest, leaving their old snapshots in place, and the scan's final result priced
+  from them, however old (a two-hour-old Pinnacle line in the test). The final result and every
+  re-price now use only fair odds young enough to bet on, like the mid-scan results already did.
+- Tracker averages (EV, CLV, beat-the-close) no longer count voided bets.
