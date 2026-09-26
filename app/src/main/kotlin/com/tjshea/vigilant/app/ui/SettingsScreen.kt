@@ -57,7 +57,9 @@ import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.MarketFamily
-import com.tjshea.vigilant.data.scanner.MiniSource
+import com.tjshea.vigilant.data.scanner.ScannerMode
+import com.tjshea.vigilant.data.cno.CnoDevig
+import com.tjshea.vigilant.data.cno.CnoFilters
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.FairSettings
@@ -94,225 +96,258 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp),
         ) {
-            // ---- Usage meters ------------------------------------------------------------------
-            SectionTitle("API usage")
-            UsageSection(state)
-
-            // ---- Fair odds ---------------------------------------------------------------------
-            SectionTitle("Fair odds method")
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                FairSource.entries.forEachIndexed { i, source ->
-                    SegmentedButton(
-                        selected = s.fairSource == source,
-                        onClick = { onUpdate { it.copy(fairSource = source) } },
-                        shape = SegmentedButtonDefaults.itemShape(i, FairSource.entries.size),
-                    ) { Text(source.shortName, maxLines = 1) }
-                }
-            }
+            // ---- Scanner ------------------------------------------------------------------------
+            SectionTitle("Scanner")
+            ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
             Hint(
-                when (s.fairSource) {
-                    FairSource.SHARP -> "Fair price from the sharp books you mark below (Pinnacle by default)."
-                    FairSource.MARKET_AVERAGE -> "Each book is devigged on its own, then all of them are averaged."
-                    FairSource.BLEND -> "A weighted mix: ${(s.sharpWeight * 100).roundToInt()}% sharp, ${100 - (s.sharpWeight * 100).roundToInt()}% market average."
+                when (s.scanner) {
+                    ScannerMode.BOTH -> "Vigilant's own scan (tap Scan) and CrazyNinjaOdds' list (kept current while on screen), both in the mini window."
+                    ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read."
+                    ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (Novig, Pinnacle, Polymarket, " +
+                        "Kalshi, The Odds API) are asleep: nothing of theirs loads, and their tabs and settings are hidden."
                 },
             )
-            if (s.fairSource == FairSource.BLEND) {
-                var weight by remember(s.sharpWeight) { mutableFloatStateOf(s.sharpWeight.toFloat()) }
-                Text("Sharp weight: ${(weight * 100).roundToInt()}%", style = MaterialTheme.typography.bodyMedium)
-                Slider(
-                    value = weight,
-                    onValueChange = { weight = (it * 20).roundToInt() / 20f },
-                    onValueChangeFinished = { onUpdate { it.copy(sharpWeight = weight.toDouble()) } },
-                    valueRange = 0f..1f,
-                    steps = 19,
+
+            // ---- The CNO scanner ----------------------------------------------------------------
+            if (s.cnoOn) {
+                val f = s.cnoFilters
+                val onCno: ((CnoFilters) -> CnoFilters) -> Unit = { t -> onUpdate { it.copy(cnoFilters = t(it.cnoFilters)) } }
+                SectionTitle("CNO scanner")
+                Text("Devig (all worst case)", style = MaterialTheme.typography.bodyMedium)
+                ChoiceChips(CnoDevig.entries, f.devig, { it.displayName }) { v -> onCno { it.copy(devig = v) } }
+                Hint(
+                    when (f.devig) {
+                        CnoDevig.CONSERVATIVE -> "The worse of CNO's two worst cases: its most cautious setting. It hides some real edges; what's left is the safest."
+                        CnoDevig.LIQUIDITY_WEIGHTED -> "Books weighted by liquidity and limits (CNO's default)."
+                        CnoDevig.MARKET_CONSENSUS -> "Every book counts the same."
+                    } + " Worst case = the longest fair odds of multiplicative, additive/Shin and power.",
                 )
-            }
-            if (s.fairSource == FairSource.SHARP) {
-                SwitchRow("Fall back to market average", "When no sharp book quotes a line, use every book instead of skipping it.", s.fallbackToAverage) { v ->
-                    onUpdate { it.copy(fallbackToAverage = v) }
-                }
-            }
-
-            Text("Sharp books", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FairSettings.KNOWN_SHARP_CANDIDATES.forEach { key ->
-                    FilterChip(
-                        selected = key in s.sharpBooks,
-                        onClick = { onUpdate { it.copy(sharpBooks = if (key in it.sharpBooks) it.sharpBooks - key else it.sharpBooks + key) } },
-                        label = { Text(TheOddsApiClient.bookTitle(key)) },
-                    )
-                }
-            }
-            Hint("Pinnacle comes from your pinnapi key (or The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
-
-            Text("Minimum books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
-            ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
-            SwitchRow(
-                "Outlier guard",
-                "With 3 or more books, use the lower of their average and median, so one stale book can't create a fake edge.",
-                s.outlierGuard,
-            ) { v -> onUpdate { it.copy(outlierGuard = v) } }
-
-            SectionTitle("Devig method")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                DevigMethod.entries.forEach { m ->
-                    FilterChip(selected = s.devigMethod == m, onClick = { onUpdate { it.copy(devigMethod = m) } }, label = { Text(m.displayName) })
-                }
-            }
-            Hint(s.devigMethod.blurb)
-
-            // ---- Sources ------------------------------------------------------------------------
-            SectionTitle("Where fair odds come from")
-            Hint("Each is called only when you scan. Polymarket and Kalshi need no key.")
-            SwitchRow(
-                "Pinnacle (pinnapi)",
-                if (state.pinnapiKeys.isEmpty()) "Needs a free key from pinnapi.com (100 requests a day, about 1–2 per scan)."
-                else "About 1–2 of a key's 100 daily requests per scan. Keys are used in order.",
-                s.usePinnacle,
-            ) { v -> onUpdate { it.copy(usePinnacle = v) } }
-            if (s.usePinnacle) {
-                KeyListEditor(ApiProvider.PINNAPI, state.pinnapiKeys, keys, "Add a pinnapi key")
-                if (state.pinnapiKeys.size > 1) {
-                    Hint(
-                        "Heads up: pinnapi's terms forbid circumventing its rate limits, so using extra keys to get past " +
-                            "100 a day could get the keys suspended. Each key is still kept inside its own limit.",
-                    )
-                }
-            }
-            SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
-            SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC.", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
-            SwitchRow(
-                "The Odds API",
-                if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
-                else "US sportsbooks plus Pinnacle. Keys are used in order; the next takes over when one runs out.",
-                s.useOddsApi,
-            ) { v -> onUpdate { it.copy(useOddsApi = v) } }
-            if (s.useOddsApi) {
-                KeyListEditor(ApiProvider.THE_ODDS_API, state.oddsApiKeys, keys, "Add an Odds API key")
-                Text("Re-use The Odds API between scans for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, s.oddsApiReuseMinutes, { if (it == 0) "Every scan" else "${it}m" }) { v ->
-                    onUpdate { it.copy(oddsApiReuseMinutes = v) }
-                }
-                Hint(creditEstimate(s))
-
+                Text("Longest odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "Any" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
+                Hint(if (f.maxOdds > 0) "Favorites and underdogs up to +${f.maxOdds} only: no longshots." else "Any odds, longshots included.")
+                Text("Fewest books behind the fair price", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "${'$'}it+" }) { v -> onCno { it.copy(minBooks = v) } }
+                Hint("A fair price from one or two books can be a small market's mistake. Tap any bet to see which books price both sides and Vigilant's own check.")
+                Text("Minimum EV", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.CNO_MIN_EV_CHOICES, f.minEv, { Format.percent(it, 0) }) { v -> onCno { it.copy(minEv = v) } }
                 SwitchRow(
-                    "Sportsbook player props",
-                    "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Kalshi " +
-                        "where it has the same line. 1 credit per prop type per game.",
-                    s.useBookProps,
-                ) { v -> onUpdate { it.copy(useBookProps = v) } }
-                if (s.useBookProps) {
-                    if (MarketFamily.PLAYER_PROPS !in s.families) Hint("Turn on Player props under Markets below to use these.")
-                    Text("Prop types per game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                    ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
-                    Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                    ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else it.toString() }) { v ->
-                        onUpdate { it.copy(bookPropCreditsPerScan = v) }
-                    }
-                    Text("Only games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                    ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
-                    Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                    ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
-                        onUpdate { it.copy(bookPropReuseMinutes = v) }
-                    }
-                    Hint(bookPropEstimate(s))
-                }
+                    "Require a complete sportsbook",
+                    "At least one book prices every side of the market (CNO's own filter).",
+                    f.completeBook,
+                ) { v -> onCno { it.copy(completeBook = v) } }
+                Hint("Always left out: EV over 20% (almost always a stale line), rows CNO devigged from one side only (⚠️), and rows whose EV doesn't follow from their fair odds.")
 
-                SectionTitle("The Odds API books (${s.referenceBooks.size}/10)")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
-                        val on = key in s.referenceBooks
-                        FilterChip(
-                            selected = on,
-                            enabled = on || s.referenceBooks.size < TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION,
-                            onClick = { onUpdate { it.copy(referenceBooks = if (on) it.referenceBooks - key else it.referenceBooks + key) } },
-                            label = { Text(title) },
-                        )
-                    }
-                }
-                Hint("Up to 10 books cost the same: one credit per market per league, and one per prop type per game for props.")
+                Text("Refresh", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, ::secondsLabel) { v -> onUpdate { it.copy(cnoRefreshSeconds = v) } }
+                Hint(refreshHint(s))
+                Text("Rows per read", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "${'$'}it" }) { v -> onCno { it.copy(rows = v) } }
+                Hint("CNO sends its best-EV rows first; fewer rows is less data per read.")
+                CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
             }
 
-            // ---- Feed filters -----------------------------------------------------------------
+            // ---- Mini window --------------------------------------------------------------------
             SectionTitle("Mini window")
             SwitchRow(
                 "Float over Novig",
-                "When you leave Vigilant with a scan running or bets to show, it shrinks to a small window that stays " +
-                    "on top of Novig. Tap it for Scan, Recheck and Next; pinch or double-tap to enlarge; drag it to the " +
-                    "bottom to close. The button next to Scan opens it any time.",
+                "When you leave Vigilant with bets to show (or a scan running), it shrinks to a small window that stays on top " +
+                    "of Novig. Tap it for its buttons; pinch or double-tap to enlarge; drag it to the bottom to close. The " +
+                    "button at the top of the list opens it any time.",
                 s.miniWindow,
             ) { v -> onUpdate { it.copy(miniWindow = v) } }
+            Hint(
+                when (s.scanner) {
+                    ScannerMode.BOTH -> "It lists Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first; its buttons are Scan (which refreshes CNO's too), Recheck and Next."
+                    ScannerMode.VIGILANT -> "It lists Vigilant's bets; its buttons are Scan, Recheck and Next."
+                    ScannerMode.CNO -> "It lists CNO's bets; its buttons are Refresh, Books (every book's odds for the top bet, then Next moves down) and Next."
+                },
+            )
             Hint("If it never appears, turn on picture-in-picture for Vigilant in Android Settings › Apps › Special app access.")
-            if (s.cnoEnabled) {
-                Text("The mini window lists", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(MiniSource.entries, s.miniSource, { it.displayName }) { v -> onUpdate { it.copy(miniSource = v) } }
+
+            // ---- Vigilant's own scanner (asleep in CNO only) ----------------------------------
+            if (s.vigilantOn) {
+                // ---- Usage meters ------------------------------------------------------------------
+                SectionTitle("API usage")
+                UsageSection(state)
+
+                // ---- Fair odds ---------------------------------------------------------------------
+                SectionTitle("Fair odds method")
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    FairSource.entries.forEachIndexed { i, source ->
+                        SegmentedButton(
+                            selected = s.fairSource == source,
+                            onClick = { onUpdate { it.copy(fairSource = source) } },
+                            shape = SegmentedButtonDefaults.itemShape(i, FairSource.entries.size),
+                        ) { Text(source.shortName, maxLines = 1) }
+                    }
+                }
                 Hint(
-                    when (s.miniSource) {
-                        MiniSource.BOTH -> "Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first. Scan also refreshes CNO's."
-                        MiniSource.VIGILANT -> "Only Vigilant's own scan."
-                        MiniSource.CNO -> "Only CrazyNinjaOdds' list. Its buttons become Refresh and Next."
+                    when (s.fairSource) {
+                        FairSource.SHARP -> "Fair price from the sharp books you mark below (Pinnacle by default)."
+                        FairSource.MARKET_AVERAGE -> "Each book is devigged on its own, then all of them are averaged."
+                        FairSource.BLEND -> "A weighted mix: ${(s.sharpWeight * 100).roundToInt()}% sharp, ${100 - (s.sharpWeight * 100).roundToInt()}% market average."
                     },
                 )
-            }
-
-            // ---- CrazyNinjaOdds ------------------------------------------------------------------
-            SectionTitle("CrazyNinjaOdds")
-            SwitchRow(
-                "CrazyNinjaOdds' +EV list",
-                "CNO's +EV bets for your view, in the CNO tab and the mini window. Read only while Vigilant or its mini " +
-                    "window is on screen, at most once every 30 seconds.",
-                s.cnoEnabled,
-            ) { v -> onUpdate { it.copy(cnoEnabled = v) } }
-            if (s.cnoEnabled) {
-                CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
-                Text("Refresh", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, { if (it <= 0) "Tap only" else secondsLabel(it) }) { v ->
-                    onUpdate { it.copy(cnoRefreshSeconds = v) }
-                }
-                Hint("CNO updates its odds about once a minute. Each read is about 90 KB; nothing is read once Vigilant and its mini window are closed.")
-            }
-
-            SectionTitle("+EV feed")
-            var minEv by remember(s.minEvPercent) { mutableFloatStateOf((s.minEvPercent * 100).toFloat()) }
-            Text("Minimum EV: ${String.format(Locale.US, "%.1f", minEv)}%", style = MaterialTheme.typography.bodyMedium)
-            Slider(
-                value = minEv,
-                onValueChange = { minEv = (it * 2).roundToInt() / 2f },
-                onValueChangeFinished = { onUpdate { it.copy(minEvPercent = minEv / 100.0) } },
-                valueRange = 0f..10f,
-                steps = 19,
-            )
-            Text("Longest odds shown: ${maxOddsLabel(s.maxOdds)}", style = MaterialTheme.typography.bodyMedium)
-            ChoiceChips(ScanSettings.MAX_ODDS_CHOICES, s.maxOdds, ::maxOddsLabel) { v -> onUpdate { it.copy(maxOdds = v) } }
-            Hint("Fair odds are least reliable on longshots, which is where most fake edges show up.")
-            Text("Markets", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MarketFamily.entries.forEach { f ->
-                    FilterChip(
-                        selected = f in s.families,
-                        onClick = { onUpdate { it.copy(families = if (f in it.families) it.families - f else it.families + f) } },
-                        label = { Text(f.displayName) },
+                if (s.fairSource == FairSource.BLEND) {
+                    var weight by remember(s.sharpWeight) { mutableFloatStateOf(s.sharpWeight.toFloat()) }
+                    Text("Sharp weight: ${(weight * 100).roundToInt()}%", style = MaterialTheme.typography.bodyMedium)
+                    Slider(
+                        value = weight,
+                        onValueChange = { weight = (it * 20).roundToInt() / 20f },
+                        onValueChangeFinished = { onUpdate { it.copy(sharpWeight = weight.toDouble()) } },
+                        valueRange = 0f..1f,
+                        steps = 19,
                     )
                 }
+                if (s.fairSource == FairSource.SHARP) {
+                    SwitchRow("Fall back to market average", "When no sharp book quotes a line, use every book instead of skipping it.", s.fallbackToAverage) { v ->
+                        onUpdate { it.copy(fallbackToAverage = v) }
+                    }
+                }
+
+                Text("Sharp books", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FairSettings.KNOWN_SHARP_CANDIDATES.forEach { key ->
+                        FilterChip(
+                            selected = key in s.sharpBooks,
+                            onClick = { onUpdate { it.copy(sharpBooks = if (key in it.sharpBooks) it.sharpBooks - key else it.sharpBooks + key) } },
+                            label = { Text(TheOddsApiClient.bookTitle(key)) },
+                        )
+                    }
+                }
+                Hint("Pinnacle comes from your pinnapi key (or The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
+
+                Text("Minimum books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+                ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
+                SwitchRow(
+                    "Outlier guard",
+                    "With 3 or more books, use the lower of their average and median, so one stale book can't create a fake edge.",
+                    s.outlierGuard,
+                ) { v -> onUpdate { it.copy(outlierGuard = v) } }
+
+                SectionTitle("Devig method")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DevigMethod.entries.forEach { m ->
+                        FilterChip(selected = s.devigMethod == m, onClick = { onUpdate { it.copy(devigMethod = m) } }, label = { Text(m.displayName) })
+                    }
+                }
+                Hint(s.devigMethod.blurb)
+
+                // ---- Sources ------------------------------------------------------------------------
+                SectionTitle("Where fair odds come from")
+                Hint("Each is called only when you scan. Polymarket and Kalshi need no key.")
+                SwitchRow(
+                    "Pinnacle (pinnapi)",
+                    if (state.pinnapiKeys.isEmpty()) "Needs a free key from pinnapi.com (100 requests a day, about 1–2 per scan)."
+                    else "About 1–2 of a key's 100 daily requests per scan. Keys are used in order.",
+                    s.usePinnacle,
+                ) { v -> onUpdate { it.copy(usePinnacle = v) } }
+                if (s.usePinnacle) {
+                    KeyListEditor(ApiProvider.PINNAPI, state.pinnapiKeys, keys, "Add a pinnapi key")
+                    if (state.pinnapiKeys.size > 1) {
+                        Hint(
+                            "Heads up: pinnapi's terms forbid circumventing its rate limits, so using extra keys to get past " +
+                                "100 a day could get the keys suspended. Each key is still kept inside its own limit.",
+                        )
+                    }
+                }
+                SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
+                SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC.", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
+                SwitchRow(
+                    "The Odds API",
+                    if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
+                    else "US sportsbooks plus Pinnacle. Keys are used in order; the next takes over when one runs out.",
+                    s.useOddsApi,
+                ) { v -> onUpdate { it.copy(useOddsApi = v) } }
+                if (s.useOddsApi) {
+                    KeyListEditor(ApiProvider.THE_ODDS_API, state.oddsApiKeys, keys, "Add an Odds API key")
+                    Text("Re-use The Odds API between scans for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                    ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, s.oddsApiReuseMinutes, { if (it == 0) "Every scan" else "${it}m" }) { v ->
+                        onUpdate { it.copy(oddsApiReuseMinutes = v) }
+                    }
+                    Hint(creditEstimate(s))
+
+                    SwitchRow(
+                        "Sportsbook player props",
+                        "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Kalshi " +
+                            "where it has the same line. 1 credit per prop type per game.",
+                        s.useBookProps,
+                    ) { v -> onUpdate { it.copy(useBookProps = v) } }
+                    if (s.useBookProps) {
+                        if (MarketFamily.PLAYER_PROPS !in s.families) Hint("Turn on Player props under Markets below to use these.")
+                        Text("Prop types per game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                        ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
+                        Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                        ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else it.toString() }) { v ->
+                            onUpdate { it.copy(bookPropCreditsPerScan = v) }
+                        }
+                        Text("Only games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                        ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
+                        Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                        ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
+                            onUpdate { it.copy(bookPropReuseMinutes = v) }
+                        }
+                        Hint(bookPropEstimate(s))
+                    }
+
+                    SectionTitle("The Odds API books (${s.referenceBooks.size}/10)")
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
+                            val on = key in s.referenceBooks
+                            FilterChip(
+                                selected = on,
+                                enabled = on || s.referenceBooks.size < TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION,
+                                onClick = { onUpdate { it.copy(referenceBooks = if (on) it.referenceBooks - key else it.referenceBooks + key) } },
+                                label = { Text(title) },
+                            )
+                        }
+                    }
+                    Hint("Up to 10 books cost the same: one credit per market per league, and one per prop type per game for props.")
+                }
+
+                SectionTitle("+EV feed")
+                var minEv by remember(s.minEvPercent) { mutableFloatStateOf((s.minEvPercent * 100).toFloat()) }
+                Text("Minimum EV: ${String.format(Locale.US, "%.1f", minEv)}%", style = MaterialTheme.typography.bodyMedium)
+                Slider(
+                    value = minEv,
+                    onValueChange = { minEv = (it * 2).roundToInt() / 2f },
+                    onValueChangeFinished = { onUpdate { it.copy(minEvPercent = minEv / 100.0) } },
+                    valueRange = 0f..10f,
+                    steps = 19,
+                )
+                Text("Longest odds shown: ${maxOddsLabel(s.maxOdds)}", style = MaterialTheme.typography.bodyMedium)
+                ChoiceChips(ScanSettings.MAX_ODDS_CHOICES, s.maxOdds, ::maxOddsLabel) { v -> onUpdate { it.copy(maxOdds = v) } }
+                Hint("Fair odds are least reliable on longshots, which is where most fake edges show up.")
+                Text("Markets", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MarketFamily.entries.forEach { f ->
+                        FilterChip(
+                            selected = f in s.families,
+                            onClick = { onUpdate { it.copy(families = if (f in it.families) it.families - f else it.families + f) } },
+                            label = { Text(f.displayName) },
+                        )
+                    }
+                }
+                Text("Alternate lines per game: ${s.linesPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, { it.toString() }) { v -> onUpdate { it.copy(linesPerGame = v) } }
+                Hint("Per spread, total and team total (full game and 1st half). Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
+                if (MarketFamily.PLAYER_PROPS in s.families) {
+                    Text("Player props per game: ${s.propsPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                    ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, { it.toString() }) { v -> onUpdate { it.copy(propsPerGame = v) } }
+                    Hint("NFL, MLB and WNBA props that Kalshi or the sportsbooks also price, on the same line. The best-covered ones are checked first.")
+                }
+                Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
+                Hint("300 is about a minute. Results appear as they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and the soonest games come first.")
+                Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
+                SwitchRow(
+                    "Include live games",
+                    "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live.",
+                    s.includeLive,
+                ) { v -> onUpdate { it.copy(includeLive = v) } }
+
             }
-            Text("Alternate lines per game: ${s.linesPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, { it.toString() }) { v -> onUpdate { it.copy(linesPerGame = v) } }
-            Hint("Per spread, total and team total (full game and 1st half). Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
-            if (MarketFamily.PLAYER_PROPS in s.families) {
-                Text("Player props per game: ${s.propsPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, { it.toString() }) { v -> onUpdate { it.copy(propsPerGame = v) } }
-                Hint("NFL, MLB and WNBA props that Kalshi or the sportsbooks also price, on the same line. The best-covered ones are checked first.")
-            }
-            Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
-            Hint("300 is about a minute. Results appear as they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and the soonest games come first.")
-            Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
-            SwitchRow(
-                "Include live games",
-                "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live.",
-                s.includeLive,
-            ) { v -> onUpdate { it.copy(includeLive = v) } }
 
             // ---- Stake sizing -----------------------------------------------------------------
             SectionTitle("Bankroll & Kelly")
@@ -331,29 +366,49 @@ fun SettingsScreen(
             ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
             Hint("Suggested stakes are capped at what Novig's book can actually fill at +EV.")
 
-            // ---- Keys backup ------------------------------------------------------------------
-            SectionTitle("Keys backup")
-            Hint(
-                "Keys are saved on this phone, kept through every app update, and included in Android's backup. " +
-                    "Export a copy to keep them even if the app is uninstalled.",
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { exporter.launch("vigilant-keys.json") }) { Text("Export keys") }
-                OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text("Import keys") }
-            }
+            if (s.vigilantOn) {
+                // ---- Keys backup ------------------------------------------------------------------
+                SectionTitle("Keys backup")
+                Hint(
+                    "Keys are saved on this phone, kept through every app update, and included in Android's backup. " +
+                        "Export a copy to keep them even if the app is uninstalled.",
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { exporter.launch("vigilant-keys.json") }) { Text("Export keys") }
+                    OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text("Import keys") }
+                }
 
-            SectionTitle("Novig API key")
-            NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect)
+                SectionTitle("Novig API key")
+                NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect)
+
+            }
 
             SectionTitle("About")
             Hint(
                 "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (pinnapi), " +
-                    "Polymarket, Kalshi, The Odds API · CNO list: crazyninjaodds.com. Nothing is fetched until you tap " +
-                    "Scan or pull to refresh, except CrazyNinjaOdds' list while Vigilant or its mini window is on screen. " +
-                    "Nothing runs in the background.",
+                    "Polymarket, Kalshi, The Odds API · CNO scanner: crazyninjaodds.com. Vigilant's scan fetches only when " +
+                    "you tap Scan or pull to refresh; CrazyNinjaOdds' list only while Vigilant or its mini window is on " +
+                    "screen. Nothing runs in the background.",
             )
         }
     }
+}
+
+/** What a refresh choice means, with its data use (~17 KB per read plus ~0.7 KB per row, RESEARCH.md §19). */
+fun refreshHint(s: ScanSettings): String {
+    val kb = 17 + 0.7 * s.cnoFilters.rows
+    val seconds = s.cnoRefreshSeconds
+    val perHour = when {
+        seconds == CnoFeed.REALTIME -> 720 // CNO updates every 13-33 s; real time averages about a read every 5 s
+        seconds <= 0 -> 0
+        else -> 3600 / seconds
+    }
+    val use = if (perHour == 0) "" else " About ${Math.round(perHour * kb / 1000)} MB of data an hour while on screen."
+    return when {
+        seconds == CnoFeed.REALTIME -> "Reads again as soon as CNO can have new odds (it updates every 13–33 s), then every 3 s until they land."
+        seconds <= 0 -> "Only when you tap Refresh or pull down."
+        else -> "Every ${secondsLabel(seconds)} while Vigilant or its mini window is on screen; CNO itself updates every 13–33 s."
+    } + use + " Nothing is read once both are closed."
 }
 
 /** Tj's CNO Shared View link: paste, check, save. Blank means Novig with CNO's defaults. */
