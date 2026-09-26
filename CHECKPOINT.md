@@ -1,13 +1,13 @@
-# CHECKPOINT 427 — read me first, then TASKS.md
+# CHECKPOINT 428 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T20:40:17Z · **tests:** all 1 fast checks green
-**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `e65080d` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T20:43:48Z · **tests:** all 1 fast checks green
+**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `6fc888c` (this checkpoint is the commit after it)
 
 ## Just done
-H5-H7 first build compiles: VM watcher set (tab/pip/overlay) runs CNO watch + books lane + teams lane; FloatingWidget (overlay window) + FloatingFeed (scroll bar, tap->Novig bet slip, placed ✓ + undo, long-press books, drag/resize/bubble); PiP Up/Down; CNO tab placed/teams/checks; Settings switches; SYSTEM_ALERT_WINDOW
+CnoWatch (data) runs CNO+lanes only while watched (CnoWatchTest); MiniWindowTest +6 (PiP Books/Up/Down, no-wrap paging, placed filter+other line, team+green check, Vigilant outcome link, SAW manifest); ScreenshotTest updated (verdict wording, taller settings); all green
 
 ## Do this next
-Run app unit tests (MiniWindowTest, ScreenshotTest) and fix; add tests: items filter placed/teams/agrees, watchers lifecycle, floating screenshots; then docs
+FloatingFeed screenshot/interaction tests (buttons always there, tap->open, ✓->placed+Undo, Down scrolls, long-press books, bubble, light theme); then docs + full test
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Run app unit tests (MiniWindowTest, ScreenshotTest) and fix; add tests: items fi
 
 ## Last ten checkpoints
 ```
+  ac53aad ckpt 427: H5-H7 first build compiles: VM watcher set (tab/pip/overlay) runs CNO watch + 
   f9ae87e ckpt 426: H1-H3 data layer: PlacedBets, CnoBooks agreement (SPLIT) + CnoFeed.keepBooksFr
   3ba6ab1 ckpt 425: H0 research done: PiP can't take touches -> overlay widget; CNO deeplink = Nov
   b55d6be ckpt 424: Recorded v0.14.1 release (G3 done); logged Tj's 6-item CNO widget request as H
@@ -25,8 +26,7 @@ Run app unit tests (MiniWindowTest, ScreenshotTest) and fix; add tests: items fi
   7b222d1 ckpt 420: SHIPPED v0.14.0 (code 18): accurate, standalone CNO scanner; CI 36264649883 gr
   c727840 ckpt 419: pre-release: v0.14.0: CNO scanner made accurate and standalone: CNO-only mode 
   85c0abd ckpt 418: F6 full test of the CNO scanner: fixed UW-WC label, judged-book check, stuck p
-  662465f ckpt 417: F2-F5 app side built: ScannerMode (both/vigilant/cno) w/ migration from miniSo
 ```
 
-(18 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
