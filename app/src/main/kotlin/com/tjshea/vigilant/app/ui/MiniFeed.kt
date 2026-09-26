@@ -322,7 +322,7 @@ fun miniStatus(state: UiState, now: Long): String {
         !MiniWindow.showsCno(state.settings) -> null
         cno.refreshing -> "CNO reading…"
         // What went wrong, in a word or two ("CNO error" alone told Tj nothing, 2026-09-26).
-        cno.error != null && showsVigilant -> cnoErrorShort(cno.error)
+        cno.error != null && showsVigilant -> cnoErrorShort(cno.error.orEmpty())
         cno.error != null -> cno.error.orEmpty()
         snap != null -> "CNO " + Format.age(snap.dataAtMs, now).removeSuffix(" ago")
         showsVigilant -> null
