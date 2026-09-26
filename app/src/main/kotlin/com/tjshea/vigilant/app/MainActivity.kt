@@ -142,7 +142,7 @@ class MainActivity : ComponentActivity() {
         runCatching { unregisterReceiver(miniButtons) }
         // Vigilant closed (backed out, or swiped away in Recents): the widget goes with it, and
         // with it every CNO read (Tj, 2026-09-26: "nothing is refreshing in the background").
-        widget.hide()
+        if (::widget.isInitialized) widget.hide()
         super.onDestroy()
     }
 

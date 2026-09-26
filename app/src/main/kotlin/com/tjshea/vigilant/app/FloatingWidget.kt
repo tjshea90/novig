@@ -105,8 +105,25 @@ class FloatingWidget(
         owner = o
         view = v
         listenToScreen()
+        app.registerComponentCallbacks(rotation)
         report()
         return true
+    }
+
+    /** Turning the phone: the window is pulled back inside the new screen. */
+    private val rotation = object : android.content.ComponentCallbacks {
+        override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+            if (view == null) return
+            if (!minimized) {
+                params.width = params.width.coerceAtMost(screenW())
+                params.height = params.height.coerceAtMost(screenH())
+            }
+            clampToScreen()
+            relayout()
+        }
+
+        @Deprecated("Required by the interface")
+        override fun onLowMemory() = Unit
     }
 
     /** Takes the window down; CNO stops being read for it at once. */
@@ -115,6 +132,7 @@ class FloatingWidget(
         view = null
         receiver?.let { runCatching { app.unregisterReceiver(it) } }
         receiver = null
+        runCatching { app.unregisterComponentCallbacks(rotation) }
         runCatching { wm.removeViewImmediate(v) }
         owner?.destroy()
         owner = null
