@@ -22,6 +22,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.data.scanner.CrossCheck
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.EvMath
@@ -45,16 +47,40 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpportunitySheet(o: Opportunity, settings: ScanSettings, onDismiss: () -> Unit, onTrack: (Double) -> Unit) {
+fun OpportunitySheet(
+    o: Opportunity,
+    settings: ScanSettings,
+    onDismiss: () -> Unit,
+    onTrack: (Double) -> Unit,
+    onRecheck: (() -> Unit)? = null,
+    rechecking: Boolean = false,
+) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
-        OpportunityDetail(o, settings, onTrack)
+        OpportunityDetail(o, settings, onRecheck = onRecheck, rechecking = rechecking, onTrack = onTrack)
     }
 }
 
+/**
+ * A maker order waits to be taken, and the takers most eager to fill it are the ones who know the
+ * line is moving against it. So a suggested bid asks for at least this much edge.
+ */
+const val MAKER_MIN_EV = 0.02
+
 @Composable
-fun OpportunityDetail(o: Opportunity, settings: ScanSettings, onTrack: (Double) -> Unit) {
+fun OpportunityDetail(
+    o: Opportunity,
+    settings: ScanSettings,
+    onRecheck: (() -> Unit)? = null,
+    rechecking: Boolean = false,
+    onTrack: (Double) -> Unit,
+) {
     val context = LocalContext.current
+    val now = rememberNow(15_000)
+    fun open(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { context.startActivity(intent) }
+    }
     val q = o.quote
     var stakeText by remember(o.key) { mutableStateOf(o.suggestedStake?.let { String.format(Locale.US, "%.2f", it) } ?: "") }
 
@@ -89,6 +115,17 @@ fun OpportunityDetail(o: Opportunity, settings: ScanSettings, onTrack: (Double) 
             LabeledValue("Full Kelly", q?.let { Format.percent(it.kellyFraction) } ?: "—")
             LabeledValue("Novig width", o.novigWidth?.let { Format.percent(it) } ?: "—")
         }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Novig price read ${Format.age(o.bookFetchedAtMs, now)}",
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (o.priceIsOld(now)) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (onRecheck != null) {
+                TextButton(onClick = onRecheck, enabled = !rechecking) { Text(if (rechecking) "Rechecking…" else "Recheck price") }
+            }
+        }
 
         if (o.ladder.isNotEmpty()) {
             SectionTitle("Novig order book (you take)")
@@ -114,6 +151,22 @@ fun OpportunityDetail(o: Opportunity, settings: ScanSettings, onTrack: (Double) 
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
+        }
+
+        o.makerBid(maxOf(settings.minEvPercent, MAKER_MIN_EV))?.let { bid ->
+            SectionTitle("Or post a bid (maker)")
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                LabeledValue("Bid up to", "${Format.american(bid.price)} · ${Format.percent(bid.price)}")
+                LabeledValue("EV if filled", Format.evPercent(bid.evPercent), valueColor = Edge.colors.positive)
+                LabeledValue("Best bid now", o.bestBid?.let { "${Format.american(it)} · ${Format.percent(it)}" } ?: "none")
+            }
+            Text(
+                "Makers pay no fee on Novig. A resting bid fills only when someone takes it, often after the line has moved " +
+                    "against it, so this asks for at least ${Format.percent(maxOf(settings.minEvPercent, MAKER_MIN_EV))} EV at today's fair price.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
 
         o.fair?.let { fair ->
@@ -188,12 +241,15 @@ fun OpportunityDetail(o: Opportunity, settings: ScanSettings, onTrack: (Double) 
             }
         }
 
+        // A second opinion from an independent calculator, prefilled with the sharpest book's line.
+        CrossCheck.devigger(o)?.let { link ->
+            OutlinedButton(onClick = { open(link.url) }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+                Text("Double-check on CrazyNinjaOdds (${link.bookTitle})", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
         OutlinedButton(
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://novig.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                runCatching { context.startActivity(intent) }
-            },
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 24.dp),
+            onClick = { open("https://novig.com") },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
         ) { Text("Open Novig") }
     }
 }

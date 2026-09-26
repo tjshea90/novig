@@ -142,6 +142,11 @@ fun SettingsScreen(
 
             Text("Minimum books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
             ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
+            SwitchRow(
+                "Outlier guard",
+                "With 3 or more books, use the lower of their average and median, so one stale book can't create a fake edge.",
+                s.outlierGuard,
+            ) { v -> onUpdate { it.copy(outlierGuard = v) } }
 
             SectionTitle("Devig method")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -234,7 +239,10 @@ fun SettingsScreen(
                 valueRange = 0f..10f,
                 steps = 19,
             )
-            Text("Markets", style = MaterialTheme.typography.bodyMedium)
+            Text("Longest odds shown: ${maxOddsLabel(s.maxOdds)}", style = MaterialTheme.typography.bodyMedium)
+            ChoiceChips(ScanSettings.MAX_ODDS_CHOICES, s.maxOdds, ::maxOddsLabel) { v -> onUpdate { it.copy(maxOdds = v) } }
+            Hint("Fair odds are least reliable on longshots, which is where most fake edges show up.")
+            Text("Markets", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 MarketFamily.entries.forEach { f ->
                     FilterChip(
@@ -360,6 +368,8 @@ fun bookPropEstimate(s: ScanSettings): String {
     return "Props cost $reach, soonest games first, never more than ${s.bookPropCreditsPerScan} credits a scan. " +
         "A game's props are re-used for ${minutesLabel(s.bookPropReuseMinutes)}, so scanning again sooner costs nothing for it."
 }
+
+fun maxOddsLabel(american: Int): String = if (american <= 0) "Any" else "+$american"
 
 fun minutesLabel(minutes: Int): String = if (minutes >= 60 && minutes % 60 == 0) "${minutes / 60}h" else "${minutes}m"
 

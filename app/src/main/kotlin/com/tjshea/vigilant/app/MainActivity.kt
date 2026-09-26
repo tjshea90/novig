@@ -142,6 +142,7 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit) 
                     onOpenSettings = { tab = Tab.SETTINGS.ordinal },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
+                    onRecheck = vm::recheck,
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
@@ -165,6 +166,12 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit) 
 
     detail?.let { o ->
         val live = state.result?.opportunities?.firstOrNull { it.key == o.key } ?: o
-        OpportunitySheet(live, state.settings, onDismiss = { detail = null }, onTrack = { stake -> vm.trackBet(live, stake); detail = null })
+        OpportunitySheet(
+            live, state.settings,
+            onDismiss = { detail = null },
+            onTrack = { stake -> vm.trackBet(live, stake); detail = null },
+            onRecheck = { vm.recheck(listOf(live.market.marketId)) }.takeIf { !state.status.scanning },
+            rechecking = state.status.rechecking,
+        )
     }
 }
