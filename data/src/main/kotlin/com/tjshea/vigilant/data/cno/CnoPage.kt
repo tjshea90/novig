@@ -50,11 +50,11 @@ object CnoPage {
             val name = attrs["name"] ?: continue
             when (kind) {
                 "input" -> {
-                    when (val type = (attrs["type"] ?: "text").lowercase()) {
+                    when ((attrs["type"] ?: "text").lowercase()) {
                         "submit" -> if (name.endsWith("\$ButtonUpdate")) button = name to (attrs["value"] ?: "Update")
                         "button", "image", "reset", "file" -> Unit
                         "checkbox", "radio" -> if ("checked" in attrs) fields += name to (attrs["value"] ?: "on")
-                        else -> fields += name to (attrs["value"] ?: "").also { type.length }
+                        else -> fields += name to (attrs["value"] ?: "")
                     }
                 }
                 "select" -> {
