@@ -1398,13 +1398,33 @@ props calls themselves are fixture-tested only.
 > be incorporated in my app or improve the app in any way?
 
 ### Plan
-- [ ] C1 Full tests (CLAUDE.md protocol): automated floor, whole-app sweep (feed, games, tracker,
+- [x] C1 Full tests (CLAUDE.md protocol): automated floor, whole-app sweep (feed, games, tracker,
       settings; engine, data/novig, reference, match, scanner, keys, store, background scan), fix
       with failing-first tests.
-- [ ] C2 Improve features and scanning (what the sweep and the research below turn up).
-- [ ] C3 Research pro.oddsassist.com plus-EV: data sources, devig method, Novig coverage, whether
+      *Done: floor run locally for the first time with Robolectric (build trap 6 corrected): 256
+      tests green. Fixes: (1) stale fair odds priced the final result and re-prices when a metered
+      source ran out mid-scan (`ScannerTest` "a metered source that runs out never prices a later
+      league from an hours-old snapshot", failed before); (2) tracker averages counted voided bets
+      (`BetTrackerTest` "a voided bet counts toward nothing…", failed before); (3) old Novig prices
+      (served from cache) weren't flagged per card: "old price" label + banner by book age
+      (`ScreenshotTest` oldPricesWarnBeforeBetting…); (4) screen clocks tick only while on screen
+      (`rememberNow` + `repeatOnLifecycle`; source-level); tests pin the screen clock (`LocalClock`).
+      Engine math cross-checked against CrazyNinjaOdds' devigger (`CrossCheckTest`, 4 lines equal).*
+- [x] C2 Improve features and scanning (what the sweep and the research below turn up).
+      *Done: outlier guard (min of mean/median, 3+ books; `FairValueTest` 2 new), longest-odds cap
+      (+1000 default; `ResearchFeaturesTest`), Recheck (feed ≤40 books or one bet, no fair-odds
+      calls; `ScannerTest` 2 new, `ScreenshotTest` 2 new), maker bid on Novig's grid (`EvMathTest`
+      2 new, `ResearchFeaturesTest`, `ScreenshotTest.detailMaker`), CrazyNinjaOdds double-check link
+      (`ResearchFeaturesTest`), settings for both (`ScreenshotTest.settingsOfferTheOutlierGuard…`).*
+- [x] C3 Research pro.oddsassist.com plus-EV: data sources, devig method, Novig coverage, whether
       its +EV is real (hands-on in Chromium where possible), terms on reuse.
-- [ ] C4 Research crazyninjaodds.com positive-EV tool: what it computes (devig calculator vs. a
+      *Done: RESEARCH.md §16.2 (headline edges are +2400..+4900 longshots; Pinnacle page sane
+      2.7-4.9%; ToS forbids bots/scraping). Novig-only filter not re-run: second Chromium session
+      blocked by the permission classifier.*
+- [x] C4 Research crazyninjaodds.com positive-EV tool: what it computes (devig calculator vs. a
       live feed), methods, Novig coverage, terms.
-- [ ] C5 Verdict + what (if anything) to incorporate into Vigilant; write RESEARCH.md section.
+      *Done: RESEARCH.md §16.1 (live feed incl. Novig with $ liquidity; 3 Novig rows 4.8-6.1% at
+      $5-$15; disclosed worst-case avg/median method; devigger URL autofill; odds from OddsBlaze).*
+- [x] C5 Verdict + what (if anything) to incorporate into Vigilant; write RESEARCH.md section.
+      *Done: RESEARCH.md §16.3-16.5; BRIEF.md fair-odds and recheck decisions.*
 - [ ] C6 Tests, CI, ship, report.
