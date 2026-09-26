@@ -233,7 +233,7 @@ class FloatingWidget(
         private const val KEY_H = "h_dp"
 
         /** Wide enough for "J. Jefferson (MIN) Under 69.5 +115" and a ✓; five bets tall. */
-        const val DEFAULT_W_DP = 300
+        const val DEFAULT_W_DP = 340
         const val DEFAULT_H_DP = 290
         const val DEFAULT_Y_DP = 72
         const val MIN_W_DP = 220
