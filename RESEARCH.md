@@ -1402,8 +1402,9 @@ real behavior needs Tj's phone to confirm.
 Tj: "I like [crazyninjaodds.com/site/tools/positive-ev.aspx] for positive EV odds when I choose
 novig and a couple filters. Consider all possible ways to make this site's scanned odds display in
 this app, especially in the floating widget." Checked with curl and Python in the dev container
-(about 12 requests to CNO in total, all before its terms were found; none after), plus CNO's
-terms PDF, API page, add-ons page and OddsBlaze's docs and JS bundle.
+(the page twice and its table once, all before the terms were found; after that only CNO's
+information pages: API, Discord, add-ons, OddsBlaze), plus CNO's terms PDF and OddsBlaze's docs
+and JS bundle.
 
 ### 18.1 How the page works (verified)
 
