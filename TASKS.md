@@ -1465,11 +1465,17 @@ props calls themselves are fixture-tested only.
 > https://crazyninjaodds.com/site/tools/positive-ev.aspx
 
 ### Plan
-- [ ] E1 Research every way to get CNO's positive-EV rows (Novig + Tj's filters) into Vigilant:
+- [x] E1 Research every way to get CNO's positive-EV rows (Novig + Tj's filters) into Vigilant:
       plain HTTP fetch + parse (how the filters are applied: URL, form postback, cookies), an
       in-app WebView (tab), a WebView that reads the table for the native feed and mini window,
       any CNO API / export / alerts / supporter feature, OddsBlaze direct, share/clipboard,
       overlay. Terms, robots.txt crawl delay, freshness, fragility. Hands-on in Chromium/curl.
+      *Done: RESEARCH.md §18 (filters ride in CNO's Shared View URL; table comes from an ASP.NET
+      AJAX postback, 100 Novig rows with $ available; CNO's terms PDF forbids bots/scrapers, but
+      CNO features Chrome add-ons on this page; OddsBlaze is $299/mo first-hand; 9 ways compared).
+      Corrected §16.1/§16.3 (said no terms page and OddsBlaze $29/mo).*
+- [ ] E1b Tj picks the way (asked 2026-09-26 ~16:00Z): in-app CNO tab + mirror (user-driven,
+      grey under CNO's terms), background reader after Mike's written OK, or split screen only.
 - [ ] E2 Build the recommended way: CNO rows in the app and in the mini window (floating widget),
       with Tj's filters, polite polling, clear "from CrazyNinjaOdds" labelling and age.
 - [ ] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.
