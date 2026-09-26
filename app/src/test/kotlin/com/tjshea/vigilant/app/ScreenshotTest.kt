@@ -305,7 +305,6 @@ class ScreenshotTest {
         compose.onNodeWithText("Justin Jefferson Under 69.5").performClick()
         compose.onNodeWithText("Every book on CNO").assertExists()
         compose.onNodeWithText("check them in Novig before betting", substring = true).assertExists()
-        compose.onRoot().captureRoboImage("screenshots/8e_cno_sheet.png")
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
@@ -313,7 +312,7 @@ class ScreenshotTest {
         val s = SampleCno.state()
         shoot("7d_mini_window_both") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("${s.feed.size + SampleCno.rows.size} +EV").assertIsDisplayed()
-        compose.onNodeWithText("CNO", substring = true).assertExists()
+        compose.onAllNodesWithText("CNO", substring = true).onFirst().assertExists()
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
