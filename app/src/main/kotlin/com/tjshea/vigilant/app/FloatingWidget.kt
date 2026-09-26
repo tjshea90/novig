@@ -82,6 +82,13 @@ class FloatingWidget(
     fun show(): Boolean {
         if (view != null) return true
         if (!allowed(app)) return false
+        // Each time it comes up it's the full widget, never a bubble left from last time (a
+        // bubble reads nothing, which would look like a stuck list).
+        if (minimized) {
+            minimized = false
+            params.width = dp(prefs.getInt(KEY_W, DEFAULT_W_DP))
+            params.height = dp(prefs.getInt(KEY_H, DEFAULT_H_DP))
+        }
         val o = WindowOwner()
         val v = ComposeView(app).apply {
             setViewTreeLifecycleOwner(o)

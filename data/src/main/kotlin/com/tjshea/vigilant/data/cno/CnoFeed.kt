@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -190,11 +191,14 @@ class CnoFeed(
         val now = clock()
         val fresh = booksReadAt[key]?.let { now - it < maxAgeMs } == true && _books.value[key]?.view != null
         if (fresh && !force) return@withLock
+        val triedBefore = booksTriedAt[key]
         booksTriedAt[key] = now
         _books.update { it + (key to (it[key] ?: CnoBooksState()).copy(loading = true, error = null)) }
         val result = try {
             Result.success(source.books(row))
         } catch (e: kotlinx.coroutines.CancellationException) {
+            // Cut short (the scanner closed, or a new list moved the lane on): not a failed try.
+            if (triedBefore == null) booksTriedAt.remove(key) else booksTriedAt[key] = triedBefore
             _books.update { it + (key to (it[key] ?: CnoBooksState()).copy(loading = false)) }
             throw e
         } catch (e: Exception) {
@@ -245,8 +249,9 @@ class CnoFeed(
      * until cancelled; the caller runs it only alongside [watch].
      */
     suspend fun keepBooksFresh(rows: Flow<List<CnoRow>>) {
-        rows.distinctUntilChanged().collectLatest { list ->
-            val top = list.take(AGREE_TOP)
+        // Only which bets are on top matters here, not their prices or order: a refresh that just
+        // re-prices the list doesn't cut a read short.
+        rows.map { it.take(AGREE_TOP) }.distinctUntilChanged { a, b -> a.mapTo(HashSet()) { it.key } == b.mapTo(HashSet()) { it.key } }.collectLatest { top ->
             if (top.isEmpty()) awaitCancellation()
             while (true) {
                 val now = clock()

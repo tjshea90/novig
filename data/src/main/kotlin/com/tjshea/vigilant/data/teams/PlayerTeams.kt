@@ -156,7 +156,8 @@ class PlayerTeams(
      * [RETRY_MS]. The caller runs it only while the CNO scanner is on screen.
      */
     suspend fun keepFresh(rows: Flow<List<CnoRow>>) {
-        rows.map(::gamesOf).distinctUntilChanged().collectLatest { games ->
+        // The same games in another order (the list re-sorted by EV) start nothing.
+        rows.map(::gamesOf).distinctUntilChanged { a, b -> a.toSet() == b.toSet() }.collectLatest { games ->
             if (games.isEmpty()) return@collectLatest
             while (true) {
                 fill(games)
