@@ -110,6 +110,8 @@ fun CnoScreen(
     onPlaced: (MiniWindow.Item) -> Unit = {},
     /** Undo, or "not placed after all". */
     onUnplace: (String) -> Unit = {},
+    /** The pull-to-refresh arrow's state (tests look at it). */
+    pullState: androidx.compose.material3.pulltorefresh.PullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState(),
 ) {
     val now = rememberNow(5_000)
     val cno = state.cno
@@ -313,14 +315,19 @@ fun CnoScreen(
     }
 }
 
-/** "Odds 20s old · every 15 s", "Reading…", or the error. */
+/**
+ * "Read 4s ago · odds 20s old · every 15 s", "Reading now…", or the error. Both clocks, so it's
+ * plain the list is being read (Tj, 2026-09-26: "I'm not sure if the data is refreshing"): "read"
+ * is when Vigilant last got the list, "odds" how old CNO's own prices were (CNO updates every
+ * 13–33 s, so they're always a little older).
+ */
 private fun cnoStatus(state: UiState, snap: CnoSnapshot?, now: Long): String = when {
     !state.settings.cnoOn -> "Off"
     state.cno.refreshing && snap == null -> "Reading…"
     state.cno.error != null && snap == null -> "Couldn't read it"
     snap == null -> "Not read yet"
-    else -> "Odds ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} old · " +
-        (if (state.cno.refreshing) "refreshing…" else refreshLabel(state.settings)) +
+    else -> (if (state.cno.refreshing) "Reading now…" else "Read ${Format.age(snap.fetchedAtMs, now)}") +
+        " · odds ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} old · " + refreshLabel(state.settings) +
         if (state.cno.error != null) " · last read failed" else ""
 }
 
