@@ -102,6 +102,9 @@ class Scanner(
     private var books: Map<String, NovigBook> = emptyMap()
     private var pinned: Set<String> = emptySet()
 
+    /** When the last scan ran: re-pricing judges fair-odds age as of then, like the scan did. */
+    private var lastScanAtMs: Long? = null
+
     /** Each market's best EV on the last scan, to read the likeliest +EV lines first next time. */
     private var lastEv: Map<String, Double> = emptyMap()
 
@@ -159,7 +162,11 @@ class Scanner(
             reports
         }
 
-        val currentPlan = catalog?.let { planFor(it, settings, now) }
+        // Priced only from fair odds young enough to bet on, like the partial results. An old
+        // snapshot can survive a scan (a metered provider that ran out skips its later leagues),
+        // and it still steers which books get read, but it never prices the feed.
+        lastScanAtMs = now
+        val currentPlan = catalog?.let { planFor(it, settings, now, youngFairOnly = true) }
         if (currentPlan != null) {
             // Anything planned but not read this scan (the per-scan cap, or Novig asked us to stop)
             // keeps the last scan's price, counted as such.
@@ -353,7 +360,7 @@ class Scanner(
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()
-        Pricing.price(planFor(cat, settings, now), books, settings, now)
+        Pricing.price(planFor(cat, settings, lastScanAtMs ?: now, youngFairOnly = true), books, settings, now)
     }
 
     /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
