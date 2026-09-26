@@ -193,50 +193,58 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
             color = Edge.colors.positive,
             maxLines = 1,
         )
-        Column(Modifier.weight(1f)) {
-            // The pick itself, what Tj taps in Novig: full contrast, always, and its side and line
-            // ("Under 69.5") never cut off; only the name shortens in a narrow window.
+        // The pick itself, what Tj taps in Novig: full contrast, and its side and line ("Under 69.5")
+        // never cut off. Wide enough: "Justin Jefferson Under 69.5" (or "J. Jefferson Under 69.5")
+        // on one line. Too narrow for that: the name alone on the first line, and the line in bold
+        // at the start of the second, before market and game.
+        BoxWithConstraints(Modifier.weight(1f)) {
             val (fullName, line) = MiniWindow.splitPick(item.title)
             // Measured with exactly the style it's drawn in (the theme's letter spacing included).
             val pickStyle = LocalTextStyle.current.merge(
                 TextStyle(fontSize = 12.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface),
             )
             val measurer = rememberTextMeasurer()
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-            // The longest name that fits beside the line ("Justin Jefferson", "J. Jefferson",
-            // "Jefferson"), and only past that a "…".
-            val lineText = line?.let { (if (fullName.isNotEmpty()) " " else "") + it }
-            val lineWidth = lineText?.let { measurer.measure(it, pickStyle, softWrap = false).size.width } ?: 0
+            fun width(text: String) = measurer.measure(text, pickStyle, softWrap = false).size.width
+            val max = constraints.maxWidth
             val choices = MiniWindow.nameChoices(fullName, player = item.subtitle.startsWith("Player"))
-            val name = if (fullName.isEmpty()) "" else choices.firstOrNull {
-                measurer.measure(it, pickStyle, softWrap = false).size.width + lineWidth <= constraints.maxWidth
-            } ?: choices.last()
-            println("DEBUGMEASURE max=${constraints.maxWidth} line='$lineText' $lineWidth " + choices.joinToString { "'$it'=" + measurer.measure(it, pickStyle, softWrap = false).size.width } + " style=${pickStyle.fontSize} ${pickStyle.fontWeight} ${pickStyle.letterSpacing} ${pickStyle.fontFamily}")
-            Row(
-                Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (name.isNotEmpty()) {
-                    Text(name, Modifier.weight(1f, fill = false), style = pickStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                if (lineText != null) {
-                    Text(lineText, style = pickStyle, maxLines = 1, softWrap = false)
-                }
+            val lineText = line?.let { (if (fullName.isNotEmpty()) " " else "") + it }
+            val lineWidth = lineText?.let(::width) ?: 0
+            val oneLine = fullName.isEmpty() || line == null || choices.any { width(it) + lineWidth <= max }
+            val name = when {
+                fullName.isEmpty() -> ""
+                oneLine -> choices.firstOrNull { width(it) + lineWidth <= max } ?: choices.last()
+                else -> choices.firstOrNull { width(it) <= max } ?: choices.last()
             }
-            }
-            Text(
-                buildAnnotatedString {
-                    if (item.fromCno && showTag) {
-                        withStyle(SpanStyle(color = tag, fontWeight = FontWeight.Bold)) { append("CNO ") }
+            Column {
+                Row(
+                    Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (name.isNotEmpty()) {
+                        Text(name, Modifier.weight(1f, fill = false), style = pickStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    append(item.subtitle)
-                },
-                fontSize = 9.sp,
-                lineHeight = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+                    if (oneLine && lineText != null) {
+                        Text(lineText, style = pickStyle, maxLines = 1, softWrap = false)
+                    }
+                }
+                Text(
+                    buildAnnotatedString {
+                        if (!oneLine && line != null) {
+                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) { append(line) }
+                            append(" · ")
+                        }
+                        if (item.fromCno && showTag) {
+                            withStyle(SpanStyle(color = tag, fontWeight = FontWeight.Bold)) { append("CNO ") }
+                        }
+                        append(item.subtitle)
+                    },
+                    fontSize = 9.sp,
+                    lineHeight = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         Column(Modifier.padding(start = 4.dp), horizontalAlignment = Alignment.End) {
             Text(
