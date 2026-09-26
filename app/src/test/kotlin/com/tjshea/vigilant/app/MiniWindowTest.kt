@@ -79,7 +79,7 @@ class MiniWindowTest {
     }
 
     @Test
-    fun `the scanner mode decides what runs: CNO only hides Vigilant's list, Vigilant only never shows CNO`() {
+    fun `the scanner mode decides what runs - CNO only hides Vigilant's list, Vigilant only never shows CNO`() {
         val s = ScanSettings()
         assertTrue(s.cnoOn && s.vigilantOn)
         assertFalse(s.copy(scanner = ScannerMode.CNO).vigilantOn)
