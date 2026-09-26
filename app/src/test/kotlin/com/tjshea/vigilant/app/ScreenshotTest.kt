@@ -18,6 +18,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.swipeDown
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.foundation.layout.size
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -691,5 +696,74 @@ class ScreenshotTest {
         compose.onNodeWithContentDescription("Shrink to a bubble").performClick()
         compose.onNodeWithContentDescription("Open Vigilant").performClick()
         assert(closed && shrunk && app)
+    }
+
+    // ---- Tj, 2026-09-26 ~23:45Z: resize/move, "CNO error", the stuck refresh arrow ----------
+
+    /** The window as FloatingWidget draws it: frame, corner handles, the widget inside. */
+    @Config(qualifiers = "w380dp-h340dp-xxhdpi")
+    @Test fun floatingWindowHasAFrameWithFourCornerHandlesAndATallerTopBar() {
+        screen {
+            androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.size((FloatingWidget.DEFAULT_W_DP + 2 * FloatingWidget.FRAME_DP).dp, (FloatingWidget.DEFAULT_H_DP + 2 * FloatingWidget.FRAME_DP).dp)) {
+                com.tjshea.vigilant.app.ui.FloatingWindow(floatingState(), com.tjshea.vigilant.app.ui.FloatingActions())
+            }
+        }
+        compose.onRoot().captureRoboImage("screenshots/9h_floating_window_frame.png")
+        compose.onNodeWithContentDescription("Drag a corner to resize", substring = true).assertExists()
+        // v0.15.0's in-corner grip is gone (the rounded corner cut it off).
+        compose.onAllNodesWithContentDescription("Drag to resize").assertCountEquals(0)
+        listOf("Refresh", "Up", "Down", "Books").forEach { compose.onNodeWithContentDescription(it).assertIsDisplayed() }
+    }
+
+    @Test fun theWidgetSaysWhatWentWrongWithCnoNotJustCnoError() {
+        assertEquals("CNO offline, retrying", com.tjshea.vigilant.app.ui.cnoErrorShort("Couldn't reach CrazyNinjaOdds (timeout)"))
+        assertEquals("CNO busy, waiting", com.tjshea.vigilant.app.ui.cnoErrorShort("CrazyNinjaOdds is busy (HTTP 429); trying again later"))
+        assertEquals("CNO refused, waiting", com.tjshea.vigilant.app.ui.cnoErrorShort("CrazyNinjaOdds refused the request (HTTP 403)"))
+        assertEquals("CNO page problem", com.tjshea.vigilant.app.ui.cnoErrorShort("CrazyNinjaOdds' reply had no table"))
+        assertEquals("CNO HTTP 500", com.tjshea.vigilant.app.ui.cnoErrorShort("CrazyNinjaOdds answered HTTP 500"))
+        val s = SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot(), error = "Couldn't reach CrazyNinjaOdds (timeout)"))
+        assertTrue(com.tjshea.vigilant.app.ui.miniStatus(s, SampleScan.NOW).endsWith("CNO offline, retrying"))
+    }
+
+    /** Tj's screenshot: the pull-to-refresh arrow stuck half way down the CNO tab. */
+    @Test fun thePullToRefreshArrowLetsGoAfterARead() {
+        var refreshing by androidx.compose.runtime.mutableStateOf(false)
+        var pulls = 0
+        lateinit var pull: androidx.compose.material3.pulltorefresh.PullToRefreshState
+        screen {
+            pull = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+            val base = SampleCno.state()
+            com.tjshea.vigilant.app.ui.CnoScreen(
+                base.copy(cno = base.cno.copy(refreshing = refreshing)),
+                onRefresh = { pulls++; refreshing = true },
+                onOpenSettings = {},
+                pullState = pull,
+            )
+        }
+        compose.onNodeWithText("Justin Jefferson Under 69.5").performTouchInput { swipeDown(startY = top, endY = top + 1_500f, durationMillis = 400) }
+        compose.waitForIdle()
+        assertEquals(1, pulls)
+        refreshing = false // the read ended
+        compose.mainClock.advanceTimeBy(3_000)
+        compose.waitForIdle()
+        assertEquals(0f, pull.distanceFraction, 0.001f)
+    }
+
+    /** A pull whose read CNO's pacing skipped (nothing starts): the arrow still lets go. */
+    @Test fun thePullToRefreshArrowLetsGoWhenNothingWasRead() {
+        var pulls = 0
+        lateinit var pull: androidx.compose.material3.pulltorefresh.PullToRefreshState
+        screen {
+            pull = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
+            com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), onRefresh = { pulls++ }, onOpenSettings = {}, pullState = pull)
+        }
+        compose.onNodeWithText("Justin Jefferson Under 69.5").performTouchInput { swipeDown(startY = top, endY = top + 1_500f, durationMillis = 400) }
+        compose.waitForIdle()
+        assertEquals(1, pulls)
+        compose.mainClock.advanceTimeBy(3_000)
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(3, java.util.concurrent.TimeUnit.SECONDS)
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.waitForIdle()
+        assertEquals(0f, pull.distanceFraction, 0.001f)
     }
 }
