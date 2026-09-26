@@ -24,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -88,11 +87,12 @@ fun FeedScreen(
             }
         },
     ) { padding ->
-        PullToRefreshBox(
-            // The progress bar under the top bar shows the scan; a pull just starts one.
-            isRefreshing = false,
+        VigilantPullToRefresh(
+            // The progress bar under the top bar shows the scan; the pull's arrow lets go once it starts.
+            busy = state.status.scanning,
             onRefresh = onScan,
             modifier = Modifier.padding(padding).fillMaxSize(),
+            holdWhileBusy = false,
         ) {
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 24.dp),

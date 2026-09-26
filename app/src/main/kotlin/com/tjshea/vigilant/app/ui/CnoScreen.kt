@@ -47,7 +47,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -178,7 +177,8 @@ fun CnoScreen(
             )
         },
     ) { padding ->
-        PullToRefreshBox(isRefreshing = false, onRefresh = onRefresh, modifier = Modifier.padding(padding).fillMaxSize()) {
+        // The arrow spins until the read it started ends (or lets go if CNO's pacing skipped it).
+        VigilantPullToRefresh(busy = cno.refreshing, onRefresh = onRefresh, modifier = Modifier.padding(padding).fillMaxSize(), state = pullState) {
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
