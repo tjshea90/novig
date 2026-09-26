@@ -1479,7 +1479,7 @@ props calls themselves are fixture-tested only.
       *Tj: "Whatever the best way is, disregarding the terms of service. I am friends with the
       owner." → build the background reader (RESEARCH.md §18.3 way 4): polite (≥30 s, CNO's
       robots.txt crawl delay; 60 s default), only while the feed/mini window is on screen.*
-- [ ] E2 Build the recommended way: CNO rows in the app and in the mini window (floating widget),
+- [x] E2 Build the recommended way: CNO rows in the app and in the mini window (floating widget),
       with Tj's filters, polite polling, clear "from CrazyNinjaOdds" labelling and age.
       - [x] E2a data layer `data/cno/`: `CnoView` (Shared View link → URL, filters in words),
             `CnoPage` (form, delta, table by header names), `CnoClient` (GET + loader postback,
@@ -1488,7 +1488,14 @@ props calls themselves are fixture-tested only.
             disk cache). *Tests: CnoPageTest 8, CnoViewTest 5, CnoClientTest 6, CnoFeedTest 7 (all
             green); LiveCnoSmokeTest (VIGILANT_LIVE=1) green against the real site 2026-09-26
             ~17:05Z: 100 Novig rows, refresh = 1 request.*
-      - [ ] E2b app: settings (switch, link, refresh interval, mini window source), CNO tab + sheet,
+      - [x] E2b app: settings (switch, link, refresh interval, mini window source), CNO tab + sheet,
             mini window rows mixed with Vigilant's (tagged), Refresh button in the mini window,
             watch only while started (incl. PiP), BRIEF.md exception to manual-only for CNO.
+            *Done: `ui/CnoScreen` (tab, sheet, ¼-Kelly from CNO's fair capped at $ available),
+            `MiniWindow.items` + `MiniFeed` (both/Vigilant/CNO, CNO tagged, $ available, EV now
+            rounded), PiP Refresh+Next when CNO-only, `MainActivity` watch while STARTED, Settings
+            section + link editor, cno.json out of backup. Tests: MiniWindowTest 8 (4 new, incl.
+            rounding which fails on the old truncation), ScreenshotTest +10 (cno tab/light/reading/
+            error/off/refresh/sheet, mini both/CNO-only, settings). Full floor: 308 tests, 0 failed,
+            3 skipped (live), exit 0. Docs: BRIEF.md decision, RESEARCH.md §18.5, CLAUDE.md surface.*
 - [ ] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.
