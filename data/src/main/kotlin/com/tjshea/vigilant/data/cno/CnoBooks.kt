@@ -37,6 +37,13 @@ object CnoBooks {
     /** Fewest two-sided books (Novig aside) for Vigilant to call an edge confirmed. */
     const val MIN_TWO_SIDED = 3
 
+    /**
+     * Fewest of those books that must each, on its own, make the price +EV for the books to
+     * "agree" (the widget's green check, Tj 2026-09-26: "where several books agree on the fair
+     * value price").
+     */
+    const val MIN_AGREEING = 3
+
     fun name(code: String): String = names[code] ?: code
 
     /** CNO's column code for a book as its +EV list names it ("Novig" → NV, "ProphetX" → PX). */
@@ -146,13 +153,20 @@ object CnoBooks {
         val oneSided: Int,
         /** Worst case of mean and median of each two-sided book's worst-case devig. */
         val fairProbability: Double?,
+        /** Two-sided books whose own worst-case fair value alone makes the price +EV. */
+        val agreeing: Int = 0,
         /** The price judged (Novig's, nearly always): the game page's, else the list's. */
         val novigOdds: Int,
         val ev: Double?,
         val verdict: Verdict,
     )
 
-    enum class Verdict { CONFIRMED, THIN, NOT_CONFIRMED, NO_DATA }
+    /**
+     * CONFIRMED: [MIN_TWO_SIDED]+ two-sided books, their consensus says +EV, and [MIN_AGREEING]+
+     * of them say so on their own (the green check). SPLIT: the consensus says +EV but only one
+     * or two books alone do (possible with 3–4 books). THIN: too few two-sided books.
+     */
+    enum class Verdict { CONFIRMED, SPLIT, THIN, NOT_CONFIRMED, NO_DATA }
 
     /** Checks [row] (its book's price, and Novig's taker fee if the game is [live]) against [view]. */
     fun check(view: CnoBooksView, row: CnoRow, live: Boolean = false): Check =
@@ -160,23 +174,34 @@ object CnoBooks {
 
     /**
      * [listOdds] is the price in CNO's +EV list at book [judged]; [live] adds Novig's taker fee
-     * (pregame is free; other books' fees aren't modeled).
+     * (pregame is free; other books' fees aren't modeled). The game page's price for the judged
+     * book wins over the list's, unless [preferListOdds] (the list is the newer read).
      */
-    fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false, judged: String = NOVIG): Check {
+    fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false, judged: String = NOVIG, preferListOdds: Boolean = false): Check {
         val usable = view.prices.filter { usableForFair(it.code, judged) }
         val pairs = usable.filter { it.twoSided }
         val fairs = pairs.mapNotNull { fairFor(it.odds!!, it.otherOdds!!) }
         val fair = if (fairs.isEmpty()) null else minOf(fairs.average(), median(fairs))
-        val novig = view.prices.firstOrNull { it.code == judged }?.odds ?: listOdds
-        val ev = fair?.let { evAt(it, novig, live && judged == NOVIG) }
+        val novig = (if (preferListOdds) null else view.prices.firstOrNull { it.code == judged }?.odds) ?: listOdds
+        val fee = live && judged == NOVIG
+        val ev = fair?.let { evAt(it, novig, fee) }
+        val agreeing = fairs.count { evAt(it, novig, fee) > 0 }
         val verdict = when {
             fairs.isEmpty() -> Verdict.NO_DATA
             fairs.size < MIN_TWO_SIDED -> Verdict.THIN
-            ev != null && ev > 0 -> Verdict.CONFIRMED
-            else -> Verdict.NOT_CONFIRMED
+            ev == null || ev <= 0 -> Verdict.NOT_CONFIRMED
+            agreeing >= MIN_AGREEING -> Verdict.CONFIRMED
+            else -> Verdict.SPLIT
         }
-        return Check(fairs.size, usable.count { !it.twoSided }, fair, novig, ev, verdict)
+        return Check(fairs.size, usable.count { !it.twoSided }, fair, agreeing, novig, ev, verdict)
     }
+
+    /**
+     * The widget's green check for [row]: the books on its game page agree it's +EV at the list's
+     * current price (newer than the game page's when the list was read after it).
+     */
+    fun agrees(view: CnoBooksView, row: CnoRow, live: Boolean, listReadAtMs: Long): Boolean =
+        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds = listReadAtMs > view.fetchedAtMs).verdict == Verdict.CONFIRMED
 
     /** One book's fair probability for the first side: worst-case devig, or plain normalizing when there's no vig to remove. */
     fun fairFor(odds: Int, otherOdds: Int): Double? {
