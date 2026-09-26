@@ -1800,3 +1800,8 @@ Figure out if these websites truly offer positive EV bets, and for novig. If so,
 ```
 Is it possible to make a floating widget for this app or a picture in picture type view so I can see the scans while I have novig open
 ```
+
+## 2026-09-26T15:33:51Z
+```
+I like the following website for positive EV odds when I choose novig and a couple filters. Consider all possible ways to make this site's scanned odds display in this app, especially in the floating widget
+```
