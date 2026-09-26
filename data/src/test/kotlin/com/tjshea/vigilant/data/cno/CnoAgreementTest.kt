@@ -140,4 +140,49 @@ class CnoAgreementTest {
         assertEquals("novigapp://events/abc/cno", CnoFeed.appLink("novigapp://events/abc/cno"))
         assertEquals("https://other.example/x", CnoFeed.appLink("https://other.example/x"))
     }
+
+    /** Books that take [readMs] to arrive, counting reads started and finished. */
+    private class SlowSource(val clock: () -> Long, val readMs: Long) : CnoSource {
+        val started = mutableListOf<Pair<String, Long>>()
+        var finished = 0
+        override suspend fun fetch(url: String, filters: CnoFilters) = CnoSnapshot(url, emptyList(), clock())
+        override suspend fun books(row: CnoRow): CnoBooksView {
+            started += row.key to clock()
+            kotlinx.coroutines.delay(readMs)
+            finished++
+            return CnoBooksView(row.bet, null, null, false, emptyList(), clock())
+        }
+    }
+
+    @Test
+    fun `a refresh that only re-prices the list doesn't cut a books read short`() = runTest {
+        val source = SlowSource({ currentTime }, readMs = 1_500)
+        val feed = CnoFeed(source, clock = { currentTime })
+        val rows = MutableStateFlow(listOf(row(1), row(2)))
+        val job = launch { feed.keepBooksFresh(rows) }
+        runCurrent()
+        advanceTimeBy(500)
+        rows.value = listOf(row(2, odds = 125), row(1, odds = 130)) // same bets, new prices and order
+        advanceTimeBy(10_000)
+        assertEquals(2, source.started.size)
+        assertEquals(2, source.finished)
+        job.cancel()
+    }
+
+    @Test
+    fun `a books read cut short isn't a failure, so it's tried again at once, not in 2 minutes`() = runTest {
+        val source = SlowSource({ currentTime }, readMs = 1_500)
+        val feed = CnoFeed(source, clock = { currentTime })
+        val rows = MutableStateFlow(listOf(row(1)))
+        val job = launch { feed.keepBooksFresh(rows) }
+        runCurrent()
+        advanceTimeBy(500)
+        rows.value = listOf(row(9)) // another bet took the top spot mid-read: row 1's read is cancelled
+        advanceTimeBy(5_000)
+        rows.value = listOf(row(1)) // back on top
+        advanceTimeBy(5_000)
+        assertEquals(listOf(row(1).key, row(9).key, row(1).key), source.started.map { it.first })
+        assertTrue(source.started.last().second < 20_000L)
+        job.cancel()
+    }
 }
