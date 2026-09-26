@@ -157,12 +157,13 @@ fun miniStatus(state: UiState, now: Long): String {
         else -> "Scanned ${Format.age(s.scannedAtMs, now)}"
     }
     val cno = state.cno
+    val snap = cno.snapshot
     val theirs = when {
         !MiniWindow.showsCno(state.settings) -> null
         cno.refreshing -> "CNO reading…"
         cno.error != null && showsVigilant -> "CNO error"
         cno.error != null -> cno.error
-        cno.snapshot != null -> "CNO " + Format.age(cno.snapshot.dataAtMs, now).removeSuffix(" ago")
+        snap != null -> "CNO " + Format.age(snap.dataAtMs, now).removeSuffix(" ago")
         showsVigilant -> null
         else -> "CrazyNinjaOdds"
     }
