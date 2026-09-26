@@ -136,14 +136,16 @@ object MiniWindow {
     }
 
     /**
-     * A shorter name for a narrow window: a player keeps an initial and the surname ("Justin
-     * Jefferson" → "J. Jefferson", "Amon-Ra St. Brown" → "A. St. Brown"); a team its last word
-     * ("Dallas Cowboys" → "Cowboys"). One-word names stay.
+     * Shorter names for a narrow window, longest first: the full name, then for a player an
+     * initial and surname ("J. Jefferson", "A. St. Brown") and the surname alone ("Jefferson",
+     * "St. Brown"); for a team its last word ("Cowboys"). The window uses the first that fits.
      */
-    fun shortName(name: String, player: Boolean): String {
-        val words = name.trim().split(Regex("\\s+"))
-        if (words.size < 2) return name.trim()
-        return if (player) "${words.first().first()}. ${words.drop(1).joinToString(" ")}" else words.last()
+    fun nameChoices(name: String, player: Boolean): List<String> {
+        val full = name.trim()
+        val words = full.split(Regex("\\s+"))
+        if (words.size < 2) return listOf(full)
+        val surname = words.drop(1).joinToString(" ")
+        return if (player) listOf(full, "${words.first().first()}. $surname", surname).distinct() else listOf(full, words.last())
     }
 
     /** Whether leaving Vigilant should shrink it to the mini window. [rows] is what it would list. */

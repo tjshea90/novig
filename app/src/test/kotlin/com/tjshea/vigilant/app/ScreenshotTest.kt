@@ -531,6 +531,28 @@ class ScreenshotTest {
         shootAsWindow("7g_mini_window_small_cno") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed() // the whole pick, for TalkBack
         compose.onNodeWithText(" Under 69.5", useUnmergedTree = true).assertIsDisplayed()
-        compose.onNodeWithText("J. Jefferson", useUnmergedTree = true).assertIsDisplayed() // shortened, not "Ju…"
+        // Shortened to fit rather than cut to "Ju…": whatever name shows, it isn't ellipsized.
+        assertNotCutOff("Jefferson")
+        assertNotCutOff(" Under 69.5")
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowShortensNamesThatDontFitAtTheUsualSize() {
+        val base = SampleCno.state()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        screen { MiniFeed(s, next = 0) }
+        assertNotCutOff("Jefferson")
+        assertNotCutOff("Bowers")
+    }
+
+    /** The drawn text containing [part] fits its space: no "…". */
+    private fun assertNotCutOff(part: String) {
+        val node = compose.onNodeWithText(part, substring = true, useUnmergedTree = true).fetchSemanticsNode()
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        val layout = layouts.single()
+        assert(!layout.hasVisualOverflow && (0 until layout.lineCount).none { layout.isLineEllipsized(it) }) {
+            "\"${layout.layoutInput.text}\" is cut off"
+        }
     }
 }

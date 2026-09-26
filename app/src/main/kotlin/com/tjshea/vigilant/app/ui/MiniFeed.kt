@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -196,42 +197,29 @@ private fun MiniRow(item: MiniWindow.Item, showTag: Boolean = true) {
             // The pick itself, what Tj taps in Novig: full contrast, always, and its side and line
             // ("Under 69.5") never cut off; only the name shortens in a narrow window.
             val (fullName, line) = MiniWindow.splitPick(item.title)
-            val pickStyle = TextStyle(fontSize = 12.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold)
+            // Measured with exactly the style it's drawn in (the theme's letter spacing included).
+            val pickStyle = LocalTextStyle.current.merge(
+                TextStyle(fontSize = 12.sp, lineHeight = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface),
+            )
             val measurer = rememberTextMeasurer()
             BoxWithConstraints(Modifier.fillMaxWidth()) {
-            // Full name if it fits beside the line, else "J. Jefferson" / "Cowboys", else cut with "…".
-            val lineWidth = line?.let { measurer.measure((if (fullName.isNotEmpty()) " " else "") + it, pickStyle).size.width } ?: 0
-            val name = if (fullName.isEmpty() || measurer.measure(fullName, pickStyle).size.width + lineWidth <= constraints.maxWidth) {
-                fullName
-            } else {
-                MiniWindow.shortName(fullName, player = item.subtitle.startsWith("Player"))
-            }
+            // The longest name that fits beside the line ("Justin Jefferson", "J. Jefferson",
+            // "Jefferson"), and only past that a "…".
+            val lineText = line?.let { (if (fullName.isNotEmpty()) " " else "") + it }
+            val lineWidth = lineText?.let { measurer.measure(it, pickStyle, softWrap = false).size.width } ?: 0
+            val choices = MiniWindow.nameChoices(fullName, player = item.subtitle.startsWith("Player"))
+            val name = if (fullName.isEmpty()) "" else choices.firstOrNull {
+                measurer.measure(it, pickStyle, softWrap = false).size.width + lineWidth <= constraints.maxWidth
+            } ?: choices.last()
             Row(
                 Modifier.clearAndSetSemantics { text = AnnotatedString(item.title) },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (name.isNotEmpty()) {
-                    Text(
-                        name,
-                        Modifier.weight(1f, fill = false),
-                        fontSize = 12.sp,
-                        lineHeight = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Text(name, Modifier.weight(1f, fill = false), style = pickStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                if (line != null) {
-                    Text(
-                        (if (name.isNotEmpty()) " " else "") + line,
-                        fontSize = 12.sp,
-                        lineHeight = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        softWrap = false,
-                    )
+                if (lineText != null) {
+                    Text(lineText, style = pickStyle, maxLines = 1, softWrap = false)
                 }
             }
             }
