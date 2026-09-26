@@ -1710,3 +1710,14 @@ A few things to investigate or change for this app:
 <summary>Background command "Wait for the release workflow run" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-26T01:47:14Z
+```
+Run full tests on this app, try to improve the features and scanning, then research the following websites:
+
+https://pro.oddsassist.com/advantages/plus-ev
+
+https://crazyninjaodds.com/site/tools/positive-ev.aspx
+
+Figure out if these websites truly offer positive EV bets, and for novig. If so, can they somehow be incorporated in my app or improve the app in any way?
+```
