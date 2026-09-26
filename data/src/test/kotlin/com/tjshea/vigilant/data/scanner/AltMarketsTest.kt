@@ -196,9 +196,9 @@ class AltMarketsTest {
         val picked = ScanSettings(propsPerGame = 2, maxBooksPerScan = 400, schema = 3).migrate()
         assertEquals(2, picked.propsPerGame)
         assertEquals(400, picked.maxBooksPerScan)
-        assertEquals(4, picked.schema)
+        assertEquals(5, picked.schema) // v0.14.0 added schema 5 (the scanner choice)
         // A current file is left alone.
-        assertEquals(ScanSettings(propsPerGame = 4, schema = 4), ScanSettings(propsPerGame = 4, schema = 4).migrate())
+        assertEquals(ScanSettings(propsPerGame = 4, schema = 5), ScanSettings(propsPerGame = 4, schema = 5).migrate())
     }
 
     // ---- sources --------------------------------------------------------------------------------
