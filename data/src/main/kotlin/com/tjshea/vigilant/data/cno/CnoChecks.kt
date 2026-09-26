@@ -66,7 +66,9 @@ object CnoChecks {
 
     private fun reject(row: CnoRow, f: CnoFilters, now: Long): Reason? {
         val fair = fairProbability(row)
-        if (fair != null && abs(fair * Odds.americanToDecimal(row.odds) - 1.0 - row.ev) > EV_TOLERANCE) return Reason.MISMATCH
+        val started = row.startsAtMs != null && row.startsAtMs <= now
+        // Live rows may carry a fee in CNO's EV; pregame Novig fills are free, so there it must add up.
+        if (!started && fair != null && abs(fair * Odds.americanToDecimal(row.odds) - 1.0 - row.ev) > EV_TOLERANCE) return Reason.MISMATCH
         if (row.oneWay) return Reason.ONE_WAY
         if (row.books != null && row.books < f.minBooks) return Reason.BOOKS
         if (f.maxOdds > 0 && row.odds > f.maxOdds) return Reason.ODDS
