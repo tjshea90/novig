@@ -219,15 +219,19 @@ class ScreenshotTest {
     // ---- The mini window (picture-in-picture over Novig), at the sizes Android gives it ----
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindow() = shoot("7_mini_window") { MiniFeed(SampleScan.state(), next = 0) }
+
+    /** About the size Android opens a 3:2 picture-in-picture window at on a phone. */
+    @Config(qualifiers = "w180dp-h120dp-xxhdpi")
     @Test fun miniWindowSmall() {
         val s = SampleScan.state()
-        shoot("7_mini_window") { MiniFeed(s, next = 0) }
+        shoot("7a_mini_window_small") { MiniFeed(s, next = 0) }
         compose.onNodeWithText("${s.feed.size} +EV").assertIsDisplayed()
         compose.onNodeWithText(s.feed.first().selection).assertIsDisplayed()
         compose.onNodeWithText("/${s.feed.size}", substring = true).assertIsDisplayed() // more than fit: a page label
     }
 
-    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Config(qualifiers = "w180dp-h120dp-xxhdpi")
     @Test fun miniWindowNextShowsTheNextPage() {
         val s = SampleScan.state()
         screen { MiniFeed(s, next = 1) }
