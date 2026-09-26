@@ -178,7 +178,9 @@ class PlayerTeams(
 
     private suspend fun get(url: String): JsonElement? {
         requests++
-        val request = Request.Builder().url(url).get().header("User-Agent", USER_AGENT).build()
+        // OkHttp's own User-Agent: ESPN's CDN answers 403 "Access Denied" to one naming Vigilant,
+        // or a browser's (checked live 2026-09-26; RESEARCH.md §20).
+        val request = Request.Builder().url(url).get().build()
         return try {
             http.newCall(request).await().use { r ->
                 if (!r.isSuccessful) null else r.body?.string()?.let { runCatching { json.parseToJsonElement(it) }.getOrNull() }
@@ -208,8 +210,6 @@ class PlayerTeams(
 
         /** At most this many reads per pass (a full slate is ~15 games = 30 rosters: two passes). */
         const val MAX_READS_PER_PASS = 20
-
-        const val USER_AGENT = "Vigilant (Android)"
 
         /** ESPN's site-API path for a league as CNO names it, or null for leagues without rosters here. */
         fun espnPath(league: String): String? = when (league.trim().uppercase()) {

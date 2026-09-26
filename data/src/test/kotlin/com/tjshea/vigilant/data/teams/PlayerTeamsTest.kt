@@ -29,6 +29,7 @@ class PlayerTeamsTest {
     @get:Rule val tmp = TemporaryFolder()
     private val server = MockWebServer()
     private val paths: MutableList<String> = Collections.synchronizedList(mutableListOf())
+    private val agents: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     @Volatile
     var fail = false
@@ -51,7 +52,10 @@ class PlayerTeamsTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val path = request.path.orEmpty()
                 paths += path
+                agents += request.getHeader("User-Agent").orEmpty()
                 if (fail) return MockResponse().setResponseCode(500)
+                // ESPN's CDN refuses a User-Agent naming the app (or a browser's, from an app).
+                if (request.getHeader("User-Agent").orEmpty().contains("Vigilant")) return MockResponse().setResponseCode(403).setBody("<HTML>Access Denied</HTML>")
                 return when {
                     path.startsWith("/football/nfl/teams?") -> MockResponse().setBody(teams)
                     path == "/football/nfl/teams/34/roster" -> MockResponse().setBody(houston)
@@ -116,6 +120,14 @@ class PlayerTeamsTest {
         now += PlayerTeams.RETRY_MS
         assertEquals(3, t.fill(games))
         assertEquals("HOU", t.state.value.teamOf("NFL", "Houston Texans @ Indianapolis Colts", "Dalton Schultz"))
+    }
+
+    @Test
+    fun `rosters are asked for with OkHttp's own User-Agent, which ESPN's CDN lets through`() = runBlocking {
+        val t = teamsClient()
+        assertEquals(3, t.fill(PlayerTeams.gamesOf(listOf(row("Dalton Schultz Over 5.5")))))
+        assertEquals("HOU", t.state.value.teamOf("NFL", "Houston Texans @ Indianapolis Colts", "Dalton Schultz"))
+        assertTrue(agents.isNotEmpty() && agents.all { it.startsWith("okhttp/") })
     }
 
     @Test
