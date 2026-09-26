@@ -229,6 +229,16 @@ fun SettingsScreen(
             }
 
             // ---- Feed filters -----------------------------------------------------------------
+            SectionTitle("Mini window")
+            SwitchRow(
+                "Float over Novig",
+                "When you leave Vigilant with a scan running or bets on the feed, it shrinks to a small window that stays " +
+                    "on top of Novig. Tap it for Scan, Recheck and Next; pinch or double-tap to enlarge; drag it to the " +
+                    "bottom to close. The button next to Scan opens it any time.",
+                s.miniWindow,
+            ) { v -> onUpdate { it.copy(miniWindow = v) } }
+            Hint("If it never appears, turn on picture-in-picture for Vigilant in Android Settings › Apps › Special app access.")
+
             SectionTitle("+EV feed")
             var minEv by remember(s.minEvPercent) { mutableFloatStateOf((s.minEvPercent * 100).toFloat()) }
             Text("Minimum EV: ${String.format(Locale.US, "%.1f", minEv)}%", style = MaterialTheme.typography.bodyMedium)

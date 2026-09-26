@@ -143,6 +143,6 @@ fun miniStatus(state: UiState, now: Long): String {
 
 private fun emptyText(state: UiState): String = when {
     state.status.scanning -> "Scanning… bets show here as they're found"
-    state.result == null -> "Tap for Scan"
+    state.result == null -> "Tap the window, then Scan"
     else -> "No +EV right now"
 }

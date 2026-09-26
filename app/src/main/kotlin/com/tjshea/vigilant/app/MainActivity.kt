@@ -1,6 +1,11 @@
 package com.tjshea.vigilant.app
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,6 +27,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,17 +36,23 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.tjshea.vigilant.app.ui.FeedScreen
 import com.tjshea.vigilant.app.ui.GamesScreen
+import com.tjshea.vigilant.app.ui.LocalOpenNovig
+import com.tjshea.vigilant.app.ui.MiniFeed
 import com.tjshea.vigilant.app.ui.OpportunitySheet
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
+import com.tjshea.vigilant.app.ui.feedMarketIds
 import com.tjshea.vigilant.data.scanner.Opportunity
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -63,12 +75,92 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // The mini window (picture-in-picture over Novig): its buttons, its "am I small?" state, and
+        // parameters kept in step with the scan so Android can shrink Vigilant on the way out.
+        inMiniWindow = isInPictureInPictureMode
+        addOnPictureInPictureModeChangedListener { info ->
+            inMiniWindow = info.isInPictureInPictureMode
+            if (!inMiniWindow) miniPage = 0
+        }
+        ContextCompat.registerReceiver(this, miniButtons, IntentFilter(MiniWindow.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.state
+                    .map { MiniWindow.shouldAutoEnter(it.settings, it.status, it.feed.size) to it.status.scanning }
+                    .distinctUntilChanged()
+                    .collect { (auto, scanning) -> updateMiniWindow(auto, scanning) }
+            }
+        }
+
         setContent {
             VigilantTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
-                VigilantRoot(state, vm, onScan = { scan() })
+                if (inMiniWindow) {
+                    MiniFeed(state, miniPage)
+                } else {
+                    CompositionLocalProvider(LocalOpenNovig provides { openNovig() }) {
+                        VigilantRoot(state, vm, onScan = { scan() }, onMiniWindow = { enterMiniWindow() }.takeIf { MiniWindow.supported(this) })
+                    }
+                }
             }
         }
+    }
+
+    override fun onDestroy() {
+        runCatching { unregisterReceiver(miniButtons) }
+        super.onDestroy()
+    }
+
+    private var inMiniWindow by mutableStateOf(false)
+
+    /** Taps on the mini window's Next button; each shows the next page of bets. */
+    private var miniPage by mutableIntStateOf(0)
+
+    /** The mini window's Scan / Recheck / Next buttons (PendingIntents back to this app only). */
+    private val miniButtons = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.getIntExtra(MiniWindow.EXTRA_BUTTON, 0)) {
+                MiniWindow.SCAN -> vm.scan()
+                MiniWindow.RECHECK -> vm.recheck(feedMarketIds(vm.state.value))
+                MiniWindow.NEXT -> miniPage++
+            }
+        }
+    }
+
+    private fun updateMiniWindow(autoEnter: Boolean, scanning: Boolean) {
+        if (!MiniWindow.supported(this)) return
+        runCatching { setPictureInPictureParams(MiniWindow.params(this, autoEnter, scanning)) }
+    }
+
+    /** Shrinks to the mini window now. False if this phone or its settings don't allow it. */
+    private fun enterMiniWindow(): Boolean {
+        val s = vm.state.value
+        val ok = MiniWindow.supported(this) &&
+            runCatching { enterPictureInPictureMode(MiniWindow.params(this, MiniWindow.shouldAutoEnter(s.settings, s.status, s.feed.size), s.status.scanning)) }
+                .getOrDefault(false)
+        if (!ok) {
+            android.widget.Toast.makeText(this, "Picture-in-picture is off for Vigilant (Android Settings › Apps › Special app access)", android.widget.Toast.LENGTH_LONG).show()
+        }
+        return ok
+    }
+
+    /** Android 12+ shrinks to the mini window by itself (auto-enter); Android 11 needs asking. */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            val s = vm.state.value
+            if (MiniWindow.supported(this) && MiniWindow.shouldAutoEnter(s.settings, s.status, s.feed.size)) {
+                runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, s.status.scanning)) }
+            }
+        }
+    }
+
+    /** Novig's app (or site), with Vigilant floating over it when the mini window is on. */
+    private fun openNovig() {
+        if (vm.state.value.settings.miniWindow && MiniWindow.supported(this)) {
+            runCatching { enterPictureInPictureMode(MiniWindow.params(this, true, vm.state.value.status.scanning)) }
+        }
+        runCatching { startActivity(MiniWindow.novigIntent(this)) }
     }
 
     override fun onStart() {
@@ -107,7 +199,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 }
 
 @Composable
-private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit) {
+private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit, onMiniWindow: (() -> Unit)?) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
 
@@ -143,6 +235,7 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit) 
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onRecheck = vm::recheck,
+                    onMiniWindow = onMiniWindow,
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)

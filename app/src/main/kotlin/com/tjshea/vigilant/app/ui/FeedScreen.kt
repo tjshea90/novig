@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,10 +32,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.R
 import com.tjshea.vigilant.app.ScanStatus
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.scanner.FeedSort
@@ -53,6 +57,8 @@ fun FeedScreen(
     onSort: (FeedSort) -> Unit = {},
     /** Re-read these markets' Novig prices only (seconds, no fair-odds calls). */
     onRecheck: (Collection<String>) -> Unit = {},
+    /** Shrink to the mini window over other apps. Null hides the button (no picture-in-picture). */
+    onMiniWindow: (() -> Unit)? = null,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
@@ -68,7 +74,14 @@ fun FeedScreen(
                             StatusLine(state.status)
                         }
                     },
-                    actions = { ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan) },
+                    actions = {
+                        if (onMiniWindow != null) {
+                            IconButton(onClick = onMiniWindow) {
+                                Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over Novig", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan)
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 )
                 ScanProgressBar(state.status)

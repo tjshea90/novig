@@ -62,6 +62,12 @@ fun OpportunitySheet(
 }
 
 /**
+ * Opens Novig (its app when installed) and, with the mini window on, floats Vigilant over it.
+ * Provided by the activity; null (tests, previews) opens novig.com.
+ */
+val LocalOpenNovig = androidx.compose.runtime.staticCompositionLocalOf<(() -> Unit)?> { null }
+
+/**
  * A maker order waits to be taken, and the takers most eager to fill it are the ones who know the
  * line is moving against it. So a suggested bid asks for at least this much edge.
  */
@@ -247,8 +253,9 @@ fun OpportunityDetail(
                 Text("Double-check on CrazyNinjaOdds (${link.bookTitle})", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+        val openNovig = LocalOpenNovig.current
         OutlinedButton(
-            onClick = { open("https://novig.com") },
+            onClick = { openNovig?.invoke() ?: open("https://novig.com") },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
         ) { Text("Open Novig") }
     }
