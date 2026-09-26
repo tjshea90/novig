@@ -104,7 +104,8 @@ fun SettingsScreen(
                     ScannerMode.BOTH -> "Vigilant's own scan (tap Scan) and CrazyNinjaOdds' list (kept current while on screen), both in the mini window."
                     ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read."
                     ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (Novig, Pinnacle, Polymarket, " +
-                        "Kalshi, The Odds API) are asleep: nothing of theirs loads, and their tabs and settings are hidden."
+                        "Kalshi, The Odds API) are asleep: nothing of theirs loads, and their tabs and settings are hidden. " +
+                        "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on)."
                 },
             )
 
@@ -143,6 +144,18 @@ fun SettingsScreen(
                 Text("Rows per read", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "$it" }) { v -> onCno { it.copy(rows = v) } }
                 Hint("CNO sends its best-EV rows first; fewer rows is less data per read.")
+                SwitchRow(
+                    "Green ✓ when books agree",
+                    "Reads the ${CnoFeed.AGREE_TOP} best bets' books from CNO in the background (one bet every few seconds, " +
+                        "each again after ${CnoFeed.AGREE_TTL_MS / 60_000} minutes), after the list, so the list is never slower. " +
+                        "✓ = ${CnoBooks.MIN_TWO_SIDED}+ books price both sides and at least ${CnoBooks.MIN_AGREEING} of them each say it's +EV.",
+                    s.cnoCheckBooks,
+                ) { v -> onUpdate { it.copy(cnoCheckBooks = v) } }
+                SwitchRow(
+                    "Player teams",
+                    "Player bets show the team, like D. Schultz (HOU), from ESPN's rosters: two small reads per new game, kept for a day.",
+                    s.cnoPlayerTeams,
+                ) { v -> onUpdate { it.copy(cnoPlayerTeams = v) } }
                 CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
             }
 
@@ -150,19 +163,42 @@ fun SettingsScreen(
             SectionTitle("Mini window")
             SwitchRow(
                 "Float over Novig",
-                "When you leave Vigilant with bets to show (or a scan running), it shrinks to a small window that stays on top " +
-                    "of Novig. Tap it for its buttons; pinch or double-tap to enlarge; drag it to the bottom to close. The " +
-                    "button at the top of the list opens it any time.",
+                "When you leave Vigilant with bets to show (or a scan running), a small window with them stays on top of " +
+                    "Novig. The button at the top of the list opens it any time.",
                 s.miniWindow,
             ) { v -> onUpdate { it.copy(miniWindow = v) } }
-            Hint(
-                when (s.scanner) {
-                    ScannerMode.BOTH -> "It lists Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first; its buttons are Scan (which refreshes CNO's too), Recheck and Next."
-                    ScannerMode.VIGILANT -> "It lists Vigilant's bets; its buttons are Scan, Recheck and Next."
-                    ScannerMode.CNO -> "It lists CNO's bets; its buttons are Refresh, Books (every book's odds for the top bet, then Next moves down) and Next."
-                },
-            )
-            Hint("If it never appears, turn on picture-in-picture for Vigilant in Android Settings › Apps › Special app access.")
+            if (s.cnoOn) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                var allowed by remember { mutableStateOf(com.tjshea.vigilant.app.FloatingWidget.allowed(context)) }
+                androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+                    allowed = com.tjshea.vigilant.app.FloatingWidget.allowed(context)
+                    onPauseOrDispose { }
+                }
+                SwitchRow(
+                    "Floating widget you can touch",
+                    "Up and down buttons always at the bottom, tap a bet to open it in Novig's bet slip, ✓ to mark it placed " +
+                        "(hidden for good), hold it for every book's odds. Drag the top to move it, the corner to resize it, " +
+                        "− to shrink it to a bubble, ✕ to close it. Off: the picture-in-picture window.",
+                    s.floatingWidget,
+                ) { v -> onUpdate { it.copy(floatingWidget = v) } }
+                if (s.floatingWidget && !allowed) {
+                    Hint("Needs Android's \"Display over other apps\" for Vigilant (until then it's picture-in-picture). If Android greys the switch out: App info › ⋮ › Allow restricted settings.")
+                    OutlinedButton(onClick = { runCatching { context.startActivity(com.tjshea.vigilant.app.FloatingWidget.permissionIntent(context)) } }) {
+                        Text("Allow display over other apps")
+                    }
+                }
+                Hint("CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read.")
+            }
+            if (!s.cnoOn || !s.floatingWidget) {
+                Hint(
+                    when (s.scanner) {
+                        ScannerMode.BOTH -> "Picture-in-picture: it lists Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first; tap it for Scan (which refreshes CNO's too), Recheck and Next. Pinch or double-tap to enlarge; drag it to the bottom to close."
+                        ScannerMode.VIGILANT -> "Picture-in-picture: it lists Vigilant's bets; tap it for Scan, Recheck and Next. Pinch or double-tap to enlarge; drag it to the bottom to close."
+                        ScannerMode.CNO -> "Picture-in-picture: it lists CNO's bets; tap it for Up, Down and Books (every book's odds for the top bet; Up and Down then move between bets). Pinch or double-tap to enlarge."
+                    },
+                )
+                Hint("If it never appears, turn on picture-in-picture for Vigilant in Android Settings › Apps › Special app access.")
+            }
 
             // ---- Vigilant's own scanner (asleep in CNO only) ----------------------------------
             if (s.vigilantOn) {
