@@ -19,8 +19,12 @@ class TmpEspnDebugTest {
         }
         val http = OkHttpClient.Builder().protocols(listOf(okhttp3.Protocol.HTTP_1_1)).build()
         val body = http.newCall(Request.Builder().url("https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams?limit=1000").header("User-Agent", PlayerTeams.USER_AGENT).build()).execute().use { it.body!!.string() }
-        println("DBG body ${body.length} ${body.take(80)}")
-        val el = kotlinx.serialization.json.Json.parseToJsonElement(body)
+        println("DBG body ${body.length} ${body.replace("\n"," ").take(440)}")
+        for (ua in listOf("Vigilant (Android)", "Vigilant", "Mozilla/5.0 (Linux; Android 16; moto g) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36 Vigilant")) {
+            val r = runCatching { http.newCall(Request.Builder().url("https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/34/roster").header("User-Agent", ua).build()).execute().use { "${it.code} ${it.body!!.string().take(30)}" } }
+            println("DBG ua '$ua' -> $r")
+        }
+        return@runBlocking
         val teams = PlayerTeams.parseTeams(el)
         println("DBG teams ${teams.size} ${teams.take(3)}")
         println("DBG find ${PlayerTeams.findTeam("Houston Texans", teams)}")
