@@ -1427,4 +1427,7 @@ props calls themselves are fixture-tested only.
       $5-$15; disclosed worst-case avg/median method; devigger URL autofill; odds from OddsBlaze).*
 - [x] C5 Verdict + what (if anything) to incorporate into Vigilant; write RESEARCH.md section.
       *Done: RESEARCH.md §16.3-16.5; BRIEF.md fair-odds and recheck decisions.*
-- [ ] C6 Tests, CI, ship, report.
+- [x] C6 Tests, CI, ship, report.
+      *Done: local 256 tests green (exit 0, 0 failures); CI 36211240206 green; ship.sh gate green;
+      release 36211424686 → v0.11.0 (code 15, 4.78MB):
+      https://github.com/tjshea90/novig/releases/tag/v0.11.0*
