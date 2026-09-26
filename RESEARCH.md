@@ -1396,3 +1396,95 @@ from the button next to Scan, and from a bet's "Open Novig" (which now opens Nov
 device or emulator in the dev container: the window's content is screenshot-tested at PiP sizes,
 the Android side (auto-enter, buttons) is unit-tested for the parameters it hands Android, and the
 real behavior needs Tj's phone to confirm.
+
+## 18. CrazyNinjaOdds' scanned odds inside Vigilant and the mini window (2026-09-26 ~15:35–16:00Z)
+
+Tj: "I like [crazyninjaodds.com/site/tools/positive-ev.aspx] for positive EV odds when I choose
+novig and a couple filters. Consider all possible ways to make this site's scanned odds display in
+this app, especially in the floating widget." Checked with curl and Python in the dev container
+(about 12 requests to CNO in total, all before its terms were found; none after), plus CNO's
+terms PDF, API page, add-ons page and OddsBlaze's docs and JS bundle.
+
+### 18.1 How the page works (verified)
+
+- **Filters travel in the URL.** CNO's "Shared View → Copy Link" builds
+  `positive-ev.aspx?site_id=17&ev_min=…&odds_min=…&odds_max=…&liq_min=…&books_min=…&sides_min=…&main=…&live=…&sport=…&league=…&starts_within_h=…&limit=…`
+  (`site_id=17` is Novig; the devig method is *not* in the link, it stays the page default,
+  Liquidity-Weighted worst case). A plain GET with `?site_id=17` comes back with Novig selected.
+- **The table is not in that page.** It arrives by a second request: an ASP.NET AJAX timer
+  (`TimerAjaxDelayedLoad`, 1 ms) posts the whole form back (`__VIEWSTATE`, `__EVENTVALIDATION`,
+  `__ASYNCPOST=true`, header `X-MicrosoftAjax: Delta=true`) and gets a "delta" reply
+  (`length|type|id|content|` records; lengths count UTF-16 units including `\r\n`). ~1 s and ~75 KB
+  each way.
+- **What a row holds** (`GridView1`, 100 rows at the default limit, all Novig with `site_id=17`):
+  EV % (LW worst case), start time (UTC), sport, league, event (link to CNO's game page with
+  CNO's game/market/side ids), market ("Player Receptions", "Moneyline 3-way", …), bet name
+  ("Brock Bowers Under 4.5"), Novig odds **with dollars available** ("+100 ($109)"), book (link
+  to CNO's deeplink page, which asks for a consent tick and then opens the book with the referrer
+  hidden), fair odds, number of books, and `data-fairpercentage` (fair probability, 15 digits).
+- **Snapshot, Novig only, `books_min=3&sides_min=2`, 15:40Z:** 100 rows from 11.6% down; the top
+  ones: Miguel Rojas O0.5 RBI +335 ($4) vs fair +290, 11.59%; Pittsburgh −63.5 +344 ($8), 9.50%;
+  Javonte Williams O19.5 rec yds +156 ($1), 7.45%; Baker Mayfield longest pass O35.5 +117 ($19),
+  7.21%. Rows with real size exist too: Brock Bowers U4.5 rec +100 ($109) vs −108, 13 books, 4.05%;
+  Geraldo Perdomo U0.5 hits +167 ($203), 11 books, 3.81%; Amon-Ra St. Brown U0.5 TD +106 ($226),
+  3.31%. Mostly player props, which is where Vigilant's own coverage is thinnest (§14).
+- "Last Updated: 41 seconds ago": CNO refreshes its odds about once a minute server-side. The page
+  does not refresh itself; the user presses Refresh.
+
+### 18.2 What CNO's terms and CNO itself say
+
+- **Terms of service** (`/files/terms-of-service.pdf`, Becker Games LLC, updated 2022-09-01; §16.1
+  wrongly said there were none): §2 grants "a limited license to access and use the Site and to
+  download or print a copy of any portion of the Content … solely for your personal,
+  non-commercial use". §3: you "will not access the Site through automated or non-human means,
+  whether through a bot, script, or otherwise". §5 forbids "systematically retriev[ing] data … to
+  create or compile … a collection", "unauthorized framing", "any automated use of the system,
+  such as … data mining, robots, or similar data gathering and extraction tools", and "except as
+  may be the result of standard search engine or Internet browser usage, use, launch, develop, or
+  distribute any automated system, including … any spider, robot, cheat utility, scraper, or
+  offline reader that accesses the Site". §12: they may block IP addresses without notice.
+  Contact: mike@crazyninjaodds.com.
+- **But CNO features browser add-ons that act on this exact page** (`/site/tools/community-addons.aspx`):
+  "CNO Parlay Buddy" (Chrome) "adds a small window with the ability to select and devig multiple
+  legs on the CNO +EV page"; "Injury Guard" fills the page's filters automatically. "If you've built
+  something you'd like featured here, reach out to me via the CNO Discord." So the owner welcomes
+  user-side tools on the page someone has open; the terms' wording still covers anything
+  automated.
+- **API page:** the Devigger API is work in progress; odds APIs are "coming in the future"; "CrazyNinjaOdds
+  uses OddsBlaze API for much of its Odds. You can develop your own tools with OddsBlaze API!"
+- **OddsBlaze, first-hand** (docs.oddsblaze.com and the pricing data in oddsblaze.com's JS bundle):
+  Plan 1 **$299/mo** (300 requests/min), Plan 2 $999/mo; free trial. Novig is one of its 24
+  books. Pull API is one request per book per league (`odds.oddsblaze.com/?key=…&sportsbook=novig&league=nfl`),
+  plus a push feed. Ten times Tj's $30 budget, so rebuilding CNO's scan from CNO's own source is out.
+- **Discord** (5,000+ members): "Get pinged when a verified user posts a +EV play … for a state or
+  sportsbook". Those are people's posted plays, not the scanner table.
+
+### 18.3 Every way to get CNO's rows onto the screen, and what each costs
+
+| # | Way | What Tj sees | Terms | Work | Verdict |
+|---|---|---|---|---|---|
+| 1 | **Split screen**: Chrome on his Shared View + Novig | The real page, half screen | Clean (it's a browser) | None | Works today |
+| 2 | Freeform/floating window of Chrome (Android developer option "Enable freeform windows"; some OEM skins) | The real page in a floating window | Clean | None | Unverified on the Moto G; worth one try on the phone |
+| 3 | **In-app CNO tab (WebView) + mirror in the mini window**: Tj opens his Shared View inside Vigilant; every load/refresh is his tap (in the tab or the mini window's Refresh button); Vigilant reads the rows already on the page and shows them in the mini window and feed | CNO's rows in Vigilant's own layout, in the floating window, with EV, price, $ available, fair, books, start time, age | Grey: like CNO's featured Chrome add-ons, no background access, but the terms' words ("extraction tools", "framing") still cover it | Medium (WebView kept alive under the PiP window, a JS reader, tests of the reader in Chromium on the saved page) | **Best without permission**, if Tj accepts the grey |
+| 4 | **Background reader** (Vigilant does the GET + postback itself every ≥60 s while the feed or mini window is on screen, from Tj's Shared View link; stops in the background) | Same as 3, refreshing by itself; can alert on new rows | **Breaks §3/§5** unless CNO says yes in writing; risk is an IP block, which would also cut Tj's own browser access | Medium; the protocol is fully worked out above | **Best with Mike's written OK** |
+| 5 | Share/copy rows from Chrome into Vigilant (allowed by §2's personal-copy licence) | Pinned rows in the mini window; Vigilant rechecks each price on Novig itself | Clean | Medium; mobile Chrome's text from a collapsed table is unknown without a device | Clunky for prices that move each minute |
+| 6 | OddsBlaze direct, CNO's method in Vigilant | Vigilant's own rows, 24 books | Clean | Large | $299/mo: out |
+| 7 | Discord pings → Vigilant via a notification listener | Posted plays, not the scan | Clean for CNO | Medium | Not what Tj asked for |
+| 8 | Show the web page itself in the picture-in-picture window | CNO's phone layout collapses every column but EV% | As 3 | Small | Unreadable at PiP size |
+| 9 | CNO API | — | — | — | Doesn't exist for odds yet |
+
+For the display side, the mini window from §17 is the floating widget in every option; the
+"display over other apps" overlay (§17) stays the upgrade if the PiP window proves too small, and
+works the same for CNO rows as for Vigilant's own.
+
+### 18.4 Recommendation
+
+1. **Ask Mike** (CNO Discord or mike@crazyninjaodds.com) for written OK to read one Shared View
+   once a minute, only while the app is on screen, for one person's own use. The add-ons page
+   and his stated aim ("fuel cheaper alternatives to the expensive +EV sites") make a yes
+   plausible. With a yes, build 4: it is the only way the floating window keeps itself current.
+2. Until then, the choice is Tj's: **3** (user-driven, grey) or **1/2** (clean, nothing to build).
+3. Either way, Vigilant should keep its own scan: CNO's copy of Novig is up to a minute old and
+   its sizes ($1–$226) are what was on Novig at CNO's last refresh. A CNO row shown in Vigilant
+   should say how old it is, and Vigilant's own Recheck (Novig's live book) is the check before
+   betting.
