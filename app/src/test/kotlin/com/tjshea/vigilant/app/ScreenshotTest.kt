@@ -262,13 +262,16 @@ class ScreenshotTest {
         assert(picked?.miniWindow == false) { "picked $picked" }
     }
 
-    // ---- CrazyNinjaOdds' list (RESEARCH.md §18): its tab, and in the mini window ----
+    // ---- The CNO scanner (RESEARCH.md §18–19): its tab, bet detail, and in the mini window ----
 
     @Test fun cnoTab() {
         shoot("8_cno") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
-        compose.onNodeWithText("Walker Buehler Over 15.5").assertIsDisplayed()
-        compose.onNodeWithText("Novig · 3+ books", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Odds 49s old · every 1 min", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
+        compose.onNodeWithText("Conservative worst case · to +150 · 5+ books · ≥1% EV").assertIsDisplayed()
+        compose.onNodeWithText("View: Novig · 3+ books").assertIsDisplayed()
+        compose.onNodeWithText("Odds 49s old · every 15 s", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("4 bets pass · 2 hidden: 1 too few books, 1 longer odds than your cap").assertIsDisplayed()
+        compose.onAllNodesWithText("Walker Buehler Over 15.5").assertCountEquals(0) // 4 books: too thin
         compose.onAllNodesWithText("\$88.00").onFirst().assertIsDisplayed() // dollars available
     }
 
@@ -283,55 +286,123 @@ class ScreenshotTest {
         val cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot(readAgoMs = 180_000), error = "CrazyNinjaOdds answered HTTP 503")
         shoot("8d_cno_error") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(cno = cno), {}, {}) }
         compose.onNodeWithText("Showing the list from 3m ago", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Walker Buehler Over 15.5").assertIsDisplayed()
+        compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
     }
 
-    @Test fun cnoTabOff() {
+    @Test fun cnoTabWarnsWhenCnoHasStoppedUpdating() {
+        val cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot().copy(cnoAgeSeconds = 12 * 60))
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(cno = cno), {}, {}) }
+        compose.onNodeWithText("hasn't updated its odds", substring = true).assertIsDisplayed()
+    }
+
+    @Test fun cnoTabOffInVigilantOnlyMode() {
         val s = SampleCno.state()
-        screen { com.tjshea.vigilant.app.ui.CnoScreen(s.copy(settings = s.settings.copy(cnoEnabled = false)), {}, {}) }
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(s.copy(settings = s.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT)), {}, {}) }
         compose.onNodeWithText("CrazyNinjaOdds is off").assertIsDisplayed()
-        compose.onAllNodesWithText("Walker Buehler Over 15.5").assertCountEquals(0)
+        compose.onAllNodesWithText("Justin Jefferson Under 69.5").assertCountEquals(0)
     }
 
-    @Test fun cnoTabRefreshButton() {
+    @Test fun cnoTabRefreshButtonAndCnoOnlyChip() {
         var refreshed = 0
-        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), { refreshed++ }, {}) }
+        var mode: com.tjshea.vigilant.data.scanner.ScannerMode? = null
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), { refreshed++ }, {}, onScanner = { mode = it }) }
         compose.onNodeWithContentDescription("Refresh CrazyNinjaOdds").performClick()
         assert(refreshed == 1)
+        compose.onNodeWithText("CNO only").performClick()
+        assert(mode == com.tjshea.vigilant.data.scanner.ScannerMode.CNO) { "mode $mode" }
     }
 
-    @Test fun cnoSheet() {
-        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
+    @Test fun cnoCardShowsTheBooksVerdictOnceLoaded() {
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.withBooks(), {}, {}) }
+        compose.onNodeWithText("✓ 3 books agree").assertIsDisplayed()
+    }
+
+    @Test fun cnoSheetAsksForTheBetsBooks() {
+        var asked: com.tjshea.vigilant.data.cno.CnoRow? = null
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}, onLoadBooks = { r, _ -> asked = r }) }
         compose.onNodeWithText("Justin Jefferson Under 69.5").performClick()
-        compose.onNodeWithText("Every book on CNO").assertExists()
-        compose.onNodeWithText("check them in Novig before betting", substring = true).assertExists()
+        compose.waitForIdle()
+        assert(asked?.bet == "Justin Jefferson Under 69.5") { "asked $asked" }
+        compose.onNodeWithText("Reading every book's odds from CNO…").assertExists()
+        compose.onNodeWithText("Open in Novig").assertExists()
+    }
+
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
+    @Test fun cnoDetailWithEveryBook() {
+        val s = SampleCno.withBooks()
+        val pick = s.cnoPicks(SampleScan.NOW)!!.picks.first { it.row.bet == "Justin Jefferson Under 69.5" }
+        shoot("8e_cno_detail") {
+            com.tjshea.vigilant.app.ui.CnoDetail(pick, s.cno.snapshot, s.settings, s.cnoUrl, s.books[pick.row.key], SampleScan.NOW)
+        }
+        compose.onNodeWithText("✓ 3 books agree").assertIsDisplayed()
+        compose.onNodeWithText("Pinnacle").assertIsDisplayed()
+        compose.onNodeWithText("DraftKings").assertIsDisplayed() // one side only: listed, not counted
+        compose.onNodeWithText("judged").assertIsDisplayed() // Novig's own row
+        compose.onNodeWithText("so +117 on Novig is", substring = true).assertIsDisplayed()
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
     @Test fun miniWindowWithBothLists() {
         val s = SampleCno.state()
         shoot("7d_mini_window_both") { MiniFeed(s, next = 0) }
-        compose.onNodeWithText("${s.feed.size + SampleCno.rows.size} +EV").assertIsDisplayed()
+        compose.onNodeWithText("${s.feed.size + SampleCno.kept.size} +EV").assertIsDisplayed()
         compose.onAllNodesWithText("CNO", substring = true).onFirst().assertExists()
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
     @Test fun miniWindowWithCnoOnly() {
         val base = SampleCno.state()
-        val s = base.copy(settings = base.settings.copy(miniSource = com.tjshea.vigilant.data.scanner.MiniSource.CNO))
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
         shoot("7e_mini_window_cno") { MiniFeed(s, next = 0) }
-        compose.onNodeWithText("Walker Buehler Over 15.5").assertIsDisplayed()
+        compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
         compose.onNodeWithText("CNO 49s", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("${SampleCno.kept.size} +EV").assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowBooks() {
+        val base = SampleCno.withBooks()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        shoot("7f_mini_window_books") { MiniFeed(s, next = 0, books = 0) }
+        compose.onNodeWithText("✓ 3 books agree", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
+        compose.onNodeWithText("1/4").assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowBooksWhileLoading() {
+        val base = SampleCno.state()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        screen { MiniFeed(s, next = 0, books = 1) }
+        compose.onNodeWithText("Reading books…").assertIsDisplayed()
+        compose.onNodeWithText("Ohio -33.5").assertIsDisplayed() // Next moved to the second bet
     }
 
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
-    @Test fun settingsOfferTheCnoListAndLink() {
+    @Test fun settingsOfferTheCnoScannerAndItsFilters() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
         compose.onNodeWithText("Shared View link").assertExists()
-        compose.onNodeWithText("The mini window lists").assertExists()
+        compose.onNodeWithText("Longest odds").assertExists()
+        compose.onNodeWithText("+150").assertExists()
+        compose.onNodeWithText("Fewest books behind the fair price").assertExists()
+        compose.onNodeWithText("Real time").assertExists()
         compose.onNodeWithText("Tap only").assertExists()
-        compose.onNodeWithText("CrazyNinjaOdds' +EV list").performClick()
-        assert(picked?.cnoEnabled == false) { "picked $picked" }
+        compose.onNodeWithText("CNO only").performClick()
+        assert(picked?.scanner == com.tjshea.vigilant.data.scanner.ScannerMode.CNO) { "picked $picked" }
+        compose.onNodeWithText("+100").performClick()
+        assert(picked?.cnoFilters?.maxOdds == 100) { "picked $picked" }
+    }
+
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
+    @Test fun cnoOnlySettingsHideWhatsAsleep() {
+        val base = SampleScan.state()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        shoot("5c_settings_cno_only") { SettingsScreen(s, {}) }
+        compose.onAllNodesWithText("Fair odds method").assertCountEquals(0)
+        compose.onAllNodesWithText("API usage").assertCountEquals(0)
+        compose.onAllNodesWithText("Novig API key").assertCountEquals(0)
+        compose.onNodeWithText("CNO scanner").assertExists()
+        compose.onNodeWithText("Bankroll & Kelly").assertExists()
     }
 }

@@ -23,7 +23,7 @@ object SampleCno {
 
     /** Read [readAgoMs] before [SampleScan.NOW]; CNO said its odds were 29 s old then. */
     fun snapshot(readAgoMs: Long = 20_000, url: String = CnoView.DEFAULT, rows: List<CnoRow> = this.rows) =
-        CnoSnapshot(url, rows, SampleScan.NOW - readAgoMs, cnoAgeSeconds = 29, evLabel = "LW-WC")
+        CnoSnapshot(url, rows, SampleScan.NOW - readAgoMs, cnoAgeSeconds = 29, evLabel = "C-WC", filters = com.tjshea.vigilant.data.cno.CnoFilters())
 
     fun state(base: UiState = SampleScan.state(), cno: CnoState = CnoState(snapshot = snapshot())): UiState = base.copy(cno = cno)
 
