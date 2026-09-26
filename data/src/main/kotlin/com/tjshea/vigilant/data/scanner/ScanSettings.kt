@@ -1,16 +1,22 @@
 package com.tjshea.vigilant.data.scanner
 
+import com.tjshea.vigilant.data.cno.CnoFilters
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.FairSettings
 import com.tjshea.vigilant.engine.FairSource
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** How many prop types to request from the sportsbooks per game (each costs a credit). */
 enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
 
-/** Whose bets the mini window lists: Vigilant's scan, CrazyNinjaOdds' list, or both by EV. */
-enum class MiniSource(val displayName: String) { BOTH("Both"), VIGILANT("Vigilant"), CNO("CrazyNinjaOdds") }
+/**
+ * Which scanner runs (Tj, 2026-09-26). CNO only: CrazyNinjaOdds' list alone, with Vigilant's own
+ * scan and every API behind it asleep (no Scan, no Novig or odds-API calls, their tabs hidden).
+ * Vigilant only: CNO is never read. Both: both, and the mini window lists both by EV.
+ */
+enum class ScannerMode(val displayName: String) { BOTH("Both"), VIGILANT("Vigilant only"), CNO("CNO only") }
 
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
@@ -34,7 +40,7 @@ enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
 /**
  * Everything the user can tune, persisted as JSON. Nothing here triggers network on its own: the
  * app only fetches when Tj taps Scan or pulls to refresh (his rule, 2026-09-25). The one
- * exception is CrazyNinjaOdds' list ([cnoEnabled]), kept current while on screen (Tj, 2026-09-26).
+ * exception is CrazyNinjaOdds' list ([scanner]), kept current while on screen (Tj, 2026-09-26).
  */
 @Serializable
 data class ScanSettings(
@@ -123,10 +129,15 @@ data class ScanSettings(
     val cnoEnabled: Boolean = true,
     /** Tj's CNO Shared View link (his filters), as normalized by CnoView; blank = Novig, CNO's defaults. */
     val cnoViewUrl: String = "",
-    /** Seconds between automatic CNO reads while on screen; 0 = only when tapped. */
-    val cnoRefreshSeconds: Int = 60,
-    /** What the mini window lists. */
-    val miniSource: MiniSource = MiniSource.BOTH,
+    /**
+     * Seconds between automatic CNO reads while on screen; [com.tjshea.vigilant.data.cno.CnoFeed.REALTIME]
+     * = as soon as CNO publishes; 0 = only when tapped.
+     */
+    val cnoRefreshSeconds: Int = 15,
+    /** Which scanner runs. Saved as "miniSource" by v0.13.0, whose values it keeps. */
+    @SerialName("miniSource") val scanner: ScannerMode = ScannerMode.BOTH,
+    /** The CNO scanner's filters: worst-case devig, odds cap, fewest books, … (RESEARCH.md §19). */
+    val cnoFilters: CnoFilters = CnoFilters(),
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
@@ -155,8 +166,23 @@ data class ScanSettings(
                 schema = 4,
             )
         }
+        // v0.14.0: the CNO switch became the scanner choice, and 15 s the default refresh.
+        if (s.schema < 5) {
+            s = s.copy(
+                scanner = if (!s.cnoEnabled) ScannerMode.VIGILANT else s.scanner,
+                cnoEnabled = true,
+                cnoRefreshSeconds = if (s.cnoRefreshSeconds == 60) 15 else s.cnoRefreshSeconds,
+                schema = 5,
+            )
+        }
         return s
     }
+
+    /** CrazyNinjaOdds' list is read (both scanners, or CNO only). */
+    val cnoOn: Boolean get() = scanner != ScannerMode.VIGILANT
+
+    /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only). */
+    val vigilantOn: Boolean get() = scanner != ScannerMode.CNO
 
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
@@ -195,5 +221,9 @@ data class ScanSettings(
         val BOOK_PROP_REUSE_CHOICES = listOf(30, 60, 120, 240)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
         val MAX_ODDS_CHOICES = listOf(300, 500, 1000, 2000, 0)
+        val CNO_MAX_ODDS_CHOICES = listOf(100, 150, 200, 300, 0)
+        val CNO_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8, 10)
+        val CNO_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
+        val CNO_ROWS_CHOICES = listOf(25, 50, 100)
     }
 }
