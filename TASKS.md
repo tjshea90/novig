@@ -1431,3 +1431,17 @@ props calls themselves are fixture-tested only.
       *Done: local 256 tests green (exit 0, 0 failures); CI 36211240206 green; ship.sh gate green;
       release 36211424686 → v0.11.0 (code 15, 4.78MB):
       https://github.com/tjshea90/novig/releases/tag/v0.11.0*
+
+## Tj's request, 2026-09-26 — see scans while Novig is open
+
+> Is it possible to make a floating widget for this app or a picture in picture type view so I can
+> see the scans while I have novig open
+
+### Plan
+- [ ] D1 Research the options on Android 16 / Moto G: picture-in-picture, a draggable overlay
+      ("display over other apps"), split screen, notifications; limits of each (touch, size,
+      permissions, Novig touch-blocking risk, battery).
+- [ ] D2 Build the recommended one: a mini window that shows scan progress and the top +EV bets,
+      live, while Novig is open (auto when leaving Vigilant, a button to open it, actions to scan,
+      recheck and page through bets), with a setting to turn it off.
+- [ ] D3 Tests (paging, when it opens, screenshots of the mini view), CI, ship, report.
