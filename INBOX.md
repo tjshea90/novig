@@ -1899,3 +1899,22 @@ Review the screenshot. Notice the floating widget doesn't say what the pick actu
 <summary>Background command "Poll the release run until done" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-26T20:11:43Z
+```
+For the cno scanner in this app, do the following: 
+
+1) make it so there are permanent up and down buttons on the bottom of the cno scanner widget that scroll the bets instead of the current next page button. 
+
+2) make sure if I close the cno scanner or the app that nothing is refreshing in the background. 
+
+3) on the cno scanner widget, put small team designations next to player names. For example, d. Schultz (hou). That way I know what team to look for in the novig app.
+
+4) put small green checks next to bets in the cno widget where several books agree on the fair value price , but only do this if it doesn't slow down the scanning a lot. 
+
+5) if possible, in the cno scanner widget, make it so I can press a bet to let me know that I already placed that bet. I want to be able to track which bets on the scanner I already made, so I don't place them twice. Maybe a button to remove the bet from the scanner widget so I don't see it anymore after I place the bet, but this has to persist even through refreshes so the bet doesn't come back up after a refresh if I already placed the bet.
+
+6) if possible, on the cno scanner widget, make it so I can tap a bet and it will bring me to that exact bet in the novig app so I can place it immediately. 
+
+After all of this is done, run full tes protocol on the app
+```
