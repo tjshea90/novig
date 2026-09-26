@@ -136,6 +136,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Serializes settings writes so two fast taps can't interleave read-modify-write. */
     private val settingsMutex = Mutex()
 
+    /**
+     * Who is looking at CNO's list right now: "tab" (the CNO tab, Vigilant started), "pip" (the
+     * picture-in-picture window), "overlay" (the floating widget, screen on). CNO is read only
+     * while this isn't empty (Tj, 2026-09-26: "if I close the cno scanner or the app … nothing is
+     * refreshing in the background").
+     */
+    private val cnoWatchers = MutableStateFlow<Set<String>>(emptySet())
+
+    /** One-shot messages for a toast ("Tracked", save errors). Declared before [init]: its coroutines can run at once. */
+    private val _toasts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
+    val toasts: kotlinx.coroutines.flow.SharedFlow<String> = _toasts
+
     init {
         viewModelScope.launch {
             val stored = c.settingsStore.read()
@@ -194,14 +206,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-    /**
-     * Who is looking at CNO's list right now: "tab" (the CNO tab, Vigilant started), "pip" (the
-     * picture-in-picture window), "overlay" (the floating widget, screen on). CNO is read only
-     * while this isn't empty (Tj, 2026-09-26: "if I close the cno scanner or the app … nothing is
-     * refreshing in the background").
-     */
-    private val cnoWatchers = MutableStateFlow<Set<String>>(emptySet())
 
     /** [MainActivity] and the widget say when they start and stop showing CNO's list. */
     fun watchCno(who: String, on: Boolean) = cnoWatchers.update { if (on) it + who else it - who }
@@ -513,9 +517,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** One-shot messages for a toast ("Tracked", save errors). */
-    private val _toasts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
-    val toasts: kotlinx.coroutines.flow.SharedFlow<String> = _toasts
 
     fun trackBet(o: Opportunity, stake: Double) {
         viewModelScope.launch {

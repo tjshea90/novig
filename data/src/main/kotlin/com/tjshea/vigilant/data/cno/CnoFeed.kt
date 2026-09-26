@@ -223,6 +223,10 @@ class CnoFeed(
 
     // ---- The green check: the top bets' books, read slowly in the background ---------------
 
+    /** When the agreement lane last started a read. */
+    @Volatile
+    private var laneReadAtMs = Long.MIN_VALUE / 2
+
     /** Whether [row]'s books are due for the agreement lane: never read, stale, or a failed try long enough ago. */
     private fun booksDueInMs(row: CnoRow, now: Long): Long {
         val read = booksReadAt[row.key]
@@ -252,15 +256,17 @@ class CnoFeed(
                     delay(wait)
                     continue
                 }
-                // The list first: wait out a running read or a pause CNO asked for.
+                // The list first: wait out a running read or a pause CNO asked for; and keep the
+                // gap between two of these even when a new list restarted this loop.
                 val s = _state.value
                 val pause = s.pausedUntilMs?.let { it - clock() } ?: 0L
-                if (s.refreshing || pause > 0) {
-                    delay(maxOf(pause, 500L))
+                val gap = laneReadAtMs + AGREE_GAP_MS - clock()
+                if (s.refreshing || pause > 0 || gap > 0) {
+                    delay(maxOf(pause, gap, if (s.refreshing) 500L else 0L, 1L))
                     continue
                 }
+                laneReadAtMs = clock()
                 loadBooks(next, maxAgeMs = AGREE_TTL_MS)
-                delay(AGREE_GAP_MS)
             }
         }
     }
