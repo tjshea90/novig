@@ -38,12 +38,10 @@ data class CnoRow(
 
     /** CNO's `side_id` for this bet (the row id on its game page). */
     val sideId: String? get() = gameUrl?.let { SIDE_ID.find(it)?.groupValues?.get(1) }
-
-    private companion object {
-        val DEVIG_PARAM = Regex("[&?]devig_method=\\d+")
-        val SIDE_ID = Regex("[?&]side_id=(\\d+)")
-    }
 }
+
+private val DEVIG_PARAM = Regex("[&?]devig_method=\\d+")
+private val SIDE_ID = Regex("[?&]side_id=(\\d+)")
 
 /**
  * CNO's devig choices that are worst-case (RESEARCH.md §19): the longest fair value of
