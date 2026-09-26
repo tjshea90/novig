@@ -1455,3 +1455,21 @@ props calls themselves are fixture-tested only.
       *Done: local 267 tests green (exit 0, 0 failures); CI 36214953291 green; ship.sh gate green;
       release 36215186173 → v0.12.0 (code 16, 4.83MB):
       https://github.com/tjshea90/novig/releases/tag/v0.12.0. Not device-tested (no emulator here).*
+
+## Tj's request, 2026-09-26T15:34Z — CrazyNinjaOdds' scanned odds inside the app
+
+> I like the following website for positive EV odds when I choose novig and a couple filters.
+> Consider all possible ways to make this site's scanned odds display in this app, especially in
+> the floating widget
+>
+> https://crazyninjaodds.com/site/tools/positive-ev.aspx
+
+### Plan
+- [ ] E1 Research every way to get CNO's positive-EV rows (Novig + Tj's filters) into Vigilant:
+      plain HTTP fetch + parse (how the filters are applied: URL, form postback, cookies), an
+      in-app WebView (tab), a WebView that reads the table for the native feed and mini window,
+      any CNO API / export / alerts / supporter feature, OddsBlaze direct, share/clipboard,
+      overlay. Terms, robots.txt crawl delay, freshness, fragility. Hands-on in Chromium/curl.
+- [ ] E2 Build the recommended way: CNO rows in the app and in the mini window (floating widget),
+      with Tj's filters, polite polling, clear "from CrazyNinjaOdds" labelling and age.
+- [ ] E3 Tests (parser on a saved page, mini window screenshots), CI, ship, report.

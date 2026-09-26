@@ -1,13 +1,13 @@
-# CHECKPOINT 406 — read me first, then TASKS.md
+# CHECKPOINT 407 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T03:38:18Z · **tests:** all 1 fast checks green
-**Branch:** `claude/positive-ev-betting-research-dkp593` · **builds on:** `7134743` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T15:34:51Z · **tests:** all 1 fast checks green
+**Branch:** `claude/odds-display-integration-8qnsaq` · **builds on:** `e3d1e60` (this checkpoint is the commit after it)
 
 ## Just done
-SHIPPED v0.12.0 (code 16): mini window over Novig; CI 36214953291 + release 36215186173 green; Release confirmed with vigilant-v0.12.0.apk; recorded; TASKS D1-D3 ticked
+Logged Tj's 2026-09-26T15:34Z request (CrazyNinjaOdds' positive-EV rows in the app and mini window) as TASKS E1-E3
 
 ## Do this next
-Nothing open. Live checks for Tj: leave Vigilant with bets on the feed (window appears), tap it for Scan/Recheck/Next, pinch/double-tap to enlarge, Open Novig opens the app. If the window is too small in practice: build the 'display over other apps' overlay (RESEARCH.md §17)
+E1: research how CNO applies filters (URL/postback/cookies) and every way to show its rows in Vigilant
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nothing open. Live checks for Tj: leave Vigilant with bets on the feed (window a
 
 ## Last ten checkpoints
 ```
+  7104c43 ckpt 406: SHIPPED v0.12.0 (code 16): mini window over Novig; CI 36214953291 + release 36
   b58cbed ckpt 405: pre-release: v0.12.0: mini window over Novig (picture-in-picture): scan progre
   2288244 ckpt 404: D1+D2: picture-in-picture mini window over Novig (auto on leaving with a scan/
   1304a58 ckpt 403: Logged Tj's 2026-09-26 request (floating widget / picture-in-picture over Novi
@@ -26,5 +27,7 @@ Nothing open. Live checks for Tj: leave Vigilant with bets on the feed (window a
   efee7d7 ckpt 399: C2 app layer: recheck (feed 'Recheck prices' + sheet 'Recheck price' + old-pri
   1e2cb8e ckpt 398: C2 data layer: ScanSettings.outlierGuard (default on) + maxOdds (default +1000
   4284bdd ckpt 397: C1/C2: fixed stale-fair pricing in Scanner (final result + reprice only from y
-  b35fb87 ckpt 396: C1 started: local SDK + Maven/Robolectric mirror set up (build trap 6); full f
 ```
+
+(2 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
