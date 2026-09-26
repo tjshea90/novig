@@ -1627,15 +1627,18 @@ props calls themselves are fixture-tested only.
         CNO's game page (2 requests per bet). So the green check needs a background lane that
         reads the top bets' game pages slowly, after the list, cached 5 min, only while the
         scanner is on screen; `CnoBooks.check` already devigs each two-sided book.
-- [ ] H1 Data: placed bets (`PlacedBets`, placed.json, kept through refreshes/restarts/backup,
-      expire after the game) + tests.
+- [x] H1 Data: placed bets (`PlacedBets`, placed.json, kept through refreshes/restarts/backup,
+      expire after the game) + tests. *PlacedBetsTest 4 (restart, undo, expiry, pick family).*
 - [ ] H2 Data: books agreement: per-book +EV count, new SPLIT verdict (green ✓ = CONFIRMED = 3+
       two-sided books whose consensus is +EV and 3+ of them individually +EV); background
       agreement lane in CnoFeed (top bets, one game page at a time, ≥2 s apart, 5-min TTL,
       only inside the watch) + tests incl. "never runs when not watched".
-- [ ] H3 Data: player teams (`PlayerTeams`: ESPN teams + rosters, disk cache 24 h, lane inside
-      the watch, soft-fails) + MockWebServer tests.
+      *Data done: CnoBooks.agreeing/SPLIT/agrees, CnoFeed.keepBooksFresh (+ books 429 pauses list
+      reads, cancellation no longer leaves "loading", memory capped at 150 bets). CnoAgreementTest 8.*
+- [x] H3 Data: player teams (`PlayerTeams`: ESPN teams + rosters, disk cache 24 h, lane inside
+      the watch, soft-fails) + MockWebServer tests. *PlayerTeamsTest 5.*
 - [ ] H4 Data: Novig links: CNO https form → novigapp://, Vigilant rows → novigapp://events/<outcomeId>.
+      *CNO part done (CnoFeed.appLink, CnoAgreementTest); Vigilant rows in the app step.*
 - [ ] H5 App: nothing refreshes when the scanner is closed: CNO reads only while the CNO tab is on
       screen or a widget is showing (and the screen is on); closing the widget / the app (swipe
       away, back out) stops everything; tests.
