@@ -1,22 +1,22 @@
-# CHECKPOINT 426 — read me first, then TASKS.md
+# CHECKPOINT 427 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T20:28:57Z · **tests:** all 1 fast checks green
-**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `97b73f9` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T20:40:17Z · **tests:** all 1 fast checks green
+**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `e65080d` (this checkpoint is the commit after it)
 
 ## Just done
-H1-H3 data layer: PlacedBets, CnoBooks agreement (SPLIT) + CnoFeed.keepBooksFresh lane, PlayerTeams (ESPN), CnoFeed.appLink; 41 tests in 5 classes green
+H5-H7 first build compiles: VM watcher set (tab/pip/overlay) runs CNO watch + books lane + teams lane; FloatingWidget (overlay window) + FloatingFeed (scroll bar, tap->Novig bet slip, placed ✓ + undo, long-press books, drag/resize/bubble); PiP Up/Down; CNO tab placed/teams/checks; Settings switches; SYSTEM_ALERT_WINDOW
 
 ## Do this next
-H5: VM watcher set (tab/pip/overlay) running watch + books lane + teams lane together; wire AppContainer (placed.json, teams.json); then H6 overlay widget
+Run app unit tests (MiniWindowTest, ScreenshotTest) and fix; add tests: items filter placed/teams/agrees, watchers lifecycle, floating screenshots; then docs
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  f9ae87e ckpt 426: H1-H3 data layer: PlacedBets, CnoBooks agreement (SPLIT) + CnoFeed.keepBooksFr
   3ba6ab1 ckpt 425: H0 research done: PiP can't take touches -> overlay widget; CNO deeplink = Nov
   b55d6be ckpt 424: Recorded v0.14.1 release (G3 done); logged Tj's 6-item CNO widget request as H
   775ebaa ckpt 423: pre-release: v0.14.1: the mini window shows each pick clearly (names were draw
@@ -28,5 +28,5 @@ H5: VM watcher set (tab/pip/overlay) running watch + books lane + teams lane tog
   662465f ckpt 417: F2-F5 app side built: ScannerMode (both/vigilant/cno) w/ migration from miniSo
 ```
 
-(11 automatic checkpoint(s) since the last deliberate one — the
+(18 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
