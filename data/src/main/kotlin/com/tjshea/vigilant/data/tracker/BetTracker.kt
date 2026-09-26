@@ -132,7 +132,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }
             val staked = settled.sumOf { it.stake }
             val profit = settled.sumOf { it.profit ?: 0.0 }
-            val withClv = bets.mapNotNull { it.clvPercent }
+            // A voided bet never happened: it counts toward nothing but the bet count.
+            val live = bets.filter { it.status != BetStatus.VOID }
+            val withClv = live.mapNotNull { it.clvPercent }
             return TrackerStats(
                 bets = bets.size,
                 pending = bets.count { it.status == BetStatus.PENDING },
@@ -140,8 +142,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 staked = staked,
                 profit = profit,
                 roi = if (staked > 0) profit / staked else null,
-                expectedProfit = bets.filter { it.status != BetStatus.VOID }.sumOf { it.expectedProfit },
-                averageEv = bets.takeIf { it.isNotEmpty() }?.map { it.evPercentAtBet }?.average(),
+                expectedProfit = live.sumOf { it.expectedProfit },
+                averageEv = live.takeIf { it.isNotEmpty() }?.map { it.evPercentAtBet }?.average(),
                 averageClv = withClv.takeIf { it.isNotEmpty() }?.average(),
                 beatClosePercent = withClv.takeIf { it.isNotEmpty() }?.let { l -> l.count { it > 0 }.toDouble() / l.size },
             )

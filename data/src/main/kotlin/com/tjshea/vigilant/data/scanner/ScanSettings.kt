@@ -96,6 +96,16 @@ data class ScanSettings(
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
     val exchangeMaxSpread: Double = 0.03,
     val feedSort: FeedSort = FeedSort.EV,
+    /**
+     * With 3+ books behind a fair price, use the lower of their mean and median per side, so one
+     * stale book can't manufacture an edge (CrazyNinjaOdds' default, RESEARCH.md §16).
+     */
+    val outlierGuard: Boolean = true,
+    /**
+     * The feed hides prices longer than these American odds (0 = no limit). Devigging is least
+     * reliable on longshots, which is where the biggest fake edges show up (RESEARCH.md §8.1, §16).
+     */
+    val maxOdds: Int = 1000,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
@@ -134,7 +144,11 @@ data class ScanSettings(
         sharpWeight = sharpWeight.coerceIn(0.0, 1.0),
         fallbackToAverage = fallbackToAverage,
         minBooks = minBooks.coerceAtLeast(1),
+        outlierGuard = outlierGuard,
     )
+
+    /** Whether a price (cost per $1 payout) is within [maxOdds]. */
+    fun withinMaxOdds(cost: Double): Boolean = maxOdds <= 0 || cost >= 100.0 / (100.0 + maxOdds) - 1e-9
 
     val selectedLeagues: List<League> get() = Leagues.ALL.filter { it.novigName in leagues }
 
@@ -159,5 +173,6 @@ data class ScanSettings(
         val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
         val BOOK_PROP_REUSE_CHOICES = listOf(30, 60, 120, 240)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
+        val MAX_ODDS_CHOICES = listOf(300, 500, 1000, 2000, 0)
     }
 }

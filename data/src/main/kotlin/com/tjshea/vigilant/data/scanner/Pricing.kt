@@ -12,6 +12,7 @@ import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.EvQuote
 import com.tjshea.vigilant.engine.FairLine
 import com.tjshea.vigilant.engine.FairValue
+import com.tjshea.vigilant.engine.MakerBid
 import com.tjshea.vigilant.engine.PositiveDepth
 import com.tjshea.vigilant.engine.TakeLevel
 
@@ -33,6 +34,8 @@ data class Opportunity(
     val suggestedStake: Double?,
     /** Novig's own spread on this market: best take price for both sides, minus 1. */
     val novigWidth: Double?,
+    /** The best resting bid for this outcome itself: the price a new bid has to beat to lead. */
+    val bestBid: Double? = null,
     val bookFetchedAtMs: Long?,
     /** Newest `last_update` among the books that fed the fair line. */
     val fairUpdatedMs: Long?,
@@ -50,6 +53,15 @@ data class Opportunity(
         }
 
     val key: String get() = "${market.marketId}/${outcome.outcomeId}"
+
+    /**
+     * Where to post a resting order instead of taking: the highest price that still makes
+     * [minEvPercent] if it fills. Makers pay no fee on Novig.
+     */
+    fun makerBid(minEvPercent: Double): MakerBid? = fairProbability?.let { EvMath.makerBid(it, minEvPercent) }
+
+    /** Novig's price for this line was read more than [Pricing.OLD_PRICE_MS] before [now]. */
+    fun priceIsOld(now: Long): Boolean = bookFetchedAtMs == null || now - bookFetchedAtMs > Pricing.OLD_PRICE_MS
     val evPercent: Double? get() = quote?.evPercent
     val eventName: String get() = event.description
     val isLive: Boolean get() = event.isLive
@@ -92,6 +104,7 @@ data class ScanResult(
             (freshSinceMs == null || (o.bookFetchedAtMs ?: 0L) >= freshSinceMs) &&
                 o.league.novigName in settings.leagues &&
                 ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
+                settings.withinMaxOdds(o.quote!!.cost) &&
                 (settings.includeLive || !o.isLive) &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
         }
@@ -108,6 +121,9 @@ data class ScanResult(
  * setting (fair source, devig method, Kelly) re-prices instantly from what's already fetched.
  */
 object Pricing {
+
+    /** Past this, a Novig price is too old to bet on without a recheck (exchange prices move fast). */
+    const val OLD_PRICE_MS = 10 * 60_000L
 
     fun price(plan: Plan, books: Map<String, NovigBook>, settings: ScanSettings, now: Long): ScanResult {
         val fairSettings = settings.fairSettings()
@@ -154,6 +170,7 @@ object Pricing {
                     depth = depth,
                     suggestedStake = stake,
                     novigWidth = width,
+                    bestBid = book?.bestBid(po.outcome.outcomeId)?.price,
                     bookFetchedAtMs = book?.fetchedAtMs,
                     fairUpdatedMs = fair?.perBook?.filter { it.book.bookTitle in fair.booksUsed }?.mapNotNull { it.book.lastUpdateMs }?.maxOrNull(),
                     refEvent = pm.refEvent,
