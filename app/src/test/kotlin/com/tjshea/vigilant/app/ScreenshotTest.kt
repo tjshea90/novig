@@ -417,4 +417,32 @@ class ScreenshotTest {
         compose.onNodeWithText("API usage", ignoreCase = true).assertExists()
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
     }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowBooksFallsBackToTheTopBetWhenItsBetIsGone() {
+        val base = SampleCno.withBooks()
+        val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        screen { MiniFeed(s, next = 0, booksKey = "cno:a bet CNO no longer lists") }
+        compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
+        compose.onNodeWithText("1/4").assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowTagsCnoRowsOnlyWhenBothListsAreMixed() {
+        val base = SampleCno.state()
+        screen { MiniFeed(base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO)), next = 0) }
+        compose.onAllNodesWithText("CNO Player Receiving Yards", substring = true).assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w240dp-h160dp-xxhdpi")
+    @Test fun miniWindowTagsCnoRowsWhenMixed() {
+        screen { MiniFeed(SampleCno.state(), next = 0) }
+        compose.onAllNodesWithText("CNO Player Receiving Yards", substring = true).onFirst().assertExists()
+    }
+
+    @Test fun cnoTabSaysWhenCnoUsedAnotherDevig() {
+        val snap = SampleCno.snapshot().copy(evLabel = "LW-WC") // asked for Conservative
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = snap)), {}, {}) }
+        compose.onNodeWithText("CrazyNinjaOdds used liquidity-weighted, worst case instead of conservative worst case.").assertIsDisplayed()
+    }
 }

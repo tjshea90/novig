@@ -100,4 +100,24 @@ class CnoBooksTest {
         assertEquals(0.5 * 2.1 - 1, pre, 1e-12)
         assertTrue(live < pre)
     }
+
+    @Test
+    fun `a row from another book is judged at that book's price, with Novig counted as one more book`() {
+        // A Shared View link can list other books too. ProphetX's Under at -107 is the price judged;
+        // Novig (+120 / -127) now counts toward the fair value instead.
+        val row = CnoRow(0.01, event = "A @ B", market = "M", bet = "Joe Receiver Under 69.5", odds = -107, book = "ProphetX")
+        val c = CnoBooks.check(view(), row)
+        assertEquals(-107, c.novigOdds)
+        assertEquals(3, c.twoSided) // Pinnacle, Kalshi, Novig (ProphetX is the one judged)
+        assertEquals("PX", CnoBooks.codeFor("ProphetX"))
+        assertEquals("NV", CnoBooks.codeFor("Novig"))
+        assertEquals("CS", CnoBooks.codeFor("Circa Sports (NV)"))
+    }
+
+    @Test
+    fun `CNO's market consensus column is UW-WC, so choosing it never looks like CNO ignored the choice`() {
+        assertEquals("UW-WC", CnoDevig.MARKET_CONSENSUS.label) // seen live; v0.14.0's first draft said UMC-WC
+        assertEquals("C-WC", CnoDevig.CONSERVATIVE.label)
+        assertEquals("LW-WC", CnoDevig.LIQUIDITY_WEIGHTED.label)
+    }
 }

@@ -226,4 +226,38 @@ class CnoFeedTest {
         assertEquals("u", next.state.value.snapshot!!.url)
         assertEquals(CnoFilters(), next.state.value.snapshot!!.filters)
     }
+
+    @Test
+    fun `a stuck CNO is looked at every 30 seconds on a 5 second refresh too`() = runTest {
+        val source = FakeSource { currentTime }
+        source.ageSeconds = 15 * 60
+        val feed = CnoFeed(source, clock = { currentTime })
+        val job = launch { feed.watch(MutableStateFlow(CnoConfig(true, "u", 5))) }
+        advanceTimeBy(65_000)
+        runCurrent()
+        assertEquals(listOf(0L, 30_000L, 60_000L), times(source))
+        job.cancel()
+    }
+
+    @Test
+    fun `an unchanged list isn't rewritten to disk on every read, only once a minute`() = runTest {
+        val file = tmp.newFile("cno2.json").also { it.delete() }
+        val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val source = FakeSource { currentTime }
+        val feed = CnoFeed(source, JsonFileStore(file, CnoCache.serializer(), { CnoCache() }, json), clock = { currentTime })
+        feed.refresh("u")
+        assertTrue(file.exists())
+        file.delete()
+        advanceTimeBy(5_000)
+        feed.refresh("u") // same rows: not written
+        assertFalse(file.exists())
+        source.rows = 2
+        advanceTimeBy(5_000)
+        feed.refresh("u") // new rows: written at once
+        assertTrue(file.exists())
+        file.delete()
+        advanceTimeBy(CnoFeed.SAVE_EVERY_MS)
+        feed.refresh("u") // unchanged, but a minute has passed
+        assertTrue(file.exists())
+    }
 }
