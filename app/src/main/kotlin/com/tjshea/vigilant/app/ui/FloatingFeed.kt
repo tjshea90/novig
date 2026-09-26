@@ -6,7 +6,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,8 +42,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -53,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tjshea.vigilant.app.FloatingWidget
 import com.tjshea.vigilant.app.MiniWindow
 import com.tjshea.vigilant.app.R
 import com.tjshea.vigilant.app.UiState
@@ -67,12 +72,6 @@ class FloatingActions(
     val onExpand: () -> Unit = {},
     /** Back to the full app. */
     val onOpenApp: () -> Unit = {},
-    /** The header was dragged by this many pixels (moves the window). */
-    val onDrag: (Float, Float) -> Unit = { _, _ -> },
-    /** A move or resize ended (the window saves where it is). */
-    val onDragEnd: () -> Unit = {},
-    /** The corner grip was dragged by this many pixels (resizes the window). */
-    val onResize: (Float, Float) -> Unit = { _, _ -> },
     val onRefresh: () -> Unit = {},
     val onScan: () -> Unit = {},
     val onRecheck: () -> Unit = {},
@@ -95,8 +94,9 @@ private val FLOAT_ROW = 40.dp
  *  - each bet's ✓ marks it placed and hides it for good (Undo for a few seconds);
  *  - holding a CNO bet (or Books) shows every book's odds for it;
  *  - a green ✓ before a pick means several books agree it's +EV, and player bets show the team.
- * The header drags the window, the corner grip resizes it, − shrinks it to a bubble, ✕ closes it
- * (which stops CNO's reads).
+ * − shrinks it to a bubble, ✕ closes it (which stops CNO's reads). Moving and resizing are the
+ * window's ([com.tjshea.vigilant.app.FloatingWidget]); [FloatingWindow] draws the frame and corner
+ * handles they use.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -141,17 +141,16 @@ fun FloatingFeed(
 
         Column(Modifier.fillMaxSize()) {
             // ---- Header: drag to move -----------------------------------------------------
+            // The top bar drags the widget (the window handles that): a grip in the middle says so.
+            Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)) {
+                Box(
+                    Modifier.align(Alignment.TopCenter).padding(top = 3.dp).size(width = 32.dp, height = 4.dp)
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f), CircleShape),
+                )
             Row(
                 Modifier.fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .pointerInput(Unit) {
-                        detectDragGestures(onDragEnd = actions.onDragEnd) { change, drag ->
-                            change.consume()
-                            actions.onDrag(drag.x, drag.y)
-                        }
-                    }
-                    .padding(start = 8.dp, end = 2.dp)
-                    .height(30.dp),
+                    .padding(start = 8.dp, end = 2.dp, top = 4.dp)
+                    .height(FloatingWidget.HEADER_DP.dp - 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(7.dp).background(if (busy) MaterialTheme.colorScheme.primary else Edge.colors.positive, CircleShape))
@@ -170,6 +169,7 @@ fun FloatingFeed(
                 HeaderButton(painterResource(R.drawable.ic_open), "Open Vigilant", actions.onOpenApp)
                 HeaderButton(painterResource(R.drawable.ic_minimize), "Shrink to a bubble", actions.onMinimize)
                 HeaderButton(null, "Close the widget", actions.onClose, close = true)
+            }
             }
 
             // ---- The bets ---------------------------------------------------------------------
@@ -261,7 +261,7 @@ fun FloatingFeed(
             val canUp by remember(booksIndex) { derivedStateOf { if (booksIndex != null) booksIndex > 0 else list.canScrollBackward } }
             val canDown by remember(booksIndex, items.size) { derivedStateOf { if (booksIndex != null) booksIndex < items.lastIndex else list.canScrollForward } }
             Row(
-                Modifier.fillMaxWidth().height(40.dp).background(MaterialTheme.colorScheme.surfaceContainer).padding(horizontal = 2.dp),
+                Modifier.fillMaxWidth().height(40.dp).background(MaterialTheme.colorScheme.surfaceContainer).padding(horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -300,8 +300,55 @@ fun FloatingFeed(
                         }
                     }
                 }
-                ResizeGrip(actions)
             }
+        }
+    }
+}
+
+/**
+ * The whole floating window: the widget inside a frame (Tj, 2026-09-26: "easily accessed corners
+ * that I can pull out to enlarge or in to shrink", "an easier way … to drag and move"). The frame
+ * is a dark border all around, a big thing to grab and move, with a handle drawn at each corner;
+ * the window turns drags on them (and two-finger pinches anywhere) into moves and resizes. The
+ * bubble has no frame.
+ */
+@Composable
+fun FloatingWindow(
+    state: UiState,
+    actions: FloatingActions,
+    minimized: Boolean = false,
+    opening: String? = null,
+    modifier: Modifier = Modifier,
+) {
+    if (minimized) {
+        FloatingFeed(state, actions, modifier, minimized = true, opening = opening)
+        return
+    }
+    val frame = FloatingWidget.FRAME_DP.dp
+    val handle = MaterialTheme.colorScheme.primary
+    Box(modifier.fillMaxSize()) {
+        // The frame: dark enough to see over any app, so it reads as something to hold.
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(frame + 12.dp)))
+        FloatingFeed(state, actions, Modifier.fillMaxSize().padding(frame), opening = opening)
+        // A handle at each corner, following the frame's rounded corner.
+        Canvas(Modifier.fillMaxSize().semantics { contentDescription = "Drag a corner to resize; drag the frame or the top bar to move; two fingers to pinch or spread" }) {
+            val inset = (frame / 2).toPx()
+            val r = 12.dp.toPx()
+            val arm = 16.dp.toPx()
+            val stroke = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
+            val w = size.width
+            val h = size.height
+            // Top-left, drawn once and mirrored to the other three corners.
+            val corner = Path().apply {
+                moveTo(inset, inset + r + arm)
+                lineTo(inset, inset + r)
+                arcTo(Rect(inset, inset, inset + 2 * r, inset + 2 * r), 180f, 90f, false)
+                lineTo(inset + r + arm, inset)
+            }
+            drawPath(corner, handle, style = stroke)
+            scale(-1f, 1f, pivot = Offset(w / 2, h / 2)) { drawPath(corner, handle, style = stroke) }
+            scale(1f, -1f, pivot = Offset(w / 2, h / 2)) { drawPath(corner, handle, style = stroke) }
+            scale(-1f, -1f, pivot = Offset(w / 2, h / 2)) { drawPath(corner, handle, style = stroke) }
         }
     }
 }
@@ -341,42 +388,11 @@ private fun BarButton(label: String, icon: Painter, enabled: Boolean = true, big
     }
 }
 
-/** The bottom-right corner: drag it to resize the window. */
-@Composable
-private fun ResizeGrip(actions: FloatingActions) {
-    val color = MaterialTheme.colorScheme.onSurfaceVariant
-    Box(
-        Modifier.size(28.dp)
-            .semantics { contentDescription = "Drag to resize" }
-            .pointerInput(Unit) {
-                detectDragGestures(onDragEnd = actions.onDragEnd) { change, drag ->
-                    change.consume()
-                    actions.onResize(drag.x, drag.y)
-                }
-            },
-        contentAlignment = Alignment.BottomEnd,
-    ) {
-        Canvas(Modifier.size(14.dp).padding(2.dp)) {
-            val w = size.width
-            for (i in 1..3) {
-                val d = w * i / 3f
-                drawLine(color, Offset(w - d, w), Offset(w, w - d), strokeWidth = 1.5.dp.toPx())
-            }
-        }
-    }
-}
-
-/** The widget shrunk to a bubble: how many bets, tap to open it again, drag to move. */
+/** The widget shrunk to a bubble: how many bets, tap to open it again, drag to move (the window's). */
 @Composable
 private fun MinimizedBubble(count: Int, busy: Boolean, actions: FloatingActions) {
     Row(
         Modifier
-            .pointerInput(Unit) {
-                detectDragGestures(onDragEnd = actions.onDragEnd) { change, drag ->
-                    change.consume()
-                    actions.onDrag(drag.x, drag.y)
-                }
-            }
             .clickable(onClickLabel = "Open the widget", onClick = actions.onExpand)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

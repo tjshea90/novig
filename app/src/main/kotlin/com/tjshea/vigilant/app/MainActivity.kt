@@ -46,7 +46,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.FeedScreen
 import com.tjshea.vigilant.app.ui.FloatingActions
-import com.tjshea.vigilant.app.ui.FloatingFeed
+import com.tjshea.vigilant.app.ui.FloatingWindow
 import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalOpenNovig
 import com.tjshea.vigilant.app.ui.MiniFeed
@@ -167,16 +167,13 @@ class MainActivity : ComponentActivity() {
     private fun FloatingContent(w: FloatingWidget) {
         VigilantTheme {
             val state by vm.state.collectAsStateWithLifecycle()
-            FloatingFeed(
+            FloatingWindow(
                 state,
                 FloatingActions(
                     onClose = { w.hide() },
-                    onMinimize = { w.minimize(); w.save() },
+                    onMinimize = { w.minimize() },
                     onExpand = { w.expand() },
                     onOpenApp = { openApp() },
-                    onDrag = { dx, dy -> w.moveBy(dx, dy) },
-                    onDragEnd = { w.save() },
-                    onResize = { dw, dh -> w.resizeBy(dw, dh) },
                     onRefresh = { vm.refreshCno(quiet = true) },
                     onScan = {
                         vm.scan()
@@ -188,7 +185,6 @@ class MainActivity : ComponentActivity() {
                     onUndoPlaced = { key -> vm.unmarkPlaced(key) },
                     onLoadBooks = { row -> vm.loadBooks(row) },
                 ),
-                androidx.compose.ui.Modifier.fillMaxSize(),
                 minimized = w.minimized,
                 opening = w.opening,
             )
