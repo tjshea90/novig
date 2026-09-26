@@ -23,8 +23,6 @@ class CnoFeedTest {
 
     @get:Rule val tmp = TemporaryFolder()
 
-    private val row = CnoRow(ev = 0.05, event = "A @ B", market = "Moneyline", bet = "B", odds = 120, book = "Novig")
-
     /** Records each read's time; fails on demand. */
     private class FakeSource(val clock: () -> Long) : CnoSource {
         val reads = mutableListOf<Pair<String, Long>>()
@@ -156,6 +154,5 @@ class CnoFeedTest {
         next.load()
         assertEquals(4, next.state.value.snapshot!!.rows.size)
         assertEquals("u", next.state.value.snapshot!!.url)
-        assertEquals(row.key, row.copy().key)
     }
 }
