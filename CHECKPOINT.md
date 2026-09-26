@@ -1,22 +1,25 @@
-# CHECKPOINT 436 — read me first, then TASKS.md
+# CHECKPOINT 437 — read me first, then TASKS.md
 
-**Written:** 2026-09-26T23:46:49Z · **tests:** all 1 fast checks green
-**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `fde5851` (this checkpoint is the commit after it)
+**Written:** 2026-09-26T23:59:47Z · **tests:** all 1 fast checks green
+**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `b31e210` (this checkpoint is the commit after it)
 
 ## Just done
-Logged Tj's request: pinch/corner resize, easier move, cut-off bottom-right grip, 'CNO error' (J1-J5)
+J1-J4, J6 done: framed widget with corner handles, pinch/spread + two-finger move, frame/top-bar drag in screen px; cancelled CNO reads no longer errors, bodies off main thread, short error reasons; pull arrow always lets go; CNO status shows last read
 
 ## Do this next
-J4 first: live soak of CnoFeed+books lane against the real CNO to catch the error; then J1-J3 TouchFrame in FloatingWidget
+J5: forced full regression, screenshots, bump v0.15.1 code 21, ship, release, link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M RESEARCH.md
      M TASKS.md
+     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/SettingsScreen.kt
 
 ## Last ten checkpoints
 ```
+  4cfc2e5 ckpt 436: Logged Tj's request: pinch/corner resize, easier move, cut-off bottom-right gr
   cd1f331 ckpt 435: SHIPPED v0.15.0 (code 20): floating CNO widget, placed bets, teams, green chec
   0d37c74 ckpt 434: pre-release: v0.15.0: CNO widget you can touch (floating over Novig): Up/Down 
   df36b8b ckpt 433: H9 full test: fixes + forced full rerun 388 tests 0 failed 3 skipped exit 0; v
@@ -26,8 +29,7 @@ J4 first: live soak of CnoFeed+books lane against the real CNO to catch the erro
   196922d ckpt 429: H4-H7 done: floating widget (340x290dp default) + tests green (ScreenshotTest 
   5ba9dfd ckpt 428: CnoWatch (data) runs CNO+lanes only while watched (CnoWatchTest); MiniWindowTe
   ac53aad ckpt 427: H5-H7 first build compiles: VM watcher set (tab/pip/overlay) runs CNO watch + 
-  f9ae87e ckpt 426: H1-H3 data layer: PlacedBets, CnoBooks agreement (SPLIT) + CnoFeed.keepBooksFr
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(16 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

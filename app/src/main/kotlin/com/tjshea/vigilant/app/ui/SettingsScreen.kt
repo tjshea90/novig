@@ -178,8 +178,9 @@ fun SettingsScreen(
                 SwitchRow(
                     "Floating widget you can touch",
                     "Up and down buttons always at the bottom, tap a bet to open it in Novig's bet slip, ✓ to mark it placed " +
-                        "(hidden for good), hold it for every book's odds. Drag the top to move it, the corner to resize it, " +
-                        "− to shrink it to a bubble, ✕ to close it. Off: the picture-in-picture window.",
+                        "(hidden for good), hold it for every book's odds. Spread or pinch two fingers on it to resize it (and " +
+                        "slide them to move it), or pull a green corner; drag its frame or top bar to move it. − shrinks it to a " +
+                        "bubble, ✕ closes it. Off: the picture-in-picture window.",
                     s.floatingWidget,
                 ) { v -> onUpdate { it.copy(floatingWidget = v) } }
                 if (s.floatingWidget && !allowed) {

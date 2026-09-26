@@ -1646,3 +1646,31 @@ that exact bet in Novig. Checked first-hand from this container:
 **Not verified on a device** (there is none here): the overlay window itself, drag/resize, the
 permission flow (Android may grey the switch out for a sideloaded app: App info › ⋮ › Allow
 restricted settings), and where exactly Novig's app lands for `novigapp://events/<outcome>/cno`.
+
+### 20.1 Resize, move, "CNO error" and the stuck refresh arrow (v0.15.1, Tj 2026-09-26 ~23:45Z)
+
+- **The cut-off thing at the bottom right** was v0.15.0's resize grip, drawn inside the widget's
+  12 dp rounded corner, which clipped it. The window is now the widget plus a 10 dp frame on
+  every side, dark enough to see over any app, with a green handle drawn at each corner.
+- **Resizing and moving** are handled by the window before the list sees a touch
+  (`FloatingWidget.TouchFrame` → `WidgetGestures`): two fingers anywhere spread/pinch it (about
+  its middle) and move it; one finger on a corner handle (a 44 dp square) resizes from that
+  corner with the opposite one fixed; one finger on the frame or the (taller, 36 dp, with a grip)
+  top bar drags it. A finger becomes a move only past the touch slop, so taps on top-bar buttons
+  still tap. All in screen pixels (`MotionEvent.getRawX/Y`, API 29+): v0.15.0 dragged with the
+  view's own coordinates, which shift as the window moves, so the widget lagged behind the finger.
+- **"CNO error"**: a 3-minute soak of the app's own pattern against the real site (list in real
+  time, books lane, teams lane: 106 requests) had no errors, and CNO serves HTTP/2. Two code
+  faults fit what Tj saw: (1) a read cut short because nobody was looking any more (tab left,
+  widget closed, phone locked) comes back from OkHttp as a network failure ("stream was reset:
+  CANCEL"), which CnoFeed recorded as an error that stayed on screen until the next good read;
+  now a cancelled read is a cancellation (`CnoWatchTest`, failed on the old code). (2) The list,
+  books and roster bodies were read on the main thread (HTTP/2 made it block rather than throw);
+  now `Call.awaitText()` reads them on OkHttp's thread. The widget's status also says what went
+  wrong ("CNO offline, retrying", "CNO busy, waiting") instead of "CNO error".
+- **The stuck arrow**: Material3 1.3.1's `PullToRefreshBox` parks its arrow at the threshold
+  after a full pull and hides it only when `isRefreshing` goes true then false; Vigilant always
+  passed false. `VigilantPullToRefresh` now holds it until the read (or scan start) it triggered
+  has come and gone, or 1.2 s when CNO's pacing skipped the read. Same fix on the +EV and Games
+  tabs. The CNO tab's status now says "Read 4s ago · odds 20s old · every 15 s" ("Reading now…"
+  while it reads), so it's plain the list is being refreshed.

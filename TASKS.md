@@ -1689,19 +1689,29 @@ props calls themselves are fixture-tested only.
 > Also it says cno error at the top. Figure that out
 
 ### Plan
-- [ ] J1 Cut-off thing at the bottom right = v0.15.0's resize grip, drawn inside the 12 dp rounded
+- [x] J1 Cut-off thing at the bottom right = v0.15.0's resize grip, drawn inside the 12 dp rounded
       corner (the corner clips it). Replace it.
-- [ ] J2 Resize: two fingers anywhere on the widget (spread = bigger, pinch = smaller), and four
+- [x] J2 Resize: two fingers anywhere on the widget (spread = bigger, pinch = smaller), and four
       big corner handles drawn in a frame around the widget (drag out = bigger, in = smaller).
-- [ ] J3 Move: two fingers anywhere also move it; the whole frame border and a taller top bar
+- [x] J3 Move: two fingers anywhere also move it; the whole frame border and a taller top bar
       drag it with one finger. Screen coordinates (MotionEvent raw x/y), not the widget's own,
       so it follows the finger exactly (the v0.15.0 top-bar drag used local deltas, which lag
       a moving window).
-- [ ] J4 "CNO error": find the real cause (live soak of the app's own read pattern: list + books
+      *J1-J3 done: WidgetGestures/WidgetGeometry + FloatingWidget.TouchFrame + FloatingWindow frame.
+      WidgetGesturesTest 10 (zones, exact-follow drag, tap stays a tap, list scroll untouched,
+      corner out/in with opposite corner fixed, min/screen clamps, pinch spread/shrink/pan, lift
+      ends pinch, bubble no pinch, off-screen clamp); ScreenshotTest
+      floatingWindowHasAFrameWithFourCornerHandlesAndATallerTopBar (9h screenshot checked).*
+- [x] J4 "CNO error": find the real cause (live soak of the app's own read pattern: list + books
       lane + teams), fix it, and make the widget say what the error is instead of "CNO error".
-- [ ] J6 Tj's screenshot (CNO tab, 7:45): "notice the refresh symbol … Sometimes it is getting
+      *Done: soak 3 min / 106 requests clean; fixes: cancelled reads no longer errors (CnoWatchTest
+      2, failed on old code), bodies read off the main thread (Call.awaitText), short reasons
+      (ScreenshotTest theWidgetSaysWhatWentWrongWithCnoNotJustCnoError). RESEARCH.md §20.1.*
+- [x] J6 Tj's screenshot (CNO tab, 7:45): "notice the refresh symbol … Sometimes it is getting
       stuck. I'm not sure if the data is refreshing." The pull-to-refresh arrow sits half-pulled
       under the header. Make it always go away, and make it obvious when the list was last read
       and that it's reading now.
+      *Done: VigilantPullToRefresh (CNO, +EV, Games); ScreenshotTest thePullToRefreshArrowLetsGo…
+      2 (both failed on the old box); CNO status "Read 4s ago · odds 20s old · every 15 s".*
 - [ ] J5 Tests (geometry + gestures + error cases), screenshots, full floor, ship, send the link.
       ("Make sure you complete all tasks including the last two prompts I sent.")
