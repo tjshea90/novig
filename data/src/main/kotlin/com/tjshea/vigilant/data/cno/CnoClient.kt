@@ -201,7 +201,7 @@ class CnoClient(
         }
         put("TextBoxMinimumOddsProviderCount", maxOf(f.minBooks, number("TextBoxMinimumOddsProviderCount")?.toInt() ?: 0).toString())
         val ev = maxOf(f.minEv * 100, number("TextBoxMinimumEVPercentage") ?: 0.0)
-        put("TextBoxMinimumEVPercentage", (if (ev == Math.floor(ev)) ev.toInt().toString() else "%.1f".format(ev)) + "%")
+        put("TextBoxMinimumEVPercentage", (if (ev == Math.floor(ev)) ev.toInt().toString() else String.format(java.util.Locale.US, "%.1f", ev)) + "%")
         put("TextBoxMinimumSubMarketSideCount", maxOf(f.minSides, number("TextBoxMinimumSubMarketSideCount")?.toInt() ?: 0).toString())
         put("TextBoxMaximumResultCount", f.rows.toString())
         if (f.completeBook) s.form.checkboxes.firstOrNull { it.endsWith("CheckBoxRequireACompleteSportsbook") }?.let { fields[it] = "on" }
