@@ -1354,7 +1354,8 @@ they do better was adopted:
    opinion in one tap (`CrossCheck`, `ResearchFeaturesTest`).
 
 Not adopted: liquidity-weighted consensus (Vigilant's sharp/average blend already weights
-Pinnacle and the exchanges; per-book limits aren't published), OddsBlaze (a 2-minute throttle at
+Pinnacle and the exchanges; per-book limits aren't published), OddsBlaze (*$299/mo first-hand,
+§18.2; the rest of this sentence assumed $29*: a 2-minute throttle at
 $29 is slower than Vigilant's own reads; worth a look only as a cheaper prop-odds source than
 The Odds API's credits, if its pricing checks out first-hand).
 
