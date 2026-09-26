@@ -92,7 +92,7 @@ class ScreenshotTest {
 
     @Test fun tracker() = shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
 
-    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
@@ -199,7 +199,7 @@ class ScreenshotTest {
         compose.onAllNodesWithText("OR POST A BID (MAKER)").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
@@ -254,7 +254,7 @@ class ScreenshotTest {
         assert(opened == 1)
     }
 
-    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settingsOfferTheMiniWindowSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
@@ -324,7 +324,7 @@ class ScreenshotTest {
         compose.onNodeWithText("CNO 49s", substring = true).assertIsDisplayed()
     }
 
-    @Config(qualifiers = "w393dp-h4400dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settingsOfferTheCnoListAndLink() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }

@@ -103,7 +103,7 @@ private fun MiniRow(item: MiniWindow.Item) {
     val tag = MaterialTheme.colorScheme.tertiary
     Row(Modifier.fillMaxWidth().height(ROW), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            Format.evPercent(item.ev).replace(Regex("(\\.\\d)\\d%$"), "$1%"),
+            Format.evPercentShort(item.ev),
             Modifier.width(40.dp),
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,

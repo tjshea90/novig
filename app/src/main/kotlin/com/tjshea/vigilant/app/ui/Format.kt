@@ -15,6 +15,9 @@ object Format {
 
     fun evPercent(ev: Double): String = (if (ev >= 0) "+" else "−") + String.format(Locale.US, "%.2f%%", abs(ev) * 100)
 
+    /** One decimal, rounded ("+7.2%" for 7.18%), for the mini window's narrow column. */
+    fun evPercentShort(ev: Double): String = (if (ev >= 0) "+" else "−") + String.format(Locale.US, "%.1f%%", abs(ev) * 100)
+
     fun percent(p: Double, digits: Int = 1): String = String.format(Locale.US, "%.${digits}f%%", p * 100)
 
     fun american(probability: Double): String = Odds.formatAmerican(Odds.probabilityToAmerican(probability.coerceIn(0.001, 0.999)))
