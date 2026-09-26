@@ -55,9 +55,10 @@ class CnoBooksTest {
     @Test
     fun `Vigilant's check devigs only books with both sides, leaves Novig and pick'em out, and takes the worse of mean and median`() {
         val c = CnoBooks.check(view(), listOdds = 120)
-        // Two-sided (Novig aside): Pinnacle, ProphetX, Kalshi. FanDuel, DraftKings, PrizePicks: one side only.
+        // Two-sided (Novig aside): Pinnacle, ProphetX, Kalshi. One side only: FanDuel, DraftKings
+        // (PrizePicks isn't counted at all: pick'em lines aren't odds).
         assertEquals(3, c.twoSided)
-        assertEquals(3, c.oneSided)
+        assertEquals(2, c.oneSided)
         val fairs = listOf(-118 to 104, -107 to -129, -103 to -126).map { (mine, theirs) ->
             Devig.worstCase(listOf(1 / Odds.americanToDecimal(mine), 1 / Odds.americanToDecimal(theirs)))[0]
         }
