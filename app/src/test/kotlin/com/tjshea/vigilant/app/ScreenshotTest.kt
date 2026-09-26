@@ -14,6 +14,10 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.foundation.layout.size
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.FeedScreen
@@ -559,5 +563,129 @@ class ScreenshotTest {
         assert((0 until layout.lineCount).none { layout.isLineEllipsized(it) }) {
             "\"${layout.layoutInput.text}\" is cut off"
         }
+    }
+
+    // ---- The floating widget (Tj, 2026-09-26) ------------------------------------------------
+
+    /** CNO only, with [extra] more bets than [SampleCno] so the list scrolls. */
+    private fun floatingState(extra: Int = 6): UiState {
+        val more = (1..extra).map { i ->
+            SampleCno.rows[3].copy(ev = 0.02 - i * 0.001, bet = "Player$i Over ${i}.5", gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=${100 + i}")
+        }
+        val base = SampleCno.withBooks(SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot(rows = SampleCno.rows + more))))
+        return base.copy(
+            settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO),
+            teams = mapOf(SampleCno.rows[1].key to "MIN", SampleCno.rows[3].key to "LV"),
+        )
+    }
+
+    private fun floating(name: String, s: UiState, dark: Boolean = true, minimized: Boolean = false, actions: com.tjshea.vigilant.app.ui.FloatingActions = com.tjshea.vigilant.app.ui.FloatingActions()) {
+        screen(dark = dark) {
+            androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(8.dp)) {
+                com.tjshea.vigilant.app.ui.FloatingFeed(
+                    s, actions,
+                    if (minimized) androidx.compose.ui.Modifier else androidx.compose.ui.Modifier.androidxSize(300, 290),
+                    minimized = minimized,
+                )
+            }
+        }
+        compose.onRoot().captureRoboImage("screenshots/$name.png")
+    }
+
+    private fun androidx.compose.ui.Modifier.androidxSize(w: Int, h: Int) =
+        this.then(androidx.compose.ui.Modifier.size(w.dp, h.dp))
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetKeepsItsButtonsAndScrollsAPageAtATime() {
+        floating("9_floating_widget", floatingState())
+        // Always there, no tap needed (picture-in-picture can't do this).
+        listOf("Refresh", "Up", "Down", "Books").forEach { compose.onNodeWithContentDescription(it).assertIsDisplayed() }
+        compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertIsDisplayed()
+        compose.onAllNodesWithText("Player6 Over 6.5").assertCountEquals(0) // below the fold (lazy)
+        compose.onNodeWithContentDescription("Down").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertDoesNotExist()
+        compose.onNodeWithContentDescription("Down").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Player6 Over 6.5").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Up").performClick()
+        compose.onNodeWithContentDescription("Up").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetTapOpensTheBetAndItsCheckMarksItPlacedWithUndo() {
+        var opened: MiniWindow.Item? = null
+        var placed: MiniWindow.Item? = null
+        var undone: String? = null
+        floating(
+            "9f_floating_placed", floatingState(),
+            actions = com.tjshea.vigilant.app.ui.FloatingActions(onOpenBet = { opened = it }, onPlaced = { placed = it }, onUndoPlaced = { undone = it }),
+        )
+        compose.onNodeWithText("Ohio -33.5").performClick()
+        assert(opened?.title == "Ohio -33.5") { "opened $opened" }
+        compose.onNodeWithContentDescription("I placed Ohio -33.5: hide it").performClick()
+        assert(placed?.title == "Ohio -33.5") { "placed $placed" }
+        compose.onNodeWithText("UNDO").assertIsDisplayed()
+        compose.onNodeWithText("Placed: Ohio -33.5").assertIsDisplayed()
+        compose.onNodeWithText("UNDO").performClick()
+        assert(undone == placed!!.key) { "undone $undone" }
+        compose.onAllNodesWithText("UNDO").assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetShowsTeamsAndGreenChecks() {
+        floating("9b_floating_widget_light", floatingState(), dark = false)
+        // Jefferson's books agree (Pinnacle, ProphetX, Kalshi): ✓; his team is known: (MIN).
+        compose.onNodeWithText("✓ ", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithText(" (MIN)", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithText(" (LV)", useUnmergedTree = true).assertIsDisplayed()
+        // Ohio's spread isn't a player bet: no team.
+        compose.onAllNodesWithText("(", substring = true, useUnmergedTree = true).assertCountEquals(2)
+        assertReadable("Justin Jefferson Under 69.5")
+    }
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetHoldingABetShowsEveryBook() {
+        floating("9c_floating_books", floatingState())
+        compose.onNodeWithText("Justin Jefferson Under 69.5").performTouchInput { longClick() }
+        compose.waitForIdle()
+        compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
+        compose.onNodeWithText("✓ 3 of 3 books agree", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("List").performClick()
+        compose.onAllNodesWithText("PN +100/-122").assertCountEquals(0)
+        // Books from the bottom bar: the first bet showing.
+        compose.onNodeWithContentDescription("Books").performClick()
+        compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetShrinksToABubble() {
+        var expanded = false
+        floating("9d_floating_bubble", floatingState(), minimized = true, actions = com.tjshea.vigilant.app.ui.FloatingActions(onExpand = { expanded = true }))
+        compose.onNodeWithText("10 +EV").assertIsDisplayed()
+        compose.onNodeWithText("10 +EV").performClick()
+        assert(expanded)
+    }
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetWithBothScannersHasScanAndRecheck() {
+        val s = floatingState().let { it.copy(settings = it.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)) }
+        floating("9e_floating_both", s)
+        listOf("Scan", "Recheck", "Up", "Down", "Books").forEach { compose.onNodeWithContentDescription(it).assertIsDisplayed() }
+        compose.onAllNodesWithContentDescription("Refresh").assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w320dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetHeaderClosesShrinksAndOpensTheApp() {
+        var closed = false
+        var shrunk = false
+        var app = false
+        floating("9g_floating_header", floatingState(), actions = com.tjshea.vigilant.app.ui.FloatingActions(onClose = { closed = true }, onMinimize = { shrunk = true }, onOpenApp = { app = true }))
+        compose.onNodeWithContentDescription("Close the widget").performClick()
+        compose.onNodeWithContentDescription("Shrink to a bubble").performClick()
+        compose.onNodeWithContentDescription("Open Vigilant").performClick()
+        assert(closed && shrunk && app)
     }
 }
