@@ -1850,3 +1850,14 @@ https://crazyninjaodds.com/site/tools/positive-ev.aspx
 ```
 Make sure it is actually comparing the cno odds to fair odds based on the cno feed. Consider if the bets it is showing me are truly positive EV. I don't want to take dangerous bets, especially if only one or two other sports books offer the odds then it may be just a small market with inaccurate odds. Optimize the cno scanner and make sure it is giving me good positive EV bets for novig. I should be able to go to the cno scanner and it will work without using the other parts of the app, for example if I choose the cno scanner, the other parts of the app using the other apis should be asleep and not loading, and I should be able to use the cno scanner on the floating widget as well.  Make an option so I can set the odds to no more than +150 , meaning I want to take odds that are negative or up to +150. I don't like longshots. The cno scanner should use worst case devigging if possible. The goal is to show me accurate, true positive EV bets, regardless of the sport or market. Any market or sport is fine as long as it is positive EV. Allow an option for 15 second refresh, 5 second refresh, and real time refresh for the cno scanner if this is possible. Make it so if I press on any bet that it scanned, I can see the odds for the same bet at whatever other sports books it found, even on the widget. Then run a full test on this cno scanner to make sure it is working properly and efficient and smart. Look for and fix bugs.
 ```
+
+## 2026-09-26T19:06:04Z
+```
+<task-notification>
+<task-id>bl1b6ea2n</task-id>
+<tool-use-id>toolu_0122yroH96KhFoxyWGGb98RC</tool-use-id>
+<output-file>/tmp/claude-0/-home-user-novig/3426c198-3914-5eaa-935e-af529831b07f/tasks/bl1b6ea2n.output</output-file>
+<status>completed</status>
+<summary>Background command "Poll CI for the release commit" completed (exit code 0)</summary>
+</task-notification>
+```
