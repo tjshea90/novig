@@ -52,5 +52,16 @@ class LiveCnoSmokeTest {
         val link = client.novigLink(top)
         println("LIVE CNO Novig link: $link")
         assertTrue(link == null || link.startsWith("novigapp://"))
+        println("LIVE CNO check agreeing: ${check.agreeing} of ${check.twoSided}")
+
+        // Player teams for the list's player bets, from ESPN's real rosters (RESEARCH.md §20).
+        val teams = com.tjshea.vigilant.data.teams.PlayerTeams(OkHttpClient())
+        val games = com.tjshea.vigilant.data.teams.PlayerTeams.gamesOf(first.rows)
+        val reads = teams.fill(games)
+        val players = first.rows.mapNotNull { r -> com.tjshea.vigilant.data.teams.PlayerTeams.playerOf(r)?.let { r to it } }
+        val tagged = players.map { (r, p) -> "$p (${teams.state.value.teamOf(r.league, r.event, p) ?: "?"}) | ${r.event}" }
+        println("LIVE ESPN: ${games.size} games, $reads reads, ${players.size} player bets")
+        tagged.take(15).forEach { println("  $it") }
+        if (players.isNotEmpty()) assertTrue("most players get a team", tagged.count { !it.contains("(?)") } * 2 >= players.size)
     }
 }

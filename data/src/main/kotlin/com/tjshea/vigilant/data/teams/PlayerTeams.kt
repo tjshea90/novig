@@ -143,9 +143,14 @@ class PlayerTeams(
         reads
     }
 
-    /** Each read is kept at once (a few KB), so a pass cut short loses nothing. */
+    /**
+     * Each read is kept at once (a few KB), so a pass cut short loses nothing. Rosters not needed
+     * for a week are dropped, so the file stays the size of this week's games, not a season's.
+     */
     private suspend fun save() {
         val disk = store ?: return
+        val now = clock()
+        _state.update { c -> c.copy(rosters = c.rosters.filterValues { now - it.fetchedAtMs < KEEP_MS }) }
         val snapshot = _state.value
         runCatching { disk.update { snapshot } }
     }
@@ -197,6 +202,9 @@ class PlayerTeams(
 
         /** Pause between two reads. */
         const val GAP_MS = 300L
+
+        /** A roster not re-read for this long is dropped from the cache. */
+        const val KEEP_MS = 7 * 24 * 60 * 60_000L
 
         /** At most this many reads per pass (a full slate is ~15 games = 30 rosters: two passes). */
         const val MAX_READS_PER_PASS = 20
