@@ -283,6 +283,14 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
     GAMES("Games", Icons.Filled.DateRange),
     TRACKER("Tracker", Icons.AutoMirrored.Filled.List),
     SETTINGS("Settings", Icons.Filled.Settings),
+    ;
+
+    /** Whether the tab exists in this scanner mode: CNO only hides what needs Vigilant's scanner. */
+    fun shownIn(mode: ScannerMode): Boolean = when (this) {
+        EV, GAMES -> mode != ScannerMode.CNO
+        CNO -> mode != ScannerMode.VIGILANT
+        TRACKER, SETTINGS -> true
+    }
 }
 
 @Composable
@@ -295,21 +303,32 @@ private fun TabIcon(t: Tab) {
 }
 
 @Composable
-private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit, onMiniWindow: (() -> Unit)?) {
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+private fun VigilantRoot(
+    state: UiState,
+    vm: MainViewModel,
+    onScan: () -> Unit,
+    onMiniWindow: (() -> Unit)?,
+    onOpenInNovig: (CnoRow) -> Unit = {},
+) {
+    val mode = state.settings.scanner
+    val tabs = Tab.entries.filter { it.shownIn(mode) }
+    var tabName by rememberSaveable { mutableStateOf<String?>(null) }
+    // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
+    val tab = tabs.firstOrNull { it.name == tabName } ?: if (mode == ScannerMode.CNO) Tab.CNO else tabs.first()
     var detail by remember { mutableStateOf<Opportunity?>(null) }
+    val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                Tab.entries.forEachIndexed { i, t ->
+                tabs.forEach { t ->
                     NavigationBarItem(
-                        selected = tab == i,
-                        onClick = { tab = i },
+                        selected = tab == t,
+                        onClick = { tabName = t.name },
                         icon = {
                             val count = when (t) {
                                 Tab.EV -> state.feed.size
-                                Tab.CNO -> if (state.settings.cnoEnabled) state.cno.snapshot?.takeIf { it.url == state.cnoUrl }?.rows?.size ?: 0 else 0
+                                Tab.CNO -> state.cnoPicks(now)?.picks?.size ?: 0
                                 else -> 0
                             }
                             if (count > 0) {
@@ -326,12 +345,12 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit, 
     ) { padding ->
         val modifier = Modifier.padding(bottom = padding.calculateBottomPadding()).fillMaxSize()
         androidx.compose.foundation.layout.Box(modifier) {
-            when (Tab.entries[tab]) {
+            when (tab) {
                 Tab.EV -> FeedScreen(
                     state = state,
                     onScan = onScan,
                     onToggleLeague = vm::toggleLeague,
-                    onOpenSettings = { tab = Tab.SETTINGS.ordinal },
+                    onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onRecheck = vm::recheck,
@@ -340,8 +359,11 @@ private fun VigilantRoot(state: UiState, vm: MainViewModel, onScan: () -> Unit, 
                 Tab.CNO -> CnoScreen(
                     state,
                     onRefresh = { vm.refreshCno() },
-                    onOpenSettings = { tab = Tab.SETTINGS.ordinal },
+                    onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onMiniWindow = onMiniWindow,
+                    onLoadBooks = vm::loadBooks,
+                    onOpenInNovig = onOpenInNovig,
+                    onScanner = { m -> vm.updateSettings { it.copy(scanner = m) } },
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
