@@ -30,10 +30,47 @@ data class CnoRow(
     val gameUrl: String? = null,
     /** CNO's deeplink to the bet at [book] (a consent page first, then the book). */
     val betUrl: String? = null,
+    /** CNO marked it ⚠️: devigged from one-way lines with an estimated juice (less reliable). */
+    val oneWay: Boolean = false,
 ) {
-    /** One side at one book. CNO's game link names the side (`side_id`). */
-    val key: String get() = (gameUrl ?: "$event|$market|$bet") + "|" + book
+    /** One side at one book. CNO's game link names the side (`side_id`); the devig in it is dropped. */
+    val key: String get() = ((gameUrl?.replace(Regex("[&?]devig_method=\\d+"), "")) ?: "$event|$market|$bet") + "|" + book
+
+    /** CNO's `side_id` for this bet (the row id on its game page). */
+    val sideId: String? get() = gameUrl?.let { Regex("[?&]side_id=(\\d+)").find(it)?.groupValues?.get(1) }
 }
+
+/**
+ * CNO's devig choices that are worst-case (RESEARCH.md §19): the longest fair value of
+ * multiplicative, additive/Shin and power. [code] is CNO's dropdown value, [label] its EV column.
+ */
+enum class CnoDevig(val code: Int, val label: String, val displayName: String) {
+    /** The worse of the other two: CNO's most cautious setting (Tj's default, 2026-09-26). */
+    CONSERVATIVE(8, "C-WC", "Conservative"),
+    LIQUIDITY_WEIGHTED(0, "LW-WC", "Liquidity-weighted"),
+    MARKET_CONSENSUS(4, "UMC-WC", "Market consensus"),
+}
+
+/**
+ * The CNO scanner's filters, posted in CNO's own form on every read (so CNO ranks and trims its
+ * list by them) and enforced again in the app ([CnoChecks]).
+ */
+@Serializable
+data class CnoFilters(
+    val devig: CnoDevig = CnoDevig.CONSERVATIVE,
+    /** Longest American odds shown (+150 = negative odds up to +150); 0 = no limit. */
+    val maxOdds: Int = 150,
+    /** Fewest books behind CNO's fair price (1–2-book markets are too thin to trust). */
+    val minBooks: Int = 5,
+    /** Smallest EV shown, as a fraction. */
+    val minEv: Double = 0.01,
+    /** How many rows CNO sends (best EV first); fewer rows = a smaller download per refresh. */
+    val rows: Int = 50,
+    /** CNO's "Require a Complete Sportsbook": at least one book prices every side. */
+    val completeBook: Boolean = true,
+    /** Sides a market needs at a book (2 = both sides priced, so the vig can be removed honestly). */
+    val minSides: Int = 2,
+)
 
 /** One read of Tj's CNO view. */
 @Serializable
@@ -48,10 +85,38 @@ data class CnoSnapshot(
     val evLabel: String? = null,
     /** CNO's red message under the table, when it shows one. */
     val note: String? = null,
+    /** The filters it was read with (null in lists saved before v0.14.0). */
+    val filters: CnoFilters? = null,
 ) {
     /** When CNO's odds were last updated on CNO's side. */
     val dataAtMs: Long get() = fetchedAtMs - (cnoAgeSeconds ?: 0) * 1000L
 }
+
+/** One book's prices for a bet and its other side, from CNO's game page. */
+@Serializable
+data class CnoBookPrice(
+    /** CNO's column code ("PN", "DK", "NV"). */
+    val code: String,
+    val odds: Int? = null,
+    val available: Double? = null,
+    val otherOdds: Int? = null,
+    val otherAvailable: Double? = null,
+) {
+    val name: String get() = CnoBooks.name(code)
+    val twoSided: Boolean get() = odds != null && otherOdds != null
+}
+
+/** Every book's price for one bet (and its other side), as CNO's game page listed them. */
+@Serializable
+data class CnoBooksView(
+    val bet: String,
+    val otherBet: String? = null,
+    /** CNO's fair odds for this side on the game page (the devig of the link). */
+    val cnoFair: Int? = null,
+    val cnoFairOneWay: Boolean = false,
+    val prices: List<CnoBookPrice>,
+    val fetchedAtMs: Long,
+)
 
 /** What's kept on disk between launches, so the last list shows before the first re-read. */
 @Serializable
