@@ -105,7 +105,7 @@ fun SettingsScreen(
                 when (s.scanner) {
                     ScannerMode.BOTH -> "Vigilant's own scan (tap Scan) and CrazyNinjaOdds' list (kept current while on screen), both in the mini window."
                     ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read."
-                    ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (Novig, Pinnacle, Polymarket, " +
+                    ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (${if (AppBook.isNovig) "Novig, " else "PropLine, "}Pinnacle, Polymarket, " +
                         "Kalshi, The Odds API) are asleep: nothing of theirs loads, and their tabs and settings are hidden. " +
                         "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on)."
                 },
@@ -161,7 +161,8 @@ fun SettingsScreen(
                         "books are in. Fewer bets, more reliable ones.",
                     s.cnoOnlyAgreed,
                 ) { v -> onUpdate { it.copy(cnoOnlyAgreed = v) } }
-                SwitchRow(
+                // Novig's own order books: Vigilant MGM has no such public feed for BetMGM.
+                if (AppBook.isNovig) SwitchRow(
                     "Novig's price now",
                     "The ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_TOP} best CNO bets on Novig show Novig's current price, read from Novig's own " +
                         "order book every ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_EVERY_MS / 1000} s while the list is on screen, and the EV " +
@@ -180,9 +181,9 @@ fun SettingsScreen(
             // ---- Mini window --------------------------------------------------------------------
             SectionTitle("Mini window")
             SwitchRow(
-                "Float over Novig",
+                "Float over ${AppBook.name}",
                 "When you leave Vigilant with bets to show (or a scan running), a small window with them stays on top of " +
-                    "Novig. The button at the top of the list opens it any time.",
+                    "${AppBook.name}. The button at the top of the list opens it any time.",
                 s.miniWindow,
             ) { v -> onUpdate { it.copy(miniWindow = v) } }
             // The floating widget, for either scanner (Tj, 2026-09-27: "on the regular vigilant
@@ -195,7 +196,7 @@ fun SettingsScreen(
             }
             SwitchRow(
                 "Floating widget you can touch",
-                "Up and down buttons always at the bottom, tap a bet to open it in Novig's bet slip, ✓ to mark it placed " +
+                "Up and down buttons always at the bottom, tap a bet to open it in ${AppBook.name}'s bet slip, ✓ to mark it placed " +
                     "or ✕ to remove it without betting (hidden everywhere in Vigilant for good, with Undo), hold a CNO bet for " +
                     "every book's odds. The top bar's switch picks CNO only, Both or Vigilant only. Spread or pinch two fingers " +
                     "on it to resize it (and slide them to move it), or pull a green corner; drag its frame or top bar to move " +
