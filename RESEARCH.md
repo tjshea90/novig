@@ -1674,3 +1674,61 @@ restricted settings), and where exactly Novig's app lands for `novigapp://events
   has come and gone, or 1.2 s when CNO's pacing skipped the read. Same fix on the +EV and Games
   tabs. The CNO tab's status now says "Read 4s ago · odds 20s old · every 15 s" ("Reading now…"
   while it reads), so it's plain the list is being refreshed.
+
+### 20.2 Reading CNO reliably: "unable to resolve", "timeout", taps that didn't open the bet slip (v0.15.2, Tj 2026-09-27 ~00:05–00:30Z)
+
+Tj: "sometimes it says unable to resolve cno sometimes it says timeout" and "see if there is a way
+to safely and repeatedly refresh cno odds without timeout or unable to resolve or any other
+restrictions, whether that is using a specific dns server, or my nordvpn, or any cheap service".
+
+**What CNO is.** One IIS server on Winhost shared hosting (162.250.75.106), HTTP/2, no CDN, DNS
+at ns1–3.winhost.com with a one-hour TTL. robots.txt asks crawlers for 30 s between pages and
+disallows the game pages. No rate-limit headers, no Cloudflare, no 429 seen: a 3-minute soak of
+the app's own pattern from the container (106 requests) had zero errors. So CNO was not
+throttling Tj; the two messages are the phone's network:
+
+- **"Unable to resolve host"** is DNS failing on the phone before any request leaves it: a
+  network switch (Wi-Fi ↔ mobile), the phone waking from sleep, or a VPN (his quick settings show
+  one) reconnecting and swapping its DNS server. NordVPN's own DNS answers only while its tunnel
+  is up.
+- **"timeout"** is mostly a dead pooled connection: OkHttp keeps a connection open between reads;
+  after the phone slept or changed networks (or the VPN reconnected) that socket is gone but not
+  yet known to be, and the next read waits on it until the read timeout.
+- **Taps that didn't open the bet slip**: the Novig link was asked of CNO on the tap, so a tap
+  during either failure got no link and opened Novig's home.
+
+**What the app now does (all on the phone, nothing to pay for or set up)** — `CnoNetwork`:
+- DNS that doesn't give up (`RememberingDns`): the phone's DNS first; if it fails, DNS over HTTPS
+  to Cloudflare (1.1.1.1) then Google (8.8.8.8), reached at their fixed addresses so they don't
+  need DNS themselves (`DnsOverHttps`, only the name crazyninjaodds.com is sent); if that fails
+  too, CNO's last good address (kept a day; it changes rarely).
+- Connections idle 20 s are closed rather than reused, reads time out after 12 s, and a failed
+  request is retried once at once on a fresh connection (the pool emptied first).
+- One pace for every CNO request, whichever part of the app makes it (`CnoPace`, ≥1 s apart;
+  the list itself stays ≥3 s apart), and the green-check and link lanes wait while the list is
+  failing or CNO asked for a pause.
+- Bet links read ahead of time for the listed bets (one small request every 3 s, kept on disk in
+  `cno_links.json`: a line's link never changes), so a tap usually needs no network. A tap
+  without one asks CNO for at most 5 s, then finds the bet in Novig's own public catalog
+  (`NovigBetFinder`: the game by its teams and start, the outcome by player/team, line and side,
+  exactly one match or nothing), else opens its game; it says so when it couldn't open the bet
+  itself (`TapLink`, `TapLinkTest`).
+- The status says which failure it is: "CNO lookup failed, retrying" (DNS), "CNO slow,
+  retrying" (timeout), "CNO offline, retrying" (no connection).
+
+**Recommendations for Tj (cost: none)**
+1. **Private DNS** (Android Settings › Network & internet › Private DNS › Private DNS provider
+   hostname: `one.one.one.one`, or `dns.google`). Makes the phone's own lookups steadier on any
+   network. Free; the app no longer depends on it.
+2. **NordVPN**: it doesn't help with CNO (CNO wasn't blocking anything), and a VPN reconnecting
+   is itself a cause of both messages. Novig also checks location and refuses VPNs
+   (NOVIG_API.md §7), so it should be off while betting anyway. If he wants it on for other
+   apps: NordVPN › Settings › Split tunneling, and leave Vigilant and Novig out of the tunnel.
+3. **Paid relays are not worth it now.** A Cloudflare Worker (free up to 100k requests a day) or a
+   $4–6/month VPS could fetch CNO for the phone, but CNO would see the same load, it adds
+   something that can break, and the in-app fixes above cover what went wrong. Revisit only if
+   the status keeps showing "CNO slow" or "offline" on a good connection.
+4. **Not done on purpose**: rotating proxies or IPs to read faster than CNO allows. CNO is a free
+   site on one small shared server; the app already reads it more often than its robots.txt asks
+   of crawlers, only while Tj is looking. If he wants more, the honest route is asking CNO's
+   owner (donations page) for an allowed rate or a feed.
