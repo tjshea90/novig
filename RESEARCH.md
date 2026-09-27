@@ -1825,23 +1825,87 @@ $149/mo) for a measured trial: Vigilant would first log how often and how long N
 by more than the fee, before any alerts are trusted. Pregame +EV (fee-free on Novig) remains where
 the edge is, and v0.15.4's "Novig's price now" keeps those prices current.
 
-## 22. Every free odds API / sportsbook feed, re-surveyed 2026-09-27 (~06:15Z, Tj: "better accuracy or faster scanning")
+## 22. Every free odds API / sportsbook feed, re-surveyed 2026-09-27 (~06:15–06:50Z, Tj: "better accuracy or faster scanning")
 
-*(Draft notes, being filled in this session — see TASKS.md P2. Measured from this container unless marked "docs".)*
+**Why:** Tj asked for every odds API and sportsbook with a free API, and whether any would make
+Vigilant more accurate or faster. §11 covered the 2026-09-25 field (Polymarket, Kalshi, pinnapi,
+The Odds API, OddsPapi, SharpAPI…). This pass looked for anything new since, measured from this
+container where possible ("docs" = read from the provider's own docs the same day, not measured).
 
-- **PinnWire** (pinnwire.com, Pinnacle feed, same `/kit/v1/markets` shape as pinnapi): free key 100/day,
-  20/min, no card, no expiry (docs); a public `key=demo` works with no signup (measured: NFL prematch
-  board 15 games, 63 KB, 0.9 s). `include_specials=1` adds **Pinnacle player props** as child events
-  (`parent_id` = game, `special` = "DJ Moore Total Receptions", `special_markets.num_0[].prices[]`
-  Over/Under with `points`, decimal `price`, `max_risk`): measured NFL 768 player props + 240 game props
-  in ONE request (692 KB): receptions, receiving/rushing/passing yards, TDs, rush attempts, pass
-  completions/attempts, TD passes, interceptions, field goals. pinnapi's own trial blocks specials
-  (docs), PinnWire's free tier does not.
-- **PropLine** (prop-line.com): free 1,000 requests/day, burst 10, 5/s, no card (docs). One call =
-  a whole sport's slate (`/v1/sports/{sport}/odds?markets=h2h,spreads,totals`); props one call per game.
-  30 books incl. **Pinnacle, DraftKings, FanDuel, BetMGM, Fanatics, BetRivers, Bovada, BetOnline/LowVig,
-  Kalshi, Polymarket, ProphetX, Smarkets, Matchbook and Novig itself** (measured `/v1/freshness`, no auth:
-  game lines 0–31 s old across books, Pinnacle 13 s, Novig 10 s). Response is the-odds-api's format
-  (American prices), sport keys accept the-odds-api names. Free tier = odds + scores; +EV/history/
-  prop results are paid ($9+). The published demo key was already at its 1,000/day cap (shared), so no
-  live board was read; needs Tj's own free key.
+### 22.1 What changed the picture
+
+**1. Pinnacle's player props, free: PinnWire** (pinnwire.com; an independent Pinnacle feed, same
+`/kit/v1/markets` JSON as pinnapi, which the app already parses).
+- Free key: 100 requests/day, 20/min, no card, no expiry (docs). Every plan, the free one included,
+  has "props & specials" (docs); pinnapi's own trial does not (its docs: "no special-market access
+  on trial"). A public `key=demo` exists (one shared bucket for everyone: 10/min, 50/day; docs), so
+  it is fine for trying the feed, not for the app.
+- **Measured** with `key=demo` (2026-09-27 06:18–06:40Z): NFL prematch board, 15 games, 63 KB, 0.9 s.
+  With `include_specials=1`: 1,041 rows in ONE request (692 KB): **768 Pinnacle player props** + 240
+  game props, as child rows (`parent_id` = the game) with `special` = "DJ Moore Total Receptions",
+  `special_units` = "Receptions", `special_markets.num_0[0].prices` = Over/Under, `points`, decimal
+  `price`, `max_risk` ($250–$500 on props). NFL units: Receptions 158, Receiving Yards 157,
+  Touchdowns 148 (Over 0.5 = anytime TD), Rushing Yards 81, Rush Attempts 45, Passing Yards 30,
+  Touchdown Passes 30, Pass Completions 30, Pass Attempts 30, Field Goals 30, Interceptions 29.
+  MLB (11 games): Home Runs 58, Bases (= total bases) 20, Strikeouts (pitcher) 4. WNBA: Points,
+  Rebounds, Assists, Threes Made. NFL + NCAA share sport 5, so both cost one request.
+- Why it matters: Pinnacle is the sharpest book on player props, and until now Vigilant priced props
+  only from Kalshi (NFL/MLB/WNBA ladders) and The Odds API's sportsbooks (1 credit per prop type per
+  game out of 500 a month). Pinnacle's props need **one request per sport per scan**.
+- Auth: header `x-api-key` (pinnapi uses `x-portal-apikey`) or `?key=`. 429 body is pinnapi's
+  (`window`, `retry_after_ms`). `since=<last>` returns only events changed since the last call.
+
+**2. Thirty books in one free call: PropLine** (prop-line.com).
+- Free: 1,000 requests/day (UTC reset), burst 10, 5/s, 20 in flight; no card (docs). Quota headers
+  `X-Daily-Limit/Used/Remaining/Reset` on every reply. Free = live odds + scores; +EV, history and
+  prop grading are paid ($9/mo and up).
+- Books (**measured** `/v1/freshness`, no key, 06:17Z): Pinnacle, DraftKings, FanDuel, BetMGM,
+  Fanatics, BetRivers, Hard Rock, Bovada, BetOnline, LowVig, BetUS, Unibet, 1xBet, Marathon, Fliff,
+  Betway, TAB, ReBet, Courtside, Kalshi, Polymarket (+US), ProphetX, Smarkets, Matchbook, **Novig**,
+  and DFS books. Game lines were 0–42 s old across every book (Pinnacle 13 s, Novig 10 s).
+- One call = a whole league's game lines for every book (`/v1/sports/{sport}/odds?markets=h2h,
+  spreads,totals`); props are one call per game (`/events/{id}/odds?markets=…`). Response is the-odds-
+  api's format (American prices; team totals ride `totals` with a `team` field; each outcome carries
+  `last_seen_at` — older than its market's `last_update` means withdrawn; `suspended_at` on pulled
+  markets). the-odds-api sport keys are accepted as aliases.
+- The published demo key had already hit its 1,000/day cap (shared) at 06:17Z, so **no board was read
+  live**; the parser follows the documented schema (openapi.json) and needs Tj's own free key.
+- Why it matters: The Odds API's free 500 credits a month buy about 5 full refreshes a day of 3 markets
+  in 3 leagues and almost no props. PropLine's free 1,000 a day covers ~40 scans a day with every book
+  plus props for ~20 games a scan, so the market-average fair line (and CNO-style "books agree" checks)
+  gets many more books for free.
+
+### 22.2 Everything else looked at
+
+| Source | Free? (measured / docs) | Books / data | Verdict |
+|---|---|---|---|
+| Pinnacle's own website API (`guest.api.arcadia.pinnacle.com`) | Answers with no signup (measured: NFL 1,040 matchups incl. 1,025 specials, 0.3 s) | Pinnacle itself | Not built: private website backend, not a published API (same rule as §11's "no sportsbook web endpoints"); PinnWire gives the same prices legitimately |
+| Action Network (`api.actionnetwork.com/web/v2/scoreboard`) | Answers with no key (measured: NFL 16 games, 7 books, 576 KB, 1 s) | DraftKings, FanDuel, BetMGM, Caesars, BetRivers, consensus, open; no timestamps | Not built: unofficial, soft books only, no update times; PropLine covers the same books officially |
+| ESPN scoreboard odds | Free, no key (measured) | DraftKings only | Not useful for fair odds |
+| SX Bet (`api.sx.bet`) | Free, no key (measured: NFL markets listed) | Crypto exchange | Not built: order read failed (400), liquidity unproven |
+| Odds-API.io | Free 100/hour, **new free keys paused**; 2 soft books; sharp books paid (docs) | — | No |
+| SportsGameOdds | Free 2,500 objects/mo, **10-minute delay**, 9 books (docs) | — | No (delay) |
+| The Rundown | Free 20k data points/day, **5-minute delay**, DK/FD/MGM only, no props (docs) | — | No (delay, soft books) |
+| OddsPapi | Free 250 requests/**month** (docs, §11) | 350 books incl. Pinnacle | Spot checks only |
+| Owls Insight | No free plan (3-day trial); $9.99 plan has no sharp books (docs) | — | No |
+| BoltOdds | 7-day trial only; $99+/mo (docs) | — | No |
+| Unabated, OpticOdds, OddsJam, OddsBlaze, LSports, Sportradar | Sales-gated or $99–$3,000+/mo | — | No |
+| ProphetX API | Partners only, no self-serve key (docs) | — | No (PropLine carries its prices) |
+| Betfair / Smarkets / Matchbook APIs | Need a funded account; Betfair not available in the US | Exchanges | No (PropLine carries Smarkets/Matchbook best back prices) |
+| PinnOdds, pinnapi | Free trial 100/day, game lines (pinnapi: no props on trial) | Pinnacle | pinnapi kept as the fallback Pinnacle key |
+
+### 22.3 Faster scanning
+
+Novig's own book reads (4 a second on public routes, 16/s with a Novig key) are still the long pole
+of a Vigilant scan, not the fair-odds calls: every source above answers a whole league in one call
+(PinnWire, PropLine, Polymarket, Kalshi). No free feed is fast enough for live (in-game) betting
+(§21 still holds: Novig's live book leads the free feeds). What speeds a scan up is spending Novig
+reads only where an edge is plausible, which more (and sharper) fair lines do: lines no source quotes
+are never read, and props get Pinnacle's line instead of waiting on scarce Odds API credits.
+
+### 22.4 Built (v0.16.0) — see TASKS.md P3 for the tests
+1. **Pinnacle through PinnWire** (keys in Settings → Fair-odds sources → Pinnacle): game lines as before
+   plus Pinnacle player props, one request per sport; pinnapi keys stay as the fallback.
+2. **PropLine** (its own switch and keys): every sportsbook's game lines per league and props per game,
+   filtered to the reference books picked in Settings, exchanges and DFS books left out (the app
+   reads Polymarket and Kalshi directly, and Novig is the thing being priced).
