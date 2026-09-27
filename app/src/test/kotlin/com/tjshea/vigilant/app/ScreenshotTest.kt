@@ -327,6 +327,13 @@ class ScreenshotTest {
         compose.onAllNodesWithText("\$88.00").onFirst().assertIsDisplayed() // dollars available
     }
 
+    /** RESEARCH.md §24: CNO's EVs rest on other books' prices; once its odds are over 5 minutes old, none are offered. */
+    @Test fun cnoTabHidesItsBetsWhileCnosOddsAreOld() {
+        screen(now = SampleScan.NOW + 6 * 60_000L) { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
+        compose.onNodeWithText("CrazyNinjaOdds' odds are too old").assertIsDisplayed()
+        compose.onAllNodesWithText(SampleCno.rows[1].bet, substring = true).assertCountEquals(0)
+    }
+
     @Test fun cnoTabLight() = shoot("8b_cno_light", dark = false) { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
 
     @Test fun cnoTabFirstRead() {
