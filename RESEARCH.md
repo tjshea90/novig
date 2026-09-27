@@ -1824,3 +1824,24 @@ built, so it can't mislead. What would change the answer: Tj buying Pinnacle liv
 $149/mo) for a measured trial: Vigilant would first log how often and how long Novig trails Pinnacle
 by more than the fee, before any alerts are trusted. Pregame +EV (fee-free on Novig) remains where
 the edge is, and v0.15.4's "Novig's price now" keeps those prices current.
+
+## 22. Every free odds API / sportsbook feed, re-surveyed 2026-09-27 (~06:15Z, Tj: "better accuracy or faster scanning")
+
+*(Draft notes, being filled in this session — see TASKS.md P2. Measured from this container unless marked "docs".)*
+
+- **PinnWire** (pinnwire.com, Pinnacle feed, same `/kit/v1/markets` shape as pinnapi): free key 100/day,
+  20/min, no card, no expiry (docs); a public `key=demo` works with no signup (measured: NFL prematch
+  board 15 games, 63 KB, 0.9 s). `include_specials=1` adds **Pinnacle player props** as child events
+  (`parent_id` = game, `special` = "DJ Moore Total Receptions", `special_markets.num_0[].prices[]`
+  Over/Under with `points`, decimal `price`, `max_risk`): measured NFL 768 player props + 240 game props
+  in ONE request (692 KB): receptions, receiving/rushing/passing yards, TDs, rush attempts, pass
+  completions/attempts, TD passes, interceptions, field goals. pinnapi's own trial blocks specials
+  (docs), PinnWire's free tier does not.
+- **PropLine** (prop-line.com): free 1,000 requests/day, burst 10, 5/s, no card (docs). One call =
+  a whole sport's slate (`/v1/sports/{sport}/odds?markets=h2h,spreads,totals`); props one call per game.
+  30 books incl. **Pinnacle, DraftKings, FanDuel, BetMGM, Fanatics, BetRivers, Bovada, BetOnline/LowVig,
+  Kalshi, Polymarket, ProphetX, Smarkets, Matchbook and Novig itself** (measured `/v1/freshness`, no auth:
+  game lines 0–31 s old across books, Pinnacle 13 s, Novig 10 s). Response is the-odds-api's format
+  (American prices), sport keys accept the-odds-api names. Free tier = odds + scores; +EV/history/
+  prop results are paid ($9+). The published demo key was already at its 1,000/day cap (shared), so no
+  live board was read; needs Tj's own free key.
