@@ -252,5 +252,8 @@ data class ScanSettings(
         val CNO_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8, 10)
         val CNO_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
         val CNO_ROWS_CHOICES = listOf(25, 50, 100)
+
+        /** [widgetRescanMinutes]' choices (0 = off). */
+        val WIDGET_RESCAN_CHOICES = listOf(0, 5, 10, 15, 30)
     }
 }

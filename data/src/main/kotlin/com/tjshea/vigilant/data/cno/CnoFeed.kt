@@ -84,6 +84,7 @@ class CnoFeed(
     /** Shows the list saved by the last read, before any network. */
     suspend fun load() {
         linkStore?.let { runCatching { it.read().links }.getOrNull() }?.forEach { (k, v) -> novigLinks.putIfAbsent(k, v) }
+        publishLinks()
         val cached = store?.let { runCatching { it.read().snapshot }.getOrNull() } ?: return
         _state.update { if (it.snapshot == null) it.copy(snapshot = cached) else it }
     }
@@ -306,6 +307,18 @@ class CnoFeed(
 
     /** Links by [linkKey], oldest first (so the file keeps the newest [LINKS_KEEP]); taps and lanes share it. */
     private val novigLinks: MutableMap<String, String> = java.util.Collections.synchronizedMap(LinkedHashMap())
+
+    private val _links = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /**
+     * Every known bet link by [linkKey], for showing a bet both scanners list once (by its Novig
+     * outcome, [outcomeIdOf]). Updated as links are found.
+     */
+    val links: StateFlow<Map<String, String>> = _links.asStateFlow()
+
+    private fun publishLinks() {
+        _links.value = synchronized(novigLinks) { LinkedHashMap(novigLinks) }
+    }
     private val linkTriedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val linkSaveMutex = Mutex()
 
@@ -315,8 +328,6 @@ class CnoFeed(
     /** [row]'s Novig link if it's already known: no network, so a tap opens the bet at once. */
     fun cachedLink(row: CnoRow): String? = novigLinks[linkKey(row)]
 
-    /** Where [row]'s link is kept: CNO's deeplink (one per line, whatever the price), else the row. */
-    private fun linkKey(row: CnoRow): String = row.betUrl ?: "row:${row.key}"
 
     /** Keeps a link found elsewhere (a tap's lookup in Novig's catalog) like one this feed found. */
     suspend fun rememberLink(row: CnoRow, link: String) {
@@ -372,6 +383,7 @@ class CnoFeed(
     }
 
     private suspend fun saveLinks() {
+        publishLinks()
         val disk = linkStore ?: return
         linkSaveMutex.withLock {
             // The newest [LINKS_KEEP]: a season of lines would otherwise pile up.
@@ -492,6 +504,13 @@ class CnoFeed(
 
         /** Between two lookups in Novig's catalog (most cost nothing: the game's markets are kept). */
         const val CATALOG_GAP_MS = 300L
+
+        /** Where [row]'s link is kept: CNO's deeplink (one per line, whatever the price), else the row. */
+        fun linkKey(row: CnoRow): String = row.betUrl ?: "row:${row.key}"
+
+        /** The Novig outcome a bet link opens (`novigapp://events/<id>[/cno]`), or null for a game link. */
+        fun outcomeIdOf(link: String?): String? =
+            link?.takeIf { it.startsWith("novigapp://events/") }?.removePrefix("novigapp://events/")?.substringBefore('/')?.takeIf { it.isNotEmpty() }
 
         private val NOVIG_WEB_BET = Regex("""^https://(?:www\.)?novig\.(?:com|us)/(events/[^?#]+)""", RegexOption.IGNORE_CASE)
 

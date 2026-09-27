@@ -62,7 +62,7 @@ class PlacedBets(
 
     /** Marks [bet] placed (replacing an earlier mark of the same bet). */
     suspend fun mark(bet: PlacedBet): PlacedBook =
-        store.update { b -> prune(PlacedBook(b.bets.filter { it.key != bet.key } + bet), clock()) }
+        store.update { b -> prune(PlacedBook(b.bets.filter { old -> old.keys.none { it in bet.keys } } + bet), clock()) }
 
     /** Takes the mark off (Undo, or "not placed after all"). */
     suspend fun unmark(key: String): PlacedBook =
