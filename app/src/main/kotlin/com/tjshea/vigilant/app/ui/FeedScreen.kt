@@ -316,7 +316,7 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("NOVIG", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(AppBook.name.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(Format.american(q.cost), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                 }
             }
@@ -329,7 +329,7 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
             Text(
                 buildString {
                     append(o.fair?.let { f -> f.booksUsed.take(3).joinToString(", ") + if (f.booksUsed.size > 3) " +${f.booksUsed.size - 3}" else "" } ?: "")
-                    if (depth != null && depth.contracts > 0) append("  ·  ${Format.money(depth.dollarCost)} fillable at +EV")
+                    if (AppBook.exchange && depth != null && depth.contracts > 0) append("  ·  ${Format.money(depth.dollarCost)} fillable at +EV")
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
