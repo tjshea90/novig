@@ -125,10 +125,11 @@ class ScreenshotTest {
     }
 
     @Test fun settingsTakePinnWireAndPropLineKeys() {
-        screen { SettingsScreen(SampleScan.state(), {}) }
+        screen { SettingsScreen(SampleScan.state().copy(pinnwireKeys = emptyList(), proplineKeys = emptyList()), {}) }
         compose.onNodeWithText("PinnWire keys (game lines and player props)").assertExists()
         compose.onNodeWithText("Add a PinnWire key").assertExists()
         compose.onNodeWithText("PropLine").assertExists()
+        compose.onNodeWithText("Free key at prop-line.com", substring = true).assertExists()
         compose.onNodeWithText("Add a PropLine key").assertExists()
         compose.onNodeWithText("Sportsbooks for fair odds", substring = true).assertExists()
     }
@@ -230,7 +231,7 @@ class ScreenshotTest {
         compose.onAllNodesWithText("OR POST A BID (MAKER)").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
     @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
