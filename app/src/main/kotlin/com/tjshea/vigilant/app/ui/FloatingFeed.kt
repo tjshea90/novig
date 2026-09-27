@@ -452,7 +452,8 @@ private fun StartsWithinSwitch(hours: Int, onPick: (Int) -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            startsWithinLabel(hours),
+            // "Any", not "Any time": on a narrow widget the longer label squeezed out the scan status.
+            if (hours <= 0) "Any" else startsWithinLabel(hours),
             Modifier
                 .background(if (on) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, CircleShape)
                 .border(1.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
