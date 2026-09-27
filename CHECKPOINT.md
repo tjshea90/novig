@@ -1,13 +1,13 @@
-# CHECKPOINT 537 — read me first, then TASKS.md
+# CHECKPOINT 538 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T21:54:55Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-game-time-filter-tkml0n` · **builds on:** `f2a534d` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T21:57:19Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-game-time-filter-tkml0n` · **builds on:** `3a66035` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.17.1: 'Starts within' filter (Any time / 12h / 24h / 48h) on the +EV tab, CNO tab, floating widget and Settings; every list, badge and notification shows only games starting in that window. Recheck re-reads only the bets shown. Vigilant only from now on (Vigilant MGM dormant at v0.17.0). 624 tests (versionCode 33, v0.17.1)
+Shipped v0.17.1 to main (3a66035); release.yml run 36353475955 CANCELLED at the APK build (it was triggered before CI finished; no tag, no Release)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.17.1), then run: bash tools/record-release.sh v0.17.1 33 "v0.17.1: 'Starts within' filter (Any time / 12h / 24h / 48h) on the +EV tab, CNO tab, floating widget and Settings; every list, badge and notification shows only games starting in that window. Recheck re-reads only the bets shown. Vigilant only from now on (Vigilant MGM dormant at v0.17.0). 624 tests"
+When CI 36353437186 on 3a66035 is really completed+success: trigger release.yml on main, confirm tag v0.17.1 (vigilant-v0.17.1.apk only), bash tools/record-release.sh v0.17.1 33 "<ship note>", tick G3/H4 ship, send Tj the link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  3a66035 ckpt 537: pre-release: v0.17.1: 'Starts within' filter (Any time / 12h / 24h / 48h) on t
   f2a534d ckpt 536: H4 full tests done: 624 green, live green, release APK verified; fixes F1 (Rec
   078fd3a ckpt 535: H4 in progress: floor 623 green + live Novig/CNO/scores green; fixed F1 Rechec
   1be888c ckpt 534: H3: Maven Central 429 research + tools/setup-android.sh (SDK, Gradle mirror, R
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   fb0f8bb ckpt 530: v0.17.1 shipped to main via ship.sh (619 tests green locally); CI run 36351838
   0936ecc ckpt 529: pre-release: v0.17.1: 'Starts within' filter in Vigilant (Any time / 12h / 24h
   80596f1 ckpt 528: G1+G2: start-time window (Any/12/24/48h) on feed, CNO, Games, widgets, notific
-  5d4dc1d ckpt 527: Wrote Tj's game start-time filter request into TASKS.md (G1-G3)
 ```
