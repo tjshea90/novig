@@ -21,6 +21,9 @@ class PlacedIndex private constructor(
     private val outcomes: Set<String>,
     private val identities: Map<String, List<Long?>>,
 ) {
+    /** The games in [identities]: a listed bet's wording is read only when its game is one of these. */
+    private val games: Set<String> = identities.keys.mapTo(HashSet()) { it.substringBefore('|') }
+
     val isEmpty: Boolean get() = keys.isEmpty() && outcomes.isEmpty() && identities.isEmpty()
 
     /** Whether a listed bet is one Tj already has. */
@@ -37,7 +40,9 @@ class PlacedIndex private constructor(
         if (key != null && key in keys) return true
         if (aliases.any { it in keys }) return true
         if (!outcomeId.isNullOrEmpty() && outcomeId in outcomes) return true
-        val id = identity(event, market, selection) ?: return false
+        val game = gameKey(event) ?: return false
+        if (game !in games) return false
+        val id = pickKey(market, selection)?.let { "$game|$it" } ?: return false
         val starts = identities[id] ?: return false
         return starts.any { s -> s == null || startsTs == null || abs(s - startsTs) <= SAME_GAME_MS }
     }
@@ -96,18 +101,26 @@ class PlacedIndex private constructor(
          * can't be read for certain (such a bet is matched by key or outcome only).
          */
         fun identity(event: String, market: String, selection: String): String? {
-            val game = NovigText.parseMatchup(event) ?: return null
+            val game = gameKey(event) ?: return null
+            return pickKey(market, selection)?.let { "$game|$it" }
+        }
+
+        /** "baltimore ravens@dallas cowboys" (never contains '|'). */
+        private fun gameKey(event: String): String? =
+            NovigText.parseMatchup(event)?.let { "${team(it.away)}@${team(it.home)}" }
+
+        private fun pickKey(market: String, selection: String): String? {
             val pick = BetGrader.pickOf(market, selection) ?: return null
-            fun team(name: String) = TeamMatcher.tokens(name).joinToString(" ")
             fun ou(over: Boolean) = if (over) "o" else "u"
-            val what = when (pick) {
+            return when (pick) {
                 is BetGrader.Pick.Moneyline -> "ml|${team(pick.team)}"
                 is BetGrader.Pick.Spread -> "sp|${pick.period}|${team(pick.team)}|${pick.line}"
                 is BetGrader.Pick.Total -> "tot|${pick.period}|${ou(pick.over)}|${pick.line}"
                 is BetGrader.Pick.TeamTotal -> "tt|${team(pick.team)}|${ou(pick.over)}|${pick.line}"
                 is BetGrader.Pick.Prop -> "prop|${PlayerNames.key(pick.player)}|${pick.stat}|${ou(pick.over)}|${pick.line}"
             }
-            return "${team(game.away)}@${team(game.home)}|$what"
         }
+
+        private fun team(name: String) = TeamMatcher.tokens(name).joinToString(" ")
     }
 }
