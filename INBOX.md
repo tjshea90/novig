@@ -2057,3 +2057,8 @@ When all of the features and fixes I asked for are finished, run a full test pro
 
 If I add more requests while you are still working, and them to the list and finish everything, do not stop work on any prior requests 
 ```
+
+## 2026-09-27T01:46:56Z
+```
+For the next version, after releasing the version you are working on now, consider if it is possible and if there is an online feed fast enough to tell me positive EV live bets on novig. I have to be able to bet these very fast because the odds change. Also, it has to scan for live odds on games very fast to find positive EV live bets that are not based on stale odds. If this can be done, make it. If not, tell me your findings
+```
