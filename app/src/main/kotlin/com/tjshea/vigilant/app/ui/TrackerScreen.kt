@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
@@ -305,7 +306,7 @@ private fun BetCard(bet: TrackedBet, now: Long, onSettle: (String, BetStatus) ->
                     Text(bet.eventName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
                         (if (bet.source == BetTracker.SOURCE_CNO) "CNO" else "Vigilant") +
-                            (if (bet.book != "Novig") " · ${bet.book}" else "") +
+                            (if (bet.book != AppBook.name) " · ${bet.book}" else "") +
                             (if (bet.imported) " · from an earlier ✓" else ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -378,7 +379,7 @@ private fun StakeDialog(bet: TrackedBet, onSave: (Double) -> Unit, onDismiss: ()
         title = { Text("Stake") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("${bet.selection} · what you bet on Novig", style = MaterialTheme.typography.bodySmall)
+                Text("${bet.selection} · what you bet on ${bet.book.ifBlank { AppBook.name }}", style = MaterialTheme.typography.bodySmall)
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
