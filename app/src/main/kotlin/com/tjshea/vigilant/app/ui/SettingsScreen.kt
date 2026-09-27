@@ -153,6 +153,14 @@ fun SettingsScreen(
                     s.cnoCheckBooks,
                 ) { v -> onUpdate { it.copy(cnoCheckBooks = v) } }
                 SwitchRow(
+                    "Only bets the books agree on",
+                    "The list, its count and the widget show only ✓ bets: ${CnoBooks.MIN_TWO_SIDED}+ other books price both sides " +
+                        "and ${CnoBooks.MIN_AGREEING}+ of them each say it's +EV, so the fair price isn't one book's. The " +
+                        "${CnoFeed.AGREE_TOP_ONLY_AGREED} best bets' books are read (one every few seconds); a bet shows once its " +
+                        "books are in. Fewer bets, more reliable ones.",
+                    s.cnoOnlyAgreed,
+                ) { v -> onUpdate { it.copy(cnoOnlyAgreed = v) } }
+                SwitchRow(
                     "Player teams",
                     "Player bets show the team, like D. Schultz (HOU), from ESPN's rosters: two small reads per new game, kept for a day.",
                     s.cnoPlayerTeams,
