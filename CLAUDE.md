@@ -289,7 +289,13 @@ unless Tj asks).
   forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
   `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
   page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog; bets over ±6% EV when bet are outliers, left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`)).
-- **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
+- **Vigilant MGM (v0.17.0+, RESEARCH.md §25):** the second app, module `mgm` (`com.tjshea.vigilant.betmgm`),
+  compiles `app`'s own sources with `BuildConfig.BOOK = "betmgm"`; `app/AppBook` is the one switch (names, links,
+  Novig-only parts off). Data side: `data/book/` (`Sportsbook`, `BookBoard`, `SportsbookScanner` behind
+  `scanner/OddsScanner`, `BetMgmLinks`), `PropLineClient(relayNovig, bookIds)`. Its screens are tested in `app`
+  with the book switched (`MgmAppTest`, `SampleMgm`); `mgm/src/test` checks the real build (`MgmBuildTest`).
+  A sweep covers both apps: anything touching a shared screen must read the same in Vigilant.
+- **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest :mgm:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
   `VIGILANT_LIVE=1 ... --tests '*LiveNovigSmokeTest'` re-verifies matching against

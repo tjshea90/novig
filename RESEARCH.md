@@ -2058,3 +2058,45 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
   old; the green-check lane re-reads each page every 4 minutes (`CnoFeed.AGREE_TTL_MS`, was 10).
 - Costs: The Odds API (now mostly PropLine's backup) and sportsbook props are asked again after 2 minutes
   instead of 15/60; when The Odds API is the only sportsbook source, frequent scanning spends more credits.
+
+## 25. The same +EV scanner for BetMGM: Vigilant MGM (2026-09-27 ~19:00Z, Tj: "make it also do the same exact functions to find positive EV on betmgm … Do not scan for both at the same time unless this can be done without wasting too much api usage. If needed or if smart, make this a totally separate app")
+
+### 25.1 Where BetMGM's prices can come from (checked today)
+- **BetMGM has no public odds API.** Its site sits behind Cloudflare bot protection (every `*.betmgm.com` page
+  answered 403 from this container, measured). Its own "Sports API" docs (sportsapi.<state>.betmgm.com/restapi)
+  are for partners and describe only deep links.
+- **PropLine already carries BetMGM** (measured `/v1/freshness` 18:59Z: 1,653 active game-line markets, 3,463 props,
+  10 s behind BetMGM) in the same `/odds` and per-game calls Vigilant makes for the fair line. With
+  `includeBookIds=true` each book block carries `book_event_id` and each outcome `book_outcome_id` (the book's own
+  ids); `includeLinks=true` adds the book's event page (docs: "BetMGM" among the books with a verified link
+  template). Neither costs a request or changes the reply's shape for other callers (both fields are null unless asked).
+- **The Odds API** carries `betmgm` too (its fallback role is unchanged).
+- **CrazyNinjaOdds** lists BetMGM as a book (`site_id=4`, column `MGM`), so its Positive EV page works for BetMGM.
+
+### 25.2 Decision: a second app from the same code, one book per app
+- **Vigilant MGM** (`com.tjshea.vigilant.betmgm`, module `mgm`) compiles `app`'s own sources and resources with
+  `BuildConfig.BOOK = "betmgm"`; `app` sets `"novig"`. `AppBook` switches every book-specific part. A copied fork was
+  rejected: it drifts (CLAUDE.md's "duplicated normalizer" lesson). A runtime switch inside Vigilant was rejected: it
+  would mix placed bets, tracked bets, CNO caches and keys between books and put BetMGM code paths in the Novig app.
+- **Nothing scans both at once**: each app scans its own book on its own tap. **No request is made for BetMGM**: it is
+  asked for alongside the reference books in the same PropLine/The Odds API calls (always first in the book list, so
+  The Odds API's 10-book region never drops it), split off as the board, and never counted in its own fair line.
+- Scanning in both apps spends each app's own requests (both can use the same PropLine key: its meter reads PropLine's
+  own daily headers, so both apps' meters stay right; PinnWire/pinnapi count locally, so two apps on one key each see
+  only their own calls).
+
+### 25.3 Built (v0.17.0)
+- `data/book/`: `Sportsbook` (NOVIG, BETMGM), `BookBoard` (the book's quotes → a Novig-shaped board: one event per
+  game, one market per line, exact posted prices via `NovigBook.posted`, no fee; later feeds' games matched and turned
+  to the board's home/away), `SportsbookScanner` (same `OddsScanner` interface as `Scanner`: game lines in parallel,
+  The Odds API after PropLine, props for the book's games once its board is in, same re-use/freshness rules; the
+  book's own quote ages its EV like the others, `BookBoard.withBookAges`; recheck = one PropLine request per league),
+  `BetMgmLinks` (bet slip `sports.<state>.betmgm.com/en/sports?options=<fixture>-<market>-<option>` from BetMGM's
+  documented deep-link format when the ids spell it out; else the game page; else BetMGM's home).
+- `PropLineClient(relayNovig, bookIds)`: Novig's relay off and book ids on for Vigilant MGM only; Vigilant's requests
+  are byte-for-byte as before (`SportsbookScannerTest` "Novig's scan is untouched").
+- App: order book, maker bid, depth, Novig key, Novig's live prices and catalog, Novig meter and per-line read limits
+  are Vigilant-only; BetMGM state picker; CNO view defaults to `site_id=4`; CNO's live-fee adjustment only on Novig rows.
+- **Not verified live:** PropLine's demo key was at its daily cap all session, so the exact shape of BetMGM's
+  `book_outcome_id` (market-option pair vs. option alone) is unknown; the link builder accepts either and falls back to
+  the game page. First real scan with Tj's key settles it.

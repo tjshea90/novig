@@ -291,6 +291,14 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
 
 ## Locked architecture decisions
 
+- **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
+  `com.tjshea.vigilant.betmgm` ("Vigilant MGM"), built by module `mgm` from `app`'s OWN sources and resources
+  (never a copy) with `BuildConfig.BOOK = "betmgm"`; `app` sets `"novig"` and stays `com.tjshea.vigilant`.
+  `AppBook` is the one switch for everything book-specific. Both applicationIds are permanent (keystore rules
+  below), both sign with the same committed keystore, and both share one versionCode/versionName (read from
+  `app/build.gradle.kts`). BetMGM's prices ride in the PropLine / The Odds API calls that fetch the fair line
+  (no request just for BetMGM) and never price their own fair line. Each app scans only its own book.
+
 - **Novig data comes from Novig's official v3 API. Read
   [`NOVIG_API.md`](NOVIG_API.md) before touching any Novig client code.**
   (2026-09-25: Tj has beta access.) Public no-key routes cover the catalog and
