@@ -187,6 +187,8 @@ object MiniWindow {
         if (state.livePrice(row, now) == null) return base
         val live = state.livePick(pick, now)
         return base.copy(
+            // The bet at Novig's price now: its Books view, tap and marks see that price (keys don't change).
+            cno = live,
             price = american(live.row.odds),
             ev = live.ev,
             available = live.row.available?.let { "$" + it.roundToInt() },

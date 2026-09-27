@@ -152,8 +152,8 @@ internal fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: S
         val view = books?.view
         // The newer price, as the row's ✓ judges it: the list's when it was read after the books.
         val check = if (pick != null && view != null) {
-            // The price shown (Novig's live one, when there is one).
-            CnoBooks.check(view, pick.row.copy(odds = item.cno.row.odds.let { o -> item.price.let { MiniWindow.parseAmerican(it) } ?: o }), pick.live, preferListOdds = listReadAtMs != null && listReadAtMs > view.fetchedAtMs)
+            // At the price shown ([MiniWindow.itemFor] carries Novig's live one when there is one).
+            CnoBooks.check(view, pick.row, pick.live, preferListOdds = listReadAtMs != null && listReadAtMs > view.fetchedAtMs)
         } else null
         val judged = pick?.row?.book?.let { CnoBooks.codeFor(it) } ?: CnoBooks.NOVIG
         Row(verticalAlignment = Alignment.CenterVertically) {
