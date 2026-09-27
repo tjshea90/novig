@@ -124,6 +124,15 @@ class ScreenshotTest {
         compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
     }
 
+    @Test fun settingsTakePinnWireAndPropLineKeys() {
+        screen { SettingsScreen(SampleScan.state(), {}) }
+        compose.onNodeWithText("PinnWire keys (game lines and player props)").assertExists()
+        compose.onNodeWithText("Add a PinnWire key").assertExists()
+        compose.onNodeWithText("PropLine").assertExists()
+        compose.onNodeWithText("Add a PropLine key").assertExists()
+        compose.onNodeWithText("Sportsbooks for fair odds", substring = true).assertExists()
+    }
+
     @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
     @Test fun usageMeters() = shoot("5b_usage_meters") {
         androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
@@ -134,8 +143,8 @@ class ScreenshotTest {
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
         screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
-        // Key 1 of each keyed provider is the one the next call uses.
-        compose.onAllNodesWithText("in use").assertCountEquals(2)
+        // Key 1 of each keyed provider (PinnWire, pinnapi, PropLine, The Odds API) is the one the next call uses.
+        compose.onAllNodesWithText("in use").assertCountEquals(4)
         compose.onNodeWithText("next").assertIsDisplayed()
         compose.onNodeWithText("142 requests today").assertIsDisplayed()
     }

@@ -146,6 +146,8 @@ object SampleScan {
             status = ScanStatus(scannedAtMs = NOW - 60_000, sources = if (withFair) sources else emptyList(), booksFetched = 14),
             oddsApiKeys = listOf("1234567890abcdef1234", "abcdefabcdefabcd5678"),
             pinnapiKeys = listOf("trial-key-sample-0001"),
+            pinnwireKeys = listOf("wire-key-sample-0001"),
+            proplineKeys = listOf("propline-sample-0001"),
             usage = usage(),
             bets = bets,
             loaded = true,
