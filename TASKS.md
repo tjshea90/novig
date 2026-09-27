@@ -2295,4 +2295,25 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       `cnoCandidates`, so the +EV feed, CNO tab, badges, mini window and widget all obey it; the Games board too.
       Display filter only (no scan or API change). Tests for each list.
 - [x] G2 (DONE: ScreenshotTest.theFeedCanShowOnlyGamesStartingSoon + 1c_feed_starts_within_24h.png looked at; MgmAppTest asserts no row in Vigilant MGM; chips say "Any time" ("Any" clashed with the odds cap).) UI: chip row on the +EV feed (next to the sort) + Settings; Vigilant only (hidden in Vigilant MGM). Screenshot check.
-- [ ] G3 Light tests, ckpt, ship, link.
+- [ ] G3 Light tests, ckpt, ship, link. (HELD 21:35Z: v0.17.1 not released yet; it now ships with H1-H4 below, Vigilant only.)
+
+## MGM dormant, CNO time picker, Maven 429s, full tests (Tj, 2026-09-27T21:34Z)
+
+> "1) from now on, everything in this repo and anything I ask you to do will always be for the regular vigilant app
+> for novig, unless I explicitly request something for novig mgm. Novig mgm should be dormant and no changes made at
+> all unless I ask for it. All future work and versions and GitHub releases will be for regular vigilant for novig
+> only unless I say otherwise.
+> 2) make sure on the app I can select the time periods 12h 24h 48h and anytime for the cno scanner and cno widget as well.
+> 3) research and figure out why Claude code very frequently gets maven central 429 errors. Find ways to fix this
+> online and let me know if there is anything I can do to fix it.
+> Run full tests and see how vigilant can be improved"
+
+- [ ] H1 Standing rule written into CLAUDE.md + BRIEF.md: all work/versions/releases are Vigilant (Novig) only; Vigilant
+      MGM frozen at v0.17.0, `mgm/` untouched. Build: `:mgm` included only on request (`-Pmgm`), release.yml builds and
+      attaches Vigilant's APK only, ci.yml uploads Vigilant's debug APK only.
+- [ ] H2 "Starts within" (Any time / 12h / 24h / 48h) selectable on the CNO tab and in the floating CNO widget
+      (same setting as the +EV tab). Tests.
+- [ ] H3 Research Maven Central 429s in Claude Code on the web; write findings + fixes (what Tj can do) into BRIEF.md
+      build trap 6 / RESEARCH, and apply any in-repo fix that's safe.
+- [ ] H4 Full tests per CLAUDE.md: floor, sweep, fixes with named tests, improvement list for Tj; then ship v0.17.1
+      (Vigilant only) with G1-G2 + H1-H4, link.

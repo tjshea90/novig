@@ -1,21 +1,23 @@
-# CHECKPOINT 530 — read me first, then TASKS.md
+# CHECKPOINT 531 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T21:29:45Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-game-time-filter-tkml0n` · **builds on:** `0936ecc` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T21:35:20Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-game-time-filter-tkml0n` · **builds on:** `f57fd03` (this checkpoint is the commit after it)
 
 ## Just done
-v0.17.1 shipped to main via ship.sh (619 tests green locally); CI run 36351838536 re-running (attempt 2)
+Wrote Tj's 4 requests into TASKS.md (H1-H4); held v0.17.1's release (deleted the 21:45 check-in) so it ships with them, Vigilant only
 
 ## Do this next
-When CI 36351838536 is green: trigger release.yml on main, confirm tag v0.17.1, bash tools/record-release.sh v0.17.1 33 "<ship note>", tick G3, send Tj the Release link
+H1: MGM dormant: settings.gradle.kts -Pmgm, release.yml/ci.yml Vigilant only, CLAUDE.md/BRIEF.md rule
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  fb0f8bb ckpt 530: v0.17.1 shipped to main via ship.sh (619 tests green locally); CI run 36351838
   0936ecc ckpt 529: pre-release: v0.17.1: 'Starts within' filter in Vigilant (Any time / 12h / 24h
   80596f1 ckpt 528: G1+G2: start-time window (Any/12/24/48h) on feed, CNO, Games, widgets, notific
   5d4dc1d ckpt 527: Wrote Tj's game start-time filter request into TASKS.md (G1-G3)
@@ -25,3 +27,6 @@ When CI 36351838536 is green: trigger release.yml on main, confirm tag v0.17.1, 
   55958db ckpt 523: V3 app: AppBook (BuildConfig.BOOK) + mgm module (com.tjshea.vigilant.betmgm, c
   56eb079 ckpt 522: V1 data layer + V2 links: data/book (Sportsbook, BookBoard, SportsbookScanner,
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
