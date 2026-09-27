@@ -42,7 +42,7 @@ class LiveNovigBetFinderTest {
             val tag = when (found) { is NovigBetFinder.Found.Bet -> "BET "; is NovigBetFinder.Found.Game -> "GAME"; null -> "NONE" }
             println("LIVE FIND $tag ${row.league} | ${row.market} | ${row.bet} | ${row.event} -> ${found?.link}")
             // Ground truth for exact finds: CNO's own link names the outcome (paced like the app).
-            if (found is NovigBetFinder.Found.Bet && checked < 25 && row.betUrl != null) {
+            if (found is NovigBetFinder.Found.Bet && checked < 80 && row.betUrl != null) {
                 delay(1_500)
                 val truth = runCatching { cno.novigLink(row) }.getOrNull()
                 val truthId = truth?.removePrefix("novigapp://events/")?.removePrefix("https://novig.com/events/")?.substringBefore('/')
