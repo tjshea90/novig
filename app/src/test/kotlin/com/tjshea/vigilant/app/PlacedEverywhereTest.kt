@@ -37,6 +37,7 @@ class PlacedEverywhereTest {
     fun `a bet placed on CNO's widget leaves Vigilant's +EV feed and widget`() {
         assertTrue(vigilant.indexed(now).feed.any { it.key == o.key }) // listed before
         val after = vigilant.copy(placed = listOf(cnoMark())).indexed(now)
+        vigilant.feed.forEach { f -> println("DBG ${f.key} | ${f.event.description} | ${f.marketLabel} | ${f.selection} | ${f.event.startsTs} | ${com.tjshea.vigilant.data.tracker.PlacedIndex.identity(f.event.description, f.marketLabel, f.selection)}") }
         assertFalse(after.feed.any { it.key == o.key })
         val widget = after.copy(settings = after.settings.copy(scanner = ScannerMode.VIGILANT))
         assertFalse(MiniWindow.items(widget, now).any { it.key == o.key })
