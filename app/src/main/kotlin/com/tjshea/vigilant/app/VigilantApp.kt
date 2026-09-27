@@ -32,6 +32,7 @@ import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.teams.PlayerTeams
 import com.tjshea.vigilant.data.teams.TeamsCache
+import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.PlacedBets
 import com.tjshea.vigilant.data.tracker.PlacedBook
@@ -107,6 +108,23 @@ class AppContainer(app: Application) {
         linkStore = JsonFileStore(File(app.filesDir, "cno_links.json"), CnoLinks.serializer(), { CnoLinks() }, json),
         // Bet links from Novig's catalog first, so taps don't depend on CNO answering (Tj, 2026-09-27).
         catalog = { row -> (betFinder.find(row) as? NovigBetFinder.Found.Bet)?.link },
+    )
+
+    /**
+     * Settles tracked bets from Novig's catalog (WIN / LOSS / PUSH / fair value): on app open, on
+     * the Tracker tab, and every 3 h in the background ([SettleWorker]). Reads only for open bets
+     * whose game started over an hour ago.
+     */
+    val settler = BetSettler(
+        tracker,
+        market = { id -> novig.market(id) },
+        resolve = { b ->
+            val row = com.tjshea.vigilant.data.cno.CnoRow(
+                ev = 0.0, startsAtMs = b.startsTs, league = b.league, event = b.eventName, market = b.marketLabel,
+                bet = b.selection, odds = b.american ?: 100, book = b.book,
+            )
+            betFinder.findEnded(row)?.let { f -> f.marketId?.let { it to f.outcomeId } }
+        },
     )
 
     /** Novig's price now for CNO's listed bets, from Novig's order books (only while CNO's list is on screen). */
