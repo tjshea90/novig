@@ -1985,3 +1985,8 @@ Also notice the refresh symbol in this screenshot. Sometimes it is getting stuck
 ```
 When I click on bets, sometimes they pull up the novig bet slip, but sometimes they don't. It may be because it says cno could not be reached. Figure out and fix both problems, I think cno is restricting or slowing me down. 
 ```
+
+## 2026-09-27T00:08:07Z
+```
+Do this all in addition to everything else I asked before
+```
