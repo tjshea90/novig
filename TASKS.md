@@ -2308,7 +2308,7 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
 > online and let me know if there is anything I can do to fix it.
 > Run full tests and see how vigilant can be improved"
 
-- [ ] H1 Standing rule written into CLAUDE.md + BRIEF.md: all work/versions/releases are Vigilant (Novig) only; Vigilant
+- [x] H1 (DONE: CLAUDE.md "Vigilant MGM is dormant" section + BRIEF.md; settings.gradle.kts includes :mgm only with -Pmgm (checked: `gradlew projects` lists app/data/engine, with -Pmgm also mgm); release.yml builds, verifies and attaches vigilant-vX.apk only; ci.yml uploads app debug APK only; mgm/ untouched.) Standing rule written into CLAUDE.md + BRIEF.md: all work/versions/releases are Vigilant (Novig) only; Vigilant
       MGM frozen at v0.17.0, `mgm/` untouched. Build: `:mgm` included only on request (`-Pmgm`), release.yml builds and
       attaches Vigilant's APK only, ci.yml uploads Vigilant's debug APK only.
 - [ ] H2 "Starts within" (Any time / 12h / 24h / 48h) selectable on the CNO tab and in the floating CNO widget
