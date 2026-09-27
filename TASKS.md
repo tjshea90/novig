@@ -2061,7 +2061,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         providers); full floor 512 tests green 2026-09-27 ~07:30Z) App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
         PropLine, source list/FeedScreen hints, SOURCE_ORDER, requestKey, maxFairAgeMs, planFor book
         filter for propline. Screenshot test for the Settings sources section.
-- [x] P4 (DONE 2026-09-27 ~08:30Z. Found and fixed, each with a test that fails on the old code:
+- [x] P4 (DONE 2026-09-27 ~07:05Z. Found and fixed, each with a test that fails on the old code:
       (1) settle broken: Novig forgets finished games (N7) -> P4a score feeds, live 8/8; (2) planning
       re-tokenized team names on every comparison: TeamMatcher cache, 165 ms -> 16 ms per plan for 61
       NCAAF games x 4 feeds (`TeamMatcherTest` "a name is tokenized once"); (3) Novig's board failed
@@ -2083,5 +2083,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       moneyline, spread, total, team total, 1st half / F5 / 1st inning from line scores) and ESPN's box
       score (player props: the stats Novig lists), no key; Novig's catalog kept first for FMV/void.
       `data/tracker/EspnResults` + BetSettler wiring; tests from real ESPN replies (fixtures).
-- [ ] P5 Full regression (exit code AND output), screenshots looked at, ckpt, ship, release, record,
+- [ ] P5 (floor DONE 2026-09-27 ~07:10Z: 528 tests, 0 failures, 8 skipped live, exit 0; assembleRelease OK 5.5 MB;
+      49 screenshots, settings/meters/tracker looked at. Next: CI green on head, ship.sh, release.yml v0.16.0 code 27,
+      record, link) Full regression (exit code AND output), screenshots looked at, ckpt, ship, release, record,
       send link + findings.
