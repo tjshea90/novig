@@ -32,7 +32,7 @@ object CnoNetwork {
      * the list's own reads (every few seconds) keep one warm while the scanner is on screen.
      * DNS remembers CNO's last address for when the phone's DNS fails ("unable to resolve").
      */
-    fun client(base: OkHttpClient, dns: Dns = RememberingDns()): OkHttpClient = base.newBuilder()
+    fun client(base: OkHttpClient, dns: Dns = RememberingDns(fallback = DnsOverHttps(base))): OkHttpClient = base.newBuilder()
         .connectionPool(ConnectionPool(2, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS))
         .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .callTimeout(30, TimeUnit.SECONDS)
@@ -42,12 +42,15 @@ object CnoNetwork {
 }
 
 /**
- * The system's DNS, with the last good answer per host kept for [keepMs]: when the phone's DNS
- * fails for a moment (a network switch, a VPN reconnecting, a flaky mobile resolver), the host is
- * still at the address it was at a minute ago. CNO's record changes rarely (TTL one hour).
+ * DNS that doesn't give up (Tj, 2026-09-27: "unable to resolve cno"). The phone's own DNS first
+ * (fast, cached by Android); when it fails (a network switch, a VPN reconnecting, a flaky mobile
+ * resolver), [fallback] (DNS over HTTPS to Cloudflare or Google, which doesn't depend on the
+ * phone's resolver); when that fails too, the last good answer, kept for [keepMs]. CNO's record
+ * changes rarely (TTL one hour).
  */
 class RememberingDns(
     private val system: Dns = Dns.SYSTEM,
+    private val fallback: Dns? = null,
     private val keepMs: Long = 24 * 60 * 60_000L,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : Dns {
@@ -55,10 +58,88 @@ class RememberingDns(
 
     private val known = ConcurrentHashMap<String, Known>()
 
-    override fun lookup(hostname: String): List<InetAddress> = try {
-        system.lookup(hostname).also { if (it.isNotEmpty()) known[hostname] = Known(it, clock()) }
-    } catch (e: UnknownHostException) {
-        known[hostname]?.takeIf { clock() - it.atMs < keepMs }?.addresses ?: throw e
+    override fun lookup(hostname: String): List<InetAddress> {
+        val first = try {
+            system.lookup(hostname)
+        } catch (e: UnknownHostException) {
+            val second = fallback?.let { runCatching { it.lookup(hostname) }.getOrNull() }
+            if (second.isNullOrEmpty()) {
+                return known[hostname]?.takeIf { clock() - it.atMs < keepMs }?.addresses ?: throw e
+            }
+            second
+        }
+        if (first.isNotEmpty()) known[hostname] = Known(first, clock())
+        return first
+    }
+}
+
+/**
+ * DNS over HTTPS (Cloudflare's 1.1.1.1, then Google's 8.8.8.8), for when the phone's own DNS
+ * fails. The resolvers are reached at their fixed addresses, so asking them needs no DNS itself;
+ * TLS still checks their certificates by name. Answers are kept for their TTL (at most an hour).
+ * Only the host name being looked up is sent (crazyninjaodds.com), nothing about the user.
+ */
+class DnsOverHttps(
+    base: OkHttpClient,
+    private val clock: () -> Long = System::currentTimeMillis,
+) : Dns {
+    private val http: OkHttpClient = base.newBuilder()
+        .connectTimeout(3, TimeUnit.SECONDS)
+        .readTimeout(3, TimeUnit.SECONDS)
+        .callTimeout(5, TimeUnit.SECONDS)
+        .dns(object : Dns {
+            override fun lookup(hostname: String): List<InetAddress> =
+                RESOLVERS[hostname]?.map { InetAddress.getByName(it) } ?: Dns.SYSTEM.lookup(hostname)
+        })
+        .build()
+
+    private class Answer(val addresses: List<InetAddress>, val untilMs: Long)
+
+    private val answers = ConcurrentHashMap<String, Answer>()
+
+    override fun lookup(hostname: String): List<InetAddress> {
+        answers[hostname]?.takeIf { it.untilMs > clock() }?.let { return it.addresses }
+        for (url in listOf("https://cloudflare-dns.com/dns-query", "https://dns.google/resolve")) {
+            val found = runCatching { ask(url, hostname) }.getOrNull() ?: continue
+            if (found.first.isNotEmpty()) {
+                answers[hostname] = Answer(found.first, clock() + found.second.coerceIn(30, 3_600) * 1000L)
+                return found.first
+            }
+        }
+        throw UnknownHostException("$hostname: DNS over HTTPS didn't answer either")
+    }
+
+    /** The A records for [host] from one resolver's JSON API, and their TTL in seconds. */
+    private fun ask(url: String, host: String): Pair<List<InetAddress>, Int>? {
+        val request = okhttp3.Request.Builder()
+            .url("$url?name=$host&type=A")
+            .header("Accept", "application/dns-json")
+            .build()
+        val body = http.newCall(request).execute().use { if (it.isSuccessful) it.body?.string() else null } ?: return null
+        return parse(body)
+    }
+
+    companion object {
+        /** The resolvers' own fixed addresses. */
+        private val RESOLVERS = mapOf(
+            "cloudflare-dns.com" to listOf("1.1.1.1", "1.0.0.1"),
+            "dns.google" to listOf("8.8.8.8", "8.8.4.4"),
+        )
+
+        /** A DNS JSON reply (RFC 8427 style, both resolvers): the A records and the lowest TTL. */
+        fun parse(body: String): Pair<List<InetAddress>, Int>? = runCatching {
+            val root = kotlinx.serialization.json.Json.parseToJsonElement(body) as kotlinx.serialization.json.JsonObject
+            val answers = (root["Answer"] as? kotlinx.serialization.json.JsonArray).orEmpty()
+                .mapNotNull { it as? kotlinx.serialization.json.JsonObject }
+                .filter { (it["type"] as? kotlinx.serialization.json.JsonPrimitive)?.content == "1" }
+            val ips = answers.mapNotNull { a ->
+                (a["data"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.takeIf { IPV4.matches(it) }?.let { InetAddress.getByName(it) }
+            }
+            val ttl = answers.mapNotNull { (it["TTL"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull() }.minOrNull() ?: 300
+            ips to ttl
+        }.getOrNull()
+
+        private val IPV4 = Regex("""^\d{1,3}(\.\d{1,3}){3}$""")
     }
 }
 
