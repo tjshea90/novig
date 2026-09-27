@@ -1862,6 +1862,14 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       widget (best EV first). Add the switch in the widget itself ("+ Vigilant scan" on/off, i.e.
       Both ⇄ CNO only), show the same bet once when both scanners list it, and an opt-in "scan
       again every N min while the widget is open" (off by default: scans spend API quotas).
+      Done: top-bar switch "CNO only" / "Both" (`ScreenshotTest.theWidgetsTopBarSwitchesVigilantsScanOnAndOff`;
+      switching on scans at once when the last scan is missing or >5 min old, `WidgetRescanTest`);
+      a bet both scanners list (same Novig outcome via CNO's link) shows once as Vigilant's row
+      tagged "CNO +x%", with CNO's books/✓/team (`MiniWindowTest` "a bet both scanners list shows
+      once…", `ScreenshotTest.theWidgetWithBothListsABetBothScannersFoundOnce`); placed/removed
+      from either side hides both (`MiniWindowTest` "marking a bet both scanners list placed…",
+      `PlacedBetsTest` aliases); Settings › Mini window "Vigilant's scan again while the widget is
+      open: Off/5/10/15/30 min" (`WidgetRescanTest`, `settingsOfferVigilantsScanAgainWhileTheWidgetIsOpen`).
 - [ ] L3 CNO under load: measure CNO under rapid refreshing (latency, errors, compression) from
       here; build what helps (list and taps independent of CNO's speed; Novig's own live price for
       listed CNO bets so a slow CNO doesn't leave stale prices); write up DNS / VPN / relay /
