@@ -27,10 +27,13 @@ object BetGrader {
     }
 
     /** What [bet] is on, or null when its wording can't be read for certain. */
-    fun pickOf(bet: TrackedBet): Pick? {
-        val market = bet.marketLabel.trim()
+    fun pickOf(bet: TrackedBet): Pick? = pickOf(bet.marketLabel, bet.selection)
+
+    /** What a bet on [marketLabel] ("Player Receptions", "Spread") and [selection] ("Brock Bowers Under 4.5") is. */
+    fun pickOf(marketLabel: String, selection: String): Pick? {
+        val market = marketLabel.trim()
         val lower = market.lowercase()
-        val (who, line) = Picks.split(bet.selection.trim())
+        val (who, line) = Picks.split(selection.trim())
         if (lower.contains("3-way") || lower.contains("3 way")) return null
         val period = when {
             Regex("1st inning|first inning|nrfi|yrfi").containsMatchIn(lower) -> Period.FIRST_INNING

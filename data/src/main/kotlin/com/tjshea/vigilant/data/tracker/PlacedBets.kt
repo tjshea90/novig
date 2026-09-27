@@ -33,6 +33,11 @@ data class PlacedBet(
      * once): marked there too, so it can't come back from either list.
      */
     val aliases: List<String> = emptyList(),
+    /** Its game ("Houston Texans @ Indianapolis Colts") and market ("Player Receptions"), since v0.16.2. */
+    val event: String = "",
+    val market: String = "",
+    /** Novig's outcome id when known (Vigilant's bets; CNO's once its Novig link is known), since v0.16.2. */
+    val outcomeId: String? = null,
 ) {
     /** Every key this mark hides. */
     val keys: List<String> get() = listOf(key) + aliases
