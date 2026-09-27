@@ -32,6 +32,7 @@ import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.teams.PlayerTeams
 import com.tjshea.vigilant.data.teams.TeamsCache
+import com.tjshea.vigilant.data.tracker.BetRecheck
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.PlacedBets
@@ -126,6 +127,19 @@ class AppContainer(app: Application) {
             betFinder.findEnded(row)?.let { f -> f.marketId?.let { it to f.outcomeId } }
         },
     )
+
+    /**
+     * The Tracker's "Check odds now": each open CNO bet's game page re-read through [cno] (its pace;
+     * nothing while CNO asked for a pause), judged against what the bet cost.
+     */
+    val recheck = BetRecheck(tracker, books = { row ->
+        if ((cno.state.value.pausedUntilMs ?: 0L) > System.currentTimeMillis()) {
+            null
+        } else {
+            cno.loadBooks(row, force = true)
+            cno.books.value[row.key]?.takeIf { it.error == null }?.view
+        }
+    })
 
     /** Novig's price now for CNO's listed bets, from Novig's order books (only while CNO's list is on screen). */
     val live = NovigLive(novig, { row -> betFinder.find(row) })

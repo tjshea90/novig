@@ -85,6 +85,8 @@ data class UiState(
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
+    /** The Tracker's "Check odds now" is running. */
+    val checkingOdds: Boolean = false,
     val loaded: Boolean = false,
     val novig: NovigUi = NovigUi(),
     /** CrazyNinjaOdds' +EV list (its own tab, and the mini window). */
@@ -723,6 +725,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val report = runCatching { withContext(Dispatchers.IO) { c.settler.run() } }.getOrNull() ?: return@launch
             if (report.settled > 0) _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from Novig's results")
+        }
+    }
+
+    /**
+     * "Check odds now" (Tj, 2026-09-27): every open CNO bet's books read again for its EV now.
+     * Vigilant's own bets update with each scan ([com.tjshea.vigilant.data.tracker.BetTracker.observe]).
+     */
+    fun checkOdds() {
+        if (_state.value.checkingOdds) return
+        _state.update { it.copy(checkingOdds = true) }
+        viewModelScope.launch {
+            val report = runCatching { c.recheck.run() }.getOrNull()
+            _state.update { it.copy(checkingOdds = false) }
+            _toasts.tryEmit(
+                when {
+                    report == null -> "Couldn't check the odds"
+                    report.checked == 0 -> "No open CNO bets to check (Vigilant's own update with each scan)"
+                    report.updated == 0 -> "CrazyNinjaOdds didn't answer: try again in a minute"
+                    else -> "Checked ${report.updated} of ${report.checked} open bet${if (report.checked == 1) "" else "s"}"
+                },
+            )
         }
     }
 
