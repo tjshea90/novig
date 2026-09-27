@@ -33,6 +33,8 @@ data class SourceReport(
     /** Novig games it matched. */
     val matched: Int,
     val error: String?,
+    /** Leagues a fallback source wasn't asked for: the API it backs up had already given them (RESEARCH.md §23). */
+    val standingBy: Int = 0,
 )
 
 /** What a [Scanner.recheck] read: [read] books refreshed, [failed] not (shown as they were). */
@@ -99,6 +101,9 @@ class Scanner(
 
     /** Latest snapshot per `"$sourceId|$league"`. */
     private val references = HashMap<String, Cached>()
+
+    /** The `"$sourceId|$league"` keys answered this scan (fetched, re-used or partly): what a fallback may lean on. */
+    private val answered = HashSet<String>()
     private var creditsRemaining: Int? = null
     /** Plans cached by what went into them: key true = only fair odds young enough to show. */
     private val plans = HashMap<Boolean, Pair<Any, Plan>>()
@@ -134,21 +139,28 @@ class Scanner(
         progress.emit()
         val pump = BookPump(settings, now, progress, onPartial)
 
+        synchronized(answered) { answered.clear() }
         val sourceReports = coroutineScope {
             val catalogJob = async {
                 refreshCatalog(settings, catalogTypes(settings, ordered), now, errors)
                 progress.fairDone()
             }
-            val jobs = ordered.map { source ->
-                async {
-                    // A source that picks its games from Novig's board waits for the board.
-                    val context = if (source.needsCatalog) {
+            // First choices start at once; a fallback (RESEARCH.md §23) waits for the source it backs up.
+            val jobs = HashMap<String, kotlinx.coroutines.Deferred<SourceReport>>()
+            for (source in ordered.sortedBy { if (it.fallbackFor == null) 0 else 1 }) {
+                val first = source.fallbackFor?.let { jobs[it] }
+                jobs[source.id] = async {
+                    first?.await()
+                    // A source that picks its games from Novig's board waits for the board, and so
+                    // does a fallback (it's told which of Novig's games the first source covered).
+                    val context = if (source.needsCatalog || first != null) {
                         catalogJob.await()
-                        catalog?.let { ScanContext(it.events, it.markets, now) } ?: ScanContext(now = now)
+                        val board = catalog?.let { ScanContext(it.events, it.markets, now) } ?: ScanContext(now = now)
+                        if (first != null) covering(source.fallbackFor!!, leagues, board) else board
                     } else {
                         null
                     }
-                    fetchSource(source, leagues, settings, now, errors, context) {
+                    fetchSource(source, leagues, settings, now, errors, context, fallback = first != null) {
                         progress.fairDone()
                         pump.wake()
                     }
@@ -159,7 +171,7 @@ class Scanner(
                 catalogJob.await()
                 pump.run()
             }
-            val reports = jobs.awaitAll()
+            val reports = ordered.map { jobs.getValue(it.id) }.awaitAll()
             pump.fairOddsDone()
             pumpJob.await()
             reports
@@ -440,6 +452,27 @@ class Scanner(
         }
     }
 
+    /**
+     * What source [firstId] gave this scan, as a fallback's [ScanContext]: the leagues it answered
+     * (fresh or re-used) and, per Novig game it matched, which lines and prop stats it priced.
+     */
+    private fun covering(firstId: String, leagues: List<League>, board: ScanContext): ScanContext {
+        val covered = HashMap<String, MutableSet<String>>()
+        val answeredLeagues = HashSet<String>()
+        for (league in leagues) {
+            val key = "$firstId|${league.novigName}"
+            if (synchronized(answered) { key !in answered }) continue
+            answeredLeagues += league.novigName
+            val snap = synchronized(references) { references[key]?.snapshot } ?: continue
+            val games = board.novigEvents.filter { it.league == league.novigName }
+            for (m in Planner.matchEvents(games, listOf(snap))) {
+                val ref = m.refEvent ?: continue
+                covered.getOrPut(m.event.eventId) { HashSet() } += ref.markets.map { it.coverage }
+            }
+        }
+        return board.copy(covered = covered, firstAnswered = answeredLeagues)
+    }
+
     private suspend fun fetchSource(
         source: ReferenceSource,
         leagues: List<League>,
@@ -447,10 +480,12 @@ class Scanner(
         now: Long,
         errors: MutableList<String>,
         context: ScanContext?,
+        fallback: Boolean = false,
         onCall: () -> Unit,
     ): SourceReport {
         var fetched = 0
         var reused = 0
+        var standingBy = 0
         var error: String? = null
         val requestKey = requestKey(source, settings)
         val reuseMs = source.reuseMs(settings)
@@ -460,6 +495,7 @@ class Scanner(
             val have = synchronized(references) { references[key] }
             if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs) {
                 reused++
+                synchronized(answered) { answered += key }
                 onCall()
                 continue
             }
@@ -469,11 +505,19 @@ class Scanner(
                 continue
             }
             try {
+                // A fallback whose first choice already gave this league stands by: nothing spent,
+                // and its own last answer (if any) ages out as usual.
+                if (fallback && context != null && !source.needed(league, settings, context)) {
+                    standingBy++
+                    onCall()
+                    continue
+                }
                 // Stamped with our own clock: re-use windows (credits) must never depend on what
                 // time a provider claims it answered.
                 val snap = (if (context != null) source.odds(league, settings, context) else source.odds(league, settings))
                     .copy(fetchedAtMs = now, provider = source.id)
                 synchronized(references) { references[key] = Cached(snap, requestKey) }
+                synchronized(answered) { answered += key }
                 snap.creditsRemaining?.let { creditsRemaining = it }
                 fetched++
             } catch (e: CancellationException) {
@@ -481,6 +525,8 @@ class Scanner(
             } catch (e: PartialReferenceException) {
                 // What came back before the failure is kept; the failure is still reported.
                 synchronized(references) { references[key] = Cached(e.partial.copy(fetchedAtMs = now, provider = source.id), requestKey) }
+                // A fallback is told what did come back, and covers the rest.
+                synchronized(answered) { answered += key }
                 e.partial.creditsRemaining?.let { creditsRemaining = it }
                 fetched++
                 val message = e.message ?: source.displayName
@@ -501,7 +547,7 @@ class Scanner(
             }
             onCall()
         }
-        return SourceReport(source.id, source.displayName, fetched, reused, 0, error)
+        return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy)
     }
 
     /** What a snapshot was asked for; a different ask can't re-use it. */
