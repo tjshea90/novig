@@ -114,6 +114,8 @@ fun CnoScreen(
     onHide: (MiniWindow.Item) -> Unit = {},
     /** Undo, or "not placed after all" / "put it back". */
     onUnplace: (String) -> Unit = {},
+    /** Show only games starting within this many hours (0 = any time); the same setting as the +EV tab's. */
+    onStartsWithin: (Int) -> Unit = {},
     /** The bet (row key) whose Novig link is being found after "Open in Novig". */
     opening: String? = null,
     /** The pull-to-refresh arrow's state (tests look at it). */
@@ -225,6 +227,8 @@ fun CnoScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        // Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well".
+                        if (on) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
                         if (snap != null && CnoChecks.stuck(snap, now)) {
                             Banner("CrazyNinjaOdds hasn't updated its odds in ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} (it may be down). These prices are likely gone.")
                         }

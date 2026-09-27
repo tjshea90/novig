@@ -363,6 +363,18 @@ fun cnoErrorShort(error: String): String = when {
 }
 
 /** What an empty widget says. [floating]: its buttons always show, so no "tap the window". */
+/**
+ * The bets the widgets would list but for the start-time window ([com.tjshea.vigilant.data.scanner.ScanSettings.startsWithinHours]):
+ * Vigilant's current EVs and CNO's passing bets (not the ones Tj already has) on games starting later. 0 with the window off.
+ */
+internal fun laterCount(state: UiState, now: Long): Int {
+    val s = state.settings
+    if (s.startsWithinHours <= 0) return 0
+    val ours = if (MiniWindow.showsVigilant(s)) state.feed.count { !it.fairIsOld(now) && !s.startsInWindow(it.event.startsTs, now) } else 0
+    val theirs = if (MiniWindow.showsCno(s)) state.cnoPicks(now)?.picks.orEmpty().count { !s.startsInWindow(it.row.startsAtMs, now) && !state.hasCno(it.row) } else 0
+    return ours + theirs
+}
+
 internal fun emptyText(state: UiState, floating: Boolean = false, now: Long = System.currentTimeMillis()): String {
     val cno = state.cno
     val tap = if (floating) "Tap" else "Tap the window, then"
@@ -375,6 +387,8 @@ internal fun emptyText(state: UiState, floating: Boolean = false, now: Long = Sy
         // CNO's EVs rest on other books' prices: too old, and none are offered (RESEARCH.md §24).
         MiniWindow.showsCno(state.settings) && state.cnoTooOld(now) && !state.cno.refreshing ->
             "CrazyNinjaOdds' odds are over ${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} min old: hidden until it updates"
+        // Everything listed is on a game past the start-time window: say so, not "no +EV".
+        laterCount(state, now) > 0 -> "Nothing starting within ${state.settings.startsWithinHours}h · ${laterCount(state, now)} later"
         !MiniWindow.showsVigilant(state.settings) -> when {
             cno.refreshing -> "Reading CrazyNinjaOdds…"
             cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now"

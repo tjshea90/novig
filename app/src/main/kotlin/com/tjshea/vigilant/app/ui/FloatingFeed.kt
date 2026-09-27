@@ -92,6 +92,8 @@ class FloatingActions(
     val onLoadBooks: (CnoRow) -> Unit = {},
     /** The top bar's switch: which scanner the widget lists (Both, Vigilant only, CNO only). */
     val onScanner: (com.tjshea.vigilant.data.scanner.ScannerMode) -> Unit = {},
+    /** The top bar's start-time switch: only games starting within this many hours (0 = any time). */
+    val onStartsWithin: (Int) -> Unit = {},
 )
 
 /** Height of one bet in the floating widget: a comfortable touch target. */
@@ -177,6 +179,7 @@ fun FloatingFeed(
                     overflow = TextOverflow.Ellipsis,
                 )
                 ScannerSwitch(state.settings.scanner, onPick = actions.onScanner)
+                StartsWithinSwitch(state.settings.startsWithinHours, onPick = actions.onStartsWithin)
                 if (items.isNotEmpty()) {
                     Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(start = 6.dp, end = 2.dp))
                 }
@@ -433,6 +436,43 @@ private fun ScannerSwitch(mode: com.tjshea.vigilant.data.scanner.ScannerMode, on
         )
     }
 }
+
+/**
+ * The start-time window, flipped right there (Tj, 2026-09-27: "select the time periods 12h 24h 48h and
+ * anytime for the cno scanner and cno widget as well"): each tap moves to the next of Any time → 12h →
+ * 24h → 48h. The same setting as the +EV and CNO tabs' "Starts within" row.
+ */
+@Composable
+private fun StartsWithinSwitch(hours: Int, onPick: (Int) -> Unit) {
+    val next = nextStartsWithin(hours)
+    val description = "Showing games starting ${startsWithinWords(hours)}. Tap for ${startsWithinWords(next)}"
+    val on = hours > 0
+    Box(
+        Modifier.padding(start = 4.dp).height(32.dp).clickable(onClickLabel = description) { onPick(next) }.semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            startsWithinLabel(hours),
+            Modifier
+                .background(if (on) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, CircleShape)
+                .border(1.dp, if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (on) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
+    }
+}
+
+/** The widget's start-time switch order: Any time → 12h → 24h → 48h → Any time. */
+internal fun nextStartsWithin(hours: Int): Int {
+    val choices = com.tjshea.vigilant.data.scanner.ScanSettings.STARTS_WITHIN_CHOICES
+    return choices[(choices.indexOf(hours).coerceAtLeast(0) + 1) % choices.size]
+}
+
+private fun startsWithinWords(hours: Int) = if (hours <= 0) "at any time" else "within $hours hours"
 
 /** The widget switch's order: CNO only → Both → Vigilant only → CNO only. */
 internal fun nextScanner(mode: com.tjshea.vigilant.data.scanner.ScannerMode) = when (mode) {

@@ -190,6 +190,7 @@ class MainActivity : ComponentActivity() {
                     onUndoPlaced = { key -> vm.unmarkPlaced(key) },
                     onLoadBooks = { row -> vm.loadBooks(row) },
                     onScanner = { mode -> vm.setScanner(mode) },
+                    onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
                 ),
                 minimized = w.minimized,
                 opening = w.opening,
@@ -611,6 +612,7 @@ private fun CnoTab(
         onPlaced = vm::markPlaced,
         onHide = vm::markHidden,
         onUnplace = vm::unmarkPlaced,
+        onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
         opening = openingBet,
     )
 }
