@@ -10,7 +10,6 @@ import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.util.Rational
-import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoSnapshot
 import com.tjshea.vigilant.data.match.Picks
