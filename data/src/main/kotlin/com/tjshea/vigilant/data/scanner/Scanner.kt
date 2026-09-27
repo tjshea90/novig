@@ -508,6 +508,8 @@ class Scanner(
     private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropHours}"
+        "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
+        "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropHours}"
         else -> "${settings.families.sorted()}|${settings.exchangeMaxSpread}|${settings.daysAhead}"
     }
 
@@ -525,7 +527,7 @@ class Scanner(
                 SOURCE_ORDER.filter { it in enabled }.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot }
             }
         }.filter { !youngFairOnly || fairAsOf - it.fetchedAtMs <= maxFairAgeMs(it.provider, settings) }
-        // The Odds API's books follow the reference-book picker, even between scans.
+        // The sportsbook feeds' books follow the reference-book picker, even between scans.
         val books = settings.referenceBooks.toSet()
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
@@ -534,7 +536,7 @@ class Scanner(
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
         val filtered = refs.map { snap ->
-            if (snap.provider != "oddsapi" && snap.provider != "oddsapi_props") snap
+            if (snap.provider !in PICKED_BOOK_FEEDS) snap
             else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
         return Planner.plan(cat.events, cat.markets, filtered, settings, now, pinned).also { plans[youngFairOnly] = inputs to it }
@@ -567,7 +569,10 @@ class Scanner(
 
     companion object {
         /** Merge order: when two feeds carry the same book, the earlier one's quote is priced. */
-        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "oddsapi", "oddsapi_props")
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "propline", "oddsapi", "propline_props", "oddsapi_props")
+
+        /** Sportsbook feeds whose books follow the reference-book picker in Settings. */
+        private val PICKED_BOOK_FEEDS = setOf("oddsapi", "oddsapi_props", "propline", "propline_props")
 
         private val MAIN_TYPES = (MarketFamily.MONEYLINE.novigTypes + MarketFamily.SPREAD.novigTypes + MarketFamily.TOTAL.novigTypes).toSet()
 

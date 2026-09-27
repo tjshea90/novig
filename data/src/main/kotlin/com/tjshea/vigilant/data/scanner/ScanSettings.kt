@@ -72,6 +72,11 @@ data class ScanSettings(
     val useKalshi: Boolean = true,
     /** The Odds API (500 credits/month free). */
     val useOddsApi: Boolean = true,
+    /**
+     * PropLine (1,000 requests a day free, RESEARCH.md §22): every reference sportsbook's game lines
+     * each scan, and their player props per game when [useBookProps] is on. Needs a key in Settings.
+     */
+    val usePropLine: Boolean = true,
     /** Re-use The Odds API's last odds for this long instead of paying credits on every scan. */
     val oddsApiReuseMinutes: Int = 15,
     /**
@@ -240,6 +245,8 @@ data class ScanSettings(
             if (useKalshi) add("kalshi")
             if (useOddsApi) add("oddsapi")
             if (useOddsApi && useBookProps) add("oddsapi_props")
+            if (usePropLine) add("propline")
+            if (usePropLine && useBookProps) add("propline_props")
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
