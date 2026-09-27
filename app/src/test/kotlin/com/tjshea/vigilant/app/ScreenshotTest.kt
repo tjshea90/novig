@@ -1036,6 +1036,8 @@ class ScreenshotTest {
         compose.onNodeWithText("+9.7%", useUnmergedTree = true).assertExists()
     }
 
+    // Tall enough for every card under the CNO tab's header (its "Starts within" row since v0.17.1).
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun cnoCardShowsNovigsPriceNowAndWhatCnoHad() {
         val jj = SampleCno.rows[1]
         val s = SampleCno.state().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(105, 40.0, 0.004, SampleScan.NOW - 5_000)))
@@ -1064,6 +1066,8 @@ class ScreenshotTest {
     }
 
     /** At Novig's price now a bet can fall under the minimum: the CNO tab warns, as the widget does. */
+    // Tall enough for every card under the CNO tab's header (its "Starts within" row since v0.17.1).
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun cnoCardWarnsWhenNovigsPriceNowIsUnderTheMinimum() {
         val jj = SampleCno.rows[1]
         val s = SampleCno.state().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(105, 40.0, 0.004, SampleScan.NOW - 5_000)))
