@@ -65,7 +65,9 @@ data class ScanReport(
  *  2. Fair odds from every enabled [ReferenceSource], providers in parallel, leagues one at a time
  *     within a provider. A metered provider (The Odds API credits, pinnapi's 100/day) is re-used
  *     for its [ReferenceSource.reuseMs]. A failed call keeps the previous snapshot while it's
- *     younger than the stale limit, so one hiccup doesn't blank the feed.
+ *     younger than the stale limit, so one hiccup doesn't blank the feed. Where two providers carry
+ *     the same books, the second is only a fallback ([ReferenceSource.fallbackFor], RESEARCH.md §23):
+ *     it waits for the first, is told what that one gave, and is called only for the rest.
  *  3. Plan: match games, choose which Novig markets to price (capped per game).
  *  4. Novig books for the plan, paced by [NovigSource.books] to stay under Novig's rate limits.
  *
