@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.FeedScreen
@@ -96,7 +97,7 @@ class MgmAppTest {
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
         compose.onAllNodesWithText("Most Novig prices per scan", substring = true).assertCountEquals(0)
         compose.onAllNodesWithText("Novig's price now").assertCountEquals(0)
-        compose.onNodeWithText("NJ").performClick()
+        compose.onNodeWithText("NJ").performScrollTo().performClick()
         assertEquals("nj", saved?.bookState)
     }
 
