@@ -268,13 +268,27 @@ class FloatingWidget(
             canPinch = { !minimized },
         )
 
-        override fun onInterceptTouchEvent(ev: MotionEvent): Boolean = handle(ev)
-
-        @SuppressLint("ClickableViewAccessibility")
-        override fun onTouchEvent(ev: MotionEvent): Boolean {
-            // Only reached for touches the list didn't take (the frame, the top bar) or once the
-            // widget took the gesture over: keep receiving the rest of it.
-            handle(ev)
+        /**
+         * Every touch comes here first. Once a move, resize or pinch takes over, the list gets one
+         * cancel and nothing more of that touch; until then everything goes to the list as usual.
+         * (Not onInterceptTouchEvent: a scrolling list asks its parents not to intercept, which
+         * would stop a second finger from turning a scroll into a pinch.)
+         */
+        override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+            val wasOurs = gestures.active
+            val ours = handle(ev)
+            if (ours) {
+                val ending = ev.actionMasked == MotionEvent.ACTION_UP || ev.actionMasked == MotionEvent.ACTION_CANCEL
+                if (!wasOurs && !ending) {
+                    val cancel = MotionEvent.obtain(ev).apply { action = MotionEvent.ACTION_CANCEL }
+                    super.dispatchTouchEvent(cancel)
+                    cancel.recycle()
+                }
+                return true
+            }
+            super.dispatchTouchEvent(ev)
+            // Always true: the rest of this touch comes here even where the list takes no touches
+            // (the frame, the top bar's empty part), so they can drag the widget.
             return true
         }
 
