@@ -268,7 +268,7 @@ unless Tj asks).
   bar, tap = Novig bet slip, ✓ placed + Undo, hold = books, drag/resize/bubble), `data/cno/CnoWatch`
   + `MainViewModel.watchCno` (tab / pip / overlay), `CnoFeed.keepBooksFresh` (green ✓ lane,
   `CnoBooks.agrees`), `data/teams/PlayerTeams` (ESPN rosters, `teams.json`),
-  `data/tracker/PlacedBets` (`placed.json`, ✓ placed and ✕ removed = `hidden`), `data/match/Picks`;
+  `data/tracker/PlacedBets` (`placed.json`, ✓ placed and ✕ removed = `hidden`), `data/tracker/PlacedIndex` (one "already placed" rule for the whole app: list key, Novig outcome id, or game + `BetGrader` pick within 12 h; `UiState.placedIndex`/`feedOf`/`indexed`, the widget, the mini window, `ScanService`'s counts), `data/match/Picks`;
   PiP fallback's Up/Down); reading CNO reliably and taps that always open Novig (RESEARCH.md §20.2:
   `data/cno/CnoNetwork` (`RememberingDns` + `DnsOverHttps` fallback, 20 s keep-alive, retry once,
   `CnoPace`), `CnoFeed.keepLinksFresh` (`cno_links.json`), `data/cno/TapLink` + `NovigBetFinder`
@@ -277,7 +277,7 @@ unless Tj asks).
   cancelled (`ScanService.cancelDone`)); bet slips without CNO and CNO under load (RESEARCH.md §20.3:
   `NovigBetFinder` catalog-first links (`CnoFeed.catalog`, `LiveNovigBetFinderTest`), `TapLink` race,
   `data/cno/NovigLive` (Novig's price now for CNO bets, `ScanSettings.cnoLivePrices`,
-  `UiState.livePick`, read for `UiState.livePriceRows` (candidates, never filtered by those prices)), widget switch Both / CNO only (`MainViewModel.setBothScanners`), one row per
+  `UiState.livePick`, read for `UiState.livePriceRows` (candidates, never filtered by those prices)), widget switch CNO only / Both / Vigilant only (`MainViewModel.setScanner`, `FloatingFeed.nextScanner`; the widget works in every mode, and Vigilant's bet sheet opens the exact bet slip, `OpportunitySheet.betSlipLink`), one row per
   bet both scanners list (`MiniWindow.merge`, `PlacedBet.aliases`), `ScanSettings.widgetRescanMinutes`
   (`WidgetRescan`), `LiveCnoBurstTest` (VIGILANT_BURST=1)); every bet tracked, settled and rechecked
   (TASKS.md N1–N5: every ✓ logs a $1 `TrackedBet` (`BetTracker.logCno/track/untrack/importPlaced`,
