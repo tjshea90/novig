@@ -250,7 +250,7 @@ object MiniWindow {
             .setActions(
                 if (cnoOnly) {
                     listOf(
-                        if (tapsOnly && !books) action(REFRESH, R.drawable.ic_recheck, "Refresh")
+                        if (tapsOnly && !books) action(REFRESH, R.drawable.ic_scan, "Refresh")
                         else action(BOOKS, R.drawable.ic_books, if (books) "List" else "Books"),
                         action(UP, R.drawable.ic_up, "Up"),
                         action(DOWN, R.drawable.ic_down, "Down"),
