@@ -40,6 +40,7 @@ import com.tjshea.vigilant.app.R
 import com.tjshea.vigilant.app.ScanStatus
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.scanner.FeedSort
+import com.tjshea.vigilant.data.scanner.Freshness
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -102,8 +103,10 @@ fun FeedScreen(
                 item(key = "leagues") {
                     LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
                 }
-                item(key = "summary") { FeedSummary(state, now, onScan, onOpenSettings, onSort) { onRecheck(feedMarketIds(state)) } }
-                items(state.feed, key = { it.key }) { o ->
+                // Only EVs whose other books' prices are still current (RESEARCH.md §24).
+                val shown = state.feedAt(now)
+                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort) { onRecheck(feedMarketIds(state)) } }
+                items(shown, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
             }
@@ -126,6 +129,7 @@ fun FeedScreen(
 @Composable
 private fun FeedSummary(
     state: UiState,
+    shown: List<Opportunity>,
     now: Long,
     onScan: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -135,13 +139,13 @@ private fun FeedSummary(
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         UsageStrip(state)
         state.status.errors.take(3).forEach { Banner(it, color = Edge.colors.negative) }
-        val old = if (state.status.scanning) emptyList() else state.feed.filter { it.priceIsOld(now) }
+        val old = if (state.status.scanning) emptyList() else shown.filter { it.priceIsOld(now) }
         if (old.isNotEmpty()) {
             // Novig prices age: an edge from 20 minutes ago may be gone. Say so before Tj bets it,
             // and offer the few-second recheck rather than a whole scan.
             val oldest = old.mapNotNull { it.bookFetchedAtMs }.minOrNull()
             Banner(
-                (if (old.size == state.feed.size) "These prices are" else "${old.size} of these prices are") +
+                (if (old.size == shown.size) "These prices are" else "${old.size} of these prices are") +
                     " up to ${Format.age(oldest, now).removeSuffix(" ago")} old. Recheck them (a few seconds) or scan again before betting.",
                 action = if (state.status.rechecking) null else "Recheck",
                 onAction = onRecheck,
@@ -184,6 +188,13 @@ private fun FeedSummary(
                 action = "Fair odds settings",
                 onAction = onOpenSettings,
             )
+            state.feed.isNotEmpty() && shown.isEmpty() -> EmptyState(
+                "Odds too old to compare",
+                "The other books' prices behind these bets are over ${Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes old, so they're " +
+                    "hidden: they could show +EV that isn't there any more. Scan for current odds.",
+                action = "Scan now",
+                onAction = onScan,
+            )
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games. " +
@@ -192,7 +203,7 @@ private fun FeedSummary(
             else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "${state.feed.size} bet${if (state.feed.size == 1) "" else "s"} ≥ +${Format.percent(state.settings.minEvPercent)} EV · " +
+                        "${shown.size} bet${if (shown.size == 1) "" else "s"} ≥ +${Format.percent(state.settings.minEvPercent)} EV · " +
                             "${result.stats.outcomesWithFair} checked" + if (status.scanning) " so far" else "",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -265,7 +276,6 @@ fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
 fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val q = o.quote ?: return
     val fair = o.fairProbability ?: return
-    val refStale = o.fairUpdatedMs?.let { now - it > settings.staleReferenceMinutes * 60_000L } ?: false
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
@@ -282,7 +292,8 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                     modifier = Modifier.weight(1f),
                 )
                 if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
-                if (refStale) Text("stale fair", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                // Its other books' prices are nearly too old to show (they leave the feed at 5 minutes).
+                if (o.fairAsOfMs != null && now - o.fairAsOfMs > FAIR_AGING_MS) Text("odds aging", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -319,3 +330,6 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
         }
     }
 }
+
+/** A card says its odds are aging past this: the other books' prices are well on the way to [Freshness.MAX_QUOTE_AGE_MS]. */
+private const val FAIR_AGING_MS = 3 * 60_000L

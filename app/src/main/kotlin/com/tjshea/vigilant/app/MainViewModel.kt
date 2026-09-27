@@ -112,6 +112,13 @@ data class UiState(
      */
     val placedIndex: PlacedIndex = PlacedIndex.EMPTY,
 ) {
+    /**
+     * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
+     * (Tj, 2026-09-27: "The other sports books odds MUST be current or at most a few minutes old",
+     * RESEARCH.md §24). Every screen that offers Vigilant's bets shows this, not [feed].
+     */
+    fun feedAt(now: Long): List<Opportunity> = feed.filterNot { it.fairIsOld(now) }
+
     /** [r]'s +EV feed under these settings, without the bets Tj already has (Tj, 2026-09-27). */
     fun feedOf(r: ScanResult?): List<Opportunity> = r?.let { placedIndex.visible(it.feed(settings)) } ?: emptyList()
 
