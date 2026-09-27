@@ -2291,8 +2291,8 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
 
 > "for the regular version of the NoVig Vigilant app. Make it so I can add a filter to only show games that start within the next 24 hours or 12 hours or 48 hours."
 
-- [ ] G1 `ScanSettings.startsWithinHours` (0 = any, 12 / 24 / 48): applied at `now` in `UiState.feedAt` and
+- [x] G1 (DONE: StartsWithinTest (6): feed, widget, CNO list/shown/count text, Games board, clock, saved setting; ScanService counts use it too.) `ScanSettings.startsWithinHours` (0 = any, 12 / 24 / 48): applied at `now` in `UiState.feedAt` and
       `cnoCandidates`, so the +EV feed, CNO tab, badges, mini window and widget all obey it; the Games board too.
       Display filter only (no scan or API change). Tests for each list.
-- [ ] G2 UI: chip row on the +EV feed (next to the sort) + Settings; Vigilant only (hidden in Vigilant MGM). Screenshot check.
+- [x] G2 (DONE: ScreenshotTest.theFeedCanShowOnlyGamesStartingSoon + 1c_feed_starts_within_24h.png looked at; MgmAppTest asserts no row in Vigilant MGM; chips say "Any time" ("Any" clashed with the odds cap).) UI: chip row on the +EV feed (next to the sort) + Settings; Vigilant only (hidden in Vigilant MGM). Screenshot check.
 - [ ] G3 Light tests, ckpt, ship, link.

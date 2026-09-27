@@ -289,6 +289,10 @@ unless Tj asks).
   forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
   `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
   page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog; bets over ±6% EV when bet are outliers, left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`)).
+- **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
+  `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
+  Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV tab
+  (`FeedScreen` "Starts within" row) or in Settings › Scanner; display only, scans unchanged (`StartsWithinTest`).
 - **Vigilant MGM (v0.17.0+, RESEARCH.md §25):** the second app, module `mgm` (`com.tjshea.vigilant.betmgm`),
   compiles `app`'s own sources with `BuildConfig.BOOK = "betmgm"`; `app/AppBook` is the one switch (names, links,
   Novig-only parts off). Data side: `data/book/` (`Sportsbook`, `BookBoard`, `SportsbookScanner` behind
