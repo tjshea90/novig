@@ -2100,7 +2100,10 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > but had 'n' instead at path: $[0].bookmakers JSON input: ....._event_ids":null,"bookmakers":null},
 > {"home_team_key":"colts"....". (Same scan: "PropLine 33" games matched, so the league board parsed live.)
 
-- [ ] Q1 Cause: PropLine's `/v1/sports/{sport}/events` (the props source's game list) sends
+- [x] Q1 (DONE: PlEvent/PlBook/PlMarket/PlOutcome all optional, lenient Json, each game decoded alone;
+      `readableError` for banners. Tests: PropLineClientTest "PropLine's real game list, with null bookmakers…",
+      "props are bought from the real game list's ids", "nulls anywhere in a board…" (all 3 failed on v0.16.0),
+      "an unreadable reply shows a short plain message".) Cause: PropLine's `/v1/sports/{sport}/events` (the props source's game list) sends
       `"bookmakers": null` (and other nulls); `PlEvent.bookmakers` was a non-null list, so the whole
       list failed and no PropLine props were bought. Fix: null-tolerant PropLine decoding (every list
       and string may be null), one bad event never sinks the rest; test from the real shape that fails
