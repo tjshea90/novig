@@ -2125,3 +2125,8 @@ If I say I have my own key (pk_...), use it in the same URLs via ?key= — nothi
 ```
 The prop-line website says its api also grades each prop as win loss or draw. Would this help the app grade and keep stats on my wins and losses 
 ```
+
+## 2026-09-27T14:46:04Z
+```
+Review and fix the error in the screenshot
+```
