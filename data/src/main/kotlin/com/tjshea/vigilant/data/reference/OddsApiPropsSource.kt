@@ -145,7 +145,7 @@ class OddsApiPropsSource(
             if (have != null && have.ask == ask) continue
             val league = Leagues.byNovigName(e.league) ?: continue
             // Prop types PropLine already priced for this game this scan are left to it.
-            val theirs = context.covered[e.eventId].orEmpty().mapNotNullTo(HashSet()) { it.removePrefix("PROP:").takeIf { s -> s != it } }
+            val theirs = context.covered[e.eventId].orEmpty().filter { it.startsWith("PROP:") }.mapTo(HashSet()) { it.removePrefix("PROP:") }
             val types = (propTypes[e.eventId]?.toSet() ?: continue) - theirs
             if (types.isEmpty()) continue
             val markets = PropStats.oddsApiMarkets(league.oddsApiSportKey, settings.bookPropSet, types)
