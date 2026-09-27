@@ -375,3 +375,12 @@ tested but unwired. **Still unverified against the real API** (no key yet).
 4. Whether Android's built-in providers sign Ed25519 on every device Vigilant
    targets (minSdk 30). Sidestep it: use **P-256** in Android Keystore for the
    app's own key (§3).
+
+
+## Finished games leave the public catalog (verified 2026-09-27 ~07:45Z)
+
+`GET /v3/public/catalog/markets/{id}` answers **404** for a market whose game ended a few hours
+earlier, and `/v3/public/catalog/events?league=MLB&startsAfter=<14 h ago>` (any `status` filter,
+SETTLED and FINAL included) lists only open games and futures: the night's finished MLB games were
+gone. So the public routes can't settle a bet after the fact. Vigilant's Tracker settles from final
+scores instead (ESPN's scoreboard/box scores, MLB's Stats API; `data/tracker/Scores.kt`).

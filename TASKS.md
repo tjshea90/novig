@@ -2065,7 +2065,10 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       scanner/cno/keys/store/tracker), app (VM, service, widget, PiP, screens). Fix every bug found,
       each with a named test that fails before the fix; speed/efficiency/UI improvements (no major
       UI change without Tj's OK — list those as proposals instead).
-- [ ] P4a SETTLE FIX (found in this full test, N7): results from ESPN's free scoreboard (game lines:
+- [x] P4a (DONE: `tracker/Scores.kt` FreeScores (ESPN + MLB Stats API), `tracker/BetGrader.kt`, BetSettler rewired;
+      tests FreeScoresTest 6 (real fixtures), BetGraderTest 7 (CNO's real market names), BetSettlerTest 6; LIVE:
+      `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'` settled 8/8 real bets (Mets@Nats, Falcons@Packers) in 4 requests;
+      dead `NovigBetFinder.findEnded` removed) SETTLE FIX (found in this full test, N7): results from ESPN's free scoreboard (game lines:
       moneyline, spread, total, team total, 1st half / F5 / 1st inning from line scores) and ESPN's box
       score (player props: the stats Novig lists), no key; Novig's catalog kept first for FMV/void.
       `data/tracker/EspnResults` + BetSettler wiring; tests from real ESPN replies (fixtures).
