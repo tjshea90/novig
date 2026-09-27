@@ -18,8 +18,12 @@ import java.io.File
  *    mid-write leaves the old file intact, never a half-written one.
  *  - **Serialized updates.** [update] holds a mutex across read-modify-write, so two quick taps
  *    (e.g. "track bet" twice) can't lose one of the writes.
- *  - **Corruption-tolerant reads.** An unreadable file is moved aside to `<name>.corrupt` (kept,
- *    not deleted) and the default is used, instead of crashing the app on launch.
+ *  - **Corruption-tolerant reads.** An unreadable file is moved aside to `<name>.corrupt-<time>`
+ *    (kept, not deleted; each one its own file, so a second bad read never replaces the first) and
+ *    the default is used, instead of crashing the app on launch.
+ *
+ * Writes are flushed to the disk before the rename, so a power cut right after a save can't leave
+ * an empty file where the old one was.
  */
 class JsonFileStore<T>(
     private val file: File,
@@ -47,7 +51,9 @@ class JsonFileStore<T>(
         val loaded = withContext(Dispatchers.IO) {
             if (!file.exists()) return@withContext default()
             runCatching { json.decodeFromString(serializer, file.readText()) }.getOrElse {
-                file.renameTo(File(file.parentFile, file.name + ".corrupt"))
+                val aside = File(file.parentFile, file.name + ".corrupt-" + System.currentTimeMillis())
+                // Kept either way: the next save must never write over the only copy.
+                if (!file.renameTo(aside)) runCatching { file.copyTo(aside, overwrite = false) }
                 default()
             }
         }
@@ -58,7 +64,10 @@ class JsonFileStore<T>(
     private suspend fun writeLocked(value: T) = withContext(Dispatchers.IO) {
         file.parentFile?.mkdirs()
         val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText(json.encodeToString(serializer, value))
+        java.io.FileOutputStream(tmp).use { out ->
+            out.write(json.encodeToString(serializer, value).toByteArray())
+            out.fd.sync()
+        }
         if (!tmp.renameTo(file)) {
             // Some filesystems refuse rename-over; fall back to delete + rename.
             file.delete()
