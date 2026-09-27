@@ -2093,3 +2093,17 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       `/v1/sports/americanfootball_nfl/odds?markets=h2h,spreads,totals&bookmakers=pinnacle,draftkings,fanduel`
       and one game's `/events/{id}/odds?markets=player_receptions` and check `PropLineClient.parseEvents` /
       `parseEvent` read them (a gated live test like `LiveScoresTest`); fix the parser if the real shape differs.
+
+## Tj's screenshot, 2026-09-27 ~14:45Z (v0.16.0 +EV feed) — "Review and fix the error in the screenshot"
+
+> Error banner: "PropLine props NFL: Unexpected JSON token at offset 537: Expected start of the array '[',
+> but had 'n' instead at path: $[0].bookmakers JSON input: ....._event_ids":null,"bookmakers":null},
+> {"home_team_key":"colts"....". (Same scan: "PropLine 33" games matched, so the league board parsed live.)
+
+- [ ] Q1 Cause: PropLine's `/v1/sports/{sport}/events` (the props source's game list) sends
+      `"bookmakers": null` (and other nulls); `PlEvent.bookmakers` was a non-null list, so the whole
+      list failed and no PropLine props were bought. Fix: null-tolerant PropLine decoding (every list
+      and string may be null), one bad event never sinks the rest; test from the real shape that fails
+      on the old code.
+- [ ] Q2 Light tests, floor, ship v0.16.1, link. Record that PropLine's /odds board parsed live on Tj's
+      phone (P6 partly verified).
