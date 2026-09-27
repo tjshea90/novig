@@ -152,6 +152,9 @@ class NovigBetFinderTest {
                     path.startsWith("/v3/public/catalog/events?league=NFL") -> MockResponse().setBody(
                         """{"items":[{"eventId":"E1","description":"Seattle Seahawks @ Washington Commanders","sport":"FOOTBALL","league":"NFL","status":"OPEN_PREGAME","startsTs":$start}]}""",
                     )
+                    path.startsWith("/v3/public/catalog/events?status=") && "SETTLED" in path && "FINAL" in path && "startsAfter=" in path -> MockResponse().setBody(
+                        """{"items":[{"eventId":"E1","description":"Seattle Seahawks @ Washington Commanders","sport":"FOOTBALL","league":"NFL","status":"FINAL","startsTs":$start}]}""",
+                    )
                     path.startsWith("/v3/public/catalog/markets?event=E1") -> MockResponse().setBody(marketsJson)
                     else -> MockResponse().setResponseCode(404)
                 }
@@ -205,5 +208,16 @@ class NovigBetFinderTest {
         assertEquals("arroyo-o45", m.otherOutcome("arroyo-u45")?.outcomeId)
         // A market whose fee can't be read has none: it's never priced as if it were free.
         assertEquals(null, markets.first().novig?.fee)
+    }
+
+    @Test
+    fun `a finished game's bet is found for its result, league or not (an old imported mark has none)`() = runBlocking {
+        val f = finder()
+        val ended = f.findEnded(row("Elijah Arroyo Under 4.5", "Player Receiving Yards").copy(league = ""))
+        assertEquals("arroyo-u45", ended?.outcomeId)
+        assertEquals("m2", ended?.marketId)
+        assertEquals("with the league", "arroyo-o35", f.findEnded(row("Elijah Arroyo Over 3.5", "Player Receiving Yards"))?.outcomeId)
+        // Nothing exact: no guess.
+        assertNull(f.findEnded(row("Elijah Arroyo Over 9.5", "Player Receiving Yards")))
     }
 }
