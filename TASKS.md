@@ -2311,7 +2311,7 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
 - [x] H1 (DONE: CLAUDE.md "Vigilant MGM is dormant" section + BRIEF.md; settings.gradle.kts includes :mgm only with -Pmgm (checked: `gradlew projects` lists app/data/engine, with -Pmgm also mgm); release.yml builds, verifies and attaches vigilant-vX.apk only; ci.yml uploads app debug APK only; mgm/ untouched.) Standing rule written into CLAUDE.md + BRIEF.md: all work/versions/releases are Vigilant (Novig) only; Vigilant
       MGM frozen at v0.17.0, `mgm/` untouched. Build: `:mgm` included only on request (`-Pmgm`), release.yml builds and
       attaches Vigilant's APK only, ci.yml uploads Vigilant's debug APK only.
-- [ ] H2 "Starts within" (Any time / 12h / 24h / 48h) selectable on the CNO tab and in the floating CNO widget
+- [x] H2 (DONE: CNO tab row (only while CNO is on) + widget top-bar switch cycling Any time/12h/24h/48h, same setting; CNO count line and widget empty text say what the window hides. Tests: StartsWithinTest (8), ScreenshotTest cnoTabPicksTheStartTimeWindow, cnoTabHidesTheWindowWhenCnoIsOff, theWidgetsTopBarPicksTheStartTimeWindow, theWidgetSaysWhenTheWindowHidesEverything; screenshots 8e/9q/9r looked at.) "Starts within" (Any time / 12h / 24h / 48h) selectable on the CNO tab and in the floating CNO widget
       (same setting as the +EV tab). Tests.
 - [ ] H3 Research Maven Central 429s in Claude Code on the web; write findings + fixes (what Tj can do) into BRIEF.md
       build trap 6 / RESEARCH, and apply any in-repo fix that's safe.
