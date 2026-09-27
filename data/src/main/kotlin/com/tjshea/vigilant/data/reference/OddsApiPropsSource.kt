@@ -67,7 +67,7 @@ class OddsApiPropsSource(
         val now = context.now
         val sport = league.oddsApiSportKey
         val ask = ask(settings)
-        val reuseMs = settings.bookPropReuseMinutes.coerceAtLeast(0) * 60_000L
+        val reuseMs = settings.bookPropReuseMs
         // The scanner calls once per league with the same clock reading: the first call of a scan
         // spends the budget across every league at once, soonest games first.
         if (now != scanAt) {

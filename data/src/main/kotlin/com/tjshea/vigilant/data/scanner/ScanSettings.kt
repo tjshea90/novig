@@ -78,7 +78,7 @@ data class ScanSettings(
      */
     val usePropLine: Boolean = true,
     /** Re-use The Odds API's last odds for this long instead of paying credits on every scan. */
-    val oddsApiReuseMinutes: Int = 15,
+    val oddsApiReuseMinutes: Int = 2,
     /**
      * Spread and total lines priced per game (each). Every line is one Novig request per scan,
      * so this is the main lever on scan time and Novig's rate limit.
@@ -107,7 +107,7 @@ data class ScanSettings(
     /** Only games starting within this many hours get sportsbook props (soonest first). */
     val bookPropHours: Int = 24,
     /** Re-use sportsbook props for this long between scans. */
-    val bookPropReuseMinutes: Int = 60,
+    val bookPropReuseMinutes: Int = 2,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
     val exchangeMaxSpread: Double = 0.03,
     val feedSort: FeedSort = FeedSort.EV,
@@ -238,6 +238,12 @@ data class ScanSettings(
     val selectedLeagues: List<League> get() = Leagues.ALL.filter { it.novigName in leagues }
 
     /** [com.tjshea.vigilant.data.reference.ReferenceSource.id]s the user has switched on. */
+    /** How long The Odds API's game lines are re-used: the setting, never past [Freshness.MAX_REUSE_MS]. */
+    val oddsApiReuseMs: Long get() = minOf(oddsApiReuseMinutes.coerceAtLeast(0) * 60_000L, Freshness.MAX_REUSE_MS)
+
+    /** How long a game's sportsbook props are re-used: the setting, never past [Freshness.MAX_REUSE_MS]. */
+    val bookPropReuseMs: Long get() = minOf(bookPropReuseMinutes.coerceAtLeast(0) * 60_000L, Freshness.MAX_REUSE_MS)
+
     val enabledSources: Set<String>
         get() = buildSet {
             if (usePinnacle) add("pinnacle")
@@ -252,13 +258,14 @@ data class ScanSettings(
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
 
     companion object {
-        val ODDS_API_REUSE_CHOICES = listOf(0, 5, 15, 30, 60)
+        /** At most [Freshness.MAX_REUSE_MS]: older sportsbook odds are never compared (RESEARCH.md §24). */
+        val ODDS_API_REUSE_CHOICES = listOf(0, 1, 2)
         val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
         val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12)
         val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400)
         val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96)
         val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
-        val BOOK_PROP_REUSE_CHOICES = listOf(30, 60, 120, 240)
+        val BOOK_PROP_REUSE_CHOICES = listOf(1, 2)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
         val MAX_ODDS_CHOICES = listOf(300, 500, 1000, 2000, 0)
         val CNO_MAX_ODDS_CHOICES = listOf(100, 150, 200, 300, 0)

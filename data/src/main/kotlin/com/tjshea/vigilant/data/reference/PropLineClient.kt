@@ -336,7 +336,9 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
 
     companion object {
         const val ID = "propline_props"
-        const val REUSE_MS = 10 * 60_000L
+
+        /** A game's props are re-used this long at most, so they're current through a scan (RESEARCH.md §24). */
+        const val REUSE_MS = com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS
 
         /** Novig prices relayed with a game's props are passed on (to order Novig reads) only this long. */
         const val NOVIG_MAX_AGE_MS = 3 * 60_000L

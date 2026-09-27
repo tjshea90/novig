@@ -53,7 +53,7 @@ class TheOddsApiClient(
     override val displayName = "The Odds API"
     override val metered = true
 
-    override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMinutes.coerceAtLeast(0) * 60_000L
+    override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMs
 
     /**
      * PropLine carries the same sportsbooks for 1 of 1,000 daily requests per league; this costs 3 of
