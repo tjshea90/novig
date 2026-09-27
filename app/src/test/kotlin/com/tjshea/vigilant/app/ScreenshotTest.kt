@@ -112,7 +112,6 @@ class ScreenshotTest {
 
     @Test fun gamesBeforeFirstScan() = shoot("3b_games_before_scan") { GamesScreen(SampleScan.fresh(), {}, {}) }
 
-    @Test fun tracker() = shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
 
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
@@ -947,6 +946,39 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleCno.state(), { }) }
         compose.onNodeWithText("✕ to remove it without betting", substring = true).assertExists()
         compose.onNodeWithText("CNO only / Both switch", substring = true).assertExists()
+    }
+
+    // ---- N (2026-09-27): every ✓ tracked, auto-settled, "now ±x% EV", a stats section -----------
+
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
+    @Test fun trackerStats() {
+        shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
+        // b1 won, b2 lost, b6 won (settled by Novig): 2-1, and profit is +$34.52 − $18 + $1.
+        compose.onNodeWithText("66.7%").assertExists()
+        compose.onNodeWithText("2-1").assertExists()
+        compose.onNodeWithText("+$17.52").assertExists()
+        compose.onNodeWithText("By scanner").assertExists()
+    }
+
+    @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
+    @Test fun trackerBetsShowTheirEvNowGreenOrRed() {
+        shoot("4b_tracker_bets") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}, initialView = com.tjshea.vigilant.app.ui.TrackerView.BETS) }
+        compose.onNodeWithText("now +3.1% EV").assertExists()
+        compose.onNodeWithText("now −2.1% EV").assertExists()
+        compose.onNodeWithText("Open (3)").assertExists()
+        // Open bets only by default: the settled ones are one tap away.
+        compose.onAllNodesWithText("Won · undo").assertCountEquals(0)
+        compose.onNodeWithText("Settled (3)").performClick()
+        compose.onNodeWithText("settled by Novig").assertExists()
+    }
+
+    @Test fun trackerStakeIsEditable() {
+        var saved: Pair<String, Double>? = null
+        screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}, onStake = { id, v -> saved = id to v }, initialView = com.tjshea.vigilant.app.ui.TrackerView.BETS) }
+        compose.onAllNodesWithText("Stake ✎")[0].performClick()
+        compose.onNodeWithText("1.00").performTextReplacement("12.5")
+        compose.onNodeWithText("Save").performClick()
+        assertEquals(12.5, saved!!.second, 1e-9)
     }
 
     @Test fun trackerSaysCloseForEverySportNotJustFootball() {
