@@ -151,8 +151,8 @@ object SampleScan {
         )
     }
 
-    /** A ledger mid-month: key 1 of The Odds API partly used, key 2 untouched; a busy scan day. */
-    fun usage(now: Long = System.currentTimeMillis()): UsageBook {
+    /** A ledger mid-month on [NOW]'s clock (not the real one: a test run on another day saw "0 today"): key 1 of The Odds API partly used, key 2 untouched; a busy scan day. */
+    fun usage(now: Long = NOW): UsageBook {
         val month = QuotaPolicy.ODDS_API.periodStart(now)
         val day = QuotaPolicy.PINNAPI.periodStart(now)
         return UsageBook(
