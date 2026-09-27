@@ -189,11 +189,17 @@ object MiniWindow {
         // CNO's key for each outcome it lists, placed, removed or held back included.
         val cnoKeyOf = state.cnoPicks(now)?.picks.orEmpty().mapNotNull { p -> outcomeOf(p.row)?.let { it to cnoKey(p.row) } }.toMap()
         val shownByOutcome = theirs.mapNotNull { t -> t.cno?.row?.let(::outcomeOf)?.let { it to t } }.toMap()
+        // Vigilant MGM: CNO's BetMGM links aren't outcome ids, so the same bet is known by its game,
+        // market, side and line instead (PlacedIndex's rule). Novig keeps matching by outcome only.
+        fun identity(event: String, market: String, bet: String) = com.tjshea.vigilant.data.tracker.PlacedIndex.identity(event, market, bet)
+        val cnoKeyById = if (AppBook.isNovig) emptyMap() else state.cnoPicks(now)?.picks.orEmpty().mapNotNull { p -> identity(p.row.event, p.row.market, p.row.bet)?.let { it to cnoKey(p.row) } }.toMap()
+        val shownById = if (AppBook.isNovig) emptyMap() else theirs.mapNotNull { t -> t.cno?.row?.let { r -> identity(r.event, r.market, r.bet) }?.let { it to t } }.toMap()
         val used = HashSet<String>()
         val mine = ours.map { o ->
             val oid = o.outcomeId ?: return@map o
-            val alias = cnoKeyOf[oid]?.let { listOf(it) }.orEmpty()
-            val t = shownByOutcome[oid]
+            val id = if (AppBook.isNovig) null else identity(o.event, o.market, o.title)
+            val alias = (cnoKeyOf[oid] ?: id?.let { cnoKeyById[it] })?.let { listOf(it) }.orEmpty()
+            val t = shownByOutcome[oid] ?: id?.let { shownById[it] }
             if (t == null || !used.add(t.key)) o.copy(aliases = alias)
             else o.copy(cno = t.cno, alsoCnoEv = t.ev, agrees = t.agrees, team = o.team ?: t.team, aliases = alias)
         }
