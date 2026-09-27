@@ -321,7 +321,7 @@ unless Tj asks).
   with the book switched (`MgmAppTest`, `SampleMgm`); `mgm/src/test` checks the real build (`MgmBuildTest`).
   A sweep covers Vigilant only while MGM is dormant.
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
-  (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
+  (needs BRIEF.md build trap 6 locally: `bash tools/setup-android.sh`). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
   `VIGILANT_LIVE=1 ... --tests '*LiveNovigSmokeTest'` re-verifies matching against
   Novig's real catalog.
@@ -451,7 +451,7 @@ into the right account in that browser, not regenerating the link.
 ## Building the APK
 
 CI builds the real release (see "Releasing"). A local build is possible once
-BRIEF.md build trap 6 is set up: `ANDROID_HOME=/opt/android-sdk ./gradlew
+BRIEF.md build trap 6 is set up (`bash tools/setup-android.sh`, one command): `ANDROID_HOME=/opt/android-sdk ./gradlew
 :app:assembleRelease` (R8-minified, ~4.6MB). Use it to check a change compiles
 and to render screenshots, not to hand Tj an APK.
 

@@ -267,27 +267,45 @@ re-diagnose these from scratch:
   belongs on state changes, not unconditionally on every iteration, since
   each line is a separate event.
 
-### Build trap 6 (2026-09-25): building `app` locally is possible, but needs two local-only steps
+### Build trap 6 (2026-09-25; one command since 2026-09-27): `bash tools/setup-android.sh`
 
-The container has no Android SDK by default and Maven Central answers 429 to Gradle here.
-Neither fix belongs in the repo:
-1. SDK: download `commandlinetools-linux-*_latest.zip` from dl.google.com into
-   `/opt/android-sdk/cmdline-tools/latest`, accept licenses, then
-   `sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"`.
-   Build with `ANDROID_HOME=/opt/android-sdk`.
-2. Mirror: `~/.gradle/init.d/mirror.gradle.kts` puts
-   `https://maven-central.storage-download.googleapis.com/maven2/` (Google's Maven Central
-   mirror) first, inside `settingsEvaluated { }`, in `pluginManagement.repositories` and
-   `dependencyResolutionManagement.repositories` only (`remove(repo); addFirst(repo)`). Adding it
-   to project repositories (`allprojects { repositories }`) fails the build: settings
-   repositories are preferred here. Robolectric downloads its `android-all` jar at test time from
-   Maven Central too, so the same script sets
-   `tasks.withType<Test>().configureEach { systemProperty("robolectric.dependency.repo.url", mirror) }`
-   (confirmed working 2026-09-26: all 256 tests, screenshots included).
-With both in place, `./gradlew :engine:test :data:test :app:testDebugUnitTest` runs every test,
-including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every screen to
-`app/screenshots/` (gitignored), and `:app:assembleRelease` builds the R8-minified APK
-(~2.8MB). CI stays the authority on green.
+The container has no Android SDK by default, and Maven Central answers 429 to Gradle here often.
+`tools/setup-android.sh` (idempotent, self-contained, ~1 min on a fresh container) fixes both:
+1. SDK: command-line tools from dl.google.com into `/opt/android-sdk`, then
+   `platforms;android-36`, `build-tools;36.0.0`, `platform-tools`. Build with `ANDROID_HOME=/opt/android-sdk`.
+2. Gradle mirror: `~/.gradle/init.d/mirror.gradle.kts` puts Google's Maven Central mirror
+   (`https://maven-central.storage-download.googleapis.com/maven2/`) FIRST, inside
+   `settingsEvaluated { }`, in `pluginManagement.repositories` and
+   `dependencyResolutionManagement.repositories` only. Adding it to project repositories fails the
+   build (`FAIL_ON_PROJECT_REPOS`). First, not last: Gradle stops at a repository that errors, so a
+   429 never falls through to a mirror listed after it.
+3. Robolectric mirror: Robolectric downloads its `android-all-instrumented` jar at test time by
+   itself, outside Gradle's repositories (a mirror in step 2 doesn't cover it: exactly this failed
+   on 2026-09-27 with "Failed to fetch maven artifact org.robolectric:android-all-instrumented").
+   The script writes `vigilant.mavenMirror=<mirror>` to `~/.gradle/gradle.properties`, and
+   `app/build.gradle.kts` passes it to test JVMs as `robolectric.dependency.repo.url`. CI never sets
+   it and keeps Maven Central (verified 2026-09-27: with the property pointing nowhere and the jar
+   cache cleared, the tests fail to fetch; with the mirror they pass).
+With it run, `./gradlew :engine:test :data:test :app:testDebugUnitTest` runs every test, including
+the Robolectric screen tests. `-Pscreenshots` writes PNGs of every screen to `app/screenshots/`
+(gitignored), and `:app:assembleRelease` builds the R8-minified APK. CI stays the authority on green.
+
+**Why Central 429s here (researched 2026-09-27, Sonatype's own docs):** Maven Central rate-limits by
+EGRESS IP on the aggregate traffic from that IP ("the source of the traffic may not be the build that
+failed"), since its 2025 move to new CDN infrastructure with limits for high-volume consumers. Every
+Claude Code on the web session exits through a small shared pool of cloud egress addresses and starts
+with an empty Gradle cache (a Vigilant build pulls ~1 GB, thousands of requests), so the pool keeps
+crossing the threshold and everyone on it gets 429s. Blocks start short and escalate for repeat
+offenders (up to 30 days per Sonatype); repeated requests during a block extend it, so retrying
+makes it worse. Nothing one account does changes the pool's total; only the platform (Anthropic)
+can take it up with Sonatype ("infrastructure provider" path). The fix on our side is to not ask
+Central at all: Google's mirror above. **What Tj can do:** paste `tools/setup-android.sh`'s contents
+into the cloud environment's **Setup script** (session title bar › cloud environment menu › Edit), so
+every new session starts with the SDK and both mirrors in place before the first build; keep Network
+access allowing `maven-central.storage-download.googleapis.com` and `dl.google.com`; and optionally
+report it to Anthropic (github.com/anthropics/claude-code issues) so they raise it with Sonatype.
+Sources: central.sonatype.org/faq/429-error/, central.sonatype.org/faq/429-contact-support/,
+robolectric.org/configuring/.
 
 ## Locked architecture decisions
 
