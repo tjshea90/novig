@@ -112,6 +112,12 @@ class AppContainer(app: Application) {
     )
 
     /**
+     * Written once the ✓ marks from before the Tracker kept them were moved into it: the move runs
+     * once, so a bet deleted in the Tracker doesn't come back from its old mark.
+     */
+    val trackerImported = File(app.filesDir, "tracker_imported")
+
+    /**
      * Settles tracked bets from Novig's catalog (WIN / LOSS / PUSH / fair value): on app open, on
      * the Tracker tab, and every 3 h in the background ([SettleWorker]). Reads only for open bets
      * whose game started over an hour ago.

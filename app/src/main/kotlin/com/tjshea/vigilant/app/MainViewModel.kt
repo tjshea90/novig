@@ -260,8 +260,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val marks = runCatching { c.placed.load() }.getOrNull()
             // ✓ marks made before the Tracker kept them move into it, once (Tj, 2026-09-27).
-            if (marks != null) {
-                val moved = runCatching { c.tracker.importPlaced(marks.bets) }.getOrDefault(0)
+            if (marks != null && !c.trackerImported.exists()) {
+                val moved = runCatching { c.tracker.importPlaced(marks.bets).also { c.trackerImported.createNewFile() } }.getOrDefault(0)
                 if (moved > 0) _toasts.tryEmit("Moved $moved earlier ✓ bet${if (moved == 1) "" else "s"} into the Tracker (at \$1 each: change it there)")
             }
             // Results of games that ended while Vigilant was closed, then every 3 h in the background.
