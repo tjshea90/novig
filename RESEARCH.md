@@ -152,7 +152,8 @@ the fee constant into the app):
 - **Pre-game straight trades: $0 fee**, for both the Maker and the Taker.
 - **Live (in-game) straight trades:** Taker pays `0.03 × P × (1 − P)` per
   $1 of contract, where `P` is the price in dollars (so ~$0.0075 per $1 at
-  a 50¢ price — roughly 0.75% of stake at even money, less at extreme
+  a 50¢ price — about 1.5% of stake at even money ($0.0075 on a $0.50 stake;
+  corrected 2026-09-27, the app's math always used cost = price + fee), less at extreme
   prices). Maker side is still $0.
 - **Parlays:** fees apply; exact structure not yet pulled from source —
   TODO next research pass.
@@ -1776,3 +1777,48 @@ NordVPN (no help; Novig refuses VPNs; split-tunnel Vigilant and Novig out if kep
 (Cloudflare Worker free tier / $4–6 VPS: no benefit without a limit to get around); proxies (no
 limit to get around; free proxies are a security risk on a betting phone; residential ones cost
 ~$5–15/GB): not built.
+
+## 21. Live (in-game) +EV on Novig: can it be found fast enough? (measured 2026-09-27 ~01:50–02:05Z)
+
+Tj: "consider if it is possible and if there is an online feed fast enough to tell me positive EV
+live bets on novig. I have to be able to bet these very fast because the odds change. Also, it has
+to scan for live odds on games very fast to find positive EV live bets that are not based on stale
+odds. If this can be done, make it. If not, tell me your findings."
+
+**Measured from here, during Saturday night's games** (50 events live on Novig: MLB, NHL, MLS,
+NCAAF; `research/live_leadlag.py`):
+- **Novig's side is fast enough to read.** Live books over the public REST route take ~170 ms, are
+  not cached at the edge ("Miss from cloudfront", no ETag), and two backends (separate `seq`
+  ranges, never compare them) return the same book within ~1 s. Prices jump within a second of a
+  play (HOU 0.675 → 0.61 in one second), and market makers pull their quotes around plays (the
+  take price briefly goes wide, e.g. 0.795 or 0.895 against a 0.70 middle). With Tj's read key,
+  `NovigStream` (the signed websocket, §6 of NOVIG_API.md) pushes every change instead.
+- **The free reference is the stale side.** Kalshi's live game markets (the only free live
+  reference with liquidity; Polymarket had no live MLB game markets and its live NCAAF/NHL ones
+  were settled or empty) were sampled against Novig once a second for 150 s on three live MLB
+  games: Novig's price jumped 9, 7 and 2 times; Kalshi's 1, 2 and 0. Every Kalshi jump came after
+  Novig had already moved. A scanner using Kalshi as "fair" would flag bets exactly when Kalshi is
+  behind: stale-odds false positives, the thing Tj asked to avoid.
+- **No edge after the live fee.** In 440 samples, Novig's take price never beat Kalshi's middle by
+  1% after Novig's live taker fee (0.03 × P × (1 − P): ~1.5% of stake at even odds, ~1% at 70¢);
+  the best was −0.2%.
+- **CNO's live view** updates every 13–33 s (§18): far too slow for live prices.
+
+**Paid feeds that could be fast enough (not bought):** Pinnacle is the sharpest live line and the
+one Novig's makers most likely follow. Since Pinnacle closed its public API (July 2025), pinnapi
+sells it: live odds and streaming only on paid plans ($99–$229/mo; Edge $149/mo), 15–40 ms quoted
+from a Pinnacle change; the free tier (100 REST calls/day) has no live odds. Others: SportsGameOdds
+websocket (~100 ms, from $49/mo), SharpAPI (SSE, ~89 ms p50), OpticOdds (enterprise, "high hundreds"
+a month and up), Unabated ($3,000/mo for its consensus line). Even with Pinnacle live, the windows
+where a Novig resting order is stale against Pinnacle last about the time Novig's makers take to
+re-quote (their quotes are already pulled around plays): a second or two. A person seeing an alert,
+opening Novig's bet slip and confirming takes several seconds, so most such bets would be gone or
+re-priced; catching them reliably needs an automated taker (a trading key and a bot), which is a
+different product with its own risks.
+
+**Decision (reported to Tj, not built):** a live +EV scanner on free feeds would show almost no
+bets, and the few it showed would come from the reference being behind Novig, i.e. stale odds. Not
+built, so it can't mislead. What would change the answer: Tj buying Pinnacle live (pinnapi Edge,
+$149/mo) for a measured trial: Vigilant would first log how often and how long Novig trails Pinnacle
+by more than the fee, before any alerts are trusted. Pregame +EV (fee-free on Novig) remains where
+the edge is, and v0.15.4's "Novig's price now" keeps those prices current.

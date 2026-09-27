@@ -1896,11 +1896,18 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > can be done, make it. If not, tell me your findings
 
 ### Plan
-- [ ] M1 Research (after L4 ships): what's fast enough for live +EV on Novig: Novig's websocket
+- [x] M1 Research (after L4 ships): what's fast enough for live +EV on Novig: Novig's websocket
       (NOVIG_API.md §6) vs polling books; live sharp reference odds (Pinnacle via pinnapi, Kalshi /
       Polymarket live markets, The Odds API live, CNO's live view) with their real update latency
       and cost; how stale each is vs Novig's book; Novig's live taker fee. Measure what can be
       measured from here.
-- [ ] M2 If feasible: build a live +EV mode (fresh-only: every leg's age shown and capped, stale
+- [x] M2 If feasible: build a live +EV mode (fresh-only: every leg's age shown and capped, stale
       legs dropped), fast enough to bet from the widget; if not, write up the findings for Tj.
-- [ ] M3 Tests, ship, send link (or findings).
+- [x] M3 Tests, ship, send link (or findings).
+      Done 2026-09-27 ~02:05Z: RESEARCH.md §21 (`research/live_leadlag.py`). Not feasible on free
+      feeds: Novig's live book leads Kalshi (9/7/2 Novig jumps vs 1/2/0 Kalshi in 150 s, Novig
+      first each time), 0 of 440 samples +EV after the live fee (best −0.2%); CNO live is 13–33 s
+      stale; paid Pinnacle live (pinnapi $149/mo) is the only candidate and manual betting is
+      likely too slow for its 1–2 s windows. Not built (would show stale-odds false positives);
+      findings sent to Tj with the paid-trial option. Also corrected RESEARCH §3's live-fee note
+      (≈1.5% of stake at even odds, not 0.75%; the app's math was already right).
