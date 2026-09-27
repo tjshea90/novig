@@ -65,7 +65,6 @@ class PlacedIndex private constructor(
                 add(identity(event, market, p.title), p.startsAtMs)
             }
             for (b in tracked) {
-                if (b.status == BetStatus.VOID && b.settledBy == BetSettler.BY_YOU) continue
                 if (now - b.startsTs > TRACKED_WINDOW_MS) continue
                 b.placedKey?.let { keys += it }
                 if (b.marketId.isNotEmpty() && b.outcomeId.isNotEmpty()) keys += "${b.marketId}/${b.outcomeId}"
