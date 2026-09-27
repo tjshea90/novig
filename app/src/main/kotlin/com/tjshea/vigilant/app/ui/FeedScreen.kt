@@ -224,16 +224,22 @@ private fun FeedSummary(
     }
 }
 
-/** "Pinnacle, Polymarket, Kalshi": the sources the next scan will use. */
-private fun sourceNames(state: UiState): String {
+/**
+ * "Pinnacle, Polymarket, Kalshi and PropLine (The Odds API as backup)": the sources the next scan will
+ * use, a backup named as one (RESEARCH.md §23).
+ */
+internal fun sourceNames(state: UiState): String {
     val s = state.settings
+    val propLine = s.usePropLine && state.proplineKeys.isNotEmpty()
+    val oddsApi = s.useOddsApi && state.oddsApiKeys.isNotEmpty()
     return buildList {
         if (s.usePinnacle && (state.pinnapiKeys.isNotEmpty() || state.pinnwireKeys.isNotEmpty())) add("Pinnacle")
         if (s.usePolymarket) add("Polymarket")
         if (s.useKalshi) add("Kalshi")
-        if (s.usePropLine && state.proplineKeys.isNotEmpty()) add("PropLine")
-        if (s.useOddsApi && state.oddsApiKeys.isNotEmpty()) add("The Odds API")
-    }.let { if (it.size <= 1) it.joinToString("") else it.dropLast(1).joinToString(", ") + " and " + it.last() }
+        if (propLine) add("PropLine")
+        if (oddsApi && !propLine) add("The Odds API")
+    }.let { if (it.size <= 1) it.joinToString("") else it.dropLast(1).joinToString(", ") + " and " + it.last() } +
+        if (oddsApi && propLine) " (The Odds API as backup)" else ""
 }
 
 /**

@@ -3,6 +3,7 @@ package com.tjshea.vigilant.app
 import com.tjshea.vigilant.app.ui.bookPropEstimate
 import com.tjshea.vigilant.app.ui.creditEstimate
 import com.tjshea.vigilant.app.ui.minutesLabel
+import com.tjshea.vigilant.app.ui.sourceNames
 import com.tjshea.vigilant.app.ui.sourceSummary
 import com.tjshea.vigilant.data.scanner.SourceReport
 import com.tjshea.vigilant.data.scanner.BookPropSet
@@ -59,5 +60,12 @@ class CreditEstimateTest {
         // Called after all (PropLine couldn't answer): no standby note.
         val called = status.copy(sources = status.sources.map { if (it.id == "oddsapi") it.copy(fetched = 1, matched = 14, standingBy = 0) else it })
         assertEquals("Pinnacle 12 · PropLine 14 · The Odds API 14 games", sourceSummary(called))
+    }
+
+    @Test
+    fun `the feed names The Odds API as PropLine's backup`() {
+        val s = SampleScan.state()
+        assertEquals("Pinnacle, Polymarket, Kalshi and PropLine (The Odds API as backup)", sourceNames(s))
+        assertEquals("Pinnacle, Polymarket, Kalshi and The Odds API", sourceNames(s.copy(proplineKeys = emptyList())))
     }
 }
