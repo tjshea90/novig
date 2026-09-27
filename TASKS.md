@@ -1911,3 +1911,44 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       likely too slow for its 1–2 s windows. Not built (would show stale-odds false positives);
       findings sent to Tj with the paid-trial option. Also corrected RESEARCH §3's live-fee note
       (≈1.5% of stake at even odds, not 0.75%; the app's math was already right).
+
+## Tj's request, 2026-09-27 ~03:00Z — every bet tracked, auto-settled, rechecked; a stats section
+
+> The app tracker tab only shows 8 open bets. I placed almost 60 bets. I want to be able to track
+> every single bet I placed and whether it won or lost. It should move all of the bets I made into
+> the tracker section automatically. Also, if possible this section should have an option for me to
+> scan for up to date average odds against sports books for each of the bets I made and to show
+> whether the value of the bets I placed is still positive EV. For example, if I place 5 bets today,
+> the tracker section can show me the current updated odds of each of those bets (a newly calculated
+> fair odds value based on up to date odds across sports books and devigged) compared to what the
+> odds were at the time I bet it. And it will show an updated EV value percentage, for example "now
+> +3% ev" (in color green) or "now -2% ev" (in color red).
+> 1) for every bet that I check on the cno scanner, log it permanently in the vigilant app, and keep
+> track whether each bet was a win or a loss. this will require a background scores system to keep
+> track of final scores and events. if possible, when I bet something on novig, automatically log the
+> amount and type of bet into the vigilant app and check the box for that bet on the widget. but if
+> that is not possible, log each bet as a $1 wager in the app.
+> 2) make a stats section of the app that provides clean easy view of my percentage of actual bet
+> wins and losses, total money gained or lost, and a running percentage of profit made, red number if
+> negative and green if positive.
+> After these features are built, run full tests on the app and make sure the features work well and
+> do what they were designed to do, then ship.
+
+### Plan
+- [ ] N1 Why only 8: the Tracker holds only bets tracked from Vigilant's own +EV cards; the widget's
+      and CNO tab's ✓ went to placed.json (hide-only, dropped 12 h after the game). → every ✓ (widget,
+      CNO tab, sheet) logs a permanent Tracker bet (CNO's bet, market, game, league, price, fair, EV,
+      start, CNO links, Novig outcome/market when known), $1 stake by default (editable); Undo removes
+      it; ✕ (removed) never logs. One-time import of the ✓ marks still in placed.json.
+- [ ] N2 Auto-settle ("background scores system"): Novig's own catalog settles each outcome (WIN /
+      LOSS / PUSH / fair-market value); pending bets whose game has started are checked on app open,
+      on the Tracker tab, and by a periodic background job (network only, every few hours), the Novig
+      outcome found through the catalog when not already known. Manual Won/Lost stays as an override.
+- [ ] N3 Auto-log from Novig (amount and type): check what Novig's API can read of Tj's own bets
+      (NOVIG_API.md: keys, subaccounts, positions); build it if possible, else $1 per ✓ (N1) and say so.
+- [ ] N4 "Check odds now" in the Tracker: for open bets, the current fair odds from every book
+      (CNO's game page, devigged worst case, the same consensus as the green check) vs the price
+      bet, "now +3% EV" green / "now −2% EV" red, and the odds at bet time.
+- [ ] N5 Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
+      source (CNO / Vigilant) and period.
+- [ ] N6 Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
