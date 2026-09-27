@@ -1792,7 +1792,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [x] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
       Shipped v0.15.2 (code 22, 438 tests, CI green on b39913d, Release published 2026-09-27T00:54Z;
       built from main, which carries v0.15.1's J1-J6).
-- [ ] K10 Tj, 00:30Z: "When all of the features and fixes I asked for are finished, run a full test
+- [x] K10 Tj, 00:30Z: "When all of the features and fixes I asked for are finished, run a full test
       protocol and find ways to improve the UI and speed and efficiency and bug fixes, but without
       sacrificing any accuracy" → after K1-K9 ship: CLAUDE.md full-test protocol on the whole app,
       improvements (UI, speed, efficiency) + bug fixes with failing-first tests, accuracy
@@ -1825,6 +1825,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         RateGate): accuracy untouched, only efficiency/bug fixes with failing-first tests.
         `git diff v0.15.0..HEAD` on engine, scanner, novig, reference and match: only ScanSettings'
         new switch; nothing changed since v0.15.0's full test, suites re-run green (engine 39).
-  - [ ] K10d Fix everything found with named tests; forced floor + screenshots looked at;
+  - [x] K10d Fix everything found with named tests; forced floor + screenshots looked at;
         v0.15.3 ship, release, record, send link. (Forced floor 446 green: engine 39, data 290,
-        app 117; new PNGs 9i-9m, 8e looked at.)
+        app 117; new PNGs 9i-9m, 8e looked at.) Shipped v0.15.3 (code 23): CI green on 7b9636f,
+        Release published 2026-09-27T01:06Z, recorded in BUILDLOG.md.
