@@ -148,13 +148,24 @@ class NovigBetFinder(
             val words = marketWords(row.market)
             val candidates = mutableListOf<Outcome>()
             for (m in markets) {
-                if (!typeFits(m.type, words)) continue
+                if (!typeFits(m.type, words) && !threeWay(m.type, row.market)) continue
                 for (o in m.outcomes) if (isThisBet(row, who, line, m, o, event)) candidates += o
             }
             return candidates.singleOrNull()
         }
 
         private fun isThisBet(row: CnoRow, who: String, line: String?, m: Market, o: Outcome, event: Event): Boolean {
+            // Soccer's 3-way moneyline: Novig has a Yes/No market per team ("Real Salt Lake
+            // MONEYLINE_3_WAY_WIN") and one for the draw; CNO says "Real Salt Lake No", "Draw Yes".
+            if (threeWay(m.type, row.market)) {
+                if (line == null || !o.name.equals(line, ignoreCase = true) || !(line.equals("Yes", true) || line.equals("No", true))) return false
+                val draw = who.equals("Draw", ignoreCase = true) || who.equals("Tie", ignoreCase = true)
+                return when (m.type) {
+                    "MONEYLINE_3_WAY_DRAW" -> draw
+                    "MONEYLINE_3_WAY_WIN" -> !draw && who.isNotEmpty() && namesTeam(m.description.trim().removeSuffix(m.type).trim(), who, event)
+                    else -> false
+                }
+            }
             val total = line?.let { NovigText.parseTotalOutcome(it) }
             if (total != null) {
                 // "Over 5.5": the outcome says the same; a player's or team's market names them.
@@ -191,9 +202,15 @@ class NovigBetFinder(
 
         private fun isGameTotal(type: String) = type.startsWith("TOTAL")
 
+        /** A 3-way moneyline market of Novig's for a CNO "Moneyline 3-way" bet (full game only). */
+        private fun threeWay(type: String, cnoMarket: String): Boolean =
+            type.startsWith("MONEYLINE_3_WAY") && cnoMarket.contains("3-way", ignoreCase = true) &&
+                !Regex("(?i)half|1h|2h|period|quarter").containsMatchIn(cnoMarket)
+
         /** CNO's market name as words, the way Novig's market types are spelled ("1st Half" → "1h"). */
         fun marketWords(market: String): Set<String> = norm(
-            market.replace(Regex("(?i)1st half|first half"), " 1h ").replace(Regex("(?i)2nd half|second half"), " 2h ")
+            market.replace(Regex("(?i)passing interceptions"), " interceptions thrown ")
+                .replace(Regex("(?i)1st half|first half"), " 1h ").replace(Regex("(?i)2nd half|second half"), " 2h ")
                 .replace(Regex("(?i)point spread|run line|puck line|goal spread|spread"), " spread ")
                 .replace(Regex("(?i)total points|total runs|total goals"), " total ")
                 .replace(Regex("(?i)moneyline"), " money "),
