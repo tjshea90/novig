@@ -74,6 +74,10 @@ class FloatingWidget(
 
     val showing: Boolean get() = root != null
 
+    /** The window's root view and its place on screen, for tests that drive it with touches. */
+    internal val rootForTest: android.view.View? get() = root
+    internal fun rectForTest(): WidgetRect = rect()
+
     private val params = WindowManager.LayoutParams(
         savedW(),
         savedH(),
