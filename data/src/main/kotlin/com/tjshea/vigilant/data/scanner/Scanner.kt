@@ -86,7 +86,7 @@ class Scanner(
     private val novig: NovigSource,
     private val clock: () -> Long = System::currentTimeMillis,
     private val catalogTtlMs: Long = 3 * 60_000L,
-) {
+) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
         val includeLive: Boolean,
@@ -116,17 +116,17 @@ class Scanner(
     /** Each market's best EV on the last scan, to read the likeliest +EV lines first next time. */
     private var lastEv: Map<String, Double> = emptyMap()
 
-    suspend fun scan(
+    override suspend fun scan(
         settings: ScanSettings,
         sources: List<ReferenceSource>,
         /** Markets always priced past the per-game line cap: the ones Tj has open bets on. */
-        pinned: Set<String> = emptySet(),
-        onProgress: (ScanProgress) -> Unit = {},
+        pinned: Set<String>,
+        onProgress: (ScanProgress) -> Unit,
         /**
          * Everything priced so far, each time another batch of Novig prices lands. Its feed lists
          * only prices read this scan ([ScanResult.freshSinceMs]); the final result is the report's.
          */
-        onPartial: (ScanResult) -> Unit = {},
+        onPartial: (ScanResult) -> Unit,
     ): ScanReport = mutex.withLock {
         this.pinned = pinned
         val now = clock()
@@ -432,10 +432,10 @@ class Scanner(
      * re-prices against the last scan's fair odds. Seconds instead of a full scan: for checking
      * that the feed's edges are still there right before betting. Null result before any scan.
      */
-    suspend fun recheck(
+    override suspend fun recheck(
         settings: ScanSettings,
         marketIds: Collection<String>,
-        onProgress: (Int, Int) -> Unit = { _, _ -> },
+        onProgress: (Int, Int) -> Unit,
     ): RecheckReport = mutex.withLock {
         val cat = catalog ?: return@withLock RecheckReport(null, 0, 0, null)
         val ids = marketIds.distinct().take(MAX_RECHECK)
@@ -463,7 +463,7 @@ class Scanner(
     }
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
-    suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
+    override suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()
@@ -471,7 +471,7 @@ class Scanner(
     }
 
     /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
-    suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = mutex.withLock {
+    override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = mutex.withLock {
         settings.leagues - (catalog?.leagues ?: emptySet())
     }
 

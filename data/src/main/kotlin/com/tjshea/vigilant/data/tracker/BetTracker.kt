@@ -111,8 +111,11 @@ data class TrackerStats(
     val winRate: Double? get() = (won + lost).takeIf { it > 0 }?.let { won.toDouble() / it }
 }
 
-/** Tracked bets, persisted in one JSON file (see [JsonFileStore] for the crash-safety rules). */
-class BetTracker(file: File, private val clock: () -> Long = System::currentTimeMillis) {
+/**
+ * Tracked bets, persisted in one JSON file (see [JsonFileStore] for the crash-safety rules).
+ * [ownBook] names the book the app's own scan prices ("Novig"; "BetMGM" in Vigilant MGM).
+ */
+class BetTracker(file: File, private val clock: () -> Long = System::currentTimeMillis, private val ownBook: String = "Novig") {
 
     private val store = JsonFileStore(file, ListSerializer(TrackedBet.serializer()), { emptyList() })
 
@@ -248,6 +251,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             stake = stake,
             placedKey = placedKey,
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
+            book = ownBook,
         )
         store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING }) + bet }
         return bet

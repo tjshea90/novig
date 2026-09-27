@@ -31,7 +31,7 @@ data class ScanRun(
  * switches apps (2026-09-25), so the scan can't live in anything the screen tears down. [scope] is
  * the app's own; the foreground service keeps the process running while [ScanRun.scanning].
  */
-class ScanRunner(private val scanner: Scanner, private val scope: CoroutineScope) {
+class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineScope) {
     private val _state = MutableStateFlow(ScanRun())
     val state: StateFlow<ScanRun> = _state.asStateFlow()
 
