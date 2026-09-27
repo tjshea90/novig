@@ -64,6 +64,8 @@ class MgmAppTest {
         compose.onAllNodesWithText("BETMGM").assertCountEquals(2)
         compose.onAllNodesWithText("NOVIG").assertCountEquals(0)
         compose.onAllNodesWithText("fillable at +EV", substring = true).assertCountEquals(0)
+        // The start-time filter is Vigilant's (Tj asked for it "for the regular version").
+        compose.onAllNodesWithText("Starts within").assertCountEquals(0)
     }
 
     @Test fun `a bet's sheet has BetMGM's price and hold, no order book or maker bid, and opens BetMGM's bet slip`() {
