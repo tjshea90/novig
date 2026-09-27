@@ -2145,7 +2145,8 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       theWidgetWithBothListsABetBothScannersFoundOnce (9o), settingsOfferTheFloatingWidgetOnVigilantsScanAlone,
       PlacedEverywhereTest switch order.) Vigilant scanner gets the floating widget too (Vigilant-only mode as well as Both): tap = exact
       bet slip, ✓ placed (tracked + hidden everywhere), ✕ remove, Undo; tests + screenshots.
-- [ ] R5 Light tests (+ screenshots), floor, ship, link.
+- [x] R5 (SHIPPED v0.16.2 code 29, 2026-09-27T15:45Z: floor 549 tests 0 failures, CI green, release.yml green,
+      https://github.com/tjshea90/novig/releases/tag/v0.16.2, recorded.) Light tests (+ screenshots), floor, ship, link.
 
 ## Tj's request, 2026-09-27 (mid R-work) — outlier bets left out of the Tracker's stats
 > For the stats/tracker sections, do not count any bets that are outliers (currently + or - over 6% ev)
@@ -2162,4 +2163,4 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [x] O2 (DONE: note above the stats, "Outlier (over ±6% EV): not in stats" on the card, running-profit line skips
       them. Tests: trackerLeavesOutlierBetsOutOfTheStats (4c), anOutlierBetSaysItIsNotInTheStats.) Tracker UI: the Stats tab says how many bets were left out as outliers; each outlier's card in
       Bets says "Outlier: not in stats". Screenshot test.
-- [ ] O3 Ships with R5 (v0.16.2).
+- [x] O3 (SHIPPED in v0.16.2 code 29.) Ships with R5 (v0.16.2).
