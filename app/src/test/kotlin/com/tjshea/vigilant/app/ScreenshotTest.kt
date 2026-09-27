@@ -935,6 +935,11 @@ class ScreenshotTest {
         screen { com.tjshea.vigilant.app.ui.CnoScreen(s, {}, {}) }
         compose.onNodeWithContentDescription("Expected value +0.40%, under your minimum").assertExists()
         compose.onNodeWithContentDescription("Expected value +5.28%").assertExists() // Ohio: CNO's price, fine
+        // Best EV first at the prices shown, as in the widget: Jefferson (+0.40% now) is last, not first.
+        val order = compose.onAllNodes(androidx.compose.ui.test.hasContentDescription("Expected value", substring = true)).fetchSemanticsNodes()
+            .sortedBy { it.positionInRoot.y }.map { it.config[androidx.compose.ui.semantics.SemanticsProperties.ContentDescription].first() }
+        assertEquals("Expected value +5.28%", order.first())
+        assertEquals("Expected value +0.40%, under your minimum", order.last())
     }
 
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")

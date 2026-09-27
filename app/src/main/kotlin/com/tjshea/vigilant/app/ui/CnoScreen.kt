@@ -127,7 +127,8 @@ fun CnoScreen(
     // Bets Tj placed or removed are gone from the list (and the widget) until their game is over;
     // with "only bets the books agree on", so are the ones without the green check.
     val candidates = state.cnoCandidates(now)
-    val picks = state.cnoShown(now)
+    // Best EV first at the prices shown (Novig's price now re-orders them between CNO's reads, as in the widget).
+    val picks = state.cnoShown(now).sortedByDescending { state.livePick(it, now).ev }
     val placedHere = state.placed.filter { it.key.startsWith("cno:") }
     val (removedHere, betHere) = placedHere.partition { it.hidden }
     var showPlaced by remember { mutableStateOf(false) }
