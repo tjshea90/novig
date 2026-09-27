@@ -311,4 +311,73 @@ class ScannerTest {
         scanner.recheck(settings, (1..100).map { "m$it" })
         assertEquals(Scanner.MAX_RECHECK, novig.lastBookIds.size)
     }
+
+    // ---- RESEARCH.md §23: the second API for the same books is only a fallback ---------------------
+
+    /** PropLine, faked: the same Ravens–Cowboys board as the Odds API fixture. [fail] = no answer. */
+    private class FakeFirst(val log: MutableList<String>, var fail: Boolean = false) : ReferenceSource {
+        override val id = "propline"
+        override val displayName = "PropLine"
+        override val metered = true
+        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+            kotlinx.coroutines.delay(50)
+            log += "first"
+            if (fail) throw AllKeysExhaustedException("All 1 PropLine key(s) are rate-limited or invalid")
+            return RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0)
+        }
+    }
+
+    /** The Odds API behind it: asks what it's told (standing by when the first answered the league). */
+    private class FakeBackup(val log: MutableList<String>) : ReferenceSource {
+        var calls = 0
+        var seen: ScanContext? = null
+        override val id = "oddsapi"
+        override val displayName = "The Odds API"
+        override val metered = true
+        override val fallbackFor = "propline"
+        override suspend fun needed(league: League, settings: ScanSettings, context: ScanContext): Boolean {
+            log += "needed"
+            seen = context
+            return league.novigName !in context.firstAnswered
+        }
+        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+            calls++
+            log += "backup"
+            return RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0)
+        }
+    }
+
+    @Test
+    fun `a fallback waits for the API it backs up, is told what it gave, and stands by`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val backup = FakeBackup(log)
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(backup, FakeFirst(log)))
+        assertEquals(listOf("first", "needed"), log)
+        assertEquals(0, backup.calls)
+        assertEquals(setOf("NFL"), backup.seen!!.firstAnswered)
+        assertTrue("MONEYLINE:0" in backup.seen!!.covered.getValue(Fixtures.EVENT_ID))
+        val report = r.sources.single { it.id == "oddsapi" }
+        assertEquals(1, report.standingBy)
+        assertEquals(0, report.fetched)
+        // Still priced: the first API's books.
+        assertTrue(r.result!!.opportunities.isNotEmpty())
+    }
+
+    @Test
+    fun `when the first API can't answer, the fallback is called at once for it`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val backup = FakeBackup(log)
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeFirst(log, fail = true), backup))
+        assertEquals(listOf("first", "needed", "backup"), log)
+        assertEquals(1, r.sources.single { it.id == "oddsapi" }.fetched)
+        assertTrue(r.result!!.opportunities.isNotEmpty())
+    }
+
+    @Test
+    fun `without the first API in the scan, the fallback is simply the source`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val backup = FakeBackup(log)
+        Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(backup))
+        assertEquals(listOf("backup"), log) // never asked whether it's needed
+    }
 }
