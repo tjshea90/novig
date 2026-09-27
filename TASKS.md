@@ -2170,18 +2170,29 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > them if needed. If apis overlap odds from the same sports books, use the best/fastest API first and
 > the others as automatic fallbacks
 
-- [ ] S1 Map every odds API the app reads (Novig, PinnWire, pinnapi, Polymarket, Kalshi, PropLine, The
+- [x] S1 (DONE: RESEARCH.md §23.1 table; PinnWire llms-full.txt + PropLine llms.txt/freshness + The Odds API guide re-read
+      today; Kalshi/Polymarket timed live.) Map every odds API the app reads (Novig, PinnWire, pinnapi, Polymarket, Kalshi, PropLine, The
       Odds API, CNO, ESPN/MLB scores): which books each one carries, what it costs per call and per day,
       how fast it answers, and how the scan orders them today (Planner/Scanner/Pricing, key pools).
       Re-read each provider's docs (RESEARCH.md §22, NOVIG_API.md first; web for anything changed).
-- [ ] S2 Decide the order per book: where two APIs give the same book (Pinnacle: PinnWire, pinnapi,
+- [x] S2 (DONE: RESEARCH.md §23.2: Pinnacle = PinnWire → pinnapi → PropLine's copy → The Odds API's copy (merge order,
+      no extra calls); sportsbooks = PropLine, then The Odds API as fallback; props = PropLine props, then Odds API props for
+      what PropLine didn't price; exchanges direct; PinnWire since= rejected (no deletions on REST).) Decide the order per book: where two APIs give the same book (Pinnacle: PinnWire, pinnapi,
       The Odds API, PropLine; others: PropLine vs The Odds API), the best/fastest one goes first and the
       rest are fallbacks used automatically only for what the first couldn't give (failure, quota out,
       league or market missing). Write the decision into RESEARCH.md.
-- [ ] S3 Build it: one ordered fallback chain per book/league, no duplicate spend on a book another API
+- [x] S3 (DONE: ReferenceSource.fallbackFor/needed, ScanContext.covered/firstAnswered, Scanner.covering, TheOddsApiClient.needed,
+      OddsApiPropsSource skip, standby drops stale snapshot, Settings/feed copy. Tests: ScannerTest "a fallback waits for the API it
+      backs up…", "when the first API can't answer…", "without the first API in the scan…", "a fallback standing by drops its own
+      older answer" (failed before the fix); OddsApiFallbackTest (6); OddsApiPropsTest "behind PropLine, credits go only to…";
+      CreditEstimateTest backup estimates, standby summary, feed names; ScreenshotTest settingsSayTheOddsApiBacksUpPropLine,
+      settingsSayPropCreditsOnlyBackUpPropLine.) Build it: one ordered fallback chain per book/league, no duplicate spend on a book another API
       already returned this scan; usage optimizations found in S1 (caching, batching, fewer calls).
       Tests that prove the fallback kicks in and that the second API isn't called when the first
       answered.
-- [ ] S4 Full tests (CLAUDE.md protocol): automated floor + screenshots, sweep every tab and subsystem,
+- [x] S4 (DONE: floor 567 tests 0 failures + screenshots checked (5_settings sources, usage cards); fixes with tests:
+      PlacedIndex doubleheader/unknown-start (PlacedIndexTest; both checks FAIL on v0.16.2's code), stale fallback snapshot,
+      roster lane gated on CNO (PlacedEverywhereTest "with CNO asleep…"), Odds API list failure = standby (OddsApiFallbackTest).
+      RESEARCH.md §23.5.) Full tests (CLAUDE.md protocol): automated floor + screenshots, sweep every tab and subsystem,
       fix what's found with named tests.
 - [ ] S5 Regression (exit code + output), ckpt, ship, release, link.

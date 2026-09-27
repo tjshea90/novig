@@ -1977,3 +1977,24 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
   else, and faster pacing drew 429s before (§11).
 - **MLB scores fallback to ESPN**: ESPN's MLB box score lacks total bases (§22.5), and a failed MLB Stats API
   read already just waits for the next settle pass (every 3 h). Not built.
+
+### 23.4 Built (v0.16.3)
+- `ReferenceSource.fallbackFor` / `needed()`; `ScanContext.covered` (per Novig game: "MONEYLINE:0",
+  "PROP:RECEPTIONS", …) and `firstAnswered`; `Scanner` starts first choices at once and runs a fallback
+  after its first choice, with what that one gave (`Scanner.covering`). A fallback that stands by drops its
+  own older answer, so its stale quotes never price beside the fresh ones.
+- The Odds API game lines behind PropLine (`TheOddsApiClient.needed`: PropLine didn't answer the league;
+  or a sharp-picked book only The Odds API carries; or Novig games PropLine lacks that The Odds API's free
+  `/events` lists, re-used 5 min; an unreadable free list = stand by). The Odds API props behind PropLine
+  props (`OddsApiPropsSource.allocate` skips game/stat pairs PropLine priced).
+- Settings and the scan line say so ("Backup to PropLine", "The Odds API on standby").
+
+### 23.5 Also found in this full test (2026-09-27 ~16:40Z)
+- **Placed bets across a doubleheader or a series:** v0.16.2's "same bet" check allowed 12 h between
+  start times for every sport, so a ✓ on a doubleheader's game 1 hid the same bet in game 2; and a mark
+  with no start time matched the same pairing on any later day (a Mets–Nationals series). Now baseball
+  allows 2 h (the feeds agree to the minute), other sports 12 h, and an unknown start only matches a mark
+  from the last 24 h (`PlacedIndex`, league carried on marks and widget rows).
+- **Rosters read for a CNO list nobody sees:** since the widget works in Vigilant-only mode, its "on
+  screen" signal kept ESPN roster reads going for an old CNO list; now only with CNO's scanner on
+  (`UiState.cnoTeamRows`).
