@@ -1713,7 +1713,9 @@ props calls themselves are fixture-tested only.
       and that it's reading now.
       *Done: VigilantPullToRefresh (CNO, +EV, Games); ScreenshotTest thePullToRefreshArrowLetsGo…
       2 (both failed on the old box); CNO status "Read 4s ago · odds 20s old · every 15 s".*
-- [ ] J5 Tests (geometry + gestures + error cases), screenshots, full floor, ship, send the link.
+- [x] J5 Tests (geometry + gestures + error cases), screenshots, full floor, ship, send the link.
+      *Shipped v0.15.1 (code 21): CI 36281404595 green, release 36281636243,
+      https://github.com/tjshea90/novig/releases/tag/v0.15.1.*
       *Tests: WidgetGesturesTest 10, FloatingWidgetTest 4 (the real window driven by MotionEvents:
       bottom-left corner in/out with the right edge fixed, remembered; frame drag moves, list tap
       doesn't; two-finger pinch shrinks), ScreenshotTest +4. The frame now handles touches in
@@ -1752,4 +1754,11 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [ ] K3 Milwaukee: find why the notification's "best bet" isn't in the widget (mode? feed filter
       vs. notification count?) and make them agree.
 - [ ] K4 Bottom bar fits at any width (icons only when narrow; "Bo" cut off).
+- [ ] K6 Tj, 00:10Z: "Sometimes it says unable to resolve cno sometimes it says timeout." (DNS
+      failures and timeouts: the phone's network/VPN, not an HTTP refusal) → keep CNO's last good
+      address for when DNS fails, drop dead connections and retry a failed read once at once.
+- [ ] K7 Tj, 00:10Z: "make an x option next to each check mark on the right side on the cno
+      widget. If I press the x, it will remove the bet from the list even if I didn't bet it"
+      → ✕ = hide (not placed), kept through refreshes/restarts like placed, with Undo; CNO tab
+      lists hidden and placed bets separately.
 - [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
