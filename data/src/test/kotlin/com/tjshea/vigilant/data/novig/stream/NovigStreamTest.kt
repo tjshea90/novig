@@ -105,4 +105,30 @@ class NovigStreamTest {
         stream.connect()
         assertTrue((stream.state.value as StreamState.Failed).message.contains("Reconnect"))
     }
+
+    /**
+     * Found by the full test (2026-09-27): a late callback from a socket Vigilant already closed
+     * flipped the stream to "Failed", and after a quick reconnect wiped the new connection too.
+     */
+    @Test
+    fun `a closed socket's late goodbye neither fails the stream nor touches a newer connection`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val vault = MemoryVault().apply { generate("read") }
+        val signer = NovigSignedClient(OkHttpClient(), Json, vault.signer("read", "read-key-1"), server.url("").toString().trimEnd('/'))
+        val stream = NovigStream(OkHttpClient(), signer, scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"))
+        stream.setEvents(setOf("e1"))
+        stream.connect()
+        until { stream.book("m1")?.seq == 11L }
+        stream.close()
+        delay(1_000) // the server's close frame comes back
+        assertTrue("closed on purpose stays Off, was ${stream.state.value}", stream.state.value is StreamState.Off)
+        // Close and reconnect at once: the first socket's goodbye must not reach the second.
+        stream.connect()
+        until { stream.book("m1")?.seq == 11L }
+        delay(1_000)
+        assertTrue("the new connection is still live, was ${stream.state.value}", stream.state.value is StreamState.Live)
+        assertEquals(11L, stream.book("m1")?.seq)
+        stream.close()
+    }
 }
