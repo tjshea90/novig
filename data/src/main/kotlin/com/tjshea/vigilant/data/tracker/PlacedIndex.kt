@@ -42,6 +42,16 @@ class PlacedIndex private constructor(
         return starts.any { s -> s == null || startsTs == null || abs(s - startsTs) <= SAME_GAME_MS }
     }
 
+    /** Whether Vigilant's own [o] is a bet Tj already has. */
+    fun has(o: com.tjshea.vigilant.data.scanner.Opportunity): Boolean = has(
+        key = o.key, outcomeId = o.outcome.outcomeId, event = o.event.description, market = o.marketLabel,
+        selection = o.selection, startsTs = o.event.startsTs,
+    )
+
+    /** [list] without the bets Tj already has. */
+    fun visible(list: List<com.tjshea.vigilant.data.scanner.Opportunity>): List<com.tjshea.vigilant.data.scanner.Opportunity> =
+        if (isEmpty) list else list.filterNot(::has)
+
     companion object {
         /** Two listings of one bet start within this of each other (Novig's and CNO's times differ a little). */
         const val SAME_GAME_MS = 12 * 60 * 60_000L

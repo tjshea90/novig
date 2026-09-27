@@ -36,10 +36,10 @@ object BetGrader {
         val (who, line) = Picks.split(selection.trim())
         if (lower.contains("3-way") || lower.contains("3 way")) return null
         val period = when {
-            Regex("1st inning|first inning|nrfi|yrfi").containsMatchIn(lower) -> Period.FIRST_INNING
-            Regex("\\b1h\\b|1st half|first half|\\bf5\\b|first 5|1st 5").containsMatchIn(lower) -> Period.FIRST_HALF
+            FIRST_INNING_WORDS.containsMatchIn(lower) -> Period.FIRST_INNING
+            FIRST_HALF_WORDS.containsMatchIn(lower) -> Period.FIRST_HALF
             // Quarters, periods, 2nd halves: not graded here.
-            Regex("quarter|\\bq[1-4]\\b|period|2nd half|second half|\\b2h\\b|inning").containsMatchIn(lower) -> return null
+            OTHER_PERIOD_WORDS.containsMatchIn(lower) -> return null
             else -> Period.GAME
         }
         val total = line?.let { NovigText.parseTotalOutcome(it) }
@@ -51,7 +51,7 @@ object BetGrader {
             lower.contains("moneyline") || lower == "money" || lower.contains("to win") -> {
                 if (line != null || who.isEmpty() || period != Period.GAME) null else Pick.Moneyline(who)
             }
-            Regex("spread|run line|puck line|handicap").containsMatchIn(lower) -> {
+            SPREAD_WORDS.containsMatchIn(lower) -> {
                 val points = line?.replace('−', '-')?.trim()?.toDoubleOrNull()
                 if (who.isEmpty() || points == null || period == Period.FIRST_INNING) null else Pick.Spread(who, points, period)
             }
@@ -75,8 +75,8 @@ object BetGrader {
     /** Novig's stat for a market label ("Player Receiving Yards", "Passing Yards", "Pitcher Strikeouts"), when exactly one fits. */
     fun statOf(market: String): String? {
         val words = NovigBetFinder.marketWords(
-            market.replace(Regex("(?i)anytime (td|touchdown)( scorer)?"), "touchdowns")
-                .replace(Regex("(?i)3-pointers made|3 pointers made|threes made|threes"), "three pointers made"),
+            market.replace(ANYTIME_TD, "touchdowns")
+                .replace(THREES, "three pointers made"),
         )
         val fits = PropStats.NOVIG_TYPES.filter { NovigBetFinder.typeFits(it, words) }
         return fits.singleOrNull()
@@ -188,6 +188,12 @@ object BetGrader {
     private const val MIN_TEAM = 0.8
 
     private val GAME_TOTAL = Regex("^total( points| runs| goals)?$")
+    private val FIRST_INNING_WORDS = Regex("1st inning|first inning|nrfi|yrfi")
+    private val FIRST_HALF_WORDS = Regex("\\b1h\\b|1st half|first half|\\bf5\\b|first 5|1st 5")
+    private val OTHER_PERIOD_WORDS = Regex("quarter|\\bq[1-4]\\b|period|2nd half|second half|\\b2h\\b|inning")
+    private val SPREAD_WORDS = Regex("spread|run line|puck line|handicap")
+    private val ANYTIME_TD = Regex("(?i)anytime (td|touchdown)( scorer)?")
+    private val THREES = Regex("(?i)3-pointers made|3 pointers made|threes made|threes")
 
     /** A period in front of a market's name ("F5 Total", "1st 5 Innings Total Runs"). */
     private val PERIOD_PREFIX = Regex("^(1h|f5|1st half|first half|1st inning|first inning|1st 5 innings|first 5 innings|1st five innings)\\s+")
