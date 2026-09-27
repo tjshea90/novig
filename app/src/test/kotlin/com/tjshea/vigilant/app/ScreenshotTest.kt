@@ -844,6 +844,16 @@ class ScreenshotTest {
         compose.onAllNodesWithText("✓ 3 of 3 books agree", substring = true).assertCountEquals(0)
     }
 
+    /** "Only bets the books agree on" with none agreed yet: the widget says so, not "no +EV". */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetSaysWhenBetsAreWaitingForTheBooks() {
+        val s = floatingState().let { it.copy(books = emptyMap(), settings = it.settings.copy(cnoOnlyAgreed = true)) }
+        floating("9m_floating_only_agreed_waiting", s)
+        compose.onAllNodesWithText("No +EV on CrazyNinjaOdds right now").assertCountEquals(0)
+        compose.onNodeWithText("No bets the books agree on yet", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("being checked", substring = true).assertIsDisplayed()
+    }
+
     /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */
     @Test fun openInNovigSaysItsOpening() {
         val (pick, snap) = jeffersonMoved()
