@@ -55,6 +55,7 @@ import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageViews
+import com.tjshea.vigilant.data.reference.PropLinePropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.MarketFamily
@@ -278,7 +279,7 @@ fun SettingsScreen(
                         )
                     }
                 }
-                Hint("Pinnacle comes from your pinnapi key (or The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
+                Hint("Pinnacle comes from your PinnWire or pinnapi key (or PropLine / The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
 
                 Text("Minimum books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
                 ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
@@ -298,24 +299,37 @@ fun SettingsScreen(
 
                 // ---- Sources ------------------------------------------------------------------------
                 SectionTitle("Where fair odds come from")
-                Hint("Each is called only when you scan. Polymarket and Kalshi need no key.")
+                Hint("Each is called only when you scan. Polymarket and Kalshi need no key; the others take a free key.")
+                val pinnKeys = state.pinnwireKeys.size + state.pinnapiKeys.size
                 SwitchRow(
-                    "Pinnacle (pinnapi)",
-                    if (state.pinnapiKeys.isEmpty()) "Needs a free key from pinnapi.com (100 requests a day, about 1–2 per scan)."
-                    else "About 1–2 of a key's 100 daily requests per scan. Keys are used in order.",
+                    "Pinnacle",
+                    if (pinnKeys == 0) "The sharpest book. Needs a free key: pinnwire.com (100 requests a day, player props included) or pinnapi.com (game lines only)."
+                    else "About 1–2 of a key's 100 daily requests per scan. PinnWire keys go first (with Pinnacle's player props), then pinnapi's.",
                     s.usePinnacle,
                 ) { v -> onUpdate { it.copy(usePinnacle = v) } }
                 if (s.usePinnacle) {
+                    Text("PinnWire keys (game lines and player props)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
+                    KeyListEditor(ApiProvider.PINNWIRE, state.pinnwireKeys, keys, "Add a PinnWire key")
+                    Text("pinnapi keys (game lines, used when PinnWire's run out)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                     KeyListEditor(ApiProvider.PINNAPI, state.pinnapiKeys, keys, "Add a pinnapi key")
-                    if (state.pinnapiKeys.size > 1) {
+                    if (state.pinnapiKeys.size > 1 || state.pinnwireKeys.size > 1) {
                         Hint(
-                            "Heads up: pinnapi's terms forbid circumventing its rate limits, so using extra keys to get past " +
-                                "100 a day could get the keys suspended. Each key is still kept inside its own limit.",
+                            "Heads up: these feeds' terms forbid circumventing their rate limits, so using extra keys of one feed to get " +
+                                "past 100 a day could get the keys suspended. Each key is still kept inside its own limit.",
                         )
                     }
                 }
                 SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
                 SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC.", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
+                SwitchRow(
+                    "PropLine",
+                    if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
+                    else "1 request per league per scan for game lines, 1 per game for player props (up to ${PropLinePropsSource.MAX_GAMES_PER_SCAN} games a scan). 1,000 a day per key.",
+                    s.usePropLine,
+                ) { v -> onUpdate { it.copy(usePropLine = v) } }
+                if (s.usePropLine) {
+                    KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
+                }
                 SwitchRow(
                     "The Odds API",
                     if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
@@ -329,31 +343,34 @@ fun SettingsScreen(
                         onUpdate { it.copy(oddsApiReuseMinutes = v) }
                     }
                     Hint(creditEstimate(s))
-
+                }
+                if (s.useOddsApi || s.usePropLine) {
                     SwitchRow(
                         "Sportsbook player props",
-                        "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Kalshi " +
-                            "where it has the same line. 1 credit per prop type per game.",
+                        "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Pinnacle and " +
+                            "Kalshi where they have the same line. PropLine: 1 request per game. The Odds API: 1 credit per prop type per game.",
                         s.useBookProps,
                     ) { v -> onUpdate { it.copy(useBookProps = v) } }
                     if (s.useBookProps) {
                         if (MarketFamily.PLAYER_PROPS !in s.families) Hint("Turn on Player props under Markets below to use these.")
-                        Text("Prop types per game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                        ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
-                        Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                        ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else it.toString() }) { v ->
-                            onUpdate { it.copy(bookPropCreditsPerScan = v) }
-                        }
                         Text("Only games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                         ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
-                        Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                        ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
-                            onUpdate { it.copy(bookPropReuseMinutes = v) }
+                        if (s.useOddsApi) {
+                            Text("Prop types per game (The Odds API)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                            ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
+                            Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                            ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else it.toString() }) { v ->
+                                onUpdate { it.copy(bookPropCreditsPerScan = v) }
+                            }
+                            Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                            ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
+                                onUpdate { it.copy(bookPropReuseMinutes = v) }
+                            }
+                            Hint(bookPropEstimate(s))
                         }
-                        Hint(bookPropEstimate(s))
                     }
 
-                    SectionTitle("The Odds API books (${s.referenceBooks.size}/10)")
+                    SectionTitle("Sportsbooks for fair odds (${s.referenceBooks.size}/10)")
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
                             val on = key in s.referenceBooks
@@ -365,7 +382,11 @@ fun SettingsScreen(
                             )
                         }
                     }
-                    Hint("Up to 10 books cost the same: one credit per market per league, and one per prop type per game for props.")
+                    Hint(
+                        "Read from PropLine and The Odds API. On The Odds API, up to 10 books cost the same: one credit per market per " +
+                            "league, and one per prop type per game for props. PropLine carries all of them except Caesars, ESPN BET, " +
+                            "Betfair, Bally Bet and MyBookie.",
+                    )
                 }
 
                 SectionTitle("+EV feed")
@@ -448,8 +469,8 @@ fun SettingsScreen(
 
             SectionTitle("About")
             Hint(
-                "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (pinnapi), " +
-                    "Polymarket, Kalshi, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
+                "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (PinnWire, pinnapi), " +
+                    "Polymarket, Kalshi, PropLine, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
                     "fetches only when you tap Scan or pull to refresh; CrazyNinjaOdds' list only while its tab or a widget is on " +
                     "screen (and the screen is on). Nothing runs in the background.",
             )
