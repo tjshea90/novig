@@ -1959,7 +1959,11 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       "stats count wins and losses…".) Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
       source (CNO / Vigilant) and period.
 - [x] N6 (DONE: full floor 496 tests 0 failures, assembleRelease OK; shipped v0.15.6 code 26, https://github.com/tjshea90/novig/releases/tag/v0.15.6.) Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
-- [ ] N7 VERIFY LIVE (not yet possible 2026-09-27 ~04Z: no settled market seen): does
+- [x] N7 VERIFIED LIVE 2026-09-27 ~07:45Z: **404** for all three market ids below, and
+      `/v3/public/catalog/events?league=MLB&startsAfter=<14h ago>` lists only open games + futures (the
+      night's finished MLB games are gone under every status filter). So Novig's public catalog can
+      never settle a bet: BetSettler as built in v0.15.6 settles nothing. Fix = TASKS P4a (the
+      2026-09-27T06:14Z request's full test). Original question: does
       `GET /v3/public/catalog/markets/{id}` return a finished market with outcome status WIN/LOSS, or
       404 (the public list already hides settled markets)? Check these, in-game at 04Z (MLB):
       `01a0db6d-bda2-7440-98f8-a9643f6c5145` (OAK/HOU), `01a0d9d1-f4cf-7063-a5e7-c3b75b930d7c`
@@ -2061,5 +2065,9 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       scanner/cno/keys/store/tracker), app (VM, service, widget, PiP, screens). Fix every bug found,
       each with a named test that fails before the fix; speed/efficiency/UI improvements (no major
       UI change without Tj's OK — list those as proposals instead).
+- [ ] P4a SETTLE FIX (found in this full test, N7): results from ESPN's free scoreboard (game lines:
+      moneyline, spread, total, team total, 1st half / F5 / 1st inning from line scores) and ESPN's box
+      score (player props: the stats Novig lists), no key; Novig's catalog kept first for FMV/void.
+      `data/tracker/EspnResults` + BetSettler wiring; tests from real ESPN replies (fixtures).
 - [ ] P5 Full regression (exit code AND output), screenshots looked at, ckpt, ship, release, record,
       send link + findings.
