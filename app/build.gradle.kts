@@ -21,6 +21,9 @@ android {
         targetSdk = 36
         versionCode = 31
         versionName = "0.16.4"
+        // The book this app prices: Novig. The `mgm` module builds Vigilant MGM from these same
+        // sources with "betmgm" (AppBook.kt, BRIEF.md). Never change this one.
+        buildConfigField("String", "BOOK", "\"novig\"")
     }
 
     // Signs with a keystore committed directly into the repo — Tj's explicit call (2026-09-20),

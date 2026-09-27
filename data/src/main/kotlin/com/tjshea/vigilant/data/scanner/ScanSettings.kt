@@ -179,6 +179,11 @@ data class ScanSettings(
      * is slow or out of reach (Tj, 2026-09-27; [com.tjshea.vigilant.data.cno.NovigLive]).
      */
     val cnoLivePrices: Boolean = true,
+    /**
+     * Vigilant MGM only: the state Tj bets BetMGM in (two letters, "nj"). BetMGM's sites are per state,
+     * so its bet-slip links need it ([com.tjshea.vigilant.data.book.BetMgmLinks]). Unused by Vigilant.
+     */
+    val bookState: String = "",
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
