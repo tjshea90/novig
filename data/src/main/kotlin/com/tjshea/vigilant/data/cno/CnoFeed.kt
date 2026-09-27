@@ -65,6 +65,13 @@ class CnoFeed(
     private val clock: () -> Long = System::currentTimeMillis,
     /** Bets' Novig links, kept between launches (a line's link never changes). */
     private val linkStore: JsonFileStore<CnoLinks>? = null,
+    /**
+     * Novig's own public catalog: a bet's exact bet-slip link, or null when it can't name exactly
+     * one outcome ([NovigBetFinder]). Asked before CNO, so links don't depend on CNO answering
+     * (Tj, 2026-09-27: "make it so vigilant can open the bet in novig even if it can't reach cno
+     * servers"), and CNO is spared those requests.
+     */
+    private val catalog: (suspend (CnoRow) -> String?)? = null,
 ) {
     private val _state = MutableStateFlow(CnoState())
     val state: StateFlow<CnoState> = _state.asStateFlow()
@@ -305,7 +312,32 @@ class CnoFeed(
     private var linkLaneAtMs = Long.MIN_VALUE / 2
 
     /** [row]'s Novig link if it's already known: no network, so a tap opens the bet at once. */
-    fun cachedLink(row: CnoRow): String? = row.betUrl?.let { novigLinks[it] }
+    fun cachedLink(row: CnoRow): String? = novigLinks[linkKey(row)]
+
+    /** Where [row]'s link is kept: CNO's deeplink (one per line, whatever the price), else the row. */
+    private fun linkKey(row: CnoRow): String = row.betUrl ?: "row:${row.key}"
+
+    /** When each row was last looked up in Novig's catalog (a miss is tried again after [LINK_RETRY_MS]). */
+    private val catalogTriedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /**
+     * [row]'s exact link from Novig's catalog ([catalog]), kept like CNO's; null when the catalog
+     * can't say. Never touches CNO.
+     */
+    suspend fun catalogLink(row: CnoRow): String? {
+        val find = catalog ?: return null
+        novigLinks[linkKey(row)]?.let { return it }
+        val link = try {
+            find(row)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        novigLinks[linkKey(row)] = link
+        saveLinks()
+        return link
+    }
 
     /**
      * The Novig app link for [row]: `novigapp://events/<outcome id>/cno`, which opens Novig with
@@ -344,22 +376,35 @@ class CnoFeed(
 
     /**
      * Looks up the Novig links of the top [top] bets in [rows] ahead of any tap (Tj, 2026-09-27:
-     * "sometimes they pull up the novig bet slip, but sometimes they don't": the link used to be
-     * asked of CNO on the tap, which failed whenever CNO was slow or out of reach). One small
-     * request per new bet, [LINK_GAP_MS] apart, after the list's reads and never while CNO is
-     * failing or asked for a pause. Runs until cancelled; the caller runs it alongside [watch].
+     * "sometimes they pull up the novig bet slip, but sometimes they don't"; then "make it so
+     * vigilant can open the bet in novig even if it can't reach cno servers"). Novig's own catalog
+     * first ([catalog]: two public Novig reads per game, kept five minutes, [CATALOG_GAP_MS] apart),
+     * then, only for bets the catalog can't pin to one outcome, CNO's link: one small request per
+     * bet, [LINK_GAP_MS] apart, after the list's reads and never while CNO is failing or asked for
+     * a pause. Runs until cancelled; the caller runs it alongside [watch].
      */
     suspend fun keepLinksFresh(rows: Flow<List<CnoRow>>, top: Int = LINKS_TOP) {
-        rows.map { list -> list.take(top).filter { it.betUrl != null } }
+        rows.map { list -> list.take(top) }
             .distinctUntilChanged { a, b -> a.mapTo(HashSet()) { it.key } == b.mapTo(HashSet()) { it.key } }
             .collectLatest { list ->
                 while (true) {
                     val now = clock()
-                    val missing = list.filter { novigLinks[it.betUrl!!] == null }
+                    val missing = list.filter { novigLinks[linkKey(it)] == null }
                     if (missing.isEmpty()) awaitCancellation()
-                    val next = missing.firstOrNull { r -> linkTriedAt[r.betUrl!!]?.let { now - it >= LINK_RETRY_MS } ?: true }
+                    // 1. Novig's catalog, which doesn't depend on CNO at all.
+                    val fromCatalog = if (catalog == null) null else missing.firstOrNull { r -> catalogTriedAt[linkKey(r)]?.let { now - it >= LINK_RETRY_MS } ?: true }
+                    if (fromCatalog != null) {
+                        catalogTriedAt[linkKey(fromCatalog)] = now
+                        catalogLink(fromCatalog)
+                        delay(CATALOG_GAP_MS)
+                        continue
+                    }
+                    // 2. CNO, for what the catalog couldn't name (and every bet when there's no catalog).
+                    val forCno = missing.filter { it.betUrl != null }
+                    val next = forCno.firstOrNull { r -> linkTriedAt[r.betUrl!!]?.let { now - it >= LINK_RETRY_MS } ?: true }
                     if (next == null) {
-                        val soonest = missing.mapNotNull { linkTriedAt[it.betUrl!!] }.minOrNull() ?: now
+                        val tried = forCno.mapNotNull { linkTriedAt[it.betUrl!!] } + missing.mapNotNull { catalogTriedAt[linkKey(it)] }
+                        val soonest = tried.minOrNull() ?: now
                         delay((soonest + LINK_RETRY_MS - now).coerceAtLeast(1_000L))
                         continue
                     }
