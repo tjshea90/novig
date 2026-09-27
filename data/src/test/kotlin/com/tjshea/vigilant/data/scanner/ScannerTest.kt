@@ -380,4 +380,20 @@ class ScannerTest {
         Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(backup))
         assertEquals(listOf("backup"), log) // never asked whether it's needed
     }
+
+    /** Full test, 2026-09-27: a backup that stands by must not keep pricing from its last, older answer. */
+    @Test
+    fun `a fallback standing by drops its own older answer`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val backup = FakeBackup(log)
+        val scanner = Scanner(FakeNovig(), clock = { now })
+        // PropLine not set up yet: The Odds API answers.
+        assertEquals(1, scanner.scan(settings, listOf(backup)).sources.single { it.id == "oddsapi" }.matched)
+        // 20 minutes later PropLine answers: The Odds API stands by, and its 20-minute-old quotes price nothing.
+        now += 20 * 60_000L
+        val r = scanner.scan(settings, listOf(FakeFirst(log), backup))
+        assertEquals(1, r.sources.single { it.id == "oddsapi" }.standingBy)
+        assertEquals(0, r.sources.single { it.id == "oddsapi" }.matched)
+        assertEquals(1, r.sources.single { it.id == "propline" }.matched)
+    }
 }
