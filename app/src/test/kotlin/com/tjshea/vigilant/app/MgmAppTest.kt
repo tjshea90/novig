@@ -106,6 +106,31 @@ class MgmAppTest {
         compose.onNodeWithText("Add a PropLine key").assertExists()
     }
 
+    @Test fun `a bet both scanners list shows once in the widget, matched by game, side and line`() {
+        val base = SampleMgm.state()
+        val url = CnoView.defaultFor(Sportsbook.BETMGM.cnoSiteId)
+        val row = com.tjshea.vigilant.data.cno.CnoRow(
+            0.036, SampleMgm.NOW + 5 * 3_600_000L, "Football", "NFL", "Baltimore Ravens @ Dallas Cowboys", "Moneyline", "Baltimore Ravens",
+            150, null, "BetMGM", 142, 0.4132, 6, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=77",
+        )
+        val snap = com.tjshea.vigilant.data.cno.CnoSnapshot(url, listOf(row), SampleMgm.NOW - 20_000, cnoAgeSeconds = 20, filters = com.tjshea.vigilant.data.cno.CnoFilters())
+        val s = base.copy(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = snap))
+        val items = MiniWindow.items(s, SampleMgm.NOW)
+        val ravens = items.filter { it.title == "Baltimore Ravens" }
+        assertEquals(1, ravens.size)
+        assertEquals(0.036, ravens.single().alsoCnoEv!!, 1e-9)
+        // Marking Vigilant's copy placed covers CNO's too.
+        assertTrue(MiniWindow.cnoKey(row) in ravens.single().aliases)
+    }
+
+    @Test fun `CNO's live BetMGM bets keep CNO's EV - only Novig charges a taker fee`() {
+        val row = com.tjshea.vigilant.data.cno.CnoRow(0.04, SampleMgm.NOW - 60_000, "Football", "NFL", "A @ B", "Moneyline", "A", 110, null, "BetMGM", 100, 0.4952, 6)
+        val snap = com.tjshea.vigilant.data.cno.CnoSnapshot("u", listOf(row, row.copy(book = "Novig", bet = "B")), SampleMgm.NOW, filters = com.tjshea.vigilant.data.cno.CnoFilters(minEv = 0.0))
+        val picks = com.tjshea.vigilant.data.cno.CnoChecks.screen(snap, com.tjshea.vigilant.data.cno.CnoFilters(minEv = 0.0), SampleMgm.NOW).picks
+        assertEquals(0.04, picks.single { it.row.book == "BetMGM" }.ev, 1e-12)
+        assertTrue(picks.single { it.row.book == "Novig" }.ev < 0.04)
+    }
+
     @Test fun `CNO's list defaults to BetMGM`() {
         val s = SampleMgm.state()
         assertEquals(CnoView.defaultFor(Sportsbook.BETMGM.cnoSiteId), s.cnoUrl)
