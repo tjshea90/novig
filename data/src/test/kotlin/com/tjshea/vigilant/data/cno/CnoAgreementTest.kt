@@ -20,6 +20,8 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class CnoAgreementTest {
 
+    @get:org.junit.Rule val tmp = org.junit.rules.TemporaryFolder()
+
     private fun row(i: Int, odds: Int = 120) =
         CnoRow(0.05, event = "E$i", market = "Player Receptions", bet = "P$i Under 69.5", odds = odds, book = "Novig", gameUrl = "https://x/game.aspx?side_id=$i")
 
@@ -74,16 +76,17 @@ class CnoAgreementTest {
     }
 
     @Test
-    fun `the lane reads the top bets' books one at a time, 2 s apart, then waits for them to go stale`() = runTest {
+    fun `the lane reads the top bets' books one at a time, 4 s apart, then waits for them to go stale`() = runTest {
         val source = Source { currentTime }
         val feed = CnoFeed(source, clock = { currentTime })
         val rows = MutableStateFlow(List(3) { row(it) })
         val job = launch { feed.keepBooksFresh(rows) }
         runCurrent()
-        advanceTimeBy(10_000)
-        assertEquals(listOf(0L, 2_000L, 4_000L), source.bookTimes.map { it.second })
-        // Nothing more until the first goes stale (5 minutes after it was read).
-        advanceTimeBy(CnoFeed.AGREE_TTL_MS - 11_000)
+        advanceTimeBy(3 * CnoFeed.AGREE_GAP_MS)
+        val gap = CnoFeed.AGREE_GAP_MS
+        assertEquals(listOf(0L, gap, 2 * gap), source.bookTimes.map { it.second })
+        // Nothing more until the first goes stale (10 minutes after it was read).
+        advanceTimeBy(CnoFeed.AGREE_TTL_MS - 3 * gap - 1_000)
         assertEquals(3, source.bookTimes.size)
         advanceTimeBy(2_000)
         assertEquals(4, source.bookTimes.size)
@@ -184,5 +187,66 @@ class CnoAgreementTest {
         assertEquals(listOf(row(1).key, row(9).key, row(1).key), source.started.map { it.first })
         assertTrue(source.started.last().second < 20_000L)
         job.cancel()
+    }
+
+    @Test
+    fun `while CNO's list is failing, the books lane waits instead of piling on`() = runTest {
+        val source = Source { currentTime }
+        val failing = object : CnoSource by source {
+            override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot = throw CnoException("Couldn't reach CrazyNinjaOdds (timeout)")
+        }
+        val feed = CnoFeed(failing, clock = { currentTime })
+        feed.refresh("u") // fails: the list shows an error
+        val rows = MutableStateFlow(List(3) { row(it) })
+        val job = launch { feed.keepBooksFresh(rows) }
+        runCurrent()
+        advanceTimeBy(60_000)
+        assertTrue(source.bookTimes.isEmpty())
+        job.cancel()
+    }
+
+    /** Links as CNO's deeplink hands them over, counting requests. */
+    private class LinkSource(val clock: () -> Long) : CnoSource {
+        val asked = mutableListOf<Pair<String, Long>>()
+        override suspend fun fetch(url: String, filters: CnoFilters) = CnoSnapshot(url, emptyList(), clock())
+        override suspend fun novigLink(row: CnoRow): String {
+            asked += row.key to clock()
+            return "novigapp://events/outcome-${row.bet}/cno"
+        }
+    }
+
+    private fun linkRow(i: Int) = row(i).copy(betUrl = "https://crazyninjaodds.com/site/redirect/deeplink.aspx?line_id=$i")
+
+    @Test
+    fun `bet links are looked up ahead of a tap, once each, paced, and a tap then needs no network`() = runTest {
+        val source = LinkSource { currentTime }
+        val feed = CnoFeed(source, clock = { currentTime })
+        val rows = MutableStateFlow(List(3) { linkRow(it) })
+        assertEquals(null, feed.cachedLink(linkRow(0)))
+        val job = launch { feed.keepLinksFresh(rows) }
+        runCurrent()
+        advanceTimeBy(3 * CnoFeed.LINK_GAP_MS)
+        val gap = CnoFeed.LINK_GAP_MS
+        assertEquals(listOf(0L, gap, 2 * gap), source.asked.map { it.second })
+        assertEquals("novigapp://events/outcome-P0 Under 69.5/cno", feed.cachedLink(linkRow(0)))
+        // A refresh of the same bets asks for nothing again.
+        rows.value = List(3) { linkRow(it).copy(odds = 125) }
+        advanceTimeBy(60_000)
+        assertEquals(3, source.asked.size)
+        job.cancel()
+        // The tap: already known.
+        assertEquals("novigapp://events/outcome-P2 Under 69.5/cno", feed.novigLink(linkRow(2)))
+        assertEquals(3, source.asked.size)
+    }
+
+    @Test
+    fun `bet links survive a restart`() = runTest {
+        val file = java.io.File(tmp.root, "cno_links.json")
+        fun store() = com.tjshea.vigilant.data.store.JsonFileStore(file, CnoLinks.serializer(), { CnoLinks() })
+        val first = CnoFeed(LinkSource { currentTime }, clock = { currentTime }, linkStore = store())
+        first.novigLink(linkRow(7))
+        val second = CnoFeed(LinkSource { currentTime }, clock = { currentTime }, linkStore = store())
+        second.load()
+        assertEquals("novigapp://events/outcome-P7 Under 69.5/cno", second.cachedLink(linkRow(7)))
     }
 }
