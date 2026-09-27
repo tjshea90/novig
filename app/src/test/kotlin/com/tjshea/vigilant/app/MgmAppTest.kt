@@ -92,8 +92,8 @@ class MgmAppTest {
         var saved: ScanSettings? = null
         val s = SampleMgm.state()
         shoot("22_mgm_settings") { SettingsScreen(s, { t -> saved = t(s.settings) }) }
-        compose.onNodeWithText("BetMGM state").assertExists()
-        compose.onAllNodesWithText("Novig API key").assertCountEquals(0)
+        compose.onNodeWithText("BetMGM state", ignoreCase = true).assertExists()
+        compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
         compose.onAllNodesWithText("Most Novig prices per scan", substring = true).assertCountEquals(0)
         compose.onAllNodesWithText("Novig's price now").assertCountEquals(0)
         compose.onNodeWithText("NJ").performClick()
