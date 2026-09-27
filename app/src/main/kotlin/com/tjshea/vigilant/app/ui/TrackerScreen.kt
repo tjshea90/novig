@@ -98,7 +98,7 @@ fun TrackerScreen(
     var filter by rememberSaveable { mutableStateOf(BetFilter.OPEN) }
     var confirmDelete by remember { mutableStateOf<TrackedBet?>(null) }
     var editStake by remember { mutableStateOf<TrackedBet?>(null) }
-    // Results of finished games from Novig, each time the tab is opened (nothing to read: no network).
+    // Results of finished games from their final scores, each time the tab is opened (no network when nothing is due).
     LaunchedEffect(Unit) { onShown() }
 
     Scaffold(
@@ -227,7 +227,7 @@ private fun StatsCards(bets: List<TrackedBet>) {
                 LabeledValue("Open", "${stats.pending}")
             }
             Text(
-                "Wins out of bets won or lost (pushes aside). Results come from Novig once a game is over; tap one to fix it.",
+                "Wins out of bets won or lost (pushes aside). Results come from each game's final score (ESPN, MLB) once it's over; tap one to fix it.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

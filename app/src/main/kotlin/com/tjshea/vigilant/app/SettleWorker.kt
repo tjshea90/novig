@@ -12,15 +12,15 @@ import java.util.concurrent.TimeUnit
 
 /**
  * The Tracker's "background scores system" (Tj, 2026-09-27): every few hours, with a network,
- * whether Vigilant is open or not, open bets whose games are over are settled from Novig's catalog
- * ([com.tjshea.vigilant.data.tracker.BetSettler]). Android batches it with other apps' work, so it
+ * whether Vigilant is open or not, open bets whose games are over are settled from their final
+ * scores ([com.tjshea.vigilant.data.tracker.BetSettler]: ESPN, MLB's Stats API). Android batches it with other apps' work, so it
  * costs no wake-ups of its own; with no bet due it reads one small file and ends, no network.
  */
 class SettleWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val app = applicationContext as? VigilantApp ?: return Result.success()
         val report = runCatching { app.container.settler.run() }.getOrNull()
-        // Novig busy or out of reach: the next 3-hourly run tries again, no retry storm.
+        // A score feed out of reach: the next 3-hourly run tries again, no retry storm.
         return if (report == null) Result.failure() else Result.success()
     }
 
