@@ -2281,4 +2281,8 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
 - [x] V4 (DONE: release.yml builds both, verifies both certs, attaches vigilant-vX.apk and vigilant-mgm-vX.apk; ci.yml uploads
       both debug APKs; ship.sh's `./gradlew test` already covers :mgm.) Build/release: ci.yml covers `:mgm` (root `test`/`assembleDebug`), release.yml builds both and
       attaches both APKs to the same Release (Novig's APK name unchanged); ship.sh gate covers both.
-- [ ] V5 Docs (BRIEF.md decision, CLAUDE.md surface, RESEARCH.md §25), light tests, ship, link.
+- [x] V5 (SHIPPED v0.17.0 code 32, 2026-09-27T19:56Z: docs in BRIEF.md/CLAUDE.md/RESEARCH.md §25; light review of the whole diff +
+      callers of every changed shared function (CnoView.normalize, CnoChecks, NovigBook.takeLadder incl. NovigLive, BetTracker,
+      PropLineClient, ScanRunner); floor engine 39 / data 400 (8 live skipped) / app 170 / mgm 2 = 611, 0 failures, exit 0 + XML
+      counts; ship.sh suite green; CI 36345562068 green on f68ecd4; release.yml 36345843461 green; both APKs on
+      https://github.com/tjshea90/novig/releases/tag/v0.17.0.) Docs (BRIEF.md decision, CLAUDE.md surface, RESEARCH.md §25), light tests, ship, link.
