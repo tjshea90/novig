@@ -33,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -234,7 +236,8 @@ private fun FeedSummary(
                     )
                     FeedSort.entries.forEach { sort ->
                         val on = state.settings.feedSort == sort
-                        TextButton(onClick = { onSort(sort) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        // Which one is picked is said to TalkBack too, not only drawn in bold.
+                        TextButton(onClick = { onSort(sort) }, modifier = Modifier.semantics { selected = on }, contentPadding = PaddingValues(horizontal = 8.dp)) {
                             Text(sort.displayName, style = MaterialTheme.typography.labelMedium, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
                                 color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -374,7 +377,7 @@ internal fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
         )
         ScanSettings.STARTS_WITHIN_CHOICES.forEach { h ->
             val on = hours == h
-            TextButton(onClick = { onPick(h) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            TextButton(onClick = { onPick(h) }, modifier = Modifier.semantics { selected = on }, contentPadding = PaddingValues(horizontal = 8.dp)) {
                 Text(startsWithinLabel(h), style = MaterialTheme.typography.labelMedium, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
                     color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }

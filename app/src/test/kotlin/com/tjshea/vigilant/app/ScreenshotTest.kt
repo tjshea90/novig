@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
@@ -272,6 +274,11 @@ class ScreenshotTest {
         var picked: Int? = null
         screen { FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(startsWithinHours = 24)) }, {}, {}, {}, { _, _ -> }, onStartsWithin = { picked = it }) }
         compose.onNodeWithText("Starts within").assertExists()
+        // The picked window and sort are told to TalkBack, not only drawn in bold (full test, 2026-09-27).
+        compose.onNodeWithText("24h").assertIsSelected()
+        compose.onNodeWithText("48h").assertIsNotSelected()
+        compose.onNodeWithText("Best EV").assertIsSelected()
+        compose.onNodeWithText("Soonest").assertIsNotSelected()
         compose.onNodeWithText("12h").performClick()
         assert(picked == 12) { "picked $picked" }
         compose.onNodeWithText("Any time").performClick()
