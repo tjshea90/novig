@@ -336,17 +336,18 @@ class OddsApiPropsTest {
         source.odds(nfl, settings, board)
         val bought = requests.size
 
-        // Ten minutes later: nothing new to buy, and the same props come back.
-        val again = source.odds(nfl, settings, board.copy(now = now + 10 * 60_000))
+        // A minute later: nothing new to buy, and the same props come back.
+        val again = source.odds(nfl, settings, board.copy(now = now + 60_000))
         assertEquals(bought, requests.size)
         assertEquals(listOf("oA"), again.events.map { it.id })
 
-        // Past the hour: the soonest game is bought again.
-        source.odds(nfl, settings, board.copy(now = now + 61 * 60_000))
+        // The setting says an hour, but props are never re-used past two minutes (RESEARCH.md §24):
+        // three minutes on, the soonest game is bought again.
+        source.odds(nfl, settings, board.copy(now = now + 3 * 60_000))
         assertEquals(2, requests.count { it.requestUrl!!.encodedPath.endsWith("/oA/odds") })
 
         // A different set of books is a different ask: bought fresh, not re-used.
-        source.odds(nfl, settings.copy(referenceBooks = listOf("betmgm")), board.copy(now = now + 62 * 60_000))
+        source.odds(nfl, settings.copy(referenceBooks = listOf("betmgm")), board.copy(now = now + 4 * 60_000))
         assertEquals(3, requests.count { it.requestUrl!!.encodedPath.endsWith("/oA/odds") })
     }
 
