@@ -42,6 +42,9 @@ data class RefBookMarket(
             LineKind.TOTAL, LineKind.TEAM_TOTAL, LineKind.PLAYER_PROP -> quotes.firstOrNull { it.side == Side.OVER }?.point
         }
 
+    /** What this quote covers, for a fallback source to skip: "PROP:<stat>" for props, else "<kind>:<period>". */
+    val coverage: String get() = if (kind == LineKind.PLAYER_PROP) "PROP:$stat" else "$kind:$period"
+
     /** The same quote seen from the other team's side (home and away swapped). */
     fun flipped(): RefBookMarket = copy(
         quotes = quotes.map {
@@ -129,13 +132,35 @@ interface ReferenceSource {
 
     /** [odds] with Novig's board for the league, for sources that [needsCatalog]. */
     suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot = odds(league, settings)
+
+    /**
+     * The [id] of the source that goes first for the same books (RESEARCH.md §23; Tj, 2026-09-27: "If
+     * apis overlap odds from the same sports books, use the best/fastest API first and the others as
+     * automatic fallbacks"). A fallback runs once that source has answered, with what it gave in
+     * [ScanContext.covered], and only when [needed] says it could add something. Null = first choice.
+     */
+    val fallbackFor: String? get() = null
+
+    /**
+     * For a fallback ([fallbackFor]): whether calling for [league] could add anything the first source
+     * didn't give this scan. False = it stands by (nothing spent). Called only when no re-usable
+     * snapshot of its own would be used instead.
+     */
+    suspend fun needed(league: League, settings: ScanSettings, context: ScanContext): Boolean = true
 }
 
-/** What a scan already knows when a [ReferenceSource.needsCatalog] source runs. */
+/** What a scan already knows when a [ReferenceSource.needsCatalog] source (or a fallback) runs. */
 data class ScanContext(
     val novigEvents: List<NovigEvent> = emptyList(),
     val novigMarkets: List<NovigMarket> = emptyList(),
     val now: Long = System.currentTimeMillis(),
+    /**
+     * For a fallback source: per Novig event id, what its first source priced for that game this
+     * scan ([RefBookMarket.coverage]: "MONEYLINE:0", "PROP:RECEPTIONS", …).
+     */
+    val covered: Map<String, Set<String>> = emptyMap(),
+    /** For a fallback source: the Novig leagues its first source answered this scan. */
+    val firstAnswered: Set<String> = emptySet(),
 )
 
 /**
