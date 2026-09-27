@@ -211,6 +211,57 @@ class PropLineClientTest {
          {"name":"Over","description":"Justin Tucker","price":120,"point":1.5}]}]}]}
     """.trimIndent()
 
+    /**
+     * PropLine's game list as it really answers (Tj's phone, 2026-09-27 ~14:45Z, v0.16.0 showed
+     * "Expected start of the array '[' but had 'n' … at path: $[0].bookmakers"): `/events` sends
+     * `"bookmakers": null` and other nulls, which its schema allows.
+     */
+    private val realEvents = """
+    [{"id":"555","sport_key":"football_nfl","home_team":"Dallas Cowboys","away_team":"Baltimore Ravens",
+      "home_team_key":"cowboys","away_team_key":"ravens","home_team_id":"espn.nfl:6","away_team_id":null,
+      "home_team_logo_url":null,"away_team_logo_url":null,"commence_time":"${iso(start)}","live":false,"completed":false,
+      "is_outright":false,"tournament":null,"tour":null,"espn_event_id":null,"mlb_game_pk":null,
+      "merged_from_event_ids":null,"bookmakers":null},
+     {"home_team_key":"colts","away_team_key":"texans","id":"556","sport_key":"football_nfl","home_team":"Indianapolis Colts",
+      "away_team":"Houston Texans","commence_time":"${iso(start)}","merged_from_event_ids":null,"bookmakers":null}]
+    """.trimIndent()
+
+    @Test
+    fun `PropLine's real game list, with null bookmakers, still names every game`() = runTest {
+        routes["/v1/sports/americanfootball_nfl/events"] = { ok(realEvents) }
+        val games = client().events("americanfootball_nfl")
+        assertEquals(listOf("pl:555", "pl:556"), games.map { it.id })
+        assertEquals("Houston Texans", games[1].away)
+        assertTrue(games.all { it.markets.isEmpty() })
+    }
+
+    @Test
+    fun `props are bought from the real game list's ids`() = runTest {
+        routes["/v1/sports/americanfootball_nfl/events"] = { ok(realEvents) }
+        routes["/v1/sports/americanfootball_nfl/events/555/odds"] = { ok(props) }
+        val snap = PropLinePropsSource(client()).odds(nfl, ScanSettings(referenceBooks = listOf("fanduel")), context)
+        assertEquals("PASSING_YARDS", snap.events.single().markets.single().stat)
+    }
+
+    @Test
+    fun `nulls anywhere in a board are read as nothing, and one bad game never sinks the rest`() {
+        val raw = """
+        [{"id":"1","home_team":"Dallas Cowboys","away_team":"Baltimore Ravens","commence_time":"${iso(start)}",
+          "bookmakers":[{"key":"pinnacle","title":null,"last_update":null,"markets":null},
+                        {"key":"fanduel","title":"FanDuel","markets":[{"key":"h2h","last_update":null,"outcomes":null},
+                          {"key":"h2h","description":null,"last_update":"$upd","outcomes":[
+                            {"name":"Dallas Cowboys","description":null,"price":-150,"point":null,"side":"home"},
+                            {"name":"Baltimore Ravens","description":null,"price":130,"point":null,"side":"away"}]}]}]},
+         {"id":"2","home_team":null,"away_team":"X","commence_time":"${iso(start)}"},
+         {"id":3,"home_team":"A","away_team":"B","commence_time":"not a time"},
+         "junk"]
+        """.trimIndent()
+        val events = PropLineClient.parseEvents(raw, json, "americanfootball_nfl")
+        val e = events.single()
+        assertEquals("FanDuel", e.markets.single().bookTitle)
+        assertEquals(LineKind.MONEYLINE, e.markets.single().kind)
+    }
+
     @Test
     fun `props are bought per game for the stats Novig lists, and re-used for ten minutes`() = runTest {
         routes["/v1/sports/americanfootball_nfl/events"] = { ok(board) }
