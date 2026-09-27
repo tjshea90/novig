@@ -1,0 +1,1013 @@
+{
+ "sport_id": 5,
+ "last": 1790489951390,
+ "generated_at": "2026-09-27T06:19:11.390Z",
+ "events": [
+  {
+   "event_id": 1636872090,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "home": "Pittsburgh Steelers",
+   "away": "Cincinnati Bengals",
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "is_have_periods": true,
+   "periods": {
+    "num_0": {
+     "number": 0,
+     "money_line": {
+      "home": 2.56,
+      "away": 1.562
+     },
+     "spreads": {
+      "1": {
+       "hdp": 1,
+       "home": 2.39,
+       "away": 1.613,
+       "max": 50000
+      },
+      "2": {
+       "hdp": 2,
+       "home": 2.27,
+       "away": 1.68,
+       "max": 50000
+      },
+      "3": {
+       "hdp": 3,
+       "home": 2.04,
+       "away": 1.847,
+       "max": 50000
+      }
+     },
+     "totals": {
+      "41": {
+       "points": 41,
+       "over": 1.763,
+       "under": 2.12,
+       "max": 10000
+      },
+      "42": {
+       "points": 42,
+       "over": 1.877,
+       "under": 1.98,
+       "max": 10000
+      },
+      "43": {
+       "points": 43,
+       "over": 2.03,
+       "under": 1.847,
+       "max": 10000
+      }
+     },
+     "team_total": {
+      "home": {
+       "points": 19.5,
+       "over": 1.862,
+       "under": 2.03
+      },
+      "away": {
+       "points": 23.5,
+       "over": 2.05,
+       "under": 1.847
+      }
+     },
+     "team_totals": {
+      "home": {
+       "19.5": {
+        "points": 19.5,
+        "over": 1.862,
+        "under": 2.03,
+        "max": 5000
+       }
+      },
+      "away": {
+       "23.5": {
+        "points": 23.5,
+        "over": 2.05,
+        "under": 1.847,
+        "max": 5000
+       }
+      }
+     }
+    },
+    "num_3": {
+     "number": 3,
+     "money_line": {
+      "home": 2.16,
+      "away": 1.752
+     },
+     "spreads": {
+      "0.5": {
+       "hdp": 0.5,
+       "home": 1.699,
+       "away": 2.24,
+       "max": 3000
+      },
+      "1.5": {
+       "hdp": 1.5,
+       "home": 1.667,
+       "away": 2.26,
+       "max": 3000
+      },
+      "-0.5": {
+       "hdp": -0.5,
+       "home": 2.72,
+       "away": 1.478,
+       "max": 3000
+      }
+     },
+     "totals": {
+      "7": {
+       "points": 7,
+       "over": 1.641,
+       "under": 2.28,
+       "max": 2000
+      },
+      "7.5": {
+       "points": 7.5,
+       "over": 2.02,
+       "under": 1.84,
+       "max": 2000
+      },
+      "9.5": {
+       "points": 9.5,
+       "over": 2.16,
+       "under": 1.719,
+       "max": 2000
+      }
+     },
+     "team_total": {
+      "home": {
+       "points": 0.5,
+       "over": 1.602,
+       "under": 2.4
+      },
+      "away": {
+       "points": 3.5,
+       "over": 2.02,
+       "under": 1.84
+      }
+     },
+     "team_totals": {
+      "home": {
+       "0.5": {
+        "points": 0.5,
+        "over": 1.602,
+        "under": 2.4,
+        "max": 1000
+       }
+      },
+      "away": {
+       "3.5": {
+        "points": 3.5,
+        "over": 2.02,
+        "under": 1.84,
+        "max": 1000
+       }
+      }
+     }
+    },
+    "num_1": {
+     "number": 1,
+     "money_line": {
+      "home": 2.3,
+      "away": 1.68
+     },
+     "spreads": {
+      "3": {
+       "hdp": 3,
+       "home": 1.763,
+       "away": 2.14,
+       "max": 5000
+      },
+      "4": {
+       "hdp": 4,
+       "home": 1.556,
+       "away": 2.52,
+       "max": 5000
+      },
+      "2.5": {
+       "hdp": 2.5,
+       "home": 1.935,
+       "away": 1.952,
+       "max": 5000
+      }
+     },
+     "totals": {
+      "19": {
+       "points": 19,
+       "over": 1.629,
+       "under": 2.34,
+       "max": 3000
+      },
+      "20": {
+       "points": 20,
+       "over": 1.735,
+       "under": 2.15,
+       "max": 3000
+      },
+      "21": {
+       "points": 21,
+       "over": 1.971,
+       "under": 1.901,
+       "max": 3000
+      }
+     },
+     "team_total": {
+      "home": {
+       "points": 9.5,
+       "over": 1.901,
+       "under": 1.971
+      },
+      "away": {
+       "points": 10.5,
+       "over": 2.05,
+       "under": 1.833
+      }
+     },
+     "team_totals": {
+      "home": {
+       "9.5": {
+        "points": 9.5,
+        "over": 1.901,
+        "under": 1.971,
+        "max": 1000
+       }
+      },
+      "away": {
+       "10.5": {
+        "points": 10.5,
+        "over": 2.05,
+        "under": 1.833,
+        "max": 1000
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "event_id": 1628029726,
+   "sport_id": 5,
+   "league_id": 880,
+   "league_name": "NCAA",
+   "special": "CFP Championship Game Winner 2026-27",
+   "special_category": "Futures",
+   "special_units": "Place 1st",
+   "parent_id": null,
+   "starts": "2026-09-26T00:05:00Z",
+   "start_ts": "2026-09-26T00:05:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "moneyline",
+      "key": "s;0;m",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Indiana",
+        "participant_id": 1628049655,
+        "points": null,
+        "price": 11.06
+       },
+       {
+        "name": "Texas",
+        "participant_id": 1628049656,
+        "points": null,
+        "price": 7.58
+       },
+       {
+        "name": "Ohio State",
+        "participant_id": 1628049657,
+        "points": null,
+        "price": 6.75
+       },
+       {
+        "name": "Notre Dame",
+        "participant_id": 1628049658,
+        "points": null,
+        "price": 6.19
+       },
+       {
+        "name": "Oregon",
+        "participant_id": 1628049659,
+        "points": null,
+        "price": 24.18
+       },
+       {
+        "name": "Georgia",
+        "participant_id": 1628049660,
+        "points": null,
+        "price": 7.9
+       },
+       {
+        "name": "LSU",
+        "participant_id": 1628049661,
+        "points": null,
+        "price": 15.79
+       },
+       {
+        "name": "Texas Tech",
+        "participant_id": 1628049662,
+        "points": null,
+        "price": 32.59
+       },
+       {
+        "name": "Miami Florida",
+        "participant_id": 1628049663,
+        "points": null,
+        "price": 10
+       },
+       {
+        "name": "Texas A&M",
+        "participant_id": 1628049664,
+        "points": null,
+        "price": 64.08
+       },
+       {
+        "name": "Alabama",
+        "participant_id": 1628049665,
+        "points": null,
+        "price": 27.34
+       },
+       {
+        "name": "USC",
+        "participant_id": 1628049666,
+        "points": null,
+        "price": 34.7
+       },
+       {
+        "name": "Ole Miss",
+        "participant_id": 1628049667,
+        "points": null,
+        "price": 16.83
+       },
+       {
+        "name": "Oklahoma",
+        "participant_id": 1628049668,
+        "points": null,
+        "price": 68.27
+       },
+       {
+        "name": "Michigan",
+        "participant_id": 1628049669,
+        "points": null,
+        "price": 95.52
+       },
+       {
+        "name": "Penn State",
+        "participant_id": 1628049670,
+        "points": null,
+        "price": 58.83
+       },
+       {
+        "name": "Florida",
+        "participant_id": 1628049671,
+        "points": null,
+        "price": 43.08
+       },
+       {
+        "name": "Auburn",
+        "participant_id": 1628049672,
+        "points": null,
+        "price": 315.37
+       },
+       {
+        "name": "Tennessee",
+        "participant_id": 1628049673,
+        "points": null,
+        "price": 58.83
+       },
+       {
+        "name": "Utah",
+        "participant_id": 1628049674,
+        "points": null,
+        "price": 95.52
+       },
+       {
+        "name": "BYU",
+        "participant_id": 1628049675,
+        "points": null,
+        "price": 71.2
+       },
+       {
+        "name": "Clemson",
+        "participant_id": 1628049676,
+        "points": null,
+        "price": 733.17
+       },
+       {
+        "name": "Missouri",
+        "participant_id": 1628049677,
+        "points": null,
+        "price": 111.24
+       },
+       {
+        "name": "SMU",
+        "participant_id": 1628049678,
+        "points": null,
+        "price": 210.73
+       },
+       {
+        "name": "Iowa",
+        "participant_id": 1628049679,
+        "points": null,
+        "price": 126.97
+       },
+       {
+        "name": "Washington",
+        "participant_id": 1628049680,
+        "points": null,
+        "price": 158.39
+       },
+       {
+        "name": "Vanderbilt",
+        "participant_id": 1628049681,
+        "points": null,
+        "price": 524.39
+       },
+       {
+        "name": "South Carolina",
+        "participant_id": 1628049682,
+        "points": null,
+        "price": 210.73
+       },
+       {
+        "name": "Florida State",
+        "participant_id": 1628049683,
+        "points": null,
+        "price": 1151.12
+       },
+       {
+        "name": "Virginia Tech",
+        "participant_id": 1628049684,
+        "points": null,
+        "price": 210.73
+       },
+       {
+        "name": "Louisville",
+        "participant_id": 1628049685,
+        "points": null,
+        "price": 106.01
+       },
+       {
+        "name": "Kansas State",
+        "participant_id": 1628049686,
+        "points": null,
+        "price": 315.37
+       },
+       {
+        "name": "Illinois",
+        "participant_id": 1628049687,
+        "points": null,
+        "price": 838.25
+       },
+       {
+        "name": "Houston",
+        "participant_id": 1628049688,
+        "points": null,
+        "price": 263.06
+       },
+       {
+        "name": "Virginia",
+        "participant_id": 1628049689,
+        "points": null,
+        "price": 419.92
+       },
+       {
+        "name": "Baylor",
+        "participant_id": 1628049690,
+        "points": null,
+        "price": 890.44
+       },
+       {
+        "name": "Arizona",
+        "participant_id": 1628049691,
+        "points": null,
+        "price": 524.39
+       },
+       {
+        "name": "Nebraska",
+        "participant_id": 1628049692,
+        "points": null,
+        "price": 524.89
+       },
+       {
+        "name": "Georgia Tech",
+        "participant_id": 1628049693,
+        "points": null,
+        "price": 1306.27
+       },
+       {
+        "name": "Arizona State",
+        "participant_id": 1628049694,
+        "points": null,
+        "price": 524.89
+       },
+       {
+        "name": "TCU",
+        "participant_id": 1628049695,
+        "points": null,
+        "price": 681
+       },
+       {
+        "name": "Pittsburgh",
+        "participant_id": 1628049696,
+        "points": null,
+        "price": 367.65
+       },
+       {
+        "name": "Cincinnati",
+        "participant_id": 1628049697,
+        "points": null,
+        "price": 1254.23
+       },
+       {
+        "name": "Boise State",
+        "participant_id": 1628049698,
+        "points": null,
+        "price": 420.32
+       },
+       {
+        "name": "Tulane",
+        "participant_id": 1628049699,
+        "points": null,
+        "price": 1566.28
+       },
+       {
+        "name": "North Carolina",
+        "participant_id": 1628049700,
+        "points": null,
+        "price": 1045.97
+       },
+       {
+        "name": "Kentucky",
+        "participant_id": 1628049701,
+        "points": null,
+        "price": 419.92
+       },
+       {
+        "name": "Duke",
+        "participant_id": 1628049702,
+        "points": null,
+        "price": 628.82
+       },
+       {
+        "name": "Arkansas",
+        "participant_id": 1628049703,
+        "points": null,
+        "price": 2085.36
+       },
+       {
+        "name": "Oklahoma State",
+        "participant_id": 1628049704,
+        "points": null,
+        "price": 419.92
+       },
+       {
+        "name": "Kansas",
+        "participant_id": 1628049705,
+        "points": null,
+        "price": 1045.97
+       },
+       {
+        "name": "Iowa State",
+        "participant_id": 1628049706,
+        "points": null,
+        "price": 837.49
+       },
+       {
+        "name": "Wisconsin",
+        "participant_id": 1628049707,
+        "points": null,
+        "price": 838.25
+       },
+       {
+        "name": "Wake Forest",
+        "participant_id": 1628049708,
+        "points": null,
+        "price": 1255.33
+       },
+       {
+        "name": "Colorado",
+        "participant_id": 1628049709,
+        "points": null,
+        "price": 1566.28
+       },
+       {
+        "name": "UNLV",
+        "participant_id": 1628049710,
+        "points": null,
+        "price": 1567.58
+       },
+       {
+        "name": "South Florida",
+        "participant_id": 1628049711,
+        "points": null,
+        "price": 838.25
+       },
+       {
+        "name": "NC State",
+        "participant_id": 1628049712,
+        "points": null,
+        "price": 1254.23
+       },
+       {
+        "name": "Mississippi State",
+        "participant_id": 1628049713,
+        "points": null,
+        "price": 74.56
+       },
+       {
+        "name": "California",
+        "participant_id": 1628049714,
+        "points": null,
+        "price": 941.75
+       },
+       {
+        "name": "UCLA",
+        "participant_id": 1628049715,
+        "points": null,
+        "price": 315.68
+       },
+       {
+        "name": "UCF Knights",
+        "participant_id": 1628049716,
+        "points": null,
+        "price": 1045.97
+       },
+       {
+        "name": "San Diego State",
+        "participant_id": 1628049717,
+        "points": null,
+        "price": 1045.97
+       },
+       {
+        "name": "Navy",
+        "participant_id": 1628049718,
+        "points": null,
+        "price": 1045.97
+       },
+       {
+        "name": "Michigan State",
+        "participant_id": 1628049719,
+        "points": null,
+        "price": 1670.21
+       },
+       {
+        "name": "Memphis",
+        "participant_id": 1628049720,
+        "points": null,
+        "price": 1045.97
+       },
+       {
+        "name": "Hawaii",
+        "participant_id": 1628049721,
+        "points": null,
+        "price": 2086.98
+       },
+       {
+        "name": "West Virginia",
+        "participant_id": 1628049722,
+        "points": null,
+        "price": 524.39
+       },
+       {
+        "name": "Washington State",
+        "participant_id": 1628049723,
+        "points": null,
+        "price": 2086.98
+       },
+       {
+        "name": "East Carolina",
+        "participant_id": 1628049724,
+        "points": null,
+        "price": 2605.05
+       },
+       {
+        "name": "Syracuse",
+        "participant_id": 1628049725,
+        "points": null,
+        "price": 1255.33
+       },
+       {
+        "name": "Northwestern",
+        "participant_id": 1628049726,
+        "points": null,
+        "price": 628.82
+       },
+       {
+        "name": "Minnesota",
+        "participant_id": 1628049727,
+        "points": null,
+        "price": 838.25
+       },
+       {
+        "name": "Maryland",
+        "participant_id": 1628049728,
+        "points": null,
+        "price": 1254.23
+       },
+       {
+        "name": "The Field",
+        "participant_id": 1628049729,
+        "points": null,
+        "price": 32.59
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637258270,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Chase Brown Total Receptions",
+   "special_category": "Player Props",
+   "special_units": "Receptions",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "total",
+      "key": "s;0;ou",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Over",
+        "participant_id": 1637258271,
+        "points": 3.5,
+        "price": 2.06
+       },
+       {
+        "name": "Under",
+        "participant_id": 1637258272,
+        "points": 3.5,
+        "price": 1.746
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637258273,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Chase Brown Total Receiving Yards",
+   "special_category": "Player Props",
+   "special_units": "Receiving Yards",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "total",
+      "key": "s;0;ou",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Over",
+        "participant_id": 1637258274,
+        "points": 21.5,
+        "price": 1.893
+       },
+       {
+        "name": "Under",
+        "participant_id": 1637258275,
+        "points": 21.5,
+        "price": 1.893
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637258261,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Aaron Rodgers Total Passing Yards",
+   "special_category": "Player Props",
+   "special_units": "Passing Yards",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "total",
+      "key": "s;0;ou",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Over",
+        "participant_id": 1637258262,
+        "points": 220.5,
+        "price": 1.926
+       },
+       {
+        "name": "Under",
+        "participant_id": 1637258263,
+        "points": 220.5,
+        "price": 1.862
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637402225,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Ja'Marr Chase Total Touchdowns",
+   "special_category": "Player Props",
+   "special_units": "Touchdowns",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "total",
+      "key": "s;0;ou",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Over",
+        "participant_id": 1637402226,
+        "points": 0.5,
+        "price": 2.18
+       },
+       {
+        "name": "Under",
+        "participant_id": 1637402227,
+        "points": 0.5,
+        "price": 1.671
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637300330,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Chris Boswell Total Field Goals",
+   "special_category": "Player Props",
+   "special_units": "Field Goals",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "total",
+      "key": "s;0;ou",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Over",
+        "participant_id": 1637300331,
+        "points": 1.5,
+        "price": 1.847
+       },
+       {
+        "name": "Under",
+        "participant_id": 1637300332,
+        "points": 1.5,
+        "price": 1.943
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637300336,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Joe Burrow Total Interceptions",
+   "special_category": "Player Props",
+   "special_units": "Interceptions",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_0": [
+     {
+      "type": "total",
+      "key": "s;0;ou",
+      "side": null,
+      "max_risk": 500,
+      "prices": [
+       {
+        "name": "Over",
+        "participant_id": 1637300337,
+        "points": 0.5,
+        "price": 1.8
+       },
+       {
+        "name": "Under",
+        "participant_id": 1637300338,
+        "points": 0.5,
+        "price": 2
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "event_id": 1637194923,
+   "sport_id": 5,
+   "league_id": 889,
+   "league_name": "NFL",
+   "special": "Cincinnati Bengals Points Range 1st Quarter",
+   "special_category": "Game Props",
+   "special_units": "Points",
+   "parent_id": 1636872090,
+   "starts": "2026-09-27T17:00:00Z",
+   "start_ts": "2026-09-27T17:00:00Z",
+   "event_type": "prematch",
+   "is_have_odds": true,
+   "special_markets": {
+    "num_3": [
+     {
+      "type": "moneyline",
+      "key": "s;3;m",
+      "side": null,
+      "max_risk": 250,
+      "prices": [
+       {
+        "name": "11 - 15",
+        "participant_id": 1637194940,
+        "points": null,
+        "price": 12.5
+       },
+       {
+        "name": "16 - 20",
+        "participant_id": 1637194941,
+        "points": null,
+        "price": 33
+       },
+       {
+        "name": "21+",
+        "participant_id": 1637194942,
+        "points": null,
+        "price": 51
+       },
+       {
+        "name": "0 - 5",
+        "participant_id": 1637194938,
+        "points": null,
+        "price": 1.806
+       },
+       {
+        "name": "6 - 10",
+        "participant_id": 1637194939,
+        "points": null,
+        "price": 2.75
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
