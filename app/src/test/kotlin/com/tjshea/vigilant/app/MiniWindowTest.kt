@@ -173,6 +173,60 @@ class MiniWindowTest {
     }
 
     @Test
+    fun `x removes a bet like placing it, but never counts as a bet placed at another line`() {
+        val base = SampleCno.state()
+        val bowers = MiniWindow.items(base, SampleScan.NOW).first { it.title == "Brock Bowers Under 4.5" }
+        val removed = MiniWindow.placed(bowers, SampleScan.NOW, hidden = true)
+        assertTrue(removed.hidden)
+        val after = base.copy(placed = listOf(removed))
+        assertTrue(MiniWindow.items(after, SampleScan.NOW).none { it.key == bowers.key })
+        assertTrue(after.cnoShown(SampleScan.NOW).none { it.row.key == SampleCno.rows[3].key })
+        // A refresh brings it back re-priced: still gone.
+        val refreshed = after.copy(cno = CnoState(snapshot = SampleCno.snapshot(readAgoMs = 1_000, rows = SampleCno.rows.map { if (it.key == SampleCno.rows[3].key) it.copy(odds = 105, ev = 0.05) else it })))
+        assertTrue(MiniWindow.items(refreshed, SampleScan.NOW).none { it.key == bowers.key })
+        // The same player at another line isn't tagged "placed": Tj didn't bet this one.
+        val other = SampleCno.rows[3].copy(bet = "Brock Bowers Under 5.5", gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=44")
+        val withOther = after.copy(cno = CnoState(snapshot = SampleCno.snapshot(rows = SampleCno.rows + other)))
+        assertEquals(null, MiniWindow.items(withOther, SampleScan.NOW).first { it.title == "Brock Bowers Under 5.5" }.placedOther)
+        // placed.json from before ✕ existed: those were all placed.
+        val old = Json.decodeFromString(com.tjshea.vigilant.data.tracker.PlacedBet.serializer(), """{"key":"cno:x","title":"t","placedAtMs":1}""")
+        assertFalse(old.hidden)
+    }
+
+    @Test
+    fun `only bets the books agree on - the rest held back, the ones whose books are coming counted`() {
+        val on = SampleCno.withBooks().let { it.copy(settings = it.settings.copy(cnoOnlyAgreed = true)) }
+        val now = SampleScan.NOW
+        // Jefferson's books agree (3 of 3); the other three passing bets have no books read yet.
+        assertEquals(listOf("Justin Jefferson Under 69.5"), on.cnoShown(now).map { it.row.bet })
+        assertEquals(listOf("Justin Jefferson Under 69.5"), MiniWindow.items(on, now).filter { it.fromCno }.map { it.title })
+        assertEquals(SampleCno.kept, on.cnoCandidates(now).map { it.row.bet })
+        assertEquals(3, on.cnoBeingChecked(now))
+        // Read and not agreeing (one book), or failed to read: held back, but not "being checked".
+        val ohio = SampleCno.rows[2]
+        val bowers = SampleCno.rows[3]
+        val oneBook = com.tjshea.vigilant.data.cno.CnoBooksView(ohio.bet, prices = emptyList(), fetchedAtMs = now)
+        val read = on.copy(books = on.books + (ohio.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = oneBook)) + (bowers.key to com.tjshea.vigilant.data.cno.CnoBooksState(error = "x")))
+        assertEquals(1, read.cnoBeingChecked(now))
+        assertEquals(listOf("Justin Jefferson Under 69.5"), read.cnoShown(now).map { it.row.bet })
+        // The setting reads books (and shows the ✓) even with the green check switched off.
+        val noCheck = on.copy(settings = on.settings.copy(cnoCheckBooks = false))
+        assertTrue(noCheck.cnoReadsBooks)
+        assertTrue(MiniWindow.items(noCheck, now).first { it.fromCno }.agrees)
+        // Off: every bet that passes, as before; nothing counted.
+        val off = on.copy(settings = on.settings.copy(cnoOnlyAgreed = false))
+        assertEquals(SampleCno.kept, off.cnoShown(now).map { it.row.bet })
+        assertEquals(0, off.cnoBeingChecked(now))
+        // Saved settings from before it existed: off.
+        assertFalse(Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"]}""").cnoOnlyAgreed)
+    }
+
+    @Test
+    fun `the widget opens wider by default, room for both buttons`() {
+        assertEquals(360, FloatingWidget.DEFAULT_W_DP)
+    }
+
+    @Test
     fun `a Vigilant bet opens Novig's bet slip on its own outcome`() {
         val o = SampleScan.state().feed.first()
         val item = MiniWindow.items(SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = ScannerMode.VIGILANT)), SampleScan.NOW).first { it.key == o.key }
