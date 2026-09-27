@@ -2130,3 +2130,8 @@ The prop-line website says its api also grades each prop as win loss or draw. Wo
 ```
 Review and fix the error in the screenshot
 ```
+
+## 2026-09-27T15:10:59Z
+```
+Right now some bets are showing up in the vigilant positive EV scanner which I already placed in the cno scanner widget. Make sure the bet tracker works across all parts of the app and hides bets I already placed throughout the whole app regardless of scanner. Also, on the regular vigilant scanner, make it also have a widget and be able to open the exact bet slip in novig. Right now I see bets and it has an open novig button but the button only opens the app, not the exact bet slip like the cno scanner does
+```
