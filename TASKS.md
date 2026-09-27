@@ -1826,4 +1826,5 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         `git diff v0.15.0..HEAD` on engine, scanner, novig, reference and match: only ScanSettings'
         new switch; nothing changed since v0.15.0's full test, suites re-run green (engine 39).
   - [ ] K10d Fix everything found with named tests; forced floor + screenshots looked at;
-        v0.15.3 ship, release, record, send link.
+        v0.15.3 ship, release, record, send link. (Forced floor 446 green: engine 39, data 290,
+        app 117; new PNGs 9i-9m, 8e looked at.)
