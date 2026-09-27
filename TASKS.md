@@ -1935,7 +1935,8 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > do what they were designed to do, then ship.
 
 ### Plan
-- [ ] N1 Why only 8: the Tracker holds only bets tracked from Vigilant's own +EV cards; the widget's
+- [ ] N1 (data part DONE 2026-09-27 ~03:25Z: `BetTracker.logCno/untrack/edit/setStake/importPlaced`,
+      `track(o, stake, placedKey)`, model fields; `BetTrackerTest` 8 green. LEFT: VM wiring below.) Why only 8: the Tracker holds only bets tracked from Vigilant's own +EV cards; the widget's
       and CNO tab's ✓ went to placed.json (hide-only, dropped 12 h after the game). → every ✓ (widget,
       CNO tab, sheet) logs a permanent Tracker bet (CNO's bet, market, game, league, price, fair, EV,
       start, CNO links, Novig outcome/market when known), $1 stake by default (editable); Undo removes
