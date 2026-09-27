@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -913,6 +915,38 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
         compose.onNodeWithText("Novig's price now").performClick()
         assertEquals(false, picked?.cnoLivePrices)
+    }
+
+    // ---- Full test, 2026-09-27 ~02:40Z ------------------------------------------------------
+
+    /** 8f's screenshot: the ✕ on cards with a Kelly stake was squeezed smaller than a touch target. */
+    @Test fun cnoCardButtonsKeepTheirSizeWhateverTheValuesRowHolds() {
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
+        listOf("Ohio -33.5", "Brock Bowers Under 4.5", "Justin Jefferson Under 69.5").forEach { bet ->
+            compose.onNodeWithContentDescription("Remove $bet from the list").assertWidthIsAtLeast(36.dp).assertHeightIsAtLeast(36.dp)
+            compose.onNodeWithContentDescription("I placed $bet: hide it").assertWidthIsAtLeast(36.dp)
+        }
+    }
+
+    /** At Novig's price now a bet can fall under the minimum: the CNO tab warns, as the widget does. */
+    @Test fun cnoCardWarnsWhenNovigsPriceNowIsUnderTheMinimum() {
+        val jj = SampleCno.rows[1]
+        val s = SampleCno.state().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(105, 40.0, 0.004, SampleScan.NOW - 5_000)))
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(s, {}, {}) }
+        compose.onNodeWithContentDescription("Expected value +0.40%, under your minimum").assertExists()
+        compose.onNodeWithContentDescription("Expected value +5.28%").assertExists() // Ohio: CNO's price, fine
+    }
+
+    @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
+    @Test fun settingsDescribeTheWidgetAsItIsNow() {
+        screen { SettingsScreen(SampleCno.state(), { }) }
+        compose.onNodeWithText("✕ to remove it without betting", substring = true).assertExists()
+        compose.onNodeWithText("CNO only / Both switch", substring = true).assertExists()
+    }
+
+    @Test fun trackerSaysCloseForEverySportNotJustFootball() {
+        screen { TrackerScreen(SampleScan.state(), { _, _ -> }, { }) }
+        compose.onNodeWithText("last fair line seen before the game started", substring = true).assertExists()
     }
 
     /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */

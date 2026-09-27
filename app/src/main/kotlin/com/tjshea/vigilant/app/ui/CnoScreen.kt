@@ -639,7 +639,7 @@ fun CnoDetail(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            EvBadge(pick.ev, large = true)
+            EvBadge(pick.ev, large = true, low = pick.ev < settings.cnoFilters.minEv - 1e-9)
             Spacer(Modifier.width(12.dp))
             Text(
                 "CrazyNinjaOdds · ${row.book}" + if (pick.live) " · LIVE (fee included)" else "",
