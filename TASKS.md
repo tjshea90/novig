@@ -2313,7 +2313,7 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       attaches Vigilant's APK only, ci.yml uploads Vigilant's debug APK only.
 - [x] H2 (DONE: CNO tab row (only while CNO is on) + widget top-bar switch cycling Any time/12h/24h/48h, same setting; CNO count line and widget empty text say what the window hides. Tests: StartsWithinTest (8), ScreenshotTest cnoTabPicksTheStartTimeWindow, cnoTabHidesTheWindowWhenCnoIsOff, theWidgetsTopBarPicksTheStartTimeWindow, theWidgetSaysWhenTheWindowHidesEverything; screenshots 8e/9q/9r looked at.) "Starts within" (Any time / 12h / 24h / 48h) selectable on the CNO tab and in the floating CNO widget
       (same setting as the +EV tab). Tests.
-- [ ] H3 Research Maven Central 429s in Claude Code on the web; write findings + fixes (what Tj can do) into BRIEF.md
+- [x] H3 (DONE: cause = Central rate-limits by shared egress IP, empty caches every session; fix = tools/setup-android.sh (SDK + Gradle mirror init + vigilant.mavenMirror for Robolectric, which app/build.gradle.kts passes to test JVMs; CI unchanged). Verified: bogus mirror + cleared jar cache fails, Google mirror passes. BRIEF.md trap 6 rewritten with sources + what Tj can do (paste the script as the environment setup script).) Research Maven Central 429s in Claude Code on the web; write findings + fixes (what Tj can do) into BRIEF.md
       build trap 6 / RESEARCH, and apply any in-repo fix that's safe.
 - [ ] H4 Full tests per CLAUDE.md: floor, sweep, fixes with named tests, improvement list for Tj; then ship v0.17.1
       (Vigilant only) with G1-G2 + H1-H4, link.
