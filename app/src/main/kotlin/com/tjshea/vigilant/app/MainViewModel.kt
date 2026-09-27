@@ -30,6 +30,7 @@ import com.tjshea.vigilant.data.scanner.SourceReport
 import com.tjshea.vigilant.data.teams.PlayerTeams
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.PlacedBet
+import com.tjshea.vigilant.data.tracker.PlacedIndex
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -105,7 +106,26 @@ data class UiState(
     val cnoLinks: Map<String, String> = emptyMap(),
     /** Novig's price now for CNO's listed bets, by row key ([com.tjshea.vigilant.data.cno.NovigLive]). */
     val novigLive: Map<String, com.tjshea.vigilant.data.cno.LivePrice> = emptyMap(),
+    /**
+     * Every bet Tj already has (✓ placed or ✕ removed in the widget or CNO tab, or tracked from a
+     * card), from either scanner: hidden from every list ([PlacedIndex]). Rebuilt when those change.
+     */
+    val placedIndex: PlacedIndex = PlacedIndex.EMPTY,
 ) {
+    /** [r]'s +EV feed under these settings, without the bets Tj already has (Tj, 2026-09-27). */
+    fun feedOf(r: ScanResult?): List<Opportunity> = r?.let { placedIndex.visible(it.feed(settings)) } ?: emptyList()
+
+    /** This state with [placedIndex] rebuilt from [placed] and [bets], and the feed re-filtered. */
+    fun indexed(now: Long = System.currentTimeMillis()): UiState =
+        copy(placedIndex = PlacedIndex.of(placed, bets, now)).let { s -> s.copy(feed = s.feedOf(s.result)) }
+
+    /** Whether CNO's [row] is a bet Tj already has: its ✓/✕, or the same bet placed or tracked from Vigilant's list. */
+    fun hasCno(row: CnoRow): Boolean = MiniWindow.cnoKey(row) in placedKeys || placedIndex.has(
+        key = MiniWindow.cnoKey(row),
+        outcomeId = com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(cnoLinks[com.tjshea.vigilant.data.cno.CnoFeed.linkKey(row)]),
+        event = row.event, market = row.market, selection = row.bet, startsTs = row.startsAtMs,
+    )
+
     /** Tj's keys for [provider], in the order they're tried. */
     fun keysOf(provider: ApiProvider): List<String> = when (provider) {
         ApiProvider.THE_ODDS_API -> oddsApiKeys
@@ -169,7 +189,7 @@ data class UiState(
 
     /** [cnoPicks] without the bets Tj placed or removed (✕): what the green-check lane reads. */
     fun cnoCandidates(now: Long): List<CnoPick> =
-        cnoPicks(now)?.picks?.filter { MiniWindow.cnoKey(it.row) !in placedKeys }.orEmpty()
+        cnoPicks(now)?.picks?.filter { !hasCno(it.row) }.orEmpty()
 
     /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
     fun cnoAgrees(pick: CnoPick, now: Long = System.currentTimeMillis()): Boolean {
@@ -256,7 +276,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             follow()
         }
         viewModelScope.launch {
-            c.tracker.flow.filterNotNull().collect { bets -> _state.update { it.copy(bets = bets) } }
+            // A bet tracked anywhere leaves every list at once (Tj, 2026-09-27).
+            c.tracker.flow.filterNotNull().collect { bets -> _state.update { it.copy(bets = bets).indexed() } }
         }
         viewModelScope.launch {
             c.usage.flow.collect { u -> _state.update { it.copy(usage = u) } }
@@ -284,7 +305,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Results of games that ended while Vigilant was closed, then every 3 h in the background.
             settleBets()
             runCatching { SettleWorker.schedule(getApplication()) }
-            c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets) } }
+            c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets).indexed() } }
         }
         viewModelScope.launch {
             runCatching { c.teams.load() }
@@ -430,7 +451,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val report = outcome.getOrNull()
             _state.update { s ->
                 val r = report?.result ?: s.result
-                s.copy(result = r, feed = r?.feed(s.settings) ?: s.feed, status = s.status.copy(rechecking = false))
+                s.copy(result = r, feed = if (r != null) s.feedOf(r) else s.feed, status = s.status.copy(rechecking = false))
             }
             runCatching { c.usage.flush() }
             _toasts.tryEmit(
@@ -482,7 +503,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val r = run.result ?: s.result
                     s.copy(
                         result = r,
-                        feed = r?.feed(s.settings) ?: s.feed,
+                        feed = if (r != null) s.feedOf(r) else s.feed,
                         status = s.status.copy(scanning = run.scanning, progress = run.progress),
                     )
                 }
@@ -496,7 +517,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val r = result ?: s.result
             s.copy(
                 result = r,
-                feed = r?.feed(s.settings) ?: emptyList(),
+                feed = s.feedOf(r),
                 status = s.status.copy(
                     scanning = false,
                     progress = null,
@@ -523,7 +544,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val unscanned = if (_state.value.status.scannedAtMs == null) emptySet() else c.scanner.unscannedLeagues(settings)
         _state.update {
             val r = repriced ?: it.result
-            it.copy(result = r, feed = r?.feed(it.settings) ?: emptyList(), status = it.status.copy(unscanned = unscanned))
+            it.copy(result = r, feed = it.feedOf(r), status = it.status.copy(unscanned = unscanned))
         }
     }
 
@@ -643,7 +664,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val before = _state.value.settings
         _state.update {
             if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
-            else it.copy(settings = next, feed = it.result?.feed(next) ?: emptyList())
+            else it.copy(settings = next).let { n -> n.copy(feed = n.feedOf(n.result)) }
         }
         // CNO only now: a "scan done" note would name bets no screen shows any more.
         if (before.vigilantOn && !next.vigilantOn) ScanService.cancelDone(getApplication())
