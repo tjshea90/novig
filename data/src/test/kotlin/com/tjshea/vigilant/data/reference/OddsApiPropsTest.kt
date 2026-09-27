@@ -299,6 +299,27 @@ class OddsApiPropsTest {
         assertTrue(requests.isEmpty())
     }
 
+    /**
+     * RESEARCH.md §23 (Tj, 2026-09-27: "use the best/fastest API first and the others as automatic
+     * fallbacks"): PropLine priced Ravens–Cowboys' passing yards and receptions and the Yankees' hits
+     * this scan, so credits go only to what it didn't: Crochet's strikeouts.
+     */
+    @Test
+    fun `behind PropLine, credits go only to the games and prop types PropLine didn't price`() = runTest {
+        routeAll()
+        val source = OddsApiPropsSource(client())
+        assertEquals(PropLinePropsSource.ID, source.fallbackFor)
+        val after = board.copy(
+            covered = mapOf("nA" to setOf("PROP:PASSING_YARDS", "PROP:RECEPTIONS", "MONEYLINE:0"), "nC" to setOf("PROP:HITS")),
+            firstAnswered = setOf("NFL", "MLB"),
+        )
+        source.odds(nfl, settings, after)
+        source.odds(mlb, settings, after)
+        assertFalse(paths().any { it.endsWith("/events/oA/odds") })
+        val mlbCall = requests.single { it.requestUrl!!.encodedPath.endsWith("/events/oC/odds") }
+        assertEquals("pitcher_strikeouts", mlbCall.requestUrl!!.queryParameter("markets"))
+    }
+
     @Test
     fun `nothing is bought when player props are off`() = runTest {
         routeAll()
