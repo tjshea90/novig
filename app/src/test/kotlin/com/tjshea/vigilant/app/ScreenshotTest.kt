@@ -114,7 +114,7 @@ class ScreenshotTest {
     @Test fun gamesBeforeFirstScan() = shoot("3b_games_before_scan") { GamesScreen(SampleScan.fresh(), {}, {}) }
 
 
-    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h6800dp-xxhdpi")
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
