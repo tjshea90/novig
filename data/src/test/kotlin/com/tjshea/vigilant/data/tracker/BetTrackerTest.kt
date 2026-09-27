@@ -97,4 +97,63 @@ class BetTrackerTest {
         assertEquals(0.52 / 0.5 - 1, s.averageClv!!, 1e-12)
         assertEquals(1.0, s.beatClosePercent!!, 1e-12)
     }
+
+    // ---- Tj, 2026-09-27: every ✓ is a bet in the Tracker -------------------------------------
+
+    private val cnoRow = com.tjshea.vigilant.data.cno.CnoRow(
+        0.05, 2_000_000L, "Football", "NFL", "Houston Texans @ Indianapolis Colts", "Player Receptions", "Dalton Schultz Over 5.5",
+        141, 60.0, "Novig", 120, 0.4375, 8, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=9", betUrl = "https://crazyninjaodds.com/d?l=9",
+    )
+
+    @Test
+    fun `a CNO check logs a $1 bet for good, a second check replaces it, Undo removes it`() = kotlinx.coroutines.test.runTest {
+        val t = BetTracker(File(tmp.root, "t.json"), clock = { 1_000_000L })
+        val bet = t.logCno(cnoRow, ev = 0.05, live = false, placedKey = "cno:k")
+        assertEquals(1.0, bet.stake, 0.0)
+        assertEquals(BetTracker.SOURCE_CNO, bet.source)
+        assertEquals(141, bet.american)
+        assertEquals(1 / 2.41, bet.cost, 1e-9) // pregame: no fee
+        assertEquals(0.4375, bet.fairAtBet!!, 1e-9)
+        assertEquals(cnoRow.gameUrl, bet.gameUrl)
+        t.logCno(cnoRow, ev = 0.05, live = false, placedKey = "cno:k")
+        assertEquals(1, t.all().size)
+        t.untrack("cno:k")
+        assertTrue(t.all().isEmpty())
+        // A settled bet stays whatever happens to its mark.
+        val kept = t.logCno(cnoRow, 0.05, false, "cno:k")
+        t.settle(kept.id, BetStatus.WON)
+        t.untrack("cno:k")
+        assertEquals(1, t.all().size)
+    }
+
+    @Test
+    fun `old checks still in placed json move into the Tracker once, removed ones don't`() = kotlinx.coroutines.test.runTest {
+        val t = BetTracker(File(tmp.root, "t2.json"), clock = { 1_000_000L })
+        val marks = listOf(
+            PlacedBet("cno:a", "Dalton Schultz Over 5.5", "Player Receptions · Houston Texans @ Indianapolis Colts", odds = "+141", placedAtMs = 500L, startsAtMs = 900L),
+            PlacedBet("cno:b", "Ohio -33.5", "Point Spread · Stonehill @ Ohio", odds = "−108", placedAtMs = 600L),
+            PlacedBet("cno:c", "Removed Over 1.5", "x · y", odds = "+100", placedAtMs = 700L, hidden = true),
+        )
+        assertEquals(2, t.importPlaced(marks))
+        assertEquals(0, t.importPlaced(marks)) // once
+        val a = t.all().first { it.placedKey == "cno:a" }
+        assertEquals("Player Receptions", a.marketLabel)
+        assertEquals("Houston Texans @ Indianapolis Colts", a.eventName)
+        assertEquals(141, a.american)
+        assertEquals(null, a.evPercentAtBet)
+        assertTrue(a.imported)
+        assertEquals(-108, t.all().first { it.placedKey == "cno:b" }.american)
+        // Stats leave unknown EVs out rather than count them as 0.
+        assertEquals(null, BetTracker.stats(t.all()).averageEv)
+    }
+
+    @Test
+    fun `a Novig fair-market settlement pays its value, and tracker files from before read as they were`() {
+        val b = TrackedBet("x", 0, "NFL", "A @ B", 0, "M", "S", "m", "o", 0.5, 0.5, 0.5, 0.0, 10.0, BetStatus.FMV, settleValue = 0.6)
+        assertEquals(10.0 * (0.6 / 0.5 - 1), b.profit!!, 1e-9)
+        val old = kotlinx.serialization.json.Json.decodeFromString(TrackedBet.serializer(),
+            """{"id":"1","createdAtMs":1,"league":"NFL","eventName":"A @ B","startsTs":2,"marketLabel":"M","selection":"S","marketId":"m","outcomeId":"o","price":0.5,"cost":0.5,"fairAtBet":0.52,"evPercentAtBet":0.04,"stake":5.0}""")
+        assertEquals(BetTracker.SOURCE_VIGILANT, old.source)
+        assertEquals(0.04, old.evPercentAtBet!!, 1e-9)
+    }
 }
