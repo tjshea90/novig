@@ -2188,3 +2188,15 @@ for the regular version of the NoVig Vigilant app. Make it so I can add a filter
 
 Run full tests and see how vigilant can be improved
 ```
+
+## 2026-09-27T21:57:41Z
+```
+1) from now on, everything in this repo and anything I ask you to do will always be for the regular vigilant app for novig, unless I explicitly request something for novig mgm. Novig mgm should be dormant and no changes made at all unless I ask for it. All future work and versions and GitHub releases will be for regular vigilant for novig only unless I say otherwise. 
+
+2) make sure on the app I can select the time periods 12h 24h 48h and anytime for the cno scanner and cno widget as well.
+
+3) research and figure out why Claude code very frequently gets maven central 429 errors. Find ways to fix this online and let me know if there is anything I can do to fix it.
+
+Run full tests and see how vigilant can be improved
+Before starting, let me switch to opus ultracode. Pause when you can so I can resume 
+```
