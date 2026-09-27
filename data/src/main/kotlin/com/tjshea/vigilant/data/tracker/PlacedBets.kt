@@ -28,7 +28,15 @@ data class PlacedBet(
      * I didn't bet it"): hidden the same way, but it never counts as a bet placed at another line.
      */
     val hidden: Boolean = false,
-)
+    /**
+     * The same bet's key in the other scanner's list (a bet both Vigilant and CNO listed, shown
+     * once): marked there too, so it can't come back from either list.
+     */
+    val aliases: List<String> = emptyList(),
+) {
+    /** Every key this mark hides. */
+    val keys: List<String> get() = listOf(key) + aliases
+}
 
 @Serializable
 data class PlacedBook(val bets: List<PlacedBet> = emptyList())
@@ -58,7 +66,7 @@ class PlacedBets(
 
     /** Takes the mark off (Undo, or "not placed after all"). */
     suspend fun unmark(key: String): PlacedBook =
-        store.update { b -> if (b.bets.none { it.key == key }) b else PlacedBook(b.bets.filter { it.key != key }) }
+        store.update { b -> if (b.bets.none { key in it.keys }) b else PlacedBook(b.bets.filter { key !in it.keys }) }
 
     companion object {
         /** A placed bet stays hidden this long after its game starts (overtime, extra innings, live lines). */

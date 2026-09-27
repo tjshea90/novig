@@ -158,6 +158,13 @@ data class ScanSettings(
      * Bets whose books aren't read yet are held back until they are. Implies reading the books.
      */
     val cnoOnlyAgreed: Boolean = false,
+    /**
+     * With both scanners, Vigilant's own scan runs again this many minutes after the last one
+     * while CNO's list is on screen (its tab or a widget), so the widget's two lists stay fresh
+     * together (Tj, 2026-09-27: "an option to also use the regular scan in addition to cno").
+     * 0 = only when Scan is tapped (the default: each scan spends API credits).
+     */
+    val widgetRescanMinutes: Int = 0,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
