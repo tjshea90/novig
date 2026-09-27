@@ -36,7 +36,7 @@ object BetMgmLinks {
     )
 
     /** BetMGM's home when nothing better is known (it asks for the state itself). */
-    const val HOME = "https://sports.betmgm.com/en/sports"
+    const val HOME = "https://www.betmgm.com/"
 
     data class Link(val url: String, val exact: Boolean)
 
