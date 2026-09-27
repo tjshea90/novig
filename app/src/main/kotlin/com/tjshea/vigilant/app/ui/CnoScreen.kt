@@ -277,8 +277,13 @@ fun CnoScreen(
                 }
                 if (on && snap != null && screened != null) {
                     items(picks, key = { it.row.key }) { pick ->
+                        // At Novig's price now, when it was read (RESEARCH.md §20.3).
+                        val shown = state.livePick(pick, now)
                         CnoCard(
-                            pick, snap, state.settings, state.books[pick.row.key], now,
+                            shown, snap, state.settings, state.books[pick.row.key], now,
+                            listedOdds = pick.row.odds.takeIf { it != shown.row.odds },
+                            priceAtMs = state.priceReadAtMs(pick.row, now) ?: snap.fetchedAtMs,
+                            live = state.livePrice(pick.row, now) != null,
                             team = state.teams[pick.row.key],
                             placedOther = state.placedFamilies[com.tjshea.vigilant.data.match.Picks.familyKey(pick.row.event, pick.row.market, pick.row.bet)]?.title,
                             modifier = Modifier.padding(horizontal = 12.dp).animateItem(),
@@ -304,9 +309,13 @@ fun CnoScreen(
 
     selected?.let { pick ->
         // The freshest copy of the tapped bet: a refresh may have re-priced it since the tap.
-        val live = screened?.picks?.firstOrNull { it.row.key == pick.row.key } ?: pick
+        val listed = screened?.picks?.firstOrNull { it.row.key == pick.row.key } ?: pick
+        // At Novig's price now, when it was read.
+        val live = state.livePick(listed, now)
         CnoSheet(
             live, snap, state.settings, state.cnoUrl, state.books[live.row.key],
+            listedOdds = listed.row.odds.takeIf { it != live.row.odds },
+            liveAtMs = state.livePrice(listed.row, now)?.atMs,
             onLoadBooks = onLoadBooks,
             onOpenInNovig = onOpenInNovig,
             onDismiss = { selected = null },
@@ -481,13 +490,19 @@ private fun CnoCard(
     team: String? = null,
     /** Tj placed this bet at another line (that bet's name). */
     placedOther: String? = null,
+    /** CNO's price when Novig's now (the one shown) differs. */
+    listedOdds: Int? = null,
+    /** When the price shown was read (Novig's live read, or CNO's list). */
+    priceAtMs: Long = snap.fetchedAtMs,
+    /** The price shown is Novig's, read just now. */
+    live: Boolean = false,
     onPlaced: () -> Unit = {},
     onHide: () -> Unit = {},
     onClick: () -> Unit,
 ) {
     val row = pick.row
-    val old = now - snap.dataAtMs > MiniWindow.CNO_OLD_MS
-    val check = books?.view?.let { CnoBooks.check(it, row, pick.live, preferListOdds = snap.fetchedAtMs > it.fetchedAtMs) }
+    val old = !live && now - snap.dataAtMs > MiniWindow.CNO_OLD_MS
+    val check = books?.view?.let { CnoBooks.check(it, row, pick.live, preferListOdds = priceAtMs > it.fetchedAtMs) }
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
@@ -527,8 +542,9 @@ private fun CnoCard(
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(row.book.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(row.book.uppercase() + if (live) " NOW" else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(MiniWindow.american(row.odds), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                    listedOdds?.let { Text("CNO had ${MiniWindow.american(it)}", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, fontWeight = FontWeight.SemiBold) }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -566,6 +582,8 @@ private fun CnoSheet(
     team: String? = null,
     onPlaced: () -> Unit = {},
     opening: Boolean = false,
+    listedOdds: Int? = null,
+    liveAtMs: Long? = null,
 ) {
     val row = pick.row
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -581,6 +599,8 @@ private fun CnoSheet(
             team = team,
             onPlaced = onPlaced,
             opening = opening,
+            listedOdds = listedOdds,
+            liveAtMs = liveAtMs,
         )
     }
 }
@@ -602,11 +622,17 @@ fun CnoDetail(
     onPlaced: (() -> Unit)? = null,
     /** "Open in Novig" was tapped and the bet's link is being found. */
     opening: Boolean = false,
+    /** CNO's price when Novig's now (the one shown) differs. */
+    listedOdds: Int? = null,
+    /** When Novig's price shown was read live (null: the price is CNO's). */
+    liveAtMs: Long? = null,
 ) {
     val row = pick.row
     val view = books?.view
-    // The newer price, as the card and the widget's ✓ judge it: the list's when it was read after the books.
-    val check = view?.let { CnoBooks.check(it, row, pick.live, preferListOdds = snap != null && snap.fetchedAtMs > it.fetchedAtMs) }
+    // The newer price, as the card and the widget's ✓ judge it: Novig's live one, else the list's
+    // when it was read after the books.
+    val priceAtMs = liveAtMs ?: snap?.fetchedAtMs
+    val check = view?.let { CnoBooks.check(it, row, pick.live, preferListOdds = priceAtMs != null && priceAtMs > it.fetchedAtMs) }
     Column(
         Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -626,7 +652,8 @@ fun CnoDetail(
             row.startsAtMs?.let { Text("${row.league.ifEmpty { row.sport }} · ${Format.startTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            LabeledValue(row.book, MiniWindow.american(row.odds))
+            LabeledValue(if (liveAtMs != null) "${row.book} now" else row.book, MiniWindow.american(row.odds))
+            listedOdds?.let { LabeledValue("CNO had", MiniWindow.american(it), valueColor = Edge.colors.warning) }
             row.fairOdds?.let { LabeledValue("CNO fair", MiniWindow.american(it)) }
             row.available?.let { LabeledValue("Available", Format.money(it)) }
             cnoStake(pick, settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
@@ -654,7 +681,7 @@ fun CnoDetail(
         Text(
             "CNO's numbers" + (snap?.let { " as of ${Format.age(it.dataAtMs, now)}" } ?: "") +
                 (snap?.evLabel?.let { ", ${evMethodName(it)} devig" } ?: "") +
-                ". The price and the dollars available were what Novig showed then: check them in Novig before betting." +
+                (if (liveAtMs != null) ". The price, dollars and EV are at Novig's price now (its order book, read ${Format.age(liveAtMs, now)}), against CNO's fair odds." else ". The price and the dollars available were what Novig showed then: check them in Novig before betting.") +
                 if (CnoView.includesLive(viewUrl) || pick.live) " Live bets pay Novig's taker fee; the EV here already takes it out." else "",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
