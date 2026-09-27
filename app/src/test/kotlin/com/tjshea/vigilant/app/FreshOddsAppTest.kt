@@ -65,6 +65,7 @@ class FreshOddsAppTest {
         val s = SampleScan.state()
         val ids = s.feed.map { it.market.marketId }
         assertFalse(WidgetRescan.fairTooOldToRecheck(s, ids, now)) // seen 3 minutes ago
-        assertTrue(WidgetRescan.fairTooOldToRecheck(s, ids, now + 90_000L)) // 4.5 minutes: too close
+        assertFalse(WidgetRescan.fairTooOldToRecheck(s, ids, now + 60_000L)) // 4 minutes: a few seconds' recheck still fits
+        assertTrue(WidgetRescan.fairTooOldToRecheck(s, ids, now + 2 * minute)) // 5 minutes: scan instead
     }
 }
