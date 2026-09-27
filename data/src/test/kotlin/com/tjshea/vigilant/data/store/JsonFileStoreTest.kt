@@ -38,6 +38,17 @@ class JsonFileStoreTest {
     fun `a corrupt file is set aside, not deleted, and the app still starts`() = runTest {
         val f = File(tmp.root, "bets.json").apply { writeText("{not json") }
         assertEquals(emptyList<String>(), store(f).read())
-        assertEquals("{not json", File(tmp.root, "bets.json.corrupt").readText())
+        assertEquals(listOf("{not json"), tmp.root.listFiles()!!.filter { it.name.startsWith("bets.json.corrupt") }.map { it.readText() })
+    }
+
+    @Test
+    fun `a second corrupt file never replaces the first one set aside`() = runTest {
+        val f = File(tmp.root, "bets.json").apply { writeText("{first") }
+        store(f).read()
+        Thread.sleep(5)
+        f.writeText("{second")
+        store(f).read()
+        val kept = tmp.root.listFiles()!!.filter { it.name.startsWith("bets.json.corrupt") }.map { it.readText() }.toSet()
+        assertEquals(setOf("{first", "{second"), kept)
     }
 }
