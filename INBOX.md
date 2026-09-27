@@ -2067,3 +2067,14 @@ For the next version, after releasing the version you are working on now, consid
 ```
 run full tests
 ```
+
+## 2026-09-27T02:57:25Z
+```
+The app tracker tab only shows 8 open bets. I placed almost 60 bets. I want to be able to track every single bet I placed and whether it won or lost. It should move all of the bets I made into the tracker section automatically. Also, if possible this section should have an option for me to scan for up to date average odds against sports books for each of the bets I made and to show whether the value of the bets I placed is still positive EV. For example, if I place 5 bets today, the tracker section can show me the current updated odds of each of those bets (a newly calculated fair odds value based on up to date odds across sports books and devigged) compared to what the odds were at the time I bet it. And it will show an updated EV value percentage, for example "now +3% ev" (in color green) or "now -2% ev" (in color red).
+
+1 ) for every bet that I check on the cno scanner, log it permanently in the vigilant app, and keep track whether each bet was a win or a loss. this will require a background scores system to keep track of final scores and events. if possible, when I bet something on novig, automatically log the amount and type of bet into the vigilant app and check the box for that bet on the widget. but if that is not possible, log each bet as a $1 wager in the app. 
+
+2) make a stats section of the app that provides clean easy view of my percentage of actual bet wins and losses, total money gained or lost, and a running percentage of profit made, red number if negative and green if positive.
+
+After these features are built, run full tests on the app and make sure the features work well and do what they were designed to do, then ship.
+```
