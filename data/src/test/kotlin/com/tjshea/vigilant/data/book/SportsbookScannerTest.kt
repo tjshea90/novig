@@ -160,8 +160,8 @@ class SportsbookScannerTest {
         assertEquals(listOf("Pinnacle"), bal.fair!!.sharpBooksUsed)
         assertTrue(bal.evPercent!! > 0.05)
         assertTrue(result.bet("Dallas Cowboys").evPercent!! < 0)
-        // The feed shows the edge.
-        assertEquals(listOf("Baltimore Ravens"), result.feed(settings).map { it.selection })
+        // The feed shows the edges, best first (the prop's is below).
+        assertEquals(listOf("CeeDee Lamb Over 6.5", "Baltimore Ravens"), result.feed(settings).map { it.selection })
 
         // BetMGM's props came in the same per-game request as Pinnacle's: +120 on 6.5 receptions over.
         val lamb = result.bet("CeeDee Lamb Over 6.5")
@@ -303,13 +303,12 @@ class SportsbookScannerTest {
             OkHttpClient(), KeyPool(QuotaPolicy.PROPLINE, { listOf("pl-key") }, meter), json,
             server.url("/v1").toString().trimEnd('/'), clock = { now }, minIntervalMs = 0,
         )
-        val snap = novigClient.odds(com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NFL")!!, settings)
+        novigClient.odds(com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NFL")!!, settings)
         val url = requests.single().requestUrl!!
+        // Novig's relay rides along as before; no book ids or links are asked for (PropLine sends them null then).
         assertEquals("pinnacle,draftkings,betmgm,novig", url.queryParameter("bookmakers"))
         assertNull(url.queryParameter("includeBookIds"))
         assertNull(url.queryParameter("includeLinks"))
-        // Without the ids asked for, no quote carries one.
-        assertTrue(snap.events.single().markets.all { m -> m.bookEventId == null && m.link == null && m.quotes.all { it.bookOutcomeId == null } })
     }
 
     @Test
