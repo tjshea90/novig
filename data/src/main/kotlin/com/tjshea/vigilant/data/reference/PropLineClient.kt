@@ -489,8 +489,16 @@ internal data class PlMarket(
         }
         if (quotes.map { it.side }.toSet().size != 2) return emptyList()
         if (kind != LineKind.MONEYLINE && quotes.any { it.point == null }) return emptyList()
-        return listOf(RefBookMarket(bookKey, title, kind, quotes, updated, subject = subject))
+        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live) ?: updated, subject = subject))
     }
+
+    /**
+     * When PropLine last saw this price at the book: the older of the two sides' `last_seen_at` (PropLine
+     * also sends `last_change_at`, when the price last moved; an unmoved price is still current), else the
+     * market's `last_update`. The scan never prices one older than a few minutes (RESEARCH.md §24).
+     */
+    private fun seen(outcomes: List<PlOutcome>): Long? =
+        outcomes.map { PropLineClient.ms(it.last_seen_at) ?: return null }.minOrNull()
 
     /**
      * Two-way player lines only (`point` set, Over/Under), and Yes/No markets as Over/Under 0.5. A
@@ -498,7 +506,7 @@ internal data class PlMarket(
      */
     private fun props(live: List<PlOutcome>, bookKey: String, title: String, updated: Long?, stat: String): List<RefBookMarket> {
         val yesNo = this.key in PropLineProps.YES_NO
-        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double)
+        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double, val seen: Long?)
         val legs = live.mapNotNull { o ->
             val player = o.description?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             val over = when (o.name.orEmpty().trim().lowercase()) {
@@ -507,7 +515,7 @@ internal data class PlMarket(
                 else -> return@mapNotNull null
             }
             val point = o.point ?: if (yesNo) 0.5 else return@mapNotNull null
-            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null)
+            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, PropLineClient.ms(o.last_seen_at))
         }
         return legs.groupBy { PlayerNames.key(it.player) to it.point }.values.mapNotNull { group ->
             val over = group.singleOrNull { it.over } ?: return@mapNotNull null
@@ -515,7 +523,7 @@ internal data class PlMarket(
             RefBookMarket(
                 bookKey, title, LineKind.PLAYER_PROP,
                 listOf(RefQuote(Side.OVER, over.price, over.point), RefQuote(Side.UNDER, under.price, under.point)),
-                updated, subject = over.player, stat = stat,
+                if (over.seen != null && under.seen != null) minOf(over.seen, under.seen) else updated, subject = over.player, stat = stat,
             )
         }
     }
