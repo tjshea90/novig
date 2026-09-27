@@ -481,7 +481,7 @@ class CnoFeed(
         /** The listed bets whose links are looked up ahead of a tap (most come from Novig's catalog, cheap). */
         const val LINKS_TOP = 30
 
-        /** …one every this long… */
+        /** CNO's link for one the catalog can't name: one every this long… */
         const val LINK_GAP_MS = 3_000L
 
         /** …a failed one again after this long. */
