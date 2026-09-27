@@ -1842,12 +1842,22 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > do not stop work on any prior requests
 
 ### Plan
-- [ ] L1 Bet slip without CNO: v0.15.2 asked CNO first (up to 5 s) and Novig's catalog only after,
+- [x] L1 Bet slip without CNO: v0.15.2 asked CNO first (up to 5 s) and Novig's catalog only after,
       unless CNO's list was already failing; a CNO that hangs (not yet failed) cost the tap 5 s+
       and its links lane never used Novig at all. → Ask CNO and Novig's catalog at the same time
       (first exact link wins), resolve the listed bets' links ahead of time from Novig's catalog
       too (not only CNO), so a tap needs neither; verify NovigBetFinder live against the real
       CNO list and Novig catalog (league names, market types) and fix what doesn't match.
+      Done: live check (`LiveNovigBetFinderTest`, VIGILANT_LIVE=1) on CNO's real 60-row list: 56
+      exact before, 60 exact after (Novig's INTERCEPTIONS_THROWN for "Passing Interceptions";
+      soccer's MONEYLINE_3_WAY_WIN/DRAW Yes/No markets), every one the same outcome CNO's own link
+      opens, 0 wrong (`NovigBetFinderTest` "passing interceptions and soccer's 3-way…"). Taps race
+      CNO and the catalog, first exact wins (`TapLinkTest` 5, 3 failed on the old sequential code);
+      the links lane asks the catalog first and CNO only for what it can't name, and fills every
+      link with CNO down (`CnoAgreementTest` "links come from Novig's catalog first…", "with CNO
+      down, the catalog still fills every link"); 30 bets ahead instead of 15; exact catalog finds
+      from taps are kept. Also fixed: cno_links.json kept an arbitrary 400 links, not the newest
+      (`CnoAgreementTest` "the links file keeps the newest links…", failed on the old code).
 - [ ] L2 Widget with both scanners: Both mode already merges Vigilant's scan and CNO's list in the
       widget (best EV first). Add the switch in the widget itself ("+ Vigilant scan" on/off, i.e.
       Both ⇄ CNO only), show the same bet once when both scanners list it, and an opt-in "scan
