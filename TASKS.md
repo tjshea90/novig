@@ -2083,7 +2083,13 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       moneyline, spread, total, team total, 1st half / F5 / 1st inning from line scores) and ESPN's box
       score (player props: the stats Novig lists), no key; Novig's catalog kept first for FMV/void.
       `data/tracker/EspnResults` + BetSettler wiring; tests from real ESPN replies (fixtures).
-- [ ] P5 (floor DONE 2026-09-27 ~07:10Z: 528 tests, 0 failures, 8 skipped live, exit 0; assembleRelease OK 5.5 MB;
+- [x] P5 (SHIPPED v0.16.0 code 27, 2026-09-27T07:16Z: CI green on 9bb3d4a, ship.sh gates green, release.yml
+      green, https://github.com/tjshea90/novig/releases/tag/v0.16.0, recorded in BUILDLOG.md; link sent.) (floor DONE 2026-09-27 ~07:10Z: 528 tests, 0 failures, 8 skipped live, exit 0; assembleRelease OK 5.5 MB;
       49 screenshots, settings/meters/tracker looked at. Next: CI green on head, ship.sh, release.yml v0.16.0 code 27,
       record, link) Full regression (exit code AND output), screenshots looked at, ckpt, ship, release, record,
       send link + findings.
+- [ ] P6 VERIFY PropLine LIVE (couldn't on 2026-09-27: the shared demo key was at its daily cap; it resets at
+      00:00 UTC). With the demo key from prop-line.com/llms-full.txt (or Tj's own), read
+      `/v1/sports/americanfootball_nfl/odds?markets=h2h,spreads,totals&bookmakers=pinnacle,draftkings,fanduel`
+      and one game's `/events/{id}/odds?markets=player_receptions` and check `PropLineClient.parseEvents` /
+      `parseEvent` read them (a gated live test like `LiveScoresTest`); fix the parser if the real shape differs.
