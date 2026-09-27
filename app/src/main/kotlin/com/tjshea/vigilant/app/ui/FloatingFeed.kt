@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,7 +54,10 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,6 +84,8 @@ class FloatingActions(
     val onOpenBet: (MiniWindow.Item) -> Unit = {},
     /** Its ✓ button: placed, hide it. */
     val onPlaced: (MiniWindow.Item) -> Unit = {},
+    /** Its ✕ button: not bet, but gone from the list all the same. */
+    val onHidden: (MiniWindow.Item) -> Unit = {},
     val onUndoPlaced: (String) -> Unit = {},
     val onLoadBooks: (CnoRow) -> Unit = {},
 )
@@ -91,7 +98,8 @@ private val FLOAT_ROW = 40.dp
  * window, but it takes touches, so
  *  - Up and Down are always at the bottom and scroll a page at a time (a finger scrolls too);
  *  - tapping a bet opens that bet in Novig's bet slip;
- *  - each bet's ✓ marks it placed and hides it for good (Undo for a few seconds);
+ *  - each bet's ✓ marks it placed and hides it for good, its ✕ removes it without betting it
+ *    (Tj, 2026-09-27), both with Undo for a few seconds;
  *  - holding a CNO bet (or Books) shows every book's odds for it;
  *  - a green ✓ before a pick means several books agree it's +EV, and player bets show the team.
  * − shrinks it to a bubble, ✕ closes it (which stops CNO's reads). Moving and resizing are the
@@ -125,11 +133,12 @@ fun FloatingFeed(
             return@Surface
         }
         var booksKey by remember { mutableStateOf<String?>(null) }
-        var lastPlaced by remember { mutableStateOf<MiniWindow.Item?>(null) }
-        LaunchedEffect(lastPlaced) {
-            if (lastPlaced != null) {
+        // The last bet marked placed (✓) or removed (✕), for Undo.
+        var lastMarked by remember { mutableStateOf<Marked?>(null) }
+        LaunchedEffect(lastMarked) {
+            if (lastMarked != null) {
                 delay(UNDO_MS)
-                lastPlaced = null
+                lastMarked = null
             }
         }
         val list = rememberLazyListState()
@@ -204,14 +213,14 @@ fun FloatingFeed(
                                     .padding(start = 8.dp),
                             ) {
                                 MiniRow(item, showTag = !cnoOnly, height = FLOAT_ROW) {
-                                    Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                                    Box(Modifier.size(width = 34.dp, height = FLOAT_ROW), contentAlignment = Alignment.Center) {
                                         if (opening == item.key) {
                                             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
                                         } else {
                                             Box(
-                                                Modifier.size(36.dp)
+                                                Modifier.fillMaxSize()
                                                     .clickable(onClickLabel = "Mark placed") {
-                                                        lastPlaced = item
+                                                        lastMarked = Marked(item, hidden = false)
                                                         actions.onPlaced(item)
                                                     }
                                                     .semantics { contentDescription = "I placed ${item.title}: hide it" },
@@ -221,12 +230,24 @@ fun FloatingFeed(
                                             }
                                         }
                                     }
+                                    // ✕: gone from the list without betting it (Tj, 2026-09-27).
+                                    Box(
+                                        Modifier.size(width = 30.dp, height = FLOAT_ROW)
+                                            .clickable(onClickLabel = "Remove") {
+                                                lastMarked = Marked(item, hidden = true)
+                                                actions.onHidden(item)
+                                            }
+                                            .semantics { contentDescription = "Remove ${item.title} from the list" },
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(Icons.Filled.Close, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                lastPlaced?.let { p ->
+                lastMarked?.let { (p, hidden) ->
                     Surface(
                         Modifier.align(Alignment.BottomCenter).padding(6.dp).fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
@@ -234,7 +255,7 @@ fun FloatingFeed(
                     ) {
                         Row(Modifier.padding(start = 10.dp).height(34.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Placed: ${p.title}",
+                                (if (hidden) "Removed: " else "Placed: ") + p.title,
                                 Modifier.weight(1f),
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.inverseOnSurface,
@@ -245,7 +266,7 @@ fun FloatingFeed(
                                 "UNDO",
                                 Modifier.clickable {
                                     actions.onUndoPlaced(p.key)
-                                    lastPlaced = null
+                                    lastMarked = null
                                 }.padding(horizontal = 12.dp, vertical = 8.dp),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -260,16 +281,22 @@ fun FloatingFeed(
             HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
             val canUp by remember(booksIndex) { derivedStateOf { if (booksIndex != null) booksIndex > 0 else list.canScrollBackward } }
             val canDown by remember(booksIndex, items.size) { derivedStateOf { if (booksIndex != null) booksIndex < items.lastIndex else list.canScrollForward } }
+            val showsCno = MiniWindow.showsCno(state.settings)
+            val labels = (if (cnoOnly) listOf("Refresh") else listOf("Scan", "Recheck")) +
+                if (showsCno) listOf(if (booksIndex != null) "List" else "Books") else emptyList()
+            BoxWithConstraints(Modifier.fillMaxWidth().height(40.dp).background(MaterialTheme.colorScheme.surfaceContainer)) {
+            // Labels only when they all fit ("Books" was cut to "Bo" on a narrow widget, Tj 2026-09-27).
+            val labelled = barFits(labels, constraints.maxWidth)
             Row(
-                Modifier.fillMaxWidth().height(40.dp).background(MaterialTheme.colorScheme.surfaceContainer).padding(horizontal = 6.dp),
+                Modifier.fillMaxSize().padding(horizontal = BAR_PAD),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                if (cnoOnly || !MiniWindow.showsVigilant(state.settings)) {
-                    BarButton("Refresh", painterResource(R.drawable.ic_recheck), enabled = !state.cno.refreshing, onClick = actions.onRefresh)
+                if (cnoOnly) {
+                    BarButton("Refresh", painterResource(R.drawable.ic_recheck), enabled = !state.cno.refreshing, labelled = labelled, onClick = actions.onRefresh)
                 } else {
-                    BarButton("Scan", painterResource(R.drawable.ic_scan), enabled = !status.scanning && !status.rechecking, onClick = actions.onScan)
-                    BarButton("Recheck", painterResource(R.drawable.ic_recheck), enabled = !status.scanning && !status.rechecking && state.feed.isNotEmpty(), onClick = actions.onRecheck)
+                    BarButton("Scan", painterResource(R.drawable.ic_scan), enabled = !status.scanning && !status.rechecking, labelled = labelled, onClick = actions.onScan)
+                    BarButton("Recheck", painterResource(R.drawable.ic_recheck), enabled = !status.scanning && !status.rechecking && state.feed.isNotEmpty(), labelled = labelled, onClick = actions.onRecheck)
                 }
                 BarButton("Up", painterResource(R.drawable.ic_up), enabled = canUp, big = true) {
                     if (booksIndex != null) {
@@ -285,11 +312,12 @@ fun FloatingFeed(
                         scope.launch { list.animateScrollToItem(pageTarget(list, up = false, size = items.size)) }
                     }
                 }
-                if (MiniWindow.showsCno(state.settings)) {
+                if (showsCno) {
                     BarButton(
                         if (booksIndex != null) "List" else "Books",
                         painterResource(R.drawable.ic_books),
                         enabled = booksIndex != null || items.any { it.cno != null },
+                        labelled = labelled,
                     ) {
                         booksKey = if (booksIndex != null) {
                             null
@@ -301,9 +329,13 @@ fun FloatingFeed(
                     }
                 }
             }
+            }
         }
     }
 }
+
+/** A bet just marked placed (✓) or removed without betting it (✕, [hidden]), for Undo. */
+private data class Marked(val item: MiniWindow.Item, val hidden: Boolean)
 
 /**
  * The whole floating window: the widget inside a frame (Tj, 2026-09-26: "easily accessed corners
@@ -373,18 +405,39 @@ private fun HeaderButton(icon: Painter?, description: String, onClick: () -> Uni
     }
 }
 
+/** The bottom bar's side padding. */
+private val BAR_PAD = 6.dp
+
+/** The label style of the bottom bar's small buttons (measured by [barFits] exactly as drawn). */
 @Composable
-private fun BarButton(label: String, icon: Painter, enabled: Boolean = true, big: Boolean = false, onClick: () -> Unit) {
+private fun barLabelStyle() = LocalTextStyle.current.merge(TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold))
+
+/**
+ * Whether the bottom bar's buttons fit [maxWidthPx] with their labels: each small button's icon,
+ * label and padding, plus Up and Down. When not, they show icons only (labels stay for TalkBack).
+ */
+@Composable
+private fun barFits(labels: List<String>, maxWidthPx: Int): Boolean {
+    val measurer = rememberTextMeasurer()
+    val style = barLabelStyle()
+    val density = LocalDensity.current
+    val text = labels.sumOf { measurer.measure(it, style, softWrap = false, maxLines = 1).size.width }
+    val fixed = with(density) { (labels.size * (6 + 16 + 3 + 6) + 2 * (12 + 26 + 12) + 2 * BAR_PAD.value.toInt()).dp.roundToPx() }
+    return text + fixed <= maxWidthPx
+}
+
+@Composable
+private fun BarButton(label: String, icon: Painter, enabled: Boolean = true, big: Boolean = false, labelled: Boolean = true, onClick: () -> Unit) {
     val color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
     Row(
         Modifier.height(36.dp)
             .clickable(enabled = enabled, onClickLabel = label, onClick = onClick)
             .semantics { contentDescription = label }
-            .padding(horizontal = if (big) 12.dp else 6.dp),
+            .padding(horizontal = if (big || !labelled) 12.dp else 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, Modifier.size(if (big) 26.dp else 16.dp), tint = color)
-        if (!big) Text(label, Modifier.padding(start = 3.dp), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = color, maxLines = 1)
+        Icon(icon, null, Modifier.size(if (big) 26.dp else if (labelled) 16.dp else 20.dp), tint = color)
+        if (!big && labelled) Text(label, Modifier.padding(start = 3.dp), style = barLabelStyle(), color = color, maxLines = 1, softWrap = false)
     }
 }
 
