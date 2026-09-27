@@ -793,7 +793,7 @@ class ScreenshotTest {
         shoot("8e_cno_only_agreed") { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(cnoOnlyAgreed = true)), {}, {}) }
         compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertIsDisplayed()
         compose.onAllNodesWithText("Ohio -33.5").assertCountEquals(0)
-        compose.onNodeWithText("1 bet pass · 2 hidden: 1 too few books, 1 longer odds than your cap · only ✓ bets: 3 held back, 3 being checked").assertIsDisplayed()
+        compose.onNodeWithText("1 bet passes · 2 hidden: 1 too few books, 1 longer odds than your cap · only ✓ bets: 3 held back, 3 being checked").assertIsDisplayed()
     }
 
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
