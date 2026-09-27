@@ -1722,3 +1722,34 @@ props calls themselves are fixture-tested only.
       failed on 09-27). Forced full rerun: 409 tests, 0 failed, 4 skipped (live), exit 0 after
       that fix; v0.15.1 code 21.*
       ("Make sure you complete all tasks including the last two prompts I sent.")
+
+## Tj's messages, 2026-09-27 ~00:05Z (while v0.15.1 shipped) — bet slip taps, CNO unreachable, Milwaukee
+
+> When I click on bets, sometimes they pull up the novig bet slip, but sometimes they don't. It
+> may be because it says cno could not be reached. Figure out and fix both problems, I think cno
+> is restricting or slowing me down.
+> Do this all in addition to everything else I asked before
+> Also in my notifications it says the best bet is Milwaukee, but this bet isn't even shown in the
+> widget. See the screenshots
+> Every message I send make sure you are still completing all prior tasks as well
+
+Screenshots: widget over the home screen (v0.15.0: "CNO 1m · 45 +EV", Thornton's row showing the
+link spinner instead of its ✓, the bottom bar's "Books" cut to "Bo" at that width); notification
+shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4% EV" (3m), and
+"Vigilant is displaying over other apps" (Android's own, silent). Quick settings show a VPN tile
+("Secure my con..").
+
+### Plan
+- [ ] K1 Tap → bet slip every time: the link comes from a CNO request made on the tap (the spinner
+      in the screenshot), which fails or hangs when CNO is slow. Resolve links ahead of time for
+      the listed bets (paced, cached on disk, a line's link never changes), give the tap a short
+      timeout with one retry, and when CNO can't answer, find the outcome in Novig's own catalog
+      (event by teams, market by player/line) so the bet slip still opens; say so when it can't.
+- [ ] K2 "CNO could not be reached": measure what CNO does under the app's load (throttling,
+      slow replies, Cloudflare?), then cut the app's CNO traffic: one shared pace for every CNO
+      request (list first), a lighter books lane, back off all lanes after a failure, and
+      explain it in the app.
+- [ ] K3 Milwaukee: find why the notification's "best bet" isn't in the widget (mode? feed filter
+      vs. notification count?) and make them agree.
+- [ ] K4 Bottom bar fits at any width (icons only when narrow; "Bo" cut off).
+- [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
