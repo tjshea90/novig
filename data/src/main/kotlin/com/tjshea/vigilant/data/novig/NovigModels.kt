@@ -32,6 +32,11 @@ data class NovigOutcome(
     val name: String,
     /** TBD, WIN, LOSS, PUSH, or a decimal price string for a fair-market-value settlement. */
     val status: String,
+    /**
+     * Only on a sportsbook's board (Vigilant MGM, [com.tjshea.vigilant.data.book.BookBoard]): the book's
+     * own ids and page for this bet, which its bet-slip link is built from. Never set for Novig.
+     */
+    val bookRef: com.tjshea.vigilant.data.book.BookRef? = null,
 )
 
 data class NovigMarket(
@@ -66,12 +71,19 @@ data class NovigBook(
     val seq: Long,
     val bidsByOutcome: Map<String, List<BidLevel>>,
     val fetchedAtMs: Long,
+    /**
+     * Only for a sportsbook's posted odds (Vigilant MGM): each outcome's price, exact (a sportsbook's
+     * odds aren't on Novig's thousandths grid). Novig's own books never set it: their ladders come
+     * from [bidsByOutcome].
+     */
+    val posted: Map<String, List<TakeLevel>>? = null,
 ) {
     /**
      * What you could buy [outcomeId] for right now, best (cheapest) first: every resting bid on
      * the other outcome, flipped to `1 − bid`.
      */
     fun takeLadder(market: NovigMarket, outcomeId: String): List<TakeLevel> {
+        posted?.let { return it[outcomeId].orEmpty() }
         val other = market.otherOutcome(outcomeId) ?: return emptyList()
         return bidsByOutcome[other.outcomeId].orEmpty().map { TakeLevel((1000 - it.priceMilli) / 1000.0, it.contracts) }
     }

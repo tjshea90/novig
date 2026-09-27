@@ -14,8 +14,12 @@ enum class Side { HOME, AWAY, OVER, UNDER }
  */
 enum class LineKind { MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PLAYER_PROP }
 
-/** One outcome price from one book. [point] is the handicap (spreads) or the line (over/unders). */
-data class RefQuote(val side: Side, val decimalOdds: Double, val point: Double?)
+/**
+ * One outcome price from one book. [point] is the handicap (spreads) or the line (over/unders).
+ * [bookOutcomeId]: the book's own id for this selection, when the feed was asked for it (PropLine's
+ * `includeBookIds`, only for the book Vigilant MGM prices): what its bet-slip link is built from.
+ */
+data class RefQuote(val side: Side, val decimalOdds: Double, val point: Double?, val bookOutcomeId: String? = null)
 
 /** One book's quote for one market of one event. */
 data class RefBookMarket(
@@ -30,6 +34,10 @@ data class RefBookMarket(
     val subject: String? = null,
     /** [LineKind.PLAYER_PROP]: the stat, as Novig names it (e.g. `PASSING_YARDS`). */
     val stat: String? = null,
+    /** The book's own id for this game, when the feed was asked for it (see [RefQuote.bookOutcomeId]). */
+    val bookEventId: String? = null,
+    /** The book's page for this game, when the feed sends one (PropLine's `includeLinks`). */
+    val link: String? = null,
 ) {
     /**
      * The line this quote is on: null for moneylines, the HOME side's handicap for spreads
