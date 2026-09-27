@@ -179,6 +179,10 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 val american = m.odds.replace("−", "-").trim().toIntOrNull()?.takeIf { it >= 100 || it <= -100 } ?: return@mapNotNull null
                 val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(american)
                 val parts = m.detail.split(" · ")
+                val cno = m.key.startsWith("cno:")
+                // A Vigilant mark's key is its Novig "<market>/<outcome>"; a CNO one's starts with its game page.
+                val ids = if (cno) null else m.key.split('/').takeIf { it.size == 2 && it.all(String::isNotBlank) }
+                val gameUrl = if (cno) m.key.removePrefix("cno:").substringBeforeLast('|').takeIf { it.startsWith("http") } else null
                 TrackedBet(
                     id = UUID.randomUUID().toString(),
                     createdAtMs = m.placedAtMs,
@@ -187,17 +191,18 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                     startsTs = m.startsAtMs ?: m.placedAtMs,
                     marketLabel = parts.getOrNull(0).orEmpty(),
                     selection = m.title,
-                    marketId = "",
-                    outcomeId = "",
+                    marketId = ids?.get(0).orEmpty(),
+                    outcomeId = ids?.get(1).orEmpty(),
                     price = price,
                     cost = price,
                     fairAtBet = null,
                     evPercentAtBet = null,
                     stake = DEFAULT_STAKE,
-                    source = if (m.key.startsWith("cno:")) SOURCE_CNO else SOURCE_VIGILANT,
+                    source = if (cno) SOURCE_CNO else SOURCE_VIGILANT,
                     placedKey = m.key,
                     american = american,
                     book = parts.getOrNull(2) ?: "Novig",
+                    gameUrl = gameUrl,
                     imported = true,
                 )
             }
@@ -234,7 +239,14 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
 
     suspend fun settle(id: String, status: BetStatus) {
         store.update { list ->
-            list.map { if (it.id == id) it.copy(status = status, settledAtMs = if (status == BetStatus.PENDING) null else clock()) else it }
+            // A tap (or its undo) is Tj's call: the auto-settle leaves it alone from then on.
+            list.map {
+                if (it.id == id) {
+                    it.copy(status = status, settledAtMs = if (status == BetStatus.PENDING) null else clock(), settleValue = null, settledBy = BetSettler.BY_YOU)
+                } else {
+                    it
+                }
+            }
         }
     }
 
