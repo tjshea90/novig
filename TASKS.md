@@ -2026,8 +2026,9 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > scanning
 
 ### Plan
-- [ ] P1 Local build/test floor ready (BRIEF.md build trap 6: SDK + mirror); run the full floor
+- [x] P1 Local build/test floor ready (BRIEF.md build trap 6: SDK + mirror); run the full floor
       `:engine:test :data:test :app:testDebugUnitTest` (+ `-Pscreenshots`) and record the baseline.
+      Baseline 2026-09-27 06:25Z: 496 tests, 0 failures, 0 errors, 7 skipped (live tests), exit 0.
 - [ ] P2 Research: every odds API / sportsbook / exchange with a free tier or free public data NOT
       already in RESEARCH.md §4/§11 (e.g. Odds-API.io, SportsGameOdds, OddsPapi re-check, API-Sports
       odds, The Rundown, BALLDONTLIE, ESPN core odds, Action Network, SX Bet, ProphetX, Sporttrade,
