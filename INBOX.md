@@ -2019,3 +2019,8 @@ Make sure on every new request I send you log and still finish the prior request
 ```
 See if there is a way to safely and repeatedly refresh cno odds without timeout or unable to resolve or any other restrictions  whether that is using a specific dns server, or my nordvpn, or any cheap service that could help, or any other way
 ```
+
+## 2026-09-27T00:18:56Z
+```
+When all of the features and fixes I asked for are finished, run a full test protocol and find ways to improve the UI and speed and efficiency and bug fixes, but without sacrificing any accuracy 
+```
