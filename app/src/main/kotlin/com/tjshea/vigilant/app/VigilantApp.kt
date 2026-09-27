@@ -7,6 +7,9 @@ import com.tjshea.vigilant.app.data.NovigConnectionStore
 import com.tjshea.vigilant.data.cno.CnoCache
 import com.tjshea.vigilant.data.cno.CnoClient
 import com.tjshea.vigilant.data.cno.CnoFeed
+import com.tjshea.vigilant.data.cno.CnoLinks
+import com.tjshea.vigilant.data.cno.CnoNetwork
+import com.tjshea.vigilant.data.cno.NovigBetFinder
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.FileApiKeyStore
 import com.tjshea.vigilant.data.keys.KeyPool
@@ -85,7 +88,15 @@ class AppContainer(app: Application) {
      * CrazyNinjaOdds' +EV list (RESEARCH.md §18). It reads only while [MainActivity] is started
      * (on screen, or as the mini window), at most once per 30 s; the last list is kept on disk.
      */
-    val cno = CnoFeed(CnoClient(http), JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json))
+    val cno = CnoFeed(
+        // Its own client over the shared one: CNO's DNS fallback, short keep-alive, retry (CnoNetwork).
+        CnoClient(CnoNetwork.client(http)),
+        JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json),
+        linkStore = JsonFileStore(File(app.filesDir, "cno_links.json"), CnoLinks.serializer(), { CnoLinks() }, json),
+    )
+
+    /** Finds a CNO bet in Novig's own catalog when CNO can't hand over its link (on a tap only). */
+    val betFinder = NovigBetFinder(http, json)
 
     /** Bets Tj marked placed in the widget or the CNO tab: hidden from both until their game is over. */
     val placed = PlacedBets(JsonFileStore(File(app.filesDir, "placed.json"), PlacedBook.serializer(), { PlacedBook() }, json))
