@@ -69,7 +69,7 @@ class StartsWithinTest {
         assertEquals(listOf("Ohio -33.5"), twelve.cnoCandidates(now).map { it.row.bet })
         assertEquals(listOf("Ohio -33.5"), twelve.cnoShown(now).map { it.row.bet })
         assertTrue(MiniWindow.items(twelve, now).filter { it.fromCno }.all { it.title == "Ohio -33.5" })
-        assertEquals("; 3 start after 12h", laterText(twelve, twelve.cnoPicks(now)!!.picks, now))
+        assertEquals("3 start after 12h", laterText(twelve, twelve.cnoPicks(now)!!.picks, now))
         assertEquals("", laterText(s, s.cnoPicks(now)!!.picks, now))
         // 24 h includes a game starting exactly 24 h from now.
         assertEquals(SampleCno.kept, s.within(24).cnoCandidates(now).map { it.row.bet })

@@ -384,6 +384,7 @@ class ScreenshotTest {
         // 12h: Ohio (8 h out) is listed, the three bets 24 h out aren't, and the count says why.
         compose.onNodeWithText("Ohio -33.5").assertIsDisplayed()
         compose.onAllNodesWithText("Justin Jefferson Under 69.5").assertCountEquals(0)
+        compose.onNodeWithText("3 start after 12h", substring = true).assertIsDisplayed()
         compose.onNodeWithText("24h").performClick()
         assertEquals(24, picked)
         compose.onNodeWithText("Any time").performClick()
