@@ -854,6 +854,39 @@ class ScreenshotTest {
         compose.onNodeWithText("being checked", substring = true).assertIsDisplayed()
     }
 
+    /** Tj, 2026-09-27: "an option to also use the regular scan in addition to cno" — right in the widget. */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetsTopBarSwitchesVigilantsScanOnAndOff() {
+        var both: Boolean? = null
+        floating("9n_floating_switch_cno", floatingState(), actions = com.tjshea.vigilant.app.ui.FloatingActions(onBoth = { both = it }))
+        compose.onNodeWithText("CNO only").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Showing CNO only. Tap to add Vigilant's own scan").performClick()
+        assertEquals(true, both)
+    }
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetWithBothListsABetBothScannersFoundOnce() {
+        var both: Boolean? = null
+        val feedItem = MiniWindow.items(SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT)), SampleScan.NOW).first()
+        val ohio = SampleCno.rows[2]
+        val s = SampleCno.state().copy(cnoLinks = mapOf(com.tjshea.vigilant.data.cno.CnoFeed.linkKey(ohio) to "novigapp://events/${feedItem.outcomeId}/cno"))
+        floating("9o_floating_both_merged", s, actions = com.tjshea.vigilant.app.ui.FloatingActions(onBoth = { both = it }))
+        compose.onNodeWithText("Both").assertIsDisplayed()
+        compose.onAllNodesWithText("Ohio -33.5").assertCountEquals(0) // folded into Vigilant's row
+        compose.onNodeWithText("CNO +5.3%", substring = true, useUnmergedTree = true).assertExists()
+        compose.onNodeWithContentDescription("Showing CNO and Vigilant's scan. Tap for CNO only").performClick()
+        assertEquals(false, both)
+    }
+
+    @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
+    @Test fun settingsOfferVigilantsScanAgainWhileTheWidgetIsOpen() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
+        compose.onNodeWithText("10 min").performClick()
+        assertEquals(10, picked?.widgetRescanMinutes)
+    }
+
     /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */
     @Test fun openInNovigSaysItsOpening() {
         val (pick, snap) = jeffersonMoved()

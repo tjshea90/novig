@@ -221,6 +221,48 @@ class MiniWindowTest {
         assertFalse(Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"]}""").cnoOnlyAgreed)
     }
 
+    /** SampleScan's feed and SampleCno's list together, with CNO's Ohio bet naming [outcome] in Novig. */
+    private fun both(outcome: String?): UiState {
+        val base = SampleCno.state() // Both scanners
+        val ohio = SampleCno.rows[2]
+        val links = if (outcome == null) emptyMap() else mapOf(com.tjshea.vigilant.data.cno.CnoFeed.linkKey(ohio) to "novigapp://events/$outcome/cno")
+        return base.copy(cnoLinks = links)
+    }
+
+    @Test
+    fun `a bet both scanners list shows once - Vigilant's row, tagged with CNO's EV, with CNO's books`() {
+        val feedItem = MiniWindow.items(SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = ScannerMode.VIGILANT)), SampleScan.NOW).first()
+        val outcome = feedItem.outcomeId!!
+        val ohio = SampleCno.rows[2]
+        val merged = MiniWindow.items(both(outcome), SampleScan.NOW)
+        assertTrue(merged.none { it.key == MiniWindow.cnoKey(ohio) }) // CNO's copy is folded in
+        val one = merged.single { it.key == feedItem.key }
+        assertEquals(0.0528, one.alsoCnoEv!!, 1e-9)
+        assertEquals(ohio.key, one.cno?.row?.key) // hold for every book's odds still works
+        assertEquals(listOf(MiniWindow.cnoKey(ohio)), one.aliases)
+        assertEquals(outcome, one.outcomeId) // a tap opens Vigilant's own outcome
+        // Best EV first across both lists.
+        assertEquals(merged.sortedByDescending { it.ev }, merged)
+        // Without CNO's link naming the outcome, both rows show (nothing is guessed).
+        val apart = MiniWindow.items(both(null), SampleScan.NOW)
+        assertTrue(apart.any { it.key == MiniWindow.cnoKey(ohio) } && apart.any { it.key == feedItem.key })
+        assertEquals(merged.size + 1, apart.size)
+    }
+
+    @Test
+    fun `marking a bet both scanners list placed hides it from both, whichever side marked it`() {
+        val feedItem = MiniWindow.items(SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = ScannerMode.VIGILANT)), SampleScan.NOW).first()
+        val ohio = SampleCno.rows[2]
+        val s = both(feedItem.outcomeId)
+        val one = MiniWindow.items(s, SampleScan.NOW).single { it.key == feedItem.key }
+        val placed = s.copy(placed = listOf(MiniWindow.placed(one, SampleScan.NOW)))
+        assertTrue(MiniWindow.items(placed, SampleScan.NOW).none { it.key == feedItem.key || it.key == MiniWindow.cnoKey(ohio) })
+        assertTrue(placed.cnoShown(SampleScan.NOW).none { it.row.key == ohio.key }) // the CNO tab too
+        // Placed from the CNO tab (CNO's key only): Vigilant's copy is hidden as well.
+        val fromCnoTab = s.copy(placed = listOf(com.tjshea.vigilant.data.tracker.PlacedBet(MiniWindow.cnoKey(ohio), ohio.bet, placedAtMs = SampleScan.NOW)))
+        assertTrue(MiniWindow.items(fromCnoTab, SampleScan.NOW).none { it.key == feedItem.key })
+    }
+
     @Test
     fun `the widget opens wider by default, room for both buttons`() {
         assertEquals(360, FloatingWidget.DEFAULT_W_DP)

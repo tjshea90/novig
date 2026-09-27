@@ -72,4 +72,20 @@ class PlacedBetsTest {
         assertEquals("U47.5", Picks.shortLine("Under 47.5"))
         assertEquals("-3.5", Picks.shortLine("New York Giants -3.5"))
     }
+
+    @Test
+    fun `a bet both scanners listed is one mark under both keys - undo from either takes it off`() = runTest {
+        val s = store()
+        s.mark(bet("mkt/out").copy(aliases = listOf("cno:a")))
+        assertEquals(listOf("mkt/out", "cno:a"), s.load().bets.single().keys)
+        // Marked again from the CNO side: still one mark.
+        s.mark(bet("cno:a"))
+        assertEquals(1, s.load().bets.size)
+        s.mark(bet("mkt/out").copy(aliases = listOf("cno:a")))
+        s.unmark("cno:a")
+        assertTrue(s.load().bets.isEmpty())
+        // placed.json from before aliases existed reads fine.
+        val old = kotlinx.serialization.json.Json.decodeFromString(PlacedBet.serializer(), """{"key":"cno:x","title":"t","placedAtMs":1}""")
+        assertEquals(listOf("cno:x"), old.keys)
+    }
 }
