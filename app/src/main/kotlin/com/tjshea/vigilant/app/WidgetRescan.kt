@@ -22,4 +22,19 @@ object WidgetRescan {
 
     /** Whether switching Vigilant's scan on should start one now. */
     fun scanOnSwitch(lastScanMs: Long?, now: Long): Boolean = lastScanMs == null || now - lastScanMs > STALE_ON_SWITCH_MS
+
+    /** A recheck this close to the fair odds' limit scans instead: it takes a few seconds, then the EVs must still stand. */
+    const val RECHECK_MARGIN_MS = 30_000L
+
+    /**
+     * Whether the other books' prices behind [marketIds] (the oldest of them, else the last scan's time)
+     * are too old, or nearly, for a Novig-only recheck to give EVs that can be shown.
+     */
+    fun fairTooOldToRecheck(state: UiState, marketIds: Collection<String>, now: Long): Boolean {
+        val ids = marketIds.toSet()
+        val oldest = state.result?.opportunities?.filter { it.market.marketId in ids }?.mapNotNull { it.fairAsOfMs }?.minOrNull()
+            ?: state.status.scannedAtMs
+            ?: return false
+        return now - oldest > com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS - RECHECK_MARGIN_MS
+    }
 }

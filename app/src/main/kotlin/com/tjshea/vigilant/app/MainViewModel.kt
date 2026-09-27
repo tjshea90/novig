@@ -461,6 +461,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun recheck(marketIds: Collection<String>) {
         val current = _state.value
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        // A recheck re-reads Novig only. When the other books' prices it compares against are about to
+        // be too old to use (RESEARCH.md §24), it would show nothing: scan everything instead.
+        if (WidgetRescan.fairTooOldToRecheck(current, marketIds, System.currentTimeMillis())) {
+            _toasts.tryEmit("The other books' odds are too old to recheck against: scanning again")
+            scan()
+            return
+        }
         viewModelScope.launch {
             _state.update { it.copy(status = it.status.copy(rechecking = true)) }
             val outcome = runCatching { withContext(Dispatchers.IO) { c.scanner.recheck(_state.value.settings, marketIds) } }
