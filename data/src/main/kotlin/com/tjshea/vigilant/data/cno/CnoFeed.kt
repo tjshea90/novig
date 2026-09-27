@@ -478,8 +478,8 @@ class CnoFeed(
         /** While CNO's list is failing, the books and link lanes look again this often. */
         const val LANE_WAIT_ON_ERROR_MS = 5_000L
 
-        /** Bets whose Novig links are looked up ahead of a tap… */
-        const val LINKS_TOP = 15
+        /** The listed bets whose links are looked up ahead of a tap (most come from Novig's catalog, cheap). */
+        const val LINKS_TOP = 30
 
         /** …one every this long… */
         const val LINK_GAP_MS = 3_000L

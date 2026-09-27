@@ -88,7 +88,12 @@ class NovigBetFinder(
     private suspend fun <T> cached(map: HashMap<String, Kept<T>>, key: String, load: suspend () -> T?): T? {
         mutex.withLock { map[key]?.takeIf { clock() - it.atMs < KEEP_MS }?.let { return it.value } }
         val value = load() ?: return null
-        mutex.withLock { map[key] = Kept(value, clock()) }
+        mutex.withLock {
+            // Games long over drop out, so a day of taps doesn't pile them up.
+            val now = clock()
+            map.entries.removeAll { now - it.value.atMs >= KEEP_MS }
+            map[key] = Kept(value, now)
+        }
         return value
     }
 
