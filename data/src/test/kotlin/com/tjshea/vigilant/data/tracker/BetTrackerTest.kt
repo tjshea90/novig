@@ -157,4 +157,16 @@ class BetTrackerTest {
         assertEquals(BetTracker.SOURCE_VIGILANT, old.source)
         assertEquals(0.04, old.evPercentAtBet!!, 1e-9)
     }
+
+    @Test
+    fun `stats count wins and losses (pushes aside) for the win rate`() {
+        fun b(id: String, st: BetStatus) = TrackedBet(id, 0, "NFL", "A @ B", 0, "Moneyline", "A", "m", "o", 0.5, 0.5, null, null, 1.0, st)
+        val s = BetTracker.stats(listOf(b("1", BetStatus.WON), b("2", BetStatus.WON), b("3", BetStatus.LOST), b("4", BetStatus.PUSH), b("5", BetStatus.PENDING)))
+        assertEquals(2, s.won)
+        assertEquals(1, s.lost)
+        assertEquals(1, s.pushed)
+        assertEquals(2.0 / 3.0, s.winRate!!, 1e-12)
+        assertEquals(1.0, s.profit, 1e-12)
+        assertNull(BetTracker.stats(emptyList()).winRate)
+    }
 }
