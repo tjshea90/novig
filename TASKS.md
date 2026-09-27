@@ -1811,10 +1811,19 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         "Open in Novig" on the CNO tab gave no sign of working for up to 13 s (`openInNovigSaysItsOpening`);
         INBOX.md logged the harness's background-task notices as Tj's words (`tools/test_resume.sh`).
         CI: `CnoNetworkTest` retry test resolved "localhost" (IPv6-first on runners) → pinned to 127.0.0.1.
-  - [ ] K10b Sweep app: MainViewModel flows (recomputation per state change), MainActivity
+  - [x] K10b Sweep app: MainViewModel flows (recomputation per state change), MainActivity
         (widget/PiP wiring, taps), FloatingWidget/WidgetGestures, FloatingFeed/MiniFeed, CnoScreen,
         Settings; the other tabs (Feed, Games, Tracker) and ScanService.
-  - [ ] K10c Sweep engine + scanner (FairValue, Devig, Fees, EvMath, Planner/Pricing, Scanner,
+        Found+fixed: with "only bets the books agree on" and none agreed yet, the widget said "No +EV
+        on CrazyNinjaOdds right now" → "No bets the books agree on yet · N held back, M being checked"
+        (`ScreenshotTest.theWidgetSaysWhenBetsAreWaitingForTheBooks`, failed on the old text). Checked
+        and left: the VM's lanes re-screen CNO's rows per state change (≤100 rows of arithmetic, not
+        worth a cache); the widget's clocks stop with its lifecycle when hidden/bubble/screen off;
+        corner zones overlap the header ✕ and "Books" but taps under the slop still reach them
+        (`WidgetGesturesTest`). Feed/Games/Tracker unchanged since v0.15.0's full test.
+  - [x] K10c Sweep engine + scanner (FairValue, Devig, Fees, EvMath, Planner/Pricing, Scanner,
         RateGate): accuracy untouched, only efficiency/bug fixes with failing-first tests.
+        `git diff v0.15.0..HEAD` on engine, scanner, novig, reference and match: only ScanSettings'
+        new switch; nothing changed since v0.15.0's full test, suites re-run green (engine 39).
   - [ ] K10d Fix everything found with named tests; forced floor + screenshots looked at;
         v0.15.3 ship, release, record, send link.
