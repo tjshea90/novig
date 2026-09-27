@@ -2014,3 +2014,8 @@ Include an option in the cno settings to only include bets where multiple books 
 
 Make sure on every new request I send you log and still finish the prior requests without interrupting or breaking those requests
 ```
+
+## 2026-09-27T00:18:01Z
+```
+See if there is a way to safely and repeatedly refresh cno odds without timeout or unable to resolve or any other restrictions  whether that is using a specific dns server, or my nordvpn, or any cheap service that could help, or any other way
+```
