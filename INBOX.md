@@ -1990,3 +1990,8 @@ When I click on bets, sometimes they pull up the novig bet slip, but sometimes t
 ```
 Do this all in addition to everything else I asked before
 ```
+
+## 2026-09-27T00:08:11Z
+```
+Also in my notifications it says the best bet is Milwaukee, but this bet isn't even shown in the widget. See the screenshots
+```
