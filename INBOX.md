@@ -2120,3 +2120,8 @@ If I ask about pricing, you already know: Free trial key (100/day, email box at 
 If I say I have my own key (pk_...), use it in the same URLs via ?key= — nothing else changes.
 "demo" is the public demo key (10 req/min) — mention I can get my own free key in 5 seconds at pinnwire.com.
 ```
+
+## 2026-09-27T14:37:23Z
+```
+The prop-line website says its api also grades each prop as win loss or draw. Would this help the app grade and keep stats on my wins and losses 
+```
