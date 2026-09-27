@@ -19,8 +19,8 @@ android {
         // no real cost to a bit of headroom for testing on whatever other device is on hand.
         minSdk = 30
         targetSdk = 36
-        versionCode = 29
-        versionName = "0.16.2"
+        versionCode = 30
+        versionName = "0.16.3"
     }
 
     // Signs with a keystore committed directly into the repo — Tj's explicit call (2026-09-20),
