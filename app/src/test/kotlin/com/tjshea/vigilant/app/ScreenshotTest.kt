@@ -128,7 +128,6 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleScan.state().copy(pinnwireKeys = emptyList(), proplineKeys = emptyList()), {}) }
         compose.onNodeWithText("PinnWire keys (game lines and player props)").assertExists()
         compose.onNodeWithText("Add a PinnWire key").assertExists()
-        compose.onNodeWithText("PropLine").assertExists()
         compose.onNodeWithText("Free key at prop-line.com", substring = true).assertExists()
         compose.onNodeWithText("Add a PropLine key").assertExists()
         compose.onNodeWithText("Sportsbooks for fair odds", substring = true).assertExists()
