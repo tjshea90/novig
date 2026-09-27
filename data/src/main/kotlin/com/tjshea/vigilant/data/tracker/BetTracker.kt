@@ -268,7 +268,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             return fair.takeIf { b.closingFair == null || kotlin.math.abs(it - b.closingFair) > 1e-9 }
         }
         if (store.read().none { fresh(it) != null }) return false
-        store.update { list -> list.map { b -> fresh(b)?.let { b.copy(closingFair = it, closingSeenAtMs = now) } ?: b } }
+        // The scan's fair line is also the bet's EV now (the Tracker's "now +3% EV").
+        store.update { list -> list.map { b -> fresh(b)?.let { b.copy(closingFair = it, closingSeenAtMs = now, nowFair = it, nowEv = it / b.cost - 1.0, nowAtMs = now) } ?: b } }
         return true
     }
 
