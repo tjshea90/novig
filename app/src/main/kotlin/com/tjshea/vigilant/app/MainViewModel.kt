@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** What the status line under the title shows. */
 data class ScanStatus(
@@ -163,6 +164,17 @@ data class UiState(
  * results while it runs, the report when it ends.
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+    /** Where a tapped CNO bet opens in Novig: its bet slip ([exact]) or only its game. */
+    data class BetLink(val link: String, val exact: Boolean)
+
+    companion object {
+        /** A tap waits this long for CNO's link before asking Novig's catalog. */
+        const val TAP_CNO_MS = 5_000L
+
+        /** …and this long for Novig's catalog. */
+        const val TAP_NOVIG_MS = 8_000L
+    }
 
     private val c = (application as VigilantApp).container
 
@@ -353,8 +365,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { runCatching { c.cno.loadBooks(row, force) } }
     }
 
-    /** The Novig app link that opens a CNO bet in Novig's bet slip (`novigapp://events/<outcome>/cno`), or null. */
-    suspend fun novigLink(row: CnoRow): String? = withContext(Dispatchers.IO) { c.cno.novigLink(row) }
+    /**
+     * The link that opens a CNO bet in Novig (Tj, 2026-09-27: "sometimes they pull up the novig
+     * bet slip, but sometimes they don't"), fastest first: the one read ahead of time (no network);
+     * CNO's, asked now for at most [TAP_CNO_MS]; the bet found in Novig's own catalog (at most
+     * [TAP_NOVIG_MS]), or failing that its game. When CNO's list is failing, Novig's catalog is
+     * asked first. Null when nothing answered.
+     */
+    suspend fun betLink(row: CnoRow): BetLink? = withContext(Dispatchers.IO) {
+        c.cno.cachedLink(row)?.let { return@withContext BetLink(it, exact = true) }
+        suspend fun fromCno() = withTimeoutOrNull(TAP_CNO_MS) { c.cno.novigLink(row) }?.let { BetLink(it, exact = true) }
+        suspend fun fromNovig() = withTimeoutOrNull(TAP_NOVIG_MS) { c.betFinder.find(row) }
+            ?.let { BetLink(it.link, exact = it is com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet) }
+        val cno = c.cno.state.value
+        val cnoFailing = cno.error != null || (cno.pausedUntilMs ?: 0L) > System.currentTimeMillis()
+        if (!cnoFailing) return@withContext fromCno() ?: fromNovig()
+        val novig = fromNovig()
+        if (novig?.exact == true) novig else fromCno() ?: novig
+    }
 
     /** Mirrors the runner into the screen's state, for as long as this screen lives. */
     private suspend fun follow() {

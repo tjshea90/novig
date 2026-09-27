@@ -95,8 +95,8 @@ object MiniWindow {
     /** The key a CNO bet has in the widget (and in placed.json). */
     fun cnoKey(row: com.tjshea.vigilant.data.cno.CnoRow): String = "cno:${row.key}"
 
-    /** A widget bet as a placed-bet record. */
-    fun placed(item: Item, now: Long): PlacedBet = PlacedBet(
+    /** A widget bet as a placed-bet record ([hidden]: removed with ✕, not bet). */
+    fun placed(item: Item, now: Long, hidden: Boolean = false): PlacedBet = PlacedBet(
         key = item.key,
         title = item.title,
         detail = item.subtitle,
@@ -104,11 +104,12 @@ object MiniWindow {
         odds = item.price,
         placedAtMs = now,
         startsAtMs = item.startsAtMs,
+        hidden = hidden,
     )
 
     /**
      * Novig's app on a Vigilant bet: its outcome in Novig's bet slip (Novig's own link format,
-     * RESEARCH.md §20). CNO bets get theirs from CNO ([MainViewModel.novigLink]).
+     * RESEARCH.md §20). CNO bets get theirs from CNO or Novig's catalog ([MainViewModel.betLink]).
      */
     fun novigLink(item: Item): String? = item.outcomeId?.let { "novigapp://events/$it" }
 

@@ -182,6 +182,7 @@ class MainActivity : ComponentActivity() {
                     onRecheck = { vm.recheck(feedMarketIds(vm.state.value)) },
                     onOpenBet = { item -> openBet(item) },
                     onPlaced = { item -> vm.markPlaced(item) },
+                    onHidden = { item -> vm.markHidden(item) },
                     onUndoPlaced = { key -> vm.unmarkPlaced(key) },
                     onLoadBooks = { row -> vm.loadBooks(row) },
                 ),
@@ -202,8 +203,9 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * A widget bet in Novig's app, in its bet slip: CNO's link for a CNO bet (looked up once,
-     * then cached), Novig's own outcome link for Vigilant's. Novig's home when there's no link.
+     * A widget bet in Novig's app, in its bet slip: for a CNO bet, the link read ahead of time,
+     * else CNO's or Novig's own catalog's ([MainViewModel.betLink]); Novig's own outcome link for
+     * Vigilant's. Says so when only the game, or only Novig's home, could be opened.
      */
     private fun openBet(item: MiniWindow.Item) {
         val row = item.cno?.row
@@ -213,10 +215,21 @@ class MainActivity : ComponentActivity() {
         }
         widget.opening = item.key
         lifecycleScope.launch {
-            val link = runCatching { vm.novigLink(row) }.getOrNull()
+            val found = runCatching { vm.betLink(row) }.getOrNull()
             if (widget.opening == item.key) widget.opening = null
-            launchNovig(link)
+            tellHowItOpened(found, row)
+            launchNovig(found?.link)
         }
+    }
+
+    /** A word when a tap couldn't open the bet slip itself (the bet opens silently when it could). */
+    private fun tellHowItOpened(found: MainViewModel.BetLink?, row: CnoRow) {
+        val text = when {
+            found == null -> "Couldn't find this bet's link (CNO and Novig didn't answer). Opening Novig: look for ${row.bet}"
+            !found.exact -> "Opened the game in Novig: ${row.bet} is under ${row.market}"
+            else -> return
+        }
+        android.widget.Toast.makeText(applicationContext, text, android.widget.Toast.LENGTH_LONG).show()
     }
 
     /** Opens [link] in Novig's app (never a browser when the app is installed), else Novig itself. */
@@ -360,9 +373,10 @@ class MainActivity : ComponentActivity() {
      */
     private fun openInNovig(row: CnoRow) {
         lifecycleScope.launch {
-            val link = vm.novigLink(row)
+            val found = runCatching { vm.betLink(row) }.getOrNull()
             floatOverNovig()
-            launchNovig(link)
+            tellHowItOpened(found, row)
+            launchNovig(found?.link)
         }
     }
 
