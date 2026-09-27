@@ -97,9 +97,11 @@ data class UiState(
     val teams: Map<String, String> = emptyMap(),
     /** CNO is being kept current right now: its tab or a widget is on screen. */
     val cnoLive: Boolean = false,
+    /** CNO bets' Novig links by [com.tjshea.vigilant.data.cno.CnoFeed.linkKey] (a bet both scanners list is shown once). */
+    val cnoLinks: Map<String, String> = emptyMap(),
 ) {
-    /** [placed]'s keys, for hiding them. */
-    val placedKeys: Set<String> by lazy { placed.mapTo(HashSet()) { it.key } }
+    /** [placed]'s keys (and the other scanner's key for the same bet), for hiding them. */
+    val placedKeys: Set<String> by lazy { placed.flatMapTo(HashSet()) { it.keys } }
 
     /** [placed]'s families (the same bet at another line), for the "placed O5.5" tag; bets removed with ✕ weren't bet. */
     val placedFamilies: Map<String, PlacedBet> by lazy { placed.filter { !it.hidden && it.family.isNotEmpty() }.associateBy { it.family } }
@@ -218,6 +220,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch {
             c.cno.books.collect { b -> _state.update { it.copy(books = b) } }
+        }
+        viewModelScope.launch {
+            c.cno.links.collect { l -> _state.update { it.copy(cnoLinks = l) } }
         }
         viewModelScope.launch {
             runCatching { c.placed.load() }

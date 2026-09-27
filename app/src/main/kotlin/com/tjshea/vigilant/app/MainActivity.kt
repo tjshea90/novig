@@ -210,7 +210,8 @@ class MainActivity : ComponentActivity() {
      */
     private fun openBet(item: MiniWindow.Item) {
         val row = item.cno?.row
-        if (row == null) {
+        // Vigilant's own bets (a bet both scanners list included) carry their Novig outcome.
+        if (item.outcomeId != null || row == null) {
             launchNovig(MiniWindow.novigLink(item))
             return
         }

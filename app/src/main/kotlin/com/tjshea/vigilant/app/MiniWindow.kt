@@ -86,6 +86,10 @@ object MiniWindow {
         val agrees: Boolean = false,
         /** Tj placed this bet at another line: that line, short ("O5.5"). */
         val placedOther: String? = null,
+        /** CNO lists this Vigilant bet too (the same Novig outcome): CNO's EV for it. */
+        val alsoCnoEv: Double? = null,
+        /** The same bet's key in CNO's list, so marking it placed or removed covers both. */
+        val aliases: List<String> = emptyList(),
     ) {
         /** The same bet at any line, in this game and market. */
         val family: String get() = Picks.familyKey(event, market, title)
@@ -97,6 +101,7 @@ object MiniWindow {
     /** A widget bet as a placed-bet record ([hidden]: removed with ✕, not bet). */
     fun placed(item: Item, now: Long, hidden: Boolean = false): PlacedBet = PlacedBet(
         key = item.key,
+        aliases = item.aliases,
         title = item.title,
         detail = item.subtitle,
         family = item.family,
@@ -132,16 +137,40 @@ object MiniWindow {
         val all = when {
             theirs.isEmpty() -> ours
             ours.isEmpty() -> theirs
-            else -> (ours + theirs).sortedByDescending { it.ev }
+            else -> merge(ours, theirs, state, now)
         }
         // Placed bets are gone for good (Tj: "so the bet doesn't come back up after a refresh");
         // the same bet at another line says so.
         if (state.placed.isEmpty()) return all
         val placed = state.placedKeys
         val families = state.placedFamilies
-        return all.filter { it.key !in placed }.map { item ->
+        return all.filter { it.key !in placed && it.aliases.none { k -> k in placed } }.map { item ->
             families[item.family]?.let { p -> item.copy(placedOther = Picks.shortLine(p.title)) } ?: item
         }
+    }
+
+    /**
+     * Both lists, best EV first, and a bet both scanners list (the same Novig outcome: CNO's link,
+     * read ahead of time, names it) shown once: Vigilant's row (its own live Novig price and fair
+     * value, tap opens that outcome) tagged with CNO's EV, with CNO's books, ✓ and team (Tj,
+     * 2026-09-27: "put all the results in the widget together"). Every Vigilant bet also carries
+     * the key of CNO's copy, listed or not, so marking either one placed hides both.
+     */
+    private fun merge(ours: List<Item>, theirs: List<Item>, state: UiState, now: Long): List<Item> {
+        fun outcomeOf(row: com.tjshea.vigilant.data.cno.CnoRow): String? =
+            com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(state.cnoLinks[com.tjshea.vigilant.data.cno.CnoFeed.linkKey(row)])
+        // CNO's key for each outcome it lists, placed, removed or held back included.
+        val cnoKeyOf = state.cnoPicks(now)?.picks.orEmpty().mapNotNull { p -> outcomeOf(p.row)?.let { it to cnoKey(p.row) } }.toMap()
+        val shownByOutcome = theirs.mapNotNull { t -> t.cno?.row?.let(::outcomeOf)?.let { it to t } }.toMap()
+        val used = HashSet<String>()
+        val mine = ours.map { o ->
+            val oid = o.outcomeId ?: return@map o
+            val alias = cnoKeyOf[oid]?.let { listOf(it) }.orEmpty()
+            val t = shownByOutcome[oid]
+            if (t == null || !used.add(t.key)) o.copy(aliases = alias)
+            else o.copy(cno = t.cno, alsoCnoEv = t.ev, agrees = t.agrees, team = o.team ?: t.team, aliases = alias)
+        }
+        return (mine + theirs.filter { it.key !in used }).sortedByDescending { it.ev }
     }
 
     /** One CNO bet as the widget (and the CNO tab's placed button) sees it. */

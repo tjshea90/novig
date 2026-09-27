@@ -251,7 +251,11 @@ internal fun MiniRow(
                     Modifier.clearAndSetSemantics {
                         text = AnnotatedString(item.title)
                         // Read after the pick: "books agree, team HOU".
-                        val extras = listOfNotNull(if (item.agrees) "books agree" else null, item.team?.let { "team $it" })
+                        val extras = listOfNotNull(
+                            if (item.agrees) "books agree" else null,
+                            item.team?.let { "team $it" },
+                            item.alsoCnoEv?.let { "CNO lists it too at ${Format.evPercentShort(it)}" },
+                        )
                         if (extras.isNotEmpty()) stateDescription = extras.joinToString(", ")
                     },
                     verticalAlignment = Alignment.CenterVertically,
@@ -277,6 +281,10 @@ internal fun MiniRow(
                         }
                         if (item.fromCno && showTag) {
                             withStyle(SpanStyle(color = tag, fontWeight = FontWeight.Bold)) { append("CNO ") }
+                        }
+                        // Both scanners list it: CNO's EV for the same bet.
+                        item.alsoCnoEv?.let {
+                            withStyle(SpanStyle(color = tag, fontWeight = FontWeight.Bold)) { append("CNO ${Format.evPercentShort(it)} ") }
                         }
                         append(item.subtitle)
                     },
