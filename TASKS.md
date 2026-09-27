@@ -2135,3 +2135,17 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [ ] R4 Vigilant scanner gets the floating widget too (Vigilant-only mode as well as Both): tap = exact
       bet slip, ✓ placed (tracked + hidden everywhere), ✕ remove, Undo; tests + screenshots.
 - [ ] R5 Light tests (+ screenshots), floor, ship, link.
+
+## Tj's request, 2026-09-27 (mid R-work) — outlier bets left out of the Tracker's stats
+> For the stats/tracker sections, do not count any bets that are outliers (currently + or - over 6% ev)
+> as wins or losses. Ignore them completely. I don't want the average skewed by a single bet that is an
+> outlier
+
+- [ ] O1 Outlier = a tracked bet whose EV when placed (`evPercentAtBet`) is over +6% or under −6% (one
+      constant, `BetTracker.OUTLIER_EV`, so the line can move). `BetTracker.stats` leaves them out of
+      everything: record, win %, profit, profit %, staked, expected, avg EV, avg CLV, beat-the-close, open
+      count, by-scanner rows; the running-profit line too. Bets with no EV (imported) are not outliers.
+      Tests (data): stats with and without outliers; the ±6% edges.
+- [ ] O2 Tracker UI: the Stats tab says how many bets were left out as outliers; each outlier's card in
+      Bets says "Outlier: not in stats". Screenshot test.
+- [ ] O3 Ships with R5 (v0.16.2).
