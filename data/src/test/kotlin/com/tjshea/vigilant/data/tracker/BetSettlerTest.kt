@@ -1,148 +1,134 @@
 package com.tjshea.vigilant.data.tracker
 
-import com.tjshea.vigilant.data.novig.NovigHttpException
-import com.tjshea.vigilant.data.novig.NovigMarket
-import com.tjshea.vigilant.data.novig.NovigOutcome
-import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.time.LocalDate
 
-/** Tj, 2026-09-27: "keep track whether each bet was a win or a loss … a background scores system". */
+/**
+ * Tj, 2026-09-27: "keep track whether each bet was a win or a loss … a background scores system".
+ * Settled from final scores (the 2026-09-27 full test found Novig's catalog forgets finished games;
+ * TASKS.md N7).
+ */
 class BetSettlerTest {
 
     @get:Rule val tmp = TemporaryFolder()
-    private val start = 1_790_528_400_000L
-    private var now = start + 3 * 60 * 60_000L
+    private val start = BetGraderTest.METS_START
+    private var now = start + 4 * 60 * 60_000L
 
-    private fun tracker() = BetTracker(File(tmp.root, "bets.json"), clock = { now })
+    private fun tracker(vararg bets: TrackedBet): BetTracker {
+        File(tmp.root, "bets.json").writeText(
+            kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()), bets.toList()),
+        )
+        return BetTracker(File(tmp.root, "bets.json"), clock = { now })
+    }
 
-    private fun bet(id: String, market: String = "m-$id", outcome: String = "o-$id", startsTs: Long = start, cost: Double = 0.5) = TrackedBet(
-        id = id, createdAtMs = startsTs - 3_600_000L, league = "NFL", eventName = "Seattle Seahawks @ Washington Commanders", startsTs = startsTs,
-        marketLabel = "Moneyline", selection = "SEA", marketId = market, outcomeId = outcome, price = cost, cost = cost,
-        fairAtBet = 0.52, evPercentAtBet = 0.04, stake = 1.0,
+    private fun bet(id: String, market: String, selection: String, league: String = "MLB", startsTs: Long = start, settledBy: String? = null) = TrackedBet(
+        id = id, createdAtMs = startsTs - 3_600_000L, league = league, eventName = "New York Mets @ Washington Nationals", startsTs = startsTs,
+        marketLabel = market, selection = selection, marketId = "", outcomeId = "", price = 0.5, cost = 0.5,
+        fairAtBet = 0.52, evPercentAtBet = 0.04, stake = 1.0, settledBy = settledBy,
     )
 
-    private fun market(id: String, vararg outcomes: Pair<String, String>) =
-        NovigMarket(id, "E1", "MONEY", "SETTLED", "SEA", start, MarketFee.GAME, outcomes.map { (o, st) -> NovigOutcome(o, o, st) })
+    /** Scores for the Mets game; [final] false = still being played; null games = feed out of reach. */
+    private class FakeScores(var final: Boolean = true, var reachable: Boolean = true) : ScoreSource {
+        val asked = ArrayList<Pair<String, LocalDate>>()
+        var boxes = 0
+        override fun covers(league: String) = league in setOf("MLB", "NFL", "NCAAF", "WNBA", "NBA", "NHL", "NCAAB")
+        override suspend fun games(league: String, date: LocalDate): List<GameScore>? {
+            asked += league to date
+            if (!reachable) return null
+            if (league != "MLB" || date != LocalDate.of(2026, 9, 26)) return emptyList()
+            return listOf(
+                GameScore("822678", "MLB", "Washington Nationals", "New York Mets", BetGraderTest.METS_START, final, false, 1, 7,
+                    listOf(0, 0, 1, 0, 0, 0, 0, 0, 0), listOf(0, 0, 0, 0, 0, 0, 4, 1, 2)),
+            )
+        }
+        override suspend fun players(game: GameScore): List<PlayerLine>? {
+            boxes++
+            return listOf(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
+        }
+    }
 
     @Test
-    fun `Novig's WIN, LOSS, PUSH and a fair-value payout settle each bet, TBD waits`() = runTest {
-        File(tmp.root, "bets.json").writeText(
-            kotlinx.serialization.json.Json.encodeToString(
-                kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()),
-                listOf(bet("w"), bet("l"), bet("p"), bet("f"), bet("t")),
-            ),
+    fun `a final score settles game lines and props, one scoreboard read for the day`() = runTest {
+        val t = tracker(
+            bet("ml", "Moneyline", "New York Mets"),
+            bet("tot", "Total Runs", "Over 8.5"),
+            bet("push", "Total", "Under 8"),
+            bet("tb", "Player Total Bases", "Carson Benge Over 1.5"),
         )
-        val t = tracker()
-        val markets = mapOf(
-            "m-w" to market("m-w", "o-w" to "WIN", "x" to "LOSS"),
-            "m-l" to market("m-l", "o-l" to "LOSS"),
-            "m-p" to market("m-p", "o-p" to "PUSH"),
-            "m-f" to market("m-f", "o-f" to "0.47"),
-            "m-t" to market("m-t", "o-t" to "TBD"),
-        )
-        val settler = BetSettler(t, market = { markets[it] }, resolve = { null }, clock = { now })
-        val report = settler.run()
+        val scores = FakeScores()
+        val report = BetSettler(t, scores, clock = { now }).run()
         assertEquals(4, report.settled)
         val byId = t.all().associateBy { it.id }
-        assertEquals(BetStatus.WON, byId.getValue("w").status)
-        assertEquals(1.0, byId.getValue("w").profit!!, 1e-9)
-        assertEquals(BetStatus.LOST, byId.getValue("l").status)
-        assertEquals(-1.0, byId.getValue("l").profit!!, 1e-9)
-        assertEquals(BetStatus.PUSH, byId.getValue("p").status)
-        assertEquals(BetStatus.FMV, byId.getValue("f").status)
-        assertEquals(-0.06, byId.getValue("f").profit!!, 1e-9) // 0.47 back per 0.50 spent
-        assertEquals(BetSettler.BY_NOVIG, byId.getValue("w").settledBy)
-        assertEquals(BetStatus.PENDING, byId.getValue("t").status)
-        // Undecided: asked again only after a while.
+        assertEquals(BetStatus.WON, byId.getValue("ml").status)
+        assertEquals(1.0, byId.getValue("ml").profit!!, 1e-9)
+        assertEquals(BetStatus.LOST, byId.getValue("tot").status)
+        assertEquals(BetStatus.PUSH, byId.getValue("push").status)
+        assertEquals(BetStatus.WON, byId.getValue("tb").status)
+        assertTrue(byId.values.all { it.settledBy == BetSettler.BY_SCORES && it.settledAtMs == now })
+        // The scoreboard was read once (cached per league and day is the feed's job; the day itself was asked for each bet).
+        assertTrue(scores.asked.all { it == ("MLB" to LocalDate.of(2026, 9, 26)) })
+        assertEquals(1, scores.boxes)
+    }
+
+    @Test
+    fun `a game still going waits half an hour, then settles`() = runTest {
+        val t = tracker(bet("ml", "Moneyline", "New York Mets"))
+        val scores = FakeScores(final = false)
+        val settler = BetSettler(t, scores, clock = { now })
+        assertEquals(0, settler.run().settled)
+        scores.final = true
+        now += 10 * 60_000L
         assertEquals(0, settler.run().asked)
-        now += BetSettler.RETRY_MS
-        assertEquals(1, settler.run().asked)
+        now += 25 * 60_000L
+        assertEquals(1, settler.run().settled)
+        assertEquals(BetStatus.WON, t.all().single().status)
     }
 
     @Test
     fun `games not an hour old, and results Tj tapped (or undid), are left alone`() = runTest {
-        File(tmp.root, "bets.json").writeText(
-            kotlinx.serialization.json.Json.encodeToString(
-                kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()),
-                listOf(bet("young", startsTs = now - 30 * 60_000L), bet("tapped")),
-            ),
+        val t = tracker(
+            bet("new", "Moneyline", "New York Mets", startsTs = now - 30 * 60_000L),
+            bet("tapped", "Moneyline", "New York Mets", settledBy = BetSettler.BY_YOU),
         )
-        val t = tracker()
-        t.settle("tapped", BetStatus.LOST)
-        t.settle("tapped", BetStatus.PENDING) // undo: still his call
-        var asked = 0
-        val settler = BetSettler(t, market = { asked++; market(it, "o-young" to "WIN", "o-tapped" to "WIN") }, resolve = { null }, clock = { now })
-        settler.run()
-        assertEquals(0, asked)
-        assertEquals(listOf(BetStatus.PENDING, BetStatus.PENDING), t.all().map { it.status })
+        val report = BetSettler(t, FakeScores(), clock = { now }).run()
+        assertEquals(0, report.asked)
+        assertTrue(t.all().all { it.status == BetStatus.PENDING })
     }
 
     @Test
-    fun `a bet without Novig's ids is looked up once, kept, then settled`() = runTest {
-        File(tmp.root, "bets.json").writeText(
-            kotlinx.serialization.json.Json.encodeToString(
-                kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()),
-                listOf(bet("cno", market = "", outcome = "")),
-            ),
-        )
-        val t = tracker()
-        var lookups = 0
-        val settler = BetSettler(t, market = { if (it == "m9") market("m9", "o9" to "LOSS") else null }, resolve = { lookups++; "m9" to "o9" }, clock = { now })
-        assertEquals(1, settler.run().settled)
-        val b = t.all().single()
-        assertEquals("m9", b.marketId)
-        assertEquals("o9", b.outcomeId)
-        assertEquals(BetStatus.LOST, b.status)
-        assertEquals(1, lookups)
+    fun `a score feed out of reach stops the pass and guesses nothing`() = runTest {
+        val t = tracker(bet("a", "Moneyline", "New York Mets"), bet("b", "Moneyline", "Washington Nationals"))
+        val report = BetSettler(t, FakeScores(reachable = false), clock = { now }).run()
+        assertTrue(report.stopped)
+        assertEquals(0, report.settled)
+        assertTrue(t.all().all { it.status == BetStatus.PENDING })
     }
 
     @Test
-    fun `Novig busy stops the pass - nothing is guessed, the rest go next time`() = runTest {
-        File(tmp.root, "bets.json").writeText(
-            kotlinx.serialization.json.Json.encodeToString(
-                kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()),
-                listOf(bet("a"), bet("b", startsTs = start + 1)),
-            ),
-        )
-        val t = tracker()
-        val settler = BetSettler(t, market = { throw NovigHttpException(429, "busy", 5) }, resolve = { null }, clock = { now })
-        val r = settler.run()
-        assertEquals(true, r.stopped)
-        assertEquals(1, r.asked)
-        assertEquals(listOf(BetStatus.PENDING, BetStatus.PENDING), t.all().map { it.status })
+    fun `a bet imported without a league is found in whichever league has the game`() = runTest {
+        val t = tracker(bet("old", "Moneyline", "New York Mets", league = ""))
+        assertEquals(1, BetSettler(t, FakeScores(), clock = { now }).run().settled)
+        assertEquals(BetStatus.WON, t.all().single().status)
     }
 
     @Test
-    fun `Novig's statuses read as results`() {
-        assertEquals(BetStatus.WON to null, BetSettler.resultOf("WIN"))
-        assertEquals(BetStatus.LOST to null, BetSettler.resultOf("LOSS"))
-        assertEquals(BetStatus.FMV to 0.25, BetSettler.resultOf("0.25"))
-        assertNull(BetSettler.resultOf("TBD"))
-        assertNull(BetSettler.resultOf("1.5"))
-    }
-
-    @Test
-    fun `a long-over game Novig can't answer for is asked about only every few hours`() = runTest {
-        File(tmp.root, "bets.json").writeText(
-            kotlinx.serialization.json.Json.encodeToString(
-                kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()),
-                listOf(bet("gone", startsTs = now - BetSettler.LONG_OVER_MS - 60_000L)),
-            ),
-        )
-        var asked = 0
-        val settler = BetSettler(tracker(), market = { asked++; null }, resolve = { null }, clock = { now })
-        settler.run()
-        now += BetSettler.RETRY_MS
-        settler.run()
-        assertEquals(1, asked)
-        now += BetSettler.RETRY_LONG_OVER_MS
-        settler.run()
-        assertEquals(2, asked)
+    fun `a bet it can't grade stays open for a tap and is looked at again only every few hours`() = runTest {
+        val t = tracker(bet("odd", "Some Novelty Market", "Something Over 1.5"), bet("ufc", "Moneyline", "Fighter A", league = "UFC"))
+        val scores = FakeScores()
+        val settler = BetSettler(t, scores, clock = { now })
+        assertEquals(2, settler.run().asked)
+        now += 60 * 60_000L
+        assertEquals(0, settler.run().asked)
+        now += 6 * 60 * 60_000L
+        assertEquals(2, settler.run().asked)
+        assertTrue(t.all().all { it.status == BetStatus.PENDING })
+        // UFC has no score feed: nothing was read for it.
+        assertTrue(scores.asked.none { it.first == "UFC" })
     }
 }
