@@ -93,7 +93,14 @@ data class TrackerStats(
     val averageEv: Double?,
     val averageClv: Double?,
     val beatClosePercent: Double?,
-)
+    val won: Int = 0,
+    val lost: Int = 0,
+    /** Pushes and fair-value settlements: neither a win nor a loss. */
+    val pushed: Int = 0,
+) {
+    /** Wins out of decided bets (Tj: "percentage of actual bet wins and losses"); null before any. */
+    val winRate: Double? get() = (won + lost).takeIf { it > 0 }?.let { won.toDouble() / it }
+}
 
 /** Tracked bets, persisted in one JSON file (see [JsonFileStore] for the crash-safety rules). */
 class BetTracker(file: File, private val clock: () -> Long = System::currentTimeMillis) {
@@ -298,6 +305,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 averageEv = live.mapNotNull { it.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average(),
                 averageClv = withClv.takeIf { it.isNotEmpty() }?.average(),
                 beatClosePercent = withClv.takeIf { it.isNotEmpty() }?.let { l -> l.count { it > 0 }.toDouble() / l.size },
+                won = bets.count { it.status == BetStatus.WON },
+                lost = bets.count { it.status == BetStatus.LOST },
+                pushed = bets.count { it.status == BetStatus.PUSH || it.status == BetStatus.FMV },
             )
         }
     }
