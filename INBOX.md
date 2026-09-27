@@ -2007,3 +2007,10 @@ Sometimes it says unable to resolve cno sometimes it says timeout.
 
 Also, make an x option next to each check mark on the right side on the cno widget. If I press the x, it will remove the bet from the list  even if I didn't bet it
 ```
+
+## 2026-09-27T00:15:57Z
+```
+Include an option in the cno settings to only include bets where multiple books agree (the check mark bets), and where both sides of the bet have odds at different sports books for the most accurate odds.
+
+Make sure on every new request I send you log and still finish the prior requests without interrupting or breaking those requests
+```
