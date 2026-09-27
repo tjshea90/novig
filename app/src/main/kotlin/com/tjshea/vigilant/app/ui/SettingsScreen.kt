@@ -595,7 +595,7 @@ fun creditEstimate(s: ScanSettings, backup: Boolean = false): String {
 fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     if (s.bookPropCreditsPerScan <= 0) return "No credits are set aside for props, so none are bought."
     if (backup) return "Only games and prop types PropLine didn't price this scan, soonest first, never more than " +
-        "${s.bookPropCreditsPerScan} credits a scan (about 4 a game); re-used for ${minutesLabel(s.bookPropReuseMinutes)}."
+        "${s.bookPropCreditsPerScan} credits a scan (one per prop type); re-used for ${minutesLabel(s.bookPropReuseMinutes)}."
     val perGame = if (s.bookPropSet == BookPropSet.CORE) 4 else null
     val games = perGame?.let { s.bookPropCreditsPerScan / it }
     val reach = if (games != null) {

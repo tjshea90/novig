@@ -236,9 +236,15 @@ private fun sourceNames(state: UiState): String {
     }.let { if (it.size <= 1) it.joinToString("") else it.dropLast(1).joinToString(", ") + " and " + it.last() }
 }
 
-/** "Pinnacle 12 · Polymarket 14 · Kalshi 9 games": who matched what on the last scan. */
-fun sourceSummary(status: ScanStatus): String =
-    status.sources.filter { it.matched > 0 }.joinToString(" · ") { "${it.name} ${it.matched}" }.let { if (it.isEmpty()) it else "$it games" }
+/**
+ * "Pinnacle 12 · Polymarket 14 · Kalshi 9 games": who matched what on the last scan, then any backup
+ * API that wasn't needed ("The Odds API on standby": PropLine gave its books, RESEARCH.md §23).
+ */
+fun sourceSummary(status: ScanStatus): String {
+    val matched = status.sources.filter { it.matched > 0 }.joinToString(" · ") { "${it.name} ${it.matched}" }.let { if (it.isEmpty()) it else "$it games" }
+    val standby = status.sources.filter { it.standingBy > 0 && it.fetched == 0 && it.matched == 0 }.joinToString(" · ") { "${it.name} on standby" }
+    return listOf(matched, standby).filter { it.isNotEmpty() }.joinToString(" · ")
+}
 
 /** The feed's markets, best first: what "Recheck" re-reads (the scanner reads at most 40). */
 fun feedMarketIds(state: UiState): List<String> = state.feed.map { it.market.marketId }.distinct()
