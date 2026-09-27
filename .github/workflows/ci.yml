@@ -62,5 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vigilant-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            mgm/build/outputs/apk/debug/*.apk
           if-no-files-found: error

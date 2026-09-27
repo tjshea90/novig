@@ -91,31 +91,36 @@ jobs:
             git push origin ":refs/tags/$TAG"
           fi
 
-      - name: Build signed release APK
-        run: ./gradlew :app:assembleRelease --console=plain
+      - name: Build signed release APKs (Vigilant, and Vigilant MGM from the same sources)
+        run: ./gradlew :app:assembleRelease :mgm:assembleRelease --console=plain
 
       - name: Verify the signing certificate matches BRIEF.md's recorded fingerprint
         run: |
-          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
-          if [ -z "$APK" ]; then
-            echo "::error::No release APK found after assembleRelease"
-            exit 1
-          fi
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
-          "$APKSIGNER" verify --print-certs "$APK" | tee signing-info.txt
           # apksigner prints the digest as continuous lowercase hex, no colons — unlike keytool's
           # colon-separated uppercase (which is what BRIEF.md records, matching Android tooling
           # convention there). Normalize both sides before comparing rather than assume a format.
           EXPECTED="AB:22:07:A8:6C:4E:59:18:BB:C1:A2:20:04:FB:14:42:B2:86:6E:6E:5A:B0:C3:D3:27:A7:EE:0E:AA:98:5C:C1"
           EXPECTED_NORMALIZED=$(echo "$EXPECTED" | tr -d ':' | tr 'A-Z' 'a-z')
-          ACTUAL_NORMALIZED=$(grep -oE '[0-9a-fA-F]{64}' signing-info.txt | tr 'A-Z' 'a-z' | head -1)
-          if [ "$ACTUAL_NORMALIZED" != "$EXPECTED_NORMALIZED" ]; then
-            echo "::error::Signing certificate does not match the fingerprint recorded in BRIEF.md — the committed keystore was changed unexpectedly. Refusing to publish."
-            exit 1
-          fi
-          echo "Signing certificate verified against BRIEF.md's recorded fingerprint."
           mkdir -p release-out
-          cp "$APK" "release-out/vigilant-${{ steps.version.outputs.tag }}.apk"
+          # module:published name. Vigilant's APK name is unchanged; Vigilant MGM's is its own.
+          for PAIR in "app:vigilant" "mgm:vigilant-mgm"; do
+            MODULE="${PAIR%%:*}"
+            NAME="${PAIR##*:}"
+            APK=$(find "$MODULE/build/outputs/apk/release" -name "*.apk" | head -1)
+            if [ -z "$APK" ]; then
+              echo "::error::No release APK found for $MODULE after assembleRelease"
+              exit 1
+            fi
+            "$APKSIGNER" verify --print-certs "$APK" | tee "signing-info-$MODULE.txt"
+            ACTUAL_NORMALIZED=$(grep -oE '[0-9a-fA-F]{64}' "signing-info-$MODULE.txt" | tr 'A-Z' 'a-z' | head -1)
+            if [ "$ACTUAL_NORMALIZED" != "$EXPECTED_NORMALIZED" ]; then
+              echo "::error::$MODULE's signing certificate does not match the fingerprint recorded in BRIEF.md — the committed keystore was changed unexpectedly. Refusing to publish."
+              exit 1
+            fi
+            cp "$APK" "release-out/$NAME-${{ steps.version.outputs.tag }}.apk"
+          done
+          echo "Both signing certificates verified against BRIEF.md's recorded fingerprint."
 
       - name: Create the release tag (server-side — this account's containers get HTTP 403 pushing refs/tags/*)
         run: |
@@ -131,7 +136,7 @@ jobs:
           name: "Vigilant ${{ steps.version.outputs.tag }}"
           files: release-out/*.apk
           body: |
-            Signed release build of Vigilant (versionCode ${{ steps.version.outputs.code }}).
+            Signed release builds (versionCode ${{ steps.version.outputs.code }}): **vigilant-*.apk** is Vigilant (Novig, `com.tjshea.vigilant`); **vigilant-mgm-*.apk** is Vigilant MGM (BetMGM, `com.tjshea.vigilant.betmgm`), the same app for BetMGM, installed alongside it with its own settings, keys and bets.
 
             Signing certificate SHA-256:
             `AB:22:07:A8:6C:4E:59:18:BB:C1:A2:20:04:FB:14:42:B2:86:6E:6E:5A:B0:C3:D3:27:A7:EE:0E:AA:98:5C:C1`
