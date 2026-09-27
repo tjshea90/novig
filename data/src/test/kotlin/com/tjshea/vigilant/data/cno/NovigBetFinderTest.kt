@@ -102,6 +102,36 @@ class NovigBetFinderTest {
         assertEquals("MLS", NovigBetFinder.novigLeague("MLS (USA)"))
     }
 
+    /** Real shapes from Novig's catalog (2026-09-27), for markets v0.15.2 only found the game of. */
+    @Test
+    fun `passing interceptions and soccer's 3-way moneyline land on the exact outcome`() {
+        val nfl = NovigBetFinder.Event("E2", "New England Patriots @ Jacksonville Jaguars", start)
+        val nflMarkets = NovigBetFinder.parseMarkets(Json.parseToJsonElement("""{"items":[
+          {"marketId":"i1","marketType":"INTERCEPTIONS_THROWN","strike":"0.5","description":"Drake Maye 0.5 INTERCEPTIONS_THROWN","outcomes":[{"outcomeId":"maye-int-o","name":"Over 0.5"},{"outcomeId":"maye-int-u","name":"Under 0.5"}]},
+          {"marketId":"i2","marketType":"INTERCEPTIONS_THROWN","strike":"0.5","description":"Trevor Lawrence 0.5 INTERCEPTIONS_THROWN","outcomes":[{"outcomeId":"tl-int-o","name":"Over 0.5"},{"outcomeId":"tl-int-u","name":"Under 0.5"}]},
+          {"marketId":"i3","marketType":"PASSING_TOUCHDOWNS","strike":"0.5","description":"Drake Maye 0.5 PASSING_TOUCHDOWNS","outcomes":[{"outcomeId":"maye-td-o","name":"Over 0.5"},{"outcomeId":"maye-td-u","name":"Under 0.5"}]}
+        ]}"""))
+        fun nflRow(bet: String, market: String) = CnoRow(0.03, start, "Football", "NFL", nfl.description, market, bet, 110, book = "Novig")
+        assertEquals("maye-int-o", NovigBetFinder.matchOutcome(nflRow("Drake Maye Over 0.5", "Player Passing Interceptions"), nfl, nflMarkets)?.id)
+        assertEquals("tl-int-u", NovigBetFinder.matchOutcome(nflRow("Trevor Lawrence Under 0.5", "Player Passing Interceptions"), nfl, nflMarkets)?.id)
+
+        val mls = NovigBetFinder.Event("E3", "New England Revolution @ Real Salt Lake", start)
+        val mlsMarkets = NovigBetFinder.parseMarkets(Json.parseToJsonElement("""{"items":[
+          {"marketId":"w1","marketType":"MONEYLINE_3_WAY_WIN","strike":"0","description":"New England MONEYLINE_3_WAY_WIN","outcomes":[{"outcomeId":"ne-yes","name":"Yes"},{"outcomeId":"ne-no","name":"No"}]},
+          {"marketId":"d1","marketType":"MONEYLINE_3_WAY_DRAW","strike":"0","description":"New England @ Real Salt Lake MONEYLINE_3_WAY_DRAW","outcomes":[{"outcomeId":"draw-yes","name":"Yes"},{"outcomeId":"draw-no","name":"No"}]},
+          {"marketId":"w2","marketType":"MONEYLINE_3_WAY_WIN","strike":"0","description":"Real Salt Lake MONEYLINE_3_WAY_WIN","outcomes":[{"outcomeId":"rsl-yes","name":"Yes"},{"outcomeId":"rsl-no","name":"No"}]},
+          {"marketId":"m1","marketType":"MONEY","strike":"0","description":"RSL","outcomes":[{"outcomeId":"ml-rsl","name":"RSL"},{"outcomeId":"ml-ne","name":"NE"}]}
+        ]}"""))
+        fun mlsRow(bet: String) = CnoRow(0.03, start, "Soccer", "MLS (USA)", mls.description, "Moneyline 3-way", bet, 110, book = "Novig")
+        assertEquals("rsl-no", NovigBetFinder.matchOutcome(mlsRow("Real Salt Lake No"), mls, mlsMarkets)?.id)
+        assertEquals("rsl-yes", NovigBetFinder.matchOutcome(mlsRow("Real Salt Lake Yes"), mls, mlsMarkets)?.id)
+        assertEquals("ne-no", NovigBetFinder.matchOutcome(mlsRow("New England Revolution No"), mls, mlsMarkets)?.id)
+        assertEquals("draw-yes", NovigBetFinder.matchOutcome(mlsRow("Draw Yes"), mls, mlsMarkets)?.id)
+        // A 3-way bet never lands on the 2-way moneyline, and a team that isn't playing finds nothing.
+        assertNull(NovigBetFinder.matchOutcome(mlsRow("Real Salt Lake"), mls, mlsMarkets))
+        assertNull(NovigBetFinder.matchOutcome(mlsRow("Seattle Sounders No"), mls, mlsMarkets))
+    }
+
     // ---- Over the network -----------------------------------------------------------------------
 
     private val server = MockWebServer()
