@@ -38,10 +38,26 @@ object TeamMatcher {
         "u" to "university",
     )
 
+    /**
+     * Names repeat thousands of times in one plan (every Novig game against every feed's games,
+     * four ways), and a plan is rebuilt each time a feed answers, so each name is tokenized once.
+     * Measured 2026-09-27: 61 college games x 4 feeds went from 165 ms to about a tenth of that per
+     * plan on a desktop JVM (a phone is several times slower).
+     */
+    private val tokenCache = java.util.concurrent.ConcurrentHashMap<String, List<String>>()
+    private val wordCache = java.util.concurrent.ConcurrentHashMap<String, List<String>>()
+    private const val CACHE_LIMIT = 5_000
+
     fun tokens(name: String): List<String> {
-        var s = Normalizer.normalize(name, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
-        s = s.replace("&", " and ").replace(Regex("[^a-z0-9 ]"), " ")
-        s = " " + s.replace(Regex("\\s+"), " ").trim() + " "
+        tokenCache[name]?.let { return it }
+        if (tokenCache.size > CACHE_LIMIT) tokenCache.clear()
+        return computeTokens(name).also { tokenCache[name] = it }
+    }
+
+    private fun computeTokens(name: String): List<String> {
+        var s = Normalizer.normalize(name, Normalizer.Form.NFD).replace(MARKS, "").lowercase()
+        s = s.replace("&", " and ").replace(NON_ALNUM_SPACE, " ")
+        s = " " + s.replace(SPACES, " ").trim() + " "
         for ((from, to) in PHRASES) s = s.replace(" $from ", " $to ")
         return s.trim().split(' ')
             .filter { it.isNotBlank() && it !in STOPWORDS && !it.all(Char::isDigit) }
@@ -111,8 +127,7 @@ object TeamMatcher {
     fun abbreviationScore(label: String, fullName: String): Int {
         val a = label.lowercase().filter(Char::isLetterOrDigit)
         if (a.length !in 2..5 || label.trim().contains(' ')) return 0
-        val words = Normalizer.normalize(fullName, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
-            .lowercase().split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }
+        val words = words(fullName)
         if (words.isEmpty()) return 0
         val concat = words.joinToString("")
         val initials = words.joinToString("") { it.take(1) }
@@ -159,6 +174,20 @@ object TeamMatcher {
             else -> null
         }
     }
+
+    /** A name's lowercase words, accents and punctuation gone (cached like [tokens]). */
+    private fun words(name: String): List<String> {
+        wordCache[name]?.let { return it }
+        if (wordCache.size > CACHE_LIMIT) wordCache.clear()
+        return Normalizer.normalize(name, Normalizer.Form.NFD).replace(MARKS, "")
+            .lowercase().split(NON_ALNUM).filter { it.isNotBlank() }
+            .also { wordCache[name] = it }
+    }
+
+    private val MARKS = Regex("\\p{M}+")
+    private val NON_ALNUM_SPACE = Regex("[^a-z0-9 ]")
+    private val NON_ALNUM = Regex("[^a-z0-9]+")
+    private val SPACES = Regex("\\s+")
 
     private fun isSubsequence(needle: String, hay: String): Boolean {
         var i = 0
