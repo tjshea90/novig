@@ -102,8 +102,12 @@ object MiniWindow {
     /** The key a CNO bet has in the widget (and in placed.json). */
     fun cnoKey(row: com.tjshea.vigilant.data.cno.CnoRow): String = "cno:${row.key}"
 
-    /** A widget bet as a placed-bet record ([hidden]: removed with ✕, not bet). */
-    fun placed(item: Item, now: Long, hidden: Boolean = false): PlacedBet = PlacedBet(
+    /**
+     * A widget bet as a placed-bet record ([hidden]: removed with ✕, not bet). [outcomeId] is its
+     * Novig outcome when known (a CNO bet's comes from its Novig link), so the same bet is hidden
+     * from the other scanner's list too.
+     */
+    fun placed(item: Item, now: Long, hidden: Boolean = false, outcomeId: String? = item.outcomeId): PlacedBet = PlacedBet(
         key = item.key,
         aliases = item.aliases,
         title = item.title,
@@ -113,6 +117,9 @@ object MiniWindow {
         placedAtMs = now,
         startsAtMs = item.startsAtMs,
         hidden = hidden,
+        event = item.event,
+        market = item.market,
+        outcomeId = outcomeId,
     )
 
     /**
@@ -144,12 +151,17 @@ object MiniWindow {
             snap == null -> ours
             else -> merge(ours, theirs, state, now)
         }
-        // Placed bets are gone for good (Tj: "so the bet doesn't come back up after a refresh");
-        // the same bet at another line says so.
-        if (state.placed.isEmpty()) return all
+        // Placed bets are gone for good (Tj: "so the bet doesn't come back up after a refresh"),
+        // from whichever scanner they were placed in (Tj, 2026-09-27); the same bet at another line says so.
+        if (state.placed.isEmpty() && state.placedIndex.isEmpty) return all
         val placed = state.placedKeys
         val families = state.placedFamilies
-        return all.filter { it.key !in placed && it.aliases.none { k -> k in placed } }.map { item ->
+        return all.filter { item ->
+            item.key !in placed && item.aliases.none { k -> k in placed } && !state.placedIndex.has(
+                key = item.key, aliases = item.aliases, outcomeId = item.outcomeId,
+                event = item.event, market = item.market, selection = item.title, startsTs = item.startsAtMs,
+            )
+        }.map { item ->
             families[item.family]?.let { p -> item.copy(placedOther = Picks.shortLine(p.title)) } ?: item
         }
     }

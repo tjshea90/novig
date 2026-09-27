@@ -364,10 +364,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun markPlaced(item: MiniWindow.Item) {
         viewModelScope.launch {
-            if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis())) }.isFailure) _toasts.tryEmit("Couldn't save that")
+            if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis(), outcomeId = outcomeOf(item))) }.isFailure) _toasts.tryEmit("Couldn't save that")
             if (runCatching { logBet(item) }.isFailure) _toasts.tryEmit("Couldn't log the bet in the Tracker")
         }
     }
+
+    /** [item]'s Novig outcome: Vigilant's own, or a CNO bet's from its Novig link when that's known. */
+    private fun outcomeOf(item: MiniWindow.Item): String? = item.outcomeId
+        ?: item.cno?.row?.let { com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(_state.value.cnoLinks[com.tjshea.vigilant.data.cno.CnoFeed.linkKey(it)]) }
 
     /** The Tracker's copy of a ✓: Vigilant's own bet (its scan's numbers), else CNO's bet at the price shown. */
     private suspend fun logBet(item: MiniWindow.Item) {
@@ -388,7 +392,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** The widget's ✕: the bet leaves the list for good, without counting as placed (Tj, 2026-09-27). */
     fun markHidden(item: MiniWindow.Item) {
         viewModelScope.launch {
-            if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis(), hidden = true)) }.isFailure) _toasts.tryEmit("Couldn't save that")
+            if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis(), hidden = true, outcomeId = outcomeOf(item))) }.isFailure) _toasts.tryEmit("Couldn't save that")
         }
     }
 
