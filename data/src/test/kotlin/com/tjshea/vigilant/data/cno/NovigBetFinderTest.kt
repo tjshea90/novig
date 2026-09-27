@@ -136,6 +136,7 @@ class NovigBetFinderTest {
 
     private val server = MockWebServer()
     private var down = false
+    private var busyOnce = false
 
     @Before
     fun start() {
@@ -143,6 +144,10 @@ class NovigBetFinderTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 if (down) return MockResponse().setResponseCode(503)
                 val path = request.path.orEmpty()
+                if (busyOnce && path.startsWith("/v3/public/catalog/markets")) {
+                    busyOnce = false
+                    return MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
+                }
                 return when {
                     path.startsWith("/v3/public/catalog/events?league=NFL") -> MockResponse().setBody(
                         """{"items":[{"eventId":"E1","description":"Seattle Seahawks @ Washington Commanders","sport":"FOOTBALL","league":"NFL","status":"OPEN_PREGAME","startsTs":$start}]}""",
@@ -175,5 +180,30 @@ class NovigBetFinderTest {
         assertEquals("novigapp://event-markets/E1", f.find(row("Elijah Arroyo Over 9.5", "Player Receiving Yards"))?.link)
         down = true
         assertNull(finder().find(row("Elijah Arroyo Under 4.5", "Player Receiving Yards")))
+    }
+
+    @Test
+    fun `Novig busy - "couldn't look" (asked again later), not "only the game", and its pause is kept`() = runBlocking {
+        val f = finder()
+        busyOnce = true
+        val first = f.find(row("Elijah Arroyo Under 4.5", "Player Receiving Yards"))
+        assertEquals(NovigBetFinder.Found.Game("E1", searched = false), first)
+        val t0 = System.nanoTime()
+        assertEquals("novigapp://events/arroyo-u45", f.find(row("Elijah Arroyo Under 4.5", "Player Receiving Yards"))?.link)
+        assertTrue("waited out Retry-After", (System.nanoTime() - t0) / 1_000_000 >= 900)
+    }
+
+    @Test
+    fun `an exact find carries its market as read, fee included, for pricing it from Novig's book`() {
+        val withFee = NovigBetFinder.parseMarkets(Json.parseToJsonElement("""{"items":[
+          {"marketId":"m1","eventId":"E1","marketType":"RECEIVING_YARDS","status":"OPEN","strike":"4.5","description":"Elijah Arroyo 4.5 RECEIVING_YARDS",
+           "fee":{"coefficient":"0.03","makerCredit":"0.5","charged":"WHEN_LIVE"},
+           "outcomes":[{"outcomeId":"arroyo-o45","name":"Over 4.5","status":"TBD"},{"outcomeId":"arroyo-u45","name":"Under 4.5","status":"TBD"}]}
+        ]}"""))
+        val m = withFee.single().novig!!
+        assertEquals(com.tjshea.vigilant.engine.MarketFee.GAME, m.fee)
+        assertEquals("arroyo-o45", m.otherOutcome("arroyo-u45")?.outcomeId)
+        // A market whose fee can't be read has none: it's never priced as if it were free.
+        assertEquals(null, markets.first().novig?.fee)
     }
 }

@@ -116,4 +116,18 @@ class NovigLiveTest {
         assertEquals(NovigLive.LIVE_TOP, source.reads)
         job.cancel()
     }
+
+    @Test
+    fun `a bet the catalog couldn't look up (Novig busy) is asked again a minute later`() = runTest {
+        val source = Source().also { it.clock = { currentTime } }
+        var busy = true
+        val live = NovigLive(source, { r -> if (busy) NovigBetFinder.Found.Game("E1", searched = false) else finder(1) }, clock = { currentTime })
+        val job = launch { live.keepFresh(MutableStateFlow(listOf(row(1)))) }
+        runCurrent()
+        assertTrue(live.prices.value.isEmpty())
+        busy = false
+        advanceTimeBy(NovigLive.RETRY_MS + NovigLive.LIVE_EVERY_MS)
+        assertEquals(setOf(row(1).key), live.prices.value.keys)
+        job.cancel()
+    }
 }
