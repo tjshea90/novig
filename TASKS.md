@@ -1829,3 +1829,31 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         v0.15.3 ship, release, record, send link. (Forced floor 446 green: engine 39, data 290,
         app 117; new PNGs 9i-9m, 8e looked at.) Shipped v0.15.3 (code 23): CI green on 7b9636f,
         Release published 2026-09-27T01:06Z, recorded in BUILDLOG.md.
+
+## Tj's request, 2026-09-27 ~01:18Z (after v0.15.3) — bet slip without CNO, both scans in the widget, CNO under load
+
+> 1) I think it won't open the bets slips in novig if the cno server is not responding. Can you
+> make it so vigilant can open the bet in novig even if it can't reach cno servers?
+> 2) on the widget, include an option to also use the regular scan in addition to cno and put all
+> the results in the widget together, if it doesn't already do this.
+> 3) consider ways to make cno respond even with high traffic and rapid refreshing. Is there a
+> workaround? Dns? Free or cheap service? Vpn? Use proxies to get around the limit, it is ok
+> If I add more requests while you are still working, and them to the list and finish everything,
+> do not stop work on any prior requests
+
+### Plan
+- [ ] L1 Bet slip without CNO: v0.15.2 asked CNO first (up to 5 s) and Novig's catalog only after,
+      unless CNO's list was already failing; a CNO that hangs (not yet failed) cost the tap 5 s+
+      and its links lane never used Novig at all. → Ask CNO and Novig's catalog at the same time
+      (first exact link wins), resolve the listed bets' links ahead of time from Novig's catalog
+      too (not only CNO), so a tap needs neither; verify NovigBetFinder live against the real
+      CNO list and Novig catalog (league names, market types) and fix what doesn't match.
+- [ ] L2 Widget with both scanners: Both mode already merges Vigilant's scan and CNO's list in the
+      widget (best EV first). Add the switch in the widget itself ("+ Vigilant scan" on/off, i.e.
+      Both ⇄ CNO only), show the same bet once when both scanners list it, and an opt-in "scan
+      again every N min while the widget is open" (off by default: scans spend API quotas).
+- [ ] L3 CNO under load: measure CNO under rapid refreshing (latency, errors, compression) from
+      here; build what helps (list and taps independent of CNO's speed; Novig's own live price for
+      listed CNO bets so a slow CNO doesn't leave stale prices); write up DNS / VPN / relay /
+      proxy findings with costs in RESEARCH.md §20.3.
+- [ ] L4 Tests, full floor, ship, release, record, send link.
