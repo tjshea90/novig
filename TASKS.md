@@ -2164,3 +2164,24 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       them. Tests: trackerLeavesOutlierBetsOutOfTheStats (4c), anOutlierBetSaysItIsNotInTheStats.) Tracker UI: the Stats tab says how many bets were left out as outliers; each outlier's card in
       Bets says "Outlier: not in stats". Screenshot test.
 - [x] O3 (SHIPPED in v0.16.2 code 29.) Ships with R5 (v0.16.2).
+
+## Tj's request, 2026-09-27T15:59Z — full tests; best APIs first, overlapping ones as automatic fallbacks
+> Run full tests. Read docs on the apis  and see which ones are best to use and optimize the usage of
+> them if needed. If apis overlap odds from the same sports books, use the best/fastest API first and
+> the others as automatic fallbacks
+
+- [ ] S1 Map every odds API the app reads (Novig, PinnWire, pinnapi, Polymarket, Kalshi, PropLine, The
+      Odds API, CNO, ESPN/MLB scores): which books each one carries, what it costs per call and per day,
+      how fast it answers, and how the scan orders them today (Planner/Scanner/Pricing, key pools).
+      Re-read each provider's docs (RESEARCH.md §22, NOVIG_API.md first; web for anything changed).
+- [ ] S2 Decide the order per book: where two APIs give the same book (Pinnacle: PinnWire, pinnapi,
+      The Odds API, PropLine; others: PropLine vs The Odds API), the best/fastest one goes first and the
+      rest are fallbacks used automatically only for what the first couldn't give (failure, quota out,
+      league or market missing). Write the decision into RESEARCH.md.
+- [ ] S3 Build it: one ordered fallback chain per book/league, no duplicate spend on a book another API
+      already returned this scan; usage optimizations found in S1 (caching, batching, fewer calls).
+      Tests that prove the fallback kicks in and that the second API isn't called when the first
+      answered.
+- [ ] S4 Full tests (CLAUDE.md protocol): automated floor + screenshots, sweep every tab and subsystem,
+      fix what's found with named tests.
+- [ ] S5 Regression (exit code + output), ckpt, ship, release, link.
