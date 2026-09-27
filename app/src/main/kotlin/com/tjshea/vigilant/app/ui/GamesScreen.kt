@@ -52,8 +52,9 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
     var openEventId by rememberSaveable { mutableStateOf<String?>(null) }
     // Fair prices and EVs show only while the other books' prices are current (RESEARCH.md §24).
     val now = rememberNow(15_000)
-    val games = state.result?.games.orEmpty()
-    val open = games.firstOrNull { it.event.eventId == openEventId }
+    val games = state.gamesAt(now)
+    // An open game stays open even if it just left the start-time window.
+    val open = state.result?.games.orEmpty().firstOrNull { it.event.eventId == openEventId }
 
     if (open != null) {
         BackHandler { openEventId = null }
@@ -102,6 +103,10 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                                 "Games from the leagues you picked show up here with ${AppBook.name}'s prices and the fair line.",
                                 action = "Scan now",
                                 onAction = onScan,
+                            )
+                            state.settings.startsWithinHours > 0 && state.result?.games.orEmpty().isNotEmpty() -> EmptyState(
+                                "No games in the next ${state.settings.startsWithinHours} hours",
+                                "Games later than that are hidden by the start-time filter (+EV tab or Settings).",
                             )
                             else -> EmptyState(
                                 "No games in the next ${state.settings.daysAhead} days",

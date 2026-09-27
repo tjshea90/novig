@@ -139,7 +139,7 @@ class ScanService : Service() {
 
     private fun progressNotification(run: ScanRun): Notification {
         val p = run.progress
-        val found = run.result?.let { r -> run.settings?.let { placedIndex().visible(r.feed(it)).size } } ?: 0
+        val found = run.result?.let { r -> run.settings?.let { shown(r.feed(it), it).size } } ?: 0
         return NotificationCompat.Builder(this, CHANNEL_SCAN)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle("Scanning ${AppBook.name}")
@@ -160,10 +160,19 @@ class ScanService : Service() {
         return com.tjshea.vigilant.data.tracker.PlacedIndex.of(c.placed.flow.value?.bets.orEmpty(), c.tracker.flow.value.orEmpty(), System.currentTimeMillis())
     }
 
+    /** [feed] as the app's lists show it: without bets Tj already has, and only games in his start-time window. */
+    private fun shown(
+        feed: List<com.tjshea.vigilant.data.scanner.Opportunity>,
+        settings: com.tjshea.vigilant.data.scanner.ScanSettings,
+    ): List<com.tjshea.vigilant.data.scanner.Opportunity> {
+        val now = System.currentTimeMillis()
+        return placedIndex().visible(feed).filter { settings.startsInWindow(it.event.startsTs, now) }
+    }
+
     private fun doneNotification(run: ScanRun): Notification {
         val settings = run.settings
         // Bets Tj already placed (from either scanner) aren't news (Tj, 2026-09-27).
-        val feed = if (settings != null) placedIndex().visible(run.result?.feed(settings).orEmpty()) else emptyList()
+        val feed = if (settings != null) shown(run.result?.feed(settings).orEmpty(), settings) else emptyList()
         val (title, text) = ScanText.done(feed, settings?.minEvPercent ?: 0.0, run.report?.errors.orEmpty())
         return NotificationCompat.Builder(this, CHANNEL_RESULTS)
             .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
