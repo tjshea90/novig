@@ -272,7 +272,12 @@ unless Tj asks).
   `CnoPace`), `CnoFeed.keepLinksFresh` (`cno_links.json`), `data/cno/TapLink` + `NovigBetFinder`
   (Novig's public catalog when CNO can't answer), `ScanSettings.cnoOnlyAgreed` ("Only bets the books
   agree on": `UiState.cnoCandidates`/`cnoShown`/`cnoBeingChecked`), stale "scan done" notification
-  cancelled (`ScanService.cancelDone`)).
+  cancelled (`ScanService.cancelDone`)); bet slips without CNO and CNO under load (RESEARCH.md §20.3:
+  `NovigBetFinder` catalog-first links (`CnoFeed.catalog`, `LiveNovigBetFinderTest`), `TapLink` race,
+  `data/cno/NovigLive` (Novig's price now for CNO bets, `ScanSettings.cnoLivePrices`,
+  `UiState.livePick`), widget switch Both / CNO only (`MainViewModel.setBothScanners`), one row per
+  bet both scanners list (`MiniWindow.merge`, `PlacedBet.aliases`), `ScanSettings.widgetRescanMinutes`
+  (`WidgetRescan`), `LiveCnoBurstTest` (VIGILANT_BURST=1)).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.

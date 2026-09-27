@@ -1732,3 +1732,47 @@ throttling Tj; the two messages are the phone's network:
    site on one small shared server; the app already reads it more often than its robots.txt asks
    of crawlers, only while Tj is looking. If he wants more, the honest route is asking CNO's
    owner (donations page) for an allowed rate or a feed.
+
+### 20.3 Bet slips without CNO, both scanners in the widget, CNO under rapid refreshing (v0.15.4, Tj 2026-09-27 ~01:18Z)
+
+Tj: "make it so vigilant can open the bet in novig even if it can't reach cno servers"; "an
+option to also use the regular scan in addition to cno and put all the results in the widget
+together"; "consider ways to make cno respond even with high traffic and rapid refreshing. Is
+there a workaround? Dns? Free or cheap service? Vpn? Use proxies to get around the limit, it is ok".
+
+**Bet slips from Novig's own catalog (measured live).** `LiveNovigBetFinderTest` ran CNO's real
+60-row list through `NovigBetFinder` (Novig's public catalog only, no CNO): 56 exact at first; the
+4 misses were Novig naming CNO's "Passing Interceptions" `INTERCEPTIONS_THROWN` and soccer's 3-way
+moneyline being a Yes/No market per team (`MONEYLINE_3_WAY_WIN`, and one `_DRAW`). Fixed: 60 of 60
+exact, and each of the 60 was checked against CNO's own link: the same outcome every time, 0 wrong.
+So a tap no longer needs CNO: links are looked up ahead of time from the catalog first (two public
+Novig reads per game, kept 5 minutes, paced ≥350 ms, Novig's 429 Retry-After honored), CNO only for
+a bet the catalog can't pin down; a tap without a known link asks CNO and the catalog at once and
+takes the first exact answer (`TapLink`).
+
+**CNO under rapid refreshing (measured live, `LiveCnoBurstTest`).** The list re-read once a second
+for a minute (61 requests): 0 errors, 0 refusals (all HTTP 200), median 258 ms, p90 306 ms, 2.5 s
+only for the first (session) read. CNO's replies are not compressed (~30 KB each; ~36 MB an hour
+in real-time mode). **There is no rate limit to get around**, so proxies (or a VPN) would add a hop,
+latency and a third party that sees the traffic, and fix nothing. What Tj saw ("unable to resolve",
+"timeout") was the phone's network (§20.2), now absorbed by the backup DNS, fresh connections and
+the retry. CNO's own data updates only every 13–33 s (longer when its updater lags): reading CNO
+faster can't make its prices fresher.
+
+**The workaround that does make prices fresher: Novig's own book.** `NovigLive` reads the order
+books of the 10 best listed CNO bets on Novig every 15 s while the list is on screen (through the
+scanner's paced public client; mostly "304 not modified"), and each CNO read is re-priced against
+the books already read with no request. The price shown is Novig's now; the EV is CNO's fair
+probability against it (Novig's fee on live games from each market's own fee object); "was +117"
+flags a line that moved, an orange EV one now under the minimum. Measured live: 10 of 10 prices
+identical to the Novig price CNO listed, dollars available matching within a few dollars (except
+where the book changed since CNO's read). Vigilant's EV reads slightly lower than CNO's on the same
+price (e.g. 3.52% vs 3.75%) because it uses Novig's exact price (0.475) where CNO's EV uses the
+rounded American odds (+111): Vigilant's is the more exact figure. Switch: Settings › CNO › "Novig's
+price now".
+
+**Options weighed, costs (unchanged from §20.2 unless noted):** Private DNS (free, recommended);
+NordVPN (no help; Novig refuses VPNs; split-tunnel Vigilant and Novig out if kept on); a relay
+(Cloudflare Worker free tier / $4–6 VPS: no benefit without a limit to get around); proxies (no
+limit to get around; free proxies are a security risk on a betting phone; residential ones cost
+~$5–15/GB): not built.
