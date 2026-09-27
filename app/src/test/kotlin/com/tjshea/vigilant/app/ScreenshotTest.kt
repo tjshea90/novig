@@ -923,7 +923,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
     @Test fun settingsOfferTheFloatingWidgetOnVigilantsScanAlone() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT))
+        val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, floatingWidget = false))
         screen { SettingsScreen(s, { t -> picked = t(s.settings) }) }
         compose.onNodeWithText("Floating widget you can touch").assertExists().performClick()
         assertEquals(true, picked?.floatingWidget)
@@ -988,7 +988,7 @@ class ScreenshotTest {
     @Test fun settingsDescribeTheWidgetAsItIsNow() {
         screen { SettingsScreen(SampleCno.state(), { }) }
         compose.onNodeWithText("✕ to remove it without betting", substring = true).assertExists()
-        compose.onNodeWithText("CNO only / Both switch", substring = true).assertExists()
+        compose.onNodeWithText("switch picks CNO only, Both or Vigilant only", substring = true).assertExists()
     }
 
     // ---- N (2026-09-27): every ✓ tracked, auto-settled, "now ±x% EV", a stats section -----------
