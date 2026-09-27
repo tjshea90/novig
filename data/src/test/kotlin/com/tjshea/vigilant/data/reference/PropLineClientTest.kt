@@ -149,14 +149,17 @@ class PropLineClientTest {
     }
 
     /**
-     * RESEARCH.md §24: a price's time is when PropLine last saw it at the book (`last_seen_at`), so a
-     * price the book stopped sending minutes ago can't pass for current behind a fresh market time.
+     * RESEARCH.md §24: a price's time is when PropLine last saw it at the book (`last_seen_at`), the
+     * older side's, so a market PropLine stopped seeing minutes ago can't pass for current. (A side
+     * older than a fresh market time was withdrawn and is dropped: the board test's DraftKings total.)
      */
     @Test
     fun `each price carries when PropLine last saw it at the book`() {
-        val longAgo = iso(now - 8 * 60_000)
-        val raw = board.replace(""""side":"home","last_seen_at":"$upd"""", """"side":"home","last_seen_at":"$longAgo"""")
+        val h2h = """{"key":"h2h","last_update":"$upd","outcomes":["""
+        val raw = board.replaceFirst(h2h, """{"key":"h2h","last_update":"${iso(now - 9 * 60_000)}","outcomes":[""")
+            .replace(""""side":"home","last_seen_at":"$upd"""", """"side":"home","last_seen_at":"${iso(now - 8 * 60_000)}"""")
         val e = PropLineClient.parseEvents(raw, json, "americanfootball_nfl").single()
+        // The older side's last sighting: not the market's older time, not the other side's fresh one.
         assertEquals(now - 8 * 60_000, e.markets.single { it.bookKey == "pinnacle" && it.kind == LineKind.MONEYLINE }.lastUpdateMs)
         // Sent without last_seen_at: the market's own time.
         assertEquals(now - 20_000, e.markets.single { it.bookKey == "pinnacle" && it.kind == LineKind.SPREAD }.lastUpdateMs)
