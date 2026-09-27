@@ -633,8 +633,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var rescanStartedAtMs: Long? = null
 
     /**
-     * Scans again every [ScanSettings.widgetRescanMinutes] while CNO's list is on screen (run
-     * alongside [CnoFeed.watch]), when that option is on and Vigilant's scan is too.
+     * Scans again every [ScanSettings.widgetRescanMinutes] while CNO's list or the floating widget
+     * (in any mode) is on screen (run alongside [CnoFeed.watch]), when that option is on and
+     * Vigilant's scan is too.
      */
     private suspend fun rescanWhileWatched() {
         state.map { s -> s.settings.widgetRescanMinutes.takeIf { s.settings.vigilantOn && s.settings.leagues.isNotEmpty() } ?: 0 }
