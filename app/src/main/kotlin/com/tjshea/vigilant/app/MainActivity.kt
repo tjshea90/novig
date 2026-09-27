@@ -223,7 +223,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /** A word when a tap couldn't open the bet slip itself (the bet opens silently when it could). */
-    private fun tellHowItOpened(found: MainViewModel.BetLink?, row: CnoRow) {
+    private fun tellHowItOpened(found: com.tjshea.vigilant.data.cno.TapLink.Link?, row: CnoRow) {
         val text = when {
             found == null -> "Couldn't find this bet's link (CNO and Novig didn't answer). Opening Novig: look for ${row.bet}"
             !found.exact -> "Opened the game in Novig: ${row.bet} is under ${row.market}"
