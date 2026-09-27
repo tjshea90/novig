@@ -1775,3 +1775,8 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       build what's safe in the app (DoH fallback so DNS never blocks a read), write it up in
       RESEARCH.md §20.2 and recommend the rest with costs.
 - [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
+- [ ] K10 Tj, 00:30Z: "When all of the features and fixes I asked for are finished, run a full test
+      protocol and find ways to improve the UI and speed and efficiency and bug fixes, but without
+      sacrificing any accuracy" → after K1-K9 ship: CLAUDE.md full-test protocol on the whole app,
+      improvements (UI, speed, efficiency) + bug fixes with failing-first tests, accuracy
+      untouched (EV math, devig, checks, matching), then ship again and send the link.
