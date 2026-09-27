@@ -43,7 +43,7 @@ data class TrackedBet(
     val closingFair: Double? = null,
     val closingSeenAtMs: Long? = null,
     /** "vigilant" (a +EV card or a Vigilant bet's ✓) or "cno" (a CNO bet's ✓). */
-    val source: String = SOURCE_VIGILANT,
+    val source: String = BetTracker.SOURCE_VIGILANT,
     /** The widget/CNO-tab key of the ✓ that logged it ("cno:<row key>"): Undo removes the bet. */
     val placedKey: String? = null,
     /** The price as Tj saw it (American). */
