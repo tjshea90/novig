@@ -186,6 +186,7 @@ class MainActivity : ComponentActivity() {
                     onHidden = { item -> vm.markHidden(item) },
                     onUndoPlaced = { key -> vm.unmarkPlaced(key) },
                     onLoadBooks = { row -> vm.loadBooks(row) },
+                    onBoth = { both -> vm.setBothScanners(both) },
                 ),
                 minimized = w.minimized,
                 opening = w.opening,

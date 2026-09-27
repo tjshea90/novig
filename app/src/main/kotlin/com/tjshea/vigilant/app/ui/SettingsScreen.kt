@@ -198,6 +198,14 @@ fun SettingsScreen(
                     }
                 }
                 Hint("CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read.")
+                Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.WIDGET_RESCAN_CHOICES, s.widgetRescanMinutes, { if (it <= 0) "Off" else "$it min" }) { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
+                Hint(
+                    "With Both (the widget's top-bar switch, or Scanner above), the widget lists Vigilant's bets and CNO's together, best EV first; " +
+                        "a bet both list shows once, tagged with CNO's EV. " +
+                        if (s.widgetRescanMinutes > 0) "Vigilant scans again every ${s.widgetRescanMinutes} min while CNO's tab or the widget is on screen. Each scan spends API credits (Pinnacle / The Odds API keys)."
+                        else "Off: Vigilant scans only when you tap Scan (no API credits spent on its own).",
+                )
             }
             if (!s.cnoOn || !s.floatingWidget) {
                 Hint(

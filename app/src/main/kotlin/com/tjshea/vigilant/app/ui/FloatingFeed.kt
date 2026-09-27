@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -88,6 +89,8 @@ class FloatingActions(
     val onHidden: (MiniWindow.Item) -> Unit = {},
     val onUndoPlaced: (String) -> Unit = {},
     val onLoadBooks: (CnoRow) -> Unit = {},
+    /** The top bar's switch: true = CNO and Vigilant's own scan together (Both), false = CNO only. */
+    val onBoth: (Boolean) -> Unit = {},
 )
 
 /** Height of one bet in the floating widget: a comfortable touch target. */
@@ -172,6 +175,7 @@ fun FloatingFeed(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                ScannerSwitch(both = !cnoOnly, onClick = { actions.onBoth(cnoOnly) })
                 if (items.isNotEmpty()) {
                     Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(start = 6.dp, end = 2.dp))
                 }
@@ -393,6 +397,32 @@ internal fun pageTarget(list: androidx.compose.foundation.lazy.LazyListState, up
     val step = (full - 1).coerceAtLeast(1)
     val first = list.firstVisibleItemIndex
     return if (up) (first - step).coerceAtLeast(0) else (first + step).coerceAtMost((size - 1).coerceAtLeast(0))
+}
+
+/**
+ * CNO alone, or CNO and Vigilant's own scan in one list (Tj, 2026-09-27: "an option to also use
+ * the regular scan in addition to cno"). Named like the Scanner setting it flips (Both / CNO only).
+ */
+@Composable
+private fun ScannerSwitch(both: Boolean, onClick: () -> Unit) {
+    val description = if (both) "Showing CNO and Vigilant's scan. Tap for CNO only" else "Showing CNO only. Tap to add Vigilant's own scan"
+    Box(
+        Modifier.padding(start = 4.dp).height(32.dp).clickable(onClickLabel = description, onClick = onClick).semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            if (both) "Both" else "CNO only",
+            Modifier
+                .background(if (both) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, CircleShape)
+                .border(1.dp, if (both) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (both) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+        )
+    }
 }
 
 @Composable
