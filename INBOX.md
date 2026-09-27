@@ -2145,3 +2145,8 @@ For the stats/tracker sections, do not count any bets that are outliers (current
 ```
 Run full tests. Read docs on the apis  and see which ones are best to use and optimize the usage of them if needed. If apis overlap odds from the same sports books, use the best/fastest API first and the others as automatic fallbacks
 ```
+
+## 2026-09-27T16:53:18Z
+```
+Yes, use PropLine's Novig prices to order the reads, but if there is any failure or delay, make the app automatically fallback to the original novig read
+```
