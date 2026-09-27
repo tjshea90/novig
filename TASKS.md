@@ -1858,7 +1858,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       down, the catalog still fills every link"); 30 bets ahead instead of 15; exact catalog finds
       from taps are kept. Also fixed: cno_links.json kept an arbitrary 400 links, not the newest
       (`CnoAgreementTest` "the links file keeps the newest links…", failed on the old code).
-- [ ] L2 Widget with both scanners: Both mode already merges Vigilant's scan and CNO's list in the
+- [x] L2 Widget with both scanners: Both mode already merges Vigilant's scan and CNO's list in the
       widget (best EV first). Add the switch in the widget itself ("+ Vigilant scan" on/off, i.e.
       Both ⇄ CNO only), show the same bet once when both scanners list it, and an opt-in "scan
       again every N min while the widget is open" (off by default: scans spend API quotas).
