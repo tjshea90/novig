@@ -287,4 +287,51 @@ class CnoAgreementTest {
         assertTrue(waitAfterPauseDuringListRead(listFails = true) >= 119_000L)
         assertTrue(waitAfterPauseDuringListRead(listFails = false) >= 119_000L)
     }
+
+    @Test
+    fun `links come from Novig's catalog first, so CNO is asked only for what the catalog can't name`() = runTest {
+        val source = LinkSource { currentTime }
+        val catalogAsked = mutableListOf<String>()
+        // The catalog names every bet but row 1 (it finds only that one's game).
+        val feed = CnoFeed(source, clock = { currentTime }, catalog = { r -> catalogAsked += r.key; if (r.key == linkRow(1).key) null else "novigapp://events/nv-${r.bet}" })
+        val rows = MutableStateFlow(List(3) { linkRow(it) })
+        val job = launch { feed.keepLinksFresh(rows) }
+        runCurrent()
+        advanceTimeBy(10_000)
+        assertEquals(3, catalogAsked.size)
+        assertEquals(listOf(linkRow(1).key), source.asked.map { it.first }) // CNO only for the one the catalog couldn't name
+        assertEquals("novigapp://events/nv-P0 Under 69.5", feed.cachedLink(linkRow(0)))
+        assertEquals("novigapp://events/outcome-P1 Under 69.5/cno", feed.cachedLink(linkRow(1)))
+        job.cancel()
+    }
+
+    @Test
+    fun `with CNO down, the catalog still fills every link`() = runTest {
+        val down = object : CnoSource {
+            override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot = throw CnoException("Couldn't reach CrazyNinjaOdds (it didn't answer in time)")
+            override suspend fun novigLink(row: CnoRow): String = throw java.io.IOException("unreachable")
+        }
+        val feed = CnoFeed(down, clock = { currentTime }, catalog = { r -> "novigapp://events/nv-${r.bet}" })
+        feed.refresh("u") // the list fails: CNO is down
+        val rows = MutableStateFlow(List(5) { linkRow(it) })
+        val job = launch { feed.keepLinksFresh(rows) }
+        runCurrent()
+        advanceTimeBy(5 * CnoFeed.CATALOG_GAP_MS + 1)
+        assertEquals((0 until 5).map { "novigapp://events/nv-P$it Under 69.5" }, (0 until 5).map { feed.cachedLink(linkRow(it)) })
+        job.cancel()
+    }
+
+    @Test
+    fun `the links file keeps the newest links, not an arbitrary few`() = runTest {
+        val file = java.io.File(tmp.root, "cno_links.json")
+        fun store() = com.tjshea.vigilant.data.store.JsonFileStore(file, CnoLinks.serializer(), { CnoLinks() })
+        val feed = CnoFeed(LinkSource { currentTime }, clock = { currentTime }, linkStore = store())
+        val n = CnoFeed.LINKS_KEEP + 25
+        for (i in 0 until n) feed.novigLink(linkRow(i))
+        val kept = store().read().links
+        assertEquals(CnoFeed.LINKS_KEEP, kept.size)
+        // The 25 oldest went; the newest are all there.
+        assertTrue((n - 50 until n).all { i -> linkRow(i).betUrl in kept })
+        assertFalse((0 until 25).any { i -> linkRow(i).betUrl in kept })
+    }
 }
