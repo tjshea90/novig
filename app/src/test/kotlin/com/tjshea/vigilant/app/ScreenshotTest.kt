@@ -588,12 +588,12 @@ class ScreenshotTest {
         )
     }
 
-    private fun floating(name: String, s: UiState, dark: Boolean = true, minimized: Boolean = false, actions: com.tjshea.vigilant.app.ui.FloatingActions = com.tjshea.vigilant.app.ui.FloatingActions()) {
+    private fun floating(name: String, s: UiState, dark: Boolean = true, minimized: Boolean = false, actions: com.tjshea.vigilant.app.ui.FloatingActions = com.tjshea.vigilant.app.ui.FloatingActions(), w: Int = FloatingWidget.DEFAULT_W_DP) {
         screen(dark = dark) {
             androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(8.dp)) {
                 com.tjshea.vigilant.app.ui.FloatingFeed(
                     s, actions,
-                    if (minimized) androidx.compose.ui.Modifier else androidx.compose.ui.Modifier.androidxSize(FloatingWidget.DEFAULT_W_DP, FloatingWidget.DEFAULT_H_DP),
+                    if (minimized) androidx.compose.ui.Modifier else androidx.compose.ui.Modifier.androidxSize(w, FloatingWidget.DEFAULT_H_DP),
                     minimized = minimized,
                 )
             }
@@ -604,7 +604,7 @@ class ScreenshotTest {
     private fun androidx.compose.ui.Modifier.androidxSize(w: Int, h: Int) =
         this.then(androidx.compose.ui.Modifier.size(w.dp, h.dp))
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetKeepsItsButtonsAndScrollsAPageAtATime() {
         floating("9_floating_widget", floatingState())
         // Always there, no tap needed (picture-in-picture can't do this).
@@ -623,7 +623,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertIsDisplayed()
     }
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetTapOpensTheBetAndItsCheckMarksItPlacedWithUndo() {
         var opened: MiniWindow.Item? = null
         var placed: MiniWindow.Item? = null
@@ -643,7 +643,7 @@ class ScreenshotTest {
         compose.onAllNodesWithText("UNDO").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetShowsTeamsAndGreenChecks() {
         floating("9b_floating_widget_light", floatingState(), dark = false)
         // Jefferson's books agree (Pinnacle, ProphetX, Kalshi): ✓; his team is known: (MIN).
@@ -655,7 +655,7 @@ class ScreenshotTest {
         assertReadable("Justin Jefferson Under 69.5")
     }
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetHoldingABetShowsEveryBook() {
         floating("9c_floating_books", floatingState())
         compose.onNodeWithText("Justin Jefferson Under 69.5").performTouchInput { longClick() }
@@ -669,7 +669,7 @@ class ScreenshotTest {
         compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
     }
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetShrinksToABubble() {
         var expanded = false
         floating("9d_floating_bubble", floatingState(), minimized = true, actions = com.tjshea.vigilant.app.ui.FloatingActions(onExpand = { expanded = true }))
@@ -678,7 +678,7 @@ class ScreenshotTest {
         assert(expanded)
     }
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetWithBothScannersHasScanAndRecheck() {
         val s = floatingState().let { it.copy(settings = it.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)) }
         floating("9e_floating_both", s)
@@ -686,7 +686,7 @@ class ScreenshotTest {
         compose.onAllNodesWithContentDescription("Refresh").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w360dp-h320dp-xxhdpi")
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun floatingWidgetHeaderClosesShrinksAndOpensTheApp() {
         var closed = false
         var shrunk = false
@@ -723,6 +723,90 @@ class ScreenshotTest {
         assertEquals("CNO HTTP 500", com.tjshea.vigilant.app.ui.cnoErrorShort("CrazyNinjaOdds answered HTTP 500"))
         val s = SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = SampleCno.snapshot(), error = "Couldn't reach CrazyNinjaOdds (timeout)"))
         assertTrue(com.tjshea.vigilant.app.ui.miniStatus(s, SampleScan.NOW).endsWith("CNO offline, retrying"))
+    }
+
+    // ---- Tj, 2026-09-27: ✕ to remove a bet, the bar at any width, only agreed bets, DNS/timeouts ----
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetXRemovesABetWithoutPlacingItAndCanBeUndone() {
+        var removed: MiniWindow.Item? = null
+        var placed: MiniWindow.Item? = null
+        var undone: String? = null
+        floating(
+            "9i_floating_remove", floatingState(),
+            actions = com.tjshea.vigilant.app.ui.FloatingActions(onPlaced = { placed = it }, onHidden = { removed = it }, onUndoPlaced = { undone = it }),
+        )
+        // Every row has both, on the right: ✓ placed and ✕ remove.
+        compose.onNodeWithContentDescription("I placed Ohio -33.5: hide it").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Remove Ohio -33.5 from the list").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Remove Ohio -33.5 from the list").performClick()
+        assert(removed?.title == "Ohio -33.5" && placed == null) { "removed $removed, placed $placed" }
+        compose.onNodeWithText("Removed: Ohio -33.5").assertIsDisplayed()
+        compose.onNodeWithText("UNDO").performClick()
+        assert(undone == removed!!.key) { "undone $undone" }
+        // The price stays whole next to the two buttons.
+        assertReadable("+117")
+    }
+
+    /** "Books" was cut to "Bo" (Tj's screenshot, v0.15.0): narrow, the bar shows icons only. */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetBarFitsAtAnyWidth() {
+        val both = floatingState().let { it.copy(settings = it.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)) }
+        floating("9j_floating_narrow", both, w = 250)
+        listOf("Scan", "Recheck", "Up", "Down", "Books").forEach { compose.onNodeWithContentDescription(it).assertIsDisplayed() }
+        compose.onAllNodesWithText("Books", useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithText("Recheck", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun floatingWidgetBarKeepsItsLabelsWhenTheyFit() {
+        floating("9k_floating_labels", floatingState())
+        compose.onNodeWithText("Books", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithText("Refresh", useUnmergedTree = true).assertIsDisplayed()
+        assertReadable("Books")
+    }
+
+    @Test fun cnoCardXRemovesItAndTheRemovedListPutsItBack() {
+        var removed: MiniWindow.Item? = null
+        var back: String? = null
+        val removedBet = com.tjshea.vigilant.data.tracker.PlacedBet("cno:x", "Somebody Over 1.5", "Player Hits · A @ B", placedAtMs = SampleScan.NOW, hidden = true)
+        val placedBet = com.tjshea.vigilant.data.tracker.PlacedBet("cno:y", "Other Under 2.5", "Player Hits · A @ B", placedAtMs = SampleScan.NOW)
+        screen {
+            com.tjshea.vigilant.app.ui.CnoScreen(
+                SampleCno.state().copy(placed = listOf(removedBet, placedBet)), {}, {},
+                onHide = { removed = it }, onUnplace = { back = it },
+            )
+        }
+        compose.onNodeWithContentDescription("Remove Ohio -33.5 from the list").performClick()
+        assert(removed?.title == "Ohio -33.5") { "removed $removed" }
+        compose.onNodeWithText("Removed: Ohio -33.5", substring = true).assertIsDisplayed()
+        // Placed and removed bets are listed apart.
+        compose.onNodeWithText("Show the 1 bet you placed").assertIsDisplayed()
+        compose.onNodeWithText("Show the 1 bet you removed").performClick()
+        compose.onNodeWithText("✕ Somebody Over 1.5").assertIsDisplayed()
+        compose.onNodeWithText("Put back").performClick()
+        assertEquals("cno:x", back)
+    }
+
+    @Test fun cnoTabWithOnlyAgreedBetsSaysWhatsHeldBack() {
+        val base = SampleCno.withBooks()
+        shoot("8e_cno_only_agreed") { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(cnoOnlyAgreed = true)), {}, {}) }
+        compose.onNodeWithText("Justin Jefferson Under 69.5", substring = true).assertIsDisplayed()
+        compose.onAllNodesWithText("Ohio -33.5").assertCountEquals(0)
+        compose.onNodeWithText("1 bet pass · 2 hidden: 1 too few books, 1 longer odds than your cap · only ✓ bets: 3 held back, 3 being checked").assertIsDisplayed()
+    }
+
+    @Test fun settingsHasTheOnlyAgreedSwitch() {
+        var picked: ScanSettings? = null
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Only bets the books agree on").performScrollTo().performClick()
+        assert(picked?.cnoOnlyAgreed == true) { "picked $picked" }
+    }
+
+    @Test fun theWidgetTellsDnsFailuresFromTimeouts() {
+        assertEquals("CNO lookup failed, retrying", com.tjshea.vigilant.app.ui.cnoErrorShort("Couldn't reach CrazyNinjaOdds (the phone couldn't look up its address: no signal, or a VPN reconnecting)"))
+        assertEquals("CNO slow, retrying", com.tjshea.vigilant.app.ui.cnoErrorShort("Couldn't reach CrazyNinjaOdds (it didn't answer in time)"))
+        assertEquals("CNO offline, retrying", com.tjshea.vigilant.app.ui.cnoErrorShort("Couldn't reach CrazyNinjaOdds (no connection to it)"))
     }
 
     /** Tj's screenshot: the pull-to-refresh arrow stuck half way down the CNO tab. */

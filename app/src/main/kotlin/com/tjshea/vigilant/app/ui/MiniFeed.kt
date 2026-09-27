@@ -333,6 +333,8 @@ fun miniStatus(state: UiState, now: Long): String {
 
 /** CNO's last error in a few words, for a status line with no room for the whole message. */
 fun cnoErrorShort(error: String): String = when {
+    error.contains("look up its address", ignoreCase = true) -> "CNO lookup failed, retrying"
+    error.contains("didn't answer in time", ignoreCase = true) -> "CNO slow, retrying"
     error.contains("Couldn't reach", ignoreCase = true) -> "CNO offline, retrying"
     error.contains("busy", ignoreCase = true) -> "CNO busy, waiting"
     error.contains("refused", ignoreCase = true) -> "CNO refused, waiting"
