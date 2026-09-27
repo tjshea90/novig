@@ -1909,3 +1909,22 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
 2. **PropLine** (its own switch and keys): every sportsbook's game lines per league and props per game,
    filtered to the reference books picked in Settings, exchanges and DFS books left out (the app
    reads Polymarket and Kalshi directly, and Novig is the thing being priced).
+
+### 22.5 Also found in this full test (2026-09-27)
+- **Settling bets:** Novig's public catalog drops a game and its markets a few hours after it ends
+  (404 by id; not listed under any status), so v0.15.6's auto-settle could never settle anything.
+  Free score feeds do it instead: ESPN's scoreboard (`site.api.espn.com/apis/site/v2/sports/{sport}/
+  {league}/scoreboard?dates=YYYYMMDD`, college with `groups=80`/`50`) and box score (`/summary?event=`)
+  for football, basketball and hockey; MLB's Stats API (`statsapi.mlb.com/api/v1/schedule?sportId=1&
+  date=&hydrate=linescore`, `/game/{pk}/boxscore`) for baseball, because ESPN's MLB box score has no
+  per-player doubles/triples (total bases) while MLB's has totalBases, stolenBases and pitcher outs.
+  Live check: 8 real bets from 2026-09-24/26 games (moneyline, F5 total, run line, pitcher Ks, total
+  bases, NFL spread, rushing yards, receptions) all settled correctly in 4 requests.
+- **Scan speed on the phone:** matching every Novig game against every feed's games re-tokenized the
+  team names on each comparison (Unicode normalize + regex). Measured on a desktop JVM: 165 ms per plan
+  for 61 college games x 4 feeds, and a scan plans again each time a feed answers. Caching each name's
+  tokens: 16 ms per plan (0.14 µs per comparison, was 3.3 µs). A Moto G is several times slower, so
+  this was seconds of CPU per busy scan.
+- **Not built, for Tj to decide:** PinnWire's `since=<last>` returns only changed games, which would cut
+  the ~700 KB NFL props download per scan to a few KB (same request count); PropLine carries Novig's own
+  game-line prices (10 s old), which could order Vigilant's Novig reads so likely edges are read first.
