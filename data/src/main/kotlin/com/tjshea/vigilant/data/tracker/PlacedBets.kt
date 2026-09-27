@@ -38,6 +38,8 @@ data class PlacedBet(
     val market: String = "",
     /** Novig's outcome id when known (Vigilant's bets; CNO's once its Novig link is known), since v0.16.2. */
     val outcomeId: String? = null,
+    /** "MLB", "NFL"…, since v0.16.3: how close two listings' start times must be to be one game ([PlacedIndex]). */
+    val league: String = "",
 ) {
     /** Every key this mark hides. */
     val keys: List<String> get() = listOf(key) + aliases

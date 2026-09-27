@@ -78,6 +78,8 @@ object MiniWindow {
         val event: String = "",
         val market: String = "",
         val startsAtMs: Long? = null,
+        /** "MLB", "NFL"…: how close another listing's start must be to be this game ([PlacedIndex]). */
+        val league: String = "",
         /** Novig's outcome id, for Vigilant's own bets (opens Novig's bet slip on it). */
         val outcomeId: String? = null,
         /** The player's team ("HOU"), for player bets whose team is known. */
@@ -120,6 +122,7 @@ object MiniWindow {
         event = item.event,
         market = item.market,
         outcomeId = outcomeId,
+        league = item.league,
     )
 
     /**
@@ -159,7 +162,7 @@ object MiniWindow {
         return all.filter { item ->
             item.key !in placed && item.aliases.none { k -> k in placed } && !state.placedIndex.has(
                 key = item.key, aliases = item.aliases, outcomeId = item.outcomeId,
-                event = item.event, market = item.market, selection = item.title, startsTs = item.startsAtMs,
+                event = item.event, market = item.market, selection = item.title, startsTs = item.startsAtMs, league = item.league,
             )
         }.map { item ->
             families[item.family]?.let { p -> item.copy(placedOther = Picks.shortLine(p.title)) } ?: item
@@ -223,6 +226,7 @@ object MiniWindow {
             event = eventName,
             market = marketLabel,
             startsAtMs = event.startsTs,
+            league = event.league,
             outcomeId = outcome.outcomeId,
         )
     }
@@ -241,6 +245,7 @@ object MiniWindow {
         event = row.event,
         market = row.market,
         startsAtMs = row.startsAtMs,
+        league = row.league,
     )
 
     fun american(odds: Int): String = com.tjshea.vigilant.engine.Odds.formatAmerican(odds)

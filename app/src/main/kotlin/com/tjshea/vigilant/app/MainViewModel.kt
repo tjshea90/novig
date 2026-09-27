@@ -123,7 +123,7 @@ data class UiState(
     fun hasCno(row: CnoRow): Boolean = MiniWindow.cnoKey(row) in placedKeys || placedIndex.has(
         key = MiniWindow.cnoKey(row),
         outcomeId = com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(cnoLinks[com.tjshea.vigilant.data.cno.CnoFeed.linkKey(row)]),
-        event = row.event, market = row.market, selection = row.bet, startsTs = row.startsAtMs,
+        event = row.event, market = row.market, selection = row.bet, startsTs = row.startsAtMs, league = row.league,
     )
 
     /** Tj's keys for [provider], in the order they're tried. */
