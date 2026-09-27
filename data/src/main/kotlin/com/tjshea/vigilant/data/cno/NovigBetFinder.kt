@@ -37,7 +37,7 @@ class NovigBetFinder(
 ) {
     sealed class Found {
         /** The exact outcome: `novigapp://events/<id>` opens Novig's bet slip on it. */
-        data class Bet(val outcomeId: String, val eventId: String) : Found() {
+        data class Bet(val outcomeId: String, val eventId: String, val marketId: String? = null) : Found() {
             override val link: String get() = "novigapp://events/$outcomeId"
         }
 
@@ -74,7 +74,8 @@ class NovigBetFinder(
         val league = novigLeague(row.league) ?: return null
         val event = eventsOf(league)?.let { matchEvent(row, it) } ?: return null
         val list = marketsOf(event.id) ?: return Found.Game(event.id)
-        return matchOutcome(row, event, list)?.let { Found.Bet(it.id, event.id) } ?: Found.Game(event.id)
+        val outcome = matchOutcome(row, event, list) ?: return Found.Game(event.id)
+        return Found.Bet(outcome.id, event.id, list.firstOrNull { m -> m.outcomes.any { it.id == outcome.id } }?.id)
     }
 
     private suspend fun eventsOf(league: String): List<Event>? = cached(events, league) {
