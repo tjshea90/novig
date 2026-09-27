@@ -67,4 +67,34 @@ class PlacedIndexTest {
         assertTrue(index.has(event = "Houston Texans @ Indianapolis Colts", market = "Spread", selection = "Houston Texans -3.5", startsTs = start))
         assertFalse(index.has(event = "Houston Texans @ Indianapolis Colts", market = "Spread", selection = "Indianapolis Colts +3.5", startsTs = start))
     }
+
+    /** Full test, 2026-09-27: a doubleheader's game 2 is a different bet; a football kickoff the feeds disagree on isn't. */
+    @Test
+    fun `baseball needs the same start within two hours, football within twelve`() {
+        val mets = "New York Mets @ Washington Nationals"
+        val game1 = PlacedBet(key = "cno:g1", title = "New York Mets", event = mets, market = "Moneyline", league = "MLB", placedAtMs = now, startsAtMs = start)
+        val index = PlacedIndex.of(listOf(game1), emptyList(), now)
+        assertTrue(index.has(event = mets, market = "Moneyline", selection = "New York Mets", startsTs = start + 10 * 60_000L, league = "MLB"))
+        // Game 2, five hours later: not placed.
+        assertFalse(index.has(event = mets, market = "Moneyline", selection = "New York Mets", startsTs = start + 5 * 3_600_000L, league = "MLB"))
+        // A mark saved without a league still reads the listing's.
+        assertFalse(PlacedIndex.of(listOf(game1.copy(league = "")), emptyList(), now)
+            .has(event = mets, market = "Moneyline", selection = "New York Mets", startsTs = start + 5 * 3_600_000L, league = "MLB"))
+        // Football: the same kickoff listed 5 hours apart is still the one game.
+        val bengals = PlacedBet(key = "cno:f", title = "Erick All Jr. Under 0.5", event = event, market = "Player Receptions", league = "NFL", placedAtMs = now, startsAtMs = start)
+        assertTrue(PlacedIndex.of(listOf(bengals), emptyList(), now)
+            .has(event = event, market = "Receptions", selection = "Erick All Jr. Under 0.5", startsTs = start + 5 * 3_600_000L, league = "NFL"))
+    }
+
+    @Test
+    fun `with no start time to compare, only a mark from the last day counts`() {
+        val noStart = cnoMark.copy(startsAtMs = null)
+        fun has(index: PlacedIndex) = index.has(event = event, market = "Receptions", selection = "Erick All Jr. Under 0.5", startsTs = start)
+        assertTrue(has(PlacedIndex.of(listOf(noStart), emptyList(), now + 3_600_000L)))
+        // Marked three days ago, game unknown: the same pairing now is a later game.
+        assertFalse(has(PlacedIndex.of(listOf(noStart), emptyList(), now + 72 * 3_600_000L)))
+        // And a listing with no start of its own is judged the same way.
+        val index = PlacedIndex.of(listOf(cnoMark), emptyList(), now + 72 * 3_600_000L)
+        assertFalse(index.has(event = event, market = "Receptions", selection = "Erick All Jr. Under 0.5", startsTs = null))
+    }
 }
