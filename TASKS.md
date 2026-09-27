@@ -2224,7 +2224,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 >
 > Do this after the process you already started
 
-- [ ] U1 Audit every place a fair line is built from other books' odds (Vigilant's Planner/Pricing from
+- [x] U1 (DONE: RESEARCH.md §24.1, 7 findings.) Audit every place a fair line is built from other books' odds (Vigilant's Planner/Pricing from
       every ReferenceSource and its re-use windows/stale limit; recheck and re-price; props caches;
       CNO's books, CnoBooks, NovigLive, BetRecheck; the tracker's "now EV"): list each place an old
       quote can price, and how old it can be today.

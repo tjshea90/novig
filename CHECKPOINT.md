@@ -1,13 +1,13 @@
-# CHECKPOINT 513 — read me first, then TASKS.md
+# CHECKPOINT 514 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T17:04:33Z · **tests:** all 1 fast checks green
-**Branch:** `claude/vigilant-testing-odds-apis-mpvkc7` · **builds on:** `0bd4682` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T17:08:41Z · **tests:** all 1 fast checks green
+**Branch:** `claude/vigilant-testing-odds-apis-mpvkc7` · **builds on:** `70c9568` (this checkpoint is the commit after it)
 
 ## Just done
-T1-T3 done: PropLine relays Novig's prices in the same calls (RefSnapshot.novig), Scanner.preview orders reads by EV at those prices, automatic fallback to the original order (no/failed/late/old relay, unquoted line). data 379/0 incl. NovigPreviewTest 5
+U1 audit done: RESEARCH.md §24.1 (re-use windows 15-60 min, stale-limit keep, no per-quote age check vs Odds API last_update/PropLine last_seen_at, recheck judged as of last scan, feed/widget show old EVs, CNO rows up to 10 min + green check any age). Rule in §24.2: 5 min per quote, 2 min re-use
 
 ## Do this next
-Start U1 stale-odds audit (after T per Tj); ship T4 together with U4 at the end
+U2/U3: implement Freshness constants, per-quote confirmation time, Pricing filter + Opportunity.fairAsOfMs, reuse caps, recheck as of now, UI expiry, CNO rows/agree limits; tests failing-first
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -18,6 +18,7 @@ Start U1 stale-odds audit (after T per Tj); ship T4 together with U4 at the end
 
 ## Last ten checkpoints
 ```
+  70c9568 ckpt 513: T1-T3 done: PropLine relays Novig's prices in the same calls (RefSnapshot.novi
   b9a59a9 ckpt 512: Wrote Tj's second request (no stale sportsbook odds in any comparison; after T
   2abdfb9 ckpt 511: Wrote Tj's request (PropLine's Novig prices order Novig reads, fallback to ori
   c15cb5c ckpt 510: SHIPPED v0.16.3 code 30 (S1-S5 ticked): https://github.com/tjshea90/novig/rele
@@ -27,8 +28,4 @@ Start U1 stale-odds audit (after T per Tj); ship T4 together with U4 at the end
   6663b09 ckpt 506: S4 sweep fix 2: a fallback standing by drops its own older snapshot (Odds API'
   87963fb ckpt 505: S4 sweep fix 1: PlacedIndex league-aware same-game window (MLB 2h: doubleheade
   c148cd7 ckpt 504: S3 core built: ReferenceSource.fallbackFor/needed + ScanContext.covered/firstA
-  82d5c33 ckpt 503: S1+S2: API map (books, quotas, freshness measured) and order decision written 
 ```
-
-(7 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

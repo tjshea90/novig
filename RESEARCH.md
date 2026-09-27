@@ -2010,3 +2010,37 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
   that isn't in yet (the pump never waits: the first reads go in the original order and the rest re-sort
   when it lands), a relay older than 3 minutes (`NOVIG_PREVIEW_MAX_AGE_MS`; props relays likewise), a line
   PropLine doesn't quote (last scan's EV, as before), or any error computing it.
+
+## 24. No stale sportsbook odds in any comparison (2026-09-27 ~17:20Z, Tj: "The other sports books odds MUST be current or at most a few minutes old")
+
+### 24.1 Audit (v0.16.3 code): every place another book's price can feed an EV, and how old it could be
+1. **Re-use windows longer than a few minutes**: The Odds API game lines 15 min (Settings, up to 60), its props
+   60 min (up to 4 h), PropLine props 10 min. Priced while `planFor(youngFairOnly)` allowed
+   max(stale limit 30 min, re-use), so up to 30–60+ minutes.
+2. **A failed call keeps the last snapshot** up to the 30-min stale limit, and it still priced.
+3. **No per-quote age check at all.** A snapshot fetched now can carry a book's quote the feed itself says is
+   old: The Odds API docs (guide v4, today): the market-level `last_update` "shows the last time our system saw
+   odds for that market from the bookmaker … When a market is suspended or closed, its last_update stops
+   advancing, and the market is removed from the API response after about 15 minutes" — so a pulled market
+   priced for up to 15 minutes. PropLine sends each outcome's `last_seen_at` (and `last_change_at`); the app
+   used the market's `last_update` and never checked either against the clock (PropLine's own "stale"
+   threshold is 30 minutes, `/v1/freshness`).
+4. **Recheck and re-pricing judged fair-odds age as of the last scan** (`fairAs Of = lastScanAtMs`): a Recheck
+   45 minutes later priced Novig's fresh book against 45-minute-old fair lines.
+5. **The feed, widget, mini window and Games tab keep showing a scan's EVs** with no fair-odds age limit (only
+   Novig's own price is flagged old after 10 min).
+6. **CNO**: its rows (CNO's EV from its books) stay listed until CNO's data is 10 min old ("stuck"), flagged
+   "old" only after 5; the green "books agree" check used a CNO game page of any age (re-read every 10 min).
+7. Not a bet decision, left as is: the Tracker's "now ±x% EV" (labelled with its age), CLV.
+
+### 24.2 The rule (v0.16.4)
+- One hard limit, `Freshness.MAX_QUOTE_AGE_MS` = **5 minutes**: a book's quote prices a fair line only if the
+  feed saw it within the last 5 minutes (Pinnacle, Kalshi, Polymarket: when fetched; The Odds API: market
+  `last_update`; PropLine: the outcomes' `last_seen_at`; never later than when Vigilant fetched it). No setting
+  can raise it.
+- Re-use windows are capped at 2 minutes (`Freshness.MAX_REUSE_MS`) so a re-used answer is still fresh
+  through a scan.
+- Every EV shown carries the time of its oldest quote; past 5 minutes it leaves the feed, widget, mini window
+  and Games tab ("scan again"), and Recheck/re-pricing judge age as of now.
+- CNO: rows hidden while CNO's odds are over 5 minutes old; the green check needs a book page under 5 minutes
+  old (re-read every 3).
