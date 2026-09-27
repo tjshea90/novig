@@ -197,5 +197,14 @@ object SampleScan {
             0.51, 0.51, 0.527, 0.0333, 18.0, BetStatus.LOST, NOW - 20 * HOUR, closingFair = 0.521),
         TrackedBet("b3", NOW - 2 * HOUR, "NFL", "Baltimore Ravens @ Dallas Cowboys", NOW + 50 * HOUR, "Moneyline", "Dallas Cowboys", "g1-ml", "g1-ml-h",
             0.385, 0.385, 0.398, 0.034, 20.0, closingFair = 0.401),
+        // CNO ✓ bets (TASKS.md N1/N4): two open with an EV now either side of zero, one settled by Novig.
+        TrackedBet("b4", NOW - 60 * MINUTE, "NFL", "Seattle Seahawks @ Washington Commanders", NOW + 3 * HOUR, "Player Receptions", "Jaxon Smith-Njigba Over 5.5",
+            "", "", 0.5, 0.5, 0.52, 0.04, 1.0, source = BetTracker.SOURCE_CNO, american = 100, book = "Novig", gameUrl = "https://crazyninjaodds.com/g?side_id=1",
+            nowFair = 0.5155, nowEv = 0.031, nowAtMs = NOW - 5 * MINUTE, nowBooks = 4),
+        TrackedBet("b5", NOW - 50 * MINUTE, "MLB", "New York Mets @ Miami Marlins", NOW + 2 * HOUR, "Total", "Under 7.5", "", "", 0.5238, 0.5238, 0.54, 0.031, 1.0,
+            source = BetTracker.SOURCE_CNO, american = -110, gameUrl = "https://crazyninjaodds.com/g?side_id=2",
+            nowFair = 0.5128, nowEv = -0.021, nowAtMs = NOW - 5 * MINUTE, nowBooks = 5),
+        TrackedBet("b6", NOW - 28 * HOUR, "", "Tampa Bay Rays @ Boston Red Sox", NOW - 27 * HOUR, "Moneyline", "Boston Red Sox", "m6", "o6", 0.5, 0.5, null, null, 1.0,
+            BetStatus.WON, NOW - 23 * HOUR, source = BetTracker.SOURCE_CNO, american = 100, settledBy = "novig", imported = true),
     )
 }
