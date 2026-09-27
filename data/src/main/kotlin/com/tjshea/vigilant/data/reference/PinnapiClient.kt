@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.scanner.League
+import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -22,86 +23,130 @@ import okhttp3.Request
 import java.time.Instant
 
 /**
- * Pinnacle's prices through pinnapi.com (RESEARCH.md §11), an independent feed (not Pinnacle
- * itself, which closed its public API on 2025-07-23). The free trial key never expires but allows
- * **100 requests a day** (20/min, 100/hour). One request returns a whole sport's prematch board,
- * so NFL and NCAAF share one call; a sport fetched in the last [shareMs] is re-used rather than
- * re-requested. [KeyPool] counts every request per key (pinnapi sends no usage headers) and skips a
- * key before its daily/minute allowance runs out; a 429 rests the key for pinnapi's own
- * `retry_after_ms`.
+ * Pinnacle's prices through an independent Pinnacle feed (Pinnacle itself closed its public API on
+ * 2025-07-23): **PinnWire** first (pinnwire.com, RESEARCH.md §22: its free key includes Pinnacle's
+ * player props), then **pinnapi** (pinnapi.com, RESEARCH.md §11: its trial key has no props). Both
+ * serve the same `/kit/v1/markets` JSON and allow **100 requests a day** per free key (20/min). One
+ * request returns a whole sport's prematch board, so NFL and NCAAF share one call; a sport fetched
+ * in the last [shareMs] is re-used rather than re-requested. Each host's [KeyPool] counts every
+ * request per key (neither sends usage headers) and skips a key before its allowance runs out; a
+ * 429 rests the key for the feed's own `retry_after_ms`. A host with no usable key is skipped for
+ * the next one.
  *
- * Response shape (their docs): `{events:[{event_id, league_name, starts, home, away,
- * periods:{num_0:{money_line:{home,away,draw?}, spreads:{"<hdp>":{hdp,home,away}},
- * totals:{"<pts>":{points,over,under}}}}}]}`, decimal odds, `hdp` is the home handicap.
- * **Not yet verified live:** no key existed on 2026-09-25. League names are matched loosely
- * for that reason (see [leagueNames]).
+ * Response shape (verified live on PinnWire 2026-09-27): `{events:[{event_id, league_name, starts,
+ * home, away, periods:{num_0:{money_line:{home,away,draw?}, spreads:{"<hdp>":{hdp,home,away}},
+ * totals:{"<pts>":{points,over,under}}}}}]}`, decimal odds, `hdp` is the home handicap. With
+ * `include_specials=1` (asked only when player props are priced), props arrive as extra rows:
+ * `{parent_id, special:"DJ Moore Total Receptions", special_category:"Player Props",
+ * special_units:"Receptions", special_markets:{num_0:[{type:"total", prices:[{name:"Over",
+ * points:3.5, price:1.735}, …]}]}}`.
  */
 class PinnapiClient(
     private val http: OkHttpClient,
     private val json: Json,
-    private val pool: KeyPool,
-    private val baseUrl: String = "https://pinnapi.com/kit/v1",
+    /** The feeds to try, in order: the first with a usable key answers. */
+    private val hosts: List<Host>,
     private val clock: () -> Long = System::currentTimeMillis,
     private val shareMs: Long = 60_000,
 ) : ReferenceSource {
 
+    /** One Pinnacle feed: where it is, how it takes a key, and whether its keys get player props. */
+    class Host(
+        val name: String,
+        val pool: KeyPool,
+        val baseUrl: String,
+        val authHeader: String,
+        val props: Boolean,
+    )
+
+    /** pinnapi alone (the app before v0.16.0, and the tests written for it). */
+    constructor(
+        http: OkHttpClient,
+        json: Json,
+        pool: KeyPool,
+        baseUrl: String = PINNAPI_URL,
+        clock: () -> Long = System::currentTimeMillis,
+        shareMs: Long = 60_000,
+    ) : this(http, json, listOf(pinnapi(pool, baseUrl)), clock, shareMs)
+
     override val id = ID
     override val displayName = "Pinnacle"
     override val metered = true
+    override val extraPropTypes: Set<String> get() = if (hosts.any { it.props }) PinnacleProps.STATS else emptySet()
 
     override fun supports(league: League) = league.pinnacleSportId != null
 
     private data class Board(val events: List<JsonObject>, val fetchedAtMs: Long)
 
     private val mutex = Mutex()
-    private val boards = HashMap<Int, Board>()
+
+    /** By sport and whether player props were asked for. */
+    private val boards = HashMap<Pair<Int, Boolean>, Board>()
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val sport = league.pinnacleSportId ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
-        val board = mutex.withLock { boardFor(sport) }
+        val props = MarketFamily.PLAYER_PROPS in settings.families
+        val board = mutex.withLock { boardFor(sport, props) }
         return RefSnapshot(league.oddsApiSportKey, parse(board.events, league, board.fetchedAtMs), board.fetchedAtMs, provider = ID)
     }
 
-    private suspend fun boardFor(sport: Int): Board {
-        boards[sport]?.takeIf { clock() - it.fetchedAtMs < shareMs }?.let { return it }
-        val url = "$baseUrl/markets".toHttpUrl().newBuilder()
+    private suspend fun boardFor(sport: Int, props: Boolean): Board {
+        boards[sport to props]?.takeIf { clock() - it.fetchedAtMs < shareMs }?.let { return it }
+        var problem: String? = null
+        for (host in hosts) {
+            if (host.pool.keyCount() == 0) continue
+            val events = try {
+                fetch(host, sport, props && host.props)
+            } catch (e: AllKeysExhaustedException) {
+                // This feed's keys are spent (or refused): the next feed may still have some.
+                if (problem == null) problem = e.message
+                continue
+            }
+            return Board(events, clock()).also { boards[sport to props] = it }
+        }
+        throw ReferenceException(problem ?: "No Pinnacle key. Add a free PinnWire or pinnapi key in Settings.")
+    }
+
+    private suspend fun fetch(host: Host, sport: Int, specials: Boolean): List<JsonObject> {
+        val url = "${host.baseUrl}/markets".toHttpUrl().newBuilder()
             .addQueryParameter("sport_id", sport.toString())
             .addQueryParameter("event_type", "prematch")
+            .apply { if (specials) addQueryParameter("include_specials", "1") }
             .build()
-        val events = try {
-            pool.execute(cost = 1) { key ->
-                http.newCall(Request.Builder().url(url).header("x-portal-apikey", key).get().build()).await().use { response ->
-                    val body = response.body?.string().orEmpty()
-                    when {
-                        // pinnapi says which window was hit and exactly how long to wait.
-                        response.code == 429 -> {
-                            val err = runCatching { json.parseToJsonElement(body).jsonObject }.getOrNull()
-                            val window = (err?.get("window") as? JsonPrimitive)?.content
-                            val waitMs = (err?.get("retry_after_ms") as? JsonPrimitive)?.longOrNull
-                                ?: response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000)
-                                ?: 60_000L
-                            if (window == "day" || window == "hour") {
-                                KeyAttemptResult.Depleted(if (window == "day") "daily limit reached" else "hourly limit reached", waitMs)
-                            } else {
-                                KeyAttemptResult.RateLimited(waitMs, "per-minute limit")
-                            }
+        return host.pool.execute(cost = 1) { key ->
+            http.newCall(Request.Builder().url(url).header(host.authHeader, key).get().build()).await().use { response ->
+                val body = response.body?.string().orEmpty()
+                when {
+                    // The feed says which window was hit and exactly how long to wait.
+                    response.code == 429 -> {
+                        val err = runCatching { json.parseToJsonElement(body).jsonObject }.getOrNull()
+                        val window = (err?.get("window") as? JsonPrimitive)?.content
+                        val waitMs = (err?.get("retry_after_ms") as? JsonPrimitive)?.longOrNull
+                            ?: response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000)
+                            ?: 60_000L
+                        if (window == "day" || window == "hour") {
+                            KeyAttemptResult.Depleted(if (window == "day") "daily limit reached" else "hourly limit reached", waitMs)
+                        } else {
+                            KeyAttemptResult.RateLimited(waitMs, "per-minute limit")
                         }
-                        response.code == 401 || response.code == 403 -> KeyAttemptResult.Invalid("HTTP ${response.code}, key refused")
-                        !response.isSuccessful -> throw ReferenceException("Pinnacle (pinnapi) HTTP ${response.code}")
-                        else -> KeyAttemptResult.Success(
-                            (json.parseToJsonElement(body).jsonObject["events"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty(),
-                        )
                     }
+                    response.code == 401 || response.code == 403 -> KeyAttemptResult.Invalid("HTTP ${response.code}, key refused")
+                    !response.isSuccessful -> throw ReferenceException("Pinnacle (${host.name}) HTTP ${response.code}")
+                    else -> KeyAttemptResult.Success(
+                        (json.parseToJsonElement(body).jsonObject["events"] as? JsonArray)?.mapNotNull { it as? JsonObject }.orEmpty(),
+                    )
                 }
             }
-        } catch (e: AllKeysExhaustedException) {
-            throw ReferenceException(e.message ?: "Pinnacle (pinnapi) keys are used up")
         }
-        return Board(events, clock()).also { boards[sport] = it }
     }
 
     companion object {
         const val ID = "pinnacle"
+        const val PINNAPI_URL = "https://pinnapi.com/kit/v1"
+        const val PINNWIRE_URL = "https://pinnwire.com/kit/v1"
+
+        fun pinnapi(pool: KeyPool, baseUrl: String = PINNAPI_URL) = Host("pinnapi", pool, baseUrl, "x-portal-apikey", props = false)
+        fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true)
 
         /**
          * Pinnacle's league names for each Novig league (their public naming). Compared
@@ -136,10 +181,45 @@ class PinnapiClient(
         }
 
         fun parse(events: List<JsonObject>, league: League, fetchedAtMs: Long): List<RefEvent> {
+            // Specials (player props) are rows of their own, pointing at their game by parent_id.
+            val (specials, games) = events.partition { it.containsKey("parent_id") && it["parent_id"] !is kotlinx.serialization.json.JsonNull }
             val names = leagueNames(league)
-            val named = events.filter { e -> e.str("league_name")?.trim()?.lowercase() in names }
-            val pool = named.ifEmpty { events }
-            return pool.mapNotNull { event(it, league, fetchedAtMs) }
+            val named = games.filter { e -> e.str("league_name")?.trim()?.lowercase() in names }
+            val pool = named.ifEmpty { games }
+            val props = if (specials.isEmpty()) emptyMap() else specials.groupBy { (it["parent_id"] as? JsonPrimitive)?.content }
+            return pool.mapNotNull { e ->
+                val event = event(e, league, fetchedAtMs) ?: return@mapNotNull null
+                val own = props[(e["event_id"] as? JsonPrimitive)?.content].orEmpty()
+                if (own.isEmpty()) event else event.copy(markets = event.markets + own.mapNotNull { playerProp(it, league, fetchedAtMs) })
+            }
+        }
+
+        /**
+         * One Pinnacle player prop ("DJ Moore Total Receptions", Over/Under 3.5) as a two-way line,
+         * when its stat is one Novig lists ([PinnacleProps]). Anything else (game props, ladders,
+         * one-sided lines) is left out.
+         */
+        fun playerProp(row: JsonObject, league: League, fetchedAtMs: Long): RefBookMarket? {
+            if (row.str("special_category") != "Player Props") return null
+            val units = row.str("special_units")?.trim() ?: return null
+            val stat = PinnacleProps.stat(league.pinnacleSportId, units) ?: return null
+            val player = PinnacleProps.player(row.str("special") ?: return null, units) ?: return null
+            val market = (row["special_markets"].obj()?.get("num_0") as? JsonArray)?.firstOrNull().obj() ?: return null
+            if (market.str("type") != "total") return null
+            val prices = (market["prices"] as? JsonArray)?.mapNotNull { it.obj() } ?: return null
+            if (prices.size != 2) return null
+            val over = prices.singleOrNull { it.str("name").equals("Over", true) } ?: return null
+            val under = prices.singleOrNull { it.str("name").equals("Under", true) } ?: return null
+            val point = over.num("points") ?: return null
+            if (under.num("points") != point) return null
+            val o = over.num("price") ?: return null
+            val u = under.num("price") ?: return null
+            if (!(o > 1.0 && u > 1.0 && o.isFinite() && u.isFinite())) return null
+            return RefBookMarket(
+                ID, "Pinnacle", LineKind.PLAYER_PROP,
+                listOf(RefQuote(Side.OVER, o, point), RefQuote(Side.UNDER, u, point)),
+                fetchedAtMs, subject = player, stat = stat,
+            )
         }
 
         private fun event(e: JsonObject, league: League, fetchedAtMs: Long): RefEvent? {
@@ -188,5 +268,55 @@ class PinnapiClient(
             }
             return RefEvent("pin:$id", league.oddsApiSportKey, starts, home = home, away = away, markets = markets)
         }
+    }
+}
+
+/**
+ * Pinnacle's player-prop names (its `special_units`, per sport) for the stats Novig lists, as read
+ * live from PinnWire on 2026-09-27 (RESEARCH.md §22). Only names seen live are mapped: an unmapped
+ * prop is skipped, never guessed.
+ */
+object PinnacleProps {
+    private val FOOTBALL = mapOf(
+        "Passing Yards" to "PASSING_YARDS",
+        "Rushing Yards" to "RUSHING_YARDS",
+        "Receiving Yards" to "RECEIVING_YARDS",
+        "Receptions" to "RECEPTIONS",
+        "Touchdown Passes" to "PASSING_TOUCHDOWNS",
+        // Rushing + receiving touchdowns: Over 0.5 is "anytime touchdown", Novig's Over 0.5 TOUCHDOWNS.
+        "Touchdowns" to "TOUCHDOWNS",
+        "Pass Completions" to "PASSING_COMPLETIONS",
+        "Pass Attempts" to "PASSING_ATTEMPTS",
+        "Rush Attempts" to "RUSHING_ATTEMPTS",
+        "Interceptions" to "INTERCEPTIONS_THROWN",
+        "Field Goals" to "FIELD_GOALS_MADE",
+    )
+    private val BASEBALL = mapOf(
+        "Home Runs" to "HOME_RUNS",
+        "Bases" to "TOTAL_BASES",
+        // Pinnacle lists strikeouts for starting pitchers only.
+        "Strikeouts" to "PITCHER_STRIKEOUTS",
+    )
+    private val BASKETBALL = mapOf(
+        "Points" to "POINTS",
+        "Rebounds" to "REBOUNDS",
+        "Assists" to "ASSISTS",
+        "Threes Made" to "THREE_POINTERS_MADE",
+    )
+
+    /** Pinnacle `sport_id` -> its prop names. */
+    private val BY_SPORT = mapOf(5 to FOOTBALL, 6 to BASEBALL, 3 to BASKETBALL)
+
+    /** Every Novig stat Pinnacle's props can price. */
+    val STATS: Set<String> = BY_SPORT.values.flatMap { it.values }.toSet()
+
+    fun stat(sportId: Int?, units: String): String? = BY_SPORT[sportId]?.get(units)
+
+    /** "DJ Moore Total Receptions" (units "Receptions") -> "DJ Moore"; "Bo Bichette Total Bases" -> "Bo Bichette". */
+    fun player(special: String, units: String): String? {
+        val s = special.trim()
+        val base = if (s.endsWith(units)) s.removeSuffix(units).trim() else s.substringBeforeLast(" Total ", "").trim()
+        val name = base.removeSuffix(" Total").trim()
+        return name.takeIf { it.isNotEmpty() && it != s && !it.endsWith(" Total") }
     }
 }
