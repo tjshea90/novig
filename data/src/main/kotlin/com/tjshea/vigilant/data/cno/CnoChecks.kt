@@ -82,10 +82,14 @@ object CnoChecks {
         row.fairProbability ?: row.fairOdds?.takeIf { it != 0 }?.let { 1.0 / Odds.americanToDecimal(it) }
 
     private fun netEv(row: CnoRow, live: Boolean): Double {
-        if (!live) return row.ev
+        // Only Novig charges the taker once a game is live; a sportsbook's price is all-in (Vigilant MGM's BetMGM rows).
+        if (!live || !chargesNovigFee(row)) return row.ev
         val fair = fairProbability(row) ?: return row.ev
         return CnoBooks.evAt(fair, row.odds, live = true)
     }
+
+    /** A row at Novig (or of unknown book, as before): its live fills pay Novig's taker fee. */
+    private fun chargesNovigFee(row: CnoRow): Boolean = row.book.isBlank() || CnoBooks.codeFor(row.book) == CnoBooks.NOVIG
 
     /** Whether CNO has stopped updating (its data is older than [STUCK_MS]). */
     fun stuck(snapshot: CnoSnapshot, now: Long): Boolean = now - snapshot.dataAtMs > STUCK_MS

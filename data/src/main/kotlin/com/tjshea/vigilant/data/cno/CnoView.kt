@@ -15,19 +15,22 @@ object CnoView {
     /** Novig only, with CNO's own recommended minimums (3 books, 2 market sides). */
     const val DEFAULT = "$PAGE?site_id=$NOVIG_SITE_ID&books_min=3&sides_min=2"
 
+    /** [DEFAULT] for the book with CNO's [siteId] (Vigilant MGM: BetMGM's "4"). */
+    fun defaultFor(siteId: String): String = "$PAGE?site_id=$siteId&books_min=3&sides_min=2"
+
     /**
      * The link to read for what Tj pasted: blank means [DEFAULT]; a link to another site or page
      * is null. Text around the link (a copied message) is ignored, `http` becomes `https`, and a
-     * link without a book filter gets Novig's.
+     * link without a book filter gets Novig's ([siteId]: the app's own book).
      */
-    fun normalize(input: String): String? {
+    fun normalize(input: String, siteId: String = NOVIG_SITE_ID): String? {
         val text = input.trim()
-        if (text.isEmpty()) return DEFAULT
+        if (text.isEmpty()) return defaultFor(siteId)
         val found = Regex("""(?i)(https?://)?(www\.)?crazyninjaodds\.com/\S+""").find(text)?.value ?: return null
         val url = (if (found.startsWith("http", ignoreCase = true)) found else "https://$found").toHttpUrlOrNull() ?: return null
         if (!isCno(url) || !url.encodedPath.endsWith("/positive-ev.aspx", ignoreCase = true)) return null
         val builder = url.newBuilder().scheme("https")
-        if (url.queryParameterValues("site_id").none { !it.isNullOrBlank() }) builder.setQueryParameter("site_id", NOVIG_SITE_ID)
+        if (url.queryParameterValues("site_id").none { !it.isNullOrBlank() }) builder.setQueryParameter("site_id", siteId)
         return builder.build().toString()
     }
 
