@@ -1,38 +1,32 @@
 package com.tjshea.vigilant.data.tracker
 
-import com.tjshea.vigilant.data.novig.NovigHttpException
-import com.tjshea.vigilant.data.novig.NovigMarket
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.IOException
 
 /**
- * Settles tracked bets from Novig's own catalog (Tj, 2026-09-27: "keep track whether each bet was a
- * win or a loss … a background scores system"). Novig marks every outcome of a finished market
- * WIN, LOSS, PUSH, or a decimal payout per $1 contract when it settles at fair market value
- * (NOVIG_API.md §3), on a public route, so no key and no score feed are needed.
+ * Settles tracked bets from each game's final score (Tj, 2026-09-27: "keep track whether each bet
+ * was a win or a loss … a background scores system"). v0.15.6 asked Novig's public catalog, which
+ * the 2026-09-27 full test found drops a game and its markets once it's over (TASKS.md N7): it
+ * never settled anything. Scores now come from free feeds ([ScoreSource]: ESPN, MLB's Stats API),
+ * and [BetGrader] reads each bet (Vigilant's wording or CNO's) against the final score or the box
+ * score.
  *
- * Only open bets whose game started at least [AFTER_START_MS] ago are asked about, oldest first,
- * one read at a time [gapMs] apart; a bet still undecided is asked again after [RETRY_MS]. A bet
- * without Novig's ids yet (a CNO bet whose outcome wasn't found when it was marked, or one
- * imported from an old ✓ mark) is looked up first with [resolve]. A result tapped in the Tracker
- * ([BetTracker.settle], "you") is never overwritten, and neither is an undo of one.
+ * Only open bets whose game started at least [AFTER_START_MS] ago are looked at, oldest first; one
+ * scoreboard read covers every bet of that league and day. A game not over yet is looked at again
+ * after [RETRY_MS]; a bet that can't be graded (a market it can't read, a player missing from the
+ * box score, a postponed game) after [RETRY_UNGRADABLE_MS], and it can always be tapped. A result
+ * tapped in the Tracker ([BetTracker.settle], "you") is never overwritten, and neither is an undo.
  */
 class BetSettler(
     private val tracker: BetTracker,
-    /** Novig's market by id (`/v3/public/catalog/markets/{id}`); null when Novig doesn't know it. */
-    private val market: suspend (String) -> NovigMarket?,
-    /** A bet's Novig market and outcome ids, when it has none: null when not found. */
-    private val resolve: suspend (TrackedBet) -> Pair<String, String>?,
+    private val scores: ScoreSource,
     private val clock: () -> Long = System::currentTimeMillis,
-    private val gapMs: Long = GAP_MS,
 ) {
     data class Report(val asked: Int, val settled: Int, val stopped: Boolean)
 
     private val mutex = Mutex()
 
-    /** When each bet may be asked about again (kept while the app runs). */
+    /** When each bet may be looked at again (kept while the app runs). */
     private val nextTry = HashMap<String, Long>()
 
     /** Bets due a look now. */
@@ -47,32 +41,31 @@ class BetSettler(
         var asked = 0
         var settled = 0
         for (bet in due(tracker.all()).take(MAX_PER_RUN)) {
-            if (asked > 0) delay(gapMs)
             asked++
-            // Undecided, not found, or unknown to Novig: asked again later, rarely once the game is
-            // long over (Novig may drop settled markets from its public catalog; a tap settles those).
-            nextTry[bet.id] = clock() + if (clock() - bet.startsTs > LONG_OVER_MS) RETRY_LONG_OVER_MS else RETRY_MS
-            val ids = try {
-                idsOf(bet)
-            } catch (e: IOException) {
-                return@withLock Report(asked, settled, stopped = true)
-            } ?: continue
-            if (bet.marketId.isEmpty() || bet.outcomeId.isEmpty()) delay(gapMs)
-            val m = try {
-                market(ids.first)
-            } catch (e: NovigHttpException) {
-                // Novig busy (429) or down: the rest waits for the next pass.
-                return@withLock Report(asked, settled, stopped = true)
-            } catch (e: IOException) {
-                return@withLock Report(asked, settled, stopped = true)
-            } ?: continue
-            val outcome = m.outcomes.firstOrNull { it.outcomeId == ids.second } ?: continue
-            val (status, value) = resultOf(outcome.status) ?: continue
+            val pick = BetGrader.pickOf(bet)
+            if (pick == null) {
+                later(bet, RETRY_UNGRADABLE_MS)
+                continue
+            }
+            val found = when (val f = findGame(bet)) {
+                Lookup.Unreachable -> return@withLock Report(asked, settled, stopped = true)
+                Lookup.NotFound -> { later(bet, RETRY_UNGRADABLE_MS); continue }
+                is Lookup.Found -> f.game
+            }
+            if (found.called) { later(bet, RETRY_UNGRADABLE_MS); continue }
+            if (!found.final) { later(bet, RETRY_MS); continue }
+            val players = if (pick is BetGrader.Pick.Prop) {
+                scores.players(found) ?: return@withLock Report(asked, settled, stopped = true)
+            } else {
+                null
+            }
+            val status = BetGrader.grade(pick, found, players)
+            if (status == null) { later(bet, RETRY_UNGRADABLE_MS); continue }
             val now = clock()
             tracker.edit(bet.id) {
                 // Tapped (or undone) while this pass ran: the tap wins.
                 if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it
-                else it.copy(status = status, settledAtMs = now, settleValue = value, settledBy = BY_NOVIG)
+                else it.copy(status = status, settledAtMs = now, settleValue = null, settledBy = BY_SCORES)
             }
             nextTry.remove(bet.id)
             settled++
@@ -80,46 +73,64 @@ class BetSettler(
         Report(asked, settled, stopped = false)
     }
 
-    /** The bet's ids, found and kept if it had none. */
-    private suspend fun idsOf(bet: TrackedBet): Pair<String, String>? {
-        if (bet.marketId.isNotEmpty() && bet.outcomeId.isNotEmpty()) return bet.marketId to bet.outcomeId
-        val found = resolve(bet) ?: return null
-        tracker.edit(bet.id) { if (it.marketId.isEmpty() || it.outcomeId.isEmpty()) it.copy(marketId = found.first, outcomeId = found.second) else it }
-        return found
+    private fun later(bet: TrackedBet, afterMs: Long) {
+        nextTry[bet.id] = clock() + afterMs
+    }
+
+    private sealed interface Lookup {
+        data class Found(val game: GameScore) : Lookup
+        data object NotFound : Lookup
+        data object Unreachable : Lookup
+    }
+
+    /**
+     * The bet's game in its league's scoreboard for its Eastern date (and the days either side, for
+     * a late listing). A bet with no league (imported from an old ✓ mark) is looked for in every
+     * league the feeds cover.
+     */
+    private suspend fun findGame(bet: TrackedBet): Lookup {
+        val leagues = bet.league.trim().uppercase().takeIf { it.isNotEmpty() }?.let { l -> listOf(l).filter(scores::covers) } ?: ALL_LEAGUES
+        if (leagues.isEmpty()) return Lookup.NotFound
+        val day = FreeScores.etDate(bet.startsTs)
+        var readAny = false
+        for (date in listOf(day, day.minusDays(1), day.plusDays(1))) {
+            for (league in leagues) {
+                val games = scores.games(league, date) ?: continue
+                readAny = true
+                BetGrader.gameOf(bet, games)?.let { return Lookup.Found(it) }
+            }
+            // The game's own day answered and it isn't there: the next days only for a late listing.
+            if (!readAny) return Lookup.Unreachable
+        }
+        return Lookup.NotFound
     }
 
     companion object {
+        /** Settled from Novig's catalog (v0.15.6's way; kept so old files read the same). */
         const val BY_NOVIG = "novig"
+
+        /** Settled from the game's final score or box score. */
+        const val BY_SCORES = "scores"
+
+        /** Tapped in the Tracker. */
         const val BY_YOU = "you"
 
-        /** Asked about only once the game is at least this old (most games are decided by then or soon after). */
+        /** Looked at only once the game is at least this old. */
         const val AFTER_START_MS = 60 * 60_000L
 
-        /** An undecided bet is asked about again after this. */
+        /** A game not over yet is looked at again after this. */
         const val RETRY_MS = 30 * 60_000L
 
-        /** A game this old that Novig still can't settle for us... */
-        const val LONG_OVER_MS = 12 * 60 * 60_000L
+        /** A bet that can't be graded yet (missing player line, postponed game, unreadable market). */
+        const val RETRY_UNGRADABLE_MS = 6 * 60 * 60_000L
 
-        /** ...is asked about this rarely. */
-        const val RETRY_LONG_OVER_MS = 6 * 60 * 60_000L
-
-        /** Bets older than this are left to a tap: Novig's catalog doesn't keep games forever. */
+        /** Bets older than this are left to a tap. */
         const val GIVE_UP_MS = 30L * 24 * 60 * 60_000L
 
-        /** Novig's public routes allow short bursts only (NOVIG_API.md §5.1). */
-        const val GAP_MS = 400L
+        /** Bets per pass at most; the rest go next pass. */
+        const val MAX_PER_RUN = 200
 
-        /** Reads per pass at most (~40 s at [GAP_MS]); the rest go next pass. */
-        const val MAX_PER_RUN = 80
-
-        /** Novig's outcome status as a result: WIN, LOSS, PUSH, or a fair-market-value payout ("0.47"). Null: undecided. */
-        fun resultOf(status: String): Pair<BetStatus, Double?>? = when (status.trim().uppercase()) {
-            "WIN", "WON" -> BetStatus.WON to null
-            "LOSS", "LOSE", "LOST" -> BetStatus.LOST to null
-            "PUSH" -> BetStatus.PUSH to null
-            "TBD", "" -> null
-            else -> status.trim().toDoubleOrNull()?.takeIf { it in 0.0..1.0 }?.let { BetStatus.FMV to it }
-        }
+        /** Where a bet with no league is looked for, most likely first. */
+        val ALL_LEAGUES = listOf("NFL", "NCAAF", "MLB", "WNBA", "NBA", "NHL", "NCAAB")
     }
 }
