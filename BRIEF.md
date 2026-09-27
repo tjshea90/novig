@@ -298,6 +298,9 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   below), both sign with the same committed keystore, and both share one versionCode/versionName (read from
   `app/build.gradle.kts`). BetMGM's prices ride in the PropLine / The Odds API calls that fetch the fair line
   (no request just for BetMGM) and never price their own fair line. Each app scans only its own book.
+  **DORMANT since 2026-09-27 (Tj):** every task, version and Release is Vigilant (Novig) only unless Tj
+  names Vigilant MGM; `mgm/` is frozen at v0.17.0 and only in the build with `-Pmgm` (CLAUDE.md "Vigilant
+  MGM is dormant").
 
 - **Novig data comes from Novig's official v3 API. Read
   [`NOVIG_API.md`](NOVIG_API.md) before touching any Novig client code.**

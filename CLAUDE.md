@@ -24,6 +24,25 @@ modules `engine` / `data` / `app`, built and released by GitHub Actions. Do not
 treat `BRIEF.md`'s remaining TBD sections as settled just because they're
 written down; they're marked TBD on purpose.
 
+## Vigilant MGM is dormant — every request is for Vigilant (Novig) unless Tj names MGM
+
+**Standing instruction from Tj (2026-09-27, verbatim):** "from now on, everything in this repo and anything I
+ask you to do will always be for the regular vigilant app for novig, unless I explicitly request something for
+novig mgm. Novig mgm should be dormant and no changes made at all unless I ask for it. All future work and
+versions and GitHub releases will be for regular vigilant for novig only unless I say otherwise."
+
+What that means in practice:
+- **Every task, version and Release is Vigilant's** (`app`, `com.tjshea.vigilant`). Never read a request as
+  covering Vigilant MGM unless Tj names it.
+- **`mgm/` is frozen at v0.17.0** (its last APK is on that Release). Don't edit anything under `mgm/`. The
+  module isn't in the build at all unless you pass `-Pmgm` (`settings.gradle.kts`), so `./gradlew test`,
+  CI, `ship.sh` and `release.yml` build, test and publish Vigilant alone.
+- **The shared code stays shared.** `app`'s sources still carry `AppBook` switches and `MgmAppTest` still runs
+  in `app`'s suite: they cost nothing and keep a revival cheap. Don't add MGM work to keep them current;
+  a new Vigilant feature doesn't need an MGM variant.
+- **To revive it** (only when Tj asks): build with `-Pmgm`, add `mgm` back to `release.yml`'s build and
+  signature check, and re-read RESEARCH.md §25.
+
 ## FIRST ACTION OF EVERY SESSION — install the hooks, don't assume they exist
 
 This account runs several repos side by side under one Claude Code
@@ -293,13 +312,13 @@ unless Tj asks).
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV tab
   (`FeedScreen` "Starts within" row) or in Settings › Scanner; display only, scans unchanged (`StartsWithinTest`).
-- **Vigilant MGM (v0.17.0+, RESEARCH.md §25):** the second app, module `mgm` (`com.tjshea.vigilant.betmgm`),
+- **Vigilant MGM (v0.17.0 only; DORMANT since 2026-09-27, see "Vigilant MGM is dormant" above; RESEARCH.md §25):** the second app, module `mgm` (`com.tjshea.vigilant.betmgm`),
   compiles `app`'s own sources with `BuildConfig.BOOK = "betmgm"`; `app/AppBook` is the one switch (names, links,
   Novig-only parts off). Data side: `data/book/` (`Sportsbook`, `BookBoard`, `SportsbookScanner` behind
   `scanner/OddsScanner`, `BetMgmLinks`), `PropLineClient(relayNovig, bookIds)`. Its screens are tested in `app`
   with the book switched (`MgmAppTest`, `SampleMgm`); `mgm/src/test` checks the real build (`MgmBuildTest`).
   A sweep covers both apps: anything touching a shared screen must read the same in Vigilant.
-- **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest :mgm:testDebugUnitTest`
+- **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
   `VIGILANT_LIVE=1 ... --tests '*LiveNovigSmokeTest'` re-verifies matching against
