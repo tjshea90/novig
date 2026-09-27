@@ -69,19 +69,21 @@ class FloatingWidgetTest {
     }
 
     @Test
-    fun `pulling the bottom-right corner out enlarges the window, and it's remembered`() {
+    fun `pulling the bottom-left corner out enlarges the window, pushing it in shrinks it, and it's remembered`() {
         val root = shown()
-        val start = widget.rectForTest()
-        val x = start.w - 5f
+        val start = widget.rectForTest() // flush with the screen's right edge, so grow to the left
+        val x = 5f
         val y = start.h - 5f
         touch(root, MotionEvent.ACTION_DOWN, x, y)
-        touch(root, MotionEvent.ACTION_MOVE, x - 30f, y - 20f) // raw = local here: in by 30, 20
-        touch(root, MotionEvent.ACTION_MOVE, x + 30f, y + 40f) // then out by 30, 40
-        touch(root, MotionEvent.ACTION_UP, x + 30f, y + 40f)
+        touch(root, MotionEvent.ACTION_MOVE, x + 30f, y - 20f) // in by 30, 20: smaller
+        assertEquals(start.w - 30, widget.rectForTest().w)
+        assertEquals(start.h - 20, widget.rectForTest().h)
+        touch(root, MotionEvent.ACTION_MOVE, x - 30f, y + 40f) // out by 30, 40: bigger
+        touch(root, MotionEvent.ACTION_UP, x - 30f, y + 40f)
         val r = widget.rectForTest()
         assertEquals(start.w + 30, r.w)
         assertEquals(start.h + 40, r.h)
-        assertEquals(start.x, r.x)
+        assertEquals(start.x - 30, r.x) // the right edge stayed put
         assertEquals(start.y, r.y)
         // Shown again later: same size.
         widget.hide()
@@ -106,7 +108,7 @@ class FloatingWidgetTest {
     }
 
     @Test
-    fun `two fingers spread on the list enlarge the window`() {
+    fun `two fingers pinched on the list shrink the window`() {
         val root = shown()
         val start = widget.rectForTest()
         val cy = start.h / 2f
@@ -117,11 +119,11 @@ class FloatingWidgetTest {
         }
         touch(root, MotionEvent.ACTION_DOWN, start.w / 2f - 50f, cy)
         root.dispatchTouchEvent(two(MotionEvent.ACTION_POINTER_DOWN or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT), 50f))
-        root.dispatchTouchEvent(two(MotionEvent.ACTION_MOVE, 60f)) // 100 → 120 apart: 1.2x
-        root.dispatchTouchEvent(two(MotionEvent.ACTION_POINTER_UP or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT), 60f))
-        touch(root, MotionEvent.ACTION_UP, start.w / 2f - 60f, cy)
+        root.dispatchTouchEvent(two(MotionEvent.ACTION_MOVE, 40f)) // 100 → 80 apart: 0.8x
+        root.dispatchTouchEvent(two(MotionEvent.ACTION_POINTER_UP or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT), 40f))
+        touch(root, MotionEvent.ACTION_UP, start.w / 2f - 40f, cy)
         val r = widget.rectForTest()
-        assertEquals((start.w * 1.2f).toInt().toFloat(), r.w.toFloat(), 2f)
-        assertEquals((start.h * 1.2f).toInt().toFloat(), r.h.toFloat(), 2f)
+        assertEquals(start.w * 0.8f, r.w.toFloat(), 2f)
+        assertEquals(start.h * 0.8f, r.h.toFloat(), 2f)
     }
 }
