@@ -474,8 +474,12 @@ class CnoFeed(
         const val AGREE_TOP = 10
         const val AGREE_TOP_ONLY_AGREED = 20
 
-        /** …re-reading each one's books after this long (a bet's consensus moves slowly)… */
-        const val AGREE_TTL_MS = 10 * 60_000L
+        /**
+         * …re-reading each one's books after this long: under the 5 minutes a book page may be
+         * compared at all ([com.tjshea.vigilant.data.scanner.Freshness], RESEARCH.md §24), with a minute
+         * to spare for a slow read…
+         */
+        const val AGREE_TTL_MS = 4 * 60_000L
 
         /** …a failed one after this long… */
         const val AGREE_RETRY_MS = 2 * 60_000L

@@ -101,7 +101,7 @@ fun MiniFeed(
                     val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
                     val item = items[i]
                     androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
-                    MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), item.cno?.row?.let { state.priceReadAtMs(it, now) })
+                    MiniBooks(item, state.booksAt(item.cno?.row?.key, now), "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), item.cno?.row?.let { state.priceReadAtMs(it, now) })
                 } else if (items.isEmpty()) {
                     Text(
                         emptyText(state, now = now),
@@ -372,6 +372,9 @@ internal fun emptyText(state: UiState, floating: Boolean = false, now: Long = Sy
         state.status.scanning && MiniWindow.showsVigilant(state.settings) -> "Scanning… bets show here as they're found"
         heldBack > 0 -> "No bets the books agree on yet · $heldBack held back" +
             state.cnoBeingChecked(now).let { if (it > 0) ", $it being checked" else "" }
+        // CNO's EVs rest on other books' prices: too old, and none are offered (RESEARCH.md §24).
+        MiniWindow.showsCno(state.settings) && state.cnoTooOld(now) && !state.cno.refreshing ->
+            "CrazyNinjaOdds' odds are over ${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} min old: hidden until it updates"
         !MiniWindow.showsVigilant(state.settings) -> when {
             cno.refreshing -> "Reading CrazyNinjaOdds…"
             cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now"

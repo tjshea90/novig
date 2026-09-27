@@ -21,6 +21,7 @@ import com.tjshea.vigilant.data.cno.CnoState
 import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.cno.CnoWatch
 import com.tjshea.vigilant.data.cno.TapLink
+import com.tjshea.vigilant.data.scanner.Freshness
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
@@ -170,7 +171,23 @@ data class UiState(
      * nothing was read for this link yet.
      */
     fun cnoPicks(now: Long): CnoScreened? =
-        cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
+        cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl && !cnoTooOld(now) }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
+
+    /**
+     * CNO's own odds (its EVs come from other books' prices) are over [Freshness.MAX_QUOTE_AGE_MS]
+     * old at [now]: none of its bets are offered until it updates (RESEARCH.md §24).
+     */
+    fun cnoTooOld(now: Long): Boolean = cno.snapshot?.let { now - it.dataAtMs > Freshness.MAX_QUOTE_AGE_MS } ?: false
+
+    /**
+     * A bet's books as shown and compared: a CNO game page read over [Freshness.MAX_QUOTE_AGE_MS]
+     * ago isn't (RESEARCH.md §24): it reads as needing a re-read.
+     */
+    fun booksAt(rowKey: String?, now: Long): com.tjshea.vigilant.data.cno.CnoBooksState? = books[rowKey]?.let { st ->
+        val view = st.view ?: return@let st
+        if (now - view.fetchedAtMs <= Freshness.MAX_QUOTE_AGE_MS) st
+        else st.copy(view = null, error = st.error ?: "These books' odds are over ${Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes old: open the books again to re-read them")
+    }
 
     /**
      * CNO's rows whose players' teams are read from ESPN: none unless CNO's scanner is on (the widget
@@ -208,7 +225,7 @@ data class UiState(
     /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
     fun cnoAgrees(pick: CnoPick, now: Long = System.currentTimeMillis()): Boolean {
         if (!cnoReadsBooks) return false
-        val view = books[pick.row.key]?.view ?: return false
+        val view = booksAt(pick.row.key, now)?.view ?: return false
         val snap = cno.snapshot ?: return false
         // Judged at the newest Novig price: the live one when it's newer than the list.
         val live = livePrice(pick.row, now)?.takeIf { it.atMs > snap.fetchedAtMs }

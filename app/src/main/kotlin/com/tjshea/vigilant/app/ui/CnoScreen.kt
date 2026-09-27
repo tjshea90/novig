@@ -253,6 +253,13 @@ fun CnoScreen(
                                 "Its +EV list for your view appears here in a few seconds, and stays current while this tab " +
                                     "or a widget is on screen (nothing is read once you close them).",
                             )
+                            // CNO's EVs rest on other books' prices: past a few minutes none are offered (RESEARCH.md §24).
+                            snap != null && state.cnoTooOld(now) -> EmptyState(
+                                "CrazyNinjaOdds' odds are too old",
+                                "Its odds are ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} old (over " +
+                                    "${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes), so its bets are hidden: they " +
+                                    "could show +EV that isn't there any more. They come back as soon as CNO updates.",
+                            )
                             screened != null && picks.isEmpty() -> EmptyState(
                                 if (state.settings.cnoOnlyAgreed && candidates.isNotEmpty()) "No bets the books agree on yet" else "No +EV bets pass right now",
                                 "CNO listed ${snap?.rows?.size ?: 0} for your view" + hiddenText(screened).let { if (it.isEmpty()) "" else "; $it" } +
@@ -281,7 +288,7 @@ fun CnoScreen(
                         // At Novig's price now, when it was read (RESEARCH.md §20.3).
                         val shown = state.livePick(pick, now)
                         CnoCard(
-                            shown, snap, state.settings, state.books[pick.row.key], now,
+                            shown, snap, state.settings, state.booksAt(pick.row.key, now), now,
                             listedOdds = pick.row.odds.takeIf { it != shown.row.odds },
                             priceAtMs = state.priceReadAtMs(pick.row, now) ?: snap.fetchedAtMs,
                             live = state.livePrice(pick.row, now) != null,
@@ -315,7 +322,7 @@ fun CnoScreen(
         // At Novig's price now, when it was read.
         val live = state.livePick(listed, now)
         CnoSheet(
-            live, snap, state.settings, state.cnoUrl, state.books[live.row.key],
+            live, snap, state.settings, state.cnoUrl, state.booksAt(live.row.key, now),
             listedOdds = listed.row.odds.takeIf { it != live.row.odds },
             liveAtMs = state.livePrice(listed.row, now)?.atMs,
             onLoadBooks = onLoadBooks,

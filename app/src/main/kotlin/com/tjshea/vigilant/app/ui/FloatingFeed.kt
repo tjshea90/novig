@@ -192,7 +192,7 @@ fun FloatingFeed(
                         val item = items[booksIndex]
                         LaunchedEffect(item.key) { item.cno?.let { actions.onLoadBooks(it.row) } }
                         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                            MiniBooks(item, state.books[item.cno?.row?.key], "${booksIndex + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), item.cno?.row?.let { state.priceReadAtMs(it, now) })
+                            MiniBooks(item, state.booksAt(item.cno?.row?.key, now), "${booksIndex + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), item.cno?.row?.let { state.priceReadAtMs(it, now) })
                         }
                     }
                     items.isEmpty() -> Text(
