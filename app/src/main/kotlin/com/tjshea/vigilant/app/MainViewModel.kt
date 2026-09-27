@@ -614,14 +614,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * The widget's switch (Tj, 2026-09-27: "an option to also use the regular scan in addition to
-     * cno and put all the results in the widget together"): CNO alone, or CNO and Vigilant's own
-     * scan together (Both). Switching the scan on starts one when the last is missing or old.
-     */
-    fun setBothScanners(both: Boolean) =
-        setScanner(if (both) com.tjshea.vigilant.data.scanner.ScannerMode.BOTH else com.tjshea.vigilant.data.scanner.ScannerMode.CNO)
-
-    /**
      * The widget's scanner switch: CNO only, Both, or Vigilant only (Tj, 2026-09-27). Switching
      * Vigilant's scan on starts one when the last is missing or old.
      */
