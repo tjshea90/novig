@@ -2172,3 +2172,8 @@ Is this still going
 ```
 Be very careful not to break or disrupt anything in this app, but make it also do the same exact functions to find positive EV on betmgm. It should do exactly what the app already does for novig, but at the ability to do the same for betmgm. Do not scan for both at the same time unless this can be done without wasting too much api usage. If needed or if smart, make this a totally separate app for the betmgm scanner so as not to disturb novig, and copy the logic you already built from vigilant
 ```
+
+## 2026-09-27T21:17:38Z
+```
+for the regular version of the NoVig Vigilant app. Make it so I can add a filter to only show games that start within the next 24 hours or 12 hours or 48 hours.
+```
