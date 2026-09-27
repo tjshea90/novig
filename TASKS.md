@@ -1870,10 +1870,20 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       from either side hides both (`MiniWindowTest` "marking a bet both scanners list placed…",
       `PlacedBetsTest` aliases); Settings › Mini window "Vigilant's scan again while the widget is
       open: Off/5/10/15/30 min" (`WidgetRescanTest`, `settingsOfferVigilantsScanAgainWhileTheWidgetIsOpen`).
-- [ ] L3 CNO under load: measure CNO under rapid refreshing (latency, errors, compression) from
+- [x] L3 CNO under load: measure CNO under rapid refreshing (latency, errors, compression) from
       here; build what helps (list and taps independent of CNO's speed; Novig's own live price for
       listed CNO bets so a slow CNO doesn't leave stale prices); write up DNS / VPN / relay /
       proxy findings with costs in RESEARCH.md §20.3.
+      Done: `LiveCnoBurstTest` (VIGILANT_BURST=1): 61 reads in 60 s, 0 errors, 0 refusals, p50
+      258 ms, uncompressed ~30 KB each: no limit to get around, so no proxies/VPN/relay (§20.3).
+      Built `NovigLive`: the 10 best listed CNO bets on Novig priced from Novig's own book every
+      15 s while on screen, CNO reads re-priced without a request, EV = CNO's fair vs Novig now,
+      "was +117" / orange EV when it moved (`NovigLiveTest` 4, `MiniWindowTest` "CNO bets show
+      Novig's price now…", "the green check judges Novig's price now…", `ScreenshotTest.
+      theWidgetShowsNovigsPriceNowAndWhatCnoHad`, `cnoCardShowsNovigsPriceNowAndWhatCnoHad`,
+      `settingsHaveTheNovigPriceNowSwitch`); live: 10 of 10 prices identical to CNO's Novig price.
+      Also: the bet finder is paced (≥350 ms) and honors Novig's 429 Retry-After, and "couldn't
+      look" (Novig busy) is no longer reported as "only the game" (`NovigBetFinderTest` 10).
 - [ ] L4 Tests, full floor, ship, release, record, send link.
 
 ## Tj's request, 2026-09-27 (mid-L3) — live +EV bets, fast (next version, after L4 ships)
