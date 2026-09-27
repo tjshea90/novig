@@ -215,7 +215,7 @@ class CnoClient(
         }
     }
 
-    private fun unreachable(e: IOException) = CnoException("Couldn't reach CrazyNinjaOdds (${e.message ?: "network error"})", cause = e)
+    private fun unreachable(e: IOException) = CnoException("Couldn't reach CrazyNinjaOdds (${why(e)})", cause = e)
 
     private fun check(response: HttpText) {
         if (response.isSuccessful) return
@@ -236,6 +236,21 @@ class CnoClient(
     }
 
     companion object {
+        /**
+         * A network failure in plain words (Tj, 2026-09-27: "sometimes it says unable to resolve
+         * cno sometimes it says timeout"): which of the phone's network, its DNS or CNO itself
+         * is the trouble.
+         */
+        fun why(e: IOException): String = when (e) {
+            is java.net.UnknownHostException -> "the phone couldn't look up its address: no signal, or a VPN reconnecting"
+            is java.net.SocketTimeoutException -> "it didn't answer in time"
+            is java.net.ConnectException -> "no connection to it"
+            is javax.net.ssl.SSLException -> "secure connection failed: ${e.message ?: "TLS error"}"
+            else -> when {
+                e.message.orEmpty().contains("timeout", ignoreCase = true) -> "it didn't answer in time"
+                else -> e.message ?: "network error"
+            }
+        }
         /** A phone browser's, so CNO serves its normal page; "Vigilant" at the end says who's asking. */
         const val USER_AGENT = "Mozilla/5.0 (Linux; Android 16; moto g) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36 Vigilant"
 

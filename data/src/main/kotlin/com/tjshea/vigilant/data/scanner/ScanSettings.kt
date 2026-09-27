@@ -151,6 +151,13 @@ data class ScanSettings(
     val cnoCheckBooks: Boolean = true,
     /** Player bets show the player's team ("D. Schultz (HOU)"), from ESPN's rosters. */
     val cnoPlayerTeams: Boolean = true,
+    /**
+     * CNO's list shows only green-check bets (Tj, 2026-09-27: "only include bets where multiple
+     * books agree … and where both sides of the bet have odds at different sports books"): 3+
+     * other books price both sides and 3+ of them alone say it's +EV ([com.tjshea.vigilant.data.cno.CnoBooks]).
+     * Bets whose books aren't read yet are held back until they are. Implies reading the books.
+     */
+    val cnoOnlyAgreed: Boolean = false,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {

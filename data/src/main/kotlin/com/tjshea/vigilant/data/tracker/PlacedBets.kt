@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 /**
  * A bet Tj marked "placed" in the widget or the CNO tab (Tj, 2026-09-26: "so I don't place them
- * twice"). It's hidden from both lists from then on, through every refresh and restart, until the
- * game is long over.
+ * twice"), or removed without betting it ([hidden]). It's hidden from both lists from then on,
+ * through every refresh and restart, until the game is long over.
  */
 @Serializable
 data class PlacedBet(
@@ -23,6 +23,11 @@ data class PlacedBet(
     val odds: String = "",
     val placedAtMs: Long,
     val startsAtMs: Long? = null,
+    /**
+     * Removed with the widget's ✕, not bet (Tj, 2026-09-27: "remove the bet from the list even if
+     * I didn't bet it"): hidden the same way, but it never counts as a bet placed at another line.
+     */
+    val hidden: Boolean = false,
 )
 
 @Serializable
