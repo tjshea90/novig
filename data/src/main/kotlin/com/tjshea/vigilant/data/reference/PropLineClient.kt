@@ -157,6 +157,9 @@ class PropLineClient(
             "underdog", "prizepicks", "sleeper", "dabble", "parlayplay",
         )
 
+        /** Whether PropLine carries [book] (The Odds API's name) as a sportsbook that can price a fair line. */
+        fun carries(book: String): Boolean = (TO_PROPLINE[book] ?: book).let { it in KNOWN && it !in EXCLUDED }
+
         /** PropLine books for the reference books picked in Settings (The Odds API's names). */
         fun books(referenceBooks: List<String>): List<String> =
             referenceBooks.map { TO_PROPLINE[it] ?: it }.filter { it !in EXCLUDED && it in KNOWN }.distinct()

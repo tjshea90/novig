@@ -6,6 +6,7 @@ import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
+import com.tjshea.vigilant.data.scanner.Planner
 import com.tjshea.vigilant.data.scanner.PropStats
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.delay
@@ -53,6 +54,40 @@ class TheOddsApiClient(
     override val metered = true
 
     override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMinutes.coerceAtLeast(0) * 60_000L
+
+    /**
+     * PropLine carries the same sportsbooks for 1 of 1,000 daily requests per league; this costs 3 of
+     * 500 monthly credits. So with a PropLine key this is PropLine's fallback (RESEARCH.md §23).
+     */
+    override val fallbackFor: String get() = PropLineClient.ID
+
+    /**
+     * Worth credits only when PropLine didn't answer [league] this scan, when a book picked as sharp is
+     * one only this feed carries, or when Novig lists games PropLine's board lacks and this feed's free
+     * game list has at least one of them.
+     */
+    override suspend fun needed(league: League, settings: ScanSettings, context: ScanContext): Boolean {
+        if (league.novigName !in context.firstAnswered) return true
+        if (settings.referenceBooks.any { it in settings.sharpBooks && !PropLineClient.carries(it) }) return true
+        val horizon = context.now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
+        val missing = context.novigEvents.filter { e ->
+            e.league == league.novigName && e.startsTs <= horizon &&
+                context.covered[e.eventId].orEmpty().none { it in GAME_LINES }
+        }
+        if (missing.isEmpty()) return false
+        val listed = listed(league.oddsApiSportKey, horizon)
+        return Planner.matchEvents(missing, listOf(RefSnapshot(league.oddsApiSportKey, listed, context.now, provider = ID)))
+            .any { it.refEvent != null }
+    }
+
+    private val lists = Mutex()
+    private val listCache = HashMap<String, Pair<Long, List<RefEvent>>>()
+
+    /** [events] for [needed]'s check, re-used for a few minutes (free either way, but each call waits its turn). */
+    private suspend fun listed(sportKey: String, startsBeforeMs: Long): List<RefEvent> = lists.withLock {
+        listCache[sportKey]?.takeIf { clock() - it.first < LIST_REUSE_MS }?.let { return it.second }
+        events(sportKey, startsBeforeMs + 86_400_000L).value.also { listCache[sportKey] = clock() to it }
+    }
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val markets = marketsFor(settings.families)
@@ -184,6 +219,10 @@ class TheOddsApiClient(
     companion object {
         const val ID = "oddsapi"
         val ALL_MARKETS = listOf("h2h", "spreads", "totals")
+
+        /** What a PropLine board covers for a game ([RefBookMarket.coverage]): its full-game lines. */
+        private val GAME_LINES = setOf("MONEYLINE:0", "SPREAD:0", "TOTAL:0")
+        private const val LIST_REUSE_MS = 5 * 60_000L
         private val FAMILY_MARKETS = mapOf(MarketFamily.MONEYLINE to "h2h", MarketFamily.SPREAD to "spreads", MarketFamily.TOTAL to "totals")
 
         /** The main-line markets a sport refresh buys: one credit each. Alt markets come from elsewhere. */
