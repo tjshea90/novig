@@ -200,17 +200,22 @@ class NovigBetFinder(
         ).split(' ').filter { it.isNotEmpty() }.toSet()
 
         /**
-         * Whether a Novig market type ("RECEIVING_YARDS", "PITCHER_STRIKEOUTS", "SPREAD_1H") fits
-         * CNO's market words: every word of the type is in CNO's name (by its first five letters,
-         * so PITCHER fits Pitching), and a half is only a half.
+         * Whether a Novig market type ("RECEIVING_YARDS", "PITCHER_STRIKEOUTS", "SPREAD_1H") is
+         * CNO's market: the same words both ways (by their first five letters, so PITCHER is
+         * Pitching), so "Rushing + Receiving Yards" is never plain "Rushing Yards", and a half is
+         * only ever a half.
          */
         fun typeFits(type: String, words: Set<String>): Boolean {
-            val parts = type.lowercase().split('_').filter { it.isNotEmpty() && it != "and" }
-            if (parts.isEmpty()) return false
-            val half = words.any { it == "1h" || it == "2h" }
-            if (half != parts.any { it == "1h" || it == "2h" }) return false
-            return parts.all { p -> words.any { w -> w == p || (p.length >= 5 && w.length >= 5 && w.take(5) == p.take(5)) || w.removeSuffix("s") == p.removeSuffix("s") } }
+            val parts = type.lowercase().split('_').filter { it.isNotEmpty() && it !in GENERIC }.toSet()
+            val cno = words.filter { it !in GENERIC }.toSet()
+            if (parts.isEmpty() || cno.isEmpty()) return false
+            fun same(a: String, b: String) = a == b || a.removeSuffix("s") == b.removeSuffix("s") ||
+                (a.length >= 5 && b.length >= 5 && a.take(5) == b.take(5))
+            return parts.all { p -> cno.any { same(it, p) } } && cno.all { w -> parts.any { same(w, it) } }
         }
+
+        /** Words that say nothing about which market it is. */
+        private val GENERIC = setOf("player", "and", "the")
 
         private fun norm(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
             .lowercase().replace("&", " and ").replace("+", " and ").replace(Regex("[^a-z0-9]+"), " ").trim()
