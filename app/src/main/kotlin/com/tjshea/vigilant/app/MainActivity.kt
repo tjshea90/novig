@@ -214,9 +214,9 @@ class MainActivity : ComponentActivity() {
      */
     private fun openBet(item: MiniWindow.Item) {
         val row = item.cno?.row
-        // Vigilant's own bets (a bet both scanners list included) carry their Novig outcome.
+        // Vigilant's own bets (a bet both scanners list included) carry their Novig outcome (BetMGM's ids in Vigilant MGM).
         if (item.outcomeId != null || row == null) {
-            launchNovig(MiniWindow.novigLink(item))
+            launchNovig(MiniWindow.betLink(item, vm.state.value.settings.bookState))
             return
         }
         widget.opening = item.key
@@ -230,9 +230,11 @@ class MainActivity : ComponentActivity() {
 
     /** A word when a tap couldn't open the bet slip itself (the bet opens silently when it could). */
     private fun tellHowItOpened(found: com.tjshea.vigilant.data.cno.TapLink.Link?, row: CnoRow) {
+        val book = AppBook.name
         val text = when {
-            found == null -> "Couldn't find this bet's link (CNO and Novig didn't answer). Opening Novig: look for ${row.bet}"
-            !found.exact -> "Opened the game in Novig: ${row.bet} is under ${row.market}"
+            found == null && AppBook.isNovig -> "Couldn't find this bet's link (CNO and Novig didn't answer). Opening Novig: look for ${row.bet}"
+            found == null -> "Couldn't find this bet's link (CNO didn't answer). Opening $book: look for ${row.bet}"
+            !found.exact -> "Opened the game in $book: ${row.bet} is under ${row.market}"
             else -> return
         }
         android.widget.Toast.makeText(applicationContext, text, android.widget.Toast.LENGTH_LONG).show()
@@ -248,7 +250,7 @@ class MainActivity : ComponentActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }.isSuccess
-        if (!opened) runCatching { startActivity(MiniWindow.novigIntent(this)) }
+        if (!opened) runCatching { startActivity(AppBook.homeIntent(this)) }
     }
 
     /**
@@ -398,7 +400,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun openNovig(link: String? = null) {
         floatOverNovig()
-        if (link != null) launchNovig(link) else runCatching { startActivity(MiniWindow.novigIntent(this)) }
+        if (link != null) launchNovig(link) else runCatching { startActivity(AppBook.homeIntent(this)) }
     }
 
     /** Before opening Novig: the widget over it, when the mini window setting is on. */

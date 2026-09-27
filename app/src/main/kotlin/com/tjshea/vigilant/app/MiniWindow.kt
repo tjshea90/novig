@@ -96,6 +96,8 @@ object MiniWindow {
         val movedFrom: String? = null,
         /** At Novig's price now it's under the minimum EV (it moved against Tj). */
         val evLow: Boolean = false,
+        /** Vigilant MGM's own bets: BetMGM's ids for the bet slip ([betLink]). */
+        val bookRef: com.tjshea.vigilant.data.book.BookRef? = null,
     ) {
         /** The same bet at any line, in this game and market. */
         val family: String get() = Picks.familyKey(event, market, title)
@@ -130,6 +132,10 @@ object MiniWindow {
      * RESEARCH.md §20). CNO bets get theirs from CNO or Novig's catalog ([MainViewModel.betLink]).
      */
     fun novigLink(item: Item): String? = item.outcomeId?.let { "novigapp://events/$it" }
+
+    /** A Vigilant bet's bet slip in the app's own book: [novigLink] for Novig, BetMGM's for a player in [state]. */
+    fun betLink(item: Item, state: String): String? =
+        if (AppBook.isNovig) novigLink(item) else item.outcomeId?.let { AppBook.betLink(it, item.bookRef, state) }
 
     /** Whether the mini window lists CNO's rows (both scanners, or CNO only). */
     fun showsCno(settings: ScanSettings): Boolean = settings.cnoOn
@@ -222,13 +228,15 @@ object MiniWindow {
             title = selection,
             subtitle = "$marketLabel · $eventName",
             price = com.tjshea.vigilant.app.ui.Format.american(q.cost),
-            available = depth?.takeIf { it.contracts > 0 }?.let { "$" + it.dollarCost.roundToInt() },
+            // What an exchange's book holds at +EV; a sportsbook's limit isn't published.
+            available = depth?.takeIf { AppBook.exchange && it.contracts > 0 }?.let { "$" + it.dollarCost.roundToInt() },
             old = priceIsOld(now),
             event = eventName,
             market = marketLabel,
             startsAtMs = event.startsTs,
             league = event.league,
             outcomeId = outcome.outcomeId,
+            bookRef = outcome.bookRef,
         )
     }
 
@@ -236,7 +244,7 @@ object MiniWindow {
         key = cnoKey(row),
         ev = ev,
         title = row.bet,
-        subtitle = "${row.market} · ${row.event}" + if (row.book != "Novig") " · ${row.book}" else "",
+        subtitle = "${row.market} · ${row.event}" + if (row.book != AppBook.name) " · ${row.book}" else "",
         price = american(row.odds),
         available = row.available?.let { "$" + it.roundToInt() },
         old = now - snap.dataAtMs > CNO_OLD_MS,
