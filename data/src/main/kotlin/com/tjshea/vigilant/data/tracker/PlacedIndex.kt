@@ -14,13 +14,20 @@ import kotlin.math.abs
  *  - its list key (`cno:<row>` or `<market>/<outcome>`), or a mark's alias for it;
  *  - Novig's outcome id (Vigilant's bets carry it; CNO's once its Novig link is known);
  *  - the same game, market, side and line, read with [BetGrader]'s rules, starting within
- *    [SAME_GAME_MS] of each other (so yesterday's game in the same series doesn't count).
+ *    [SAME_GAME_MS] of each other ([SAME_BASEBALL_GAME_MS] in baseball, where the feeds agree to the
+ *    minute and a doubleheader's second game is a different bet), so yesterday's game in the same
+ *    series doesn't count. With a start time missing on either side, only a mark from the last
+ *    [UNKNOWN_START_MS] counts.
  */
 class PlacedIndex private constructor(
     private val keys: Set<String>,
     private val outcomes: Set<String>,
-    private val identities: Map<String, List<Long?>>,
+    private val identities: Map<String, List<Mark>>,
+    private val now: Long,
 ) {
+    /** One placed or tracked bet's game, for the same-bet check. */
+    private class Mark(val startsTs: Long?, val placedAtMs: Long, val league: String)
+
     /** The games in [identities]: a listed bet's wording is read only when its game is one of these. */
     private val games: Set<String> = identities.keys.mapTo(HashSet()) { it.substringBefore('|') }
 
@@ -35,6 +42,7 @@ class PlacedIndex private constructor(
         market: String = "",
         selection: String = "",
         startsTs: Long? = null,
+        league: String = "",
     ): Boolean {
         if (isEmpty) return false
         if (key != null && key in keys) return true
@@ -43,14 +51,21 @@ class PlacedIndex private constructor(
         val game = gameKey(event) ?: return false
         if (game !in games) return false
         val id = pickKey(market, selection)?.let { "$game|$it" } ?: return false
-        val starts = identities[id] ?: return false
-        return starts.any { s -> s == null || startsTs == null || abs(s - startsTs) <= SAME_GAME_MS }
+        val marks = identities[id] ?: return false
+        return marks.any { m ->
+            val s = m.startsTs
+            when {
+                s == null || startsTs == null -> now - m.placedAtMs <= UNKNOWN_START_MS
+                isBaseball(league) || isBaseball(m.league) -> abs(s - startsTs) <= SAME_BASEBALL_GAME_MS
+                else -> abs(s - startsTs) <= SAME_GAME_MS
+            }
+        }
     }
 
     /** Whether Vigilant's own [o] is a bet Tj already has. */
     fun has(o: com.tjshea.vigilant.data.scanner.Opportunity): Boolean = has(
         key = o.key, outcomeId = o.outcome.outcomeId, event = o.event.description, market = o.marketLabel,
-        selection = o.selection, startsTs = o.event.startsTs,
+        selection = o.selection, startsTs = o.event.startsTs, league = o.event.league,
     )
 
     /** [list] without the bets Tj already has. */
@@ -58,35 +73,46 @@ class PlacedIndex private constructor(
         if (isEmpty) list else list.filterNot(::has)
 
     companion object {
-        /** Two listings of one bet start within this of each other (Novig's and CNO's times differ a little). */
+        /**
+         * Two listings of one bet start within this of each other: football feeds can disagree on a
+         * kickoff by hours (the matcher allows 36), but not by a day, which is the next game.
+         */
         const val SAME_GAME_MS = 12 * 60 * 60_000L
+
+        /** Baseball: the feeds agree to the minute, and a doubleheader's second game starts 3+ hours after the first. */
+        const val SAME_BASEBALL_GAME_MS = 2 * 60 * 60_000L
+
+        /** A mark with no start time to compare stands for the same bet only this long after it was placed. */
+        const val UNKNOWN_START_MS = 24 * 60 * 60_000L
+
+        private fun isBaseball(league: String) = league.equals("MLB", ignoreCase = true)
 
         /** Tracked bets on games that started longer ago than this can't be on any list. */
         private const val TRACKED_WINDOW_MS = 36 * 60 * 60_000L
 
-        val EMPTY = PlacedIndex(emptySet(), emptySet(), emptyMap())
+        val EMPTY = PlacedIndex(emptySet(), emptySet(), emptyMap(), 0L)
 
         fun of(placed: List<PlacedBet>, tracked: List<TrackedBet>, now: Long): PlacedIndex {
             val keys = HashSet<String>()
             val outcomes = HashSet<String>()
-            val identities = HashMap<String, MutableList<Long?>>()
-            fun add(id: String?, starts: Long?) {
-                if (id != null) identities.getOrPut(id) { ArrayList() } += starts
+            val identities = HashMap<String, MutableList<Mark>>()
+            fun add(id: String?, mark: Mark) {
+                if (id != null) identities.getOrPut(id) { ArrayList() } += mark
             }
             for (p in placed) {
                 keys += p.keys
                 p.outcomeId?.takeIf { it.isNotEmpty() }?.let { outcomes += it }
                 val (market, event) = if (p.event.isNotEmpty()) p.market to p.event else fromDetail(p.detail)
-                add(identity(event, market, p.title), p.startsAtMs)
+                add(identity(event, market, p.title), Mark(p.startsAtMs, p.placedAtMs, p.league))
             }
             for (b in tracked) {
                 if (now - b.startsTs > TRACKED_WINDOW_MS) continue
                 b.placedKey?.let { keys += it }
                 if (b.marketId.isNotEmpty() && b.outcomeId.isNotEmpty()) keys += "${b.marketId}/${b.outcomeId}"
                 b.outcomeId.takeIf { it.isNotEmpty() }?.let { outcomes += it }
-                add(identity(b.eventName, b.marketLabel, b.selection), b.startsTs)
+                add(identity(b.eventName, b.marketLabel, b.selection), Mark(b.startsTs, b.createdAtMs, b.league))
             }
-            return if (keys.isEmpty() && outcomes.isEmpty() && identities.isEmpty()) EMPTY else PlacedIndex(keys, outcomes, identities)
+            return if (keys.isEmpty() && outcomes.isEmpty() && identities.isEmpty()) EMPTY else PlacedIndex(keys, outcomes, identities, now)
         }
 
         /** A mark saved before v0.16.2 kept "Player Receptions · Houston Texans @ Indianapolis Colts[ · Book]". */
