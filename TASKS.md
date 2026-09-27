@@ -2035,7 +2035,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       Betfair/Smarkets/Matchbook, BetDEX, Pinnacle guest API, Kambi/Bovada public JSON). Measure live
       from here what can be measured: coverage (NFL/MLB/NCAAF/NBA/NHL/WNBA, props), books, latency,
       limits, terms. Write RESEARCH.md §22 with a ranked verdict.
-- [ ] P3 Build what the research says is worth it (free, legal, adds sharp books or speed) as a
+- [x] P3 Build what the research says is worth it (free, legal, adds sharp books or speed) as a
       reference source behind a Settings switch, with tests; say what was rejected and why.
       Design (RESEARCH §22.4), steps:
   - [x] P3a (data layer done + tested: ExchangeClientsTest PinnWire tests on a REAL fixture
@@ -2053,7 +2053,8 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         PropLine keys, no exchanges/DFS/novig; withdrawn (`last_seen_at` < market `last_update`)
         and suspended outcomes dropped; team totals via `team`. Settings `usePropLine`. Tests from a
         schema-shaped fixture (MockWebServer), quota headers -> meter.
-  - [ ] P3c App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
+  - [x] P3c (done: ScreenshotTest.settingsTakePinnWireAndPropLineKeys, theMetersShowWhatsLeftPerKey… (4 keyed
+        providers); full floor 511 tests green 2026-09-27 ~07:30Z) App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
         PropLine, source list/FeedScreen hints, SOURCE_ORDER, requestKey, maxFairAgeMs, planFor book
         filter for propline. Screenshot test for the Settings sources section.
 - [ ] P4 Full tests (CLAUDE.md protocol) over the whole app: engine, data (novig/reference/match/
