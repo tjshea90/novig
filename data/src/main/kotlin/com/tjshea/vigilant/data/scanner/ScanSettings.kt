@@ -184,6 +184,12 @@ data class ScanSettings(
      * so its bet-slip links need it ([com.tjshea.vigilant.data.book.BetMgmLinks]). Unused by Vigilant.
      */
     val bookState: String = "",
+    /**
+     * Every list (the +EV feed, CNO's list, the Games board, the widgets) shows only games starting
+     * within this many hours; 0 = any time (Tj, 2026-09-27: "only show games that start within the next
+     * 24 hours or 12 hours or 48 hours"). A display filter: what a scan reads is unchanged.
+     */
+    val startsWithinHours: Int = 0,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
@@ -243,6 +249,13 @@ data class ScanSettings(
     /** Whether a price (cost per $1 payout) is within [maxOdds]. */
     fun withinMaxOdds(cost: Double): Boolean = maxOdds <= 0 || cost >= 100.0 / (100.0 + maxOdds) - 1e-9
 
+    /**
+     * Whether a game starting at [startsMs] passes [startsWithinHours] at [now]. Games already under
+     * way pass (whether live bets show is [includeLive]'s call), and so does an unknown start.
+     */
+    fun startsInWindow(startsMs: Long?, now: Long): Boolean =
+        startsWithinHours <= 0 || startsMs == null || startsMs <= 0 || startsMs <= now + startsWithinHours * 3_600_000L
+
     val selectedLeagues: List<League> get() = Leagues.ALL.filter { it.novigName in leagues }
 
     /** How long The Odds API's game lines are re-used: the setting, never past [Freshness.MAX_REUSE_MS]. */
@@ -283,5 +296,8 @@ data class ScanSettings(
 
         /** [widgetRescanMinutes]' choices (0 = off). */
         val WIDGET_RESCAN_CHOICES = listOf(0, 5, 10, 15, 30)
+
+        /** [startsWithinHours]' choices (0 = any time). */
+        val STARTS_WITHIN_CHOICES = listOf(0, 12, 24, 48)
     }
 }

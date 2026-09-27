@@ -116,9 +116,11 @@ data class UiState(
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
      * (Tj, 2026-09-27: "The other sports books odds MUST be current or at most a few minutes old",
-     * RESEARCH.md §24). Every screen that offers Vigilant's bets shows this, not [feed].
+     * RESEARCH.md §24), and only games starting within [ScanSettings.startsWithinHours]. Every screen
+     * that offers Vigilant's bets shows this, not [feed].
      */
-    fun feedAt(now: Long): List<Opportunity> = feed.filterNot { it.fairIsOld(now) }
+    fun feedAt(now: Long): List<Opportunity> =
+        feed.filter { !it.fairIsOld(now) && settings.startsInWindow(it.event.startsTs, now) }
 
     /** [r]'s +EV feed under these settings, without the bets Tj already has (Tj, 2026-09-27). */
     fun feedOf(r: ScanResult?): List<Opportunity> = r?.let { placedIndex.visible(it.feed(settings)) } ?: emptyList()
@@ -219,9 +221,16 @@ data class UiState(
      */
     fun livePriceRows(now: Long): List<CnoRow> = cnoCandidates(now).map { it.row }
 
-    /** [cnoPicks] without the bets Tj placed or removed (✕): what the green-check lane reads. */
+    /**
+     * [cnoPicks] without the bets Tj placed or removed (✕), and only games starting within
+     * [ScanSettings.startsWithinHours]: what the green-check lane reads.
+     */
     fun cnoCandidates(now: Long): List<CnoPick> =
-        cnoPicks(now)?.picks?.filter { !hasCno(it.row) }.orEmpty()
+        cnoPicks(now)?.picks?.filter { settings.startsInWindow(it.row.startsAtMs, now) && !hasCno(it.row) }.orEmpty()
+
+    /** The Games board at [now]: only games starting within [ScanSettings.startsWithinHours]. */
+    fun gamesAt(now: Long): List<com.tjshea.vigilant.data.scanner.PricedGame> =
+        result?.games.orEmpty().filter { settings.startsInWindow(it.event.startsTs, now) }
 
     /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
     fun cnoAgrees(pick: CnoPick, now: Long = System.currentTimeMillis()): Boolean {
