@@ -68,7 +68,7 @@ class TheOddsApiClient(
      */
     override suspend fun needed(league: League, settings: ScanSettings, context: ScanContext): Boolean {
         if (league.novigName !in context.firstAnswered) return true
-        if (settings.referenceBooks.any { it in settings.sharpBooks && !PropLineClient.carries(it) }) return true
+        if (settings.referenceBooks.any { it in KNOWN_BOOKMAKERS && it in settings.sharpBooks && !PropLineClient.carries(it) }) return true
         val horizon = context.now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
         val missing = context.novigEvents.filter { e ->
             e.league == league.novigName && e.startsTs <= horizon &&
