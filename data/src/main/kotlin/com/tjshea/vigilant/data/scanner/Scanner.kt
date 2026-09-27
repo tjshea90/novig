@@ -113,7 +113,6 @@ class Scanner(
     private var books: Map<String, NovigBook> = emptyMap()
     private var pinned: Set<String> = emptySet()
 
-
     /** Each market's best EV on the last scan, to read the likeliest +EV lines first next time. */
     private var lastEv: Map<String, Double> = emptyMap()
 
