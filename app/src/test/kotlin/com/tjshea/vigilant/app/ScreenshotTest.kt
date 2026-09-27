@@ -919,6 +919,18 @@ class ScreenshotTest {
         assertEquals(10, picked?.widgetRescanMinutes)
     }
 
+    /** Tj, 2026-09-27: "on the regular vigilant scanner, make it also have a widget": offered with Vigilant's scan alone too. */
+    @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
+    @Test fun settingsOfferTheFloatingWidgetOnVigilantsScanAlone() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT))
+        screen { SettingsScreen(s, { t -> picked = t(s.settings) }) }
+        compose.onNodeWithText("Floating widget you can touch").assertExists().performClick()
+        assertEquals(true, picked?.floatingWidget)
+        compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
+        compose.onAllNodesWithText("CNO is read only", substring = true).assertCountEquals(0)
+    }
+
     /** Novig's price now for CNO's bets (RESEARCH.md §20.3): the widget and the CNO tab say what CNO had. */
     @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun theWidgetShowsNovigsPriceNowAndWhatCnoHad() {
