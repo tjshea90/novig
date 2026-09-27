@@ -262,6 +262,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val moved = runCatching { c.tracker.importPlaced(marks.bets) }.getOrDefault(0)
                 if (moved > 0) _toasts.tryEmit("Moved $moved earlier ✓ bet${if (moved == 1) "" else "s"} into the Tracker (at \$1 each: change it there)")
             }
+            // Results of games that ended while Vigilant was closed, then every 3 h in the background.
+            settleBets()
+            runCatching { SettleWorker.schedule(getApplication()) }
             c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets) } }
         }
         viewModelScope.launch {
@@ -710,6 +713,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val ok = runCatching { c.tracker.track(o, stake) }.getOrNull() != null
             _toasts.tryEmit(if (ok) "Tracked ${o.selection} · ${com.tjshea.vigilant.app.ui.Format.money(stake)}" else "Couldn't save the bet")
         }
+    }
+
+    /**
+     * Settles open bets whose games are over from Novig's results (the Tracker tab calls it when
+     * shown). Costs nothing when no bet is due; [BetSettler] runs one pass at a time.
+     */
+    fun settleBets() {
+        viewModelScope.launch {
+            val report = runCatching { withContext(Dispatchers.IO) { c.settler.run() } }.getOrNull() ?: return@launch
+            if (report.settled > 0) _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from Novig's results")
+        }
+    }
+
+    fun setStake(id: String, stake: Double) {
+        if (!(stake > 0.0) || stake > 1_000_000.0) return
+        viewModelScope.launch { if (runCatching { c.tracker.setStake(id, stake) }.isFailure) _toasts.tryEmit("Couldn't save") }
     }
 
     fun settleBet(id: String, status: BetStatus) {
