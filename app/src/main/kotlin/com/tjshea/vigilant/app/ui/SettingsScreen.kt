@@ -642,7 +642,7 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     val reach = if (games != null) {
         "about $perGame credits a game, so up to $games game${if (games == 1) "" else "s"} a scan"
     } else {
-        "one credit per prop type Novig lists for the game (up to 18 in football)"
+        "one credit per prop type ${AppBook.name} lists for the game (up to 18 in football)"
     }
     return "Props cost $reach, soonest games first, never more than ${s.bookPropCreditsPerScan} credits a scan. " +
         "A game's props are re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}, so scanning again sooner costs nothing for it " +
