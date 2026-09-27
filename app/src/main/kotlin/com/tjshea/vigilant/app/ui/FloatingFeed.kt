@@ -89,8 +89,8 @@ class FloatingActions(
     val onHidden: (MiniWindow.Item) -> Unit = {},
     val onUndoPlaced: (String) -> Unit = {},
     val onLoadBooks: (CnoRow) -> Unit = {},
-    /** The top bar's switch: true = CNO and Vigilant's own scan together (Both), false = CNO only. */
-    val onBoth: (Boolean) -> Unit = {},
+    /** The top bar's switch: which scanner the widget lists (Both, Vigilant only, CNO only). */
+    val onScanner: (com.tjshea.vigilant.data.scanner.ScannerMode) -> Unit = {},
 )
 
 /** Height of one bet in the floating widget: a comfortable touch target. */
@@ -175,7 +175,7 @@ fun FloatingFeed(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                ScannerSwitch(both = !cnoOnly, onClick = { actions.onBoth(cnoOnly) })
+                ScannerSwitch(state.settings.scanner, onPick = actions.onScanner)
                 if (items.isNotEmpty()) {
                     Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(start = 6.dp, end = 2.dp))
                 }
@@ -400,21 +400,29 @@ internal fun pageTarget(list: androidx.compose.foundation.lazy.LazyListState, up
 }
 
 /**
- * CNO alone, or CNO and Vigilant's own scan in one list (Tj, 2026-09-27: "an option to also use
- * the regular scan in addition to cno"). Named like the Scanner setting it flips (Both / CNO only).
+ * Which scanner the widget lists, flipped right there (Tj, 2026-09-27: "an option to also use the
+ * regular scan in addition to cno"; then "on the regular vigilant scanner, make it also have a
+ * widget"): each tap moves to the next of CNO only → Both → Vigilant only. Named like the Scanner
+ * setting it flips.
  */
 @Composable
-private fun ScannerSwitch(both: Boolean, onClick: () -> Unit) {
-    val description = if (both) "Showing CNO and Vigilant's scan. Tap for CNO only" else "Showing CNO only. Tap to add Vigilant's own scan"
+private fun ScannerSwitch(mode: com.tjshea.vigilant.data.scanner.ScannerMode, onPick: (com.tjshea.vigilant.data.scanner.ScannerMode) -> Unit) {
+    val next = nextScanner(mode)
+    val description = "Showing ${scannerWords(mode)}. Tap for ${scannerWords(next)}"
+    val both = mode == com.tjshea.vigilant.data.scanner.ScannerMode.BOTH
     Box(
-        Modifier.padding(start = 4.dp).height(32.dp).clickable(onClickLabel = description, onClick = onClick).semantics { contentDescription = description },
+        Modifier.padding(start = 4.dp).height(32.dp).clickable(onClickLabel = description) { onPick(next) }.semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            if (both) "Both" else "CNO only",
+            when (mode) {
+                com.tjshea.vigilant.data.scanner.ScannerMode.BOTH -> "Both"
+                com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT -> "Vigilant"
+                com.tjshea.vigilant.data.scanner.ScannerMode.CNO -> "CNO only"
+            },
             Modifier
                 .background(if (both) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, CircleShape)
-                .border(1.dp, if (both) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
+                .border(1.dp, if (mode != com.tjshea.vigilant.data.scanner.ScannerMode.CNO) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
                 .padding(horizontal = 8.dp, vertical = 2.dp),
             fontSize = 10.sp,
             lineHeight = 12.sp,
@@ -423,6 +431,19 @@ private fun ScannerSwitch(both: Boolean, onClick: () -> Unit) {
             maxLines = 1,
         )
     }
+}
+
+/** The widget switch's order: CNO only → Both → Vigilant only → CNO only. */
+internal fun nextScanner(mode: com.tjshea.vigilant.data.scanner.ScannerMode) = when (mode) {
+    com.tjshea.vigilant.data.scanner.ScannerMode.CNO -> com.tjshea.vigilant.data.scanner.ScannerMode.BOTH
+    com.tjshea.vigilant.data.scanner.ScannerMode.BOTH -> com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT
+    com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT -> com.tjshea.vigilant.data.scanner.ScannerMode.CNO
+}
+
+private fun scannerWords(mode: com.tjshea.vigilant.data.scanner.ScannerMode) = when (mode) {
+    com.tjshea.vigilant.data.scanner.ScannerMode.BOTH -> "CNO and Vigilant's scan"
+    com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT -> "Vigilant's scan only"
+    com.tjshea.vigilant.data.scanner.ScannerMode.CNO -> "CNO only"
 }
 
 @Composable

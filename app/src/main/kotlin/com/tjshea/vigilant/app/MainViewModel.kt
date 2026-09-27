@@ -618,10 +618,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * cno and put all the results in the widget together"): CNO alone, or CNO and Vigilant's own
      * scan together (Both). Switching the scan on starts one when the last is missing or old.
      */
-    fun setBothScanners(both: Boolean) {
+    fun setBothScanners(both: Boolean) =
+        setScanner(if (both) com.tjshea.vigilant.data.scanner.ScannerMode.BOTH else com.tjshea.vigilant.data.scanner.ScannerMode.CNO)
+
+    /**
+     * The widget's scanner switch: CNO only, Both, or Vigilant only (Tj, 2026-09-27). Switching
+     * Vigilant's scan on starts one when the last is missing or old.
+     */
+    fun setScanner(mode: com.tjshea.vigilant.data.scanner.ScannerMode) {
         viewModelScope.launch {
-            applySettings { it.copy(scanner = if (both) com.tjshea.vigilant.data.scanner.ScannerMode.BOTH else com.tjshea.vigilant.data.scanner.ScannerMode.CNO) }
-            if (!both) return@launch
+            applySettings { it.copy(scanner = mode) }
+            if (mode == com.tjshea.vigilant.data.scanner.ScannerMode.CNO) return@launch
             if (_state.value.settings.leagues.isEmpty()) {
                 _toasts.tryEmit("Pick leagues in Settings for Vigilant's scan")
             } else if (WidgetRescan.scanOnSwitch(_state.value.status.scannedAtMs, System.currentTimeMillis())) {

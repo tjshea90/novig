@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },
-                            onMiniWindow = { showWidget(moveBack = true); Unit }.takeIf { MiniWindow.supported(this) || state.settings.cnoOn },
+                            onMiniWindow = { showWidget(moveBack = true); Unit }.takeIf { MiniWindow.supported(this) || state.settings.floatingWidget },
                             onOpenInNovig = ::openInNovig,
                             openingBet = openingBet,
                         )
@@ -159,9 +159,12 @@ class MainActivity : ComponentActivity() {
      */
     private var overlayAllowed = false
 
-    /** The widget is the floating one: CNO on, the setting on, and Android's permission given. */
+    /**
+     * The widget is the floating one: the setting on and Android's permission given, for either
+     * scanner (Tj, 2026-09-27: "on the regular vigilant scanner, make it also have a widget").
+     */
     private fun useFloating(s: UiState): Boolean =
-        s.settings.cnoOn && s.settings.floatingWidget && overlayAllowed
+        s.settings.floatingWidget && overlayAllowed
 
     /** The floating widget's content: the app's state, and what its buttons and rows do. */
     @androidx.compose.runtime.Composable
@@ -186,7 +189,7 @@ class MainActivity : ComponentActivity() {
                     onHidden = { item -> vm.markHidden(item) },
                     onUndoPlaced = { key -> vm.unmarkPlaced(key) },
                     onLoadBooks = { row -> vm.loadBooks(row) },
-                    onBoth = { both -> vm.setBothScanners(both) },
+                    onScanner = { mode -> vm.setScanner(mode) },
                 ),
                 minimized = w.minimized,
                 opening = w.opening,
@@ -254,7 +257,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun showWidget(moveBack: Boolean): Boolean {
         val s = vm.state.value
-        if (s.settings.cnoOn && s.settings.floatingWidget) {
+        if (s.settings.floatingWidget) {
             overlayAllowed = FloatingWidget.allowed(this)
             if (overlayAllowed) {
                 if (widget.show()) {
