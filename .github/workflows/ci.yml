@@ -64,5 +64,4 @@ jobs:
           name: vigilant-debug
           path: |
             app/build/outputs/apk/debug/*.apk
-            mgm/build/outputs/apk/debug/*.apk
           if-no-files-found: error
