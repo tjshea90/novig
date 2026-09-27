@@ -297,7 +297,8 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
         val ids = leagueEvents.mapTo(HashSet()) { it.eventId }
         val current = bought.values.filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < REUSE_MS }
         val events = current.filter { it.ref.markets.isNotEmpty() }.map { it.ref }.distinctBy { it.id }
-        val novig = current.mapNotNull { it.novig }.distinctBy { it.id }
+        // Novig's own prices steer reads only while young: a game's props are re-used longer.
+        val novig = current.filter { now - it.atMs <= NOVIG_MAX_AGE_MS }.mapNotNull { it.novig }.distinctBy { it.id }
         val snapshot = RefSnapshot(sport, events, now, provider = ID, novig = novig)
         failure?.let { e ->
             val message = when (e) {
@@ -336,6 +337,9 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
     companion object {
         const val ID = "propline_props"
         const val REUSE_MS = 10 * 60_000L
+
+        /** Novig prices relayed with a game's props are passed on (to order Novig reads) only this long. */
+        const val NOVIG_MAX_AGE_MS = 3 * 60_000L
         const val MAX_GAMES_PER_SCAN = 12
         internal const val PREFIX = "pl:"
     }
