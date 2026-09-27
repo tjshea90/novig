@@ -357,7 +357,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         val pick = item.cno ?: return
         val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key)
-        // Novig's outcome, for settling it from Novig's catalog later (best effort; the settler retries).
+        // Novig's outcome, so Vigilant's own scans can follow its line to the close (best effort).
         viewModelScope.launch {
             val found = runCatching { withContext(Dispatchers.IO) { c.betFinder.find(pick.row) } }.getOrNull() as? com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet
             if (found?.marketId != null) runCatching { c.tracker.edit(bet.id) { it.copy(marketId = found.marketId!!, outcomeId = found.outcomeId) } }

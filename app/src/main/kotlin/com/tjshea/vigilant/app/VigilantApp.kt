@@ -36,6 +36,7 @@ import com.tjshea.vigilant.data.teams.PlayerTeams
 import com.tjshea.vigilant.data.teams.TeamsCache
 import com.tjshea.vigilant.data.tracker.BetRecheck
 import com.tjshea.vigilant.data.tracker.BetSettler
+import com.tjshea.vigilant.data.tracker.FreeScores
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.PlacedBets
 import com.tjshea.vigilant.data.tracker.PlacedBook
@@ -120,21 +121,11 @@ class AppContainer(app: Application) {
     val trackerImported = File(app.filesDir, "tracker_imported")
 
     /**
-     * Settles tracked bets from Novig's catalog (WIN / LOSS / PUSH / fair value): on app open, on
-     * the Tracker tab, and every 3 h in the background ([SettleWorker]). Reads only for open bets
-     * whose game started over an hour ago.
+     * Settles tracked bets from each game's final score (ESPN's free scoreboard and box scores, MLB's
+     * Stats API): on app open, on the Tracker tab, and every 3 h in the background ([SettleWorker]).
+     * Reads only for open bets whose game started over an hour ago, one scoreboard per league and day.
      */
-    val settler = BetSettler(
-        tracker,
-        market = { id -> novig.market(id) },
-        resolve = { b ->
-            val row = com.tjshea.vigilant.data.cno.CnoRow(
-                ev = 0.0, startsAtMs = b.startsTs, league = b.league, event = b.eventName, market = b.marketLabel,
-                bet = b.selection, odds = b.american ?: 100, book = b.book,
-            )
-            betFinder.findEnded(row)?.let { f -> f.marketId?.let { it to f.outcomeId } }
-        },
-    )
+    val settler = BetSettler(tracker, FreeScores(http, json))
 
     /**
      * The Tracker's "Check odds now": each open CNO bet's game page re-read through [cno] (its pace;

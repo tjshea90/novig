@@ -344,8 +344,8 @@ private fun BetCard(bet: TrackedBet, now: Long, onSettle: (String, BetStatus) ->
                 } else {
                     val name = if (bet.status == BetStatus.FMV) "Fair value" else bet.status.name.lowercase().replaceFirstChar { it.uppercase() }
                     AssistChip(onClick = { onSettle(bet.id, BetStatus.PENDING) }, label = { Text("$name · undo") })
-                    if (bet.settledBy == BetSettler.BY_NOVIG) {
-                        Text("settled by Novig", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (bet.settledBy == BetSettler.BY_SCORES || bet.settledBy == BetSettler.BY_NOVIG) {
+                        Text("from the final score", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
