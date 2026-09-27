@@ -31,7 +31,8 @@ class CreditEstimateTest {
     fun `the props estimate says how many games a scan's credits buy`() {
         val core = bookPropEstimate(ScanSettings(bookPropSet = BookPropSet.CORE, bookPropCreditsPerScan = 24, bookPropReuseMinutes = 60))
         assertTrue(core, core.contains("up to 6 games a scan"))
-        assertTrue(core, core.contains("re-used for 1h"))
+        // An hour is asked for, but props are never re-used past two minutes (RESEARCH.md §24).
+        assertTrue(core, core.contains("re-used for 2m"))
         assertTrue(bookPropEstimate(ScanSettings(bookPropCreditsPerScan = 0)).startsWith("No credits"))
         assertEquals("30m", minutesLabel(30))
         assertEquals("4h", minutesLabel(240))

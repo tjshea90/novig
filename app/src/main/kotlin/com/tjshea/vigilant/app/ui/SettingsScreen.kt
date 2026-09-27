@@ -348,7 +348,7 @@ fun SettingsScreen(
                 if (s.useOddsApi) {
                     KeyListEditor(ApiProvider.THE_ODDS_API, state.oddsApiKeys, keys, "Add an Odds API key")
                     Text("Re-use The Odds API between scans for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-                    ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, s.oddsApiReuseMinutes, { if (it == 0) "Every scan" else "${it}m" }) { v ->
+                    ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, (s.oddsApiReuseMs / 60_000L).toInt(), { if (it == 0) "Every scan" else "${it}m" }) { v ->
                         onUpdate { it.copy(oddsApiReuseMinutes = v) }
                     }
                     Hint(creditEstimate(s, backup = propLineFirst))
@@ -373,7 +373,7 @@ fun SettingsScreen(
                                 onUpdate { it.copy(bookPropCreditsPerScan = v) }
                             }
                             Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                            ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
+                            ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, (s.bookPropReuseMs / 60_000L).toInt(), ::minutesLabel) { v ->
                                 onUpdate { it.copy(bookPropReuseMinutes = v) }
                             }
                             Hint(bookPropEstimate(s, backup = propLineFirst))
@@ -583,11 +583,12 @@ fun creditEstimate(s: ScanSettings, backup: Boolean = false): String {
     val perScan = markets * s.leagues.size.coerceAtLeast(1)
     val base = "Game lines cost about $perScan credit${if (perScan == 1) "" else "s"} per refresh " +
         "(${s.leagues.size} league${if (s.leagues.size == 1) "" else "s"} × $markets market${if (markets == 1) "" else "s"})."
-    return if (s.oddsApiReuseMinutes == 0) {
+    val reuse = (s.oddsApiReuseMs / 60_000L).toInt()
+    return if (reuse == 0) {
         "$base Every scan refreshes it."
     } else {
-        val perHour = perScan * (60 / s.oddsApiReuseMinutes)
-        "$base Scanning as often as you like costs at most $perHour an hour."
+        val perHour = perScan * (60 / reuse)
+        "$base Scanning as often as you like costs at most $perHour an hour (odds are never re-used past ${minutesLabel(reuse)}: older ones aren't compared)."
     }
 }
 
@@ -595,7 +596,7 @@ fun creditEstimate(s: ScanSettings, backup: Boolean = false): String {
 fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     if (s.bookPropCreditsPerScan <= 0) return "No credits are set aside for props, so none are bought."
     if (backup) return "Only games and prop types PropLine didn't price this scan, soonest first, never more than " +
-        "${s.bookPropCreditsPerScan} credits a scan (one per prop type); re-used for ${minutesLabel(s.bookPropReuseMinutes)}."
+        "${s.bookPropCreditsPerScan} credits a scan (one per prop type); re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}."
     val perGame = if (s.bookPropSet == BookPropSet.CORE) 4 else null
     val games = perGame?.let { s.bookPropCreditsPerScan / it }
     val reach = if (games != null) {
@@ -604,7 +605,8 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
         "one credit per prop type Novig lists for the game (up to 18 in football)"
     }
     return "Props cost $reach, soonest games first, never more than ${s.bookPropCreditsPerScan} credits a scan. " +
-        "A game's props are re-used for ${minutesLabel(s.bookPropReuseMinutes)}, so scanning again sooner costs nothing for it."
+        "A game's props are re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}, so scanning again sooner costs nothing for it " +
+        "(never longer: older odds aren't compared)."
 }
 
 fun maxOddsLabel(american: Int): String = if (american <= 0) "Any" else "+$american"
