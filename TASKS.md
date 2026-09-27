@@ -2315,5 +2315,24 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       (same setting as the +EV tab). Tests.
 - [x] H3 (DONE: cause = Central rate-limits by shared egress IP, empty caches every session; fix = tools/setup-android.sh (SDK + Gradle mirror init + vigilant.mavenMirror for Robolectric, which app/build.gradle.kts passes to test JVMs; CI unchanged). Verified: bogus mirror + cleared jar cache fails, Google mirror passes. BRIEF.md trap 6 rewritten with sources + what Tj can do (paste the script as the environment setup script).) Research Maven Central 429s in Claude Code on the web; write findings + fixes (what Tj can do) into BRIEF.md
       build trap 6 / RESEARCH, and apply any in-repo fix that's safe.
-- [ ] H4 Full tests per CLAUDE.md: floor, sweep, fixes with named tests, improvement list for Tj; then ship v0.17.1
+- [x] H4 (DONE 2026-09-27 ~21:55Z. Floor engine 39 / data 400 (8 live skipped) / app 185 = 624, 0 failures, exit 0 + XML
+      counts; live Novig smoke (2), Novig bet finder (2), CNO smoke (1), scores (1) green; :app:assembleRelease built, cert AB:22:…
+      verified, com.tjshea.vigilant 0.17.1/33. Swept every change since v0.16.3 (Scanner freshness + relay preview, Pricing,
+      MainViewModel, WidgetRescan, VigilantApp, MiniWindow, Games, OpportunitySheet, ScanService, CNO checks/feed/view, tracker)
+      + screenshots. Fixed: F1 Recheck (+EV tab, widget, PiP) re-read EVERY market in the scan, shown or not: hidden-by-window
+      markets spent Novig requests and the recheck cap, and one hidden stale EV turned the recheck into a full scan →
+      feedMarketIds reads UiState.feedAt (StartsWithinTest "Recheck re-reads only the bets shown", fails pre-fix). F2 a11y: the
+      sort and start-time buttons now tell TalkBack which is picked (ScreenshotTest.theFeedCanShowOnlyGamesStartingSoon
+      assertIsSelected, fails pre-fix). F3 widget chip says "Any" (not "Any time") so the status text keeps room.)
+      Full tests per CLAUDE.md: floor, sweep, fixes with named tests, improvement list for Tj; then ship v0.17.1
       (Vigilant only) with G1-G2 + H1-H4, link.
+
+### Suggestions from the 2026-09-27 full test (wait on Tj; not started)
+
+- [ ] S1 Let the scan follow "Starts within": with 12/24/48h picked, a scan still reads Novig books and spends API
+      credits on games up to "Days ahead" (3 days by default). Scanning only the window would cut Novig reads,
+      PropLine / The Odds API usage and scan time; widening the window would then need a new scan.
+- [ ] S2 Show the start-time window in the picture-in-picture window's header (it can't take taps, so today
+      there's no sign there that bets are being hidden).
+- [ ] S3 Tj's side: paste `tools/setup-android.sh` into the cloud environment's Setup script (BRIEF.md trap 6) so
+      every session starts ready to build without touching Maven Central.
