@@ -108,7 +108,9 @@ fun CnoScreen(
     onScanner: (ScannerMode) -> Unit = {},
     /** "I placed it": hidden here and in the widget from now on. */
     onPlaced: (MiniWindow.Item) -> Unit = {},
-    /** Undo, or "not placed after all". */
+    /** ✕: gone here and in the widget without betting it. */
+    onHide: (MiniWindow.Item) -> Unit = {},
+    /** Undo, or "not placed after all" / "put it back". */
     onUnplace: (String) -> Unit = {},
     /** The pull-to-refresh arrow's state (tests look at it). */
     pullState: androidx.compose.material3.pulltorefresh.PullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState(),
@@ -119,24 +121,33 @@ fun CnoScreen(
     // A list read for another link (Tj just changed it) isn't shown as if it were this one's.
     val snap = cno.snapshot?.takeIf { it.url == state.cnoUrl }
     val screened = state.cnoPicks(now)
-    // Bets Tj placed are gone from the list (and the widget) until their game is over.
+    // Bets Tj placed or removed are gone from the list (and the widget) until their game is over;
+    // with "only bets the books agree on", so are the ones without the green check.
+    val candidates = state.cnoCandidates(now)
     val picks = state.cnoShown(now)
     val placedHere = state.placed.filter { it.key.startsWith("cno:") }
+    val (removedHere, betHere) = placedHere.partition { it.hidden }
     var showPlaced by remember { mutableStateOf(false) }
+    var showRemoved by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<CnoPick?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val markPlaced: (CnoPick) -> Unit = { pick ->
+    val mark: (CnoPick, Boolean) -> Unit = { pick, hidden ->
         if (snap != null) {
             val item = MiniWindow.itemFor(pick, snap, state, now)
-            onPlaced(item)
+            if (hidden) onHide(item) else onPlaced(item)
             scope.launch {
                 snackbar.currentSnackbarData?.dismiss()
-                val r = snackbar.showSnackbar("Placed: ${pick.row.bet}. Hidden here and in the widget.", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                val r = snackbar.showSnackbar(
+                    (if (hidden) "Removed: " else "Placed: ") + "${pick.row.bet}. Hidden here and in the widget.",
+                    actionLabel = "Undo",
+                    duration = SnackbarDuration.Short,
+                )
                 if (r == SnackbarResult.ActionPerformed) onUnplace(item.key)
             }
         }
     }
+    val markPlaced: (CnoPick) -> Unit = { mark(it, false) }
     // Android's "Display over other apps", re-checked each time Tj comes back from its settings.
     val context = LocalContext.current
     var overlayAllowed by remember { mutableStateOf(FloatingWidget.allowed(context)) }
@@ -239,36 +250,25 @@ fun CnoScreen(
                                     "or a widget is on screen (nothing is read once you close them).",
                             )
                             screened != null && picks.isEmpty() -> EmptyState(
-                                "No +EV bets pass right now",
+                                if (state.settings.cnoOnlyAgreed && candidates.isNotEmpty()) "No bets the books agree on yet" else "No +EV bets pass right now",
                                 "CNO listed ${snap?.rows?.size ?: 0} for your view" + hiddenText(screened).let { if (it.isEmpty()) "" else "; $it" } +
-                                    (if (screened.picks.size > picks.size) "; ${screened.picks.size - picks.size} you placed" else "") +
+                                    setAsideText(screened.picks.size - candidates.size) +
+                                    onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else "; $it" } +
                                     ". It's read again ${refreshLabel(state.settings)}.",
                             )
                             screened != null -> Text(
                                 "${picks.size} bet${if (picks.size == 1) "" else "s"} pass" +
-                                    hiddenText(screened).let { if (it.isEmpty()) "" else " · $it" },
+                                    hiddenText(screened).let { if (it.isEmpty()) "" else " · $it" } +
+                                    onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else " · $it" },
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        if (on && placedHere.isNotEmpty()) {
-                            TextButton(onClick = { showPlaced = !showPlaced }, contentPadding = PaddingValues(horizontal = 4.dp)) {
-                                Text(
-                                    (if (showPlaced) "Hide" else "Show") + " the ${placedHere.size} bet${if (placedHere.size == 1) "" else "s"} you placed",
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            }
-                            if (showPlaced) {
-                                placedHere.forEach { p ->
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Column(Modifier.weight(1f)) {
-                                            Text("✓ ${p.title}" + (p.odds.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: ""), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                                            Text(p.detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        }
-                                        TextButton(onClick = { onUnplace(p.key) }) { Text("Not placed") }
-                                    }
-                                }
-                            }
+                        if (on && betHere.isNotEmpty()) {
+                            SetAsideList(betHere, "you placed", "✓", "Not placed", showPlaced, { showPlaced = !showPlaced }, onUnplace)
+                        }
+                        if (on && removedHere.isNotEmpty()) {
+                            SetAsideList(removedHere, "you removed", "✕", "Put back", showRemoved, { showRemoved = !showRemoved }, onUnplace)
                         }
                     }
                 }
@@ -280,6 +280,7 @@ fun CnoScreen(
                             placedOther = state.placedFamilies[com.tjshea.vigilant.data.match.Picks.familyKey(pick.row.event, pick.row.market, pick.row.bet)]?.title,
                             modifier = Modifier.padding(horizontal = 12.dp).animateItem(),
                             onPlaced = { markPlaced(pick) },
+                            onHide = { mark(pick, true) },
                         ) { selected = pick }
                     }
                     item(key = "credit") {
@@ -351,6 +352,49 @@ fun cnoFiltersLabel(f: CnoFilters): String = listOfNotNull(
     "${f.minBooks}+ books",
     if (f.minEv > 0) "≥${Format.percent(f.minEv, 0)} EV" else null,
 ).joinToString(" · ")
+
+/** "; 2 you placed or removed" (nothing when none). */
+fun setAsideText(n: Int): String = if (n <= 0) "" else "; $n you placed or removed"
+
+/**
+ * With "only bets the books agree on": "only ✓ bets: 5 held back, 3 being checked" (nothing when
+ * the setting is off or nothing is held back).
+ */
+fun onlyAgreedText(state: UiState, heldBack: Int, now: Long): String {
+    if (!state.settings.cnoOnlyAgreed || heldBack <= 0) return ""
+    val checking = state.cnoBeingChecked(now)
+    return "only ✓ bets: $heldBack held back" + if (checking > 0) ", $checking being checked" else ""
+}
+
+/** The bets Tj placed (or removed), folded away under a button, each with a way to bring it back. */
+@Composable
+private fun SetAsideList(
+    bets: List<com.tjshea.vigilant.data.tracker.PlacedBet>,
+    what: String,
+    mark: String,
+    undo: String,
+    open: Boolean,
+    onToggle: () -> Unit,
+    onUndo: (String) -> Unit,
+) {
+    TextButton(onClick = onToggle, contentPadding = PaddingValues(horizontal = 4.dp)) {
+        Text(
+            (if (open) "Hide" else "Show") + " the ${bets.size} bet${if (bets.size == 1) "" else "s"} $what",
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
+    if (open) {
+        bets.forEach { p ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("$mark ${p.title}" + (p.odds.takeIf { it.isNotEmpty() }?.let { " · $it" } ?: ""), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Text(p.detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                TextButton(onClick = { onUndo(p.key) }) { Text(undo) }
+            }
+        }
+    }
+}
 
 /** "3 hidden: 2 too few books, 1 longer odds than your cap". */
 fun hiddenText(s: CnoScreened): String =
@@ -434,6 +478,7 @@ private fun CnoCard(
     /** Tj placed this bet at another line (that bet's name). */
     placedOther: String? = null,
     onPlaced: () -> Unit = {},
+    onHide: () -> Unit = {},
     onClick: () -> Unit,
 ) {
     val row = pick.row
@@ -490,6 +535,9 @@ private fun CnoCard(
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onPlaced, modifier = Modifier.size(36.dp)) {
                     Icon(Icons.Outlined.CheckCircle, contentDescription = "I placed ${row.bet}: hide it", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = onHide, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Filled.Close, contentDescription = "Remove ${row.bet} from the list", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             check?.let {
