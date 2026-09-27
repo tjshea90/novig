@@ -2286,3 +2286,13 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       PropLineClient, ScanRunner); floor engine 39 / data 400 (8 live skipped) / app 170 / mgm 2 = 611, 0 failures, exit 0 + XML
       counts; ship.sh suite green; CI 36345562068 green on f68ecd4; release.yml 36345843461 green; both APKs on
       https://github.com/tjshea90/novig/releases/tag/v0.17.0.) Docs (BRIEF.md decision, CLAUDE.md surface, RESEARCH.md §25), light tests, ship, link.
+
+## Game start-time filter (Tj, 2026-09-27T21:17Z)
+
+> "for the regular version of the NoVig Vigilant app. Make it so I can add a filter to only show games that start within the next 24 hours or 12 hours or 48 hours."
+
+- [ ] G1 `ScanSettings.startsWithinHours` (0 = any, 12 / 24 / 48): applied at `now` in `UiState.feedAt` and
+      `cnoCandidates`, so the +EV feed, CNO tab, badges, mini window and widget all obey it; the Games board too.
+      Display filter only (no scan or API change). Tests for each list.
+- [ ] G2 UI: chip row on the +EV feed (next to the sort) + Settings; Vigilant only (hidden in Vigilant MGM). Screenshot check.
+- [ ] G3 Light tests, ckpt, ship, link.
