@@ -153,7 +153,7 @@ are CloudFront-cached.
 | `/v3/public/catalog/events` | `league, status, startsAfter, startsBefore, limit, after` | `{items:[{eventId, sport, league, status, description, startsTs}], next?}`. `description` is e.g. `"Atlanta Falcons @ New Orleans Saints"` (away @ home, full names). The docs say "don't parse it", but it's the only full-team-name field. |
 | `/v3/public/catalog/events/{id}` | none | one event |
 | `/v3/public/catalog/markets` | `league, marketType, eventStatus, event, startsAfter, startsBefore, limit (1–5000, default 500), after` | Comma-separated lists are allowed (`marketType=MONEY,SPREAD,TOTAL`). Each market: `{marketId, eventId, marketType, status, voids (PUSH/FMV), description, startsTs, fee{coefficient, makerCredit, charged}, outcomes:[{outcomeId, name, status}]}`. `max-age=10`. |
-| `/v3/public/catalog/markets/{id}` | none | one market |
+| `/v3/public/catalog/markets/{id}` | none | one market. Each outcome's `status` is `TBD` until settled, then `WIN`/`LOSS`/`PUSH`, or a decimal payout per $1 contract for a fair-market-value void: the Tracker's auto-settle reads it (`BetSettler`, 2026-09-27; the exact settled strings are per the docs' `outcomes[].status`, not yet seen live on a finished game). |
 | `/v3/public/catalog/markets/{id}/book` | header `If-None-Match` | `{marketId, seq, orders:{<outcomeId>:[{orderId, price, qty}]}}`, best price first, queue order within a price. Returns `ETag` (`"<marketId>-<seq>"`), and a match gives `304`. `max-age=5`. |
 | `/v3/public/catalog/markets/{id}/trades` | `limit, after` | `{items:[{tradeId, outcomeId, price, qty, ts}]}`, newest first |
 
