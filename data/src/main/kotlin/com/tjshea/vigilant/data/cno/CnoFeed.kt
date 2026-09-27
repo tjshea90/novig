@@ -304,7 +304,8 @@ class CnoFeed(
         }
     }
 
-    private val novigLinks = java.util.concurrent.ConcurrentHashMap<String, String>()
+    /** Links by [linkKey], oldest first (so the file keeps the newest [LINKS_KEEP]); taps and lanes share it. */
+    private val novigLinks: MutableMap<String, String> = java.util.Collections.synchronizedMap(LinkedHashMap())
     private val linkTriedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val linkSaveMutex = Mutex()
 
@@ -316,6 +317,11 @@ class CnoFeed(
 
     /** Where [row]'s link is kept: CNO's deeplink (one per line, whatever the price), else the row. */
     private fun linkKey(row: CnoRow): String = row.betUrl ?: "row:${row.key}"
+
+    /** Keeps a link found elsewhere (a tap's lookup in Novig's catalog) like one this feed found. */
+    suspend fun rememberLink(row: CnoRow, link: String) {
+        if (novigLinks.put(linkKey(row), link) != link) saveLinks()
+    }
 
     /** When each row was last looked up in Novig's catalog (a miss is tried again after [LINK_RETRY_MS]). */
     private val catalogTriedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -369,7 +375,7 @@ class CnoFeed(
         val disk = linkStore ?: return
         linkSaveMutex.withLock {
             // The newest [LINKS_KEEP]: a season of lines would otherwise pile up.
-            val all = novigLinks.toMap()
+            val all = synchronized(novigLinks) { LinkedHashMap(novigLinks) }
             val kept = if (all.size <= LINKS_KEEP) all else all.entries.toList().takeLast(LINKS_KEEP).associate { it.key to it.value }
             runCatching { disk.update { CnoLinks(kept) } }
         }
