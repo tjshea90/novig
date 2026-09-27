@@ -268,6 +268,20 @@ class ScreenshotTest {
         assert(picked == com.tjshea.vigilant.data.scanner.FeedSort.START)
     }
 
+    @Test fun theFeedCanShowOnlyGamesStartingSoon() {
+        var picked: Int? = null
+        screen { FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(startsWithinHours = 24)) }, {}, {}, {}, { _, _ -> }, onStartsWithin = { picked = it }) }
+        compose.onNodeWithText("Starts within").assertExists()
+        compose.onNodeWithText("12h").performClick()
+        assert(picked == 12) { "picked $picked" }
+        compose.onNodeWithText("Any time").performClick()
+        assert(picked == 0) { "picked $picked" }
+    }
+
+    @Test fun startsWithinFilterShot() = shoot("1c_feed_starts_within_24h") {
+        FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(startsWithinHours = 24)) }, {}, {}, {}, { _, _ -> })
+    }
+
     // ---- The mini window (picture-in-picture over Novig), at the sizes Android gives it ----
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")

@@ -357,7 +357,7 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
 /** A card says its odds are aging past this: the other books' prices are well on the way to [Freshness.MAX_QUOTE_AGE_MS]. */
 private const val FAIR_AGING_MS = 3 * 60_000L
 
-/** "Starts within: Any · 12h · 24h · 48h": the start-time window every list obeys. */
+/** "Starts within: Any time · 12h · 24h · 48h": the start-time window every list obeys. */
 @Composable
 private fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {

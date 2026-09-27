@@ -59,5 +59,5 @@ object Format {
     fun contractsAsPayout(contracts: Long): String = money(contracts / 100.0)
 }
 
-/** A [com.tjshea.vigilant.data.scanner.ScanSettings.startsWithinHours] choice as a chip reads it: "Any", "24h". */
-fun startsWithinLabel(hours: Int): String = if (hours <= 0) "Any" else "${hours}h"
+/** A [com.tjshea.vigilant.data.scanner.ScanSettings.startsWithinHours] choice as a chip reads it: "Any time", "24h". */
+fun startsWithinLabel(hours: Int): String = if (hours <= 0) "Any time" else "${hours}h"

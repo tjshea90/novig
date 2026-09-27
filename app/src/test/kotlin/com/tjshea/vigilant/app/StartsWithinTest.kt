@@ -25,10 +25,10 @@ class StartsWithinTest {
     private fun UiState.within(h: Int) = copy(settings = settings.copy(startsWithinHours = h))
 
     @Test
-    fun `the choices are any, 12, 24 and 48 hours, any by default`() {
+    fun `the choices are any time, 12, 24 and 48 hours, any by default`() {
         assertEquals(listOf(0, 12, 24, 48), ScanSettings.STARTS_WITHIN_CHOICES)
         assertEquals(0, ScanSettings().startsWithinHours)
-        assertEquals(listOf("Any", "12h", "24h", "48h"), ScanSettings.STARTS_WITHIN_CHOICES.map(::startsWithinLabel))
+        assertEquals(listOf("Any time", "12h", "24h", "48h"), ScanSettings.STARTS_WITHIN_CHOICES.map(::startsWithinLabel))
     }
 
     @Test
