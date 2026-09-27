@@ -108,7 +108,7 @@ fun FeedScreen(
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now)
-                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state)) } }
+                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
                 items(shown, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
@@ -287,7 +287,12 @@ fun sourceSummary(status: ScanStatus): String {
 }
 
 /** The feed's markets, best first: what "Recheck" re-reads (the scanner reads at most 40). */
-fun feedMarketIds(state: UiState): List<String> = state.feed.map { it.market.marketId }.distinct()
+/**
+ * The markets a Recheck re-reads: the bets shown at [now] ([UiState.feedAt]), not the whole scan. A bet
+ * hidden by the start-time window or by old odds would spend Novig requests (and the recheck's cap) on
+ * lines Tj can't see, and one with old odds would turn the recheck into a full scan (full test, 2026-09-27).
+ */
+fun feedMarketIds(state: UiState, now: Long = System.currentTimeMillis()): List<String> = state.feedAt(now).map { it.market.marketId }.distinct()
 
 fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
     FairSource.SHARP -> "sharp books"
