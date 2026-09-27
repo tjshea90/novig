@@ -142,7 +142,7 @@ class ScanService : Service() {
         val found = run.result?.let { r -> run.settings?.let { placedIndex().visible(r.feed(it)).size } } ?: 0
         return NotificationCompat.Builder(this, CHANNEL_SCAN)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle("Scanning Novig")
+            .setContentTitle("Scanning ${AppBook.name}")
             .setContentText(ScanText.progress(p, found))
             .setProgress(p?.total ?: 0, p?.done ?: 0, p == null || p.total <= 0)
             .setOngoing(true)
