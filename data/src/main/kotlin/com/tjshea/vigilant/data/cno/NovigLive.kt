@@ -88,7 +88,7 @@ class NovigLive(
                     val wait = lastReadMs + everyMs - clock()
                     if (wait <= 0) {
                         lastReadMs = clock()
-                            read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
+                        read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
                     }
                     // A new CNO read re-prices against the books already read: no request.
                     _prices.value = price(list)
