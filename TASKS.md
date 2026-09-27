@@ -1958,7 +1958,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       stake dialog; tests `ScreenshotTest.trackerStats`, `trackerStakeIsEditable`, `BetTrackerTest`
       "stats count wins and losses…".) Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
       source (CNO / Vigilant) and period.
-- [ ] N6 Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
+- [x] N6 (DONE: full floor 496 tests 0 failures, assembleRelease OK; shipped v0.15.6 code 26, https://github.com/tjshea90/novig/releases/tag/v0.15.6.) Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
 - [ ] N7 VERIFY LIVE (not yet possible 2026-09-27 ~04Z: no settled market seen): does
       `GET /v3/public/catalog/markets/{id}` return a finished market with outcome status WIN/LOSS, or
       404 (the public list already hides settled markets)? Check these, in-game at 04Z (MLB):
