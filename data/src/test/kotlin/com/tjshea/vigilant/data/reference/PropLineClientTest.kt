@@ -148,6 +148,20 @@ class PropLineClientTest {
         assertEquals(1.0 + 100.0 / 140.0, nml.quotes.single { it.side == Side.HOME }.decimalOdds, 1e-9)
     }
 
+    /**
+     * RESEARCH.md §24: a price's time is when PropLine last saw it at the book (`last_seen_at`), so a
+     * price the book stopped sending minutes ago can't pass for current behind a fresh market time.
+     */
+    @Test
+    fun `each price carries when PropLine last saw it at the book`() {
+        val longAgo = iso(now - 8 * 60_000)
+        val raw = board.replace(""""side":"home","last_seen_at":"$upd"""", """"side":"home","last_seen_at":"$longAgo"""")
+        val e = PropLineClient.parseEvents(raw, json, "americanfootball_nfl").single()
+        assertEquals(now - 8 * 60_000, e.markets.single { it.bookKey == "pinnacle" && it.kind == LineKind.MONEYLINE }.lastUpdateMs)
+        // Sent without last_seen_at: the market's own time.
+        assertEquals(now - 20_000, e.markets.single { it.bookKey == "pinnacle" && it.kind == LineKind.SPREAD }.lastUpdateMs)
+    }
+
     @Test
     fun `every reply's daily figures feed the usage meter`() = runTest {
         routes["/v1/sports/americanfootball_nfl/odds"] = { ok(board) }
