@@ -1792,7 +1792,9 @@ NCAAF; `research/live_leadlag.py`):
   ranges, never compare them) return the same book within ~1 s. Prices jump within a second of a
   play (HOU 0.675 → 0.61 in one second), and market makers pull their quotes around plays (the
   take price briefly goes wide, e.g. 0.795 or 0.895 against a 0.70 middle). With Tj's read key,
-  `NovigStream` (the signed websocket, §6 of NOVIG_API.md) pushes every change instead.
+  `NovigStream` (the signed websocket, §6 of NOVIG_API.md) would push every change instead: the
+  client is built and tested but not yet wired into the app (scans read books over REST, signed
+  with the key when one is connected).
 - **The free reference is the stale side.** Kalshi's live game markets (the only free live
   reference with liquidity; Polymarket had no live MLB game markets and its live NCAAF/NHL ones
   were settled or empty) were sampled against Novig once a second for 150 s on three live MLB
