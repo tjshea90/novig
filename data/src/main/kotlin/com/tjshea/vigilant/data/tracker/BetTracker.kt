@@ -104,7 +104,110 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
 
     suspend fun all(): List<TrackedBet> = store.read()
 
-    suspend fun track(o: Opportunity, stake: Double): TrackedBet? {
+    /**
+     * A CNO bet Tj marked placed (✓ in the widget or the CNO tab; Tj, 2026-09-27: "for every bet
+     * that I check on the cno scanner, log it permanently"): kept for good, [stake] $1 unless he
+     * changes it (Novig's API can't read the app's own bets, so the amount isn't known). [row] is
+     * the bet at the price shown when it was marked; [live]: the game had started (Novig's taker
+     * fee is part of the cost). Marking the same ✓ again replaces the open bet, never duplicates it.
+     */
+    suspend fun logCno(
+        row: com.tjshea.vigilant.data.cno.CnoRow,
+        ev: Double,
+        live: Boolean,
+        placedKey: String,
+        stake: Double = DEFAULT_STAKE,
+        marketId: String = "",
+        outcomeId: String = "",
+    ): TrackedBet {
+        val decimal = com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
+        val price = 1.0 / decimal
+        val fee = if (live && price > 0.0 && price < 1.0) {
+            com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
+        } else {
+            0.0
+        }
+        val bet = TrackedBet(
+            id = UUID.randomUUID().toString(),
+            createdAtMs = clock(),
+            league = row.league,
+            eventName = row.event,
+            startsTs = row.startsAtMs ?: clock(),
+            marketLabel = row.market,
+            selection = row.bet,
+            marketId = marketId,
+            outcomeId = outcomeId,
+            price = price,
+            cost = price + fee,
+            fairAtBet = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: ((1 + ev) / decimal),
+            evPercentAtBet = ev,
+            stake = stake,
+            source = SOURCE_CNO,
+            placedKey = placedKey,
+            american = row.odds,
+            book = row.book,
+            gameUrl = row.gameUrl,
+            betUrl = row.betUrl,
+        )
+        store.update { list -> list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING } + bet }
+        return bet
+    }
+
+    /** Undo, or "not placed after all": the open bet that ✓ logged goes. Settled ones stay. */
+    suspend fun untrack(placedKey: String) {
+        store.update { list -> if (list.none { it.placedKey == placedKey }) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING } }
+    }
+
+    /** Changes one bet (stake, a recheck, a settlement): [transform] gets the stored bet. */
+    suspend fun edit(id: String, transform: (TrackedBet) -> TrackedBet) {
+        store.update { list -> list.map { if (it.id == id) transform(it) else it } }
+    }
+
+    suspend fun setStake(id: String, stake: Double) = edit(id) { it.copy(stake = stake) }
+
+    /**
+     * ✓ marks made before the Tracker kept them (placed.json, Tj 2026-09-27: "It should move all of
+     * the bets I made into the tracker section automatically"): each one not already a bet becomes
+     * one, $1, with what the mark kept (bet, market, game, price, start). Removed (✕) marks aren't
+     * bets. Returns how many were added.
+     */
+    suspend fun importPlaced(marks: List<PlacedBet>): Int {
+        var added = 0
+        store.update { list ->
+            val known = list.mapNotNullTo(HashSet()) { it.placedKey }
+            val new = marks.filter { !it.hidden && it.key !in known && it.aliases.none { k -> k in known } }.mapNotNull { m ->
+                val american = m.odds.replace("−", "-").trim().toIntOrNull()?.takeIf { it >= 100 || it <= -100 } ?: return@mapNotNull null
+                val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(american)
+                val parts = m.detail.split(" · ")
+                TrackedBet(
+                    id = UUID.randomUUID().toString(),
+                    createdAtMs = m.placedAtMs,
+                    league = "",
+                    eventName = parts.getOrNull(1).orEmpty(),
+                    startsTs = m.startsAtMs ?: m.placedAtMs,
+                    marketLabel = parts.getOrNull(0).orEmpty(),
+                    selection = m.title,
+                    marketId = "",
+                    outcomeId = "",
+                    price = price,
+                    cost = price,
+                    fairAtBet = null,
+                    evPercentAtBet = null,
+                    stake = DEFAULT_STAKE,
+                    source = if (m.key.startsWith("cno:")) SOURCE_CNO else SOURCE_VIGILANT,
+                    placedKey = m.key,
+                    american = american,
+                    book = parts.getOrNull(2) ?: "Novig",
+                    imported = true,
+                )
+            }
+            added = new.size
+            if (new.isEmpty()) list else list + new
+        }
+        return added
+    }
+
+    suspend fun track(o: Opportunity, stake: Double, placedKey: String? = null): TrackedBet? {
         val q = o.quote ?: return null
         val fair = o.fairProbability ?: return null
         val bet = TrackedBet(
@@ -122,8 +225,10 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             fairAtBet = fair,
             evPercentAtBet = q.evPercent,
             stake = stake,
+            placedKey = placedKey,
+            american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
         )
-        store.update { it + bet }
+        store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING }) + bet }
         return bet
     }
 
@@ -158,6 +263,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     companion object {
         const val SOURCE_VIGILANT = "vigilant"
         const val SOURCE_CNO = "cno"
+
+        /** A ✓ logs a $1 bet: Novig's API can't read the app's own bets (NOVIG_API.md: subaccounts only). */
+        const val DEFAULT_STAKE = 1.0
 
         fun stats(bets: List<TrackedBet>): TrackerStats {
             val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }
