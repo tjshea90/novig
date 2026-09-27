@@ -1742,38 +1742,53 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 ("Secure my con..").
 
 ### Plan
-- [ ] K1 Tap → bet slip every time: the link comes from a CNO request made on the tap (the spinner
+- [x] K1 Tap → bet slip every time: the link comes from a CNO request made on the tap (the spinner
       in the screenshot), which fails or hangs when CNO is slow. Resolve links ahead of time for
       the listed bets (paced, cached on disk, a line's link never changes), give the tap a short
       timeout with one retry, and when CNO can't answer, find the outcome in Novig's own catalog
       (event by teams, market by player/line) so the bet slip still opens; say so when it can't.
-- [ ] K2 "CNO could not be reached": measure what CNO does under the app's load (throttling,
+- [x] K2 "CNO could not be reached": measure what CNO does under the app's load (throttling,
       slow replies, Cloudflare?), then cut the app's CNO traffic: one shared pace for every CNO
       request (list first), a lighter books lane, back off all lanes after a failure, and
       explain it in the app.
-- [ ] K3 Milwaukee: find why the notification's "best bet" isn't in the widget (mode? feed filter
+- [x] K3 Milwaukee: find why the notification's "best bet" isn't in the widget (mode? feed filter
       vs. notification count?) and make them agree.
-- [ ] K4 Bottom bar fits at any width (icons only when narrow; "Bo" cut off).
-- [ ] K6 Tj, 00:10Z: "Sometimes it says unable to resolve cno sometimes it says timeout." (DNS
+- [x] K4 Bottom bar fits at any width (icons only when narrow; "Bo" cut off).
+- [x] K6 Tj, 00:10Z: "Sometimes it says unable to resolve cno sometimes it says timeout." (DNS
       failures and timeouts: the phone's network/VPN, not an HTTP refusal) → keep CNO's last good
       address for when DNS fails, drop dead connections and retry a failed read once at once.
-- [ ] K7 Tj, 00:10Z: "make an x option next to each check mark on the right side on the cno
+- [x] K7 Tj, 00:10Z: "make an x option next to each check mark on the right side on the cno
       widget. If I press the x, it will remove the bet from the list even if I didn't bet it"
       → ✕ = hide (not placed), kept through refreshes/restarts like placed, with Undo; CNO tab
       lists hidden and placed bets separately.
-- [ ] K8 Tj, 00:20Z: "Include an option in the cno settings to only include bets where multiple
+- [x] K8 Tj, 00:20Z: "Include an option in the cno settings to only include bets where multiple
       books agree (the check mark bets), and where both sides of the bet have odds at different
       sports books for the most accurate odds." → Settings switch "Only bets the books agree on":
       the tab, badge and widget list only ✓ bets (3+ books pricing both sides, 3+ of them +EV
       alone); bets whose books aren't read yet are held back and counted ("N being checked"); the
       green-check lane then covers more of the list (paced within K2's budget).
       ("Make sure on every new request I send you log and still finish the prior requests.")
-- [ ] K9 Tj, 00:25Z: "See if there is a way to safely and repeatedly refresh cno odds without
+- [x] K9 Tj, 00:25Z: "See if there is a way to safely and repeatedly refresh cno odds without
       timeout or unable to resolve or any other restrictions whether that is using a specific dns
       server, or my nordvpn, or any cheap service that could help, or any other way" → research
       (DNS-over-HTTPS, Android Private DNS, NordVPN, a relay/cache service, CNO's own limits),
       build what's safe in the app (DoH fallback so DNS never blocks a read), write it up in
       RESEARCH.md §20.2 and recommend the rest with costs.
+      Done (v0.15.2), proved by: K1 `TapLinkTest` (4: cached link needs no request; CNO hanging
+      → Novig's catalog after 5 s; CNO failing → Novig first; nothing → null within both limits),
+      `NovigBetFinderTest` (7), `CnoAgreementTest` links lane + `cno_links.json` survives restart;
+      K2/K6 `CnoNetworkTest` (DoH/remembered DNS, pace, retry, and "network failures say which one it
+      was"), `ScreenshotTest.theWidgetTellsDnsFailuresFromTimeouts`; K3 cause: the scan's results
+      live in memory and the notification outlived them (process restarted, or CNO only) → cancelled
+      on a new process (`VigilantApp.onCreate`), on switching to CNO only, on a new scan, and not
+      posted when CNO only was picked mid-scan (Android side, no unit harness: source pin in the
+      code comments); K4 `ScreenshotTest.floatingWidgetBarFitsAtAnyWidth` (250 dp: icons only,
+      labels for TalkBack) + `floatingWidgetBarKeepsItsLabelsWhenTheyFit`, default 360 dp
+      (`MiniWindowTest`); K7 `MiniWindowTest` "x removes a bet like placing it…",
+      `ScreenshotTest.floatingWidgetXRemovesABetWithoutPlacingItAndCanBeUndone`,
+      `cnoCardXRemovesItAndTheRemovedListPutsItBack`; K8 `MiniWindowTest` "only bets the books agree
+      on…", `ScreenshotTest.cnoTabWithOnlyAgreedBetsSaysWhatsHeldBack`,
+      `settingsHasTheOnlyAgreedSwitch`; K9 RESEARCH.md §20.2.
 - [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
 - [ ] K10 Tj, 00:30Z: "When all of the features and fixes I asked for are finished, run a full test
       protocol and find ways to improve the UI and speed and efficiency and bug fixes, but without

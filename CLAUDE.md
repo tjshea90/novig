@@ -266,7 +266,13 @@ unless Tj asks).
   bar, tap = Novig bet slip, ✓ placed + Undo, hold = books, drag/resize/bubble), `data/cno/CnoWatch`
   + `MainViewModel.watchCno` (tab / pip / overlay), `CnoFeed.keepBooksFresh` (green ✓ lane,
   `CnoBooks.agrees`), `data/teams/PlayerTeams` (ESPN rosters, `teams.json`),
-  `data/tracker/PlacedBets` (`placed.json`), `data/match/Picks`; PiP fallback's Up/Down).
+  `data/tracker/PlacedBets` (`placed.json`, ✓ placed and ✕ removed = `hidden`), `data/match/Picks`;
+  PiP fallback's Up/Down); reading CNO reliably and taps that always open Novig (RESEARCH.md §20.2:
+  `data/cno/CnoNetwork` (`RememberingDns` + `DnsOverHttps` fallback, 20 s keep-alive, retry once,
+  `CnoPace`), `CnoFeed.keepLinksFresh` (`cno_links.json`), `data/cno/TapLink` + `NovigBetFinder`
+  (Novig's public catalog when CNO can't answer), `ScanSettings.cnoOnlyAgreed` ("Only bets the books
+  agree on": `UiState.cnoCandidates`/`cnoShown`/`cnoBeingChecked`), stale "scan done" notification
+  cancelled (`ScanService.cancelDone`)).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
