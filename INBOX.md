@@ -1980,3 +1980,8 @@ Also it says cno error at the top. Figure that out
 ```
 Also notice the refresh symbol in this screenshot. Sometimes it is getting stuck. I'm not sure if the data is refreshing. Make sure you complete all tasks including the last two prompts I sent
 ```
+
+## 2026-09-27T00:08:03Z
+```
+When I click on bets, sometimes they pull up the novig bet slip, but sometimes they don't. It may be because it says cno could not be reached. Figure out and fix both problems, I think cno is restricting or slowing me down. 
+```
