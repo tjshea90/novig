@@ -1795,8 +1795,20 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       sacrificing any accuracy" → after K1-K9 ship: CLAUDE.md full-test protocol on the whole app,
       improvements (UI, speed, efficiency) + bug fixes with failing-first tests, accuracy
       untouched (EV math, devig, checks, matching), then ship again and send the link.
-  - [ ] K10a Sweep data/cno + data/teams + data/tracker (CnoFeed lanes, CnoClient, CnoBooks,
+  - [x] K10a Sweep data/cno + data/teams + data/tracker (CnoFeed lanes, CnoClient, CnoBooks,
         CnoChecks, NovigBetFinder, PlayerTeams, PlacedBets): races, lost state, wasted requests.
+        Found+fixed (each test failed on the old code): CNO's HTML and ESPN's JSON were parsed on
+        the main thread every read (widget stutter) → `CnoClient`/`PlayerTeams` parse on a work
+        dispatcher (`CnoClientTest` "the page is parsed off the caller's thread", `PlayerTeamsTest`
+        "ESPN's JSON is parsed off…"; old code had no such path); a refused/busy link lookup didn't
+        pause anything, and a list read ending wiped a pause CNO had just asked for (`CnoAgreementTest`
+        "a busy or refused answer to a link lookup pauses…", "a pause CNO asks for during a list
+        read isn't wiped out…"); the sheet and the widget's Books view judged the game page's older
+        Novig price while the card and ✓ judged the list's newer one (`ScreenshotTest.
+        theSheetJudgesTheSamePriceAsTheGreenCheck`, `theWidgetsBooksViewJudgesTheSamePriceAsItsGreenCheck`);
+        "Open in Novig" on the CNO tab gave no sign of working for up to 13 s (`openInNovigSaysItsOpening`);
+        INBOX.md logged the harness's background-task notices as Tj's words (`tools/test_resume.sh`).
+        CI: `CnoNetworkTest` retry test resolved "localhost" (IPv6-first on runners) → pinned to 127.0.0.1.
   - [ ] K10b Sweep app: MainViewModel flows (recomputation per state change), MainActivity
         (widget/PiP wiring, taps), FloatingWidget/WidgetGestures, FloatingFeed/MiniFeed, CnoScreen,
         Settings; the other tabs (Feed, Games, Tracker) and ScanService.
