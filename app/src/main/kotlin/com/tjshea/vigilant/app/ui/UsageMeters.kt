@@ -32,16 +32,23 @@ import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.keys.UsageViews
 
 /** The keys the app holds for a provider's meter (keyless providers have none). */
-fun keysFor(state: UiState, policy: QuotaPolicy): List<String> = when (policy.id) {
-    QuotaPolicy.ODDS_API.id -> state.oddsApiKeys
-    QuotaPolicy.PINNAPI.id -> state.pinnapiKeys
-    else -> emptyList()
-}
+fun keysFor(state: UiState, policy: QuotaPolicy): List<String> = providerFor(policy)?.let(state::keysOf).orEmpty()
 
 fun providerFor(policy: QuotaPolicy): ApiProvider? = when (policy.id) {
     QuotaPolicy.ODDS_API.id -> ApiProvider.THE_ODDS_API
     QuotaPolicy.PINNAPI.id -> ApiProvider.PINNAPI
+    QuotaPolicy.PINNWIRE.id -> ApiProvider.PINNWIRE
+    QuotaPolicy.PROPLINE.id -> ApiProvider.PROPLINE
     else -> null
+}
+
+/** The meter strip's short name for a keyed provider. */
+fun shortName(policy: QuotaPolicy): String = when (policy.id) {
+    QuotaPolicy.ODDS_API.id -> "Odds API"
+    QuotaPolicy.PINNAPI.id -> "pinnapi"
+    QuotaPolicy.PINNWIRE.id -> "PinnWire"
+    QuotaPolicy.PROPLINE.id -> "PropLine"
+    else -> policy.displayName
 }
 
 fun meterViews(state: UiState, now: Long): List<ProviderView> =
@@ -143,7 +150,7 @@ private fun KeyRow(policy: QuotaPolicy, k: KeyView, now: Long) {
             )
         }
         val detail = listOfNotNull(
-            k.left?.let { "$it left" + if (!k.serverReported && policy.id == QuotaPolicy.PINNAPI.id) " (counted here)" else "" },
+            k.left?.let { "$it left" + if (!k.serverReported && (policy.id == QuotaPolicy.PINNAPI.id || policy.id == QuotaPolicy.PINNWIRE.id)) " (counted here)" else "" },
             k.lastCallMs?.let { "last call ${Format.age(it, now)}" },
             k.note?.takeIf { k.state == KeyState.REFUSED || k.state == KeyState.SPENT || k.state == KeyState.COOLING },
         ).joinToString(" · ")
@@ -160,7 +167,7 @@ fun UsageStrip(state: UiState, modifier: Modifier = Modifier) {
     val parts = meterViews(state, now).mapNotNull { v ->
         when {
             v.policy.keyed && v.keys.isNotEmpty() -> {
-                val short = if (v.policy.id == QuotaPolicy.ODDS_API.id) "Odds API" else "Pinnacle"
+                val short = shortName(v.policy)
                 val left = v.totalLeft ?: return@mapNotNull null
                 Triple(short, "$left left", meterColorKey(left, v.totalAllowance))
             }

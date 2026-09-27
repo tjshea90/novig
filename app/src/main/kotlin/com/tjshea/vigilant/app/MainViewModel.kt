@@ -82,6 +82,8 @@ data class UiState(
     val status: ScanStatus = ScanStatus(),
     val oddsApiKeys: List<String> = emptyList(),
     val pinnapiKeys: List<String> = emptyList(),
+    val pinnwireKeys: List<String> = emptyList(),
+    val proplineKeys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
@@ -104,6 +106,22 @@ data class UiState(
     /** Novig's price now for CNO's listed bets, by row key ([com.tjshea.vigilant.data.cno.NovigLive]). */
     val novigLive: Map<String, com.tjshea.vigilant.data.cno.LivePrice> = emptyMap(),
 ) {
+    /** Tj's keys for [provider], in the order they're tried. */
+    fun keysOf(provider: ApiProvider): List<String> = when (provider) {
+        ApiProvider.THE_ODDS_API -> oddsApiKeys
+        ApiProvider.PINNAPI -> pinnapiKeys
+        ApiProvider.PINNWIRE -> pinnwireKeys
+        ApiProvider.PROPLINE -> proplineKeys
+    }
+
+    /** This state with [provider]'s keys replaced. */
+    fun withKeys(provider: ApiProvider, keys: List<String>): UiState = when (provider) {
+        ApiProvider.THE_ODDS_API -> copy(oddsApiKeys = keys)
+        ApiProvider.PINNAPI -> copy(pinnapiKeys = keys)
+        ApiProvider.PINNWIRE -> copy(pinnwireKeys = keys)
+        ApiProvider.PROPLINE -> copy(proplineKeys = keys)
+    }
+
     /** Novig's live price for [row], when that setting is on and it was read in the last minute. */
     fun livePrice(row: CnoRow, now: Long): com.tjshea.vigilant.data.cno.LivePrice? =
         novigLive[row.key]?.takeIf { settings.cnoLivePrices && now - it.atMs <= com.tjshea.vigilant.data.cno.NovigLive.FRESH_MS }
@@ -224,14 +242,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (settings != stored) runCatching { c.settingsStore.update { settings } }
             runCatching { c.migrateKeys() }
             c.usage.load()
-            val keys = c.keyStore.getKeys(ApiProvider.THE_ODDS_API)
-            val pinn = c.keyStore.getKeys(ApiProvider.PINNAPI)
+            val keys = ApiProvider.entries.associateWith { c.keyStore.getKeys(it) }
             val bets = c.tracker.all()
             val connection = c.novigConnection.load()
             c.useConnection(connection)
             _state.update {
-                it.copy(
-                    settings = settings, oddsApiKeys = keys, pinnapiKeys = pinn, bets = bets, loaded = true,
+                keys.entries.fold(it) { s, (p, k) -> s.withKeys(p, k) }.copy(
+                    settings = settings, bets = bets, loaded = true,
                     novig = it.novig.copy(connection = connection),
                 )
             }
@@ -637,10 +654,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         s.copy(leagues = if (league in s.leagues) s.leagues - league else s.leagues + league)
     }
 
-    fun keysFor(provider: ApiProvider): List<String> = when (provider) {
-        ApiProvider.THE_ODDS_API -> _state.value.oddsApiKeys
-        ApiProvider.PINNAPI -> _state.value.pinnapiKeys
-    }
+    fun keysFor(provider: ApiProvider): List<String> = _state.value.keysOf(provider)
 
     /** Adds a key at the end of the rotation (keys are tried in order: key 1 first). */
     fun addKey(provider: ApiProvider, key: String) {
@@ -666,12 +680,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val saved = runCatching { c.keyStore.setKeys(provider, keys) }.isSuccess
             if (!saved) _toasts.tryEmit("Couldn't save the key")
             val clean = c.keyStore.getKeys(provider)
-            _state.update {
-                when (provider) {
-                    ApiProvider.THE_ODDS_API -> it.copy(oddsApiKeys = clean)
-                    ApiProvider.PINNAPI -> it.copy(pinnapiKeys = clean)
-                }
-            }
+            _state.update { it.withKeys(provider, clean) }
         }
     }
 
@@ -697,9 +706,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 c.keyStore.importJson(text)
             }
-            val odds = c.keyStore.getKeys(ApiProvider.THE_ODDS_API)
-            val pinn = c.keyStore.getKeys(ApiProvider.PINNAPI)
-            _state.update { it.copy(oddsApiKeys = odds, pinnapiKeys = pinn) }
+            val keys = ApiProvider.entries.associateWith { c.keyStore.getKeys(it) }
+            _state.update { keys.entries.fold(it) { s, (p, k) -> s.withKeys(p, k) } }
             _toasts.tryEmit(
                 result.fold(
                     onSuccess = { n -> if (n == 0) "No new keys in that file" else "Added $n key${if (n == 1) "" else "s"}" },

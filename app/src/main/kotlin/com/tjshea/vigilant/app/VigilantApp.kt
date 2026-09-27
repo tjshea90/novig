@@ -23,6 +23,8 @@ import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.PinnapiClient
 import com.tjshea.vigilant.data.reference.PolymarketClient
+import com.tjshea.vigilant.data.reference.PropLineClient
+import com.tjshea.vigilant.data.reference.PropLinePropsSource
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
@@ -174,7 +176,18 @@ class AppContainer(app: Application) {
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */
     private val bookProps = OddsApiPropsSource(oddsApi)
-    private val pinnacle = PinnapiClient(http, json, KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage))
+    /** Pinnacle: PinnWire's keys first (their free keys include player props), then pinnapi's. */
+    private val pinnacle = PinnapiClient(
+        http, json,
+        listOf(
+            PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keyStore.current(ApiProvider.PINNWIRE) }, usage)),
+            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage)),
+        ),
+    )
+
+    /** Thirty sportsbooks' lines (per league) and props (per game) through one free PropLine key. */
+    private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keyStore.current(ApiProvider.PROPLINE) }, usage), json)
+    private val propLineProps = PropLinePropsSource(propLine)
 
     /**
      * Moves keys saved by v0.6.0 and earlier (encrypted with a Keystore key, which a backup
@@ -198,9 +211,13 @@ class AppContainer(app: Application) {
      * every call, so adding or removing a key takes effect on the next scan.
      */
     fun referenceSources(settings: ScanSettings): List<ReferenceSource> = buildList {
-        if (settings.usePinnacle && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) add(pinnacle)
+        if (settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())) add(pinnacle)
         if (settings.usePolymarket) add(polymarket)
         if (settings.useKalshi) add(kalshi)
+        if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) {
+            add(propLine)
+            if (settings.useBookProps) add(propLineProps)
+        }
         if (settings.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty()) {
             add(oddsApi)
             if (settings.useBookProps) add(bookProps)

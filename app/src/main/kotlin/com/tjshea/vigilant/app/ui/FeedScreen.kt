@@ -172,14 +172,14 @@ private fun FeedSummary(
                     sourceNames(state).let {
                         if (it.isEmpty()) "No fair-odds source is on (Settings), so a scan shows Novig's prices only." else "Fair odds come from $it."
                     } +
-                    if (state.pinnapiKeys.isEmpty() && state.settings.usePinnacle) " Add a free Pinnacle key in Settings for sharper lines." else "",
+                    if (state.pinnapiKeys.isEmpty() && state.pinnwireKeys.isEmpty() && state.settings.usePinnacle) " Add a free Pinnacle key in Settings for sharper lines." else "",
                 action = "Scan now",
                 onAction = onScan,
             )
             result.stats.matchedEvents == 0 && result.games.isNotEmpty() -> EmptyState(
                 "No fair odds for these games",
                 "Novig's prices for ${result.games.size} games are on the Games tab, but none of your fair-odds " +
-                    "sources listed them this scan. Check the sources in Settings (a Pinnacle or Odds API key " +
+                    "sources listed them this scan. Check the sources in Settings (a Pinnacle or PropLine key " +
                     "covers the most leagues).",
                 action = "Fair odds settings",
                 onAction = onOpenSettings,
@@ -228,9 +228,10 @@ private fun FeedSummary(
 private fun sourceNames(state: UiState): String {
     val s = state.settings
     return buildList {
-        if (s.usePinnacle && state.pinnapiKeys.isNotEmpty()) add("Pinnacle")
+        if (s.usePinnacle && (state.pinnapiKeys.isNotEmpty() || state.pinnwireKeys.isNotEmpty())) add("Pinnacle")
         if (s.usePolymarket) add("Polymarket")
         if (s.useKalshi) add("Kalshi")
+        if (s.usePropLine && state.proplineKeys.isNotEmpty()) add("PropLine")
         if (s.useOddsApi && state.oddsApiKeys.isNotEmpty()) add("The Odds API")
     }.let { if (it.size <= 1) it.joinToString("") else it.dropLast(1).joinToString(", ") + " and " + it.last() }
 }
