@@ -108,7 +108,7 @@ class OddsApiPropsSource(
         failure?.let { e ->
             val message = when (e) {
                 is AllKeysExhaustedException, is ReferenceException -> e.message ?: displayName
-                else -> "$displayName ${league.displayName}: ${e.message ?: e.javaClass.simpleName}"
+                else -> "$displayName ${league.displayName}: ${readableError(e)}"
             }
             throw PartialReferenceException(snapshot, message)
         }

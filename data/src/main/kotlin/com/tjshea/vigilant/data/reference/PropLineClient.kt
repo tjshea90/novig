@@ -276,7 +276,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
         failure?.let { e ->
             val message = when (e) {
                 is com.tjshea.vigilant.data.keys.AllKeysExhaustedException, is ReferenceException -> e.message ?: displayName
-                else -> "$displayName ${league.displayName}: ${e.message ?: e.javaClass.simpleName}"
+                else -> "$displayName ${league.displayName}: ${readableError(e)}"
             }
             throw PartialReferenceException(snapshot, message)
         }

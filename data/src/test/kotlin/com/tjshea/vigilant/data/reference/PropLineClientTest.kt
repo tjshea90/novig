@@ -310,4 +310,12 @@ class PropLineClientTest {
         PropLinePropsSource(c).odds(nfl, ScanSettings(), context)
         assertTrue(requests.none { it.requestUrl!!.encodedPath.endsWith("/events") })
     }
+
+    @Test
+    fun `an unreadable reply shows a short plain message, not the JSON`() {
+        val e = runCatching { Json.decodeFromString(PlEvent.serializer(), "[1,2]") }.exceptionOrNull()!!
+        assertEquals("sent a reply Vigilant couldn't read", readableError(e))
+        val long = IllegalStateException("x".repeat(500))
+        assertEquals(160, readableError(long).length)
+    }
 }

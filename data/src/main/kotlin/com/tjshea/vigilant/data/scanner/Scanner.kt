@@ -489,7 +489,7 @@ class Scanner(
             } catch (e: Exception) {
                 val message = when (e) {
                     is AllKeysExhaustedException, is ReferenceException -> e.message ?: source.displayName
-                    else -> "${source.displayName} ${league.displayName}: ${e.message ?: e.javaClass.simpleName}"
+                    else -> "${source.displayName} ${league.displayName}: ${com.tjshea.vigilant.data.reference.readableError(e)}"
                 }
                 if (error == null) errors.addSync(message)
                 error = message

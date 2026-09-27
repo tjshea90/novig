@@ -138,6 +138,17 @@ data class ScanContext(
     val now: Long = System.currentTimeMillis(),
 )
 
+/**
+ * An error as one short line for the scan's banner: a reply that couldn't be read says so plainly
+ * instead of dumping the JSON it choked on (Tj's phone, 2026-09-27: "Unexpected JSON token at offset
+ * 537 … JSON input: ….."), and anything else is cut to [max] characters.
+ */
+fun readableError(e: Throwable, max: Int = 160): String {
+    if (e is kotlinx.serialization.SerializationException) return "sent a reply Vigilant couldn't read"
+    val m = (e.message ?: e.javaClass.simpleName).replace(Regex("\\s+"), " ").trim()
+    return if (m.length <= max) m else m.take(max - 1).trimEnd() + "…"
+}
+
 /** A provider refused or failed in a way the user should read as-is. */
 open class ReferenceException(message: String) : Exception(message)
 
