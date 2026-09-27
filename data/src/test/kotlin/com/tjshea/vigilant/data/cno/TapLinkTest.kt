@@ -25,7 +25,7 @@ class TapLinkTest {
     }
 
     @Test
-    fun `CNO answers - its link; CNO hangs - Novig's own catalog after a few seconds, not forever`() = runTest {
+    fun `CNO answers - its link, CNO hangs - Novig's own catalog after a few seconds, not forever`() = runTest {
         assertEquals(TapLink.Link(cnoLink, true), TapLink.resolve(null, false, { cnoLink }, { error("not asked") }))
         val start = testScheduler.currentTime
         val link = TapLink.resolve(null, false, { awaitCancellation() }, { bet })
