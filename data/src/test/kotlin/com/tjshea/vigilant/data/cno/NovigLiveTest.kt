@@ -64,7 +64,7 @@ class NovigLiveTest {
         var clock: () -> Long = { 0L }
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?): List<NovigEvent> = emptyList()
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?): List<NovigMarket> = emptyList()
-        override suspend fun market(marketId: String): NovigMarket = market(marketId)
+        override suspend fun market(marketId: String): NovigMarket = this@NovigLiveTest.market(marketId)
         override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch {
             reads += marketIds.size
             return BookBatch(marketIds.associateWith { book(it, overBid[it] ?: 520, at = clock()) }, 0, marketIds.size, 0)
