@@ -37,6 +37,8 @@ interface CnoSource {
 class CnoClient(
     private val http: OkHttpClient,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** One pace for all of CNO's requests, the list's, the books' and the links' alike. */
+    private val pace: CnoPace = CnoPace(),
 ) : CnoSource {
 
     private class Session(
@@ -94,7 +96,7 @@ class CnoClient(
             .header("Cookie", "BetaDeepLinkIntro=Read=1")
             .build()
         val html = try {
-            http.newCall(request).awaitText().also(::check).body
+            call(request).also(::check).body
         } catch (e: IOException) {
             throw unreachable(e)
         }
@@ -107,7 +109,7 @@ class CnoClient(
         val pageUrl = url.toHttpUrl()
         val request = Request.Builder().url(pageUrl).get().header("User-Agent", USER_AGENT).build()
         val cookies = LinkedHashMap<String, String>()
-        val html = http.newCall(request).awaitText().also { check(it); keepCookies(it, cookies) }.body
+        val html = call(request).also { check(it); keepCookies(it, cookies) }.body
         val form = CnoPage.form(html)
         val postUrl = form.action?.let { pageUrl.resolve(it) } ?: pageUrl
         return Session(url, postUrl, cookies, form, LinkedHashMap(form.fields.toMap()), clock())
@@ -157,7 +159,7 @@ class CnoClient(
             .header("Referer", s.view)
             .apply { if (s.cookies.isNotEmpty()) header("Cookie", s.cookies.entries.joinToString("; ") { "${it.key}=${it.value}" }) }
             .build()
-        val reply = http.newCall(request).awaitText().also { check(it); keepCookies(it, s.cookies) }.body
+        val reply = call(request).also { check(it); keepCookies(it, s.cookies) }.body
         val records = CnoPage.delta(reply)
         records.firstOrNull { it.type == "error" }?.let { throw CnoException("CrazyNinjaOdds answered with an error: ${it.content.take(120)}") }
         if (records.any { it.type == "pageRedirect" }) throw CnoException("CrazyNinjaOdds restarted the page")
@@ -194,6 +196,23 @@ class CnoClient(
         put("TextBoxMinimumSubMarketSideCount", maxOf(f.minSides, number("TextBoxMinimumSubMarketSideCount")?.toInt() ?: 0).toString())
         put("TextBoxMaximumResultCount", f.rows.toString())
         if (f.completeBook) s.form.checkboxes.firstOrNull { it.endsWith("CheckBoxRequireACompleteSportsbook") }?.let { fields[it] = "on" }
+    }
+
+    /**
+     * One request to CNO, in [pace], read off the caller's thread. A network failure (a dead
+     * connection left from before the phone slept, a timeout, a DNS hiccup) is tried once more
+     * straight away on a fresh connection: most of the "timeout" and "unable to resolve" Tj saw
+     * (2026-09-27) were one-off, and the second try goes through.
+     */
+    private suspend fun call(request: Request): HttpText {
+        pace.await()
+        return try {
+            http.newCall(request).awaitText()
+        } catch (e: IOException) {
+            http.connectionPool.evictAll()
+            pace.await()
+            http.newCall(request).awaitText()
+        }
     }
 
     private fun unreachable(e: IOException) = CnoException("Couldn't reach CrazyNinjaOdds (${e.message ?: "network error"})", cause = e)
