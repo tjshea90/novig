@@ -726,13 +726,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Settles open bets whose games are over from Novig's results (the Tracker tab calls it when
+     * Settles open bets whose games are over from their final scores (the Tracker tab calls it when
      * shown). Costs nothing when no bet is due; [BetSettler] runs one pass at a time.
      */
     fun settleBets() {
         viewModelScope.launch {
             val report = runCatching { withContext(Dispatchers.IO) { c.settler.run() } }.getOrNull() ?: return@launch
-            if (report.settled > 0) _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from Novig's results")
+            if (report.settled > 0) _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from final scores")
         }
     }
 
