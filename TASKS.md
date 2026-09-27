@@ -2202,12 +2202,17 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > Yes, use PropLine's Novig prices to order the reads, but if there is any failure or delay, make the app
 > automatically fallback to the original novig read
 
-- [ ] T1 Read Novig's own prices from the PropLine league call already made (add `novig` to its books: no
+- [x] T1 (DONE: PropLineClient asks `novig` in the same /odds and per-game calls, `parseBoard`/`parseEventBoard` split it into
+      RefSnapshot.novig; PropLinePropsSource passes on Novig quotes ≤3 min old. Test: PropLineClientTest board test asserts
+      the bookmakers param and the split.) Read Novig's own prices from the PropLine league call already made (add `novig` to its books: no
       extra request), kept apart from the fair-odds books (never priced, never counted as coverage).
-- [ ] T2 Scanner: before and while reading Novig's books, estimate each planned line's EV at PropLine's
+- [x] T2 (DONE: Scanner.preview/previewOf stand-in books through Pricing; fetchOrder uses preview EV before last scan's. Test:
+      NovigPreviewTest "PropLine's Novig prices put the likeliest +EV line first and the worst last" (also: nothing priced from
+      them).) Scanner: before and while reading Novig's books, estimate each planned line's EV at PropLine's
       Novig price and read the likeliest +EV lines first. The preview only orders reads: the feed is always
       priced from Novig's own books.
-- [ ] T3 Automatic fallback: no PropLine key, PropLine failed, answered late (the book reads don't wait for
+- [x] T3 (DONE: NovigPreviewTest "with no relay…", "a relay that answers late never holds the reads back", "a relay that fails…",
+      "a relay older than three minutes orders nothing"; preview errors → empty map.) Automatic fallback: no PropLine key, PropLine failed, answered late (the book reads don't wait for
       it past a short limit), its Novig prices too old, or a line it doesn't quote → the original order
       (open bets, last scan's EV, props/periods, main lines). Tests for each.
 - [ ] T4 Light tests + floor with screenshots, RESEARCH.md §23 note, ship, link.

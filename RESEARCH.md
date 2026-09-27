@@ -1998,3 +1998,15 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
 - **Rosters read for a CNO list nobody sees:** since the widget works in Vigilant-only mode, its "on
   screen" signal kept ESPN roster reads going for an old CNO list; now only with CNO's scanner on
   (`UiState.cnoTeamRows`).
+
+### 23.6 PropLine's Novig prices order the Novig reads (v0.16.4, Tj: "use PropLine's Novig prices to order the reads, but if there is any failure or delay, make the app automatically fallback to the original novig read")
+- `novig` rides in the same PropLine requests (league board and per-game props: no extra requests) and is
+  parsed apart (`RefSnapshot.novig`), so it never prices a fair line and never counts as a fallback's
+  coverage.
+- The book pump builds a stand-in Novig book per planned line from those prices ("taking A at P" = a bid of
+  1 − P on B), prices it with the normal `Pricing` against this scan's fair line, and reads the likeliest
+  +EV lines first (`Scanner.preview`, `fetchOrder`). The feed is still priced only from Novig's own books.
+- Fallback to the original order, automatically: no PropLine key or a failed call (no relay), an answer
+  that isn't in yet (the pump never waits: the first reads go in the original order and the rest re-sort
+  when it lands), a relay older than 3 minutes (`NOVIG_PREVIEW_MAX_AGE_MS`; props relays likewise), a line
+  PropLine doesn't quote (last scan's EV, as before), or any error computing it.
