@@ -248,7 +248,8 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
 
     override fun supports(league: League) = PropLineProps.marketsFor(league.oddsApiSportKey).isNotEmpty()
 
-    private data class Bought(val novigEventId: String, val ref: RefEvent, val atMs: Long, val ask: String)
+    /** A game's props, bought at [atMs] with request [ask]; [novig] = Novig's own prices from the same reply. */
+    private data class Bought(val novigEventId: String, val ref: RefEvent, val atMs: Long, val ask: String, val novig: RefEvent? = null)
 
     private val mutex = Mutex()
     private val bought = HashMap<String, Bought>()
@@ -280,9 +281,12 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                     val ref = m.refEvent ?: continue
                     val markets = toBuy[m.event.eventId].orEmpty()
                     if (markets.isEmpty()) continue
-                    val odds = client.eventOdds(sport, ref.id.removePrefix(PREFIX), markets, books)
+                    val board = client.eventBoard(sport, ref.id.removePrefix(PREFIX), markets, books)
                     // The listing's teams and time (the ones matched on) with the odds call's quotes.
-                    bought[m.event.eventId] = Bought(m.event.eventId, ref.copy(markets = odds?.markets.orEmpty()), now, ask)
+                    bought[m.event.eventId] = Bought(
+                        m.event.eventId, ref.copy(markets = board?.events?.singleOrNull()?.markets.orEmpty()), now, ask,
+                        novig = board?.novig?.singleOrNull()?.let { ref.copy(markets = it.markets) },
+                    )
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
@@ -291,11 +295,10 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
             }
         }
         val ids = leagueEvents.mapTo(HashSet()) { it.eventId }
-        val events = bought.values
-            .filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < REUSE_MS && it.ref.markets.isNotEmpty() }
-            .map { it.ref }
-            .distinctBy { it.id }
-        val snapshot = RefSnapshot(sport, events, now, provider = ID)
+        val current = bought.values.filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < REUSE_MS }
+        val events = current.filter { it.ref.markets.isNotEmpty() }.map { it.ref }.distinctBy { it.id }
+        val novig = current.mapNotNull { it.novig }.distinctBy { it.id }
+        val snapshot = RefSnapshot(sport, events, now, provider = ID, novig = novig)
         failure?.let { e ->
             val message = when (e) {
                 is com.tjshea.vigilant.data.keys.AllKeysExhaustedException, is ReferenceException -> e.message ?: displayName
