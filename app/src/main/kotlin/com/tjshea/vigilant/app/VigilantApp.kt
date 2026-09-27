@@ -10,6 +10,7 @@ import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoLinks
 import com.tjshea.vigilant.data.cno.CnoNetwork
 import com.tjshea.vigilant.data.cno.NovigBetFinder
+import com.tjshea.vigilant.data.cno.NovigLive
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.FileApiKeyStore
 import com.tjshea.vigilant.data.keys.KeyPool
@@ -107,6 +108,9 @@ class AppContainer(app: Application) {
         // Bet links from Novig's catalog first, so taps don't depend on CNO answering (Tj, 2026-09-27).
         catalog = { row -> (betFinder.find(row) as? NovigBetFinder.Found.Bet)?.link },
     )
+
+    /** Novig's price now for CNO's listed bets, from Novig's order books (only while CNO's list is on screen). */
+    val live = NovigLive(novig, { row -> betFinder.find(row) })
 
     /** Bets Tj marked placed in the widget or the CNO tab: hidden from both until their game is over. */
     val placed = PlacedBets(JsonFileStore(File(app.filesDir, "placed.json"), PlacedBook.serializer(), { PlacedBook() }, json))

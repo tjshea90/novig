@@ -165,6 +165,12 @@ data class ScanSettings(
      * 0 = only when Scan is tapped (the default: each scan spends API credits).
      */
     val widgetRescanMinutes: Int = 0,
+    /**
+     * CNO's Novig bets show Novig's price now, read from Novig's own order book every few seconds
+     * while the list is on screen, with the EV at it against CNO's fair odds: current even when CNO
+     * is slow or out of reach (Tj, 2026-09-27; [com.tjshea.vigilant.data.cno.NovigLive]).
+     */
+    val cnoLivePrices: Boolean = true,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {

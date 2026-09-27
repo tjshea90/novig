@@ -99,7 +99,13 @@ data class UiState(
     val cnoLive: Boolean = false,
     /** CNO bets' Novig links by [com.tjshea.vigilant.data.cno.CnoFeed.linkKey] (a bet both scanners list is shown once). */
     val cnoLinks: Map<String, String> = emptyMap(),
+    /** Novig's price now for CNO's listed bets, by row key ([com.tjshea.vigilant.data.cno.NovigLive]). */
+    val novigLive: Map<String, com.tjshea.vigilant.data.cno.LivePrice> = emptyMap(),
 ) {
+    /** Novig's live price for [row], when that setting is on and it was read in the last minute. */
+    fun livePrice(row: CnoRow, now: Long): com.tjshea.vigilant.data.cno.LivePrice? =
+        novigLive[row.key]?.takeIf { settings.cnoLivePrices && now - it.atMs <= com.tjshea.vigilant.data.cno.NovigLive.FRESH_MS }
+
     /** [placed]'s keys (and the other scanner's key for the same bet), for hiding them. */
     val placedKeys: Set<String> by lazy { placed.flatMapTo(HashSet()) { it.keys } }
 
@@ -127,11 +133,14 @@ data class UiState(
         cnoPicks(now)?.picks?.filter { MiniWindow.cnoKey(it.row) !in placedKeys }.orEmpty()
 
     /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
-    fun cnoAgrees(pick: CnoPick): Boolean {
+    fun cnoAgrees(pick: CnoPick, now: Long = System.currentTimeMillis()): Boolean {
         if (!cnoReadsBooks) return false
         val view = books[pick.row.key]?.view ?: return false
         val snap = cno.snapshot ?: return false
-        return CnoBooks.agrees(view, pick.row, pick.live, snap.fetchedAtMs)
+        // Judged at the newest Novig price: the live one when it's newer than the list.
+        val live = livePrice(pick.row, now)?.takeIf { it.atMs > snap.fetchedAtMs }
+        return if (live != null) CnoBooks.agrees(view, pick.row.copy(odds = live.american), pick.live, live.atMs)
+        else CnoBooks.agrees(view, pick.row, pick.live, snap.fetchedAtMs)
     }
 
     /**
@@ -225,6 +234,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.cno.links.collect { l -> _state.update { it.copy(cnoLinks = l) } }
         }
         viewModelScope.launch {
+            c.live.prices.collect { p -> _state.update { it.copy(novigLive = p) } }
+        }
+        viewModelScope.launch {
             runCatching { c.placed.load() }
             c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets) } }
         }
@@ -250,6 +262,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 launch { c.teams.keepFresh(teamRows()) }
                 // Vigilant's own scan again every N minutes, when Tj asked for that.
                 launch { rescanWhileWatched() }
+                // Novig's price now for the listed CNO bets (off the main thread: book parsing).
+                launch(Dispatchers.Default) {
+                    state.map { it.settings.cnoLivePrices && it.settings.cnoOn }.distinctUntilChanged().collectLatest { on ->
+                        if (on) c.live.keepFresh(state.map { s -> s.cnoShown(System.currentTimeMillis()).map { it.row } })
+                    }
+                }
             }
         }
     }
