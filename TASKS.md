@@ -2195,4 +2195,5 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       roster lane gated on CNO (PlacedEverywhereTest "with CNO asleep…"), Odds API list failure = standby (OddsApiFallbackTest).
       RESEARCH.md §23.5.) Full tests (CLAUDE.md protocol): automated floor + screenshots, sweep every tab and subsystem,
       fix what's found with named tests.
-- [ ] S5 Regression (exit code + output), ckpt, ship, release, link.
+- [x] S5 (SHIPPED v0.16.3 code 30, 2026-09-27T16:41Z: floor 567 tests 0 failures (exit 0 + XML counts), ship.sh suite green,
+      CI green, release.yml green, https://github.com/tjshea90/novig/releases/tag/v0.16.3, recorded.) Regression (exit code + output), ckpt, ship, release, link.
