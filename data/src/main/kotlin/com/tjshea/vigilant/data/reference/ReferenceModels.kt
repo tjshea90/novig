@@ -107,6 +107,12 @@ interface ReferenceSource {
     /** True when each call spends a limited quota (credits), so callers should re-use results. */
     val metered: Boolean get() = false
 
+    /**
+     * Player-prop stats this source can price that the free exchanges (Kalshi) don't: Novig lists
+     * hundreds of those markets a day, so the scan only loads them when some source prices them.
+     */
+    val extraPropTypes: Set<String> get() = emptySet()
+
     /** Whether this provider lists [league] at all. A scan never calls [odds] for one it doesn't. */
     fun supports(league: League): Boolean = true
 

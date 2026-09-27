@@ -333,6 +333,9 @@ class KeyPool(
     private val keys: () -> List<String>,
     private val meter: UsageMeter,
 ) {
+    /** How many keys Tj has for this provider right now. */
+    fun keyCount(): Int = keys().size
+
     suspend fun <T> execute(cost: Int, action: suspend (key: String) -> KeyAttemptResult<T>): T {
         val tried = HashSet<String>()
         var lastProblem: String? = null

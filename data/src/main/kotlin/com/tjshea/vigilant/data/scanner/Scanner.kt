@@ -410,8 +410,8 @@ class Scanner(
      * kicking points, …) are hundreds of markets a day, fetched only when that source is on.
      */
     private fun catalogTypes(settings: ScanSettings, sources: List<ReferenceSource>): Set<String> {
-        val types = settings.novigMarketTypes.toSet()
-        return if (sources.any { it.id == "oddsapi_props" }) types else types - PropStats.BOOK_ONLY_TYPES
+        val priced = sources.flatMapTo(HashSet()) { it.extraPropTypes }
+        return settings.novigMarketTypes.toSet() - (PropStats.BOOK_ONLY_TYPES - priced)
     }
 
     private suspend fun refreshCatalog(settings: ScanSettings, types: Set<String>, now: Long, errors: MutableList<String>) {
