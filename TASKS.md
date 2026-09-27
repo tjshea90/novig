@@ -1952,3 +1952,55 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [ ] N5 Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
       source (CNO / Vigilant) and period.
 - [ ] N6 Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
+
+### Findings and design (written 2026-09-27 ~03:10Z so a fresh session can build it cold)
+- N3 answered: NOT possible. docs.novig.com: every account route (positions, fills, orders,
+  transactions, balance) targets an API **subaccount** (`{keyId}` = subaccount trading key; errors
+  NOT_A_SUBACCOUNT_KEY); bets placed in the Novig app come from the main cash wallet, which no API
+  scope reads. So per Tj's fallback: every ✓ logs a **$1** bet, stake editable in the Tracker. Tell Tj.
+- Why only 8: `BetTracker` (tracker.json) only gets bets from Vigilant's +EV card "Track"; the
+  widget/CNO-tab ✓ goes to `PlacedBets` (placed.json, hide-only, pruned 12 h after start), so most
+  of his ~60 ✓ marks are already gone from disk; import the ones still in placed.json (N1).
+- Data model (`data/tracker/BetTracker.kt`, all new fields optional for old files):
+  `TrackedBet` + `source: String = "vigilant"` ("cno"), `placedKey: String? = null` (widget key
+  "cno:<row key>" or "<market>/<outcome>", links the ✓ mark: Undo/"Not placed" deletes the pending
+  bet), `american: Int? = null`, `book: String = "Novig"`, `gameUrl`/`betUrl: String? = null` (CNO
+  links: rechecks + finding the Novig outcome), `nowFair`/`nowEv: Double?`, `nowAtMs: Long?`,
+  `nowBooks: Int?` (N4), `settleValue: Double? = null` (payout per $1 contract for a Novig
+  fair-market-value settlement), `settledBy: String? = null` ("novig" auto / "you" manual),
+  `imported: Boolean = false` (from placed.json: EV/fair unknown). Make `fairAtBet` and
+  `evPercentAtBet` `Double?` (imported bets have none); `BetStatus` + `FMV`. Update users:
+  TrackerScreen, BetTracker.stats, SampleScan.kt:194-198, BetTrackerTest.kt:89-93.
+  CNO bet from a ✓: price = 1/decimal(odds) (the price shown, live one if any), cost = price +
+  Novig fee if the game had started (Fees.takerFee(price, MarketFee.GAME, true)), fairAtBet =
+  CnoChecks.fairProbability(row) ?: (1+ev)/decimal, evPercentAtBet = pick.ev, league/event/
+  market/bet/book/startsAt from the row, marketId/outcomeId from `NovigBetFinder.find` (Bet has
+  both since v0.15.4) or "" until resolved. Vigilant item ✓: find the Opportunity in
+  state.result by key → `tracker.track(o, 1.0)` + placedKey.
+- Wiring: `MainViewModel.markPlaced(item)` also logs (not `markHidden`); `unmarkPlaced(key)` also
+  deletes the PENDING tracked bet with that placedKey. One-time import on VM init after both
+  stores load: every non-hidden PlacedBet whose key isn't a tracked placedKey → imported bet
+  (title→selection, detail "market · event[ · book]", odds string → american, startsAtMs,
+  placedAtMs → createdAtMs, stake $1).
+- N2 auto-settle, new `data/tracker/BetSettler.kt`: for PENDING bets whose game started ≥ 1 h
+  ago: resolve marketId/outcomeId if blank (NovigBetFinder; for imported bets without league,
+  search `/v3/public/catalog/events` by time window without league, statuses incl. closed ones),
+  then GET `/v3/public/catalog/markets/{id}` (`NovigPublicClient.market`): outcome status WIN →
+  WON, LOSS → LOST, PUSH → PUSH, decimal → FMV with settleValue; TBD → leave. Paced ≥ 400 ms.
+  Runs: VM init, Tracker tab shown, and a WorkManager periodic job every 3 h with a network
+  constraint (add `androidx.work:work-runtime-ktx` to gradle/libs.versions.toml + app deps;
+  Worker gets `(applicationContext as VigilantApp).container`). Manual Won/Lost stays (settledBy "you").
+- N4 "Check odds now" button (Tracker): pending, not-started CNO bets with gameUrl →
+  `CnoFeed.loadBooks(row, force = true)` (paced, CNO pauses respected) → `CnoBooks.check(view,
+  american at bet)` → fairProbability → nowFair, nowEv = fair/cost − 1, Novig's current price from
+  the view; before the start also write it as closingFair (CLV for CNO bets). Vigilant bets: their
+  latest scan fair (closingFair/closingSeenAtMs, `observe`) and the button starts a scan when
+  Vigilant's scanner is on. UI: "now +3.0% EV" green / "now −2.0% EV" red, "bet at +117 · fair now
+  +105", checked "Xm ago".
+- N5 Stats: Tracker tab gets a top switch "Stats | Bets". Stats: profit $ and ROI % (green/red),
+  win % (W/(W+L)), record W-L-P, open bets, expected profit, avg EV (known only), avg CLV; period
+  chips All / 30 d / 7 d / Today; split CNO vs Vigilant. Bets: filter chips Open / Settled / All,
+  stake editable (tap → dialog), newest first.
+- Tests to write: BetTrackerTest (CNO log, undo deletes, import, old JSON reads), BetSettlerTest
+  (MockWebServer market statuses → WON/LOST/PUSH/FMV, TBD untouched, unresolved resolved),
+  MiniWindowTest/VM-level where possible, ScreenshotTest (stats colors, now-EV colors, filters).
