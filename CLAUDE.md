@@ -275,7 +275,7 @@ unless Tj asks).
   cancelled (`ScanService.cancelDone`)); bet slips without CNO and CNO under load (RESEARCH.md §20.3:
   `NovigBetFinder` catalog-first links (`CnoFeed.catalog`, `LiveNovigBetFinderTest`), `TapLink` race,
   `data/cno/NovigLive` (Novig's price now for CNO bets, `ScanSettings.cnoLivePrices`,
-  `UiState.livePick`), widget switch Both / CNO only (`MainViewModel.setBothScanners`), one row per
+  `UiState.livePick`, read for `UiState.livePriceRows` (candidates, never filtered by those prices)), widget switch Both / CNO only (`MainViewModel.setBothScanners`), one row per
   bet both scanners list (`MiniWindow.merge`, `PlacedBet.aliases`), `ScanSettings.widgetRescanMinutes`
   (`WidgetRescan`), `LiveCnoBurstTest` (VIGILANT_BURST=1)).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
