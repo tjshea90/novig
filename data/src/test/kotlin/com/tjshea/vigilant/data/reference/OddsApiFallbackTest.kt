@@ -119,8 +119,12 @@ class OddsApiFallbackTest {
 
     @Test
     fun `if the free game list can't be read, it stands by instead of raising an error`() = runTest {
-        server.shutdown() // nothing answers
+        // Nothing listens on port 1: the free list can't be read.
+        val unreachable = TheOddsApiClient(
+            OkHttpClient(), KeyPool(QuotaPolicy.ODDS_API, { listOf("test-key") }, meter), json,
+            "http://127.0.0.1:1/v4", clock = { now }, minIntervalMs = 0,
+        )
         val onlyRavens = mapOf("nA" to setOf("MONEYLINE:0"))
-        assertFalse(client().needed(nfl, settings, after(onlyRavens)))
+        assertFalse(unreachable.needed(nfl, settings, after(onlyRavens)))
     }
 }
