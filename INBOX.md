@@ -2135,3 +2135,8 @@ Review and fix the error in the screenshot
 ```
 Right now some bets are showing up in the vigilant positive EV scanner which I already placed in the cno scanner widget. Make sure the bet tracker works across all parts of the app and hides bets I already placed throughout the whole app regardless of scanner. Also, on the regular vigilant scanner, make it also have a widget and be able to open the exact bet slip in novig. Right now I see bets and it has an open novig button but the button only opens the app, not the exact bet slip like the cno scanner does
 ```
+
+## 2026-09-27T15:27:13Z
+```
+For the stats/tracker sections, do not count any bets that are outliers (currently + or - over 6% ev) as wins or losses. Ignore them completely. I don't want the average skewed by a single bet that is an outlier
+```
