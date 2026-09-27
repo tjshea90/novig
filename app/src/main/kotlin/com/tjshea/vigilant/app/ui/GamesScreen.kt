@@ -49,12 +49,14 @@ import com.tjshea.vigilant.data.scanner.PricedGame
 @Composable
 fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (String) -> Unit, onScan: () -> Unit = {}) {
     var openEventId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Fair prices and EVs show only while the other books' prices are current (RESEARCH.md §24).
+    val now = rememberNow(15_000)
     val games = state.result?.games.orEmpty()
     val open = games.firstOrNull { it.event.eventId == openEventId }
 
     if (open != null) {
         BackHandler { openEventId = null }
-        GameDetail(open, state, onBack = { openEventId = null }, onOpen = onOpen)
+        GameDetail(open, state, now, onBack = { openEventId = null }, onOpen = onOpen)
         return
     }
 
@@ -107,15 +109,15 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                         }
                     }
                 }
-                items(games, key = { it.event.eventId }) { g -> GameRow(g, Modifier.padding(horizontal = 12.dp)) { openEventId = g.event.eventId } }
+                items(games, key = { it.event.eventId }) { g -> GameRow(g, now, Modifier.padding(horizontal = 12.dp)) { openEventId = g.event.eventId } }
             }
         }
     }
 }
 
 @Composable
-private fun GameRow(g: PricedGame, modifier: Modifier, onClick: () -> Unit) {
-    val best = g.outcomes.mapNotNull { it.evPercent }.maxOrNull()
+private fun GameRow(g: PricedGame, now: Long, modifier: Modifier, onClick: () -> Unit) {
+    val best = g.outcomes.filterNot { it.fairIsOld(now) }.mapNotNull { it.evPercent }.maxOrNull()
     val ml = g.outcomes.filter { it.market.marketType == "MONEY" }
     Card(
         modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -152,7 +154,7 @@ private fun GameRow(g: PricedGame, modifier: Modifier, onClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GameDetail(g: PricedGame, state: UiState, onBack: () -> Unit, onOpen: (Opportunity) -> Unit) {
+private fun GameDetail(g: PricedGame, state: UiState, now: Long, onBack: () -> Unit, onOpen: (Opportunity) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -183,8 +185,10 @@ private fun GameDetail(g: PricedGame, state: UiState, onBack: () -> Unit, onOpen
                     Column(Modifier.padding(vertical = 4.dp)) {
                         Text(outcomes.first().marketLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         outcomes.forEach { o ->
+                            // Past a few minutes the other books' prices behind it aren't current: Novig's price only.
+                            val old = o.fairIsOld(now)
                             Row(
-                                Modifier.fillMaxWidth().clickable(enabled = o.quote != null) { onOpen(o) }.padding(vertical = 6.dp),
+                                Modifier.fillMaxWidth().clickable(enabled = o.quote != null && !old) { onOpen(o) }.padding(vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(o.selection, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
@@ -194,9 +198,9 @@ private fun GameDetail(g: PricedGame, state: UiState, onBack: () -> Unit, onOpen
                                     fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.SemiBold,
                                 )
-                                Text(o.fairProbability?.let { Format.american(it) } ?: "—", Modifier.width(64.dp), fontFamily = FontFamily.Monospace)
+                                Text(if (old) "old" else o.fairProbability?.let { Format.american(it) } ?: "—", Modifier.width(64.dp), fontFamily = FontFamily.Monospace)
                                 Text(
-                                    o.evPercent?.let { Format.evPercent(it) } ?: "",
+                                    if (old) "" else o.evPercent?.let { Format.evPercent(it) } ?: "",
                                     Modifier.width(72.dp),
                                     color = when {
                                         (o.evPercent ?: 0.0) >= state.settings.minEvPercent -> Edge.colors.positive
