@@ -251,6 +251,7 @@ class CnoClient(
                 else -> e.message ?: "network error"
             }
         }
+
         /** A phone browser's, so CNO serves its normal page; "Vigilant" at the end says who's asking. */
         const val USER_AGENT = "Mozilla/5.0 (Linux; Android 16; moto g) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36 Vigilant"
 
