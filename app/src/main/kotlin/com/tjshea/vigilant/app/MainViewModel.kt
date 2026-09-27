@@ -256,7 +256,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.live.prices.collect { p -> _state.update { it.copy(novigLive = p) } }
         }
         viewModelScope.launch {
-            runCatching { c.placed.load() }
+            val marks = runCatching { c.placed.load() }.getOrNull()
+            // ✓ marks made before the Tracker kept them move into it, once (Tj, 2026-09-27).
+            if (marks != null) {
+                val moved = runCatching { c.tracker.importPlaced(marks.bets) }.getOrDefault(0)
+                if (moved > 0) _toasts.tryEmit("Moved $moved earlier ✓ bet${if (moved == 1) "" else "s"} into the Tracker (at \$1 each: change it there)")
+            }
             c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets) } }
         }
         viewModelScope.launch {
@@ -309,10 +314,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (!s.settings.cnoPlayerTeams) emptyList() else s.cno.snapshot?.takeIf { it.url == s.cnoUrl }?.rows ?: emptyList()
     }
 
-    /** Marks a widget or CNO-tab bet placed: hidden from then on, through refreshes and restarts. */
+    /**
+     * Marks a widget or CNO-tab bet placed: hidden from then on, through refreshes and restarts,
+     * and logged in the Tracker for good (Tj, 2026-09-27: "for every bet that I check on the cno
+     * scanner, log it permanently"), $1 unless he changes it there.
+     */
     fun markPlaced(item: MiniWindow.Item) {
         viewModelScope.launch {
             if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis())) }.isFailure) _toasts.tryEmit("Couldn't save that")
+            if (runCatching { logBet(item) }.isFailure) _toasts.tryEmit("Couldn't log the bet in the Tracker")
+        }
+    }
+
+    /** The Tracker's copy of a ✓: Vigilant's own bet (its scan's numbers), else CNO's bet at the price shown. */
+    private suspend fun logBet(item: MiniWindow.Item) {
+        val own = item.outcomeId?.let { _state.value.result?.opportunities?.firstOrNull { o -> o.key == item.key } }
+        if (own != null) {
+            c.tracker.track(own, com.tjshea.vigilant.data.tracker.BetTracker.DEFAULT_STAKE, placedKey = item.key)
+            return
+        }
+        val pick = item.cno ?: return
+        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key)
+        // Novig's outcome, for settling it from Novig's catalog later (best effort; the settler retries).
+        viewModelScope.launch {
+            val found = runCatching { withContext(Dispatchers.IO) { c.betFinder.find(pick.row) } }.getOrNull() as? com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet
+            if (found?.marketId != null) runCatching { c.tracker.edit(bet.id) { it.copy(marketId = found.marketId!!, outcomeId = found.outcomeId) } }
         }
     }
 
@@ -325,7 +351,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Undo, or "not placed after all": the bet shows again. */
     fun unmarkPlaced(key: String) {
-        viewModelScope.launch { if (runCatching { c.placed.unmark(key) }.isFailure) _toasts.tryEmit("Couldn't save that") }
+        viewModelScope.launch {
+            if (runCatching { c.placed.unmark(key) }.isFailure) _toasts.tryEmit("Couldn't save that")
+            // Not placed after all: its open bet leaves the Tracker too.
+            runCatching { c.tracker.untrack(key) }
+        }
     }
 
     /** Re-reads CNO now (Refresh, pull down, the mini window's button), if 3 s have passed. */
