@@ -887,6 +887,32 @@ class ScreenshotTest {
         assertEquals(10, picked?.widgetRescanMinutes)
     }
 
+    /** Novig's price now for CNO's bets (RESEARCH.md §20.3): the widget and the CNO tab say what CNO had. */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetShowsNovigsPriceNowAndWhatCnoHad() {
+        val jj = SampleCno.rows[1]
+        val s = floatingState().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(105, 40.0, 0.004, SampleScan.NOW - 5_000)))
+        floating("9p_floating_novig_now", s)
+        compose.onNodeWithText("was +117", substring = true, useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("+105", useUnmergedTree = true).assertExists()
+    }
+
+    @Test fun cnoCardShowsNovigsPriceNowAndWhatCnoHad() {
+        val jj = SampleCno.rows[1]
+        val s = SampleCno.state().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(105, 40.0, 0.004, SampleScan.NOW - 5_000)))
+        shoot("8f_cno_novig_now") { com.tjshea.vigilant.app.ui.CnoScreen(s, {}, {}) }
+        compose.onNodeWithText("CNO had +117").assertIsDisplayed()
+        compose.onNodeWithText("NOVIG NOW").assertIsDisplayed()
+    }
+
+    @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
+    @Test fun settingsHaveTheNovigPriceNowSwitch() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Novig's price now").performClick()
+        assertEquals(false, picked?.cnoLivePrices)
+    }
+
     /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */
     @Test fun openInNovigSaysItsOpening() {
         val (pick, snap) = jeffersonMoved()

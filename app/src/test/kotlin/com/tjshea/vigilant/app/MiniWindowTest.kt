@@ -264,6 +264,40 @@ class MiniWindowTest {
     }
 
     @Test
+    fun `CNO bets show Novig's price now when it was read, with the EV at it, and say what CNO had`() {
+        val jj = SampleCno.rows[1] // +117 on CNO's list
+        val now = SampleScan.NOW
+        val live = com.tjshea.vigilant.data.cno.LivePrice(american = 105, available = 40.0, ev = 0.004, atMs = now - 5_000)
+        val s = SampleCno.state().copy(novigLive = mapOf(jj.key to live))
+        val item = MiniWindow.items(s, now).first { it.title == jj.bet }
+        assertEquals("+105", item.price)
+        assertEquals(0.004, item.ev, 1e-9)
+        assertEquals("\$40", item.available)
+        assertEquals("+117", item.movedFrom)
+        assertTrue(item.evLow) // under the 1% minimum at Novig's price now
+        assertEquals(105, item.cno!!.row.odds) // its Books view, tap and marks see that price
+        // A read over a minute old, or the setting off: CNO's price as listed.
+        val stale = s.copy(novigLive = mapOf(jj.key to live.copy(atMs = now - 61_000)))
+        assertEquals("+117", MiniWindow.items(stale, now).first { it.title == jj.bet }.price)
+        val off = s.copy(settings = s.settings.copy(cnoLivePrices = false))
+        assertEquals("+117", MiniWindow.items(off, now).first { it.title == jj.bet }.price)
+        // The same price as CNO's: nothing flagged.
+        val same = s.copy(novigLive = mapOf(jj.key to live.copy(american = 117, ev = 0.058)))
+        assertEquals(null, MiniWindow.items(same, now).first { it.title == jj.bet }.movedFrom)
+    }
+
+    @Test
+    fun `the green check judges Novig's price now, not the older one CNO listed`() {
+        val jj = SampleCno.rows[1]
+        val now = SampleScan.NOW
+        val s = SampleCno.withBooks()
+        assertTrue(MiniWindow.items(s, now).first { it.title == jj.bet }.agrees)
+        // Novig's book now: -125 (the books' fair value no longer beats it).
+        val moved = s.copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(-125, 50.0, 0.01, now - 1_000)))
+        assertFalse(MiniWindow.items(moved, now).first { it.title == jj.bet }.agrees)
+    }
+
+    @Test
     fun `the widget opens wider by default, room for both buttons`() {
         assertEquals(360, FloatingWidget.DEFAULT_W_DP)
     }
