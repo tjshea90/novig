@@ -868,25 +868,46 @@ class ScreenshotTest {
     /** Tj, 2026-09-27: "an option to also use the regular scan in addition to cno" — right in the widget. */
     @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun theWidgetsTopBarSwitchesVigilantsScanOnAndOff() {
-        var both: Boolean? = null
-        floating("9n_floating_switch_cno", floatingState(), actions = com.tjshea.vigilant.app.ui.FloatingActions(onBoth = { both = it }))
+        var picked: com.tjshea.vigilant.data.scanner.ScannerMode? = null
+        floating("9n_floating_switch_cno", floatingState(), actions = com.tjshea.vigilant.app.ui.FloatingActions(onScanner = { picked = it }))
         compose.onNodeWithText("CNO only").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Showing CNO only. Tap to add Vigilant's own scan").performClick()
-        assertEquals(true, both)
+        compose.onNodeWithContentDescription("Showing CNO only. Tap for CNO and Vigilant's scan").performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH, picked)
+    }
+
+    /**
+     * Tj, 2026-09-27: "on the regular vigilant scanner, make it also have a widget". The widget on
+     * Vigilant's scan alone: its bets, Scan and Recheck, no CNO buttons, and the switch goes on to CNO.
+     */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetWorksOnVigilantsScanAlone() {
+        var picked: com.tjshea.vigilant.data.scanner.ScannerMode? = null
+        var opened: MiniWindow.Item? = null
+        val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, floatingWidget = true))
+        val first = MiniWindow.items(s, SampleScan.NOW).first()
+        floating("9p_floating_vigilant_only", s, actions = com.tjshea.vigilant.app.ui.FloatingActions(onScanner = { picked = it }, onOpenBet = { opened = it }))
+        compose.onNodeWithText("Vigilant").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Scan").assertExists()
+        compose.onAllNodesWithContentDescription("Books").assertCountEquals(0)
+        compose.onNodeWithText(first.title).performClick()
+        // The exact bet slip, not just Novig's app.
+        assertEquals("novigapp://events/${first.outcomeId}", opened?.let { MiniWindow.novigLink(it) })
+        compose.onNodeWithContentDescription("Showing Vigilant's scan only. Tap for CNO only").performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.ScannerMode.CNO, picked)
     }
 
     @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun theWidgetWithBothListsABetBothScannersFoundOnce() {
-        var both: Boolean? = null
+        var picked: com.tjshea.vigilant.data.scanner.ScannerMode? = null
         val feedItem = MiniWindow.items(SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT)), SampleScan.NOW).first()
         val ohio = SampleCno.rows[2]
         val s = SampleCno.state().copy(cnoLinks = mapOf(com.tjshea.vigilant.data.cno.CnoFeed.linkKey(ohio) to "novigapp://events/${feedItem.outcomeId}/cno"))
-        floating("9o_floating_both_merged", s, actions = com.tjshea.vigilant.app.ui.FloatingActions(onBoth = { both = it }))
+        floating("9o_floating_both_merged", s, actions = com.tjshea.vigilant.app.ui.FloatingActions(onScanner = { picked = it }))
         compose.onNodeWithText("Both").assertIsDisplayed()
         compose.onAllNodesWithText("Ohio -33.5").assertCountEquals(0) // folded into Vigilant's row
         compose.onNodeWithText("CNO +5.3%", substring = true, useUnmergedTree = true).assertExists()
-        compose.onNodeWithContentDescription("Showing CNO and Vigilant's scan. Tap for CNO only").performClick()
-        assertEquals(false, both)
+        compose.onNodeWithContentDescription("Showing CNO and Vigilant's scan. Tap for Vigilant's scan only").performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, picked)
     }
 
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
