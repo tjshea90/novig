@@ -1,22 +1,22 @@
-# CHECKPOINT 443 — read me first, then TASKS.md
+# CHECKPOINT 444 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T00:18:33Z · **tests:** all 1 fast checks green
-**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `b1d4dd8` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T00:26:35Z · **tests:** all 1 fast checks green
+**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `050bb84` (this checkpoint is the commit after it)
 
 ## Just done
-Logged K9 (reliable CNO refresh research); CnoFeed link lane + lighter books lane + CnoLinks written
+K1/K2/K6/K9 data layer: CnoNetwork (DoH+remembered DNS, 20s keep-alive, 12s read timeout, retry once, CnoPace 1s), CnoFeed link lane + cno_links.json, lighter books lane waiting on errors, NovigBetFinder; data tests 277 + CnoNetworkTest 4 green
 
 ## Do this next
-K9 test DoH endpoints; then wire AppContainer, NovigBetFinder, app side K1/K3/K4/K7/K8
+App side: VM keepLinksFresh + openBet (cache->CNO 5s->NovigBetFinder->toast), K7 x hide, K8 only-agreed setting, K3 stale notification, K4 narrow bar + 360dp, K9 RESEARCH 20.2, then tests, v0.15.2 ship; then K10 full test
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    M  TASKS.md
 
 ## Last ten checkpoints
 ```
+  1d2da36 ckpt 443: Logged K9 (reliable CNO refresh research); CnoFeed link lane + lighter books l
   3f2758e ckpt 442: Logged K8 (only-agreed-bets option); CnoNetwork (RememberingDns, keep-alive 20
   17ba6f1 ckpt 441: v0.15.1 released + recorded; logged K6 (DNS/timeouts) and K7 (✕ hide button)
   5c9fe1c ckpt 440: Logged Tj's K1-K5 (bet slip taps, CNO unreachable, Milwaukee notification, nar
@@ -26,8 +26,7 @@ K9 test DoH endpoints; then wire AppContainer, NovigBetFinder, app side K1/K3/K4
   4cfc2e5 ckpt 436: Logged Tj's request: pinch/corner resize, easier move, cut-off bottom-right gr
   cd1f331 ckpt 435: SHIPPED v0.15.0 (code 20): floating CNO widget, placed bets, teams, green chec
   0d37c74 ckpt 434: pre-release: v0.15.0: CNO widget you can touch (floating over Novig): Up/Down 
-  df36b8b ckpt 433: H9 full test: fixes + forced full rerun 388 tests 0 failed 3 skipped exit 0; v
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(9 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
