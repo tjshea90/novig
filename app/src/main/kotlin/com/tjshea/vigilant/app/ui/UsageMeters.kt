@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.KeyState
@@ -52,7 +53,9 @@ fun shortName(policy: QuotaPolicy): String = when (policy.id) {
 }
 
 fun meterViews(state: UiState, now: Long): List<ProviderView> =
-    QuotaPolicy.ALL.map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now) }
+    // Vigilant MGM never calls Novig: no Novig meter there.
+    QuotaPolicy.ALL.filter { AppBook.isNovig || it.id != QuotaPolicy.NOVIG.id }
+        .map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now) }
 
 /** Green with plenty left, amber under half, red under a fifth or spent. */
 @Composable
