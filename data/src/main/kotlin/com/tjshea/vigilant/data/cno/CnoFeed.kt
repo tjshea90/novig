@@ -345,7 +345,8 @@ class CnoFeed(
      * doesn't change. Null when CNO couldn't say.
      */
     suspend fun novigLink(row: CnoRow): String? {
-        val key = row.betUrl ?: return null
+        row.betUrl ?: return null
+        val key = linkKey(row)
         novigLinks[key]?.let { return it }
         val link = try {
             source.novigLink(row)?.let(::appLink)
@@ -482,6 +483,9 @@ class CnoFeed(
 
         /** Links kept on disk. */
         const val LINKS_KEEP = 400
+
+        /** Between two lookups in Novig's catalog (most cost nothing: the game's markets are kept). */
+        const val CATALOG_GAP_MS = 300L
 
         private val NOVIG_WEB_BET = Regex("""^https://(?:www\.)?novig\.(?:com|us)/(events/[^?#]+)""", RegexOption.IGNORE_CASE)
 
