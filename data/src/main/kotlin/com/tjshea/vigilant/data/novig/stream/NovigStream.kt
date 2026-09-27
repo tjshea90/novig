@@ -160,13 +160,23 @@ class NovigStream(
         socket?.send(message.toString())
     }
 
+    /**
+     * Whether [webSocket] is the connection in use. A socket [close] let go of (or one replaced by
+     * a reconnect) still gets its last callbacks on OkHttp's thread: they must change nothing,
+     * or a deliberate close reads "Failed" and a quick reconnect is torn down by the old socket's
+     * goodbye (full test, 2026-09-27).
+     */
+    private fun current(webSocket: WebSocket): Boolean = synchronized(this) { socket === webSocket }
+
     private inner class Listener : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
+            if (!current(webSocket)) return
             _state.value = StreamState.Live(clock(), 0)
             scheduleSync()
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
+            if (!current(webSocket)) return
             val msg = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull() ?: return
             msg["snapshot"]?.jsonObject?.forEach { (marketId, body) ->
                 body.jsonObject["book"]?.jsonObject?.let { books.applySnapshot(marketId, it) }
@@ -186,6 +196,7 @@ class NovigStream(
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = dropped(
+            webSocket,
             when (reason) {
                 "GEOLOCATION_EXPIRED" -> "Open the Novig app so it can confirm your location."
                 "SLOW_CONSUMER" -> "Connection was too slow; reconnecting."
@@ -194,6 +205,7 @@ class NovigStream(
         )
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = dropped(
+            webSocket,
             when (response?.code) {
                 401 -> "Novig rejected the key for streaming (401). Check the key in Settings."
                 403 -> "This key can't stream (403). It needs trading or trading::read scope."
@@ -204,8 +216,10 @@ class NovigStream(
         )
     }
 
-    private fun dropped(message: String) {
+    private fun dropped(webSocket: WebSocket, message: String) {
         synchronized(this) {
+            // Not the connection in use (closed on purpose, or replaced): nothing was dropped.
+            if (socket !== webSocket) return
             socket = null
             subscribed = emptySet()
         }
