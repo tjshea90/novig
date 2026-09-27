@@ -2017,3 +2017,28 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - Tests to write: BetTrackerTest (CNO log, undo deletes, import, old JSON reads), BetSettlerTest
   (MockWebServer market statuses → WON/LOST/PUSH/FMV, TBD untouched, unresolved resolved),
   MiniWindowTest/VM-level where possible, ScreenshotTest (stats colors, now-EV colors, filters).
+
+## Tj's request, 2026-09-27T06:14Z — full tests; every free odds API / sportsbook API; faster, more accurate scanning
+
+> Run full tests on this app, research all available odds apis and sports books offering free apis
+> and see if any of them can be incorporated into the vigilant app for better accuracy or faster
+> scanning. Look for any ways to improve speed and accuracy and efficiency of the app code or UI or
+> scanning
+
+### Plan
+- [ ] P1 Local build/test floor ready (BRIEF.md build trap 6: SDK + mirror); run the full floor
+      `:engine:test :data:test :app:testDebugUnitTest` (+ `-Pscreenshots`) and record the baseline.
+- [ ] P2 Research: every odds API / sportsbook / exchange with a free tier or free public data NOT
+      already in RESEARCH.md §4/§11 (e.g. Odds-API.io, SportsGameOdds, OddsPapi re-check, API-Sports
+      odds, The Rundown, BALLDONTLIE, ESPN core odds, Action Network, SX Bet, ProphetX, Sporttrade,
+      Betfair/Smarkets/Matchbook, BetDEX, Pinnacle guest API, Kambi/Bovada public JSON). Measure live
+      from here what can be measured: coverage (NFL/MLB/NCAAF/NBA/NHL/WNBA, props), books, latency,
+      limits, terms. Write RESEARCH.md §22 with a ranked verdict.
+- [ ] P3 Build what the research says is worth it (free, legal, adds sharp books or speed) as a
+      reference source behind a Settings switch, with tests; say what was rejected and why.
+- [ ] P4 Full tests (CLAUDE.md protocol) over the whole app: engine, data (novig/reference/match/
+      scanner/cno/keys/store/tracker), app (VM, service, widget, PiP, screens). Fix every bug found,
+      each with a named test that fails before the fix; speed/efficiency/UI improvements (no major
+      UI change without Tj's OK — list those as proposals instead).
+- [ ] P5 Full regression (exit code AND output), screenshots looked at, ckpt, ship, release, record,
+      send link + findings.
