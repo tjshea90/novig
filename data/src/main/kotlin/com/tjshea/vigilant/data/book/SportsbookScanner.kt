@@ -131,8 +131,10 @@ class SportsbookScanner(
         lastLeagues = settings.leagues
         lastSources = sources
         scannedAtMs = now
-        val result = priced(settings, now, now)
-        val reports = sourceReports.map { r -> r.copy(matched = result?.let { res -> matchedBy(r.id, settings, now) } ?: 0) }
+        val board = board(asked, now)
+        val priceable = board.takeIf { it.games.isNotEmpty() }?.plan(fair(settings, now), settings, now, youngOnly = true)
+        val result = priceable?.let { BookBoard.withBookAges(Pricing.price(it.plan, it.books, settings, now), it.seenAt) }
+        val reports = sourceReports.map { r -> r.copy(matched = priceable?.plan?.events?.count { r.id in it.providers } ?: 0) }
         report(result, errors, reports, result?.stats?.marketsPriced ?: 0)
     }
 
@@ -141,7 +143,7 @@ class SportsbookScanner(
         marketIds: Collection<String>,
         onProgress: (Int, Int) -> Unit,
     ): RecheckReport = mutex.withLock {
-        val scanned = scannedAtMs ?: return@withLock RecheckReport(null, 0, 0, null)
+        if (scannedAtMs == null) return@withLock RecheckReport(null, 0, 0, null)
         val now = clock()
         val asked = forBook(settings)
         val before = board(asked, now)
@@ -153,7 +155,7 @@ class SportsbookScanner(
             .sortedBy { BOARD_LINE_FEEDS.indexOf(it.id) }
             .filter { s -> leagues.any { l -> synchronized(references) { references["${s.id}|${l.novigName}"] } != null } }
         var error: String? = null
-        var readLeagues = 0
+        val readLeagues = HashSet<String>()
         var i = 0
         for (league in leagues) {
             onProgress(i++, leagues.size)
@@ -164,7 +166,7 @@ class SportsbookScanner(
                     val snap = source.odds(league, asked).copy(fetchedAtMs = now, provider = source.id).seenBy(now)
                     synchronized(references) { references[key] = Cached(snap, requestKey(source, asked)) }
                     snap.creditsRemaining?.let { creditsRemaining = it }
-                    readLeagues++
+                    readLeagues += league.novigName
                     break
                 } catch (e: CancellationException) {
                     throw e
@@ -179,9 +181,8 @@ class SportsbookScanner(
         // A line counts as read when its league was re-read and the book still lists it.
         val readIds = ids.filter { id ->
             val game = after.game(id.substringBefore('|')) ?: return@filter false
-            game.league.novigName in leagueNames && readLeagues > 0 && game.lines.containsKey(id.substringAfter('|'))
+            game.league.novigName in readLeagues && game.lines.containsKey(id.substringAfter('|'))
         }
-        if (scanned > 0 && result == null) return@withLock RecheckReport(null, 0, ids.size, error)
         RecheckReport(result, readIds.size, ids.size - readIds.size, error)
     }
 
@@ -215,13 +216,6 @@ class SportsbookScanner(
         if (board.games.isEmpty()) return null
         val priceable = board.plan(fair(settings, fairAsOf), settings, now, youngOnly = true)
         return BookBoard.withBookAges(Pricing.price(priceable.plan, priceable.books, settings, now), priceable.seenAt)
-    }
-
-    /** How many of the book's games [sourceId] matched, for the Settings line. */
-    private fun matchedBy(sourceId: String, settings: ScanSettings, now: Long): Int {
-        val board = board(forBook(settings), now)
-        val plan = board.plan(fair(settings, now), settings, now, youngOnly = true).plan
-        return plan.events.count { sourceId in it.providers }
     }
 
     /**
