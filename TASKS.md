@@ -2255,21 +2255,30 @@ paths never see BetMGM at runtime), both can be installed side by side, and ever
 scans both at once. BetMGM costs no extra requests: its prices ride in the PropLine / The Odds API calls that
 already fetch the fair-odds books (BetMGM asked for alongside them, split off as the board, never in the fair line).
 
-- [ ] V1 Data: `data/book/Sportsbook` (NOVIG / BETMGM: names, feed keys, CNO site id and column), `MgmBoard`
+- [x] V1 (DONE: data/book Sportsbook/BookBoard/SportsbookScanner, scanner/OddsScanner (Scanner implements it unchanged),
+      NovigBook.posted, RefQuote/RefBookMarket book ids, PropLineClient(relayNovig, bookIds), BetTracker(ownBook). Tests:
+      SportsbookScannerTest (10: pricing vs fair never its own, one request serves both, BetMGM ids, stale BetMGM quote never
+      priced, BetMGM's own age ages the EV, recheck = 1 request, reprice no network, reversed home/away, Novig's PropLine
+      request unchanged, no-BetMGM feed); engine 39 / data 399 green.) Data: `data/book/Sportsbook` (NOVIG / BETMGM: names, feed keys, CNO site id and column), `MgmBoard`
       (BetMGM's quotes in a feed's snapshot → an event/market/outcome board with exact prices, no fee),
       `MgmScanner` (same `scan/recheck/reprice/unscannedLeagues` as `Scanner` behind one `OddsScanner`
       interface; PropLine league boards + props per game, PinnWire, Kalshi, Polymarket, The Odds API fallback;
       BetMGM never prices its own fair line; recheck re-reads PropLine for the feed's leagues/games only).
       Tests: BetMGM's price vs fair → EV; BetMGM left out of the fair line; one PropLine request serves both;
       stale BetMGM quote never priced; recheck request count; Novig's `Scanner` untouched (all old tests green).
-- [ ] V2 Bet slips: BetMGM's link from PropLine's ids (`includeBookIds`/`includeLinks`: fixture, market,
+- [x] V2 (DONE: BetMgmLinks + AppBook.betLink; CNO rows use CNO's own deeplink (TapLink with no Novig catalog). Tests:
+      BetMgmLinksTest (4), MgmAppTest bet-slip/widget links. NOT verified live: PropLine demo key capped all session.) Bet slips: BetMGM's link from PropLine's ids (`includeBookIds`/`includeLinks`: fixture, market,
       option → `sports.<state>.betmgm.com/en/sports?options=f-m-o`), else its event page, else BetMGM's
       site; state picked in Settings. CNO rows follow CNO's own BetMGM deeplink. Tests for each fallback.
-- [ ] V3 App: `BuildConfig.BOOK` in `app` (novig) and new module `mgm` (betmgm, own name/icon, same keystore,
+- [x] V3 (DONE: AppBook, mgm module, book-aware copy, Novig-only parts gated, BetMGM state picker, CNO site 4, CNO live fee
+      only on Novig rows, MGM-only widget merge by game/side/line. Tests: app 161 Novig tests unchanged, MgmAppTest (9),
+      MgmBuildTest (2, real mgm build: app id, "Vigilant MGM", BetMGM); both release APKs built and verified locally
+      (aapt2: com.tjshea.vigilant "Vigilant" / com.tjshea.vigilant.betmgm "Vigilant MGM", same cert AB:22:…).) App: `BuildConfig.BOOK` in `app` (novig) and new module `mgm` (betmgm, own name/icon, same keystore,
       versionCode/Name shared); every "Novig" the user reads comes from the book; Novig-only parts off in
       Vigilant MGM (Novig key, maker bid, order-book depth/width, Novig fee checks, NovigLive, Novig catalog
       finder); CNO view defaults to site_id=4 (BetMGM). Tests: Novig build's screenshots/strings unchanged;
       mgm screenshots say BetMGM.
-- [ ] V4 Build/release: ci.yml covers `:mgm` (root `test`/`assembleDebug`), release.yml builds both and
+- [x] V4 (DONE: release.yml builds both, verifies both certs, attaches vigilant-vX.apk and vigilant-mgm-vX.apk; ci.yml uploads
+      both debug APKs; ship.sh's `./gradlew test` already covers :mgm.) Build/release: ci.yml covers `:mgm` (root `test`/`assembleDebug`), release.yml builds both and
       attaches both APKs to the same Release (Novig's APK name unchanged); ship.sh gate covers both.
 - [ ] V5 Docs (BRIEF.md decision, CLAUDE.md surface, RESEARCH.md §25), light tests, ship, link.
