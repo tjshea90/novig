@@ -242,8 +242,10 @@ unless Tj asks).
   ROI, CLV), Settings (`SettingsScreen`).
 - **Subsystems:** fair-odds math (`engine`: `FairValue`, `Devig`, `Fees`,
   `EvMath`); Novig data (`data/novig`: `NovigPublicClient`, `NovigText`);
-  reference odds (`data/reference/`: `PinnapiClient`, `PolymarketClient`, `KalshiClient`,
-  `TheOddsApiClient`, `OddsApiPropsSource`); matching and pricing (`data/match/TeamMatcher`,
+  reference odds (`data/reference/`: `PinnapiClient` (Pinnacle: PinnWire keys first with
+  `include_specials` player props → `PinnacleProps`, then pinnapi's), `PolymarketClient`, `KalshiClient`,
+  `PropLineClient` + `PropLinePropsSource` (30 books, 1,000/day free), `TheOddsApiClient`,
+  `OddsApiPropsSource`; RESEARCH.md §22); matching and pricing (`data/match/TeamMatcher`,
   `data/match/PlayerNames`, `data/scanner/PropStats`,
   `data/scanner/Planner` + `Pricing`); manual scans and pacing (`data/scanner/Scanner`,
   `data/novig/RateGate`, `MainViewModel.scan`); keys, quotas and meters (`data/keys/`:
@@ -279,8 +281,9 @@ unless Tj asks).
   bet both scanners list (`MiniWindow.merge`, `PlacedBet.aliases`), `ScanSettings.widgetRescanMinutes`
   (`WidgetRescan`), `LiveCnoBurstTest` (VIGILANT_BURST=1)); every bet tracked, settled and rechecked
   (TASKS.md N1–N5: every ✓ logs a $1 `TrackedBet` (`BetTracker.logCno/track/untrack/importPlaced`,
-  one-time import flag `tracker_imported`), `data/tracker/BetSettler` (Novig's market outcome status
-  WIN/LOSS/PUSH/fair value, `NovigBetFinder.findEnded`) run on app open, on the Tracker tab and by
+  one-time import flag `tracker_imported`), `data/tracker/BetSettler` (final scores: `tracker/Scores.kt`
+  `FreeScores` = ESPN scoreboard/box score + MLB Stats API, graded by `tracker/BetGrader`; Novig's catalog
+  forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
   `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
   page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog)).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`

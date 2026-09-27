@@ -408,6 +408,13 @@ including the Robolectric screen tests. `-Pscreenshots` writes PNGs of every scr
   for `oddsApiReuseMinutes`). Spreads/totals are capped at `linesPerGame` per game because
   each priced line is one Novig request. Multiple free Odds API accounts: advised against
   (abuse clause), not needed.
+- **v0.16.0 (RESEARCH.md §22): Pinnacle through PinnWire first** (free key, 100 req/day, includes
+  Pinnacle's player props via `include_specials`; pinnapi keys are the fallback) **and PropLine**
+  (free key, 1,000 req/day: every reference book's lines per league, props per game; exchanges,
+  DFS and Novig itself never priced from it). Both optional, each behind its key and switch.
+- **Bets settle from final scores (v0.16.0):** ESPN's free scoreboard/box scores and MLB's Stats
+  API (`data/tracker/Scores.kt`, `BetGrader`); Novig's public catalog drops finished games, so it
+  can't settle (NOVIG_API.md). A bet it can't read for certain stays open for a tap.
 - **Reference-line source order: prefer a sharp book (Pinnacle/Circa) alone
   when fetched, else average every major book fetched.** Tj's own explicit
   instruction (2026-09-20). Implemented in `engine`'s `Consensus` object —
