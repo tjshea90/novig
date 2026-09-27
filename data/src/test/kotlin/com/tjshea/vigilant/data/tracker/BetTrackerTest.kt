@@ -91,7 +91,7 @@ class BetTrackerTest {
             id, 0, "NFL", "A @ B", Fixtures.START_MS, "Moneyline", "A", "m", "o",
             price = 0.5, cost = 0.5, fairAtBet = 0.5 * (1 + ev), evPercentAtBet = ev, stake = 10.0, status = status, closingFair = closing,
         )
-        val bets = listOf(bet("1", 0.03, BetStatus.WON, 0.52), bet("2", 0.50, BetStatus.VOID, 0.40))
+        val bets = listOf(bet("1", 0.03, BetStatus.WON, 0.52), bet("2", 0.05, BetStatus.VOID, 0.40))
         val s = BetTracker.stats(bets)
         assertEquals(2, s.bets)
         assertEquals(0.03, s.averageEv!!, 1e-12)
@@ -156,6 +156,33 @@ class BetTrackerTest {
             """{"id":"1","createdAtMs":1,"league":"NFL","eventName":"A @ B","startsTs":2,"marketLabel":"M","selection":"S","marketId":"m","outcomeId":"o","price":0.5,"cost":0.5,"fairAtBet":0.52,"evPercentAtBet":0.04,"stake":5.0}""")
         assertEquals(BetTracker.SOURCE_VIGILANT, old.source)
         assertEquals(0.04, old.evPercentAtBet!!, 1e-9)
+    }
+
+    /** Tj, 2026-09-27: "do not count any bets that are outliers (currently + or - over 6% ev) … Ignore them completely." */
+    @Test
+    fun `bets over 6% EV either way are left out of every stat`() {
+        fun b(id: String, ev: Double?, st: BetStatus, source: String = BetTracker.SOURCE_CNO) = TrackedBet(
+            id, 0, "NFL", "A @ B", 0, "Moneyline", "A", "m", "o", 0.5, 0.5, ev?.let { 0.5 * (1 + it) }, ev, 1.0, st,
+            closingFair = 0.51, source = source,
+        )
+        val normal = listOf(b("1", 0.03, BetStatus.WON), b("2", 0.05, BetStatus.LOST), b("3", 0.02, BetStatus.PENDING), b("4", null, BetStatus.WON))
+        val outliers = listOf(
+            b("big win", 0.25, BetStatus.WON), b("big loss", 0.061, BetStatus.LOST),
+            b("negative", -0.07, BetStatus.WON), b("open", 0.40, BetStatus.PENDING, BetTracker.SOURCE_VIGILANT),
+        )
+        val s = BetTracker.stats(normal + outliers)
+        assertEquals(BetTracker.stats(normal).copy(outliers = 4), s)
+        assertEquals(4, s.bets)
+        assertEquals(2, s.won) // "4" (no EV on record) counts; the 25% and −7% wins don't
+        assertEquals(1, s.lost)
+        assertEquals(1, s.pending)
+        assertEquals(1.0, s.profit, 1e-12)
+        assertEquals(3.0, s.staked, 1e-12)
+        assertEquals((0.03 + 0.05 + 0.02) / 3, s.averageEv!!, 1e-12)
+        // Exactly 6% either way is not "over": it counts.
+        assertEquals(0, BetTracker.stats(listOf(b("a", 0.06, BetStatus.WON), b("b", -0.06, BetStatus.LOST))).outliers)
+        assertTrue(b("c", 0.0601, BetStatus.WON).isOutlier)
+        assertTrue(!b("d", null, BetStatus.WON).isOutlier)
     }
 
     @Test
