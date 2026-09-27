@@ -165,6 +165,13 @@ data class UiState(
     fun cnoPicks(now: Long): CnoScreened? =
         cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
 
+    /**
+     * CNO's rows whose players' teams are read from ESPN: none unless CNO's scanner is on (the widget
+     * shows in Vigilant only mode too, and an old CNO list mustn't keep rosters loading behind it).
+     */
+    val cnoTeamRows: List<CnoRow>
+        get() = if (!settings.cnoPlayerTeams || !settings.cnoOn) emptyList() else cno.snapshot?.takeIf { it.url == cnoUrl }?.rows ?: emptyList()
+
     /** Whether CNO bets' books are read: for the green check, or for "only bets the books agree on". */
     val cnoReadsBooks: Boolean get() = settings.cnoCheckBooks || settings.cnoOnlyAgreed
 
@@ -353,9 +360,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** The rows whose players' teams are wanted (all of the list's player bets). */
-    private fun teamRows(): Flow<List<CnoRow>> = state.map { s ->
-        if (!s.settings.cnoPlayerTeams) emptyList() else s.cno.snapshot?.takeIf { it.url == s.cnoUrl }?.rows ?: emptyList()
-    }
+    private fun teamRows(): Flow<List<CnoRow>> = state.map { it.cnoTeamRows }
 
     /**
      * Marks a widget or CNO-tab bet placed: hidden from then on, through refreshes and restarts,

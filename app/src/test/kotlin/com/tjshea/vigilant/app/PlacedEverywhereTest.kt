@@ -90,4 +90,12 @@ class PlacedEverywhereTest {
         assertEquals(ScannerMode.VIGILANT, nextScanner(ScannerMode.BOTH))
         assertEquals(ScannerMode.CNO, nextScanner(ScannerMode.VIGILANT))
     }
+
+    /** Full test, 2026-09-27: the widget on Vigilant's scan alone reads nothing for CNO's list. */
+    @Test
+    fun `with CNO asleep, no player rosters are read for its old list`() {
+        val cno = SampleCno.state()
+        assertTrue(cno.cnoTeamRows.isNotEmpty())
+        assertTrue(cno.copy(settings = cno.settings.copy(scanner = ScannerMode.VIGILANT)).cnoTeamRows.isEmpty())
+    }
 }
