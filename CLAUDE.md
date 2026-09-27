@@ -285,7 +285,7 @@ unless Tj asks).
   `FreeScores` = ESPN scoreboard/box score + MLB Stats API, graded by `tracker/BetGrader`; Novig's catalog
   forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
   `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
-  page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog)).
+  page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog; bets over ±6% EV when bet are outliers, left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`)).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
