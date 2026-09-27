@@ -2025,7 +2025,7 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
    priced for up to 15 minutes. PropLine sends each outcome's `last_seen_at` (and `last_change_at`); the app
    used the market's `last_update` and never checked either against the clock (PropLine's own "stale"
    threshold is 30 minutes, `/v1/freshness`).
-4. **Recheck and re-pricing judged fair-odds age as of the last scan** (`fairAs Of = lastScanAtMs`): a Recheck
+4. **Recheck and re-pricing judged fair-odds age as of the last scan** (`fairAsOf = lastScanAtMs`): a Recheck
    45 minutes later priced Novig's fresh book against 45-minute-old fair lines.
 5. **The feed, widget, mini window and Games tab keep showing a scan's EVs** with no fair-odds age limit (only
    Novig's own price is flagged old after 10 min).
