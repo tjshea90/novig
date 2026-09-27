@@ -547,20 +547,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun applySettings(transform: (ScanSettings) -> ScanSettings) {
-        run {
-            val next = settingsMutex.withLock {
-                // If the write fails, keep the change for this session rather than crash.
-                runCatching { c.settingsStore.update(transform) }.getOrElse { transform(_state.value.settings) }
-            }
-            val before = _state.value.settings
-            _state.update {
-                if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
-                else it.copy(settings = next, feed = it.result?.feed(next) ?: emptyList())
-            }
-            // CNO only now: a "scan done" note would name bets no screen shows any more.
-            if (before.vigilantOn && !next.vigilantOn) ScanService.cancelDone(getApplication())
-            if (next.leagues.isNotEmpty()) repriceNow(next)
+        val next = settingsMutex.withLock {
+            // If the write fails, keep the change for this session rather than crash.
+            runCatching { c.settingsStore.update(transform) }.getOrElse { transform(_state.value.settings) }
         }
+        val before = _state.value.settings
+        _state.update {
+            if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
+            else it.copy(settings = next, feed = it.result?.feed(next) ?: emptyList())
+        }
+        // CNO only now: a "scan done" note would name bets no screen shows any more.
+        if (before.vigilantOn && !next.vigilantOn) ScanService.cancelDone(getApplication())
+        if (next.leagues.isNotEmpty()) repriceNow(next)
     }
 
     fun toggleLeague(league: String) = updateSettings { s ->
