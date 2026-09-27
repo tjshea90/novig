@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -335,6 +336,13 @@ fun SettingsScreen(
                 if (s.usePropLine) {
                     KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
                 }
+                if (!AppBook.isNovig) {
+                    Hint(
+                        "${AppBook.name}'s own odds come in these same requests (no request just for ${AppBook.name}): PropLine first, " +
+                            "The Odds API where PropLine can't answer. Keep one of them on, with a key. ${AppBook.name}'s prices never " +
+                            "count toward their own fair line.",
+                    )
+                }
                 // PropLine goes first for the same sportsbooks; The Odds API backs it up (RESEARCH.md §23).
                 val propLineFirst = s.usePropLine && state.proplineKeys.isNotEmpty()
                 SwitchRow(
@@ -425,6 +433,8 @@ fun SettingsScreen(
                         )
                     }
                 }
+                // Novig's per-line reads are what these limit; a sportsbook's lines cost no request each.
+                if (AppBook.exchange) {
                 Text("Alternate lines per game: ${s.linesPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, { it.toString() }) { v -> onUpdate { it.copy(linesPerGame = v) } }
                 Hint("Per spread, total and team total (full game and 1st half). Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
@@ -436,11 +446,15 @@ fun SettingsScreen(
                 Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
                 Hint("300 is about a minute. Results appear as they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and the soonest games come first.")
+                } else {
+                    Hint("Every ${AppBook.name} line another book also prices is checked: its lines come in the fair-odds requests, so there's no per-line cost to limit.")
+                }
                 Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
                 SwitchRow(
                     "Include live games",
-                    "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live.",
+                    if (AppBook.isNovig) "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live."
+                    else "Off by default: in-game odds move faster than the feeds re-read them, so live edges are rarely real.",
                     s.includeLive,
                 ) { v -> onUpdate { it.copy(includeLive = v) } }
 
@@ -461,7 +475,27 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
-            Hint("Suggested stakes are capped at what Novig's book can actually fill at +EV.")
+            Hint(
+                if (AppBook.exchange) "Suggested stakes are capped at what Novig's book can actually fill at +EV."
+                else "${AppBook.name} doesn't publish its limits: a suggested stake over your max bet there is capped by ${AppBook.name} itself.",
+            )
+            if (!AppBook.isNovig) {
+                // BetMGM's sites are per state: its bet-slip links need Tj's (BetMgmLinks).
+                SectionTitle("${AppBook.name} state")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    com.tjshea.vigilant.data.book.BetMgmLinks.STATES.forEach { st ->
+                        FilterChip(
+                            selected = s.bookState == st,
+                            onClick = { onUpdate { it.copy(bookState = if (it.bookState == st) "" else st) } },
+                            label = { Text(st.uppercase()) },
+                        )
+                    }
+                }
+                Hint(
+                    if (s.bookState.isBlank()) "Pick the state you bet ${AppBook.name} in: its sites are per state, so without it a tap opens ${AppBook.name}'s home instead of the bet slip."
+                    else "Taps open sports.${s.bookState}.betmgm.com: the bet slip with the bet in it when the feed sent ${AppBook.name}'s ids, else the game.",
+                )
+            }
 
             if (s.vigilantOn) {
                 // ---- Keys backup ------------------------------------------------------------------
@@ -475,14 +509,17 @@ fun SettingsScreen(
                     OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text("Import keys") }
                 }
 
-                SectionTitle("Novig API key")
-                NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect)
+                if (AppBook.isNovig) {
+                    SectionTitle("Novig API key")
+                    NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect)
+                }
 
             }
 
             SectionTitle("About")
             Hint(
-                "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com · Fair odds: Pinnacle (PinnWire, pinnapi), " +
+                (if (AppBook.isNovig) "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com"
+                else "Vigilant MGM ${BuildConfig.VERSION_NAME} · ${AppBook.name} prices: PropLine, The Odds API") + " · Fair odds: Pinnacle (PinnWire, pinnapi), " +
                     "Polymarket, Kalshi, PropLine, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
                     "fetches only when you tap Scan or pull to refresh; CrazyNinjaOdds' list only while its tab or a widget is on " +
                     "screen (and the screen is on). Nothing runs in the background.",
@@ -508,25 +545,26 @@ fun refreshHint(s: ScanSettings): String {
     } + use + " Nothing is read once both are closed."
 }
 
-/** Tj's CNO Shared View link: paste, check, save. Blank means Novig with CNO's defaults. */
+/** Tj's CNO Shared View link: paste, check, save. Blank means the app's book (Novig; BetMGM in Vigilant MGM) with CNO's defaults. */
 @Composable
 private fun CnoViewEditor(saved: String, onSave: (String) -> Unit) {
     var text by remember(saved) { mutableStateOf(saved) }
-    val normalized = CnoView.normalize(text)
-    val current = CnoView.normalize(saved) ?: CnoView.DEFAULT
+    val site = AppBook.current.cnoSiteId
+    val normalized = CnoView.normalize(text, site)
+    val current = CnoView.normalize(saved, site) ?: CnoView.defaultFor(site)
     Text("Your view: ${CnoView.describe(current)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     OutlinedTextField(
         value = text,
         onValueChange = { text = it },
         label = { Text("Shared View link") },
-        placeholder = { Text("Blank = Novig, CNO's recommended filters") },
+        placeholder = { Text("Blank = ${AppBook.name}, CNO's recommended filters") },
         singleLine = true,
         isError = normalized == null,
         supportingText = {
             Text(
                 when {
                     normalized == null -> "That isn't a CrazyNinjaOdds Positive EV link."
-                    text.isBlank() -> "Novig only, 3+ books, 2 sides."
+                    text.isBlank() -> "${AppBook.name} only, 3+ books, 2 sides."
                     else -> CnoView.describe(normalized)
                 },
             )
@@ -539,7 +577,7 @@ private fun CnoViewEditor(saved: String, onSave: (String) -> Unit) {
             onClick = { onSave(if (text.isBlank()) "" else normalized!!) },
             enabled = normalized != null && (if (text.isBlank()) "" else normalized) != saved,
         ) { Text("Save") }
-        if (saved.isNotBlank()) OutlinedButton(onClick = { text = ""; onSave("") }) { Text("Use Novig default") }
+        if (saved.isNotBlank()) OutlinedButton(onClick = { text = ""; onSave("") }) { Text("Use ${AppBook.name} default") }
     }
     Hint("On crazyninjaodds.com's Positive EV page: set your filters (sports, leagues, markets, …), open Shared View, tap Copy Link, and paste it here. The scanner's settings above apply on top of it; where both set a limit, the stricter one wins.")
 }
