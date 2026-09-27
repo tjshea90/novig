@@ -104,7 +104,7 @@ fun MiniFeed(
                     MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), state.cno.snapshot?.fetchedAtMs)
                 } else if (items.isEmpty()) {
                     Text(
-                        emptyText(state),
+                        emptyText(state, now = now),
                         Modifier.align(Alignment.Center),
                         fontSize = 11.sp,
                         lineHeight = 13.sp,
@@ -348,11 +348,15 @@ fun cnoErrorShort(error: String): String = when {
 }
 
 /** What an empty widget says. [floating]: its buttons always show, so no "tap the window". */
-internal fun emptyText(state: UiState, floating: Boolean = false): String {
+internal fun emptyText(state: UiState, floating: Boolean = false, now: Long = System.currentTimeMillis()): String {
     val cno = state.cno
     val tap = if (floating) "Tap" else "Tap the window, then"
+    // "Only bets the books agree on" is holding back what CNO listed: say so, not "no +EV".
+    val heldBack = if (MiniWindow.showsCno(state.settings) && state.settings.cnoOnlyAgreed) state.cnoCandidates(now).size else 0
     return when {
         state.status.scanning && MiniWindow.showsVigilant(state.settings) -> "Scanning… bets show here as they're found"
+        heldBack > 0 -> "No bets the books agree on yet · $heldBack held back" +
+            state.cnoBeingChecked(now).let { if (it > 0) ", $it being checked" else "" }
         !MiniWindow.showsVigilant(state.settings) -> when {
             cno.refreshing -> "Reading CrazyNinjaOdds…"
             cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now"

@@ -192,7 +192,7 @@ fun FloatingFeed(
                         }
                     }
                     items.isEmpty() -> Text(
-                        emptyText(state, floating = true),
+                        emptyText(state, floating = true, now = now),
                         Modifier.align(Alignment.Center).padding(12.dp),
                         fontSize = 12.sp,
                         lineHeight = 14.sp,
