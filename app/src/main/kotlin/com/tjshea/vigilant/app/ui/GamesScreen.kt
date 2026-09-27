@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.PricedGame
@@ -95,16 +96,16 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                 if (games.isEmpty()) {
                     item(key = "empty") {
                         when {
-                            state.result == null && state.status.scanning -> EmptyState("Scanning…", "Reading Novig's board.")
+                            state.result == null && state.status.scanning -> EmptyState("Scanning…", "Reading ${AppBook.name}'s board.")
                             state.result == null -> EmptyState(
                                 "Tap Scan to load the board",
-                                "Games from the leagues you picked show up here with Novig's prices and the fair line.",
+                                "Games from the leagues you picked show up here with ${AppBook.name}'s prices and the fair line.",
                                 action = "Scan now",
                                 onAction = onScan,
                             )
                             else -> EmptyState(
                                 "No games in the next ${state.settings.daysAhead} days",
-                                "Games from the leagues you picked show up here with Novig's prices and the fair line.",
+                                "Games from the leagues you picked show up here with ${AppBook.name}'s prices and the fair line.",
                             )
                         }
                     }
@@ -133,7 +134,7 @@ private fun GameRow(g: PricedGame, now: Long, modifier: Modifier, onClick: () ->
                 )
                 Text(g.event.description, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(
-                    if (g.refEvent == null) "Novig only · no fair odds for this game" else "${g.outcomes.count { it.fairProbability != null }} prices vs fair",
+                    if (g.refEvent == null) "${AppBook.name} only · no fair odds for this game" else "${g.outcomes.count { it.fairProbability != null }} prices vs fair",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (g.refEvent == null) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -175,7 +176,7 @@ private fun GameDetail(g: PricedGame, state: UiState, now: Long, onBack: () -> U
             item {
                 Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                     Text("Selection", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Novig", Modifier.width(64.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(AppBook.name, Modifier.width(64.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Fair", Modifier.width(64.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("EV", Modifier.width(72.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

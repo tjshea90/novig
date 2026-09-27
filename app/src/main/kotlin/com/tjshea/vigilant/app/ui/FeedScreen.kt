@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.R
 import com.tjshea.vigilant.app.ScanStatus
 import com.tjshea.vigilant.app.UiState
@@ -77,7 +78,7 @@ fun FeedScreen(
                     actions = {
                         if (onMiniWindow != null) {
                             IconButton(onClick = onMiniWindow) {
-                                Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over Novig", tint = MaterialTheme.colorScheme.primary)
+                                Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over ${AppBook.name}", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                         ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan)
@@ -166,15 +167,23 @@ private fun FeedSummary(
                 EmptyState("Pick a league", "Choose one or more leagues above, then tap Scan.")
             status.scanning && state.feed.isEmpty() -> EmptyState(
                 "Scanning…",
-                "Reading Novig's board" + sourceNames(state).let { if (it.isEmpty()) "" else " and fair odds from $it" } + ". " +
-                    "Bets appear here as Novig's prices come in, likeliest edges first. " +
+                "Reading ${AppBook.name}'s board" + sourceNames(state).let { if (it.isEmpty()) "" else " and fair odds from $it" } + ". " +
+                    "Bets appear here as ${AppBook.name}'s prices come in, likeliest edges first. " +
                     "You can switch apps: the scan keeps going and tells you when it's done.",
+            )
+            // Vigilant MGM reads BetMGM's own odds through these feeds: with neither, there's nothing to price.
+            result == null && !AppBook.isNovig && state.proplineKeys.isEmpty() && state.oddsApiKeys.isEmpty() -> EmptyState(
+                "Add a PropLine key",
+                "Vigilant MGM reads ${AppBook.name}'s odds in the same requests as the other books': PropLine (free key, " +
+                    "1,000 requests a day) or The Odds API. Add a key in Settings, then tap Scan.",
+                action = "Settings",
+                onAction = onOpenSettings,
             )
             result == null -> EmptyState(
                 "Tap Scan to find +EV bets",
                 "Nothing is downloaded until you ask: tap Scan or pull down. " +
                     sourceNames(state).let {
-                        if (it.isEmpty()) "No fair-odds source is on (Settings), so a scan shows Novig's prices only." else "Fair odds come from $it."
+                        if (it.isEmpty()) "No fair-odds source is on (Settings), so a scan shows ${AppBook.name}'s prices only." else "Fair odds come from $it."
                     } +
                     if (state.pinnapiKeys.isEmpty() && state.pinnwireKeys.isEmpty() && state.settings.usePinnacle) " Add a free Pinnacle key in Settings for sharper lines." else "",
                 action = "Scan now",
@@ -182,7 +191,7 @@ private fun FeedSummary(
             )
             result.stats.matchedEvents == 0 && result.games.isNotEmpty() -> EmptyState(
                 "No fair odds for these games",
-                "Novig's prices for ${result.games.size} games are on the Games tab, but none of your fair-odds " +
+                "${AppBook.name}'s prices for ${result.games.size} games are on the Games tab, but none of your fair-odds " +
                     "sources listed them this scan. Check the sources in Settings (a Pinnacle or PropLine key " +
                     "covers the most leagues).",
                 action = "Fair odds settings",
