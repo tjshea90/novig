@@ -1928,3 +1928,52 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
 - **Not built, for Tj to decide:** PinnWire's `since=<last>` returns only changed games, which would cut
   the ~700 KB NFL props download per scan to a few KB (same request count); PropLine carries Novig's own
   game-line prices (10 s old), which could order Vigilant's Novig reads so likely edges are read first.
+
+## 23. Which API first when two carry the same books (2026-09-27 ~16:00–16:40Z, Tj: "If apis overlap odds from the same sports books, use the best/fastest API first and the others as automatic fallbacks")
+
+### 23.1 Every odds API a scan reads, re-checked against the providers' docs today
+
+| Source | Books | Free allowance | Cost per scan | Freshness / speed | Notes |
+|---|---|---|---|---|---|
+| Novig API (NOVIG_API.md) | Novig (the book priced) | public 4 req/s; 16/s with a key | 1 per market read (≤300) | the book itself | the only source for Novig's depth; no change |
+| PinnWire → pinnapi (one `PinnapiClient`, PinnWire first) | Pinnacle: game lines, every alt line, 1st half / F5, team totals, player props (PinnWire only) | 100/day, 20/min per key (llms-full.txt, 2026-09-23 rev.) | 1 per sport (NFL + NCAAF share) | real-time feed ("1–19 ms path latency", REST snapshot at request time) | best Pinnacle source: alt lines and props in one call |
+| PropLine | 19 sportsbooks incl. Pinnacle, DK, FD, MGM, Fanatics, BetRivers, Hard Rock, Bovada, BetOnline, LowVig, BetUS, Unibet…; props per game | 1,000/day (UTC), burst 10, ≤20 in flight (llms.txt) | 1 per league + 1 per game for props (≤12 games) | measured `/v1/freshness` 16:20Z: DK/FD/Fanatics/Pinnacle/BetRivers 0–1 s, MGM/Hard Rock 12 s, BetOnline/LowVig 28 s; docs: DK/FD/Fanatics pushed in ~1 s, others polled 60–90 s pregame | carries Pinnacle props too (96,925 Pinnacle markets listed) |
+| The Odds API | ≤10 picked books (Pinnacle, DK, FD, MGM, Caesars, ESPN BET, …) | 500 credits/month | 3 credits per league (h2h+spreads+totals); props 1 credit per prop type per game | docs don't publish update intervals | cost rules unchanged (guide v4, today): markets × regions, ≤10 books = 1 region, empty = free, `/events` free |
+| Polymarket (Gamma) | Polymarket | free, 300 req/10 s, over-limit queued | 1–2 pages per league | measured 0.39 s for an NFL page (646 KB) | exchange: bid/ask, spread filter |
+| Kalshi | Kalshi | free; anonymous reads throttle near 3/s (§11) | 1 per series (NFL: 19 series incl. props) at 2/s | measured 0.4–1.3 s per series | exchange; the only free prop ladders besides PinnWire |
+
+### 23.2 Where two APIs return the same book, and what goes first
+
+1. **Pinnacle** — PinnWire first (real-time, every alt line, halves, team totals and props in one request per
+   sport), then pinnapi (same format, no props on trial), then PropLine's copy of Pinnacle (free inside the
+   PropLine call already made), then The Odds API's copy. The fair-odds merge already prices the first
+   source's copy of a book per line (`Scanner.SOURCE_ORDER`, `Pricing` keeps one quote per book), so this
+   chain needs no extra requests: PropLine's and The Odds API's Pinnacle quotes only price a line PinnWire
+   didn't give.
+2. **Sportsbook game lines (DK, FD, MGM, BetOnline, …)** — PropLine first: one request per league from
+   1,000 a day, fresh within seconds for the big books. The Odds API costs 3 of 500 monthly credits for the
+   same books, so it becomes the automatic fallback, called for a league only when PropLine gave nothing for
+   it (no key, daily limit, error, league missing), when Novig lists games PropLine's board doesn't have and
+   The Odds API's free game list does, or when a book picked as sharp in Settings is one only The Odds API
+   carries. What that gives up when PropLine answers: Caesars and ESPN BET (soft books PropLine doesn't
+   carry) drop out of the market average.
+3. **Sportsbook player props** — PropLine props first (1 request per game, up to 12 games a scan), then The
+   Odds API's props (1 credit per prop type per game) only for the games and prop types PropLine didn't
+   price this scan.
+4. **Exchanges** — Polymarket and Kalshi straight from their own APIs (bid/ask with the spread filter).
+   PropLine also relays both, but as one-sided prices without the spread check, so its copies stay unused
+   (`PropLineClient.EXCLUDED`).
+5. **Novig** — its own API only. PropLine relays Novig's game lines ~20 s old; that could order which Novig
+   books a scan reads first, but it can't price anything. Left for Tj to decide.
+
+### 23.3 Looked at and not changed
+- **PinnWire `since=<last>`** (only games changed since the last call): same request count, far smaller
+  download, but REST never says when a game or prop was removed (docs: "Only events changed after this
+  timestamp"; deletions are signalled only on the paid WebSocket). A prop Pinnacle pulled would keep its old
+  price in a merged board, and a stale Pinnacle prop against a moved Novig price is exactly a fake edge. Not
+  built.
+- **Compression**: pinnwire.com serves gzip, and OkHttp asks for it on every call already.
+- **Kalshi pacing** (2 req/s): kept. It is ~10 s per NFL scan for 19 series, in parallel with everything
+  else, and faster pacing drew 429s before (§11).
+- **MLB scores fallback to ESPN**: ESPN's MLB box score lacks total bases (§22.5), and a failed MLB Stats API
+  read already just waits for the next settle pass (every 3 h). Not built.
