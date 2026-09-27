@@ -2353,7 +2353,8 @@ Tj as chat files. Findings so far: `com.bim.sandiskbopsuperflasher`, targetSdk 3
 AOSP test key, native code armeabi-v7a ONLY (fails to install on a 64-bit-only phone), OPEN's file list uses java.io.File,
 so it sees the .fw file only with "All files access" granted.
 
-- [ ] M1 Diagnose install + OPEN failures on Android 16 (done above; write Tj the no-code workaround).
-- [ ] M2 Safe rebuild: flashing code byte-identical, re-signed; 64-bit version only if its native code can be proven
-      byte-identical to the original's output under ARM emulation.
-- [ ] M3 Send Tj the APK(s) + step-by-step instructions.
+- [x] M1 (DONE: diagnosis + no-code workaround sent to Tj in chat: check ABIs, uninstall old copy, Play Protect
+      "Install anyway", grant All files access; don't WRITE unless OPEN says "Open Success!" / OPEN DIR says "Processed".)
+- [x] M2 (CLOSED, not doing: no rebuilt or 64-bit APK. Tj was told plainly; if the phone is 64-bit only, use an older
+      32-bit-capable Android phone/tablet.)
+- [x] M3 (DONE: steps sent in chat; nothing from this job is in the repo.)
