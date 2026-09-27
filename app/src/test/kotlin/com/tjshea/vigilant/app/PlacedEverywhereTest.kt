@@ -35,14 +35,21 @@ class PlacedEverywhereTest {
 
     @Test
     fun `a bet placed on CNO's widget leaves Vigilant's +EV feed and widget`() {
-        assertTrue(vigilant.indexed(now).feed.any { it.key == o.key }) // listed before
+        val before = vigilant.indexed(now)
+        assertTrue(before.feed.any { it.key == o.key }) // listed before
         val after = vigilant.copy(placed = listOf(cnoMark())).indexed(now)
-        vigilant.feed.forEach { f -> println("DBG ${f.key} | ${f.event.description} | ${f.marketLabel} | ${f.selection} | ${f.event.startsTs} | ${com.tjshea.vigilant.data.tracker.PlacedIndex.identity(f.event.description, f.marketLabel, f.selection)}") }
         assertFalse(after.feed.any { it.key == o.key })
         val widget = after.copy(settings = after.settings.copy(scanner = ScannerMode.VIGILANT))
         assertFalse(MiniWindow.items(widget, now).any { it.key == o.key })
         // Everything else still shows.
-        assertEquals(vigilant.feed.size - 1, after.feed.size)
+        assertEquals(before.feed.size - 1, after.feed.size)
+    }
+
+    @Test
+    fun `a bet already in the tracker is gone from the feed from the start`() {
+        // The sample tracker holds Dallas's moneyline (b3): the scan lists it, the feed doesn't.
+        assertTrue(vigilant.feed.any { it.key == "g1-ml/g1-ml-h" })
+        assertFalse(vigilant.indexed(now).feed.any { it.key == "g1-ml/g1-ml-h" })
     }
 
     @Test
