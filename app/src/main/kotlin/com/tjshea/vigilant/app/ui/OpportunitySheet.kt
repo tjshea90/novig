@@ -1,7 +1,5 @@
 package com.tjshea.vigilant.app.ui
 
-import com.tjshea.vigilant.app.AppBook
-
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.data.scanner.CrossCheck
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -276,7 +275,7 @@ fun OpportunityDetail(
         // "the button only opens the app, not the exact bet slip like the cno scanner does").
         val openNovig = LocalOpenNovig.current
         OutlinedButton(
-            onClick = { betSlipLink(o, settings.bookState).let { link -> openNovig?.invoke(link) ?: open(link) } },
+            onClick = { betSlipLink(o, settings.bookState).let { link -> openNovig?.invoke(link) ?: open(if (AppBook.isNovig) "https://novig.com" else link) } },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
         ) { Text("Open this bet in ${AppBook.name}") }
         if (!AppBook.isNovig && settings.bookState.isBlank()) {
