@@ -375,6 +375,27 @@ class ScreenshotTest {
         compose.onAllNodesWithText("Justin Jefferson Under 69.5").assertCountEquals(0)
     }
 
+    /** Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well". */
+    @Test fun cnoTabPicksTheStartTimeWindow() {
+        var picked: Int? = null
+        val s = SampleCno.state().let { it.copy(settings = it.settings.copy(startsWithinHours = 12)) }
+        shoot("8e_cno_starts_within_12h") { com.tjshea.vigilant.app.ui.CnoScreen(s, {}, {}, onStartsWithin = { picked = it }) }
+        compose.onNodeWithText("Starts within").assertIsDisplayed()
+        // 12h: Ohio (8 h out) is listed, the three bets 24 h out aren't, and the count says why.
+        compose.onNodeWithText("Ohio -33.5").assertIsDisplayed()
+        compose.onAllNodesWithText("Justin Jefferson Under 69.5").assertCountEquals(0)
+        compose.onNodeWithText("24h").performClick()
+        assertEquals(24, picked)
+        compose.onNodeWithText("Any time").performClick()
+        assertEquals(0, picked)
+    }
+
+    @Test fun cnoTabHidesTheWindowWhenCnoIsOff() {
+        val s = SampleCno.state().let { it.copy(settings = it.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT)) }
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(s, {}, {}) }
+        compose.onAllNodesWithText("Starts within").assertCountEquals(0)
+    }
+
     @Test fun cnoTabRefreshButtonAndCnoOnlyChip() {
         var refreshed = 0
         var mode: com.tjshea.vigilant.data.scanner.ScannerMode? = null
@@ -915,6 +936,27 @@ class ScreenshotTest {
         compose.onNodeWithText("CNO only").assertIsDisplayed()
         compose.onNodeWithContentDescription("Showing CNO only. Tap for CNO and Vigilant's scan").performClick()
         assertEquals(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH, picked)
+    }
+
+    /** Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the … cno widget as well". */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetsTopBarPicksTheStartTimeWindow() {
+        var picked: Int? = null
+        val s = floatingState().let { it.copy(settings = it.settings.copy(startsWithinHours = 24)) }
+        floating("9q_floating_starts_within_24h", s, actions = com.tjshea.vigilant.app.ui.FloatingActions(onStartsWithin = { picked = it }))
+        compose.onNodeWithText("24h").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Showing games starting within 24 hours. Tap for within 48 hours").performClick()
+        assertEquals(48, picked)
+    }
+
+    /** Everything CNO listed starts after the window: the widget says so instead of "no +EV". */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetSaysWhenTheWindowHidesEverything() {
+        val base = floatingState()
+        val s = base.copy(settings = base.settings.copy(startsWithinHours = 12), cno = base.cno.copy(snapshot = base.cno.snapshot!!.copy(rows = base.cno.snapshot!!.rows.map { it.copy(startsAtMs = SampleScan.NOW + 30 * 3_600_000L) })))
+        floating("9r_floating_all_later", s)
+        compose.onNodeWithText("Nothing starting within 12h", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("12h").assertIsDisplayed()
     }
 
     /**

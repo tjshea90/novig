@@ -1,7 +1,9 @@
 package com.tjshea.vigilant.app
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.tjshea.vigilant.app.ui.laterCount
 import com.tjshea.vigilant.app.ui.laterText
+import com.tjshea.vigilant.app.ui.nextStartsWithin
 import com.tjshea.vigilant.app.ui.startsWithinLabel
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.cno.CnoState
@@ -94,5 +96,25 @@ class StartsWithinTest {
         assertEquals(48, json.decodeFromString(ScanSettings.serializer(), saved).startsWithinHours)
         // An older settings file has no such field: any time.
         assertEquals(0, json.decodeFromString(ScanSettings.serializer(), "{}").startsWithinHours)
+    }
+
+    @Test
+    fun `the widget's switch cycles any time, 12h, 24h, 48h`() {
+        assertEquals(listOf(12, 24, 48, 0), listOf(0, 12, 24, 48).map(::nextStartsWithin))
+        // A saved value that isn't a choice any more starts the cycle over.
+        assertEquals(12, nextStartsWithin(6))
+    }
+
+    @Test
+    fun `the widgets count what the window hides, from both scanners`() {
+        val s = SampleCno.state().indexed(now)
+        assertEquals(0, laterCount(s, now)) // window off
+        val twelve = s.within(12)
+        val nflLater = twelve.feed.count { !it.fairIsOld(now) && it.league.novigName == "NFL" }
+        assertTrue(nflLater > 0)
+        // Both: Vigilant's NFL bets (50+ h out) and CNO's three bets 24 h out.
+        assertEquals(nflLater + 3, laterCount(twelve, now))
+        assertEquals(3, laterCount(twelve.copy(settings = twelve.settings.copy(scanner = ScannerMode.CNO)), now))
+        assertEquals(nflLater, laterCount(twelve.copy(settings = twelve.settings.copy(scanner = ScannerMode.VIGILANT)), now))
     }
 }
