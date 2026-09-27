@@ -245,7 +245,8 @@ unless Tj asks).
   reference odds (`data/reference/`: `PinnapiClient` (Pinnacle: PinnWire keys first with
   `include_specials` player props → `PinnacleProps`, then pinnapi's), `PolymarketClient`, `KalshiClient`,
   `PropLineClient` + `PropLinePropsSource` (30 books, 1,000/day free), `TheOddsApiClient`,
-  `OddsApiPropsSource`; RESEARCH.md §22); matching and pricing (`data/match/TeamMatcher`,
+  `OddsApiPropsSource`; RESEARCH.md §22; where two carry the same books the second is only a fallback:
+  `ReferenceSource.fallbackFor`/`needed`, `ScanContext.covered`, `Scanner.covering`, RESEARCH.md §23); matching and pricing (`data/match/TeamMatcher`,
   `data/match/PlayerNames`, `data/scanner/PropStats`,
   `data/scanner/Planner` + `Pricing`); manual scans and pacing (`data/scanner/Scanner`,
   `data/novig/RateGate`, `MainViewModel.scan`); keys, quotas and meters (`data/keys/`:
