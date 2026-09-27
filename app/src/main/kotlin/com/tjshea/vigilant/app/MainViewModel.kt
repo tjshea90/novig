@@ -357,12 +357,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Where a tapped CNO bet opens in Novig: its bet slip, else its game ([TapLink]). Null when nothing answered. */
     suspend fun betLink(row: CnoRow): TapLink.Link? = withContext(Dispatchers.IO) {
         val cno = c.cno.state.value
-        TapLink.resolve(
+        val paused = (cno.pausedUntilMs ?: 0L) > System.currentTimeMillis()
+        val found = TapLink.resolve(
             cached = c.cno.cachedLink(row),
-            cnoFailing = cno.error != null || (cno.pausedUntilMs ?: 0L) > System.currentTimeMillis(),
-            fromCno = { c.cno.novigLink(row) },
+            cnoFailing = cno.error != null,
+            // CNO asked for a pause: not even a tap asks it; Novig's catalog answers alone.
+            fromCno = if (paused) null else ({ c.cno.novigLink(row) }),
             fromNovig = { c.betFinder.find(row) },
         )
+        // An exact link from Novig's catalog is kept like CNO's: the next tap needs no network.
+        if (found?.exact == true) c.cno.rememberLink(row, found.link)
+        found
     }
 
     /** Mirrors the runner into the screen's state, for as long as this screen lives. */

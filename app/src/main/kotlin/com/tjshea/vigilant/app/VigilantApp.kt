@@ -96,15 +96,17 @@ class AppContainer(app: Application) {
      * CrazyNinjaOdds' +EV list (RESEARCH.md §18). It reads only while [MainActivity] is started
      * (on screen, or as the mini window), at most once per 30 s; the last list is kept on disk.
      */
+    /** Finds a CNO bet in Novig's own public catalog: its exact bet-slip link without asking CNO. */
+    val betFinder = NovigBetFinder(http, json)
+
     val cno = CnoFeed(
         // Its own client over the shared one: CNO's DNS fallback, short keep-alive, retry (CnoNetwork).
         CnoClient(CnoNetwork.client(http)),
         JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json),
         linkStore = JsonFileStore(File(app.filesDir, "cno_links.json"), CnoLinks.serializer(), { CnoLinks() }, json),
+        // Bet links from Novig's catalog first, so taps don't depend on CNO answering (Tj, 2026-09-27).
+        catalog = { row -> (betFinder.find(row) as? NovigBetFinder.Found.Bet)?.link },
     )
-
-    /** Finds a CNO bet in Novig's own catalog when CNO can't hand over its link (on a tap only). */
-    val betFinder = NovigBetFinder(http, json)
 
     /** Bets Tj marked placed in the widget or the CNO tab: hidden from both until their game is over. */
     val placed = PlacedBets(JsonFileStore(File(app.filesDir, "placed.json"), PlacedBook.serializer(), { PlacedBook() }, json))
