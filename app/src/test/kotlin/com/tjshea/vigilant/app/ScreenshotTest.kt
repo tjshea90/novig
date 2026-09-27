@@ -844,6 +844,16 @@ class ScreenshotTest {
         compose.onAllNodesWithText("✓ 3 of 3 books agree", substring = true).assertCountEquals(0)
     }
 
+    /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */
+    @Test fun openInNovigSaysItsOpening() {
+        val (pick, snap) = jeffersonMoved()
+        screen {
+            com.tjshea.vigilant.app.ui.CnoDetail(pick, snap, SampleScan.settings, com.tjshea.vigilant.data.cno.CnoView.DEFAULT, null, SampleScan.NOW, opening = true)
+        }
+        compose.onNodeWithText("Opening…").assertIsDisplayed()
+        compose.onAllNodesWithText("Open in Novig").assertCountEquals(0)
+    }
+
     /** Tj's screenshot: the pull-to-refresh arrow stuck half way down the CNO tab. */
     @Test fun thePullToRefreshArrowLetsGoAfterARead() {
         var refreshing by androidx.compose.runtime.mutableStateOf(false)

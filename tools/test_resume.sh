@@ -226,6 +226,15 @@ fi
   && ok "capture_inbox.sh commits the captured message immediately" \
   || bad "capture_inbox.sh wrote INBOX.md but did not commit it — a cap right after would lose it"
 
+# A background-task notice from the harness is not Tj's message: never logged.
+echo '{"prompt": "<task-notification>\n<task-id>x</task-id>\n<status>completed</status>\n</task-notification>"}' | \
+  ( cd "$IB" && bash tools/capture_inbox.sh >/dev/null 2>&1 )
+if grep -q '<task-id>x</task-id>' "$IB/INBOX.md" 2>/dev/null; then
+  bad "capture_inbox.sh logged a harness task notification as if Tj had sent it"
+else
+  ok "capture_inbox.sh leaves harness task notifications out of INBOX.md"
+fi
+
 # Malformed / empty stdin must never crash the hook or block the prompt —
 # CLAUDE.md is explicit that this can never be allowed to block.
 printf '' | ( cd "$IB" && bash tools/capture_inbox.sh >/dev/null 2>&1 )

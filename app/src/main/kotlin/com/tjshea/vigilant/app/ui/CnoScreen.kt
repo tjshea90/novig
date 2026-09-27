@@ -113,6 +113,8 @@ fun CnoScreen(
     onHide: (MiniWindow.Item) -> Unit = {},
     /** Undo, or "not placed after all" / "put it back". */
     onUnplace: (String) -> Unit = {},
+    /** The bet (row key) whose Novig link is being found after "Open in Novig". */
+    opening: String? = null,
     /** The pull-to-refresh arrow's state (tests look at it). */
     pullState: androidx.compose.material3.pulltorefresh.PullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState(),
 ) {
@@ -309,6 +311,7 @@ fun CnoScreen(
             onOpenInNovig = onOpenInNovig,
             onDismiss = { selected = null },
             team = state.teams[live.row.key],
+            opening = opening == live.row.key,
             onPlaced = {
                 markPlaced(live)
                 selected = null
@@ -562,6 +565,7 @@ private fun CnoSheet(
     onDismiss: () -> Unit,
     team: String? = null,
     onPlaced: () -> Unit = {},
+    opening: Boolean = false,
 ) {
     val row = pick.row
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -576,6 +580,7 @@ private fun CnoSheet(
             onOpenCno = { row.gameUrl?.let { runCatching { uri.openUri(it) } } },
             team = team,
             onPlaced = onPlaced,
+            opening = opening,
         )
     }
 }
@@ -595,10 +600,13 @@ fun CnoDetail(
     team: String? = null,
     /** Null hides "I placed it" (the widget's Books view has its own ✓). */
     onPlaced: (() -> Unit)? = null,
+    /** "Open in Novig" was tapped and the bet's link is being found. */
+    opening: Boolean = false,
 ) {
     val row = pick.row
     val view = books?.view
-    val check = view?.let { CnoBooks.check(it, row, pick.live) }
+    // The newer price, as the card and the widget's ✓ judge it: the list's when it was read after the books.
+    val check = view?.let { CnoBooks.check(it, row, pick.live, preferListOdds = snap != null && snap.fetchedAtMs > it.fetchedAtMs) }
     Column(
         Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -652,7 +660,15 @@ fun CnoDetail(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onOpenInNovig) { Text("Open in Novig") }
+            Button(onClick = onOpenInNovig, enabled = !opening) {
+                if (opening) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Opening…")
+                } else {
+                    Text("Open in Novig")
+                }
+            }
             if (onPlaced != null) OutlinedButton(onClick = onPlaced) { Text("I placed it") }
             if (row.gameUrl != null) OutlinedButton(onClick = onOpenCno) { Text("CNO page") }
         }

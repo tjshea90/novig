@@ -131,6 +131,7 @@ class MainActivity : ComponentActivity() {
                             onScan = { scan() },
                             onMiniWindow = { showWidget(moveBack = true); Unit }.takeIf { MiniWindow.supported(this) || state.settings.cnoOn },
                             onOpenInNovig = ::openInNovig,
+                            openingBet = openingBet,
                         )
                     }
                 }
@@ -270,6 +271,9 @@ class MainActivity : ComponentActivity() {
 
     private var inMiniWindow by mutableStateOf(false)
 
+    /** The CNO bet (row key) whose link "Open in Novig" is finding: its button says "Opening…". */
+    private var openingBet by mutableStateOf<String?>(null)
+
     /** Taps on the mini window's Next button; each shows the next page of bets. */
     private var miniPage by mutableIntStateOf(0)
 
@@ -372,8 +376,11 @@ class MainActivity : ComponentActivity() {
      * Vigilant floating over it when the mini window is on. Falls back to Novig's app or site.
      */
     private fun openInNovig(row: CnoRow) {
+        if (openingBet == row.key) return
+        openingBet = row.key
         lifecycleScope.launch {
             val found = runCatching { vm.betLink(row) }.getOrNull()
+            if (openingBet == row.key) openingBet = null
             floatOverNovig()
             tellHowItOpened(found, row)
             launchNovig(found?.link)
@@ -483,6 +490,7 @@ private fun VigilantRoot(
     onScan: () -> Unit,
     onMiniWindow: (() -> Unit)?,
     onOpenInNovig: (CnoRow) -> Unit = {},
+    openingBet: String? = null,
 ) {
     val mode = state.settings.scanner
     val tabs = Tab.entries.filter { it.shownIn(mode) }
@@ -526,6 +534,7 @@ private fun VigilantRoot(
                     onLoadBooks = vm::loadBooks,
                     onOpenInNovig = onOpenInNovig,
                     onScanner = { m -> vm.updateSettings { it.copy(scanner = m) } },
+                    openingBet = openingBet,
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
                 Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
@@ -571,6 +580,7 @@ private fun CnoTab(
     onLoadBooks: (CnoRow, Boolean) -> Unit,
     onOpenInNovig: (CnoRow) -> Unit,
     onScanner: (ScannerMode) -> Unit,
+    openingBet: String? = null,
 ) {
     LifecycleStartEffect(Unit) {
         vm.watchCno("tab", true)
@@ -587,5 +597,6 @@ private fun CnoTab(
         onPlaced = vm::markPlaced,
         onHide = vm::markHidden,
         onUnplace = vm::unmarkPlaced,
+        opening = openingBet,
     )
 }

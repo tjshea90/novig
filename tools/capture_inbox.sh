@@ -51,6 +51,12 @@ else
 fi
 [ -z "$PROMPT" ] && exit 0
 
+# The harness's own notices (a background command finishing) arrive as prompts too; they are
+# not Tj's words, and logging them made INBOX.md look like he had sent them (2026-09-27).
+case "$PROMPT" in
+  "<task-notification>"*) exit 0 ;;
+esac
+
 {
   echo ""
   echo "## $(date -u +%Y-%m-%dT%H:%M:%SZ)"

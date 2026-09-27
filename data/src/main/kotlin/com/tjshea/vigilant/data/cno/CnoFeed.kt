@@ -100,7 +100,8 @@ class CnoFeed(
         try {
             val snap = source.fetch(url, filters)
             val previous = _state.value.snapshot
-            _state.update { it.copy(snapshot = snap, refreshing = false, error = null, errors = 0, pausedUntilMs = null) }
+            // A pause CNO asked for while this read ran (a books or link request refused) stands.
+            _state.update { it.copy(snapshot = snap, refreshing = false, error = null, errors = 0, pausedUntilMs = it.pausedUntilMs?.takeIf { p -> p > clock() }) }
             // The disk copy only has to survive a restart: write it when the list changed or a
             // minute has passed, not on every 5-second read (flash wear, battery).
             val changed = previous == null || previous.rows != snap.rows || previous.url != snap.url || previous.filters != snap.filters
@@ -126,7 +127,7 @@ class CnoFeed(
                     refreshing = false,
                     error = message,
                     errors = it.errors + 1,
-                    pausedUntilMs = retry?.let { sec -> clock() + sec * 1000L },
+                    pausedUntilMs = maxOf(retry?.let { sec -> clock() + sec * 1000L } ?: 0L, it.pausedUntilMs ?: 0L).takeIf { p -> p > clock() },
                 )
             }
         }
@@ -320,6 +321,10 @@ class CnoFeed(
             throw e
         } catch (e: Exception) {
             if (!currentCoroutineContext().isActive) throw kotlinx.coroutines.CancellationException("cancelled").apply { initCause(e) }
+            // CNO asked for a pause (busy, or refusing): every lane waits it out, the list included.
+            (e as? CnoException)?.retryAfterSeconds?.let { sec ->
+                _state.update { it.copy(pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L)) }
+            }
             null
         } ?: return null
         novigLinks[key] = link

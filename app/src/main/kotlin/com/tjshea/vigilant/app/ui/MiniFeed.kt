@@ -101,7 +101,7 @@ fun MiniFeed(
                     val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
                     val item = items[i]
                     androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
-                    MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings))
+                    MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), state.cno.snapshot?.fetchedAtMs)
                 } else if (items.isEmpty()) {
                     Text(
                         emptyText(state),
@@ -145,12 +145,15 @@ fun MiniFeed(
 /** One CNO bet with every book's odds, sized for the mini window. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String, tag: Boolean) {
+internal fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: String, tag: Boolean, listReadAtMs: Long? = null) {
     val pick = item.cno
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
         MiniRow(item, tag)
         val view = books?.view
-        val check = if (pick != null && view != null) CnoBooks.check(view, pick.row, pick.live) else null
+        // The newer price, as the row's ✓ judges it: the list's when it was read after the books.
+        val check = if (pick != null && view != null) {
+            CnoBooks.check(view, pick.row, pick.live, preferListOdds = listReadAtMs != null && listReadAtMs > view.fetchedAtMs)
+        } else null
         val judged = pick?.row?.book?.let { CnoBooks.codeFor(it) } ?: CnoBooks.NOVIG
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
