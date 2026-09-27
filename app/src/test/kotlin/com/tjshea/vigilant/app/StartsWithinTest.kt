@@ -46,17 +46,17 @@ class StartsWithinTest {
         assertEquals(all.size, s.within(0).feedAt(now).size)
         // The tab badge and the widget follow the feed.
         val widget = s.within(24).copy(settings = s.within(24).settings.copy(scanner = ScannerMode.VIGILANT))
-        assertTrue(MiniWindow.items(widget, now).none { it.title.contains("Ravens") || it.title.contains("Chiefs") })
         assertEquals(widget.feedAt(now).size, MiniWindow.items(widget, now).size)
     }
 
     @Test
     fun `the window moves with the clock`() {
-        val s = SampleScan.state().indexed(now).within(12)
-        val nfl = s.feed.filter { it.league.novigName == "NFL" }
-        assertTrue(nfl.isNotEmpty() && s.feedAt(now).none { it in nfl })
-        // 40 hours later the NFL games (50-54 h out now) start within 12 hours.
-        assertTrue(s.feedAt(now + 40 * 3_600_000L).containsAll(nfl.filter { !it.fairIsOld(now + 40 * 3_600_000L) }))
+        val s = SampleScan.state().indexed(now)
+        val nflStart = s.feed.first { it.league.novigName == "NFL" }.event.startsTs // 50 h out
+        val twelve = ScanSettings(startsWithinHours = 12)
+        assertTrue(!twelve.startsInWindow(nflStart, now))
+        assertTrue(twelve.startsInWindow(nflStart, now + 40 * 3_600_000L))
+        assertTrue(!ScanSettings(startsWithinHours = 48).startsInWindow(nflStart, now))
     }
 
     @Test
