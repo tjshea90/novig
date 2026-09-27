@@ -461,7 +461,8 @@ class Scanner(
                 error = e.message ?: e.javaClass.simpleName
             }
         }
-        val plan = planFor(cat, settings, now, youngFairOnly = true, fairAsOf = lastScanAtMs ?: now)
+        // Fair odds' age is judged now: a recheck long after the scan finds them too old (RESEARCH.md §24).
+        val plan = planFor(cat, settings, now, youngFairOnly = true)
         RecheckReport(Pricing.price(plan, books, settings, now), read, failed, error)
     }
 
@@ -470,7 +471,7 @@ class Scanner(
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()
-        Pricing.price(planFor(cat, settings, now, youngFairOnly = true, fairAsOf = lastScanAtMs ?: now), books, settings, now)
+        Pricing.price(planFor(cat, settings, now, youngFairOnly = true), books, settings, now)
     }
 
     /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
@@ -549,7 +550,8 @@ class Scanner(
         var standingBy = 0
         var error: String? = null
         val requestKey = requestKey(source, settings)
-        val reuseMs = source.reuseMs(settings)
+        // Never longer than a couple of minutes, whatever the feed or Settings say (RESEARCH.md §24).
+        val reuseMs = minOf(source.reuseMs(settings), Freshness.MAX_REUSE_MS)
         for (league in leagues) {
             if (!source.supports(league)) continue
             val key = "${source.id}|${league.novigName}"
@@ -578,7 +580,7 @@ class Scanner(
                 // Stamped with our own clock: re-use windows (credits) must never depend on what
                 // time a provider claims it answered.
                 val snap = (if (context != null) source.odds(league, settings, context) else source.odds(league, settings))
-                    .copy(fetchedAtMs = now, provider = source.id)
+                    .copy(fetchedAtMs = now, provider = source.id).seenBy(now)
                 synchronized(references) { references[key] = Cached(snap, requestKey) }
                 synchronized(answered) { answered += key }
                 snap.creditsRemaining?.let { creditsRemaining = it }
@@ -587,7 +589,7 @@ class Scanner(
                 throw e
             } catch (e: PartialReferenceException) {
                 // What came back before the failure is kept; the failure is still reported.
-                synchronized(references) { references[key] = Cached(e.partial.copy(fetchedAtMs = now, provider = source.id), requestKey) }
+                synchronized(references) { references[key] = Cached(e.partial.copy(fetchedAtMs = now, provider = source.id).seenBy(now), requestKey) }
                 // A fallback is told what did come back, and covers the rest.
                 synchronized(answered) { answered += key }
                 e.partial.creditsRemaining?.let { creditsRemaining = it }
@@ -635,7 +637,7 @@ class Scanner(
             settings.selectedLeagues.flatMap { l ->
                 SOURCE_ORDER.filter { it in enabled }.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot }
             }
-        }.filter { !youngFairOnly || fairAsOf - it.fetchedAtMs <= maxFairAgeMs(it.provider, settings) }
+        }.filter { !youngFairOnly || fairAsOf - it.fetchedAtMs <= Freshness.MAX_QUOTE_AGE_MS }
         // The sportsbook feeds' books follow the reference-book picker, even between scans.
         val books = settings.referenceBooks.toSet()
         val inputs = listOf(
@@ -645,21 +647,25 @@ class Scanner(
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
         val filtered = refs.map { snap ->
-            if (snap.provider !in PICKED_BOOK_FEEDS) snap
-            else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
+            // Pricing: only book prices their feed saw in the last few minutes (RESEARCH.md §24). Reading
+            // order may still lean on older ones; they never price.
+            val fresh = if (!youngFairOnly) snap else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf) }) })
+            if (fresh.provider !in PICKED_BOOK_FEEDS) fresh
+            else fresh.copy(events = fresh.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
         return Planner.plan(cat.events, cat.markets, filtered, settings, now, pinned).also { plans[youngFairOnly] = inputs to it }
     }
 
-    /** How old a provider's snapshot may be and still price: the stale limit, or its re-use window if longer. */
-    private fun maxFairAgeMs(provider: String, settings: ScanSettings): Long {
-        val reuse = when (provider) {
-            "oddsapi" -> settings.oddsApiReuseMinutes
-            "oddsapi_props" -> settings.bookPropReuseMinutes
-            else -> 0
-        }
-        return maxOf(settings.staleReferenceMinutes, reuse) * 60_000L
-    }
+    /**
+     * Every quote's "last seen" as its feed said, never later than [now] (a feed's clock can run ahead),
+     * and [now] where it didn't say: what the freshness rule measures ([Freshness]).
+     */
+    private fun RefSnapshot.seenBy(now: Long): RefSnapshot = copy(
+        events = events.map { e ->
+            if (e.markets.all { it.lastUpdateMs != null && it.lastUpdateMs <= now }) e
+            else e.copy(markets = e.markets.map { m -> if (m.lastUpdateMs != null && m.lastUpdateMs <= now) m else m.copy(lastUpdateMs = minOf(m.lastUpdateMs ?: now, now)) })
+        },
+    )
 
     private fun report(result: ScanResult?, errors: List<String>, retryAfter: Int?, credits: Int?, sources: List<SourceReport>) = ScanReport(
         result = result,
