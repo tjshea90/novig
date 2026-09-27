@@ -217,7 +217,7 @@ class ScreenshotTest {
         assertTrue(scanned)
     }
 
-    /** Past three minutes a bet says its odds are aging; at two it doesn't. */
+    /** Past three minutes a bet says its odds are aging (they leave the feed at five). */
     @Test fun agingOddsAreFlaggedBeforeTheyLeave() {
         screen(now = SampleScan.NOW + 60_000L) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
         compose.onAllNodesWithText("odds aging").onFirst().assertIsDisplayed()
