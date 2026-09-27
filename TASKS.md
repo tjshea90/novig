@@ -2061,7 +2061,18 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         providers); full floor 512 tests green 2026-09-27 ~07:30Z) App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
         PropLine, source list/FeedScreen hints, SOURCE_ORDER, requestKey, maxFairAgeMs, planFor book
         filter for propline. Screenshot test for the Settings sources section.
-- [ ] P4 Full tests (CLAUDE.md protocol) over the whole app: engine, data (novig/reference/match/
+- [x] P4 (DONE 2026-09-27 ~08:30Z. Found and fixed, each with a test that fails on the old code:
+      (1) settle broken: Novig forgets finished games (N7) -> P4a score feeds, live 8/8; (2) planning
+      re-tokenized team names on every comparison: TeamMatcher cache, 165 ms -> 16 ms per plan for 61
+      NCAAF games x 4 feeds (`TeamMatcherTest` "a name is tokenized once"); (3) Novig's board failed
+      the whole scan on one short 429: now waited out (`NovigPublicClientTest` "a short 429 on the
+      board"); (4) a second corrupt JSON file replaced the first copy set aside, and saves weren't
+      flushed before the rename (`JsonFileStoreTest` "a second corrupt file never replaces the
+      first"); (5) stale wording (Novig settles, Kalshi-only props hint). Reviewed with nothing to
+      fix: engine (grid, devig, fees), Polymarket/Kalshi clients, CnoFeed lanes, NovigLive,
+      ScanRunner, ScanService (wake lock bounded, released). Proposals for Tj (not built): PinnWire
+      `since` deltas to cut the ~700 KB NFL props download per scan; using PropLine's Novig prices to
+      order Novig reads.) Full tests (CLAUDE.md protocol) over the whole app: engine, data (novig/reference/match/
       scanner/cno/keys/store/tracker), app (VM, service, widget, PiP, screens). Fix every bug found,
       each with a named test that fails before the fix; speed/efficiency/UI improvements (no major
       UI change without Tj's OK — list those as proposals instead).
