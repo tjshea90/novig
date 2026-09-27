@@ -11,7 +11,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -176,11 +175,24 @@ class PropLineClient(
             if (MarketFamily.TOTAL in families || MarketFamily.TEAM_TOTAL in families) add("totals")
         }
 
-        fun parseEvents(raw: String, json: Json, sportKey: String): List<RefEvent> =
-            json.decodeFromString(ListSerializer(PlEvent.serializer()), raw).mapNotNull { it.toDomain(sportKey) }
+        /**
+         * PropLine sends null for anything it has no value for (its game list's `bookmakers`, a
+         * book's `title`, a market's `description`…; its schema allows it), so every field is read
+         * as optional, and each game is read on its own: one odd game never costs the rest of the
+         * board (Tj's phone, 2026-09-27: "Expected start of the array '[' … at path: $[0].bookmakers").
+         */
+        fun parseEvents(raw: String, json: Json, sportKey: String): List<RefEvent> {
+            val lenient = lenient(json)
+            val items = lenient.parseToJsonElement(raw) as? kotlinx.serialization.json.JsonArray ?: return emptyList()
+            return items.mapNotNull { e -> runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), e).toDomain(sportKey) }.getOrNull() }
+        }
 
-        fun parseEvent(raw: String, json: Json, sportKey: String): RefEvent? =
-            json.decodeFromString(PlEvent.serializer(), raw).toDomain(sportKey)
+        fun parseEvent(raw: String, json: Json, sportKey: String): RefEvent? {
+            val lenient = lenient(json)
+            return runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), lenient.parseToJsonElement(raw)).toDomain(sportKey) }.getOrNull()
+        }
+
+        private fun lenient(json: Json) = Json(from = json) { ignoreUnknownKeys = true; coerceInputValues = true; isLenient = true }
 
         internal fun ms(iso: String?): Long? = iso?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() }
 
@@ -362,48 +374,54 @@ object PropLineProps {
 
 @Serializable
 internal data class PlEvent(
-    val id: String,
-    val home_team: String = "",
-    val away_team: String = "",
-    val commence_time: String = "",
-    val is_outright: Boolean = false,
-    val bookmakers: List<PlBook> = emptyList(),
+    val id: String? = null,
+    val home_team: String? = null,
+    val away_team: String? = null,
+    val commence_time: String? = null,
+    val is_outright: Boolean? = null,
+    val bookmakers: List<PlBook?>? = null,
 ) {
     fun toDomain(sportKey: String): RefEvent? {
-        if (is_outright || home_team.isBlank() || away_team.isBlank()) return null
+        val id = id?.takeIf { it.isNotBlank() } ?: return null
+        val home = home_team?.takeIf { it.isNotBlank() } ?: return null
+        val away = away_team?.takeIf { it.isNotBlank() } ?: return null
+        if (is_outright == true) return null
         val start = PropLineClient.ms(commence_time) ?: return null
-        val markets = bookmakers
-            .filter { it.key !in PropLineClient.EXCLUDED }
-            .flatMap { b -> b.markets.flatMap { it.toDomain(b, home_team, away_team) } }
-        return RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home_team, away = away_team, markets = markets)
+        val markets = bookmakers.orEmpty().filterNotNull()
+            .filter { it.key != null && it.key !in PropLineClient.EXCLUDED }
+            .flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away) } }
+        return RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets)
     }
 }
 
 @Serializable
 internal data class PlBook(
-    val key: String,
-    val title: String = "",
+    val key: String? = null,
+    val title: String? = null,
     val last_update: String? = null,
-    val markets: List<PlMarket> = emptyList(),
+    val markets: List<PlMarket?>? = null,
 )
 
 @Serializable
 internal data class PlMarket(
-    val key: String,
+    val key: String? = null,
     val last_update: String? = null,
     val period: String? = null,
     val team: String? = null,
     val suspended_at: String? = null,
-    val outcomes: List<PlOutcome> = emptyList(),
+    val outcomes: List<PlOutcome?>? = null,
 ) {
     fun toDomain(book: PlBook, home: String, away: String): List<RefBookMarket> {
+        val key = key ?: return emptyList()
+        val bookKeyRaw = book.key ?: return emptyList()
+        val outcomes = outcomes.orEmpty().filterNotNull().filter { it.name != null }
         // Pulled by the book, or a period line (only full games are asked for).
         if (suspended_at != null || period != null) return emptyList()
         val updated = PropLineClient.ms(last_update ?: book.last_update)
         // An outcome the book stopped sending while still sending its market was withdrawn.
         val live = outcomes.filter { o -> val seen = PropLineClient.ms(o.last_seen_at); seen == null || updated == null || seen >= updated }
-        val bookKey = PropLineClient.bookKey(book.key)
-        val title = TheOddsApiClient.KNOWN_BOOKMAKERS[bookKey] ?: book.title.ifBlank { bookKey }
+        val bookKey = PropLineClient.bookKey(bookKeyRaw)
+        val title = TheOddsApiClient.KNOWN_BOOKMAKERS[bookKey] ?: book.title?.takeIf { it.isNotBlank() } ?: bookKey
         PropLineProps.MARKETS[key]?.let { stat -> return props(live, bookKey, title, updated, stat) }
         val kind = when (key) {
             "h2h" -> LineKind.MONEYLINE
@@ -421,8 +439,8 @@ internal data class PlMarket(
         val quotes = live.map { o ->
             val side = when (kind) {
                 LineKind.TOTAL, LineKind.TEAM_TOTAL -> when {
-                    o.name.equals("Over", true) -> Side.OVER
-                    o.name.equals("Under", true) -> Side.UNDER
+                    o.name.equals("Over", ignoreCase = true) -> Side.OVER
+                    o.name.equals("Under", ignoreCase = true) -> Side.UNDER
                     else -> return emptyList()
                 }
                 else -> when {
@@ -443,11 +461,11 @@ internal data class PlMarket(
      * milestone rung ("3+ Total Bases") or a Yes-only list has no second side to devig and is left out.
      */
     private fun props(live: List<PlOutcome>, bookKey: String, title: String, updated: Long?, stat: String): List<RefBookMarket> {
-        val yesNo = key in PropLineProps.YES_NO
+        val yesNo = this.key in PropLineProps.YES_NO
         data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double)
         val legs = live.mapNotNull { o ->
             val player = o.description?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-            val over = when (o.name.trim().lowercase()) {
+            val over = when (o.name.orEmpty().trim().lowercase()) {
                 "over", "yes" -> true
                 "under", "no" -> false
                 else -> return@mapNotNull null
@@ -469,7 +487,7 @@ internal data class PlMarket(
 
 @Serializable
 internal data class PlOutcome(
-    val name: String,
+    val name: String? = null,
     val description: String? = null,
     val price: Double? = null,
     val point: Double? = null,
