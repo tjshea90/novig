@@ -539,7 +539,10 @@ private fun VigilantRoot(
                     openingBet = openingBet,
                 )
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
-                Tab.TRACKER -> TrackerScreen(state, onSettle = vm::settleBet, onDelete = vm::deleteBet)
+                Tab.TRACKER -> TrackerScreen(
+                    state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
+                    onCheckOdds = vm::checkOdds, onShown = vm::settleBets,
+                )
                 Tab.SETTINGS -> SettingsScreen(
                     state,
                     onUpdate = vm::updateSettings,
