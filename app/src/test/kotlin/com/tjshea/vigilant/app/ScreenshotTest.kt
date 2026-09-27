@@ -130,7 +130,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Add a PinnWire key").assertExists()
         compose.onNodeWithText("Free key at prop-line.com", substring = true).assertExists()
         compose.onNodeWithText("Add a PropLine key").assertExists()
-        compose.onNodeWithText("Sportsbooks for fair odds", substring = true).assertExists()
+        compose.onNodeWithText("SPORTSBOOKS FOR FAIR ODDS", substring = true).assertExists()
     }
 
     @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
