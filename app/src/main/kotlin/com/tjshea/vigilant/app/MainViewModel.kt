@@ -248,6 +248,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Each listed bet's Novig link, ahead of any tap (Tj, 2026-09-27: taps that didn't open the bet slip).
                 launch { c.cno.keepLinksFresh(state.map { s -> s.cnoShown(System.currentTimeMillis()).map { it.row } }) }
                 launch { c.teams.keepFresh(teamRows()) }
+                // Vigilant's own scan again every N minutes, when Tj asked for that.
+                launch { rescanWhileWatched() }
             }
         }
     }
@@ -494,7 +496,58 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Saves a settings change and re-prices from the last scan. Never touches the network. */
     fun updateSettings(transform: (ScanSettings) -> ScanSettings) {
+        viewModelScope.launch { applySettings(transform) }
+    }
+
+    /**
+     * The widget's switch (Tj, 2026-09-27: "an option to also use the regular scan in addition to
+     * cno and put all the results in the widget together"): CNO alone, or CNO and Vigilant's own
+     * scan together (Both). Switching the scan on starts one when the last is missing or old.
+     */
+    fun setBothScanners(both: Boolean) {
         viewModelScope.launch {
+            applySettings { it.copy(scanner = if (both) com.tjshea.vigilant.data.scanner.ScannerMode.BOTH else com.tjshea.vigilant.data.scanner.ScannerMode.CNO) }
+            if (!both) return@launch
+            if (_state.value.settings.leagues.isEmpty()) {
+                _toasts.tryEmit("Pick leagues in Settings for Vigilant's scan")
+            } else if (WidgetRescan.scanOnSwitch(_state.value.status.scannedAtMs, System.currentTimeMillis())) {
+                scan()
+            }
+        }
+    }
+
+    /** When the last scan was started by [rescanWhileWatched] (its own clock: a failing scan waits a full interval too). */
+    private var rescanStartedAtMs: Long? = null
+
+    /**
+     * Scans again every [ScanSettings.widgetRescanMinutes] while CNO's list is on screen (run
+     * alongside [CnoFeed.watch]), when that option is on and Vigilant's scan is too.
+     */
+    private suspend fun rescanWhileWatched() {
+        state.map { s -> s.settings.widgetRescanMinutes.takeIf { s.settings.vigilantOn && s.settings.leagues.isNotEmpty() } ?: 0 }
+            .distinctUntilChanged()
+            .collectLatest { minutes ->
+                while (true) {
+                    val s = _state.value
+                    val wait = WidgetRescan.dueInMs(minutes, s.status.scannedAtMs, rescanStartedAtMs, System.currentTimeMillis())
+                        ?: kotlinx.coroutines.awaitCancellation()
+                    if (wait > 0) {
+                        kotlinx.coroutines.delay(wait)
+                        continue
+                    }
+                    if (c.runner.running || s.status.rechecking || s.status.scanning) {
+                        kotlinx.coroutines.delay(5_000)
+                        continue
+                    }
+                    rescanStartedAtMs = System.currentTimeMillis()
+                    scan()
+                    kotlinx.coroutines.delay(1_000)
+                }
+            }
+    }
+
+    private suspend fun applySettings(transform: (ScanSettings) -> ScanSettings) {
+        run {
             val next = settingsMutex.withLock {
                 // If the write fails, keep the change for this session rather than crash.
                 runCatching { c.settingsStore.update(transform) }.getOrElse { transform(_state.value.settings) }
