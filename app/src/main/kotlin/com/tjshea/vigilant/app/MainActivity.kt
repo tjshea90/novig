@@ -533,6 +533,7 @@ private fun VigilantRoot(
                     onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
+                    onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
                     onRecheck = vm::recheck,
                     onMiniWindow = onMiniWindow,
                 )

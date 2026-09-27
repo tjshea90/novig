@@ -111,6 +111,11 @@ fun SettingsScreen(
                         "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on)."
                 },
             )
+            if (AppBook.isNovig) {
+                Text("Games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.STARTS_WITHIN_CHOICES, s.startsWithinHours, ::startsWithinLabel) { v -> onUpdate { it.copy(startsWithinHours = v) } }
+                Hint("Every list (+EV, CNO, Games and the widgets) shows only games starting within this window. Games already under way still show when live games are on. It only hides bets: what a scan reads is unchanged.")
+            }
 
             // ---- The CNO scanner ----------------------------------------------------------------
             if (s.cnoOn) {

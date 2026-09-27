@@ -58,3 +58,6 @@ object Format {
     /** A Novig contract pays $0.01, so N contracts is $N/100 of payout. */
     fun contractsAsPayout(contracts: Long): String = money(contracts / 100.0)
 }
+
+/** A [com.tjshea.vigilant.data.scanner.ScanSettings.startsWithinHours] choice as a chip reads it: "Any", "24h". */
+fun startsWithinLabel(hours: Int): String = if (hours <= 0) "Any" else "${hours}h"

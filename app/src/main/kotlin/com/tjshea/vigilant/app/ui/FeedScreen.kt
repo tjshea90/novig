@@ -56,6 +56,8 @@ fun FeedScreen(
     onOpenSettings: () -> Unit,
     onTrack: (Opportunity, Double) -> Unit,
     onSort: (FeedSort) -> Unit = {},
+    /** Show only games starting within this many hours (0 = any). */
+    onStartsWithin: (Int) -> Unit = {},
     /** Re-read these markets' Novig prices only (seconds, no fair-odds calls). */
     onRecheck: (Collection<String>) -> Unit = {},
     /** Shrink to the mini window over other apps. Null hides the button (no picture-in-picture). */
@@ -106,7 +108,7 @@ fun FeedScreen(
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now)
-                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort) { onRecheck(feedMarketIds(state)) } }
+                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state)) } }
                 items(shown, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
                 }
@@ -135,6 +137,7 @@ private fun FeedSummary(
     onScan: () -> Unit,
     onOpenSettings: () -> Unit,
     onSort: (FeedSort) -> Unit,
+    onStartsWithin: (Int) -> Unit,
     onRecheck: () -> Unit,
 ) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -162,6 +165,11 @@ private fun FeedSummary(
 
         val result = state.result
         val status = state.status
+        // Tj, 2026-09-27: "only show games that start within the next 24 hours or 12 hours or 48 hours".
+        if (AppBook.isNovig && result != null && state.settings.leagues.isNotEmpty()) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
+        // The feed's bets, current enough to compare, but all outside the start-time window.
+        val allLater = state.settings.startsWithinHours > 0 &&
+            state.feed.any { !it.fairIsOld(now) } && state.feed.none { !it.fairIsOld(now) && state.settings.startsInWindow(it.event.startsTs, now) }
         when {
             state.settings.leagues.isEmpty() ->
                 EmptyState("Pick a league", "Choose one or more leagues above, then tap Scan.")
@@ -196,6 +204,12 @@ private fun FeedSummary(
                     "covers the most leagues).",
                 action = "Fair odds settings",
                 onAction = onOpenSettings,
+            )
+            allLater -> EmptyState(
+                "Nothing starting in the next ${state.settings.startsWithinHours} hours",
+                "Every +EV bet this scan found is on a game starting later. Widen the window to see them.",
+                action = "Show any time",
+                onAction = { onStartsWithin(0) },
             )
             state.feed.isNotEmpty() && shown.isEmpty() -> EmptyState(
                 "Odds too old to compare",
@@ -342,3 +356,23 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
 
 /** A card says its odds are aging past this: the other books' prices are well on the way to [Freshness.MAX_QUOTE_AGE_MS]. */
 private const val FAIR_AGING_MS = 3 * 60_000L
+
+/** "Starts within: Any · 12h · 24h · 48h": the start-time window every list obeys. */
+@Composable
+private fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "Starts within",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        ScanSettings.STARTS_WITHIN_CHOICES.forEach { h ->
+            val on = hours == h
+            TextButton(onClick = { onPick(h) }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                Text(startsWithinLabel(h), style = MaterialTheme.typography.labelMedium, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                    color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
