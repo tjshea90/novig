@@ -89,6 +89,7 @@ class ScannerTest {
         override val displayName = "Sportsbook props"
         override val metered = true
         override val needsCatalog = true
+        override val extraPropTypes = PropStats.BOOK_ONLY_TYPES
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot = error("needs Novig's board")
         override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot {
             seen = context
@@ -110,6 +111,20 @@ class ScannerTest {
         val withProps = FakeNovig()
         Scanner(withProps, clock = { now }).scan(settings, listOf(FakeProps(partial = false)))
         assertTrue("BATTING_STRIKEOUTS" in withProps.lastTypes && "KICKING_POINTS" in withProps.lastTypes)
+    }
+
+    @Test
+    fun `a source that prices a few book-only prop stats loads just those from Novig`() = runTest {
+        val pinnacle = object : ReferenceSource {
+            override val id = "pinnacle"
+            override val displayName = "Pinnacle"
+            override val extraPropTypes = setOf("FIELD_GOALS_MADE")
+            override suspend fun odds(league: League, settings: ScanSettings) = RefSnapshot(league.oddsApiSportKey, emptyList(), 0)
+        }
+        val novig = FakeNovig()
+        Scanner(novig, clock = { now }).scan(settings, listOf(pinnacle))
+        assertTrue("FIELD_GOALS_MADE" in novig.lastTypes)
+        assertTrue("KICKING_POINTS" !in novig.lastTypes && "BATTING_STRIKEOUTS" !in novig.lastTypes)
     }
 
     @Test
