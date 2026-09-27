@@ -32,7 +32,7 @@ class NovigLiveTest {
     private fun market(id: String) = NovigMarket(
         marketId = id, eventId = "E1", marketType = "RECEPTIONS", status = "OPEN", description = "X 4.5 RECEPTIONS",
         startsTs = start + 3_600_000, fee = MarketFee.GAME,
-        outcomes = listOf(NovigOutcome("$id-over", "Over 4.5"), NovigOutcome("$id-under", "Under 4.5")),
+        outcomes = listOf(NovigOutcome("$id-over", "Over 4.5", "TBD"), NovigOutcome("$id-under", "Under 4.5", "TBD")),
     )
 
     /** Every order is a bid: a bid of [overBid] on Over is what Under can be taken at (1 − bid). */
