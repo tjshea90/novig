@@ -29,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.FloatingWidget
 import kotlinx.coroutines.launch
 import androidx.compose.material3.Button
@@ -179,7 +180,7 @@ fun CnoScreen(
                 actions = {
                     if (onMiniWindow != null) {
                         IconButton(onClick = onMiniWindow) {
-                            Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over Novig", tint = MaterialTheme.colorScheme.primary)
+                            Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over ${AppBook.name}", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                     if (cno.refreshing) {
@@ -231,7 +232,7 @@ fun CnoScreen(
                         snap?.note?.let { Banner("CrazyNinjaOdds says: $it") }
                         if (on && state.settings.floatingWidget && !overlayAllowed) {
                             Banner(
-                                "The floating widget (scroll buttons, tap a bet to open it in Novig, ✓ placed and ✕ remove) needs " +
+                                "The floating widget (scroll buttons, tap a bet to open it in ${AppBook.name}, ✓ placed and ✕ remove) needs " +
                                     "Android's \"Display over other apps\" for Vigilant. Until then the widget is picture-in-picture. " +
                                     "If Android greys the switch out: App info › ⋮ › Allow restricted settings.",
                                 action = "Allow",
@@ -303,9 +304,11 @@ fun CnoScreen(
                         Text(
                             "From crazyninjaodds.com (free; donations keep it running). EV is CNO's fair odds " +
                                 (snap.evLabel?.let { "(${evMethodName(it)}) " } ?: "") +
-                                "against the Novig price shown, less Novig's fee on live games: \"NOVIG NOW\" is Novig's price " +
-                                "read just now (orange EV: under your minimum at it), otherwise the one CNO listed at its last " +
-                                "update, which may have moved. Tap a bet for every book's odds and Vigilant's own check.",
+                                (if (AppBook.isNovig) "against the Novig price shown, less Novig's fee on live games: \"NOVIG NOW\" is Novig's price " +
+                                    "read just now (orange EV: under your minimum at it), otherwise the one CNO listed at its last " +
+                                    "update, which may have moved. Tap a bet for every book's odds and Vigilant's own check."
+                                else "against the ${AppBook.name} price CNO listed at its last update, which may have moved. " +
+                                    "Tap a bet for every book's odds and Vigilant's own check."),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp),
@@ -472,8 +475,8 @@ fun cnoStake(pick: CnoPick, s: ScanSettings): Double? {
     val row = pick.row
     val fair = CnoChecks.fairProbability(row) ?: return null
     val price = 1.0 / Odds.americanToDecimal(row.odds)
-    // Pregame Novig game markets charge the taker nothing (NOVIG_API.md §8); live ones do.
-    val fee = Fees.takerFee(price, MarketFee.GAME, eventLive = pick.live)
+    // Pregame Novig game markets charge the taker nothing (NOVIG_API.md §8); live ones do. A sportsbook never does.
+    val fee = if (AppBook.exchange) Fees.takerFee(price, MarketFee.GAME, eventLive = pick.live) else 0.0
     val stake = EvMath.suggestedStake(EvQuote(fair, price, fee), s.bankroll, s.kellyMultiplier, row.available)
     return stake.takeIf { it > 0 }
 }
@@ -690,8 +693,8 @@ fun CnoDetail(
         Text(
             "CNO's numbers" + (snap?.let { " as of ${Format.age(it.dataAtMs, now)}" } ?: "") +
                 (snap?.evLabel?.let { ", ${evMethodName(it)} devig" } ?: "") +
-                (if (liveAtMs != null) ". The price, dollars and EV are at Novig's price now (its order book, read ${Format.age(liveAtMs, now)}), against CNO's fair odds." else ". The price and the dollars available were what Novig showed then: check them in Novig before betting.") +
-                if (CnoView.includesLive(viewUrl) || pick.live) " Live bets pay Novig's taker fee; the EV here already takes it out." else "",
+                (if (liveAtMs != null) ". The price, dollars and EV are at Novig's price now (its order book, read ${Format.age(liveAtMs, now)}), against CNO's fair odds." else ". The price and the dollars available were what ${AppBook.name} showed then: check them in ${AppBook.name} before betting.") +
+                if (AppBook.exchange && (CnoView.includesLive(viewUrl) || pick.live)) " Live bets pay Novig's taker fee; the EV here already takes it out." else "",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -702,7 +705,7 @@ fun CnoDetail(
                     Spacer(Modifier.width(8.dp))
                     Text("Opening…")
                 } else {
-                    Text("Open in Novig")
+                    Text("Open in ${AppBook.name}")
                 }
             }
             if (onPlaced != null) OutlinedButton(onClick = onPlaced) { Text("I placed it") }
@@ -712,7 +715,7 @@ fun CnoDetail(
             if (view != null) TextButton(onClick = onReloadBooks, enabled = !books.loading) { Text(if (books.loading) "Reading…" else "Re-read books") }
         }
         Text(
-            "Open in Novig puts this bet in Novig's bet slip." +
+            "Open in ${AppBook.name} puts this bet in ${AppBook.name}'s bet slip." +
                 if (onPlaced != null) " \"I placed it\" hides it here and in the widget until the game is over." else "",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -727,23 +730,23 @@ private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
         CnoBooks.Verdict.CONFIRMED ->
             "${check.twoSided} books price both sides. Devigged worst case and taking the lower of their average and median, " +
                 "the fair price is ${Format.american(check.fairProbability!!)} (${Format.percent(check.fairProbability!!)}), " +
-                "so ${MiniWindow.american(check.novigOdds)} on Novig is ${Format.evPercent(check.ev!!)} EV; " +
+                "so ${MiniWindow.american(check.novigOdds)} on ${AppBook.name} is ${Format.evPercent(check.ev!!)} EV; " +
                 "${check.agreeing} of them say +EV on their own (the widget's green ✓)."
         CnoBooks.Verdict.SPLIT ->
-            "${check.twoSided} books price both sides and together (worst case) they make ${MiniWindow.american(check.novigOdds)} on Novig " +
+            "${check.twoSided} books price both sides and together (worst case) they make ${MiniWindow.american(check.novigOdds)} on ${AppBook.name} " +
                 "${Format.evPercent(check.ev!!)} EV, but only ${check.agreeing} of them say so on their own. " +
                 "The edge rests on one or two books: no green ✓."
         CnoBooks.Verdict.THIN ->
-            "Only ${check.twoSided} book${if (check.twoSided == 1) "" else "s"} (Novig aside) price both sides" +
+            "Only ${check.twoSided} book${if (check.twoSided == 1) "" else "s"} (${AppBook.name} aside) price both sides" +
                 (if (check.oneSided > 0) "; ${check.oneSided} list only one" else "") +
                 ". That's a thin market to judge a fair price from" +
                 (check.ev?.let { ": by them it's ${Format.evPercent(it)} EV." } ?: ".")
         CnoBooks.Verdict.NOT_CONFIRMED ->
             "${check.twoSided} books price both sides, and by them (worst case) the fair price is " +
-                "${Format.american(check.fairProbability!!)}: ${MiniWindow.american(check.novigOdds)} on Novig is ${Format.evPercent(check.ev!!)} EV. " +
+                "${Format.american(check.fairProbability!!)}: ${MiniWindow.american(check.novigOdds)} on ${AppBook.name} is ${Format.evPercent(check.ev!!)} EV. " +
                 "CNO's weighting sees it differently; skip it or look closer."
         CnoBooks.Verdict.NO_DATA ->
-            "No book (Novig aside) prices both " + (otherBet?.let { "this and $it" } ?: "sides") +
+            "No book (${AppBook.name} aside) prices both " + (otherBet?.let { "this and $it" } ?: "sides") +
                 ", so CNO's fair value comes from one side and a guessed margin. Treat it as unconfirmed."
     }
     Surface(color = color.copy(alpha = 0.12f), shape = RoundedCornerShape(12.dp)) {
@@ -752,7 +755,7 @@ private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
             Text(body, style = MaterialTheme.typography.bodySmall)
             if (check.novigOdds != row.odds) {
                 Text(
-                    "Novig's price on CNO's game page is ${MiniWindow.american(check.novigOdds)} (the list said ${MiniWindow.american(row.odds)}).",
+                    "${AppBook.name}'s price on CNO's game page is ${MiniWindow.american(check.novigOdds)} (the list said ${MiniWindow.american(row.odds)}).",
                     style = MaterialTheme.typography.bodySmall,
                     color = Edge.colors.warning,
                 )
