@@ -1761,4 +1761,11 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       widget. If I press the x, it will remove the bet from the list even if I didn't bet it"
       → ✕ = hide (not placed), kept through refreshes/restarts like placed, with Undo; CNO tab
       lists hidden and placed bets separately.
+- [ ] K8 Tj, 00:20Z: "Include an option in the cno settings to only include bets where multiple
+      books agree (the check mark bets), and where both sides of the bet have odds at different
+      sports books for the most accurate odds." → Settings switch "Only bets the books agree on":
+      the tab, badge and widget list only ✓ bets (3+ books pricing both sides, 3+ of them +EV
+      alone); bets whose books aren't read yet are held back and counted ("N being checked"); the
+      green-check lane then covers more of the list (paced within K2's budget).
+      ("Make sure on every new request I send you log and still finish the prior requests.")
 - [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
