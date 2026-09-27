@@ -891,10 +891,12 @@ class ScreenshotTest {
     @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun theWidgetShowsNovigsPriceNowAndWhatCnoHad() {
         val jj = SampleCno.rows[1]
-        val s = floatingState().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(105, 40.0, 0.004, SampleScan.NOW - 5_000)))
+        // Novig moved Jefferson in Tj's favor since CNO's read: +125 now, a better EV, so still on top.
+        val s = floatingState().copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(125, 40.0, 0.0973, SampleScan.NOW - 5_000)))
         floating("9p_floating_novig_now", s)
         compose.onNodeWithText("was +117", substring = true, useUnmergedTree = true).assertExists()
-        compose.onNodeWithText("+105", useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("+125", useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("+9.7%", useUnmergedTree = true).assertExists()
     }
 
     @Test fun cnoCardShowsNovigsPriceNowAndWhatCnoHad() {
