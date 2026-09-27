@@ -2038,14 +2038,16 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [ ] P3 Build what the research says is worth it (free, legal, adds sharp books or speed) as a
       reference source behind a Settings switch, with tests; say what was rejected and why.
       Design (RESEARCH §22.4), steps:
-  - [ ] P3a Pinnacle via PinnWire: `ApiProvider.PINNWIRE` + `QuotaPolicy.PINNWIRE` (100/day, 20/min);
+  - [x] P3a (data layer done + tested: ExchangeClientsTest PinnWire tests on a REAL fixture
+        `data/src/test/resources/pinnwire-football.json`, ScannerTest "a source that prices a few book-only
+        prop stats"; app wiring is P3c) Pinnacle via PinnWire: `ApiProvider.PINNWIRE` + `QuotaPolicy.PINNWIRE` (100/day, 20/min);
         `PinnapiClient` takes hosts in order (PinnWire pool first with `x-api-key` +
         `include_specials=1`, then pinnapi pool with `x-portal-apikey`, no specials); specials rows
         "Player Props" -> `LineKind.PLAYER_PROP` (bookKey "pinnacle", subject = player, stat via
         `PinnacleProps.stat(sport, units)`); Scanner.catalogTypes keeps book-only prop types when a
         source `pricesBookProps`. Tests: parse a trimmed REAL PinnWire fixture (lines + props),
         host fallback, header per host.
-  - [ ] P3b PropLine: `ApiProvider.PROPLINE` + `QuotaPolicy.PROPLINE` (1,000/day UTC, headers
+  - [x] P3b (data layer done: `reference/PropLineClient.kt`, PropLineClientTest 8 tests; app wiring is P3c) PropLine: `ApiProvider.PROPLINE` + `QuotaPolicy.PROPLINE` (1,000/day UTC, headers
         X-Daily-*), `PropLineClient` (game lines per league) + `PropLinePropsSource` (per game,
         needsCatalog, capped games per scan, reuse window); books = reference books mapped to
         PropLine keys, no exchanges/DFS/novig; withdrawn (`last_seen_at` < market `last_update`)
