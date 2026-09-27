@@ -2124,15 +2124,26 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > scanner does
 
 ### Plan
-- [ ] R1 Investigate: how placed/tracked bets are keyed per scanner (PlacedBets keys "cno:<row>",
+- [x] R1 (DONE: cause = each list filtered only its own keys; a CNO ✓ saved `cno:<row>` + wording, which Vigilant's
+      feed never looked at.) Investigate: how placed/tracked bets are keyed per scanner (PlacedBets keys "cno:<row>",
       "<market>/<outcome>", aliases; TrackedBet placedKey/marketId/outcomeId), where each list filters
       them (+EV feed, Games, CNO tab, widget, PiP), and why a CNO ✓ still shows in Vigilant's feed.
-- [ ] R2 One "already placed" rule for the whole app: a bet placed/tracked from ANY scanner (✓ in the
+- [x] R2 (DONE: `data/tracker/PlacedIndex` (key, Novig outcome id, or game + BetGrader pick within 12 h; tracked bets
+      on games within 36 h), `UiState.placedIndex/feedOf/indexed/hasCno`, MiniWindow.items, ScanService counts; marks now
+      save event/market/outcomeId. Tests: PlacedIndexTest (5), PlacedEverywhereTest "a bet placed on CNO's widget leaves
+      Vigilant's +EV feed and widget", "…Novig outcome itself…", "a bet only in the tracker…", "…already in the tracker…",
+      "a same-named bet on a different day's game still shows". Games tab left as a full price board.) One "already placed" rule for the whole app: a bet placed/tracked from ANY scanner (✓ in the
       widget/CNO tab, Track on a card) is hidden from the +EV feed, the CNO tab, the floating widget and
       the mini window, matched by Novig outcome id when known, else by the same game+market+side; tests.
-- [ ] R3 Vigilant's "Open Novig" opens the exact bet slip (`novigapp://events/<outcomeId>`) from the
+- [x] R3 (DONE: `OpportunitySheet.betSlipLink`, "Open this bet in Novig" via `LocalOpenNovig(link)`; widget/mini window
+      already used `MiniWindow.novigLink`. Test: PlacedEverywhereTest "Vigilant's bet sheet opens the exact bet slip",
+      ScreenshotTest theWidgetWorksOnVigilantsScanAlone.) Vigilant's "Open Novig" opens the exact bet slip (`novigapp://events/<outcomeId>`) from the
       card, the bet sheet, the mini window and the widget; test.
-- [ ] R4 Vigilant scanner gets the floating widget too (Vigilant-only mode as well as Both): tap = exact
+- [x] R4 (DONE: widget no longer needs CNO on; top-bar switch CNO only → Both → Vigilant only (`nextScanner`,
+      `MainViewModel.setScanner`); Settings offers the widget and its rescan chips in every mode. Tests:
+      theWidgetWorksOnVigilantsScanAlone (9p), theWidgetsTopBarSwitchesVigilantsScanOnAndOff (9n),
+      theWidgetWithBothListsABetBothScannersFoundOnce (9o), settingsOfferTheFloatingWidgetOnVigilantsScanAlone,
+      PlacedEverywhereTest switch order.) Vigilant scanner gets the floating widget too (Vigilant-only mode as well as Both): tap = exact
       bet slip, ✓ placed (tracked + hidden everywhere), ✕ remove, Undo; tests + screenshots.
 - [ ] R5 Light tests (+ screenshots), floor, ship, link.
 
@@ -2141,11 +2152,14 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > as wins or losses. Ignore them completely. I don't want the average skewed by a single bet that is an
 > outlier
 
-- [ ] O1 Outlier = a tracked bet whose EV when placed (`evPercentAtBet`) is over +6% or under −6% (one
+- [x] O1 (DONE: `BetTracker.OUTLIER_EV` = 0.06, `TrackedBet.isOutlier`, `stats()` drops them first,
+      `TrackerStats.outliers`. Test: BetTrackerTest "bets over 6% EV either way are left out of every stat"; void test
+      kept meaningful with a 5% EV.) Outlier = a tracked bet whose EV when placed (`evPercentAtBet`) is over +6% or under −6% (one
       constant, `BetTracker.OUTLIER_EV`, so the line can move). `BetTracker.stats` leaves them out of
       everything: record, win %, profit, profit %, staked, expected, avg EV, avg CLV, beat-the-close, open
       count, by-scanner rows; the running-profit line too. Bets with no EV (imported) are not outliers.
       Tests (data): stats with and without outliers; the ±6% edges.
-- [ ] O2 Tracker UI: the Stats tab says how many bets were left out as outliers; each outlier's card in
+- [x] O2 (DONE: note above the stats, "Outlier (over ±6% EV): not in stats" on the card, running-profit line skips
+      them. Tests: trackerLeavesOutlierBetsOutOfTheStats (4c), anOutlierBetSaysItIsNotInTheStats.) Tracker UI: the Stats tab says how many bets were left out as outliers; each outlier's card in
       Bets says "Outlier: not in stats". Screenshot test.
 - [ ] O3 Ships with R5 (v0.16.2).
