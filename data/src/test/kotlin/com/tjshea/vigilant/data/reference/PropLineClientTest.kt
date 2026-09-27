@@ -117,8 +117,9 @@ class PropLineClientTest {
         val r = requests.single()
         assertEquals("pl-key", r.getHeader("X-API-Key"))
         assertEquals("h2h,spreads,totals", r.requestUrl!!.queryParameter("markets"))
-        // Caesars has no PropLine feed; Hard Rock goes by PropLine's own name.
-        assertEquals("pinnacle,hardrock,draftkings", r.requestUrl!!.queryParameter("bookmakers"))
+        // Caesars has no PropLine feed; Hard Rock goes by PropLine's own name. Novig rides along
+        // (RESEARCH.md §23.6), never as a book.
+        assertEquals("pinnacle,hardrock,draftkings,novig", r.requestUrl!!.queryParameter("bookmakers"))
 
         val e = snap.events.single()
         assertEquals("pl:555", e.id)
@@ -138,8 +139,13 @@ class PropLineClientTest {
         assertEquals("Hard Rock Bet", hr.single().bookTitle)
         // DraftKings stopped sending the Under: the total can't be devigged, so it's dropped.
         assertTrue(e.markets.none { it.bookKey == "draftkings" })
-        // Novig is what's being priced, never a reference.
+        // Novig is what's being priced, never a reference: its prices come apart, to order Novig reads.
         assertTrue(e.markets.none { it.bookKey == "novig" })
+        val novig = snap.novig.single()
+        assertEquals("pl:555", novig.id)
+        val nml = novig.markets.single()
+        assertEquals("novig", nml.bookKey)
+        assertEquals(1.0 + 100.0 / 140.0, nml.quotes.single { it.side == Side.HOME }.decimalOdds, 1e-9)
     }
 
     @Test
@@ -273,7 +279,7 @@ class PropLineClientTest {
         val ask = requests.last()
         assertEquals("/v1/sports/americanfootball_nfl/events/555/odds", ask.requestUrl!!.encodedPath)
         assertEquals(setOf("player_pass_yds", "player_field_goals_made"), ask.requestUrl!!.queryParameter("markets")!!.split(",").toSet())
-        assertEquals("fanduel,draftkings", ask.requestUrl!!.queryParameter("bookmakers"))
+        assertEquals("fanduel,draftkings,novig", ask.requestUrl!!.queryParameter("bookmakers"))
 
         val e = snap.events.single()
         val m = e.markets.single()
