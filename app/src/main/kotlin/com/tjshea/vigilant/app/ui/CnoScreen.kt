@@ -258,7 +258,7 @@ fun CnoScreen(
                                     ". It's read again ${refreshLabel(state.settings)}.",
                             )
                             screened != null -> Text(
-                                "${picks.size} bet${if (picks.size == 1) "" else "s"} pass" +
+                                "${picks.size} bet${if (picks.size == 1) " passes" else "s pass"}" +
                                     hiddenText(screened).let { if (it.isEmpty()) "" else " · $it" } +
                                     onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else " · $it" },
                                 style = MaterialTheme.typography.labelMedium,

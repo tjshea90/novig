@@ -173,7 +173,7 @@ fun FloatingFeed(
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (items.isNotEmpty()) {
-                    Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(end = 2.dp))
+                    Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(start = 6.dp, end = 2.dp))
                 }
                 HeaderButton(painterResource(R.drawable.ic_open), "Open Vigilant", actions.onOpenApp)
                 HeaderButton(painterResource(R.drawable.ic_minimize), "Shrink to a bubble", actions.onMinimize)
@@ -293,7 +293,8 @@ fun FloatingFeed(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 if (cnoOnly) {
-                    BarButton("Refresh", painterResource(R.drawable.ic_recheck), enabled = !state.cno.refreshing, labelled = labelled, onClick = actions.onRefresh)
+                    // The same circling arrows as the CNO tab's Refresh.
+                    BarButton("Refresh", painterResource(R.drawable.ic_scan), enabled = !state.cno.refreshing, labelled = labelled, onClick = actions.onRefresh)
                 } else {
                     BarButton("Scan", painterResource(R.drawable.ic_scan), enabled = !status.scanning && !status.rechecking, labelled = labelled, onClick = actions.onScan)
                     BarButton("Recheck", painterResource(R.drawable.ic_recheck), enabled = !status.scanning && !status.rechecking && state.feed.isNotEmpty(), labelled = labelled, onClick = actions.onRecheck)
