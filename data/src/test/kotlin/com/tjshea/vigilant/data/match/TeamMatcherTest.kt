@@ -70,4 +70,11 @@ class TeamMatcherTest {
     fun `closeness prefers the name with fewer extra words`() {
         assertTrue(TeamMatcher.closeness("Miami Florida", "Miami Hurricanes") > TeamMatcher.closeness("Miami Florida", "Miami (OH) RedHawks"))
     }
+
+    @Test
+    fun `a name is tokenized once and re-used, since a plan compares it thousands of times`() {
+        val first = TeamMatcher.tokens("Mississippi State Bulldogs")
+        assertTrue(first === TeamMatcher.tokens("Mississippi State Bulldogs"))
+        assertEquals(listOf("mississippi", "st", "bulldogs"), first)
+    }
 }
