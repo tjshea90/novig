@@ -201,13 +201,26 @@ class ScreenshotTest {
         }
     }
 
-    @Test fun oldPricesWarnBeforeBettingAndOfferAQuickRecheck() {
-        var rechecked: Collection<String>? = null
-        screen(now = SampleScan.NOW + 25 * 60_000L) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onRecheck = { rechecked = it }) }
-        compose.onNodeWithText("These prices are up to 25m old. Recheck them", substring = true).assertIsDisplayed()
-        compose.onAllNodesWithText("old price", substring = true).onFirst().assertIsDisplayed()
-        compose.onNodeWithText("Recheck", useUnmergedTree = true).performClick()
-        assert(rechecked == SampleScan.state().feed.map { it.market.marketId }.distinct()) { "rechecked $rechecked" }
+    /**
+     * Tj, 2026-09-27: "make sure it never gives me stale odds when comparing odds from other sports
+     * books" (RESEARCH.md §24). 25 minutes after a scan (the sample's book prices were seen 3 minutes
+     * before it), no bet is offered: the feed says why and offers a scan. Until v0.16.4 the same bets
+     * still showed, only flagged "old price".
+     */
+    @Test fun oldOddsLeaveTheFeedAndAskForAScan() {
+        var scanned = false
+        screen(now = SampleScan.NOW + 25 * 60_000L) { FeedScreen(SampleScan.state(), { scanned = true }, {}, {}, { _, _ -> }) }
+        compose.onNodeWithText("Odds too old to compare").assertIsDisplayed()
+        compose.onAllNodesWithText("old price", substring = true).assertCountEquals(0)
+        compose.onAllNodesWithText(SampleScan.state().feed.first().selection).assertCountEquals(0)
+        compose.onNodeWithText("Scan now").performClick()
+        assertTrue(scanned)
+    }
+
+    /** Past three minutes a bet says its odds are aging; at two it doesn't. */
+    @Test fun agingOddsAreFlaggedBeforeTheyLeave() {
+        screen(now = SampleScan.NOW + 60_000L) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
+        compose.onAllNodesWithText("odds aging").onFirst().assertIsDisplayed()
     }
 
     @Test fun freshPricesHaveNoWarningAndTheFeedCanStillBeRechecked() {
