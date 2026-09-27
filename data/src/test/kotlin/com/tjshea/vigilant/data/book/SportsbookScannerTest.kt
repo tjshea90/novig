@@ -146,7 +146,7 @@ class SportsbookScannerTest {
         val client = propLine()
         val scanner = SportsbookScanner(Sportsbook.BETMGM, clock = { now })
         val report = scanner.scan(settings, listOf(client, PropLinePropsSource(client)))
-        val result = assertNotNull(report.result).let { report.result!! }
+        val result = report.result!!
 
         // Pinnacle -150/+130: fair 0.5798/0.4202. BetMGM's +150 on the Ravens pays 2.5: +5.04%.
         val bal = result.bet("Baltimore Ravens")
@@ -264,31 +264,36 @@ class SportsbookScannerTest {
         assertEquals(setOf("MLB"), scanner.unscannedLeagues(settings.copy(leagues = setOf("NFL", "MLB"))))
     }
 
-    /** A feed that lists the same game with home and away the other way round (as a fallback might). */
-    private class Swapped(val book: String, val lines: List<RefBookMarket>) : ReferenceSource {
-        override val id = "oddsapi"
-        override val displayName = "The Odds API"
-        override val fallbackFor: String? = null
+    /** Pinnacle's own feed, listing the game with home and away the other way round from PropLine. */
+    private class ReversedPinnacle(val now: Long, val start: Long) : ReferenceSource {
+        override val id = "pinnacle"
+        override val displayName = "Pinnacle"
         override suspend fun odds(league: League, settings: ScanSettings) = RefSnapshot(
             league.oddsApiSportKey,
-            listOf(RefEvent("oa-1", league.oddsApiSportKey, 1_790_518_000_000L, home = "Baltimore Ravens", away = "Dallas Cowboys", markets = lines)),
-            0,
+            listOf(
+                RefEvent(
+                    "pn-1", league.oddsApiSportKey, start, home = "Baltimore Ravens", away = "Dallas Cowboys",
+                    markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 2.10, 3.5), RefQuote(Side.AWAY, 1.80, -3.5)), now)),
+                ),
+            ),
+            now,
         )
     }
 
     @Test
-    fun `a second feed with home and away reversed lines up with the board`() = runTest {
-        // PropLine is down: BetMGM's lines come from The Odds API, which lists the game the other way round.
-        routes["/v1/sports/americanfootball_nfl/odds"] = { MockResponse().setResponseCode(500) }
-        val t = now - 10_000
-        val mgm = RefBookMarket("betmgm", "BetMGM", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1.87, 3.5), RefQuote(Side.AWAY, 1.95, -3.5)), t)
-        val pin = RefBookMarket("pinnacle", "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1.91, 3.5), RefQuote(Side.AWAY, 1.91, -3.5)), t)
+    fun `a fair feed with home and away reversed lines up with BetMGM's board`() = runTest {
+        routesUp()
+        val client = propLine()
         val result = SportsbookScanner(Sportsbook.BETMGM, clock = { now })
-            .scan(settings.copy(useOddsApi = true), listOf(propLine(), Swapped("betmgm", listOf(mgm, pin)))).result!!
-        // The Cowboys -3.5 at BetMGM (1.95) against Pinnacle's 50/50: +2.5%.
+            .scan(settings.copy(usePinnacle = true), listOf(client, ReversedPinnacle(now - 5_000, start))).result!!
+        // Pinnacle's own feed (first in the merge): Cowboys -3.5 at 1.80, Ravens +3.5 at 2.10, fair 0.5385.
+        // BetMGM's Cowboys -3.5 at -105 (1.952): +5.1%. Read the wrong way round, it would be priced off
+        // PropLine's copy of Pinnacle (50/50) or not at all.
+        val fairDal = (1 / 1.80) / (1 / 1.80 + 1 / 2.10)
         val dal = result.bet("Dallas Cowboys -3.5")
-        assertEquals(0.5 * 1.95 - 1, dal.evPercent!!, 1e-9)
-        assertEquals(0.5 * 1.87 - 1, result.bet("Baltimore Ravens +3.5").evPercent!!, 1e-9)
+        assertEquals(fairDal, dal.fairProbability!!, 1e-9)
+        assertEquals(fairDal * (1 + 100.0 / 105) - 1, dal.evPercent!!, 1e-9)
+        assertEquals((1 - fairDal) * (1 + 100.0 / 115) - 1, result.bet("Baltimore Ravens +3.5").evPercent!!, 1e-9)
     }
 
     @Test
@@ -308,11 +313,10 @@ class SportsbookScannerTest {
     }
 
     @Test
-    fun `the book never prices itself even when a feed's context covers it`() {
+    fun `a feed with no BetMGM prices puts nothing on the board`() {
         // A board built from a snapshot with only other books has no games.
         val snap = RefSnapshot("americanfootball_nfl", listOf(RefEvent("x", "americanfootball_nfl", start, "Dallas Cowboys", "Baltimore Ravens",
             listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 1.6, null), RefQuote(Side.AWAY, 2.4, null)), now)))), now)
         assertTrue(BookBoard.build(Sportsbook.BETMGM, listOf(snap), now, now).games.isEmpty())
-        assertEquals(ScanContext().novigEvents, emptyList<Any>())
     }
 }
