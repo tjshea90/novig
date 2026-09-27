@@ -30,17 +30,6 @@ class BetSettlerTest {
     private fun market(id: String, vararg outcomes: Pair<String, String>) =
         NovigMarket(id, "E1", "MONEY", "SETTLED", "SEA", start, MarketFee.GAME, outcomes.map { (o, st) -> NovigOutcome(o, o, st) })
 
-    private suspend fun BetTracker.seed(vararg bets: TrackedBet) {
-        // Through the public API: log then rewrite, the way the app's own writes go.
-        for (b in bets) {
-            importPlaced(emptyList())
-            edit(b.id) { it }
-        }
-        File(tmp.root, "bets.json").writeText(
-            kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()), bets.toList()),
-        )
-    }
-
     @Test
     fun `Novig's WIN, LOSS, PUSH and a fair-value payout settle each bet, TBD waits`() = runTest {
         File(tmp.root, "bets.json").writeText(
