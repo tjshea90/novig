@@ -1768,4 +1768,10 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       alone); bets whose books aren't read yet are held back and counted ("N being checked"); the
       green-check lane then covers more of the list (paced within K2's budget).
       ("Make sure on every new request I send you log and still finish the prior requests.")
+- [ ] K9 Tj, 00:25Z: "See if there is a way to safely and repeatedly refresh cno odds without
+      timeout or unable to resolve or any other restrictions whether that is using a specific dns
+      server, or my nordvpn, or any cheap service that could help, or any other way" → research
+      (DNS-over-HTTPS, Android Private DNS, NordVPN, a relay/cache service, CNO's own limits),
+      build what's safe in the app (DoH fallback so DNS never blocks a read), write it up in
+      RESEARCH.md §20.2 and recommend the rest with costs.
 - [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
