@@ -126,5 +126,9 @@ data class CnoBooksView(
 @Serializable
 data class CnoCache(val snapshot: CnoSnapshot? = null)
 
+/** Bets' Novig app links by CNO deeplink (cno_links.json): looked up once, good for the line's life. */
+@Serializable
+data class CnoLinks(val links: Map<String, String> = emptyMap())
+
 /** CNO couldn't be read or its page wasn't understood. [message] is written for the screen. */
 class CnoException(message: String, val retryAfterSeconds: Int? = null, cause: Throwable? = null) : Exception(message, cause)

@@ -63,6 +63,8 @@ class CnoFeed(
     private val source: CnoSource,
     private val store: JsonFileStore<CnoCache>? = null,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Bets' Novig links, kept between launches (a line's link never changes). */
+    private val linkStore: JsonFileStore<CnoLinks>? = null,
 ) {
     private val _state = MutableStateFlow(CnoState())
     val state: StateFlow<CnoState> = _state.asStateFlow()
@@ -74,6 +76,7 @@ class CnoFeed(
 
     /** Shows the list saved by the last read, before any network. */
     suspend fun load() {
+        linkStore?.let { runCatching { it.read().links }.getOrNull() }?.forEach { (k, v) -> novigLinks.putIfAbsent(k, v) }
         val cached = store?.let { runCatching { it.read().snapshot }.getOrNull() } ?: return
         _state.update { if (it.snapshot == null) it.copy(snapshot = cached) else it }
     }
@@ -263,10 +266,10 @@ class CnoFeed(
      * [AGREE_GAP_MS] apart, never while a list read is running or CNO asked for a pause. Runs
      * until cancelled; the caller runs it only alongside [watch].
      */
-    suspend fun keepBooksFresh(rows: Flow<List<CnoRow>>) {
+    suspend fun keepBooksFresh(rows: Flow<List<CnoRow>>, top: Int = AGREE_TOP) {
         // Only which bets are on top matters here, not their prices or order: a refresh that just
         // re-prices the list doesn't cut a read short.
-        rows.map { it.take(AGREE_TOP) }.distinctUntilChanged { a, b -> a.mapTo(HashSet()) { it.key } == b.mapTo(HashSet()) { it.key } }.collectLatest { top ->
+        rows.map { it.take(top) }.distinctUntilChanged { a, b -> a.mapTo(HashSet()) { it.key } == b.mapTo(HashSet()) { it.key } }.collectLatest { top ->
             if (top.isEmpty()) awaitCancellation()
             while (true) {
                 val now = clock()
@@ -281,8 +284,10 @@ class CnoFeed(
                 val s = _state.value
                 val pause = s.pausedUntilMs?.let { it - clock() } ?: 0L
                 val gap = laneReadAtMs + AGREE_GAP_MS - clock()
-                if (s.refreshing || pause > 0 || gap > 0) {
-                    delay(maxOf(pause, gap, if (s.refreshing) 500L else 0L, 1L))
+                // CNO's list failing (unreachable, busy): don't pile more requests on; wait for it.
+                val failing = if (s.error != null) LANE_WAIT_ON_ERROR_MS else 0L
+                if (s.refreshing || pause > 0 || gap > 0 || failing > 0) {
+                    delay(maxOf(pause, gap, failing, if (s.refreshing) 500L else 0L, 1L))
                     continue
                 }
                 laneReadAtMs = clock()
@@ -292,17 +297,80 @@ class CnoFeed(
     }
 
     private val novigLinks = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val linkTriedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private val linkSaveMutex = Mutex()
+
+    @Volatile
+    private var linkLaneAtMs = Long.MIN_VALUE / 2
+
+    /** [row]'s Novig link if it's already known: no network, so a tap opens the bet at once. */
+    fun cachedLink(row: CnoRow): String? = row.betUrl?.let { novigLinks[it] }
 
     /**
      * The Novig app link for [row]: `novigapp://events/<outcome id>/cno`, which opens Novig with
-     * that exact bet in its bet slip (RESEARCH.md §20). Cached: a line's link doesn't change.
+     * that exact bet in its bet slip (RESEARCH.md §20). Cached, and kept on disk: a line's link
+     * doesn't change. Null when CNO couldn't say.
      */
     suspend fun novigLink(row: CnoRow): String? {
         val key = row.betUrl ?: return null
         novigLinks[key]?.let { return it }
-        val link = runCatching { source.novigLink(row) }.getOrNull()?.let(::appLink) ?: return null
+        val link = try {
+            source.novigLink(row)?.let(::appLink)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (!currentCoroutineContext().isActive) throw kotlinx.coroutines.CancellationException("cancelled").apply { initCause(e) }
+            null
+        } ?: return null
         novigLinks[key] = link
+        saveLinks()
         return link
+    }
+
+    private suspend fun saveLinks() {
+        val disk = linkStore ?: return
+        linkSaveMutex.withLock {
+            // The newest [LINKS_KEEP]: a season of lines would otherwise pile up.
+            val all = novigLinks.toMap()
+            val kept = if (all.size <= LINKS_KEEP) all else all.entries.toList().takeLast(LINKS_KEEP).associate { it.key to it.value }
+            runCatching { disk.update { CnoLinks(kept) } }
+        }
+    }
+
+    /**
+     * Looks up the Novig links of the top [top] bets in [rows] ahead of any tap (Tj, 2026-09-27:
+     * "sometimes they pull up the novig bet slip, but sometimes they don't": the link used to be
+     * asked of CNO on the tap, which failed whenever CNO was slow or out of reach). One small
+     * request per new bet, [LINK_GAP_MS] apart, after the list's reads and never while CNO is
+     * failing or asked for a pause. Runs until cancelled; the caller runs it alongside [watch].
+     */
+    suspend fun keepLinksFresh(rows: Flow<List<CnoRow>>, top: Int = LINKS_TOP) {
+        rows.map { list -> list.take(top).filter { it.betUrl != null } }
+            .distinctUntilChanged { a, b -> a.mapTo(HashSet()) { it.key } == b.mapTo(HashSet()) { it.key } }
+            .collectLatest { list ->
+                while (true) {
+                    val now = clock()
+                    val missing = list.filter { novigLinks[it.betUrl!!] == null }
+                    if (missing.isEmpty()) awaitCancellation()
+                    val next = missing.firstOrNull { r -> linkTriedAt[r.betUrl!!]?.let { now - it >= LINK_RETRY_MS } ?: true }
+                    if (next == null) {
+                        val soonest = missing.mapNotNull { linkTriedAt[it.betUrl!!] }.minOrNull() ?: now
+                        delay((soonest + LINK_RETRY_MS - now).coerceAtLeast(1_000L))
+                        continue
+                    }
+                    val s = _state.value
+                    val pause = s.pausedUntilMs?.let { it - clock() } ?: 0L
+                    val gap = linkLaneAtMs + LINK_GAP_MS - clock()
+                    val failing = if (s.error != null) LANE_WAIT_ON_ERROR_MS else 0L
+                    if (s.refreshing || pause > 0 || gap > 0 || failing > 0) {
+                        delay(maxOf(pause, gap, failing, if (s.refreshing) 500L else 0L, 1L))
+                        continue
+                    }
+                    linkLaneAtMs = clock()
+                    linkTriedAt[next.betUrl!!] = clock()
+                    novigLink(next)
+                }
+            }
     }
 
     companion object {
@@ -330,17 +398,40 @@ class CnoFeed(
         /** Books kept in memory for this many bets at most. */
         const val BOOKS_KEEP = 150
 
-        /** The green check looks at this many of the best bets. */
-        const val AGREE_TOP = 12
+        /**
+         * The green check looks at this many of the best bets (Tj's "only bets the books agree on"
+         * widens it to [AGREE_TOP_ONLY_AGREED])…
+         */
+        const val AGREE_TOP = 10
+        const val AGREE_TOP_ONLY_AGREED = 20
 
-        /** …re-reading each one's books after this long… */
-        const val AGREE_TTL_MS = 5 * 60_000L
+        /** …re-reading each one's books after this long (a bet's consensus moves slowly)… */
+        const val AGREE_TTL_MS = 10 * 60_000L
 
         /** …a failed one after this long… */
         const val AGREE_RETRY_MS = 2 * 60_000L
 
-        /** …and waits this long between two of them. */
-        const val AGREE_GAP_MS = 2_000L
+        /**
+         * …and waits this long between two of them: each is two requests (CNO's game page, then
+         * its table), and CNO is one small shared server (Tj, 2026-09-27: "cno is restricting or
+         * slowing me down").
+         */
+        const val AGREE_GAP_MS = 4_000L
+
+        /** While CNO's list is failing, the books and link lanes look again this often. */
+        const val LANE_WAIT_ON_ERROR_MS = 5_000L
+
+        /** Bets whose Novig links are looked up ahead of a tap… */
+        const val LINKS_TOP = 15
+
+        /** …one every this long… */
+        const val LINK_GAP_MS = 3_000L
+
+        /** …a failed one again after this long. */
+        const val LINK_RETRY_MS = 60_000L
+
+        /** Links kept on disk. */
+        const val LINKS_KEEP = 400
 
         private val NOVIG_WEB_BET = Regex("""^https://(?:www\.)?novig\.(?:com|us)/(events/[^?#]+)""", RegexOption.IGNORE_CASE)
 
