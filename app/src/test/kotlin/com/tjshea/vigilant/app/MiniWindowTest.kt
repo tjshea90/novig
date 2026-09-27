@@ -297,6 +297,23 @@ class MiniWindowTest {
         assertFalse(MiniWindow.items(moved, now).first { it.title == jj.bet }.agrees)
     }
 
+    /**
+     * "Only bets the books agree on" with Novig's price now: a live price that breaks the agreement
+     * hides the bet, and the rows whose live prices are read must not depend on that, or the price
+     * would be dropped, the bet shown again at CNO's older price, re-priced, hidden… every 15 s.
+     */
+    @Test
+    fun `live prices are read for the same bets whatever those prices say, so nothing flickers`() {
+        val jj = SampleCno.rows[1]
+        val now = SampleScan.NOW
+        val on = SampleCno.withBooks().let { it.copy(settings = it.settings.copy(cnoOnlyAgreed = true)) }
+        assertTrue(on.cnoShown(now).any { it.row.key == jj.key })
+        val moved = on.copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(-125, 50.0, 0.01, now - 1_000)))
+        assertTrue(moved.cnoShown(now).none { it.row.key == jj.key }) // no longer agreed at -125: hidden
+        assertTrue(moved.livePriceRows(now).any { it.key == jj.key }) // …but still priced live
+        assertEquals(on.livePriceRows(now).map { it.key }, moved.livePriceRows(now).map { it.key })
+    }
+
     @Test
     fun `the widget opens wider by default, room for both buttons`() {
         assertEquals(360, FloatingWidget.DEFAULT_W_DP)

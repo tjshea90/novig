@@ -140,6 +140,13 @@ data class UiState(
     /** When [row]'s shown price was read: Novig's live read, else CNO's list. */
     fun priceReadAtMs(row: CnoRow, now: Long): Long? = livePrice(row, now)?.atMs ?: cno.snapshot?.fetchedAtMs
 
+    /**
+     * The CNO bets whose Novig price now is read ([com.tjshea.vigilant.data.cno.NovigLive]): the
+     * candidates in CNO's order, never filtered by those prices (with "only bets the books agree
+     * on", a live price that hides a bet must keep being read, or the bet would flicker back).
+     */
+    fun livePriceRows(now: Long): List<CnoRow> = cnoCandidates(now).map { it.row }
+
     /** [cnoPicks] without the bets Tj placed or removed (✕): what the green-check lane reads. */
     fun cnoCandidates(now: Long): List<CnoPick> =
         cnoPicks(now)?.picks?.filter { MiniWindow.cnoKey(it.row) !in placedKeys }.orEmpty()
@@ -160,7 +167,7 @@ data class UiState(
      * when "only bets the books agree on" is on (Tj, 2026-09-27).
      */
     fun cnoShown(now: Long): List<CnoPick> =
-        cnoCandidates(now).let { all -> if (settings.cnoOnlyAgreed) all.filter(::cnoAgrees) else all }
+        cnoCandidates(now).let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
 
     /**
      * With "only bets the books agree on" on: the bets held back only because their books haven't
@@ -277,7 +284,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Novig's price now for the listed CNO bets (off the main thread: book parsing).
                 launch(Dispatchers.Default) {
                     state.map { it.settings.cnoLivePrices && it.settings.cnoOn }.distinctUntilChanged().collectLatest { on ->
-                        if (on) c.live.keepFresh(state.map { s -> s.cnoShown(System.currentTimeMillis()).map { it.row } })
+                        if (on) c.live.keepFresh(state.map { s -> s.livePriceRows(System.currentTimeMillis()) })
                     }
                 }
             }
