@@ -1959,6 +1959,12 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       "stats count wins and losses…".) Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
       source (CNO / Vigilant) and period.
 - [ ] N6 Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
+- [ ] N7 VERIFY LIVE (not yet possible 2026-09-27 ~04Z: no settled market seen): does
+      `GET /v3/public/catalog/markets/{id}` return a finished market with outcome status WIN/LOSS, or
+      404 (the public list already hides settled markets)? Check these, in-game at 04Z (MLB):
+      `01a0db6d-bda2-7440-98f8-a9643f6c5145` (OAK/HOU), `01a0d9d1-f4cf-7063-a5e7-c3b75b930d7c`
+      (SEA/LAA), `01a0d9d1-f48c-7e71-92de-ef88cf6c19ca` (SD/ARI). If 404: BetSettler needs another
+      source (ESPN scoreboard for game lines; box scores for props), tell Tj; manual Won/Lost works meanwhile.
 
 ### Findings and design (written 2026-09-27 ~03:10Z so a fresh session can build it cold)
 - N3 answered: NOT possible. docs.novig.com: every account route (positions, fills, orders,

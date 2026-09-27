@@ -49,7 +49,9 @@ class BetSettler(
         for (bet in due(tracker.all()).take(MAX_PER_RUN)) {
             if (asked > 0) delay(gapMs)
             asked++
-            nextTry[bet.id] = clock() + RETRY_MS
+            // Undecided, not found, or unknown to Novig: asked again later, rarely once the game is
+            // long over (Novig may drop settled markets from its public catalog; a tap settles those).
+            nextTry[bet.id] = clock() + if (clock() - bet.startsTs > LONG_OVER_MS) RETRY_LONG_OVER_MS else RETRY_MS
             val ids = try {
                 idsOf(bet)
             } catch (e: IOException) {
@@ -95,6 +97,12 @@ class BetSettler(
 
         /** An undecided bet is asked about again after this. */
         const val RETRY_MS = 30 * 60_000L
+
+        /** A game this old that Novig still can't settle for us... */
+        const val LONG_OVER_MS = 12 * 60 * 60_000L
+
+        /** ...is asked about this rarely. */
+        const val RETRY_LONG_OVER_MS = 6 * 60 * 60_000L
 
         /** Bets older than this are left to a tap: Novig's catalog doesn't keep games forever. */
         const val GIVE_UP_MS = 30L * 24 * 60 * 60_000L

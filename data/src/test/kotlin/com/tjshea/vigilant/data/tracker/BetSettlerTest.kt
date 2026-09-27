@@ -126,4 +126,23 @@ class BetSettlerTest {
         assertNull(BetSettler.resultOf("TBD"))
         assertNull(BetSettler.resultOf("1.5"))
     }
+
+    @Test
+    fun `a long-over game Novig can't answer for is asked about only every few hours`() = runTest {
+        File(tmp.root, "bets.json").writeText(
+            kotlinx.serialization.json.Json.encodeToString(
+                kotlinx.serialization.builtins.ListSerializer(TrackedBet.serializer()),
+                listOf(bet("gone", startsTs = now - BetSettler.LONG_OVER_MS - 60_000L)),
+            ),
+        )
+        var asked = 0
+        val settler = BetSettler(tracker(), market = { asked++; null }, resolve = { null }, clock = { now })
+        settler.run()
+        now += BetSettler.RETRY_MS
+        settler.run()
+        assertEquals(1, asked)
+        now += BetSettler.RETRY_LONG_OVER_MS
+        settler.run()
+        assertEquals(2, asked)
+    }
 }
