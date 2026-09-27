@@ -90,7 +90,7 @@ class SportsbookScanner(
         val ordered = sources.sortedBy { Scanner.SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
         val total = ordered.sumOf { s -> leagues.count { s.supports(it) } }
         val done = AtomicInteger(0)
-        fun progress() = onProgress(ScanProgress("Fair odds and ${book.displayName} lines", done.get(), total))
+        fun progress() = onProgress(ScanProgress("${book.displayName} and fair odds", done.get(), total))
         progress()
         val publishLock = Any()
         fun publish() {
