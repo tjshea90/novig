@@ -143,7 +143,8 @@ object MiniWindow {
      */
     fun items(state: UiState, now: Long): List<Item> {
         val s = state.settings
-        val ours = if (showsVigilant(s)) state.feed.mapNotNull { it.miniItem(now) } else emptyList()
+        // Only EVs whose other books' prices are still current (RESEARCH.md §24).
+        val ours = if (showsVigilant(s)) state.feedAt(now).mapNotNull { it.miniItem(now) } else emptyList()
         val snap = state.cno.snapshot
         // CNO's rows only after the app's own checks (thin markets, odds cap, one-way devigs, …),
         // placed and removed ones left out, and only green-check ones when that setting is on.

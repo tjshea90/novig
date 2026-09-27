@@ -293,7 +293,7 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                 )
                 if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
                 // Its other books' prices are nearly too old to show (they leave the feed at 5 minutes).
-                if (o.fairAsOfMs != null && now - o.fairAsOfMs > FAIR_AGING_MS) Text("odds aging", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                if (o.fairAsOfMs?.let { now - it > FAIR_AGING_MS } == true) Text("odds aging", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {

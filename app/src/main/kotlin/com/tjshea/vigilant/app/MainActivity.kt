@@ -467,7 +467,7 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
 @Composable
 private fun TabIconWithCount(t: Tab, state: UiState) {
     val count = when (t) {
-        Tab.EV -> state.feed.size
+        Tab.EV -> state.feedAt(System.currentTimeMillis()).size
         Tab.CNO -> {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             // Placed and removed bets aren't counted (nor, with "only bets the books agree on", the rest): the tab doesn't list them.
