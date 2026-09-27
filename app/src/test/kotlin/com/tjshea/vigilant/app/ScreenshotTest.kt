@@ -919,6 +919,15 @@ class ScreenshotTest {
         assertEquals(10, picked?.widgetRescanMinutes)
     }
 
+    /** RESEARCH.md §23: with a PropLine key, The Odds API says it only backs PropLine up, and what that costs. */
+    @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
+    @Test fun settingsSayTheOddsApiBacksUpPropLine() {
+        screen { SettingsScreen(SampleScan.state(), { }) }
+        compose.onNodeWithText("Backup to PropLine", substring = true).assertExists()
+        compose.onNodeWithText("Nothing while PropLine answers", substring = true).assertExists()
+        compose.onNodeWithText("Read from PropLine first", substring = true).assertExists()
+    }
+
     /** Tj, 2026-09-27: "on the regular vigilant scanner, make it also have a widget": offered with Vigilant's scan alone too. */
     @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
     @Test fun settingsOfferTheFloatingWidgetOnVigilantsScanAlone() {
