@@ -381,7 +381,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         val pick = item.cno ?: return
-        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key)
+        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key, outcomeId = outcomeOf(item).orEmpty())
         // Novig's outcome, so Vigilant's own scans can follow its line to the close (best effort).
         viewModelScope.launch {
             val found = runCatching { withContext(Dispatchers.IO) { c.betFinder.find(pick.row) } }.getOrNull() as? com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet
