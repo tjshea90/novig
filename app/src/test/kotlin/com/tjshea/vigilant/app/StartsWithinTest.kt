@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.tjshea.vigilant.app.ui.feedMarketIds
 import com.tjshea.vigilant.app.ui.laterCount
 import com.tjshea.vigilant.app.ui.laterText
 import com.tjshea.vigilant.app.ui.nextStartsWithin
@@ -116,5 +117,21 @@ class StartsWithinTest {
         assertEquals(nflLater + 3, laterCount(twelve, now))
         assertEquals(3, laterCount(twelve.copy(settings = twelve.settings.copy(scanner = ScannerMode.CNO)), now))
         assertEquals(nflLater, laterCount(twelve.copy(settings = twelve.settings.copy(scanner = ScannerMode.VIGILANT)), now))
+    }
+
+    /** Full test, 2026-09-27: Recheck re-read every market in the scan, shown or not. */
+    @Test
+    fun `Recheck re-reads only the bets shown`() {
+        val s = SampleScan.state().indexed(now)
+        assertEquals(s.feed.map { it.market.marketId }.distinct(), feedMarketIds(s, now))
+        // The window hides the NFL games: their markets aren't re-read.
+        val twelve = s.within(12)
+        val ids = feedMarketIds(twelve, now)
+        assertTrue(ids.isNotEmpty())
+        assertEquals(twelve.feedAt(now).map { it.market.marketId }.distinct(), ids)
+        assertTrue(s.feed.filter { it.league.novigName == "NFL" }.none { it.market.marketId in ids })
+        // Ten minutes on, every EV's other-book prices are too old to show: nothing to re-read (and no
+        // forced full scan from a hidden bet's old odds).
+        assertEquals(emptyList<String>(), feedMarketIds(s, now + 10 * 60_000L))
     }
 }
