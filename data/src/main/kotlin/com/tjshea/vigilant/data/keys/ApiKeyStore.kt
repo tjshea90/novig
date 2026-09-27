@@ -15,6 +15,15 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
 
     /** pinnapi.com's Pinnacle feed. The free trial key allows 100 requests a day. */
     PINNAPI("pinnapi", "Pinnacle (pinnapi)"),
+
+    /**
+     * pinnwire.com's Pinnacle feed (RESEARCH.md §22): the same prices, and its free key (100 requests
+     * a day) includes Pinnacle's player props. Tried before pinnapi.
+     */
+    PINNWIRE("pinnwire", "Pinnacle (PinnWire)"),
+
+    /** prop-line.com: 30 sportsbooks' lines and props in one feed, 1,000 requests a day free (RESEARCH.md §22). */
+    PROPLINE("propline", "PropLine"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */
@@ -23,7 +32,7 @@ interface ApiKeyStore {
     suspend fun setKeys(provider: ApiProvider, keys: List<String>)
 }
 
-/** The keys file: `{"keys": {"the_odds_api": ["k1", "k2"], "pinnapi": ["k3"]}}`. */
+/** The keys file: `{"keys": {"the_odds_api": ["k1", "k2"], "pinnapi": ["k3"], "pinnwire": [...], "propline": [...]}}`. */
 @Serializable
 data class StoredKeys(val version: Int = 1, val keys: Map<String, List<String>> = emptyMap())
 

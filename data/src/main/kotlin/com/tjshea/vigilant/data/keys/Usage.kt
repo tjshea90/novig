@@ -87,11 +87,20 @@ data class QuotaPolicy(
             perMinute = 20, perHour = 100,
             rule = "100 requests a day per trial key (20 a minute), reset at midnight UTC. About 1 per sport per scan.",
         )
+        val PINNWIRE = QuotaPolicy(
+            "pinnwire", "Pinnacle (PinnWire)", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 100,
+            perMinute = 20,
+            rule = "100 requests a day per free key (20 a minute), reset at midnight UTC. About 1 per sport per scan, player props included.",
+        )
+        val PROPLINE = QuotaPolicy(
+            "propline", "PropLine", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 1000,
+            rule = "1,000 requests a day per free key, reset at midnight UTC. 1 per league per scan for game lines, 1 per game for props.",
+        )
         val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
 
-        val ALL = listOf(ODDS_API, PINNAPI, NOVIG, POLYMARKET, KALSHI)
+        val ALL = listOf(PINNWIRE, PINNAPI, PROPLINE, ODDS_API, NOVIG, POLYMARKET, KALSHI)
     }
 }
 
