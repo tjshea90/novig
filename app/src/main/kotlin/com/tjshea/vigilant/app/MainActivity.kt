@@ -125,7 +125,7 @@ class MainActivity : ComponentActivity() {
                         onPage = { miniPage = it },
                     )
                 } else {
-                    CompositionLocalProvider(LocalOpenNovig provides { openNovig() }) {
+                    CompositionLocalProvider(LocalOpenNovig provides { link -> openNovig(link) }) {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },
@@ -389,10 +389,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Novig's app (or site), with Vigilant floating over it when the mini window is on. */
-    private fun openNovig() {
+    /**
+     * Novig's app on [link] (a Vigilant bet's bet slip), else Novig's home, with Vigilant floating
+     * over it when the mini window is on.
+     */
+    private fun openNovig(link: String? = null) {
         floatOverNovig()
-        runCatching { startActivity(MiniWindow.novigIntent(this)) }
+        if (link != null) launchNovig(link) else runCatching { startActivity(MiniWindow.novigIntent(this)) }
     }
 
     /** Before opening Novig: the widget over it, when the mini window setting is on. */

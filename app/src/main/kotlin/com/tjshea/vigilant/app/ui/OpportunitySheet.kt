@@ -65,7 +65,8 @@ fun OpportunitySheet(
  * Opens Novig (its app when installed) and, with the mini window on, floats Vigilant over it.
  * Provided by the activity; null (tests, previews) opens novig.com.
  */
-val LocalOpenNovig = androidx.compose.runtime.staticCompositionLocalOf<(() -> Unit)?> { null }
+/** Opens Novig's app on a link (a bet's `novigapp://events/<outcome>` bet slip), or Novig itself for null. */
+val LocalOpenNovig = androidx.compose.runtime.staticCompositionLocalOf<((String?) -> Unit)?> { null }
 
 /**
  * A maker order waits to be taken, and the takers most eager to fill it are the ones who know the
@@ -253,10 +254,15 @@ fun OpportunityDetail(
                 Text("Double-check on CrazyNinjaOdds (${link.bookTitle})", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+        // This exact bet in Novig's bet slip, the way the widget and CNO tab open theirs (Tj, 2026-09-27:
+        // "the button only opens the app, not the exact bet slip like the cno scanner does").
         val openNovig = LocalOpenNovig.current
         OutlinedButton(
-            onClick = { openNovig?.invoke() ?: open("https://novig.com") },
+            onClick = { openNovig?.invoke(betSlipLink(o)) ?: open("https://novig.com") },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
-        ) { Text("Open Novig") }
+        ) { Text("Open this bet in Novig") }
     }
 }
+
+/** [o]'s bet slip in Novig's app: Novig's own link to that outcome (RESEARCH.md §20). */
+fun betSlipLink(o: Opportunity): String = "novigapp://events/${o.outcome.outcomeId}"
