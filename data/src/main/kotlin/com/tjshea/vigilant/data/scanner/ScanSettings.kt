@@ -61,7 +61,10 @@ data class ScanSettings(
     val daysAhead: Int = 3,
     val bankroll: Double = 1000.0,
     val kellyMultiplier: Double = 0.25,
-    /** A fair line older than this is flagged stale in the UI. */
+    /**
+     * How long a feed's last answer is kept after a failed call, only to order reads: it never prices
+     * past [Freshness.MAX_QUOTE_AGE_MS] (RESEARCH.md §24).
+     */
     val staleReferenceMinutes: Int = 30,
     // ---- Fair-odds sources (RESEARCH.md §11). Every fetch happens only on a manual scan. ----
     /** Pinnacle via pinnapi's free key (100 requests/day). Needs a key in Settings. */
@@ -237,13 +240,13 @@ data class ScanSettings(
 
     val selectedLeagues: List<League> get() = Leagues.ALL.filter { it.novigName in leagues }
 
-    /** [com.tjshea.vigilant.data.reference.ReferenceSource.id]s the user has switched on. */
     /** How long The Odds API's game lines are re-used: the setting, never past [Freshness.MAX_REUSE_MS]. */
     val oddsApiReuseMs: Long get() = minOf(oddsApiReuseMinutes.coerceAtLeast(0) * 60_000L, Freshness.MAX_REUSE_MS)
 
     /** How long a game's sportsbook props are re-used: the setting, never past [Freshness.MAX_REUSE_MS]. */
     val bookPropReuseMs: Long get() = minOf(bookPropReuseMinutes.coerceAtLeast(0) * 60_000L, Freshness.MAX_REUSE_MS)
 
+    /** [com.tjshea.vigilant.data.reference.ReferenceSource.id]s the user has switched on. */
     val enabledSources: Set<String>
         get() = buildSet {
             if (usePinnacle) add("pinnacle")

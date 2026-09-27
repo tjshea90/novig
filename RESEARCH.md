@@ -2043,7 +2043,7 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
 - Every EV shown carries the time of its oldest quote; past 5 minutes it leaves the feed, widget, mini window
   and Games tab ("scan again"), and Recheck/re-pricing judge age as of now.
 - CNO: rows hidden while CNO's odds are over 5 minutes old; the green check needs a book page under 5 minutes
-  old (re-read every 3).
+  old (re-read every 4).
 
 ### 24.3 Built (v0.16.4)
 - `data/scanner/Freshness` (5 min per quote, 2 min re-use). `Scanner` stamps each quote's "last seen" at
