@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.FloatingWidget
 import com.tjshea.vigilant.app.MiniWindow
 import com.tjshea.vigilant.app.R
@@ -209,7 +210,7 @@ fun FloatingFeed(
                             Box(
                                 Modifier.fillMaxWidth()
                                     .combinedClickable(
-                                        onClickLabel = "Open in Novig",
+                                        onClickLabel = "Open in ${AppBook.name}",
                                         onLongClickLabel = "Every book's odds",
                                         onLongClick = { if (item.cno != null) booksKey = item.key },
                                         onClick = { actions.onOpenBet(item) },
