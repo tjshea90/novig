@@ -1722,7 +1722,7 @@ throttling Tj; the two messages are the phone's network:
    network. Free; the app no longer depends on it.
 2. **NordVPN**: it doesn't help with CNO (CNO wasn't blocking anything), and a VPN reconnecting
    is itself a cause of both messages. Novig also checks location and refuses VPNs
-   (NOVIG_API.md §7), so it should be off while betting anyway. If he wants it on for other
+   (NOVIG_API.md §4), so it should be off while betting anyway. If he wants it on for other
    apps: NordVPN › Settings › Split tunneling, and leave Vigilant and Novig out of the tunnel.
 3. **Paid relays are not worth it now.** A Cloudflare Worker (free up to 100k requests a day) or a
    $4–6/month VPS could fetch CNO for the phone, but CNO would see the same load, it adds
