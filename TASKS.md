@@ -2088,7 +2088,9 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       49 screenshots, settings/meters/tracker looked at. Next: CI green on head, ship.sh, release.yml v0.16.0 code 27,
       record, link) Full regression (exit code AND output), screenshots looked at, ckpt, ship, release, record,
       send link + findings.
-- [ ] P6 VERIFY PropLine LIVE (couldn't on 2026-09-27: the shared demo key was at its daily cap; it resets at
+- [ ] P6 (PARTLY VERIFIED 2026-09-27 ~14:45Z on Tj's phone with his own key: the league board (`/odds`) parsed,
+      33 games matched; `/events` sent `bookmakers: null`, fixed in v0.16.1. Still to see live: one game's props.)
+      VERIFY PropLine LIVE (couldn't on 2026-09-27: the shared demo key was at its daily cap; it resets at
       00:00 UTC). With the demo key from prop-line.com/llms-full.txt (or Tj's own), read
       `/v1/sports/americanfootball_nfl/odds?markets=h2h,spreads,totals&bookmakers=pinnacle,draftkings,fanduel`
       and one game's `/events/{id}/odds?markets=player_receptions` and check `PropLineClient.parseEvents` /
@@ -2108,5 +2110,6 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       list failed and no PropLine props were bought. Fix: null-tolerant PropLine decoding (every list
       and string may be null), one bad event never sinks the rest; test from the real shape that fails
       on the old code.
-- [ ] Q2 Light tests, floor, ship v0.16.1, link. Record that PropLine's /odds board parsed live on Tj's
+- [x] Q2 (SHIPPED v0.16.1 code 28, 2026-09-27T15:01Z: floor 532 tests 0 failures, CI green, release.yml green,
+      https://github.com/tjshea90/novig/releases/tag/v0.16.1, recorded.) Light tests, floor, ship v0.16.1, link. Record that PropLine's /odds board parsed live on Tj's
       phone (P6 partly verified).
