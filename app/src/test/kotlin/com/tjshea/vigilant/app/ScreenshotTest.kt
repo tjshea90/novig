@@ -745,7 +745,7 @@ class ScreenshotTest {
         compose.onNodeWithText("UNDO").performClick()
         assert(undone == removed!!.key) { "undone $undone" }
         // The price stays whole next to the two buttons.
-        assertReadable("+117")
+        assertReadable("+106")
     }
 
     /** "Books" was cut to "Bo" (Tj's screenshot, v0.15.0): narrow, the bar shows icons only. */
