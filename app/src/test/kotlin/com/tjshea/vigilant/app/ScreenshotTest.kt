@@ -118,10 +118,18 @@ class ScreenshotTest {
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
-        screen { SettingsScreen(SampleScan.state(), {}) }
+        // No PropLine key: The Odds API buys props on its own.
+        screen { SettingsScreen(SampleScan.state().copy(proplineKeys = emptyList()), {}) }
         compose.onNodeWithText("Sportsbook player props").assertExists()
         compose.onNodeWithText("Most credits per scan on props").assertExists()
         compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
+    }
+
+    /** With a PropLine key, The Odds API's prop credits go only to what PropLine didn't price (RESEARCH.md §23). */
+    @Test fun settingsSayPropCreditsOnlyBackUpPropLine() {
+        screen { SettingsScreen(SampleScan.state(), {}) }
+        compose.onNodeWithText("Only games and prop types PropLine didn't price", substring = true).assertExists()
+        compose.onAllNodesWithText("up to 6 games a scan", substring = true).assertCountEquals(0)
     }
 
     @Test fun settingsTakePinnWireAndPropLineKeys() {
