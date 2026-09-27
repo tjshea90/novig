@@ -56,9 +56,12 @@ class CnoNetworkTest {
         val server = MockWebServer()
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
         server.enqueue(MockResponse().setBody("<script>location.replace('novigapp://events/abc/cno');</script>"))
-        server.start()
+        server.start(InetAddress.getByName("127.0.0.1"), 0)
         val client = CnoClient(OkHttpClient.Builder().retryOnConnectionFailure(false).build(), pace = CnoPace(minGapMs = 0))
-        val row = CnoRow(0.03, event = "A @ B", market = "M", bet = "X Over 1.5", odds = 110, book = "Novig", betUrl = server.url("/deeplink.aspx?line_id=1").toString())
+        // By address, not "localhost": where that resolves to ::1 first (CI's runners), the first
+        // try is refused at ::1 and never reaches the server's dropped connection.
+        val url = server.url("/deeplink.aspx?line_id=1").newBuilder().host("127.0.0.1").build()
+        val row = CnoRow(0.03, event = "A @ B", market = "M", bet = "X Over 1.5", odds = 110, book = "Novig", betUrl = url.toString())
         assertEquals("novigapp://events/abc/cno", client.novigLink(row))
         assertEquals(2, server.requestCount)
         server.shutdown()

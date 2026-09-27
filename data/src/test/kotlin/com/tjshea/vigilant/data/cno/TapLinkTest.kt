@@ -10,6 +10,7 @@ import org.junit.Test
  * A tap on a CNO bet opens it in Novig every time it can (Tj, 2026-09-27: "sometimes they pull up
  * the novig bet slip, but sometimes they don't … it says cno could not be reached").
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class TapLinkTest {
 
     private val cnoLink = "novigapp://events/o1/cno"
