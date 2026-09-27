@@ -277,7 +277,12 @@ unless Tj asks).
   `data/cno/NovigLive` (Novig's price now for CNO bets, `ScanSettings.cnoLivePrices`,
   `UiState.livePick`, read for `UiState.livePriceRows` (candidates, never filtered by those prices)), widget switch Both / CNO only (`MainViewModel.setBothScanners`), one row per
   bet both scanners list (`MiniWindow.merge`, `PlacedBet.aliases`), `ScanSettings.widgetRescanMinutes`
-  (`WidgetRescan`), `LiveCnoBurstTest` (VIGILANT_BURST=1)).
+  (`WidgetRescan`), `LiveCnoBurstTest` (VIGILANT_BURST=1)); every bet tracked, settled and rechecked
+  (TASKS.md N1–N5: every ✓ logs a $1 `TrackedBet` (`BetTracker.logCno/track/untrack/importPlaced`,
+  one-time import flag `tracker_imported`), `data/tracker/BetSettler` (Novig's market outcome status
+  WIN/LOSS/PUSH/fair value, `NovigBetFinder.findEnded`) run on app open, on the Tracker tab and by
+  `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
+  page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog)).
 - **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
   (needs BRIEF.md build trap 6 locally). Add `-Pscreenshots` and look at every PNG
   in `app/screenshots/`: this is the "Chromium check" for a Compose app.
