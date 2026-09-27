@@ -1935,22 +1935,28 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 > do what they were designed to do, then ship.
 
 ### Plan
-- [ ] N1 (data part DONE 2026-09-27 ~03:25Z: `BetTracker.logCno/untrack/edit/setStake/importPlaced`,
-      `track(o, stake, placedKey)`, model fields; `BetTrackerTest` 8 green. LEFT: VM wiring below.) Why only 8: the Tracker holds only bets tracked from Vigilant's own +EV cards; the widget's
+- [x] N1 (DONE: `BetTracker.logCno/untrack/edit/setStake/importPlaced` + `MainViewModel.markPlaced →
+      logBet`, `unmarkPlaced → untrack`, one-time import (flag file `tracker_imported`); tests
+      `BetTrackerTest` "CNO check logs $1…", "import from placed.json once", "FMV payout + old JSON").) Why only 8: the Tracker holds only bets tracked from Vigilant's own +EV cards; the widget's
       and CNO tab's ✓ went to placed.json (hide-only, dropped 12 h after the game). → every ✓ (widget,
       CNO tab, sheet) logs a permanent Tracker bet (CNO's bet, market, game, league, price, fair, EV,
       start, CNO links, Novig outcome/market when known), $1 stake by default (editable); Undo removes
       it; ✕ (removed) never logs. One-time import of the ✓ marks still in placed.json.
-- [ ] N2 Auto-settle ("background scores system"): Novig's own catalog settles each outcome (WIN /
+- [x] N2 (DONE: `data/tracker/BetSettler`, `NovigBetFinder.findEnded`, `app/SettleWorker` (WorkManager
+      2.10.1, 3 h, network), VM `settleBets()` on init + Tracker tab; tests `BetSettlerTest` (5),
+      `NovigBetFinderTest` "a finished game's bet is found…".) Auto-settle ("background scores system"): Novig's own catalog settles each outcome (WIN /
       LOSS / PUSH / fair-market value); pending bets whose game has started are checked on app open,
       on the Tracker tab, and by a periodic background job (network only, every few hours), the Novig
       outcome found through the catalog when not already known. Manual Won/Lost stays as an override.
-- [ ] N3 Auto-log from Novig (amount and type): check what Novig's API can read of Tj's own bets
+- [x] N3 (ANSWERED: not possible, API reads subaccounts only; $1 per ✓, stake editable in the Tracker.) Auto-log from Novig (amount and type): check what Novig's API can read of Tj's own bets
       (NOVIG_API.md: keys, subaccounts, positions); build it if possible, else $1 per ✓ (N1) and say so.
-- [ ] N4 "Check odds now" in the Tracker: for open bets, the current fair odds from every book
+- [x] N4 (DONE: `data/tracker/BetRecheck` + `BetTracker.observe` nowEv, VM `checkOdds()`, Tracker button
+      and "now ±x% EV" line; tests `BetRecheckTest` (3), `ScreenshotTest.trackerBetsShowTheirEvNowGreenOrRed`.) "Check odds now" in the Tracker: for open bets, the current fair odds from every book
       (CNO's game page, devigged worst case, the same consensus as the green check) vs the price
       bet, "now +3% EV" green / "now −2% EV" red, and the odds at bet time.
-- [ ] N5 Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
+- [x] N5 (DONE: TrackerScreen Stats|Bets, periods, running-profit line, by scanner, Open/Settled/All,
+      stake dialog; tests `ScreenshotTest.trackerStats`, `trackerStakeIsEditable`, `BetTrackerTest`
+      "stats count wins and losses…".) Stats section: win % (W-L-P), total money won/lost, running profit % (ROI), green/red; by
       source (CNO / Vigilant) and period.
 - [ ] N6 Full tests (CLAUDE.md protocol) incl. these features end to end, then ship + link.
 
