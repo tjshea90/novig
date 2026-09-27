@@ -507,9 +507,11 @@ class Scanner(
                 continue
             }
             try {
-                // A fallback whose first choice already gave this league stands by: nothing spent,
-                // and its own last answer (if any) ages out as usual.
+                // A fallback whose first choice already gave this league stands by: nothing spent.
+                // Its own last answer is dropped (it was too old to re-use, or asked differently), so
+                // quotes older than the first choice's never price beside them.
                 if (fallback && context != null && !source.needed(league, settings, context)) {
+                    synchronized(references) { references.remove(key) }
                     standingBy++
                     onCall()
                     continue
