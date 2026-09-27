@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.app.ui
 
+import com.tjshea.vigilant.app.AppBook
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -121,18 +123,24 @@ fun OpportunityDetail(
 
         SectionTitle("Price")
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            LabeledValue("Novig", q?.let { "${Format.american(it.cost)} · ${Format.percent(it.cost)}" } ?: "no offers")
+            LabeledValue(AppBook.name, q?.let { "${Format.american(it.cost)} · ${Format.percent(it.cost)}" } ?: "no offers")
             LabeledValue("Fair", o.fairProbability?.let { "${Format.american(it)} · ${Format.percent(it)}" } ?: "—")
         }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            LabeledValue("Taker fee", q?.let { if (it.fee == 0.0) "none (pregame)" else Format.percent(it.fee, 2) } ?: "—")
-            LabeledValue("Full Kelly", q?.let { Format.percent(it.kellyFraction) } ?: "—")
-            LabeledValue("Novig width", o.novigWidth?.let { Format.percent(it) } ?: "—")
+            if (AppBook.exchange) {
+                LabeledValue("Taker fee", q?.let { if (it.fee == 0.0) "none (pregame)" else Format.percent(it.fee, 2) } ?: "—")
+                LabeledValue("Full Kelly", q?.let { Format.percent(it.kellyFraction) } ?: "—")
+                LabeledValue("Novig width", o.novigWidth?.let { Format.percent(it) } ?: "—")
+            } else {
+                // A sportsbook's price is all-in; its hold is the vig on both sides of this line.
+                LabeledValue("Full Kelly", q?.let { Format.percent(it.kellyFraction) } ?: "—")
+                LabeledValue("${AppBook.name} hold", o.novigWidth?.let { Format.percent(it) } ?: "—")
+            }
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "Novig price read ${Format.age(o.bookFetchedAtMs, now)}",
+                "${AppBook.name} price read ${Format.age(o.bookFetchedAtMs, now)}",
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (o.priceIsOld(now)) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -142,7 +150,8 @@ fun OpportunityDetail(
             }
         }
 
-        if (o.ladder.isNotEmpty()) {
+        // An exchange's order book and resting bids; a sportsbook has neither.
+        if (AppBook.exchange && o.ladder.isNotEmpty()) {
             SectionTitle("Novig order book (you take)")
             o.ladder.take(6).forEach { level ->
                 val ev = o.fairProbability?.let { EvMath.quote(it, level.price, o.market.fee!!, o.isLive).evPercent }
@@ -168,7 +177,7 @@ fun OpportunityDetail(
             }
         }
 
-        o.makerBid(maxOf(settings.minEvPercent, MAKER_MIN_EV))?.let { bid ->
+        o.makerBid(maxOf(settings.minEvPercent, MAKER_MIN_EV))?.takeIf { AppBook.exchange }?.let { bid ->
             SectionTitle("Or post a bid (maker)")
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 LabeledValue("Bid up to", "${Format.american(bid.price)} · ${Format.percent(bid.price)}")
@@ -248,7 +257,8 @@ fun OpportunityDetail(
             }
             o.suggestedStake?.let {
                 Text(
-                    "Suggested: ${Format.money(it)} (${Format.kellyLabel(settings.kellyMultiplier)} of a ${Format.money(settings.bankroll)} bankroll, capped at +EV liquidity).",
+                    "Suggested: ${Format.money(it)} (${Format.kellyLabel(settings.kellyMultiplier)} of a ${Format.money(settings.bankroll)} bankroll" +
+                        (if (AppBook.exchange) ", capped at +EV liquidity)." else ")."),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
@@ -266,11 +276,23 @@ fun OpportunityDetail(
         // "the button only opens the app, not the exact bet slip like the cno scanner does").
         val openNovig = LocalOpenNovig.current
         OutlinedButton(
-            onClick = { openNovig?.invoke(betSlipLink(o)) ?: open("https://novig.com") },
+            onClick = { betSlipLink(o, settings.bookState).let { link -> openNovig?.invoke(link) ?: open(link) } },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
-        ) { Text("Open this bet in Novig") }
+        ) { Text("Open this bet in ${AppBook.name}") }
+        if (!AppBook.isNovig && settings.bookState.isBlank()) {
+            Text(
+                "Pick your ${AppBook.name} state in Settings so this opens the exact bet slip (${AppBook.name}'s sites are per state).",
+                style = MaterialTheme.typography.labelSmall,
+                color = Edge.colors.warning,
+                modifier = Modifier.padding(bottom = 24.dp),
+            )
+        }
     }
 }
 
 /** [o]'s bet slip in Novig's app: Novig's own link to that outcome (RESEARCH.md §20). */
 fun betSlipLink(o: Opportunity): String = "novigapp://events/${o.outcome.outcomeId}"
+
+/** [o]'s bet slip in the app's own book: Novig's link above, or BetMGM's ([AppBook.betLink]) for a player in [state]. */
+fun betSlipLink(o: Opportunity, state: String): String =
+    AppBook.betLink(o.outcome.outcomeId, o.outcome.bookRef, state) ?: AppBook.home
