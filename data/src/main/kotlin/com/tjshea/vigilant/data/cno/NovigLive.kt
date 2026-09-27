@@ -50,8 +50,11 @@ class NovigLive(
 
     private class Target(val marketId: String, val outcomeId: String)
 
-    /** Each row's market and outcome (null = the catalog couldn't say), by row key. */
-    private val targets = LinkedHashMap<String, Target?>()
+    /** Each row's market and outcome, by row key. */
+    private val targets = LinkedHashMap<String, Target>()
+
+    /** Rows the catalog couldn't pin down (or couldn't be read for), and when: asked again after [RETRY_MS]. */
+    private val missedAt = HashMap<String, Long>()
 
     /** Markets (their fee and outcomes), which don't change. */
     private val markets = HashMap<String, NovigMarket>()
@@ -76,12 +79,16 @@ class NovigLive(
                     return@collectLatest
                 }
                 while (true) {
-                    for (row in list) if (row.key !in targets) targets[row.key] = resolve(row)
+                    for (row in list) {
+                        if (row.key in targets || missedAt[row.key]?.let { clock() - it < RETRY_MS } == true) continue
+                        val t = resolve(row)
+                        if (t != null) targets[row.key] = t.also { missedAt.remove(row.key) } else missedAt[row.key] = clock()
+                    }
                     prune(list)
                     val wait = lastReadMs + everyMs - clock()
                     if (wait <= 0) {
                         lastReadMs = clock()
-                        read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
+                            read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
                     }
                     // A new CNO read re-prices against the books already read: no request.
                     _prices.value = price(list)
@@ -93,7 +100,8 @@ class NovigLive(
     private suspend fun resolve(row: CnoRow): Target? {
         val found = runCatching { find(row) }.getOrNull() as? NovigBetFinder.Found.Bet ?: return null
         val marketId = found.marketId ?: return null
-        if (marketId !in markets) markets[marketId] = runCatching { novig.market(marketId) }.getOrNull() ?: return null
+        // The catalog read that found it already has its market (fee, outcomes): no extra request.
+        if (marketId !in markets) markets[marketId] = found.market ?: runCatching { novig.market(marketId) }.getOrNull() ?: return null
         return Target(marketId, found.outcomeId)
     }
 
@@ -116,7 +124,8 @@ class NovigLive(
         val listed = list.mapTo(HashSet()) { it.key }
         val drop = targets.keys.filter { it !in listed }.take(targets.size - KEEP_TARGETS)
         drop.forEach { targets.remove(it) }
-        val usedMarkets = targets.values.mapNotNullTo(HashSet()) { it?.marketId }
+        missedAt.keys.retainAll(listed)
+        val usedMarkets = targets.values.mapTo(HashSet()) { it.marketId }
         markets.keys.retainAll(usedMarkets)
         books.keys.retainAll(usedMarkets)
     }
@@ -132,6 +141,9 @@ class NovigLive(
         const val FRESH_MS = 60_000L
 
         private const val KEEP_TARGETS = 300
+
+        /** A bet the catalog couldn't pin down is looked up again after this long. */
+        const val RETRY_MS = 60_000L
 
         /**
          * [row]'s price on [book] right now: the best price to take [outcomeId] (every order is a

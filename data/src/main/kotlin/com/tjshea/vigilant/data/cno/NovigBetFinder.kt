@@ -36,13 +36,24 @@ class NovigBetFinder(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     sealed class Found {
-        /** The exact outcome: `novigapp://events/<id>` opens Novig's bet slip on it. */
-        data class Bet(val outcomeId: String, val eventId: String, val marketId: String? = null) : Found() {
+        /**
+         * The exact outcome: `novigapp://events/<id>` opens Novig's bet slip on it. [market] is its
+         * market as read (fee, outcomes), for pricing it from Novig's book ([NovigLive]).
+         */
+        data class Bet(
+            val outcomeId: String,
+            val eventId: String,
+            val marketId: String? = null,
+            val market: com.tjshea.vigilant.data.novig.NovigMarket? = null,
+        ) : Found() {
             override val link: String get() = "novigapp://events/$outcomeId"
         }
 
-        /** Only the game: `novigapp://event-markets/<id>` opens its markets in Novig. */
-        data class Game(val eventId: String) : Found() {
+        /**
+         * Only the game: `novigapp://event-markets/<id>` opens its markets in Novig. [searched] is
+         * false when the game's markets couldn't be read (Novig busy): worth asking again later.
+         */
+        data class Game(val eventId: String, val searched: Boolean = true) : Found() {
             override val link: String get() = "novigapp://event-markets/$eventId"
         }
 
@@ -55,8 +66,15 @@ class NovigBetFinder(
     /** One outcome of one market. */
     data class Outcome(val id: String, val name: String)
 
-    /** One market of an event. */
-    data class Market(val id: String, val type: String, val description: String, val strike: Double?, val outcomes: List<Outcome>)
+    /** One market of an event ([novig]: the same market as the app models it, fee included). */
+    data class Market(
+        val id: String,
+        val type: String,
+        val description: String,
+        val strike: Double?,
+        val outcomes: List<Outcome>,
+        val novig: com.tjshea.vigilant.data.novig.NovigMarket? = null,
+    )
 
     private class Kept<T>(val value: T, val atMs: Long)
 
@@ -73,9 +91,10 @@ class NovigBetFinder(
     suspend fun find(row: CnoRow): Found? {
         val league = novigLeague(row.league) ?: return null
         val event = eventsOf(league)?.let { matchEvent(row, it) } ?: return null
-        val list = marketsOf(event.id) ?: return Found.Game(event.id)
+        val list = marketsOf(event.id) ?: return Found.Game(event.id, searched = false)
         val outcome = matchOutcome(row, event, list) ?: return Found.Game(event.id)
-        return Found.Bet(outcome.id, event.id, list.firstOrNull { m -> m.outcomes.any { it.id == outcome.id } }?.id)
+        val market = list.firstOrNull { m -> m.outcomes.any { it.id == outcome.id } }
+        return Found.Bet(outcome.id, event.id, market?.id, market?.novig)
     }
 
     private suspend fun eventsOf(league: String): List<Event>? = cached(events, league) {
@@ -98,11 +117,31 @@ class NovigBetFinder(
         return value
     }
 
+    private val paceMutex = Mutex()
+    private var lastGetMs = Long.MIN_VALUE / 2
+
+    @Volatile
+    private var pausedUntilMs = 0L
+
+    /**
+     * One public Novig read, never closer than [MIN_GAP_MS] to the last, and none while Novig asked
+     * for a pause (HTTP 429's Retry-After): its public routes allow short bursts only, and Tj's
+     * phone has hit that limit before (NOVIG_API.md §5.1).
+     */
     private suspend fun get(url: String): JsonElement? {
+        paceMutex.withLock {
+            val wait = maxOf(lastGetMs + MIN_GAP_MS, pausedUntilMs) - clock()
+            if (wait > 0) kotlinx.coroutines.delay(wait)
+            lastGetMs = clock()
+        }
         requests++
         return try {
             val reply = http.newCall(Request.Builder().url(url).get().build()).awaitText()
-            if (!reply.isSuccessful) null else runCatching { json.parseToJsonElement(reply.body) }.getOrNull()
+            if (reply.code == 429) {
+                pausedUntilMs = clock() + (reply.header("Retry-After")?.trim()?.toLongOrNull() ?: 2L).coerceIn(1L, 60L) * 1000L
+                return null
+            }
+            if (!reply.isSuccessful) null else kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { runCatching { json.parseToJsonElement(reply.body) }.getOrNull() }
         } catch (e: IOException) {
             null
         }
@@ -111,6 +150,11 @@ class NovigBetFinder(
     companion object {
         /** Catalog answers are kept this long (a tap on the next bet of the same game costs nothing). */
         const val KEEP_MS = 5 * 60_000L
+
+        /** The least time between two of its reads. */
+        const val MIN_GAP_MS = 350L
+
+        private val LENIENT = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
 
         /** A game found by its teams must start within this of CNO's start time. */
         private const val START_SLACK_MS = 6 * 60 * 60_000L
@@ -127,7 +171,7 @@ class NovigBetFinder(
             val id = o.str("marketId") ?: return@mapNotNull null
             val outcomes = (o["outcomes"] as? JsonArray).orEmpty().mapNotNull { it as? JsonObject }
                 .mapNotNull { oc -> Outcome(oc.str("outcomeId") ?: return@mapNotNull null, oc.str("name").orEmpty()) }
-            Market(id, o.str("marketType").orEmpty(), o.str("description").orEmpty(), o.str("strike")?.toDoubleOrNull(), outcomes)
+            Market(id, o.str("marketType").orEmpty(), o.str("description").orEmpty(), o.str("strike")?.toDoubleOrNull(), outcomes, com.tjshea.vigilant.data.novig.novigMarketOf(LENIENT, o))
         }
 
         private fun items(root: JsonElement): List<JsonObject> =

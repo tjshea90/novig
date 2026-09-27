@@ -373,6 +373,10 @@ private data class EventDto(
     fun toDomain() = NovigEvent(eventId, sport, league, status, description, startsTs)
 }
 
+/** One market of Novig's catalog as the app models it (its fee, outcomes, …), or null if it can't be read. */
+internal fun novigMarketOf(json: Json, element: kotlinx.serialization.json.JsonElement): NovigMarket? =
+    runCatching { json.decodeFromJsonElement(MarketDto.serializer(), element).toDomain() }.getOrNull()
+
 @Serializable
 private data class MarketPageDto(val items: List<MarketDto> = emptyList(), val next: String? = null)
 
