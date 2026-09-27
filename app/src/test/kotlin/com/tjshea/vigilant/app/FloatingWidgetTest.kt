@@ -90,7 +90,7 @@ class FloatingWidgetTest {
     }
 
     @Test
-    fun `dragging the frame moves the window; a tap on the list doesn't`() {
+    fun `dragging the frame moves the window, and a tap on the list doesn't`() {
         val root = shown()
         val start = widget.rectForTest()
         // The frame's left edge, halfway down.
