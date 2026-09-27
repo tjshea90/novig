@@ -207,6 +207,14 @@ private fun StatsCard(content: @Composable () -> Unit) {
 private fun StatsCards(bets: List<TrackedBet>) {
     val stats = BetTracker.stats(bets)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (stats.outliers > 0) {
+            Text(
+                "${stats.outliers} outlier bet${if (stats.outliers == 1) "" else "s"} (over ±${Format.percent(BetTracker.OUTLIER_EV, 0)} EV when bet) " +
+                    "left out of every number here, so one odd bet can't skew them. ${if (stats.outliers == 1) "It's" else "They're"} still under Bets.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 LabeledValue("Profit", Format.signedMoney(stats.profit), valueColor = moneyColor(stats.profit))
@@ -261,10 +269,10 @@ private fun StatsCards(bets: List<TrackedBet>) {
     }
 }
 
-/** Running profit, one step per settled bet in the order they settled: green above zero, red below. */
+/** Running profit, one step per settled bet in the order they settled (outliers left out): green above zero, red below. */
 @Composable
 private fun ProfitLine(bets: List<TrackedBet>) {
-    val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }.sortedBy { it.settledAtMs ?: it.startsTs }
+    val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID && !it.isOutlier }.sortedBy { it.settledAtMs ?: it.startsTs }
     if (settled.size < 2) return
     val points = settled.runningFold(0.0) { acc, b -> acc + (b.profit ?: 0.0) }
     val color = if (points.last() >= 0) Edge.colors.positive else Edge.colors.negative
@@ -302,6 +310,14 @@ private fun BetCard(bet: TrackedBet, now: Long, onSettle: (String, BetStatus) ->
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (bet.isOutlier) {
+                        Text(
+                            "Outlier (over ±${Format.percent(BetTracker.OUTLIER_EV, 0)} EV): not in stats",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
                 }
                 IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Delete bet") }
             }
