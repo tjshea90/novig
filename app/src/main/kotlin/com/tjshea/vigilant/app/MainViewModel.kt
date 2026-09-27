@@ -150,9 +150,9 @@ data class UiState(
         ApiProvider.PROPLINE -> copy(proplineKeys = keys)
     }
 
-    /** Novig's live price for [row], when that setting is on and it was read in the last minute. */
+    /** Novig's live price for [row], when that setting is on and it was read in the last minute (never in Vigilant MGM). */
     fun livePrice(row: CnoRow, now: Long): com.tjshea.vigilant.data.cno.LivePrice? =
-        novigLive[row.key]?.takeIf { settings.cnoLivePrices && now - it.atMs <= com.tjshea.vigilant.data.cno.NovigLive.FRESH_MS }
+        novigLive[row.key]?.takeIf { AppBook.isNovig && settings.cnoLivePrices && now - it.atMs <= com.tjshea.vigilant.data.cno.NovigLive.FRESH_MS }
 
     /** [placed]'s keys (and the other scanner's key for the same bet), for hiding them. */
     val placedKeys: Set<String> by lazy { placed.flatMapTo(HashSet()) { it.keys } }
@@ -160,8 +160,9 @@ data class UiState(
     /** [placed]'s families (the same bet at another line), for the "placed O5.5" tag; bets removed with ✕ weren't bet. */
     val placedFamilies: Map<String, PlacedBet> by lazy { placed.filter { !it.hidden && it.family.isNotEmpty() }.associateBy { it.family } }
 
-    /** The CNO view to read: Tj's saved link, or Novig with CNO's defaults. */
-    val cnoUrl: String get() = CnoView.normalize(settings.cnoViewUrl) ?: CnoView.DEFAULT
+    /** The CNO view to read: Tj's saved link, or the app's book (Novig; BetMGM in Vigilant MGM) with CNO's defaults. */
+    val cnoUrl: String
+        get() = CnoView.normalize(settings.cnoViewUrl, AppBook.current.cnoSiteId) ?: CnoView.defaultFor(AppBook.current.cnoSiteId)
 
     val cnoConfig: CnoConfig get() = CnoConfig(loaded && settings.cnoOn, cnoUrl, settings.cnoRefreshSeconds, settings.cnoFilters)
 
@@ -360,9 +361,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 launch { c.teams.keepFresh(teamRows()) }
                 // Vigilant's own scan again every N minutes, when Tj asked for that.
                 launch { rescanWhileWatched() }
-                // Novig's price now for the listed CNO bets (off the main thread: book parsing).
+                // Novig's price now for the listed CNO bets (off the main thread: book parsing). Novig only.
                 launch(Dispatchers.Default) {
-                    state.map { it.settings.cnoLivePrices && it.settings.cnoOn }.distinctUntilChanged().collectLatest { on ->
+                    state.map { AppBook.isNovig && it.settings.cnoLivePrices && it.settings.cnoOn }.distinctUntilChanged().collectLatest { on ->
                         if (on) c.live.keepFresh(state.map { s -> s.livePriceRows(System.currentTimeMillis()) })
                     }
                 }
@@ -412,6 +413,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val pick = item.cno ?: return
         val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key, outcomeId = outcomeOf(item).orEmpty())
         // Novig's outcome, so Vigilant's own scans can follow its line to the close (best effort).
+        if (!AppBook.isNovig) return
         viewModelScope.launch {
             val found = runCatching { withContext(Dispatchers.IO) { c.betFinder.find(pick.row) } }.getOrNull() as? com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet
             if (found?.marketId != null) runCatching { c.tracker.edit(bet.id) { it.copy(marketId = found.marketId!!, outcomeId = found.outcomeId) } }
@@ -520,7 +522,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             cnoFailing = cno.error != null,
             // CNO asked for a pause: not even a tap asks it; Novig's catalog answers alone.
             fromCno = if (paused) null else ({ c.cno.novigLink(row) }),
-            fromNovig = { c.betFinder.find(row) },
+            // Vigilant MGM has no public BetMGM catalog: CNO's own link is the way in.
+            fromNovig = { if (AppBook.isNovig) c.betFinder.find(row) else null },
         )
         // An exact link from Novig's catalog is kept like CNO's: the next tap needs no network.
         if (found?.exact == true) c.cno.rememberLink(row, found.link)
