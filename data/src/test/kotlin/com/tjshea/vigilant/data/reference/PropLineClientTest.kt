@@ -283,7 +283,7 @@ class PropLineClientTest {
     }
 
     @Test
-    fun `props are bought per game for the stats Novig lists, and re-used for ten minutes`() = runTest {
+    fun `props are bought per game for the stats Novig lists, and re-used for two minutes`() = runTest {
         routes["/v1/sports/americanfootball_nfl/events"] = { ok(board) }
         routes["/v1/sports/americanfootball_nfl/events/555/odds"] = { ok(props) }
         val source = PropLinePropsSource(client())
@@ -305,10 +305,11 @@ class PropLineClientTest {
         assertEquals(1, e.markets.size)
 
         val before = requests.size
-        clockMs = now + 5 * 60_000L
+        clockMs = now + 60_000L
         source.odds(nfl, settings, context.copy(now = clockMs))
         assertEquals(before, requests.size)
-        clockMs = now + 11 * 60_000L
+        // Never older than a couple of minutes (RESEARCH.md §24): bought again three minutes on.
+        clockMs = now + 3 * 60_000L
         source.odds(nfl, settings, context.copy(now = clockMs))
         assertTrue(requests.size > before)
     }
