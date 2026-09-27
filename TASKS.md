@@ -1795,3 +1795,12 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       sacrificing any accuracy" → after K1-K9 ship: CLAUDE.md full-test protocol on the whole app,
       improvements (UI, speed, efficiency) + bug fixes with failing-first tests, accuracy
       untouched (EV math, devig, checks, matching), then ship again and send the link.
+  - [ ] K10a Sweep data/cno + data/teams + data/tracker (CnoFeed lanes, CnoClient, CnoBooks,
+        CnoChecks, NovigBetFinder, PlayerTeams, PlacedBets): races, lost state, wasted requests.
+  - [ ] K10b Sweep app: MainViewModel flows (recomputation per state change), MainActivity
+        (widget/PiP wiring, taps), FloatingWidget/WidgetGestures, FloatingFeed/MiniFeed, CnoScreen,
+        Settings; the other tabs (Feed, Games, Tracker) and ScanService.
+  - [ ] K10c Sweep engine + scanner (FairValue, Devig, Fees, EvMath, Planner/Pricing, Scanner,
+        RateGate): accuracy untouched, only efficiency/bug fixes with failing-first tests.
+  - [ ] K10d Fix everything found with named tests; forced floor + screenshots looked at;
+        v0.15.3 ship, release, record, send link.
