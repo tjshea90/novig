@@ -2150,3 +2150,10 @@ Run full tests. Read docs on the apis  and see which ones are best to use and op
 ```
 Yes, use PropLine's Novig prices to order the reads, but if there is any failure or delay, make the app automatically fallback to the original novig read
 ```
+
+## 2026-09-27T16:54:52Z
+```
+Do a thorough scan of the app and make sure it never gives me stale odds when comparing odds from other sports books. This is important because it can give me false positive EV. The other sports books odds MUST be current or at most a few minutes old. 
+
+Do this after the process you already started
+```
