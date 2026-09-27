@@ -2140,3 +2140,8 @@ Right now some bets are showing up in the vigilant positive EV scanner which I a
 ```
 For the stats/tracker sections, do not count any bets that are outliers (currently + or - over 6% ev) as wins or losses. Ignore them completely. I don't want the average skewed by a single bet that is an outlier
 ```
+
+## 2026-09-27T15:59:01Z
+```
+Run full tests. Read docs on the apis  and see which ones are best to use and optimize the usage of them if needed. If apis overlap odds from the same sports books, use the best/fastest API first and the others as automatic fallbacks
+```
