@@ -3,6 +3,8 @@ package com.tjshea.vigilant.data.cno
 import com.tjshea.vigilant.data.HttpText
 import com.tjshea.vigilant.data.awaitText
 import com.tjshea.vigilant.engine.Odds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -39,6 +41,11 @@ class CnoClient(
     private val clock: () -> Long = System::currentTimeMillis,
     /** One pace for all of CNO's requests, the list's, the books' and the links' alike. */
     private val pace: CnoPace = CnoPace(),
+    /**
+     * Where replies are parsed: never the caller's thread, which is the main one (the list's
+     * page is hundreds of KB of HTML every few seconds; parsed there, the widget stuttered).
+     */
+    private val work: kotlin.coroutines.CoroutineContext = Dispatchers.Default,
 ) : CnoSource {
 
     private class Session(
@@ -52,7 +59,9 @@ class CnoClient(
 
     private var session: Session? = null
 
-    override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot {
+    override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot = withContext(work) { fetchHere(url, filters) }
+
+    private suspend fun fetchHere(url: String, filters: CnoFilters): CnoSnapshot {
         val reuse = session?.takeIf { it.view == url && clock() - it.usedAtMs < SESSION_MS && it.form.button != null }
         if (reuse != null) {
             try {
@@ -77,7 +86,9 @@ class CnoClient(
         }
     }
 
-    override suspend fun books(row: CnoRow): CnoBooksView? {
+    override suspend fun books(row: CnoRow): CnoBooksView? = withContext(work) { booksHere(row) }
+
+    private suspend fun booksHere(row: CnoRow): CnoBooksView? {
         val url = row.gameUrl ?: return null
         return try {
             val s = open(url)
@@ -88,7 +99,9 @@ class CnoClient(
         }
     }
 
-    override suspend fun novigLink(row: CnoRow): String? {
+    override suspend fun novigLink(row: CnoRow): String? = withContext(work) { novigLinkHere(row) }
+
+    private suspend fun novigLinkHere(row: CnoRow): String? {
         val url = row.betUrl ?: return null
         // CNO's deeplink page asks for consent once and remembers it in this cookie.
         val request = Request.Builder().url(url).get()

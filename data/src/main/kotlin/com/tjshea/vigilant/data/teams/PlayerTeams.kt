@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -74,6 +75,8 @@ class PlayerTeams(
     private val store: JsonFileStore<TeamsCache>? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val baseUrl: String = "https://site.api.espn.com/apis/site/v2/sports/",
+    /** Where ESPN's JSON is parsed: never the caller's (main) thread. */
+    private val work: kotlin.coroutines.CoroutineContext = kotlinx.coroutines.Dispatchers.Default,
 ) {
     private val _state = MutableStateFlow(TeamsCache())
     val state: StateFlow<TeamsCache> = _state.asStateFlow()
@@ -183,8 +186,10 @@ class PlayerTeams(
         // or a browser's (checked live 2026-09-26; RESEARCH.md §20).
         val request = Request.Builder().url(url).get().build()
         return try {
-            // Read on OkHttp's thread: this runs in the app's main-thread scope.
-            http.newCall(request).awaitText().takeIf { it.isSuccessful }?.let { runCatching { json.parseToJsonElement(it.body) }.getOrNull() }
+            // Read on OkHttp's thread and parsed off the main one (a roster is ~100 KB of JSON;
+            // this runs in the app's main-thread scope).
+            val reply = http.newCall(request).awaitText().takeIf { it.isSuccessful } ?: return null
+            withContext(work) { runCatching { json.parseToJsonElement(reply.body) }.getOrNull() }
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
