@@ -62,13 +62,15 @@ class PropLineClient(
         val markets = marketsFor(settings.families)
         val books = books(settings.referenceBooks)
         if (markets.isEmpty() || books.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
+        // Novig rides along in the same request (no extra cost): its prices order the scan's own
+        // Novig reads, and are kept apart from the books that make the fair line.
         val answer = call(
             "/sports/${league.oddsApiSportKey}/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to books.joinToString(",")),
-            notFound = emptyList(),
-        ) { parseEvents(it, json, league.oddsApiSportKey) }
-        remember(league.oddsApiSportKey, answer.value)
-        return RefSnapshot(league.oddsApiSportKey, answer.value, clock(), answer.remaining, answer.used, ID)
+            listOf("markets" to markets.joinToString(","), "bookmakers" to (books + NOVIG).joinToString(",")),
+            notFound = Board(emptyList(), emptyList()),
+        ) { parseBoard(it, json, league.oddsApiSportKey) }
+        remember(league.oddsApiSportKey, answer.value.events)
+        return RefSnapshot(league.oddsApiSportKey, answer.value.events, clock(), answer.remaining, answer.used, ID, novig = answer.value.novig)
     }
 
     /**
@@ -83,14 +85,21 @@ class PropLineClient(
     }
 
     /** One game's [markets] (player props) from [books]. Null when PropLine no longer lists the game. */
-    suspend fun eventOdds(sportKey: String, eventId: String, markets: List<String>, books: List<String>): RefEvent? {
+    suspend fun eventOdds(sportKey: String, eventId: String, markets: List<String>, books: List<String>): RefEvent? =
+        eventBoard(sportKey, eventId, markets, books)?.events?.singleOrNull()
+
+    /** [eventOdds] with Novig's own prices for the same game alongside (same request: [Board.novig]). */
+    suspend fun eventBoard(sportKey: String, eventId: String, markets: List<String>, books: List<String>): Board? {
         require(markets.isNotEmpty()) { "No markets to ask for" }
         return call(
             "/sports/$sportKey/events/$eventId/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to books.joinToString(",")),
+            listOf("markets" to markets.joinToString(","), "bookmakers" to (books + NOVIG).distinct().joinToString(",")),
             notFound = null,
-        ) { parseEvent(it, json, sportKey) }.value
+        ) { raw -> parseEventBoard(raw, json, sportKey) }.value
     }
+
+    /** One reply read once: the fair-line books' games, and the same games with Novig's prices only. */
+    class Board(val events: List<RefEvent>, val novig: List<RefEvent>)
 
     private val listed = Mutex()
     private val boards = HashMap<String, Pair<Long, List<RefEvent>>>()
@@ -145,6 +154,9 @@ class PropLineClient(
         )
 
         const val REUSE_MS = 2 * 60_000L
+
+        /** Novig's key on PropLine: asked for alongside the books, never one of them. */
+        const val NOVIG = "novig"
         private const val LIST_REUSE_MS = 5 * 60_000L
 
         /** PropLine's book keys where they differ from The Odds API's. */
@@ -184,15 +196,23 @@ class PropLineClient(
          * as optional, and each game is read on its own: one odd game never costs the rest of the
          * board (Tj's phone, 2026-09-27: "Expected start of the array '[' … at path: $[0].bookmakers").
          */
-        fun parseEvents(raw: String, json: Json, sportKey: String): List<RefEvent> {
+        fun parseEvents(raw: String, json: Json, sportKey: String): List<RefEvent> = parseBoard(raw, json, sportKey).events
+
+        /** A league board, read once: the books' games, and Novig's prices for them apart. */
+        fun parseBoard(raw: String, json: Json, sportKey: String): Board {
             val lenient = lenient(json)
-            val items = lenient.parseToJsonElement(raw) as? kotlinx.serialization.json.JsonArray ?: return emptyList()
-            return items.mapNotNull { e -> runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), e).toDomain(sportKey) }.getOrNull() }
+            val items = lenient.parseToJsonElement(raw) as? kotlinx.serialization.json.JsonArray ?: return Board(emptyList(), emptyList())
+            val events = items.mapNotNull { e -> runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), e) }.getOrNull() }
+            return Board(events.mapNotNull { it.toDomain(sportKey) }, events.mapNotNull { it.novigDomain(sportKey) })
         }
 
-        fun parseEvent(raw: String, json: Json, sportKey: String): RefEvent? {
+        fun parseEvent(raw: String, json: Json, sportKey: String): RefEvent? = parseEventBoard(raw, json, sportKey).events.singleOrNull()
+
+        fun parseEventBoard(raw: String, json: Json, sportKey: String): Board {
             val lenient = lenient(json)
-            return runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), lenient.parseToJsonElement(raw)).toDomain(sportKey) }.getOrNull()
+            val e = runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), lenient.parseToJsonElement(raw)) }.getOrNull()
+                ?: return Board(emptyList(), emptyList())
+            return Board(listOfNotNull(e.toDomain(sportKey)), listOfNotNull(e.novigDomain(sportKey)))
         }
 
         private fun lenient(json: Json) = Json(from = json) { ignoreUnknownKeys = true; coerceInputValues = true; isLenient = true }
@@ -384,14 +404,20 @@ internal data class PlEvent(
     val is_outright: Boolean? = null,
     val bookmakers: List<PlBook?>? = null,
 ) {
-    fun toDomain(sportKey: String): RefEvent? {
+    /** The game with the fair-line books' quotes (never Novig, the exchanges read directly, or DFS). */
+    fun toDomain(sportKey: String): RefEvent? = domain(sportKey) { it !in PropLineClient.EXCLUDED }
+
+    /** The same game with Novig's quotes only; null when PropLine had none for it. */
+    fun novigDomain(sportKey: String): RefEvent? = domain(sportKey) { it == PropLineClient.NOVIG }?.takeIf { it.markets.isNotEmpty() }
+
+    private fun domain(sportKey: String, keep: (String) -> Boolean): RefEvent? {
         val id = id?.takeIf { it.isNotBlank() } ?: return null
         val home = home_team?.takeIf { it.isNotBlank() } ?: return null
         val away = away_team?.takeIf { it.isNotBlank() } ?: return null
         if (is_outright == true) return null
         val start = PropLineClient.ms(commence_time) ?: return null
         val markets = bookmakers.orEmpty().filterNotNull()
-            .filter { it.key != null && it.key !in PropLineClient.EXCLUDED }
+            .filter { b -> b.key?.let(keep) == true }
             .flatMap { b -> b.markets.orEmpty().filterNotNull().flatMap { it.toDomain(b, home, away) } }
         return RefEvent(PropLinePropsSource.PREFIX + id, sportKey, start, home = home, away = away, markets = markets)
     }

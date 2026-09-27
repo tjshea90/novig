@@ -99,6 +99,12 @@ data class RefSnapshot(
     val creditsUsed: Int? = null,
     /** [ReferenceSource.id] of the provider that produced it. */
     val provider: String = "",
+    /**
+     * Novig's own prices as this feed relays them (PropLine, ~20 s behind Novig), the same games with
+     * only Novig's quotes. Never a fair line and never coverage: they only order which Novig books a
+     * scan reads first (RESEARCH.md §23.6).
+     */
+    val novig: List<RefEvent> = emptyList(),
 )
 
 /** A fair-odds provider. Each call covers one league. */
