@@ -135,8 +135,8 @@ object MiniWindow {
         // placed and removed ones left out, and only green-check ones when that setting is on.
         val theirs = if (snap == null) emptyList() else state.cnoShown(now).map { itemFor(it, snap, state, now) }
         val all = when {
-            theirs.isEmpty() -> ours
             ours.isEmpty() -> theirs
+            snap == null -> ours
             else -> merge(ours, theirs, state, now)
         }
         // Placed bets are gone for good (Tj: "so the bet doesn't come back up after a refresh");
@@ -170,7 +170,8 @@ object MiniWindow {
             if (t == null || !used.add(t.key)) o.copy(aliases = alias)
             else o.copy(cno = t.cno, alsoCnoEv = t.ev, agrees = t.agrees, team = o.team ?: t.team, aliases = alias)
         }
-        return (mine + theirs.filter { it.key !in used }).sortedByDescending { it.ev }
+        // Vigilant's alone keep the feed's order; mixed, best EV first.
+        return if (theirs.isEmpty()) mine else (mine + theirs.filter { it.key !in used }).sortedByDescending { it.ev }
     }
 
     /** One CNO bet as the widget (and the CNO tab's placed button) sees it. */
