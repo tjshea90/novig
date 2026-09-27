@@ -208,4 +208,25 @@ class CnoClientTest {
         server.enqueue(MockResponse().setBody("<html>consent page</html>"))
         assertEquals(null, client.novigLink(row))
     }
+
+    /** Counts the tasks sent to it; runs them on a plain thread. */
+    private class CountingDispatcher : kotlinx.coroutines.CoroutineDispatcher() {
+        val dispatched = java.util.concurrent.atomic.AtomicInteger()
+        private val pool = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "cno-work") }
+        override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) {
+            dispatched.incrementAndGet()
+            pool.execute(block)
+        }
+    }
+
+    @Test
+    fun `the page is parsed off the caller's thread (the main one, in the app)`() = runBlocking {
+        val work = CountingDispatcher()
+        val c = CnoClient(OkHttpClient(), clock = { now }, work = work)
+        server.enqueue(page())
+        server.enqueue(reply())
+        val snap = c.fetch(url, CnoFilters())
+        assertEquals(3, snap.rows.size)
+        assertTrue("parsed on the work dispatcher", work.dispatched.get() > 0)
+    }
 }

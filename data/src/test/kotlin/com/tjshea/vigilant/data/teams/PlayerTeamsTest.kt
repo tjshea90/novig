@@ -180,4 +180,18 @@ class PlayerTeamsTest {
         assertEquals(count, paths.size)
         assertTrue(paths.all { it.startsWith("/football/nfl/") })
     }
+
+    @Test
+    fun `ESPN's JSON is parsed off the caller's thread (the main one, in the app)`() = runBlocking {
+        val dispatched = java.util.concurrent.atomic.AtomicInteger()
+        val work = object : kotlinx.coroutines.CoroutineDispatcher() {
+            override fun dispatch(context: kotlin.coroutines.CoroutineContext, block: Runnable) {
+                dispatched.incrementAndGet()
+                kotlinx.coroutines.Dispatchers.Default.dispatch(context, block)
+            }
+        }
+        val teams = PlayerTeams(OkHttpClient(), clock = { 1_000L }, baseUrl = server.url("/").toString(), work = work)
+        teams.fill(listOf(PlayerTeams.Game("NFL", "Houston Texans @ Indianapolis Colts")))
+        assertTrue(dispatched.get() > 0)
+    }
 }

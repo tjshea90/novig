@@ -810,6 +810,50 @@ class ScreenshotTest {
         assertEquals("CNO offline, retrying", com.tjshea.vigilant.app.ui.cnoErrorShort("Couldn't reach CrazyNinjaOdds (no connection to it)"))
     }
 
+    // ---- K10 (full test, 2026-09-27) ----------------------------------------------------------
+
+    /** Jefferson re-read at -125 after his books were read (at +117): the list's price is the newer one. */
+    private fun jeffersonMoved(): Pair<com.tjshea.vigilant.data.cno.CnoPick, com.tjshea.vigilant.data.cno.CnoSnapshot> {
+        val jj = SampleCno.rows[1]
+        val moved = jj.copy(odds = -125, ev = 0.012, fairProbability = 0.5613)
+        val snap = SampleCno.snapshot(readAgoMs = 1_000, rows = SampleCno.rows.map { if (it.key == jj.key) moved else it })
+        return com.tjshea.vigilant.data.cno.CnoPick(moved, 0.012, live = false) to snap
+    }
+
+    /** The sheet judged the game page's older price while the card and the ✓ judged the list's newer one. */
+    @Test fun theSheetJudgesTheSamePriceAsTheGreenCheck() {
+        val (pick, snap) = jeffersonMoved()
+        screen {
+            com.tjshea.vigilant.app.ui.CnoDetail(
+                pick, snap, SampleScan.settings, com.tjshea.vigilant.data.cno.CnoView.DEFAULT,
+                com.tjshea.vigilant.data.cno.CnoBooksState(view = SampleCno.jeffersonBooks()), SampleScan.NOW,
+            )
+        }
+        compose.onAllNodesWithText("✓ 3 of 3 books agree", substring = true).assertCountEquals(0)
+        compose.onNodeWithText("✗ books say", substring = true).assertExists()
+    }
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetsBooksViewJudgesTheSamePriceAsItsGreenCheck() {
+        val (_, snap) = jeffersonMoved()
+        val s = floatingState().let { it.copy(cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = snap)) }
+        floating("9l_floating_books_moved", s)
+        compose.onNodeWithText("Justin Jefferson Under 69.5").performTouchInput { longClick() }
+        compose.waitForIdle()
+        compose.onNodeWithText("PN +100/-122").assertIsDisplayed()
+        compose.onAllNodesWithText("✓ 3 of 3 books agree", substring = true).assertCountEquals(0)
+    }
+
+    /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */
+    @Test fun openInNovigSaysItsOpening() {
+        val (pick, snap) = jeffersonMoved()
+        screen {
+            com.tjshea.vigilant.app.ui.CnoDetail(pick, snap, SampleScan.settings, com.tjshea.vigilant.data.cno.CnoView.DEFAULT, null, SampleScan.NOW, opening = true)
+        }
+        compose.onNodeWithText("Opening…").assertIsDisplayed()
+        compose.onAllNodesWithText("Open in Novig").assertCountEquals(0)
+    }
+
     /** Tj's screenshot: the pull-to-refresh arrow stuck half way down the CNO tab. */
     @Test fun thePullToRefreshArrowLetsGoAfterARead() {
         var refreshing by androidx.compose.runtime.mutableStateOf(false)

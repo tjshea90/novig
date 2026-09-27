@@ -249,4 +249,42 @@ class CnoAgreementTest {
         second.load()
         assertEquals("novigapp://events/outcome-P7 Under 69.5/cno", second.cachedLink(linkRow(7)))
     }
+
+    @Test
+    fun `a busy or refused answer to a link lookup pauses every CNO read, the list's too`() = runTest {
+        val refusing = object : CnoSource {
+            override suspend fun fetch(url: String, filters: CnoFilters) = CnoSnapshot(url, emptyList(), currentTime)
+            override suspend fun novigLink(row: CnoRow): String = throw CnoException("refused", retryAfterSeconds = 600)
+        }
+        val feed = CnoFeed(refusing, clock = { currentTime })
+        assertEquals(null, feed.novigLink(linkRow(1)))
+        assertTrue(feed.waitForGapMs() >= 599_000L)
+        assertFalse(feed.refresh("u"))
+    }
+
+    /** A list read that ends (failed or not) after a books read was refused mid-way: how long until the next read. */
+    private suspend fun kotlinx.coroutines.test.TestScope.waitAfterPauseDuringListRead(listFails: Boolean): Long {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val source = object : CnoSource {
+            override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot {
+                gate.await()
+                if (listFails) throw CnoException("Couldn't reach CrazyNinjaOdds (it didn't answer in time)")
+                return CnoSnapshot(url, emptyList(), currentTime)
+            }
+            override suspend fun books(row: CnoRow): CnoBooksView = throw CnoException("busy", retryAfterSeconds = 120)
+        }
+        val feed = CnoFeed(source, clock = { currentTime })
+        val read = launch { feed.refresh("u") }
+        runCurrent()
+        feed.loadBooks(row(1)) // refused while the list read runs: CNO asks for 2 minutes
+        gate.complete(Unit)
+        read.join()
+        return feed.waitForGapMs()
+    }
+
+    @Test
+    fun `a pause CNO asks for during a list read isn't wiped out when that read ends`() = runTest {
+        assertTrue(waitAfterPauseDuringListRead(listFails = true) >= 119_000L)
+        assertTrue(waitAfterPauseDuringListRead(listFails = false) >= 119_000L)
+    }
 }
