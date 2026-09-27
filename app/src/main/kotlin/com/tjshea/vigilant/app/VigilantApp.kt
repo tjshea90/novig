@@ -28,6 +28,8 @@ import com.tjshea.vigilant.data.reference.PropLinePropsSource
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.data.book.SportsbookScanner
+import com.tjshea.vigilant.data.scanner.OddsScanner
 import com.tjshea.vigilant.data.scanner.ScanRunner
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.Scanner
@@ -86,10 +88,15 @@ class AppContainer(app: Application) {
     val usage = UsageMeter(JsonFileStore(File(app.filesDir, "usage.json"), UsageBook.serializer(), { UsageBook() }, json))
 
     val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
-    val tracker = BetTracker(File(app.filesDir, "bets.json"))
+    val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
     val novig = NovigPublicClient(http, json, usage = usage)
     val novigConnection = NovigConnectionStore(app)
-    val scanner = Scanner(novig)
+
+    /**
+     * Novig's own books (Vigilant), or a sportsbook's posted odds out of the fair-odds feeds'
+     * requests (Vigilant MGM: BetMGM, no request of its own; [SportsbookScanner]).
+     */
+    val scanner: OddsScanner = if (AppBook.isNovig) Scanner(novig) else SportsbookScanner(AppBook.current)
 
     /**
      * Lives as long as the process, not a screen: a scan Tj starts keeps going when he switches
@@ -111,7 +118,8 @@ class AppContainer(app: Application) {
         JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json),
         linkStore = JsonFileStore(File(app.filesDir, "cno_links.json"), CnoLinks.serializer(), { CnoLinks() }, json),
         // Bet links from Novig's catalog first, so taps don't depend on CNO answering (Tj, 2026-09-27).
-        catalog = { row -> (betFinder.find(row) as? NovigBetFinder.Found.Bet)?.link },
+        // Vigilant MGM has no such catalog: BetMGM bets' links come from CNO's own deeplinks.
+        catalog = { row -> if (AppBook.isNovig) (betFinder.find(row) as? NovigBetFinder.Found.Bet)?.link else null },
     )
 
     /**
@@ -177,7 +185,11 @@ class AppContainer(app: Application) {
     )
 
     /** Thirty sportsbooks' lines (per league) and props (per game) through one free PropLine key. */
-    private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keyStore.current(ApiProvider.PROPLINE) }, usage), json)
+    private val propLine = PropLineClient(
+        http, KeyPool(QuotaPolicy.PROPLINE, { keyStore.current(ApiProvider.PROPLINE) }, usage), json,
+        // Vigilant MGM: no Novig reads to order, and BetMGM's own ids for its bet-slip links.
+        relayNovig = AppBook.isNovig, bookIds = !AppBook.isNovig,
+    )
     private val propLineProps = PropLinePropsSource(propLine)
 
     /**
