@@ -455,7 +455,7 @@ private fun TabIconWithCount(t: Tab, state: UiState) {
         Tab.EV -> state.feed.size
         Tab.CNO -> {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
-            // Placed bets aren't counted: the tab doesn't list them.
+            // Placed and removed bets aren't counted (nor, with "only bets the books agree on", the rest): the tab doesn't list them.
             state.cnoShown(now).size
         }
         else -> 0
@@ -585,6 +585,7 @@ private fun CnoTab(
         onOpenInNovig = onOpenInNovig,
         onScanner = onScanner,
         onPlaced = vm::markPlaced,
+        onHide = vm::markHidden,
         onUnplace = vm::unmarkPlaced,
     )
 }
