@@ -2000,3 +2000,10 @@ Also in my notifications it says the best bet is Milwaukee, but this bet isn't e
 ```
 Every message I send make sure you are still completing all prior tasks as well
 ```
+
+## 2026-09-27T00:12:54Z
+```
+Sometimes it says unable to resolve cno sometimes it says timeout. 
+
+Also, make an x option next to each check mark on the right side on the cno widget. If I press the x, it will remove the bet from the list  even if I didn't bet it
+```
