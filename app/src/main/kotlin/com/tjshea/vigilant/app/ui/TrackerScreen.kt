@@ -74,7 +74,7 @@ fun TrackerScreen(state: UiState, onSettle: (String, BetStatus) -> Unit, onDelet
                             LabeledValue("Avg CLV", stats.averageClv?.let { Format.evPercent(it) } ?: "—")
                         }
                         Text(
-                            "CLV compares your price to the last fair line seen before kickoff. Beating the close " +
+                            "CLV compares your price to the last fair line seen before the game started. Beating the close " +
                                 "consistently is the best sign the edges are real" +
                                 (stats.beatClosePercent?.let { " — you've beaten it on ${Format.percent(it, 0)} of bets." } ?: "."),
                             style = MaterialTheme.typography.labelSmall,

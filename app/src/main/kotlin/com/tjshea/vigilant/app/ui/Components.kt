@@ -72,18 +72,21 @@ val LocalClock = staticCompositionLocalOf<() -> Long> { System::currentTimeMilli
 
 /** OddsJam's signature green EV pill. */
 @Composable
-fun EvBadge(ev: Double, modifier: Modifier = Modifier, large: Boolean = false) {
+fun EvBadge(ev: Double, modifier: Modifier = Modifier, large: Boolean = false, low: Boolean = false) {
     val edge = Edge.colors
     val positive = ev >= 0
     Surface(
-        modifier = modifier.semantics { contentDescription = "Expected value ${Format.evPercent(ev)}" },
+        modifier = modifier.semantics {
+            contentDescription = "Expected value ${Format.evPercent(ev)}" + if (low) ", under your minimum" else ""
+        },
         shape = RoundedCornerShape(8.dp),
         color = if (positive) edge.positiveContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Text(
             Format.evPercent(ev),
             modifier = Modifier.padding(horizontal = if (large) 12.dp else 8.dp, vertical = if (large) 6.dp else 3.dp),
-            color = if (positive) edge.positive else edge.negative,
+            // [low]: under Tj's minimum at the price shown (it moved against him), as the widget colors it.
+            color = if (low && positive) edge.warning else if (positive) edge.positive else edge.negative,
             style = if (large) MaterialTheme.typography.titleMedium else MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,

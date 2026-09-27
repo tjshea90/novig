@@ -230,7 +230,7 @@ fun CnoScreen(
                         snap?.note?.let { Banner("CrazyNinjaOdds says: $it") }
                         if (on && state.settings.floatingWidget && !overlayAllowed) {
                             Banner(
-                                "The floating widget (scroll buttons, tap a bet to open it in Novig, mark bets placed) needs " +
+                                "The floating widget (scroll buttons, tap a bet to open it in Novig, ✓ placed and ✕ remove) needs " +
                                     "Android's \"Display over other apps\" for Vigilant. Until then the widget is picture-in-picture. " +
                                     "If Android greys the switch out: App info › ⋮ › Allow restricted settings.",
                                 action = "Allow",
@@ -293,10 +293,11 @@ fun CnoScreen(
                     }
                     item(key = "credit") {
                         Text(
-                            "From crazyninjaodds.com (free; donations keep it running). EV is CNO's " +
+                            "From crazyninjaodds.com (free; donations keep it running). EV is CNO's fair odds " +
                                 (snap.evLabel?.let { "(${evMethodName(it)}) " } ?: "") +
-                                "as of its last update, less Novig's fee on live games. Tap a bet for every book's odds " +
-                                "and Vigilant's own check. Novig's price may have moved: check it in Novig before betting.",
+                                "against the Novig price shown, less Novig's fee on live games: \"NOVIG NOW\" is Novig's price " +
+                                "read just now (orange EV: under your minimum at it), otherwise the one CNO listed at its last " +
+                                "update, which may have moved. Tap a bet for every book's odds and Vigilant's own check.",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp),
@@ -510,7 +511,7 @@ private fun CnoCard(
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                EvBadge(pick.ev)
+                EvBadge(pick.ev, low = pick.ev < settings.cnoFilters.minEv - 1e-9)
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "${sportEmoji(row.sport)} ${row.league.ifEmpty { row.sport }} · " +
@@ -520,6 +521,13 @@ private fun CnoCard(
                     modifier = Modifier.weight(1f),
                 )
                 if (old) Text("old price", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                // Top right, where there's always room (in the values row they were squeezed on a phone).
+                IconButton(onClick = onPlaced, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Outlined.CheckCircle, contentDescription = "I placed ${row.bet}: hide it", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = onHide, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Filled.Close, contentDescription = "Remove ${row.bet} from the list", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -552,13 +560,6 @@ private fun CnoCard(
                 row.available?.let { LabeledValue("Available", Format.money(it)) }
                 row.books?.let { LabeledValue("Books", it.toString()) }
                 cnoStake(pick, settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
-                Spacer(Modifier.weight(1f))
-                IconButton(onClick = onPlaced, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Outlined.CheckCircle, contentDescription = "I placed ${row.bet}: hide it", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                IconButton(onClick = onHide, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Filled.Close, contentDescription = "Remove ${row.bet} from the list", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
             }
             check?.let {
                 val (text, color) = verdictLabel(it)
