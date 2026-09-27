@@ -1,13 +1,13 @@
-# CHECKPOINT 511 — read me first, then TASKS.md
+# CHECKPOINT 512 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T16:53:59Z · **tests:** all 1 fast checks green
-**Branch:** `claude/vigilant-testing-odds-apis-mpvkc7` · **builds on:** `7a9d3cf` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T16:55:08Z · **tests:** all 1 fast checks green
+**Branch:** `claude/vigilant-testing-odds-apis-mpvkc7` · **builds on:** `0235390` (this checkpoint is the commit after it)
 
 ## Just done
-Wrote Tj's request (PropLine's Novig prices order Novig reads, fallback to original order) into TASKS.md T1-T4
+Wrote Tj's second request (no stale sportsbook odds in any comparison; after T1-T4) into TASKS.md U1-U4
 
 ## Do this next
-T1: PropLineClient asks for novig in the same call, splits it into RefSnapshot.novigPreview
+T1: PropLineClient asks for novig in the same call, splits it into RefSnapshot.novigQuotes
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ T1: PropLineClient asks for novig in the same call, splits it into RefSnapshot.n
 
 ## Last ten checkpoints
 ```
+  2abdfb9 ckpt 511: Wrote Tj's request (PropLine's Novig prices order Novig reads, fallback to ori
   c15cb5c ckpt 510: SHIPPED v0.16.3 code 30 (S1-S5 ticked): https://github.com/tjshea90/novig/rele
   e46361a ckpt 509: pre-release: v0.16.3: PropLine first for sportsbook odds, The Odds API only as
   51e51af ckpt 508: S1-S4 ticked: fallback chain built and tested, full-test fixes done, floor 567
@@ -26,7 +27,6 @@ T1: PropLineClient asks for novig in the same call, splits it into RefSnapshot.n
   c148cd7 ckpt 504: S3 core built: ReferenceSource.fallbackFor/needed + ScanContext.covered/firstA
   82d5c33 ckpt 503: S1+S2: API map (books, quotas, freshness measured) and order decision written 
   fd13532 ckpt 502: Wrote Tj's 15:59Z request (full tests; best API first per book, others as auto
-  30debdd ckpt 501: SHIPPED v0.16.2 code 29 (R1-R5, O1-O3 all ticked): https://github.com/tjshea90
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the

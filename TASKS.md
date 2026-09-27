@@ -2211,3 +2211,20 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       it past a short limit), its Novig prices too old, or a line it doesn't quote → the original order
       (open bets, last scan's EV, props/periods, main lines). Tests for each.
 - [ ] T4 Light tests + floor with screenshots, RESEARCH.md §23 note, ship, link.
+
+## Tj's request, 2026-09-27 (~17:00Z, after T1–T4) — never stale sportsbook odds in a comparison
+> Do a thorough scan of the app and make sure it never gives me stale odds when comparing odds from other
+> sports books. This is important because it can give me false positive EV. The other sports books odds
+> MUST be current or at most a few minutes old.
+>
+> Do this after the process you already started
+
+- [ ] U1 Audit every place a fair line is built from other books' odds (Vigilant's Planner/Pricing from
+      every ReferenceSource and its re-use windows/stale limit; recheck and re-price; props caches;
+      CNO's books, CnoBooks, NovigLive, BetRecheck; the tracker's "now EV"): list each place an old
+      quote can price, and how old it can be today.
+- [ ] U2 One hard age limit ("a few minutes"): no book quote older than it ever feeds a fair line or an
+      EV shown as current — by the time it was fetched AND by the book's own last update where the feed
+      says it. Settings / re-use windows can't raise it. Decide the number with the evidence (RESEARCH).
+- [ ] U3 Fix every path found, each with a test that fails on the old code.
+- [ ] U4 Floor + screenshots, ship, link.
