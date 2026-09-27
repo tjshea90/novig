@@ -185,28 +185,30 @@ fun SettingsScreen(
                     "Novig. The button at the top of the list opens it any time.",
                 s.miniWindow,
             ) { v -> onUpdate { it.copy(miniWindow = v) } }
+            // The floating widget, for either scanner (Tj, 2026-09-27: "on the regular vigilant
+            // scanner, make it also have a widget").
+            val context = androidx.compose.ui.platform.LocalContext.current
+            var allowed by remember { mutableStateOf(com.tjshea.vigilant.app.FloatingWidget.allowed(context)) }
+            androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+                allowed = com.tjshea.vigilant.app.FloatingWidget.allowed(context)
+                onPauseOrDispose { }
+            }
+            SwitchRow(
+                "Floating widget you can touch",
+                "Up and down buttons always at the bottom, tap a bet to open it in Novig's bet slip, ✓ to mark it placed " +
+                    "or ✕ to remove it without betting (hidden everywhere in Vigilant for good, with Undo), hold a CNO bet for " +
+                    "every book's odds. The top bar's switch picks CNO only, Both or Vigilant only. Spread or pinch two fingers " +
+                    "on it to resize it (and slide them to move it), or pull a green corner; drag its frame or top bar to move " +
+                    "it. − shrinks it to a bubble, the top ✕ closes it. Off: the picture-in-picture window.",
+                s.floatingWidget,
+            ) { v -> onUpdate { it.copy(floatingWidget = v) } }
+            if (s.floatingWidget && !allowed) {
+                Hint("Needs Android's \"Display over other apps\" for Vigilant (until then it's picture-in-picture). If Android greys the switch out: App info › ⋮ › Allow restricted settings.")
+                OutlinedButton(onClick = { runCatching { context.startActivity(com.tjshea.vigilant.app.FloatingWidget.permissionIntent(context)) } }) {
+                    Text("Allow display over other apps")
+                }
+            }
             if (s.cnoOn) {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                var allowed by remember { mutableStateOf(com.tjshea.vigilant.app.FloatingWidget.allowed(context)) }
-                androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
-                    allowed = com.tjshea.vigilant.app.FloatingWidget.allowed(context)
-                    onPauseOrDispose { }
-                }
-                SwitchRow(
-                    "Floating widget you can touch",
-                    "Up and down buttons always at the bottom, tap a bet to open it in Novig's bet slip, ✓ to mark it placed " +
-                        "or ✕ to remove it without betting (hidden for good, with Undo), hold it for every book's odds. The top " +
-                        "bar's CNO only / Both switch adds Vigilant's own scan to the list. Spread or pinch two fingers on it to " +
-                        "resize it (and slide them to move it), or pull a green corner; drag its frame or top bar to move it. − " +
-                        "shrinks it to a bubble, the top ✕ closes it. Off: the picture-in-picture window.",
-                    s.floatingWidget,
-                ) { v -> onUpdate { it.copy(floatingWidget = v) } }
-                if (s.floatingWidget && !allowed) {
-                    Hint("Needs Android's \"Display over other apps\" for Vigilant (until then it's picture-in-picture). If Android greys the switch out: App info › ⋮ › Allow restricted settings.")
-                    OutlinedButton(onClick = { runCatching { context.startActivity(com.tjshea.vigilant.app.FloatingWidget.permissionIntent(context)) } }) {
-                        Text("Allow display over other apps")
-                    }
-                }
                 Hint("CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read.")
                 Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.WIDGET_RESCAN_CHOICES, s.widgetRescanMinutes, { if (it <= 0) "Off" else "$it min" }) { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
@@ -217,7 +219,7 @@ fun SettingsScreen(
                         else "Off: Vigilant scans only when you tap Scan (no API credits spent on its own).",
                 )
             }
-            if (!s.cnoOn || !s.floatingWidget) {
+            if (!s.floatingWidget) {
                 Hint(
                     when (s.scanner) {
                         ScannerMode.BOTH -> "Picture-in-picture: it lists Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first; tap it for Scan (which refreshes CNO's too), Recheck and Next. Pinch or double-tap to enlarge; drag it to the bottom to close."
