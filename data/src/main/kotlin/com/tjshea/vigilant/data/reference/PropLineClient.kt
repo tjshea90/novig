@@ -47,6 +47,16 @@ class PropLineClient(
     private val clock: () -> Long = System::currentTimeMillis,
     /** 4 a second: under PropLine's 5/s sustained rate, so its burst limit never trips. */
     private val minIntervalMs: Long = 250,
+    /**
+     * Ask for Novig's own prices alongside the books (they order Vigilant's Novig reads, §23.6). Off in
+     * Vigilant MGM, which prices BetMGM and has no Novig reads to order.
+     */
+    private val relayNovig: Boolean = true,
+    /**
+     * Ask for each book's own event and selection ids and event page (`includeBookIds`, `includeLinks`):
+     * Vigilant MGM builds BetMGM's bet-slip links from them. Off for Vigilant, whose requests stay as they were.
+     */
+    private val bookIds: Boolean = false,
 ) : ReferenceSource {
 
     override val id = ID
@@ -66,7 +76,7 @@ class PropLineClient(
         // Novig reads, and are kept apart from the books that make the fair line.
         val answer = call(
             "/sports/${league.oddsApiSportKey}/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to (books + NOVIG).joinToString(",")),
+            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).joinToString(",")) + idParams(),
             notFound = Board(emptyList(), emptyList()),
         ) { parseBoard(it, json, league.oddsApiSportKey) }
         remember(league.oddsApiSportKey, answer.value.events)
@@ -93,10 +103,17 @@ class PropLineClient(
         require(markets.isNotEmpty()) { "No markets to ask for" }
         return call(
             "/sports/$sportKey/events/$eventId/odds",
-            listOf("markets" to markets.joinToString(","), "bookmakers" to (books + NOVIG).distinct().joinToString(",")),
+            listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).distinct().joinToString(",")) + idParams(),
             notFound = null,
         ) { raw -> parseEventBoard(raw, json, sportKey) }.value
     }
+
+    /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
+    private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
+
+    /** The book-id and event-page parameters, only when [bookIds] is on. */
+    private fun idParams(): List<Pair<String, String>> =
+        if (bookIds) listOf("includeBookIds" to "true", "includeLinks" to "true") else emptyList()
 
     /** One reply read once: the fair-line books' games, and the same games with Novig's prices only. */
     class Board(val events: List<RefEvent>, val novig: List<RefEvent>)
@@ -438,6 +455,10 @@ internal data class PlBook(
     val title: String? = null,
     val last_update: String? = null,
     val markets: List<PlMarket?>? = null,
+    /** Only with `includeLinks`: the book's page for the game. */
+    val link: String? = null,
+    /** Only with `includeBookIds`: the book's own id for the game. */
+    val book_event_id: String? = null,
 )
 
 @Serializable
@@ -460,7 +481,7 @@ internal data class PlMarket(
         val live = outcomes.filter { o -> val seen = PropLineClient.ms(o.last_seen_at); seen == null || updated == null || seen >= updated }
         val bookKey = PropLineClient.bookKey(bookKeyRaw)
         val title = TheOddsApiClient.KNOWN_BOOKMAKERS[bookKey] ?: book.title?.takeIf { it.isNotBlank() } ?: bookKey
-        PropLineProps.MARKETS[key]?.let { stat -> return props(live, bookKey, title, updated, stat) }
+        PropLineProps.MARKETS[key]?.let { stat -> return props(live, bookKey, title, updated, stat, book) }
         val kind = when (key) {
             "h2h" -> LineKind.MONEYLINE
             "spreads" -> LineKind.SPREAD
@@ -487,11 +508,11 @@ internal data class PlMarket(
                     else -> return emptyList()
                 }
             }
-            RefQuote(side, PropLineClient.decimal(o.price) ?: return emptyList(), o.point)
+            RefQuote(side, PropLineClient.decimal(o.price) ?: return emptyList(), o.point, o.book_outcome_id?.takeIf { it.isNotBlank() })
         }
         if (quotes.map { it.side }.toSet().size != 2) return emptyList()
         if (kind != LineKind.MONEYLINE && quotes.any { it.point == null }) return emptyList()
-        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live) ?: updated, subject = subject))
+        return listOf(RefBookMarket(bookKey, title, kind, quotes, seen(live) ?: updated, subject = subject, bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() }))
     }
 
     /**
@@ -506,9 +527,9 @@ internal data class PlMarket(
      * Two-way player lines only (`point` set, Over/Under), and Yes/No markets as Over/Under 0.5. A
      * milestone rung ("3+ Total Bases") or a Yes-only list has no second side to devig and is left out.
      */
-    private fun props(live: List<PlOutcome>, bookKey: String, title: String, updated: Long?, stat: String): List<RefBookMarket> {
+    private fun props(live: List<PlOutcome>, bookKey: String, title: String, updated: Long?, stat: String, book: PlBook): List<RefBookMarket> {
         val yesNo = this.key in PropLineProps.YES_NO
-        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double, val seen: Long?)
+        data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double, val seen: Long?, val id: String? = null)
         val legs = live.mapNotNull { o ->
             val player = o.description?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
             val over = when (o.name.orEmpty().trim().lowercase()) {
@@ -517,15 +538,16 @@ internal data class PlMarket(
                 else -> return@mapNotNull null
             }
             val point = o.point ?: if (yesNo) 0.5 else return@mapNotNull null
-            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, PropLineClient.ms(o.last_seen_at))
+            Leg(player, point, over, PropLineClient.decimal(o.price) ?: return@mapNotNull null, PropLineClient.ms(o.last_seen_at), o.book_outcome_id?.takeIf { it.isNotBlank() })
         }
         return legs.groupBy { PlayerNames.key(it.player) to it.point }.values.mapNotNull { group ->
             val over = group.singleOrNull { it.over } ?: return@mapNotNull null
             val under = group.singleOrNull { !it.over } ?: return@mapNotNull null
             RefBookMarket(
                 bookKey, title, LineKind.PLAYER_PROP,
-                listOf(RefQuote(Side.OVER, over.price, over.point), RefQuote(Side.UNDER, under.price, under.point)),
+                listOf(RefQuote(Side.OVER, over.price, over.point, over.id), RefQuote(Side.UNDER, under.price, under.point, under.id)),
                 if (over.seen != null && under.seen != null) minOf(over.seen, under.seen) else updated, subject = over.player, stat = stat,
+                bookEventId = book.book_event_id?.takeIf { it.isNotBlank() }, link = book.link?.takeIf { it.isNotBlank() },
             )
         }
     }
@@ -539,4 +561,6 @@ internal data class PlOutcome(
     val point: Double? = null,
     val last_seen_at: String? = null,
     val side: String? = null,
+    /** Only with `includeBookIds`: the book's own id for this selection. */
+    val book_outcome_id: String? = null,
 )
