@@ -2054,7 +2054,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
         and suspended outcomes dropped; team totals via `team`. Settings `usePropLine`. Tests from a
         schema-shaped fixture (MockWebServer), quota headers -> meter.
   - [x] P3c (done: ScreenshotTest.settingsTakePinnWireAndPropLineKeys, theMetersShowWhatsLeftPerKey… (4 keyed
-        providers); full floor 511 tests green 2026-09-27 ~07:30Z) App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
+        providers); full floor 512 tests green 2026-09-27 ~07:30Z) App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
         PropLine, source list/FeedScreen hints, SOURCE_ORDER, requestKey, maxFairAgeMs, planFor book
         filter for propline. Screenshot test for the Settings sources section.
 - [ ] P4 Full tests (CLAUDE.md protocol) over the whole app: engine, data (novig/reference/match/
