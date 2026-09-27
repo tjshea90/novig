@@ -2046,3 +2046,14 @@ When all of the features and fixes I asked for are finished, run a full test pro
 <summary>Background command "Poll CI on current HEAD until done" completed (exit code 0)</summary>
 </task-notification>
 ```
+
+## 2026-09-27T01:18:10Z
+```
+1) I think it won't open the bets slips in novig if the cno server is not responding. Can you make it so vigilant can open the bet in novig even if it can't reach cno servers?
+
+2) on the widget, include an option to also use the regular scan in addition to cno and put all the results in the widget together, if it doesn't already do this. 
+
+3) consider ways to make cno respond even with high traffic and rapid refreshing. Is there a workaround? Dns? Free or cheap service? Vpn? Use proxies to get around the limit, it is ok 
+
+If I add more requests while you are still working, and them to the list and finish everything, do not stop work on any prior requests 
+```
