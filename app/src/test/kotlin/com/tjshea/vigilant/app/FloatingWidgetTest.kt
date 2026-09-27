@@ -24,7 +24,7 @@ import org.robolectric.shadows.ShadowSettings
  * the frame and top bar move it, two fingers pinch it, and the list still gets its taps.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [35], qualifiers = "w400dp-h800dp-mdpi")
+@Config(sdk = [35], qualifiers = "w420dp-h800dp-mdpi")
 class FloatingWidgetTest {
 
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
