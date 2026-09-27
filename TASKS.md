@@ -2037,6 +2037,23 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       limits, terms. Write RESEARCH.md §22 with a ranked verdict.
 - [ ] P3 Build what the research says is worth it (free, legal, adds sharp books or speed) as a
       reference source behind a Settings switch, with tests; say what was rejected and why.
+      Design (RESEARCH §22.4), steps:
+  - [ ] P3a Pinnacle via PinnWire: `ApiProvider.PINNWIRE` + `QuotaPolicy.PINNWIRE` (100/day, 20/min);
+        `PinnapiClient` takes hosts in order (PinnWire pool first with `x-api-key` +
+        `include_specials=1`, then pinnapi pool with `x-portal-apikey`, no specials); specials rows
+        "Player Props" -> `LineKind.PLAYER_PROP` (bookKey "pinnacle", subject = player, stat via
+        `PinnacleProps.stat(sport, units)`); Scanner.catalogTypes keeps book-only prop types when a
+        source `pricesBookProps`. Tests: parse a trimmed REAL PinnWire fixture (lines + props),
+        host fallback, header per host.
+  - [ ] P3b PropLine: `ApiProvider.PROPLINE` + `QuotaPolicy.PROPLINE` (1,000/day UTC, headers
+        X-Daily-*), `PropLineClient` (game lines per league) + `PropLinePropsSource` (per game,
+        needsCatalog, capped games per scan, reuse window); books = reference books mapped to
+        PropLine keys, no exchanges/DFS/novig; withdrawn (`last_seen_at` < market `last_update`)
+        and suspended outcomes dropped; team totals via `team`. Settings `usePropLine`. Tests from a
+        schema-shaped fixture (MockWebServer), quota headers -> meter.
+  - [ ] P3c App: keys generalized (UiState.keys map), Settings key editors + meters for PinnWire and
+        PropLine, source list/FeedScreen hints, SOURCE_ORDER, requestKey, maxFairAgeMs, planFor book
+        filter for propline. Screenshot test for the Settings sources section.
 - [ ] P4 Full tests (CLAUDE.md protocol) over the whole app: engine, data (novig/reference/match/
       scanner/cno/keys/store/tracker), app (VM, service, widget, PiP, screens). Fix every bug found,
       each with a named test that fails before the fix; speed/efficiency/UI improvements (no major
