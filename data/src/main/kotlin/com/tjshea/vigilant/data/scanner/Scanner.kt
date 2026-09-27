@@ -19,6 +19,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.roundToInt
 
 /** Where a scan is, for the progress line. */
 data class ScanProgress(val step: String, val done: Int = 0, val total: Int = 0)
@@ -306,7 +307,7 @@ class Scanner(
                     signal.receive()
                     continue
                 }
-                val chunk = fetchOrder(pending, settings).take(minOf(CHUNK, cap - requested.size))
+                val chunk = fetchOrder(pending, settings, preview(plan, settings, now)).take(minOf(CHUNK, cap - requested.size))
                 val ids = chunk.map { it.market.marketId }
                 requested += ids
                 progress.reading = true
@@ -349,17 +350,23 @@ class Scanner(
     }
 
     /**
-     * Which unread markets to read first. Open bets, then last scan's +EV lines by EV, then its near
+     * Which unread markets to read first. Open bets, then the likeliest +EV lines by EV, then near
      * misses, then lines never priced (props, period lines and team totals before main lines: the
-     * derivative markets are where exchange prices lag most), then lines that were well below zero,
-     * and last the games no fair source covers (they can't be +EV). Soonest games first within each.
+     * derivative markets are where exchange prices lag most), then lines well below zero, and last the
+     * games no fair source covers (they can't be +EV). Soonest games first within each.
+     *
+     * A line's EV here is its [preview] (this scan's fair line at Novig's price as PropLine relayed it
+     * seconds ago) when there is one, else last scan's: so a missing, failed, late or old relay simply
+     * leaves the original order (Tj, 2026-09-27: "if there is any failure or delay, … fallback to the
+     * original novig read"). Either way it only orders reads: the feed is priced from Novig's books.
      */
-    private fun fetchOrder(pending: List<PlannedMarket>, settings: ScanSettings): List<PlannedMarket> {
+    private fun fetchOrder(pending: List<PlannedMarket>, settings: ScanSettings, preview: Map<String, Double> = emptyMap()): List<PlannedMarket> {
+        fun ev(id: String): Double? = preview[id] ?: lastEv[id]
         fun group(p: PlannedMarket): Int {
             val id = p.market.marketId
             if (id in pinned) return 0
             if (p.lineKey == null) return 6
-            val ev = lastEv[id]
+            val ev = ev(id)
             return when {
                 ev == null -> if (p.kind == LineKind.PLAYER_PROP || p.kind == LineKind.TEAM_TOTAL || (p.lineKey.period) != 0) 3 else 4
                 ev >= settings.minEvPercent -> 1
@@ -368,8 +375,60 @@ class Scanner(
             }
         }
         return pending.sortedWith(
-            compareBy<PlannedMarket>({ group(it) }, { -(lastEv[it.market.marketId] ?: 0.0) }, { it.event.startsTs }),
+            compareBy<PlannedMarket>({ group(it) }, { -(ev(it.market.marketId) ?: 0.0) }, { it.event.startsTs }),
         )
+    }
+
+    /** The last [preview], re-used while its plan and relays are the same objects. */
+    private var previewCache: Triple<Plan, List<RefSnapshot>, Map<String, Double>>? = null
+
+    /**
+     * Each planned market's best EV at Novig's own prices as PropLine relayed them ([RefSnapshot.novig],
+     * the same request as its books: RESEARCH.md §23.6), against [plan]'s fair lines: stand-in books
+     * built from those prices, priced exactly like real ones. Only relays fetched in the last
+     * [NOVIG_PREVIEW_MAX_AGE_MS] count. Empty (the original read order) when there's none or anything
+     * goes wrong.
+     */
+    private fun preview(plan: Plan, settings: ScanSettings, now: Long): Map<String, Double> {
+        val relays = synchronized(references) {
+            settings.selectedLeagues.flatMap { l -> NOVIG_RELAYS.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot } }
+        }.filter { it.novig.isNotEmpty() && now - it.fetchedAtMs <= NOVIG_PREVIEW_MAX_AGE_MS }
+        if (relays.isEmpty()) return emptyMap()
+        previewCache?.let { (p, r, v) -> if (p === plan && r.size == relays.size && r.indices.all { r[it] === relays[it] }) return v }
+        val result = runCatching { previewOf(plan, relays.map { it.copy(events = it.novig) }, settings, now) }.getOrDefault(emptyMap())
+        previewCache = Triple(plan, relays, result)
+        return result
+    }
+
+    private fun previewOf(plan: Plan, relays: List<RefSnapshot>, settings: ScanSettings, now: Long): Map<String, Double> {
+        val ours = plan.events.associateBy { it.event.eventId }
+        val relayed = Planner.matchEvents(plan.events.map { it.event }, relays).associateBy { it.event.eventId }
+        val books = HashMap<String, NovigBook>()
+        for (m in plan.markets) {
+            val key = m.lineKey ?: continue
+            if (m.outcomes.size != 2) continue
+            val relay = relayed[m.event.eventId] ?: continue
+            val relayEvent = relay.refEvent ?: continue
+            val mine = ours[m.event.eventId] ?: continue
+            // Both feeds' home/away oriented like the plan's before comparing lines.
+            val quotes = if (relay.refSwapped != mine.refSwapped) relayEvent.markets.map { it.flipped() } else relayEvent.markets
+            val q = quotes.firstOrNull { key.matches(it) } ?: continue
+            val bids = HashMap<String, List<com.tjshea.vigilant.data.novig.BidLevel>>()
+            for ((i, o) in m.outcomes.withIndex()) {
+                val side = (o.target as? OutcomeTarget.Is)?.side ?: continue
+                val decimal = q.quotes.firstOrNull { it.side == side }?.decimalOdds ?: continue
+                // Taking this outcome at price P = a resting bid of 1 − P on the other one.
+                val milli = ((1.0 - 1.0 / decimal) * 1000).roundToInt()
+                if (milli in 1..999) bids[m.outcomes[1 - i].outcome.outcomeId] = listOf(com.tjshea.vigilant.data.novig.BidLevel(milli, PREVIEW_CONTRACTS))
+            }
+            if (bids.isNotEmpty()) books[m.market.marketId] = NovigBook(m.market.marketId, 0, bids, now)
+        }
+        if (books.isEmpty()) return emptyMap()
+        return Pricing.price(plan, books, settings, now).opportunities
+            .filter { it.market.marketId in books }
+            .mapNotNull { o -> o.evPercent?.let { o.market.marketId to it } }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, evs) -> evs.max() }
     }
 
     /**
@@ -634,5 +693,14 @@ class Scanner(
 
         /** A line this close below zero last scan is worth re-reading early: a tick can flip it. */
         const val NEAR_MISS_EV = -0.02
+
+        /** Feeds that relay Novig's own prices ([RefSnapshot.novig]). */
+        private val NOVIG_RELAYS = listOf(com.tjshea.vigilant.data.reference.PropLineClient.ID, com.tjshea.vigilant.data.reference.PropLinePropsSource.ID)
+
+        /** A relay of Novig's prices older than this orders nothing (the original order stands). */
+        const val NOVIG_PREVIEW_MAX_AGE_MS = 3 * 60_000L
+
+        /** Stand-in depth for a previewed line: its size is unknown, and only its EV is used. */
+        private const val PREVIEW_CONTRACTS = 1_000L
     }
 }
