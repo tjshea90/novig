@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -975,7 +976,7 @@ class ScreenshotTest {
     @Test fun trackerStakeIsEditable() {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}, initialView = com.tjshea.vigilant.app.ui.TrackerView.BETS) }
         // Tapping the stake opens its dialog (not opened here: a text field in a Robolectric dialog never idles).
-        compose.onAllNodesWithText("Stake ✎")[0].assert(androidx.compose.ui.test.hasClickAction())
+        compose.onAllNodesWithText("Stake ✎")[0].assertHasClickAction()
     }
 
     @Test fun trackerSaysCloseForEverySportNotJustFootball() {
