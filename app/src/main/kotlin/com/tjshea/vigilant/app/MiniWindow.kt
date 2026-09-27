@@ -90,6 +90,10 @@ object MiniWindow {
         val alsoCnoEv: Double? = null,
         /** The same bet's key in CNO's list, so marking it placed or removed covers both. */
         val aliases: List<String> = emptyList(),
+        /** Novig's price now differs from the one CNO listed: CNO's ("+117"). */
+        val movedFrom: String? = null,
+        /** At Novig's price now it's under the minimum EV (it moved against Tj). */
+        val evLow: Boolean = false,
     ) {
         /** The same bet at any line, in this game and market. */
         val family: String get() = Picks.familyKey(event, market, title)
@@ -133,7 +137,8 @@ object MiniWindow {
         val snap = state.cno.snapshot
         // CNO's rows only after the app's own checks (thin markets, odds cap, one-way devigs, …),
         // placed and removed ones left out, and only green-check ones when that setting is on.
-        val theirs = if (snap == null) emptyList() else state.cnoShown(now).map { itemFor(it, snap, state, now) }
+        // Best EV first at the prices shown (Novig's live ones re-order it between CNO's reads).
+        val theirs = if (snap == null) emptyList() else state.cnoShown(now).map { itemFor(it, snap, state, now) }.sortedByDescending { it.ev }
         val all = when {
             ours.isEmpty() -> theirs
             snap == null -> ours
@@ -177,7 +182,18 @@ object MiniWindow {
     /** One CNO bet as the widget (and the CNO tab's placed button) sees it. */
     fun itemFor(pick: CnoPick, snap: CnoSnapshot, state: UiState, now: Long): Item {
         val row = pick.row
-        return pick.miniItem(snap, now).copy(team = state.teams[row.key], agrees = state.cnoAgrees(pick))
+        val base = pick.miniItem(snap, now).copy(team = state.teams[row.key], agrees = state.cnoAgrees(pick, now))
+        // Novig's price now, when it was read (RESEARCH.md §20.3): what Tj would actually get.
+        if (state.livePrice(row, now) == null) return base
+        val live = state.livePick(pick, now)
+        return base.copy(
+            price = american(live.row.odds),
+            ev = live.ev,
+            available = live.row.available?.let { "$" + it.roundToInt() },
+            old = false,
+            movedFrom = if (live.row.odds != row.odds) american(row.odds) else null,
+            evLow = live.ev < state.settings.cnoFilters.minEv - 1e-9,
+        )
     }
 
     private fun Opportunity.miniItem(now: Long): Item? {

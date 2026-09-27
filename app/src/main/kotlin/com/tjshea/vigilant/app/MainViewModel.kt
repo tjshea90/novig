@@ -128,6 +128,18 @@ data class UiState(
     /** Whether CNO bets' books are read: for the green check, or for "only bets the books agree on". */
     val cnoReadsBooks: Boolean get() = settings.cnoCheckBooks || settings.cnoOnlyAgreed
 
+    /**
+     * [pick] at Novig's price now ([livePrice]): the price, dollars and EV (CNO's fair odds against
+     * that price) the widget, the CNO tab and the bet sheet show. [pick] itself without one.
+     */
+    fun livePick(pick: CnoPick, now: Long): CnoPick {
+        val live = livePrice(pick.row, now) ?: return pick
+        return CnoPick(pick.row.copy(odds = live.american, available = live.available ?: pick.row.available), live.ev ?: pick.ev, pick.live)
+    }
+
+    /** When [row]'s shown price was read: Novig's live read, else CNO's list. */
+    fun priceReadAtMs(row: CnoRow, now: Long): Long? = livePrice(row, now)?.atMs ?: cno.snapshot?.fetchedAtMs
+
     /** [cnoPicks] without the bets Tj placed or removed (✕): what the green-check lane reads. */
     fun cnoCandidates(now: Long): List<CnoPick> =
         cnoPicks(now)?.picks?.filter { MiniWindow.cnoKey(it.row) !in placedKeys }.orEmpty()

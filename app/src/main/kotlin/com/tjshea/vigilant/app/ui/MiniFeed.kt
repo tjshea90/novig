@@ -101,7 +101,7 @@ fun MiniFeed(
                     val i = items.indexOfFirst { it.key == booksKey }.coerceAtLeast(0)
                     val item = items[i]
                     androidx.compose.runtime.LaunchedEffect(item.key) { item.cno?.let { onLoadBooks(it.row) } }
-                    MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), state.cno.snapshot?.fetchedAtMs)
+                    MiniBooks(item, state.books[item.cno?.row?.key], "${i + 1}/${items.size}", MiniWindow.showsVigilant(state.settings), item.cno?.row?.let { state.priceReadAtMs(it, now) })
                 } else if (items.isEmpty()) {
                     Text(
                         emptyText(state, now = now),
@@ -152,7 +152,8 @@ internal fun MiniBooks(item: MiniWindow.Item, books: CnoBooksState?, position: S
         val view = books?.view
         // The newer price, as the row's ✓ judges it: the list's when it was read after the books.
         val check = if (pick != null && view != null) {
-            CnoBooks.check(view, pick.row, pick.live, preferListOdds = listReadAtMs != null && listReadAtMs > view.fetchedAtMs)
+            // The price shown (Novig's live one, when there is one).
+            CnoBooks.check(view, pick.row.copy(odds = item.cno.row.odds.let { o -> item.price.let { MiniWindow.parseAmerican(it) } ?: o }), pick.live, preferListOdds = listReadAtMs != null && listReadAtMs > view.fetchedAtMs)
         } else null
         val judged = pick?.row?.book?.let { CnoBooks.codeFor(it) } ?: CnoBooks.NOVIG
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -214,7 +215,8 @@ internal fun MiniRow(
             Modifier.width(40.dp),
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = Edge.colors.positive,
+            // Under the minimum at Novig's price now: it moved against Tj.
+            color = if (item.evLow) Edge.colors.warning else Edge.colors.positive,
             maxLines = 1,
         )
         // The pick itself, what Tj taps in Novig: full contrast, and its side and line ("Under 69.5")
@@ -277,6 +279,11 @@ internal fun MiniRow(
                         }
                         item.placedOther?.let {
                             withStyle(SpanStyle(color = Edge.colors.warning, fontWeight = FontWeight.Bold)) { append("placed $it") }
+                            append(" · ")
+                        }
+                        // Novig's price moved since CNO listed it (the price shown is Novig's now).
+                        item.movedFrom?.let {
+                            withStyle(SpanStyle(color = Edge.colors.warning, fontWeight = FontWeight.Bold)) { append("was $it") }
                             append(" · ")
                         }
                         if (item.fromCno && showTag) {
