@@ -161,6 +161,14 @@ fun SettingsScreen(
                     s.cnoOnlyAgreed,
                 ) { v -> onUpdate { it.copy(cnoOnlyAgreed = v) } }
                 SwitchRow(
+                    "Novig's price now",
+                    "The ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_TOP} best CNO bets on Novig show Novig's current price, read from Novig's own " +
+                        "order book every ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_EVERY_MS / 1000} s while the list is on screen, and the EV " +
+                        "at it against CNO's fair odds: up to date even when CNO is slow or out of reach. \"was +117\" means it moved " +
+                        "since CNO listed it; an orange EV, that it's now under your minimum.",
+                    s.cnoLivePrices,
+                ) { v -> onUpdate { it.copy(cnoLivePrices = v) } }
+                SwitchRow(
                     "Player teams",
                     "Player bets show the team, like D. Schultz (HOU), from ESPN's rosters: two small reads per new game, kept for a day.",
                     s.cnoPlayerTeams,
