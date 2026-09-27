@@ -312,6 +312,18 @@ class SportsbookScannerTest {
     }
 
     @Test
+    fun `BetMGM ids sent as numbers still parse`() {
+        val raw = board().replace("\"book_event_id\":\"17345678\"", "\"book_event_id\":17345678")
+            .replace("\"book_outcome_id\":\"888-1002\"", "\"book_outcome_id\":1002")
+        val e = PropLineClient.parseEvents(raw, json, "americanfootball_nfl").single()
+        val ml = e.markets.single { it.bookKey == "betmgm" && it.kind == LineKind.MONEYLINE }
+        assertEquals("17345678", ml.bookEventId)
+        assertEquals("1002", ml.quotes.single { it.side == Side.AWAY }.bookOutcomeId)
+        // Every other book still parses.
+        assertTrue(e.markets.any { it.bookKey == "pinnacle" })
+    }
+
+    @Test
     fun `a feed with no BetMGM prices puts nothing on the board`() {
         // A board built from a snapshot with only other books has no games.
         val snap = RefSnapshot("americanfootball_nfl", listOf(RefEvent("x", "americanfootball_nfl", start, "Dallas Cowboys", "Baltimore Ravens",
