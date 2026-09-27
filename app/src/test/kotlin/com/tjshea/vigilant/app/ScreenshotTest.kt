@@ -963,7 +963,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun trackerStats() {
         shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
-        // b1 won, b2 lost, b6 won (settled by Novig): 2-1, and profit is +$34.52 − $18 + $1.
+        // b1 won, b2 lost, b6 won (settled from the final score): 2-1, and profit is +$34.52 − $18 + $1.
         compose.onNodeWithText("66.7%").assertExists()
         compose.onNodeWithText("2-1").assertExists()
         compose.onNodeWithText("+$17.52").assertExists()
@@ -979,7 +979,7 @@ class ScreenshotTest {
         // Open bets only by default: the settled ones are one tap away.
         compose.onAllNodesWithText("Won · undo").assertCountEquals(0)
         compose.onNodeWithText("Settled (3)").performClick()
-        compose.onNodeWithText("settled by Novig").assertExists()
+        compose.onNodeWithText("from the final score").assertExists()
     }
 
     @Test fun trackerStakeIsEditable() {
