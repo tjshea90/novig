@@ -1,13 +1,13 @@
-# CHECKPOINT 494 — read me first, then TASKS.md
+# CHECKPOINT 495 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T15:02:22Z · **tests:** all 1 fast checks green
-**Branch:** `claude/vigilant-testing-odds-apis-mpvkc7` · **builds on:** `92a20e7` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T15:11:30Z · **tests:** all 1 fast checks green
+**Branch:** `claude/vigilant-testing-odds-apis-mpvkc7` · **builds on:** `d98bc4e` (this checkpoint is the commit after it)
 
 ## Just done
-Released v0.16.1 (code 28): PropLine null-tolerant decoding + readable scan errors; recorded; Q1-Q2 ticked
+Wrote Tj's 15:10Z request (placed bets hidden app-wide; Vigilant widget + exact bet slip) into TASKS R1-R5
 
 ## Do this next
-P6: check one game's PropLine props live (send_later at 00:15Z, or from Tj's next screenshot); otherwise wait for Tj
+R1: investigate placed-bet keys and each list's filter; Open Novig link path
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ P6: check one game's PropLine props live (send_later at 00:15Z, or from Tj's nex
 
 ## Last ten checkpoints
 ```
+  0059052 ckpt 494: Released v0.16.1 (code 28): PropLine null-tolerant decoding + readable scan er
   94990e8 ckpt 493: pre-release: v0.16.1: fixes 'PropLine props … Unexpected JSON token … book
   bff826a ckpt 492: Q1 fixed: PropLine null-tolerant decoding (3 failing-first tests) + readable s
   9babee4 ckpt 491: Wrote Tj's 14:45Z screenshot request (PropLine props JSON error) into TASKS Q1
@@ -26,5 +27,7 @@ P6: check one game's PropLine props live (send_later at 00:15Z, or from Tj's nex
   9bb3d4a ckpt 487: v0.16.0 (code 27) bumped; full floor 528 tests green + release APK builds; tra
   42475df ckpt 486: P4 fixes 4-5: JsonFileStore keeps every corrupt copy (.corrupt-<time>) + fsync
   7337458 ckpt 485: P4a settle fix done: FreeScores (ESPN+MLB Stats API) + BetGrader + BetSettler 
-  652779b ckpt 484: P4 finding: N7 verified live - Novig public catalog 404s settled markets and d
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

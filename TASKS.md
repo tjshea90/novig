@@ -2113,3 +2113,25 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [x] Q2 (SHIPPED v0.16.1 code 28, 2026-09-27T15:01Z: floor 532 tests 0 failures, CI green, release.yml green,
       https://github.com/tjshea90/novig/releases/tag/v0.16.1, recorded.) Light tests, floor, ship v0.16.1, link. Record that PropLine's /odds board parsed live on Tj's
       phone (P6 partly verified).
+
+## Tj's request, 2026-09-27T15:10Z — placed bets hidden everywhere; Vigilant scanner widget + exact bet slip
+
+> Right now some bets are showing up in the vigilant positive EV scanner which I already placed in the
+> cno scanner widget. Make sure the bet tracker works across all parts of the app and hides bets I
+> already placed throughout the whole app regardless of scanner. Also, on the regular vigilant scanner,
+> make it also have a widget and be able to open the exact bet slip in novig. Right now I see bets and
+> it has an open novig button but the button only opens the app, not the exact bet slip like the cno
+> scanner does
+
+### Plan
+- [ ] R1 Investigate: how placed/tracked bets are keyed per scanner (PlacedBets keys "cno:<row>",
+      "<market>/<outcome>", aliases; TrackedBet placedKey/marketId/outcomeId), where each list filters
+      them (+EV feed, Games, CNO tab, widget, PiP), and why a CNO ✓ still shows in Vigilant's feed.
+- [ ] R2 One "already placed" rule for the whole app: a bet placed/tracked from ANY scanner (✓ in the
+      widget/CNO tab, Track on a card) is hidden from the +EV feed, the CNO tab, the floating widget and
+      the mini window, matched by Novig outcome id when known, else by the same game+market+side; tests.
+- [ ] R3 Vigilant's "Open Novig" opens the exact bet slip (`novigapp://events/<outcomeId>`) from the
+      card, the bet sheet, the mini window and the widget; test.
+- [ ] R4 Vigilant scanner gets the floating widget too (Vigilant-only mode as well as Both): tap = exact
+      bet slip, ✓ placed (tracked + hidden everywhere), ✕ remove, Undo; tests + screenshots.
+- [ ] R5 Light tests (+ screenshots), floor, ship, link.
