@@ -75,7 +75,15 @@ class TheOddsApiClient(
                 context.covered[e.eventId].orEmpty().none { it in GAME_LINES }
         }
         if (missing.isEmpty()) return false
-        val listed = listed(league.oddsApiSportKey, horizon)
+        // PropLine did answer: if the free list can't be read either (network, keys resting), stand by
+        // rather than raise an error for a backup that may not have been needed.
+        val listed = try {
+            listed(league.oddsApiSportKey, horizon)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return false
+        }
         return Planner.matchEvents(missing, listOf(RefSnapshot(league.oddsApiSportKey, listed, context.now, provider = ID)))
             .any { it.refEvent != null }
     }

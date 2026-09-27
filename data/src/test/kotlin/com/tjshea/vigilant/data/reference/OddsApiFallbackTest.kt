@@ -116,4 +116,11 @@ class OddsApiFallbackTest {
         assertFalse(PropLineClient.carries("williamhill_us") || PropLineClient.carries("espnbet") || PropLineClient.carries("betfair_ex_eu"))
         assertFalse(PropLineClient.carries("novig") || PropLineClient.carries("kalshi"))
     }
+
+    @Test
+    fun `if the free game list can't be read, it stands by instead of raising an error`() = runTest {
+        server.shutdown() // nothing answers
+        val onlyRavens = mapOf("nA" to setOf("MONEYLINE:0"))
+        assertFalse(client().needed(nfl, settings, after(onlyRavens)))
+    }
 }
