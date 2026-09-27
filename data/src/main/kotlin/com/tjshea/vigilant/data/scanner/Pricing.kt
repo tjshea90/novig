@@ -43,6 +43,11 @@ data class Opportunity(
     val lineKey: LineKey?,
     /** Which reference side this outcome is priced from. */
     val target: OutcomeTarget?,
+    /**
+     * When the oldest book price behind [fair] was last seen by its feed (RESEARCH.md §24): past
+     * [Freshness.MAX_QUOTE_AGE_MS] this EV is no longer current and isn't shown.
+     */
+    val fairAsOfMs: Long? = null,
 ) {
     /** Column of this outcome in [FairLine.perBook] odds. */
     val referenceIndex: Int?
@@ -64,6 +69,9 @@ data class Opportunity(
         val take = quote?.cost
         return bid.takeIf { take == null || take > bid.price + 1e-9 }
     }
+
+    /** The other books' prices behind this EV are over [Freshness.MAX_QUOTE_AGE_MS] old at [now]: don't offer it. */
+    fun fairIsOld(now: Long): Boolean = fairAsOfMs != null && now - fairAsOfMs > Freshness.MAX_QUOTE_AGE_MS
 
     /** Novig's price for this line was read more than [Pricing.OLD_PRICE_MS] before [now]. */
     fun priceIsOld(now: Long): Boolean = bookFetchedAtMs == null || now - bookFetchedAtMs > Pricing.OLD_PRICE_MS
@@ -178,6 +186,7 @@ object Pricing {
                     bestBid = book?.bestBid(po.outcome.outcomeId)?.price,
                     bookFetchedAtMs = book?.fetchedAtMs,
                     fairUpdatedMs = fair?.perBook?.filter { it.book.bookTitle in fair.booksUsed }?.mapNotNull { it.book.lastUpdateMs }?.maxOrNull(),
+                    fairAsOfMs = fair?.perBook?.filter { it.book.bookTitle in fair.booksUsed }?.mapNotNull { it.book.lastUpdateMs }?.minOrNull(),
                     refEvent = pm.refEvent,
                     lineKey = pm.lineKey,
                     target = po.target,
