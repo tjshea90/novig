@@ -129,7 +129,7 @@ private fun BetCard(bet: TrackedBet, onSettle: (String, BetStatus) -> Unit, onDe
             Row(Modifier.fillMaxWidth().padding(top = 8.dp, end = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 LabeledValue("Stake", Format.money(bet.stake))
                 LabeledValue("Price", Format.american(bet.cost))
-                LabeledValue("EV", Format.evPercent(bet.evPercentAtBet))
+                LabeledValue("EV", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
                 LabeledValue("CLV", bet.clvPercent?.let { Format.evPercent(it) } ?: "—")
                 LabeledValue(
                     if (bet.status == BetStatus.PENDING) "To win" else "Result",
