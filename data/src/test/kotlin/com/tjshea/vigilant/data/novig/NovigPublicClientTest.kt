@@ -53,6 +53,17 @@ class NovigPublicClientTest {
     }
 
     @Test
+    fun `a short 429 on the board is waited out instead of failing the scan`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "1").setBody("{}"))
+        server.enqueue(MockResponse().setBody("""{"items":[{"eventId":"a"}]}"""))
+        val paused = ArrayList<Long>()
+        val c = NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }, sleep = { paused += it })
+        val events = c.events(listOf("NFL"), emptyList())
+        assertEquals(listOf("a"), events.map { it.eventId })
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test
     fun `follows the next cursor across pages`() = runBlocking {
         server.enqueue(MockResponse().setBody("""{"items":[{"eventId":"a"}],"next":"cursor-1"}"""))
         server.enqueue(MockResponse().setBody("""{"items":[{"eventId":"b"}]}"""))

@@ -305,21 +305,36 @@ class NovigPublicClient(
     ): List<T> {
         val all = ArrayList<T>()
         var after: String? = null
-        repeat(MAX_PAGES) {
+        var retries = 0
+        var pages = 0
+        while (pages < MAX_PAGES) {
             val url = "$baseUrl$path".toHttpUrl().newBuilder().apply {
                 params.forEach { (k, v) -> addQueryParameter(k, v) }
                 after?.let { addQueryParameter("after", it) }
             }.build()
             publicGate.acquire()
-            http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
+            val page = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
                 count(response.code)
-                if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
+                if (!response.isSuccessful) {
+                    val e = httpError(response.code, body, response.header("Retry-After"))
+                    // A burst limit (429, Retry-After of a second or so) on the board: wait it out
+                    // and ask again, like a book, rather than fail the whole scan (2026-09-27 full test).
+                    val wait = e.retryAfterSeconds ?: 1
+                    if (e.code == 429 && wait <= SHORT_RETRY_SECONDS && retries < 2) {
+                        retries++
+                        publicGate.pause(rateClock() + wait * 1000L)
+                        publicGate.slowDown()
+                        return@use null
+                    }
+                    throw e
+                }
                 publicGate.success()
-                val (items, next) = parse(body)
-                all += items
-                after = next
-            }
+                parse(body)
+            } ?: continue
+            all += page.first
+            after = page.second
+            pages++
             if (after == null) return all
         }
         return all
