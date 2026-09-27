@@ -2228,8 +2228,13 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       every ReferenceSource and its re-use windows/stale limit; recheck and re-price; props caches;
       CNO's books, CnoBooks, NovigLive, BetRecheck; the tracker's "now EV"): list each place an old
       quote can price, and how old it can be today.
-- [ ] U2 One hard age limit ("a few minutes"): no book quote older than it ever feeds a fair line or an
+- [x] U2 (DONE: Freshness.MAX_QUOTE_AGE_MS = 5 min per quote by the feed's own last-seen time, MAX_REUSE_MS = 2 min; RESEARCH.md
+      §24.2 with the Odds API/PropLine doc quotes.) One hard age limit ("a few minutes"): no book quote older than it ever feeds a fair line or an
       EV shown as current — by the time it was fetched AND by the book's own last update where the feed
       says it. Settings / re-use windows can't raise it. Decide the number with the evidence (RESEARCH).
-- [ ] U3 Fix every path found, each with a test that fails on the old code.
+- [x] U3 (DONE, RESEARCH.md §24.3. Tests that FAILED on v0.16.3 code: FreshOddsTest "a book price the feed last saw over five minutes
+      ago…", "a feed's answer is re-used for two minutes at most…", "a failed call's last answer stops pricing…", "a recheck judges the
+      fair odds' age now…"; plus PropLineClientTest "each price carries when PropLine last saw it", FreshOddsAppTest (4),
+      ScreenshotTest oldOddsLeaveTheFeedAndAskForAScan (replaces the test that expected old bets shown), agingOddsAreFlagged…,
+      cnoTabHidesItsBetsWhileCnosOddsAreOld.) Fix every path found, each with a test that fails on the old code.
 - [ ] U4 Floor + screenshots, ship, link.

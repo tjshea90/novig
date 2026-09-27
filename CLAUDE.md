@@ -246,7 +246,9 @@ unless Tj asks).
   `include_specials` player props → `PinnacleProps`, then pinnapi's), `PolymarketClient`, `KalshiClient`,
   `PropLineClient` + `PropLinePropsSource` (30 books, 1,000/day free), `TheOddsApiClient`,
   `OddsApiPropsSource`; RESEARCH.md §22; where two carry the same books the second is only a fallback:
-  `ReferenceSource.fallbackFor`/`needed`, `ScanContext.covered`, `Scanner.covering`, RESEARCH.md §23); matching and pricing (`data/match/TeamMatcher`,
+  `ReferenceSource.fallbackFor`/`needed`, `ScanContext.covered`, `Scanner.covering`, RESEARCH.md §23; PropLine's relayed Novig
+  prices order Novig reads, `RefSnapshot.novig`/`Scanner.preview`, §23.6; **no book quote over 5 minutes old ever prices**:
+  `data/scanner/Freshness`, `Opportunity.fairAsOfMs`/`fairIsOld`, `UiState.feedAt`/`cnoTooOld`/`booksAt`, RESEARCH.md §24); matching and pricing (`data/match/TeamMatcher`,
   `data/match/PlayerNames`, `data/scanner/PropStats`,
   `data/scanner/Planner` + `Pricing`); manual scans and pacing (`data/scanner/Scanner`,
   `data/novig/RateGate`, `MainViewModel.scan`); keys, quotas and meters (`data/keys/`:

@@ -2044,3 +2044,17 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
   and Games tab ("scan again"), and Recheck/re-pricing judge age as of now.
 - CNO: rows hidden while CNO's odds are over 5 minutes old; the green check needs a book page under 5 minutes
   old (re-read every 3).
+
+### 24.3 Built (v0.16.4)
+- `data/scanner/Freshness` (5 min per quote, 2 min re-use). `Scanner` stamps each quote's "last seen" at
+  fetch (the feed's own time, never later than the fetch; the fetch time when the feed doesn't say),
+  prices only quotes seen within 5 minutes of the pricing moment (`planFor`), re-uses no answer past
+  2 minutes, and judges Recheck / re-pricing as of now. PropLine quotes carry `last_seen_at` (older side).
+- `Opportunity.fairAsOfMs` / `fairIsOld(now)`: `UiState.feedAt(now)` feeds the +EV tab, widget, mini window
+  and tab badge; the Games tab shows "old" instead of a fair price/EV; an open bet sheet drops its EV with a
+  warning; a card says "odds aging" past 3 minutes; Recheck within 30 s of the limit runs a scan instead.
+- CNO: `UiState.cnoTooOld(now)` hides every CNO bet (tab, widget, mini window, lanes) while CNO's own odds
+  are over 5 minutes old; `UiState.booksAt(row, now)` never shows or agrees with a game page over 5 minutes
+  old; the green-check lane re-reads each page every 4 minutes (`CnoFeed.AGREE_TTL_MS`, was 10).
+- Costs: The Odds API (now mostly PropLine's backup) and sportsbook props are asked again after 2 minutes
+  instead of 15/60; when The Odds API is the only sportsbook source, frequent scanning spends more credits.
