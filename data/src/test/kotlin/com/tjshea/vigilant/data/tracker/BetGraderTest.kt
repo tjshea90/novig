@@ -86,8 +86,10 @@ class BetGraderTest {
         // No run in the 1st: NRFI (Under 0.5) wins.
         assertEquals(BetStatus.WON, g("1st Inning Total", "Under 0.5"))
         // Football halves are two quarters: Falcons 17, Packers 7.
-        val half = BetGrader.pickOf(bet("1st Half Point Spread", "Green Bay Packers +9.5", "Atlanta Falcons @ Green Bay Packers", "NFL"))!!
+        val half = BetGrader.pickOf(bet("1st Half Point Spread", "Green Bay Packers +10.5", "Atlanta Falcons @ Green Bay Packers", "NFL"))!!
         assertEquals(BetStatus.WON, BetGrader.grade(half, falcons))
+        val short = BetGrader.pickOf(bet("1st Half Point Spread", "Green Bay Packers +9.5", "Atlanta Falcons @ Green Bay Packers", "NFL"))!!
+        assertEquals(BetStatus.LOST, BetGrader.grade(short, falcons))
     }
 
     @Test
