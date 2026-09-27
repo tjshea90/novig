@@ -72,7 +72,7 @@ class PlacedEverywhereTest {
 
     @Test
     fun `a same-named bet on a different day's game still shows`() {
-        val tomorrow = cnoMark().copy(startsAtMs = o.event.startsTs!! + 24 * 3_600_000L)
+        val tomorrow = cnoMark().copy(startsAtMs = o.event.startsTs + 24 * 3_600_000L)
         assertTrue(vigilant.copy(placed = listOf(tomorrow)).indexed(now).feed.any { it.key == o.key })
     }
 
