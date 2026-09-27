@@ -264,7 +264,8 @@ fun CnoScreen(
                             screened != null && picks.isEmpty() -> EmptyState(
                                 if (state.settings.cnoOnlyAgreed && candidates.isNotEmpty()) "No bets the books agree on yet" else "No +EV bets pass right now",
                                 "CNO listed ${snap?.rows?.size ?: 0} for your view" + hiddenText(screened).let { if (it.isEmpty()) "" else "; $it" } +
-                                    setAsideText(screened.picks.size - candidates.size) +
+                                    laterText(state, screened.picks, now) +
+                                    setAsideText(screened.picks.count { state.hasCno(it.row) }) +
                                     onlyAgreedText(state, candidates.size - picks.size, now).let { if (it.isEmpty()) "" else "; $it" } +
                                     ". It's read again ${refreshLabel(state.settings)}.",
                             )
@@ -380,6 +381,13 @@ fun cnoFiltersLabel(f: CnoFilters): String = listOfNotNull(
 
 /** "; 2 you placed or removed" (nothing when none). */
 fun setAsideText(n: Int): String = if (n <= 0) "" else "; $n you placed or removed"
+
+/** "; 4 start after 24h": CNO's bets hidden by the start-time window (nothing when it's off or hides none). */
+fun laterText(state: UiState, picks: List<CnoPick>, now: Long): String {
+    val h = state.settings.startsWithinHours
+    val n = picks.count { !state.settings.startsInWindow(it.row.startsAtMs, now) }
+    return if (h <= 0 || n <= 0) "" else "; $n start after ${h}h"
+}
 
 /**
  * With "only bets the books agree on": "only ✓ bets: 5 held back, 3 being checked" (nothing when
