@@ -1015,6 +1015,28 @@ class ScreenshotTest {
         compose.onNodeWithText("from the final score").assertExists()
     }
 
+    /** Tj, 2026-09-27: bets over ±6% EV "ignore them completely" in the stats; still listed under Bets. */
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
+    @Test fun trackerLeavesOutlierBetsOutOfTheStats() {
+        val base = SampleScan.state()
+        val outlier = base.bets.first { it.id == "b1" }.copy(id = "big", selection = "Big Outlier", evPercentAtBet = 0.18, stake = 50.0)
+        val s = base.copy(bets = base.bets + outlier)
+        shoot("4c_tracker_outlier") { TrackerScreen(s, { _, _ -> }, {}) }
+        // The same record and profit as without it (trackerStats): a $50 win at +18% EV counts for nothing.
+        compose.onNodeWithText("2-1").assertExists()
+        compose.onNodeWithText("+$17.52").assertExists()
+        compose.onNodeWithText("1 outlier bet (over ±6% EV when bet)", substring = true).assertExists()
+    }
+
+    @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
+    @Test fun anOutlierBetSaysItIsNotInTheStats() {
+        val base = SampleScan.state()
+        val outlier = base.bets.first { it.id == "b4" }.copy(id = "big", selection = "Big Outlier", evPercentAtBet = -0.08)
+        screen { TrackerScreen(base.copy(bets = base.bets + outlier), { _, _ -> }, {}, initialView = com.tjshea.vigilant.app.ui.TrackerView.BETS) }
+        compose.onNodeWithText("Outlier (over ±6% EV): not in stats").assertExists()
+        compose.onAllNodesWithText("not in stats", substring = true).assertCountEquals(1)
+    }
+
     @Test fun trackerStakeIsEditable() {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}, initialView = com.tjshea.vigilant.app.ui.TrackerView.BETS) }
         // Tapping the stake opens its dialog (not opened here: a text field in a Robolectric dialog never idles).
