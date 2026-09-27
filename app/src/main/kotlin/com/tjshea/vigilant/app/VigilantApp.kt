@@ -44,6 +44,14 @@ import java.util.concurrent.TimeUnit
 
 class VigilantApp : Application() {
     val container: AppContainer by lazy { AppContainer(this) }
+
+    override fun onCreate() {
+        super.onCreate()
+        // A new process has no scan results (they live in memory): a "scan done" notification left
+        // from before Android closed Vigilant names bets the app can no longer show (Tj, 2026-09-27:
+        // "it says the best bet is Milwaukee, but this bet isn't even shown in the widget").
+        ScanService.cancelDone(this)
+    }
 }
 
 /**

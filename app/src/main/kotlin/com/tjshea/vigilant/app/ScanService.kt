@@ -99,7 +99,9 @@ class ScanService : Service() {
     }
 
     private fun finish(run: ScanRun, onScreen: Boolean) {
-        if (!onScreen && run.finished > 0) notify(DONE_ID, doneNotification(run))
+        // Not when Tj switched to CNO only mid-scan: the widget and app no longer show these bets.
+        val vigilantShown = (application as VigilantApp).container.settingsStore.flow.value?.vigilantOn ?: true
+        if (!onScreen && run.finished > 0 && vigilantShown) notify(DONE_ID, doneNotification(run))
         stopNow()
     }
 
@@ -175,7 +177,17 @@ class ScanService : Service() {
 
         /** Called from the Scan tap, while Vigilant is on screen (Android only lets it start then). */
         fun start(context: Context) {
+            // The last scan's "done" note is out of date the moment a new scan starts.
+            cancelDone(context)
             runCatching { ContextCompat.startForegroundService(context, Intent(context, ScanService::class.java)) }
+        }
+
+        /**
+         * Takes down the "scan done" notification: its bets are no longer what Vigilant shows (a new
+         * process, CNO only picked, or a new scan).
+         */
+        fun cancelDone(context: Context) {
+            runCatching { NotificationManagerCompat.from(context).cancel(DONE_ID) }
         }
 
         fun canNotify(context: Context): Boolean =
