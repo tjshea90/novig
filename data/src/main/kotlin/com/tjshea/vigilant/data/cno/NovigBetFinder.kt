@@ -97,6 +97,33 @@ class NovigBetFinder(
         return Found.Bet(outcome.id, event.id, market?.id, market?.novig)
     }
 
+    /**
+     * [row] on Novig after its game (the Tracker's auto-settle, Tj 2026-09-27: "keep track whether
+     * each bet was a win or a loss"): the same strict match, over every event that started near
+     * [CnoRow.startsAtMs] whatever its status (finished games leave the open list). [row]'s league
+     * may be blank (a bet imported from an old ✓ mark): then every league is searched. Only an
+     * exact outcome counts; the market is the one it belongs to.
+     */
+    suspend fun findEnded(row: CnoRow): Found.Bet? {
+        val start = row.startsAtMs ?: return null
+        val league = novigLeague(row.league)
+        val from = start - START_SLACK_MS
+        val key = "ended:${league.orEmpty()}:${from / ENDED_BUCKET_MS}"
+        val list = cached(events, key) {
+            val q = buildString {
+                append("$baseUrl/v3/public/catalog/events?status=$ENDED_STATUSES&limit=1000")
+                append("&startsAfter=${from - ENDED_BUCKET_MS}&startsBefore=${start + START_SLACK_MS + ENDED_BUCKET_MS}")
+                if (league != null) append("&league=").append(java.net.URLEncoder.encode(league, "UTF-8").replace("+", "%20"))
+            }
+            get(q)?.let(::parseEvents)
+        } ?: return null
+        val event = matchEvent(row, list) ?: return null
+        val markets = marketsOf(event.id) ?: return null
+        val outcome = matchOutcome(row, event, markets) ?: return null
+        val market = markets.firstOrNull { m -> m.outcomes.any { it.id == outcome.id } } ?: return null
+        return Found.Bet(outcome.id, event.id, market.id, market.novig)
+    }
+
     private suspend fun eventsOf(league: String): List<Event>? = cached(events, league) {
         get("$baseUrl/v3/public/catalog/events?league=$league&status=OPEN_PREGAME,OPEN_INGAME&limit=1000")?.let(::parseEvents)
     }
@@ -153,6 +180,12 @@ class NovigBetFinder(
 
         /** The least time between two of its reads. */
         const val MIN_GAP_MS = 350L
+
+        /** Every status a game can be in once it has started (and the ones before, for a late start). */
+        private const val ENDED_STATUSES = "OPEN_PREGAME,CLOSED_PREGAME,OPEN_INGAME,DELAYED,SETTLED,FINAL,CANCELED"
+
+        /** Finished-game searches share one read per this much start time. */
+        private const val ENDED_BUCKET_MS = 60 * 60_000L
 
         private val LENIENT = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
 
