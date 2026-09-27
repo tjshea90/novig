@@ -108,7 +108,15 @@ fun OpportunityDetail(
                 )
                 Text(o.eventName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            q?.let { EvBadge(it.evPercent, large = true) }
+            q?.takeIf { !o.fairIsOld(now) }?.let { EvBadge(it.evPercent, large = true) }
+        }
+        // Left open past a few minutes: the other books' prices behind this EV aren't current (RESEARCH.md §24).
+        if (o.fairIsOld(now)) {
+            Banner(
+                "The other books' prices behind this are over ${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes " +
+                    "old, so its EV isn't shown: scan again before betting.",
+                color = Edge.colors.warning,
+            )
         }
 
         SectionTitle("Price")
