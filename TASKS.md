@@ -2215,7 +2215,7 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       "a relay older than three minutes orders nothing"; preview errors → empty map.) Automatic fallback: no PropLine key, PropLine failed, answered late (the book reads don't wait for
       it past a short limit), its Novig prices too old, or a line it doesn't quote → the original order
       (open bets, last scan's EV, props/periods, main lines). Tests for each.
-- [ ] T4 Light tests + floor with screenshots, RESEARCH.md §23 note, ship, link.
+- [x] T4 (DONE 2026-09-27 ~18:00Z: light review of every file changed since v0.16.3 + callers (feedAt used by feed/tab badge/mini window/widget; Recheck on old odds scans instead); fixed stale KDoc (ScanSettings.staleReferenceMinutes, enabledSources) and RESEARCH §24.2 re-read interval; RESEARCH.md §23.6 present. Floor: engine 39, data 385 (8 live skipped), app 161, 0 failures, exit 0 + XML counts; screenshots checked (1_feed, 5_settings reuse 1m/2m chips, 8_cno, 9_floating_widget); assembleRelease OK.) Light tests + floor with screenshots, RESEARCH.md §23 note, ship, link.
 
 ## Tj's request, 2026-09-27 (~17:00Z, after T1–T4) — never stale sportsbook odds in a comparison
 > Do a thorough scan of the app and make sure it never gives me stale odds when comparing odds from other
@@ -2237,4 +2237,4 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       fair odds' age now…"; plus PropLineClientTest "each price carries when PropLine last saw it", FreshOddsAppTest (4),
       ScreenshotTest oldOddsLeaveTheFeedAndAskForAScan (replaces the test that expected old bets shown), agingOddsAreFlagged…,
       cnoTabHidesItsBetsWhileCnosOddsAreOld.) Fix every path found, each with a test that fails on the old code.
-- [ ] U4 Floor + screenshots, ship, link.
+- [x] U4 (floor above; the floor caught PropLineClientTest "each price carries when PropLine last saw it" contradicting the parser's withdrawn-side rule: fixture rewritten (market 9 min, older side 8 min -> 8 min; fails on v0.16.3 code, which used the market's time). Ship: see BUILDLOG v0.16.4.) Floor + screenshots, ship, link.
