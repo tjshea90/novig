@@ -72,6 +72,14 @@ android {
             all {
                 it.systemProperty("roborazzi.test.record", project.hasProperty("screenshots").toString())
                 it.maxHeapSize = "2g"
+                // Robolectric fetches its android-all jars itself, outside Gradle's repositories. In Claude
+                // Code's cloud containers Maven Central 429s the shared egress IPs, so tools/setup-android.sh
+                // sets `vigilant.mavenMirror` (Google's mirror of Central) and it's used here too. CI never
+                // sets it: Robolectric keeps Maven Central there (BRIEF.md build trap 6).
+                (project.findProperty("vigilant.mavenMirror") as String?)?.takeIf { url -> url.isNotBlank() }?.let { url ->
+                    it.systemProperty("robolectric.dependency.repo.url", url)
+                    it.systemProperty("robolectric.dependency.repo.id", "vigilant-maven-mirror")
+                }
             }
         }
     }
