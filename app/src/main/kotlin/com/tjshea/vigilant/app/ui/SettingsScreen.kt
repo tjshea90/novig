@@ -333,10 +333,16 @@ fun SettingsScreen(
                 if (s.usePropLine) {
                     KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
                 }
+                // PropLine goes first for the same sportsbooks; The Odds API backs it up (RESEARCH.md §23).
+                val propLineFirst = s.usePropLine && state.proplineKeys.isNotEmpty()
                 SwitchRow(
                     "The Odds API",
-                    if (state.oddsApiKeys.isEmpty()) "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
-                    else "US sportsbooks plus Pinnacle. Keys are used in order; the next takes over when one runs out.",
+                    when {
+                        state.oddsApiKeys.isEmpty() -> "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
+                        propLineFirst -> "Backup to PropLine (the same sportsbooks): asked only for leagues, games and props PropLine couldn't give, " +
+                            "so its credits last. Keys are used in order; the next takes over when one runs out."
+                        else -> "US sportsbooks plus Pinnacle. Keys are used in order; the next takes over when one runs out."
+                    },
                     s.useOddsApi,
                 ) { v -> onUpdate { it.copy(useOddsApi = v) } }
                 if (s.useOddsApi) {
@@ -345,13 +351,14 @@ fun SettingsScreen(
                     ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, s.oddsApiReuseMinutes, { if (it == 0) "Every scan" else "${it}m" }) { v ->
                         onUpdate { it.copy(oddsApiReuseMinutes = v) }
                     }
-                    Hint(creditEstimate(s))
+                    Hint(creditEstimate(s, backup = propLineFirst))
                 }
                 if (s.useOddsApi || s.usePropLine) {
                     SwitchRow(
                         "Sportsbook player props",
                         "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Pinnacle and " +
-                            "Kalshi where they have the same line. PropLine: 1 request per game. The Odds API: 1 credit per prop type per game.",
+                            "Kalshi where they have the same line. PropLine first: 1 request per game. The Odds API: 1 credit per prop type " +
+                            "per game, only for games and prop types PropLine didn't price.",
                         s.useBookProps,
                     ) { v -> onUpdate { it.copy(useBookProps = v) } }
                     if (s.useBookProps) {
@@ -369,7 +376,7 @@ fun SettingsScreen(
                             ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, s.bookPropReuseMinutes, ::minutesLabel) { v ->
                                 onUpdate { it.copy(bookPropReuseMinutes = v) }
                             }
-                            Hint(bookPropEstimate(s))
+                            Hint(bookPropEstimate(s, backup = propLineFirst))
                         }
                     }
 
@@ -386,9 +393,10 @@ fun SettingsScreen(
                         }
                     }
                     Hint(
-                        "Read from PropLine and The Odds API. On The Odds API, up to 10 books cost the same: one credit per market per " +
-                            "league, and one per prop type per game for props. PropLine carries all of them except Caesars, ESPN BET, " +
-                            "Betfair, Bally Bet and MyBookie.",
+                        "Read from PropLine first, and from The Odds API only for what PropLine couldn't give. On The Odds API, up to 10 " +
+                            "books cost the same: one credit per market per league, and one per prop type per game for props. PropLine " +
+                            "carries all of them except Caesars, ESPN BET, Betfair, Bally Bet and MyBookie, which count only when The Odds " +
+                            "API is asked (a book of those picked as sharp above keeps it asked every scan).",
                     )
                 }
 
@@ -567,9 +575,11 @@ private fun <T> ChoiceChips(options: List<T>, selected: T, label: (T) -> String,
  * What a scan costs in Odds API credits, so the free tier's 500 isn't a surprise. Only the main
  * lines (moneyline, spread, total) are bought per league; 1st half, team totals and props are not.
  */
-fun creditEstimate(s: ScanSettings): String {
+fun creditEstimate(s: ScanSettings, backup: Boolean = false): String {
     val markets = TheOddsApiClient.marketsFor(s.families).size
     if (markets == 0) return "No main-line markets are on, so game lines cost nothing."
+    if (backup) return "Nothing while PropLine answers. When it can't, game lines cost about ${markets * s.leagues.size.coerceAtLeast(1)} " +
+        "credits per refresh (${s.leagues.size} league${if (s.leagues.size == 1) "" else "s"} × $markets market${if (markets == 1) "" else "s"}), re-used as set here."
     val perScan = markets * s.leagues.size.coerceAtLeast(1)
     val base = "Game lines cost about $perScan credit${if (perScan == 1) "" else "s"} per refresh " +
         "(${s.leagues.size} league${if (s.leagues.size == 1) "" else "s"} × $markets market${if (markets == 1) "" else "s"})."
@@ -582,8 +592,10 @@ fun creditEstimate(s: ScanSettings): String {
 }
 
 /** What sportsbook props cost, in the same terms as [creditEstimate]. */
-fun bookPropEstimate(s: ScanSettings): String {
+fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     if (s.bookPropCreditsPerScan <= 0) return "No credits are set aside for props, so none are bought."
+    if (backup) return "Only games and prop types PropLine didn't price this scan, soonest first, never more than " +
+        "${s.bookPropCreditsPerScan} credits a scan (about 4 a game); re-used for ${minutesLabel(s.bookPropReuseMinutes)}."
     val perGame = if (s.bookPropSet == BookPropSet.CORE) 4 else null
     val games = perGame?.let { s.bookPropCreditsPerScan / it }
     val reach = if (games != null) {
