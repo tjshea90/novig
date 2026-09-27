@@ -44,6 +44,13 @@ class OddsApiPropsSource(
     /** Re-use is per game, in [bought]; the scanner must not hold the whole league back. */
     override fun reuseMs(settings: ScanSettings): Long = 0L
 
+    /**
+     * PropLine's props (1 request a game, from 1,000 a day) come from the same sportsbooks, so with a
+     * PropLine key these credits go only to the games and prop types PropLine didn't price this scan
+     * (RESEARCH.md §23): see [allocate].
+     */
+    override val fallbackFor: String get() = PropLinePropsSource.ID
+
     /** A game's props, bought at [atMs] with request [ask]. [ref] may have no markets (no book posted any). */
     private data class Bought(val novigEventId: String, val ref: RefEvent, val atMs: Long, val ask: String)
 
@@ -137,7 +144,10 @@ class OddsApiPropsSource(
             val have = bought[e.eventId]
             if (have != null && have.ask == ask) continue
             val league = Leagues.byNovigName(e.league) ?: continue
-            val types = propTypes[e.eventId]?.toSet() ?: continue
+            // Prop types PropLine already priced for this game this scan are left to it.
+            val theirs = context.covered[e.eventId].orEmpty().mapNotNullTo(HashSet()) { it.removePrefix("PROP:").takeIf { s -> s != it } }
+            val types = (propTypes[e.eventId]?.toSet() ?: continue) - theirs
+            if (types.isEmpty()) continue
             val markets = PropStats.oddsApiMarkets(league.oddsApiSportKey, settings.bookPropSet, types)
             if (markets.isEmpty() || markets.size > credits) continue
             out[e.eventId] = markets
