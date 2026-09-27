@@ -1,13 +1,13 @@
-# CHECKPOINT 455 — read me first, then TASKS.md
+# CHECKPOINT 456 — read me first, then TASKS.md
 
-**Written:** 2026-09-27T01:35:28Z · **tests:** all 1 fast checks green
-**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `c846fd8` (this checkpoint is the commit after it)
+**Written:** 2026-09-27T01:47:12Z · **tests:** all 1 fast checks green
+**Branch:** `claude/cno-scanner-enhancements-tj52i1` · **builds on:** `0cda14f` (this checkpoint is the commit after it)
 
 ## Just done
-L2 done: widget top-bar switch CNO only/Both, same bet shown once (outcome match) tagged CNO EV, placed hides both (aliases), opt-in rescan while widget open
+Logged Tj's live +EV request as M1-M3 (next version, after L4 ships); L3 in progress: NovigLive (Novig's price now for CNO bets) built + tested, finder paced + 429-aware
 
 ## Do this next
-L3: measure CNO under rapid refresh from here; build what helps (Novig live price for listed CNO bets?); RESEARCH 20.3; then L4 full floor + ship
+Finish L3: live check of NovigLive after 429 cool-down, RESEARCH 20.3, docs; L4 full floor, ship v0.15.4, release, link; then M1 research
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ L3: measure CNO under rapid refresh from here; build what helps (Novig live pric
 
 ## Last ten checkpoints
 ```
+  82074cb ckpt 455: L2 done: widget top-bar switch CNO only/Both, same bet shown once (outcome mat
   5cc41a5 ckpt 454: L1 done: taps race CNO + Novig catalog (first exact wins); links lane catalog-
   8b2086b ckpt 453: Logged Tj's 01:18Z requests as L1-L4 in TASKS.md
   8eb5cb1 ckpt 452: K10 done: v0.15.3 shipped (CI green 7b9636f, Release published, recorded); K1-
@@ -26,8 +27,7 @@ L3: measure CNO under rapid refresh from here; build what helps (Novig live pric
   b39913d ckpt 448: CI fix: CnoNetworkTest dead-connection retry pinned to 127.0.0.1 (CI runners r
   cb2fe83 ckpt 447: pre-release: v0.15.2: taps open Novig's bet slip every time (links read ahead,
   8c4d920 ckpt 446: K1-K9 done, v0.15.2 code 22 bumped, TASKS ticked, forced floor 438 green (engi
-  1ef848e ckpt 445: K1 (links lane + TapLink: cache -> CNO 5s -> Novig catalog -> game, toast), K2
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(17 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

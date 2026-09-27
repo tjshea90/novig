@@ -1875,3 +1875,21 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       listed CNO bets so a slow CNO doesn't leave stale prices); write up DNS / VPN / relay /
       proxy findings with costs in RESEARCH.md §20.3.
 - [ ] L4 Tests, full floor, ship, release, record, send link.
+
+## Tj's request, 2026-09-27 (mid-L3) — live +EV bets, fast (next version, after L4 ships)
+
+> For the next version, after releasing the version you are working on now, consider if it is
+> possible and if there is an online feed fast enough to tell me positive EV live bets on novig. I
+> have to be able to bet these very fast because the odds change. Also, it has to scan for live
+> odds on games very fast to find positive EV live bets that are not based on stale odds. If this
+> can be done, make it. If not, tell me your findings
+
+### Plan
+- [ ] M1 Research (after L4 ships): what's fast enough for live +EV on Novig: Novig's websocket
+      (NOVIG_API.md §6) vs polling books; live sharp reference odds (Pinnacle via pinnapi, Kalshi /
+      Polymarket live markets, The Odds API live, CNO's live view) with their real update latency
+      and cost; how stale each is vs Novig's book; Novig's live taker fee. Measure what can be
+      measured from here.
+- [ ] M2 If feasible: build a live +EV mode (fresh-only: every leg's age shown and capped, stale
+      legs dropped), fast enough to bet from the widget; if not, write up the findings for Tj.
+- [ ] M3 Tests, ship, send link (or findings).
