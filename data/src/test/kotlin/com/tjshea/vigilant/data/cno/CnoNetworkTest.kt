@@ -74,4 +74,16 @@ class CnoNetworkTest {
         }
         assertEquals(listOf(0L, 1_000L, 2_000L), times)
     }
+
+    @Test
+    fun `network failures say which one it was - DNS, a timeout, no connection`() {
+        assertEquals(
+            "the phone couldn't look up its address: no signal, or a VPN reconnecting",
+            CnoClient.why(java.net.UnknownHostException("Unable to resolve host \"crazyninjaodds.com\"")),
+        )
+        assertEquals("it didn't answer in time", CnoClient.why(java.net.SocketTimeoutException("timeout")))
+        assertEquals("it didn't answer in time", CnoClient.why(java.io.InterruptedIOException("timeout")))
+        assertEquals("no connection to it", CnoClient.why(java.net.ConnectException("Failed to connect")))
+        assertEquals("stream was reset: CANCEL", CnoClient.why(java.io.IOException("stream was reset: CANCEL")))
+    }
 }
