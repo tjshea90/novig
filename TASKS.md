@@ -2238,3 +2238,38 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       ScreenshotTest oldOddsLeaveTheFeedAndAskForAScan (replaces the test that expected old bets shown), agingOddsAreFlagged…,
       cnoTabHidesItsBetsWhileCnosOddsAreOld.) Fix every path found, each with a test that fails on the old code.
 - [x] U4 (floor above; the floor caught PropLineClientTest "each price carries when PropLine last saw it" contradicting the parser's withdrawn-side rule: fixture rewritten (market 9 min, older side 8 min -> 8 min; fails on v0.16.3 code, which used the market's time). Ship: see BUILDLOG v0.16.4.) Floor + screenshots, ship, link.
+
+## Tj's request, 2026-09-27 (~18:55Z) — the same +EV scanner for BetMGM, without disturbing Novig
+> Be very careful not to break or disrupt anything in this app, but make it also do the same exact functions
+> to find positive EV on betmgm. It should do exactly what the app already does for novig, but at the ability
+> to do the same for betmgm. Do not scan for both at the same time unless this can be done without wasting too
+> much api usage. If needed or if smart, make this a totally separate app for the betmgm scanner so as not to
+> disturb novig, and copy the logic you already built from vigilant
+
+**Decision (this session):** a separate app, **Vigilant MGM** (`com.tjshea.vigilant.betmgm`), built from the
+same code as Vigilant rather than a hand-copied fork: a second Android module `mgm` compiles `app`'s own
+sources and resources with one build-time switch (`BuildConfig.BOOK`: `novig` in `app`, `betmgm` in `mgm`).
+Why: the Novig app keeps its applicationId, storage, keys, placed bets, tracker and every behavior (its code
+paths never see BetMGM at runtime), both can be installed side by side, and every future fix reaches both
+(a copied fork drifts: CLAUDE.md's "duplicated normalizer" lesson). One scan targets one book, so nothing
+scans both at once. BetMGM costs no extra requests: its prices ride in the PropLine / The Odds API calls that
+already fetch the fair-odds books (BetMGM asked for alongside them, split off as the board, never in the fair line).
+
+- [ ] V1 Data: `data/book/Sportsbook` (NOVIG / BETMGM: names, feed keys, CNO site id and column), `MgmBoard`
+      (BetMGM's quotes in a feed's snapshot → an event/market/outcome board with exact prices, no fee),
+      `MgmScanner` (same `scan/recheck/reprice/unscannedLeagues` as `Scanner` behind one `OddsScanner`
+      interface; PropLine league boards + props per game, PinnWire, Kalshi, Polymarket, The Odds API fallback;
+      BetMGM never prices its own fair line; recheck re-reads PropLine for the feed's leagues/games only).
+      Tests: BetMGM's price vs fair → EV; BetMGM left out of the fair line; one PropLine request serves both;
+      stale BetMGM quote never priced; recheck request count; Novig's `Scanner` untouched (all old tests green).
+- [ ] V2 Bet slips: BetMGM's link from PropLine's ids (`includeBookIds`/`includeLinks`: fixture, market,
+      option → `sports.<state>.betmgm.com/en/sports?options=f-m-o`), else its event page, else BetMGM's
+      site; state picked in Settings. CNO rows follow CNO's own BetMGM deeplink. Tests for each fallback.
+- [ ] V3 App: `BuildConfig.BOOK` in `app` (novig) and new module `mgm` (betmgm, own name/icon, same keystore,
+      versionCode/Name shared); every "Novig" the user reads comes from the book; Novig-only parts off in
+      Vigilant MGM (Novig key, maker bid, order-book depth/width, Novig fee checks, NovigLive, Novig catalog
+      finder); CNO view defaults to site_id=4 (BetMGM). Tests: Novig build's screenshots/strings unchanged;
+      mgm screenshots say BetMGM.
+- [ ] V4 Build/release: ci.yml covers `:mgm` (root `test`/`assembleDebug`), release.yml builds both and
+      attaches both APKs to the same Release (Novig's APK name unchanged); ship.sh gate covers both.
+- [ ] V5 Docs (BRIEF.md decision, CLAUDE.md surface, RESEARCH.md §25), light tests, ship, link.
