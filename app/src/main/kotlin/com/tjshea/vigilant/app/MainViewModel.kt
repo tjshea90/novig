@@ -9,10 +9,12 @@ import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
+import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoBooksState
 import com.tjshea.vigilant.data.cno.CnoChecks
 import com.tjshea.vigilant.data.cno.CnoConfig
 import com.tjshea.vigilant.data.cno.CnoFeed
+import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.CnoScreened
 import com.tjshea.vigilant.data.cno.CnoState
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -97,8 +100,8 @@ data class UiState(
     /** [placed]'s keys, for hiding them. */
     val placedKeys: Set<String> by lazy { placed.mapTo(HashSet()) { it.key } }
 
-    /** [placed]'s families (the same bet at another line), for the "placed O5.5" tag. */
-    val placedFamilies: Map<String, PlacedBet> by lazy { placed.filter { it.family.isNotEmpty() }.associateBy { it.family } }
+    /** [placed]'s families (the same bet at another line), for the "placed O5.5" tag; bets removed with ✕ weren't bet. */
+    val placedFamilies: Map<String, PlacedBet> by lazy { placed.filter { !it.hidden && it.family.isNotEmpty() }.associateBy { it.family } }
 
     /** The CNO view to read: Tj's saved link, or Novig with CNO's defaults. */
     val cnoUrl: String get() = CnoView.normalize(settings.cnoViewUrl) ?: CnoView.DEFAULT
@@ -113,9 +116,39 @@ data class UiState(
     fun cnoPicks(now: Long): CnoScreened? =
         cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
 
-    /** [cnoPicks] without the bets Tj marked placed: what the CNO tab, its badge and the widgets list. */
-    fun cnoShown(now: Long): List<com.tjshea.vigilant.data.cno.CnoPick> =
+    /** Whether CNO bets' books are read: for the green check, or for "only bets the books agree on". */
+    val cnoReadsBooks: Boolean get() = settings.cnoCheckBooks || settings.cnoOnlyAgreed
+
+    /** [cnoPicks] without the bets Tj placed or removed (✕): what the green-check lane reads. */
+    fun cnoCandidates(now: Long): List<CnoPick> =
         cnoPicks(now)?.picks?.filter { MiniWindow.cnoKey(it.row) !in placedKeys }.orEmpty()
+
+    /** The green check: several books price both sides of [pick] and agree it's +EV ([CnoBooks.agrees]). */
+    fun cnoAgrees(pick: CnoPick): Boolean {
+        if (!cnoReadsBooks) return false
+        val view = books[pick.row.key]?.view ?: return false
+        val snap = cno.snapshot ?: return false
+        return CnoBooks.agrees(view, pick.row, pick.live, snap.fetchedAtMs)
+    }
+
+    /**
+     * What the CNO tab, its badge and the widgets list: [cnoCandidates], only the green-check ones
+     * when "only bets the books agree on" is on (Tj, 2026-09-27).
+     */
+    fun cnoShown(now: Long): List<CnoPick> =
+        cnoCandidates(now).let { all -> if (settings.cnoOnlyAgreed) all.filter(::cnoAgrees) else all }
+
+    /**
+     * With "only bets the books agree on" on: the bets held back only because their books haven't
+     * been read yet (the green-check lane is on its way to them). Zero otherwise.
+     */
+    fun cnoBeingChecked(now: Long): Int {
+        if (!settings.cnoOnlyAgreed) return 0
+        return cnoCandidates(now).take(CnoFeed.AGREE_TOP_ONLY_AGREED).count { p ->
+            val b = books[p.row.key]
+            b?.view == null && b?.error == null
+        }
+    }
 }
 
 /**
@@ -200,7 +233,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             cnoWatch.runWhileWatched(onActive = { active -> _state.update { it.copy(cnoLive = active) } }) {
                 launch { c.cno.watch(state.map { it.cnoConfig }) }
-                launch { c.cno.keepBooksFresh(agreementRows()) }
+                // How many of the top bets the lane covers follows the switch (restarting the lane).
+                launch {
+                    state.map { it.settings.cnoOnlyAgreed }.distinctUntilChanged().collectLatest { only ->
+                        c.cno.keepBooksFresh(agreementRows(), if (only) CnoFeed.AGREE_TOP_ONLY_AGREED else CnoFeed.AGREE_TOP)
+                    }
+                }
+                // Each listed bet's Novig link, ahead of any tap (Tj, 2026-09-27: taps that didn't open the bet slip).
+                launch { c.cno.keepLinksFresh(state.map { s -> s.cnoShown(System.currentTimeMillis()).map { it.row } }) }
                 launch { c.teams.keepFresh(teamRows()) }
             }
         }
@@ -209,10 +249,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** [MainActivity] and the widget say when they start and stop showing CNO's list. */
     fun watchCno(who: String, on: Boolean) = cnoWatch.set(who, on)
 
-    /** The bets whose books the green check reads: the list's best, placed ones left out. */
+    /**
+     * The bets whose books the green check reads: the list's best, placed and removed ones left
+     * out. With "only bets the books agree on", every candidate (not just the ones shown, which
+     * would be only those already read) and more of them.
+     */
     private fun agreementRows(): Flow<List<CnoRow>> = state.map { s ->
-        if (!s.settings.cnoCheckBooks) emptyList()
-        else s.cnoShown(System.currentTimeMillis()).map { it.row }
+        if (!s.cnoReadsBooks) emptyList()
+        else s.cnoCandidates(System.currentTimeMillis()).map { it.row }
     }
 
     /** The rows whose players' teams are wanted (all of the list's player bets). */
@@ -224,6 +268,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun markPlaced(item: MiniWindow.Item) {
         viewModelScope.launch {
             if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis())) }.isFailure) _toasts.tryEmit("Couldn't save that")
+        }
+    }
+
+    /** The widget's ✕: the bet leaves the list for good, without counting as placed (Tj, 2026-09-27). */
+    fun markHidden(item: MiniWindow.Item) {
+        viewModelScope.launch {
+            if (runCatching { c.placed.mark(MiniWindow.placed(item, System.currentTimeMillis(), hidden = true)) }.isFailure) _toasts.tryEmit("Couldn't save that")
         }
     }
 
