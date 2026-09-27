@@ -1789,7 +1789,9 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       `cnoCardXRemovesItAndTheRemovedListPutsItBack`; K8 `MiniWindowTest` "only bets the books agree
       on…", `ScreenshotTest.cnoTabWithOnlyAgreedBetsSaysWhatsHeldBack`,
       `settingsHasTheOnlyAgreedSwitch`; K9 RESEARCH.md §20.2.
-- [ ] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
+- [x] K5 Tests, full floor, ship, send the link; confirm J1-J6 (v0.15.1) are in the release.
+      Shipped v0.15.2 (code 22, 438 tests, CI green on b39913d, Release published 2026-09-27T00:54Z;
+      built from main, which carries v0.15.1's J1-J6).
 - [ ] K10 Tj, 00:30Z: "When all of the features and fixes I asked for are finished, run a full test
       protocol and find ways to improve the UI and speed and efficiency and bug fixes, but without
       sacrificing any accuracy" → after K1-K9 ship: CLAUDE.md full-test protocol on the whole app,
