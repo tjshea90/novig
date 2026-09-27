@@ -80,6 +80,13 @@ data class TrackedBet(
 
     /** Closing-line value: the EV this price had against the closing fair line. */
     val clvPercent: Double? get() = closingFair?.let { it / cost - 1.0 }
+
+    /**
+     * An EV so far from the rest (over [BetTracker.OUTLIER_EV] either way when bet) that it's left out
+     * of every stat (Tj, 2026-09-27: "I don't want the average skewed by a single bet that is an
+     * outlier"). A bet with no EV on record isn't one.
+     */
+    val isOutlier: Boolean get() = evPercentAtBet?.let { kotlin.math.abs(it) > BetTracker.OUTLIER_EV + 1e-9 } ?: false
 }
 
 data class TrackerStats(
@@ -97,6 +104,8 @@ data class TrackerStats(
     val lost: Int = 0,
     /** Pushes and fair-value settlements: neither a win nor a loss. */
     val pushed: Int = 0,
+    /** Bets left out of every number above ([TrackedBet.isOutlier]). */
+    val outliers: Int = 0,
 ) {
     /** Wins out of decided bets (Tj: "percentage of actual bet wins and losses"); null before any. */
     val winRate: Double? get() = (won + lost).takeIf { it > 0 }?.let { won.toDouble() / it }
@@ -287,7 +296,15 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         /** A ✓ logs a $1 bet: Novig's API can't read the app's own bets (NOVIG_API.md: subaccounts only). */
         const val DEFAULT_STAKE = 1.0
 
-        fun stats(bets: List<TrackedBet>): TrackerStats {
+        /**
+         * A bet whose EV when placed was over this, either way, is an outlier: kept in the list of bets,
+         * left out of every stat (Tj, 2026-09-27: "currently + or - over 6% ev").
+         */
+        const val OUTLIER_EV = 0.06
+
+        /** The Tracker's numbers for [all], outliers ([TrackedBet.isOutlier]) left out completely. */
+        fun stats(all: List<TrackedBet>): TrackerStats {
+            val bets = all.filterNot { it.isOutlier }
             val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }
             val staked = settled.sumOf { it.stake }
             val profit = settled.sumOf { it.profit ?: 0.0 }
@@ -308,6 +325,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 won = bets.count { it.status == BetStatus.WON },
                 lost = bets.count { it.status == BetStatus.LOST },
                 pushed = bets.count { it.status == BetStatus.PUSH || it.status == BetStatus.FMV },
+                outliers = all.size - bets.size,
             )
         }
     }
