@@ -129,13 +129,15 @@ class NovigPreviewTest {
     @Test
     fun `a relay older than three minutes orders nothing`() = runTest {
         val relay = Relay(reuse = 30 * 60_000L)
-        val scanner = Scanner(Novig(), clock = { now })
+        val novig = Novig()
+        val scanner = Scanner(novig, clock = { now })
         scanner.scan(settings, listOf(Pinnacle(), relay))
+        assertEquals(Fixtures.TOTAL_MARKET, novig.reads.first().first())
         // Five minutes on, the relay's answer is re-used (its own window), but it's too old to order by.
+        novig.reads.clear()
         now += 5 * 60_000L
-        val later = Novig()
-        val again = Scanner::class.java.getDeclaredField("novig").let { f -> f.isAccessible = true; f.set(scanner, later) }
         scanner.scan(settings, listOf(Pinnacle(), relay))
-        assertEquals(original, later.reads.first())
+        assertEquals(1, log.count { it == "relay" })
+        assertEquals(original, novig.reads.first())
     }
 }
