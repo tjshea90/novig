@@ -127,8 +127,9 @@ object MiniWindow {
         val s = state.settings
         val ours = if (showsVigilant(s)) state.feed.mapNotNull { it.miniItem(now) } else emptyList()
         val snap = state.cno.snapshot
-        // CNO's rows only after the app's own checks (thin markets, odds cap, one-way devigs, …).
-        val theirs = if (snap == null) emptyList() else state.cnoPicks(now)?.picks?.map { itemFor(it, snap, state, now) } ?: emptyList()
+        // CNO's rows only after the app's own checks (thin markets, odds cap, one-way devigs, …),
+        // placed and removed ones left out, and only green-check ones when that setting is on.
+        val theirs = if (snap == null) emptyList() else state.cnoShown(now).map { itemFor(it, snap, state, now) }
         val all = when {
             theirs.isEmpty() -> ours
             ours.isEmpty() -> theirs
@@ -147,11 +148,7 @@ object MiniWindow {
     /** One CNO bet as the widget (and the CNO tab's placed button) sees it. */
     fun itemFor(pick: CnoPick, snap: CnoSnapshot, state: UiState, now: Long): Item {
         val row = pick.row
-        val view = state.books[row.key]?.view
-        return pick.miniItem(snap, now).copy(
-            team = state.teams[row.key],
-            agrees = view != null && state.settings.cnoCheckBooks && CnoBooks.agrees(view, row, pick.live, snap.fetchedAtMs),
-        )
+        return pick.miniItem(snap, now).copy(team = state.teams[row.key], agrees = state.cnoAgrees(pick))
     }
 
     private fun Opportunity.miniItem(now: Long): Item? {
