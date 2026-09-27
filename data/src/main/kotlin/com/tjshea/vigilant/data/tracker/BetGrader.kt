@@ -52,9 +52,8 @@ object BetGrader {
                 val points = line?.replace('−', '-')?.trim()?.toDoubleOrNull()
                 if (who.isEmpty() || points == null || period == Period.FIRST_INNING) null else Pick.Spread(who, points, period)
             }
-            // A game total ("Total", "Total Points", "F5 Total", "1st Inning Total"): no one named.
-            Regex("^(1h |f5 |1st half |first half |1st inning |first inning )?total( points| runs| goals)?$").matches(lower) ||
-                (period == Period.FIRST_INNING && who.isEmpty()) -> {
+            // A game total ("Total", "Total Points", "F5 Total", "1st 5 Innings Total Runs", "1st Inning Total"): no one named.
+            GAME_TOTAL.matches(lower.replace(PERIOD_PREFIX, "")) || (period == Period.FIRST_INNING && who.isEmpty()) -> {
                 if (who.isNotEmpty() || total == null) null else Pick.Total(total.first, total.second, period)
             }
             else -> {
@@ -72,9 +71,10 @@ object BetGrader {
 
     /** Novig's stat for a market label ("Player Receiving Yards", "Passing Yards", "Pitcher Strikeouts"), when exactly one fits. */
     fun statOf(market: String): String? {
-        val words = NovigBetFinder.marketWords(market.replace(Regex("(?i)anytime (td|touchdown)( scorer)?"), "touchdowns")
-            .replace(Regex("(?i)\\bstrikeouts\\b"), if (market.contains("pitch", true)) "strikeouts" else "strikeouts")
-            .replace(Regex("(?i)3-pointers made|3 pointers made|threes made|threes"), "three pointers made"))
+        val words = NovigBetFinder.marketWords(
+            market.replace(Regex("(?i)anytime (td|touchdown)( scorer)?"), "touchdowns")
+                .replace(Regex("(?i)3-pointers made|3 pointers made|threes made|threes"), "three pointers made"),
+        )
         val fits = PropStats.NOVIG_TYPES.filter { NovigBetFinder.typeFits(it, words) }
         return fits.singleOrNull()
             // "Strikeouts" alone: a pitcher's (the books' default), unless it says batter.
@@ -183,6 +183,11 @@ object BetGrader {
     }
 
     private const val MIN_TEAM = 0.8
+
+    private val GAME_TOTAL = Regex("^total( points| runs| goals)?$")
+
+    /** A period in front of a market's name ("F5 Total", "1st 5 Innings Total Runs"). */
+    private val PERIOD_PREFIX = Regex("^(1h|f5|1st half|first half|1st inning|first inning|1st 5 innings|first 5 innings|1st five innings)\\s+")
 
     /** A score feed's game and the bet's must start within this (Novig's placeholder times, late starts). */
     const val MAX_START_GAP_MS = 12 * 60 * 60_000L
