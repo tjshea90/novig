@@ -1,0 +1,188 @@
+{
+ "boxscore": {
+  "players": [
+   {
+    "team": {
+     "displayName": "Toronto Tempo"
+    },
+    "statistics": [
+     {
+      "name": null,
+      "keys": [
+       "minutes",
+       "points",
+       "fieldGoalsMade-fieldGoalsAttempted",
+       "threePointFieldGoalsMade-threePointFieldGoalsAttempted",
+       "freeThrowsMade-freeThrowsAttempted",
+       "rebounds",
+       "assists",
+       "turnovers",
+       "steals",
+       "blocks",
+       "offensiveRebounds",
+       "defensiveRebounds",
+       "fouls",
+       "plusMinus"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Isabelle Harrison"
+        },
+        "stats": [
+         "23",
+         "19",
+         "7-12",
+         "0-1",
+         "5-7",
+         "10",
+         "0",
+         "4",
+         "1",
+         "0",
+         "2",
+         "8",
+         "2",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Laura Juskaite"
+        },
+        "stats": [
+         "32",
+         "15",
+         "3-15",
+         "0-3",
+         "9-10",
+         "7",
+         "3",
+         "1",
+         "4",
+         "0",
+         "1",
+         "6",
+         "3",
+         "-3"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Kia Nurse"
+        },
+        "stats": [
+         "29",
+         "10",
+         "2-10",
+         "2-8",
+         "4-4",
+         "2",
+         "1",
+         "1",
+         "0",
+         "0",
+         "1",
+         "1",
+         "3",
+         "-3"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "team": {
+     "displayName": "Connecticut Sun"
+    },
+    "statistics": [
+     {
+      "name": null,
+      "keys": [
+       "minutes",
+       "points",
+       "fieldGoalsMade-fieldGoalsAttempted",
+       "threePointFieldGoalsMade-threePointFieldGoalsAttempted",
+       "freeThrowsMade-freeThrowsAttempted",
+       "rebounds",
+       "assists",
+       "turnovers",
+       "steals",
+       "blocks",
+       "offensiveRebounds",
+       "defensiveRebounds",
+       "fouls",
+       "plusMinus"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Aaliyah Edwards"
+        },
+        "stats": [
+         "17",
+         "16",
+         "6-11",
+         "0-0",
+         "4-4",
+         "4",
+         "2",
+         "2",
+         "1",
+         "0",
+         "3",
+         "1",
+         "1",
+         "-1"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Diamond Miller"
+        },
+        "stats": [
+         "17",
+         "3",
+         "1-4",
+         "1-3",
+         "0-2",
+         "1",
+         "0",
+         "0",
+         "1",
+         "0",
+         "0",
+         "1",
+         "3",
+         "-4"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Raegan Beers"
+        },
+        "stats": [
+         "29",
+         "17",
+         "6-11",
+         "0-1",
+         "5-5",
+         "8",
+         "1",
+         "0",
+         "0",
+         "2",
+         "4",
+         "4",
+         "5",
+         "+13"
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

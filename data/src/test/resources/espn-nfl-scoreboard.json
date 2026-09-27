@@ -1,0 +1,78 @@
+{
+ "events": [
+  {
+   "id": "401872948",
+   "date": "2026-09-25T00:15Z",
+   "name": "Atlanta Falcons at Green Bay Packers",
+   "competitions": [
+    {
+     "status": {
+      "type": {
+       "id": "3",
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true,
+       "description": "Final",
+       "detail": "Final",
+       "shortDetail": "Final"
+      }
+     },
+     "competitors": [
+      {
+       "homeAway": "home",
+       "winner": false,
+       "score": "14",
+       "team": {
+        "displayName": "Green Bay Packers",
+        "shortDisplayName": "Packers",
+        "abbreviation": "GB",
+        "location": "Green Bay",
+        "name": "Packers"
+       },
+       "linescores": [
+        {
+         "value": 7.0
+        },
+        {
+         "value": 0.0
+        },
+        {
+         "value": 0.0
+        },
+        {
+         "value": 7.0
+        }
+       ]
+      },
+      {
+       "homeAway": "away",
+       "winner": true,
+       "score": "35",
+       "team": {
+        "displayName": "Atlanta Falcons",
+        "shortDisplayName": "Falcons",
+        "abbreviation": "ATL",
+        "location": "Atlanta",
+        "name": "Falcons"
+       },
+       "linescores": [
+        {
+         "value": 7.0
+        },
+        {
+         "value": 10.0
+        },
+        {
+         "value": 7.0
+        },
+        {
+         "value": 11.0
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,565 @@
+{
+ "boxscore": {
+  "players": [
+   {
+    "team": {
+     "displayName": "Atlanta Falcons"
+    },
+    "statistics": [
+     {
+      "name": "passing",
+      "keys": [
+       "completions/passingAttempts",
+       "passingYards",
+       "yardsPerPassAttempt",
+       "passingTouchdowns",
+       "interceptions",
+       "sacks-sackYardsLost",
+       "adjQBR",
+       "QBRating"
+      ],
+      "labels": [
+       "C/ATT",
+       "YDS",
+       "AVG",
+       "TD",
+       "INT",
+       "SACKS",
+       "QBR",
+       "RTG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Michael Penix Jr."
+        },
+        "stats": [
+         "18/25",
+         "256",
+         "10.2",
+         "1",
+         "1",
+         "0-0",
+         "84.5",
+         "101.4"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "rushing",
+      "keys": [
+       "rushingAttempts",
+       "rushingYards",
+       "yardsPerRushAttempt",
+       "rushingTouchdowns",
+       "longRushing"
+      ],
+      "labels": [
+       "CAR",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Bijan Robinson"
+        },
+        "stats": [
+         "29",
+         "194",
+         "6.7",
+         "2",
+         "55"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Brian Robinson Jr."
+        },
+        "stats": [
+         "10",
+         "50",
+         "5.0",
+         "1",
+         "16"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Michael Penix Jr."
+        },
+        "stats": [
+         "2",
+         "-2",
+         "-1.0",
+         "0",
+         "-1"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "receiving",
+      "keys": [
+       "receptions",
+       "receivingYards",
+       "yardsPerReception",
+       "receivingTouchdowns",
+       "longReception",
+       "receivingTargets"
+      ],
+      "labels": [
+       "REC",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG",
+       "TGTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Drake London"
+        },
+        "stats": [
+         "9",
+         "194",
+         "21.6",
+         "0",
+         "68",
+         "10"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Bijan Robinson"
+        },
+        "stats": [
+         "2",
+         "19",
+         "9.5",
+         "0",
+         "17",
+         "2"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Austin Hooper"
+        },
+        "stats": [
+         "2",
+         "11",
+         "5.5",
+         "1",
+         "6",
+         "2"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Jahan Dotson"
+        },
+        "stats": [
+         "1",
+         "11",
+         "11.0",
+         "0",
+         "11",
+         "3"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "kickReturns",
+      "keys": [
+       "kickReturns",
+       "kickReturnYards",
+       "yardsPerKickReturn",
+       "longKickReturn",
+       "kickReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Brian Robinson Jr."
+        },
+        "stats": [
+         "2",
+         "54",
+         "27.0",
+         "30",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Zachariah Branch"
+        },
+        "stats": [
+         "1",
+         "22",
+         "22.0",
+         "22",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "puntReturns",
+      "keys": [
+       "puntReturns",
+       "puntReturnYards",
+       "yardsPerPuntReturn",
+       "longPuntReturn",
+       "puntReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Zachariah Branch"
+        },
+        "stats": [
+         "1",
+         "18",
+         "18.0",
+         "18",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Olamide Zaccheaus"
+        },
+        "stats": [
+         "1",
+         "4",
+         "4.0",
+         "4",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "kicking",
+      "keys": [
+       "fieldGoalsMade/fieldGoalAttempts",
+       "fieldGoalPct",
+       "longFieldGoalMade",
+       "extraPointsMade/extraPointAttempts",
+       "totalKickingPoints"
+      ],
+      "labels": [
+       "FG",
+       "PCT",
+       "LONG",
+       "XP",
+       "PTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Nick Folk"
+        },
+        "stats": [
+         "2/2",
+         "100.0",
+         "44",
+         "3/3",
+         "9"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "team": {
+     "displayName": "Green Bay Packers"
+    },
+    "statistics": [
+     {
+      "name": "passing",
+      "keys": [
+       "completions/passingAttempts",
+       "passingYards",
+       "yardsPerPassAttempt",
+       "passingTouchdowns",
+       "interceptions",
+       "sacks-sackYardsLost",
+       "adjQBR",
+       "QBRating"
+      ],
+      "labels": [
+       "C/ATT",
+       "YDS",
+       "AVG",
+       "TD",
+       "INT",
+       "SACKS",
+       "QBR",
+       "RTG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Jordan Love"
+        },
+        "stats": [
+         "28/53",
+         "312",
+         "5.9",
+         "2",
+         "1",
+         "1-1",
+         "42.6",
+         "75.4"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "rushing",
+      "keys": [
+       "rushingAttempts",
+       "rushingYards",
+       "yardsPerRushAttempt",
+       "rushingTouchdowns",
+       "longRushing"
+      ],
+      "labels": [
+       "CAR",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "MarShawn Lloyd"
+        },
+        "stats": [
+         "4",
+         "11",
+         "2.8",
+         "0",
+         "6"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Kaleb Johnson"
+        },
+        "stats": [
+         "4",
+         "6",
+         "1.5",
+         "0",
+         "5"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Jordan Love"
+        },
+        "stats": [
+         "1",
+         "0",
+         "0.0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "receiving",
+      "keys": [
+       "receptions",
+       "receivingYards",
+       "yardsPerReception",
+       "receivingTouchdowns",
+       "longReception",
+       "receivingTargets"
+      ],
+      "labels": [
+       "REC",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG",
+       "TGTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Matthew Golden"
+        },
+        "stats": [
+         "5",
+         "100",
+         "20.0",
+         "1",
+         "45",
+         "12"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Christian Watson"
+        },
+        "stats": [
+         "7",
+         "96",
+         "13.7",
+         "1",
+         "34",
+         "10"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Skyy Moore"
+        },
+        "stats": [
+         "3",
+         "31",
+         "10.3",
+         "0",
+         "12",
+         "7"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Tucker Kraft"
+        },
+        "stats": [
+         "4",
+         "26",
+         "6.5",
+         "0",
+         "9",
+         "8"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "kickReturns",
+      "keys": [
+       "kickReturns",
+       "kickReturnYards",
+       "yardsPerKickReturn",
+       "longKickReturn",
+       "kickReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Skyy Moore"
+        },
+        "stats": [
+         "5",
+         "134",
+         "26.8",
+         "32",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Bo Melton"
+        },
+        "stats": [
+         "2",
+         "46",
+         "23.0",
+         "25",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "puntReturns",
+      "keys": [
+       "puntReturns",
+       "puntReturnYards",
+       "yardsPerPuntReturn",
+       "longPuntReturn",
+       "puntReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": []
+     },
+     {
+      "name": "kicking",
+      "keys": [
+       "fieldGoalsMade/fieldGoalAttempts",
+       "fieldGoalPct",
+       "longFieldGoalMade",
+       "extraPointsMade/extraPointAttempts",
+       "totalKickingPoints"
+      ],
+      "labels": [
+       "FG",
+       "PCT",
+       "LONG",
+       "XP",
+       "PTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Trey Smack"
+        },
+        "stats": [
+         "0/1",
+         "0.0",
+         "0",
+         "2/2",
+         "2"
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

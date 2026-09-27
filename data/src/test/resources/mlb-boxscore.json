@@ -1,0 +1,276 @@
+{
+ "teams": {
+  "away": {
+   "team": {
+    "name": "New York Mets"
+   },
+   "players": {
+    "ID666182": {
+     "person": {
+      "fullName": "Bo Bichette"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 1,
+       "hits": 1,
+       "atBats": 4,
+       "stolenBases": 0,
+       "plateAppearances": 5,
+       "totalBases": 1,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID682626": {
+     "person": {
+      "fullName": "Francisco Alvarez"
+     },
+     "stats": {
+      "batting": {
+       "runs": 1,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 1,
+       "hits": 0,
+       "atBats": 3,
+       "stolenBases": 0,
+       "plateAppearances": 4,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID668901": {
+     "person": {
+      "fullName": "Mark Vientos"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 5,
+       "stolenBases": 0,
+       "plateAppearances": 5,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID668964": {
+     "person": {
+      "fullName": "Tobias Myers"
+     },
+     "stats": {
+      "batting": {},
+      "pitching": {
+       "strikeOuts": 2,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "inningsPitched": "1.0",
+       "earnedRuns": 0,
+       "outs": 3
+      }
+     }
+    },
+    "ID683146": {
+     "person": {
+      "fullName": "Brett Baty"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 4,
+       "stolenBases": 0,
+       "plateAppearances": 4,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID701807": {
+     "person": {
+      "fullName": "Carson Benge"
+     },
+     "stats": {
+      "batting": {
+       "runs": 2,
+       "doubles": 1,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 0,
+       "baseOnBalls": 0,
+       "hits": 3,
+       "atBats": 5,
+       "stolenBases": 0,
+       "plateAppearances": 5,
+       "totalBases": 4,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    }
+   }
+  },
+  "home": {
+   "team": {
+    "name": "Washington Nationals"
+   },
+   "players": {
+    "ID691781": {
+     "person": {
+      "fullName": "Brady House"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 0,
+       "hits": 1,
+       "atBats": 3,
+       "stolenBases": 0,
+       "plateAppearances": 3,
+       "totalBases": 1,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID694673": {
+     "person": {
+      "fullName": "Abimelec Ortiz"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 3,
+       "stolenBases": 0,
+       "plateAppearances": 4,
+       "totalBases": 0,
+       "rbi": 1
+      },
+      "pitching": {}
+     }
+    },
+    "ID691002": {
+     "person": {
+      "fullName": "Yohandy Morales"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 2,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 3,
+       "stolenBases": 0,
+       "plateAppearances": 3,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID682928": {
+     "person": {
+      "fullName": "CJ Abrams"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 3,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 4,
+       "stolenBases": 0,
+       "plateAppearances": 4,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID683083": {
+     "person": {
+      "fullName": "Nasim Nu\u00f1ez"
+     },
+     "stats": {
+      "batting": {
+       "runs": 1,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 1,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 1,
+       "stolenBases": 0,
+       "plateAppearances": 2,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    },
+    "ID678391": {
+     "person": {
+      "fullName": "Jorbit Vivas"
+     },
+     "stats": {
+      "batting": {
+       "runs": 0,
+       "doubles": 0,
+       "triples": 0,
+       "homeRuns": 0,
+       "strikeOuts": 0,
+       "baseOnBalls": 0,
+       "hits": 0,
+       "atBats": 1,
+       "stolenBases": 0,
+       "plateAppearances": 1,
+       "totalBases": 0,
+       "rbi": 0
+      },
+      "pitching": {}
+     }
+    }
+   }
+  }
+ }
+}
