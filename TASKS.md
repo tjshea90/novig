@@ -1884,7 +1884,8 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
       `settingsHaveTheNovigPriceNowSwitch`); live: 10 of 10 prices identical to CNO's Novig price.
       Also: the bet finder is paced (≥350 ms) and honors Novig's 429 Retry-After, and "couldn't
       look" (Novig busy) is no longer reported as "only the game" (`NovigBetFinderTest` 10).
-- [ ] L4 Tests, full floor, ship, release, record, send link.
+- [x] L4 Tests, full floor, ship, release, record, send link. v0.15.4 (code 24): forced floor 474 green,
+      CI green on 9ebfebe, Release published 2026-09-27T01:59Z, recorded in BUILDLOG.md.
 
 ## Tj's request, 2026-09-27 (mid-L3) — live +EV bets, fast (next version, after L4 ships)
 
