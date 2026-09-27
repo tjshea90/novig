@@ -1714,4 +1714,11 @@ props calls themselves are fixture-tested only.
       *Done: VigilantPullToRefresh (CNO, +EV, Games); ScreenshotTest thePullToRefreshArrowLetsGo…
       2 (both failed on the old box); CNO status "Read 4s ago · odds 20s old · every 15 s".*
 - [ ] J5 Tests (geometry + gestures + error cases), screenshots, full floor, ship, send the link.
+      *Tests: WidgetGesturesTest 10, FloatingWidgetTest 4 (the real window driven by MotionEvents:
+      bottom-left corner in/out with the right edge fixed, remembered; frame drag moves, list tap
+      doesn't; two-finger pinch shrinks), ScreenshotTest +4. The frame now handles touches in
+      dispatchTouchEvent (a scrolling list asks parents not to intercept, which would have blocked
+      a pinch started mid-scroll). SampleScan.usage pinned to NOW (a date-dependent meter test
+      failed on 09-27). Forced full rerun: 409 tests, 0 failed, 4 skipped (live), exit 0 after
+      that fix; v0.15.1 code 21.*
       ("Make sure you complete all tasks including the last two prompts I sent.")
