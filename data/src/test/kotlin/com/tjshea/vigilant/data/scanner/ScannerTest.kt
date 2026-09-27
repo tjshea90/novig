@@ -65,7 +65,7 @@ class ScannerTest {
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
             calls++
             if (fail) throw AllKeysExhaustedException("All 1 The Odds API key(s) are rate-limited or invalid")
-            return RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0, 488, 12)
+            return RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0, 488, 12)
         }
     }
 
@@ -77,7 +77,7 @@ class ScannerTest {
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
             calls++
             val ev = RefEvent("$key-1", league.oddsApiSportKey, Fixtures.START_MS, home = "Cowboys", away = "Ravens",
-                markets = listOf(RefBookMarket(key, key, LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, bal, null), RefQuote(Side.HOME, dal, null)), 0)))
+                markets = listOf(RefBookMarket(key, key, LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, bal, null), RefQuote(Side.HOME, dal, null)), null)))
             return RefSnapshot(league.oddsApiSportKey, listOf(ev), 0)
         }
     }
@@ -93,7 +93,7 @@ class ScannerTest {
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot = error("needs Novig's board")
         override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot {
             seen = context
-            val snap = RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0, 470, 30)
+            val snap = RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0, 470, 30)
             if (partial) throw PartialReferenceException(snap, "Sportsbook props NFL: credits ran out")
             return snap
         }
@@ -160,13 +160,14 @@ class ScannerTest {
     fun `The Odds API is re-used inside its window so repeated scans don't burn credits`() = runTest {
         val ref = FakeOddsApi()
         val scanner = Scanner(FakeNovig(), clock = { now })
+        // A 15-minute setting is re-used two minutes at most: older odds are never compared (RESEARCH.md §24).
         val s = settings.copy(oddsApiReuseMinutes = 15)
         scanner.scan(s, listOf(ref))
-        now += 5 * 60_000
+        now += 60_000
         val second = scanner.scan(s, listOf(ref))
         assertEquals(1, ref.calls)
         assertEquals(1, second.sources.single().reused)
-        now += 11 * 60_000
+        now += 2 * 60_000
         scanner.scan(s, listOf(ref))
         assertEquals(2, ref.calls)
         // 0 = fetch on every scan.
@@ -323,7 +324,7 @@ class ScannerTest {
             kotlinx.coroutines.delay(50)
             log += "first"
             if (fail) throw AllKeysExhaustedException("All 1 PropLine key(s) are rate-limited or invalid")
-            return RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0)
+            return RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0)
         }
     }
 
@@ -343,7 +344,7 @@ class ScannerTest {
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
             calls++
             log += "backup"
-            return RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0)
+            return RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0)
         }
     }
 

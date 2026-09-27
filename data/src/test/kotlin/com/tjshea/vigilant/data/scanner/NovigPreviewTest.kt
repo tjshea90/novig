@@ -63,7 +63,7 @@ class NovigPreviewTest {
         override val id = "pinnacle"
         override val displayName = "Pinnacle"
         override suspend fun odds(league: League, settings: ScanSettings) =
-            RefSnapshot(league.oddsApiSportKey, TheOddsApiClient.parseEvents(Fixtures.oddsApi, Json { ignoreUnknownKeys = true }), 0)
+            RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0)
     }
 
     /**
@@ -128,16 +128,14 @@ class NovigPreviewTest {
 
     @Test
     fun `a relay older than three minutes orders nothing`() = runTest {
-        val relay = Relay(reuse = 30 * 60_000L)
         val novig = Novig()
         val scanner = Scanner(novig, clock = { now })
-        scanner.scan(settings, listOf(Pinnacle(), relay))
+        scanner.scan(settings, listOf(Pinnacle(), Relay()))
         assertEquals(Fixtures.TOTAL_MARKET, novig.reads.first().first())
-        // Five minutes on, the relay's answer is re-used (its own window), but it's too old to order by.
+        // Five minutes on PropLine fails: its last answer is kept a while, but it's too old to order by.
         novig.reads.clear()
         now += 5 * 60_000L
-        scanner.scan(settings, listOf(Pinnacle(), relay))
-        assertEquals(1, log.count { it == "relay" })
+        scanner.scan(settings, listOf(Pinnacle(), Relay(fail = true)))
         assertEquals(original, novig.reads.first())
     }
 }

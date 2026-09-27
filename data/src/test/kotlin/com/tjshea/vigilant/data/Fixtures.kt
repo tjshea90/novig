@@ -6,6 +6,15 @@ package com.tjshea.vigilant.data
  * Baltimore Ravens @ Dallas Cowboys.
  */
 object Fixtures {
+    /**
+     * [oddsApi]'s games with each book's "last seen" left unset, so a scanner under test stamps them as
+     * fetched at its own clock (RESEARCH.md §24): tests about other things aren't tripped by the
+     * fixture's fixed dates going stale.
+     */
+    fun oddsApiSeenNow(): List<com.tjshea.vigilant.data.reference.RefEvent> =
+        com.tjshea.vigilant.data.reference.TheOddsApiClient.parseEvents(oddsApi, kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
+            .map { e -> e.copy(markets = e.markets.map { it.copy(lastUpdateMs = null) }) }
+
     const val EVENT_ID = "01a0aa74-36dd-7251-b18e-486f25a0821b"
     const val ML_MARKET = "01a0aa74-36db-7163-8ff2-1027a5c4f54f"
     const val ML_DAL = "01a0aa74-36db-7163-8ff2-103e7c9a7496"

@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -78,8 +79,7 @@ class FreshOddsTest {
     fun `a book price the feed last saw over five minutes ago never prices anything`() = runTest {
         // The Odds API keeps a pulled market for ~15 minutes with its last_update frozen.
         val r = Scanner(Novig(), clock = { now }).scan(settings, listOf(Book(seenAgoMs = 6 * minute)))
-        assertNull(dal(r).fairProbability)
-        assertNull(dal(r).quote)
+        assertTrue(r.result!!.opportunities.none { it.fairProbability != null || it.quote != null })
     }
 
     @Test
