@@ -261,4 +261,91 @@ class ExchangeClientsTest {
         assertThrows(ReferenceException::class.java) { runBlocking { c.odds(nfl, settings) } }
         assertTrue(m.flow.value.providers.getValue("pinnacle").keys.getValue("bad").lastNote!!.contains("key refused"))
     }
+
+    // ---- PinnWire (Pinnacle with player props), RESEARCH.md §22 --------------------------------
+
+    private fun wirePool(keys: List<String>, m: UsageMeter = meter()) = KeyPool(QuotaPolicy.PINNWIRE, { keys }, m)
+
+    /** A real PinnWire reply (2026-09-27 06:40Z, NFL, `include_specials=1`), trimmed to one game. */
+    private val pinnwireFootball: String =
+        javaClass.classLoader!!.getResource("pinnwire-football.json")!!.readText()
+
+    private fun pinnacle(wire: List<String>, pinn: List<String>, m: UsageMeter = meter(), shareMs: Long = 60_000) = PinnapiClient(
+        OkHttpClient(), json,
+        listOf(PinnapiClient.pinnwire(wirePool(wire, m), base("/kit/v1")), PinnapiClient.pinnapi(pinnPool(pinn, m), base("/kit/v1"))),
+        clock = { 9L }, shareMs = shareMs,
+    )
+
+    @Test
+    fun `a real PinnWire board parses game lines and Pinnacle's player props`() = runBlocking {
+        server.enqueue(MockResponse().setBody(pinnwireFootball))
+        val snap = pinnacle(listOf("wire-key"), emptyList()).odds(nfl, settings)
+        val r = server.takeRequest()
+        assertEquals("wire-key", r.getHeader("x-api-key"))
+        assertEquals("1", r.requestUrl!!.queryParameter("include_specials"))
+        val e = snap.events.single()
+        assertEquals("Pittsburgh Steelers", e.home)
+        assertEquals("Cincinnati Bengals", e.away)
+        assertEquals(2.56, e.markets.first { it.kind == LineKind.MONEYLINE }.quotes.first { it.side == Side.HOME }.decimalOdds, 0.0)
+        val props = e.markets.filter { it.kind == LineKind.PLAYER_PROP }
+        // Six player props; the game prop (points range) and the futures row are left out.
+        assertEquals(
+            setOf("RECEPTIONS", "RECEIVING_YARDS", "PASSING_YARDS", "TOUCHDOWNS", "FIELD_GOALS_MADE", "INTERCEPTIONS_THROWN"),
+            props.map { it.stat }.toSet(),
+        )
+        val rec = props.single { it.stat == "RECEPTIONS" }
+        assertEquals("Chase Brown", rec.subject)
+        assertEquals(3.5, rec.line!!, 0.0)
+        assertEquals(2.06, rec.quotes.single { it.side == Side.OVER }.decimalOdds, 0.0)
+        assertEquals(1.746, rec.quotes.single { it.side == Side.UNDER }.decimalOdds, 0.0)
+        assertEquals("Ja'Marr Chase", props.single { it.stat == "TOUCHDOWNS" }.subject)
+        assertTrue(props.all { it.bookKey == "pinnacle" && it.period == 0 })
+    }
+
+    @Test
+    fun `without player props the feed isn't asked for them`() = runBlocking {
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        pinnacle(listOf("w"), emptyList()).odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD)))
+        assertNull(server.takeRequest().requestUrl!!.queryParameter("include_specials"))
+    }
+
+    @Test
+    fun `PinnWire keys go first, pinnapi's when they're spent, and pinnapi is never asked for props`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":"rate_limited","window":"day","limit":100,"retry_after_ms":7200000}"""))
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        val snap = pinnacle(listOf("w"), listOf("p")).odds(nfl, settings)
+        val first = server.takeRequest()
+        assertEquals("w", first.getHeader("x-api-key"))
+        val second = server.takeRequest()
+        assertEquals("p", second.getHeader("x-portal-apikey"))
+        assertNull(second.requestUrl!!.queryParameter("include_specials"))
+        assertEquals("Dallas Cowboys", snap.events.single().home)
+    }
+
+    @Test
+    fun `a Pinnacle feed without keys is skipped without a call`() = runBlocking {
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        pinnacle(emptyList(), listOf("p")).odds(nfl, settings)
+        assertEquals(1, server.requestCount)
+        assertEquals("p", server.takeRequest().getHeader("x-portal-apikey"))
+    }
+
+    @Test
+    fun `with no Pinnacle key at all the scan says to add one`() {
+        val e = assertThrows(ReferenceException::class.java) { runBlocking { pinnacle(emptyList(), emptyList()).odds(nfl, settings) } }
+        assertTrue(e.message!!, e.message!!.contains("PinnWire"))
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun `Pinnacle prop names give the player and Novig's stat`() {
+        assertEquals("DJ Moore", PinnacleProps.player("DJ Moore Total Receptions", "Receptions"))
+        assertEquals("Bo Bichette", PinnacleProps.player("Bo Bichette Total Bases", "Bases"))
+        assertEquals("Josh Allen", PinnacleProps.player("Josh Allen Total Touchdown Passes", "Touchdown Passes"))
+        assertNull(PinnacleProps.player("Receptions", "Receptions"))
+        assertEquals("TOTAL_BASES", PinnacleProps.stat(6, "Bases"))
+        assertEquals("THREE_POINTERS_MADE", PinnacleProps.stat(3, "Threes Made"))
+        // Football's "Points" isn't basketball's.
+        assertNull(PinnacleProps.stat(5, "Points"))
+    }
 }
