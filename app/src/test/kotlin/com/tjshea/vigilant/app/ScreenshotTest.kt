@@ -410,7 +410,7 @@ class ScreenshotTest {
     @Test fun cnoTab() {
         shoot("8_cno") { com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.state(), {}, {}) }
         compose.onNodeWithText("Justin Jefferson Under 69.5").assertIsDisplayed()
-        compose.onNodeWithText("Conservative worst case · to +150 · 5+ books · ≥1% EV").assertIsDisplayed()
+        compose.onNodeWithText("Conservative worst case · to +150 · 4+ books · ≥1% EV").assertIsDisplayed()
         compose.onNodeWithText("View: Novig · 3+ books").assertIsDisplayed()
         compose.onNodeWithText("Read 20s ago · odds 49s old · every 15 s", substring = true).assertIsDisplayed()
         compose.onNodeWithText("4 bets pass · 2 hidden: 1 too few books, 1 longer odds than your cap").assertIsDisplayed()

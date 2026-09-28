@@ -13,7 +13,7 @@ object SampleCno {
     private const val DAY = 86_400_000L
 
     val rows = listOf(
-        CnoRow(0.0718, SampleScan.NOW + DAY, "Baseball", "MLB", "Arizona Diamondbacks @ San Diego Padres", "Player Outs Recorded", "Walker Buehler Over 15.5", 160, 6.0, "Novig", 143, 0.4115, 4, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=1"),
+        CnoRow(0.0718, SampleScan.NOW + DAY, "Baseball", "MLB", "Arizona Diamondbacks @ San Diego Padres", "Player Outs Recorded", "Walker Buehler Over 15.5", 160, 6.0, "Novig", 143, 0.4115, 3, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=1"),
         CnoRow(0.0584, SampleScan.NOW + DAY, "Football", "NFL", "Minnesota Vikings @ Tampa Bay Buccaneers", "Player Receiving Yards", "Justin Jefferson Under 69.5", 117, 88.0, "Novig", 105, 0.4878, 10, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=2"),
         CnoRow(0.0528, SampleScan.NOW + DAY / 3, "Football", "NCAAF", "Stonehill @ Ohio", "Point Spread", "Ohio -33.5", 117, 100.0, "Novig", 106, 0.4854, 6, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=3"),
         CnoRow(0.0405, SampleScan.NOW + DAY, "Football", "NFL", "Las Vegas Raiders @ New Orleans Saints", "Player Receptions", "Brock Bowers Under 4.5", 100, 109.0, "Novig", -108, 0.5202, 13, "https://crazyninjaodds.com/site/browse/game.aspx?side_id=4"),
@@ -27,7 +27,7 @@ object SampleCno {
 
     fun state(base: UiState = SampleScan.state(), cno: CnoState = CnoState(snapshot = snapshot())): UiState = base.copy(cno = cno)
 
-    /** The rows the default filters keep: Buehler has 4 books, Perdomo is +167; the other four pass. */
+    /** The rows the default filters keep: Buehler has 3 books (4+ needed), Perdomo is +167; the other four pass. */
     val kept = listOf("Justin Jefferson Under 69.5", "Ohio -33.5", "Brock Bowers Under 4.5", "Amon-Ra St. Brown Under 0.5")
 
     /** Justin Jefferson Under 69.5 on CNO's game page: sportsbooks list only the Over; Pinnacle and two exchanges price both. */
