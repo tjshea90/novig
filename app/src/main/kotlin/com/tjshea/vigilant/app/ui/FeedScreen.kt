@@ -64,6 +64,8 @@ fun FeedScreen(
     onRecheck: (Collection<String>) -> Unit = {},
     /** Shrink to the mini window over other apps. Null hides the button (no picture-in-picture). */
     onMiniWindow: (() -> Unit)? = null,
+    /** Pause every scan (true) or resume (false). */
+    onPause: (Boolean) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
@@ -85,6 +87,7 @@ fun FeedScreen(
                                 Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over ${AppBook.name}", tint = MaterialTheme.colorScheme.primary)
                             }
                         }
+                        PauseButton(state.settings.paused, onPause)
                         ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan)
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -110,6 +113,7 @@ fun FeedScreen(
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now)
+                if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
                 items(shown, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
