@@ -301,12 +301,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val stored = c.settingsStore.read()
             val settings = stored.migrate()
             if (settings != stored) runCatching { c.settingsStore.update { settings } }
-            runCatching { c.migrateKeys() }
-            c.usage.load()
+            // Keys moved, meters, the Novig key: once per process (the background auto-scan may have done it).
+            val connection = c.ensureLoaded()
             val keys = ApiProvider.entries.associateWith { c.keyStore.getKeys(it) }
             val bets = c.tracker.all()
-            val connection = c.novigConnection.load()
-            c.useConnection(connection)
             _state.update {
                 keys.entries.fold(it) { s, (p, k) -> s.withKeys(p, k) }.copy(
                     settings = settings, bets = bets, loaded = true,
@@ -315,6 +313,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             // After the settings, so a scan still running (or finished) is shown under them.
             follow()
+        }
+        viewModelScope.launch {
+            // Settings written outside this screen (the auto-scan notification's Stop): shown at once.
+            c.settingsStore.flow.filterNotNull().collect { saved ->
+                val s = _state.value
+                if (s.loaded && saved.autoScan != s.settings.autoScan) _state.update { it.copy(settings = it.settings.copy(autoScan = saved.autoScan)) }
+            }
         }
         viewModelScope.launch {
             // A bet tracked anywhere leaves every list at once (Tj, 2026-09-27).
@@ -468,16 +473,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // CNO only: Vigilant's scanner and every API behind it stay asleep.
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking) return
         if (current.settings.leagues.isEmpty()) return
-        val settings = current.settings
-        val now = System.currentTimeMillis()
         // Open bets' lines are priced even past the per-game cap, so their closing value updates.
-        val pinned = current.bets.filter { it.status == BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
-        val started = c.runner.start(settings, c.referenceSources(settings), pinned) { report ->
-            // Runs even with this screen gone. Disk trouble (full storage) must never break a scan.
-            report?.result?.let { runCatching { c.tracker.observe(it) } }
-            // Keyed calls saved as they happened; this saves the keyless request counters.
-            runCatching { c.usage.flush() }
-        }
+        val started = c.startVigilantScan(current.settings, current.bets)
         if (started) ScanService.start(getApplication())
     }
 
@@ -523,21 +520,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Where a tapped CNO bet opens in Novig: its bet slip, else its game ([TapLink]). Null when nothing answered. */
-    suspend fun betLink(row: CnoRow): TapLink.Link? = withContext(Dispatchers.IO) {
-        val cno = c.cno.state.value
-        val paused = (cno.pausedUntilMs ?: 0L) > System.currentTimeMillis()
-        val found = TapLink.resolve(
-            cached = c.cno.cachedLink(row),
-            cnoFailing = cno.error != null,
-            // CNO asked for a pause: not even a tap asks it; Novig's catalog answers alone.
-            fromCno = if (paused) null else ({ c.cno.novigLink(row) }),
-            // Vigilant MGM has no public BetMGM catalog: CNO's own link is the way in.
-            fromNovig = { if (AppBook.isNovig) c.betFinder.find(row) else null },
-        )
-        // An exact link from Novig's catalog is kept like CNO's: the next tap needs no network.
-        if (found?.exact == true) c.cno.rememberLink(row, found.link)
-        found
-    }
+    suspend fun betLink(row: CnoRow): TapLink.Link? = c.betLink(row)
 
     /** Mirrors the runner into the screen's state, for as long as this screen lives. */
     private suspend fun follow() {

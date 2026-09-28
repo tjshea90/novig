@@ -11,6 +11,11 @@ import com.tjshea.vigilant.data.cno.CnoLinks
 import com.tjshea.vigilant.data.cno.CnoNetwork
 import com.tjshea.vigilant.data.cno.NovigBetFinder
 import com.tjshea.vigilant.data.cno.NovigLive
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.cno.TapLink
+import com.tjshea.vigilant.data.alerts.AlertBook
+import com.tjshea.vigilant.data.alerts.AlertLog
+import kotlinx.coroutines.sync.withLock
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.FileApiKeyStore
 import com.tjshea.vigilant.data.keys.KeyPool
@@ -160,6 +165,73 @@ class AppContainer(app: Application) {
     /** Whether Vigilant is on screen: a finished scan only notifies when it isn't. */
     @Volatile
     var onScreen = false
+
+    /** Bets a push alert went out for (alerts.json), so each bet alerts once (Tj, 2026-09-28). */
+    val alertLog = AlertLog(JsonFileStore(File(app.filesDir, "alerts.json"), AlertBook.serializer(), { AlertBook() }, json))
+
+    /** The background auto-scan and its +EV alerts (Tj, 2026-09-28), run by [AutoScanService]. */
+    val autoScan: AutoScanner by lazy { AutoScanner(app, this) }
+
+    private val loadMutex = kotlinx.coroutines.sync.Mutex()
+
+    @Volatile
+    private var loadedConnection: Result<NovigConnection?>? = null
+
+    /**
+     * What any scan needs before its first request, with or without a screen (the background
+     * auto-scan can run in a process no screen has opened): keys moved from v0.6.0's store, the
+     * usage meters, and the connected Novig key (its reads go through the key's own rate limit).
+     * Once per process; returns the Novig connection.
+     */
+    suspend fun ensureLoaded(): NovigConnection? = loadMutex.withLock {
+        loadedConnection?.let { return@withLock it.getOrNull() }
+        runCatching { migrateKeys() }
+        runCatching { usage.load() }
+        val connection = runCatching { novigConnection.load() }
+        useConnection(connection.getOrNull())
+        loadedConnection = Result.success(connection.getOrNull())
+        connection.getOrNull()
+    }
+
+    /** The saved settings, brought up to date ([ScanSettings.migrate]). */
+    suspend fun currentSettings(): ScanSettings = runCatching { settingsStore.read().migrate() }.getOrDefault(ScanSettings())
+
+    /**
+     * Starts Vigilant's own scan in [runner] (false when one is already running): the Scan button's
+     * and the background auto-scan's. Lines Tj has open [bets] on are priced past the per-game cap,
+     * so their closing value updates. Afterwards, even with no screen: the Tracker follows the new
+     * prices, and the usage counters are saved.
+     */
+    fun startVigilantScan(settings: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>): Boolean {
+        val now = System.currentTimeMillis()
+        val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
+        return runner.start(settings, referenceSources(settings), pinned) { report ->
+            // Disk trouble (full storage) must never break a scan.
+            report?.result?.let { runCatching { tracker.observe(it) } }
+            // Keyed calls saved as they happened; this saves the keyless request counters.
+            runCatching { usage.flush() }
+        }
+    }
+
+    /**
+     * Where a CNO bet opens in Novig: its bet slip, else its game ([TapLink]); null when nothing
+     * answered. A tap in the widget or the CNO tab, and a background alert, all ask this.
+     */
+    suspend fun betLink(row: CnoRow): TapLink.Link? = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val state = cno.state.value
+        val paused = (state.pausedUntilMs ?: 0L) > System.currentTimeMillis()
+        val found = TapLink.resolve(
+            cached = cno.cachedLink(row),
+            cnoFailing = state.error != null,
+            // CNO asked for a pause: not even a tap asks it; Novig's catalog answers alone.
+            fromCno = if (paused) null else ({ cno.novigLink(row) }),
+            // Vigilant MGM has no public BetMGM catalog: CNO's own link is the way in.
+            fromNovig = { if (AppBook.isNovig) betFinder.find(row) else null },
+        )
+        // An exact link from Novig's catalog is kept like CNO's: the next tap needs no network.
+        if (found?.exact == true) cno.rememberLink(row, found.link)
+        found
+    }
 
     /** Book reads go through the connected key's own rate limit (or the public routes when null). */
     @Synchronized
