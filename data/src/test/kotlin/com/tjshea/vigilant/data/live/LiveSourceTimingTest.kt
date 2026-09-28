@@ -36,4 +36,21 @@ class LiveSourceTimingTest {
         }
         println("LIVE TIMING leagues: ${Leagues.ALL.map { it.novigName }}")
     }
+
+    /** v0.19.3: every league's game lines first, then the rest (as a scan now asks Kalshi). When is each league's ready? */
+    @Test
+    fun `real Kalshi - game lines first, then props`() = runBlocking {
+        assumeTrue(System.getenv("VIGILANT_LIVE") == "1")
+        val kalshi = KalshiClient(OkHttpClient(), Json { ignoreUnknownKeys = true })
+        val s = ScanSettings(leagues = setOf("NFL", "NCAAF", "MLB", "WNBA", "ATP", "WTA"), daysAhead = 7)
+        val t0 = System.currentTimeMillis()
+        for (league in s.selectedLeagues) {
+            val lines = runCatching { kalshi.lines(league, s) }
+            println("LIVE TIMING Kalshi lines ${league.novigName}: ready at ${(System.currentTimeMillis() - t0) / 1000.0} s, ${lines.getOrNull()?.events?.size ?: "error " + lines.exceptionOrNull()?.message} games")
+        }
+        for (league in s.selectedLeagues) {
+            val full = runCatching { kalshi.odds(league, s) }
+            println("LIVE TIMING Kalshi full ${league.novigName}: ready at ${(System.currentTimeMillis() - t0) / 1000.0} s, ${full.getOrNull()?.events?.sumOf { it.markets.size } ?: "error " + full.exceptionOrNull()?.message} markets")
+        }
+    }
 }
