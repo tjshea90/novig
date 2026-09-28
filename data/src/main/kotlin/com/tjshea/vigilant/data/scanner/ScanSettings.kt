@@ -72,7 +72,13 @@ data class ScanSettings(
     /** Hide edges that look too good to be true (usually a stale or mismatched line). */
     val maxEvPercent: Double = 0.25,
     val includeLive: Boolean = false,
-    val daysAhead: Int = 3,
+    /**
+     * How far ahead a scan reads. 7 since v0.19.1 (was 3): at 3, a Monday scan missed every college game
+     * and the next NFL Sunday (Tj, 2026-09-28: "There are way more than 7 total games for it to scan").
+     * Fair-odds requests don't grow with it (one per league or sport); only Novig reads do, within the
+     * per-scan budget, soonest games first.
+     */
+    val daysAhead: Int = 7,
     val bankroll: Double = 1000.0,
     val kellyMultiplier: Double = 0.25,
     /**
@@ -272,6 +278,10 @@ data class ScanSettings(
         if (s.schema < 7) {
             s = s.copy(leagues = s.leagues + TENNIS, schema = 7)
         }
+        // v0.19.1: a week ahead by default; a file still at the old default of 3 days moves once.
+        if (s.schema < 8) {
+            s = s.copy(daysAhead = if (s.daysAhead == 3) 7 else s.daysAhead, schema = 8)
+        }
         return s
     }
 
@@ -354,6 +364,9 @@ data class ScanSettings(
 
         /** [startsWithinHours]' choices (0 = any time). */
         val STARTS_WITHIN_CHOICES = listOf(0, 12, 24, 48)
+
+        /** [daysAhead]'s choices. */
+        val DAYS_AHEAD_CHOICES = listOf(1, 2, 3, 5, 7, 10)
 
         /** [autoScanMinutes]' choices (Tj, 2026-09-28: "every 5 10 20 30 or 40 minutes"). */
         val AUTO_SCAN_MINUTES_CHOICES = listOf(5, 10, 20, 30, 40)
