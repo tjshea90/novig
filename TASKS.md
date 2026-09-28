@@ -2339,22 +2339,3 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       there's no sign there that bets are being hidden).
 - [ ] S3 Tj's side: paste `tools/setup-android.sh` into the cloud environment's Setup script (BRIEF.md trap 6) so
       every session starts ready to build without touching Maven Central.
-
-## Side job, not Vigilant: MP3 player flasher APK on Android 16 (Tj, 2026-09-27 ~22:00Z)
-
-> "The attached are files to flash my mp3 player. But the flasher.apk is having trouble installing on my moto g 2026.
-> When it does install, the "open with" feature does not show up as the instructions say. This used to work fine until
-> a couple Android updates. Can you find a fix or workaround or recode the apk to work with Android 16 Moto g 2026. It
-> must be safe so I don't destroy my mp3 player"
-
-Tj's files (flasher.apk, us212a.fw, Instructions.txt) are uploads, NOT in this repo, and nothing from this job goes in
-it: this repo is public and the flasher is someone else's paid tool. Work lives in the session scratchpad; APKs go to
-Tj as chat files. Findings so far: `com.bim.sandiskbopsuperflasher`, targetSdk 30 (fine for 16), signed with the public
-AOSP test key, native code armeabi-v7a ONLY (fails to install on a 64-bit-only phone), OPEN's file list uses java.io.File,
-so it sees the .fw file only with "All files access" granted.
-
-- [x] M1 (DONE: diagnosis + no-code workaround sent to Tj in chat: check ABIs, uninstall old copy, Play Protect
-      "Install anyway", grant All files access; don't WRITE unless OPEN says "Open Success!" / OPEN DIR says "Processed".)
-- [x] M2 (CLOSED, not doing: no rebuilt or 64-bit APK. Tj was told plainly; if the phone is 64-bit only, use an older
-      32-bit-capable Android phone/tablet.)
-- [x] M3 (DONE: steps sent in chat; nothing from this job is in the repo.)
