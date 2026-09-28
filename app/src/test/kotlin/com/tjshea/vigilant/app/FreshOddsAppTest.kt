@@ -25,13 +25,15 @@ class FreshOddsAppTest {
     private val minute = 60_000L
 
     @Test
-    fun `Vigilant's bets leave the feed and the widget once their book prices are five minutes old`() {
-        // The sample's book prices were seen 3 minutes before NOW.
+    fun `Vigilant's bets leave the feed and the widget once their book prices are too old for the game`() {
+        // The sample's book prices were seen 3 minutes before NOW, on games two days off: 10 minutes' life (v0.19.3,
+        // Freshness.maxAgeMs; 5 inside 3 hours of the start, FarOffOddsTest).
         val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = ScannerMode.VIGILANT))
         assertEquals(s.feed, s.feedAt(now))
         assertTrue(MiniWindow.items(s, now).isNotEmpty())
-        assertTrue(s.feedAt(now + 3 * minute).isEmpty())
-        assertTrue(MiniWindow.items(s, now + 3 * minute).isEmpty())
+        assertEquals(s.feed, s.feedAt(now + 3 * minute)) // 6 minutes old: still listed
+        assertTrue(s.feedAt(now + 8 * minute).isEmpty()) // 11: gone
+        assertTrue(MiniWindow.items(s, now + 8 * minute).isEmpty())
     }
 
     @Test
