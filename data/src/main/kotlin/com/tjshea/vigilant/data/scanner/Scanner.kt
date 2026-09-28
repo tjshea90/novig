@@ -535,7 +535,7 @@ class Scanner(
 
     /**
      * Which unread markets to read first. Open bets, then the likeliest +EV lines by EV, then near
-     * misses, then lines never priced (props, period lines and team totals before main lines: the
+     * misses and the lines the last scan ran out of time for, then lines never priced (props, period lines and team totals before main lines: the
      * derivative markets are where exchange prices lag most), then the budget's filler lines never
      * priced ([PlannedMarket.spare]), then lines well below zero, and last the games no fair source
      * covers (they can't be +EV). Soonest games first within each.
