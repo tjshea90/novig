@@ -410,3 +410,25 @@ earlier, and `/v3/public/catalog/events?league=MLB&startsAfter=<14 h ago>` (any 
 SETTLED and FINAL included) lists only open games and futures: the night's finished MLB games were
 gone. So the public routes can't settle a bet after the fact. Vigilant's Tracker settles from final
 scores instead (ESPN's scoreboard/box scores, MLB's Stats API; `data/tracker/Scores.kt`).
+
+## 13. Full docs re-read, 2026-09-28 ~07:10–08:00Z (Tj: "use it efficiently and as the docs describe")
+
+All 140 pages of `llms.txt` (86 current, 54 under `deprecated/`) plus the OpenAPI spec, compared with every Novig call
+Vigilant makes. What changed in the app (v0.19.1), and what was checked and left alone:
+
+| Docs say | Vigilant before | Now |
+|---|---|---|
+| `Market.strike`: "the line the market settles against … a spread's line is the home side's handicap"; `description` and outcome `name` are display text, "don't parse" | Lines read from outcome names only | Names still read (no structured team field exists), but a line must equal `strike`, a spread's on the side the names say is home, or the market is skipped. Live: 6,541 of 6,541 lines this week agree (`LiveNovigSmokeTest`) |
+| `GET /v3/limits` (free, 0 tokens) reports the key's buckets and `maxWatchedMarkets`; "Model each throttle in your client" | Documented defaults hard-coded (read 64/16, stream 512/4, 2,048) | Read once per key per process; keyed REST paces at 90% of `read` refill, 70% of capacity as burst; the websocket takes `stream` and the watch cap. Defaults if Novig doesn't answer |
+| Signed catalog (`/v3/catalog/events|markets`) for trading/trading::read keys; public routes "throttled per IP at the edge" | Board always from the public routes | With a key: the signed catalog (the key's `read` bucket, not the per-IP public throttle a carrier shares); public if it fails, for 10 minutes |
+| Event status `DELAYED` is tradable (event-lifecycle) | Only `OPEN_PREGAME` (+ `OPEN_INGAME`) requested | `DELAYED` requested; a game held before its start is scanned like pregame, one held mid-game isn't (the catalog doesn't say whether its taker fee is on) |
+| `limit` 1–5,000 (default 500) on events and markets; `after` cursor opaque | events 1,000 / markets 5,000, cursor passed through | Same; the cursor is percent-encoded exactly as signed (NOVIG-V3 canonical query) |
+| Websocket channels: `lifecycle`, `trades`, `book`, `orders`, `positions` (the route's own page; `bbo` appears only in the connection page's cost table) | `book` | Unchanged: `book` is the documented one |
+| Websocket errors: `{code, message, nonce}` | Read `code` top level or under `error` | Unchanged (covers it) |
+| Fees: read `fee` per market, `WHEN_LIVE` charges only `OPEN_INGAME` | Per-market `fee` | Unchanged |
+| Deep links (affiliates page): `novigapp://events/<outcome_ids>/<partner_id>`, web `novig.com/events/<outcome>/<partner>/<amount>` | `novigapp://events/<outcome>` | Unchanged (the documented form; a partner id is for affiliates) |
+
+**Not usable:** the "odds screens" GraphQL API (`POST https://api.novig.com/v1/graphql`, one query per league returning every
+outcome's offered price) answers anonymous queries with `{"errors":[{"message":"query is not allowed"}]}` (an
+allow-list; checked 2026-09-28), needs keys "from your representative" (affiliates), and the docs say it's being migrated to
+REST. No batch book route exists in v3; the websocket is the bulk path (§6, §11.1).
