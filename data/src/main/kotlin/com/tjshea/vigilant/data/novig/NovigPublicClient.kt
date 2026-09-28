@@ -35,6 +35,18 @@ interface NovigSource {
     /** Fetches every book in [marketIds]. [onProgress] gets (done, total) as books arrive. */
     suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)? = null): BookBatch
     suspend fun market(marketId: String): NovigMarket?
+
+    /**
+     * The markets a scan will price, most important first: a source that can have them pushed (the
+     * connected key's websocket) starts on them now. Nothing by default.
+     */
+    fun watch(marketIds: Collection<String>) {}
+
+    /** Books among [marketIds] this source holds current right now, with no request. None by default. */
+    fun pushed(marketIds: Collection<String>): Map<String, NovigBook> = emptyMap()
+
+    /** Why pushed books stopped, if they did at or after [sinceMs] (the scan says so once). */
+    fun pushProblem(sinceMs: Long): String? = null
 }
 
 /** The result of fetching many books at once. A failure on some books never discards the rest. */
