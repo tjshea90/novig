@@ -1,13 +1,13 @@
-# CHECKPOINT 568 — read me first, then TASKS.md
+# CHECKPOINT 569 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T08:01:22Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `f24a159` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T08:05:41Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `19ebb4b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release v0.19.2 (37): steady feed (hold bets until fair sources answer, 2-min headroom, aged-out note); floor 694 green; live flicker 10 shown / 0 gone
+pre-release: v0.19.2: bets shown mid-scan stay: a league's bets wait until all its fair-odds sources answer; scans use only book prices with 2+ minutes of freshness left; bets hidden for old odds are counted on the feed. 694 tests (versionCode 37, v0.19.2)
 
 ## Do this next
-wait for ci.yml green, ship.sh, release.yml, record-release, link
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.19.2), then run: bash tools/record-release.sh v0.19.2 37 "v0.19.2: bets shown mid-scan stay: a league's bets wait until all its fair-odds sources answer; scans use only book prices with 2+ minutes of freshness left; bets hidden for old odds are counted on the feed. 694 tests"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ wait for ci.yml green, ship.sh, release.yml, record-release, link
 
 ## Last ten checkpoints
 ```
+  19ebb4b ckpt 568: pre-release v0.19.2 (37): steady feed (hold bets until fair sources answer, 2-
   f22cd3f ckpt 567: Recorded Tj's 'bets appeared then disappeared' question as Q1-Q2
   3738919 ckpt 566: Released Vigilant v0.19.1 (code 36): release.yml run 36392649770 green, tag v0
   d6e8948 ckpt 565: pre-release v0.19.1 (36): floor 689 green (engine 39, data 445/10 live skipped
@@ -25,8 +26,4 @@ wait for ci.yml green, ship.sh, release.yml, record-release, link
   ac363cb ckpt 561: Released Vigilant v0.19.0 (code 35): release.yml run 36389431089 green, tag v0
   627a6eb ckpt 560: pre-release: v0.19.0: keyed scans load their prices through Novig's live feed 
   4fca994 ckpt 559: pre-release v0.19.0 (code 35): floor 677 tests green (engine 39, data 434/9 li
-  6a2f1a1 ckpt 558: light test: screenshots looked at (key section, settings fill switch); UI test
 ```
-
-(10 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
