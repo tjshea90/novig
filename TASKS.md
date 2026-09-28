@@ -2553,7 +2553,10 @@ Nothing at or above 1.0% EV."
       or keeps running: CNO's feed (tab, widget, pip, keepBooksFresh/keepLinksFresh), background auto-scan
       (alarm + AutoScanService), widget rescans, a Scan left running; manual Scan disabled or asks to resume while
       paused. Shown where Tj will see it (+EV/CNO tabs, widget, Settings); survives restarts; test.
-- [ ] U2 "just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in the
+- [x] U2 (DONE: every CNO tab card has the +EV card's button (shared `OpenInBookButton`, tag openBet): MainActivity.openInNovig,
+      the widget's path (TapLink / NovigBetFinder), stake via `cnoSlipStake` ("· $1"), spinner while the link is found; the
+      card tap still opens its books. Tests: ScreenshotTest `everyCnoBetHasAOneTapOpenInNovigButtonWithTheChosenStake`,
+      `cnoCardsOpenButtonSaysItsOpening`, `aCnoBetsSlipStakeIsItsKellyStake`, 8g png looked at.) "just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in the
       cno scanner in full screen (it already works in the widget)". The +EV card's one-tap `OpenBetButton` on every
       CNO tab card, same link path as the widget (TapLink / NovigBetFinder, stake), test + screenshot.
 - [ ] U3 Ship and send the link.
