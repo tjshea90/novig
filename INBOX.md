@@ -2392,3 +2392,8 @@ Research the new claude-api skill and hillclimb and figure out if it can improve
   
 </agent-message>
 ```
+
+## 2026-09-28T22:37:17Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
