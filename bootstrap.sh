@@ -67,9 +67,37 @@ if [ -f CHECKPOINT.md ]; then
 fi
 if [ -f TASKS.md ]; then
   echo "##############################################################################"
-  echo "#  TASKS.md — the scope of the current job. Continue from the first [ ]."
+  echo "#  TASKS.md — open items only. Continue from the first [ ] of the current job."
   echo "##############################################################################"
-  cat TASKS.md
+  # Open boxes only, one line each, never the whole file: this briefing has to
+  # fit Claude Code's 10,000-character hook cap (tools/resume.sh), and
+  # TASKS.md passed 200 KB on 2026-09-28. Each line carries its TASKS.md line
+  # number, so the full text is one read away.
+  python3 - <<'PY' 2>/dev/null || grep -n '^- \[ \]' TASKS.md | cut -c1-140 | tail -20
+import re
+lines = open("TASKS.md", encoding="utf-8", errors="replace").read().split("\n")
+heads = [i for i, l in enumerate(lines) if l.startswith("## ")]
+last = heads[-1] if heads else -1
+boxes = [i for i, l in enumerate(lines) if re.match(r"\s*- \[ \]", l)]
+def short(s, n):
+    s = s.strip()
+    return s if len(s) <= n else s[: n - 1] + "…"
+cur = [i for i in boxes if i > last]
+old = [i for i in boxes if i < last]
+print(f"{len(boxes)} open item(s). Lnnn = its line in TASKS.md; read there for the full text.")
+if last >= 0:
+    print(f"\nCURRENT JOB (last section, L{last + 1}): {short(lines[last][3:], 260)}")
+    for i in cur:
+        print(f"  L{i + 1:<5} {short(lines[i], 140)}")
+    if not cur:
+        print("  (no open boxes: this job is finished)")
+if old:
+    print(f"\nOLDER OPEN ITEMS ({len(old)}; some may be stale, check before acting):")
+    for i in old[-12:]:
+        print(f"  L{i + 1:<5} {short(lines[i], 110)}")
+    if len(old) > 12:
+        print(f"  ... {len(old) - 12} earlier: grep -n '^- \\[ \\]' TASKS.md")
+PY
   echo
 fi
 
