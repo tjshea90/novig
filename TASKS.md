@@ -2505,14 +2505,21 @@ Nothing at or above 1.0% EV."
 
 ## "Now consider if the 1200 Max prices per novig scan is enough … no limit … alternate lines and player props per game … credits per scan on props … automatically enter 1 dollar on every betslip … pinnwire … pinnapi … one press buttons … Open the bet in novig" (Tj, 2026-09-28 ~18:40Z, on v0.19.3)
 
-- [ ] T1 "consider if the 1200 Max prices per novig scan is enough for me to find most or all positive EV bets available,
+- [x] T1 (DONE: RESEARCH §31.1. Live board 8,620 markets; free sources price 1,168 (1,200 covers them); keys price more.
+      Budget choices up to 2,000 (one live-feed connection watches 2,048); no "No limit" (past 2,000 each price is a
+      request at ~14/s, scans run many minutes, early reads age out, background scans repeat it). Guard: a long scan
+      leaves lines whose odds would be too old (`canStillShow`, `booksTooLate`, Settings timing line). Tests:
+      BiggerScansTest (choices; `a scan running long leaves lines…` fails without the guard; `…a day off reads them
+      all`), LiveBudgetTest.) "consider if the 1200 Max prices per novig scan is enough for me to find most or all positive EV bets available,
       and if increasing this number could be beneficial or dangerous in any way. If I can have no limit on the prices
       safely, then make that option." Measure how many Novig prices a full 7-day board has with fair odds (how much
       1,200 leaves out), what more reads cost (time, Novig's limits, the websocket's 2,048 watch cap, data, battery),
       and decide; add "No limit" if safe.
-- [ ] T2 "consider if I can safely raise the max alternate lines and player props per game safely." Same question for
+- [x] T2 (DONE: with fill on the caps only order reads (budget bounds them): lines 1-10, props 0-48. BiggerScansTest.)
+      "consider if I can safely raise the max alternate lines and player props per game safely." Same question for
       `linesPerGame` / `propsPerGame`; raise the choices if safe.
-- [ ] T3 "Can I raise the most credits per scan on props safely?" Check The Odds API credits per scan
+- [x] T3 (DONE: safe as far as The Odds API plan's credits go (PropLine first, Odds API only for gaps): up to 192, hint
+      `creditWorstCase` says how few scans 500 / 20,000 credits last at that cap. BiggerScansTest.) "Can I raise the most credits per scan on props safely?" Check The Odds API credits per scan
       (`bookPropCreditsPerScan`) against the free/paid quotas; raise if safe.
 - [x] T4 (DONE: yes. Novig's deeplinking docs: `novig.com/events/<outcomes>/<partner_id>/<wager_amount>` pre-fills the
       wager in dollars; its app's link config has the same `:amount?` (unverified on a device). Settings › Bankroll &
