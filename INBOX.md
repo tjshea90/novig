@@ -2272,3 +2272,8 @@ The app is telling me I have a proxy or vpn when I test the novig key, but I don
 Research online and reconsider the 5 minute stale odds cutoff. Should this be altered? Right now it hides bets if the odds from other books are over 5 minutes old. Figure out if that is a good or needed filter. It may be that odds do not change that rapidly and  are still positive EV bets even if the odds from other books are over 5 minutes old
 For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4 books
 ```
+
+## 2026-09-28T15:53:25Z
+```
+Status
+```
