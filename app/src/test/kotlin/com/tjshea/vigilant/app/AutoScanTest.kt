@@ -23,6 +23,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.async
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
@@ -245,5 +246,30 @@ class AutoScanTest {
         for (p in listOf("FOREGROUND_SERVICE_SPECIAL_USE", "USE_EXACT_ALARM", "SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "POST_NOTIFICATIONS")) {
             assertTrue(p, manifest.contains("android.permission.$p"))
         }
+    }
+
+    // ---- sending: each bet once, even from two scans ending together --------------------------------
+
+    @Test
+    fun `two scans ending at once alert each bet once`() = kotlinx.coroutines.runBlocking {
+        shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        val app = context as VigilantApp
+        val scanner = AutoScanner(app, app.container, clock = { now })
+        val result = SampleScan.state().result
+        val settings = SampleScan.settings.copy(alertMinEv = 0.02)
+        val expected = AlertPicks.vigilant(SampleScan.state().indexed(now), 0.02, now).take(AutoScanner.MAX_ALERTS).size
+        assertTrue(expected > 0)
+        // A background cycle that waited on Tj's own scan, and that scan's own end, send at the same moment.
+        val sent = (1..2).map { async(kotlinx.coroutines.Dispatchers.Default) { scanner.afterScan(result, settings) } }.map { it.await() }
+        assertEquals(expected, sent.sum())
+        // And nothing again later.
+        assertEquals(0, scanner.afterScan(result, settings))
+    }
+
+    @Test
+    fun `turning auto-scan on asks for notifications once, not every time Vigilant opens`() {
+        val source = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
+        assertTrue(source.contains("!prefs.getBoolean(ASKED_NOTIFICATIONS_AUTO, false)"))
+        assertTrue(source.contains("prefs.edit().putBoolean(ASKED_NOTIFICATIONS_AUTO, false).apply()"))
     }
 }

@@ -165,10 +165,10 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
      * The alerts a Vigilant scan that just ended while Vigilant was off screen should send (Tj's own
      * Scan, left running in the background): the same rules as a background cycle.
      */
-    suspend fun afterScan(result: ScanResult?, settings: ScanSettings) {
-        if (result == null || settings.alertMinEv <= 0.0) return
+    suspend fun afterScan(result: ScanResult?, settings: ScanSettings): Int {
+        if (result == null || settings.alertMinEv <= 0.0) return 0
         val state = snapshot(settings).copy(result = result).indexed(clock())
-        send(AlertPicks.vigilant(state, settings.alertMinEv, clock()))
+        return send(AlertPicks.vigilant(state, settings.alertMinEv, clock()))
     }
 
     /** Every list's inputs as the app would show them now, for [settings]: one [UiState], no screen needed. */
