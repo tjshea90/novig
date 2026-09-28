@@ -480,7 +480,9 @@ class Scanner(
             val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
             val merged = HashMap(books)
             merged.putAll(fresh)
-            onPartial(Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now, waitingFor = waiting()))
+            val partial = Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now, waitingFor = waiting())
+            if (firstBetAt == null && partial.feed(settings).isNotEmpty()) firstBetAt = elapsed() - startedAt
+            onPartial(partial)
         }
 
         /**
