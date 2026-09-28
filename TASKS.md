@@ -2429,3 +2429,11 @@ Nothing at or above 1.0% EV."
       rules, re-reads, window/filters) and say which one Tj saw, with evidence; fix anything that isn't intended.
 - [x] Q2 (DONE: ScanResult.waitingFor holds a league's bets mid-scan until its sources answered (props until props-only sources); scan prices only with quotes <= 3 min old (Freshness.MIN_SHOWN_MS) so a shown bet lasts >= 2 min; feed counts bets hidden for old odds. Tests: SteadyFeedTest 3 (each fails without its fix), ScreenshotTest.betsHiddenForOldOddsAreCountedNotJustDropped (1i png looked at); live after: 10 shown, 0 gone. v0.19.2 (37).) If the cause is showing edges before the fair line is complete (or any other misleading flicker): fix, test,
       ship, link. Otherwise answer plainly.
+
+## "Did this latest version change anything with the novig API scan because now it is reading the API very slow" (Tj, 2026-09-28, on v0.19.2)
+
+- [ ] R1 List every change since v0.18.0 that affects how long a scan takes or how fast Novig prices come in, and
+      measure what can be measured here (board size and time with 7 days + tennis, reads per scan with the full
+      budget, when bets first show with the hold-back). Find the real cause(s).
+- [ ] R2 Fix what's slower than it needs to be, with tests; give Tj a way to see where scan time goes (so the next
+      "slow" report comes with numbers). Ship, link.
