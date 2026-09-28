@@ -471,7 +471,7 @@ fun SettingsScreen(
                 ChoiceChips(ScanSettings.DAYS_AHEAD_CHOICES, s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
                 Hint(
                     "Games starting within this many days are scanned. A week takes in the next college Saturday and NFL " +
-                        "Sunday; the fair-odds requests are the same whatever the window, and the soonest games are read first. " +
+                        "Sunday; the fair-odds requests barely change with the window, and the soonest games are read first. " +
                         "\"Starts within\" on the +EV tab only filters what's shown.",
                 )
                 SwitchRow(
