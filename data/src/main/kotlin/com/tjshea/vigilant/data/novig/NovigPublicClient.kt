@@ -65,6 +65,8 @@ data class BookBatch(
     val viaKey: Int = 0,
     /** Set when the key route failed and this scan fell back to the public routes. */
     val keyProblem: String? = null,
+    /** Books the key's websocket already held current: served with no request (counted in [fetched] too). */
+    val viaPush: Int = 0,
 )
 
 class NovigHttpException(val code: Int, message: String, val retryAfterSeconds: Int? = null) : IOException(message)
