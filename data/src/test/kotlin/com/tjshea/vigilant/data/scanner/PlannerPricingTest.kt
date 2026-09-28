@@ -323,11 +323,17 @@ class PlannerPricingTest {
 
     @Test
     fun `a scan reads the per-game picks before the filler lines`() = kotlinx.coroutines.test.runTest {
-        val (novig, snaps) = thinSlate()
+        val (spreads, snaps) = thinSlate()
+        // Two quoted props, one a game: the second is filler, read after every pick (even the main-line one).
+        val props = (1..2).map { i ->
+            NovigMarket("p$i", Fixtures.EVENT_ID, "RECEPTIONS", "OPEN", "Player $i 3.5 RECEPTIONS", Fixtures.START_MS, MarketFee.GAME, listOf(NovigOutcome("o$i", "Over 3.5", "TBD"), NovigOutcome("u$i", "Under 3.5", "TBD")))
+        }
+        val propQuotes = (1..2).map { i -> RefBookMarket("polymarket", "Polymarket", LineKind.PLAYER_PROP, listOf(RefQuote(Side.OVER, 1.95, 3.5), RefQuote(Side.UNDER, 1.9, 3.5)), now, 0, "Player $i", "RECEPTIONS") }
+        val snap = snaps.single().let { it.copy(events = it.events.map { e -> e.copy(markets = e.markets + propQuotes) }) }
         val reads = ArrayList<String>()
         val source = object : com.tjshea.vigilant.data.novig.NovigSource {
             override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(event)
-            override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = novig
+            override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = spreads + props
             override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): com.tjshea.vigilant.data.novig.BookBatch {
                 reads += marketIds
                 return com.tjshea.vigilant.data.novig.BookBatch(emptyMap(), 0, 0, 0)
@@ -337,11 +343,12 @@ class PlannerPricingTest {
         val fair = object : com.tjshea.vigilant.data.reference.ReferenceSource {
             override val id = "polymarket"
             override val displayName = id
-            override suspend fun odds(league: League, settings: ScanSettings) = snaps.single()
+            override suspend fun odds(league: League, settings: ScanSettings) = snap
         }
-        Scanner(source, clock = { now }).scan(sharpOnly.copy(linesPerGame = 1), listOf(fair), emptySet(), {}, {})
-        assertEquals("sp3.5", reads.first())
-        assertEquals(setOf("sp20.5", "sp2.5", "sp1.5", "sp4.5"), reads.drop(1).toSet())
+        Scanner(source, clock = { now }).scan(sharpOnly.copy(linesPerGame = 1, propsPerGame = 1), listOf(fair), emptySet(), {}, {})
+        // Picks first (a prop, then the main spread), then the filler: the other prop and spreads.
+        assertEquals(listOf("p1", "sp3.5"), reads.take(2))
+        assertEquals(setOf("p2", "sp20.5", "sp2.5", "sp1.5", "sp4.5"), reads.drop(2).toSet())
     }
 
     @Test
