@@ -2499,3 +2499,10 @@ oversized briefing is trimmed…" (both failed before the fix).
 | KotlinSense, community `kotlin-lsp` (fwcd kotlin-language-server) | Anthropic Directory (claude.ai catalog) | No: community wrappers; fwcd's server is deprecated, same binary-install problem |
 | Kobiton, Ansight, Bugsee, Dynatrace | Anthropic Directory | No: need real devices/emulators or paid services; this container has no emulator |
 | Devil's Advocate, Graph of Thought (already connected MCP servers) | Tj's claude.ai connectors | Harmless (their tools load only on demand), little value for this repo; keep or disconnect as Tj likes |
+
+### 33.5 What Tj needs to do
+- Nothing is required. The briefing fix is pushed (ckpt 605), and the environment's setup script already exists (S3).
+- Two opt-in choices, each one reply away: (1) "run the prompt audit": `/claude-api prompt-audit` over CLAUDE.md, BRIEF.md
+  and the briefing scripts, report plus proposed diff, nothing applied until Tj says which hunks; (2) "add the Compose
+  skills": read Chris Banes' four skills in full, commit them to `.claude/skills/` with the Apache-2.0 license.
+- No plugin installs, connectors or paid services are recommended.
