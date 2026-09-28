@@ -600,9 +600,16 @@ private fun CnoCard(
                 row.books?.let { LabeledValue("Books", it.toString()) }
                 cnoStake(pick, settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
             }
-            check?.let {
-                val (text, color) = verdictLabel(it)
-                Text(text, style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
+            // One tap to the bet slip, as the widget and the +EV cards do (Tj, 2026-09-28); tapping the card still opens its books.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    check?.let {
+                        val (text, color) = verdictLabel(it)
+                        Text(text, style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                Spacer(Modifier.width(8.dp))
+                OpenInBookButton(cnoSlipStakeSuffix(pick, settings), opening = opening, onClick = onOpen)
             }
         }
     }
