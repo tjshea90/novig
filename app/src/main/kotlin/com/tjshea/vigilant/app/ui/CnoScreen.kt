@@ -121,6 +121,8 @@ fun CnoScreen(
     opening: String? = null,
     /** The pull-to-refresh arrow's state (tests look at it). */
     pullState: androidx.compose.material3.pulltorefresh.PullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState(),
+    /** Pause every scan (true) or resume (false). */
+    onPause: (Boolean) -> Unit = {},
 ) {
     val now = rememberNow(5_000)
     val cno = state.cno
@@ -186,10 +188,11 @@ fun CnoScreen(
                             Icon(painterResource(R.drawable.ic_mini_window), contentDescription = "Mini window over ${AppBook.name}", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
+                    PauseButton(state.settings.paused, onPause)
                     if (cno.refreshing) {
                         CircularProgressIndicator(Modifier.padding(12.dp).size(24.dp), strokeWidth = 2.dp)
                     } else {
-                        IconButton(onClick = onRefresh, enabled = on) {
+                        IconButton(onClick = onRefresh, enabled = on && !state.settings.paused) {
                             Icon(Icons.Filled.Refresh, contentDescription = "Refresh CrazyNinjaOdds", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
@@ -228,6 +231,7 @@ fun CnoScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        if (state.settings.paused) PausedBanner({ onPause(false) })
                         // Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well".
                         if (on) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
                         if (snap != null && CnoChecks.stuck(snap, now)) {
@@ -253,6 +257,12 @@ fun CnoScreen(
                                 "Vigilant only is picked. Choose Both or CNO only in Settings to see CNO's +EV list here and in the mini window.",
                                 action = "Settings",
                                 onAction = onOpenSettings,
+                            )
+                            snap == null && state.settings.paused -> EmptyState(
+                                "Scanning is paused",
+                                "CrazyNinjaOdds' list is read again as soon as you resume.",
+                                action = "Resume",
+                                onAction = { onPause(false) },
                             )
                             snap == null && cno.error == null -> EmptyState(
                                 "Reading CrazyNinjaOdds…",
@@ -358,6 +368,7 @@ fun CnoScreen(
  */
 private fun cnoStatus(state: UiState, snap: CnoSnapshot?, now: Long): String = when {
     !state.settings.cnoOn -> "Off"
+    state.settings.paused -> "Paused" + (snap?.let { " · read ${Format.age(it.fetchedAtMs, now)}" } ?: "")
     state.cno.refreshing && snap == null -> "Reading…"
     state.cno.error != null && snap == null -> "Couldn't read it"
     snap == null -> "Not read yet"
