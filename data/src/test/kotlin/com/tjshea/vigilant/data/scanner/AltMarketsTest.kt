@@ -184,9 +184,10 @@ class AltMarketsTest {
     fun `saved settings drop removed leagues and pick up the new market families`() {
         val old = ScanSettings(leagues = setOf("EPL", "NFL", "KBO"), families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL), schema = 2)
         val m = old.migrate()
-        assertEquals(setOf("NFL"), m.leagues)
+        // Tennis joins once in schema 7 (v0.19.0).
+        assertEquals(setOf("NFL") + ScanSettings.TENNIS, m.leagues)
         assertEquals(MarketFamily.entries.toSet(), m.families)
-        assertEquals(setOf("NFL"), ScanSettings(leagues = setOf("EPL"), schema = 2).migrate().leagues)
+        assertEquals(setOf("NFL") + ScanSettings.TENNIS, ScanSettings(leagues = setOf("EPL"), schema = 2).migrate().leagues)
     }
 
     @Test
