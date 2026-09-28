@@ -238,7 +238,7 @@ class NovigPublicClientTest {
             }
         }
         val batch = keyed(client()).books((1..16).map { "m$it" })
-        assertTrue("${refused.get()} refused", refused.get() >= 9)
+        assertEquals(10, refused.get())
         assertEquals(0, batch.failed)
         assertEquals(16, batch.fetched)
         assertEquals(16, batch.viaKey)
