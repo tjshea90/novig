@@ -2480,7 +2480,10 @@ Nothing at or above 1.0% EV."
       odds do not change that rapidly and are still positive EV bets even if the odds from other books are over 5
       minutes old". Research how fast sportsbook/exchange lines really move (pregame vs live, by sport/market, props),
       what other +EV tools do, what the app's sources' own update cadences are; decide, change if warranted, test.
-- [ ] S3 "For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4
+- [x] S3 (DONE: CNO's "Fewest books behind the fair price" = 1/2/3/4, default 4 (was 5); schema 9 moves a saved 5+
+      to 4 once; the app's choice is always posted to CNO's form (before, a Shared View link's bigger number won, so 1
+      or 2 would have done nothing). Tests: CnoBooksChoicesTest (3), CnoClientTest `a stricter odds cap … fewest books
+      is always the app's`, MiniWindowTest default; sample Buehler row 4 -> 3 books.) "For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4
       books". Choices become 1-4; a saved 5+ moves to 4 once (schema bump); test.
 - [ ] S4 Ship with the v0.19.3 work (R2e) and send the link.
 
