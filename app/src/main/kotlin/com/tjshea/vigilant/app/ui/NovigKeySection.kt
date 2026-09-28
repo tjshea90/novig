@@ -40,6 +40,8 @@ fun NovigKeySection(
     onConnect: (keyId: String, pem: String) -> Unit,
     onTest: () -> Unit,
     onDisconnect: () -> Unit,
+    /** The last scan, for how its prices came in. */
+    lastScan: ScanStatus? = null,
 ) {
     val conn = novig.connection
     if (conn == null) {
@@ -50,13 +52,23 @@ fun NovigKeySection(
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            "Scans read Novig's prices through this key's own rate limit (64 at once, 16 a second) " +
-                "instead of the public one your phone's network shares. If Novig refuses the key " +
-                "(VPN on, location check due), the scan falls back to public prices and says why.",
+            "Scans open Novig's live feed with this key: about 8 seconds in, every line the scan prices (up to " +
+                "2,000) arrives at once and then updates itself, with no request per price. Until then, and for " +
+                "anything the feed doesn't cover, prices are read through the key's own rate limit (16 a second) " +
+                "instead of the public one your phone's network shares. If Novig refuses the key (VPN on, location " +
+                "check due), the scan falls back to public prices and says why.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 4.dp),
         )
+        lastScan?.takeIf { it.scannedAtMs != null && it.booksFetched > 0 }?.let { s ->
+            Text(
+                "Last scan: ${s.booksViaPush} of ${s.booksFetched} Novig prices came by live feed, " +
+                    "${s.booksViaKey} through the key's rate limit.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onTest, enabled = !novig.busy) { Text("Test key") }
             TextButton(onClick = onDisconnect, enabled = !novig.busy) { Text("Disconnect") }
