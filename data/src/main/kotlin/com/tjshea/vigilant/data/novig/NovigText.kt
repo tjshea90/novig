@@ -24,9 +24,20 @@ object NovigText {
         val i = description.indexOf(" @ ")
         if (i <= 0) return null
         val away = description.substring(0, i).trim()
-        val home = description.substring(i + 3).trim()
+        val home = description.substring(i + 3).trim().replace(ROUND, "").trim()
         return if (away.isEmpty() || home.isEmpty()) null else Matchup(away, home)
     }
+
+    /**
+     * A tennis round after the home player's name (seen live 2026-09-28): "Roman Safiullin @ Daniil
+     * Medvedev Semifinals", "Olivia Nicholls @ Marina Bassols Ribera 1st Qualifying Round",
+     * "Daria Egorova @ Kristiana Sidorova Round of 32". Not part of anyone's name.
+     */
+    private val ROUND = Regex(
+        """\s+(?:(?:\d+(?:st|nd|rd|th)\s+)?Qualifying(?:\s+(?:Round|Final))?|Round\s+of\s+\d+|\d+(?:st|nd|rd|th)\s+Round|""" +
+            """Round\s+Robin|Quarter-?finals?|Semi-?finals?|Finals?)$""",
+        RegexOption.IGNORE_CASE,
+    )
 
     /** "DAL +20.5" -> ("DAL", 20.5). */
     fun parseSpreadOutcome(name: String): Pair<String, Double>? {
