@@ -400,7 +400,8 @@ robolectric.org/configuring/.
   16/s), and since v0.19.0 a **scan** also opens Novig's websocket with the key (Tj, 2026-09-28:
   "taking full advantage of the novig API key"; RESEARCH.md §27): one subscribe loads the whole
   plan ~8 s in, pushes keep it current, and it closes 2 minutes after the last scan or recheck
-  used it. No socket without a scan. Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is one
+  used it, or at once off screen (a background scan's end, or leaving Vigilant with no scan running).
+  No socket without a scan. Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is one
   asked-for exception, above; it reads CNO only. Background auto-scan, below, is the other: off
   by default, on only when Tj picks it.)
 - **Background auto-scan and +EV alerts, opt-in (Tj, 2026-09-28; v0.18.0, RESEARCH.md §26).**

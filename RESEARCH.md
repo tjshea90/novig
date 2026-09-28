@@ -2202,7 +2202,8 @@ while Novig lists 50+ game lines and hundreds of props per game.
   reading the likeliest lines meanwhile (separate throttle), and every book the socket holds is taken in
   one pass with no request. Dropped lines are unsubscribed; gaps re-snapshot; a throttle reply is retried
   after a refill, a limit reply asks for half. The socket closes 2 minutes after a scan last used it
-  (rechecks right after a scan are instant), and on any failure scans use the key's REST route for 5
+  (rechecks right after a scan are instant), at once when a scan ends with Vigilant off screen (background
+  auto-scan) or Vigilant leaves the screen with no scan running, and on any failure scans use the key's REST route for 5
   minutes and say why once. OkHttp pings every 20 s, so a dead socket fails rather than serving old books.
   **Not verified against the real API** (the key lives in the phone's hardware keystore; nothing here can
   sign as it): the mock socket speaks the documented protocol, and anything unexpected falls back to

@@ -1,22 +1,25 @@
-# CHECKPOINT 557 — read me first, then TASKS.md
+# CHECKPOINT 558 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T06:48:55Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `2067851` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T06:54:33Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `8a6134b` (this checkpoint is the commit after it)
 
 ## Just done
-K2 (websocket for keyed scans: NovigStream market subscriptions, pushed books in one pass, app wiring, Settings text) + K1/K4 docs (RESEARCH §27, NOVIG_API, BRIEF, CLAUDE)
+light test: screenshots looked at (key section, settings fill switch); UI tests for the switch + tennis chips; fix: live feed closed at once off screen (battery), watch once per plan; floor 675 green before these
 
 ## Do this next
-K5: full floor running; then light tests on touched files, screenshots, ship v0.19.0
+K5: final floor, then ship v0.19.0 (versionCode 35), release, link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
+     M BRIEF.md
      M CHECKPOINT.md
-     M TASKS.md
+     M NOVIG_API.md
+     M RESEARCH.md
 
 ## Last ten checkpoints
 ```
+  44b45ee ckpt 557: K2 (websocket for keyed scans: NovigStream market subscriptions, pushed books 
   1975c04 ckpt 556: K3b: tennis (ATP/WTA) priced from Kalshi + Pinnacle: winner, games spread/tota
   498d761 ckpt 555: K3a: scans fill the per-scan budget with every other quoted line (fillBudget, 
   da4b847 ckpt 554: K1 diagnosed (thin slate + per-game caps + no tennis); K2-K5 planned in TASKS.
@@ -26,8 +29,7 @@ K5: full floor running; then light tests on touched files, screenshots, ship v0.
   ee1cfa9 ckpt 550: P6: live Novig/finder/CNO/scores green; 110 screenshots green (5d, 5e looked a
   6259bbe ckpt 549: P6 full tests: fix F1 duplicate alerts when two scans end together (send mutex
   45fbbf7 ckpt 548: P1-P5 done and ticked: floor 654 tests, 0 failures, 8 live skipped (engine/dat
-  3b700a0 ckpt 547: P4/P5 tests: AutoScanTest 13, AgreementTest 3, AlertLogTest 3, NovigLive.readN
 ```
 
-(42 automatic checkpoint(s) since the last deliberate one — the
+(10 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

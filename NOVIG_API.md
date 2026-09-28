@@ -352,7 +352,7 @@ location, trading::read scope). Each scan hands its whole plan (up to the budget
 again, then sends ONE `subscribe {markets: {<id>: "book", …}}` for everything wanted (≤2,000); later
 additions go when their tokens are back; dropped markets are unsubscribed. Meanwhile the REST keyed
 route (below) reads the likeliest lines; once the snapshot lands, every held book is taken with no
-request. Closed 2 minutes after a scan last used it; on failure, REST for 5 minutes and the scan says
+request. Closed 2 minutes after a scan last used it (at once off screen); on failure, REST for 5 minutes and the scan says
 why. **The socket path is not yet verified against the real API** (the key can't leave the phone):
 verified against a mock speaking the documented protocol only. If Tj's scan says "Novig live feed: …",
 that message is the first real evidence of what differs.
