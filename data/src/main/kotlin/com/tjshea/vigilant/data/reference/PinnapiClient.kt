@@ -85,7 +85,8 @@ class PinnapiClient(
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val sport = league.pinnacleSportId ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
-        val props = MarketFamily.PLAYER_PROPS in settings.families
+        // Only sports whose props Pinnacle is read for ask for its specials (tennis has none mapped).
+        val props = MarketFamily.PLAYER_PROPS in settings.families && PinnacleProps.hasProps(sport)
         val board = mutex.withLock { boardFor(sport, props) }
         return RefSnapshot(league.oddsApiSportKey, parse(board.events, league, board.fetchedAtMs), board.fetchedAtMs, provider = ID)
     }
@@ -167,6 +168,28 @@ class PinnapiClient(
             else -> emptySet()
         }
 
+        /**
+         * Tennis leagues are per tournament ("ATP Beijing", "ATP Challenger Shanghai", "WTA Wuhan"): the
+         * tour's name starts them. Compared case-insensitively.
+         */
+        fun leaguePrefixes(league: League): Set<String> = when (league.novigName) {
+            "ATP" -> setOf("atp")
+            "WTA" -> setOf("wta")
+            else -> emptySet()
+        }
+
+        private fun inLeague(leagueName: String?, names: Set<String>, prefixes: Set<String>): Boolean {
+            val n = leagueName?.trim()?.lowercase() ?: return false
+            return n in names || prefixes.any { n == it || n.startsWith("$it ") || n.startsWith("$it-") }
+        }
+
+        /**
+         * A tennis row that isn't one singles match's own lines: Pinnacle lists set betting as a match of its
+         * own with "(Sets)" on each name, and doubles as "A / B". Either would price the wrong Novig market.
+         */
+        private fun tennisSideLine(e: JsonObject): Boolean =
+            listOf("home", "away").any { k -> e.str(k)?.let { '(' in it || '/' in it } ?: true }
+
         private fun JsonObject.str(k: String): String? = (this[k] as? JsonPrimitive)?.takeIf { it.isString }?.content
         private fun JsonObject.num(k: String): Double? = (this[k] as? JsonPrimitive)?.doubleOrNull
         private fun JsonElement?.obj(): JsonObject? = this as? JsonObject
@@ -184,8 +207,10 @@ class PinnapiClient(
             // Specials (player props) are rows of their own, pointing at their game by parent_id.
             val (specials, games) = events.partition { it.containsKey("parent_id") && it["parent_id"] !is kotlinx.serialization.json.JsonNull }
             val names = leagueNames(league)
-            val named = games.filter { e -> e.str("league_name")?.trim()?.lowercase() in names }
-            val pool = named.ifEmpty { games }
+            val prefixes = leaguePrefixes(league)
+            val singles = if (league.tennis) games.filterNot(::tennisSideLine) else games
+            val named = singles.filter { e -> inLeague(e.str("league_name"), names, prefixes) }
+            val pool = named.ifEmpty { singles }
             val props = if (specials.isEmpty()) emptyMap() else specials.groupBy { (it["parent_id"] as? JsonPrimitive)?.content }
             return pool.mapNotNull { e ->
                 val event = event(e, league, fetchedAtMs) ?: return@mapNotNull null
@@ -233,15 +258,23 @@ class PinnapiClient(
             val updated = fetchedAtMs
             val markets = ArrayList<RefBookMarket>()
 
-            full["money_line"].obj()?.let { ml ->
+            // Tennis: the 1st set's winner too (period 1, two-way). Other sports' period-1 moneylines stay
+            // out: a half can end level, and Novig prices none of them (RESEARCH.md §13).
+            val mlPeriods = if (league.tennis) listOf("num_0" to 0, "num_1" to 1) else listOf("num_0" to 0)
+            for ((periodKey, period) in mlPeriods) {
+                val ml = e["periods"].obj()?.get(periodKey).obj()?.get("money_line").obj() ?: continue
                 val h = ml.num("home")
                 val a = ml.num("away")
                 if (h != null && a != null && h > 1.0 && a > 1.0 && ml.num("draw") == null) {
-                    markets += RefBookMarket(ID, "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, h, null), RefQuote(Side.AWAY, a, null)), updated)
+                    markets += RefBookMarket(ID, "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, h, null), RefQuote(Side.AWAY, a, null)), updated, period)
                 }
             }
+            // A tennis match's lines are in games. Totals under 6 can only be sets (best of 3 or 5): then
+            // that row's spreads and totals aren't the games lines Novig lists, and are left out.
+            val setsNotGames = league.tennis && full["totals"].obj()?.values?.any { v -> (v.obj()?.num("points") ?: 99.0) < 6.0 } == true
             // Full game (num_0) and 1st half / first 5 innings (num_1), with every alternate line.
             for ((periodKey, period) in listOf("num_0" to 0, "num_1" to 1)) {
+                if (setsNotGames) break
                 val p = e["periods"].obj()?.get(periodKey).obj() ?: continue
                 p["spreads"].obj()?.values?.forEach { v ->
                     val sp = v.obj() ?: return@forEach
@@ -306,6 +339,9 @@ object PinnacleProps {
 
     /** Pinnacle `sport_id` -> its prop names. */
     private val BY_SPORT = mapOf(5 to FOOTBALL, 6 to BASEBALL, 3 to BASKETBALL)
+
+    /** Whether any of [sportId]'s Pinnacle props price a Novig stat (else its specials aren't asked for). */
+    fun hasProps(sportId: Int): Boolean = sportId in BY_SPORT
 
     /** Every Novig stat Pinnacle's props can price. */
     val STATS: Set<String> = BY_SPORT.values.flatMap { it.values }.toSet()
