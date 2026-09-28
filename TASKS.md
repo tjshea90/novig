@@ -2592,3 +2592,16 @@ Nothing at or above 1.0% EV."
       background auto-scan and widget rescans still only repeat on their own timers. Tests prove each market is read
       once and the scan ends.
 - [x] V6 (DONE: v0.19.6 (41): ship.sh 760 tests/0 failures, CI green on 036f664, release.yml published vigilant-v0.19.6.apk (new code checked inside the APK), BUILDLOG recorded.) Ship and send the link.
+
+## "Research the new claude-api skill and hillclimb and figure out if it can improve this app or development. Then research other skills or plugins including from third parties that can improve the app or Claude ability to make the app better. Tell me anything I need to do" (Tj, 2026-09-28T22:16Z, on v0.19.6)
+
+- [ ] W1 Research: the claude-api skill (what it is, what's in it) and "hillclimb" (what it is, where it comes from);
+      verdict on whether either improves the app itself (at runtime) or how Claude builds it (the dev loop), and
+      what each would cost (Tj: nothing that costs money or lowers accuracy).
+- [ ] W2 Research: other skills / plugins / MCP connectors, Anthropic's and third parties', that could improve the app
+      or Claude's work on it (Kotlin / Compose / Gradle / Android, tests, review, security, library docs); which ones
+      actually work in this cloud container and survive into the next session.
+- [ ] W3 Write the findings down (RESEARCH.md, new section) so no later session redoes this; tell Tj plainly what he
+      needs to do (settings, installs, costs), links as plain text.
+- [ ] W4 Adopt on the repo side only what is clearly safe, free and reversible without Tj's say-so; list the rest for
+      his go-ahead.
