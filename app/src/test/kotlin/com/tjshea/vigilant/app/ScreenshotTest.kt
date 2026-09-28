@@ -267,6 +267,18 @@ class ScreenshotTest {
         for (gone in listOf("Any", "+500", "+1000", "+2000")) compose.onAllNodesWithText(gone).assertCountEquals(0)
         compose.onNodeWithText("+120").performClick()
         assert(picked?.maxOdds == 120) { "picked $picked" }
+        // v0.19.0: the per-scan budget's leftovers go to every other quoted line; the key's live feed is named.
+        compose.onNodeWithText("whole scan arrives by live feed", substring = true).assertExists()
+        compose.onNodeWithText("Fill the scan with every quoted line").performScrollTo().performClick()
+        assert(picked?.fillBudget == false) { "picked $picked" }
+    }
+
+    @Test fun theLeagueChipsOfferTennis() {
+        var toggled: String? = null
+        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onToggleLeague = { toggled = it }) }
+        compose.onNodeWithText("ATP").performScrollTo().performClick()
+        assert(toggled == "ATP") { "toggled $toggled" }
+        compose.onNodeWithText("WTA").assertExists()
     }
 
     @Test fun theFeedCanBeSortedBySoonest() {
