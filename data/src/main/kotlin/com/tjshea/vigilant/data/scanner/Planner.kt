@@ -119,17 +119,32 @@ object Planner {
     private const val NOVIG_ONLY_EVENT_CAP = 20
 
     fun eligibleEvents(events: List<NovigEvent>, settings: ScanSettings, now: Long): List<NovigEvent> {
-        val horizon = now + settings.daysAhead.coerceAtLeast(1) * 24L * 3600 * 1000
-        return events.filter { e ->
-            val pregameOk = e.status == NovigEvent.STATUS_PREGAME &&
-                // The catalog refreshes every few minutes, so a game can still read "pregame"
-                // after it has started. Past its start time it's live in practice: in-game fees
-                // apply and the sportsbooks' pregame lines no longer describe it.
-                (settings.includeLive || e.startsTs > now - STARTED_GRACE_MS)
-            e.league in settings.leagues &&
-                e.startsTs <= horizon &&
-                (pregameOk || (settings.includeLive && e.status == NovigEvent.STATUS_LIVE))
-        }
+        val horizon = horizon(settings, now)
+        return events.filter { e -> e.startsTs <= horizon && inPlay(e, settings, now) }
+    }
+
+    /** The last start time "Days ahead" takes in. */
+    fun horizon(settings: ScanSettings, now: Long): Long = now + settings.daysAhead.coerceAtLeast(1) * 24L * 3600 * 1000
+
+    /** A picked league's game that is open to bet now (start time aside). */
+    private fun inPlay(e: NovigEvent, settings: ScanSettings, now: Long): Boolean {
+        val notStarted = e.startsTs > now - STARTED_GRACE_MS
+        val pregameOk = e.status == NovigEvent.STATUS_PREGAME &&
+            // The catalog refreshes every few minutes, so a game can still read "pregame"
+            // after it has started. Past its start time it's live in practice: in-game fees
+            // apply and the sportsbooks' pregame lines no longer describe it.
+            (settings.includeLive || notStarted)
+        // A game held before its start (DELAYED) is still tradable, fee-free like pregame. One held
+        // mid-game is left out: whether its taker fee is on isn't something the catalog says.
+        val delayedOk = e.status == NovigEvent.STATUS_DELAYED && notStarted
+        return e.league in settings.leagues &&
+            (pregameOk || delayedOk || (settings.includeLive && e.status == NovigEvent.STATUS_LIVE))
+    }
+
+    /** Real games (two sides) in the picked leagues that start after [horizon]: not scanned. */
+    fun laterGames(events: List<NovigEvent>, settings: ScanSettings, now: Long): Int {
+        val horizon = horizon(settings, now)
+        return events.count { e -> e.startsTs > horizon && e.matchup != null && inPlay(e, settings, now) }
     }
 
     private const val STARTED_GRACE_MS = 2 * 60_000L
