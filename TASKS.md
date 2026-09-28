@@ -2332,7 +2332,7 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
 
 ### Suggestions from the 2026-09-27 full test (wait on Tj; not started)
 
-- [ ] S1 Let the scan follow "Starts within": with 12/24/48h picked, a scan still reads Novig books and spends API
+- [x] S1 (DONE in v0.19.6 with V5.) Let the scan follow "Starts within": with 12/24/48h picked, a scan still reads Novig books and spends API
       credits on games up to "Days ahead" (3 days by default). Scanning only the window would cut Novig reads,
       PropLine / The Odds API usage and scan time; widening the window would then need a new scan.
 - [ ] S2 Show the start-time window in the picture-in-picture window's header (it can't take taps, so today
@@ -2569,18 +2569,24 @@ Nothing at or above 1.0% EV."
 
 ## "Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited … make sure the app doesn't just scan continuously" (Tj, 2026-09-28 ~20:2xZ, on v0.19.5)
 
-- [ ] V1 Research: every per-scan cap (Novig prices per scan, props credits per scan, lines/props per game, sportsbook
+- [x] V1 (DONE: RESEARCH §32.1: every cap, which got No limit/All and which not, costs, how a scan ends.) Research: every per-scan cap (Novig prices per scan, props credits per scan, lines/props per game, sportsbook
       props hours, PropLine / Pinnacle requests, …), which ones "can benefit from unlimited", what unlimited costs
       (Novig's read bucket / websocket 2,048, The Odds API credits, PropLine's 1,000/day, scan time vs the odds-age rule
       that RESEARCH §31.1 turned "No limit" down for), and how an unlimited scan ends.
-- [ ] V2 "unlimited novig prices per scan": a "No limit" choice for Novig prices per scan. Every line a fair source prices
+- [x] V2 (DONE: `ScanSettings.NO_LIMIT` in MAX_BOOKS_CHOICES; reads every priced line in the window once; freshness guard
+      bounds it (~8 min); lines left too late read first next scan (`leftLastScan`). BiggerScansTest `with no limit a scan
+      reads every priced line…`, `lines a long scan left too late are read first…`.) "unlimited novig prices per scan": a "No limit" choice for Novig prices per scan. Every line a fair source prices
       in the selected time period is read once, then the scan ends; long scans keep their odds fresh enough to show
       (not the §31 "early reads age out" problem).
-- [ ] V3 "unlimited credits per scan": a "No limit" choice for The Odds API props credits per scan, bounded by the games in
+- [x] V3 (DONE: No limit credits; hint `creditWorstCase(NO_LIMIT)`. OddsApiPropsTest `no credit limit and All hours…`.) "unlimited credits per scan": a "No limit" choice for The Odds API props credits per scan, bounded by the games in
       the window × prop types and by the key's credits left; the hint says the worst case.
-- [ ] V4 The other caps that benefit ("etc."): lines / props per game and sportsbook-props hours get an "All"/"No limit"
+- [x] V4 (DONE: lines/props per game "All", props hours "All" (`bookPropWindowHours`), PropLine games per scan
+      12/24/48/No limit (was a fixed 12). PropLineClientTest `PropLine props follow the games-per-scan setting…`, ScreenshotTest
+      `settingsOfferNoLimitOnEveryScanCapThatCanUseIt`, `theNoLimitHintsSayWhatBoundsTheScan`.) The other caps that benefit ("etc."): lines / props per game and sportsbook-props hours get an "All"/"No limit"
       choice where it changes what a scan can find.
-- [ ] V5 "make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished
+- [x] V5 (DONE: `scanWindowHours` = Days ahead or Starts within when shorter (S1), `Planner.horizon`, props too; feed banner
+      when the window is wider than the last scan. BiggerScansTest `a scan reads only the games in Starts within…`, ScreenshotTest
+      `theFeedSaysWhenTheWindowIsWiderThanTheLastScan` (1l png looked at).) "make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished
       scanning for the selected time period". An unlimited scan's plan is finite: the markets starting within the
       selected time period (Days ahead, or "Starts within" when narrower: open task S1), each read once, then it stops;
       background auto-scan and widget rescans still only repeat on their own timers. Tests prove each market is read

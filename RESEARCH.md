@@ -2409,3 +2409,33 @@ the next "slow" report comes with the phone's own numbers.
   its key until the reset, pinnapi answers meanwhile (no props on pinnapi's trial), then PinnWire goes first again. A
   gap fixed: any other PinnWire failure (a 5xx, an odd status, a dropped connection) failed Pinnacle for the scan
   instead of trying pinnapi.
+
+## 32. No limit on every scan cap, bounded by the time window (2026-09-28 ~20:2xZ, Tj: "Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited. For example, unlimited credits per scan, unlimited novig prices per scan, etc. but make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished scanning for the selected time period")
+
+### 32.1 Which caps, and what "No limit" means for each (v0.19.6)
+- **Novig prices per scan** (`maxBooksPerScan`): No limit = every line a fair source prices, for the games in the scan's
+  time window, each read once. §31.1's reasons for stopping at 2,000 still hold as costs (past the live feed's 2,000, each
+  price is a request at ~14/s keyed, ~300/min public), but the scan can't run away: other books' odds are read as the scan
+  starts and last 5 minutes (10 for games over 3 h off), and a line that couldn't stay listed 2 minutes once read is left
+  (`canStillShow`, §31.1). So Novig reading stops by ~8 minutes whatever the limit. New: lines a scan left too late are read
+  first (right after likely/near +EV) by the next scan (`Scanner.leftLastScan`), so back-to-back scans cover the window.
+- **The Odds API props credits per scan** (`bookPropCreditsPerScan`): No limit = every game in the props window with props
+  Novig lists (and PropLine didn't price), one credit per prop type, each game once a scan. ~4 credits a game (Core 4), up
+  to 18 in football (All): the free 500 a month can go in one or two scans; the key pool stops when credits run out and
+  props come from PropLine, Pinnacle and Kalshi.
+- **PropLine props games per scan** (`propLineGamesPerScan`): was a hidden fixed 12; now 12/24/48/No limit (one request a
+  game against the free 1,000 a day; a full slate is 50+).
+- **Lines / props per game** ("All"): with "fill the scan" on they only order reads; off, All reads every quoted line.
+- **Sportsbook props hours** ("All"): every game the scan reads (`bookPropWindowHours` = min(hours, scan window)).
+- Not given one: Days ahead (it *is* the time period), the 40-price recheck and end-of-scan re-read (internal, the feed is
+  rarely larger), Novig-only games on the Games tab (20; they can't be +EV), CNO's rows per read (25/50/100 are CNO's own
+  choices; another value isn't known to work).
+
+### 32.2 "Stop … for the selected time period"
+- The scan's window is now `scanWindowHours`: Days ahead, or "Starts within" when shorter (open task S1, done here). Before,
+  Starts within only hid bets while the scan read the whole Days-ahead window; with No limit that meant minutes of reads
+  on games Tj had filtered out. Props follow the same window. Widening Starts within after a scan now needs a new scan: the
+  feed says so ("The last scan read games starting in the next 12 hours. Scan to add …", `ScanStatus.scannedWindowHours`).
+- A scan is one pass: every line in the window at most once, then it ends (BiggerScansTest `with no limit a scan reads every
+  priced line in the time window once, then stops`). Nothing repeats except background auto-scan and the widget's rescan,
+  each on its own timer (unchanged), and Pause stops all of it (v0.19.5).
