@@ -2221,3 +2221,8 @@ Check to see if it worked
 ```
 Did the setup script work for this environment
 ```
+
+## 2026-09-28T02:52:18Z
+```
+Tell me what the setup script for this Claude environment does and does it work right
+```
