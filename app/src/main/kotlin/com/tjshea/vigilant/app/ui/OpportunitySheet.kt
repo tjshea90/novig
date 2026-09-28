@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -336,7 +337,7 @@ fun OpenInBookButton(suffix: String, opening: Boolean = false, modifier: Modifie
     ) {
         if (opening) {
             androidx.compose.material3.CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
-            androidx.compose.foundation.layout.Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(6.dp))
             Text("Opening…", maxLines = 1)
         } else {
             Text("Open in ${AppBook.name}" + suffix, maxLines = 1)
