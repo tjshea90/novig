@@ -228,14 +228,25 @@ BRIEF="$(
 # additionalContext is the documented path; plain text is the fallback when
 # python3 is absent — never emit both, that would make the JSON unparseable
 # and lose the briefing entirely.
+#
+# The cap: Claude Code saves any additionalContext over 10,000 characters to
+# a file and shows Claude a 2,000-character preview, and nothing prompts
+# Claude to open the file (code.claude.com/docs/en/hooks). A briefing over
+# the cap is therefore worse than a trimmed one, so trim the tail (the rules
+# block and the oldest open items come last) and say where the rest is.
 if [ "$TEXT_MODE" -eq 1 ]; then
   printf '%s\n' "$BRIEF"
 elif command -v python3 >/dev/null 2>&1; then
   printf '%s' "$BRIEF" | python3 -c '
 import json, sys
+brief = sys.stdin.read()
+CAP = 9500
+if len(brief) > CAP:
+    note = "\n\n[briefing cut to fit the 10,000-character hook limit; full text: bash tools/resume.sh --text]\n"
+    brief = brief[: CAP - len(note)] + note
 print(json.dumps({"hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": sys.stdin.read()}}))
+    "additionalContext": brief}}))
 ' 2>/dev/null || printf '%s\n' "$BRIEF"
 else
   printf '%s\n' "$BRIEF"
