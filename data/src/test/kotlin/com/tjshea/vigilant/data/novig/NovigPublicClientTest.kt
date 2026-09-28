@@ -213,6 +213,29 @@ class NovigPublicClientTest {
 
     private fun MockWebServer.requests(): List<RecordedRequest> = (0 until requestCount).map { takeRequest() }
 
+    /**
+     * Tj, 2026-09-28: "now it is reading the API very slow". With a key, a whole wave of books is in flight when
+     * Novig's `read` bucket runs dry, and every one comes back 429 at once. That's one refusal: it used to count as
+     * six (of the 8 allowed) and halve the pace six times, so a second wave stopped the whole scan.
+     */
+    @Test
+    fun `with a key, two refused waves are waited out and every book still comes`() = runBlocking {
+        val refused = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.requestUrl!!.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                refused.incrementAndGet() <= 12 -> MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
+                    .setBody("""{"code":"RATE_LIMIT_EXCEEDED","message":"Rate limit exceeded. Please wait before retrying."}""")
+                else -> bookFor(request)
+            }
+        }
+        val batch = keyed(client()).books((1..16).map { "m$it" })
+        assertEquals(0, batch.failed)
+        assertEquals(16, batch.fetched)
+        assertEquals(16, batch.viaKey)
+        assertNull(batch.retryAfterSeconds)
+    }
+
     @Test
     fun `with a key, books come from the signed route and its own rate limit`() = runBlocking {
         server.dispatcher = keyedDispatch()
