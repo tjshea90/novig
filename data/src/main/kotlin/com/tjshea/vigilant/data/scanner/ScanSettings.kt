@@ -314,6 +314,9 @@ data class ScanSettings(
     /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only). */
     val vigilantOn: Boolean get() = scanner != ScannerMode.CNO
 
+    /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
+    val activeAutoScan: AutoScanMode get() = if (paused) AutoScanMode.OFF else autoScan
+
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
         method = devigMethod,
