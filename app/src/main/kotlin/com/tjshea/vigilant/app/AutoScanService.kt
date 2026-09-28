@@ -202,7 +202,10 @@ class AutoScanService : Service() {
         const val ACTION_SCAN_NOW = "com.tjshea.vigilant.AUTO_SCAN_NOW"
         const val ACTION_STOP = "com.tjshea.vigilant.AUTO_SCAN_STOP"
 
-        /** The CPU is held at most this long for one background scan (1,200 books on a slowed-down Novig). */
+        /**
+         * The CPU is held at most this long for one background scan (1,200 books on a slowed-down Novig). A scan with no
+         * limit fits too: it stops reading Novig once its other books' odds would be too old (about 8 minutes in).
+         */
         const val WAKE_LOCK_MAX_MS = 20 * 60_000L
 
         /** True while the service exists in this process. */

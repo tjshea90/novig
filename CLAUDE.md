@@ -346,6 +346,13 @@ unless Tj asks).
   alarm, boot receiver, `AutoScanner.cycle`), Scan/Recheck/Refresh toast `PAUSED_TOAST`, reading buttons greyed; bets
   still open and settle (`PauseScanningTest`, `PauseScanningAppTest`, ScreenshotTest pause tests). Every CNO tab card has
   the +EV card's `OpenInBookButton` (`MainActivity.openInNovig`, stake `cnoSlipStake`).
+- **No limit on every scan cap, scans bounded by the time window (v0.19.6+; RESEARCH.md §32):** `ScanSettings.NO_LIMIT`
+  ("No limit" / "All") on Novig prices per scan, The Odds API props credits, PropLine props games per scan
+  (`propLineGamesPerScan`, was a fixed 12), lines/props per game, sportsbook-props hours (`bookPropWindowHours`); the scan
+  reads only `scanWindowHours` (Days ahead, or Starts within when shorter: `Planner.horizon`), each line once, never past
+  its odds' freshness (`canStillShow`), and lines left too late are read first next scan (`Scanner.leftLastScan`); feed
+  banner when Starts within is wider than the last scan (`ScanStatus.scannedWindowHours`). Tests: BiggerScansTest no-limit
+  tests, OddsApiPropsTest, PropLineClientTest, ScreenshotTest no-limit tests.
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
