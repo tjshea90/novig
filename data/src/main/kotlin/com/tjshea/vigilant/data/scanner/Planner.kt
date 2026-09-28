@@ -374,6 +374,9 @@ object Planner {
         val baseball = m.league.oddsApiSportKey.startsWith("baseball")
         val halfLabel = if (baseball) "F5" else "1H"
 
+        /** Whether [point], read from the display names, is Novig's own line (or Novig sent none). */
+        fun strikeAgrees(point: Double): Boolean = market.strike?.let { abs(it - point) < 1e-9 } ?: true
+
         fun spread(period: Int, label: String): PlannedMarket? {
             if (market.outcomes.size != 2) return null
             val (o1, o2) = market.outcomes
