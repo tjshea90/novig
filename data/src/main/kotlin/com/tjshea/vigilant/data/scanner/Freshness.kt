@@ -26,7 +26,7 @@ object Freshness {
     const val FAR_OFF_MS = 3 * 60 * 60_000L
 
     /** The rule in words, for the screens that explain why a bet left. */
-    const val LIMIT_TEXT = "5 minutes (10 for games more than 3 hours away)"
+    const val LIMIT_TEXT = "over 5 minutes, or 10 for games more than 3 hours away"
 
     /** How old a quote on a game starting at [startsAtMs] may be at [now]; unknown start = the strict limit. */
     fun maxAgeMs(startsAtMs: Long?, now: Long): Long =

@@ -233,7 +233,7 @@ fun SettingsScreen(
                     "a bet both list shows once, tagged with CNO's EV. " +
                     (if (s.widgetRescanMinutes > 0) "Vigilant scans again every ${s.widgetRescanMinutes} min while the widget${if (s.cnoOn) " or CNO's tab" else ""} is on screen. Each scan spends API credits (Pinnacle / The Odds API keys)."
                     else "Off: Vigilant scans only when you tap Scan (no API credits spent on its own).") +
-                    " Its bets leave the widget ${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT} after the scan that found them: older odds aren't compared.",
+                    " Its bets leave the widget once the odds behind them are too old (${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT}): older odds aren't compared.",
             )
             if (!s.floatingWidget) {
                 Hint(

@@ -242,10 +242,11 @@ class ScreenshotTest {
         assertTrue(scanned)
     }
 
-    /** Past three minutes a bet says its odds are aging (they leave the feed at five). */
+    /** Past three minutes a bet says how old its odds are (they leave the feed at 5 minutes, 10 for games over 3 hours off). */
     @Test fun agingOddsAreFlaggedBeforeTheyLeave() {
+        // The sample's book prices were seen 3 minutes before the scan: a minute later, 4 minutes old.
         screen(now = SampleScan.NOW + 60_000L) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
-        compose.onAllNodesWithText("odds aging").onFirst().assertIsDisplayed()
+        compose.onAllNodesWithText("odds 4 min old").onFirst().assertIsDisplayed()
     }
 
     @Test fun freshPricesHaveNoWarningAndTheFeedCanStillBeRechecked() {
@@ -313,13 +314,14 @@ class ScreenshotTest {
     /** Tj, 2026-09-28: "found several positive EV bets while scanning but they quickly disappeared". */
     @Test fun betsHiddenForOldOddsAreCountedNotJustDropped() {
         val base = SampleScan.state()
-        // Half the feed's other-book prices were seen 6 minutes before now: past the 5-minute limit.
-        val old = base.feed.mapIndexed { i, o -> if (i % 2 == 0) o.copy(fairAsOfMs = SampleScan.NOW - 6 * 60_000L) else o.copy(fairAsOfMs = SampleScan.NOW) }
+        // Half the feed's other-book prices were seen 11 minutes before now: past the limit (the sample's games are two
+        // days off, so 10 minutes).
+        val old = base.feed.mapIndexed { i, o -> if (i % 2 == 0) o.copy(fairAsOfMs = SampleScan.NOW - 11 * 60_000L) else o.copy(fairAsOfMs = SampleScan.NOW) }
         val aged = old.count { it.fairIsOld(SampleScan.NOW) }
         assertTrue(aged > 0 && aged < old.size)
         shoot("1i_feed_aged_out") { FeedScreen(base.copy(feed = old), {}, {}, {}, { _, _ -> }) }
         compose.onNodeWithText("$aged bets hidden: the other books", substring = true).assertExists()
-        compose.onNodeWithText("are over 5 minutes old", substring = true).assertExists()
+        compose.onNodeWithText("are too old (over 5 minutes, or 10 for games more than 3 hours away)", substring = true).assertExists()
         assertEquals(null, com.tjshea.vigilant.app.ui.agedOutText(base, SampleScan.NOW))
     }
 

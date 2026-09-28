@@ -215,7 +215,7 @@ private fun FeedSummary(
             )
             state.feed.isNotEmpty() && shown.isEmpty() -> EmptyState(
                 "Odds too old to compare",
-                "The other books' prices behind these bets are over ${Freshness.LIMIT_TEXT} old, so they're " +
+                "The other books' prices behind these bets are too old to compare (${Freshness.LIMIT_TEXT}), so they're " +
                     "hidden: they could show +EV that isn't there any more. Scan for current odds.",
                 action = "Scan now",
                 onAction = onScan,
@@ -421,5 +421,5 @@ internal fun agedOutText(state: UiState, now: Long): String? {
     val aged = state.feed.count { it.fairIsOld(now) && state.settings.startsInWindow(it.event.startsTs, now) }
     if (aged == 0) return null
     return "$aged bet${if (aged == 1) "" else "s"} hidden: the other books' odds behind ${if (aged == 1) "it" else "them"} " +
-        "are over ${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT} old. Scan for current odds."
+        "are too old (${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT}). Scan for current odds."
 }
