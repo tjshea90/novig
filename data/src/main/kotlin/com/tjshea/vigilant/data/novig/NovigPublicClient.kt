@@ -204,8 +204,8 @@ class NovigPublicClient(
         val gate = Semaphore(if (signer != null) keyedConcurrency else publicConcurrency)
         val stop = AtomicReference<NovigHttpException?>(null)
         val throttleHits = AtomicInteger(0)
-        val done = AtomicInteger(0)
-        onProgress?.invoke(0, ids.size)
+        val done = AtomicInteger(pushed.size)
+        onProgress?.invoke(pushed.size, all.size)
         val results = ids.map { id ->
             async {
                 gate.withPermit {
