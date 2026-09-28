@@ -198,10 +198,12 @@ class Scanner(
                 pump.run()
             }
             val reports = ordered.map { jobs.getValue(it.id) }.awaitAll()
+            fairAt = elapsed() - t0
             pump.fairOddsDone()
             pumpJob.await()
             // A long scan's first edges were read minutes before its last books: read them again.
             pump.rereadEarlyEdges()
+            if (pump.readFrom != null) pump.readTo = elapsed() - t0
             reports
         }
 
