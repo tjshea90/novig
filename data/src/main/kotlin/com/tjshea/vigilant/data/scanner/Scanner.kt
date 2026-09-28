@@ -170,6 +170,13 @@ class Scanner(
                     } else {
                         null
                     }
+                    // A slow source's game lines for every league before any of its props (Kalshi, [ReferenceSource.linesFirst]).
+                    if (source.linesFirst && context == null) {
+                        linesFirst(source, leagues, settings, now) { league ->
+                            settled += "${source.id}|${league.novigName}|lines"
+                            pump.wake()
+                        }
+                    }
                     fetchSource(source, leagues, settings, now, errors, context, fallback = first != null) { league ->
                         settled += "${source.id}|${league.novigName}"
                         progress.fairDone()
@@ -443,14 +450,19 @@ class Scanner(
             onPartial(Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now, waitingFor = waiting()))
         }
 
-        /** [ScanResult.waitingFor]: each league's game lines until its sources answered, its props until the props sources did. */
+        /**
+         * [ScanResult.waitingFor]: each league's game lines until its sources answered (a [ReferenceSource.linesFirst]
+         * source: its game lines), its props until every source did.
+         */
         private fun waiting(): Set<String> {
             val done = synchronized(settled) { settled.toSet() }
             val out = HashSet<String>()
             for (league in settings.selectedLeagues) {
                 val mine = sources.filter { it.supports(league) }
-                fun ready(list: List<ReferenceSource>) = list.all { "${it.id}|${league.novigName}" in done }
-                if (!ready(mine.filter { !it.propsOnly })) {
+                fun ready(list: List<ReferenceSource>, lines: Boolean = false) = list.all {
+                    "${it.id}|${league.novigName}" in done || (lines && it.linesFirst && "${it.id}|${league.novigName}|lines" in done)
+                }
+                if (!ready(mine.filter { !it.propsOnly }, lines = true)) {
                     out += ScanResult.waitKey(league.novigName, props = false)
                     out += ScanResult.waitKey(league.novigName, props = true)
                 } else if (!ready(mine)) {
@@ -733,6 +745,31 @@ class Scanner(
             onCall(league)
         }
         return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy)
+    }
+
+    /**
+     * Every league's game lines from a [ReferenceSource.linesFirst] source, before [fetchSource] asks it for the rest:
+     * each answer stands for the league until the full one lands, and [onLines] says it's in. Nothing for a league
+     * whose last answer is still re-usable; a failure leaves the league to [fetchSource], which reports it.
+     */
+    private suspend fun linesFirst(source: ReferenceSource, leagues: List<League>, settings: ScanSettings, now: Long, onLines: (League) -> Unit) {
+        val requestKey = requestKey(source, settings)
+        val reuseMs = minOf(source.reuseMs(settings), Freshness.MAX_REUSE_MS)
+        for (league in leagues) {
+            if (!source.supports(league)) continue
+            val key = "${source.id}|${league.novigName}"
+            val have = synchronized(references) { references[key] }
+            if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs) continue
+            val snap = try {
+                source.lines(league, settings)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            } ?: continue
+            synchronized(references) { references[key] = Cached(snap.copy(fetchedAtMs = now, provider = source.id).seenBy(now), requestKey) }
+            onLines(league)
+        }
     }
 
     /** What a snapshot was asked for; a different ask can't re-use it. */
