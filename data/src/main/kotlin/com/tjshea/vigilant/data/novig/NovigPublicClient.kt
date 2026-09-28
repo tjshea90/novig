@@ -306,11 +306,14 @@ class NovigPublicClient(
                                 val retryAfter = e.retryAfterSeconds ?: 1
                                 // Measured live 2026-09-25: the edge answers a burst with 429 and
                                 // Retry-After: 1. Pause everyone, halve the pace, retry this book
-                                // twice; anything still missing is served from the last scan.
-                                if (e.code == 429) refused.incrementAndGet()
-                                val t = rateClock()
-                                val newBurst = t - lastRefusal.getAndSet(t) >= RateGate.SAME_BURST_MS
-                                if (e.code == 429 && retries < 2 && retryAfter <= SHORT_RETRY_SECONDS && (if (newBurst) throttleHits.incrementAndGet() else throttleHits.get()) <= MAX_SHORT_RETRIES) {
+                                // twice; anything still missing is served from the last scan. The
+                                // refusals of one burst count once toward giving up.
+                                val hits = if (e.code != 429) 0 else {
+                                    refused.incrementAndGet()
+                                    val t = rateClock()
+                                    if (t - lastRefusal.getAndSet(t) >= RateGate.SAME_BURST_MS) throttleHits.incrementAndGet() else throttleHits.get()
+                                }
+                                if (e.code == 429 && retries < 2 && retryAfter <= SHORT_RETRY_SECONDS && hits <= MAX_SHORT_RETRIES) {
                                     retries++
                                     rate.pause(rateClock() + retryAfter * 1000L)
                                     rate.slowDown()
