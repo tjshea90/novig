@@ -222,7 +222,9 @@ class TennisTest {
         assertEquals(setOf("Pinnacle", "Kalshi"), win.fair!!.sharpBooksUsed.toSet())
 
         assertEquals("Kyrian Jacquet +3.5", opp("sp-j").selection)
+        assertEquals("Games Spread", opp("sp-j").marketLabel)
         assertEquals(mult(1.92, 1.96), opp("sp-j").fairProbability!!, 1e-9)
+        assertEquals("Total Games", opp("to-o").marketLabel)
         assertEquals(mult(1.90, 1.96), opp("to-o").fairProbability!!, 1e-9)
 
         val games = opp("gw-o")
