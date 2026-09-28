@@ -2295,7 +2295,7 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       `cnoCandidates`, so the +EV feed, CNO tab, badges, mini window and widget all obey it; the Games board too.
       Display filter only (no scan or API change). Tests for each list.
 - [x] G2 (DONE: ScreenshotTest.theFeedCanShowOnlyGamesStartingSoon + 1c_feed_starts_within_24h.png looked at; MgmAppTest asserts no row in Vigilant MGM; chips say "Any time" ("Any" clashed with the odds cap).) UI: chip row on the +EV feed (next to the sort) + Settings; Vigilant only (hidden in Vigilant MGM). Screenshot check.
-- [ ] G3 Light tests, ckpt, ship, link. (HELD 21:35Z: v0.17.1 not released yet; it now ships with H1-H4 below, Vigilant only.)
+- [x] G3 (DONE 2026-09-28T01:23Z: release.yml run 36365476060 green on main 06de419 (code = a0a82b7, CI green); Release v0.17.1 has vigilant-v0.17.1.apk only; record-release.sh done; link sent.) Light tests, ckpt, ship, link. (HELD 21:35Z: v0.17.1 not released yet; it now ships with H1-H4 below, Vigilant only.)
       PAUSED 21:58Z at Tj's request (switching model): code shipped to main by ship.sh (3a66035, v0.17.1 code 33); ONLY the
       release is left: wait for CI green on main's head, trigger release.yml, confirm tag v0.17.1 has vigilant-v0.17.1.apk only,
       tools/record-release.sh, send link. Tj's 21:58Z re-send of the H1-H4 message is the same request (already done).

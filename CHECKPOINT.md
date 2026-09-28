@@ -1,21 +1,23 @@
-# CHECKPOINT 542 — read me first, then TASKS.md
+# CHECKPOINT 543 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T01:00:28Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-game-time-filter-tkml0n` · **builds on:** `a9af30c` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T01:23:25Z · **tests:** all 1 fast checks green
+**Branch:** `claude/vigilant-release-sm20xk` · **builds on:** `5812195` (this checkpoint is the commit after it)
 
 ## Just done
-Removed an unrelated side job from this repo (Tj: this repo is Vigilant only): its INBOX entries, TASKS section, checkpoint text and 37 stray Python wheel files
+Released Vigilant v0.17.1 (code 33): release.yml run 36365476060 green, tag v0.17.1 carries vigilant-v0.17.1.apk only, BUILDLOG recorded, G3 ticked
 
 ## Do this next
-Vigilant: v0.17.1 release still pending (G3): confirm CI green on main, trigger release.yml, confirm tag v0.17.1 has vigilant-v0.17.1.apk only, record-release, send link: only when Tj says go
+Nothing in flight. Open suggestions S1-S3 in TASKS.md wait on Tj (S1 scan follows Starts within, S2 window in PiP header, S3 Tj pastes tools/setup-android.sh as the environment setup script)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  a0a82b7 ckpt 542: Removed an unrelated side job from this repo (Tj: this repo is Vigilant only):
   15087c3 ckpt 541: MP3-flasher side job closed: diagnosis + workaround steps sent to Tj; no rebui
   2bdcfe8 ckpt 540: Recorded Tj's MP3-flasher side job in TASKS.md (M1-M3); diagnosis: 32-bit-only
   b6a37e6 ckpt 539: PAUSED for Tj's model switch. H1-H4 all done and on main (v0.17.1 code 33 gate
@@ -25,8 +27,7 @@ Vigilant: v0.17.1 release still pending (G3): confirm CI green on main, trigger 
   078fd3a ckpt 535: H4 in progress: floor 623 green + live Novig/CNO/scores green; fixed F1 Rechec
   1be888c ckpt 534: H3: Maven Central 429 research + tools/setup-android.sh (SDK, Gradle mirror, R
   9e9482f ckpt 533: H2: Starts-within picker on the CNO tab + widget top bar (cycles), counts of w
-  b50cc33 ckpt 532: H1: Vigilant MGM dormant: CLAUDE.md/BRIEF.md standing rule, :mgm only with -Pm
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
