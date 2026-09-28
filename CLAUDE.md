@@ -323,7 +323,10 @@ unless Tj asks).
   idle close 2 min, `ScanReport.booksViaPush` (Settings › Novig API); `ScanSettings.fillBudget` (`Planner.fill`,
   `PlannedMarket.spare`: every other quoted line up to the budget, read after the picks); tennis leagues ATP/WTA
   (`League.tennis`/`oddsApiListed`, Kalshi `…MATCH` series, Pinnacle sport 2 incl. 1st set, `NovigText` round suffixes,
-  `FIRST_SET_MONEYLINE`/`PLAYER_GAMES_WON`), `VIGILANT_LIVE=1 ... --tests '*LiveTennisTest'`.
+  `FIRST_SET_MONEYLINE`/`PLAYER_GAMES_WON`), `VIGILANT_LIVE=1 ... --tests '*LiveTennisTest'`. v0.19.1 (NOVIG_API.md §13):
+  `daysAhead` 7 by default (schema 8), every event read so `Plan.laterGames`/`ScanStats.laterGames` tell the feed what
+  starts past the window, `DELAYED` games, `NovigMarket.strike` guard (`Planner.strikeAgrees`), `GET /v3/limits`
+  (`NovigPublicClient.limits`, `PushedBooks.tune`), the board through the key's signed catalog (`catalog()`, public fallback).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
