@@ -95,9 +95,13 @@ class KalshiClient(
         val events = ArrayList<EventDto>()
         var failure: Exception? = null
         var fetched = 0
+        // Every quote is stamped with the oldest read behind it: lines read by [lines] a few seconds ago never pass
+        // for newer than they are (RESEARCH.md §24).
+        var asOf = now
         for (s in series) {
             try {
                 val read = synchronized(early) { early.remove(s) }?.takeIf { now - it.first in 0 until EARLY_MS }
+                read?.let { asOf = minOf(asOf, it.first) }
                 events += read?.second ?: fetchSeries(s)
                 fetched++
             } catch (e: CancellationException) {
@@ -109,7 +113,7 @@ class KalshiClient(
             }
         }
         if (fetched == 0 && failure != null) throw failure
-        return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, now), now, provider = id)
+        return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, asOf), asOf, provider = id)
     }
 
     private class KalshiThrottled : ReferenceException("Kalshi is limiting requests right now; it'll be back on the next scan.")
