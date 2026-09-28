@@ -300,7 +300,7 @@ Navigation linking config (prefixes `novigapp://` and `https://novig.onelink.me/
 
 | Path | Screen | Params |
 | ---- | ------ | ------ |
-| `events/:orderslip_outcomes?/:partner_id?/:amount?` | Home, with the bet slip | outcome ids, comma-separated; a partner tag; an amount (unverified unit: not used) |
+| `events/:orderslip_outcomes?/:partner_id?/:amount?` | Home, with the bet slip | outcome ids, comma-separated; a partner tag; a wager in dollars (docs.novig.com/affiliates/deeplinking: "Optional pre-filled wager amount (requires partner_id)"; used since v0.19.4 when Settings asks, `NovigLinks`; native form not checked on a device) |
 | `event-markets/:event_id` | one event's markets | |
 | `tournament-event-markets/:event_id` | a futures event | |
 | `players/:player_id` | a player | |

@@ -2363,3 +2363,49 @@ the next "slow" report comes with the phone's own numbers.
 - Choices 1–4 (were 3, 4, 5, 6, 8, 10), default 4 (was 5), a saved 5+ becomes 4 once (schema 9). The app's pick is
   now always posted to CNO's form: before, a Shared View link's bigger count won, so 1 or 2 would have done nothing.
   The Settings hint still says why thin markets are risky; Vigilant's own books check on each bet is unchanged.
+
+## 31. Bigger scans, per-game caps, props credits, a stake in the bet slip, PinnWire → pinnapi, one-tap Open (2026-09-28 ~18:40Z, Tj: "consider if the 1200 Max prices per novig scan is enough … If I can have no limit on the prices safely, then make that option … raise the max alternate lines and player props per game … raise the most credits per scan on props … automatically enter 1 dollar on every betslip … When pinnwire api usage runs out, automatically switch to pinnapi … one press buttons next to each bet to Open the bet in novig")
+
+### 31.1 Is 1,200 enough? (measured, `LiveBudgetTest`, 2026-09-28 ~18:50Z)
+- Novig's board, 7 days, NFL/NCAAF/MLB/WNBA/ATP/WTA: **8,620 markets** on 205 events: 2,577 spreads + 2,242 totals
+  (mostly alternates, ~15 per game), 286 team totals, 169 moneylines, halves/sets, and ~2,700 player props.
+- Priced by the free sources alone (Kalshi + Polymarket): **1,168 lines** on 150 matched games; per-game caps 2/8 pick
+  409 of them and "use the whole budget" fills the rest. So 1,200 already covers everything the free sources price.
+  Pinnacle (PinnWire: every alt line + props) and PropLine (30 books) price many more of the 8,620: not measurable here
+  without Tj's keys, but likely well past 1,200.
+- **What more reads cost:** a keyed REST read is one token of the key's `read` bucket (16/s, shared with everything else
+  Vigilant reads on Novig): ~14 prices a second. One websocket connection watches at most 2,048 markets
+  (`maxWatchedMarkets`), and a watched market costs no request after the ~8 s snapshot: so up to ~2,000 a keyed scan is
+  cheap, past it every price is a request. Other books' odds are read once as a scan starts: a scan that runs past
+  ~3 minutes shows near-game bets already expiring (5-minute rule), past ~8 minutes far-off ones too. And data/battery:
+  each price is ~0.5-2 KB, repeated by background auto-scans every 5-40 minutes.
+- **Decision (v0.19.4):** budget choices up to **2,000** (one live-feed connection's worth); **no "No limit"** (past
+  2,000 a scan can run many minutes and its early reads age out, and background scans would repeat it). And a guard for
+  any long scan: a line whose other books' odds (read as the scan began) couldn't stay listed 2 minutes once priced is
+  left for the next scan (`BookPump.canStillShow`, `ScanReport.booksTooLate`, shown in Settings › Novig API's timing line).
+
+### 31.2 Lines and props per game, props credits
+- With "use the whole budget" on (the default since v0.19.1) the per-game caps only decide which lines are read
+  *first*; the rest of the budget still goes to every other priced line. Measured: caps 5/24 pick 710 of the 1,168,
+  caps 50/500 pick all of them. Raising them costs nothing extra (the budget bounds the reads): choices now 1-10 lines,
+  0-48 props.
+- The Odds API props are a backup: only games and prop types PropLine didn't price, never more than the cap a scan.
+  Safe as far as the plan's credits go: 500 a month free (at 96 a scan, as few as 5 scans), 20,000 on the smallest paid
+  plan. Choices now up to 192, with that worst case spelled out; when credits run out, props still come from
+  PropLine, Pinnacle and Kalshi.
+
+### 31.3 A stake in Novig's bet slip
+- Novig's deeplinking docs (docs.novig.com/affiliates/deeplinking): web `novig.com/events/<outcome_ids>/<partner_id>/
+  <wager_amount>`, "Optional pre-filled wager amount (requires partner_id)", in dollars ("10 Novig Cash"); native
+  `novigapp://events/<outcome_ids>/<partner_id>`. The app's own linking config has `:amount?` after the partner
+  (NOVIG_API.md §9.1), so the native link should take it too: **not checked on a device**.
+- Built: Settings › Bankroll & Kelly › "Amount in Novig's bet slip": Off (default, links unchanged) / $1 / Kelly (the
+  bet's Kelly stake, never under $1) / My amount. Every bet opened carries it: the +EV cards' new button, the bet
+  sheet, the widget and mini window, the CNO tab, alerts. Partner tag: CNO's `cno` stays on CNO's links; Vigilant's
+  use `novig` (the docs' own example). Novig still asks to confirm.
+
+### 31.4 PinnWire → pinnapi
+- Already built (v0.16.0): PinnWire first; its daily limit (429 `window: day`, or the app's own count of 100/day) rests
+  its key until the reset, pinnapi answers meanwhile (no props on pinnapi's trial), then PinnWire goes first again. A
+  gap fixed: any other PinnWire failure (a 5xx, an odd status, a dropped connection) failed Pinnacle for the scan
+  instead of trying pinnapi.

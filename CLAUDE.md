@@ -334,7 +334,12 @@ unless Tj asks).
   where scan time goes (`data/scanner/ScanTiming`, `BookBatch.refused`, Settings › Novig API). Novig's 451 codes read
   right (`ANONYMIZED_NETWORK` = its verdict on an address, not the phone): Test key names the connection, checks for a
   real VPN and tries the other connection (`data/novig/signing/NovigKeyTest`, `app/PhoneNetworks`; NOVIG_API.md §11,
-  RESEARCH.md §30.1). CNO's fewest books 1-4 (`CNO_MIN_BOOKS_CHOICES`, schema 9).
+  RESEARCH.md §30.1). CNO's fewest books 1-4 (`CNO_MIN_BOOKS_CHOICES`, schema 9). v0.19.4 (RESEARCH.md §31): budget up
+  to 2,000 (no "No limit"), long scans leave lines whose odds would be too old (`BookPump.canStillShow`,
+  `ScanReport.booksTooLate`), lines/props per game up to 10/48, props credits up to 192 (`creditWorstCase`); a stake in
+  Novig's bet slip (`data/novig/NovigLinks`, `SlipStake`, `ScanSettings.slipStake`/`slipStakeFor`, `EvAlert.stake`,
+  `MiniWindow.Item.kelly`); one-tap Open in Novig on +EV cards (`ui/OpportunitySheet.OpenBetButton`); any PinnWire failure
+  falls to pinnapi (`PinnapiClient.boardFor`).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
