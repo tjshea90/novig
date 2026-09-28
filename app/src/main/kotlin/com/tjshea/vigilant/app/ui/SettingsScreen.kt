@@ -622,7 +622,8 @@ fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
     AutoScanMode.BOTH -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list and its best bets' books, then Vigilant's own " +
         "scan exactly as the Scan button runs it (${s.maxBooksPerScan} Novig prices at most: ${scanTime(s.maxBooksPerScan)}). " +
         "Each scan spends API credits like a tap on Scan: ${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} scans a day at this setting. " +
-        "A quiet notification shows while it's on (Scan now, Stop)."
+        "A quiet notification shows while it's on (Scan now, Stop)." +
+        if (!s.vigilantOn) " Vigilant's scan runs here even with the scanner above on CNO only." else ""
 }
 
 /** Which bets alert, at these settings. */
