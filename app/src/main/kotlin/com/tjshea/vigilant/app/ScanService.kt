@@ -99,9 +99,17 @@ class ScanService : Service() {
     }
 
     private fun finish(run: ScanRun, onScreen: Boolean) {
+        val container = (application as VigilantApp).container
         // Not when Tj switched to CNO only mid-scan: the widget and app no longer show these bets.
-        val vigilantShown = (application as VigilantApp).container.settingsStore.flow.value?.vigilantOn ?: true
-        if (!onScreen && run.finished > 0 && vigilantShown) notify(DONE_ID, doneNotification(run))
+        val vigilantShown = container.settingsStore.flow.value?.vigilantOn ?: true
+        if (!onScreen && run.finished > 0 && vigilantShown) {
+            notify(DONE_ID, doneNotification(run))
+            // His scan, left running in the background: its new +EV bets alert like a background scan's (Tj, 2026-09-28).
+            val settings = run.settings
+            if (settings != null && settings.alertMinEv > 0.0) {
+                container.appScope.launch { runCatching { container.autoScan.afterScan(run.result, container.currentSettings()) } }
+            }
+        }
         stopNow()
     }
 
@@ -189,7 +197,8 @@ class ScanService : Service() {
         private const val CHANNEL_RESULTS = "scan_results"
         private const val ONGOING_ID = 1
         private const val DONE_ID = 2
-        private const val WAKE_LOCK_MAX_MS = 10 * 60_000L
+        /** Up to 1,200 Novig prices a scan since v0.18.0: about four minutes, longer when Novig slows it down. */
+        private const val WAKE_LOCK_MAX_MS = 20 * 60_000L
 
         /** Called from the Scan tap, while Vigilant is on screen (Android only lets it start then). */
         fun start(context: Context) {
