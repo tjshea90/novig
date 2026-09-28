@@ -257,7 +257,9 @@ class AutoScanTest {
         val scanner = AutoScanner(app, app.container, clock = { now })
         val result = SampleScan.state().result
         val settings = SampleScan.settings.copy(alertMinEv = 0.02)
-        val expected = AlertPicks.vigilant(SampleScan.state().indexed(now), 0.02, now).take(AutoScanner.MAX_ALERTS).size
+        // This test's app has no tracked or placed bets (SampleScan's state has some, which hide one).
+        val bare = SampleScan.state().copy(bets = emptyList(), placed = emptyList(), settings = settings).indexed(now)
+        val expected = AlertPicks.vigilant(bare, 0.02, now).take(AutoScanner.MAX_ALERTS).size
         assertTrue(expected > 0)
         // A background cycle that waited on Tj's own scan, and that scan's own end, send at the same moment.
         val sent = (1..2).map { async(kotlinx.coroutines.Dispatchers.Default) { scanner.afterScan(result, settings) } }.map { it.await() }
