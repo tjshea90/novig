@@ -186,6 +186,41 @@ class ExchangeClientsTest {
         assertEquals(2, snap.events.single().markets.size)
     }
 
+    /**
+     * Tj, 2026-09-28: "now it is reading the API very slow". A scan asks Kalshi for every league's game lines first,
+     * then the rest: the game-line series are asked once, the props after, and nothing twice.
+     */
+    @Test
+    fun `kalshi reads a league's game-line series first, then only its props, nothing twice`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = MockResponse().setBody(
+                when (request.requestUrl!!.queryParameter("series_ticker")) {
+                    "KXNFLGAME" -> ExchangeFixtures.kalshiNflGame
+                    "KXNFLTOTAL" -> ExchangeFixtures.kalshiNflTotal
+                    else -> """{"events":[]}"""
+                },
+            )
+        }
+        val kalshi = KalshiClient(OkHttpClient(), json, base("/"))
+        assertTrue(kalshi.linesFirst)
+        val s = settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL, MarketFamily.PLAYER_PROPS))
+        val lines = kalshi.lines(nfl, s)!!
+        fun asked() = (1..server.requestCount - seen).map { server.takeRequest().requestUrl!!.queryParameter("series_ticker") }.also { seen = server.requestCount }
+        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked())
+        assertEquals(2, lines.events.single().markets.size)
+        val full = kalshi.odds(nfl, s)
+        val props = asked()
+        assertTrue(props.isNotEmpty())
+        assertTrue("no game-line series asked again: $props", props.none { it == "KXNFLGAME" || it == "KXNFLTOTAL" })
+        assertTrue(props.all { KalshiClient.familyOf(it!!) == MarketFamily.PLAYER_PROPS })
+        assertEquals(2, full.events.single().markets.size)
+        // A scan later reads everything afresh: what [lines] read is used once.
+        kalshi.odds(nfl, s)
+        assertTrue(asked().containsAll(listOf("KXNFLGAME", "KXNFLTOTAL")))
+    }
+
+    private var seen = 0
+
     @Test
     fun `kalshi event codes parse with and without a time`() {
         val a = KalshiClient.parseCode("KXNFLGAME-26OCT05ATLNO")!!
