@@ -201,10 +201,12 @@ class ExchangeClientsTest {
                 },
             )
         }
-        val kalshi = KalshiClient(OkHttpClient(), json, base("/"))
+        var t = 1_000L
+        val kalshi = KalshiClient(OkHttpClient(), json, base("/"), clock = { t })
         assertTrue(kalshi.linesFirst)
         val s = settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL, MarketFamily.PLAYER_PROPS))
         val lines = kalshi.lines(nfl, s)!!
+        t = 21_000L
         fun asked() = (1..server.requestCount - seen).map { server.takeRequest().requestUrl!!.queryParameter("series_ticker") }.also { seen = server.requestCount }
         assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked())
         assertEquals(2, lines.events.single().markets.size)
