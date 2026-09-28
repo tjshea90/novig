@@ -123,7 +123,11 @@ fun SettingsScreen(
             if (AppBook.isNovig) {
                 Text("Games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.STARTS_WITHIN_CHOICES, s.startsWithinHours, ::startsWithinLabel) { v -> onUpdate { it.copy(startsWithinHours = v) } }
-                Hint("Every list (+EV, CNO, Games and the widgets) shows only games starting within this window. Games already under way still show when live games are on. It only hides bets: what a scan reads is unchanged.")
+                Hint(
+                    "Every list (+EV, CNO, Games and the widgets) shows only games starting within this window, and Vigilant's scan reads " +
+                        "only these games when it's shorter than Days ahead, then stops (widen it and scan again for more). Games already " +
+                        "under way still show when live games are on.",
+                )
             }
 
             // ---- Background auto-scan and alerts (Vigilant for Novig) ------------------------------
@@ -350,7 +354,7 @@ fun SettingsScreen(
                 SwitchRow(
                     "PropLine",
                     if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
-                    else "1 request per league per scan for game lines, 1 per game for player props (up to ${PropLinePropsSource.MAX_GAMES_PER_SCAN} games a scan). 1,000 a day per key.",
+                    else "1 request per league per scan for game lines, 1 per game for player props (${gamesLabel(s.propLineGamesPerScan)} a scan, below). 1,000 a day per key.",
                     s.usePropLine,
                 ) { v -> onUpdate { it.copy(usePropLine = v) } }
                 if (s.usePropLine) {
@@ -394,12 +398,20 @@ fun SettingsScreen(
                     if (s.useBookProps) {
                         if (MarketFamily.PLAYER_PROPS !in s.families) Hint("Turn on Player props under Markets below to use these.")
                         Text("Only games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                        ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
+                        ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { if (it >= ScanSettings.NO_LIMIT) "All" else "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
+                        if (s.bookPropHours >= ScanSettings.NO_LIMIT) Hint("All: every game the scan reads (${windowLabel(s.scanWindowHours)} now).")
+                        if (s.usePropLine) {
+                            Text("PropLine props: most games per scan", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                            ChoiceChips(ScanSettings.PROPLINE_GAMES_CHOICES, s.propLineGamesPerScan, { if (it >= ScanSettings.NO_LIMIT) "No limit" else it.toString() }) { v ->
+                                onUpdate { it.copy(propLineGamesPerScan = v) }
+                            }
+                            Hint(propLineGamesHint(s))
+                        }
                         if (s.useOddsApi) {
                             Text("Prop types per game (The Odds API)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                             ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
                             Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                            ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else it.toString() }) { v ->
+                            ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else if (it >= ScanSettings.NO_LIMIT) "No limit" else it.toString() }) { v ->
                                 onUpdate { it.copy(bookPropCreditsPerScan = v) }
                             }
                             Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
@@ -455,21 +467,22 @@ fun SettingsScreen(
                 }
                 // Novig's per-line reads are what these limit; a sportsbook's lines cost no request each.
                 if (AppBook.exchange) {
-                Text("Alternate lines per game: ${s.linesPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, { it.toString() }) { v -> onUpdate { it.copy(linesPerGame = v) } }
+                Text("Alternate lines per game: ${allLabel(s.linesPerGame)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, ::allLabel) { v -> onUpdate { it.copy(linesPerGame = v) } }
                 Hint("Per spread, total and team total (full game and 1st half). Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
                 if (MarketFamily.PLAYER_PROPS in s.families) {
-                    Text("Player props per game: ${s.propsPerGame}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                    ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, { it.toString() }) { v -> onUpdate { it.copy(propsPerGame = v) } }
+                    Text("Player props per game: ${allLabel(s.propsPerGame)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                    ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, ::allLabel) { v -> onUpdate { it.copy(propsPerGame = v) } }
                     Hint("NFL, MLB and WNBA props that Pinnacle, Kalshi or the sportsbooks also price, on the same line. The best-covered ones are checked first.")
                 }
-                Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
+                Text("Most Novig prices per scan: ${limitLabel(s.maxBooksPerScan)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+                ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, ::limitLabel) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
                 Hint(scanSizeHint(s.maxBooksPerScan))
                 SwitchRow(
                     "Fill the scan with every quoted line",
-                    "After the lines and props per game above, what's left of the ${s.maxBooksPerScan} prices goes to every other " +
-                        "line the books quote (alternate spreads and totals, more props), best-covered first. Off: only the picks above.",
+                    (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "After the lines and props per game above, every other line the books quote is read too "
+                    else "After the lines and props per game above, what's left of the ${s.maxBooksPerScan} prices goes to every other line the books quote ") +
+                        "(alternate spreads and totals, more props), best-covered first. Off: only the picks above.",
                     s.fillBudget,
                 ) { v -> onUpdate { it.copy(fillBudget = v) } }
                 } else {
@@ -478,9 +491,9 @@ fun SettingsScreen(
                 Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.DAYS_AHEAD_CHOICES, s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
                 Hint(
-                    "Games starting within this many days are scanned. A week takes in the next college Saturday and NFL " +
-                        "Sunday; the fair-odds requests barely change with the window, and the soonest games are read first. " +
-                        "\"Starts within\" on the +EV tab only filters what's shown.",
+                    "Games starting within this many days are scanned (or within \"Starts within\" when that's shorter), then the scan " +
+                        "stops. A week takes in the next college Saturday and NFL Sunday; the fair-odds requests barely change with the " +
+                        "window, and the soonest games are read first.",
                 )
                 SwitchRow(
                     "Include live games",
@@ -667,7 +680,8 @@ fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
         "for its best bets (the green check's reads). A quiet notification shows while it's on (Scan now, Stop). About " +
         "${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} reads of CNO a day, each well under a second of work."
     AutoScanMode.BOTH -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list and its best bets' books, then Vigilant's own " +
-        "scan exactly as the Scan button runs it (${s.maxBooksPerScan} Novig prices at most: ${scanTime(s.maxBooksPerScan)}). " +
+        "scan exactly as the Scan button runs it (" + (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
+        "${scanTime(s.maxBooksPerScan)}). " +
         "Each scan spends API credits like a tap on Scan: ${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} scans a day at this setting. " +
         "A quiet notification shows while it's on (Scan now, Stop)." +
         if (!s.vigilantOn) " Vigilant's scan runs here even with the scanner above on CNO only." else ""
@@ -770,6 +784,10 @@ fun creditEstimate(s: ScanSettings, backup: Boolean = false): String {
 /** What sportsbook props cost, in the same terms as [creditEstimate]. */
 fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     if (s.bookPropCreditsPerScan <= 0) return "No credits are set aside for props, so none are bought."
+    if (s.bookPropCreditsPerScan >= ScanSettings.NO_LIMIT) return "No limit: " +
+        (if (backup) "every game and prop type PropLine didn't price this scan" else "every game with props") +
+        " in ${windowLabel(s.bookPropWindowHours)}, soonest first, one credit per prop type, each game once a scan (re-used for " +
+        "${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}). " + creditWorstCase(s.bookPropCreditsPerScan)
     if (backup) return "Only games and prop types PropLine didn't price this scan, soonest first, never more than " +
         "${s.bookPropCreditsPerScan} credits a scan (one per prop type); re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}. " +
         creditWorstCase(s.bookPropCreditsPerScan)
@@ -789,21 +807,33 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
  * How far a month's credits go if every scan spends the most it may on props (Tj, 2026-09-28: "Can I raise the most credits
  * per scan on props safely?"): safe as far as The Odds API plan allows; past it props come from PropLine, Pinnacle and Kalshi.
  */
-fun creditWorstCase(perScan: Int): String =
+fun creditWorstCase(perScan: Int): String = if (perScan >= ScanSettings.NO_LIMIT) {
+    "A full NFL Sunday is a few hundred credits: The Odds API's free 500 a month can go in one or two scans (and background " +
+        "auto-scan repeats it). When they run out, props still come from PropLine, Pinnacle and Kalshi."
+} else {
     "At most $perScan a scan: The Odds API's free 500 credits a month last at least ${500 / perScan} scans, " +
         "a 20,000-credit plan at least ${String.format(java.util.Locale.US, "%,d", 20_000 / perScan)}. When they run out, props still come from PropLine, Pinnacle and Kalshi."
+}
 
 fun maxOddsLabel(american: Int): String = if (american <= 0) "Any" else "+$american"
 
 /** About how long reading [books] Novig prices takes on the public routes (about 300 a minute). */
 fun scanTime(books: Int): String =
-    (books / 300.0).let { if (it < 1.0) "under a minute" else if (it < 1.5) "about a minute" else "about ${Math.round(it)} minutes" }
+    if (books >= ScanSettings.NO_LIMIT) "as long as the games take, 10 minutes at most"
+    else (books / 300.0).let { if (it < 1.0) "under a minute" else if (it < 1.5) "about a minute" else "about ${Math.round(it)} minutes" }
 
 /**
  * About how long a scan of [books] Novig prices takes on the public routes (4–6 a second, NOVIG_API.md
  * §11.1), and what the limit decides.
  */
 fun scanSizeHint(books: Int): String {
+    if (books >= ScanSettings.NO_LIMIT) {
+        return "No limit: every line another book also prices, for the games in your time window (Days ahead, or Starts within " +
+            "when shorter), each read once; then the scan stops. Most +EV lines are read first, so bets still show within seconds. " +
+            "With a Novig key, the first 2,000 arrive by live feed about 8 seconds in and the rest by request (about 14 a second); on " +
+            "Novig's public prices about 300 a minute. Other books' odds are read as the scan starts and last 5 minutes (10 for games " +
+            "over 3 hours off), so a scan never runs past about 8 minutes: lines it can't reach by then are read first next scan."
+    }
     return "$books is ${scanTime(books)} on Novig's public prices; with a Novig key connected, the whole scan (up to 2,000, what its " +
         "live feed watches at once) arrives by live feed about 8 seconds in. A scan that runs long leaves lines whose other books' odds " +
         "would already be too old for the next scan. Results appear as " +
@@ -812,6 +842,32 @@ fun scanSizeHint(books: Int): String {
 }
 
 fun minutesLabel(minutes: Int): String = if (minutes >= 60 && minutes % 60 == 0) "${minutes / 60}h" else "${minutes}m"
+
+/** A per-scan cap's chip: the number, or "No limit" ([ScanSettings.NO_LIMIT]). */
+fun limitLabel(v: Int): String = if (v >= ScanSettings.NO_LIMIT) "No limit" else v.toString()
+
+/** A per-game cap's chip: the number, or "All". */
+fun allLabel(v: Int): String = if (v >= ScanSettings.NO_LIMIT) "All" else v.toString()
+
+/** "12 games", "every game". */
+fun gamesLabel(v: Int): String = if (v >= ScanSettings.NO_LIMIT) "every game" else "up to $v games"
+
+/** A scan's time window: "12 hours", "7 days". */
+fun windowLabel(hours: Int): String = when {
+    hours % 24 == 0 -> (hours / 24).let { if (it == 1) "the next day" else "the next $it days" }
+    hours == 1 -> "the next hour"
+    else -> "the next $hours hours"
+}
+
+/** What PropLine's props cost at [s]'s games per scan (its free key: 1,000 requests a day). */
+fun propLineGamesHint(s: ScanSettings): String =
+    if (s.propLineGamesPerScan >= ScanSettings.NO_LIMIT) {
+        "No limit: every game with props in ${windowLabel(s.bookPropWindowHours)}, one request each, soonest first (a game's props are " +
+            "re-used for 2 minutes). A full slate can be 50+ requests a scan: the free 1,000 a day can run out with auto-scan on, " +
+            "and then props come from The Odds API (credits), Pinnacle and Kalshi."
+    } else {
+        "Up to ${s.propLineGamesPerScan} games a scan, soonest first, one request each (a game's props are re-used for 2 minutes)."
+    }
 
 /** Key list callbacks from the view model; the file pickers live in [SettingsScreen]. */
 class KeyActions(
