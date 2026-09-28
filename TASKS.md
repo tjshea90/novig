@@ -2425,7 +2425,7 @@ Nothing at or above 1.0% EV."
 
 ## "+EV bets appeared while scanning, then quickly disappeared. Is this supposed to happen?" (Tj, 2026-09-28, on v0.19.1)
 
-- [ ] Q1 Trace every way a bet can leave the feed during/after a scan (re-plans as fair sources answer, freshness
+- [x] Q1 (DONE: RESEARCH §28. Measured live (LiveFlickerTest): a Mystics ML shown 19 s in from Polymarket alone, gone when Kalshi answered. Also the 5-min rule counted from the feed's own "last seen" (a 4.5-min-old sportsbook quote hid its bet 30 s later), and the intended end-of-scan re-read.) Trace every way a bet can leave the feed during/after a scan (re-plans as fair sources answer, freshness
       rules, re-reads, window/filters) and say which one Tj saw, with evidence; fix anything that isn't intended.
-- [ ] Q2 If the cause is showing edges before the fair line is complete (or any other misleading flicker): fix, test,
+- [x] Q2 (DONE: ScanResult.waitingFor holds a league's bets mid-scan until its sources answered (props until props-only sources); scan prices only with quotes <= 3 min old (Freshness.MIN_SHOWN_MS) so a shown bet lasts >= 2 min; feed counts bets hidden for old odds. Tests: SteadyFeedTest 3 (each fails without its fix), ScreenshotTest.betsHiddenForOldOddsAreCountedNotJustDropped (1i png looked at); live after: 10 shown, 0 gone. v0.19.2 (37).) If the cause is showing edges before the fair line is complete (or any other misleading flicker): fix, test,
       ship, link. Otherwise answer plainly.
