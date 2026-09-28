@@ -2152,3 +2152,79 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
   `novigapp://events/<outcome>` in Novig's app, as the widget's tap; Novig's site when the app isn't
   installed. Live check (2026-09-28 ~04:00Z): CNO's list → game page → 14 of 14 books agreed on
   Michigan State @ Wisconsin Over 44.5 at +108 (EV 3.2%), exact Novig link found.
+
+## 27. Only 7 games, the Novig key used fully, more +EV found, and "just copy CNO?" (2026-09-28 ~06:15–08:30Z, Tj: "Why did it only scan 7 games? … Make sure the app is taking full advantage of the novig API key … finding as many positive EV bets on novig as possible … For the cno scanner, can't it just copy what is already on cno website")
+
+### 27.1 Why "440 prices checked across 7 games" (v0.18.0 screenshot, Mon 2026-09-28 06:11Z)
+
+Novig's live catalog, read the same hour (`/v3/public/catalog/events`, next 4 days, pregame):
+
+| League | Games Novig listed | Inside "Days ahead" (3) | Notes |
+|---|---|---|---|
+| NFL | 2 | 1 (Eagles @ Bears, MNF) | Steelers @ Browns is Friday 00:15Z, past the window |
+| MLB | 4 + series/futures | 4 | Regular season over; Wild Card starts Tuesday |
+| WNBA | 4 + series | 4 | Playoffs |
+| NCAAF | 2 | 0 | Next games Thu/Fri |
+| NHL (not picked) | 7 | — | Preseason |
+| **ATP + WTA (not in the app)** | **50 (763 markets)** | — | More than every US league together |
+| MLS 2, NPB 3 | — | — | Removed from the app at Tj's request (2026-09-25) |
+
+So 9 real games in the window; "Series Winner" and futures listings aren't games. 7 of the 9 matched a
+fair-odds source (the other two most likely had no reference lines yet). The slate was simply thin at
+2 a.m. on a Monday between seasons, **and** each game was read shallowly: 2 lines per spread/total group
+and 8 props per game held the scan to ~220 markets (440 prices), whatever the per-scan budget (300–1,200),
+while Novig lists 50+ game lines and hundreds of props per game.
+
+### 27.2 What the Novig key can do, from Novig's docs (re-read 2026-09-28)
+
+- No batch route for books: every REST book is one request. The key's REST route has its own `read`
+  bucket (64 burst, 16/s; Vigilant uses 14/s, 6 at once), which is why Tj saw scans get much faster.
+- **The websocket is the big one.** `GET /v3/ws` (trading or trading::read key: Vigilant's is
+  trading::read). A subscribe is charged `weight × subjects` (`book` = 16 per market) **but never more
+  than the 512-token `stream` bucket, and a request over that passes whenever the bucket is full**
+  (docs: api/streaming/connection). A connection may watch **2,048 markets** (api/throttling). So one
+  subscribe covers a whole 1,200-price scan: the upgrade spends 32 tokens, the bucket is full again
+  ~8 s later (4/s), one request goes out, every snapshot arrives together, and from then on each change
+  is pushed. REST at 14/s takes ~86 s for the same 1,200.
+- Subscribing by **event** was rejected: an event counts as all its markets (500+ for an NFL game), so
+  four games fill the 2,048 cap with lines no fair source quotes (and a subscribe past the cap
+  subscribes nothing: `SUBSCRIPTION_LIMIT_EXCEEDED`).
+- The `bbo` channel (8/market) is cheaper per subject but its message format isn't documented; `book`
+  is, and since the charge is capped at the bucket either way, `book` costs the same for a big scan.
+- Signed routes (REST or socket) refuse a VPN and need the Novig app opened every 3 days (451).
+
+### 27.3 What was built (v0.19.0)
+
+- **Websocket reads for keyed scans** (`data/novig/stream/NovigStream`, `PushedBooks`; `NovigPublicClient.stream`,
+  `watch`/`pushed`; `Scanner.BookPump`): each pass hands the whole plan (likeliest first, up to the budget)
+  to the socket; its first subscribe on a connection waits for a full bucket so the first few planned
+  lines can't spend what the whole plan needs; later additions go when their tokens are back. REST keeps
+  reading the likeliest lines meanwhile (separate throttle), and every book the socket holds is taken in
+  one pass with no request. Dropped lines are unsubscribed; gaps re-snapshot; a throttle reply is retried
+  after a refill, a limit reply asks for half. The socket closes 2 minutes after a scan last used it
+  (rechecks right after a scan are instant), and on any failure scans use the key's REST route for 5
+  minutes and say why once. OkHttp pings every 20 s, so a dead socket fails rather than serving old books.
+  **Not verified against the real API** (the key lives in the phone's hardware keystore; nothing here can
+  sign as it): the mock socket speaks the documented protocol, and anything unexpected falls back to
+  REST, which Tj's phone already uses. Settings › Novig API shows how the last scan's prices came in.
+- **The budget is filled** (`ScanSettings.fillBudget`, on by default; `Planner.fill`): after the per-game
+  picks, every other line a fair source quotes (alternate spreads/totals, more props) up to "Novig prices
+  per scan", best-covered first, read after the picks.
+- **Tennis** (ATP, WTA; turned on once by schema 7): Kalshi's free match markets
+  (`KX{ATP,WTA}MATCH`, `…CHALLENGERMATCH`) price the winner; Pinnacle (PinnWire/pinnapi `sport_id` 2)
+  the winner, games spread, total games, each player's games won and the 1st-set winner. Live check
+  (`LiveTennisTest`, 07:40Z): 48 Novig matches, 375/375 outcomes resolved to a player, 37 of 46 paired
+  with Kalshi and priced end to end. Not priced: set spread and total sets (no source quotes them in a
+  shape checked here). The Tracker can't grade tennis from scores yet (ESPN's tennis feed isn't wired):
+  Won/Lost by hand.
+
+### 27.4 "Can't the CNO scanner just copy what's on CNO's website?"
+
+It already does: since v0.13.0 the CNO scanner reads CNO's own +EV list (Tj's Shared View, his filters)
+every 5–15 s while the CNO tab or a widget is on screen (§18.5), and adds what the website doesn't have:
+Novig's price **now** for each bet (CNO's copy of Novig is up to a minute old), the books-agree check,
+exact bet-slip links, placed-bet hiding, the start-time filter and background alerts. Copying more of it
+wouldn't find more bets: CNO's list *is* its scan, it refreshes about once a minute server-side, and
+reading it harder only invites CNO's pauses (§20.2). What CNO can't give is what Vigilant's own scan adds:
+Novig's live books read directly (now pushed through the key), tennis and alternate lines CNO's filters
+skip, and fair lines from Pinnacle, Kalshi and PropLine. Keeping both ("Both" mode) is the best of each.
