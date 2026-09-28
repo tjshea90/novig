@@ -412,6 +412,7 @@ class Scanner(
                     viaKey += batch.viaKey
                     viaPush += batch.viaPush
                     failed += batch.failed
+                    refused += batch.refused
                     batch.lastError?.let { lastError = it }
                     if (keyProblem == null) keyProblem = batch.keyProblem
                     // Novig asked us to stop for a while: the rest keep the last scan's prices.
