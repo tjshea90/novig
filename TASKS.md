@@ -2407,4 +2407,4 @@ Nothing at or above 1.0% EV."
         and Novig shapes (fixtures from 2026-09-28).
 - [x] K4 (DONE: RESEARCH.md §27.4; in the reply.) Answer "can the CNO scanner just copy CNO's website?" (what it already does, what copying more would
       cost/gain) in the reply and RESEARCH.md §27.
-- [ ] K5 Light tests on everything touched, ckpt, ship, release, link.
+- [x] K5 (DONE 2026-09-28 ~07:06Z: light tests (touched files + callers, screenshots 6b/5e/1 looked at, new UI tests for the fill switch and tennis chips, fix: live feed closed at once off screen + AutoScanTest pin); floor 677 tests, 0 failures, 9 live skipped, exit 0; release APK built locally, cert AB:22:… verified; ci.yml green on 4fca994; ship.sh green; release.yml run 36389431089 green; tag v0.19.0 has vigilant-v0.19.0.apk only; BUILDLOG recorded.) Light tests on everything touched, ckpt, ship, release, link.
