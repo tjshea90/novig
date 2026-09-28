@@ -58,6 +58,7 @@ import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.PropLinePropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScannerMode
@@ -116,6 +117,9 @@ fun SettingsScreen(
                 ChoiceChips(ScanSettings.STARTS_WITHIN_CHOICES, s.startsWithinHours, ::startsWithinLabel) { v -> onUpdate { it.copy(startsWithinHours = v) } }
                 Hint("Every list (+EV, CNO, Games and the widgets) shows only games starting within this window. Games already under way still show when live games are on. It only hides bets: what a scan reads is unchanged.")
             }
+
+            // ---- Background auto-scan and alerts (Vigilant for Novig) ------------------------------
+            if (AppBook.isNovig) AutoScanSection(s, onUpdate)
 
             // ---- The CNO scanner ----------------------------------------------------------------
             if (s.cnoOn) {
@@ -216,7 +220,10 @@ fun SettingsScreen(
                 }
             }
             if (s.cnoOn) {
-                Hint("CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read.")
+                Hint(
+                    "CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read" +
+                        if (s.autoScan.cno) " (background auto-scan still reads it every ${s.autoScanMinutes} min)." else ".",
+                )
             }
             // Any mode: the widget's switch can turn Vigilant's scan on from there.
             Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
@@ -527,7 +534,7 @@ fun SettingsScreen(
                 else "Vigilant MGM ${BuildConfig.VERSION_NAME} · ${AppBook.name} prices: PropLine, The Odds API") + " · Fair odds: Pinnacle (PinnWire, pinnapi), " +
                     "Polymarket, Kalshi, PropLine, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
                     "fetches only when you tap Scan or pull to refresh; CrazyNinjaOdds' list only while its tab or a widget is on " +
-                    "screen (and the screen is on). Nothing runs in the background.",
+                    "screen (and the screen is on). Nothing runs in the background unless background auto-scan is on.",
             )
         }
     }
@@ -549,6 +556,81 @@ fun refreshHint(s: ScanSettings): String {
         else -> "Every ${secondsLabel(seconds)} while the CNO tab or a widget is on screen; CNO itself updates every 13–33 s."
     } + use + " Nothing is read once both are closed."
 }
+
+/**
+ * Background auto-scan and +EV alerts (Tj, 2026-09-28: "auto scan either cno or both cno and vigilant
+ * every 5 10 20 30 or 40 minutes in the background" and alerts "for a minimum of 2%, 3%, or 4%").
+ */
+@Composable
+private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    SectionTitle("Background auto-scan")
+    ChoiceChips(AutoScanMode.entries, s.autoScan, { it.displayName }) { v -> onUpdate { it.copy(autoScan = v) } }
+    if (s.autoScan != AutoScanMode.OFF) {
+        Text("Every", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+        ChoiceChips(ScanSettings.AUTO_SCAN_MINUTES_CHOICES, s.autoScan.let { s.autoScanMinutes }, { "$it min" }) { v -> onUpdate { it.copy(autoScanMinutes = v) } }
+    }
+    Hint(autoScanHint(s))
+    Text("Push alerts", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.ALERT_MIN_EV_CHOICES, s.alertMinEv, ::alertLabel) { v -> onUpdate { it.copy(alertMinEv = v) } }
+    Hint(alertHint(s))
+    // What Android needs from Tj for any of it: notifications (alerts, the ongoing note) and, so the
+    // phone's battery saver can't hold scans back while it sleeps, unrestricted background use.
+    var notify by remember { mutableStateOf(com.tjshea.vigilant.app.ScanService.canNotify(context)) }
+    var unrestricted by remember { mutableStateOf(ignoresBatteryLimits(context)) }
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        notify = com.tjshea.vigilant.app.ScanService.canNotify(context)
+        unrestricted = ignoresBatteryLimits(context)
+        onPauseOrDispose { }
+    }
+    if ((s.autoScan != AutoScanMode.OFF || s.alertMinEv > 0.0) && !notify) {
+        Hint("Notifications are off for Vigilant, so no alert can show.")
+        OutlinedButton(onClick = {
+            runCatching {
+                context.startActivity(
+                    android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }) { Text("Allow notifications") }
+    }
+    if (s.autoScan != AutoScanMode.OFF && !unrestricted) {
+        Hint("For scans on time while the phone sleeps, let Vigilant run in the background (Android's battery setting \"Unrestricted\").")
+        OutlinedButton(onClick = {
+            runCatching {
+                context.startActivity(
+                    android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android.net.Uri.parse("package:${context.packageName}"))
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }) { Text("Let Vigilant run in the background") }
+    }
+}
+
+private fun ignoresBatteryLimits(context: android.content.Context): Boolean =
+    (context.getSystemService(android.content.Context.POWER_SERVICE) as? android.os.PowerManager)?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+
+fun alertLabel(ev: Double): String = if (ev <= 0.0) "Off" else "${Math.round(ev * 100)}%+"
+
+/** What background auto-scan does at these settings. */
+fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
+    AutoScanMode.OFF -> "Off: Vigilant scans only when you tap Scan, and CrazyNinjaOdds is read only while its tab or a widget is on screen."
+    AutoScanMode.CNO -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list, then Novig's price now and every book's odds " +
+        "for its best bets (the green check's reads). A quiet notification shows while it's on (Scan now, Stop). About " +
+        "${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} reads of CNO a day, each well under a second of work."
+    AutoScanMode.BOTH -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list and its best bets' books, then Vigilant's own " +
+        "scan exactly as the Scan button runs it (${s.maxBooksPerScan} Novig prices at most, ${scanSizeHint(s.maxBooksPerScan).substringAfter("is ").substringBefore(" on")}). " +
+        "Each scan spends API credits like a tap on Scan: ${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} scans a day at this setting. " +
+        "A quiet notification shows while it's on (Scan now, Stop)."
+}
+
+/** Which bets alert, at these settings. */
+fun alertHint(s: ScanSettings): String =
+    if (s.alertMinEv <= 0.0) "Off: no alerts." else "A notification for each new bet at ${alertLabel(s.alertMinEv)} EV or better that several books agree on " +
+        "(${CnoBooks.MIN_TWO_SIDED}+ books price both sides and ${CnoBooks.MIN_AGREEING}+ of them alone make it +EV), found by a background scan " +
+        "or a scan you left running. Tap it to open the bet slip in ${AppBook.name}. Each bet alerts once; placed and removed bets, and games " +
+        "outside \"Starts within\", never do."
 
 /** Tj's CNO Shared View link: paste, check, save. Blank means the app's book (Novig; BetMGM in Vigilant MGM) with CNO's defaults. */
 @Composable
