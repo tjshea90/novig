@@ -253,7 +253,7 @@ class NovigPublicClient(
                         @Suppress("UNREACHABLE_CODE")
                         BookFetch.Skipped(id)
                     }
-                    onProgress?.invoke(done.incrementAndGet(), ids.size)
+                    onProgress?.invoke(done.incrementAndGet(), all.size)
                     outcome
                 }
             }
