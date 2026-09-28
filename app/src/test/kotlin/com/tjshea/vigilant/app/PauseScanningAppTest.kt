@@ -46,7 +46,7 @@ class PauseScanningAppTest {
             waitFor("settings loaded") { vm.state.value.loaded }
             vm.setPaused(true)
             waitFor("paused") { vm.state.value.settings.paused }
-            assertTrue(app.container.currentSettingsBlocking().paused) // saved: it outlives a restart
+            assertTrue(kotlinx.coroutines.runBlocking { app.container.currentSettings() }.paused) // saved: it outlives a restart
 
             toasts.clear()
             vm.scan()
