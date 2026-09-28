@@ -130,6 +130,26 @@ data class ScanResult(
 }
 
 /**
+ * Fair lines by [LineKey], kept for as long as the same [Plan] object and [FairSettings] are priced
+ * (v0.18.0, Tj 2026-09-28: "make the scans … faster"). Every partial result of a scan used to devig
+ * every line's books again (power devig: ~200 `pow` calls per book), though only Novig's books had
+ * changed; with 1,200 prices a scan that was as slow as the reads themselves. A plan is re-made
+ * whenever the fair odds behind it change, so a line is never priced from stale quotes.
+ */
+class FairMemo(private val keep: Int = 3) {
+    private val entries = ArrayList<Triple<Plan, FairSettings, HashMap<LineKey, FairLine?>>>()
+
+    @Synchronized
+    fun linesFor(plan: Plan, settings: FairSettings): HashMap<LineKey, FairLine?> {
+        entries.firstOrNull { it.first === plan && it.second == settings }?.let { return it.third }
+        val fresh = HashMap<LineKey, FairLine?>()
+        entries.add(0, Triple(plan, settings, fresh))
+        while (entries.size > keep) entries.removeAt(entries.size - 1)
+        return fresh
+    }
+}
+
+/**
  * Pure pricing: plan + books + settings in, priced outcomes out. No network, so changing a
  * setting (fair source, devig method, Kelly) re-prices instantly from what's already fetched.
  */
@@ -138,9 +158,20 @@ object Pricing {
     /** Past this, a Novig price is too old to bet on without a recheck (exchange prices move fast). */
     const val OLD_PRICE_MS = 10 * 60_000L
 
-    fun price(plan: Plan, books: Map<String, NovigBook>, settings: ScanSettings, now: Long): ScanResult {
+    fun price(
+        plan: Plan,
+        books: Map<String, NovigBook>,
+        settings: ScanSettings,
+        now: Long,
+        /**
+         * Fair lines already worked out for this same [plan] and fair settings ([FairMemo]): a scan
+         * re-prices after every few Novig books, and only the books change between those, so each
+         * line is devigged once per plan instead of once per partial result.
+         */
+        memo: FairMemo? = null,
+    ): ScanResult {
         val fairSettings = settings.fairSettings()
-        val fairCache = HashMap<LineKey, FairLine?>()
+        val fairCache = memo?.linesFor(plan, fairSettings) ?: HashMap()
         val refById = plan.markets.mapNotNull { it.refEvent }.associateBy { it.id }
 
         fun fairFor(key: LineKey): FairLine? = fairCache.getOrPut(key) {
