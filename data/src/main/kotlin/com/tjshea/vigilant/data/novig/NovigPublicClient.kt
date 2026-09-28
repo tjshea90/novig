@@ -259,9 +259,9 @@ class NovigPublicClient(
             }
         }.map { it.await() }
 
-        val books = HashMap<String, NovigBook>()
+        val books = HashMap<String, NovigBook>(pushed)
         var notModified = 0
-        var fetched = 0
+        var fetched = pushed.size
         var failed = 0
         var fromCache = 0
         var viaKey = 0
