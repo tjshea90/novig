@@ -2211,3 +2211,8 @@ Before starting, let me switch to opus ultracode. Pause when you can so I can re
 This has nothing to do with novig so make no changes at all to novig or anything to do with the novig repo
 The firmware file itself should not be changed. Only the flasher.apk. the MP3 player can successfully install the firmware
 ```
+
+## 2026-09-28T00:57:46Z
+```
+Resume where you left off. The firmware file is for a SanDisk sansa sport clip. The flasher app works fine on other phones and I need it to work on my moto g 2026. I want the app to do exactly what it already does because I need to use all the functions
+```
