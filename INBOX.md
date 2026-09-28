@@ -2231,3 +2231,8 @@ Tell me what the setup script for this Claude environment does and does it work 
 ```
 Can you see if I fixed it or do I need a new code session? Tell me what to ask Claude in a new session to see if it worked
 ```
+
+## 2026-09-28T03:01:25Z
+```
+Check whether the environment fix worked. Run echo "$ANDROID_HOME" and confirm it prints /opt/android-sdk. Then run ./gradlew :engine:test :data:test :app:testDebugUnitTest --console=plain without setting ANDROID_HOME yourself, and tell me whether it says BUILD SUCCESSFUL and how many tests passed and failed. Don't change any files.
+```
