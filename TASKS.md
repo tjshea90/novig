@@ -2549,7 +2549,13 @@ Nothing at or above 1.0% EV."
 
 ## "Make an option in the app to pause all scanning … put these same buttons in the cno scanner in full screen" (Tj, 2026-09-28 ~19:36Z, on v0.19.4)
 
-- [ ] U1 "Make an option in the app to pause all scanning." One switch that stops every scan the app runs on its own
+- [x] U1 (DONE: `ScanSettings.paused` (saved): Settings › Scanner switch, ⏸/▶ on the +EV and CNO top bars and the widget
+      header, a Resume banner. Paused: a running scan stops (`ScanRunner.stop`, no "scan done" note), CNO's list and lanes
+      held even on screen (`CnoWatch.hold`, also until settings load), auto-scan off (`activeAutoScan`: service, alarm,
+      boot receiver, cycle; resuming restarts it, from the widget too), widget rescans stop, Scan/Recheck/Refresh toast and
+      their buttons grey out. Opening bets, books on tap and settling still work. Tests: PauseScanningTest (2), CnoWatchTest
+      `a hold stops every read…`, StreamingScanTest `stop ends a running scan…`, PauseScanningAppTest (2), ScreenshotTest
+      pause tests (6; 1k/8h/9p/9q png looked at). Full floor 752 tests, 0 failures.) "Make an option in the app to pause all scanning." One switch that stops every scan the app runs on its own
       or keeps running: CNO's feed (tab, widget, pip, keepBooksFresh/keepLinksFresh), background auto-scan
       (alarm + AutoScanService), widget rescans, a Scan left running; manual Scan disabled or asks to resume while
       paused. Shown where Tj will see it (+EV/CNO tabs, widget, Settings); survives restarts; test.
