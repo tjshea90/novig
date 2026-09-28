@@ -206,6 +206,8 @@ class Scanner(
             books = merged
         }
         pump.keyProblem?.let { errors += "Novig key: $it Used public prices this scan." }
+        // The key's live feed failing only costs speed: its REST route read the rest.
+        if (pump.keyProblem == null) novig.pushProblem(now)?.let { errors += "Novig live feed: $it Prices were read one by one instead." }
         if (pump.failed > 0 && pump.lastError != null) {
             errors += "Novig prices: ${pump.lastError}" + if (pump.fromCache > 0) " (${pump.fromCache} shown from the last scan)" else ""
         } else if (pump.lastError != null) {
