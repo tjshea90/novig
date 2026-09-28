@@ -104,7 +104,9 @@ class FreshOddsTest {
         scanner.scan(settings, listOf(book))
         book.fail = true
         now += 3 * minute
-        assertNotNull(dal(scanner.scan(settings, listOf(book))).quote) // three minutes: still fresh
+        val second = scanner.scan(settings, listOf(book))
+        println("DEBUG ops=${second.result?.opportunities?.map { it.outcome.outcomeId }} errors=${second.errors} stats=${second.result?.stats}")
+        assertNotNull(dal(second).quote) // three minutes: still fresh
         now += 3 * minute
         assertNull(dal(scanner.scan(settings, listOf(book))).quote) // six: never
     }

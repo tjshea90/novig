@@ -217,15 +217,17 @@ class SportsbookScannerTest {
     }
 
     @Test
-    fun `a BetMGM bet leaves the feed once BetMGM's own price is five minutes old`() = runTest {
+    fun `a BetMGM bet leaves the feed once BetMGM's own price is too old for its game`() = runTest {
         routesUp(board(mgmSeen = iso(now - 60_000)))
         val client = propLine()
         val result = SportsbookScanner(Sportsbook.BETMGM, clock = { now }).scan(settings, listOf(client)).result!!
         val bal = result.bet("Baltimore Ravens")
         // BetMGM's price (1 min old) is older than Pinnacle's (20 s): the bet ages from BetMGM's.
         assertEquals(now - 60_000, bal.fairAsOfMs)
-        assertFalse(bal.fairIsOld(now + 3 * 60_000))
-        assertTrue(bal.fairIsOld(now + 4 * 60_000 + 1))
+        // The limit follows the game's start (5 minutes within 3 hours, 10 further off: Freshness.maxAgeMs, v0.19.3).
+        val limit = com.tjshea.vigilant.data.scanner.Freshness.maxAgeMs(bal.event.startsTs, now)
+        assertFalse(bal.fairIsOld(now + limit - 2 * 60_000))
+        assertTrue(bal.fairIsOld(now + limit - 60_000 + 1))
     }
 
     @Test
