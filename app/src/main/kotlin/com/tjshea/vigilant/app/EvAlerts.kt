@@ -48,7 +48,8 @@ object EvAlerts {
 
     /** What tapping opens: [a]'s link in Novig's app (never a browser when it's installed), else Novig itself. */
     fun intent(context: Context, a: EvAlert): Intent {
-        val link = a.link
+        // With the stake Settings asks for in the bet slip (Tj, 2026-09-28), a CNO link resolved late included.
+        val link = com.tjshea.vigilant.data.novig.NovigLinks.withStake(a.link, a.stake)
         val installed = context.packageManager.getLaunchIntentForPackage(MiniWindow.NOVIG_PACKAGE) != null
         if (link == null || (link.startsWith("novigapp://") && !installed && AppBook.isNovig)) return AppBook.homeIntent(context)
         return Intent(Intent.ACTION_VIEW, Uri.parse(link))

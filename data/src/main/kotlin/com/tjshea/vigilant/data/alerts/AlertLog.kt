@@ -43,6 +43,8 @@ data class EvAlert(
     /** Where tapping opens: the bet slip itself when [exact], else its game. Null: Novig's home. */
     val link: String?,
     val exact: Boolean,
+    /** Dollars the bet slip opens with (Settings' bet-slip amount), added to [link] on the tap; null = none. */
+    val stake: Double? = null,
 ) {
     val dedupeKey: String get() = outcomeId?.let { "outcome:$it" } ?: "$scanner:$key"
 }

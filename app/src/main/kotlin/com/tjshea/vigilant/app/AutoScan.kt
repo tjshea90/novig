@@ -54,6 +54,7 @@ object AlertPicks {
                 scanner = SCANNER_CNO, key = MiniWindow.cnoKey(pick.row), outcomeId = CnoFeed.outcomeIdOf(link),
                 bet = pick.row.bet, market = pick.row.market, event = pick.row.event, american = shown.row.odds, ev = shown.ev,
                 books = check.twoSided, agreeing = check.agreeing, startsAtMs = pick.row.startsAtMs, link = link, exact = link != null,
+                stake = state.settings.slipStakeFor(com.tjshea.vigilant.app.ui.cnoStake(shown, state.settings)),
             )
         }
     }
@@ -72,6 +73,7 @@ object AlertPicks {
                 scanner = SCANNER_VIGILANT, key = o.key, outcomeId = o.outcome.outcomeId,
                 bet = o.selection, market = o.marketLabel, event = o.eventName, american = quote.priceAmerican, ev = ev,
                 books = agreement.twoSided, agreeing = agreement.agreeing, startsAtMs = o.event.startsTs, link = link, exact = link != null,
+                stake = state.settings.slipStakeFor(o.suggestedStake),
             )
         }
     }
