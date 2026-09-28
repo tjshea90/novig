@@ -529,7 +529,7 @@ fun SettingsScreen(
 
                 if (AppBook.isNovig) {
                     SectionTitle("Novig API key")
-                    NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect)
+                    NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status)
                 }
 
             }
