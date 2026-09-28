@@ -2282,3 +2282,8 @@ Status
 ```
 Now consider if the 1200 Max prices per novig scan is enough for me to find most or all positive EV bets available, and if increasing this number could be beneficial or dangerous in any way. If I can have no limit on the prices safely, then make that option. Also consider if I can safely raise the max alternate lines and player props per game safely. Can I raise the most credits per scan on props safely? Can the app automatically enter 1 dollar on every betslip inside novig when I click on a bet? If it can, make an option to automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into the settings. When pinnwire api usage runs out, automatically switch to pinnapi until the usage resets. On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each bet to Open the bet in novig, just as the widget does 
 ```
+
+## 2026-09-28T19:12:25Z
+```
+Claude was just about to ship when usage ran out. Can you finish
+```
