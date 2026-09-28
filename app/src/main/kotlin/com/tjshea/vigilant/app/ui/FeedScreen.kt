@@ -260,6 +260,16 @@ private fun FeedSummary(
                         }
                     }
                 }
+                agedOutText(state, now)?.let { note ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(note, style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.weight(1f))
+                        if (!status.scanning) {
+                            TextButton(onClick = onScan, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                                Text("Scan", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
