@@ -131,7 +131,7 @@ class NovigStream(
         synchronized(this) {
             lastUsedMs = clock()
             wanted = marketIds.distinct()
-            start = socket == null && clock() - failedAtMs >= retryAfterFailureMs
+            start = socket == null && failedAtMs.let { it == null || clock() - it >= retryAfterFailureMs }
         }
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
     }
