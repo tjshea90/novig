@@ -460,6 +460,8 @@ private data class MarketDto(
     val startsTs: Long = 0,
     val fee: FeeDto? = null,
     val outcomes: List<OutcomeDto> = emptyList(),
+    /** The line, a decimal string; a spread's is the home side's handicap. Absent without a line. */
+    val strike: String? = null,
 ) {
     fun toDomain() = NovigMarket(
         marketId = marketId,
@@ -470,6 +472,7 @@ private data class MarketDto(
         startsTs = startsTs,
         fee = fee?.toDomain(),
         outcomes = outcomes.map { NovigOutcome(it.outcomeId, it.name, it.status) },
+        strike = strike?.toDoubleOrNull(),
     )
 }
 

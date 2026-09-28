@@ -52,6 +52,12 @@ data class NovigMarket(
     /** Null only if Novig sent a fee object we couldn't read. Such a market is skipped, never assumed free. */
     val fee: MarketFee?,
     val outcomes: List<NovigOutcome>,
+    /**
+     * The line the market settles against (Novig's `strike`; a spread's is the HOME side's handicap). The
+     * docs' contract, where descriptions and outcome names are display text: the planner checks the line it
+     * reads from the names against it. Null when Novig sent none (moneylines send 0).
+     */
+    val strike: Double? = null,
 ) {
     val isOpen: Boolean get() = status == "OPEN"
 
