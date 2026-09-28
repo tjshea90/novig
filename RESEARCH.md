@@ -2439,3 +2439,63 @@ the next "slow" report comes with the phone's own numbers.
 - A scan is one pass: every line in the window at most once, then it ends (BiggerScansTest `with no limit a scan reads every
   priced line in the time window once, then stops`). Nothing repeats except background auto-scan and the widget's rescan,
   each on its own timer (unchanged), and Pause stops all of it (v0.19.5).
+
+## 33. Claude tooling for building Vigilant: the claude-api skill, hillclimb, plugins and skills (2026-09-28 ~22:16Z, Tj: "Research the new claude-api skill and hillclimb and figure out if it can improve this app or development. Then research other skills or plugins including from third parties that can improve the app or Claude ability to make the app better. Tell me anything I need to do")
+
+### 33.1 The claude-api skill and hillclimb
+- **What it is.** A skill bundled with Claude Code (2.1.284 here): a reference for writing code that *calls* the Claude API
+  (Anthropic SDKs, model ids, caching, tool use, Managed Agents), plus subcommands `migrate`, `prompt-audit`, `upgrade`,
+  `cost-optimize`, `build-eval`, `hillclimb`, `preserved-thinking-migration`, `managed-agents-onboard`. Anthropic's post of
+  2026-09-08 ("Reducing cost and improving performance with Claude Platform") introduced `prompt-audit` and `hillclimb`.
+- **`/claude-api hillclimb`** (skill file `shared/evals/eval-hillclimb.md`) tunes an app that calls Claude against an
+  existing eval: baseline, then one change per round (prompt, tool text, model, effort), re-run, keep or revert, with a
+  train/test split so the headline number comes from cases the analyzer never read. Step 0: no runnable eval, stop (or
+  `build-eval` first). Every round's eval run is billed API usage.
+- **Verdict for the app: no.** Vigilant makes no LLM calls (Kotlin math + HTTP), so there is nothing to climb. Adding Claude
+  to the app was considered and rejected: every call costs money (Tj: nothing that costs money), adds seconds to scans
+  that race odds going stale (§24, §30.2), needs an API key on the phone (public repo), and turns deterministic, tested
+  matching/pricing into something that can't be pinned by a test. The idea behind hillclimb (measure, change one thing,
+  re-measure on held-out data) is already how scan speed (`ScanTiming`) and matching (`LiveNovigSmokeTest`) are worked on;
+  a CLV-based tune of the devig/fair-price choices would need far more settled bets than the $1 test bets give.
+- **Verdict for development: `/claude-api prompt-audit` is the useful part.** It audits instruction files (CLAUDE.md,
+  skills, commands, subagents) for dated patterns, stale facts and contradictions, writes a report plus a proposed diff,
+  and applies nothing without consent; its rules say fact/contradiction fixes are proposed, never auto-applied. It runs
+  inside Claude Code (plan usage, not API money). This repo's instruction surface is large (CLAUDE.md 36 KB loaded every
+  session, BRIEF.md 44 KB) and has stale bits found during this research: bootstrap.sh's rules block still says "NO
+  signing keystore exists yet" and "no architecture decision has been locked in", both false since v0.1.0. Offered to Tj
+  as an opt-in run (§33.5).
+
+### 33.2 Fixed now: the session-start briefing never reached Claude (ckpt 605)
+Claude Code caps a hook's `additionalContext` at 10,000 characters; over that it saves the text to a file, shows a
+2,000-character preview, and does not tell Claude to read the file (code.claude.com/docs/en/hooks, no setting raises it).
+`tools/resume.sh` printed all of TASKS.md (210 KB) through `bootstrap.sh`, so the briefing was 215,548 characters and
+sessions saw only the first lines of the INBOX tail: no CHECKPOINT "Do this next", no task list. Now `bootstrap.sh`
+prints TASKS.md's open boxes only (one line each, with line numbers; current job first, the 12 most recent older ones
+after) and `resume.sh` trims anything over 9,500 characters with a pointer to `bash tools/resume.sh --text`. Briefing:
+7,186 characters. Tests: `tools/test_resume.sh` "the briefing fits Claude Code's 10,000-character hook cap…" and "an
+oversized briefing is trimmed…" (both failed before the fix).
+
+### 33.3 What a cloud session can load (code.claude.com/docs/en/cloud-environments, "What carries over")
+- Loaded: the repo's CLAUDE.md, `.claude/skills/`, `.claude/agents/`, `.claude/commands/`, `.claude/rules/`, and skills
+  enabled on the claude.ai account. A skill in `novig/.claude/skills/` loads once Claude works on files in `novig/`
+  (sessions here start in `/home/user`, above the clone).
+- Not loaded: plugins turned on in the repo's `.claude/settings.json` or in user settings. Only an organization's
+  server-managed settings (Team/Enterprise owner) push plugins into cloud sessions. So marketplace plugins (LSP servers,
+  context7, superpowers, …) are not a repo-side switch for this project.
+- The environment's setup script runs once, then a filesystem snapshot is reused for about 7 days if the script finishes
+  within about 5 minutes. This environment already has one (ran 19:12Z today; SDK + Gradle mirror: TASKS S3 ticked).
+
+### 33.4 Candidates checked
+| Candidate | Source | Verdict |
+| :- | :- | :- |
+| `kotlin-lsp` (official plugin, JetBrains Kotlin language server) | claude-plugins-official | Not now: see 33.4.1 |
+| Chris Banes' skills (`compose-performance`, `compose-state-and-effects`, `kotlin-concurrency-and-flow`, `compose-ui-testing-patterns`) | github.com/chrisbanes/skills, Apache-2.0 | Worth adding with Tj's OK: plain SKILL.md folders work in cloud sessions when committed to `.claude/skills/`; they target exactly the Compose recomposition, battery and coroutine-cancellation code this app is full of. Read in full before committing (third-party instructions) |
+| `/code-review`, `/security-review`, `/simplify` | bundled with Claude Code | Already available, no install. `/code-review` on the diff since the last release fits the full-test protocol |
+| `/claude-api prompt-audit` | bundled | Yes, opt-in run (33.1) |
+| context7 (library docs MCP) | claude-plugins-official | No: a plugin (not loaded in cloud sessions), and WebFetch/WebSearch already reach the docs |
+| superpowers, mattpocock-skills, feature-dev, beads/ZSL "superpowers" | marketplaces | No: process frameworks with their own SessionStart hooks and workflows that would compete with CLAUDE.md's checkpoint/TASKS/test process and add context every session |
+| pr-review-toolkit, code-review plugin, commit-commands | claude-plugins-official | No: PR-centric; this project pushes to main without PRs, and the bundled `/code-review` covers review |
+| security-guidance | claude-plugins-official | No: runs an LLM diff review on every Stop (usage), and plugins don't load here anyway |
+| KotlinSense, community `kotlin-lsp` (fwcd kotlin-language-server) | Anthropic Directory (claude.ai catalog) | No: community wrappers; fwcd's server is deprecated, same binary-install problem |
+| Kobiton, Ansight, Bugsee, Dynatrace | Anthropic Directory | No: need real devices/emulators or paid services; this container has no emulator |
+| Devil's Advocate, Graph of Thought (already connected MCP servers) | Tj's claude.ai connectors | Harmless (their tools load only on demand), little value for this repo; keep or disconnect as Tj likes |
