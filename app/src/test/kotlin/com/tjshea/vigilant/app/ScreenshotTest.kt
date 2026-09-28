@@ -258,7 +258,8 @@ class ScreenshotTest {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         shoot("5e_settings_whole") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
         // Up to 1,200 Novig prices a scan, and props per game up to 24 (v0.18.0).
-        for (n in listOf("500", "800", "1200", "24")) compose.onNodeWithText(n).assertExists()
+        for (n in listOf("500", "800", "1200")) compose.onNodeWithText(n).assertExists()
+        compose.onAllNodesWithText("24").assertCountEquals(2) // props credits' 24, and props per game's
         compose.onNodeWithText("300 is about a minute", substring = true).assertExists()
         compose.onNodeWithText("Outlier guard").assertExists()
         // +300 at most since v0.18.0 (Tj, 2026-09-28: "Let me choose +200 +150 and +120 and get rid of any option over +300").
