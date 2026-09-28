@@ -46,6 +46,7 @@ class PauseScanningAppTest {
             waitFor("settings loaded") { vm.state.value.loaded }
             vm.setPaused(true)
             waitFor("paused") { vm.state.value.settings.paused }
+            waitFor("the pause's own toast") { "Scanning paused: nothing is read until you resume" in toasts }
             assertTrue(kotlinx.coroutines.runBlocking { app.container.currentSettings() }.paused) // saved: it outlives a restart
 
             toasts.clear()
