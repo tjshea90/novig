@@ -422,12 +422,9 @@ object Planner {
             "FIRST_INNING_TOTAL" -> overUnder(LineKind.TOTAL, RefBookMarket.PERIOD_FIRST_INNING, "1st Inning Total")
 
             // "Los Angeles Rams 22.5 TEAM_TOTAL": which team, then its over/under.
-            "TEAM_TOTAL" -> {
-                val team = NovigText.subjectOf(market.description, market.marketType) ?: return null
-                val isAway = TeamMatcher.labelIsAway(team, matchup.away, matchup.home) ?: return null
-                val side = if (refSide(isAway, m.refSwapped) == Side.AWAY) RefBookMarket.AWAY else RefBookMarket.HOME
-                overUnder(LineKind.TEAM_TOTAL, 0, "Team Total", subject = side, who = teamName(isAway))
-            }
+            "TEAM_TOTAL" -> sideTotal("Team Total")
+            // Tennis: a player's games won, Pinnacle's team total in games.
+            "PLAYER_GAMES_WON" -> sideTotal("Games Won")
 
             // "Patrick Mahomes 233.5 PASSING_YARDS": a player's over/under on one stat.
             in PropStats.NOVIG_TYPES -> {
