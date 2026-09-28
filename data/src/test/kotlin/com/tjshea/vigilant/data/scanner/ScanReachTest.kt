@@ -122,7 +122,7 @@ class ScanReachTest {
                     ),
                 ),
             ),
-            now,
+            Fixtures.START_MS - 2 * day,
         ),
     )
 
@@ -139,7 +139,7 @@ class ScanReachTest {
             // No strike sent: the names alone, as before.
             market("noStrike", "TOTAL", null, "Over 47.5", "Under 47.5"),
         )
-        val planned = Planner.plan(listOf(nfl), markets, refs, s, now).marketIds.toSet()
+        val planned = Planner.plan(listOf(nfl), markets, refs, s, Fixtures.START_MS - 2 * day).marketIds.toSet()
         assertEquals(setOf("ok", "tot", "noStrike"), planned)
     }
 }
