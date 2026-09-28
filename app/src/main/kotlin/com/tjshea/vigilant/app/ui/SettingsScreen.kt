@@ -107,7 +107,7 @@ fun SettingsScreen(
             SwitchRow(
                 "Pause all scanning",
                 "Stops a scan running now; nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) " +
-                    "until you switch it off. Also the ${"\u23F8"} button on the +EV and CNO tabs and the widget. Opening bets and settling tracked ones still work.",
+                    "until you switch it off. Also the pause button on the +EV and CNO tabs and the widget. Opening bets and settling tracked ones still work.",
                 s.paused,
             ) { v -> onUpdate { it.copy(paused = v) } }
             ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
