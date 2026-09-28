@@ -382,6 +382,7 @@ class Scanner(
                         .take(cap - requested.size).map { it.market.marketId }
                     requested += ids
                     ids.forEach { id -> fresh[id] = pushed.getValue(id) }
+                    if (readFrom == null) readFrom = elapsed() - startedAt
                     fetched += ids.size
                     viaPush += ids.size
                     progress.reading = true
