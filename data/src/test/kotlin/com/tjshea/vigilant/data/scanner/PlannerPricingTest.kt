@@ -286,8 +286,8 @@ class PlannerPricingTest {
 
     // ---- the per-scan budget's leftovers (Tj, 2026-09-28: "find as many positive EV bets … as possible") ----
 
-    /** Five quoted spreads (3.5 by two books, 2.5 nearest even) and one prop quoted by one book. */
-    private fun thinSlate(): Triple<List<NovigMarket>, List<RefSnapshot>, List<Double>> {
+    /** Five quoted spreads: 3.5 and 20.5 by two books, the rest by one (2.5 nearest even, then 1.5, then 4.5). */
+    private fun thinSlate(): Pair<List<NovigMarket>, List<RefSnapshot>> {
         val lines = listOf(1.5, 2.5, 3.5, 4.5, 20.5)
         val novig = lines.map { l -> market("sp$l", "SPREAD", "d$l" to "DAL +$l", "b$l" to "BAL -$l") }
         val ex = lines.map { l ->
@@ -296,21 +296,22 @@ class PlannerPricingTest {
         }
         val pin = listOf(3.5, 20.5).map { l -> RefBookMarket("pinnacle", "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1.93, l), RefQuote(Side.AWAY, 1.95, -l)), now) }
         val ref = RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens", markets = ex + pin)
-        return Triple(novig, listOf(RefSnapshot("americanfootball_nfl", listOf(ref), now)), lines)
+        return novig to listOf(RefSnapshot("americanfootball_nfl", listOf(ref), now))
     }
 
     @Test
     fun `budget left after the per-game picks goes to every other quoted line, best-covered first`() {
-        val (novig, snaps, _) = thinSlate()
-        val plan = Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 2), now)
-        // The per-game picks as before, then the rest: 20.5 (two books), then nearest even (1.5 before 4.5).
-        assertEquals(listOf("sp3.5", "sp2.5", "sp20.5", "sp1.5", "sp4.5"), plan.marketIds)
-        assertEquals(listOf(false, false, true, true, true), plan.markets.map { it.spare })
-        // Filling never passes the per-scan budget: 3 prices = the 2 picks and the best-covered filler.
-        val three = Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 2, maxBooksPerScan = 3), now)
-        assertEquals(listOf("sp3.5", "sp2.5", "sp20.5"), three.marketIds)
+        val (novig, snaps) = thinSlate()
+        val plan = Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 1), now)
+        // The per-game pick as before (3.5), then the rest: 20.5 (two books), then nearest even.
+        assertEquals(listOf("sp3.5", "sp20.5", "sp2.5", "sp1.5", "sp4.5"), plan.marketIds)
+        assertEquals(listOf(false, true, true, true, true), plan.markets.map { it.spare })
+        // Filling never passes the per-scan budget.
+        assertEquals(listOf("sp3.5", "sp20.5", "sp2.5"), Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 1, maxBooksPerScan = 3), now).marketIds)
         // A budget the picks already fill adds nothing.
-        assertEquals(listOf("sp3.5", "sp2.5"), Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 2, maxBooksPerScan = 2), now).marketIds)
+        assertEquals(listOf("sp3.5"), Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 1, maxBooksPerScan = 1), now).marketIds)
+        // Off: the per-game picks only (the app before v0.19.0).
+        assertEquals(listOf("sp3.5"), Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 1, fillBudget = false), now).marketIds)
     }
 
     @Test
@@ -322,7 +323,7 @@ class PlannerPricingTest {
 
     @Test
     fun `a scan reads the per-game picks before the filler lines`() = kotlinx.coroutines.test.runTest {
-        val (novig, snaps, _) = thinSlate()
+        val (novig, snaps) = thinSlate()
         val reads = ArrayList<String>()
         val source = object : com.tjshea.vigilant.data.novig.NovigSource {
             override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(event)
@@ -338,9 +339,9 @@ class PlannerPricingTest {
             override val displayName = id
             override suspend fun odds(league: League, settings: ScanSettings) = snaps.single()
         }
-        Scanner(source, clock = { now }).scan(sharpOnly.copy(linesPerGame = 2), listOf(fair), emptySet(), {}, {})
-        assertEquals(listOf("sp3.5", "sp2.5"), reads.take(2).sorted().reversed())
-        assertEquals(setOf("sp20.5", "sp1.5", "sp4.5"), reads.drop(2).toSet())
+        Scanner(source, clock = { now }).scan(sharpOnly.copy(linesPerGame = 1), listOf(fair), emptySet(), {}, {})
+        assertEquals("sp3.5", reads.first())
+        assertEquals(setOf("sp20.5", "sp2.5", "sp1.5", "sp4.5"), reads.drop(1).toSet())
     }
 
     @Test
