@@ -1524,12 +1524,13 @@ class ScreenshotTest {
             settings = base.settings.copy(startsWithinHours = 24, daysAhead = 7),
             status = base.status.copy(scannedWindowHours = 12),
         )
-        shoot("1l_feed_window_widened") { FeedScreen(s, { scans++ }, {}, {}, { _, _ -> }) }
+        var scanned by androidx.compose.runtime.mutableStateOf(12)
+        shoot("1l_feed_window_widened") { FeedScreen(s.copy(status = s.status.copy(scannedWindowHours = scanned)), { scans++ }, {}, {}, { _, _ -> }) }
         compose.onNodeWithText("The last scan read games starting in the next 12 hours. Scan to add the rest of the next day.").assertIsDisplayed()
         compose.onAllNodesWithText("Scan").onFirst().performClick()
         assertEquals(1, scans)
         // The same window as the scan: nothing to say.
-        screen { FeedScreen(s.copy(status = s.status.copy(scannedWindowHours = 24)), {}, {}, {}, { _, _ -> }) }
+        scanned = 24
         compose.onAllNodesWithText("Scan to add the rest", substring = true).assertCountEquals(0)
     }
 }
