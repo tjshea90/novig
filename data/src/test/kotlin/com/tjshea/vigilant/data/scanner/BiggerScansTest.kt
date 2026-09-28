@@ -37,13 +37,42 @@ class BiggerScansTest {
     // ---- choices ---------------------------------------------------------------------------------
 
     @Test
-    fun `Novig prices per scan go up to 1,200`() {
+    fun `Novig prices per scan go up to 2,000, the live feed's watch, and no further`() {
         val choices = ScanSettings.MAX_BOOKS_CHOICES
-        assertTrue(choices.containsAll(listOf(500, 600, 700, 800, 900, 1000, 1100, 1200)))
-        assertEquals(1200, choices.max())
+        assertTrue(choices.containsAll(listOf(500, 600, 700, 800, 900, 1000, 1100, 1200, 1500, 2000)))
+        // Tj, 2026-09-28: "If I can have no limit on the prices safely, then make that option": not safely (RESEARCH.md §31).
+        assertEquals(2000, choices.max())
+        assertTrue(choices.max() <= com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS)
         assertEquals(choices.sorted(), choices)
-        // More props per game, so a bigger budget has lines to spend on.
-        assertTrue(ScanSettings.PROPS_PER_GAME_CHOICES.containsAll(listOf(16, 24)))
+        // More lines and props per game ("consider if I can safely raise the max alternate lines and player props per game").
+        assertTrue(ScanSettings.PROPS_PER_GAME_CHOICES.containsAll(listOf(16, 24, 32, 48)))
+        assertTrue(ScanSettings.LINES_PER_GAME_CHOICES.containsAll(listOf(5, 8, 10)))
+        assertEquals(192, ScanSettings.BOOK_PROP_CREDIT_CHOICES.max())
+    }
+
+    /**
+     * A long scan (a big budget on public routes) must not show bets already on their way out: once it has run past the time
+     * a line's other-book odds (read as it began) could stay listed 2 minutes, the line is left for the next scan.
+     */
+    @Test
+    fun `a scan running long leaves lines whose odds would be too old, and says how many`() = runTest {
+        val board = Board(40, every = 0L) // 40 games, all starting at START
+        now = Fixtures.START_MS - 30 * 60_000L // half an hour off: 5 minutes' odds, so reads stop 3 minutes in
+        val novig = Novig(board, stepMs = 60_000L) // each batch of 8 takes a minute
+        val report = Scanner(novig, clock = { now }).scan(settings.copy(maxBooksPerScan = 1200), listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(listOf(8, 8, 8, 8), novig.calls.map { it.size }) // batches at 0, 1, 2 and 3 minutes; none at 4
+        assertEquals(8, report.booksTooLate)
+        assertEquals(8, report.timing!!.leftTooLate)
+    }
+
+    @Test
+    fun `the same scan on games a day off reads them all (their odds last 10 minutes)`() = runTest {
+        val board = Board(40, every = 0L)
+        now = Fixtures.START_MS - 86_400_000L
+        val novig = Novig(board, stepMs = 60_000L)
+        val report = Scanner(novig, clock = { now }).scan(settings.copy(maxBooksPerScan = 1200), listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(40, novig.calls.sumOf { it.size })
+        assertEquals(0, report.booksTooLate)
     }
 
     @Test
@@ -77,10 +106,10 @@ class BiggerScansTest {
      * [n] MLB games, game i starting i hours after the first (MLB's 6-hour matching window keeps
      * each game's candidates to its neighbours, so 1,300 games match in a blink).
      */
-    private inner class Board(n: Int) {
-        val events = (0 until n).map { i -> NovigEvent("e$i", "BASEBALL", "MLB", "OPEN_PREGAME", "Away $i @ Home $i", Fixtures.START_MS + i * 3_600_000L) }
+    private inner class Board(n: Int, every: Long = 3_600_000L) {
+        val events = (0 until n).map { i -> NovigEvent("e$i", "BASEBALL", "MLB", "OPEN_PREGAME", "Away $i @ Home $i", Fixtures.START_MS + i * every) }
         val markets = (0 until n).map { i ->
-            NovigMarket("m$i", "e$i", "MONEY", "OPEN", "ML", Fixtures.START_MS + i * 3_600_000L, MarketFee.GAME, listOf(NovigOutcome("a$i", "Away $i", "TBD"), NovigOutcome("h$i", "Home $i", "TBD")))
+            NovigMarket("m$i", "e$i", "MONEY", "OPEN", "ML", Fixtures.START_MS + i * every, MarketFee.GAME, listOf(NovigOutcome("a$i", "Away $i", "TBD"), NovigOutcome("h$i", "Home $i", "TBD")))
         }
     }
 
