@@ -233,10 +233,17 @@ class AppContainer(app: Application) {
         found
     }
 
-    /** Book reads go through the connected key's own rate limit (or the public routes when null). */
+    /**
+     * Book reads go through the connected key's own rate limit (or the public routes when null), and a
+     * scan's whole plan through the key's websocket ([NovigStream]: opened by a scan, closed two minutes
+     * after the last one used it).
+     */
     @Synchronized
     fun useConnection(connection: NovigConnection?) {
-        novig.keyed = connection?.let(::readKeyClient)
+        val signer = connection?.let(::readKeyClient)
+        novig.stream?.close()
+        novig.keyed = signer
+        novig.stream = signer?.let { NovigStream(http, it, appScope) }
     }
 
     fun readKeyClient(connection: NovigConnection) =
