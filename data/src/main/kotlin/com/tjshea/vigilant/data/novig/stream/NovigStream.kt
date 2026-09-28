@@ -236,7 +236,7 @@ class NovigStream(
             val need = if (synchronized(this) { firstSent }) cost else capacity
             if (!haveTokens(need)) {
                 // Wait for enough, then look again: more markets may be wanted by then, and go in the same request.
-                waitFor(cost)
+                waitFor(need)
                 continue
             }
             val n = nonce.incrementAndGet()
@@ -244,6 +244,7 @@ class NovigStream(
                 if (socket == null) return
                 subscribed.addAll(add)
                 unanswered[n] = add
+                firstSent = true
             }
             send(buildJsonObject {
                 put("nonce", n)
