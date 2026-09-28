@@ -12,6 +12,13 @@ import kotlin.math.sqrt
  */
 object Devig {
 
+    /**
+     * Where the power and Shin bisections stop: the solved exponent (or insider share) to 1e-13,
+     * which moves no fair probability by more than about 1e-13. A scan devigs every book of every
+     * line it prices, so the steps past it were pure battery.
+     */
+    const val TOLERANCE = 1e-13
+
     fun devig(rawProbs: List<Double>, method: DevigMethod): List<Double> {
         require(rawProbs.isNotEmpty()) { "Need at least one outcome" }
         require(rawProbs.all { it > 0.0 && it < 1.0 }) { "Raw implied probabilities must be in (0,1): $rawProbs" }
@@ -69,7 +76,10 @@ object Devig {
             hiIterations++
         }
 
-        repeat(100) {
+        // Bisection halves the gap each step; past [TOLERANCE] the answer no longer moves in any
+        // digit that matters, so stop there (about 45 steps) rather than always running 100.
+        var steps = 0
+        while (hi - lo > TOLERANCE * hi && steps++ < 100) {
             val mid = (lo + hi) / 2.0
             if (sumAtK(mid) > 1.0) lo = mid else hi = mid
         }
@@ -105,7 +115,8 @@ object Devig {
 
         var lo = 0.0
         var hi = 1.0 - 1e-9
-        repeat(100) {
+        var steps = 0
+        while (hi - lo > TOLERANCE && steps++ < 100) {
             val mid = (lo + hi) / 2.0
             val sumAtMid = probsAtZ(mid).sum()
             if (sumAtMid > 1.0) lo = mid else hi = mid
