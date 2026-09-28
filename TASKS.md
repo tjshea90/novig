@@ -2408,3 +2408,17 @@ Nothing at or above 1.0% EV."
 - [x] K4 (DONE: RESEARCH.md §27.4; in the reply.) Answer "can the CNO scanner just copy CNO's website?" (what it already does, what copying more would
       cost/gain) in the reply and RESEARCH.md §27.
 - [x] K5 (DONE 2026-09-28 ~07:06Z: light tests (touched files + callers, screenshots 6b/5e/1 looked at, new UI tests for the fill switch and tennis chips, fix: live feed closed at once off screen + AutoScanTest pin); floor 677 tests, 0 failures, 9 live skipped, exit 0; release APK built locally, cert AB:22:… verified; ci.yml green on 4fca994; ship.sh green; release.yml run 36389431089 green; tag v0.19.0 has vigilant-v0.19.0.apk only; BUILDLOG recorded.) Light tests on everything touched, ckpt, ship, release, link.
+
+## "Way more than 7 games"; research Novig's API docs fully and use the API as they describe (Tj, 2026-09-28, after v0.19.0)
+
+> "Baseball is not over. Mlb still has games , college football has games. There are way more than 7 total games for
+> it to scan
+> Research novig API docs too. Make sure the app is taking full advantage of the API and using it efficiently and as
+> the docs describe"
+
+- [ ] M1 Re-check Novig's catalog properly (every league, status, page, date; public AND the parameters the app sends)
+      and find why a scan saw 7 games when Tj sees many more. Evidence, not assumption; fix whatever drops games.
+- [ ] M2 Read every page of docs.novig.com (llms.txt index + OpenAPI spec) and compare with every Novig call the app
+      makes (params, limits, paging, caching/ETag, throttles, signed vs public, websocket verbs/channels, errors).
+      Write the gaps into NOVIG_API.md and fix them, with tests.
+- [ ] M3 Light tests, ckpt, ship, release, link; answer Tj plainly (what was wrong in the last answer, if anything).
