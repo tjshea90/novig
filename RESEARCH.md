@@ -2500,6 +2500,27 @@ oversized briefing is trimmed…" (both failed before the fix).
 | Kobiton, Ansight, Bugsee, Dynatrace | Anthropic Directory | No: need real devices/emulators or paid services; this container has no emulator |
 | Devil's Advocate, Graph of Thought (already connected MCP servers) | Tj's claude.ai connectors | Harmless (their tools load only on demand), little value for this repo; keep or disconnect as Tj likes |
 
+#### 33.4.1 The Kotlin language server, tested in this container (2026-09-28 ~22:20-22:50Z)
+- The official plugin (`kotlin-lsp@claude-plugins-official`) only names the command `kotlin-lsp --stdio`; the server is
+  JetBrains' Kotlin LSP (github.com/Kotlin/kotlin-lsp, "Alpha", partly closed-source). Build 263.4702.0 ("2026.3 EAP",
+  2026-09-08): 368 MB tarball from download.jetbrains.com (5 s here), 1.2 GB unpacked, bundles Java 25. `license status`
+  says "eap (Valid) … valid through 2026-10-08" and "This build does not require a license", but the server also ships
+  `license login/activate/trial`, so later builds may need a JetBrains license.
+- Real repo: the Gradle import fails on the Android module ("Querying the mapped value of property(…) before task
+  ':app:generateDebugBuildConfig' has completed"; its Android Gradle Plugin support is experimental). With the import
+  failed it reports nothing, not even a type error injected into `engine` (0 diagnostics). Cold import with an empty Gradle
+  cache ~2 min (~930 MB of dependencies); the server uses ~1.7 GB RAM plus a ~1.5 GB Gradle daemon.
+- Scratch copy with `:app` left out of `settings.gradle.kts`: import ~46 s, usable ~5 min after start (indexing on 4
+  cores). Then it works: an injected `val x: Int = "…"` came back as "Initializer type mismatch: expected 'Int', actual
+  'String'" on the right line in both `engine` and `data`, clean files had no errors, and go-to-definition went from
+  `data` to `engine/Devig.kt`.
+- Not now, because a cloud session can't switch the plugin on from the repo (33.3), the Android module (the whole UI)
+  stays out, and the free EAP build expires monthly. Untested route if it's ever worth it: the environment variable
+  `CLAUDE_CODE_PLUGIN_DIRS` pointing at a plugin folder in the repo, the setup script installing the server, and a
+  settings.gradle.kts switch that leaves `:app` out only for the language server. Revisit when its Android import stops
+  being experimental. Probe script: a ~150-line stdio JSON-RPC client (initialize, wait for import, didOpen/didChange,
+  `textDocument/diagnostic`, `textDocument/definition`), not kept in the repo.
+
 ### 33.5 What Tj needs to do
 - Nothing is required. The briefing fix is pushed (ckpt 605), and the environment's setup script already exists (S3).
 - Two opt-in choices, each one reply away: (1) "run the prompt audit": `/claude-api prompt-audit` over CLAUDE.md, BRIEF.md
