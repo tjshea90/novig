@@ -180,8 +180,9 @@ class NovigStreamTest {
         val stream = stream()
         stream.watch(plan)
         until { stream.state.value is StreamState.Failed }
-        assertTrue((stream.state.value as StreamState.Failed).message.contains("VPN"))
-        assertTrue(stream.problemSince(0)!!.contains("VPN"))
+        // Novig's own code, read as what it is: a verdict on the network's address (Tj, 2026-09-28: "I don't" have a VPN).
+        assertTrue((stream.state.value as StreamState.Failed).message.contains("ANONYMIZED_NETWORK"))
+        assertTrue(stream.problemSince(0)!!.contains("Test key"))
         assertNull(stream.problemSince(Long.MAX_VALUE)) // a scan that started after it isn't told
         // The next scan doesn't knock again straight away.
         stream.watch(plan)

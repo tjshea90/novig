@@ -394,12 +394,18 @@ class NovigStream(
             when (response?.code) {
                 401 -> "Novig refused the key for its live feed (401)."
                 403 -> "This key can't open Novig's live feed (403)."
-                451 -> "Novig's location screen refused it (451): Settings › Novig API › Test key says why."
+                // Novig's code says whether it judged the network's address or the phone's location check.
+                451 -> com.tjshea.vigilant.data.novig.signing.NovigApiException(451, refusalCode(response), null).brief
                 423 -> "Novig says the account is locked (423)."
                 else -> "Novig's live feed dropped (${t.message ?: t.javaClass.simpleName})."
             },
         )
     }
+
+    /** The `code` in a refused upgrade's JSON body, if it has one. */
+    private fun refusalCode(response: Response?): String? = runCatching {
+        (json.parseToJsonElement(response?.body?.string().orEmpty()) as? JsonObject)?.get("code")?.jsonPrimitive?.content
+    }.getOrNull()
 
     private fun fail(message: String) {
         synchronized(this) {
