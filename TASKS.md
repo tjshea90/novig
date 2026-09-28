@@ -2565,7 +2565,7 @@ Nothing at or above 1.0% EV."
       `cnoCardsOpenButtonSaysItsOpening`, `aCnoBetsSlipStakeIsItsKellyStake`, 8g png looked at.) "just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in the
       cno scanner in full screen (it already works in the widget)". The +EV card's one-tap `OpenBetButton` on every
       CNO tab card, same link path as the widget (TapLink / NovigBetFinder, stake), test + screenshot.
-- [ ] U3 Ship and send the link.
+- [x] U3 (DONE: v0.19.5 (40): ship.sh 752 tests/0 failures, CI green on 22e5276, release.yml published vigilant-v0.19.5.apk, BUILDLOG recorded.) Ship and send the link.
 
 ## "Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited … make sure the app doesn't just scan continuously" (Tj, 2026-09-28 ~20:2xZ, on v0.19.5)
 
