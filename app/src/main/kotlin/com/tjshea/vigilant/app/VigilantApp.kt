@@ -246,8 +246,8 @@ class AppContainer(app: Application) {
         novig.stream = signer?.let { NovigStream(http, it, appScope) }
     }
 
-    fun readKeyClient(connection: NovigConnection) =
-        NovigSignedClient(http, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
+    fun readKeyClient(connection: NovigConnection, client: OkHttpClient = http) =
+        NovigSignedClient(client, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
     private val kalshi = KalshiClient(http, json, usage = usage)

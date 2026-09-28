@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
+import com.tjshea.vigilant.data.novig.signing.NovigKeyTest
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
@@ -626,17 +627,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val conn = _state.value.novig.connection ?: return
         viewModelScope.launch {
             _state.update { it.copy(novig = it.novig.copy(busy = true, error = null, message = "Testing…")) }
-            val result = runCatching { withContext(Dispatchers.IO) { c.readKeyClient(conn).echo() } }
-            _state.update {
-                it.copy(
-                    novig = it.novig.copy(
-                        busy = false,
-                        message = if (result.isSuccess) "Novig accepted the key (signature, clock and network all OK)." else null,
-                        error = result.exceptionOrNull()?.let { e -> (e as? NovigApiException)?.advice ?: e.message },
-                    ),
-                )
+            // Novig judges the internet address a request comes from: say which connection was used, whether a VPN is
+            // really up, and when Novig blamed the address, try the other connection (Tj, 2026-09-28: "The app is
+            // telling me I have a proxy or vpn when I test the novig key, but I don't").
+            val report = withContext(Dispatchers.IO) {
+                val nets = PhoneNetworks(getApplication())
+                val first = NovigKeyTest.Attempt(nets.current(), echo { c.readKeyClient(conn).echo() })
+                val other = if (!NovigKeyTest.worthOtherNetwork(first)) null else nets.onOther { name, network ->
+                    NovigKeyTest.Attempt(name, echo { c.readKeyClient(conn, PhoneNetworks.bound(c.http, network)).echo() })
+                }
+                NovigKeyTest.report(first, nets.vpnUp(), other)
             }
+            _state.update { it.copy(novig = it.novig.copy(busy = false, message = report.message, error = report.error)) }
         }
+    }
+
+    /** Runs one key check: null when Novig accepted it, else why not. */
+    private suspend fun echo(call: suspend () -> Unit): Throwable? = try {
+        call()
+        null
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        e
     }
 
     /** Forgets the key on this phone. It stays registered on Novig until revoked in Novig's profile. */
