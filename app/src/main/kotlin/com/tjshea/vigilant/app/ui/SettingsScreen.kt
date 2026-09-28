@@ -764,7 +764,8 @@ fun creditEstimate(s: ScanSettings, backup: Boolean = false): String {
 fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     if (s.bookPropCreditsPerScan <= 0) return "No credits are set aside for props, so none are bought."
     if (backup) return "Only games and prop types PropLine didn't price this scan, soonest first, never more than " +
-        "${s.bookPropCreditsPerScan} credits a scan (one per prop type); re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}."
+        "${s.bookPropCreditsPerScan} credits a scan (one per prop type); re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}. " +
+        creditWorstCase(s.bookPropCreditsPerScan)
     val perGame = if (s.bookPropSet == BookPropSet.CORE) 4 else null
     val games = perGame?.let { s.bookPropCreditsPerScan / it }
     val reach = if (games != null) {
@@ -774,8 +775,16 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
     }
     return "Props cost $reach, soonest games first, never more than ${s.bookPropCreditsPerScan} credits a scan. " +
         "A game's props are re-used for ${minutesLabel((s.bookPropReuseMs / 60_000L).toInt())}, so scanning again sooner costs nothing for it " +
-        "(never longer: older odds aren't compared)."
+        "(never longer: older odds aren't compared). " + creditWorstCase(s.bookPropCreditsPerScan)
 }
+
+/**
+ * How far a month's credits go if every scan spends the most it may on props (Tj, 2026-09-28: "Can I raise the most credits
+ * per scan on props safely?"): safe as far as The Odds API plan allows; past it props come from PropLine, Pinnacle and Kalshi.
+ */
+fun creditWorstCase(perScan: Int): String =
+    "At most $perScan a scan: The Odds API's free 500 credits a month last at least ${500 / perScan} scans, " +
+        "a 20,000-credit plan at least ${String.format(java.util.Locale.US, "%,d", 20_000 / perScan)}. When they run out, props still come from PropLine, Pinnacle and Kalshi."
 
 fun maxOddsLabel(american: Int): String = if (american <= 0) "Any" else "+$american"
 
@@ -788,8 +797,9 @@ fun scanTime(books: Int): String =
  * §11.1), and what the limit decides.
  */
 fun scanSizeHint(books: Int): String {
-    return "$books is ${scanTime(books)} on Novig's public prices; with a Novig key connected, the whole scan arrives by live feed " +
-        "about 8 seconds in. Results appear as " +
+    return "$books is ${scanTime(books)} on Novig's public prices; with a Novig key connected, the whole scan (up to 2,000, what its " +
+        "live feed watches at once) arrives by live feed about 8 seconds in. A scan that runs long leaves lines whose other books' odds " +
+        "would already be too old for the next scan. Results appear as " +
         "they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and " +
         "the soonest games come first. Only lines another book also prices are read, so a scan can finish below the limit."
 }
