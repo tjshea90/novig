@@ -89,6 +89,32 @@ assert d["hookSpecificOutput"]["additionalContext"].strip()
 PY
 check $? "resume.sh emits one parseable SessionStart object"
 
+# Claude Code caps a hook's additionalContext at 10,000 characters. Anything
+# longer is saved to a file and Claude sees only a 2,000-character preview,
+# which cut off CHECKPOINT.md and TASKS.md entirely once TASKS.md grew past
+# 200 KB (2026-09-28). The real CHECKPOINT/TASKS/INBOX are in the fixture, so
+# this fails the day the briefing outgrows the cap again.
+python3 - "$TMP/brief.json" <<'PY' >/dev/null 2>&1
+import json,sys
+ctx=json.load(open(sys.argv[1]))["hookSpecificOutput"]["additionalContext"]
+assert len(ctx) < 10000, len(ctx)
+assert "Do this next" in ctx, "CHECKPOINT.md's next step is missing"
+assert "open item" in ctx, "TASKS.md's open items are missing"
+PY
+check $? "the briefing fits Claude Code's 10,000-character hook cap with CHECKPOINT's next step and TASKS' open items"
+
+# However big CHECKPOINT.md gets, the JSON path trims rather than overflowing.
+BIG="$TMP/big"; cp -r "$FX" "$BIG"
+python3 -c 'print("# CHECKPOINT\n\n## Do this next\n" + "filler line\n" * 4000)' > "$BIG/CHECKPOINT.md"
+( cd "$BIG" && bash tools/resume.sh ) >"$TMP/big.json" 2>/dev/null
+python3 - "$TMP/big.json" <<'PY' >/dev/null 2>&1
+import json,sys
+ctx=json.load(open(sys.argv[1]))["hookSpecificOutput"]["additionalContext"]
+assert len(ctx) < 10000, len(ctx)
+assert "resume.sh --text" in ctx, "no pointer to the full briefing"
+PY
+check $? "an oversized briefing is trimmed under the cap, with a pointer to the full text"
+
 ( cd "$FX" && bash tools/resume.sh --text ) >"$TMP/brief.txt" 2>/dev/null
 if head -c 1 "$TMP/brief.txt" | grep -q '{'; then
   bad "resume.sh --text still wrapped the briefing in JSON"
