@@ -77,6 +77,8 @@ data class BookBatch(
     val keyProblem: String? = null,
     /** Books the key's websocket already held current: served with no request (counted in [fetched] too). */
     val viaPush: Int = 0,
+    /** Requests Novig refused (a 429, or its edge's 403), retried or not: each pauses the reads and slows them. */
+    val refused: Int = 0,
 )
 
 class NovigHttpException(val code: Int, message: String, val retryAfterSeconds: Int? = null) : IOException(message)
