@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.scanner
 
 import com.tjshea.vigilant.data.cno.CnoFilters
+import com.tjshea.vigilant.data.novig.NovigLinks
+import com.tjshea.vigilant.data.novig.SlipStake
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.FairSettings
@@ -81,6 +83,13 @@ data class ScanSettings(
     val daysAhead: Int = 7,
     val bankroll: Double = 1000.0,
     val kellyMultiplier: Double = 0.25,
+    /**
+     * What Novig's bet slip opens with when a bet is tapped ([NovigLinks]; Tj, 2026-09-28): nothing (Novig's own
+     * default), $1, the bet's Kelly stake, or [slipCustomStake].
+     */
+    val slipStake: SlipStake = SlipStake.OFF,
+    /** The dollars "My amount" ([SlipStake.CUSTOM]) fills in. */
+    val slipCustomStake: Double = 5.0,
     /**
      * How long a feed's last answer is kept after a failed call, only to order reads: it never prices
      * past [Freshness.MAX_QUOTE_AGE_MS] (RESEARCH.md §24).
@@ -288,6 +297,9 @@ data class ScanSettings(
         }
         return s
     }
+
+    /** The dollars a bet's Novig slip opens with, for a bet whose Kelly stake is [kelly]; null = none. */
+    fun slipStakeFor(kelly: Double?): Double? = NovigLinks.stake(slipStake, slipCustomStake, kelly)
 
     /** CrazyNinjaOdds' list is read (both scanners, or CNO only). */
     val cnoOn: Boolean get() = scanner != ScannerMode.VIGILANT
