@@ -450,7 +450,11 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        (application as VigilantApp).container.onScreen = false
+        val container = (application as VigilantApp).container
+        container.onScreen = false
+        // Novig's live feed only while a scan or Tj is using it: off screen with no scan, it's closed now
+        // rather than pushing prices to a phone in a pocket for two more minutes.
+        if (!container.runner.running) container.novig.stream?.close()
         super.onStop()
     }
 
