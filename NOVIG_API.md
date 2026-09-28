@@ -343,6 +343,22 @@ edge refusal is a **`403` with an HTML body** (no `code`) that never reaches Nov
 servers. Treat an HTML 403 as "slow down", not "bad key". `423` means locked,
 self-excluded, or trading halted, and it doesn't clear on its own.
 
+### 451 codes (docs.novig.com/api/errors, read 2026-09-28)
+
+| `code` | What Novig judged | What helps |
+| --- | --- | --- |
+| `ANONYMIZED_NETWORK` | The request's **internet address** is on its VPN / proxy / Tor list ("A data-center address is fine") | Another connection (Wi-Fi ↔ mobile data); Novig support to review the address |
+| `RESTRICTED_NETWORK_REGION` | The request's **address** is in a restricted state | Another connection |
+| `GEOLOCATION_NOT_FOUND` / `_FAILED` / `INVALID_GEOLOCATION_REGION` | The key holder's **device** location check | Open the Novig app |
+| `RESTRICTED_GEOLOCATION_REGION` | The last device check is in a restricted state | Be in an allowed state |
+| `GEOLOCATION_EXPIRED` | Placements only (no check in 3 days); "A read admits a stale geolocation" | Open the Novig app |
+
+`503 GEOLOCATION_SCREENING_UNAVAILABLE`: the screen itself is down. **Until v0.19.3 Vigilant told Tj "Turn the VPN off"
+for `ANONYMIZED_NETWORK` though he had none** (2026-09-28): it's a verdict on an address, and shared Wi-Fi/carrier
+addresses get listed. Test key now names the connection used, checks the phone for a real VPN (`TRANSPORT_VPN`), and
+tries the other connection (`NovigKeyTest`, `app/PhoneNetworks`). `api.novig.com` has no IPv6 (A records only).
+A refused key sends every scan to the public routes for 10 minutes at a time (much slower).
+
 ## 11.1 How Vigilant uses the signed API
 
 **v0.19.3 (current):** the key's REST reads run 10 at a time in 30-price batches through an OkHttp client that allows
