@@ -317,6 +317,13 @@ unless Tj asks).
   `data/scanner/Agreement` (3+ books agree, worst case). Also after a Scan left running off screen (`ScanService`).
   Faster scans: `data/scanner/FairMemo` (fair lines once per plan), end-of-scan re-read of early edges
   (`Scanner.REREAD_AFTER_MS`), up to 1,200 prices a scan; Vigilant's odds cap +120/+150/+200/+300.
+- **Novig key's websocket, full budget, tennis (v0.19.0+; RESEARCH.md §27):** keyed scans hand the whole plan to
+  `data/novig/stream/NovigStream` (`PushedBooks`; `NovigPublicClient.stream`/`watch`/`pushed`; `Scanner.BookPump`):
+  one market subscribe once the `stream` bucket is full (~8 s), pushed books taken with no request, REST meanwhile,
+  idle close 2 min, `ScanReport.booksViaPush` (Settings › Novig API); `ScanSettings.fillBudget` (`Planner.fill`,
+  `PlannedMarket.spare`: every other quoted line up to the budget, read after the picks); tennis leagues ATP/WTA
+  (`League.tennis`/`oddsApiListed`, Kalshi `…MATCH` series, Pinnacle sport 2 incl. 1st set, `NovigText` round suffixes,
+  `FIRST_SET_MONEYLINE`/`PLAYER_GAMES_WON`), `VIGILANT_LIVE=1 ... --tests '*LiveTennisTest'`.
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
