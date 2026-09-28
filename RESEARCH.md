@@ -2287,7 +2287,9 @@ pages, vs 4,004 at 3 days; 0.9 s either way) and "use the whole budget", so ever
    are one (`RateGate.SAME_BURST_MS`; `RateGateTest`, `NovigPublicClientTest` fail before).
 3. **Kalshi's props held back game lines.** Kalshi now reads every league's game-line series first (29 of 57, ~15 s)
    and its props after, re-using what it read (nothing asked twice); a league's game-line bets show once its Kalshi
-   lines are in (`ReferenceSource.linesFirst`, `SteadyFeedTest`). MLB's lines were ready at ~21 s, now ~9 s.
+   lines are in (`ReferenceSource.linesFirst`, `SteadyFeedTest`). Measured live (`LiveSourceTimingTest`, ~15:25Z):
+   game lines in at NFL 1.1 s, NCAAF 4.6, MLB 8.1, WNBA 11.1, ATP 12.1, WTA 13.1 (before: NFL 8, MLB 21, WTA 28);
+   all of Kalshi at 27 s, as before.
 
 **Checked and left:** `GET /v3/limits` matches Novig's OpenAPI spec exactly (`read {capacity, refillPerSec}`, 1 token
 per book read, no batch book route: the websocket is the only bulk path); pacing by it stays. The board is not cached

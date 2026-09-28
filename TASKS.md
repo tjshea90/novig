@@ -2464,4 +2464,6 @@ Nothing at or above 1.0% EV."
         API. Tests: ScanTimingTest (text + a timed scan), ScreenshotTest `novigKeySaysWhereTheLastScansTimeWent`,
         6b png looked at. The feed's own line left as is.) Where scan time goes, in Settings › Novig API and the scan's done line: board, fair odds, Novig prices
         (count, seconds, per second; by key / live feed / public), first bet shown, the key's limits.
-  - [ ] R2e Docs (RESEARCH §29, NOVIG_API), ship v0.19.3 (38), link.
+  - [ ] R2e (docs done: RESEARCH §29, NOVIG_API §11.1, CLAUDE.md surface; Kalshi quotes re-used from `lines` stamped
+        with their read time (ExchangeClientsTest); full floor 709 tests, 0 failures; live Kalshi lines-first: all
+        leagues' lines by 13 s.) Docs (RESEARCH §29, NOVIG_API), ship v0.19.3 (38), link.
