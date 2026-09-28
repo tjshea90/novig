@@ -178,6 +178,39 @@ class ScreenshotTest {
         assert(scans == 1) { "Scan now should start exactly one scan, got $scans" }
     }
 
+    /**
+     * Tj, 2026-09-28: "On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each
+     * bet to Open the bet in novig, just as the widget does". And "automatically enter 1 dollar … the kelly value … or an
+     * amount I can type into the settings".
+     */
+    @Test fun everyBetHasAOneTapOpenInNovigButtonWithTheChosenStake() {
+        val opened = ArrayList<String?>()
+        var settings by androidx.compose.runtime.mutableStateOf(SampleScan.settings)
+        screen {
+            CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalOpenNovig provides { link -> opened += link }) {
+                FeedScreen(SampleScan.state().copy(settings = settings), {}, {}, {}, { _, _ -> })
+            }
+        }
+        val first = SampleScan.state().feed.first { it.quote != null && it.fairProbability != null }
+        compose.onAllNodesWithTag("openBet").onFirst().assertIsDisplayed()
+        compose.onAllNodesWithTag("openBet").onFirst().performClick()
+        assertEquals("novigapp://events/${first.outcome.outcomeId}", opened.last())
+        // $1 in the slip.
+        settings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR)
+        compose.onAllNodesWithText("Open in Novig · $1").onFirst().assertIsDisplayed()
+        compose.onAllNodesWithTag("openBet").onFirst().performClick()
+        assertEquals("novigapp://events/${first.outcome.outcomeId}/novig/1", opened.last())
+        // Its Kelly stake.
+        settings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY)
+        compose.onAllNodesWithTag("openBet").onFirst().performClick()
+        val kelly = com.tjshea.vigilant.data.novig.NovigLinks.amountText(maxOf(1.0, Math.round(first.suggestedStake!! * 100) / 100.0))
+        assertEquals("novigapp://events/${first.outcome.outcomeId}/novig/$kelly", opened.last())
+    }
+
+    @Test fun feedCardsWithTheOpenInNovigButton() = shoot("1j_feed_open_buttons") {
+        FeedScreen(SampleScan.state().copy(settings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR)), {}, {}, {}, { _, _ -> })
+    }
+
     @Test fun whileScanningTheButtonIsBusyAndProgressShows() {
         var scans = 0
         screen { FeedScreen(SampleScan.scanning(), { scans++ }, {}, {}, { _, _ -> }) }

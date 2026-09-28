@@ -190,6 +190,18 @@ class AutoScanTest {
         assertEquals(MiniWindow.NOVIG_PACKAGE, EvAlerts.intent(context, alert(link = null)).`package`)
     }
 
+    /** Tj, 2026-09-28: "automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into the settings". */
+    @Test
+    fun `an alert's bet slip opens with the stake Settings asks for`() {
+        installNovig()
+        assertEquals(Uri.parse("novigapp://events/o1/novig/1"), EvAlerts.intent(context, alert().copy(stake = 1.0)).data)
+        assertEquals(Uri.parse("novigapp://events/o1/cno/12.27"), EvAlerts.intent(context, alert(link = "novigapp://events/o1/cno").copy(stake = 12.27)).data)
+        // The stake comes from Settings, with each bet's Kelly stake.
+        val s = com.tjshea.vigilant.data.scanner.ScanSettings(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY)
+        assertEquals(8.5, s.slipStakeFor(8.5)!!, 0.0)
+        assertEquals(null, com.tjshea.vigilant.data.scanner.ScanSettings().slipStakeFor(8.5))
+    }
+
     @Test
     fun `alerts post as high-importance notifications that open the bet, once notifications are allowed`() {
         installNovig()
