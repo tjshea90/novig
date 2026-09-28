@@ -90,7 +90,7 @@ class ScanTimingTest {
     fun `a scan records when the board, fair odds, prices and first bet came, and Novig's refusals`() = runTest {
         val settings = ScanSettings(leagues = setOf("NFL"), families = setOf(MarketFamily.MONEYLINE), fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, minEvPercent = 0.01, sharpBooks = emptySet(), outlierGuard = false)
         val report = Scanner(novig, clock = { now }, elapsed = { ms }).scan(settings, listOf(fair), emptySet(), {}, {})
-        val t = assertNotNull(report.timing).let { report.timing!! }
+        val t = report.timing!!
         assertEquals(600L, t.boardAtMs)
         assertEquals(t.totalMs, ms)
         assertNotNull(t.novigFromMs)
