@@ -122,6 +122,15 @@ class BiggerScansTest {
 
     private val settings = ScanSettings(leagues = setOf("MLB"), fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, minEvPercent = 0.01, daysAhead = 60)
 
+    fun probeScan(games: Int, cap: Int) = kotlinx.coroutines.runBlocking {
+        val board = Board(games)
+        val novig = Novig(board)
+        var partials = 0
+        val t0 = System.nanoTime()
+        Scanner(novig, clock = { now }).scan(settings.copy(maxBooksPerScan = cap), listOf(Fair(board)), onProgress = {}, onPartial = { partials++ })
+        println("PROBE games=$games cap=$cap: ${(System.nanoTime() - t0) / 1_000_000} ms, ${novig.calls.size} batches, $partials partials")
+    }
+
     @Test
     fun `a scan set to 1,200 reads 1,200 prices, never more`() = runTest {
         val board = Board(1300)
