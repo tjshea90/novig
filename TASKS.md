@@ -2546,3 +2546,14 @@ Nothing at or above 1.0% EV."
       counted not timed); ship.sh 735 tests/0 failures, CI green on 23c4b10, release.yml published
       vigilant-v0.19.4.apk, BUILDLOG recorded.) Ship and send the link.
 
+
+## "Make an option in the app to pause all scanning … put these same buttons in the cno scanner in full screen" (Tj, 2026-09-28 ~19:36Z, on v0.19.4)
+
+- [ ] U1 "Make an option in the app to pause all scanning." One switch that stops every scan the app runs on its own
+      or keeps running: CNO's feed (tab, widget, pip, keepBooksFresh/keepLinksFresh), background auto-scan
+      (alarm + AutoScanService), widget rescans, a Scan left running; manual Scan disabled or asks to resume while
+      paused. Shown where Tj will see it (+EV/CNO tabs, widget, Settings); survives restarts; test.
+- [ ] U2 "just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in the
+      cno scanner in full screen (it already works in the widget)". The +EV card's one-tap `OpenBetButton` on every
+      CNO tab card, same link path as the widget (TapLink / NovigBetFinder, stake), test + screenshot.
+- [ ] U3 Ship and send the link.
