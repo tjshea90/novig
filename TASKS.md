@@ -2518,7 +2518,11 @@ Nothing at or above 1.0% EV."
       an option to automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into the
       settings." Research whether Novig's app/links accept a stake (deep link params, the web bet slip), and build the
       option if it can.
-- [ ] T5 "When pinnwire api usage runs out, automatically switch to pinnapi until the usage resets." Check what happens
+- [x] T5 (DONE: already built since v0.16.0 for PinnWire's daily limit (a 429 `window:day`, or the app's own count of
+      100/day): pinnapi answers and the pool rests PinnWire's key until its reset, then PinnWire goes first again, now
+      pinned by ExchangeClientsTest `a spent PinnWire key isn't asked again until its day resets…`. Gap fixed: any
+      other PinnWire failure (5xx, odd status, dropped connection) failed Pinnacle for the scan; now pinnapi answers
+      (ExchangeClientsTest `any other PinnWire failure falls to pinnapi…`, fails before).) "When pinnwire api usage runs out, automatically switch to pinnapi until the usage resets." Check what happens
       today when PinnWire's keys are spent (`PinnapiClient`, `KeyPool`), and make it switch to pinnapi and back.
 - [ ] T6 "On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each bet to
       Open the bet in novig, just as the widget does". A one-tap "Open in Novig" on each +EV card (the widget's exact
