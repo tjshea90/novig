@@ -308,6 +308,15 @@ unless Tj asks).
   forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
   `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
   page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog; bets over ±6% EV when bet are outliers, left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`)).
+- **Background auto-scan and +EV alerts (v0.18.0+, Vigilant only; RESEARCH.md §26):** `ScanSettings.autoScan`
+  (Off / CNO / CNO + Vigilant) every `autoScanMinutes` (5-40) with Vigilant closed: `app/AutoScanService` (specialUse
+  foreground service, ongoing note with Scan now/Stop), `AutoScanAlarm` (exact while idle), `AutoScanReceiver` (alarm,
+  boot, update), `app/AutoScan.kt` (`AutoScanner.cycle`: CNO list + best bets' books + `NovigLive.readNow`, then
+  `AppContainer.startVigilantScan`; `AlertPicks`), alerts `ScanSettings.alertMinEv` (Off/2/3/4%) via `app/EvAlerts`
+  (tap = `novigapp://events/<outcome>`), `data/alerts/AlertLog` (`alerts.json`, one alert per bet),
+  `data/scanner/Agreement` (3+ books agree, worst case). Also after a Scan left running off screen (`ScanService`).
+  Faster scans: `data/scanner/FairMemo` (fair lines once per plan), end-of-scan re-read of early edges
+  (`Scanner.REREAD_AFTER_MS`), up to 1,200 prices a scan; Vigilant's odds cap +120/+150/+200/+300.
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs

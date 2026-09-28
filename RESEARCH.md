@@ -2100,3 +2100,55 @@ are never read, and props get Pinnacle's line instead of waiting on scarce Odds 
 - **Not verified live:** PropLine's demo key was at its daily cap all session, so the exact shape of BetMGM's
   `book_outcome_id` (market-option pair vs. option alone) is unknown; the link builder accepts either and falls back to
   the game page. First real scan with Tj's key settles it.
+
+## 26. Faster scans, background auto-scan and +EV alerts (2026-09-28 ~03:20–04:10Z, Tj: "make the scans better or faster or find more bets … auto scan either cno or both cno and vigilant every 5 10 20 30 or 40 minutes in the background … a push notification … open the exact bet in novig immediately")
+
+### 26.1 Where scan time went, and what changed (v0.18.0)
+
+- **Novig's public edge is the floor**: ~4–6 books/s (§5.1, `RateGate`), so 1,200 prices ≈ 4 min
+  public, ≈ 1.5 min with a key. Raising the pace was not tried: the measured limit (10/s drew 429s)
+  is per IP and a phone may share a carrier IP; a 429 costs more than it saves.
+- **The scan's own CPU was the surprise.** Every partial result (each 8 books) re-priced the whole
+  plan, re-devigging every line's books (power devig: bisection, ~200 `pow` per book). Measured on a
+  desktop JVM, a 1,200-market plan with 25 books a line: ~160 ms per partial. The book pump waits on
+  it, so on a phone (several times slower) a large scan spent about as long pricing as reading.
+  Now: `FairMemo` keeps each plan's fair lines (a plan is rebuilt whenever its fair odds change, so
+  nothing stale is re-used), `FairLine.booksUsed`/`usedUpdates` are computed once, and the power and
+  Shin bisections stop at 1e-13 (~45 steps, not 100): **3.4 ms per partial**.
+- **Long scans re-read their first edges.** With 1,200 prices the first +EV lines were read minutes
+  before the end. At the end, the feed's edges read over 60 s earlier are read again (≤40 books,
+  best EV first); an edge that vanished is gone from the final feed. `ScanReport.booksReread`.
+- **More room to find bets**: up to 1,200 prices a scan (was 400), and 16 or 24 props per game
+  (props are where exchange prices lag most, §15). Vigilant's odds cap is +120/+150/+200/+300 only
+  (Tj), migrated once (schema 6).
+
+### 26.2 Background auto-scan on Android 16 (Moto G)
+
+- **Why a persistent foreground service**: WorkManager's minimum period is 15 min (Tj wants 5).
+  Android freezes a backgrounded app's process within seconds, so only a foreground service keeps
+  the process and its network. `dataSync` foreground services stop after 6 h a day on Android 15+
+  (`onTimeout`), so `AutoScanService` is `specialUse` (a sideloaded app: no Play review applies),
+  alive only while auto-scan is on, with one low-importance notification (Scan now, Stop).
+- **Why exact alarms**: with the screen off the CPU suspends and coroutine `delay`s stop counting.
+  `setExactAndAllowWhileIdle` fires on time in Doze; `USE_EXACT_ALARM` (API 33+, granted at install;
+  `SCHEDULE_EXACT_ALARM` up to API 32) lets Vigilant set them, and an exact alarm also lets it start
+  the foreground service from the background if Android had stopped it. The next alarm is armed when
+  a cycle starts (its interval after the start), so a long or killed cycle can't break the schedule.
+- **Battery**: no wake lock between scans; the alarm's receiver holds a 60 s bridge lock until the
+  service holds the scan's own (≤20 min). A process with a foreground service keeps network in Doze.
+  Settings offers Android's "Unrestricted" prompt (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`) for OEM
+  battery savers. Restart after reboot and after an update (`BOOT_COMPLETED`, `MY_PACKAGE_REPLACED`;
+  both may start a `specialUse` foreground service).
+
+### 26.3 Which bets alert
+
+- Only what the lists would show (placed/✕ bets, "Starts within", every filter), at or over the
+  alert minimum (2/3/4%), **and several books agree**, in the green check's terms: 3+ books price
+  both sides and 3+ of them alone (worst-case devig) make Novig's price +EV. CNO bets: CNO's game
+  page (`CnoBooks.check`) at Novig's price now (`NovigLive.readNow`). Vigilant bets: the books behind
+  the fair line (`Agreement`), at a Novig price read ≤3 min ago. A single sharp book never alerts.
+- One alert per bet (`alerts.json`, keyed by Novig's outcome id when known, so the same bet from both
+  scanners alerts once), ≤5 per cycle, taken down after 20 min (the price has likely moved). Tap =
+  `novigapp://events/<outcome>` in Novig's app, as the widget's tap; Novig's site when the app isn't
+  installed. Live check (2026-09-28 ~04:00Z): CNO's list → game page → 14 of 14 books agreed on
+  Michigan State @ Wisconsin Over 44.5 at +108 (EV 3.2%), exact Novig link found.
