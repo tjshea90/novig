@@ -2170,10 +2170,22 @@ Novig's live catalog, read the same hour (`/v3/public/catalog/events`, next 4 da
 | MLS 2, NPB 3 | — | — | Removed from the app at Tj's request (2026-09-25) |
 
 So 9 real games in the window; "Series Winner" and futures listings aren't games. 7 of the 9 matched a
-fair-odds source (the other two most likely had no reference lines yet). The slate was simply thin at
-2 a.m. on a Monday between seasons, **and** each game was read shallowly: 2 lines per spread/total group
-and 8 props per game held the scan to ~220 markets (440 prices), whatever the per-scan budget (300–1,200),
-while Novig lists 50+ game lines and hundreds of props per game.
+fair-odds source (the other two most likely had no reference lines yet). ~~The slate was simply thin~~
+**Wrong: see §27.5.** The window was the problem: 55 college and 15 NFL games sat 4–6 days out, past
+"Days ahead: 3" (and past the 4-day bound this check itself used). Each game was also read shallowly:
+2 lines per spread/total group and 8 props per game held the scan to ~220 markets (440 prices), whatever
+the per-scan budget (300–1,200), while Novig lists 50+ game lines and hundreds of props per game.
+
+### 27.5 Correction (2026-09-28 ~07:15Z, Tj: "Baseball is not over … college football has games. There are way more than 7 total games")
+
+The live catalog read without a date bound lists **55 college games (Thu night–Sat) and 15 NFL Week 5 games
+(Sun–Mon)**, 4–6 days out. MLB really was down to its 4 Wild Card openers (the regular season ended Sunday; those
+games show FINAL). The cause was **"Days ahead: 3"** (the default): a Monday-morning scan ended Thursday morning.
+v0.19.1 makes a week the default (a saved 3 moves to 7 once), reads every event (one small request) so the feed says
+how many games start past the window ("55 more games on Novig start later than that"), and scans `DELAYED` games.
+Fair-odds requests don't grow with the window (one per league or sport); only Novig reads do, inside the per-scan
+budget, soonest first. With the key's live feed, a 1,200 budget costs about the same time as 300. The Novig docs
+review that came with it: NOVIG_API.md §13.
 
 ### 27.2 What the Novig key can do, from Novig's docs (re-read 2026-09-28)
 
