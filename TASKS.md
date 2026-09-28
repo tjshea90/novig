@@ -2542,5 +2542,7 @@ Nothing at or above 1.0% EV."
       `everyBetHasAOneTapOpenInNovigButtonWithTheChosenStake`, 1j png looked at.) "On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each bet to
       Open the bet in novig, just as the widget does". A one-tap "Open in Novig" on each +EV card (the widget's exact
       bet-slip link), test + screenshot.
-- [ ] T7 Ship and send the link.
+- [x] T7 (DONE: v0.19.4 (39): fixed a timing-flaky NovigPublicClientTest first (CI red on 43f033e, refusals now
+      counted not timed); ship.sh 735 tests/0 failures, CI green on 23c4b10, release.yml published
+      vigilant-v0.19.4.apk, BUILDLOG recorded.) Ship and send the link.
 
