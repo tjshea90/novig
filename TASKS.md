@@ -2470,7 +2470,14 @@ Nothing at or above 1.0% EV."
 
 ## "The app is telling me I have a proxy or vpn when I test the novig key, but I don't. Research online and reconsider the 5 minute stale odds cutoff … For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4 books" (Tj, 2026-09-28, on v0.19.2)
 
-- [ ] S1 "The app is telling me I have a proxy or vpn when I test the novig key, but I don't." Find exactly what Novig
+- [x] S1 (DONE: Novig's 451 ANONYMIZED_NETWORK is its screen's verdict on the request's internet address ("VPN, proxy,
+      or Tor exit"; docs.novig.com/api/errors), not the phone, and the app read it as "Turn the VPN off". Also
+      RESTRICTED_NETWORK_REGION was told "open the Novig app". Now: advice per documented code, with the code;
+      Test key says which connection it used (Wi-Fi / mobile data), whether a VPN is really up (TRANSPORT_VPN), and on a
+      network refusal tries the other connection and reports it (`NovigKeyTest`, `PhoneNetworks`, CHANGE_NETWORK_STATE);
+      scan and live-feed banners say the same in one line (`NovigApiException.brief`). And yes: a refused key sends every
+      scan to the public route (4-6/s) for 10 minutes at a time, the likeliest cause of "reading the API very slow".
+      api.novig.com is IPv4-only (no IPv6 angle). Tests: NovigKeyTestTest (5), PhoneNetworksTest (2), NovigStreamTest.) "The app is telling me I have a proxy or vpn when I test the novig key, but I don't." Find exactly what Novig
       answered and why the app calls it a VPN/proxy (which status/code, which message); check Novig's docs for what
       triggers it (ANONYMIZED_NETWORK, iCloud Private Relay / Private DNS / carrier NAT / IPv6, Novig app location
       check); fix the wording and anything that wrongly turns a refusal into "VPN". Also: does a refused key make every

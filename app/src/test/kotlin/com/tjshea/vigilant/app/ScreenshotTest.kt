@@ -204,7 +204,7 @@ class ScreenshotTest {
             com.tjshea.vigilant.app.ui.NovigKeySection(
                 NovigUi(
                     connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("3f2504e0-4f89-11d3-9a0c-0305e82c9a1b", "a", "t", false),
-                    message = "Novig accepted the key (signature, clock and network all OK).",
+                    message = "Novig accepted the key over Wi-Fi (signature, clock and network all OK).",
                 ),
                 { _, _ -> }, {}, {},
                 lastScan = timedScan,

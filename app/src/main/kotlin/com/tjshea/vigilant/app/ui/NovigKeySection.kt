@@ -58,8 +58,8 @@ fun NovigKeySection(
             "Scans open Novig's live feed with this key: about 8 seconds in, every line the scan prices (up to " +
                 "2,000) arrives at once and then updates itself, with no request per price. Until then, and for " +
                 "anything the feed doesn't cover, prices are read through the key's own rate limit (16 a second) " +
-                "instead of the public one your phone's network shares. If Novig refuses the key (VPN on, location " +
-                "check due), the scan falls back to public prices and says why.",
+                "instead of the public one your phone's network shares. If Novig refuses the key (its network screen " +
+                "flags the connection's address, or a location check is due), the scan falls back to public prices and says why.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 4.dp),
@@ -81,8 +81,9 @@ fun NovigKeySection(
         Status(novig)
         Text(
             "The read-only key can't place bets or move money. Its private half was generated in this " +
-                "phone's secure hardware and can't be copied off it. Novig refuses keyed requests over a VPN, " +
-                "and needs the Novig app opened every few days to confirm your location.",
+                "phone's secure hardware and can't be copied off it. Novig refuses keyed requests from addresses its " +
+                "screen lists as a VPN or proxy (now and then a Wi-Fi's or carrier's shared address: Test key tries your " +
+                "other connection), and needs the Novig app opened every few days to confirm your location.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),
