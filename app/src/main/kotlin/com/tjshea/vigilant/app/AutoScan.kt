@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Which bets are worth a push alert (Tj, 2026-09-28: "positive EV bets of 3% or higher and multiple
@@ -225,18 +226,24 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
      * exact bet-slip link first (Novig's catalog, else CNO's), and a bet both scanners list alerts once.
      * Returns how many went out.
      */
-    private suspend fun send(alerts: List<EvAlert>): Int {
-        if (alerts.isEmpty()) return 0
+    private suspend fun send(alerts: List<EvAlert>): Int = sending.withLock {
+        if (alerts.isEmpty()) return@withLock 0
         var fresh = c.alertLog.unseen(alerts)
-        if (fresh.isEmpty()) return 0
+        if (fresh.isEmpty()) return@withLock 0
         fresh = fresh.take(MAX_ALERTS * 2).map { a -> if (a.link != null || a.scanner != AlertPicks.SCANNER_CNO) a else withLink(a) }
         // Resolved links name Novig's outcome: the same bet from the other scanner drops out here.
         fresh = c.alertLog.unseen(fresh).take(MAX_ALERTS)
-        if (fresh.isEmpty()) return 0
+        if (fresh.isEmpty()) return@withLock 0
         val posted = EvAlerts.post(app, fresh)
         if (posted > 0) runCatching { c.alertLog.record(fresh) }
-        return posted
+        posted
     }
+
+    /**
+     * One [send] at a time: a background cycle waiting on Tj's own scan and that scan's end both
+     * send, and "not alerted yet" then "record it" must not interleave (the same bet twice).
+     */
+    private val sending = Mutex()
 
     private suspend fun withLink(a: EvAlert): EvAlert {
         val row = c.cno.state.value.snapshot?.rows?.firstOrNull { MiniWindow.cnoKey(it) == a.key } ?: return a

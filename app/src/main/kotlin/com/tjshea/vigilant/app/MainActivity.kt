@@ -105,10 +105,16 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.state.map { it.loaded to it.settings.autoScan }.distinctUntilChanged().collect { (loaded, mode) ->
                     if (!loaded) return@collect
+                    val prefs = getSharedPreferences("ui", MODE_PRIVATE)
                     if (mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) {
-                        if (!ScanService.canNotify(this@MainActivity)) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        // Once each time it's turned on, not every time Vigilant opens (Settings has a button after that).
+                        if (!ScanService.canNotify(this@MainActivity) && !prefs.getBoolean(ASKED_NOTIFICATIONS_AUTO, false)) {
+                            prefs.edit().putBoolean(ASKED_NOTIFICATIONS_AUTO, true).apply()
+                            askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
                         AutoScanService.start(this@MainActivity)
                     } else {
+                        prefs.edit().putBoolean(ASKED_NOTIFICATIONS_AUTO, false).apply()
                         AutoScanService.stop(this@MainActivity)
                     }
                 }
@@ -463,6 +469,7 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val ASKED_NOTIFICATIONS = "asked_notifications"
+        const val ASKED_NOTIFICATIONS_AUTO = "asked_notifications_auto"
     }
 }
 
