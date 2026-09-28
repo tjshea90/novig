@@ -61,7 +61,8 @@ data class ScanReport(
 
 /**
  * Runs a scan when (and only when) Tj asks for one: the Scan button or pull-to-refresh (his rule,
- * 2026-09-25). Nothing here runs on a timer. Per scan, all at once:
+ * 2026-09-25), or background auto-scan once he turns it on (2026-09-28). Nothing here runs on a
+ * timer of its own. Per scan, all at once:
  *
  *  1. Novig catalog (events + markets): re-used for [catalogTtlMs] (3 min) if the leagues and
  *     window haven't changed. New alternate lines appear slowly; prices move fast.

@@ -397,17 +397,32 @@ robolectric.org/configuring/.
   scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s rising to at most 6/s
   after clean runs, burst 10, 3 at a time, pause on Retry-After, halve and restart the ramp after
   a 429); with a key, books use the signed per-key route instead (14/s, under the documented
-  16/s). Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is the one
-  asked-for exception, above; it reads CNO only.)
+  16/s). Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is one
+  asked-for exception, above; it reads CNO only. Background auto-scan, below, is the other: off
+  by default, on only when Tj picks it.)
+- **Background auto-scan and +EV alerts, opt-in (Tj, 2026-09-28; v0.18.0, RESEARCH.md §26).**
+  Settings › Background auto-scan: Off (default) / CNO / CNO + Vigilant, every 5 / 10 / 20 / 30 /
+  40 min, with Vigilant closed. `AutoScanService` (foreground, `specialUse`: no daily cap like
+  `dataSync`'s 6 h) runs only while it's on, with one quiet notification (Scan now, Stop); each scan
+  is woken by an exact alarm (`USE_EXACT_ALARM`) and holds a wake lock only while it runs (≤20 min);
+  restarted after a reboot or an update. A cycle: CNO's list, Novig's price now and CNO's game page
+  for its best bets at or over the alert minimum (≤8), then with CNO + Vigilant a normal Vigilant
+  scan. Alerts (Off / 2 / 3 / 4%, 3% default): one push per new bet at or over the minimum that 3+
+  two-sided books agree on (CNO: `CnoBooks` CONFIRMED; Vigilant: `Agreement`, worst-case devig per
+  book), placed/removed bets and games outside "Starts within" never; tap = the bet slip in Novig
+  (`novigapp://events/<outcome>`); `alerts.json` keeps each bet to one alert, across scanners.
 - **A scan Tj starts runs to the end in the background, and streams (Tj, 2026-09-25 ~18:05Z;
   v0.10.0, RESEARCH.md §15).** The scan lives in the app-lifetime `ScanRunner`, never in a
   screen; `ScanService` (foreground service, `dataSync`) holds the process for exactly one scan,
-  with a progress notification and a 10-minute-capped partial wake lock, then stops itself; a
+  with a progress notification and a 20-minute-capped partial wake lock (10 until v0.18.0's
+  1,200-price scans), then stops itself; a
   "scan done" notification only when Vigilant isn't on screen. Novig books are read while the
   fair odds load (re-planned as each provider answers), most-promising first (open bets, last
   scan's +EV and near misses, then props/period lines, then main lines), and every 8 books the
-  feed updates. Mid-scan the feed offers only prices read this scan. Still manual-only: no
-  timers, no boot receiver, nothing when idle.
+  feed updates. Mid-scan the feed offers only prices read this scan. Without background
+  auto-scan: no timers, no boot receiver, nothing when idle. Since v0.18.0 a scan's fair lines are
+  devigged once per plan (`FairMemo`), not once per partial result, and the feed's edges read over a
+  minute before the scan ends are read again (≤40) so a long scan never offers minutes-old prices.
 - **API keys: plain JSON in app storage, several per provider, rotated by a usage ledger (Tj,
   2026-09-25 ~14:00Z; "don't worry about security, they are free keys").** `api_keys.json`
   (survives updates, in Android backup, export/import), moved once from the old Keystore store.
