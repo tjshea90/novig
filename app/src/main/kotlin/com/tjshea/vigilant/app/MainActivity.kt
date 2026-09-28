@@ -98,6 +98,22 @@ class MainActivity : ComponentActivity() {
             }
         }
         ContextCompat.registerReceiver(this, miniButtons, IntentFilter(MiniWindow.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
+        // Background auto-scan (Tj, 2026-09-28): its service runs while the setting is on. Started from
+        // here (Android lets a visible app start it), again each time Vigilant opens, in case Android
+        // stopped it; switching it off stops it. Alerts need notifications: asked when it's turned on.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.state.map { it.loaded to it.settings.autoScan }.distinctUntilChanged().collect { (loaded, mode) ->
+                    if (!loaded) return@collect
+                    if (mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) {
+                        if (!ScanService.canNotify(this@MainActivity)) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        AutoScanService.start(this@MainActivity)
+                    } else {
+                        AutoScanService.stop(this@MainActivity)
+                    }
+                }
+            }
+        }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 vm.state
