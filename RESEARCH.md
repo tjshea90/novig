@@ -2241,3 +2241,23 @@ wouldn't find more bets: CNO's list *is* its scan, it refreshes about once a min
 reading it harder only invites CNO's pauses (§20.2). What CNO can't give is what Vigilant's own scan adds:
 Novig's live books read directly (now pushed through the key), tennis and alternate lines CNO's filters
 skip, and fair lines from Pinnacle, Kalshi and PropLine. Keeping both ("Both" mode) is the best of each.
+
+## 28. Bets that showed mid-scan and then disappeared (2026-09-28 ~07:50–08:30Z, Tj: "The app found several positive EV bets while scanning but they quickly disappeared. Is this supposed to happen?")
+
+Every way a bet could leave the feed, from the code (v0.19.1):
+1. **Priced before the fair line was complete (the cause Tj saw; measured).** A scan reads Novig's books while the
+   fair-odds sources are still answering and published each batch priced from whoever had answered. When the next source
+   answered, the fair line moved. Live (`LiveFlickerTest`, Novig + Kalshi + Polymarket, 07:55Z): a Washington Mystics
+   moneyline showed 19 s in at +1.13% from Polymarket alone and left when Kalshi's odds moved the fair price
+   (0.4146 → 0.4068). With Pinnacle, PropLine and sportsbook props (per game, slowest) arriving at different times,
+   more of it.
+2. **The 5-minute rule (§24) counted from the feed's own "last seen".** A sportsbook price PropLine or The Odds API
+   last saw 4½ minutes ago was used, and the bet hid itself 30 seconds later, silently.
+3. **The end-of-scan re-read (§26)**: an early edge whose Novig price moved by the end is dropped. Intended.
+
+v0.19.2: (1) a partial result holds back a league's bets until every fair source for it has answered (its props until
+the props-only sources have: game lines don't wait for per-game props), `ScanResult.waitingFor`; (2) a scan prices only
+with quotes at most 3 minutes old (`Freshness.MIN_SHOWN_MS`), so every bet it shows stays for at least 2 minutes
+(Recheck and re-pricing keep the plain 5-minute rule for bets already shown); (3) bets hidden for old odds are counted on
+the feed ("2 bets hidden: the other books' odds behind them are over 5 minutes old. Scan for current odds."). Live after
+the fix (same test, 08:25Z): 10 shown mid-scan, 0 gone, 10 kept.
