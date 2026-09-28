@@ -356,6 +356,7 @@ class Scanner(
                     notModified += batch.notModified
                     fromCache += batch.fromCache
                     viaKey += batch.viaKey
+                    viaPush += batch.viaPush
                     failed += batch.failed
                     batch.lastError?.let { lastError = it }
                     if (keyProblem == null) keyProblem = batch.keyProblem
