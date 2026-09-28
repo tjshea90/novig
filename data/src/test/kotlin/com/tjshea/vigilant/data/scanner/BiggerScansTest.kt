@@ -60,7 +60,7 @@ class BiggerScansTest {
     }
 
     @Test
-    fun `a saved longer cap, or none, becomes +300 once; +300 and shorter stay`() {
+    fun `a saved longer cap, or none, becomes +300 once, and +300 or shorter stays`() {
         for (old in listOf(500, 1000, 2000, 0)) assertEquals("from $old", 300, ScanSettings(maxOdds = old, schema = 5).migrate().maxOdds)
         for (kept in listOf(120, 150, 200, 300)) assertEquals(kept, ScanSettings(maxOdds = kept, schema = 5).migrate().maxOdds)
         val upgraded = ScanSettings(maxOdds = 1000, schema = 5).migrate()
