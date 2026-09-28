@@ -304,6 +304,8 @@ fun CnoScreen(
                             modifier = Modifier.padding(horizontal = 12.dp).animateItem(),
                             onPlaced = { markPlaced(pick) },
                             onHide = { mark(pick, true) },
+                            onOpen = { onOpenInNovig(shown.row) },
+                            opening = opening == pick.row.key,
                         ) { selected = pick }
                     }
                     item(key = "credit") {
