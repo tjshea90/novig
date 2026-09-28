@@ -2378,26 +2378,26 @@ Screenshot (v0.18.0 +EV tab): "Scanned 24s ago", leagues NFL/NCAAF/MLB/WNBA/NHL�
 left, PropLine 893 left, Odds API (amber); Starts within 48h; "No +EV right now — 440 prices checked across 7 games.
 Nothing at or above 1.0% EV."
 
-- [ ] K1 Find why the scan covered only 7 games and write the answer down with evidence. FOUND (live catalog
+- [x] K1 (DONE: RESEARCH.md §27.1.) Find why the scan covered only 7 games and write the answer down with evidence. FOUND (live catalog
       2026-09-28 06:25Z, next 4 days): in the picked leagues Novig lists only 9 real games inside "Days ahead" (3):
       NFL 1 (MNF; TNF is Fri), MLB 4 (regular season over, Wild Card starts Tue), WNBA 4 (playoffs), NCAAF 0
       (next Thu/Fri); "Series Winner"/futures aren't games. 7 of 9 matched fair odds. Not picked: NHL (7 preseason).
       Not supported at all: tennis (ATP 12 + WTA 38 matches, 763 markets), MLS 2, NPB 3. And the per-game caps
       (2 lines per group, 8 props) held the scan to ~220 markets (440 prices) whatever the per-scan budget.
       Write it into RESEARCH.md §27.
-- [ ] K2 Use the Novig key fully. Verified in docs 2026-09-28: no batch book route; the key's extras are the signed
+- [x] K2 Use the Novig key fully. Verified in docs 2026-09-28: no batch book route; the key's extras are the signed
       REST book route (already used, 14/s) and the websocket: one `subscribe` of up to 2,048 markets on `book`
       costs at most the 512-token `stream` bucket (a request over the cap passes when the bucket is full), so a
       fresh socket can load every planned book ~8 s after connecting, then keeps them current by push.
-  - [ ] K2a NovigStream: market subscriptions in bulk (whole plan in one request once the bucket allows; small
+  - [x] K2a (DONE: NovigStream rewritten: PushedBooks interface, market `book` subscriptions, first subscribe waits for a full bucket, later ones when affordable, 2,000 cap, unsubscribe, gap snapshots, RATE_LIMIT/SUBSCRIPTION_LIMIT handling, idle close 2 min, 5 min REST after failure, OkHttp ping 20 s. NovigStreamTest 8.) NovigStream: market subscriptions in bulk (whole plan in one request once the bucket allows; small
         additions at once when tokens cover them), 2,048 cap (SUBSCRIPTION_LIMIT_EXCEEDED handled), unsubscribe what
         the plan dropped, gap snapshots, RATE_LIMIT retry, idle close. Tests on the mock socket.
-  - [ ] K2b NovigPublicClient serves books the socket holds (no request), REST for the rest; Scanner tells it the
+  - [x] K2b (DONE: NovigSource.watch/pushed/pushProblem; NovigPublicClient.stream serves held books with no request (BookBatch.viaPush), only while the key route is usable; BookPump watches the plan and takes pushed books in one pass; ScanReport.booksViaPush; "Novig live feed: …" error once. Tests: NovigPublicClientTest (2 new), BiggerScansTest "with a key, the scan's plan goes to the websocket…" (1,200 prices: 2 REST batches then 1,184 pushed, ≤4 partials) + REST-only control.) NovigPublicClient serves books the socket holds (no request), REST for the rest; Scanner tells it the
         plan (watch) and takes every socket-held book in one pass. Socket trouble = today's REST path, said once.
         Tests (StreamingScanTest / NovigPublicClientTest).
-  - [ ] K2c App: stream built with the key (useConnection), closes when idle (2 min) and when Vigilant leaves the
+  - [x] K2c (DONE: AppContainer.useConnection builds NovigStream(http, key, appScope), closes the old one; ScanStatus.booksViaPush; Settings › Novig API explains the live feed + "Last scan: X of Y prices came by live feed"; scan-size hint updated; NOVIG_API.md §6/§11.1/§12, BRIEF.md manual-scan rule, CLAUDE.md surface, RESEARCH.md §27.) App: stream built with the key (useConnection), closes when idle (2 min) and when Vigilant leaves the
         screen with no scan running; scan status says how many prices came by push. NOVIG_API.md §6/§11.1 updated.
-- [ ] K3 Find as many +EV bets as possible.
+- [x] K3 Find as many +EV bets as possible.
   - [x] K3a (DONE: ScanSettings.fillBudget (default on; old files get it), PlannedMarket.spare, Planner.fill; Scanner reads filler after the picks (fetchOrder group 5); Settings switch "Fill the scan with every quoted line". Tests: PlannerPricingTest "budget left after the per-game picks goes to every other quoted line, best-covered first", "filling is on by default…", "a scan reads the per-game picks before the filler lines" (fails pre-fix: [p1, p2]); cap tests pinned to fillBudget = false.) Planner fills the per-scan budget: after the per-game picks, every other line a fair source quotes
         (alternate spreads/totals, more props), best-covered first, up to "Novig prices per scan". Setting
         (default on). Tests.
@@ -2405,6 +2405,6 @@ Nothing at or above 1.0% EV."
         moneyline, games spread, games total, player games won (team total), 1st-set winner. Round names cut from
         matchups; Pinnacle "(Sets)"-style rows skipped; The Odds API / PropLine skip tennis. Tests on real Kalshi
         and Novig shapes (fixtures from 2026-09-28).
-- [ ] K4 Answer "can the CNO scanner just copy CNO's website?" (what it already does, what copying more would
+- [x] K4 (DONE: RESEARCH.md §27.4; in the reply.) Answer "can the CNO scanner just copy CNO's website?" (what it already does, what copying more would
       cost/gain) in the reply and RESEARCH.md §27.
 - [ ] K5 Light tests on everything touched, ckpt, ship, release, link.
