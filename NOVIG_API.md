@@ -395,8 +395,9 @@ tested but unwired. **Still unverified against the real API** (no key yet).
    than the cache anyway.
 2. Whether Tj's beta access is prod-only or also covers QA, and whether his
    profile shows the **Novig API** screen yet. He has to look.
-3. No signed route has been exercised yet (no key exists). The echo/signing path is
-   documented but still unverified end to end for this project.
+3. ~~No signed route has been exercised yet~~ The signed REST book route works on Tj's phone
+   (2026-09-28). Still unverified live: the websocket (`/v3/ws`), its error-frame shape, and whether
+   Novig's `stream` bucket starts full for a key that has never streamed.
 4. Whether Android's built-in providers sign Ed25519 on every device Vigilant
    targets (minSdk 30). Sidestep it: use **P-256** in Android Keystore for the
    app's own key (§3).
