@@ -33,6 +33,7 @@ class OddsApiPropsSource(
 ) : ReferenceSource {
 
     override val id = ID
+    override val propsOnly = true
     override val displayName = "Sportsbook props"
     override val metered = true
     override val needsCatalog = true

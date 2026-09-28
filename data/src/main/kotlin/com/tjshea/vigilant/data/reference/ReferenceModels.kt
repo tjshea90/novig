@@ -133,6 +133,12 @@ interface ReferenceSource {
     /** Whether this provider lists [league] at all. A scan never calls [odds] for one it doesn't. */
     fun supports(league: League): Boolean = true
 
+    /**
+     * True for a source of player props only (the sportsbooks' props, per game): a scan's game lines
+     * don't wait for it before they're shown mid-scan, only its props do.
+     */
+    val propsOnly: Boolean get() = false
+
     /** How long a fetched snapshot may be re-used instead of calling again. 0 = fetch on every scan. */
     fun reuseMs(settings: ScanSettings): Long = 0L
 

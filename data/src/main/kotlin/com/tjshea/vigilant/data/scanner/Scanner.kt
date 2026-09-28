@@ -145,7 +145,9 @@ class Scanner(
         val ordered = sources.sortedBy { SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
         val progress = Progress(ordered.sumOf { s -> leagues.count { s.supports(it) } } + 1, onProgress)
         progress.emit()
-        val pump = BookPump(settings, now, progress, onPartial)
+        // "source|league" for every source that has answered (or failed, or stood by) for a league this scan.
+        val settled = java.util.Collections.synchronizedSet(HashSet<String>())
+        val pump = BookPump(settings, now, progress, onPartial, ordered, settled)
 
         synchronized(answered) { answered.clear() }
         val sourceReports = coroutineScope {
@@ -168,7 +170,8 @@ class Scanner(
                     } else {
                         null
                     }
-                    fetchSource(source, leagues, settings, now, errors, context, fallback = first != null) {
+                    fetchSource(source, leagues, settings, now, errors, context, fallback = first != null) { league ->
+                        settled += "${source.id}|${league.novigName}"
                         progress.fairDone()
                         pump.wake()
                     }
@@ -282,6 +285,9 @@ class Scanner(
         private val now: Long,
         private val progress: Progress,
         private val onPartial: (ScanResult) -> Unit,
+        /** The scan's fair-odds sources, and which of them have answered each league ("source|league"). */
+        private val sources: List<ReferenceSource> = emptyList(),
+        private val settled: Set<String> = emptySet(),
     ) {
         val requested = LinkedHashSet<String>()
         val fresh = HashMap<String, NovigBook>()
@@ -423,12 +429,35 @@ class Scanner(
         /** Books read a second time by [rereadEarlyEdges]. */
         var reread = 0
 
-        /** Everything priced so far. Its feed shows only prices read this scan. */
+        /**
+         * Everything priced so far. Its feed shows only prices read this scan, and only for leagues whose fair
+         * odds are complete: a line priced from the first source to answer can move when the next one does,
+         * and an edge that shows and then vanishes is worse than one that shows a few seconds later (Tj,
+         * 2026-09-28: "found several positive EV bets while scanning but they quickly disappeared"; live, a
+         * Mystics moneyline showed at 19 s from Polymarket alone and left when Kalshi answered).
+         */
         private fun publish(cat: Catalog) {
             val shown = planFor(cat, settings, now, youngFairOnly = true)
             val merged = HashMap(books)
             merged.putAll(fresh)
-            onPartial(Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now))
+            onPartial(Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now, waitingFor = waiting()))
+        }
+
+        /** [ScanResult.waitingFor]: each league's game lines until its sources answered, its props until the props sources did. */
+        private fun waiting(): Set<String> {
+            val done = synchronized(settled) { settled.toSet() }
+            val out = HashSet<String>()
+            for (league in settings.selectedLeagues) {
+                val mine = sources.filter { it.supports(league) }
+                fun ready(list: List<ReferenceSource>) = list.all { "${it.id}|${league.novigName}" in done }
+                if (!ready(mine.filter { !it.propsOnly })) {
+                    out += ScanResult.waitKey(league.novigName, props = false)
+                    out += ScanResult.waitKey(league.novigName, props = true)
+                } else if (!ready(mine)) {
+                    out += ScanResult.waitKey(league.novigName, props = true)
+                }
+            }
+            return out
         }
     }
 
@@ -633,7 +662,8 @@ class Scanner(
         errors: MutableList<String>,
         context: ScanContext?,
         fallback: Boolean = false,
-        onCall: () -> Unit,
+        /** Once per league this source supports, whatever came of it. */
+        onCall: (League) -> Unit,
     ): SourceReport {
         var fetched = 0
         var reused = 0
@@ -649,12 +679,12 @@ class Scanner(
             if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs) {
                 reused++
                 synchronized(answered) { answered += key }
-                onCall()
+                onCall(league)
                 continue
             }
             if (error != null && source.metered) {
                 // A metered provider that just refused (limit, bad key) will refuse the next league too.
-                onCall()
+                onCall(league)
                 continue
             }
             try {
@@ -664,7 +694,7 @@ class Scanner(
                 if (fallback && context != null && !source.needed(league, settings, context)) {
                     synchronized(references) { references.remove(key) }
                     standingBy++
-                    onCall()
+                    onCall(league)
                     continue
                 }
                 // Stamped with our own clock: re-use windows (credits) must never depend on what
@@ -700,7 +730,7 @@ class Scanner(
                     if (old != null && now - old.snapshot.fetchedAtMs > settings.staleReferenceMinutes * 60_000L) references.remove(key)
                 }
             }
-            onCall()
+            onCall(league)
         }
         return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy)
     }

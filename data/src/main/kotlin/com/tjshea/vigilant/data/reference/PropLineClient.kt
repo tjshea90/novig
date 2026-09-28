@@ -258,6 +258,7 @@ class PropLineClient(
 class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource {
 
     override val id = ID
+    override val propsOnly = true
     override val displayName = "PropLine props"
     override val metered = true
     override val needsCatalog = true

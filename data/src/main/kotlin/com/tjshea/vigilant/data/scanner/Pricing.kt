@@ -109,15 +109,27 @@ data class ScanResult(
      * since then, so a price from the last scan is never offered as a bet while the new one loads.
      */
     val freshSinceMs: Long? = null,
+    /**
+     * On a partial result: the [waitKey]s (a league's game lines, or its props) whose fair-odds sources haven't
+     * all answered yet. Their bets are held back from [feed] until they have, so the fair line behind a bet shown
+     * mid-scan is the one it ends with.
+     */
+    val waitingFor: Set<String> = emptySet(),
 ) {
     /** True while the scan that produced this is still reading prices. */
     val partial: Boolean get() = freshSinceMs != null
+
+    companion object {
+        /** A league's game lines ([props] false) or its player props, as held back in [waitingFor]. */
+        fun waitKey(league: String, props: Boolean): String = "$league|${if (props) "props" else "lines"}"
+    }
 
     /** The +EV feed: at or above the user's threshold, below the too-good-to-be-true cap, in the chosen order. */
     fun feed(settings: ScanSettings): List<Opportunity> = opportunities
         .filter { o ->
             val ev = o.evPercent ?: return@filter false
             (freshSinceMs == null || (o.bookFetchedAtMs ?: 0L) >= freshSinceMs) &&
+                (waitingFor.isEmpty() || waitKey(o.league.novigName, o.kind == LineKind.PLAYER_PROP) !in waitingFor) &&
                 o.league.novigName in settings.leagues &&
                 ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
                 settings.withinMaxOdds(o.quote!!.cost) &&
