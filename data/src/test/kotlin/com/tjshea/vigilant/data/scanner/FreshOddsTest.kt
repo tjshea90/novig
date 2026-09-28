@@ -31,7 +31,9 @@ import org.junit.Test
  */
 class FreshOddsTest {
 
-    private var now = Fixtures.START_MS - 86_400_000L
+    // Two hours before kickoff: inside 3 hours, the strict 5-minute limit applies (games further off get 10 since
+    // v0.19.3, FarOffOddsTest).
+    private var now = Fixtures.START_MS - 2 * 3_600_000L
     private val minute = 60_000L
     private val settings = ScanSettings(fairSource = FairSource.SHARP, minEvPercent = 0.0, sharpBooks = setOf("pinnacle"))
 
