@@ -2206,3 +2206,8 @@ Before starting, let me switch to opus ultracode. Pause when you can so I can re
 ```
 Resume where you left off with vigilant and ship the newest version
 ```
+
+## 2026-09-28T02:42:19Z
+```
+Where do I access the cloud environment setup script 
+```
