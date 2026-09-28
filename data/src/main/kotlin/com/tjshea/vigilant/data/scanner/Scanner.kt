@@ -127,6 +127,13 @@ class Scanner(
     /** Each market's best EV on the last scan, to read the likeliest +EV lines first next time. */
     private var lastEv: Map<String, Double> = emptyMap()
 
+    /**
+     * Lines the last scan left unread because it ran past the time their other books' odds could be shown
+     * ([ScanReport.booksTooLate]): read before the other never-priced lines this time, so back-to-back scans with no
+     * limit cover the whole time window between them instead of re-reading the same first part.
+     */
+    private var leftLastScan: Set<String> = emptySet()
+
     /** Each plan's fair lines, worked out once however many times it's priced ([FairMemo]). */
     private val fairMemo = FairMemo()
 
@@ -237,6 +244,7 @@ class Scanner(
         }
         progress.finish()
 
+        leftLastScan = pump.tooLate.toSet()
         val result = currentPlan?.let { Pricing.price(it, books, settings, now, fairMemo) }
         result?.let { r ->
             lastEv = r.opportunities.mapNotNull { o -> o.evPercent?.let { o.market.marketId to it } }
@@ -544,6 +552,8 @@ class Scanner(
             if (id in pinned) return 0
             if (p.lineKey == null) return 7
             val ev = ev(id)
+            // Left too late last scan: first of the never-priced lines now.
+            if (ev == null && id in leftLastScan) return 2
             return when {
                 ev == null && p.spare -> 5
                 ev == null -> if (p.kind == LineKind.PLAYER_PROP || p.kind == LineKind.TEAM_TOTAL || (p.lineKey.period) != 0) 3 else 4

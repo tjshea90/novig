@@ -20,9 +20,10 @@ import kotlinx.coroutines.sync.withLock
  *
  * Props cost one credit per prop type per game, so this is careful with them:
  * - Only games Novig lists props for, that haven't started and start within
- *   [ScanSettings.bookPropHours], soonest first across every league in the scan.
+ *   [ScanSettings.bookPropWindowHours], soonest first across every league in the scan.
  * - Only the prop types Novig lists for that game ([ScanSettings.bookPropSet] caps them).
- * - At most [ScanSettings.bookPropCreditsPerScan] credits a scan.
+ * - At most [ScanSettings.bookPropCreditsPerScan] credits a scan ([ScanSettings.NO_LIMIT]: every such game,
+ *   until the key's credits run out).
  * - A game's props are re-used for [ScanSettings.bookPropReuseMinutes]; the budget goes to games
  *   not yet bought first. Re-use is per game, here, so the scanner calls this every scan.
  * - Matching Novig's games to The Odds API's uses the free `/events` list and the same team and
