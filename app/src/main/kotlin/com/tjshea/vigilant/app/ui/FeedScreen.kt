@@ -408,3 +408,15 @@ internal fun daysLabel(days: Int): String = if (days == 1) "day" else "$days day
  */
 internal fun laterGamesText(later: Int): String =
     if (later <= 0) "" else " $later more game${if (later == 1) "" else "s"} on Novig start later than that; raise Days ahead in Settings to scan them."
+
+/**
+ * Why bets left the list with no scan (Tj, 2026-09-28: "they quickly disappeared"): the other books' prices
+ * behind them passed the 5-minute limit (RESEARCH.md §24). Said, instead of the list silently shrinking.
+ * Null when none did.
+ */
+internal fun agedOutText(state: UiState, now: Long): String? {
+    val aged = state.feed.count { it.fairIsOld(now) && state.settings.startsInWindow(it.event.startsTs, now) }
+    if (aged == 0) return null
+    return "$aged bet${if (aged == 1) "" else "s"} hidden: the other books' odds behind ${if (aged == 1) "it" else "them"} " +
+        "are over ${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes old. Scan for current odds."
+}

@@ -288,6 +288,19 @@ class ScreenshotTest {
         assert(opened)
     }
 
+    /** Tj, 2026-09-28: "found several positive EV bets while scanning but they quickly disappeared". */
+    @Test fun betsHiddenForOldOddsAreCountedNotJustDropped() {
+        val base = SampleScan.state()
+        // Half the feed's other-book prices were seen 6 minutes before now: past the 5-minute limit.
+        val old = base.feed.mapIndexed { i, o -> if (i % 2 == 0) o.copy(fairAsOfMs = SampleScan.NOW - 6 * 60_000L) else o.copy(fairAsOfMs = SampleScan.NOW) }
+        val aged = old.count { it.fairIsOld(SampleScan.NOW) }
+        assertTrue(aged > 0 && aged < old.size)
+        shoot("1i_feed_aged_out") { FeedScreen(base.copy(feed = old), {}, {}, {}, { _, _ -> }) }
+        compose.onNodeWithText("$aged bet", substring = true).assertExists()
+        compose.onNodeWithText("are over 5 minutes old", substring = true).assertExists()
+        assertEquals(null, com.tjshea.vigilant.app.ui.agedOutText(base, SampleScan.NOW))
+    }
+
     @Test fun theLeagueChipsOfferTennis() {
         var toggled: String? = null
         screen { com.tjshea.vigilant.app.ui.LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, setOf("NFL"), { toggled = it }) }
