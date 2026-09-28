@@ -381,6 +381,10 @@ object Planner {
             val (l2, p2) = NovigText.parseSpreadOutcome(o2.name) ?: return null
             if (abs(p1 + p2) > 1e-9) return null
             val firstAway = TeamMatcher.firstLabelIsAway(l1, l2, matchup.away, matchup.home) ?: return null
+            // Novig's `strike` is the home side's handicap (docs: the Market schema): the side read from the
+            // names must carry it, or the names were read wrong and the market is skipped, never guessed.
+            val novigHomePoint = if (firstAway) p2 else p1
+            if (!strikeAgrees(novigHomePoint)) return null
             val side1 = refSide(firstAway, m.refSwapped)
             // The reference line is the HOME side's handicap in the reference feed's orientation.
             val refHomePoint = if (side1 == Side.HOME) p1 else p2
