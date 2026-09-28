@@ -168,6 +168,7 @@ class NovigStream(
         tokens = capacity - UPGRADE_COST
         tokensAt = clock()
         subscribeRequests = 0
+        firstSent = false
         socket = http.newWebSocket(request, Listener())
         idleJob?.cancel()
         idleJob = scope.launch {
