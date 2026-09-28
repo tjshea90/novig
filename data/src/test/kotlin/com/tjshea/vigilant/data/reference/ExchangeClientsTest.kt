@@ -216,6 +216,8 @@ class ExchangeClientsTest {
         assertTrue("no game-line series asked again: $props", props.none { it == "KXNFLGAME" || it == "KXNFLTOTAL" })
         assertTrue(props.all { KalshiClient.familyOf(it!!) == MarketFamily.PLAYER_PROPS })
         assertEquals(2, full.events.single().markets.size)
+        // Quotes read 20 s before odds() was asked are stamped with when they were read, never newer.
+        assertTrue(full.events.single().markets.all { it.lastUpdateMs == 1_000L })
         // A scan later reads everything afresh: what [lines] read is used once.
         kalshi.odds(nfl, s)
         assertTrue(asked().containsAll(listOf("KXNFLGAME", "KXNFLTOTAL")))
