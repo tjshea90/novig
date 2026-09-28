@@ -284,6 +284,65 @@ class PlannerPricingTest {
         assertEquals(setOf("sp3.5", "sp2.5", "sp20.5"), pinned.marketIds.toSet())
     }
 
+    // ---- the per-scan budget's leftovers (Tj, 2026-09-28: "find as many positive EV bets … as possible") ----
+
+    /** Five quoted spreads (3.5 by two books, 2.5 nearest even) and one prop quoted by one book. */
+    private fun thinSlate(): Triple<List<NovigMarket>, List<RefSnapshot>, List<Double>> {
+        val lines = listOf(1.5, 2.5, 3.5, 4.5, 20.5)
+        val novig = lines.map { l -> market("sp$l", "SPREAD", "d$l" to "DAL +$l", "b$l" to "BAL -$l") }
+        val ex = lines.map { l ->
+            val p = 0.5 + (l - 2.5) * 0.04
+            RefBookMarket("polymarket", "Polymarket", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1 / p, l), RefQuote(Side.AWAY, 1 / (1.02 - p), -l)), now)
+        }
+        val pin = listOf(3.5, 20.5).map { l -> RefBookMarket("pinnacle", "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1.93, l), RefQuote(Side.AWAY, 1.95, -l)), now) }
+        val ref = RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens", markets = ex + pin)
+        return Triple(novig, listOf(RefSnapshot("americanfootball_nfl", listOf(ref), now)), lines)
+    }
+
+    @Test
+    fun `budget left after the per-game picks goes to every other quoted line, best-covered first`() {
+        val (novig, snaps, _) = thinSlate()
+        val plan = Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 2), now)
+        // The per-game picks as before, then the rest: 20.5 (two books), then nearest even (1.5 before 4.5).
+        assertEquals(listOf("sp3.5", "sp2.5", "sp20.5", "sp1.5", "sp4.5"), plan.marketIds)
+        assertEquals(listOf(false, false, true, true, true), plan.markets.map { it.spare })
+        // Filling never passes the per-scan budget: 3 prices = the 2 picks and the best-covered filler.
+        val three = Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 2, maxBooksPerScan = 3), now)
+        assertEquals(listOf("sp3.5", "sp2.5", "sp20.5"), three.marketIds)
+        // A budget the picks already fill adds nothing.
+        assertEquals(listOf("sp3.5", "sp2.5"), Planner.plan(listOf(event), novig, snaps, sharpOnly.copy(linesPerGame = 2, maxBooksPerScan = 2), now).marketIds)
+    }
+
+    @Test
+    fun `filling is on by default and a saved file without it gets it`() {
+        assertTrue(ScanSettings().fillBudget)
+        val old = Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"],"linesPerGame":2,"schema":6}""")
+        assertTrue(old.fillBudget)
+    }
+
+    @Test
+    fun `a scan reads the per-game picks before the filler lines`() = kotlinx.coroutines.test.runTest {
+        val (novig, snaps, _) = thinSlate()
+        val reads = ArrayList<String>()
+        val source = object : com.tjshea.vigilant.data.novig.NovigSource {
+            override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(event)
+            override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = novig
+            override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): com.tjshea.vigilant.data.novig.BookBatch {
+                reads += marketIds
+                return com.tjshea.vigilant.data.novig.BookBatch(emptyMap(), 0, 0, 0)
+            }
+            override suspend fun market(marketId: String): NovigMarket? = null
+        }
+        val fair = object : com.tjshea.vigilant.data.reference.ReferenceSource {
+            override val id = "polymarket"
+            override val displayName = id
+            override suspend fun odds(league: League, settings: ScanSettings) = snaps.single()
+        }
+        Scanner(source, clock = { now }).scan(sharpOnly.copy(linesPerGame = 2), listOf(fair), emptySet(), {}, {})
+        assertEquals(listOf("sp3.5", "sp2.5"), reads.take(2).sorted().reversed())
+        assertEquals(setOf("sp20.5", "sp1.5", "sp4.5"), reads.drop(2).toSet())
+    }
+
     @Test
     fun `the feed can be ordered by start time instead of EV`() {
         val s = sharpOnly.copy(minEvPercent = -1.0, maxEvPercent = 1.0)
