@@ -381,6 +381,7 @@ class NovigPublicClient(
             viaKey = viaKey,
             keyProblem = keyProblem.get(),
             viaPush = pushed.size,
+            refused = refused.get(),
         )
     }
 
