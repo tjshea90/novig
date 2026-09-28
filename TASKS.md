@@ -2608,3 +2608,17 @@ Nothing at or above 1.0% EV."
       needs to do (settings, installs, costs), links as plain text.
 - [x] W4 (DONE: session-start briefing fixed, 215,548 -> 7,186 chars (ckpt 605, test_resume.sh 2 new checks); S3 ticked; third-party skills and the prompt audit left for Tj's go-ahead.) Adopt on the repo side only what is clearly safe, free and reversible without Tj's say-so; list the rest for
       his go-ahead.
+
+## "run the prompt audit and add the Compose skills" (Tj, 2026-09-28T22:53Z, on v0.19.6; his yes to RESEARCH §33.5's two offers)
+
+- [ ] X1 Prompt audit, following the claude-api skill's `shared/prompt-audit.md` (what `/claude-api prompt-audit` runs):
+      scope = this repo's instruction surface (CLAUDE.md, BRIEF.md, bootstrap.sh's rules block, the text the hooks print:
+      resume.sh / ckpt.sh / toobig.sh / capture_inbox.sh); target = the model running it (Claude Opus 5.5). Deliverables:
+      a report (file:line, evidence, pattern, why, confidence, action) and a proposed diff, one finding per hunk, saved in
+      the repo. Nothing applied until Tj picks: "run" is not "apply", and the audit's rules keep stale-fact and
+      contradiction fixes proposal-only.
+- [ ] X2 Compose skills: read Chris Banes' `compose-performance`, `compose-state-and-effects`,
+      `kotlin-concurrency-and-flow`, `compose-ui-testing-patterns` in full first (third-party instructions: check for
+      `allowed-tools`, inline shell blocks, hooks, network fetches, anything that fights CLAUDE.md); commit the ones that
+      pass to `.claude/skills/` unchanged, with the Apache-2.0 license and a note naming the source commit.
+- [ ] X3 Checks + checkpoint; tell Tj the top audit findings (what applying each would change) and which skills landed.
