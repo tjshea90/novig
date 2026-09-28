@@ -111,8 +111,15 @@ class NovigStream(
     private var tokens = 0.0
     private var tokensAt = 0L
     private var lastUsedMs = 0L
-    private var failedAtMs = Long.MIN_VALUE
+    private var failedAtMs: Long? = null
     private var problem: String? = null
+
+    /**
+     * Whether this connection's first subscribe went out. It waits for a full bucket: a small early
+     * one (the first few planned lines) would spend the tokens the whole plan's single request needs,
+     * and the bucket takes two minutes to refill.
+     */
+    private var firstSent = false
 
     /** Subscribe requests sent on the current connection (for tests and the scan report). */
     @Volatile
