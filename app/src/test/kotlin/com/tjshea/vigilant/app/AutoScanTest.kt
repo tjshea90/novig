@@ -274,4 +274,19 @@ class AutoScanTest {
         assertTrue(source.contains("!prefs.getBoolean(ASKED_NOTIFICATIONS_AUTO, false)"))
         assertTrue(source.contains("prefs.edit().putBoolean(ASKED_NOTIFICATIONS_AUTO, false).apply()"))
     }
+
+    /**
+     * v0.19.0's Novig live feed (RESEARCH.md §27) never outlives its use off screen: a background auto-scan
+     * closes it when it ends, and leaving Vigilant with no scan running closes it at once (source pins:
+     * lifecycle callbacks have no unit-test harness here).
+     */
+    @Test
+    fun `Novig's live feed is closed off screen, not left pushing for two minutes`() {
+        val activity = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
+        assertTrue(activity.contains("if (!container.runner.running) container.novig.stream?.close()"))
+        val app = File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
+        assertTrue(app.contains("if (!onScreen) novig.stream?.close()"))
+        // Built only with the key, replaced (the old one closed) when the key changes.
+        assertTrue(app.contains("novig.stream?.close()\n        novig.keyed = signer\n        novig.stream = signer?.let { NovigStream(http, it, appScope) }"))
+    }
 }
