@@ -314,7 +314,17 @@ class Scanner(
         /** The scan's fair-odds sources, and which of them have answered each league ("source|league"). */
         private val sources: List<ReferenceSource> = emptyList(),
         private val settled: Set<String> = emptySet(),
+        /** The scan's start on [elapsed], for [ScanTiming]. */
+        private val startedAt: Long = elapsed(),
     ) {
+        /** [ScanTiming]: when the first price was asked for and the last came in, and the first bet shown. */
+        var readFrom: Long? = null
+        var readTo: Long? = null
+        var firstBetAt: Long? = null
+
+        /** Prices Novig refused this scan (each pauses and slows the rest). */
+        var refused = 0
+
         val requested = LinkedHashSet<String>()
         val fresh = HashMap<String, NovigBook>()
         var fetched = 0
