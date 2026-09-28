@@ -387,19 +387,32 @@ object Planner {
             )
         }
 
+        /** Who wins (the game, or a tennis match's 1st set): outcomes named for the two sides. */
+        fun winner(period: Int, label: String): PlannedMarket? {
+            if (market.outcomes.size != 2) return null
+            val (o1, o2) = market.outcomes
+            val firstAway = TeamMatcher.firstLabelIsAway(o1.name, o2.name, matchup.away, matchup.home) ?: return null
+            return PlannedMarket(
+                m.league, m.event, m.refEvent, market, LineKind.MONEYLINE, key(LineKind.MONEYLINE, null, period), label,
+                listOf(
+                    PlannedOutcome(o1, OutcomeTarget.Is(refSide(firstAway, m.refSwapped)), teamName(firstAway)),
+                    PlannedOutcome(o2, OutcomeTarget.Is(refSide(!firstAway, m.refSwapped)), teamName(!firstAway)),
+                ),
+            )
+        }
+
+        /** One side's own over/under ("Los Angeles Rams 22.5 TEAM_TOTAL", "Roman Safiullin 12.5 PLAYER_GAMES_WON"). */
+        fun sideTotal(label: String): PlannedMarket? {
+            val team = NovigText.subjectOf(market.description, market.marketType) ?: return null
+            val isAway = TeamMatcher.labelIsAway(team, matchup.away, matchup.home) ?: return null
+            val side = if (refSide(isAway, m.refSwapped) == Side.AWAY) RefBookMarket.AWAY else RefBookMarket.HOME
+            return overUnder(LineKind.TEAM_TOTAL, 0, label, subject = side, who = teamName(isAway))
+        }
+
         return when (market.marketType) {
-            "MONEY" -> {
-                if (market.outcomes.size != 2) return null
-                val (o1, o2) = market.outcomes
-                val firstAway = TeamMatcher.firstLabelIsAway(o1.name, o2.name, matchup.away, matchup.home) ?: return null
-                PlannedMarket(
-                    m.league, m.event, m.refEvent, market, LineKind.MONEYLINE, key(LineKind.MONEYLINE, null), "Moneyline",
-                    listOf(
-                        PlannedOutcome(o1, OutcomeTarget.Is(refSide(firstAway, m.refSwapped)), teamName(firstAway)),
-                        PlannedOutcome(o2, OutcomeTarget.Is(refSide(!firstAway, m.refSwapped)), teamName(!firstAway)),
-                    ),
-                )
-            }
+            "MONEY" -> winner(0, "Moneyline")
+            // Tennis: "D. Medvedev Set 1", outcomes "D. Medvedev" / "R. Safiullin" (Pinnacle's period 1).
+            "FIRST_SET_MONEYLINE" -> winner(1, "1st Set Winner")
 
             "SPREAD" -> spread(0, "Spread")
             "SPREAD_1H" -> spread(1, "$halfLabel Spread")
