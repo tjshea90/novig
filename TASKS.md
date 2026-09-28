@@ -2492,5 +2492,8 @@ Nothing at or above 1.0% EV."
       or 2 would have done nothing). Tests: CnoBooksChoicesTest (3), CnoClientTest `a stricter odds cap … fewest books
       is always the app's`, MiniWindowTest default; sample Buehler row 4 -> 3 books.) "For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4
       books". Choices become 1-4; a saved 5+ moves to 4 once (schema bump); test.
+  - [ ] S2a (decided from the 30-min live recording, RESEARCH §30.2): other books' quotes may be 10 minutes old when the
+        game is over 3 hours away, 5 minutes within 3 hours or live; one rule for scan pricing, re-pricing, Recheck
+        and how long a found bet stays listed (`Freshness.maxAgeMs`); cards show the odds' age; copy updated; tests.
 - [ ] S4 Ship with the v0.19.3 work (R2e) and send the link.
 
