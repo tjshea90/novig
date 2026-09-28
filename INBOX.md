@@ -2216,3 +2216,8 @@ The firmware file itself should not be changed. Only the flasher.apk. the MP3 pl
 ```
 Resume where you left off. The firmware file is for a SanDisk sansa sport clip. The flasher app works fine on other phones and I need it to work on my moto g 2026. I want the app to do exactly what it already does because I need to use all the functions
 ```
+
+## 2026-09-28T00:59:39Z
+```
+Cancel this it is the wrong chat. Remove anything about the flasher and MP3 player from this repo. This repo is for the vigilant app only
+```
