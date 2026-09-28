@@ -2453,8 +2453,15 @@ Nothing at or above 1.0% EV."
         slots idle), and `/v3/limits` can only raise the pace above the proven 14/s (a 429 still slows it).
   - [x] R2b (NO CHANGE, measured: the public board isn't served from cache either: CloudFront "Miss" on every read,
         0.3-1.6 s for a 5,000-market page, same as a signed read would be. The key's board stays.) Board from Novig's CDN-cached public routes first; the key's signed catalog only when those are throttled.
-  - [ ] R2c Kalshi game lines first: every league's game-line series before any props series, so game lines stop
+  - [x] R2c (DONE: `ReferenceSource.linesFirst`/`lines`; Kalshi reads every league's game-line series first (29 of 57,
+        ~15 s at 2/s), then props, re-using what `lines` read (nothing asked twice); `Scanner.linesFirst` pass and
+        `waiting()` let a league's game lines show once Kalshi's lines are in. Tests: SteadyFeedTest `a league's game
+        lines show once Kalshi's lines are in…` (fails without the Scanner pass), ExchangeClientsTest `kalshi reads a
+        league's game-line series first…`.) Kalshi game lines first: every league's game-line series before any props series, so game lines stop
         waiting on Kalshi's props under the v0.19.2 hold-back.
-  - [ ] R2d Where scan time goes, in Settings › Novig API and the scan's done line: board, fair odds, Novig prices
+  - [x] R2d (DONE: `ScanTiming` on every ScanReport (board, fair odds, Novig prices from/to, first bet, total,
+        Novig's refusals via `BookBatch.refused`), `ScanStatus.timing`/`keyReadPerSec`, one line under Settings › Novig
+        API. Tests: ScanTimingTest (text + a timed scan), ScreenshotTest `novigKeySaysWhereTheLastScansTimeWent`,
+        6b png looked at. The feed's own line left as is.) Where scan time goes, in Settings › Novig API and the scan's done line: board, fair odds, Novig prices
         (count, seconds, per second; by key / live feed / public), first bet shown, the key's limits.
   - [ ] R2e Docs (RESEARCH §29, NOVIG_API), ship v0.19.3 (38), link.
