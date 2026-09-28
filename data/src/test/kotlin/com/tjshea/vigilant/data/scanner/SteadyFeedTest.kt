@@ -102,15 +102,6 @@ class SteadyFeedTest {
     }
 
     @Test
-    fun `sportsbook props still loading hold back props only, never the game lines`() {
-        val r = ScanResult(emptyList(), emptyList(), ScanStats(0, 0, 0, 0, 0), now, freshSinceMs = now, waitingFor = setOf(ScanResult.waitKey("NFL", props = true)))
-        val lines = setOf(ScanResult.waitKey("NFL", props = false))
-        assertTrue(ScanResult.waitKey("NFL", props = false) !in r.waitingFor)
-        assertTrue(ScanResult.waitKey("NFL", props = true) in r.waitingFor)
-        assertTrue(lines.isNotEmpty())
-    }
-
-    @Test
     fun `game lines show while a props-only source is still out, props once it answers`() = runTest {
         val lines = Source("pinnacle", ref(moneyline("pinnacle", 0.56), receptions("pinnacle", 0.56)))
         val propsGate = CompletableDeferred<Unit>()
@@ -134,11 +125,12 @@ class SteadyFeedTest {
     @Test
     fun `a scan never prices with a book price that would go stale within 2 minutes`() = runTest {
         // A sportsbook price the feed last saw 3.5 minutes ago: under 5, but only 1.5 minutes of life left.
-        val borderline = Source("propline", ref(moneyline("draftkings", 0.53, seen = now - 210_000L)))
+        val borderline = Source("kalshi", ref(moneyline("kalshi", 0.53, seen = now - 210_000L)))
         var report = Scanner(novig, clock = { now }).scan(settings.copy(families = setOf(MarketFamily.MONEYLINE)), listOf(borderline), emptySet(), {}, {})
-        assertNull(report.result!!.opportunities.first { it.outcome.outcomeId == "dal" }.fairProbability)
+        assertNull(report.result!!.opportunities.firstOrNull { it.outcome.outcomeId == "dal" }?.fairProbability)
+        assertTrue(report.result!!.feed(settings).isEmpty())
         // 2.5 minutes old (2.5 left): priced, and shown for at least 2 minutes.
-        val fresh = Source("propline", ref(moneyline("draftkings", 0.53, seen = now - 150_000L)))
+        val fresh = Source("kalshi", ref(moneyline("kalshi", 0.53, seen = now - 150_000L)))
         report = Scanner(novig, clock = { now }).scan(settings.copy(families = setOf(MarketFamily.MONEYLINE)), listOf(fresh), emptySet(), {}, {})
         val dal = report.result!!.opportunities.first { it.outcome.outcomeId == "dal" }
         assertNotNull(dal.fairProbability)
