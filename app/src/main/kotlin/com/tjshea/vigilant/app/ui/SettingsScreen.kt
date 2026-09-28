@@ -754,7 +754,8 @@ fun scanTime(books: Int): String =
  * §11.1), and what the limit decides.
  */
 fun scanSizeHint(books: Int): String {
-    return "$books is ${scanTime(books)} on Novig's public prices (a connected Novig key reads two to three times as fast). Results appear as " +
+    return "$books is ${scanTime(books)} on Novig's public prices; with a Novig key connected, the whole scan arrives by live feed " +
+        "about 8 seconds in. Results appear as " +
         "they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and " +
         "the soonest games come first. Only lines another book also prices are read, so a scan can finish below the limit."
 }
