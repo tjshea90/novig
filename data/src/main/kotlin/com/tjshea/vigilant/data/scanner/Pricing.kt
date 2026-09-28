@@ -95,6 +95,8 @@ data class ScanStats(
     val marketsPriced: Int,
     val outcomesWithFair: Int,
     val positiveEv: Int,
+    /** Games Novig lists past "Days ahead" (not scanned): [Plan.laterGames]. */
+    val laterGames: Int = 0,
 )
 
 data class ScanResult(
