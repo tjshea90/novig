@@ -531,7 +531,7 @@ class ScreenshotTest {
     @Test fun autoScanOffHidesTheInterval() {
         screen { SettingsScreen(SampleScan.state(), {}) }
         compose.onAllNodesWithText("40 min").assertCountEquals(0)
-        compose.onNodeWithText("Off: Vigilant scans only when you tap Scan", substring = true).assertExists()
+        compose.onNodeWithText("Off: Vigilant scans only when you tap Scan, and CrazyNinjaOdds", substring = true).assertExists()
     }
 
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")

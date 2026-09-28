@@ -627,7 +627,7 @@ fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
 
 /** Which bets alert, at these settings. */
 fun alertHint(s: ScanSettings): String =
-    if (s.alertMinEv <= 0.0) "Off: no alerts." else "A notification for each new bet at ${alertLabel(s.alertMinEv)} EV or better that several books agree on " +
+    if (s.alertMinEv <= 0.0) "Off: no alerts." else "A notification for each new bet at ${Math.round(s.alertMinEv * 100)}% EV or better that several books agree on " +
         "(${CnoBooks.MIN_TWO_SIDED}+ books price both sides and ${CnoBooks.MIN_AGREEING}+ of them alone make it +EV), found by a background scan " +
         "or a scan you left running. Tap it to open the bet slip in ${AppBook.name}. Each bet alerts once; placed and removed bets, and games " +
         "outside \"Starts within\", never do."
