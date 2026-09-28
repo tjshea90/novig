@@ -108,7 +108,9 @@ class FreshOddsTest {
         println("DEBUG ops=${second.result?.opportunities?.map { it.outcome.outcomeId }} errors=${second.errors} stats=${second.result?.stats}")
         assertNotNull(dal(second).quote) // three minutes: still fresh
         now += 3 * minute
-        assertNull(dal(scanner.scan(settings, listOf(book))).quote) // six: never
+        val third = scanner.scan(settings, listOf(book))
+        println("DEBUG6 ops=${third.result?.opportunities?.map { it.outcome.outcomeId + ":" + it.quote }} stats=${third.result?.stats}")
+        assertNull(dal(third).quote) // six: never
     }
 
     @Test
