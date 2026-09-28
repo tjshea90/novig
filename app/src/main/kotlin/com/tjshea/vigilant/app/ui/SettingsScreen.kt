@@ -468,7 +468,12 @@ fun SettingsScreen(
                     Hint("Every ${AppBook.name} line another book also prices is checked: its lines come in the fair-odds requests, so there's no per-line cost to limit.")
                 }
                 Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-                ChoiceChips(listOf(1, 2, 3, 5, 7), s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
+                ChoiceChips(ScanSettings.DAYS_AHEAD_CHOICES, s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
+                Hint(
+                    "Games starting within this many days are scanned. A week takes in the next college Saturday and NFL " +
+                        "Sunday; the fair-odds requests are the same whatever the window, and the soonest games are read first. " +
+                        "\"Starts within\" on the +EV tab only filters what's shown.",
+                )
                 SwitchRow(
                     "Include live games",
                     if (AppBook.isNovig) "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live."

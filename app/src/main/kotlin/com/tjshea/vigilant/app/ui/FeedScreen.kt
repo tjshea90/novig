@@ -388,3 +388,13 @@ internal fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
         }
     }
 }
+
+/** "7 days", "day" for 1. */
+internal fun daysLabel(days: Int): String = if (days == 1) "day" else "$days days"
+
+/**
+ * What a scan left out because it starts past "Days ahead" (Tj, 2026-09-28: "There are way more than 7 total
+ * games"): said, with where to change it. Empty when nothing was left out.
+ */
+internal fun laterGamesText(later: Int): String =
+    if (later <= 0) "" else " $later more game${if (later == 1) "" else "s"} on Novig start later than that; raise Days ahead in Settings to scan them."
