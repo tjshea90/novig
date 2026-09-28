@@ -2292,3 +2292,8 @@ Claude was just about to ship when usage ran out. Can you finish
 ```
 Make an option in the app to pause all scanning. And just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in the cno scanner in full screen (it already works in the widget)
 ```
+
+## 2026-09-28T20:06:47Z
+```
+Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited. For example, unlimited credits per scan, unlimited novig prices per scan, etc. but make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished scanning for the selected time period.
+```
