@@ -491,7 +491,9 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
         compose.onNodeWithText("Shared View link").assertExists()
         compose.onNodeWithText("Longest odds").assertExists()
-        compose.onNodeWithText("+150").assertExists()
+        // CNO's +150 (the first), and Vigilant's own odds cap's since v0.18.0 (further down).
+        compose.onAllNodesWithText("+150").assertCountEquals(2)
+        compose.onAllNodesWithText("+150")[0].assertIsSelected()
         compose.onNodeWithText("Fewest books behind the fair price").assertExists()
         // The chips read as numbers (a first draft printed "${'$'}it+" on every one).
         compose.onNodeWithText("5+").assertExists()
