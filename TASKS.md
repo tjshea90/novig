@@ -2482,7 +2482,10 @@ Nothing at or above 1.0% EV."
       triggers it (ANONYMIZED_NETWORK, iCloud Private Relay / Private DNS / carrier NAT / IPv6, Novig app location
       check); fix the wording and anything that wrongly turns a refusal into "VPN". Also: does a refused key make every
       scan fall back to the slow public route (Tj's "reading the API very slow")?
-- [ ] S2 "Research online and reconsider the 5 minute stale odds cutoff. Should this be altered? Right now it hides bets
+- [x] S2 (DONE: RESEARCH §30.2. The rule measures when a feed last *saw* a price, so still lines never age out
+      at scan time; it bites 3-5 min after a scan. 31-min live recording: >=1 pt fair moves 1.6/2.7/3.7/6.9% at
+      5/10/15/30 min (Novig 1.8/3.8/6.8/11.5%), NFL moneylines and MLB totals far more; moves bunch near the start.)
+      "Research online and reconsider the 5 minute stale odds cutoff. Should this be altered? Right now it hides bets
       if the odds from other books are over 5 minutes old. Figure out if that is a good or needed filter. It may be that
       odds do not change that rapidly and are still positive EV bets even if the odds from other books are over 5
       minutes old". Research how fast sportsbook/exchange lines really move (pregame vs live, by sport/market, props),
@@ -2492,7 +2495,10 @@ Nothing at or above 1.0% EV."
       or 2 would have done nothing). Tests: CnoBooksChoicesTest (3), CnoClientTest `a stricter odds cap … fewest books
       is always the app's`, MiniWindowTest default; sample Buehler row 4 -> 3 books.) "For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4
       books". Choices become 1-4; a saved 5+ moves to 4 once (schema bump); test.
-  - [ ] S2a (decided from the 30-min live recording, RESEARCH §30.2): other books' quotes may be 10 minutes old when the
+  - [x] S2a (DONE: `Freshness.maxAgeMs`, `LIMIT_TEXT`; planFor per-event limit (date-only start = strict; a game
+        with no fresh line drops from the fair side, as before); cards "odds N min old"; copy. Tests: FarOffOddsTest (4),
+        SteadyFeedTest, FreshOddsTest (now 2 h before kickoff), FreshOddsAppTest, ScreenshotTest (aging label, 1i png
+        looked at), SportsbookScannerTest. Full floor 724 tests, 0 failures.) (decided from the 30-min live recording, RESEARCH §30.2): other books' quotes may be 10 minutes old when the
         game is over 3 hours away, 5 minutes within 3 hours or live; one rule for scan pricing, re-pricing, Recheck
         and how long a found bet stays listed (`Freshness.maxAgeMs`); cards show the odds' age; copy updated; tests.
 - [ ] S4 Ship with the v0.19.3 work (R2e) and send the link.
