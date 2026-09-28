@@ -246,6 +246,33 @@ class NovigPublicClientTest {
     }
 
     @Test
+    fun `a scan reads 30 books at a time with a key (10 in flight), 8 on the public routes`() {
+        val c = client()
+        assertEquals(8, c.batchSize())
+        keyed(c)
+        assertEquals(30, c.batchSize())
+    }
+
+    @Test
+    fun `with a key, ten books are in flight at once`() = runBlocking {
+        val inFlight = AtomicInteger()
+        val maxInFlight = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath == "/v3/limits") return MockResponse().setBody(limitsBody)
+                val n = inFlight.incrementAndGet()
+                maxInFlight.accumulateAndGet(n) { a, b -> maxOf(a, b) }
+                Thread.sleep(150)
+                inFlight.decrementAndGet()
+                return bookFor(request)
+            }
+        }
+        val batch = keyed(client()).books((1..30).map { "m$it" })
+        assertEquals(30, batch.viaKey)
+        assertEquals(10, maxInFlight.get())
+    }
+
+    @Test
     fun `with a key, books come from the signed route and its own rate limit`() = runBlocking {
         server.dispatcher = keyedDispatch()
         val batch = keyed(client()).books(listOf("m1", "m2"))

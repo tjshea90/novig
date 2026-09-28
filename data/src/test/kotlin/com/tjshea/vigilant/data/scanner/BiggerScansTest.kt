@@ -191,6 +191,17 @@ class BiggerScansTest {
     }
 
     @Test
+    fun `a scan asks Novig for as many books at a time as the source reads at once`() = runTest {
+        val board = Board(100)
+        val novig = Novig(board)
+        val wide = object : NovigSource by novig {
+            override fun batchSize() = 30
+        }
+        Scanner(wide, clock = { now }).scan(settings.copy(maxBooksPerScan = 100), listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(listOf(30, 30, 30, 10), novig.calls.map { it.size })
+    }
+
+    @Test
     fun `without the websocket, the same scan reads every book by request as before`() = runTest {
         val board = Board(40)
         val novig = Novig(board)

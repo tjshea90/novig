@@ -819,8 +819,11 @@ class Scanner(
 
         private val MAIN_TYPES = (MarketFamily.MONEYLINE.novigTypes + MarketFamily.SPREAD.novigTypes + MarketFamily.TOTAL.novigTypes).toSet()
 
-        /** Books read between partial results: small enough that the feed moves every ~2 seconds. */
-        const val CHUNK = 8
+        /**
+         * Books read between partial results on the public routes ([NovigSource.batchSize]): small enough that the
+         * feed moves every ~2 seconds. A key reads 30 at a time (10 in flight): about 2 seconds at its pace too.
+         */
+        const val CHUNK = NovigSource.DEFAULT_BATCH
 
         /** Most books one recheck reads: about seven seconds on Novig's public routes. */
         const val MAX_RECHECK = 40
