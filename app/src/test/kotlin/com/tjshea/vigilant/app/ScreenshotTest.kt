@@ -1391,4 +1391,71 @@ class ScreenshotTest {
         compose.waitForIdle()
         assertEquals(0f, pull.distanceFraction, 0.001f)
     }
+
+    // ---- Tj, 2026-09-28: "Make an option in the app to pause all scanning" ------------------------------------
+
+    @Test fun thePauseButtonOnTheFeedPausesAndTheBannerResumes() {
+        val picked = ArrayList<Boolean>()
+        var paused by androidx.compose.runtime.mutableStateOf(false)
+        screen { FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(paused = paused)) }, {}, {}, {}, { _, _ -> }, onPause = { picked += it; paused = it }) }
+        compose.onAllNodesWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertCountEquals(0)
+        compose.onNodeWithContentDescription("Pause all scanning").performClick()
+        assertEquals(listOf(true), picked)
+        compose.onNodeWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertIsDisplayed()
+        compose.onNodeWithText("Resume").performClick()
+        assertEquals(listOf(true, false), picked)
+        compose.onNodeWithContentDescription("Pause all scanning").assertIsDisplayed()
+    }
+
+    @Test fun feedWhilePaused() = shoot("1k_feed_paused") {
+        FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(paused = true)) }, {}, {}, {}, { _, _ -> })
+    }
+
+    @Test fun theCnoTabSaysItsPausedAndResumes() {
+        val picked = ArrayList<Boolean>()
+        val base = SampleCno.state()
+        shoot("8h_cno_paused") { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(paused = true)), {}, {}, onPause = { picked += it }) }
+        compose.onNodeWithText("Paused · read 20s ago").assertIsDisplayed()
+        compose.onNodeWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertIsDisplayed()
+        // Refresh waits too (a pull says it's paused).
+        compose.onNodeWithContentDescription("Refresh CrazyNinjaOdds").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Resume scanning").performClick()
+        assertEquals(listOf(false), picked)
+    }
+
+    /** Paused before CNO's list was ever read: not "Reading CrazyNinjaOdds…" forever. */
+    @Test fun theCnoTabPausedBeforeItsFirstReadSaysPaused() {
+        val base = SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState())
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(paused = true)), {}, {}) }
+        compose.onNodeWithText("Scanning is paused").assertIsDisplayed()
+        compose.onAllNodesWithText("Reading CrazyNinjaOdds…").assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetPausesAndResumesFromItsTopBar() {
+        val picked = ArrayList<Boolean>()
+        val s = floatingState()
+        floating("9p_floating_paused", s.copy(settings = s.settings.copy(paused = true)), actions = com.tjshea.vigilant.app.ui.FloatingActions(onPause = { picked += it }))
+        compose.onNodeWithText("Paused", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("Resume scanning").performClick()
+        assertEquals(listOf(false), picked)
+        assertTrue(com.tjshea.vigilant.app.ui.miniStatus(s.copy(settings = s.settings.copy(paused = true)), SampleScan.NOW).startsWith("Paused · "))
+        assertFalse(com.tjshea.vigilant.app.ui.miniStatus(s, SampleScan.NOW).startsWith("Paused"))
+        assertEquals("Scanning is paused · tap ▶ to resume", com.tjshea.vigilant.app.ui.emptyText(s.copy(settings = s.settings.copy(paused = true)), floating = true))
+    }
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetsPauseButton() {
+        val picked = ArrayList<Boolean>()
+        floating("9q_floating_pause_button", floatingState(), actions = com.tjshea.vigilant.app.ui.FloatingActions(onPause = { picked += it }))
+        compose.onNodeWithContentDescription("Pause all scanning").performClick()
+        assertEquals(listOf(true), picked)
+    }
+
+    @Test fun settingsOfferPauseAllScanning() {
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        compose.onNodeWithText("Pause all scanning").performClick()
+        assertEquals(true, picked?.paused)
+    }
 }
