@@ -193,7 +193,7 @@ class Scanner(
         // Priced only from fair odds young enough to bet on, like the partial results. An old
         // snapshot can survive a scan (a metered provider that ran out skips its later leagues),
         // and it still steers which books get read, but it never prices the feed.
-        val currentPlan = catalog?.let { planFor(it, settings, now, youngFairOnly = true) }
+        val currentPlan = catalog?.let { planFor(it, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS) }
         if (currentPlan != null) {
             // Anything planned but not read this scan (the per-scan cap, or Novig asked us to stop)
             // keeps the last scan's price, counted as such.
@@ -399,7 +399,7 @@ class Scanner(
             val cat = catalog ?: return
             if (retryAfter != null || fresh.isEmpty()) return
             val cutoff = clock() - REREAD_AFTER_MS
-            val shown = planFor(cat, settings, now, youngFairOnly = true)
+            val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
             val merged = HashMap(books).apply { putAll(fresh) }
             val ids = Pricing.price(shown, merged, settings, now, fairMemo).opportunities
                 .filter { o ->
@@ -437,7 +437,7 @@ class Scanner(
          * Mystics moneyline showed at 19 s from Polymarket alone and left when Kalshi answered).
          */
         private fun publish(cat: Catalog) {
-            val shown = planFor(cat, settings, now, youngFairOnly = true)
+            val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
             val merged = HashMap(books)
             merged.putAll(fresh)
             onPartial(Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now, waitingFor = waiting()))
@@ -751,7 +751,15 @@ class Scanner(
      * first, but it must never price what the feed shows. Age is judged as of [fairAsOf] (the
      * scan's own time when re-pricing later); which games are still pregame, as of [now].
      */
-    private fun planFor(cat: Catalog, settings: ScanSettings, now: Long, youngFairOnly: Boolean = false, fairAsOf: Long = now): Plan {
+    private fun planFor(
+        cat: Catalog,
+        settings: ScanSettings,
+        now: Long,
+        youngFairOnly: Boolean = false,
+        fairAsOf: Long = now,
+        /** With [youngFairOnly]: quotes must also stay fresh this much longer ([Freshness.MIN_SHOWN_MS] for a scan's own feed). */
+        headroomMs: Long = 0L,
+    ): Plan {
         val enabled = settings.enabledSources
         val refs = synchronized(references) {
             settings.selectedLeagues.flatMap { l ->
@@ -763,13 +771,13 @@ class Scanner(
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
             settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
-            settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L,
+            settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L, headroomMs,
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
         val filtered = refs.map { snap ->
             // Pricing: only book prices their feed saw in the last few minutes (RESEARCH.md §24). Reading
             // order may still lean on older ones; they never price.
-            val fresh = if (!youngFairOnly) snap else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf) }) })
+            val fresh = if (!youngFairOnly) snap else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs) }) })
             if (fresh.provider !in PICKED_BOOK_FEEDS) fresh
             else fresh.copy(events = fresh.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }

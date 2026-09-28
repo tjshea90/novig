@@ -13,6 +13,14 @@ object Freshness {
      */
     const val MAX_QUOTE_AGE_MS = 5 * 60_000L
 
+    /**
+     * How long a bet a scan shows keeps being shown, at least: a scan prices only with quotes that are this far
+     * inside [MAX_QUOTE_AGE_MS] (at most 3 minutes old), so no bet appears with seconds left before it's hidden
+     * (Tj, 2026-09-28: "found several positive EV bets while scanning but they quickly disappeared"). Rechecks
+     * and re-pricing keep the plain limit: they judge a scan's bets already shown.
+     */
+    const val MIN_SHOWN_MS = 2 * 60_000L
+
     /** The longest any feed's answer is re-used instead of asked again, so it's still fresh through a scan. */
     const val MAX_REUSE_MS = 2 * 60_000L
 
