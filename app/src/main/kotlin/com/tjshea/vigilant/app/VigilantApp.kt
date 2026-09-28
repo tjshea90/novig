@@ -52,6 +52,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
+import com.tjshea.vigilant.data.vigilantHttpClient
 import okhttp3.OkHttpClient
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -78,11 +79,7 @@ class VigilantApp : Application() {
 class AppContainer(app: Application) {
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    val http: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .callTimeout(30, TimeUnit.SECONDS)
-        .build()
+    val http: OkHttpClient = vigilantHttpClient()
 
     /** Tj's keys as plain JSON in app storage: survives updates and restores from backup. */
     val keyStore = FileApiKeyStore(File(app.filesDir, "api_keys.json"), json)

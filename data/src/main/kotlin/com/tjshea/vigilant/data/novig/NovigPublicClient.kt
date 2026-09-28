@@ -116,8 +116,9 @@ class NovigPublicClient(
     private val publicConcurrency: Int = 3,
     keyedRate: Double = 14.0,
     keyedBurst: Int = 40,
-    // Ten in flight: at a phone's ~400-700 ms for a signed request, six topped out under the key's 14/s.
-    private val keyedConcurrency: Int = 10,
+    // Ten in flight: at a phone's ~400-700 ms for a signed request, six topped out under the key's 14/s. Needs an
+    // OkHttpClient that allows it ([com.tjshea.vigilant.data.vigilantHttpClient]; OkHttp's own default is 5 a host).
+    private val keyedConcurrency: Int = com.tjshea.vigilant.data.NOVIG_KEYED_IN_FLIGHT,
     /** Pacing runs on real time even when [clock] is faked for timestamps. */
     private val rateClock: () -> Long = System::currentTimeMillis,
     private val sleep: suspend (Long) -> Unit = { delay(it) },
