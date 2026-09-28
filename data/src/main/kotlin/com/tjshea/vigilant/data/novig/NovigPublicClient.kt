@@ -326,6 +326,7 @@ class NovigPublicClient(
                                 // Retry-After: 1. Pause everyone, halve the pace, retry this book
                                 // twice; anything still missing is served from the last scan. The
                                 // refusals of one burst count once toward giving up.
+                                if (e.code == 403) refused.incrementAndGet()
                                 val hits = if (e.code != 429) 0 else {
                                     refused.incrementAndGet()
                                     val t = rateClock()
