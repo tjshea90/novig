@@ -25,6 +25,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToKey
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.swipeDown
@@ -1462,5 +1463,73 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
         compose.onNodeWithText("Pause all scanning").performClick()
         assertEquals(true, picked?.paused)
+    }
+
+    // ---- Tj, 2026-09-28: "Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited …
+    // make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished scanning for
+    // the selected time period" ---------------------------------------------------------------------------------------------
+
+    @Test fun settingsOfferNoLimitOnEveryScanCapThatCanUseIt() {
+        val nl = com.tjshea.vigilant.data.scanner.ScanSettings.NO_LIMIT
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        // Each "No limit" chip sets its own cap: Novig prices, The Odds API credits, PropLine's games.
+        val set = HashSet<String>()
+        val noLimit = compose.onAllNodesWithText("No limit")
+        repeat(noLimit.fetchSemanticsNodes().size) { i ->
+            noLimit[i].performScrollTo().performClick()
+            val p = picked!!
+            if (p.maxBooksPerScan == nl) set += "prices"
+            if (p.bookPropCreditsPerScan == nl) set += "credits"
+            if (p.propLineGamesPerScan == nl) set += "propline"
+        }
+        assertEquals(setOf("prices", "credits", "propline"), set)
+        // "All": lines and props per game, and the sportsbook-props window.
+        val all = HashSet<String>()
+        val allChips = compose.onAllNodesWithText("All")
+        repeat(allChips.fetchSemanticsNodes().size) { i ->
+            allChips[i].performScrollTo().performClick()
+            val p = picked!!
+            if (p.linesPerGame == nl) all += "lines"
+            if (p.propsPerGame == nl) all += "props"
+            if (p.bookPropHours == nl) all += "hours"
+        }
+        assertTrue(all.toString(), all.containsAll(setOf("lines", "props", "hours")))
+    }
+
+    @Test fun theNoLimitHintsSayWhatBoundsTheScan() {
+        val nl = com.tjshea.vigilant.data.scanner.ScanSettings.NO_LIMIT
+        val prices = com.tjshea.vigilant.app.ui.scanSizeHint(nl)
+        assertTrue(prices, prices.contains("each read once; then the scan stops"))
+        assertTrue(prices, prices.contains("never runs past about 8 minutes"))
+        assertEquals("as long as the games take, 10 minutes at most", com.tjshea.vigilant.app.ui.scanTime(nl))
+        val credits = com.tjshea.vigilant.app.ui.creditWorstCase(nl)
+        assertTrue(credits, credits.contains("free 500 a month can go in one or two scans"))
+        val s = SampleScan.settings.copy(bookPropCreditsPerScan = nl, bookPropHours = nl, daysAhead = 7)
+        assertTrue(com.tjshea.vigilant.app.ui.bookPropEstimate(s).startsWith("No limit: every game with props in the next 7 days"))
+        assertTrue(com.tjshea.vigilant.app.ui.propLineGamesHint(s.copy(propLineGamesPerScan = nl)).contains("1,000 a day can run out"))
+        assertEquals("the next 12 hours", com.tjshea.vigilant.app.ui.windowLabel(12))
+        assertEquals("the next day", com.tjshea.vigilant.app.ui.windowLabel(24))
+        // Games past "Starts within" point there, not at Days ahead.
+        val narrow = SampleScan.settings.copy(daysAhead = 7, startsWithinHours = 12)
+        assertTrue(com.tjshea.vigilant.app.ui.laterGamesText(5, narrow).contains("widen Starts within and scan again"))
+        assertTrue(com.tjshea.vigilant.app.ui.laterGamesText(5, narrow.copy(startsWithinHours = 0)).contains("raise Days ahead"))
+    }
+
+    /** "Starts within" widened after a scan that read only 12 hours: the feed says the rest needs a scan. */
+    @Test fun theFeedSaysWhenTheWindowIsWiderThanTheLastScan() {
+        var scans = 0
+        val base = SampleScan.state()
+        val s = base.copy(
+            settings = base.settings.copy(startsWithinHours = 24, daysAhead = 7),
+            status = base.status.copy(scannedWindowHours = 12),
+        )
+        shoot("1l_feed_window_widened") { FeedScreen(s, { scans++ }, {}, {}, { _, _ -> }) }
+        compose.onNodeWithText("The last scan read games starting in the next 12 hours. Scan to add the rest of the next day.").assertIsDisplayed()
+        compose.onAllNodesWithText("Scan").onFirst().performClick()
+        assertEquals(1, scans)
+        // The same window as the scan: nothing to say.
+        screen { FeedScreen(s.copy(status = s.status.copy(scannedWindowHours = 24)), {}, {}, {}, { _, _ -> }) }
+        compose.onAllNodesWithText("Scan to add the rest", substring = true).assertCountEquals(0)
     }
 }
