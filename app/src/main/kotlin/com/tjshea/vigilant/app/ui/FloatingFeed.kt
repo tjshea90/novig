@@ -94,6 +94,8 @@ class FloatingActions(
     val onScanner: (com.tjshea.vigilant.data.scanner.ScannerMode) -> Unit = {},
     /** The top bar's start-time switch: only games starting within this many hours (0 = any time). */
     val onStartsWithin: (Int) -> Unit = {},
+    /** The top bar's pause button: pause every scan (true) or resume (false). */
+    val onPause: (Boolean) -> Unit = {},
 )
 
 /** Height of one bet in the floating widget: a comfortable touch target. */
@@ -168,7 +170,7 @@ fun FloatingFeed(
                     .height(FloatingWidget.HEADER_DP.dp - 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(7.dp).background(if (busy) MaterialTheme.colorScheme.primary else Edge.colors.positive, CircleShape))
+                Box(Modifier.size(7.dp).background(if (state.settings.paused) Edge.colors.warning else if (busy) MaterialTheme.colorScheme.primary else Edge.colors.positive, CircleShape))
                 Text(
                     miniStatus(state, now),
                     Modifier.weight(1f).padding(start = 6.dp),
@@ -183,6 +185,14 @@ fun FloatingFeed(
                 if (items.isNotEmpty()) {
                     Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(start = 6.dp, end = 2.dp))
                 }
+                // Pause / resume every scan (Tj, 2026-09-28: "Make an option in the app to pause all scanning").
+                val paused = state.settings.paused
+                HeaderButton(
+                    painterResource(if (paused) R.drawable.ic_play else R.drawable.ic_pause),
+                    if (paused) "Resume scanning" else "Pause all scanning",
+                    { actions.onPause(!paused) },
+                    tint = if (paused) Edge.colors.warning else null,
+                )
                 HeaderButton(painterResource(R.drawable.ic_open), "Open Vigilant", actions.onOpenApp)
                 HeaderButton(painterResource(R.drawable.ic_minimize), "Shrink to a bubble", actions.onMinimize)
                 HeaderButton(null, "Close the widget", actions.onClose, close = true)
@@ -489,13 +499,13 @@ private fun scannerWords(mode: com.tjshea.vigilant.data.scanner.ScannerMode) = w
 }
 
 @Composable
-private fun HeaderButton(icon: Painter?, description: String, onClick: () -> Unit, close: Boolean = false) {
+private fun HeaderButton(icon: Painter?, description: String, onClick: () -> Unit, close: Boolean = false, tint: Color? = null) {
     Box(
         Modifier.size(32.dp).clickable(onClickLabel = description, onClick = onClick).semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         if (close) Icon(Icons.Filled.Close, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        else if (icon != null) Icon(icon, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        else if (icon != null) Icon(icon, null, Modifier.size(16.dp), tint = tint ?: MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
