@@ -417,7 +417,7 @@ object Planner {
             // A tennis match's spread and total are in games (its set lines are other market types).
             "SPREAD" -> spread(0, if (m.league.tennis) "Games Spread" else "Spread")
             "SPREAD_1H" -> spread(1, "$halfLabel Spread")
-            "TOTAL" -> overUnder(LineKind.TOTAL, 0, "Total")
+            "TOTAL" -> overUnder(LineKind.TOTAL, 0, if (m.league.tennis) "Total Games" else "Total")
             "TOTAL_1H" -> overUnder(LineKind.TOTAL, 1, "$halfLabel Total")
             // "PIT @ DET FIRST_INNING_TOTAL", Over/Under 0.5: NRFI/YRFI.
             "FIRST_INNING_TOTAL" -> overUnder(LineKind.TOTAL, RefBookMarket.PERIOD_FIRST_INNING, "1st Inning Total")
