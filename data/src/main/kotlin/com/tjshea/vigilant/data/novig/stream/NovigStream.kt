@@ -149,7 +149,7 @@ class NovigStream(
         return out
     }
 
-    override fun problemSince(sinceMs: Long): String? = synchronized(this) { problem?.takeIf { failedAtMs >= sinceMs } }
+    override fun problemSince(sinceMs: Long): String? = synchronized(this) { problem?.takeIf { (failedAtMs ?: return null) >= sinceMs } }
 
     fun book(marketId: String): NovigBook? = live(listOf(marketId))[marketId]
 
