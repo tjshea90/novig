@@ -160,6 +160,7 @@ class Scanner(
         val sourceReports = coroutineScope {
             val catalogJob = async {
                 refreshCatalog(settings, catalogTypes(settings, ordered), now, errors)
+                boardAt.set(elapsed() - t0)
                 progress.fairDone()
             }
             // First choices start at once; a fallback (RESEARCH.md §23) waits for the source it backs up.
