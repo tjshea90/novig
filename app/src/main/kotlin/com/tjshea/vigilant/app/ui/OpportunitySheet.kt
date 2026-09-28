@@ -275,9 +275,9 @@ fun OpportunityDetail(
         // "the button only opens the app, not the exact bet slip like the cno scanner does").
         val openNovig = LocalOpenNovig.current
         OutlinedButton(
-            onClick = { betSlipLink(o, settings.bookState).let { link -> openNovig?.invoke(link) ?: open(if (AppBook.isNovig) "https://novig.com" else link) } },
+            onClick = { betSlipLinkWithStake(o, settings).let { link -> openNovig?.invoke(link) ?: open(if (AppBook.isNovig) "https://novig.com" else link) } },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp),
-        ) { Text("Open this bet in ${AppBook.name}") }
+        ) { Text("Open this bet in ${AppBook.name}" + slipStakeSuffix(o, settings)) }
         if (!AppBook.isNovig && settings.bookState.isBlank()) {
             Text(
                 "Pick your ${AppBook.name} state in Settings so this opens the exact bet slip (${AppBook.name}'s sites are per state).",
@@ -295,3 +295,31 @@ fun betSlipLink(o: Opportunity): String = "novigapp://events/${o.outcome.outcome
 /** [o]'s bet slip in the app's own book: Novig's link above, or BetMGM's ([AppBook.betLink]) for a player in [state]. */
 fun betSlipLink(o: Opportunity, state: String): String =
     AppBook.betLink(o.outcome.outcomeId, o.outcome.bookRef, state) ?: AppBook.home
+
+/** [o]'s bet slip, opened with the stake Settings asks for ($1, Kelly, or a set amount; Tj, 2026-09-28). */
+fun betSlipLinkWithStake(o: Opportunity, settings: ScanSettings): String =
+    betSlipLink(o, settings.bookState).let { link -> NovigLinks.withStake(link, settings.slipStakeFor(o.suggestedStake)) ?: link }
+
+/** " · $12.27" when [o]'s bet slip opens with a stake, else nothing. */
+fun slipStakeSuffix(o: Opportunity, settings: ScanSettings): String =
+    if (!AppBook.isNovig) "" else settings.slipStakeFor(o.suggestedStake)?.let { " · $" + NovigLinks.amountText(it) }.orEmpty()
+
+/**
+ * One tap to [o]'s bet slip in Novig, the way the widget opens its bets (Tj, 2026-09-28: "make easy one press buttons next
+ * to each bet to Open the bet in novig, just as the widget does"), with the stake Settings asks for.
+ */
+@Composable
+fun OpenBetButton(o: Opportunity, settings: ScanSettings, modifier: Modifier = Modifier) {
+    val openNovig = LocalOpenNovig.current
+    val context = LocalContext.current
+    androidx.compose.material3.FilledTonalButton(
+        onClick = {
+            val link = betSlipLinkWithStake(o, settings)
+            openNovig?.invoke(link) ?: runCatching {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(if (AppBook.isNovig) "https://novig.com" else link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        },
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+        modifier = modifier.testTag("openBet"),
+    ) { Text("Open in ${AppBook.name}" + slipStakeSuffix(o, settings), maxLines = 1) }
+}
