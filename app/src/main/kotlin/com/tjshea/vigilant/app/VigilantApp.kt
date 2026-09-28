@@ -48,11 +48,11 @@ import com.tjshea.vigilant.data.tracker.FreeScores
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.PlacedBets
 import com.tjshea.vigilant.data.tracker.PlacedBook
+import com.tjshea.vigilant.data.vigilantHttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
-import com.tjshea.vigilant.data.vigilantHttpClient
 import okhttp3.OkHttpClient
 import java.io.File
 

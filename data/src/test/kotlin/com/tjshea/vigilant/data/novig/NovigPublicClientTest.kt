@@ -267,7 +267,8 @@ class NovigPublicClientTest {
                 return bookFor(request)
             }
         }
-        val batch = keyed(client()).books((1..30).map { "m$it" })
+        val c = keyed(NovigPublicClient(com.tjshea.vigilant.data.vigilantHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }))
+        val batch = c.books((1..30).map { "m$it" })
         assertEquals(30, batch.viaKey)
         assertEquals(10, maxInFlight.get())
     }
