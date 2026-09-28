@@ -16,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 class NovigPublicClientTest {
 
@@ -214,24 +215,30 @@ class NovigPublicClientTest {
     private fun MockWebServer.requests(): List<RecordedRequest> = (0 until requestCount).map { takeRequest() }
 
     /**
-     * Tj, 2026-09-28: "now it is reading the API very slow". With a key, a whole wave of books is in flight when
-     * Novig's `read` bucket runs dry, and every one comes back 429 at once. That's one refusal: it used to count as
-     * six (of the 8 allowed) and halve the pace six times, so a few more refusals stopped the whole scan.
+     * Tj, 2026-09-28: "now it is reading the API very slow". With a key, a whole wave of books (10) is in flight
+     * when Novig's `read` bucket runs dry, and every one comes back 429 together. That's one refusal: it used to
+     * count as ten of the 8 allowed and stop the whole scan (and halve the pace ten times, to 1/s for a minute).
      */
     @Test
-    fun `with a key, refused waves are waited out and every book still comes`() = runBlocking {
+    fun `with a key, a refused wave is waited out once and every book still comes`() = runBlocking {
+        val firstRefusal = AtomicLong(0)
         val refused = AtomicInteger()
         server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse = when {
-                request.requestUrl!!.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
-                // A whole wave in flight refused, then the first retries too.
-                refused.incrementAndGet() <= 10 -> MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
-                    .setBody("""{"code":"RATE_LIMIT_EXCEEDED","message":"Rate limit exceeded. Please wait before retrying."}""")
-                else -> bookFor(request)
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath == "/v3/limits") return MockResponse().setBody(limitsBody)
+                firstRefusal.compareAndSet(0, System.currentTimeMillis())
+                // Everything that arrives in the first moment (the wave in flight) is refused; Retry-After: 1.
+                return if (System.currentTimeMillis() - firstRefusal.get() < 300) {
+                    refused.incrementAndGet()
+                    MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
+                        .setBody("""{"code":"RATE_LIMIT_EXCEEDED","message":"Rate limit exceeded. Please wait before retrying."}""")
+                } else {
+                    bookFor(request)
+                }
             }
         }
         val batch = keyed(client()).books((1..16).map { "m$it" })
-        println("DEBUG ${batch.lastError} ${batch.failed} ${batch.retryAfterSeconds} ${refused.get()} ${batch.fetched}")
+        assertTrue("${refused.get()} refused", refused.get() >= 9)
         assertEquals(0, batch.failed)
         assertEquals(16, batch.fetched)
         assertEquals(16, batch.viaKey)

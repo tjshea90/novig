@@ -106,7 +106,8 @@ class NovigPublicClient(
     private val publicConcurrency: Int = 3,
     keyedRate: Double = 14.0,
     keyedBurst: Int = 40,
-    private val keyedConcurrency: Int = 6,
+    // Ten in flight: at a phone's ~400-700 ms for a signed request, six topped out under the key's 14/s.
+    private val keyedConcurrency: Int = 10,
     /** Pacing runs on real time even when [clock] is faked for timestamps. */
     private val rateClock: () -> Long = System::currentTimeMillis,
     private val sleep: suspend (Long) -> Unit = { delay(it) },
