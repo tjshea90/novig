@@ -109,13 +109,30 @@ class NovigPublicClient(
     private val keyedConcurrency: Int = 6,
     /** Pacing runs on real time even when [clock] is faked for timestamps. */
     private val rateClock: () -> Long = System::currentTimeMillis,
-    sleep: suspend (Long) -> Unit = { delay(it) },
+    private val sleep: suspend (Long) -> Unit = { delay(it) },
     /** Counts every request (and throttle) for the usage meter. */
     private val usage: UsageMeter? = null,
 ) : NovigSource {
 
     private val publicGate = RateGate(publicRate, publicBurst, rateClock, sleep, maxRate = publicMaxRate)
-    private val keyedGate = RateGate(keyedRate, keyedBurst, rateClock, sleep)
+
+    /** The key's `read` bucket, modeled (docs: api/throttling); re-set from `GET /v3/limits` ([ensureLimits]). */
+    @Volatile
+    private var keyedGate = RateGate(keyedRate, keyedBurst, rateClock, sleep)
+
+    /**
+     * The key's own throttle schedule, read once per key from `GET /v3/limits` (free: 0 tokens) the first time
+     * the key is used: the keyed pace and the websocket follow Novig's real numbers, not the documented defaults
+     * (docs: "Model each throttle in your client … GET /v3/limits reports every bucket's numbers"). Null until
+     * then, or when Novig didn't answer (the defaults stand).
+     */
+    @Volatile
+    var limits: NovigLimits? = null
+        private set
+
+    /** The key [limits] was asked for (once per key per process, answered or not). */
+    @Volatile
+    private var limitsAskedFor: NovigSignedClient? = null
 
     /** Signs book requests with the connected read-only key. Null = public routes only. */
     @Volatile
@@ -156,7 +173,7 @@ class NovigPublicClient(
     )
 
     override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?): List<NovigEvent> =
-        paged("/v3/public/catalog/events", buildMap {
+        catalog("/v3/catalog/events", "/v3/public/catalog/events", buildMap {
             if (leagues.isNotEmpty()) put("league", leagues.joinToString(","))
             if (statuses.isNotEmpty()) put("status", statuses.joinToString(","))
             startsBefore?.let { put("startsBefore", it.toString()) }
@@ -169,7 +186,7 @@ class NovigPublicClient(
         eventStatuses: Collection<String>,
         startsBefore: Long?,
     ): List<NovigMarket> =
-        paged("/v3/public/catalog/markets", buildMap {
+        catalog("/v3/catalog/markets", "/v3/public/catalog/markets", buildMap {
             if (leagues.isNotEmpty()) put("league", leagues.joinToString(","))
             if (marketTypes.isNotEmpty()) put("marketType", marketTypes.joinToString(","))
             if (eventStatuses.isNotEmpty()) put("eventStatus", eventStatuses.joinToString(","))
@@ -192,6 +209,54 @@ class NovigPublicClient(
     /** The last book seen for [marketId], without any network. */
     fun cached(marketId: String): NovigBook? = bookCache[marketId]?.book
 
+    /** After the key's catalog route fails, the public one is used this long. */
+    @Volatile
+    private var keyedCatalogDownUntil = 0L
+
+    /**
+     * Novig's board: through the connected key's signed catalog (its own `read` bucket, not the per-IP
+     * public throttle a carrier's shared address splits with strangers; docs: api/throttling), else, or
+     * if that fails, the public routes. Same parameters and pages either way.
+     */
+    private suspend fun <T> catalog(signedPath: String, publicPath: String, params: Map<String, String>, parse: (String) -> Pair<List<T>, String?>): List<T> {
+        val signer = keyed?.takeIf { clock() >= keyedDownUntil && clock() >= keyedCatalogDownUntil }
+        if (signer != null) {
+            ensureLimits(signer)
+            try {
+                return paged(signedPath, params, parse, signer)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                keyedCatalogDownUntil = clock() + keyedRetryMs
+            }
+        }
+        return paged(publicPath, params, parse)
+    }
+
+    /**
+     * Reads the key's throttle schedule once ([limits]) and paces by it: keyed reads at 90% of the `read`
+     * bucket's refill with 70% of its capacity as burst (the edge also counts every request), and the
+     * websocket told its `stream` bucket and watch cap. A failure keeps the documented defaults.
+     */
+    private suspend fun ensureLimits(signer: NovigSignedClient) {
+        if (limitsAskedFor === signer) return
+        limitsAskedFor = signer
+        val l = try {
+            http.newCall(signer.signedRequest("GET", "/v3/limits")).await().use { response ->
+                count(response.code)
+                if (!response.isSuccessful) return
+                json.decodeFromString(LimitsDto.serializer(), response.body?.string().orEmpty()).toDomain() ?: return
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return
+        }
+        limits = l
+        keyedGate = RateGate((l.readPerSec * 0.9).coerceAtLeast(1.0), (l.readCapacity * 0.7).toInt().coerceAtLeast(1), rateClock, sleep)
+        stream?.tune(l.streamCapacity, l.streamPerSec, l.maxWatchedMarkets)
+    }
+
     override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch = coroutineScope {
         val all = marketIds.distinct()
         // Books the websocket keeps current need no request; the rest are read one by one.
@@ -199,6 +264,7 @@ class NovigPublicClient(
         for ((id, book) in pushed) bookCache[id] = CachedBook(null, book)
         val ids = all.filter { it !in pushed }
         val signer = keyed?.takeIf { clock() >= keyedDownUntil }
+        if (signer != null && ids.isNotEmpty()) ensureLimits(signer)
         val useKey = AtomicReference(signer)
         val keyProblem = AtomicReference<String?>(null)
         val gate = Semaphore(if (signer != null) keyedConcurrency else publicConcurrency)
@@ -340,18 +406,20 @@ class NovigPublicClient(
         path: String,
         params: Map<String, String>,
         parse: (String) -> Pair<List<T>, String?>,
+        /** Signs each page with the key (the signed catalog), else the public route. */
+        signer: NovigSignedClient? = null,
     ): List<T> {
         val all = ArrayList<T>()
         var after: String? = null
         var retries = 0
         var pages = 0
         while (pages < MAX_PAGES) {
-            val url = "$baseUrl$path".toHttpUrl().newBuilder().apply {
-                params.forEach { (k, v) -> addQueryParameter(k, v) }
-                after?.let { addQueryParameter("after", it) }
-            }.build()
-            publicGate.acquire()
-            val page = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
+            val query = (params + listOfNotNull(after?.let { "after" to it })).entries
+                .joinToString("&") { (k, v) -> "${queryEncode(k)}=${queryEncode(v)}" }
+            val gate = if (signer != null) keyedGate else publicGate
+            gate.acquire()
+            val request = signer?.signedRequest("GET", path, query) ?: Request.Builder().url("$baseUrl$path?$query").get().build()
+            val page = http.newCall(request).await().use { response ->
                 val body = response.body?.string().orEmpty()
                 count(response.code)
                 if (!response.isSuccessful) {
@@ -361,13 +429,13 @@ class NovigPublicClient(
                     val wait = e.retryAfterSeconds ?: 1
                     if (e.code == 429 && wait <= SHORT_RETRY_SECONDS && retries < 2) {
                         retries++
-                        publicGate.pause(rateClock() + wait * 1000L)
-                        publicGate.slowDown()
+                        gate.pause(rateClock() + wait * 1000L)
+                        gate.slowDown()
                         return@use null
                     }
                     throw e
                 }
-                publicGate.success()
+                gate.success()
                 parse(body)
             } ?: continue
             all += page.first
@@ -397,6 +465,21 @@ class NovigPublicClient(
         runCatching { json.decodeFromString(ErrorDto.serializer(), body).code }.getOrNull()
 
     companion object {
+        /**
+         * A query value as sent and as signed: everything but `A-Z a-z 0-9 - . _ ~` as `%XX` (NOVIG-V3's
+         * canonical form, so the URL and the signature agree; an opaque `after` cursor may hold `+` or `/`).
+         */
+        fun queryEncode(s: String): String = buildString {
+            for (b in s.toByteArray(Charsets.UTF_8)) {
+                val c = b.toInt() and 0xFF
+                if ((c in 'A'.code..'Z'.code) || (c in 'a'.code..'z'.code) || (c in '0'.code..'9'.code) || c == '-'.code || c == '.'.code || c == '_'.code || c == '~'.code) {
+                    append(c.toChar())
+                } else {
+                    append('%').append("0123456789ABCDEF"[c shr 4]).append("0123456789ABCDEF"[c and 0xF])
+                }
+            }
+        }
+
         const val KEY_CANT_SIGN = "The Novig key on this phone can't sign any more (normal after restoring to a new phone). " +
             "Disconnect it in Settings and connect it again."
         const val MAX_CACHED_BOOKS = 3000
@@ -410,6 +493,33 @@ class NovigPublicClient(
 
 @Serializable
 private data class ErrorDto(val code: String? = null, val message: String? = null)
+
+/** A key's throttle schedule (`GET /v3/limits`, docs: api/throttling): what Vigilant paces by. */
+data class NovigLimits(
+    val readCapacity: Int,
+    val readPerSec: Double,
+    val streamCapacity: Int,
+    val streamPerSec: Double,
+    val maxWatchedMarkets: Int,
+)
+
+@Serializable
+private data class BucketDto(val capacity: Int? = null, val refillPerSec: Double? = null)
+
+@Serializable
+private data class LimitsDto(val read: BucketDto? = null, val stream: BucketDto? = null, val maxWatchedMarkets: Int? = null) {
+    fun toDomain(): NovigLimits? {
+        val r = read ?: return null
+        val st = stream ?: return null
+        return NovigLimits(
+            readCapacity = r.capacity?.takeIf { it > 0 } ?: return null,
+            readPerSec = r.refillPerSec?.takeIf { it > 0 } ?: return null,
+            streamCapacity = st.capacity?.takeIf { it > 0 } ?: return null,
+            streamPerSec = st.refillPerSec?.takeIf { it > 0 } ?: return null,
+            maxWatchedMarkets = maxWatchedMarkets?.takeIf { it > 0 } ?: return null,
+        )
+    }
+}
 
 @Serializable
 private data class EventPageDto(val items: List<EventDto> = emptyList(), val next: String? = null)
