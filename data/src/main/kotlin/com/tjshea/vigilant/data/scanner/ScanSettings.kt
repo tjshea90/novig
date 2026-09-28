@@ -113,6 +113,12 @@ data class ScanSettings(
      */
     val maxBooksPerScan: Int = 300,
     /**
+     * What the per-game picks leave of [maxBooksPerScan] goes to every other line a fair source quotes
+     * (alternate spreads and totals, more props), best-covered first (Tj, 2026-09-28: "make sure the app is
+     * finding as many positive EV bets on novig as possible"). Off: a scan reads the per-game picks only.
+     */
+    val fillBudget: Boolean = true,
+    /**
      * Player props from the major sportsbooks (DraftKings, FanDuel, BetMGM, …) via The Odds API,
      * devigged book by book and averaged. Costs 1 credit per prop type per game.
      */

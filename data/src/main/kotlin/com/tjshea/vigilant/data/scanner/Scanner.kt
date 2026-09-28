@@ -402,8 +402,9 @@ class Scanner(
     /**
      * Which unread markets to read first. Open bets, then the likeliest +EV lines by EV, then near
      * misses, then lines never priced (props, period lines and team totals before main lines: the
-     * derivative markets are where exchange prices lag most), then lines well below zero, and last the
-     * games no fair source covers (they can't be +EV). Soonest games first within each.
+     * derivative markets are where exchange prices lag most), then the budget's filler lines never
+     * priced ([PlannedMarket.spare]), then lines well below zero, and last the games no fair source
+     * covers (they can't be +EV). Soonest games first within each.
      *
      * A line's EV here is its [preview] (this scan's fair line at Novig's price as PropLine relayed it
      * seconds ago) when there is one, else last scan's: so a missing, failed, late or old relay simply
@@ -415,13 +416,14 @@ class Scanner(
         fun group(p: PlannedMarket): Int {
             val id = p.market.marketId
             if (id in pinned) return 0
-            if (p.lineKey == null) return 6
+            if (p.lineKey == null) return 7
             val ev = ev(id)
             return when {
+                ev == null && p.spare -> 5
                 ev == null -> if (p.kind == LineKind.PLAYER_PROP || p.kind == LineKind.TEAM_TOTAL || (p.lineKey.period) != 0) 3 else 4
                 ev >= settings.minEvPercent -> 1
                 ev >= NEAR_MISS_EV -> 2
-                else -> 5
+                else -> 6
             }
         }
         return pending.sortedWith(
@@ -693,7 +695,7 @@ class Scanner(
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
             settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
-            settings.propsPerGame, settings.maxBooksPerScan, pinned, now / 60_000L, fairAsOf / 60_000L,
+            settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L,
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
         val filtered = refs.map { snap ->
