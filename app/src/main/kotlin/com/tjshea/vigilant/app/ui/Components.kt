@@ -182,6 +182,30 @@ fun ScanProgressBar(status: ScanStatus, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Pause / resume every scan (Tj, 2026-09-28: "Make an option in the app to pause all scanning"): the +EV and CNO
+ * tabs' top bars. Paused, it's a play button in the warning color.
+ */
+@Composable
+fun PauseButton(paused: Boolean, onPause: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    androidx.compose.material3.IconButton(onClick = { onPause(!paused) }, modifier = modifier) {
+        Icon(
+            androidx.compose.ui.res.painterResource(if (paused) com.tjshea.vigilant.app.R.drawable.ic_play else com.tjshea.vigilant.app.R.drawable.ic_pause),
+            contentDescription = if (paused) "Resume scanning" else "Pause all scanning",
+            tint = if (paused) Edge.colors.warning else MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+/** What the +EV and CNO tabs say while scanning is paused, with the way back. */
+@Composable
+fun PausedBanner(onResume: () -> Unit, modifier: Modifier = Modifier) {
+    Banner(PAUSED_TEXT, modifier, action = "Resume", onAction = onResume)
+}
+
+/** [PausedBanner]'s words. */
+const val PAUSED_TEXT = "Scanning is paused: nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) until you resume."
+
 @Composable
 fun Banner(text: String, modifier: Modifier = Modifier, color: Color = Edge.colors.warning, action: String? = null, onAction: () -> Unit = {}) {
     Surface(modifier.fillMaxWidth(), color = color.copy(alpha = 0.14f), shape = RoundedCornerShape(10.dp)) {
