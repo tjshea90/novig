@@ -2259,3 +2259,8 @@ Research novig API docs too. Make sure the app is taking full advantage of the A
 ```
 The app found several positive EV bets while scanning but they quickly disappeared. Is this supposed to happen? 
 ```
+
+## 2026-09-28T14:46:15Z
+```
+Did this latest version change anything with the novig API scan because now it is reading the API very slow
+```
