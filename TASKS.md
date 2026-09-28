@@ -2591,4 +2591,4 @@ Nothing at or above 1.0% EV."
       selected time period (Days ahead, or "Starts within" when narrower: open task S1), each read once, then it stops;
       background auto-scan and widget rescans still only repeat on their own timers. Tests prove each market is read
       once and the scan ends.
-- [ ] V6 Ship and send the link.
+- [x] V6 (DONE: v0.19.6 (41): ship.sh 760 tests/0 failures, CI green on 036f664, release.yml published vigilant-v0.19.6.apk (new code checked inside the APK), BUILDLOG recorded.) Ship and send the link.
