@@ -86,6 +86,11 @@ data class EventMatch(
 data class Plan(
     val markets: List<PlannedMarket>,
     val events: List<EventMatch>,
+    /**
+     * Games (two sides, not futures) in the picked leagues that Novig lists but that start after
+     * "Days ahead": not scanned, counted so the feed can say so.
+     */
+    val laterGames: Int = 0,
 ) {
     val marketIds: List<String> get() = markets.map { it.market.marketId }
     val matchedEvents: Int get() = events.count { it.refEvent != null }
