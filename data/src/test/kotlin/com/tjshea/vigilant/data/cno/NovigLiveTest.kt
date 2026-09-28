@@ -130,4 +130,23 @@ class NovigLiveTest {
         assertEquals(setOf(row(1).key), live.prices.value.keys)
         job.cancel()
     }
+
+    @Test
+    fun `a background check reads Novig's price now once, for the Novig bets it asks about`() = runTest {
+        val source = Source().also { it.clock = { currentTime } }
+        val live = NovigLive(source, { r -> finder(r.bet.removePrefix("P").substringBefore(' ').toInt()) }, clock = { currentTime })
+        source.overBid["m1"] = 540 // Under takes at 0.46 (+117)
+        val got = live.readNow(listOf(row(1), row(2), row(9), row(3, book = "FanDuel")))
+        // One read per pinned-down Novig bet; the game-only one and the FanDuel one are left out.
+        assertEquals(setOf(row(1).key, row(2).key), got.keys)
+        assertEquals(2, source.reads)
+        assertEquals(117, got.getValue(row(1).key).american)
+        // The lists see them too, until the screen's own loop takes over.
+        assertEquals(got, live.prices.value)
+        // Asked again: read again (a background check wants the price now, not the last one).
+        live.readNow(listOf(row(1)))
+        assertEquals(3, source.reads)
+        assertTrue(live.readNow(emptyList()).isEmpty())
+        assertEquals(3, source.reads)
+    }
 }
