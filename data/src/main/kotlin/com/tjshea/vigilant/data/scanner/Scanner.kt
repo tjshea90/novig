@@ -355,7 +355,7 @@ class Scanner(
                     publish(cat)
                     continue
                 }
-                val chunk = fetchOrder(pending, settings, preview).take(minOf(CHUNK, cap - requested.size))
+                val chunk = fetchOrder(pending, settings, preview).take(minOf(novig.batchSize().coerceAtLeast(1), cap - requested.size))
                 val ids = chunk.map { it.market.marketId }
                 requested += ids
                 progress.reading = true

@@ -47,6 +47,16 @@ interface NovigSource {
 
     /** Why pushed books stopped, if they did at or after [sinceMs] (the scan says so once). */
     fun pushProblem(sinceMs: Long): String? = null
+
+    /**
+     * How many books a scan asks for at a time, between re-plans: enough that every request slot stays busy
+     * ([DEFAULT_BATCH] on the public routes; more with a key, which has more in flight).
+     */
+    fun batchSize(): Int = DEFAULT_BATCH
+
+    companion object {
+        const val DEFAULT_BATCH = 8
+    }
 }
 
 /** The result of fetching many books at once. A failure on some books never discards the rest. */
@@ -157,6 +167,10 @@ class NovigPublicClient(
         if (marketIds.isEmpty()) emptyMap() else liveStream()?.live(marketIds).orEmpty()
 
     override fun pushProblem(sinceMs: Long): String? = stream?.problemSince(sinceMs)
+
+    /** Three waves of the key's requests in flight; the public routes' 8 otherwise. */
+    override fun batchSize(): Int =
+        if (keyed != null && clock() >= keyedDownUntil) keyedConcurrency * 3 else NovigSource.DEFAULT_BATCH
 
     /** After the key route fails, stay on public routes this long before trying it again. */
     private val keyedRetryMs = 10 * 60_000L
