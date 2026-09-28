@@ -394,10 +394,13 @@ robolectric.org/configuring/.
 - **Manual scans only (Tj, 2026-09-25, after Novig 429s on v0.5.0).** Nothing requests
   odds from Novig or any provider unless Tj taps **Scan** or pulls to refresh: not on
   launch, not on a timer, not on a tab or settings change (those re-price from the last
-  scan). No websocket is opened. Novig reads are paced (`RateGate`: 4/s rising to at most 6/s
+  scan). Novig reads are paced (`RateGate`: 4/s rising to at most 6/s
   after clean runs, burst 10, 3 at a time, pause on Retry-After, halve and restart the ramp after
   a 429); with a key, books use the signed per-key route instead (14/s, under the documented
-  16/s). Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is one
+  16/s), and since v0.19.0 a **scan** also opens Novig's websocket with the key (Tj, 2026-09-28:
+  "taking full advantage of the novig API key"; RESEARCH.md §27): one subscribe loads the whole
+  plan ~8 s in, pushes keep it current, and it closes 2 minutes after the last scan or recheck
+  used it. No socket without a scan. Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is one
   asked-for exception, above; it reads CNO only. Background auto-scan, below, is the other: off
   by default, on only when Tj picks it.)
 - **Background auto-scan and +EV alerts, opt-in (Tj, 2026-09-28; v0.18.0, RESEARCH.md §26).**
