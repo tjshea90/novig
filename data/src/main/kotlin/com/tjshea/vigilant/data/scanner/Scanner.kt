@@ -311,13 +311,33 @@ class Scanner(
                 // Read before planning: a provider answering mid-plan still wakes the next pass.
                 val lastPass = fairDone
                 val plan = planFor(cat, settings, now)
+                val preview = preview(plan, settings, now)
+                // The whole plan, likeliest first, to the key's websocket (if any): it subscribes in bulk
+                // as its throttle allows, and keeps what it holds current (RESEARCH.md §27).
+                novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
                 val pending = plan.markets.filter { it.market.marketId !in requested }
                 if (pending.isEmpty()) {
                     if (lastPass) return
                     signal.receive()
                     continue
                 }
-                val chunk = fetchOrder(pending, settings, preview(plan, settings, now)).take(minOf(CHUNK, cap - requested.size))
+                // Books the websocket already holds cost no request: all of them at once.
+                val pushed = novig.pushed(pending.map { it.market.marketId })
+                if (pushed.isNotEmpty()) {
+                    val ids = fetchOrder(pending.filter { it.market.marketId in pushed }, settings, preview)
+                        .take(cap - requested.size).map { it.market.marketId }
+                    requested += ids
+                    ids.forEach { id -> fresh[id] = pushed.getValue(id) }
+                    fetched += ids.size
+                    viaPush += ids.size
+                    progress.reading = true
+                    progress.booksDone += ids.size
+                    progress.booksTotal = minOf(cap, requested.size + pending.size - ids.size)
+                    progress.emit()
+                    publish(cat)
+                    continue
+                }
+                val chunk = fetchOrder(pending, settings, preview).take(minOf(CHUNK, cap - requested.size))
                 val ids = chunk.map { it.market.marketId }
                 requested += ids
                 progress.reading = true
