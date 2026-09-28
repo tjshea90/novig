@@ -457,6 +457,7 @@ class Scanner(
                 // Only books actually read again replace the first read (a failed one keeps it).
                 for ((id, book) in batch.books) if (book.fetchedAtMs >= cutoff) fresh[id] = book
                 reread += batch.fetched + batch.notModified
+                refused += batch.refused
                 batch.retryAfterSeconds?.let { retryAfter = it }
             } catch (e: CancellationException) {
                 throw e
