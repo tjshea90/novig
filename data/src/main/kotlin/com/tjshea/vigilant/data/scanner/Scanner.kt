@@ -320,8 +320,11 @@ class Scanner(
                 val plan = planFor(cat, settings, now)
                 val preview = preview(plan, settings, now)
                 // The whole plan, likeliest first, to the key's websocket (if any): it subscribes in bulk
-                // as its throttle allows, and keeps what it holds current (RESEARCH.md §27).
-                novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
+                // as its throttle allows, and keeps what it holds current (RESEARCH.md §27). Once per plan.
+                if (plan !== watchedPlan) {
+                    watchedPlan = plan
+                    novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
+                }
                 val pending = plan.markets.filter { it.market.marketId !in requested }
                 if (pending.isEmpty()) {
                     if (lastPass) return
