@@ -106,10 +106,13 @@ class MainActivity : ComponentActivity() {
         // stopped it; switching it off stops it. Alerts need notifications: asked when it's turned on.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                vm.state.map { it.loaded to it.settings.autoScan }.distinctUntilChanged().collect { (loaded, mode) ->
+                vm.state.map { Triple(it.loaded, it.settings.autoScan, it.settings.paused) }.distinctUntilChanged().collect { (loaded, mode, paused) ->
                     if (!loaded) return@collect
                     val prefs = getSharedPreferences("ui", MODE_PRIVATE)
-                    if (mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) {
+                    if (mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && paused) {
+                        // Scanning paused (Tj, 2026-09-28): the service stops; resuming starts it again.
+                        AutoScanService.stop(this@MainActivity)
+                    } else if (mode != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) {
                         // Once each time it's turned on, not every time Vigilant opens (Settings has a button after that).
                         if (!ScanService.canNotify(this@MainActivity) && !prefs.getBoolean(ASKED_NOTIFICATIONS_AUTO, false)) {
                             prefs.edit().putBoolean(ASKED_NOTIFICATIONS_AUTO, true).apply()

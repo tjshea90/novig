@@ -94,10 +94,10 @@ class AutoScanService : Service() {
         return START_STICKY
     }
 
-    /** Settings changes (off, a new interval) and the cycle's progress, into the notification and the alarm. */
+    /** Settings changes (off, paused, a new interval) and the cycle's progress, into the notification and the alarm. */
     private suspend fun follow() {
         combine(
-            container.settingsStore.flow.filterNotNull().map { it.autoScan to it.autoScanMinutes }.distinctUntilChanged(),
+            container.settingsStore.flow.filterNotNull().map { it.activeAutoScan to it.autoScanMinutes }.distinctUntilChanged(),
             container.autoScan.status,
             container.runner.state.map { it.progress }.distinctUntilChanged(),
         ) { (mode, minutes), status, _ -> Triple(mode, minutes, status) }
@@ -107,7 +107,7 @@ class AutoScanService : Service() {
                     return@collect
                 }
                 val s = container.settingsStore.flow.value
-                val changed = settings?.let { it.autoScanMinutes != minutes || it.autoScan != mode } ?: false
+                val changed = settings?.let { it.autoScanMinutes != minutes || it.activeAutoScan != mode } ?: false
                 settings = s
                 if (changed && !status.running) {
                     AutoScanAlarm.set(this, AutoScanClock.nextAtMs(status.lastStartMs, minutes, System.currentTimeMillis()))
@@ -345,7 +345,7 @@ class AutoScanReceiver : BroadcastReceiver() {
                 val app = context.applicationContext as? VigilantApp ?: return pending.finish()
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        if (app.container.currentSettings().autoScan != AutoScanMode.OFF) AutoScanService.start(app)
+                        if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
                     } finally {
                         pending.finish()
                     }
