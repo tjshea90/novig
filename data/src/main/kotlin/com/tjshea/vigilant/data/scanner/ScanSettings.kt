@@ -241,6 +241,13 @@ data class ScanSettings(
      * 0 = no alerts.
      */
     val alertMinEv: Double = 0.03,
+    /**
+     * Every scan stops until Tj resumes (Tj, 2026-09-28: "Make an option in the app to pause all scanning"): a scan
+     * running is stopped, CrazyNinjaOdds' list and its lanes (books, links, rosters, Novig's price now) aren't read even
+     * on screen, background auto-scan and the widget's rescans wait, and Scan, Recheck and Refresh say it's paused. The
+     * scanner and auto-scan choices are kept for when it resumes. Opening a bet and settling tracked bets still work.
+     */
+    val paused: Boolean = false,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
