@@ -55,6 +55,8 @@ data class ScanReport(
     val novigCatalogAtMs: Long?,
     val sources: List<SourceReport>,
     val creditsRemaining: Int?,
+    /** Early edges' books read a second time at the end of a long scan ([Scanner.REREAD_AFTER_MS]). */
+    val booksReread: Int = 0,
 )
 
 /**
@@ -225,6 +227,7 @@ class Scanner(
             novigCatalogAtMs = catalog?.fetchedAtMs,
             sources = reports,
             creditsRemaining = creditsRemaining,
+            booksReread = pump.reread,
         )
     }
 
