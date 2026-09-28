@@ -18,6 +18,19 @@ enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
  */
 enum class ScannerMode(val displayName: String) { BOTH("Both"), VIGILANT("Vigilant only"), CNO("CNO only") }
 
+/**
+ * What runs in the background on a timer, with Vigilant closed or not (Tj, 2026-09-28: "an option to
+ * auto scan either cno or both cno and vigilant every 5 10 20 30 or 40 minutes in the background,
+ * even if the app is not open on the screen"). CNO: CrazyNinjaOdds' list and its best bets' books.
+ * Both: that, then Vigilant's own scan (its API credits included).
+ */
+enum class AutoScanMode(val displayName: String) {
+    OFF("Off"), CNO("CNO"), BOTH("CNO + Vigilant");
+
+    val cno: Boolean get() = this != OFF
+    val vigilant: Boolean get() = this == BOTH
+}
+
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
@@ -193,6 +206,19 @@ data class ScanSettings(
      * 24 hours or 12 hours or 48 hours"). A display filter: what a scan reads is unchanged.
      */
     val startsWithinHours: Int = 0,
+    /**
+     * Scans on a timer in the background, every [autoScanMinutes], with Vigilant closed or not
+     * (Tj, 2026-09-28). A foreground service with its own notification keeps it going; each scan
+     * is woken by an alarm and holds the CPU only while it runs. Off by default.
+     */
+    val autoScan: AutoScanMode = AutoScanMode.OFF,
+    val autoScanMinutes: Int = 10,
+    /**
+     * A push notification for each new bet at or over this EV (0.03 = 3%) that several books agree
+     * on, found while Vigilant isn't on screen; tapping it opens the bet in Novig (Tj, 2026-09-28).
+     * 0 = no alerts.
+     */
+    val alertMinEv: Double = 0.03,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
@@ -313,5 +339,11 @@ data class ScanSettings(
 
         /** [startsWithinHours]' choices (0 = any time). */
         val STARTS_WITHIN_CHOICES = listOf(0, 12, 24, 48)
+
+        /** [autoScanMinutes]' choices (Tj, 2026-09-28: "every 5 10 20 30 or 40 minutes"). */
+        val AUTO_SCAN_MINUTES_CHOICES = listOf(5, 10, 20, 30, 40)
+
+        /** [alertMinEv]'s choices (0 = off; Tj, 2026-09-28: "a minimum of 2%, 3%, or 4%"). */
+        val ALERT_MIN_EV_CHOICES = listOf(0.0, 0.02, 0.03, 0.04)
     }
 }
