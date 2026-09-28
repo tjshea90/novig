@@ -54,15 +54,51 @@ class KalshiClient(
      */
     private val gate = RateGate(ratePerSecond = 2.0, burst = 4, sleep = sleep)
 
+    /**
+     * Game lines first (Tj, 2026-09-28: "now it is reading the API very slow"): 57 series at 2/s is ~28 s, and since
+     * v0.19.2 a league's bets wait for every source. A scan asks every league's game-line series first (29 of them,
+     * ~15 s), then the props; a league's lines show as soon as its own are in.
+     */
+    override val linesFirst = true
+
+    /** Series [lines] just read, for the [odds] call that follows: taken once, and only while young. */
+    private val early = HashMap<String, Pair<Long, List<EventDto>>>()
+
+    private fun selected(league: League, settings: ScanSettings) =
+        league.kalshiSeries.filter { s -> familyOf(s)?.let { it in settings.families } ?: false }
+
+    override suspend fun lines(league: League, settings: ScanSettings): RefSnapshot? {
+        val now = clock()
+        val series = selected(league, settings).filter { familyOf(it) != MarketFamily.PLAYER_PROPS }
+        val events = ArrayList<EventDto>()
+        var fetched = 0
+        for (s in series) {
+            try {
+                val got = fetchSeries(s)
+                synchronized(early) { early[s] = now to got }
+                events += got
+                fetched++
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // [odds] asks again for whatever didn't come, and reports it.
+                if (e is KalshiThrottled) break
+            }
+        }
+        if (fetched == 0) return null
+        return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, now), now, provider = id)
+    }
+
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val now = clock()
-        val series = league.kalshiSeries.filter { s -> familyOf(s)?.let { it in settings.families } ?: false }
+        val series = selected(league, settings)
         val events = ArrayList<EventDto>()
         var failure: Exception? = null
         var fetched = 0
         for (s in series) {
             try {
-                events += fetchSeries(s)
+                val read = synchronized(early) { early.remove(s) }?.takeIf { now - it.first in 0 until EARLY_MS }
+                events += read?.second ?: fetchSeries(s)
                 fetched++
             } catch (e: CancellationException) {
                 throw e
@@ -121,6 +157,9 @@ class KalshiClient(
 
     companion object {
         const val BOOK_KEY = "kalshi"
+
+        /** How long a series [lines] read stands in for reading it again in [odds]: within one scan. */
+        const val EARLY_MS = 60_000L
 
         /** "Run in first inning" (KXMLBRFI): Yes = at least one run = over 0.5 (its strike reads 1). */
         private const val RFI = "RFI"

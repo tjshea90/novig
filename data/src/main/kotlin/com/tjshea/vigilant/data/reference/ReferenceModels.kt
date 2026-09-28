@@ -145,6 +145,16 @@ interface ReferenceSource {
     suspend fun odds(league: League, settings: ScanSettings): RefSnapshot
 
     /**
+     * True for a source slow enough that a league's game lines are worth having before its props (Kalshi: one
+     * request per series at 2/s, and props series outnumber the rest). A scan then asks [lines] for every league
+     * first and [odds] after: mid-scan, a league's game lines wait for [lines], only its props for [odds].
+     */
+    val linesFirst: Boolean get() = false
+
+    /** A league's game lines alone, for a [linesFirst] source (the [odds] that follows re-uses what it read). */
+    suspend fun lines(league: League, settings: ScanSettings): RefSnapshot? = null
+
+    /**
      * True for a source that needs Novig's board first ([ScanContext]), e.g. to spend credits only
      * on games Novig actually lists props for. The scanner waits for the catalog before calling it.
      */
