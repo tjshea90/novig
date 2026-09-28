@@ -2442,7 +2442,14 @@ Nothing at or above 1.0% EV."
       budget, when bets first show with the hold-back). Find the real cause(s).
 - [ ] R2 Fix what's slower than it needs to be, with tests; give Tj a way to see where scan time goes (so the next
       "slow" report comes with numbers). Ship, link.
-  - [ ] R2a Keyed reads at the key's full pace: more in flight and bigger batches with a key (8-price batches left
+  - [x] R2a (DONE: three real caps found and fixed. (1) OkHttp's default 5 requests a host, one held by the open
+        websocket (OkHttp 4.12, probed): the key read 4 at a time; now `vigilantHttpClient()` allows 16 (HttpClientTest,
+        fails on OkHttp's default). (2) One refused wave (every read in flight comes back 429 together) halved the pace
+        once per refusal, 14.4/s to 1/s for a minute, and counted each toward the 8 that stop a scan: now once per burst
+        (RateGateTest `refusals arriving together…`, NovigPublicClientTest `with a key, a refused wave…`, both fail
+        before). (3) 10 in flight with a key (was 6) and 30-book batches (`NovigSource.batchSize`, BiggerScansTest,
+        NovigPublicClientTest). `/v3/limits` checked against Novig's OpenAPI spec: same shape, 1 token a book; pacing
+        by it stays.) Keyed reads at the key's full pace: more in flight and bigger batches with a key (8-price batches left
         slots idle), and `/v3/limits` can only raise the pace above the proven 14/s (a 429 still slows it).
   - [ ] R2b Board from Novig's CDN-cached public routes first; the key's signed catalog only when those are throttled.
   - [ ] R2c Kalshi game lines first: every league's game-line series before any props series, so game lines stop
