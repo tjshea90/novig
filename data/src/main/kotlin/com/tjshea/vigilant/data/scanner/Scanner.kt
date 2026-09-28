@@ -57,6 +57,8 @@ data class ScanReport(
     val creditsRemaining: Int?,
     /** Early edges' books read a second time at the end of a long scan ([Scanner.REREAD_AFTER_MS]). */
     val booksReread: Int = 0,
+    /** Books the connected key's websocket pushed (no request each; RESEARCH.md §27). Part of [booksFetched]. */
+    val booksViaPush: Int = 0,
 )
 
 /**
