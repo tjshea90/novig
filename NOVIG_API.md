@@ -345,7 +345,13 @@ self-excluded, or trading halted, and it doesn't clear on its own.
 
 ## 11.1 How Vigilant uses the signed API
 
-**v0.19.0 (current): the websocket loads each keyed scan** (RESEARCH.md §27). Tj connected a key on
+**v0.19.3 (current):** the key's REST reads run 10 at a time in 30-price batches through an OkHttp client that allows
+16 requests per host (OkHttp's default is 5, and an open websocket holds one: the key had 4 lanes; RESEARCH.md §29).
+Refusals that arrive together (a whole wave in flight answered 429) slow the pace once, not once each. Pacing still
+follows `GET /v3/limits`, whose shape was checked against the OpenAPI spec (2026-09-28). Every scan's timing is shown
+under Settings › Novig API (`ScanTiming`).
+
+**v0.19.0: the websocket loads each keyed scan** (RESEARCH.md §27). Tj connected a key on
 2026-09-28 and reported scans "much faster", so the signed REST route works on his phone (signing,
 location, trading::read scope). Each scan hands its whole plan (up to the budget, likeliest first) to
 `NovigStream`: it connects (`GET /v3/ws`, signed like REST), waits until the `stream` bucket is full

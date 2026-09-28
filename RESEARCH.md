@@ -2261,3 +2261,41 @@ with quotes at most 3 minutes old (`Freshness.MIN_SHOWN_MS`), so every bet it sh
 (Recheck and re-pricing keep the plain 5-minute rule for bets already shown); (3) bets hidden for old odds are counted on
 the feed ("2 bets hidden: the other books' odds behind them are over 5 minutes old. Scan for current odds."). Live after
 the fix (same test, 08:25Z): 10 shown mid-scan, 0 gone, 10 kept.
+
+## 29. "Now it is reading the API very slow" (2026-09-28 ~14:45–16:00Z, Tj, on v0.19.2: "Did this latest version change anything with the novig API scan because now it is reading the API very slow")
+
+**What v0.19.2 changed:** no Novig request code at all (`git diff v0.19.1 v0.19.2`). It held each league's bets
+mid-scan until every fair-odds source had answered for it (§28), and Kalshi is the slowest by far: measured live
+(`LiveSourceTimingTest`, 2026-09-28 ~14:50Z) 57 series at 2/s, one request each, leagues one after another: NFL 8.2 s
+(19 series), NCAAF 3.5 (6), MLB 8.9 (18), WNBA 5.1 (10), ATP 0.9 (2), WTA 1.0 (2): 27.6 s; Polymarket 9.2 s. So a
+league's first bets showed 8–28 s into a scan. **What v0.19.1 changed:** 7 days ahead (board 8,319 markets, 0.67 MB, 2
+pages, vs 4,004 at 3 days; 0.9 s either way) and "use the whole budget", so every scan now reads the full budget
+(e.g. 1,200 prices where v0.18.0 read 440); keyed reads paced from `GET /v3/limits`; the board read through the key.
+
+**Real caps found while tracing the keyed read path (all older than v0.19.2, all fixed in v0.19.3):**
+
+1. **OkHttp ran the key's reads 4 at a time.** OkHttp's default dispatcher allows 5 requests at once per host, and
+   with OkHttp 4.12 an open websocket holds one of them for as long as it's open (probed: `runningCallsCount() == 1`
+   with only a socket open). With the key's socket to `api.novig.com` up, the "6 in flight" keyed reads got 4 lanes,
+   shared with anything else reading Novig (CNO's live prices, the board). At a phone's ~400–700 ms per signed request
+   that is 6–10 prices a second, not 14. Now `vigilantHttpClient()` allows 16 per host (`HttpClientTest`, which fails
+   on OkHttp's default), and a key keeps 10 in flight with 30-price batches between re-plans (was 8, leaving lanes idle
+   at the end of every batch).
+2. **One refusal could cut the pace to 1 a second for a minute, or stop the scan.** When Novig refuses a burst,
+   every request in flight comes back 429 together, and each one halved the pace again (14.4 → 7.2 → 3.6 → 1.8 → 1/s,
+   held a minute) and counted toward the 8 refusals that stop a scan's reads. Now refusals within a second of each other
+   are one (`RateGate.SAME_BURST_MS`; `RateGateTest`, `NovigPublicClientTest` fail before).
+3. **Kalshi's props held back game lines.** Kalshi now reads every league's game-line series first (29 of 57, ~15 s)
+   and its props after, re-using what it read (nothing asked twice); a league's game-line bets show once its Kalshi
+   lines are in (`ReferenceSource.linesFirst`, `SteadyFeedTest`). MLB's lines were ready at ~21 s, now ~9 s.
+
+**Checked and left:** `GET /v3/limits` matches Novig's OpenAPI spec exactly (`read {capacity, refillPerSec}`, 1 token
+per book read, no batch book route: the websocket is the only bulk path); pacing by it stays. The board is not cached
+on either route (CloudFront "Miss" on every public read, 0.3–1.6 s a 5,000-market page), so reading it through the key
+costs nothing extra. The scan's own work between reads is small (`PumpCostProbe`: 0.6 s of CPU per 1,200-price scan
+on the JVM here).
+
+**Still unmeasured, now visible:** the phone's real signed-request latency and whether the websocket's snapshot
+arrives. Settings › Novig API now shows where the last scan's time went (`ScanTiming`: board, fair odds, Novig
+prices with their pace and how they came (live feed / key / public), first bet, Novig's refusals, the key's limit), so
+the next "slow" report comes with the phone's own numbers.
