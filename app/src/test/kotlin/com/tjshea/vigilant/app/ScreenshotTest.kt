@@ -274,6 +274,20 @@ class ScreenshotTest {
         assert(picked?.fillBudget == false) { "picked $picked" }
     }
 
+    /** Tj, 2026-09-28: "There are way more than 7 total games for it to scan". The feed says what it covered. */
+    @Test fun anEmptyFeedSaysItsWindowAndHowManyGamesStartLater() {
+        var opened = false
+        val base = SampleScan.state()
+        val r = base.result!!.let { it.copy(stats = it.stats.copy(laterGames = 55)) }
+        shoot("1h_feed_empty_later_games") {
+            FeedScreen(base.copy(result = r, feed = emptyList(), settings = base.settings.copy(daysAhead = 3)), {}, {}, { opened = true }, { _, _ -> })
+        }
+        compose.onNodeWithText("starting in the next 3 days", substring = true).assertExists()
+        compose.onNodeWithText("55 more games on Novig start later than that", substring = true).assertExists()
+        compose.onNodeWithText("Days ahead").performClick()
+        assert(opened)
+    }
+
     @Test fun theLeagueChipsOfferTennis() {
         var toggled: String? = null
         screen { com.tjshea.vigilant.app.ui.LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, setOf("NFL"), { toggled = it }) }
