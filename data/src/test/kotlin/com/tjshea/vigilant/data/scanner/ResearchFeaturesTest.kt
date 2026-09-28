@@ -55,7 +55,8 @@ class ResearchFeaturesTest {
         assertTrue(dal !in r.feed(loose.copy(maxOdds = 1000)))
         assertTrue(dal in r.feed(loose.copy(maxOdds = 2000)))
         assertTrue(dal in r.feed(loose.copy(maxOdds = 0)))
-        assertEquals(1000, ScanSettings().maxOdds)
+        // +300 by default since v0.18.0 (Tj, 2026-09-28: nothing over +300).
+        assertEquals(300, ScanSettings().maxOdds)
     }
 
     @Test
@@ -65,7 +66,7 @@ class ResearchFeaturesTest {
         // A settings file saved before the field existed reads it as on.
         val old = Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"]}""")
         assertTrue(old.outlierGuard)
-        assertEquals(1000, old.maxOdds)
+        assertEquals(300, old.maxOdds)
     }
 
     @Test
