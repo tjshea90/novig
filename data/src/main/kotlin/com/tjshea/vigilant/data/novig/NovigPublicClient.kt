@@ -193,7 +193,11 @@ class NovigPublicClient(
     fun cached(marketId: String): NovigBook? = bookCache[marketId]?.book
 
     override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch = coroutineScope {
-        val ids = marketIds.distinct()
+        val all = marketIds.distinct()
+        // Books the websocket keeps current need no request; the rest are read one by one.
+        val pushed = pushed(all)
+        for ((id, book) in pushed) bookCache[id] = CachedBook(null, book)
+        val ids = all.filter { it !in pushed }
         val signer = keyed?.takeIf { clock() >= keyedDownUntil }
         val useKey = AtomicReference(signer)
         val keyProblem = AtomicReference<String?>(null)
