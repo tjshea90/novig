@@ -2422,3 +2422,10 @@ Nothing at or above 1.0% EV."
       makes (params, limits, paging, caching/ETag, throttles, signed vs public, websocket verbs/channels, errors).
       Write the gaps into NOVIG_API.md and fix them, with tests.
 - [x] M3 (DONE 2026-09-28 ~07:41Z: floor 689 tests, 0 failures, 10 live skipped, exit 0; release APK built locally (0.19.1/36); ci.yml green on d6e8948 (main); release.yml run 36392649770 green on d6e8948; tag v0.19.1 has vigilant-v0.19.1.apk only; BUILDLOG recorded. ship.sh itself was NOT run: the container's command check failed ~8 times in a row, so the release was triggered from GitHub with every ship gate already verified by hand (tests, CI, versionCode 36 > 35, pushed).) Light tests, ckpt, ship, release, link; answer Tj plainly (what was wrong in the last answer, if anything).
+
+## "+EV bets appeared while scanning, then quickly disappeared. Is this supposed to happen?" (Tj, 2026-09-28, on v0.19.1)
+
+- [ ] Q1 Trace every way a bet can leave the feed during/after a scan (re-plans as fair sources answer, freshness
+      rules, re-reads, window/filters) and say which one Tj saw, with evidence; fix anything that isn't intended.
+- [ ] Q2 If the cause is showing edges before the fair line is complete (or any other misleading flicker): fix, test,
+      ship, link. Otherwise answer plainly.
