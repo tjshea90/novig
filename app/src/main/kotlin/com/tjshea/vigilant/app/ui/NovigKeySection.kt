@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.NovigUi
+import com.tjshea.vigilant.app.ScanStatus
 
 /**
  * Settings → Novig API. Not connected: the one-time setup (management key ID + its .pem file).
