@@ -286,6 +286,7 @@ class NovigPublicClient(
             fromCache = fromCache,
             viaKey = viaKey,
             keyProblem = keyProblem.get(),
+            viaPush = pushed.size,
         )
     }
 
