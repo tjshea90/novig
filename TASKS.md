@@ -2416,7 +2416,7 @@ Nothing at or above 1.0% EV."
 > Research novig API docs too. Make sure the app is taking full advantage of the API and using it efficiently and as
 > the docs describe"
 
-- [ ] M1 Re-check Novig's catalog properly (every league, status, page, date; public AND the parameters the app sends)
+- [x] M1 (DONE: live catalog 07:10Z: 55 NCAAF (Thu–Sat) + 15 NFL Week 5 games were 4–6 days out, past Days ahead 3 (my first check had the same 4-day bound: wrong answer, corrected in RESEARCH §27.5); MLB = 4 Wild Card games (season over, FINAL). Fix: daysAhead 7 default + schema 8 (3 -> 7 once), all events read so the feed counts games past the window (ScanStats.laterGames, "N more games on Novig start later…" + Days ahead button), DELAYED games scanned. Tests: ScanReachTest (4 of 5), ScreenshotTest.anEmptyFeedSaysItsWindowAndHowManyGamesStartLater (1h png looked at).) Re-check Novig's catalog properly (every league, status, page, date; public AND the parameters the app sends)
       and find why a scan saw 7 games when Tj sees many more. Evidence, not assumption; fix whatever drops games.
 - [ ] M2 Read every page of docs.novig.com (llms.txt index + OpenAPI spec) and compare with every Novig call the app
       makes (params, limits, paging, caching/ETag, throttles, signed vs public, websocket verbs/channels, errors).
