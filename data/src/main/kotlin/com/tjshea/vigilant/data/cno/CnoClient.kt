@@ -189,7 +189,8 @@ class CnoClient(
 
     /**
      * Puts the scanner's filters in CNO's form. Where the Shared View link already set a stricter
-     * value (a shorter odds cap, more books, a higher minimum EV), the link's stays.
+     * value (a shorter odds cap, a higher minimum EV), the link's stays. The fewest books is always
+     * the app's: 1 or 2 picked in Settings must reach CNO even when the link says more (Tj, 2026-09-28).
      */
     private fun applyFilters(s: Session, f: CnoFilters) {
         val fields = s.fields
@@ -203,7 +204,7 @@ class CnoClient(
             val stricter = linkMax != null && Odds.americanToDecimal(linkMax) < Odds.americanToDecimal(f.maxOdds)
             if (!stricter) put("TextBoxMaximumOdds", "+${f.maxOdds}")
         }
-        put("TextBoxMinimumOddsProviderCount", maxOf(f.minBooks, number("TextBoxMinimumOddsProviderCount")?.toInt() ?: 0).toString())
+        put("TextBoxMinimumOddsProviderCount", f.minBooks.toString())
         val ev = maxOf(f.minEv * 100, number("TextBoxMinimumEVPercentage") ?: 0.0)
         put("TextBoxMinimumEVPercentage", (if (ev == Math.floor(ev)) ev.toInt().toString() else String.format(java.util.Locale.US, "%.1f", ev)) + "%")
         put("TextBoxMinimumSubMarketSideCount", maxOf(f.minSides, number("TextBoxMinimumSubMarketSideCount")?.toInt() ?: 0).toString())

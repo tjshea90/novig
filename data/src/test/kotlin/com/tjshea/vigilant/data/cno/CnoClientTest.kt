@@ -175,14 +175,15 @@ class CnoClientTest {
     }
 
     @Test
-    fun `a stricter value in the Shared View link wins over the scanner's`() = runBlocking {
+    fun `a stricter odds cap in the Shared View link wins, but the fewest books is always the app's`() = runBlocking {
         server.enqueue(MockResponse().setBody(CnoFixtures.page(maxOdds = "+120", minBooks = "8")))
         server.enqueue(reply())
-        client.fetch(url, CnoFilters(maxOdds = 150, minBooks = 5))
+        // Tj, 2026-09-28: "add options for 1 and 2 books": 1 picked in Settings reaches CNO though the link says 8.
+        client.fetch(url, CnoFilters(maxOdds = 150, minBooks = 1))
         server.takeRequest()
         val f = form(server.takeRequest())
         assertEquals("+120", f.entries.first { it.key.endsWith("TextBoxMaximumOdds") }.value)
-        assertEquals("8", f.entries.first { it.key.endsWith("TextBoxMinimumOddsProviderCount") }.value)
+        assertEquals("1", f.entries.first { it.key.endsWith("TextBoxMinimumOddsProviderCount") }.value)
     }
 
     @Test

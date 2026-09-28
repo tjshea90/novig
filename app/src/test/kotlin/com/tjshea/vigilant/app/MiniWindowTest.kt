@@ -90,9 +90,9 @@ class MiniWindowTest {
         assertEquals(ScannerMode.VIGILANT, json.decodeFromString(ScanSettings.serializer(), """{"cnoEnabled":false,"schema":4}""").migrate().scanner)
         assertEquals(15, json.decodeFromString(ScanSettings.serializer(), """{"cnoRefreshSeconds":60,"schema":4}""").migrate().cnoRefreshSeconds)
         assertEquals(30, json.decodeFromString(ScanSettings.serializer(), """{"cnoRefreshSeconds":30,"schema":4}""").migrate().cnoRefreshSeconds)
-        // New installs: Conservative worst case, up to +150, 5+ books.
+        // New installs: Conservative worst case, up to +150, 4+ books (1-4 offered since v0.19.3).
         assertEquals(150, s.cnoFilters.maxOdds)
-        assertEquals(5, s.cnoFilters.minBooks)
+        assertEquals(4, s.cnoFilters.minBooks)
         assertEquals(com.tjshea.vigilant.data.cno.CnoDevig.CONSERVATIVE, s.cnoFilters.devig)
     }
 

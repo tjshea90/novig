@@ -282,6 +282,10 @@ data class ScanSettings(
         if (s.schema < 8) {
             s = s.copy(daysAhead = if (s.daysAhead == 3) 7 else s.daysAhead, schema = 8)
         }
+        // v0.19.3: CNO's fewest books is 1-4 (Tj, 2026-09-28: "Remove any option over 4 books"); 5 or more becomes 4.
+        if (s.schema < 9) {
+            s = s.copy(cnoFilters = s.cnoFilters.copy(minBooks = s.cnoFilters.minBooks.coerceIn(1, CNO_MIN_BOOKS_CHOICES.max())), schema = 9)
+        }
         return s
     }
 
@@ -355,7 +359,8 @@ data class ScanSettings(
         /** Tennis's leagues, added to a saved file's once by [migrate] (v0.19.0). */
         val TENNIS = setOf("ATP", "WTA")
         val CNO_MAX_ODDS_CHOICES = listOf(100, 150, 200, 300, 0)
-        val CNO_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8, 10)
+        /** "Fewest books behind the fair price" (Tj, 2026-09-28: "add options for 1 and 2 books. Remove any option over 4 books"). */
+        val CNO_MIN_BOOKS_CHOICES = listOf(1, 2, 3, 4)
         val CNO_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
         val CNO_ROWS_CHOICES = listOf(25, 50, 100)
 
