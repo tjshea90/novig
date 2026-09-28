@@ -1,0 +1,60 @@
+package com.tjshea.vigilant.data.scanner
+
+import java.util.Locale
+
+/**
+ * Where a scan's time went, in milliseconds from its start (Tj, 2026-09-28: "now it is reading the API very slow"):
+ * shown under Settings › Novig API, so the next "slow" comes with numbers from the phone itself.
+ */
+data class ScanTiming(
+    /** Novig's board in (read, or re-used from the last few minutes). */
+    val boardAtMs: Long = 0,
+    /** Every fair-odds source answered. */
+    val fairAtMs: Long = 0,
+    /** Novig's prices: the first asked for, and the last in (the end-of-scan re-read too). Null = none read. */
+    val novigFromMs: Long? = null,
+    val novigToMs: Long? = null,
+    /** The feed first showed a bet, mid-scan or at the end. Null = no bet. */
+    val firstBetAtMs: Long? = null,
+    val totalMs: Long = 0,
+    /** Times Novig refused a price (a 429, or its edge's 403): each one pauses the scan and slows it for a minute. */
+    val refused: Int = 0,
+) {
+    val novigMs: Long get() = if (novigFromMs != null && novigToMs != null) (novigToMs - novigFromMs).coerceAtLeast(0) else 0
+
+    companion object {
+        /**
+         * One line for Settings, e.g. "Last scan took 41 s: board 0.9 s · fair odds 27 s · 1,200 Novig prices in 38 s
+         * (31.6 a second: 700 by live feed, 500 through the key) · first bet at 12 s · Novig refused none · the key's
+         * limit is 16 a second".
+         */
+        fun text(t: ScanTiming, prices: Int, viaKey: Int, viaPush: Int, keyPerSec: Double? = null): String = buildString {
+            append("Last scan took ").append(seconds(t.totalMs)).append(": board ").append(seconds(t.boardAtMs))
+            append(" · fair odds ").append(seconds(t.fairAtMs))
+            if (prices > 0) {
+                append(" · ").append(String.format(Locale.US, "%,d", prices)).append(" Novig price").append(if (prices == 1) "" else "s")
+                append(" in ").append(seconds(t.novigMs))
+                if (t.novigMs > 0) append(" (").append(String.format(Locale.US, "%.1f", prices * 1000.0 / t.novigMs)).append(" a second")
+                else append(" (")
+                val public = (prices - viaKey - viaPush).coerceAtLeast(0)
+                val parts = listOfNotNull(
+                    "$viaPush by live feed".takeIf { viaPush > 0 },
+                    "$viaKey through the key".takeIf { viaKey > 0 },
+                    "$public public".takeIf { public > 0 },
+                )
+                if (parts.isNotEmpty()) append(if (t.novigMs > 0) ": " else "").append(parts.joinToString(", "))
+                append(")")
+            }
+            append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
+            append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")
+            keyPerSec?.let { append(" · the key's limit is ").append(rate(it)).append(" a second") }
+        }
+
+        /** "0.9 s" under ten seconds, "27 s" above. */
+        fun seconds(ms: Long): String =
+            if (ms < 10_000) String.format(Locale.US, "%.1f s", ms / 1000.0) else "${(ms + 500) / 1000} s"
+
+        private fun rate(perSec: Double): String =
+            if (perSec == Math.floor(perSec)) perSec.toLong().toString() else String.format(Locale.US, "%.1f", perSec)
+    }
+}
