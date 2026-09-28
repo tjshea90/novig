@@ -41,6 +41,25 @@ class RateGateTest {
         assertEquals(4.0, g.currentRate, 0.0)
     }
 
+    /**
+     * Tj, 2026-09-28: "now it is reading the API very slow". With a key, 6 (now 10) books are in flight at once; when
+     * Novig refuses that burst, every one of them comes back 429 together. Each used to halve the pace again:
+     * 14.4/s → 7.2 → 3.6 → 1.8 → 1/s for a whole minute, from one refusal.
+     */
+    @Test
+    fun `refusals arriving together from one burst halve the pace once, a later one halves it again`() = runTest {
+        val g = gate(14.4, 44)
+        repeat(6) { g.slowDown() }
+        assertEquals(7.2, g.currentRate, 1e-9)
+        now += 400
+        repeat(4) { g.slowDown() }
+        assertEquals(7.2, g.currentRate, 1e-9)
+        // A refusal a second or more after the last slow-down is a new one.
+        now += 1_000
+        g.slowDown()
+        assertEquals(3.6, g.currentRate, 1e-9)
+    }
+
     @Test
     fun `steady success ramps the pace up to its ceiling, and one refusal starts it over`() = runTest {
         val g = RateGate(4.0, 10, clock = { now }, sleep = { sleeps += it; now += it }, maxRate = 6.0, rampEvery = 10, rampStep = 0.5)
