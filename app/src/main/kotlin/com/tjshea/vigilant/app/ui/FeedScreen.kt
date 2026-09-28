@@ -222,8 +222,12 @@ private fun FeedSummary(
             )
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
-                "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games. " +
-                    "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices.",
+                "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games " +
+                    "starting in the next ${daysLabel(state.settings.daysAhead)}. " +
+                    "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices." +
+                    laterGamesText(result.stats.laterGames),
+                action = if (result.stats.laterGames > 0) "Days ahead" else null,
+                onAction = onOpenSettings,
             )
             else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
