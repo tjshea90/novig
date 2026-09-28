@@ -192,6 +192,12 @@ class ScreenshotTest {
         }
     }
 
+    /** A keyed scan: where its 41 seconds went (Tj, 2026-09-28: "now it is reading the API very slow"). */
+    private val timedScan = ScanStatus(
+        scannedAtMs = SampleScan.NOW, booksFetched = 1200, booksViaKey = 500, booksViaPush = 700, keyReadPerSec = 16.0,
+        timing = com.tjshea.vigilant.data.scanner.ScanTiming(boardAtMs = 900, fairAtMs = 14_600, novigFromMs = 1_000, novigToMs = 39_000, firstBetAtMs = 6_200, totalMs = 41_200),
+    )
+
     @Test fun novigKeyConnected() = shoot("6b_novig_key_connected") {
         androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
             com.tjshea.vigilant.app.ui.NovigKeySection(
@@ -200,8 +206,23 @@ class ScreenshotTest {
                     message = "Novig accepted the key (signature, clock and network all OK).",
                 ),
                 { _, _ -> }, {}, {},
+                lastScan = timedScan,
             )
         }
+    }
+
+    @Test fun novigKeySaysWhereTheLastScansTimeWent() {
+        screen {
+            com.tjshea.vigilant.app.ui.NovigKeySection(
+                NovigUi(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("3f2504e0-4f89-11d3-9a0c-0305e82c9a1b", "a", "t", false)),
+                { _, _ -> }, {}, {},
+                lastScan = timedScan,
+            )
+        }
+        compose.onNodeWithTag("scanTiming").assertIsDisplayed()
+        compose.onNodeWithText("1,200 Novig prices in 38 s (31.6 a second: 700 by live feed, 500 through the key)", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("first bet at 6.2 s", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("the key's limit is 16 a second", substring = true).assertIsDisplayed()
     }
 
     /**
