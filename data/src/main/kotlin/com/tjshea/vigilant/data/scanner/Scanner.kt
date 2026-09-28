@@ -93,6 +93,8 @@ class Scanner(
     private val novig: NovigSource,
     private val clock: () -> Long = System::currentTimeMillis,
     private val catalogTtlMs: Long = 3 * 60_000L,
+    /** Milliseconds on a steady clock, for [ScanTiming] only (the scan's own time is [clock]). */
+    private val elapsed: () -> Long = { System.nanoTime() / 1_000_000L },
 ) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
