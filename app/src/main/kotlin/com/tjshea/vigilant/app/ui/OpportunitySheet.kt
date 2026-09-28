@@ -114,7 +114,7 @@ fun OpportunityDetail(
         // Left open past a few minutes: the other books' prices behind this EV aren't current (RESEARCH.md §24).
         if (o.fairIsOld(now)) {
             Banner(
-                "The other books' prices behind this are over ${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes " +
+                "The other books' prices behind this are over ${com.tjshea.vigilant.data.scanner.Freshness.maxAgeMs(o.event.startsTs, now) / 60_000} minutes " +
                     "old, so its EV isn't shown: scan again before betting.",
                 color = Edge.colors.warning,
             )

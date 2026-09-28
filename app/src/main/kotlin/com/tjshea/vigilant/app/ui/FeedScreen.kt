@@ -215,7 +215,7 @@ private fun FeedSummary(
             )
             state.feed.isNotEmpty() && shown.isEmpty() -> EmptyState(
                 "Odds too old to compare",
-                "The other books' prices behind these bets are over ${Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes old, so they're " +
+                "The other books' prices behind these bets are over ${Freshness.LIMIT_TEXT} old, so they're " +
                     "hidden: they could show +EV that isn't there any more. Scan for current odds.",
                 action = "Scan now",
                 onAction = onScan,
@@ -337,8 +337,11 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                     modifier = Modifier.weight(1f),
                 )
                 if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
-                // Its other books' prices are nearly too old to show (they leave the feed at 5 minutes).
-                if (o.fairAsOfMs?.let { now - it > FAIR_AGING_MS } == true) Text("odds aging", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                // How old its other books' prices are, once past a few minutes (they leave the feed at 5, or 10 for a
+                // game more than 3 hours away: Freshness.maxAgeMs).
+                o.fairAsOfMs?.let { now - it }?.takeIf { it > FAIR_AGING_MS }?.let { age ->
+                    Text("odds ${age / 60_000} min old", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -376,7 +379,7 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
     }
 }
 
-/** A card says its odds are aging past this: the other books' prices are well on the way to [Freshness.MAX_QUOTE_AGE_MS]. */
+/** A card says how old its odds are past this: the other books' prices are on their way to [Freshness.maxAgeMs]. */
 private const val FAIR_AGING_MS = 3 * 60_000L
 
 /** "Starts within: Any time · 12h · 24h · 48h": the start-time window every list obeys (the +EV and CNO tabs). */
@@ -418,5 +421,5 @@ internal fun agedOutText(state: UiState, now: Long): String? {
     val aged = state.feed.count { it.fairIsOld(now) && state.settings.startsInWindow(it.event.startsTs, now) }
     if (aged == 0) return null
     return "$aged bet${if (aged == 1) "" else "s"} hidden: the other books' odds behind ${if (aged == 1) "it" else "them"} " +
-        "are over ${com.tjshea.vigilant.data.scanner.Freshness.MAX_QUOTE_AGE_MS / 60_000} minutes old. Scan for current odds."
+        "are over ${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT} old. Scan for current odds."
 }
