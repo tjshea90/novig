@@ -73,11 +73,14 @@ class BiggerScansTest {
 
     private var now = Fixtures.START_MS - 86_400_000L
 
-    /** [n] NFL games, game i starting i minutes after the first. */
+    /**
+     * [n] MLB games, game i starting i hours after the first (MLB's 6-hour matching window keeps
+     * each game's candidates to its neighbours, so 1,300 games match in a blink).
+     */
     private inner class Board(n: Int) {
-        val events = (0 until n).map { i -> NovigEvent("e$i", "FOOTBALL", "NFL", "OPEN_PREGAME", "Away $i @ Home $i", Fixtures.START_MS + i * 60_000L) }
+        val events = (0 until n).map { i -> NovigEvent("e$i", "BASEBALL", "MLB", "OPEN_PREGAME", "Away $i @ Home $i", Fixtures.START_MS + i * 3_600_000L) }
         val markets = (0 until n).map { i ->
-            NovigMarket("m$i", "e$i", "MONEY", "OPEN", "ML", Fixtures.START_MS + i * 60_000L, MarketFee.GAME, listOf(NovigOutcome("a$i", "Away $i", "TBD"), NovigOutcome("h$i", "Home $i", "TBD")))
+            NovigMarket("m$i", "e$i", "MONEY", "OPEN", "ML", Fixtures.START_MS + i * 3_600_000L, MarketFee.GAME, listOf(NovigOutcome("a$i", "Away $i", "TBD"), NovigOutcome("h$i", "Home $i", "TBD")))
         }
     }
 
@@ -117,7 +120,7 @@ class BiggerScansTest {
         )
     }
 
-    private val settings = ScanSettings(fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, minEvPercent = 0.01, daysAhead = 7)
+    private val settings = ScanSettings(leagues = setOf("MLB"), fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, minEvPercent = 0.01, daysAhead = 60)
 
     @Test
     fun `a scan set to 1,200 reads 1,200 prices, never more`() = runTest {
@@ -134,7 +137,7 @@ class BiggerScansTest {
     @Test
     fun `the budget cuts a 1,500-line plan to 1,200, main lines and soonest games first`() {
         val board = Board(1500)
-        val plan = Planner.plan(board.events, board.markets, listOf(kotlinx.coroutines.runBlocking { Fair(board).odds(Leagues.byNovigName("NFL")!!, settings) }), settings.copy(maxBooksPerScan = 1200), now)
+        val plan = Planner.plan(board.events, board.markets, listOf(kotlinx.coroutines.runBlocking { Fair(board).odds(Leagues.byNovigName("MLB")!!, settings) }), settings.copy(maxBooksPerScan = 1200), now)
         assertEquals(1200, plan.markets.size)
     }
 
@@ -143,7 +146,7 @@ class BiggerScansTest {
     @Test
     fun `re-pricing the same plan re-uses its fair lines, and a new plan or method prices afresh`() = runTest {
         val board = Board(3)
-        val refs = listOf(Fair(board).odds(Leagues.byNovigName("NFL")!!, settings))
+        val refs = listOf(Fair(board).odds(Leagues.byNovigName("MLB")!!, settings))
         val plan = Planner.plan(board.events, board.markets, refs, settings, now)
         val books = mapOf("m0" to NovigBook("m0", 1, mapOf("a0" to listOf(BidLevel(480, 10))), now))
         val memo = FairMemo()
