@@ -19,6 +19,8 @@ data class ScanTiming(
     val totalMs: Long = 0,
     /** Times Novig refused a price (a 429, or its edge's 403): each one pauses the scan and slows it for a minute. */
     val refused: Int = 0,
+    /** Lines left for the next scan: read any later, their other books' odds would have been too old to show. */
+    val leftTooLate: Int = 0,
 ) {
     val novigMs: Long get() = if (novigFromMs != null && novigToMs != null) (novigToMs - novigFromMs).coerceAtLeast(0) else 0
 
@@ -45,6 +47,7 @@ data class ScanTiming(
             }
             append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
             append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")
+            if (t.leftTooLate > 0) append(" · ").append(String.format(Locale.US, "%,d", t.leftTooLate)).append(" left for the next scan (their odds would have been too old)")
             keyPerSec?.let { append(" · the key's limit is ").append(rate(it)).append(" a second") }
         }
 

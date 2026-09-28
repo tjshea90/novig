@@ -61,6 +61,8 @@ data class ScanReport(
     val booksViaPush: Int = 0,
     /** Where the scan's time went (Settings › Novig API). Null for a scan that did nothing. */
     val timing: ScanTiming? = null,
+    /** Planned lines not read because the scan ran long enough that their other books' odds would be too old to show. */
+    val booksTooLate: Int = 0,
 )
 
 /**
@@ -254,6 +256,7 @@ class Scanner(
             creditsRemaining = creditsRemaining,
             booksReread = pump.reread,
             booksViaPush = pump.viaPush,
+            booksTooLate = pump.tooLate.size,
             timing = ScanTiming(
                 boardAtMs = boardAt.get(),
                 fairAtMs = fairAt,
@@ -262,6 +265,7 @@ class Scanner(
                 firstBetAtMs = pump.firstBetAt ?: result?.takeIf { it.feed(settings).isNotEmpty() }?.let { elapsed() - t0 },
                 totalMs = elapsed() - t0,
                 refused = pump.refused,
+                leftTooLate = pump.tooLate.size,
             ),
         )
     }
@@ -325,6 +329,15 @@ class Scanner(
         /** Prices Novig refused this scan (each pauses and slows the rest). */
         var refused = 0
 
+        /** Lines left unread because the scan ran past the time their other books' odds could still be shown. */
+        val tooLate = HashSet<String>()
+
+        /** Whether [pm], priced now, would stay listed [Freshness.MIN_SHOWN_MS] on fair odds read as the scan began. */
+        private fun canStillShow(pm: PlannedMarket): Boolean {
+            val t = clock()
+            return t - now <= Freshness.maxAgeMs(pm.event.startsTs, t) - Freshness.MIN_SHOWN_MS
+        }
+
         val requested = LinkedHashSet<String>()
         val fresh = HashMap<String, NovigBook>()
         var fetched = 0
@@ -369,7 +382,11 @@ class Scanner(
                     watchedPlan = plan
                     novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
                 }
-                val pending = plan.markets.filter { it.market.marketId !in requested }
+                // A line whose other books' odds (read as the scan began) couldn't stay listed a couple of minutes once
+                // priced is left for the next scan: a long scan (a big budget, public routes) never shows a bet already
+                // on its way out (Tj, 2026-09-28: "consider if increasing this number could be beneficial or dangerous").
+                val pending = plan.markets.filter { it.market.marketId !in requested && it.market.marketId !in tooLate }
+                    .filter { pm -> canStillShow(pm).also { ok -> if (!ok) tooLate += pm.market.marketId } }
                 if (pending.isEmpty()) {
                     if (lastPass) return
                     signal.receive()

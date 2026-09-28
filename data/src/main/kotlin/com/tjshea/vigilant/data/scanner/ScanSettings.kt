@@ -352,13 +352,18 @@ data class ScanSettings(
     companion object {
         /** At most [Freshness.MAX_REUSE_MS]: older sportsbook odds are never compared (RESEARCH.md §24). */
         val ODDS_API_REUSE_CHOICES = listOf(0, 1, 2)
-        val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
+        val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5, 8, 10)
         /** 16 and 24 since v0.18.0: room to fill the bigger per-scan budgets with props, where exchange prices lag most. */
-        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12, 16, 24)
+        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12, 16, 24, 32, 48)
 
         /** Up to 1,200 since v0.18.0 (Tj, 2026-09-28: "so I can select 500 600 700 800 up to 1200"). */
-        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200)
-        val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96)
+        /**
+         * Up to 2,000 (Tj, 2026-09-28: "consider if the 1200 Max prices per novig scan is enough"): what one connection of
+         * the key's live feed can watch (2,048), so a keyed scan gets them all pushed. No "No limit": past it every price
+         * is its own request (~14 a second), a scan runs many minutes, and background scans repeat that (RESEARCH.md §31).
+         */
+        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1500, 2000)
+        val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96, 192)
         val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
         val BOOK_PROP_REUSE_CHOICES = listOf(1, 2)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
