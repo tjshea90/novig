@@ -275,10 +275,12 @@ class ScreenshotTest {
 
     @Test fun theLeagueChipsOfferTennis() {
         var toggled: String? = null
-        screen { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }, onToggleLeague = { toggled = it }) }
-        compose.onNodeWithText("ATP").performScrollTo().performClick()
+        screen { com.tjshea.vigilant.app.ui.LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, setOf("NFL"), { toggled = it }) }
+        // After Tj's first five, off screen at phone width: scrolled to, as a thumb would.
+        compose.onNode(androidx.compose.ui.test.hasScrollToKeyAction()).performScrollToKey("WTA")
+        compose.onNodeWithText("🎾 ATP").performClick()
         assert(toggled == "ATP") { "toggled $toggled" }
-        compose.onNodeWithText("WTA").assertExists()
+        compose.onNodeWithText("🎾 WTA").assertExists()
     }
 
     @Test fun theFeedCanBeSortedBySoonest() {
