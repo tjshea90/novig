@@ -2467,3 +2467,20 @@ Nothing at or above 1.0% EV."
   - [ ] R2e (docs done: RESEARCH §29, NOVIG_API §11.1, CLAUDE.md surface; Kalshi quotes re-used from `lines` stamped
         with their read time (ExchangeClientsTest); full floor 709 tests, 0 failures; live Kalshi lines-first: all
         leagues' lines by 13 s.) Docs (RESEARCH §29, NOVIG_API), ship v0.19.3 (38), link.
+
+## "The app is telling me I have a proxy or vpn when I test the novig key, but I don't. Research online and reconsider the 5 minute stale odds cutoff … For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4 books" (Tj, 2026-09-28, on v0.19.2)
+
+- [ ] S1 "The app is telling me I have a proxy or vpn when I test the novig key, but I don't." Find exactly what Novig
+      answered and why the app calls it a VPN/proxy (which status/code, which message); check Novig's docs for what
+      triggers it (ANONYMIZED_NETWORK, iCloud Private Relay / Private DNS / carrier NAT / IPv6, Novig app location
+      check); fix the wording and anything that wrongly turns a refusal into "VPN". Also: does a refused key make every
+      scan fall back to the slow public route (Tj's "reading the API very slow")?
+- [ ] S2 "Research online and reconsider the 5 minute stale odds cutoff. Should this be altered? Right now it hides bets
+      if the odds from other books are over 5 minutes old. Figure out if that is a good or needed filter. It may be that
+      odds do not change that rapidly and are still positive EV bets even if the odds from other books are over 5
+      minutes old". Research how fast sportsbook/exchange lines really move (pregame vs live, by sport/market, props),
+      what other +EV tools do, what the app's sources' own update cadences are; decide, change if warranted, test.
+- [ ] S3 "For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4
+      books". Choices become 1-4; a saved 5+ moves to 4 once (schema bump); test.
+- [ ] S4 Ship with the v0.19.3 work (R2e) and send the link.
+
