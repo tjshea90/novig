@@ -2254,3 +2254,8 @@ Review the screenshot. Why did it only scan 7 games? I now entered a novig api k
 Baseball is not over. Mlb still has games , college football has games. There are way more than 7 total games for it to scan
 Research novig API docs too. Make sure the app is taking full advantage of the API and using it efficiently and as the docs describe
 ```
+
+## 2026-09-28T07:42:11Z
+```
+The app found several positive EV bets while scanning but they quickly disappeared. Is this supposed to happen? 
+```
