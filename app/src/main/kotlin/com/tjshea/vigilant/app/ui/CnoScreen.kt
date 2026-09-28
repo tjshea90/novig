@@ -534,6 +534,10 @@ private fun CnoCard(
     live: Boolean = false,
     onPlaced: () -> Unit = {},
     onHide: () -> Unit = {},
+    /** Its one-tap "Open in Novig": the bet slip, the way the widget opens it. */
+    onOpen: () -> Unit = {},
+    /** That bet's link is being found. */
+    opening: Boolean = false,
     onClick: () -> Unit,
 ) {
     val row = pick.row
