@@ -395,6 +395,7 @@ class Scanner(
                 val chunk = fetchOrder(pending, settings, preview).take(minOf(novig.batchSize().coerceAtLeast(1), cap - requested.size))
                 val ids = chunk.map { it.market.marketId }
                 requested += ids
+                if (readFrom == null) readFrom = elapsed() - startedAt
                 progress.reading = true
                 progress.booksTotal = minOf(cap, requested.size + pending.size - ids.size)
                 val base = progress.booksDone
