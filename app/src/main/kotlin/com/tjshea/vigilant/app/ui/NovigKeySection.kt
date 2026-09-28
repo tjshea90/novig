@@ -27,9 +27,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.NovigUi
 import com.tjshea.vigilant.app.ScanStatus
+import com.tjshea.vigilant.data.scanner.ScanTiming
 
 /**
  * Settings → Novig API. Not connected: the one-time setup (management key ID + its .pem file).
@@ -62,12 +64,14 @@ fun NovigKeySection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 4.dp),
         )
-        lastScan?.takeIf { it.scannedAtMs != null && it.booksFetched > 0 }?.let { s ->
+        lastScan?.takeIf { it.scannedAtMs != null }?.let { s ->
+            // Where the last scan's time went (Tj, 2026-09-28: "now it is reading the API very slow").
+            val line = s.timing?.let { ScanTiming.text(it, s.booksFetched, s.booksViaKey, s.booksViaPush, s.keyReadPerSec) }
+                ?: "Last scan: ${s.booksViaPush} of ${s.booksFetched} Novig prices came by live feed, ${s.booksViaKey} through the key's rate limit."
             Text(
-                "Last scan: ${s.booksViaPush} of ${s.booksFetched} Novig prices came by live feed, " +
-                    "${s.booksViaKey} through the key's rate limit.",
+                line,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(bottom = 4.dp),
+                modifier = Modifier.padding(bottom = 4.dp).testTag("scanTiming"),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

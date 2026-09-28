@@ -27,6 +27,7 @@ import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.ScanTiming
 import com.tjshea.vigilant.data.scanner.SourceReport
 import com.tjshea.vigilant.data.teams.PlayerTeams
 import com.tjshea.vigilant.data.tracker.BetStatus
@@ -63,6 +64,10 @@ data class ScanStatus(
     val booksViaKey: Int = 0,
     /** Of [booksFetched], the ones Novig's websocket pushed through the connected key (no request each). */
     val booksViaPush: Int = 0,
+    /** Where the last scan's time went (Settings › Novig API). */
+    val timing: ScanTiming? = null,
+    /** The connected key's `read` limit, per second, as Novig reported it (`GET /v3/limits`). */
+    val keyReadPerSec: Double? = null,
     val sources: List<SourceReport> = emptyList(),
     /** Leagues picked since the last scan: nothing to show for them until the next one. */
     val unscanned: Set<String> = emptySet(),
@@ -566,6 +571,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     booksFromCache = report.booksFromCache,
                     booksViaKey = report.booksViaKey,
                     booksViaPush = report.booksViaPush,
+                    timing = report.timing ?: s.status.timing,
+                    keyReadPerSec = c.novig.limits?.readPerSec,
                     sources = report.sources,
                     unscanned = emptySet(),
                 ),
