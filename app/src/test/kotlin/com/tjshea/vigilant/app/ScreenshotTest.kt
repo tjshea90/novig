@@ -535,7 +535,7 @@ class ScreenshotTest {
         compose.waitForIdle()
         assert(asked?.bet == "Justin Jefferson Under 69.5") { "asked $asked" }
         compose.onNodeWithText("Reading every book's odds from CNO…").assertExists()
-        compose.onNodeWithText("Open in Novig").assertExists()
+        compose.onNodeWithTag("openInSheet").assertExists()
     }
 
     @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
