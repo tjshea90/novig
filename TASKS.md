@@ -2378,11 +2378,33 @@ Screenshot (v0.18.0 +EV tab): "Scanned 24s ago", leagues NFL/NCAAF/MLB/WNBA/NHL�
 left, PropLine 893 left, Odds API (amber); Starts within 48h; "No +EV right now — 440 prices checked across 7 games.
 Nothing at or above 1.0% EV."
 
-- [ ] K1 Find why the scan covered only 7 games (planner caps, days-ahead, start-time window, reference coverage,
-      prices-per-scan budget, league list) and write the answer down (RESEARCH/TASKS) with evidence.
-- [ ] K2 Make the scan use the Novig API key fully: whatever the key unlocks (rate limits, signed routes, websocket,
-      batch reads) that the app does not use yet; NOVIG_API.md updated with what's verified.
-- [ ] K3 Find as many +EV bets as possible: fix whatever K1 finds is dropping games/markets/bets; tests for each.
-- [ ] K4 Answer "can the CNO scanner just copy CNO's website?" honestly (what it already does, what copying more
-      would cost/gain).
-- [ ] K5 Light/full tests as fits, ckpt, ship, release, link.
+- [ ] K1 Find why the scan covered only 7 games and write the answer down with evidence. FOUND (live catalog
+      2026-09-28 06:25Z, next 4 days): in the picked leagues Novig lists only 9 real games inside "Days ahead" (3):
+      NFL 1 (MNF; TNF is Fri), MLB 4 (regular season over, Wild Card starts Tue), WNBA 4 (playoffs), NCAAF 0
+      (next Thu/Fri); "Series Winner"/futures aren't games. 7 of 9 matched fair odds. Not picked: NHL (7 preseason).
+      Not supported at all: tennis (ATP 12 + WTA 38 matches, 763 markets), MLS 2, NPB 3. And the per-game caps
+      (2 lines per group, 8 props) held the scan to ~220 markets (440 prices) whatever the per-scan budget.
+      Write it into RESEARCH.md §27.
+- [ ] K2 Use the Novig key fully. Verified in docs 2026-09-28: no batch book route; the key's extras are the signed
+      REST book route (already used, 14/s) and the websocket: one `subscribe` of up to 2,048 markets on `book`
+      costs at most the 512-token `stream` bucket (a request over the cap passes when the bucket is full), so a
+      fresh socket can load every planned book ~8 s after connecting, then keeps them current by push.
+  - [ ] K2a NovigStream: market subscriptions in bulk (whole plan in one request once the bucket allows; small
+        additions at once when tokens cover them), 2,048 cap (SUBSCRIPTION_LIMIT_EXCEEDED handled), unsubscribe what
+        the plan dropped, gap snapshots, RATE_LIMIT retry, idle close. Tests on the mock socket.
+  - [ ] K2b NovigPublicClient serves books the socket holds (no request), REST for the rest; Scanner tells it the
+        plan (watch) and takes every socket-held book in one pass. Socket trouble = today's REST path, said once.
+        Tests (StreamingScanTest / NovigPublicClientTest).
+  - [ ] K2c App: stream built with the key (useConnection), closes when idle (2 min) and when Vigilant leaves the
+        screen with no scan running; scan status says how many prices came by push. NOVIG_API.md §6/§11.1 updated.
+- [ ] K3 Find as many +EV bets as possible.
+  - [ ] K3a Planner fills the per-scan budget: after the per-game picks, every other line a fair source quotes
+        (alternate spreads/totals, more props), best-covered first, up to "Novig prices per scan". Setting
+        (default on). Tests.
+  - [ ] K3b Tennis: ATP + WTA leagues (Kalshi match series, free; Pinnacle sport 33 via PinnWire/pinnapi):
+        moneyline, games spread, games total, player games won (team total), 1st-set winner. Round names cut from
+        matchups; Pinnacle "(Sets)"-style rows skipped; The Odds API / PropLine skip tennis. Tests on real Kalshi
+        and Novig shapes (fixtures from 2026-09-28).
+- [ ] K4 Answer "can the CNO scanner just copy CNO's website?" (what it already does, what copying more would
+      cost/gain) in the reply and RESEARCH.md §27.
+- [ ] K5 Light tests on everything touched, ckpt, ship, release, link.
