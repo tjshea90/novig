@@ -2432,8 +2432,21 @@ Nothing at or above 1.0% EV."
 
 ## "Did this latest version change anything with the novig API scan because now it is reading the API very slow" (Tj, 2026-09-28, on v0.19.2)
 
-- [ ] R1 List every change since v0.18.0 that affects how long a scan takes or how fast Novig prices come in, and
+- [x] R1 (DONE: v0.19.2 changed no Novig request code (git diff v0.19.1 v0.19.2); it holds each league's bets until
+      Kalshi answers, measured live (LiveSourceTimingTest) at 8-28 s: Kalshi 57 series at 2/s, 27.6 s, leagues one after
+      another. v0.19.1: 7 days (board 8,319 markets vs 4,004, 0.9 s either way) + fill = every scan reads the whole
+      budget (1,200 vs v0.18's 440); keyed pace re-set from /v3/limits; board via the signed catalog (not CDN-cached).
+      Pump CPU between reads: 0.6 s per 1,200 prices here (PumpCostProbe), not the cause. Keyed batches of 8 with 6 in
+      flight leave slots idle every batch.) List every change since v0.18.0 that affects how long a scan takes or how fast Novig prices come in, and
       measure what can be measured here (board size and time with 7 days + tennis, reads per scan with the full
       budget, when bets first show with the hold-back). Find the real cause(s).
 - [ ] R2 Fix what's slower than it needs to be, with tests; give Tj a way to see where scan time goes (so the next
       "slow" report comes with numbers). Ship, link.
+  - [ ] R2a Keyed reads at the key's full pace: more in flight and bigger batches with a key (8-price batches left
+        slots idle), and `/v3/limits` can only raise the pace above the proven 14/s (a 429 still slows it).
+  - [ ] R2b Board from Novig's CDN-cached public routes first; the key's signed catalog only when those are throttled.
+  - [ ] R2c Kalshi game lines first: every league's game-line series before any props series, so game lines stop
+        waiting on Kalshi's props under the v0.19.2 hold-back.
+  - [ ] R2d Where scan time goes, in Settings › Novig API and the scan's done line: board, fair odds, Novig prices
+        (count, seconds, per second; by key / live feed / public), first bet shown, the key's limits.
+  - [ ] R2e Docs (RESEARCH §29, NOVIG_API), ship v0.19.3 (38), link.
