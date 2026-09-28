@@ -2339,3 +2339,30 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       there's no sign there that bets are being hidden).
 - [ ] S3 Tj's side: paste `tools/setup-android.sh` into the cloud environment's Setup script (BRIEF.md trap 6) so
       every session starts ready to build without touching Maven Central.
+
+## Faster scans, 1,200 prices, background auto-scan, +EV alerts, odds cap (Tj, 2026-09-28T03:19Z)
+
+> "See if you can make the scans better or faster or find more bets. Also increase the limits on the amount of novig
+> prices per scan so I can select 500 600 700 800 up to 1200. Make it so I can run the app in the background and it will
+> continue scanning and also have an option to auto scan either cno or both cno and vigilant every 5 10 20 30 or 40
+> minutes in the background, even if the app is not open on the screen. And make an option that if it is scanning in
+> the background and at any time it finds positive EV bets of 3% or higher and multiple books agree on the price that it
+> sends me an android push notification and I can click on the notification and it will open the exact bet in novig
+> immediately, just like the cno widget already does. Make in the options I can select automatic notifications for a
+> minimum of 2%, 3%, or 4% positive EV finds. Also in the options for vigilant, right now the longest odds shown option
+> stops at +300. Let me choose +200 +150 and +120 and get rid of any option over +300.
+> Run full tests protocol on this app after all work is done"
+
+- [ ] P1 "Novig prices per scan" choices up to 1,200 (500, 600, 700, 800 … 1,200); nothing else (planner, pacing,
+      wake lock, notification) caps a scan below what's picked. Test.
+- [ ] P2 Vigilant's "Longest odds shown": +120 / +150 / +200 / +300 only (nothing over +300, no "Any"); a saved
+      longer cap moves to +300 once. Test.
+- [ ] P3 Scans better / faster / more bets: read Scanner, Planner, RateGate, NOVIG_API.md; do what's safe and
+      measurable (tests for each change).
+- [ ] P4 Background auto-scan: Settings option Off / CNO / CNO + Vigilant, every 5 / 10 / 20 / 30 / 40 min, running
+      with Vigilant closed (foreground service with its own notification, woken by alarms, wake lock only while a
+      scan runs). Tests.
+- [ ] P5 +EV alerts: a push notification for each new bet at or over 2% / 3% / 4% EV (option; 3% default) that several
+      books agree on; tapping it opens that exact bet slip in Novig (as the widget does). Never the same bet twice,
+      never a placed/hidden bet, only inside "Starts within". Tests.
+- [ ] P6 Full tests protocol (CLAUDE.md), then ship, release, link.

@@ -1,13 +1,13 @@
-# CHECKPOINT 543 — read me first, then TASKS.md
+# CHECKPOINT 544 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T01:23:25Z · **tests:** all 1 fast checks green
-**Branch:** `claude/vigilant-release-sm20xk` · **builds on:** `5812195` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T03:22:10Z · **tests:** all 1 fast checks green
+**Branch:** `claude/scan-perf-background-notifications-ig8u0c` · **builds on:** `341ee6e` (this checkpoint is the commit after it)
 
 ## Just done
-Released Vigilant v0.17.1 (code 33): release.yml run 36365476060 green, tag v0.17.1 carries vigilant-v0.17.1.apk only, BUILDLOG recorded, G3 ticked
+Recorded Tj's 03:19Z request as P1-P6 in TASKS.md
 
 ## Do this next
-Nothing in flight. Open suggestions S1-S3 in TASKS.md wait on Tj (S1 scan follows Starts within, S2 window in PiP header, S3 Tj pastes tools/setup-android.sh as the environment setup script)
+P1-P3: read Scanner/Planner/RateGate/NOVIG_API.md; widen Novig prices per scan to 1200; odds cap choices
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nothing in flight. Open suggestions S1-S3 in TASKS.md wait on Tj (S1 scan follow
 
 ## Last ten checkpoints
 ```
+  5f220e0 ckpt 543: Released Vigilant v0.17.1 (code 33): release.yml run 36365476060 green, tag v0
   a0a82b7 ckpt 542: Removed an unrelated side job from this repo (Tj: this repo is Vigilant only):
   15087c3 ckpt 541: MP3-flasher side job closed: diagnosis + workaround steps sent to Tj; no rebui
   2bdcfe8 ckpt 540: Recorded Tj's MP3-flasher side job in TASKS.md (M1-M3); diagnosis: 32-bit-only
@@ -26,8 +27,7 @@ Nothing in flight. Open suggestions S1-S3 in TASKS.md wait on Tj (S1 scan follow
   f2a534d ckpt 536: H4 full tests done: 624 green, live green, release APK verified; fixes F1 (Rec
   078fd3a ckpt 535: H4 in progress: floor 623 green + live Novig/CNO/scores green; fixed F1 Rechec
   1be888c ckpt 534: H3: Maven Central 429 research + tools/setup-android.sh (SDK, Gradle mirror, R
-  9e9482f ckpt 533: H2: Starts-within picker on the CNO tab + widget top bar (cycles), counts of w
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
