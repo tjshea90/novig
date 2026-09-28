@@ -28,8 +28,10 @@ class CnoBooksChoicesTest {
     @Test
     fun `1 or 2 books let thin markets through the app's own check, 4 keeps them out`() {
         val row = CnoRow(0.05, event = "A @ B", market = "Point Spread", bet = "A -3.5", odds = 110, book = "Novig", books = 2)
-        assertEquals(null, CnoChecks.reason(row, CnoFilters(minBooks = 1)))
-        assertEquals(null, CnoChecks.reason(row, CnoFilters(minBooks = 2)))
-        assertEquals(CnoChecks.Reason.BOOKS, CnoChecks.reason(row, CnoFilters(minBooks = 4)))
+        val snap = CnoSnapshot("https://crazyninjaodds.com/x", listOf(row), fetchedAtMs = 0L)
+        for (n in listOf(1, 2)) assertEquals("$n+ books", 1, CnoChecks.screen(snap, CnoFilters(minBooks = n), 0L).picks.size)
+        val four = CnoChecks.screen(snap, CnoFilters(minBooks = 4), 0L)
+        assertEquals(0, four.picks.size)
+        assertEquals(mapOf(CnoChecks.Reason.BOOKS to 1), four.hidden)
     }
 }
