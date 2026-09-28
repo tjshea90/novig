@@ -226,8 +226,18 @@ everything. The websocket (§6) is the right tool for broad coverage.
 - Novig pings every **15s**. Answer every Ping, or the connection is dropped (`1006`).
   Close `1008 SLOW_CONSUMER` means reconnect. `1008 GEOLOCATION_EXPIRED` means
   open the Novig app, then reconnect.
+- **The charge is capped (docs re-read 2026-09-28):** a request is charged `weight × subjects` but at most
+  the 512-token bucket; one over 512 passes only when the bucket is **full**, and empties it. A connection
+  may watch at most **2,048 markets**; an event counts as all its markets; a subscribe past the cap
+  answers `SUBSCRIPTION_LIMIT_EXCEEDED` and subscribes nothing. `unsubscribe` costs 1 per subject,
+  `status` 1, `snapshot` the same as `subscribe`; an unresolvable subject still costs. A frame that fails
+  to parse or hits the throttle is answered with no nonce. So: one `subscribe` of up to 2,048 markets on
+  `book`, sent once the bucket is full (~8 s after the 32-token upgrade), loads a whole scan. That's what
+  Vigilant does (§11.1). Error frames' exact shape isn't documented; Vigilant reads `code` at the top
+  level or under `error`.
 - **Efficiency:** subscribing to a whole NFL Sunday slate's events on `bbo`
-  costs ~16 events × 8 = 128 tokens once. After that, every price change on
+  costs ~16 events × 8 = 128 tokens once (but those events hold far more than 2,048 markets: subscribe
+  markets, not events). After that, every price change on
   every market in those games is pushed. Compare roughly 850 REST book polls per scan.
   This is the real-time path, and it's also the battery-friendly one: one socket,
   no polling. RESEARCH.md §7 already chose "single WebSocket, foreground service
