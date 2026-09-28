@@ -342,7 +342,19 @@ self-excluded, or trading halted, and it doesn't clear on its own.
 
 ## 11.1 How Vigilant uses the signed API
 
-**v0.10.0 (current) pacing:** public book reads 4/s rising 0.5/s per 40 clean requests to at most
+**v0.19.0 (current): the websocket loads each keyed scan** (RESEARCH.md §27). Tj connected a key on
+2026-09-28 and reported scans "much faster", so the signed REST route works on his phone (signing,
+location, trading::read scope). Each scan hands its whole plan (up to the budget, likeliest first) to
+`NovigStream`: it connects (`GET /v3/ws`, signed like REST), waits until the `stream` bucket is full
+again, then sends ONE `subscribe {markets: {<id>: "book", …}}` for everything wanted (≤2,000); later
+additions go when their tokens are back; dropped markets are unsubscribed. Meanwhile the REST keyed
+route (below) reads the likeliest lines; once the snapshot lands, every held book is taken with no
+request. Closed 2 minutes after a scan last used it; on failure, REST for 5 minutes and the scan says
+why. **The socket path is not yet verified against the real API** (the key can't leave the phone):
+verified against a mock speaking the documented protocol only. If Tj's scan says "Novig live feed: …",
+that message is the first real evidence of what differs.
+
+**v0.10.0 pacing (still the REST route's):** public book reads 4/s rising 0.5/s per 40 clean requests to at most
 6/s (a 429 halves it for a minute and restarts the ramp; 5 idle minutes restart it), 3 in flight;
 keyed reads 14/s, burst 40, 6 in flight (the `read` bucket is 64/16 per second). Books are read
 while the fair odds load and in most-promising-first order, a few at a time (RESEARCH.md §15).
