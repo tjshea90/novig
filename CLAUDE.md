@@ -242,7 +242,7 @@ A `PreCompact` hook (`tools/toobig.sh`) fires when the conversation has grown
 enough to auto-compact. Compaction rewrites earlier messages rather than
 shrinking what a warm cache already covers, so the cheaper move is usually:
 checkpoint, then start a fresh session — `tools/resume.sh` rebuilds
-everything a session needs from GitHub in well under a hundred lines.
+everything a session needs from GitHub in about 120 lines (under 10,000 characters).
 
 ## Test protocols — "light tests" and "full tests"
 
