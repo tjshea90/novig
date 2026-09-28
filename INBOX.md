@@ -2248,3 +2248,9 @@ Run full tests protocol on this app after all work is done
 ```
 Review the screenshot. Why did it only scan 7 games? I now entered a novig api key and it is much faster. Make sure the app is taking full advantage of the novig API key. Also make sure the app is finding as many positive EV bets on novig as possible. It may be missing many games and bets. For the cno scanner, can't it just copy what is already on cno website, or is this not a good idea?
 ```
+
+## 2026-09-28T07:07:26Z
+```
+Baseball is not over. Mlb still has games , college football has games. There are way more than 7 total games for it to scan
+Research novig API docs too. Make sure the app is taking full advantage of the API and using it efficiently and as the docs describe
+```
