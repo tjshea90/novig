@@ -138,7 +138,8 @@ class KalshiClient(
             listOf("1HSPREAD", "1HTOTAL", "F5SPREAD", "F5TOTAL", RFI).any { series.endsWith(it) } -> MarketFamily.FIRST_HALF
             series.endsWith("SPREAD") -> MarketFamily.SPREAD
             series.endsWith("TOTAL") -> MarketFamily.TOTAL
-            series.endsWith("GAME") || series.endsWith("FIGHT") -> MarketFamily.MONEYLINE
+            // Tennis: "KXATPMATCH-26SEP27JACRUB" "Jacquet vs Rublev", one "wins" market per player.
+            series.endsWith("GAME") || series.endsWith("FIGHT") || series.endsWith("MATCH") -> MarketFamily.MONEYLINE
             else -> null
         }
 

@@ -53,6 +53,9 @@ class TheOddsApiClient(
     override val displayName = "The Odds API"
     override val metered = true
 
+    /** Tennis is keyed per tournament there, never by the league key the app groups it under. */
+    override fun supports(league: League) = league.oddsApiListed
+
     override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMs
 
     /**
