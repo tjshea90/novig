@@ -233,7 +233,8 @@ class NovigStream(
             if (add.isEmpty()) break
             // Charged weight × subjects, never over the bucket; a request at the cap needs it full.
             val cost = minOf(add.size * BOOK_WEIGHT.toDouble(), capacity)
-            if (!haveTokens(cost)) {
+            val need = if (synchronized(this) { firstSent }) cost else capacity
+            if (!haveTokens(need)) {
                 // Wait for enough, then look again: more markets may be wanted by then, and go in the same request.
                 waitFor(cost)
                 continue
