@@ -2366,3 +2366,23 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       books agree on; tapping it opens that exact bet slip in Novig (as the widget does). Never the same bet twice,
       never a placed/hidden bet, only inside "Starts within". Tests.
 - [x] P6 (DONE 2026-09-28 ~04:15Z: floor 656 tests, 0 failures, 8 live skipped, exit 0 + XML counts; live Novig smoke (2), bet finder (2), CNO smoke (1: 14 of 14 books CONFIRMED a real bet, exact link), scores (1) green; 110 screenshots green, 5d/5e looked at; release APK built, manifest checked (specialUse service + subtype, receiver, exact-alarm/boot/notification permissions). Fixes: F1 two scans ending together could alert the same bet twice → AutoScanner.send serialized (AutoScanTest "two scans ending at once alert each bet once", fails pre-fix 4 vs 2); F2 notification permission asked every time Vigilant opened with auto-scan on → once per turn-on (source pin); F3 stale "nothing in the background" copy (BRIEF rule, Settings About, VM/Scanner docs, release.yml notes) updated; RESEARCH.md §26 + CLAUDE.md surface. Shipped v0.18.0 code 34: ci.yml green on 1db8616, release.yml run 36376581625 green, tag v0.18.0 has vigilant-v0.18.0.apk only, BUILDLOG recorded.) Full tests protocol (CLAUDE.md), then ship, release, link.
+
+## Only 7 games scanned; use the Novig API key fully; find every +EV bet; copy CNO? (Tj, 2026-09-28, screenshot)
+
+> "Review the screenshot. Why did it only scan 7 games? I now entered a novig api key and it is much faster. Make
+> sure the app is taking full advantage of the novig API key. Also make sure the app is finding as many positive EV
+> bets on novig as possible. It may be missing many games and bets. For the cno scanner, can't it just copy what is
+> already on cno website, or is this not a good idea?"
+
+Screenshot (v0.18.0 +EV tab): "Scanned 24s ago", leagues NFL/NCAAF/MLB/WNBA/NHL…, meters PinnWire 64 left, pinnapi 100
+left, PropLine 893 left, Odds API (amber); Starts within 48h; "No +EV right now — 440 prices checked across 7 games.
+Nothing at or above 1.0% EV."
+
+- [ ] K1 Find why the scan covered only 7 games (planner caps, days-ahead, start-time window, reference coverage,
+      prices-per-scan budget, league list) and write the answer down (RESEARCH/TASKS) with evidence.
+- [ ] K2 Make the scan use the Novig API key fully: whatever the key unlocks (rate limits, signed routes, websocket,
+      batch reads) that the app does not use yet; NOVIG_API.md updated with what's verified.
+- [ ] K3 Find as many +EV bets as possible: fix whatever K1 finds is dropping games/markets/bets; tests for each.
+- [ ] K4 Answer "can the CNO scanner just copy CNO's website?" honestly (what it already does, what copying more
+      would cost/gain).
+- [ ] K5 Light/full tests as fits, ckpt, ship, release, link.
