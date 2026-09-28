@@ -1404,7 +1404,7 @@ class ScreenshotTest {
         compose.onNodeWithContentDescription("Pause all scanning").performClick()
         assertEquals(listOf(true), picked)
         compose.onNodeWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertIsDisplayed()
-        compose.onNodeWithText("Scan").assertIsNotEnabled()
+        compose.onNodeWithText("  Scan").assertIsNotEnabled()
         compose.onNodeWithText("Resume").performClick()
         assertEquals(listOf(true, false), picked)
         compose.onNodeWithContentDescription("Pause all scanning").assertIsDisplayed()
