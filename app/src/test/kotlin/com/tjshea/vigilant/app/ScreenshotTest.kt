@@ -538,6 +538,50 @@ class ScreenshotTest {
         compose.onNodeWithTag("openInSheet").assertExists()
     }
 
+    /**
+     * Tj, 2026-09-28: "just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in
+     * the cno scanner in full screen (it already works in the widget)". One tap on a CNO card opens its bet (not its books),
+     * with the stake Settings asks for.
+     */
+    @Test fun everyCnoBetHasAOneTapOpenInNovigButtonWithTheChosenStake() {
+        val base = SampleCno.state()
+        val first = base.cnoShown(SampleScan.NOW).maxBy { base.livePick(it, SampleScan.NOW).ev }
+        val opened = ArrayList<com.tjshea.vigilant.data.cno.CnoRow>()
+        var settings by androidx.compose.runtime.mutableStateOf(base.settings)
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = settings), {}, {}, onOpenInNovig = { opened += it }) }
+        compose.onAllNodesWithTag("openBet").onFirst().assertIsDisplayed()
+        compose.onAllNodesWithTag("openBet").onFirst().performClick()
+        assertEquals(listOf(first.row.key), opened.map { it.key })
+        // The button opens the bet, not the card's sheet.
+        compose.onAllNodesWithTag("openInSheet").assertCountEquals(0)
+        // With $1 in the slip, the button says so.
+        settings = base.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR)
+        compose.onAllNodesWithText("Open in Novig · $1").onFirst().assertIsDisplayed()
+    }
+
+    /** The CNO card's button spins while that bet's link is found (the widget's spinner, on the tab). */
+    @Test fun cnoCardsOpenButtonSaysItsOpening() {
+        val base = SampleCno.state()
+        val first = base.cnoShown(SampleScan.NOW).maxBy { base.livePick(it, SampleScan.NOW).ev }
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(base, {}, {}, opening = first.row.key) }
+        compose.onAllNodesWithText("Opening…").assertCountEquals(1)
+    }
+
+    /** The CNO card's stake is the same one "Open in Novig" puts in the slip: its Kelly stake, $1 at least. */
+    @Test fun aCnoBetsSlipStakeIsItsKellyStake() {
+        val base = SampleCno.state()
+        val pick = base.cnoShown(SampleScan.NOW).first { com.tjshea.vigilant.app.ui.cnoStake(it, base.settings) != null }
+        val kelly = base.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY)
+        val stake = com.tjshea.vigilant.app.ui.cnoStake(pick, kelly)!!
+        assertEquals(maxOf(1.0, Math.round(stake * 100) / 100.0), com.tjshea.vigilant.app.ui.cnoSlipStake(pick, kelly)!!, 1e-9)
+        assertEquals(null, com.tjshea.vigilant.app.ui.cnoSlipStake(pick, base.settings))
+        assertEquals(" · $1", com.tjshea.vigilant.app.ui.cnoSlipStakeSuffix(pick, base.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR)))
+    }
+
+    @Test fun cnoCardsWithTheOpenInNovigButton() = shoot("8g_cno_open_buttons") {
+        com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.withBooks().let { it.copy(settings = it.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR)) }, {}, {})
+    }
+
     @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun cnoDetailWithEveryBook() {
         val s = SampleCno.withBooks()
