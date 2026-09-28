@@ -1,13 +1,13 @@
-# CHECKPOINT 563 — read me first, then TASKS.md
+# CHECKPOINT 564 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T07:25:40Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `aed8ef5` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T07:30:07Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `6fc69b1` (this checkpoint is the commit after it)
 
 ## Just done
-M1: Days ahead 7 default (+schema 8 moves a saved 3), all events read so later games are counted (stats.laterGames, feed text), DELAYED games scanned; M2 so far: strike guard (live: 6,541/6,541 agree), GET /v3/limits paces key + stream, board via the key's signed catalog w/ public fallback. Tests: ScanReachTest 5, NovigPublicClientTest +6
+M1+M2 done: week-ahead default, later-games count, DELAYED, strike guard, /v3/limits, keyed catalog; NOVIG_API 13, RESEARCH 27.5 correction; version 0.19.1 (36)
 
 ## Do this next
-M2: finish doc review (fees, errors), app compile + UI text check, NOVIG_API.md, floor, ship v0.19.1
+M3: full floor, CI, ship, release, link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ M2: finish doc review (fees, errors), app compile + UI text check, NOVIG_API.md,
 
 ## Last ten checkpoints
 ```
+  2d1fca0 ckpt 563: M1: Days ahead 7 default (+schema 8 moves a saved 3), all events read so later
   8f76985 ckpt 562: Recorded Tj's 'way more than 7 games' + Novig docs request as M1-M3
   ac363cb ckpt 561: Released Vigilant v0.19.0 (code 35): release.yml run 36389431089 green, tag v0
   627a6eb ckpt 560: pre-release: v0.19.0: keyed scans load their prices through Novig's live feed 
@@ -25,8 +26,7 @@ M2: finish doc review (fees, errors), app compile + UI text check, NOVIG_API.md,
   1975c04 ckpt 556: K3b: tennis (ATP/WTA) priced from Kalshi + Pinnacle: winner, games spread/tota
   498d761 ckpt 555: K3a: scans fill the per-scan budget with every other quoted line (fillBudget, 
   da4b847 ckpt 554: K1 diagnosed (thin slate + per-game caps + no tennis); K2-K5 planned in TASKS.
-  d8969f8 ckpt 553: Recorded Tj's 7-games / Novig key / CNO-copy request as K1-K5 in TASKS.md
 ```
 
-(21 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
