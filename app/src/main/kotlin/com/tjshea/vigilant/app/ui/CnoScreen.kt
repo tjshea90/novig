@@ -497,6 +497,14 @@ fun cnoStake(pick: CnoPick, s: ScanSettings): Double? {
     return stake.takeIf { it > 0 }
 }
 
+/** The dollars a CNO bet's Novig slip opens with ($1, its Kelly stake, or a set amount; Tj, 2026-09-28); null = none. */
+fun cnoSlipStake(pick: CnoPick, s: ScanSettings): Double? =
+    s.slipStakeFor(if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY) cnoStake(pick, s) else null)
+
+/** " · $12.27" when a CNO bet's slip opens with a stake, else nothing (the +EV card's [slipStakeSuffix]). */
+fun cnoSlipStakeSuffix(pick: CnoPick, s: ScanSettings): String =
+    if (!AppBook.isNovig) "" else cnoSlipStake(pick, s)?.let { " · $" + com.tjshea.vigilant.data.novig.NovigLinks.amountText(it) }.orEmpty()
+
 /** Vigilant's verdict in a few words, and its color. */
 @Composable
 fun verdictLabel(check: CnoBooks.Check): Pair<String, Color> = when (check.verdict) {
