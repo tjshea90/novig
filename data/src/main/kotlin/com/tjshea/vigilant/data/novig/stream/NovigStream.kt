@@ -84,6 +84,7 @@ class NovigStream(
     private val idleCloseMs: Long = IDLE_CLOSE_MS,
     private val retryAfterFailureMs: Long = RETRY_AFTER_FAILURE_MS,
 ) : PushedBooks {
+    private val maxMarkets = maxMarkets
     private val http = http.newBuilder().pingInterval(20, TimeUnit.SECONDS).build()
     private val json = Json { ignoreUnknownKeys = true }
     val books = StreamBooks(clock)
