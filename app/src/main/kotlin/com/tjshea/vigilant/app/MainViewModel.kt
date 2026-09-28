@@ -468,6 +468,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshCno(quiet: Boolean = false) {
         val current = _state.value
         if (!current.loaded || !current.settings.cnoOn) return
+        if (current.settings.paused) {
+            if (!quiet) _toasts.tryEmit(PAUSED_TOAST)
+            return
+        }
         viewModelScope.launch {
             val wait = c.cno.waitForGapMs()
             val read = c.cno.refresh(current.cnoUrl, current.settings.cnoFilters)
@@ -486,6 +490,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val current = _state.value
         // CNO only: Vigilant's scanner and every API behind it stay asleep.
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking) return
+        if (current.settings.paused) {
+            _toasts.tryEmit(PAUSED_TOAST)
+            return
+        }
         if (current.settings.leagues.isEmpty()) return
         // Open bets' lines are priced even past the per-game cap, so their closing value updates.
         val started = c.startVigilantScan(current.settings, current.bets)
@@ -500,6 +508,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun recheck(marketIds: Collection<String>) {
         val current = _state.value
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        if (current.settings.paused) {
+            _toasts.tryEmit(PAUSED_TOAST)
+            return
+        }
         // A recheck re-reads Novig only. When the other books' prices it compares against are about to
         // be too old to use (RESEARCH.md §24), it would show nothing: scan everything instead.
         if (WidgetRescan.fairTooOldToRecheck(current, marketIds, System.currentTimeMillis())) {
@@ -674,6 +686,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Pauses every scan, or resumes them (Tj, 2026-09-28: "Make an option in the app to pause all scanning"): the
+     * top bars' and the widget's button. Settings' switch is the same setting.
+     */
+    fun setPaused(paused: Boolean) {
+        viewModelScope.launch {
+            applySettings { it.copy(paused = paused) }
+            _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else "Scanning resumed")
+        }
+    }
+
+    /**
      * The widget's scanner switch: CNO only, Both, or Vigilant only (Tj, 2026-09-27). Switching
      * Vigilant's scan on starts one when the last is missing or old.
      */
@@ -732,6 +755,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         // CNO only now: a "scan done" note would name bets no screen shows any more.
         if (before.vigilantOn && !next.vigilantOn) ScanService.cancelDone(getApplication())
+        // Paused: a scan running now stops (CNO's reads stop by the watch's hold, auto-scan by its service).
+        if (!before.paused && next.paused) c.runner.stop()
         if (next.leagues.isNotEmpty()) repriceNow(next)
     }
 
