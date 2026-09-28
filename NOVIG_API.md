@@ -21,6 +21,9 @@ data (`data/.../novig/NovigPublicClient.kt`). Tj has beta access but has **not y
 created a key, so no signed route has been exercised. §9 is now history: the stale
 v2/GraphQL clients it lists were deleted in v0.4.0.
 
+**Status (2026-09-28):** Tj connected a key; keyed REST book reads work on his phone ("much faster").
+v0.19.0 adds the websocket for keyed scans (§6, §11.1), not yet seen working live.
+
 ---
 
 ## 0. The one-paragraph version
