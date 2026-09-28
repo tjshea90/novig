@@ -341,6 +341,9 @@ data class ScanSettings(
 
         /** The longest [maxOdds] offered. */
         const val MAX_ODDS_LIMIT = 300
+
+        /** Tennis's leagues, added to a saved file's once by [migrate] (v0.19.0). */
+        val TENNIS = setOf("ATP", "WTA")
         val CNO_MAX_ODDS_CHOICES = listOf(100, 150, 200, 300, 0)
         val CNO_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8, 10)
         val CNO_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
