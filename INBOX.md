@@ -2297,3 +2297,8 @@ Make an option in the app to pause all scanning. And just like the vigilant posi
 ```
 Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited. For example, unlimited credits per scan, unlimited novig prices per scan, etc. but make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished scanning for the selected time period.
 ```
+
+## 2026-09-28T22:16:32Z
+```
+Research the new claude-api skill and hillclimb and figure out if it can improve this app or development. Then research other skills or plugins including from third parties that can improve the app or Claude ability to make the app better. Tell me anything I need to do
+```
