@@ -394,7 +394,7 @@ class NovigStream(
             when (response?.code) {
                 401 -> "Novig refused the key for its live feed (401)."
                 403 -> "This key can't open Novig's live feed (403)."
-                451 -> "Novig's location check failed (451): turn off any VPN and open the Novig app."
+                451 -> "Novig's location screen refused it (451): Settings › Novig API › Test key says why."
                 423 -> "Novig says the account is locked (423)."
                 else -> "Novig's live feed dropped (${t.message ?: t.javaClass.simpleName})."
             },

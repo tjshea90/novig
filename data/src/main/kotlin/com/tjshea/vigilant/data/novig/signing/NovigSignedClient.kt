@@ -16,12 +16,38 @@ import java.io.IOException
 class NovigApiException(val status: Int, val code: String?, val serverMessage: String?) :
     IOException("Novig HTTP $status" + (code?.let { " $it" } ?: "") + (serverMessage?.let { ": $it" } ?: "")) {
 
+    /**
+     * Novig judged the request's network (its internet address), not the phone: another connection can pass
+     * (docs.novig.com/api/errors, 451: "The first two codes judge the request's network").
+     */
+    val networkRefusal: Boolean get() = status == 451 && code in NETWORK_CODES
+
+    /**
+     * One line for a scan's banner. A network refusal reads as what it is (Novig's verdict on an address), not "you
+     * have a VPN" (Tj, 2026-09-28: "The app is telling me I have a proxy or vpn when I test the novig key, but I don't").
+     */
+    val brief: String
+        get() = when {
+            status == 451 && code == "ANONYMIZED_NETWORK" ->
+                "Novig lists the internet address of the network this phone is on as a VPN or proxy ($code), so the key can't read here. Settings › Novig API › Test key checks your other connection."
+            status == 451 && code == "RESTRICTED_NETWORK_REGION" ->
+                "Novig places this network's internet address outside the states it serves ($code). Settings › Novig API › Test key checks your other connection."
+            else -> advice
+        }
+
     /** What Tj should actually do about it (NOVIG_API.md §4, §11; docs.novig.com/api/errors). */
     val advice: String
         get() = when {
-            status == 451 && code == "ANONYMIZED_NETWORK" -> "Novig refuses VPNs and proxies on keyed requests. Turn the VPN off (or exclude Vigilant from it) and try again."
-            status == 451 && code == "RESTRICTED_GEOLOCATION_REGION" -> "Novig says this location is in a restricted state."
-            status == 451 -> "Novig needs a recent location check: open the Novig app for a moment so it can geolocate, then try again."
+            status == 451 && code == "ANONYMIZED_NETWORK" ->
+                "Novig's network screen lists the internet address this phone is using as a VPN, proxy or Tor exit (Novig code $code). " +
+                    "It judges the address, not the phone: with no VPN on, it's the Wi-Fi's or the carrier's shared address that's listed. " +
+                    "Try the other connection (Wi-Fi or mobile data). If your usual one keeps failing, ask Novig support to review it, quoting $code."
+            status == 451 && code == "RESTRICTED_NETWORK_REGION" ->
+                "Novig places the internet address this phone is using in a state it doesn't serve (Novig code $code). Carrier addresses are " +
+                    "often registered far from where you are: try the other connection (Wi-Fi or mobile data)."
+            status == 451 && code == "RESTRICTED_GEOLOCATION_REGION" -> "Novig says your last location check is in a restricted state (Novig code $code)."
+            status == 451 -> "Novig needs its location check: open the Novig app for a moment so it can geolocate, then try again" + (code?.let { " (Novig code $it)." } ?: ".")
+            status == 503 && code == "GEOLOCATION_SCREENING_UNAVAILABLE" -> "Novig's location screening is down for the moment. Try again in a few minutes."
             status == 423 -> "Novig reports the account is locked, self-excluded, or trading is halted. Contact Novig support."
             status == 401 && serverMessage?.contains("timestamp") == true -> "The phone's clock is off by more than 30 seconds. Turn on automatic date & time."
             status == 401 && serverMessage?.contains("not found") == true -> "Novig doesn't know that key ID. Check it was copied exactly, and that the key is a production (not QA) key."
@@ -36,6 +62,11 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             code == "SIGNING_FAILED" -> serverMessage ?: "The Novig key on this phone can't sign. Connect it again in Settings."
             else -> serverMessage ?: "Novig returned HTTP $status."
         }
+
+    companion object {
+        /** The 451 codes about the request's network rather than the key holder's device. */
+        val NETWORK_CODES = setOf("ANONYMIZED_NETWORK", "RESTRICTED_NETWORK_REGION")
+    }
 }
 
 @Serializable

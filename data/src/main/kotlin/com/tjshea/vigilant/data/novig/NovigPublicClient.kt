@@ -317,7 +317,7 @@ class NovigPublicClient(
                                 }
                                 if (useKey.getAndSet(null) != null) {
                                     keyedDownUntil = clock() + keyedRetryMs
-                                    keyProblem.compareAndSet(null, e.advice)
+                                    keyProblem.compareAndSet(null, e.brief)
                                 }
                                 continue
                             } catch (e: NovigHttpException) {
