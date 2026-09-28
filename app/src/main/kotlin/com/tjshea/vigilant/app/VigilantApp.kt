@@ -207,6 +207,9 @@ class AppContainer(app: Application) {
         val now = System.currentTimeMillis()
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
         return runner.start(settings, referenceSources(settings), pinned) { report ->
+            // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
+            // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
+            if (!onScreen) novig.stream?.close()
             // Disk trouble (full storage) must never break a scan.
             report?.result?.let { runCatching { tracker.observe(it) } }
             // Keyed calls saved as they happened; this saves the keyless request counters.
