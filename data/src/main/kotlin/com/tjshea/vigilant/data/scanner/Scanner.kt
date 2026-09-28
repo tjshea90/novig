@@ -284,6 +284,8 @@ class Scanner(
         var notModified = 0
         var fromCache = 0
         var viaKey = 0
+        /** Books the key's websocket pushed: read with no request. */
+        var viaPush = 0
         var failed = 0
         var retryAfter: Int? = null
         var lastError: String? = null
