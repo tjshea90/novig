@@ -102,8 +102,11 @@ bash tools/install-hooks.sh --check && echo installed || echo MISSING
 ## Starting a session
 
 A `SessionStart` hook has already run `tools/resume.sh`, which pulled the
-latest from GitHub and printed `CHECKPOINT.md`, `TASKS.md`, the tail of
-`INBOX.md`, and the rules into your context. **Do not re-run bootstrap, do
+latest from GitHub and printed `CHECKPOINT.md`, `TASKS.md`'s open items (one
+line each, with line numbers), the tail of `INBOX.md`, and the rules into
+your context. The briefing has to stay under Claude Code's 10,000-character
+hook cap, or Claude sees only a 2,000-character preview of it
+(`tools/test_resume.sh` checks this). **Do not re-run bootstrap, do
 not re-plan, do not re-read finished work.** Continue from **Do this next**
 in `CHECKPOINT.md`, or the first unticked `[ ]` in `TASKS.md`.
 
