@@ -403,6 +403,7 @@ object Planner {
             val parsed = market.outcomes.map { o -> NovigText.parseTotalOutcome(o.name)?.let { o to it } ?: return null }
             val point = parsed.first().second.second
             if (parsed.any { abs(it.second.second - point) > 1e-9 } || parsed.map { it.second.first }.toSet().size != 2) return null
+            if (!strikeAgrees(point)) return null
             return PlannedMarket(
                 m.league, m.event, m.refEvent, market, kind, key(kind, point, period, subject, stat), label,
                 parsed.map { (o, p) ->
