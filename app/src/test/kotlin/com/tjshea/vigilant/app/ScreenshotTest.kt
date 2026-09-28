@@ -167,7 +167,7 @@ class ScreenshotTest {
         screen { FeedScreen(s, {}, {}, {}, { _, _ -> }) }
         // Cards are taller since v0.19.4 (the Open in Novig button): scroll to the Dallas moneyline's card first.
         val dallas = s.feed.first { it.selection == "Dallas Cowboys" }
-        compose.onNode(androidx.compose.ui.test.hasScrollToKeyAction()).performScrollToKey(dallas.key)
+        compose.onAllNodes(androidx.compose.ui.test.hasScrollToKeyAction()).onFirst().performScrollToKey(dallas.key)
         compose.onNodeWithText("Dallas Cowboys").performClick()
         compose.onNodeWithText("FAIR ODDS: BLEND · POWER").assertIsDisplayed()
         compose.onNodeWithText("Track").assertIsDisplayed()
