@@ -61,6 +61,8 @@ data class ScanStatus(
     val booksFetched: Int = 0,
     val booksFromCache: Int = 0,
     val booksViaKey: Int = 0,
+    /** Of [booksFetched], the ones Novig's websocket pushed through the connected key (no request each). */
+    val booksViaPush: Int = 0,
     val sources: List<SourceReport> = emptyList(),
     /** Leagues picked since the last scan: nothing to show for them until the next one. */
     val unscanned: Set<String> = emptySet(),
