@@ -2451,7 +2451,8 @@ Nothing at or above 1.0% EV."
         NovigPublicClientTest). `/v3/limits` checked against Novig's OpenAPI spec: same shape, 1 token a book; pacing
         by it stays.) Keyed reads at the key's full pace: more in flight and bigger batches with a key (8-price batches left
         slots idle), and `/v3/limits` can only raise the pace above the proven 14/s (a 429 still slows it).
-  - [ ] R2b Board from Novig's CDN-cached public routes first; the key's signed catalog only when those are throttled.
+  - [x] R2b (NO CHANGE, measured: the public board isn't served from cache either: CloudFront "Miss" on every read,
+        0.3-1.6 s for a 5,000-market page, same as a signed read would be. The key's board stays.) Board from Novig's CDN-cached public routes first; the key's signed catalog only when those are throttled.
   - [ ] R2c Kalshi game lines first: every league's game-line series before any props series, so game lines stop
         waiting on Kalshi's props under the v0.19.2 hold-back.
   - [ ] R2d Where scan time goes, in Settings › Novig API and the scan's done line: board, fair odds, Novig prices
