@@ -309,7 +309,7 @@ class OddsApiPropsTest {
         routeAll()
         val unlimited = settings.copy(bookPropCreditsPerScan = ScanSettings.NO_LIMIT, bookPropHours = ScanSettings.NO_LIMIT, daysAhead = 7)
         assertEquals(7 * 24, unlimited.bookPropWindowHours)
-        routes["/v4/sports/americanfootball_nfl/events/oB/odds"] = MockResponse().setBody("{}").setHeader("x-requests-remaining", "470")
+        routes["/v4/sports/americanfootball_nfl/events/oB/odds"] = MockResponse().setBody(ravensCowboysProps.replace("\"oA\"", "\"oB\"")).setHeader("x-requests-remaining", "470")
         OddsApiPropsSource(client()).odds(nfl, unlimited, board)
         // Bills-Jets (30h) is in a 7-day window now, so its props are bought (once); Chiefs-Broncos still has none on Novig.
         assertEquals(1, paths().count { it.endsWith("/oA/odds") })
