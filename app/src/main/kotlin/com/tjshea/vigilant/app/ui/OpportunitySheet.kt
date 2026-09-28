@@ -314,14 +314,32 @@ fun slipStakeSuffix(o: Opportunity, settings: ScanSettings): String =
 fun OpenBetButton(o: Opportunity, settings: ScanSettings, modifier: Modifier = Modifier) {
     val openNovig = LocalOpenNovig.current
     val context = LocalContext.current
+    OpenInBookButton(slipStakeSuffix(o, settings), modifier = modifier) {
+        val link = betSlipLinkWithStake(o, settings)
+        openNovig?.invoke(link) ?: runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(if (AppBook.isNovig) "https://novig.com" else link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+    }
+}
+
+/**
+ * The one-tap "Open in Novig" button on a +EV card and a CNO card ([suffix]: the stake, " · $1"). [opening]: the bet's
+ * link is being found (a CNO bet), so it spins and waits.
+ */
+@Composable
+fun OpenInBookButton(suffix: String, opening: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     androidx.compose.material3.FilledTonalButton(
-        onClick = {
-            val link = betSlipLinkWithStake(o, settings)
-            openNovig?.invoke(link) ?: runCatching {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(if (AppBook.isNovig) "https://novig.com" else link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }
-        },
+        onClick = onClick,
+        enabled = !opening,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
         modifier = modifier.testTag("openBet"),
-    ) { Text("Open in ${AppBook.name}" + slipStakeSuffix(o, settings), maxLines = 1) }
+    ) {
+        if (opening) {
+            androidx.compose.material3.CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp)
+            androidx.compose.foundation.layout.Spacer(Modifier.width(6.dp))
+            Text("Opening…", maxLines = 1)
+        } else {
+            Text("Open in ${AppBook.name}" + suffix, maxLines = 1)
+        }
+    }
 }
