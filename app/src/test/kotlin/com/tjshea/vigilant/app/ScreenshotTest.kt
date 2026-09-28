@@ -1404,6 +1404,7 @@ class ScreenshotTest {
         compose.onNodeWithContentDescription("Pause all scanning").performClick()
         assertEquals(listOf(true), picked)
         compose.onNodeWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertIsDisplayed()
+        compose.onNodeWithText("Scan").assertIsNotEnabled()
         compose.onNodeWithText("Resume").performClick()
         assertEquals(listOf(true, false), picked)
         compose.onNodeWithContentDescription("Pause all scanning").assertIsDisplayed()
@@ -1439,6 +1440,8 @@ class ScreenshotTest {
         val s = floatingState()
         floating("9p_floating_paused", s.copy(settings = s.settings.copy(paused = true)), actions = com.tjshea.vigilant.app.ui.FloatingActions(onPause = { picked += it }))
         compose.onNodeWithText("Paused", substring = true).assertIsDisplayed()
+        // Refresh waits with it (greyed, not a silent tap).
+        compose.onNodeWithContentDescription("Refresh").assertIsNotEnabled()
         compose.onNodeWithContentDescription("Resume scanning").performClick()
         assertEquals(listOf(false), picked)
         assertTrue(com.tjshea.vigilant.app.ui.miniStatus(s.copy(settings = s.settings.copy(paused = true)), SampleScan.NOW).startsWith("Paused · "))

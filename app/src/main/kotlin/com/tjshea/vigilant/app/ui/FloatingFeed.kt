@@ -300,6 +300,8 @@ fun FloatingFeed(
             val canUp by remember(booksIndex) { derivedStateOf { if (booksIndex != null) booksIndex > 0 else list.canScrollBackward } }
             val canDown by remember(booksIndex, items.size) { derivedStateOf { if (booksIndex != null) booksIndex < items.lastIndex else list.canScrollForward } }
             val showsCno = MiniWindow.showsCno(state.settings)
+            // Paused: the buttons that read wait with it (greyed), the top bar's ▶ resumes.
+            val paused = state.settings.paused
             val labels = (if (cnoOnly) listOf("Refresh") else listOf("Scan", "Recheck")) +
                 if (showsCno) listOf(if (booksIndex != null) "List" else "Books") else emptyList()
             BoxWithConstraints(Modifier.fillMaxWidth().height(40.dp).background(MaterialTheme.colorScheme.surfaceContainer)) {
@@ -312,10 +314,10 @@ fun FloatingFeed(
             ) {
                 if (cnoOnly) {
                     // The same circling arrows as the CNO tab's Refresh.
-                    BarButton("Refresh", painterResource(R.drawable.ic_scan), enabled = !state.cno.refreshing, labelled = labelled, onClick = actions.onRefresh)
+                    BarButton("Refresh", painterResource(R.drawable.ic_scan), enabled = !state.cno.refreshing && !paused, labelled = labelled, onClick = actions.onRefresh)
                 } else {
-                    BarButton("Scan", painterResource(R.drawable.ic_scan), enabled = !status.scanning && !status.rechecking, labelled = labelled, onClick = actions.onScan)
-                    BarButton("Recheck", painterResource(R.drawable.ic_recheck), enabled = !status.scanning && !status.rechecking && state.feed.isNotEmpty(), labelled = labelled, onClick = actions.onRecheck)
+                    BarButton("Scan", painterResource(R.drawable.ic_scan), enabled = !status.scanning && !status.rechecking && !paused, labelled = labelled, onClick = actions.onScan)
+                    BarButton("Recheck", painterResource(R.drawable.ic_recheck), enabled = !status.scanning && !status.rechecking && state.feed.isNotEmpty() && !paused, labelled = labelled, onClick = actions.onRecheck)
                 }
                 BarButton("Up", painterResource(R.drawable.ic_up), enabled = canUp, big = true) {
                     if (booksIndex != null) {

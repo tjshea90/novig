@@ -88,7 +88,7 @@ fun FeedScreen(
                             }
                         }
                         PauseButton(state.settings.paused, onPause)
-                        ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty(), onScan)
+                        ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty() && !state.settings.paused, onScan)
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 )
