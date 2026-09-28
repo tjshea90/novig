@@ -99,8 +99,17 @@ class PinnapiClient(
             val events = try {
                 fetch(host, sport, props && host.props)
             } catch (e: AllKeysExhaustedException) {
-                // This feed's keys are spent (or refused): the next feed may still have some.
+                // This feed's keys are spent (or refused): the next feed may still have some. The pool rests
+                // them until their limit resets, so later scans go straight to the next feed, then back.
                 if (problem == null) problem = e.message
+                continue
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Any other failure (a 5xx, an unexpected status, a dropped connection) is no reason to go without
+                // Pinnacle this scan either (Tj, 2026-09-28: "When pinnwire api usage runs out, automatically switch to
+                // pinnapi until the usage resets").
+                if (problem == null) problem = e.message ?: "Pinnacle (${host.name}): ${e.javaClass.simpleName}"
                 continue
             }
             return Board(events, clock()).also { boards[sport to props] = it }

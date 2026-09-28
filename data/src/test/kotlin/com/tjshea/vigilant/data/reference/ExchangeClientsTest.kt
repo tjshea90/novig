@@ -361,6 +361,41 @@ class ExchangeClientsTest {
         assertEquals("Dallas Cowboys", snap.events.single().home)
     }
 
+    /** Tj, 2026-09-28: "When pinnwire api usage runs out, automatically switch to pinnapi until the usage resets." */
+    @Test
+    fun `a spent PinnWire key isn't asked again until its day resets, pinnapi answers meanwhile, then PinnWire again`() = runBlocking {
+        var t = 1_000L
+        val m = meter { t }
+        val client = pinnacle(listOf("w"), listOf("p"), m, shareMs = 0)
+        server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":"rate_limited","window":"day","limit":100,"retry_after_ms":7200000}"""))
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        client.odds(nfl, settings)
+        assertEquals(listOf("w", "p"), (1..2).map { server.takeRequest().let { r -> r.getHeader("x-api-key") ?: r.getHeader("x-portal-apikey") } })
+        // A minute later: straight to pinnapi, no request spent on PinnWire.
+        t += 60_000
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        client.odds(nfl, settings)
+        assertEquals("p", server.takeRequest().getHeader("x-portal-apikey"))
+        assertEquals(3, server.requestCount)
+        // Past PinnWire's reset: PinnWire first again (with its player props).
+        t += 7_300_000
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        client.odds(nfl, settings)
+        val back = server.takeRequest()
+        assertEquals("w", back.getHeader("x-api-key"))
+        assertEquals("1", back.requestUrl!!.queryParameter("include_specials"))
+    }
+
+    @Test
+    fun `any other PinnWire failure falls to pinnapi in the same scan`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(502).setBody("bad gateway"))
+        server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
+        val snap = pinnacle(listOf("w"), listOf("p")).odds(nfl, settings)
+        assertEquals("w", server.takeRequest().getHeader("x-api-key"))
+        assertEquals("p", server.takeRequest().getHeader("x-portal-apikey"))
+        assertEquals("Dallas Cowboys", snap.events.single().home)
+    }
+
     @Test
     fun `a Pinnacle feed without keys is skipped without a call`() = runBlocking {
         server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))
