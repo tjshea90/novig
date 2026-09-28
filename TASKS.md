@@ -2598,13 +2598,13 @@ Nothing at or above 1.0% EV."
 
 ## "Research the new claude-api skill and hillclimb and figure out if it can improve this app or development. Then research other skills or plugins including from third parties that can improve the app or Claude ability to make the app better. Tell me anything I need to do" (Tj, 2026-09-28T22:16Z, on v0.19.6)
 
-- [ ] W1 Research: the claude-api skill (what it is, what's in it) and "hillclimb" (what it is, where it comes from);
+- [x] W1 (DONE: RESEARCH §33.1: skill read in full incl. eval-hillclimb.md and prompt-audit.md; hillclimb needs an LLM app + eval, so no use in Vigilant; prompt-audit is the useful dev tool.) Research: the claude-api skill (what it is, what's in it) and "hillclimb" (what it is, where it comes from);
       verdict on whether either improves the app itself (at runtime) or how Claude builds it (the dev loop), and
       what each would cost (Tj: nothing that costs money or lowers accuracy).
-- [ ] W2 Research: other skills / plugins / MCP connectors, Anthropic's and third parties', that could improve the app
+- [x] W2 (DONE: RESEARCH §33.3-33.4: cloud sessions load repo skills, not plugins (docs); official kotlin-lsp tested here; claude.ai catalog, official marketplace and third-party Android skills checked.) Research: other skills / plugins / MCP connectors, Anthropic's and third parties', that could improve the app
       or Claude's work on it (Kotlin / Compose / Gradle / Android, tests, review, security, library docs); which ones
       actually work in this cloud container and survive into the next session.
 - [ ] W3 Write the findings down (RESEARCH.md, new section) so no later session redoes this; tell Tj plainly what he
       needs to do (settings, installs, costs), links as plain text.
-- [ ] W4 Adopt on the repo side only what is clearly safe, free and reversible without Tj's say-so; list the rest for
+- [x] W4 (DONE: session-start briefing fixed, 215,548 -> 7,186 chars (ckpt 605, test_resume.sh 2 new checks); S3 ticked; third-party skills and the prompt audit left for Tj's go-ahead.) Adopt on the repo side only what is clearly safe, free and reversible without Tj's say-so; list the rest for
       his go-ahead.
