@@ -1,23 +1,23 @@
-# CHECKPOINT 547 — read me first, then TASKS.md
+# CHECKPOINT 548 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T03:51:05Z · **tests:** all 1 fast checks green
-**Branch:** `claude/scan-perf-background-notifications-ig8u0c` · **builds on:** `3c901fc` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T03:53:19Z · **tests:** all 1 fast checks green
+**Branch:** `claude/scan-perf-background-notifications-ig8u0c` · **builds on:** `d15aeed` (this checkpoint is the commit after it)
 
 ## Just done
-P4/P5 tests: AutoScanTest 13, AgreementTest 3, AlertLogTest 3, NovigLive.readNow, ScreenshotTest auto-scan settings (5d png looked at) + odds cap updated
+P1-P5 done and ticked: floor 654 tests, 0 failures, 8 live skipped (engine/data/app)
 
 ## Do this next
-full floor run (engine/data/app), tick P1-P5, then P6 full tests protocol
+P6: full tests protocol (live smoke tests, sweep changed + whole-app areas, screenshots, release build), then ship v0.18.0 code 34 + release + link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/SettingsScreen.kt
-     M app/src/test/kotlin/com/tjshea/vigilant/app/ScreenshotTest.kt
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  3b700a0 ckpt 547: P4/P5 tests: AutoScanTest 13, AgreementTest 3, AlertLogTest 3, NovigLive.readN
   25a8521 ckpt 546: P4/P5 code written, compiles: AutoScanService (specialUse FGS, exact alarms, b
   8cb689e ckpt 545: P1+P2 done, P3 mostly: prices/scan to 1200, props/game 16/24, odds cap +120/+1
   6c91990 ckpt 544: Recorded Tj's 03:19Z request as P1-P6 in TASKS.md
@@ -27,8 +27,7 @@ full floor run (engine/data/app), tick P1-P5, then P6 full tests protocol
   2bdcfe8 ckpt 540: Recorded Tj's MP3-flasher side job in TASKS.md (M1-M3); diagnosis: 32-bit-only
   b6a37e6 ckpt 539: PAUSED for Tj's model switch. H1-H4 all done and on main (v0.17.1 code 33 gate
   4043306 ckpt 538: Shipped v0.17.1 to main (3a66035); release.yml run 36353475955 CANCELLED at th
-  3a66035 ckpt 537: pre-release: v0.17.1: 'Starts within' filter (Any time / 12h / 24h / 48h) on t
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

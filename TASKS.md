@@ -2353,16 +2353,16 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
 > stops at +300. Let me choose +200 +150 and +120 and get rid of any option over +300.
 > Run full tests protocol on this app after all work is done"
 
-- [ ] P1 "Novig prices per scan" choices up to 1,200 (500, 600, 700, 800 … 1,200); nothing else (planner, pacing,
+- [x] P1 (DONE: MAX_BOOKS_CHOICES 100…1,200 by 100, props/game adds 16 and 24; scan wake lock 20 min; hint gives time per size. BiggerScansTest "Novig prices per scan go up to 1,200", "a scan set to 1,200 reads 1,200 prices, never more", budget 1,500 → 1,200.) "Novig prices per scan" choices up to 1,200 (500, 600, 700, 800 … 1,200); nothing else (planner, pacing,
       wake lock, notification) caps a scan below what's picked. Test.
-- [ ] P2 Vigilant's "Longest odds shown": +120 / +150 / +200 / +300 only (nothing over +300, no "Any"); a saved
+- [x] P2 (DONE: MAX_ODDS_CHOICES +120/+150/+200/+300, default +300, schema 6 moves a saved longer cap or none to +300 once. BiggerScansTest odds-cap tests; ScreenshotTest.settingsOfferTheOutlierGuardAndAnOddsCap (no Any/+500/+1000/+2000, +120 picks 120).) Vigilant's "Longest odds shown": +120 / +150 / +200 / +300 only (nothing over +300, no "Any"); a saved
       longer cap moves to +300 once. Test.
-- [ ] P3 Scans better / faster / more bets: read Scanner, Planner, RateGate, NOVIG_API.md; do what's safe and
+- [x] P3 (DONE: FairMemo: each plan's fair lines devigged once, not per partial result (1,200 markets × 25 books: ~160 ms → 3.4 ms per partial, measured); FairLine.booksUsed/usedUpdates computed once; power/Shin bisection stops at 1e-13 (~45 steps, not 100); end-of-scan re-read of edges read over 60 s before the end (≤40 books) so the feed and alerts use current prices, vanished ones dropped. BiggerScansTest memo + re-read tests (8 total).) Scans better / faster / more bets: read Scanner, Planner, RateGate, NOVIG_API.md; do what's safe and
       measurable (tests for each change).
-- [ ] P4 Background auto-scan: Settings option Off / CNO / CNO + Vigilant, every 5 / 10 / 20 / 30 / 40 min, running
+- [x] P4 (DONE: ScanSettings.autoScan Off/CNO/CNO + Vigilant + autoScanMinutes 5-40; AutoScanService (specialUse FGS, ongoing note with Scan now/Stop), AutoScanAlarm (exact while idle, USE_EXACT_ALARM), AutoScanReceiver (alarm, boot, update), AutoScanner.cycle (CNO list + top bets' books + Novig live, then Vigilant's scan via AppContainer.startVigilantScan); Settings section with notification/battery prompts. AutoScanTest (settings, clock, ongoing text, alarm set/cancel, manifest), ScreenshotTest.settingsOfferBackgroundAutoScanAndAlerts (5d png looked at), autoScanOffHidesTheInterval.) Background auto-scan: Settings option Off / CNO / CNO + Vigilant, every 5 / 10 / 20 / 30 / 40 min, running
       with Vigilant closed (foreground service with its own notification, woken by alarms, wake lock only while a
       scan runs). Tests.
-- [ ] P5 +EV alerts: a push notification for each new bet at or over 2% / 3% / 4% EV (option; 3% default) that several
+- [x] P5 (DONE: alertMinEv Off/2/3/4% (3% default); AlertPicks (CNO: CnoBooks CONFIRMED at Novig's price now; Vigilant: Agreement 3+ two-sided books, 3+ agreeing, worst-case devig, price ≤3 min old); AlertLog alerts.json (once per bet, by Novig outcome across scanners); EvAlerts high-importance notification whose tap opens novigapp://events/<outcome> in Novig's app; also after a Scan left running in the background. AutoScanTest (CNO/Vigilant picks, placed/window/unread books excluded, exact link, notification + intent), AgreementTest 3, AlertLogTest 3, NovigLiveTest readNow.) +EV alerts: a push notification for each new bet at or over 2% / 3% / 4% EV (option; 3% default) that several
       books agree on; tapping it opens that exact bet slip in Novig (as the widget does). Never the same bet twice,
       never a placed/hidden bet, only inside "Starts within". Tests.
 - [ ] P6 Full tests protocol (CLAUDE.md), then ship, release, link.
