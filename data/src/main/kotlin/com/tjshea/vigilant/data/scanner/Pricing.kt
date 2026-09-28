@@ -71,8 +71,8 @@ data class Opportunity(
         return bid.takeIf { take == null || take > bid.price + 1e-9 }
     }
 
-    /** The other books' prices behind this EV are over [Freshness.MAX_QUOTE_AGE_MS] old at [now]: don't offer it. */
-    fun fairIsOld(now: Long): Boolean = fairAsOfMs != null && now - fairAsOfMs > Freshness.MAX_QUOTE_AGE_MS
+    /** The other books' prices behind this EV are too old at [now] for its game ([Freshness.maxAgeMs]): don't offer it. */
+    fun fairIsOld(now: Long): Boolean = fairAsOfMs != null && now - fairAsOfMs > Freshness.maxAgeMs(event.startsTs, now)
 
     /** Novig's price for this line was read more than [Pricing.OLD_PRICE_MS] before [now]. */
     fun priceIsOld(now: Long): Boolean = bookFetchedAtMs == null || now - bookFetchedAtMs > Pricing.OLD_PRICE_MS

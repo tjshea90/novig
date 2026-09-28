@@ -837,7 +837,7 @@ class Scanner(
             settings.selectedLeagues.flatMap { l ->
                 SOURCE_ORDER.filter { it in enabled }.mapNotNull { id -> references["$id|${l.novigName}"]?.snapshot }
             }
-        }.filter { !youngFairOnly || fairAsOf - it.fetchedAtMs <= Freshness.MAX_QUOTE_AGE_MS }
+        }.filter { !youngFairOnly || fairAsOf - it.fetchedAtMs <= Freshness.FAR_OFF_AGE_MS }
         // The sportsbook feeds' books follow the reference-book picker, even between scans.
         val books = settings.referenceBooks.toSet()
         val inputs = listOf(
@@ -849,7 +849,8 @@ class Scanner(
         val filtered = refs.map { snap ->
             // Pricing: only book prices their feed saw in the last few minutes (RESEARCH.md §24). Reading
             // order may still lean on older ones; they never price.
-            val fresh = if (!youngFairOnly) snap else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs) }) })
+            // How old depends on how far off the game is (Freshness.maxAgeMs); each quote carries a time (seenBy).
+            val fresh = if (!youngFairOnly) snap else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs) }) })
             if (fresh.provider !in PICKED_BOOK_FEEDS) fresh
             else fresh.copy(events = fresh.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
