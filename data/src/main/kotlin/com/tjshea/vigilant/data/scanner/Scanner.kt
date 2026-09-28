@@ -291,6 +291,8 @@ class Scanner(
         var viaKey = 0
         /** Books the key's websocket pushed: read with no request. */
         var viaPush = 0
+        /** The plan last handed to [NovigSource.watch]. */
+        private var watchedPlan: Plan? = null
         var failed = 0
         var retryAfter: Int? = null
         var lastError: String? = null
