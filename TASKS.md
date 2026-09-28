@@ -2514,7 +2514,13 @@ Nothing at or above 1.0% EV."
       `linesPerGame` / `propsPerGame`; raise the choices if safe.
 - [ ] T3 "Can I raise the most credits per scan on props safely?" Check The Odds API credits per scan
       (`bookPropCreditsPerScan`) against the free/paid quotas; raise if safe.
-- [ ] T4 "Can the app automatically enter 1 dollar on every betslip inside novig when I click on a bet? If it can, make
+- [x] T4 (DONE: yes. Novig's deeplinking docs: `novig.com/events/<outcomes>/<partner_id>/<wager_amount>` pre-fills the
+      wager in dollars; its app's link config has the same `:amount?` (unverified on a device). Settings › Bankroll &
+      Kelly › "Amount in Novig's bet slip": Off (default) / $1 / Kelly (never under $1) / My amount; `NovigLinks.withStake`
+      on every bet opened: +EV card button, bet sheet, widget and mini window (`MiniWindow.Item.kelly`), CNO tab, alerts
+      (`EvAlert.stake`). Partner tag: CNO's `cno` kept, else Novig's own `novig` (its docs' example). Tests:
+      NovigLinksTest (3), AutoScanTest `an alert's bet slip opens with the stake…`, ScreenshotTest
+      `everyBetHasAOneTapOpenInNovigButtonWithTheChosenStake`.) "Can the app automatically enter 1 dollar on every betslip inside novig when I click on a bet? If it can, make
       an option to automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into the
       settings." Research whether Novig's app/links accept a stake (deep link params, the web bet slip), and build the
       option if it can.
@@ -2524,7 +2530,9 @@ Nothing at or above 1.0% EV."
       other PinnWire failure (5xx, odd status, dropped connection) failed Pinnacle for the scan; now pinnapi answers
       (ExchangeClientsTest `any other PinnWire failure falls to pinnapi…`, fails before).) "When pinnwire api usage runs out, automatically switch to pinnapi until the usage resets." Check what happens
       today when PinnWire's keys are spent (`PinnapiClient`, `KeyPool`), and make it switch to pinnapi and back.
-- [ ] T6 "On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each bet to
+- [x] T6 (DONE: `OpenBetButton` on every +EV card ("Open in Novig", "· $1" when a stake is set), the widget's exact
+      bet-slip link through the same `LocalOpenNovig` path; tap on the card still opens details. ScreenshotTest
+      `everyBetHasAOneTapOpenInNovigButtonWithTheChosenStake`, 1j png looked at.) "On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each bet to
       Open the bet in novig, just as the widget does". A one-tap "Open in Novig" on each +EV card (the widget's exact
       bet-slip link), test + screenshot.
 - [ ] T7 Ship and send the link.

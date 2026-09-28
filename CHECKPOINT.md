@@ -1,13 +1,13 @@
-# CHECKPOINT 587 — read me first, then TASKS.md
+# CHECKPOINT 588 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T18:47:32Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `8f5e4e1` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T18:55:42Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `4c2468b` (this checkpoint is the commit after it)
 
 ## Just done
-T5: PinnWire->pinnapi was built (daily limit); pinned the reset cycle with a test and fixed the gap (any other PinnWire failure now falls to pinnapi, test fails before)
+T4 + T6: bet-slip amount setting (Off/$1/Kelly/My amount) on every Novig link (cards, sheet, widget, CNO tab, alerts); Open in Novig button on each +EV card; tests + 1j screenshot
 
 ## Do this next
-T6 + T4: Open in Novig button on +EV cards; bet-slip amount setting (Off/$1/Kelly/custom) in every Novig link
+T1-T3: budget choices up to 2,000 (live feed's 2,048 cap) + freshness read guard (don't read lines whose fair odds would expire), lines/props per game choices, props credits choices with hint
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ T6 + T4: Open in Novig button on +EV cards; bet-slip amount setting (Off/$1/Kell
 
 ## Last ten checkpoints
 ```
+  d27d061 ckpt 587: T5: PinnWire->pinnapi was built (daily limit); pinned the reset cycle with a t
   7e8359f ckpt 586: T1 measured live: 7-day board 8,620 Novig markets (4,819 spreads/totals, ~2,70
   482486c ckpt 585: Recorded Tj's request (scan budget/no limit, lines+props per game, props credi
   3238762 ckpt 584: Released Vigilant v0.19.3 (code 38): release.yml green, vigilant-v0.19.3.apk o
@@ -26,8 +27,7 @@ T6 + T4: Open in Novig button on +EV cards; bet-slip amount setting (Off/$1/Kell
   f744729 ckpt 580: Full floor after S1/S3: 2 old pins updated (schema 9, CNO chips 1+..4+); RESEA
   032a66e ckpt 579: S1: Novig 451 codes read correctly (ANONYMIZED_NETWORK = Novig's verdict on th
   bbf4475 ckpt 578: S3: CNO fewest books 1-4 (default 4, saved 5+ -> 4, app's choice always posted
-  ce24b8e ckpt 577: Recorded Tj's VPN/proxy false alarm, 5-minute cutoff review, min-books 1-4 as 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(11 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
