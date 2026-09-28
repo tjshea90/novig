@@ -201,17 +201,106 @@ class NovigPublicClientTest {
         it.keyed = com.tjshea.vigilant.data.novig.signing.NovigSignedClient(OkHttpClient(), json, fakeKey, server.url("").toString().trimEnd('/'))
     }
 
+    /** Novig's own example schedule (docs: GET /v3/limits). */
+    private val limitsBody = """{"read":{"capacity":64,"refillPerSec":16},"account":{"capacity":64,"refillPerSec":8},
+        "place":{"capacity":256,"refillPerSec":8},"cancel":{"capacity":256,"refillPerSec":16},
+        "stream":{"capacity":512,"refillPerSec":4},"history":{"capacity":512,"refillPerSec":4},"maxWatchedMarkets":2048}"""
+
+    private fun keyedDispatch(limits: String = limitsBody) = object : Dispatcher() {
+        override fun dispatch(request: RecordedRequest): MockResponse =
+            if (request.requestUrl!!.encodedPath == "/v3/limits") MockResponse().setBody(limits) else bookFor(request)
+    }
+
+    private fun MockWebServer.requests(): List<RecordedRequest> = (0 until requestCount).map { takeRequest() }
+
     @Test
     fun `with a key, books come from the signed route and its own rate limit`() = runBlocking {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest) = bookFor(request)
-        }
+        server.dispatcher = keyedDispatch()
         val batch = keyed(client()).books(listOf("m1", "m2"))
         assertEquals(2, batch.viaKey)
-        val r = server.takeRequest()
-        assertTrue(r.requestUrl!!.encodedPath.startsWith("/v3/catalog/markets/"))
-        assertEquals("kid-read", r.getHeader("Novig-Key-Id"))
+        val books = server.requests().filter { it.requestUrl!!.encodedPath.startsWith("/v3/catalog/markets/") }
+        assertEquals(2, books.size)
+        assertEquals("kid-read", books.first().getHeader("Novig-Key-Id"))
         assertNull(batch.keyProblem)
+    }
+
+    @Test
+    fun `the key's throttle schedule is read once, free, and paces the key and the websocket`() = runBlocking {
+        // A roomier schedule than the documented defaults: Vigilant follows what Novig says.
+        server.dispatcher = keyedDispatch(limitsBody.replace(""""read":{"capacity":64,"refillPerSec":16}""", """"read":{"capacity":128,"refillPerSec":40}""").replace("2048", "4096"))
+        val push = FakePush(emptyMap())
+        val c = keyed(client()).also { it.stream = push }
+        c.books(listOf("m1"))
+        c.books(listOf("m2"))
+        val paths = server.requests().map { it.requestUrl!!.encodedPath }
+        assertEquals(1, paths.count { it == "/v3/limits" })
+        assertEquals("/v3/limits", paths.first())
+        assertEquals(NovigLimits(128, 40.0, 512, 4.0, 4096), c.limits)
+        assertEquals(listOf(Triple(512, 4.0, 4096)), push.tuned)
+    }
+
+    @Test
+    fun `no schedule from Novig keeps the documented pace, and books still come`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.requestUrl!!.encodedPath == "/v3/limits") MockResponse().setResponseCode(500) else bookFor(request)
+        }
+        val c = keyed(client())
+        assertEquals(1, c.books(listOf("m1")).viaKey)
+        assertNull(c.limits)
+    }
+
+    @Test
+    fun `with a key, the board is read through the key's signed catalog, pages and all`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val url = request.requestUrl!!
+                return when {
+                    url.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                    url.encodedPath == "/v3/catalog/events" && url.queryParameter("after") == null ->
+                        MockResponse().setBody("""{"items":[{"eventId":"a"}],"next":"c+1/2="}""")
+                    url.encodedPath == "/v3/catalog/events" -> MockResponse().setBody("""{"items":[{"eventId":"b"}]}""")
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        val events = keyed(client()).events(listOf("NFL", "NCAAF"), listOf("OPEN_PREGAME", "DELAYED"), null)
+        assertEquals(listOf("a", "b"), events.map { it.eventId })
+        val pages = server.requests().filter { it.requestUrl!!.encodedPath == "/v3/catalog/events" }
+        assertEquals(2, pages.size)
+        assertTrue(pages.all { it.getHeader("Novig-Signature") != null && it.getHeader("Novig-Key-Id") == "kid-read" })
+        // Sent exactly as signed: every reserved character percent-encoded (the cursor included).
+        assertEquals("league=NFL%2CNCAAF&status=OPEN_PREGAME%2CDELAYED&limit=1000", pages[0].requestUrl!!.encodedQuery)
+        assertEquals("c+1/2=", pages[1].requestUrl!!.queryParameter("after"))
+        assertTrue(pages[1].requestUrl!!.encodedQuery!!.endsWith("after=c%2B1%2F2%3D"))
+    }
+
+    @Test
+    fun `a refused signed catalog falls back to the public board, and stays public for a while`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val path = request.requestUrl!!.encodedPath
+                return when {
+                    path == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                    path.startsWith("/v3/public/") -> MockResponse().setBody("""{"items":[{"eventId":"p"}]}""")
+                    else -> MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK","message":"vpn"}""")
+                }
+            }
+        }
+        val c = keyed(client())
+        assertEquals(listOf("p"), c.events(listOf("NFL"), emptyList(), null).map { it.eventId })
+        assertEquals(listOf("p"), c.events(listOf("NFL"), emptyList(), null).map { it.eventId })
+        val paths = server.requests().map { it.requestUrl!!.encodedPath }
+        assertEquals(1, paths.count { it == "/v3/catalog/events" }) // not asked again straight away
+        assertEquals(2, paths.count { it == "/v3/public/catalog/events" })
+    }
+
+    @Test
+    fun `query values are encoded the way NOVIG-V3 signs them`() {
+        assertEquals("NFL%2CNCAAF", NovigPublicClient.queryEncode("NFL,NCAAF"))
+        assertEquals("Serie%20A", NovigPublicClient.queryEncode("Serie A"))
+        assertEquals("a-b.c_d~e", NovigPublicClient.queryEncode("a-b.c_d~e"))
+        assertEquals("%2B%2F%3D%2A", NovigPublicClient.queryEncode("+/=*"))
     }
 
     @Test
@@ -235,24 +324,25 @@ class NovigPublicClientTest {
     /** The key's websocket, faked: it holds m1 and m2 (Tj, 2026-09-28: "taking full advantage of the novig API key"). */
     private class FakePush(val held: Map<String, NovigBook>) : com.tjshea.vigilant.data.novig.stream.PushedBooks {
         val watched = ArrayList<List<String>>()
+        val tuned = ArrayList<Triple<Int, Double, Int>>()
         override fun watch(marketIds: Collection<String>) { watched += marketIds.toList() }
         override fun live(marketIds: Collection<String>) = held.filterKeys { it in marketIds }
         override fun problemSince(sinceMs: Long): String? = null
         override fun close() {}
+        override fun tune(capacity: Int, refillPerSec: Double, maxWatchedMarkets: Int) { tuned += Triple(capacity, refillPerSec, maxWatchedMarkets) }
     }
 
     @Test
     fun `books the key's websocket holds are served with no request, the rest by the key's REST route`() = runBlocking {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest) = bookFor(request)
-        }
+        server.dispatcher = keyedDispatch()
         val held = listOf("m1", "m2").associateWith { NovigBook(it, 99, mapOf("x" to listOf(BidLevel(510, 7))), 0) }
         val push = FakePush(held)
         val c = keyed(client()).also { it.stream = push }
         val progress = ArrayList<Pair<Int, Int>>()
         val batch = c.books(listOf("m1", "m2", "m3")) { d, t -> progress += d to t }
-        assertEquals(1, server.requestCount) // m3 only
-        assertTrue(server.takeRequest().requestUrl!!.encodedPath.endsWith("/m3/book"))
+        val books = server.requests().filter { it.requestUrl!!.encodedPath.endsWith("/book") }
+        assertEquals(1, books.size) // m3 only
+        assertTrue(books.single().requestUrl!!.encodedPath.endsWith("/m3/book"))
         assertEquals(setOf("m1", "m2", "m3"), batch.books.keys)
         assertEquals(99L, batch.books.getValue("m1").seq)
         assertEquals(2, batch.viaPush)
