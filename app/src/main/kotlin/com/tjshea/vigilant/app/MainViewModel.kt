@@ -757,6 +757,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (before.vigilantOn && !next.vigilantOn) ScanService.cancelDone(getApplication())
         // Paused: a scan running now stops (CNO's reads stop by the watch's hold, auto-scan by its service).
         if (!before.paused && next.paused) c.runner.stop()
+        // Resumed: background auto-scan starts again at once, from the widget too (Android lets an app showing an
+        // overlay start it); from the app, MainActivity starts it as well, which is harmless.
+        if (before.paused && !next.paused && next.autoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) {
+            AutoScanService.start(getApplication())
+        }
         if (next.leagues.isNotEmpty()) repriceNow(next)
     }
 
