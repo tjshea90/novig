@@ -161,6 +161,15 @@ private fun FeedSummary(
                 onAction = onRecheck,
             )
         }
+        // "Starts within" widened since the last scan, which read only its window: the new games need a scan.
+        val scannedWindow = state.status.scannedWindowHours
+        if (!state.status.scanning && state.result != null && scannedWindow != null && state.settings.scanWindowHours > scannedWindow) {
+            Banner(
+                "The last scan read games starting in ${windowLabel(scannedWindow)}. Scan to add the rest of ${windowLabel(state.settings.scanWindowHours)}.",
+                action = "Scan",
+                onAction = onScan,
+            )
+        }
         if (state.status.unscanned.isNotEmpty() && !state.status.scanning) {
             Banner(
                 "${state.status.unscanned.joinToString(", ")} not scanned yet.",
@@ -227,11 +236,11 @@ private fun FeedSummary(
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games " +
-                    "starting in the next ${daysLabel(state.settings.daysAhead)}. " +
+                    "starting in ${windowLabel(state.settings.scanWindowHours)}. " +
                     "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices." +
-                    laterGamesText(result.stats.laterGames),
-                action = if (result.stats.laterGames > 0) "Days ahead" else null,
-                onAction = onOpenSettings,
+                    laterGamesText(result.stats.laterGames, state.settings),
+                action = if (result.stats.laterGames > 0) (if (state.settings.scanWindowHours < state.settings.daysAhead * 24) "Any time" else "Days ahead") else null,
+                onAction = { if (state.settings.scanWindowHours < state.settings.daysAhead * 24) onStartsWithin(0) else onOpenSettings() },
             )
             else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -429,8 +438,13 @@ internal fun daysLabel(days: Int): String = if (days == 1) "day" else "$days day
  * What a scan left out because it starts past "Days ahead" (Tj, 2026-09-28: "There are way more than 7 total
  * games"): said, with where to change it. Empty when nothing was left out.
  */
-internal fun laterGamesText(later: Int): String =
-    if (later <= 0) "" else " $later more game${if (later == 1) "" else "s"} on Novig start later than that; raise Days ahead in Settings to scan them."
+internal fun laterGamesText(later: Int, settings: ScanSettings = ScanSettings()): String = when {
+    later <= 0 -> ""
+    // "Starts within" bounded the scan (Tj, 2026-09-28: "stop the scan when all the markets are finished scanning for the selected time period").
+    settings.scanWindowHours < settings.daysAhead.coerceAtLeast(1) * 24 ->
+        " $later more game${if (later == 1) "" else "s"} on Novig start later than that; widen Starts within and scan again to add them."
+    else -> " $later more game${if (later == 1) "" else "s"} on Novig start later than that; raise Days ahead in Settings to scan them."
+}
 
 /**
  * Why bets left the list with no scan (Tj, 2026-09-28: "they quickly disappeared"): the other books' prices

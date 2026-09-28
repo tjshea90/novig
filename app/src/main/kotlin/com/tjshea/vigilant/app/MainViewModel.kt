@@ -74,6 +74,8 @@ data class ScanStatus(
     val unscanned: Set<String> = emptySet(),
     /** A recheck (a few Novig prices re-read, no fair-odds calls) is running. */
     val rechecking: Boolean = false,
+    /** The time window the last scan read ([ScanSettings.scanWindowHours]): the feed says when it's wider now. */
+    val scannedWindowHours: Int? = null,
 )
 
 /** The Novig API key section of Settings. */
@@ -593,6 +595,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     keyReadPerSec = c.novig.limits?.readPerSec,
                     sources = report.sources,
                     unscanned = emptySet(),
+                    scannedWindowHours = settings.scanWindowHours,
                 ),
             )
         }
