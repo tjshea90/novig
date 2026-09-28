@@ -291,8 +291,10 @@ class PinnapiClient(
                     }
                 }
             }
-            // Team totals (full game): the main line per team, plus alternates when sent.
+            // Team totals (full game): the main line per team, plus alternates when sent. In tennis, each
+            // player's games won (Novig's PLAYER_GAMES_WON).
             for ((sideKey, subject) in listOf("home" to RefBookMarket.HOME, "away" to RefBookMarket.AWAY)) {
+                if (setsNotGames) break
                 val lines = listOfNotNull(full["team_total"].obj()?.get(sideKey).obj()) +
                     full["team_totals"].obj()?.get(sideKey).obj()?.values?.mapNotNull { it.obj() }.orEmpty()
                 lines.mapNotNull { ou(it, "points") }.distinctBy { it.first }.forEach { (pts, o, u) ->
