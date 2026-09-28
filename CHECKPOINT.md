@@ -1,13 +1,13 @@
-# CHECKPOINT 549 — read me first, then TASKS.md
+# CHECKPOINT 550 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T03:55:51Z · **tests:** all 1 fast checks green
-**Branch:** `claude/scan-perf-background-notifications-ig8u0c` · **builds on:** `16888bc` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T04:04:56Z · **tests:** all 1 fast checks green
+**Branch:** `claude/scan-perf-background-notifications-ig8u0c` · **builds on:** `2e0fe70` (this checkpoint is the commit after it)
 
 ## Just done
-P6 full tests: fix F1 duplicate alerts when two scans end together (send mutex; AutoScanTest 'two scans ending at once' fails pre-fix 4 vs 2), F2 notification permission asked once per auto-scan turn-on (source pin)
+P6: live Novig/finder/CNO/scores green; 110 screenshots green (5d, 5e looked at); release APK builds, manifest verified; docs: BRIEF auto-scan rule, RESEARCH §26, CLAUDE.md surface; floor 656/0 fail
 
 ## Do this next
-P6: live smoke tests, then sweep rest of app + screenshots + release build
+P6: finish sweep (pre-existing areas: widget/CNO interplay with auto-scan, ScanService), bump v0.18.0 code 34, ship.sh, release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ P6: live smoke tests, then sweep rest of app + screenshots + release build
 
 ## Last ten checkpoints
 ```
+  6259bbe ckpt 549: P6 full tests: fix F1 duplicate alerts when two scans end together (send mutex
   45fbbf7 ckpt 548: P1-P5 done and ticked: floor 654 tests, 0 failures, 8 live skipped (engine/dat
   3b700a0 ckpt 547: P4/P5 tests: AutoScanTest 13, AgreementTest 3, AlertLogTest 3, NovigLive.readN
   25a8521 ckpt 546: P4/P5 code written, compiles: AutoScanService (specialUse FGS, exact alarms, b
@@ -25,8 +26,7 @@ P6: live smoke tests, then sweep rest of app + screenshots + release build
   a0a82b7 ckpt 542: Removed an unrelated side job from this repo (Tj: this repo is Vigilant only):
   15087c3 ckpt 541: MP3-flasher side job closed: diagnosis + workaround steps sent to Tj; no rebui
   2bdcfe8 ckpt 540: Recorded Tj's MP3-flasher side job in TASKS.md (M1-M3); diagnosis: 32-bit-only
-  b6a37e6 ckpt 539: PAUSED for Tj's model switch. H1-H4 all done and on main (v0.17.1 code 33 gate
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
