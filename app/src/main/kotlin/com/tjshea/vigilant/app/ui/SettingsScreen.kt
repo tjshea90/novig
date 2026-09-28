@@ -568,7 +568,7 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
     ChoiceChips(AutoScanMode.entries, s.autoScan, { it.displayName }) { v -> onUpdate { it.copy(autoScan = v) } }
     if (s.autoScan != AutoScanMode.OFF) {
         Text("Every", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(ScanSettings.AUTO_SCAN_MINUTES_CHOICES, s.autoScan.let { s.autoScanMinutes }, { "$it min" }) { v -> onUpdate { it.copy(autoScanMinutes = v) } }
+        ChoiceChips(ScanSettings.AUTO_SCAN_MINUTES_CHOICES, s.autoScanMinutes, { "$it min" }) { v -> onUpdate { it.copy(autoScanMinutes = v) } }
     }
     Hint(autoScanHint(s))
     Text("Push alerts", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
@@ -620,7 +620,7 @@ fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
         "for its best bets (the green check's reads). A quiet notification shows while it's on (Scan now, Stop). About " +
         "${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} reads of CNO a day, each well under a second of work."
     AutoScanMode.BOTH -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list and its best bets' books, then Vigilant's own " +
-        "scan exactly as the Scan button runs it (${s.maxBooksPerScan} Novig prices at most, ${scanSizeHint(s.maxBooksPerScan).substringAfter("is ").substringBefore(" on")}). " +
+        "scan exactly as the Scan button runs it (${s.maxBooksPerScan} Novig prices at most: ${scanTime(s.maxBooksPerScan)}). " +
         "Each scan spends API credits like a tap on Scan: ${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} scans a day at this setting. " +
         "A quiet notification shows while it's on (Scan now, Stop)."
 }
@@ -738,13 +738,16 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
 
 fun maxOddsLabel(american: Int): String = if (american <= 0) "Any" else "+$american"
 
+/** About how long reading [books] Novig prices takes on the public routes (about 300 a minute). */
+fun scanTime(books: Int): String =
+    (books / 300.0).let { if (it < 1.0) "under a minute" else if (it < 1.5) "about a minute" else "about ${Math.round(it)} minutes" }
+
 /**
  * About how long a scan of [books] Novig prices takes on the public routes (4–6 a second, NOVIG_API.md
  * §11.1), and what the limit decides.
  */
 fun scanSizeHint(books: Int): String {
-    val minutes = (books / 300.0).let { if (it < 1.0) "under a minute" else if (it < 1.5) "about a minute" else "about ${Math.round(it)} minutes" }
-    return "$books is $minutes on Novig's public prices (a connected Novig key reads about twice as fast). Results appear as " +
+    return "$books is ${scanTime(books)} on Novig's public prices (a connected Novig key reads two to three times as fast). Results appear as " +
         "they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and " +
         "the soonest games come first. Only lines another book also prices are read, so a scan can finish below the limit."
 }
