@@ -506,6 +506,34 @@ class ScreenshotTest {
         assert(picked?.cnoFilters?.maxOdds == 100) { "picked $picked" }
     }
 
+    /** Tj, 2026-09-28: background auto-scan (CNO, or CNO + Vigilant, every 5-40 min) and alerts at 2/3/4%+. */
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun settingsOfferBackgroundAutoScanAndAlerts() {
+        val base = SampleScan.state()
+        val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanMinutes = 10))
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        shoot("5d_settings_auto_scan") { SettingsScreen(s, { t -> picked = t(s.settings) }) }
+        compose.onNodeWithText("Background auto-scan", ignoreCase = true).assertExists()
+        compose.onNodeWithText("CNO + Vigilant").assertIsSelected()
+        compose.onNodeWithText("Every 10 min, with Vigilant open or closed", substring = true).assertExists()
+        compose.onNodeWithText("Push alerts").assertExists()
+        compose.onNodeWithText("3%+").assertIsSelected()
+        compose.onNodeWithText("40 min").performClick()
+        assert(picked?.autoScanMinutes == 40) { "picked $picked" }
+        compose.onNodeWithText("4%+").performClick()
+        assert(picked?.alertMinEv == 0.04) { "picked $picked" }
+        compose.onNodeWithText("2%+").performClick()
+        assert(picked?.alertMinEv == 0.02) { "picked $picked" }
+    }
+
+    /** Off: no interval to pick, and the hint says nothing runs by itself. */
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun autoScanOffHidesTheInterval() {
+        screen { SettingsScreen(SampleScan.state(), {}) }
+        compose.onAllNodesWithText("40 min").assertCountEquals(0)
+        compose.onNodeWithText("Off: Vigilant scans only when you tap Scan", substring = true).assertExists()
+    }
+
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun cnoOnlySettingsHideWhatsAsleep() {
         val base = SampleScan.state()
