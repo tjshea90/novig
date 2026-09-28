@@ -258,9 +258,11 @@ class ScreenshotTest {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
         compose.onNodeWithText("Outlier guard").assertExists()
-        compose.onNodeWithText("Longest odds shown: +1000").assertExists()
-        compose.onNodeWithText("Any").performClick()
-        assert(picked?.maxOdds == 0) { "picked $picked" }
+        // +300 at most since v0.18.0 (Tj, 2026-09-28: "Let me choose +200 +150 and +120 and get rid of any option over +300").
+        compose.onNodeWithText("Longest odds shown: +300").assertExists()
+        for (gone in listOf("Any", "+500", "+1000", "+2000")) compose.onAllNodesWithText(gone).assertCountEquals(0)
+        compose.onNodeWithText("+120").performClick()
+        assert(picked?.maxOdds == 120) { "picked $picked" }
     }
 
     @Test fun theFeedCanBeSortedBySoonest() {

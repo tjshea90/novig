@@ -160,7 +160,7 @@ class AutoScanTest {
         val a = alert()
         assertEquals("+5.8% EV · Justin Jefferson Under 69.5", EvAlerts.title(a))
         assertEquals(
-            "+117 on Novig · Player Receiving Yards · Minnesota Vikings @ Tampa Bay Buccaneers, Sat 12:00 PM",
+            "+117 on Novig · Player Receiving Yards · Minnesota Vikings @ Tampa Bay Buccaneers, Sun 1:20 AM",
             EvAlerts.text(a, TimeZone.getTimeZone("America/New_York")),
         )
         assertEquals("3 of 3 books agree · found by CNO", EvAlerts.detail(a))
@@ -213,7 +213,8 @@ class AutoScanTest {
         val zone = TimeZone.getTimeZone("UTC")
         assertEquals("Auto-scan: CNO + Vigilant every 10 min", AutoScanText.title(s))
         val idle = AutoScanner.Status(lastStartMs = now - 60_000, lastEndMs = now - 30_000, lastFound = 2, lastAlerts = 1)
-        assertEquals("Next at 12:00 PM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s, now + 9 * 60_000L + 20 * 60_000L - 29 * 60_000L + 20 * 60_000L - 20 * 60_000L + 60_000L * 0 + (1_790_402_400_000L - now - 9 * 60_000L), now, zone = zone))
+        // SampleScan.NOW is 05:20 UTC.
+        assertEquals("Next at 5:29 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s, now + 9 * 60_000L, now, zone = zone))
         assertEquals("Vigilant scan 40/300…", AutoScanText.status(AutoScanner.Status(running = true, step = "Vigilant scan"), s, null, now, ScanProgress("Novig prices", 40, 300), zone))
         assertEquals("Next scan soon · last found nothing to alert · alerts off", AutoScanText.status(idle.copy(lastFound = 0), s.copy(alertMinEv = 0.0), null, now, zone = zone))
     }
