@@ -2566,3 +2566,23 @@ Nothing at or above 1.0% EV."
       cno scanner in full screen (it already works in the widget)". The +EV card's one-tap `OpenBetButton` on every
       CNO tab card, same link path as the widget (TapLink / NovigBetFinder, stake), test + screenshot.
 - [ ] U3 Ship and send the link.
+
+## "Add unlimited options in the vigilant app for all types of scans that can benefit from unlimited … make sure the app doesn't just scan continuously" (Tj, 2026-09-28 ~20:2xZ, on v0.19.5)
+
+- [ ] V1 Research: every per-scan cap (Novig prices per scan, props credits per scan, lines/props per game, sportsbook
+      props hours, PropLine / Pinnacle requests, …), which ones "can benefit from unlimited", what unlimited costs
+      (Novig's read bucket / websocket 2,048, The Odds API credits, PropLine's 1,000/day, scan time vs the odds-age rule
+      that RESEARCH §31.1 turned "No limit" down for), and how an unlimited scan ends.
+- [ ] V2 "unlimited novig prices per scan": a "No limit" choice for Novig prices per scan. Every line a fair source prices
+      in the selected time period is read once, then the scan ends; long scans keep their odds fresh enough to show
+      (not the §31 "early reads age out" problem).
+- [ ] V3 "unlimited credits per scan": a "No limit" choice for The Odds API props credits per scan, bounded by the games in
+      the window × prop types and by the key's credits left; the hint says the worst case.
+- [ ] V4 The other caps that benefit ("etc."): lines / props per game and sportsbook-props hours get an "All"/"No limit"
+      choice where it changes what a scan can find.
+- [ ] V5 "make sure the app doesn't just scan continuously, it should stop the scan when all the markets are finished
+      scanning for the selected time period". An unlimited scan's plan is finite: the markets starting within the
+      selected time period (Days ahead, or "Starts within" when narrower: open task S1), each read once, then it stops;
+      background auto-scan and widget rescans still only repeat on their own timers. Tests prove each market is read
+      once and the scan ends.
+- [ ] V6 Ship and send the link.
