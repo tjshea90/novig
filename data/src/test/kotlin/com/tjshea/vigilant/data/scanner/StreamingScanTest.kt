@@ -228,4 +228,39 @@ class StreamingScanTest {
         assertTrue(after.result === good)
         assertTrue(after.report!!.errors.single(), after.report!!.errors.single().startsWith("Scan failed"))
     }
+
+    /** Tj, 2026-09-28: "pause all scanning". Pausing stops a scan mid-way: the last finished result stays up. */
+    @Test
+    fun `stop ends a running scan, keeps the last finished result, and a later scan still runs`() = runTest {
+        val novig = Novig(edgeOn = setOf(2))
+        val runner = ScanRunner(Scanner(novig, clock = { now }), this)
+        runner.start(settings, listOf(Fair()))
+        advanceUntilIdle()
+        val good = runner.state.value.result!!
+
+        // Fair odds that never come: the scan waits until it's stopped.
+        val stuck = object : ReferenceSource {
+            override val id = "polymarket"
+            override val displayName = "stuck"
+            override fun supports(league: League) = true
+            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot = kotlinx.coroutines.awaitCancellation()
+        }
+        var ended = 0
+        assertTrue(runner.start(settings, listOf(stuck)) { ended++ })
+        runCurrent()
+        assertTrue(runner.running)
+        runner.stop()
+        advanceUntilIdle()
+        val after = runner.state.value
+        assertFalse(after.scanning)
+        assertFalse(runner.running)
+        assertEquals(2, after.finished)
+        assertTrue(after.result === good)
+        assertEquals(1, ended)
+        // Stopping with nothing running does nothing; the next scan runs as usual.
+        runner.stop()
+        assertTrue(runner.start(settings, listOf(Fair())))
+        advanceUntilIdle()
+        assertEquals(3, runner.state.value.finished)
+    }
 }

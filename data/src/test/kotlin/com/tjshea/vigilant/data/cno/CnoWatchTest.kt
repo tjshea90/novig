@@ -81,6 +81,43 @@ class CnoWatchTest {
     }
 
     /**
+     * Tj, 2026-09-28: "Make an option in the app to pause all scanning". Held, nothing is read even with the CNO tab
+     * open (a read in flight stops); let go, reads start again while someone still watches.
+     */
+    @Test
+    fun `a hold stops every read even while watched, and letting go starts them again`() = runTest {
+        val source = Source { currentTime }
+        val feed = CnoFeed(source, clock = { currentTime })
+        val watch = CnoWatch()
+        val active = mutableListOf<Boolean>()
+        val job = launch { watch.runWhileWatched(onActive = { active += it }) { launch { feed.watch(MutableStateFlow(CnoConfig(true, "u", intervalSeconds = 5))) } } }
+        // Paused before anything opened (the app starts held until its settings load).
+        watch.hold(true)
+        watch.set("tab", true)
+        runCurrent()
+        advanceTimeBy(60_000)
+        runCurrent()
+        assertTrue(source.listReads.isEmpty())
+
+        watch.hold(false)
+        runCurrent()
+        advanceTimeBy(10_000)
+        runCurrent()
+        val resumed = source.listReads.size
+        assertTrue(resumed >= 2)
+
+        // Paused with the tab still open: no read, however long.
+        watch.hold(true)
+        runCurrent()
+        advanceTimeBy(60 * 60_000L)
+        runCurrent()
+        assertEquals(resumed, source.listReads.size)
+        assertTrue(watch.watched)
+        assertEquals(listOf(false, true, false), active)
+        job.cancel()
+    }
+
+    /**
      * A source that answers slowly and, like OkHttp, reports a cancelled read as a network error
      * (HTTP/2 "stream was reset: CANCEL", wrapped by CnoClient).
      */
