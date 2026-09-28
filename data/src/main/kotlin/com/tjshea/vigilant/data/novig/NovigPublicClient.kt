@@ -20,6 +20,7 @@ import okhttp3.Request
 import java.io.IOException
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 /** Everything the scanner needs from Novig. The public REST client implements it; tests fake it. */
@@ -268,7 +269,10 @@ class NovigPublicClient(
         val keyProblem = AtomicReference<String?>(null)
         val gate = Semaphore(if (signer != null) keyedConcurrency else publicConcurrency)
         val stop = AtomicReference<NovigHttpException?>(null)
+        // Refusals, counted once per burst: every book in flight when Novig says no comes back refused together.
         val throttleHits = AtomicInteger(0)
+        val lastRefusal = AtomicLong(Long.MIN_VALUE / 2)
+        val refused = AtomicInteger(0)
         val done = AtomicInteger(pushed.size)
         onProgress?.invoke(pushed.size, all.size)
         val results = ids.map { id ->
@@ -303,7 +307,10 @@ class NovigPublicClient(
                                 // Measured live 2026-09-25: the edge answers a burst with 429 and
                                 // Retry-After: 1. Pause everyone, halve the pace, retry this book
                                 // twice; anything still missing is served from the last scan.
-                                if (e.code == 429 && retries < 2 && retryAfter <= SHORT_RETRY_SECONDS && throttleHits.incrementAndGet() <= MAX_SHORT_RETRIES) {
+                                if (e.code == 429) refused.incrementAndGet()
+                                val t = rateClock()
+                                val newBurst = t - lastRefusal.getAndSet(t) >= RateGate.SAME_BURST_MS
+                                if (e.code == 429 && retries < 2 && retryAfter <= SHORT_RETRY_SECONDS && (if (newBurst) throttleHits.incrementAndGet() else throttleHits.get()) <= MAX_SHORT_RETRIES) {
                                     retries++
                                     rate.pause(rateClock() + retryAfter * 1000L)
                                     rate.slowDown()
