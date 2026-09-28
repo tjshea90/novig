@@ -419,10 +419,8 @@ class MainActivity : ComponentActivity() {
             if (openingBet == row.key) openingBet = null
             floatOverNovig()
             tellHowItOpened(found, row)
-            val s = vm.state.value.settings
             val live = row.startsAtMs?.let { it <= System.currentTimeMillis() } == true
-            val kelly = if (s.slipStake == SlipStake.KELLY) cnoStake(CnoPick(row, row.ev, live), s) else null
-            launchNovig(NovigLinks.withStake(found?.link, s.slipStakeFor(kelly)))
+            launchNovig(NovigLinks.withStake(found?.link, cnoSlipStake(CnoPick(row, row.ev, live), vm.state.value.settings)))
         }
     }
 
