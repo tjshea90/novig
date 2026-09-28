@@ -851,7 +851,11 @@ class Scanner(
             // order may still lean on older ones; they never price.
             // How old depends on how far off the game is (Freshness.maxAgeMs; a date-only start counts as near);
             // each quote carries a time (seenBy).
-            val fresh = if (!youngFairOnly) snap else snap.copy(events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs.takeIf { e.etDate == null }) }) })
+            // A game left with no fresh line is dropped, as if the feed hadn't answered: Novig's board still lists it, unpriced.
+            val fresh = if (!youngFairOnly) snap else snap.copy(
+                events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs.takeIf { e.etDate == null }) }) }
+                    .filter { it.markets.isNotEmpty() },
+            )
             if (fresh.provider !in PICKED_BOOK_FEEDS) fresh
             else fresh.copy(events = fresh.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
