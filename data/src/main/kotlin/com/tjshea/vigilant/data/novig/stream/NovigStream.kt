@@ -318,6 +318,8 @@ class NovigStream(
                 "RATE_LIMIT_EXCEEDED" -> { tokens = 0.0; tokensAt = clock() }
                 // Held fewer than we thought possible: ask for half of what was refused next time.
                 "SUBSCRIPTION_LIMIT_EXCEEDED" -> limit = subscribed.size + lost.size / 2
+                // Anything else won't pass by asking again: this connection adds nothing more (REST reads the rest).
+                else -> if (lost.isNotEmpty()) limit = subscribed.size
             }
         }
         scheduleSync()
