@@ -91,9 +91,10 @@ class AltMarketsTest {
         val props = (1..6).map { i -> market("p$i", "RECEPTIONS", "Player $i 3.5 RECEPTIONS", "o$i" to "Over 3.5", "u$i" to "Under 3.5") }
         val quotes = (1..6).map { i -> ou("kalshi", LineKind.PLAYER_PROP, 2.0, 1.9, 3.5, subject = "Player $i", stat = "RECEPTIONS") } +
             ou("pinnacle", LineKind.PLAYER_PROP, 2.0, 1.9, 3.5, subject = "Player 5", stat = "RECEPTIONS")
-        val plan = Planner.plan(listOf(event), props, ref(*quotes.toTypedArray()), s.copy(propsPerGame = 2), now)
+        val plan = Planner.plan(listOf(event), props, ref(*quotes.toTypedArray()), s.copy(propsPerGame = 2, fillBudget = false), now)
         assertEquals(2, plan.marketIds.size)
         assertTrue("p5" in plan.marketIds) // quoted by two books
+        // 0 props a game is none at all, even with budget to spare.
         assertTrue(Planner.plan(listOf(event), props, ref(*quotes.toTypedArray()), s.copy(propsPerGame = 0), now).marketIds.isEmpty())
     }
 

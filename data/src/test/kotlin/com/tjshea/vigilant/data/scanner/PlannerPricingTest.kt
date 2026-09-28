@@ -276,11 +276,11 @@ class PlannerPricingTest {
         val pin = RefBookMarket("pinnacle", "Pinnacle", LineKind.SPREAD, listOf(RefQuote(Side.HOME, 1.93, 3.5), RefQuote(Side.AWAY, 1.95, -3.5)), now)
         val ref = RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens", markets = ex + pin)
         val snaps = listOf(RefSnapshot("americanfootball_nfl", listOf(ref), now))
-        val two = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2), now)
+        val two = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2, fillBudget = false), now)
         assertEquals(listOf("sp3.5", "sp2.5"), two.marketIds)
-        assertEquals(5, Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 5), now).marketIds.size)
+        assertEquals(5, Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 5, fillBudget = false), now).marketIds.size)
         // A line Tj has a bet on is always priced, cap or not, so its closing value keeps updating.
-        val pinned = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2), now, pinned = setOf("sp20.5"))
+        val pinned = Planner.plan(listOf(event), novigSpreads, snaps, sharpOnly.copy(linesPerGame = 2, fillBudget = false), now, pinned = setOf("sp20.5"))
         assertEquals(setOf("sp3.5", "sp2.5", "sp20.5"), pinned.marketIds.toSet())
     }
 
