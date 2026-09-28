@@ -85,7 +85,17 @@ data class FairLine(
     val sharpBooksUsed: List<String>,
     val averageBooksUsed: List<String>,
 ) {
-    val booksUsed: List<String> get() = (sharpBooksUsed + averageBooksUsed).distinct()
+    val booksUsed: List<String> by lazy { (sharpBooksUsed + averageBooksUsed).distinct() }
+
+    /**
+     * When the books behind this line were last seen by their feeds (`last_update`): the newest and
+     * the oldest. Worked out once per line, not once per priced outcome.
+     */
+    val usedUpdates: Pair<Long?, Long?> by lazy {
+        val used = booksUsed.toHashSet()
+        val times = perBook.filter { it.book.bookTitle in used }.mapNotNull { it.book.lastUpdateMs }
+        times.maxOrNull() to times.minOrNull()
+    }
 
     /** Mean hold of the books that fed this line, a proxy for how confident the line is. */
     val hold: Double
