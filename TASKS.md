@@ -2398,7 +2398,7 @@ Nothing at or above 1.0% EV."
   - [ ] K2c App: stream built with the key (useConnection), closes when idle (2 min) and when Vigilant leaves the
         screen with no scan running; scan status says how many prices came by push. NOVIG_API.md §6/§11.1 updated.
 - [ ] K3 Find as many +EV bets as possible.
-  - [ ] K3a Planner fills the per-scan budget: after the per-game picks, every other line a fair source quotes
+  - [x] K3a (DONE: ScanSettings.fillBudget (default on; old files get it), PlannedMarket.spare, Planner.fill; Scanner reads filler after the picks (fetchOrder group 5); Settings switch "Fill the scan with every quoted line". Tests: PlannerPricingTest "budget left after the per-game picks goes to every other quoted line, best-covered first", "filling is on by default…", "a scan reads the per-game picks before the filler lines" (fails pre-fix: [p1, p2]); cap tests pinned to fillBudget = false.) Planner fills the per-scan budget: after the per-game picks, every other line a fair source quotes
         (alternate spreads/totals, more props), best-covered first, up to "Novig prices per scan". Setting
         (default on). Tests.
   - [ ] K3b Tennis: ATP + WTA leagues (Kalshi match series, free; Pinnacle sport 33 via PinnWire/pinnapi):

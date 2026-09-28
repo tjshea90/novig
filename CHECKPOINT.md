@@ -1,13 +1,13 @@
-# CHECKPOINT 554 — read me first, then TASKS.md
+# CHECKPOINT 555 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T06:23:36Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `d8969f8` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T06:28:34Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `6efd5c5` (this checkpoint is the commit after it)
 
 ## Just done
-K1 diagnosed (thin slate + per-game caps + no tennis); K2-K5 planned in TASKS.md with the websocket design
+K3a: scans fill the per-scan budget with every other quoted line (fillBudget, spare lines read after the picks), tests
 
 ## Do this next
-K3a Planner fills the per-scan budget
+K3b tennis (ATP/WTA): Leagues, Kalshi MATCH series, Pinnacle sport 33, round suffixes, OddsAPI/PropLine skip
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ K3a Planner fills the per-scan budget
 
 ## Last ten checkpoints
 ```
+  da4b847 ckpt 554: K1 diagnosed (thin slate + per-game caps + no tennis); K2-K5 planned in TASKS.
   d8969f8 ckpt 553: Recorded Tj's 7-games / Novig key / CNO-copy request as K1-K5 in TASKS.md
   8b3f7cd ckpt 552: Released Vigilant v0.18.0 (code 34): release.yml run 36376581625 green, tag v0
   1db8616 ckpt 551: pre-release: v0.18.0: background auto-scan (CNO or CNO + Vigilant, every 5-40 
@@ -27,3 +28,6 @@ K3a Planner fills the per-scan budget
   25a8521 ckpt 546: P4/P5 code written, compiles: AutoScanService (specialUse FGS, exact alarms, b
   8cb689e ckpt 545: P1+P2 done, P3 mostly: prices/scan to 1200, props/game 16/24, odds cap +120/+1
 ```
+
+(7 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
