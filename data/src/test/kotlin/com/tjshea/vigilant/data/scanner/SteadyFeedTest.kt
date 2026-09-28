@@ -122,6 +122,48 @@ class SteadyFeedTest {
         assertTrue(report.result!!.feed(settings).any { it.outcome.outcomeId == "o" })
     }
 
+    /** Kalshi-like: [lines] at once, the full answer (lines and props) when [gate] opens. */
+    private class LinesFirst(private val lines: RefSnapshot, private val full: RefSnapshot, private val gate: CompletableDeferred<Unit>) : ReferenceSource {
+        override val id = "kalshi"
+        override val displayName = id
+        override val linesFirst = true
+        var linesAsked = 0
+        override suspend fun lines(league: League, settings: ScanSettings): RefSnapshot {
+            linesAsked++
+            return lines
+        }
+        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+            gate.await()
+            return full
+        }
+    }
+
+    /**
+     * Tj, 2026-09-28: "now it is reading the API very slow". Kalshi asks one series at a time at 2/s (57 of them,
+     * ~28 s); since v0.19.2 a league's bets wait for it, so a scan's first bets showed up to 28 s in. Its game lines
+     * now come first: a league's game-line bets show once Kalshi's lines are in, its props once the rest is.
+     */
+    @Test
+    fun `a league's game lines show once Kalshi's lines are in, its props once Kalshi has answered in full`() = runTest {
+        val pinnacle = Source("pinnacle", ref(moneyline("pinnacle", 0.56), receptions("pinnacle", 0.56)))
+        val propsGate = CompletableDeferred<Unit>()
+        val kalshi = LinesFirst(ref(moneyline("kalshi", 0.56)), ref(moneyline("kalshi", 0.56), receptions("kalshi", 0.56)), propsGate)
+        val partials = ArrayList<Set<String>>()
+        val scan = async {
+            Scanner(novig, clock = { now }).scan(settings, listOf(pinnacle, kalshi), emptySet(), {}, { r ->
+                partials += r.feed(settings).map { it.outcome.outcomeId }.toSet()
+            })
+        }
+        repeat(50) { yield() }
+        val beforeProps = partials.toList()
+        propsGate.complete(Unit)
+        val report = scan.await()
+        assertEquals(1, kalshi.linesAsked)
+        assertTrue("the moneyline showed before Kalshi's props were in: $beforeProps", beforeProps.any { "dal" in it })
+        assertTrue("no prop before Kalshi answered in full: $beforeProps", beforeProps.none { "o" in it })
+        assertEquals(setOf("dal", "o"), report.result!!.feed(settings).map { it.outcome.outcomeId }.toSet())
+    }
+
     @Test
     fun `a scan never prices with a book price that would go stale within 2 minutes`() = runTest {
         // A sportsbook price the feed last saw 3.5 minutes ago: under 5, but only 1.5 minutes of life left.
