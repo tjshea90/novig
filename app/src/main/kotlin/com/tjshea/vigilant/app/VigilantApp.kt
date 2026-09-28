@@ -25,6 +25,7 @@ import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.NovigPublicClient
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
+import com.tjshea.vigilant.data.novig.stream.NovigStream
 import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.PinnapiClient
 import com.tjshea.vigilant.data.reference.PolymarketClient
