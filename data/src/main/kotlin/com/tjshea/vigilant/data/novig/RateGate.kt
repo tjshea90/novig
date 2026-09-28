@@ -43,6 +43,7 @@ class RateGate(
     private var rampedRate = ratePerSecond
     private var cleanStreak = 0
     private var lastAcquire = Long.MIN_VALUE
+    private var lastSlowDown = Long.MIN_VALUE
 
     /** The rate in force right now, for display. */
     val currentRate: Double get() = if (clock() < slowUntil) slowRate else rampedRate
@@ -93,12 +94,22 @@ class RateGate(
     /**
      * Halve the rate for a while after a refusal. Repeated refusals keep halving, down to
      * [minRate]. Any ramp-up is forgotten: afterwards the pace starts over at [ratePerSecond].
+     * Refusals within [SAME_BURST_MS] of the last slow-down are the same one: every request in
+     * flight when Novig said no comes back refused at once, and that's one refusal, not six
+     * halvings (Tj, 2026-09-28: "now it is reading the API very slow").
      */
     suspend fun slowDown() = mutex.withLock {
         val now = clock()
+        if (lastSlowDown != Long.MIN_VALUE && now - lastSlowDown < SAME_BURST_MS) return@withLock
+        lastSlowDown = now
         slowRate = max(minRate, (if (now < slowUntil) slowRate else rampedRate) / 2)
         slowUntil = now + slowForMs
         rampedRate = ratePerSecond
         cleanStreak = 0
+    }
+
+    companion object {
+        /** Refusals this close together came from one burst of requests in flight: they slow the pace once. */
+        const val SAME_BURST_MS = 1_000L
     }
 }
