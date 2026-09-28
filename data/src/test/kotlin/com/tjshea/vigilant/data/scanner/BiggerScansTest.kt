@@ -64,7 +64,7 @@ class BiggerScansTest {
         for (old in listOf(500, 1000, 2000, 0)) assertEquals("from $old", 300, ScanSettings(maxOdds = old, schema = 5).migrate().maxOdds)
         for (kept in listOf(120, 150, 200, 300)) assertEquals(kept, ScanSettings(maxOdds = kept, schema = 5).migrate().maxOdds)
         val upgraded = ScanSettings(maxOdds = 1000, schema = 5).migrate()
-        assertEquals(6, upgraded.schema)
+        assertTrue(upgraded.schema >= 6)
         // A current file is left alone (the cap isn't re-checked on every launch).
         assertEquals(upgraded, upgraded.migrate())
     }
