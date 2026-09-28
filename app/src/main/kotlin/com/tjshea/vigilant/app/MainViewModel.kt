@@ -565,6 +565,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     booksFetched = report.booksFetched + report.booksNotModified,
                     booksFromCache = report.booksFromCache,
                     booksViaKey = report.booksViaKey,
+                    booksViaPush = report.booksViaPush,
                     sources = report.sources,
                     unscanned = emptySet(),
                 ),
