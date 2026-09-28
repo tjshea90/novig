@@ -414,7 +414,8 @@ object Planner {
             // Tennis: "D. Medvedev Set 1", outcomes "D. Medvedev" / "R. Safiullin" (Pinnacle's period 1).
             "FIRST_SET_MONEYLINE" -> winner(1, "1st Set Winner")
 
-            "SPREAD" -> spread(0, "Spread")
+            // A tennis match's spread and total are in games (its set lines are other market types).
+            "SPREAD" -> spread(0, if (m.league.tennis) "Games Spread" else "Spread")
             "SPREAD_1H" -> spread(1, "$halfLabel Spread")
             "TOTAL" -> overUnder(LineKind.TOTAL, 0, "Total")
             "TOTAL_1H" -> overUnder(LineKind.TOTAL, 1, "$halfLabel Total")
