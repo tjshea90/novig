@@ -95,7 +95,8 @@ data class ScanSettings(
     /**
      * The most Novig prices one scan reads. Past it, main lines and the soonest games win; props
      * and later games wait. 300 since v0.10.0 (was 200): about a minute on public routes, with the
-     * likeliest +EV lines read first and shown as they land.
+     * likeliest +EV lines read first and shown as they land. Up to 1,200 since v0.18.0 (Tj,
+     * 2026-09-28): about four minutes on public routes.
      */
     val maxBooksPerScan: Int = 300,
     /**
@@ -120,10 +121,12 @@ data class ScanSettings(
      */
     val outlierGuard: Boolean = true,
     /**
-     * The feed hides prices longer than these American odds (0 = no limit). Devigging is least
-     * reliable on longshots, which is where the biggest fake edges show up (RESEARCH.md §8.1, §16).
+     * The feed hides prices longer than these American odds. Devigging is least reliable on
+     * longshots, which is where the biggest fake edges show up (RESEARCH.md §8.1, §16). +300 at most
+     * since v0.18.0 (Tj, 2026-09-28: "Let me choose +200 +150 and +120 and get rid of any option over
+     * +300"); 0 (no limit) is still read as such, but no longer offered ([migrate] moves it to +300).
      */
-    val maxOdds: Int = 1000,
+    val maxOdds: Int = 300,
     /**
      * Leaving Vigilant with a scan running or bets on the feed shrinks it to a floating
      * picture-in-picture window, so the results stay in view in Novig (Tj, 2026-09-26).
@@ -227,6 +230,10 @@ data class ScanSettings(
                 schema = 5,
             )
         }
+        // v0.18.0: the longest odds shown is +300 at most (Tj, 2026-09-28); a longer cap or none becomes +300.
+        if (s.schema < 6) {
+            s = s.copy(maxOdds = if (s.maxOdds <= 0 || s.maxOdds > MAX_ODDS_LIMIT) MAX_ODDS_LIMIT else s.maxOdds, schema = 6)
+        }
         return s
     }
 
@@ -282,13 +289,20 @@ data class ScanSettings(
         /** At most [Freshness.MAX_REUSE_MS]: older sportsbook odds are never compared (RESEARCH.md §24). */
         val ODDS_API_REUSE_CHOICES = listOf(0, 1, 2)
         val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5)
-        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12)
-        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400)
+        /** 16 and 24 since v0.18.0: room to fill the bigger per-scan budgets with props, where exchange prices lag most. */
+        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12, 16, 24)
+
+        /** Up to 1,200 since v0.18.0 (Tj, 2026-09-28: "so I can select 500 600 700 800 up to 1200"). */
+        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200)
         val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96)
         val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
         val BOOK_PROP_REUSE_CHOICES = listOf(1, 2)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
-        val MAX_ODDS_CHOICES = listOf(300, 500, 1000, 2000, 0)
+        /** Nothing over +300 since v0.18.0 (Tj, 2026-09-28). */
+        val MAX_ODDS_CHOICES = listOf(120, 150, 200, 300)
+
+        /** The longest [maxOdds] offered. */
+        const val MAX_ODDS_LIMIT = 300
         val CNO_MAX_ODDS_CHOICES = listOf(100, 150, 200, 300, 0)
         val CNO_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8, 10)
         val CNO_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
