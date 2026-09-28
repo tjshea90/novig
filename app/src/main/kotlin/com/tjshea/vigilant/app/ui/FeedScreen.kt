@@ -318,7 +318,15 @@ fun fairSourceLabel(s: ScanSettings): String = when (s.fairSource) {
 } + ", ${s.devigMethod.displayName.lowercase()} devig"
 
 @Composable
-fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun OpportunityCard(
+    o: Opportunity,
+    settings: ScanSettings,
+    now: Long,
+    modifier: Modifier = Modifier,
+    /** Show the one-tap "Open in Novig" button (the +EV tab; off where a card is only a preview). */
+    onOpen: Boolean = true,
+    onClick: () -> Unit,
+) {
     val q = o.quote ?: return
     val fair = o.fairProbability ?: return
     Card(
@@ -365,16 +373,24 @@ fun OpportunityCard(o: Opportunity, settings: ScanSettings, now: Long, modifier:
                 o.suggestedStake?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
             }
             val depth = o.depth
-            Text(
-                buildString {
-                    append(o.fair?.let { f -> f.booksUsed.take(3).joinToString(", ") + if (f.booksUsed.size > 3) " +${f.booksUsed.size - 3}" else "" } ?: "")
-                    if (AppBook.exchange && depth != null && depth.contracts > 0) append("  ·  ${Format.money(depth.dollarCost)} fillable at +EV")
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    buildString {
+                        append(o.fair?.let { f -> f.booksUsed.take(3).joinToString(", ") + if (f.booksUsed.size > 3) " +${f.booksUsed.size - 3}" else "" } ?: "")
+                        if (AppBook.exchange && depth != null && depth.contracts > 0) append("\n${Format.money(depth.dollarCost)} fillable at +EV")
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                // One tap to the bet slip, as the widget does (Tj, 2026-09-28); tapping the card still opens its details.
+                if (onOpen) {
+                    Spacer(Modifier.width(8.dp))
+                    OpenBetButton(o, settings)
+                }
+            }
         }
     }
 }

@@ -33,12 +33,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.AppBook
+import com.tjshea.vigilant.data.novig.NovigLinks
 import com.tjshea.vigilant.data.scanner.CrossCheck
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
