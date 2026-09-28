@@ -2503,3 +2503,25 @@ Nothing at or above 1.0% EV."
         and how long a found bet stays listed (`Freshness.maxAgeMs`); cards show the odds' age; copy updated; tests.
 - [x] S4 (DONE: v0.19.3 (38): CI green on 94339f0, ship.sh gates green, release.yml published vigilant-v0.19.3.apk, BUILDLOG recorded.) Ship with the v0.19.3 work (R2e) and send the link.
 
+## "Now consider if the 1200 Max prices per novig scan is enough … no limit … alternate lines and player props per game … credits per scan on props … automatically enter 1 dollar on every betslip … pinnwire … pinnapi … one press buttons … Open the bet in novig" (Tj, 2026-09-28 ~18:40Z, on v0.19.3)
+
+- [ ] T1 "consider if the 1200 Max prices per novig scan is enough for me to find most or all positive EV bets available,
+      and if increasing this number could be beneficial or dangerous in any way. If I can have no limit on the prices
+      safely, then make that option." Measure how many Novig prices a full 7-day board has with fair odds (how much
+      1,200 leaves out), what more reads cost (time, Novig's limits, the websocket's 2,048 watch cap, data, battery),
+      and decide; add "No limit" if safe.
+- [ ] T2 "consider if I can safely raise the max alternate lines and player props per game safely." Same question for
+      `linesPerGame` / `propsPerGame`; raise the choices if safe.
+- [ ] T3 "Can I raise the most credits per scan on props safely?" Check The Odds API credits per scan
+      (`bookPropCreditsPerScan`) against the free/paid quotas; raise if safe.
+- [ ] T4 "Can the app automatically enter 1 dollar on every betslip inside novig when I click on a bet? If it can, make
+      an option to automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into the
+      settings." Research whether Novig's app/links accept a stake (deep link params, the web bet slip), and build the
+      option if it can.
+- [ ] T5 "When pinnwire api usage runs out, automatically switch to pinnapi until the usage resets." Check what happens
+      today when PinnWire's keys are spent (`PinnapiClient`, `KeyPool`), and make it switch to pinnapi and back.
+- [ ] T6 "On the vigilant +ev scan tab when the app is in full screen, make easy one press buttons next to each bet to
+      Open the bet in novig, just as the widget does". A one-tap "Open in Novig" on each +EV card (the widget's exact
+      bet-slip link), test + screenshot.
+- [ ] T7 Ship and send the link.
+
