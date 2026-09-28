@@ -369,6 +369,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 rows?.mapNotNull { r -> PlayerTeams.playerOf(r)?.let { p -> cache.teamOf(r.league, r.event, p) }?.let { r.key to it } }?.toMap() ?: emptyMap()
             }.flowOn(Dispatchers.Default).collect { t -> _state.update { if (it.teams == t) it else it.copy(teams = t) } }
         }
+        // Nothing of CNO's is read before the settings say whether scanning is paused, or while it is
+        // (Tj, 2026-09-28: "pause all scanning"). Before the watch below starts, so it starts held.
+        viewModelScope.launch {
+            state.map { !it.loaded || it.settings.paused }.distinctUntilChanged().collect { cnoWatch.hold(it) }
+        }
         // CNO, its books lane and its teams lane run together, only while someone is looking.
         viewModelScope.launch {
             cnoWatch.runWhileWatched(onActive = { active -> _state.update { it.copy(cnoLive = active) } }) {
