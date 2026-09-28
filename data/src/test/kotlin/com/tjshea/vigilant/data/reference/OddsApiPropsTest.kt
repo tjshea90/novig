@@ -300,6 +300,30 @@ class OddsApiPropsTest {
     }
 
     /**
+     * Tj, 2026-09-28: "unlimited credits per scan … it should stop the scan when all the markets are finished scanning for the
+     * selected time period". No limit and "All" hours: every game in the scan's window with props Novig lists, once; a game
+     * without props still costs nothing, and the window ("Starts within" when shorter) still bounds it.
+     */
+    @Test
+    fun `no credit limit and All hours buy every game in the scan window once, and nothing past it`() = runTest {
+        routeAll()
+        val unlimited = settings.copy(bookPropCreditsPerScan = ScanSettings.NO_LIMIT, bookPropHours = ScanSettings.NO_LIMIT, daysAhead = 7)
+        assertEquals(7 * 24, unlimited.bookPropWindowHours)
+        val nflSnap = OddsApiPropsSource(client()).odds(nfl, unlimited, board)
+        // Bills-Jets (30h) is in a 7-day window now; Chiefs-Broncos still has no props on Novig.
+        assertEquals(setOf("oA", "oB"), nflSnap.events.map { it.id }.toSet())
+        assertFalse(paths().any { it.endsWith("/oD/odds") })
+        assertEquals(1, paths().count { it.endsWith("/oB/odds") })
+
+        // "Starts within 2h" narrows the window: only the Yankees game (1h).
+        requests.clear()
+        val soon = unlimited.copy(startsWithinHours = 2)
+        val source = OddsApiPropsSource(client())
+        assertTrue(source.odds(nfl, soon, board.copy(now = now + 1)).events.isEmpty())
+        assertEquals(listOf("oC"), source.odds(mlb, soon, board.copy(now = now + 1)).events.map { it.id })
+    }
+
+    /**
      * RESEARCH.md §23 (Tj, 2026-09-27: "use the best/fastest API first and the others as automatic
      * fallbacks"): PropLine priced Ravens–Cowboys' passing yards and receptions and the Yankees' hits
      * this scan, so credits go only to what it didn't: Crochet's strikeouts.

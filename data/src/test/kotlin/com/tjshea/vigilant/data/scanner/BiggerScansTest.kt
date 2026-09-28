@@ -37,17 +37,74 @@ class BiggerScansTest {
     // ---- choices ---------------------------------------------------------------------------------
 
     @Test
-    fun `Novig prices per scan go up to 2,000, the live feed's watch, and no further`() {
+    fun `Novig prices per scan go up to 2,000 (the live feed's watch), then No limit`() {
         val choices = ScanSettings.MAX_BOOKS_CHOICES
         assertTrue(choices.containsAll(listOf(500, 600, 700, 800, 900, 1000, 1100, 1200, 1500, 2000)))
-        // Tj, 2026-09-28: "If I can have no limit on the prices safely, then make that option": not safely (RESEARCH.md §31).
-        assertEquals(2000, choices.max())
-        assertTrue(choices.max() <= com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS)
+        // Tj, 2026-09-28 (v0.19.4): "If I can have no limit on the prices safely" (not then, RESEARCH.md §31); then (v0.19.6)
+        // "Add unlimited options … unlimited novig prices per scan": No limit, bounded by the time window (RESEARCH.md §32).
+        assertEquals(ScanSettings.NO_LIMIT, choices.last())
+        assertEquals(2000, choices.dropLast(1).max())
+        assertTrue(choices.dropLast(1).max() <= com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS)
         assertEquals(choices.sorted(), choices)
         // More lines and props per game ("consider if I can safely raise the max alternate lines and player props per game").
-        assertTrue(ScanSettings.PROPS_PER_GAME_CHOICES.containsAll(listOf(16, 24, 32, 48)))
-        assertTrue(ScanSettings.LINES_PER_GAME_CHOICES.containsAll(listOf(5, 8, 10)))
-        assertEquals(192, ScanSettings.BOOK_PROP_CREDIT_CHOICES.max())
+        assertTrue(ScanSettings.PROPS_PER_GAME_CHOICES.containsAll(listOf(16, 24, 32, 48, ScanSettings.NO_LIMIT)))
+        assertTrue(ScanSettings.LINES_PER_GAME_CHOICES.containsAll(listOf(5, 8, 10, ScanSettings.NO_LIMIT)))
+        assertEquals(listOf(0, 12, 24, 48, 96, 192, ScanSettings.NO_LIMIT), ScanSettings.BOOK_PROP_CREDIT_CHOICES)
+        assertEquals(ScanSettings.NO_LIMIT, ScanSettings.BOOK_PROP_HOURS_CHOICES.last())
+        assertEquals(listOf(12, 24, 48, ScanSettings.NO_LIMIT), ScanSettings.PROPLINE_GAMES_CHOICES)
+    }
+
+    // ---- No limit (Tj, 2026-09-28: "unlimited novig prices per scan … make sure the app doesn't just scan continuously,
+    // it should stop the scan when all the markets are finished scanning for the selected time period") -----------------
+
+    @Test
+    fun `with no limit a scan reads every priced line in the time window once, then stops`() = runTest {
+        val board = Board(400) // a game an hour, the first a day off
+        val novig = Novig(board)
+        val week = settings.copy(maxBooksPerScan = ScanSettings.NO_LIMIT, daysAhead = 7)
+        val inWindow = board.events.filter { it.startsTs <= now + 7 * 86_400_000L }.map { it.eventId.replace("e", "m") }.toSet()
+        assertEquals(145, inWindow.size)
+        val report = Scanner(novig, clock = { now }).scan(week, listOf(Fair(board)), onProgress = {}, onPartial = {})
+        val read = novig.calls.flatten()
+        assertEquals(inWindow, read.toSet()) // every line in the window, nothing past it
+        assertEquals(read.size, read.toSet().size) // each once
+        assertEquals(145, report.booksFetched)
+        assertEquals(400 - 145, report.result!!.stats.laterGames)
+        // The same scan with a number reads that many.
+        val capped = Novig(board)
+        Scanner(capped, clock = { now }).scan(week.copy(maxBooksPerScan = 100), listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(100, capped.calls.sumOf { it.size })
+    }
+
+    @Test
+    fun `a scan reads only the games in Starts within when it's shorter than Days ahead`() = runTest {
+        now = Fixtures.START_MS - 3_600_000L // the first game an hour off
+        val board = Board(100)
+        val novig = Novig(board)
+        val s = settings.copy(maxBooksPerScan = ScanSettings.NO_LIMIT, daysAhead = 7, startsWithinHours = 12)
+        assertEquals(12, s.scanWindowHours)
+        val report = Scanner(novig, clock = { now }).scan(s, listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals((0..11).map { "m$it" }.toSet(), novig.calls.flatten().toSet())
+        assertEquals(100 - 12, report.result!!.stats.laterGames)
+        // Longer than Days ahead (or Any time): Days ahead decides.
+        assertEquals(24, s.copy(daysAhead = 1, startsWithinHours = 48).scanWindowHours)
+        assertEquals(7 * 24, s.copy(startsWithinHours = 0).scanWindowHours)
+    }
+
+    /** A no-limit scan that ran out of time (its odds would be too old) reads what it left first next time. */
+    @Test
+    fun `lines a long scan left too late are read first by the next scan`() = runTest {
+        val board = Board(40, every = 0L)
+        now = Fixtures.START_MS - 30 * 60_000L // 5 minutes' odds: reads stop 3 minutes in
+        val novig = Novig(board, stepMs = 60_000L)
+        val scanner = Scanner(novig, clock = { now })
+        val first = scanner.scan(settings.copy(maxBooksPerScan = ScanSettings.NO_LIMIT), listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(8, first.booksTooLate)
+        val left = (board.markets.map { it.marketId }.toSet() - novig.calls.flatten().toSet())
+        assertEquals(8, left.size)
+        novig.calls.clear()
+        scanner.scan(settings.copy(maxBooksPerScan = ScanSettings.NO_LIMIT), listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(left, novig.calls.first().toSet())
     }
 
     /**

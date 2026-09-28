@@ -317,6 +317,29 @@ class PropLineClientTest {
         assertTrue(requests.size > before)
     }
 
+    /**
+     * Tj, 2026-09-28: "Add unlimited options … for all types of scans that can benefit from unlimited". PropLine's props were
+     * capped at 12 games a scan; now a setting, "No limit" = every game in the window (one request each, soonest first).
+     */
+    @Test
+    fun `PropLine props follow the games-per-scan setting, and No limit buys every game in the window`() = runTest {
+        routes["/v1/sports/americanfootball_nfl/events"] = { ok(realEvents) }
+        routes["/v1/sports/americanfootball_nfl/events/555/odds"] = { ok(props) }
+        routes["/v1/sports/americanfootball_nfl/events/556/odds"] = { ok(props.replace("\"555\"", "\"556\"")) }
+        val colts = NovigEvent("nB", "FOOTBALL", "NFL", NovigEvent.STATUS_PREGAME, "Houston Texans @ Indianapolis Colts", start + hour)
+        val two = context.copy(
+            novigEvents = listOf(game, colts),
+            novigMarkets = context.novigMarkets + prop("m3", "PASSING_YARDS", "C.J. Stroud", 240.5).copy(eventId = "nB"),
+        )
+        fun bought() = requests.map { it.requestUrl!!.encodedPath }.filter { it.endsWith("/odds") }
+        PropLinePropsSource(client()).odds(nfl, ScanSettings(referenceBooks = listOf("fanduel"), propLineGamesPerScan = 1), two)
+        assertEquals(listOf("/v1/sports/americanfootball_nfl/events/555/odds"), bought()) // the sooner game only
+        requests.clear()
+        PropLinePropsSource(client()).odds(nfl, ScanSettings(referenceBooks = listOf("fanduel"), propLineGamesPerScan = ScanSettings.NO_LIMIT), two)
+        assertEquals(setOf("/v1/sports/americanfootball_nfl/events/555/odds", "/v1/sports/americanfootball_nfl/events/556/odds"), bought().toSet())
+        assertEquals(12, ScanSettings().propLineGamesPerScan) // the old fixed cap stays the default
+    }
+
     @Test
     fun `no props are bought when player props aren't priced`() = runTest {
         val source = PropLinePropsSource(client())
