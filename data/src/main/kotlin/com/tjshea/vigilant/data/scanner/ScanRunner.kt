@@ -87,4 +87,13 @@ class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineS
     }
 
     val running: Boolean get() = job?.isActive == true
+
+    /**
+     * Stops the scan running now, if any (scanning paused; Tj, 2026-09-28). It ends like a failed one: the last
+     * finished result stays up, not a half-read one, and [start]'s afterScan still runs.
+     */
+    @Synchronized
+    fun stop() {
+        job?.cancel()
+    }
 }
