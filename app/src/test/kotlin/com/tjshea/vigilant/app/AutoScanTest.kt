@@ -10,6 +10,7 @@ import android.content.IntentFilter
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.tjshea.vigilant.app.ui.alertLabel
 import com.tjshea.vigilant.data.alerts.EvAlert
 import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.scanner.Agreement
@@ -56,7 +57,7 @@ class AutoScanTest {
         assertTrue(AutoScanMode.CNO.cno && !AutoScanMode.CNO.vigilant)
         assertTrue(AutoScanMode.BOTH.cno && AutoScanMode.BOTH.vigilant)
         assertFalse(AutoScanMode.OFF.cno || AutoScanMode.OFF.vigilant)
-        assertEquals(listOf("Off", "2%+", "3%+", "4%+"), ScanSettings.ALERT_MIN_EV_CHOICES.map(com.tjshea.vigilant.app.ui::alertLabel))
+        assertEquals(listOf("Off", "2%+", "3%+", "4%+"), ScanSettings.ALERT_MIN_EV_CHOICES.map { alertLabel(it) })
     }
 
     @Test
@@ -223,7 +224,7 @@ class AutoScanTest {
     fun `each scan's alarm is set for its time, and switching off cancels it`() {
         val am = context.getSystemService(AlarmManager::class.java)
         AutoScanAlarm.set(context, now + 10 * 60_000L)
-        val alarm = shadowOf(am).nextScheduledAlarm
+        val alarm = shadowOf(am).nextScheduledAlarm!!
         assertEquals(now + 10 * 60_000L, alarm.triggerAtTime)
         assertEquals(AlarmManager.RTC_WAKEUP, alarm.type)
         assertEquals(now + 10 * 60_000L, AutoScanAlarm.nextAtMs)
