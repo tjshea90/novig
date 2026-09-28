@@ -458,6 +458,12 @@ fun SettingsScreen(
                 Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
                 Hint(scanSizeHint(s.maxBooksPerScan))
+                SwitchRow(
+                    "Fill the scan with every quoted line",
+                    "After the lines and props per game above, what's left of the ${s.maxBooksPerScan} prices goes to every other " +
+                        "line the books quote (alternate spreads and totals, more props), best-covered first. Off: only the picks above.",
+                    s.fillBudget,
+                ) { v -> onUpdate { it.copy(fillBudget = v) } }
                 } else {
                     Hint("Every ${AppBook.name} line another book also prices is checked: its lines come in the fair-odds requests, so there's no per-line cost to limit.")
                 }
