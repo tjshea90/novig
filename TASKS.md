@@ -2337,7 +2337,10 @@ already fetch the fair-odds books (BetMGM asked for alongside them, split off as
       PropLine / The Odds API usage and scan time; widening the window would then need a new scan.
 - [ ] S2 Show the start-time window in the picture-in-picture window's header (it can't take taps, so today
       there's no sign there that bets are being hidden).
-- [ ] S3 Tj's side: paste `tools/setup-android.sh` into the cloud environment's Setup script (BRIEF.md trap 6) so
+- [x] S3 (DONE, seen 2026-09-28 ~22:40Z: the environment has a setup script that ran at 19:12:04-19:12:21Z
+      ("Running init script" / "Successfully executed init script" in /tmp/environment-manager.out), and a fresh
+      session starts with /opt/android-sdk and ~/.gradle/init.d/mirror.gradle.kts from that run.) Tj's side: paste
+      `tools/setup-android.sh` into the cloud environment's Setup script (BRIEF.md trap 6) so
       every session starts ready to build without touching Maven Central.
 
 ## Faster scans, 1,200 prices, background auto-scan, +EV alerts, odds cap (Tj, 2026-09-28T03:19Z)
