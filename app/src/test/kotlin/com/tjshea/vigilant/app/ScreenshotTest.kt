@@ -296,7 +296,7 @@ class ScreenshotTest {
         val aged = old.count { it.fairIsOld(SampleScan.NOW) }
         assertTrue(aged > 0 && aged < old.size)
         shoot("1i_feed_aged_out") { FeedScreen(base.copy(feed = old), {}, {}, {}, { _, _ -> }) }
-        compose.onNodeWithText("$aged bet", substring = true).assertExists()
+        compose.onNodeWithText("$aged bets hidden: the other books", substring = true).assertExists()
         compose.onNodeWithText("are over 5 minutes old", substring = true).assertExists()
         assertEquals(null, com.tjshea.vigilant.app.ui.agedOutText(base, SampleScan.NOW))
     }
