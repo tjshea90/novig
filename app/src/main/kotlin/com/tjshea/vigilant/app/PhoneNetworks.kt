@@ -78,7 +78,9 @@ class PhoneNetworks(context: Context) {
         /** [base], sending everything over [network] only (its own sockets, name lookups and connection pool). */
         fun bound(base: OkHttpClient, network: Network): OkHttpClient = base.newBuilder()
             .socketFactory(network.socketFactory)
-            .dns(Dns { host -> network.getAllByName(host).toList() })
+            .dns(object : Dns {
+                override fun lookup(hostname: String) = network.getAllByName(hostname).toList()
+            })
             .connectionPool(ConnectionPool())
             .build()
     }
