@@ -165,6 +165,9 @@ class ScreenshotTest {
     @Test fun tappingACardOpensItsDetailWithTheBookBreakdown() {
         val s = SampleScan.state()
         screen { FeedScreen(s, {}, {}, {}, { _, _ -> }) }
+        // Cards are taller since v0.19.4 (the Open in Novig button): scroll to the Dallas moneyline's card first.
+        val dallas = s.feed.first { it.selection == "Dallas Cowboys" }
+        compose.onNode(androidx.compose.ui.test.hasScrollToKeyAction()).performScrollToKey(dallas.key)
         compose.onNodeWithText("Dallas Cowboys").performClick()
         compose.onNodeWithText("FAIR ODDS: BLEND · POWER").assertIsDisplayed()
         compose.onNodeWithText("Track").assertIsDisplayed()
@@ -326,7 +329,7 @@ class ScreenshotTest {
         compose.onNodeWithText("+120").performClick()
         assert(picked?.maxOdds == 120) { "picked $picked" }
         // v0.19.0: the per-scan budget's leftovers go to every other quoted line; the key's live feed is named.
-        compose.onNodeWithText("whole scan arrives by live feed", substring = true).assertExists()
+        compose.onNodeWithText("arrives by live feed about 8 seconds in", substring = true).assertExists()
         compose.onNodeWithText("Fill the scan with every quoted line").performClick()
         assert(picked?.fillBudget == false) { "picked $picked" }
     }
