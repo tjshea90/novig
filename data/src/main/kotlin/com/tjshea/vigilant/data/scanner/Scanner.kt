@@ -177,6 +177,8 @@ class Scanner(
             val reports = ordered.map { jobs.getValue(it.id) }.awaitAll()
             pump.fairOddsDone()
             pumpJob.await()
+            // A long scan's first edges were read minutes before its last books: read them again.
+            pump.rereadEarlyEdges()
             reports
         }
 
@@ -252,6 +254,11 @@ class Scanner(
 
         fun finish() {
             if (reading) emit()
+        }
+
+        /** The last pass: [done] of [total] early edges read again. */
+        fun rereading(done: Int, total: Int) {
+            out(ScanProgress("Rechecking the first edges", done, total))
         }
     }
 
@@ -338,6 +345,46 @@ class Scanner(
                 publish(cat)
             }
         }
+
+        /**
+         * Novig reads again (at most [MAX_REREAD]) the feed's bets whose price was read over
+         * [REREAD_AFTER_MS] ago, best EV first: in a scan of hundreds of books the first edges are
+         * minutes old by the end (Tj, 2026-09-28: up to 1,200 prices a scan, and alerts that open the
+         * bet at once). Nothing when Novig asked to stop, or no edge is that old.
+         */
+        suspend fun rereadEarlyEdges() {
+            val cat = catalog ?: return
+            if (retryAfter != null || fresh.isEmpty()) return
+            val cutoff = clock() - REREAD_AFTER_MS
+            val shown = planFor(cat, settings, now, youngFairOnly = true)
+            val merged = HashMap(books).apply { putAll(fresh) }
+            val ids = Pricing.price(shown, merged, settings, now, fairMemo).opportunities
+                .filter { o ->
+                    val ev = o.evPercent ?: return@filter false
+                    val read = fresh[o.market.marketId]?.fetchedAtMs ?: return@filter false
+                    ev >= settings.minEvPercent && ev <= settings.maxEvPercent && read < cutoff
+                }
+                .sortedByDescending { it.evPercent }
+                .map { it.market.marketId }
+                .distinct()
+                .take(MAX_REREAD)
+            if (ids.isEmpty()) return
+            progress.rereading(0, ids.size)
+            try {
+                val batch = novig.books(ids) { d, t -> progress.rereading(d, t) }
+                // Only books actually read again replace the first read (a failed one keeps it).
+                for ((id, book) in batch.books) if (book.fetchedAtMs >= cutoff) fresh[id] = book
+                reread += batch.fetched + batch.notModified
+                batch.retryAfterSeconds?.let { retryAfter = it }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The first reads stand; the feed still shows only this scan's prices.
+            }
+        }
+
+        /** Books read a second time by [rereadEarlyEdges]. */
+        var reread = 0
 
         /** Everything priced so far. Its feed shows only prices read this scan. */
         private fun publish(cat: Catalog) {
@@ -698,6 +745,12 @@ class Scanner(
 
         /** A line this close below zero last scan is worth re-reading early: a tick can flip it. */
         const val NEAR_MISS_EV = -0.02
+
+        /** A feed bet whose Novig price was read longer ago than this when the scan ends is read again. */
+        const val REREAD_AFTER_MS = 60_000L
+
+        /** Most books the end-of-scan re-read takes: about seven seconds on Novig's public routes. */
+        const val MAX_REREAD = 40
 
         /** Feeds that relay Novig's own prices ([RefSnapshot.novig]). */
         private val NOVIG_RELAYS = listOf(com.tjshea.vigilant.data.reference.PropLineClient.ID, com.tjshea.vigilant.data.reference.PropLinePropsSource.ID)
