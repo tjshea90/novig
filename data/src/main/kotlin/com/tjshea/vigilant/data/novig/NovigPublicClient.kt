@@ -121,6 +121,25 @@ class NovigPublicClient(
     @Volatile
     var keyed: NovigSignedClient? = null
 
+    /**
+     * The connected key's websocket ([com.tjshea.vigilant.data.novig.stream.NovigStream]): books it holds
+     * are served with no request, the rest by REST. Null = none (no key).
+     */
+    @Volatile
+    var stream: com.tjshea.vigilant.data.novig.stream.PushedBooks? = null
+
+    /** Only while the key route itself is usable: a VPN or location refusal stops both. */
+    private fun liveStream() = stream?.takeIf { keyed != null && clock() >= keyedDownUntil }
+
+    override fun watch(marketIds: Collection<String>) {
+        liveStream()?.watch(marketIds)
+    }
+
+    override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> =
+        if (marketIds.isEmpty()) emptyMap() else liveStream()?.live(marketIds).orEmpty()
+
+    override fun pushProblem(sinceMs: Long): String? = stream?.problemSince(sinceMs)
+
     /** After the key route fails, stay on public routes this long before trying it again. */
     private val keyedRetryMs = 10 * 60_000L
 
