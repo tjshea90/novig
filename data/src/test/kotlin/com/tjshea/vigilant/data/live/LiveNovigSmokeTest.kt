@@ -98,4 +98,42 @@ class LiveNovigSmokeTest {
             assertTrue(r.errors.none { it.contains("429") })
         }
     }
+
+    /**
+     * Novig's `strike` (docs: the Market schema) is the line a market settles on, a spread's being the home
+     * side's handicap. The planner reads lines from display names and skips a market whose reading
+     * disagrees with it, so every real line must agree, or bets are lost (2026-09-28).
+     */
+    @Test
+    fun `real catalog - lines read from names agree with Novig's strike, spreads on the home side`() = runBlocking {
+        assumeTrue(System.getenv("VIGILANT_LIVE") == "1")
+        val client = NovigPublicClient(OkHttpClient(), Json { ignoreUnknownKeys = true })
+        val leagues = com.tjshea.vigilant.data.scanner.Leagues.ALL.map { it.novigName }
+        val before = System.currentTimeMillis() + 8 * 86_400_000L
+        val events = client.events(leagues, listOf("OPEN_PREGAME"), null).associateBy { it.eventId }
+        val types = listOf("SPREAD", "SPREAD_1H", "TOTAL", "TOTAL_1H", "TEAM_TOTAL", "PLAYER_GAMES_WON", "FIRST_INNING_TOTAL") +
+            com.tjshea.vigilant.data.scanner.PropStats.NOVIG_TYPES
+        val markets = client.markets(leagues, types, listOf("OPEN_PREGAME"), before)
+        var agree = 0
+        var disagree = 0
+        var noStrike = 0
+        for (m in markets) {
+            val mu = events[m.eventId]?.matchup ?: continue
+            val strike = m.strike ?: run { noStrike++; null } ?: continue
+            val point = if (m.marketType.startsWith("SPREAD")) {
+                val a = NovigText.parseSpreadOutcome(m.outcomes.getOrNull(0)?.name ?: "") ?: continue
+                val b = NovigText.parseSpreadOutcome(m.outcomes.getOrNull(1)?.name ?: "") ?: continue
+                val firstAway = TeamMatcher.firstLabelIsAway(a.first, b.first, mu.away, mu.home) ?: continue
+                if (firstAway) b.second else a.second
+            } else {
+                NovigText.parseTotalOutcome(m.outcomes.getOrNull(0)?.name ?: "")?.second ?: continue
+            }
+            if (kotlin.math.abs(point - strike) < 1e-9) agree++ else {
+                disagree++
+                if (disagree <= 20) println("LIVE STRIKE: ${m.marketType} strike=$strike read=$point '${m.outcomes.joinToString { it.name }}' in '${events[m.eventId]?.description}'")
+            }
+        }
+        println("LIVE STRIKE: agree $agree, disagree $disagree, no strike $noStrike, of ${markets.size} markets")
+        assertTrue("lines disagreeing with strike: $disagree of ${agree + disagree}", disagree <= (agree + disagree) / 200)
+    }
 }
