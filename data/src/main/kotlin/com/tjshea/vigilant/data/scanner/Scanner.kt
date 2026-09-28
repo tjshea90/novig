@@ -142,6 +142,7 @@ class Scanner(
     ): ScanReport = mutex.withLock {
         this.pinned = pinned
         val now = clock()
+        val t0 = elapsed()
         val errors = ArrayList<String>()
         val leagues = settings.selectedLeagues
         if (leagues.isEmpty()) return@withLock report(null, errors, null, null, emptyList())
