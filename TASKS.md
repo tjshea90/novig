@@ -2440,7 +2440,7 @@ Nothing at or above 1.0% EV."
       flight leave slots idle every batch.) List every change since v0.18.0 that affects how long a scan takes or how fast Novig prices come in, and
       measure what can be measured here (board size and time with 7 days + tennis, reads per scan with the full
       budget, when bets first show with the hold-back). Find the real cause(s).
-- [ ] R2 Fix what's slower than it needs to be, with tests; give Tj a way to see where scan time goes (so the next
+- [x] R2 (DONE: R2a-e, shipped v0.19.3 (38).) Fix what's slower than it needs to be, with tests; give Tj a way to see where scan time goes (so the next
       "slow" report comes with numbers). Ship, link.
   - [x] R2a (DONE: three real caps found and fixed. (1) OkHttp's default 5 requests a host, one held by the open
         websocket (OkHttp 4.12, probed): the key read 4 at a time; now `vigilantHttpClient()` allows 16 (HttpClientTest,
@@ -2464,7 +2464,7 @@ Nothing at or above 1.0% EV."
         API. Tests: ScanTimingTest (text + a timed scan), ScreenshotTest `novigKeySaysWhereTheLastScansTimeWent`,
         6b png looked at. The feed's own line left as is.) Where scan time goes, in Settings › Novig API and the scan's done line: board, fair odds, Novig prices
         (count, seconds, per second; by key / live feed / public), first bet shown, the key's limits.
-  - [ ] R2e (docs done: RESEARCH §29, NOVIG_API §11.1, CLAUDE.md surface; Kalshi quotes re-used from `lines` stamped
+  - [x] R2e (shipped v0.19.3 (38), release.yml green, tag has vigilant-v0.19.3.apk; docs done: RESEARCH §29, NOVIG_API §11.1, CLAUDE.md surface; Kalshi quotes re-used from `lines` stamped
         with their read time (ExchangeClientsTest); full floor 709 tests, 0 failures; live Kalshi lines-first: all
         leagues' lines by 13 s.) Docs (RESEARCH §29, NOVIG_API), ship v0.19.3 (38), link.
 
@@ -2501,5 +2501,5 @@ Nothing at or above 1.0% EV."
         looked at), SportsbookScannerTest. Full floor 724 tests, 0 failures.) (decided from the 30-min live recording, RESEARCH §30.2): other books' quotes may be 10 minutes old when the
         game is over 3 hours away, 5 minutes within 3 hours or live; one rule for scan pricing, re-pricing, Recheck
         and how long a found bet stays listed (`Freshness.maxAgeMs`); cards show the odds' age; copy updated; tests.
-- [ ] S4 Ship with the v0.19.3 work (R2e) and send the link.
+- [x] S4 (DONE: v0.19.3 (38): CI green on 94339f0, ship.sh gates green, release.yml published vigilant-v0.19.3.apk, BUILDLOG recorded.) Ship with the v0.19.3 work (R2e) and send the link.
 
