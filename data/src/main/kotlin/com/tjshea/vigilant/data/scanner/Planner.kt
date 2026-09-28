@@ -225,7 +225,7 @@ object Planner {
         if (planned.size <= max) return planned
         fun tier(p: PlannedMarket): Int = when {
             p.market.marketId in pinned -> 0
-            p.kind == LineKind.MONEYLINE -> 1
+            p.kind == LineKind.MONEYLINE && (p.lineKey?.period ?: 0) == 0 -> 1
             (p.kind == LineKind.SPREAD || p.kind == LineKind.TOTAL) && (p.lineKey?.period ?: 0) == 0 -> 2
             p.kind == LineKind.PLAYER_PROP -> 4
             else -> 3
