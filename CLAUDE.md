@@ -266,7 +266,8 @@ unless Tj asks).
   `PropLineClient` + `PropLinePropsSource` (30 books, 1,000/day free), `TheOddsApiClient`,
   `OddsApiPropsSource`; RESEARCH.md §22; where two carry the same books the second is only a fallback:
   `ReferenceSource.fallbackFor`/`needed`, `ScanContext.covered`, `Scanner.covering`, RESEARCH.md §23; PropLine's relayed Novig
-  prices order Novig reads, `RefSnapshot.novig`/`Scanner.preview`, §23.6; **no book quote over 5 minutes old ever prices**:
+  prices order Novig reads, `RefSnapshot.novig`/`Scanner.preview`, §23.6; **no book quote over 5 minutes old ever prices** (10 on a game more than 3 hours off since v0.19.3,
+  `Freshness.maxAgeMs`, RESEARCH.md §30.2):
   `data/scanner/Freshness`, `Opportunity.fairAsOfMs`/`fairIsOld`, `UiState.feedAt`/`cnoTooOld`/`booksAt`, RESEARCH.md §24); matching and pricing (`data/match/TeamMatcher`,
   `data/match/PlayerNames`, `data/scanner/PropStats`,
   `data/scanner/Planner` + `Pricing`); manual scans and pacing (`data/scanner/Scanner`,
@@ -330,7 +331,10 @@ unless Tj asks).
   v0.19.3 (RESEARCH.md §29): `data/HttpSupport.vigilantHttpClient()` (16 requests a host; OkHttp's default 5 minus the
   open websocket left the key 4), key reads 10 in flight in `NovigSource.batchSize` 30s, one refused wave slows once
   (`RateGate.SAME_BURST_MS`), Kalshi game lines before props (`ReferenceSource.linesFirst`/`lines`, `Scanner.linesFirst`),
-  where scan time goes (`data/scanner/ScanTiming`, `BookBatch.refused`, Settings › Novig API).
+  where scan time goes (`data/scanner/ScanTiming`, `BookBatch.refused`, Settings › Novig API). Novig's 451 codes read
+  right (`ANONYMIZED_NETWORK` = its verdict on an address, not the phone): Test key names the connection, checks for a
+  real VPN and tries the other connection (`data/novig/signing/NovigKeyTest`, `app/PhoneNetworks`; NOVIG_API.md §11,
+  RESEARCH.md §30.1). CNO's fewest books 1-4 (`CNO_MIN_BOOKS_CHOICES`, schema 9).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
