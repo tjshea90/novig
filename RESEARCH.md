@@ -2301,3 +2301,30 @@ on the JVM here).
 arrives. Settings › Novig API now shows where the last scan's time went (`ScanTiming`: board, fair odds, Novig
 prices with their pace and how they came (live feed / key / public), first bet, Novig's refusals, the key's limit), so
 the next "slow" report comes with the phone's own numbers.
+
+## 30. "Test key says proxy or VPN, but I don't", the 5-minute rule, and CNO's fewest books (2026-09-28 ~15:25Z, Tj: "The app is telling me I have a proxy or vpn when I test the novig key, but I don't. Research online and reconsider the 5 minute stale odds cutoff … For the fewest books behind the fair price filter, add options for 1 and 2 books. Remove any option over 4 books")
+
+### 30.1 The VPN/proxy message
+- **What Novig said:** Test key signs `POST /v3/echo`; the only VPN/proxy wording it could show came from a 451
+  `ANONYMIZED_NETWORK`. Novig's errors page: 451 codes come from its location screen; `ANONYMIZED_NETWORK` = "the
+  request came over a VPN, a proxy, or a Tor exit" and, with `RESTRICTED_NETWORK_REGION`, "judge the request's
+  network"; the rest judge the key holder's device ("the key holder must open the app"). A data-center address is
+  fine; a read admits a stale device check.
+- **So it's a verdict on an internet address, not the phone.** IP-reputation screens (GeoComply's GeoGuard and the
+  like) list shared addresses now and then: carrier-grade NAT pools (T-Mobile's mobile and home internet share few
+  public IPv4 addresses among many customers) are the known false-positive family; vendors themselves advise against
+  hard-blocking carrier IPs and take false-positive reports per address/CIDR. `api.novig.com` is IPv4-only, so it
+  isn't an IPv6 quirk. A real VPN on the phone shows as `TRANSPORT_VPN` (ad blockers and security apps run one
+  without it being obvious).
+- **Vigilant got it wrong twice:** it said "Turn the VPN off" to someone with none, and read
+  `RESTRICTED_NETWORK_REGION` as "open the Novig app". **And it cost speed:** a refused key sends every scan to the
+  public routes (4–6 prices a second, 3 at a time, vs the key's 14) for 10 minutes, then tries again: the likeliest
+  real cause of §29's "reading the API very slow".
+- **v0.19.3:** advice per documented code, with the code; Test key names the connection it used and whether a VPN is
+  really up, and on a network refusal tries the other connection (mobile data ↔ Wi-Fi, held only for the test) and
+  says which one Novig accepts. Scan and live-feed banners say the same in one line.
+
+### 30.3 CNO's fewest books
+- Choices 1–4 (were 3, 4, 5, 6, 8, 10), default 4 (was 5), a saved 5+ becomes 4 once (schema 9). The app's pick is
+  now always posted to CNO's form: before, a Shared View link's bigger count won, so 1 or 2 would have done nothing.
+  The Settings hint still says why thin markets are risky; Vigilant's own books check on each bet is unchanged.
