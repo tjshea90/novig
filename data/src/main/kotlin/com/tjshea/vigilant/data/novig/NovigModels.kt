@@ -23,6 +23,9 @@ data class NovigEvent(
     companion object {
         const val STATUS_PREGAME = "OPEN_PREGAME"
         const val STATUS_LIVE = "OPEN_INGAME"
+
+        /** Held before or during the game; still tradable (docs: api/concepts/event-lifecycle). */
+        const val STATUS_DELAYED = "DELAYED"
     }
 }
 
