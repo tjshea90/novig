@@ -52,6 +52,9 @@ interface PushedBooks {
     fun problemSince(sinceMs: Long): String?
 
     fun close()
+
+    /** The key's own `stream` bucket and watch cap, from `GET /v3/limits` (the documented values until then). */
+    fun tune(capacity: Int, refillPerSec: Double, maxWatchedMarkets: Int) {}
 }
 
 /**
@@ -78,13 +81,31 @@ class NovigStream(
     private val scope: CoroutineScope,
     private val wsUrl: String = "wss://api.novig.com/v3/ws",
     private val clock: () -> Long = System::currentTimeMillis,
-    private val capacity: Double = STREAM_CAPACITY.toDouble(),
-    private val refillPerSec: Double = REFILL_PER_SEC,
+    capacity: Double = STREAM_CAPACITY.toDouble(),
+    refillPerSec: Double = REFILL_PER_SEC,
     maxMarkets: Int = MAX_MARKETS,
     private val idleCloseMs: Long = IDLE_CLOSE_MS,
     private val retryAfterFailureMs: Long = RETRY_AFTER_FAILURE_MS,
 ) : PushedBooks {
-    private val maxMarkets = maxMarkets
+    @Volatile
+    private var capacity = capacity
+
+    @Volatile
+    private var refillPerSec = refillPerSec
+
+    @Volatile
+    private var maxMarkets = maxMarkets
+
+    override fun tune(capacity: Int, refillPerSec: Double, maxWatchedMarkets: Int) {
+        synchronized(this) {
+            this.capacity = capacity.toDouble()
+            this.refillPerSec = refillPerSec
+            // A margin under the cap, as with the documented 2,048.
+            this.maxMarkets = (maxWatchedMarkets - (MAX_WATCHED - MAX_MARKETS)).coerceAtLeast(1)
+            limit = minOf(limit, this.maxMarkets)
+            tokens = minOf(tokens, this.capacity)
+        }
+    }
     private val http = http.newBuilder().pingInterval(20, TimeUnit.SECONDS).build()
     private val json = Json { ignoreUnknownKeys = true }
     val books = StreamBooks(clock)
@@ -408,7 +429,10 @@ class NovigStream(
         const val UPGRADE_COST = 32
         const val BOOK_WEIGHT = 16
 
-        /** Documented: 2,048 markets watched per connection. A margin under it. */
+        /** Documented: 2,048 markets watched per connection. */
+        const val MAX_WATCHED = 2_048
+
+        /** A margin under [MAX_WATCHED]. */
         const val MAX_MARKETS = 2_000
 
         /** Closed this long after a scan last used it: rechecks right after a scan are instant. */
