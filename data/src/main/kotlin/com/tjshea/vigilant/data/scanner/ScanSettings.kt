@@ -125,7 +125,10 @@ data class ScanSettings(
      * The most Novig prices one scan reads. Past it, main lines and the soonest games win; props
      * and later games wait. 300 since v0.10.0 (was 200): about a minute on public routes, with the
      * likeliest +EV lines read first and shown as they land. Up to 1,200 since v0.18.0 (Tj,
-     * 2026-09-28): about four minutes on public routes.
+     * 2026-09-28): about four minutes on public routes. [NO_LIMIT] since v0.19.6 (Tj, 2026-09-28: "unlimited novig
+     * prices per scan … it should stop the scan when all the markets are finished scanning for the selected time
+     * period"): every line a fair source prices in [scanWindowHours], each read once; a line whose other books' odds
+     * would be too old once read is left for the next scan (which reads those first), so a scan never outlasts them.
      */
     val maxBooksPerScan: Int = 300,
     /**
@@ -143,8 +146,17 @@ data class ScanSettings(
     val bookPropSet: BookPropSet = BookPropSet.CORE,
     /** Most Odds API credits one scan may spend on sportsbook props. */
     val bookPropCreditsPerScan: Int = 24,
-    /** Only games starting within this many hours get sportsbook props (soonest first). */
+    /**
+     * Only games starting within this many hours get sportsbook props (soonest first); [NO_LIMIT] = every game
+     * the scan reads ([bookPropWindowHours]).
+     */
     val bookPropHours: Int = 24,
+    /**
+     * PropLine's player props: at most this many games a scan, one request each against its free 1,000 a day
+     * (12 was a fixed cap until v0.19.6; Tj, 2026-09-28: "Add unlimited options … for all types of scans that
+     * can benefit"). [NO_LIMIT]: every game in [bookPropWindowHours].
+     */
+    val propLineGamesPerScan: Int = 12,
     /** Re-use sportsbook props for this long between scans. */
     val bookPropReuseMinutes: Int = 2,
     /** Exchange quotes wider than this (ask − bid) are too thin to trust as a fair price. */
@@ -225,7 +237,9 @@ data class ScanSettings(
     /**
      * Every list (the +EV feed, CNO's list, the Games board, the widgets) shows only games starting
      * within this many hours; 0 = any time (Tj, 2026-09-27: "only show games that start within the next
-     * 24 hours or 12 hours or 48 hours"). A display filter: what a scan reads is unchanged.
+     * 24 hours or 12 hours or 48 hours"). Since v0.19.6 Vigilant's own scan reads only this window too when
+     * it's shorter than [daysAhead] ([scanWindowHours]; Tj, 2026-09-28: "stop the scan when all the markets
+     * are finished scanning for the selected time period"), so widening it needs a new scan.
      */
     val startsWithinHours: Int = 0,
     /**
@@ -317,6 +331,19 @@ data class ScanSettings(
     /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
     val activeAutoScan: AutoScanMode get() = if (paused) AutoScanMode.OFF else autoScan
 
+    /**
+     * How far ahead Vigilant's scan reads, in hours: [daysAhead], or [startsWithinHours] when that's shorter (Tj,
+     * 2026-09-28: "stop the scan when all the markets are finished scanning for the selected time period").
+     */
+    val scanWindowHours: Int
+        get() {
+            val days = daysAhead.coerceAtLeast(1) * 24
+            return if (startsWithinHours in 1 until days) startsWithinHours else days
+        }
+
+    /** Games starting within this many hours get sportsbook props: [bookPropHours], never past [scanWindowHours]. */
+    val bookPropWindowHours: Int get() = minOf(bookPropHours, scanWindowHours).coerceAtLeast(1)
+
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
         method = devigMethod,
@@ -362,9 +389,17 @@ data class ScanSettings(
     companion object {
         /** At most [Freshness.MAX_REUSE_MS]: older sportsbook odds are never compared (RESEARCH.md §24). */
         val ODDS_API_REUSE_CHOICES = listOf(0, 1, 2)
-        val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5, 8, 10)
+        /**
+         * "No limit" / "All" on every per-scan cap that can use it (Tj, 2026-09-28: "Add unlimited options in the vigilant
+         * app for all types of scans that can benefit from unlimited"). A scan is still finite: each line in the time
+         * window at most once ([maxBooksPerScan]), each game's props at most once.
+         */
+        const val NO_LIMIT = Int.MAX_VALUE
+
+        /** [NO_LIMIT] ("All") since v0.19.6: with the budget filled, these only order the reads. */
+        val LINES_PER_GAME_CHOICES = listOf(1, 2, 3, 5, 8, 10, NO_LIMIT)
         /** 16 and 24 since v0.18.0: room to fill the bigger per-scan budgets with props, where exchange prices lag most. */
-        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12, 16, 24, 32, 48)
+        val PROPS_PER_GAME_CHOICES = listOf(0, 2, 4, 8, 12, 16, 24, 32, 48, NO_LIMIT)
 
         /** Up to 1,200 since v0.18.0 (Tj, 2026-09-28: "so I can select 500 600 700 800 up to 1200"). */
         /**
@@ -372,9 +407,12 @@ data class ScanSettings(
          * the key's live feed can watch (2,048), so a keyed scan gets them all pushed. No "No limit": past it every price
          * is its own request (~14 a second), a scan runs many minutes, and background scans repeat that (RESEARCH.md §31).
          */
-        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1500, 2000)
-        val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96, 192)
-        val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48)
+        val MAX_BOOKS_CHOICES = listOf(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1500, 2000, NO_LIMIT)
+        val BOOK_PROP_CREDIT_CHOICES = listOf(0, 12, 24, 48, 96, 192, NO_LIMIT)
+        /** [NO_LIMIT] ("All"): every game the scan reads. */
+        val BOOK_PROP_HOURS_CHOICES = listOf(6, 12, 24, 48, NO_LIMIT)
+        /** [propLineGamesPerScan]'s choices. */
+        val PROPLINE_GAMES_CHOICES = listOf(12, 24, 48, NO_LIMIT)
         val BOOK_PROP_REUSE_CHOICES = listOf(1, 2)
         val KELLY_CHOICES = listOf(0.125, 0.25, 0.5, 1.0)
         /** Nothing over +300 since v0.18.0 (Tj, 2026-09-28). */
