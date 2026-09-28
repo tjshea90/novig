@@ -2324,6 +2324,41 @@ the next "slow" report comes with the phone's own numbers.
   really up, and on a network refusal tries the other connection (mobile data ↔ Wi-Fi, held only for the test) and
   says which one Novig accepts. Scan and live-feed banners say the same in one line.
 
+### 30.2 The 5-minute rule, reconsidered with live data
+- **What the rule measures:** not "the line hasn't changed in 5 minutes" but "the feed hasn't *seen* this price in 5
+  minutes" (§24: Pinnacle/Kalshi/Polymarket = when fetched, The Odds API = market `last_update`, "the last time our
+  system saw odds for that market", PropLine = `last_seen_at`). A line that sits still is re-seen on every read and
+  never ages out while the scan is current. Past 5 minutes means the feed stopped seeing it (a suspended or pulled
+  market: The Odds API freezes `last_update` for ~15 minutes after a market goes) or the scan itself is minutes old:
+  in practice the rule removes a found bet 3-5 minutes after the scan that found it.
+- **Measured (2026-09-28 15:29-16:00Z, a quiet Monday midday; most games hours to days off):** every 60 s for 31
+  minutes, every open Kalshi game-line market (NFL, NCAAF, MLB, WNBA, ATP, WTA: 2,471 markets, 62k before/after
+  pairs; mid of a <=4c spread) and the 86 soonest Novig NFL/NCAAF/MLB/WNBA lines (taker price = 1 - opposing best bid):
+
+  | Minutes later | Kalshi moved >=0.5 pt | >=1 pt | >=2 pt | Novig moved >=0.5 pt | >=1 pt | >=2 pt |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | 5 | 5.8% | 1.6% | 0.1% | 10.6% | 1.8% | 0.2% |
+  | 10 | 8.9% | 2.7% | 0.3% | 17.9% | 3.8% | 0.3% |
+  | 15 | 11.3% | 3.7% | 0.4% | 23.6% | 6.8% | 0.5% |
+  | 30 | 17.2% | 6.9% | 1.4% | 35.9% | 11.5% | 2.6% |
+
+  By market (1 pt+ within 15 / 25 min): NFL moneylines 12% / 19%, MLB totals 15% / 21%, MLB spreads 8% / 9%, NFL
+  spreads and totals 2-3% / 4-5%, WNBA sides 0-1%. A 1-point move in the fair line moves EV about 2 points at even
+  odds, so against 2-4% edges it matters.
+- **Elsewhere:** NFL spread numbers change ~0.2 times a game from release to kickoff (12 books, 2018,
+  sportsbettingdime); moves bunch up on news, and MLB moves most between lineups (3-4 h before first pitch) and the
+  start. Around late injury news slow books keep stale numbers 5-15 minutes: the window +EV tools live on, and
+  exactly when an old *fair* line shows +EV that isn't there. The bets a scan shows lean toward lines in motion,
+  so their risk is higher than the averages above.
+- **Decision (v0.19.3):** Tj's instinct holds away from game time: most lines don't move within 10 minutes. So
+  other books' quotes may be **10 minutes old on a game more than 3 hours from its start, 5 minutes within 3 hours
+  or live** (`Freshness.maxAgeMs`), one rule for scan pricing (still with 2 minutes' headroom), re-pricing, Recheck
+  and how long a found bet stays listed. A game whose every quote aged out drops from the fair side (as if the feed
+  hadn't answered), so Novig's board still lists it. Cards say "odds N min old" past 3 minutes. Not loosened further:
+  past 10 minutes 3-7% of fair lines are off by a point, concentrated in the markets that move, and a scan (or the
+  background auto-scan) refreshes them for free. CNO's own 5-minute checks are about CNO's updater stalling and
+  stay as they were.
+
 ### 30.3 CNO's fewest books
 - Choices 1–4 (were 3, 4, 5, 6, 8, 10), default 4 (was 5), a saved 5+ becomes 4 once (schema 9). The app's pick is
   now always posted to CNO's form: before, a Shared View link's bigger count won, so 1 or 2 would have done nothing.
