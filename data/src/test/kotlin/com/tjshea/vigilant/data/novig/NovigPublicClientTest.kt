@@ -232,6 +232,54 @@ class NovigPublicClientTest {
         assertEquals(before + 1, server.requestCount)
     }
 
+    /** The key's websocket, faked: it holds m1 and m2 (Tj, 2026-09-28: "taking full advantage of the novig API key"). */
+    private class FakePush(val held: Map<String, NovigBook>) : com.tjshea.vigilant.data.novig.stream.PushedBooks {
+        val watched = ArrayList<List<String>>()
+        override fun watch(marketIds: Collection<String>) { watched += marketIds.toList() }
+        override fun live(marketIds: Collection<String>) = held.filterKeys { it in marketIds }
+        override fun problemSince(sinceMs: Long): String? = null
+        override fun close() {}
+    }
+
+    @Test
+    fun `books the key's websocket holds are served with no request, the rest by the key's REST route`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = bookFor(request)
+        }
+        val held = listOf("m1", "m2").associateWith { NovigBook(it, 99, mapOf("x" to listOf(BidLevel(510, 7))), 0) }
+        val push = FakePush(held)
+        val c = keyed(client()).also { it.stream = push }
+        val progress = ArrayList<Pair<Int, Int>>()
+        val batch = c.books(listOf("m1", "m2", "m3")) { d, t -> progress += d to t }
+        assertEquals(1, server.requestCount) // m3 only
+        assertTrue(server.takeRequest().requestUrl!!.encodedPath.endsWith("/m3/book"))
+        assertEquals(setOf("m1", "m2", "m3"), batch.books.keys)
+        assertEquals(99L, batch.books.getValue("m1").seq)
+        assertEquals(2, batch.viaPush)
+        assertEquals(3, batch.fetched)
+        assertEquals(1, batch.viaKey)
+        assertEquals(2 to 3, progress.first())
+        assertEquals(3 to 3, progress.last())
+        // Asked to watch, the client passes the plan on.
+        c.watch(listOf("m1", "m9"))
+        assertEquals(listOf(listOf("m1", "m9")), push.watched)
+        assertEquals(held.keys, c.pushed(listOf("m1", "m2", "m3")).keys)
+    }
+
+    @Test
+    fun `without a usable key the websocket is neither asked nor used`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = bookFor(request)
+        }
+        val push = FakePush(mapOf("m1" to NovigBook("m1", 99, emptyMap(), 0)))
+        val c = client().also { it.stream = push } // a stream but no key
+        c.watch(listOf("m1"))
+        assertTrue(push.watched.isEmpty())
+        val batch = c.books(listOf("m1"))
+        assertEquals(0, batch.viaPush)
+        assertEquals(1, server.requestCount)
+    }
+
     @Test
     fun `a key that can't sign (missing from the phone's keystore) falls back to public prices`() = runBlocking {
         server.dispatcher = object : Dispatcher() {
