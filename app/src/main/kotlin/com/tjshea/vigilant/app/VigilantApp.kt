@@ -55,7 +55,6 @@ import kotlinx.serialization.json.Json
 import com.tjshea.vigilant.data.vigilantHttpClient
 import okhttp3.OkHttpClient
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 class VigilantApp : Application() {
     val container: AppContainer by lazy { AppContainer(this) }
