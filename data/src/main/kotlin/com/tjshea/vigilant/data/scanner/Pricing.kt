@@ -242,6 +242,7 @@ object Pricing {
                 marketsPriced = plan.markets.size,
                 outcomesWithFair = all.count { it.fairProbability != null },
                 positiveEv = all.count { (it.evPercent ?: -1.0) > 0 },
+                laterGames = plan.laterGames,
             ),
             computedAtMs = now,
         )
