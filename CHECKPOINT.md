@@ -1,13 +1,13 @@
-# CHECKPOINT 565 — read me first, then TASKS.md
+# CHECKPOINT 566 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T07:32:51Z · **tests:** all 1 fast checks green
-**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `d0342a0` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T07:41:51Z · **tests:** all 1 fast checks green
+**Branch:** `claude/novig-api-coverage-d7iwyq` · **builds on:** `0fa1ba0` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release v0.19.1 (36): floor 689 green (engine 39, data 445/10 live skipped, app 205), release APK built
+Released Vigilant v0.19.1 (code 36): release.yml run 36392649770 green, tag v0.19.1 has vigilant-v0.19.1.apk only, BUILDLOG recorded, M1-M3 ticked
 
 ## Do this next
-wait for ci.yml green, ship.sh, release.yml, record-release, link
+Nothing in flight. Tj to try v0.19.1: the scan now covers a week (college Saturday + NFL Sunday); with the key, set Most Novig prices per scan to 1,200; 'Starts within 48h' still hides later games from the list only
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ wait for ci.yml green, ship.sh, release.yml, record-release, link
 
 ## Last ten checkpoints
 ```
+  d6e8948 ckpt 565: pre-release v0.19.1 (36): floor 689 green (engine 39, data 445/10 live skipped
   d0342a0 ckpt 564: M1+M2 done: week-ahead default, later-games count, DELAYED, strike guard, /v3/
   2d1fca0 ckpt 563: M1: Days ahead 7 default (+schema 8 moves a saved 3), all events read so later
   8f76985 ckpt 562: Recorded Tj's 'way more than 7 games' + Novig docs request as M1-M3
@@ -25,5 +26,7 @@ wait for ci.yml green, ship.sh, release.yml, record-release, link
   6a2f1a1 ckpt 558: light test: screenshots looked at (key section, settings fill switch); UI test
   44b45ee ckpt 557: K2 (websocket for keyed scans: NovigStream market subscriptions, pushed books 
   1975c04 ckpt 556: K3b: tennis (ATP/WTA) priced from Kalshi + Pinnacle: winner, games spread/tota
-  498d761 ckpt 555: K3a: scans fill the per-scan budget with every other quoted line (fillBudget, 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
