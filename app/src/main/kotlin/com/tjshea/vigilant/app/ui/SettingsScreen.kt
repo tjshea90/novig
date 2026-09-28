@@ -57,7 +57,6 @@ import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageViews
-import com.tjshea.vigilant.data.reference.PropLinePropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.BookPropSet
@@ -808,8 +807,9 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
  * per scan on props safely?"): safe as far as The Odds API plan allows; past it props come from PropLine, Pinnacle and Kalshi.
  */
 fun creditWorstCase(perScan: Int): String = if (perScan >= ScanSettings.NO_LIMIT) {
-    "A full NFL Sunday is a few hundred credits: The Odds API's free 500 a month can go in one or two scans (and background " +
-        "auto-scan repeats it). When they run out, props still come from PropLine, Pinnacle and Kalshi."
+    "About 4 credits a game with the Core 4 prop types (up to 18 in football with All), so a college Saturday or a full NFL " +
+        "Sunday can be hundreds: The Odds API's free 500 a month can go in one or two scans, and background auto-scan repeats it. " +
+        "When they run out, props still come from PropLine, Pinnacle and Kalshi."
 } else {
     "At most $perScan a scan: The Odds API's free 500 credits a month last at least ${500 / perScan} scans, " +
         "a 20,000-credit plan at least ${String.format(java.util.Locale.US, "%,d", 20_000 / perScan)}. When they run out, props still come from PropLine, Pinnacle and Kalshi."
