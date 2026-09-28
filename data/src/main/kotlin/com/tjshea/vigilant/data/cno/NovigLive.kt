@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Novig's own price right now for a CNO bet, read from Novig's order book. */
 data class LivePrice(
@@ -69,6 +71,28 @@ class NovigLive(
     @Volatile
     private var lastReadMs = Long.MIN_VALUE / 2
 
+    /** [keepFresh] (the screen's loop) and [readNow] (a background check) share the maps above. */
+    private val mutex = Mutex()
+
+    /**
+     * Novig's price now for [rows] (the Novig ones), read once: for the background check behind
+     * alerts (Tj, 2026-09-28), which runs with no screen and so no [keepFresh]. Merged into [prices]
+     * too, so the lists show them when opened. Rows the catalog can't pin down are left out.
+     */
+    suspend fun readNow(rows: List<CnoRow>): Map<String, LivePrice> = mutex.withLock {
+        val list = rows.filter { it.book.equals("Novig", ignoreCase = true) }.distinctBy { it.key }
+        if (list.isEmpty()) return@withLock emptyMap()
+        for (row in list) {
+            if (row.key in targets || missedAt[row.key]?.let { clock() - it < RETRY_MS } == true) continue
+            val t = resolve(row)
+            if (t != null) targets[row.key] = t.also { missedAt.remove(row.key) } else missedAt[row.key] = clock()
+        }
+        read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
+        val now = price(list)
+        _prices.value = _prices.value + now
+        now
+    }
+
     /** Runs until cancelled; the caller runs it only while CNO's list is on screen. */
     suspend fun keepFresh(rows: Flow<List<CnoRow>>, top: Int = LIVE_TOP, everyMs: Long = LIVE_EVERY_MS) {
         rows.map { list -> list.filter { it.book.equals("Novig", ignoreCase = true) }.take(top) }
@@ -79,19 +103,22 @@ class NovigLive(
                     return@collectLatest
                 }
                 while (true) {
-                    for (row in list) {
-                        if (row.key in targets || missedAt[row.key]?.let { clock() - it < RETRY_MS } == true) continue
-                        val t = resolve(row)
-                        if (t != null) targets[row.key] = t.also { missedAt.remove(row.key) } else missedAt[row.key] = clock()
+                    val wait = mutex.withLock {
+                        for (row in list) {
+                            if (row.key in targets || missedAt[row.key]?.let { clock() - it < RETRY_MS } == true) continue
+                            val t = resolve(row)
+                            if (t != null) targets[row.key] = t.also { missedAt.remove(row.key) } else missedAt[row.key] = clock()
+                        }
+                        prune(list)
+                        val wait = lastReadMs + everyMs - clock()
+                        if (wait <= 0) {
+                            lastReadMs = clock()
+                            read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
+                        }
+                        // A new CNO read re-prices against the books already read: no request.
+                        _prices.value = price(list)
+                        wait
                     }
-                    prune(list)
-                    val wait = lastReadMs + everyMs - clock()
-                    if (wait <= 0) {
-                        lastReadMs = clock()
-                        read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
-                    }
-                    // A new CNO read re-prices against the books already read: no request.
-                    _prices.value = price(list)
                     delay(if (wait <= 0) everyMs else wait)
                 }
             }
