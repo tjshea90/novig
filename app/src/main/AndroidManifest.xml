@@ -2,16 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network for scans only. A scan Tj starts keeps running when he switches apps: a
-         foreground service (dataSync) holds the process for exactly that scan, with a progress
-         notification and a partial wake lock (capped at 10 minutes), then stops itself. Nothing
-         runs on a timer or at boot, so there's no boot or exact-alarm permission. -->
+    <!-- Network for scans. A scan Tj starts keeps running when he switches apps: a foreground
+         service (dataSync) holds the process for exactly that scan, with a progress notification
+         and a partial wake lock (capped at 20 minutes), then stops itself.
+         Background auto-scan (v0.18.0, off by default, Tj 2026-09-28): a foreground service
+         (specialUse) while it's on, woken by an exact alarm every 5-40 minutes (USE_EXACT_ALARM;
+         SCHEDULE_EXACT_ALARM before Android 13), restarted after a reboot or an update. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- "Let Vigilant run in the background" in Settings: Android's own one-tap prompt. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- The floating widget over Novig (FloatingWidget.kt): a small window Tj can touch, drawn
          over other apps. Android asks him once ("Display over other apps"); without it the
@@ -54,6 +62,24 @@
             android:name=".ScanService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".AutoScanService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Scans sports odds on a schedule the user picks and alerts on new +EV bets" />
+        </service>
+
+        <receiver
+            android:name=".AutoScanReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

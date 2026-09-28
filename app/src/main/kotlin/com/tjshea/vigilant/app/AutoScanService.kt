@@ -210,10 +210,13 @@ class AutoScanService : Service() {
         var running = false
             private set
 
-        /** From Vigilant on screen (always allowed), a boot, an update or an exact alarm. */
+        /**
+         * From Vigilant on screen (always allowed), a boot, an update or an exact alarm. Already
+         * running here: a plain start (an app with a foreground service may start its services).
+         */
         fun start(context: Context, action: String? = null) {
             val intent = Intent(context, AutoScanService::class.java).apply { this.action = action }
-            runCatching { ContextCompat.startForegroundService(context, intent) }.onFailure {
+            runCatching { if (running) context.startService(intent) else ContextCompat.startForegroundService(context, intent) }.onFailure {
                 AutoScanReceiver.releaseBridge()
                 notifyPaused(context)
             }
