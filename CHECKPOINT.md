@@ -1,22 +1,22 @@
-# CHECKPOINT 604 — read me first, then TASKS.md
+# CHECKPOINT 605 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T22:17:40Z · **tests:** all 1 fast checks green
-**Branch:** `ccr-690067b2-r33qn5` · **builds on:** `0ed8444f` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T22:28:15Z · **tests:** all 1 fast checks green
+**Branch:** `ccr-690067b2-r33qn5` · **builds on:** `9c62762b` (this checkpoint is the commit after it)
 
 ## Just done
-Recorded Tj's request (research claude-api skill + hillclimb, other skills/plugins/MCP; tell Tj what to do) as W1-W4
+W4 (part): session-start briefing fixed — it was 215 KB, over Claude Code's 10,000-char hook cap, so sessions saw only a 2 KB preview (no CHECKPOINT, no TASKS). bootstrap.sh now prints TASKS.md open items only (7.2 KB total), resume.sh trims anything over 9,500 chars with a pointer; 2 new test_resume.sh checks (failed before the fix)
 
 ## Do this next
-W1: research the claude-api skill and hillclimb
+W1-W3: finish Kotlin LSP probe, write RESEARCH.md section, report to Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  c18df1d7 ckpt 604: Recorded Tj's request (research claude-api skill + hillclimb, other skills/pl
   5c4ca421 ckpt 603: Released Vigilant v0.19.6 (code 41): release.yml green on 036f664, APK verifi
   036f6644 ckpt 602: pre-release: v0.19.6: No limit on every scan cap (Novig prices per scan, prop
   87fa0ef5 ckpt 601: V1-V5 built (No limit/All on every scan cap, PropLine games setting, scan win
@@ -28,5 +28,5 @@ W1: research the claude-api skill and hillclimb
   bf7f8d1b ckpt 595: U1 built: pause all scanning (ScanSettings.paused, CnoWatch.hold, ScanRunner.
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
