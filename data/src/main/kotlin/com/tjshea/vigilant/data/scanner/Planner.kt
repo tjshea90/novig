@@ -62,6 +62,11 @@ data class PlannedMarket(
     val lineKey: LineKey?,
     val label: String,
     val outcomes: List<PlannedOutcome>,
+    /**
+     * Past the per-game picks: a line a fair source quotes that only [ScanSettings.fillBudget] brings in,
+     * to use what's left of the per-scan budget. Read after the per-game picks.
+     */
+    val spare: Boolean = false,
 )
 
 /**
@@ -148,6 +153,8 @@ object Planner {
         val types = settings.novigMarketTypes.toSet()
 
         val planned = ArrayList<PlannedMarket>()
+        // Lines past the per-game caps, with how well they're covered: the budget's leftovers go to them.
+        val spare = ArrayList<Triple<PlannedMarket, LineStats, Int>>()
         var novigOnlyEvents = 0
         for (m in matches.sortedBy { it.event.startsTs }) {
             val eventMarkets = marketsByEvent[m.event.eventId].orEmpty().filter { it.isOpen && it.fee != null && it.marketType in types }
@@ -172,19 +179,43 @@ object Planner {
             // (the main line). Props are capped per game the same way.
             fun ranked(list: List<Pair<PlannedMarket, LineStats>>) =
                 list.sortedWith(compareByDescending<Pair<PlannedMarket, LineStats>> { it.second.books }.thenBy { it.second.imbalance }).map { it.first }
-            fun keep(list: List<Pair<PlannedMarket, LineStats>>, cap: Int): List<PlannedMarket> {
+            fun keep(list: List<Pair<PlannedMarket, LineStats>>, cap: Int, spareOk: Boolean = true): List<PlannedMarket> {
                 val order = ranked(list)
                 val kept = order.take(cap.coerceAtLeast(0))
-                return kept + order.filter { it.market.marketId in pinned && it !in kept }
+                val all = kept + order.filter { it.market.marketId in pinned && it !in kept }
+                if (spareOk) {
+                    val keptIds = all.mapTo(HashSet()) { it.market.marketId }
+                    val stats = list.associate { it.first.market.marketId to it.second }
+                    order.filter { it.market.marketId !in keptIds }.forEach { spare += Triple(it, stats.getValue(it.market.marketId), spare.size) }
+                }
+                return all
             }
             planned += quoted.filter { it.first.kind == LineKind.MONEYLINE }.map { it.first }
             quoted.filter { it.first.kind != LineKind.MONEYLINE && it.first.kind != LineKind.PLAYER_PROP }
                 .groupBy { Triple(it.first.kind, it.first.lineKey?.period, it.first.lineKey?.subject) }
                 .values.forEach { planned += keep(it, settings.linesPerGame.coerceAtLeast(1)) }
-            planned += keep(quoted.filter { it.first.kind == LineKind.PLAYER_PROP }, settings.propsPerGame)
+            // Props set to 0 per game means no props at all, not "only as filler".
+            planned += keep(quoted.filter { it.first.kind == LineKind.PLAYER_PROP }, settings.propsPerGame, spareOk = settings.propsPerGame > 0)
         }
-        return Plan(budget(planned, settings.maxBooksPerScan, pinned), matches)
+        val max = settings.maxBooksPerScan.coerceAtLeast(1)
+        val base = budget(planned, max, pinned)
+        if (!settings.fillBudget || base.size >= max || spare.isEmpty()) return Plan(base, matches)
+        return Plan(base + fill(spare, max - base.size), matches)
     }
+
+    /**
+     * What's left of the per-scan budget after the per-game picks (Tj, 2026-09-28: "make sure the app is
+     * finding as many positive EV bets on novig as possible"): on a thin slate, 2 lines a group and 8 props a
+     * game read a few hundred prices of a 1,200 budget. The rest go to every other quoted line (alternate
+     * spreads and totals, more props): most books first, then nearest a coin flip, then soonest.
+     */
+    private fun fill(spare: List<Triple<PlannedMarket, LineStats, Int>>, room: Int): List<PlannedMarket> =
+        spare.sortedWith(
+            compareByDescending<Triple<PlannedMarket, LineStats, Int>> { it.second.books }
+                .thenBy { it.second.imbalance }
+                .thenBy { it.first.event.startsTs }
+                .thenBy { it.third },
+        ).take(room).map { it.first.copy(spare = true) }
 
     /**
      * Keeps a scan to [max] Novig reads: open bets first, then moneylines and main lines, then
