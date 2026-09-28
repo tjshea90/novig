@@ -2236,3 +2236,10 @@ Can you see if I fixed it or do I need a new code session? Tell me what to ask C
 ```
 Check whether the environment fix worked. Run echo "$ANDROID_HOME" and confirm it prints /opt/android-sdk. Then run ./gradlew :engine:test :data:test :app:testDebugUnitTest --console=plain without setting ANDROID_HOME yourself, and tell me whether it says BUILD SUCCESSFUL and how many tests passed and failed. Don't change any files.
 ```
+
+## 2026-09-28T03:19:34Z
+```
+See if you can make the scans better or faster or find more bets. Also increase the limits on the amount of novig prices per scan so I can select 500 600 700 800 up to 1200. Make it so I can run the app in the background and it will continue scanning and also have an option to auto scan either cno or both cno and vigilant every 5 10 20 30 or 40 minutes in the background, even if the app is not open on the screen. And make an option that if it is scanning in the background and at any time it finds positive EV bets of 3% or higher and multiple books agree on the price that it sends me an android push notification and I can click on the notification and it will open the exact bet in novig immediately, just like the cno widget already does. Make in the options I can select automatic notifications for a minimum of 2%, 3%, or 4% positive EV finds. Also in the options for vigilant, right now the longest odds shown option stops at +300. Let me choose +200 +150 and +120 and get rid of any option over +300.
+
+Run full tests protocol on this app after all work is done
+```
