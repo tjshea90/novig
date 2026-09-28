@@ -64,7 +64,7 @@ class MiniWindowTest {
         val both = MiniWindow.items(base, SampleScan.NOW)
         assertEquals(base.feed.size + SampleCno.kept.size, both.size)
         assertEquals(both.sortedByDescending { it.ev }, both)
-        assertEquals(SampleCno.kept.sorted(), both.filter { it.fromCno }.map { it.title }.sorted()) // Buehler (4 books) and Perdomo (+167) are out
+        assertEquals(SampleCno.kept.sorted(), both.filter { it.fromCno }.map { it.title }.sorted()) // Buehler (3 books) and Perdomo (+167) are out
         val bowers = both.first { it.title == "Brock Bowers Under 4.5" }
         assertEquals("+100", bowers.price)
         assertEquals("\$109", bowers.available)

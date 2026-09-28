@@ -414,7 +414,7 @@ class ScreenshotTest {
         compose.onNodeWithText("View: Novig · 3+ books").assertIsDisplayed()
         compose.onNodeWithText("Read 20s ago · odds 49s old · every 15 s", substring = true).assertIsDisplayed()
         compose.onNodeWithText("4 bets pass · 2 hidden: 1 too few books, 1 longer odds than your cap").assertIsDisplayed()
-        compose.onAllNodesWithText("Walker Buehler Over 15.5").assertCountEquals(0) // 4 books: too thin
+        compose.onAllNodesWithText("Walker Buehler Over 15.5").assertCountEquals(0) // 3 books: too thin
         compose.onAllNodesWithText("\$88.00").onFirst().assertIsDisplayed() // dollars available
     }
 
