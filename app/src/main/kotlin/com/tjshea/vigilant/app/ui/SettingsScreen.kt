@@ -502,6 +502,34 @@ fun SettingsScreen(
                 if (AppBook.exchange) "Suggested stakes are capped at what Novig's book can actually fill at +EV."
                 else "${AppBook.name} doesn't publish its limits: a suggested stake over your max bet there is capped by ${AppBook.name} itself.",
             )
+            if (AppBook.isNovig) {
+                // Novig's bet-slip links take a wager (Tj, 2026-09-28: "automatically enter 1 dollar per bet, the kelly value
+                // per bet, or an amount I can type into the settings"; NovigLinks).
+                Text("Amount in Novig's bet slip", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+                ChoiceChips(com.tjshea.vigilant.data.novig.SlipStake.entries.toList(), s.slipStake, { it.label }) { v -> onUpdate { it.copy(slipStake = v) } }
+                if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.CUSTOM) {
+                    var custom by remember(s.slipCustomStake) { mutableStateOf(com.tjshea.vigilant.data.novig.NovigLinks.amountText(s.slipCustomStake)) }
+                    OutlinedTextField(
+                        value = custom,
+                        onValueChange = { t ->
+                            custom = t.filter { it.isDigit() || it == '.' }.take(8)
+                            custom.toDoubleOrNull()?.takeIf { it > 0 }?.let { v -> onUpdate { it.copy(slipCustomStake = v) } }
+                        },
+                        label = { Text("Amount $") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth().testTag("slipCustomStake"),
+                    )
+                }
+                Hint(
+                    when (s.slipStake) {
+                        com.tjshea.vigilant.data.novig.SlipStake.OFF -> "Tapping a bet opens Novig's bet slip with no amount: you type it in Novig."
+                        com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR -> "Every bet you tap opens in Novig's bet slip with $1 entered."
+                        com.tjshea.vigilant.data.novig.SlipStake.KELLY -> "Every bet you tap opens with its Kelly stake above entered (never under $1)."
+                        com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> "Every bet you tap opens with this amount entered."
+                    } + " From the +EV tab, the widget, the CNO tab and alerts. You still confirm the bet in Novig.",
+                )
+            }
             if (!AppBook.isNovig) {
                 // BetMGM's sites are per state: its bet-slip links need Tj's (BetMgmLinks).
                 SectionTitle("${AppBook.name} state")
