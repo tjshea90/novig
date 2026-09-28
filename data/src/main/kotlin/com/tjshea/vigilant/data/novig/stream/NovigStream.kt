@@ -170,6 +170,7 @@ class NovigStream(
         tokensAt = clock()
         subscribeRequests = 0
         firstSent = false
+        limit = maxMarkets
         socket = http.newWebSocket(request, Listener())
         idleJob?.cancel()
         idleJob = scope.launch {
