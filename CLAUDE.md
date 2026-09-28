@@ -340,6 +340,12 @@ unless Tj asks).
   Novig's bet slip (`data/novig/NovigLinks`, `SlipStake`, `ScanSettings.slipStake`/`slipStakeFor`, `EvAlert.stake`,
   `MiniWindow.Item.kelly`); one-tap Open in Novig on +EV cards (`ui/OpportunitySheet.OpenBetButton`); any PinnWire failure
   falls to pinnapi (`PinnapiClient.boardFor`).
+- **Pause all scanning and CNO's one-tap buttons (v0.19.5+):** `ScanSettings.paused` (saved; Settings › Scanner switch,
+  the +EV/CNO tabs' `PauseButton` + `PausedBanner`, the widget's header ⏸/▶): a running scan stops (`ScanRunner.stop`),
+  CNO's list and lanes are held (`CnoWatch.hold`, also until settings load), auto-scan off (`activeAutoScan`; service,
+  alarm, boot receiver, `AutoScanner.cycle`), Scan/Recheck/Refresh toast `PAUSED_TOAST`, reading buttons greyed; bets
+  still open and settle (`PauseScanningTest`, `PauseScanningAppTest`, ScreenshotTest pause tests). Every CNO tab card has
+  the +EV card's `OpenInBookButton` (`MainActivity.openInNovig`, stake `cnoSlipStake`).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs

@@ -1,22 +1,24 @@
-# CHECKPOINT 594 — read me first, then TASKS.md
+# CHECKPOINT 595 — read me first, then TASKS.md
 
-**Written:** 2026-09-28T19:45:21Z · **tests:** all 1 fast checks green
-**Branch:** `ccr-ed1962c6-kshrww` · **builds on:** `9735789` (this checkpoint is the commit after it)
+**Written:** 2026-09-28T19:56:10Z · **tests:** all 1 fast checks green
+**Branch:** `ccr-ed1962c6-kshrww` · **builds on:** `34e9cf6` (this checkpoint is the commit after it)
 
 ## Just done
-U2: Open in Novig button on every CNO tab card (same path/stake as the widget and sheet), tests + 8g screenshot
+U1 built: pause all scanning (ScanSettings.paused, CnoWatch.hold, ScanRunner.stop, activeAutoScan, toasts, top-bar/widget/Settings controls, greyed reading buttons); tests PauseScanningTest, CnoWatchTest hold, StreamingScanTest stop, PauseScanningAppTest, ScreenshotTest pause tests; v0.19.5 (40); CLAUDE.md surface
 
 ## Do this next
-U1: pause all scanning (ScanSettings.paused; CnoWatch.hold; runner.stop; auto-scan off while paused; scan/recheck/refresh toast; top-bar + widget + Settings controls)
+Full floor (engine, data, app), tick U1, then U3 ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M CLAUDE.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  25f6d90 ckpt 594: U2: Open in Novig button on every CNO tab card (same path/stake as the widget 
   a021c70 ckpt 593: Recorded Tj's request (pause all scanning; Open in Novig buttons on CNO tab ca
   090d751 ckpt 592: Released Vigilant v0.19.4 (code 39): release.yml green on 23c4b10, vigilant-v0
   23c4b10 ckpt 591: pre-release: v0.19.4: Novig prices per scan up to 2,000 (long scans skip lines
@@ -26,8 +28,7 @@ U1: pause all scanning (ScanSettings.paused; CnoWatch.hold; runner.stop; auto-sc
   d27d061 ckpt 587: T5: PinnWire->pinnapi was built (daily limit); pinned the reset cycle with a t
   7e8359f ckpt 586: T1 measured live: 7-day board 8,620 Novig markets (4,819 spreads/totals, ~2,70
   482486c ckpt 585: Recorded Tj's request (scan budget/no limit, lines+props per game, props credi
-  3238762 ckpt 584: Released Vigilant v0.19.3 (code 38): release.yml green, vigilant-v0.19.3.apk o
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(24 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
