@@ -219,6 +219,7 @@ class MainActivity : ComponentActivity() {
                     onLoadBooks = { row -> vm.loadBooks(row) },
                     onScanner = { mode -> vm.setScanner(mode) },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
+                    onPause = vm::setPaused,
                 ),
                 minimized = w.minimized,
                 opening = w.opening,
@@ -573,6 +574,7 @@ private fun VigilantRoot(
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
                     onRecheck = vm::recheck,
                     onMiniWindow = onMiniWindow,
+                    onPause = vm::setPaused,
                 )
                 Tab.CNO -> CnoTab(
                     state, vm,
@@ -650,5 +652,6 @@ private fun CnoTab(
         onUnplace = vm::unmarkPlaced,
         onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
         opening = openingBet,
+        onPause = vm::setPaused,
     )
 }

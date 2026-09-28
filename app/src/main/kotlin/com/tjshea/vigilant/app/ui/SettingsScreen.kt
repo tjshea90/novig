@@ -103,6 +103,13 @@ fun SettingsScreen(
         ) {
             // ---- Scanner ------------------------------------------------------------------------
             SectionTitle("Scanner")
+            // Tj, 2026-09-28: "Make an option in the app to pause all scanning".
+            SwitchRow(
+                "Pause all scanning",
+                "Stops a scan running now; nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) " +
+                    "until you switch it off. Also the ${"\u23F8"} button on the +EV and CNO tabs and the widget. Opening bets and settling tracked ones still work.",
+                s.paused,
+            ) { v -> onUpdate { it.copy(paused = v) } }
             ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
             Hint(
                 when (s.scanner) {
