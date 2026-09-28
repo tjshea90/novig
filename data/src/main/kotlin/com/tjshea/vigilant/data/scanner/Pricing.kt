@@ -11,6 +11,7 @@ import com.tjshea.vigilant.engine.BookPrices
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.EvQuote
 import com.tjshea.vigilant.engine.FairLine
+import com.tjshea.vigilant.engine.FairSettings
 import com.tjshea.vigilant.engine.FairValue
 import com.tjshea.vigilant.engine.MakerBid
 import com.tjshea.vigilant.engine.PositiveDepth

@@ -116,6 +116,9 @@ class Scanner(
     /** Each market's best EV on the last scan, to read the likeliest +EV lines first next time. */
     private var lastEv: Map<String, Double> = emptyMap()
 
+    /** Each plan's fair lines, worked out once however many times it's priced ([FairMemo]). */
+    private val fairMemo = FairMemo()
+
     override suspend fun scan(
         settings: ScanSettings,
         sources: List<ReferenceSource>,
@@ -203,7 +206,7 @@ class Scanner(
         }
         progress.finish()
 
-        val result = currentPlan?.let { Pricing.price(it, books, settings, now) }
+        val result = currentPlan?.let { Pricing.price(it, books, settings, now, fairMemo) }
         result?.let { r ->
             lastEv = r.opportunities.mapNotNull { o -> o.evPercent?.let { o.market.marketId to it } }
                 .groupBy({ it.first }, { it.second }).mapValues { (_, evs) -> evs.max() }
@@ -341,7 +344,7 @@ class Scanner(
             val shown = planFor(cat, settings, now, youngFairOnly = true)
             val merged = HashMap(books)
             merged.putAll(fresh)
-            onPartial(Pricing.price(shown, merged, settings, now).copy(freshSinceMs = now))
+            onPartial(Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now))
         }
     }
 
@@ -420,7 +423,7 @@ class Scanner(
             if (bids.isNotEmpty()) books[m.market.marketId] = NovigBook(m.market.marketId, 0, bids, now)
         }
         if (books.isEmpty()) return emptyMap()
-        return Pricing.price(plan, books, settings, now).opportunities
+        return Pricing.price(plan, books, settings, now, fairMemo).opportunities
             .filter { it.market.marketId in books }
             .mapNotNull { o -> o.evPercent?.let { o.market.marketId to it } }
             .groupBy({ it.first }, { it.second })
@@ -459,7 +462,7 @@ class Scanner(
         }
         // Fair odds' age is judged now: a recheck long after the scan finds them too old (RESEARCH.md §24).
         val plan = planFor(cat, settings, now, youngFairOnly = true)
-        RecheckReport(Pricing.price(plan, books, settings, now), read, failed, error)
+        RecheckReport(Pricing.price(plan, books, settings, now, fairMemo), read, failed, error)
     }
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
@@ -467,7 +470,7 @@ class Scanner(
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()
-        Pricing.price(planFor(cat, settings, now, youngFairOnly = true), books, settings, now)
+        Pricing.price(planFor(cat, settings, now, youngFairOnly = true), books, settings, now, fairMemo)
     }
 
     /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
