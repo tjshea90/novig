@@ -245,14 +245,16 @@ class TennisTest {
         val refs = listOf(RefSnapshot(wta.oddsApiSportKey, KalshiClient.parse(kalshiEvents(), wta, 0.03, now), now, provider = "kalshi"))
         val plan = Planner.plan(listOf(match), listOf(ml), refs, settings, now)
         assertEquals(listOf("wml"), plan.marketIds)
-        val r = Pricing.price(plan, mapOf(book("wml", "w-b" to 30, "w-n" to 950)), settings, now)
+        val r = Pricing.price(plan, mapOf(book("wml", "w-b" to 950, "w-n" to 30)), settings, now)
         val bassols = r.opportunities.single { it.outcome.outcomeId == "w-b" }
         assertEquals("Marina Bassols Ribera", bassols.selection)
-        assertEquals((1 / 0.97) .let { 1 / it } / (0.97 + 0.04), bassols.fairProbability!!, 1e-9)
-        // A later start (two days on) is another match: not priced.
+        assertEquals(0.97 / 1.01, bassols.fairProbability!!, 1e-9)
+        assertEquals(0.97, bassols.quote!!.price, 1e-12)
+        // Two days on is another match: no fair price (shown on the Games tab only).
         val later = match.copy(startsTs = match.startsTs + 2 * 86_400_000L)
-        assertNotNull(Planner.plan(listOf(later), listOf(ml), refs, settings, now).events.single().let { it })
-        assertTrue(Planner.plan(listOf(later), listOf(ml), refs, settings, now).markets.none { it.lineKey != null })
+        val unmatched = Planner.plan(listOf(later), listOf(ml), refs, settings, now)
+        assertEquals(0, unmatched.matchedEvents)
+        assertTrue(unmatched.markets.none { it.lineKey != null })
     }
 
     @Test
