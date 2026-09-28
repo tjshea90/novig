@@ -2216,3 +2216,8 @@ Where do I access the cloud environment setup script
 ```
 Check to see if it worked
 ```
+
+## 2026-09-28T02:50:02Z
+```
+Did the setup script work for this environment
+```
