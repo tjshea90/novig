@@ -2604,7 +2604,7 @@ Nothing at or above 1.0% EV."
 - [x] W2 (DONE: RESEARCH §33.3-33.4: cloud sessions load repo skills, not plugins (docs); official kotlin-lsp tested here; claude.ai catalog, official marketplace and third-party Android skills checked.) Research: other skills / plugins / MCP connectors, Anthropic's and third parties', that could improve the app
       or Claude's work on it (Kotlin / Compose / Gradle / Android, tests, review, security, library docs); which ones
       actually work in this cloud container and survive into the next session.
-- [ ] W3 Write the findings down (RESEARCH.md, new section) so no later session redoes this; tell Tj plainly what he
+- [x] W3 (DONE: RESEARCH.md §33 (33.1-33.5, incl. 33.4.1 Kotlin LSP probe results); reported to Tj in chat.) Write the findings down (RESEARCH.md, new section) so no later session redoes this; tell Tj plainly what he
       needs to do (settings, installs, costs), links as plain text.
 - [x] W4 (DONE: session-start briefing fixed, 215,548 -> 7,186 chars (ckpt 605, test_resume.sh 2 new checks); S3 ticked; third-party skills and the prompt audit left for Tj's go-ahead.) Adopt on the repo side only what is clearly safe, free and reversible without Tj's say-so; list the rest for
       his go-ahead.
