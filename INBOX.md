@@ -2287,3 +2287,8 @@ Now consider if the 1200 Max prices per novig scan is enough for me to find most
 ```
 Claude was just about to ship when usage ran out. Can you finish
 ```
+
+## 2026-09-28T19:36:29Z
+```
+Make an option in the app to pause all scanning. And just like the vigilant positive EV tab has buttons to open the bet in novig, put these same buttons in the cno scanner in full screen (it already works in the widget)
+```
