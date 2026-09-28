@@ -231,6 +231,7 @@ class Scanner(
             sources = reports,
             creditsRemaining = creditsRemaining,
             booksReread = pump.reread,
+            booksViaPush = pump.viaPush,
         )
     }
 
