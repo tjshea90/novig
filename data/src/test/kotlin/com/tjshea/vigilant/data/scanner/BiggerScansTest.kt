@@ -141,6 +141,55 @@ class BiggerScansTest {
         assertEquals(1200, plan.markets.size)
     }
 
+    // ---- the Novig key's websocket (Tj, 2026-09-28: "taking full advantage of the novig API key") -----
+
+    /**
+     * Novig with a key: the scan's plan goes to the websocket, whose snapshot lands after [restChunks] REST
+     * batches (a fresh socket waits ~8 s for a full throttle bucket). Books pushed are [novig]'s own prices.
+     */
+    private inner class Pushing(private val novig: Novig, private val restChunks: Int) : NovigSource by novig {
+        val watched = ArrayList<List<String>>()
+        override fun watch(marketIds: Collection<String>) { watched += marketIds.toList() }
+        override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> {
+            if (novig.calls.size < restChunks) return emptyMap()
+            val held = watched.lastOrNull().orEmpty().toSet()
+            val ids = marketIds.filter { it in held }
+            return ids.associateWith { id ->
+                val i = id.drop(1).toInt()
+                val (awayBid, homeBid) = if (i in novig.edgeOn) 440 to 550 else 480 to 480
+                NovigBook(id, 1, mapOf("a$i" to listOf(BidLevel(awayBid, 1000)), "h$i" to listOf(BidLevel(homeBid, 1000))), now)
+            }
+        }
+    }
+
+    @Test
+    fun `with a key, the scan's plan goes to the websocket and its books are read at once, no request each`() = runTest {
+        val board = Board(1200)
+        val novig = Novig(board, edgeOn = mutableSetOf(5, 700))
+        val pushing = Pushing(novig, restChunks = 2)
+        val partials = ArrayList<ScanResult>()
+        val r = Scanner(pushing, clock = { now }).scan(settings.copy(maxBooksPerScan = 1200), listOf(Fair(board)), onProgress = {}, onPartial = { partials += it })
+        // Two REST batches while the socket warms up, then everything else in one pass.
+        assertEquals(2, novig.calls.size)
+        assertEquals(2 * Scanner.CHUNK, novig.calls.sumOf { it.size })
+        assertEquals(1200, r.booksFetched)
+        assertEquals(1200 - 2 * Scanner.CHUNK, r.booksViaPush)
+        // The whole plan (up to the budget) was handed to the websocket, likeliest first.
+        assertEquals(1200, pushing.watched.last().size)
+        assertEquals(setOf("m5", "m700"), r.result!!.feed(settings).map { it.market.marketId }.toSet())
+        // One publish per REST batch plus one for the pushed books: not 150 small ones.
+        assertTrue("${partials.size} partial results", partials.size <= 4)
+    }
+
+    @Test
+    fun `without the websocket, the same scan reads every book by request as before`() = runTest {
+        val board = Board(40)
+        val novig = Novig(board)
+        val r = Scanner(novig, clock = { now }).scan(settings, listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(40, novig.calls.sumOf { it.size })
+        assertEquals(0, r.booksViaPush)
+    }
+
     // ---- faster: each line devigged once per plan --------------------------------------------------
 
     @Test
