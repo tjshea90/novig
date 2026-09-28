@@ -254,6 +254,15 @@ class Scanner(
             creditsRemaining = creditsRemaining,
             booksReread = pump.reread,
             booksViaPush = pump.viaPush,
+            timing = ScanTiming(
+                boardAtMs = boardAt.get(),
+                fairAtMs = fairAt,
+                novigFromMs = pump.readFrom,
+                novigToMs = pump.readTo,
+                firstBetAtMs = pump.firstBetAt ?: result?.takeIf { it.feed(settings).isNotEmpty() }?.let { elapsed() - t0 },
+                totalMs = elapsed() - t0,
+                refused = pump.refused,
+            ),
         )
     }
 
