@@ -309,11 +309,12 @@ class OddsApiPropsTest {
         routeAll()
         val unlimited = settings.copy(bookPropCreditsPerScan = ScanSettings.NO_LIMIT, bookPropHours = ScanSettings.NO_LIMIT, daysAhead = 7)
         assertEquals(7 * 24, unlimited.bookPropWindowHours)
-        val nflSnap = OddsApiPropsSource(client()).odds(nfl, unlimited, board)
-        // Bills-Jets (30h) is in a 7-day window now; Chiefs-Broncos still has no props on Novig.
-        assertEquals(setOf("oA", "oB"), nflSnap.events.map { it.id }.toSet())
-        assertFalse(paths().any { it.endsWith("/oD/odds") })
+        routes["/v4/sports/americanfootball_nfl/events/oB/odds"] = MockResponse().setBody("{}").setHeader("x-requests-remaining", "470")
+        OddsApiPropsSource(client()).odds(nfl, unlimited, board)
+        // Bills-Jets (30h) is in a 7-day window now, so its props are bought (once); Chiefs-Broncos still has none on Novig.
+        assertEquals(1, paths().count { it.endsWith("/oA/odds") })
         assertEquals(1, paths().count { it.endsWith("/oB/odds") })
+        assertFalse(paths().any { it.endsWith("/oD/odds") })
 
         // "Starts within 2h" narrows the window: only the Yankees game (1h).
         requests.clear()
