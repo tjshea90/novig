@@ -152,7 +152,9 @@ class Scanner(
         progress.emit()
         // "source|league" for every source that has answered (or failed, or stood by) for a league this scan.
         val settled = java.util.Collections.synchronizedSet(HashSet<String>())
-        val pump = BookPump(settings, now, progress, onPartial, ordered, settled)
+        val pump = BookPump(settings, now, progress, onPartial, ordered, settled, t0)
+        val boardAt = java.util.concurrent.atomic.AtomicLong(0)
+        var fairAt = 0L
 
         synchronized(answered) { answered.clear() }
         val sourceReports = coroutineScope {
