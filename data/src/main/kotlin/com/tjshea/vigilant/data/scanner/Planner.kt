@@ -219,8 +219,9 @@ object Planner {
         }
         val max = settings.maxBooksPerScan.coerceAtLeast(1)
         val base = budget(planned, max, pinned)
-        if (!settings.fillBudget || base.size >= max || spare.isEmpty()) return Plan(base, matches)
-        return Plan(base + fill(spare, max - base.size), matches)
+        val later = laterGames(events, settings, now)
+        if (!settings.fillBudget || base.size >= max || spare.isEmpty()) return Plan(base, matches, later)
+        return Plan(base + fill(spare, max - base.size), matches, later)
     }
 
     /**
