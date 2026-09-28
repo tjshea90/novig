@@ -132,12 +132,12 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
 
     val running: Boolean get() = mutex.isLocked
 
-    /** One background scan. False when one is already running (or auto-scan is off). */
+    /** One background scan. False when one is already running (or auto-scan is off, or scanning paused). */
     suspend fun cycle(): Boolean {
         if (!mutex.tryLock()) return false
         try {
             val settings = c.currentSettings()
-            if (settings.autoScan == AutoScanMode.OFF) return false
+            if (settings.activeAutoScan == AutoScanMode.OFF) return false
             val start = clock()
             _status.update { it.copy(running = true, step = "Starting", lastStartMs = start, lastError = null) }
             val alerts = ArrayList<EvAlert>()

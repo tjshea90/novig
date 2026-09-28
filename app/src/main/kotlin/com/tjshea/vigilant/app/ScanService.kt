@@ -100,8 +100,9 @@ class ScanService : Service() {
 
     private fun finish(run: ScanRun, onScreen: Boolean) {
         val container = (application as VigilantApp).container
-        // Not when Tj switched to CNO only mid-scan: the widget and app no longer show these bets.
-        val vigilantShown = container.settingsStore.flow.value?.vigilantOn ?: true
+        // Not when Tj switched to CNO only mid-scan (the widget and app no longer show these bets), or paused it
+        // (the scan was stopped, not done).
+        val vigilantShown = container.settingsStore.flow.value?.let { it.vigilantOn && !it.paused } ?: true
         if (!onScreen && run.finished > 0 && vigilantShown) {
             notify(DONE_ID, doneNotification(run))
             // His scan, left running in the background: its new +EV bets alert like a background scan's (Tj, 2026-09-28).
