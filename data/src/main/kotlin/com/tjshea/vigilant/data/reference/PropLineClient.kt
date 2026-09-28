@@ -250,8 +250,8 @@ class PropLineClient(
 
 /**
  * Player props from every sportsbook PropLine carries, one request per game (RESEARCH.md §22), for
- * the Novig games that list props, haven't started, and start within [ScanSettings.bookPropHours],
- * soonest first. At most [MAX_GAMES_PER_SCAN] games a scan, each re-used for [REUSE_MS] (PropLine
+ * the Novig games that list props, haven't started, and start within [ScanSettings.bookPropWindowHours],
+ * soonest first. At most [ScanSettings.propLineGamesPerScan] games a scan (or every one), each re-used for [REUSE_MS] (PropLine
  * refreshes props every minute or so; the free 1,000 a day is the limit that matters). Only the prop
  * types Novig lists for a game are asked for.
  */
@@ -332,7 +332,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
     private fun allocate(settings: ScanSettings, context: ScanContext, ask: String): Map<String, List<String>> {
         if (MarketFamily.PLAYER_PROPS !in settings.families) return emptyMap()
         val now = context.now
-        val horizon = now + settings.bookPropHours.coerceAtLeast(1) * 3_600_000L
+        val horizon = now + settings.bookPropWindowHours * 3_600_000L
         val propTypes = context.novigMarkets
             .filter { it.isOpen && it.marketType in PropLineProps.STATS }
             .groupBy({ it.eventId }, { it.marketType })
@@ -341,7 +341,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
             .filter { it.status == com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME && it.startsTs > now && it.startsTs <= horizon && it.league in settings.leagues }
             .sortedBy { it.startsTs }
         for (e in games) {
-            if (out.size >= MAX_GAMES_PER_SCAN) break
+            if (out.size >= settings.propLineGamesPerScan.coerceAtLeast(1)) break
             val have = bought[e.eventId]
             if (have != null && have.ask == ask) continue
             val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(e.league) ?: continue
@@ -360,7 +360,6 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
 
         /** Novig prices relayed with a game's props are passed on (to order Novig reads) only this long. */
         const val NOVIG_MAX_AGE_MS = 3 * 60_000L
-        const val MAX_GAMES_PER_SCAN = 12
         internal const val PREFIX = "pl:"
     }
 }

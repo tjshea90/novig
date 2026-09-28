@@ -123,8 +123,8 @@ object Planner {
         return events.filter { e -> e.startsTs <= horizon && inPlay(e, settings, now) }
     }
 
-    /** The last start time "Days ahead" takes in. */
-    fun horizon(settings: ScanSettings, now: Long): Long = now + settings.daysAhead.coerceAtLeast(1) * 24L * 3600 * 1000
+    /** The last start time a scan takes in: "Days ahead", or "Starts within" when shorter ([ScanSettings.scanWindowHours]). */
+    fun horizon(settings: ScanSettings, now: Long): Long = now + settings.scanWindowHours * 3_600_000L
 
     /** A picked league's game that is open to bet now (start time aside). */
     private fun inPlay(e: NovigEvent, settings: ScanSettings, now: Long): Boolean {

@@ -85,7 +85,7 @@ class OddsApiPropsSource(
         if (buying.isNotEmpty()) {
             try {
                 // Free, and trimmed to the window (plus a day for football's loose kickoff times).
-                val listed = client.events(sport, now + (settings.bookPropHours + 24) * 3_600_000L)
+                val listed = client.events(sport, now + (settings.bookPropWindowHours + 24L) * 3_600_000L)
                 remaining = listed.remaining ?: remaining
                 used = listed.used ?: used
                 val matches = Planner.matchEvents(buying, listOf(RefSnapshot(sport, listed.value, now, provider = ID)))
@@ -133,7 +133,7 @@ class OddsApiPropsSource(
         var credits = settings.bookPropCreditsPerScan
         if (credits <= 0) return emptyMap()
         val now = context.now
-        val horizon = now + settings.bookPropHours.coerceAtLeast(1) * 3_600_000L
+        val horizon = now + settings.bookPropWindowHours * 3_600_000L
         val propTypes = context.novigMarkets
             .filter { it.isOpen && it.marketType in PropStats.ODDS_API_MARKETS.values }
             .groupBy({ it.eventId }, { it.marketType })

@@ -827,9 +827,9 @@ class Scanner(
     /** What a snapshot was asked for; a different ask can't re-use it. */
     private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
-        "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropHours}"
+        "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
         "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
-        "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropHours}"
+        "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropWindowHours}|${settings.propLineGamesPerScan}"
         else -> "${settings.families.sorted()}|${settings.exchangeMaxSpread}|${settings.daysAhead}"
     }
 
@@ -859,7 +859,7 @@ class Scanner(
         val books = settings.referenceBooks.toSet()
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
-            settings.leagues, settings.families, settings.includeLive, settings.daysAhead, settings.linesPerGame,
+            settings.leagues, settings.families, settings.includeLive, settings.scanWindowHours, settings.linesPerGame,
             settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L, headroomMs,
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
