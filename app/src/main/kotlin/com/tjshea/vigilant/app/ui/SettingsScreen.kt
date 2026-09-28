@@ -450,7 +450,7 @@ fun SettingsScreen(
                 }
                 Text("Most Novig prices per scan: ${s.maxBooksPerScan}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, { it.toString() }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
-                Hint("300 is about a minute. Results appear as they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and the soonest games come first.")
+                Hint(scanSizeHint(s.maxBooksPerScan))
                 } else {
                     Hint("Every ${AppBook.name} line another book also prices is checked: its lines come in the fair-odds requests, so there's no per-line cost to limit.")
                 }
@@ -655,6 +655,17 @@ fun bookPropEstimate(s: ScanSettings, backup: Boolean = false): String {
 }
 
 fun maxOddsLabel(american: Int): String = if (american <= 0) "Any" else "+$american"
+
+/**
+ * About how long a scan of [books] Novig prices takes on the public routes (4–6 a second, NOVIG_API.md
+ * §11.1), and what the limit decides.
+ */
+fun scanSizeHint(books: Int): String {
+    val minutes = (books / 300.0).let { if (it < 1.0) "under a minute" else if (it < 1.5) "about a minute" else "about ${Math.round(it)} minutes" }
+    return "$books is $minutes on Novig's public prices (a connected Novig key reads about twice as fast). Results appear as " +
+        "they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and " +
+        "the soonest games come first. Only lines another book also prices are read, so a scan can finish below the limit."
+}
 
 fun minutesLabel(minutes: Int): String = if (minutes >= 60 && minutes % 60 == 0) "${minutes / 60}h" else "${minutes}m"
 
