@@ -34,16 +34,14 @@ data class ScanTiming(
             if (prices > 0) {
                 append(" · ").append(String.format(Locale.US, "%,d", prices)).append(" Novig price").append(if (prices == 1) "" else "s")
                 append(" in ").append(seconds(t.novigMs))
-                if (t.novigMs > 0) append(" (").append(String.format(Locale.US, "%.1f", prices * 1000.0 / t.novigMs)).append(" a second")
-                else append(" (")
+                val pace = if (t.novigMs > 0) String.format(Locale.US, "%.1f a second", prices * 1000.0 / t.novigMs) else null
                 val public = (prices - viaKey - viaPush).coerceAtLeast(0)
-                val parts = listOfNotNull(
+                val ways = listOfNotNull(
                     "$viaPush by live feed".takeIf { viaPush > 0 },
                     "$viaKey through the key".takeIf { viaKey > 0 },
                     "$public public".takeIf { public > 0 },
-                )
-                if (parts.isNotEmpty()) append(if (t.novigMs > 0) ": " else "").append(parts.joinToString(", "))
-                append(")")
+                ).joinToString(", ").takeIf { it.isNotEmpty() }
+                listOfNotNull(pace, ways).takeIf { it.isNotEmpty() }?.let { append(" (").append(it.joinToString(": ")).append(")") }
             }
             append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
             append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")
