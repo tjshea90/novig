@@ -98,6 +98,8 @@ object MiniWindow {
         val evLow: Boolean = false,
         /** Vigilant MGM's own bets: BetMGM's ids for the bet slip ([betLink]). */
         val bookRef: com.tjshea.vigilant.data.book.BookRef? = null,
+        /** The bet's Kelly stake, for a bet slip opened with it ([ScanSettings.slipStakeFor]). */
+        val kelly: Double? = null,
     ) {
         /** The same bet at any line, in this game and market. */
         val family: String get() = Picks.familyKey(event, market, title)
@@ -210,13 +212,16 @@ object MiniWindow {
     /** One CNO bet as the widget (and the CNO tab's placed button) sees it. */
     fun itemFor(pick: CnoPick, snap: CnoSnapshot, state: UiState, now: Long): Item {
         val row = pick.row
-        val base = pick.miniItem(snap, now).copy(team = state.teams[row.key], agrees = state.cnoAgrees(pick, now))
+        val base = pick.miniItem(snap, now).copy(
+            team = state.teams[row.key], agrees = state.cnoAgrees(pick, now), kelly = com.tjshea.vigilant.app.ui.cnoStake(pick, state.settings),
+        )
         // Novig's price now, when it was read (RESEARCH.md §20.3): what Tj would actually get.
         if (state.livePrice(row, now) == null) return base
         val live = state.livePick(pick, now)
         return base.copy(
             // The bet at Novig's price now: its Books view, tap and marks see that price (keys don't change).
             cno = live,
+            kelly = com.tjshea.vigilant.app.ui.cnoStake(live, state.settings),
             price = american(live.row.odds),
             ev = live.ev,
             available = live.row.available?.let { "$" + it.roundToInt() },
@@ -243,6 +248,7 @@ object MiniWindow {
             league = event.league,
             outcomeId = outcome.outcomeId,
             bookRef = outcome.bookRef,
+            kelly = suggestedStake,
         )
     }
 

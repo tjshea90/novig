@@ -237,9 +237,11 @@ class MainActivity : ComponentActivity() {
      */
     private fun openBet(item: MiniWindow.Item) {
         val row = item.cno?.row
+        // The bet slip opens with the stake Settings asks for ($1, Kelly, or a set amount; Tj, 2026-09-28).
+        val stake = vm.state.value.settings.slipStakeFor(item.kelly)
         // Vigilant's own bets (a bet both scanners list included) carry their Novig outcome (BetMGM's ids in Vigilant MGM).
         if (item.outcomeId != null || row == null) {
-            launchNovig(MiniWindow.betLink(item, vm.state.value.settings.bookState))
+            launchNovig(NovigLinks.withStake(MiniWindow.betLink(item, vm.state.value.settings.bookState), stake))
             return
         }
         widget.opening = item.key
@@ -247,7 +249,7 @@ class MainActivity : ComponentActivity() {
             val found = runCatching { vm.betLink(row) }.getOrNull()
             if (widget.opening == item.key) widget.opening = null
             tellHowItOpened(found, row)
-            launchNovig(found?.link)
+            launchNovig(NovigLinks.withStake(found?.link, stake))
         }
     }
 
@@ -413,7 +415,10 @@ class MainActivity : ComponentActivity() {
             if (openingBet == row.key) openingBet = null
             floatOverNovig()
             tellHowItOpened(found, row)
-            launchNovig(found?.link)
+            val s = vm.state.value.settings
+            val live = row.startsAtMs?.let { it <= System.currentTimeMillis() } == true
+            val kelly = if (s.slipStake == SlipStake.KELLY) cnoStake(CnoPick(row, row.ev, live), s) else null
+            launchNovig(NovigLinks.withStake(found?.link, s.slipStakeFor(kelly)))
         }
     }
 
