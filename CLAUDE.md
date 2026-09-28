@@ -327,6 +327,10 @@ unless Tj asks).
   `daysAhead` 7 by default (schema 8), every event read so `Plan.laterGames`/`ScanStats.laterGames` tell the feed what
   starts past the window, `DELAYED` games, `NovigMarket.strike` guard (`Planner.strikeAgrees`), `GET /v3/limits`
   (`NovigPublicClient.limits`, `PushedBooks.tune`), the board through the key's signed catalog (`catalog()`, public fallback).
+  v0.19.3 (RESEARCH.md §29): `data/HttpSupport.vigilantHttpClient()` (16 requests a host; OkHttp's default 5 minus the
+  open websocket left the key 4), key reads 10 in flight in `NovigSource.batchSize` 30s, one refused wave slows once
+  (`RateGate.SAME_BURST_MS`), Kalshi game lines before props (`ReferenceSource.linesFirst`/`lines`, `Scanner.linesFirst`),
+  where scan time goes (`data/scanner/ScanTiming`, `BookBatch.refused`, Settings › Novig API).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
