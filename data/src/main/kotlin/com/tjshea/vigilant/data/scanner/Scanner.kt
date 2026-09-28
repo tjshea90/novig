@@ -579,14 +579,19 @@ class Scanner(
             c.daysAhead == settings.daysAhead && c.types.containsAll(types) && now - c.fetchedAtMs < catalogTtlMs
         if (fresh) return
         try {
+            // DELAYED is tradable too (docs: api/concepts/event-lifecycle): a game held before its start.
             val statuses = buildList {
                 add(NovigEvent.STATUS_PREGAME)
+                add(NovigEvent.STATUS_DELAYED)
                 if (settings.includeLive) add(NovigEvent.STATUS_LIVE)
             }
             val leagues = settings.leagues.toList()
             // One extra day of slack past the horizon; Planner applies the exact cut.
             val before = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
-            val events = novig.events(leagues, statuses, before)
+            // Every event, not just the window: one small request, and the scan can then say how many games
+            // start past "Days ahead" (Tj, 2026-09-28: "There are way more than 7 total games"). Their
+            // markets (the big part) are only read inside the window.
+            val events = novig.events(leagues, statuses, null)
             // Only the families being priced: player props alone are thousands of markets a week.
             // Main lines always come along (cheap), so turning those on and off re-prices from cache.
             val wanted = types + MAIN_TYPES
