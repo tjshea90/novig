@@ -166,13 +166,14 @@ class SteadyFeedTest {
 
     @Test
     fun `a scan never prices with a book price that would go stale within 2 minutes`() = runTest {
-        // A sportsbook price the feed last saw 3.5 minutes ago: under 5, but only 1.5 minutes of life left.
-        val borderline = Source("kalshi", ref(moneyline("kalshi", 0.53, seen = now - 210_000L)))
+        // The game is a day off, so its quotes may be 10 minutes old (Freshness.maxAgeMs, v0.19.3). One the feed last saw
+        // 8.5 minutes ago is under 10, but has only 1.5 minutes of life left: not priced.
+        val borderline = Source("kalshi", ref(moneyline("kalshi", 0.53, seen = now - 510_000L)))
         var report = Scanner(novig, clock = { now }).scan(settings.copy(families = setOf(MarketFamily.MONEYLINE)), listOf(borderline), emptySet(), {}, {})
         assertNull(report.result!!.opportunities.firstOrNull { it.outcome.outcomeId == "dal" }?.fairProbability)
         assertTrue(report.result!!.feed(settings).isEmpty())
-        // 2.5 minutes old (2.5 left): priced, and shown for at least 2 minutes.
-        val fresh = Source("kalshi", ref(moneyline("kalshi", 0.53, seen = now - 150_000L)))
+        // 7.5 minutes old (2.5 left): priced, and shown for at least 2 minutes.
+        val fresh = Source("kalshi", ref(moneyline("kalshi", 0.53, seen = now - 450_000L)))
         report = Scanner(novig, clock = { now }).scan(settings.copy(families = setOf(MarketFamily.MONEYLINE)), listOf(fresh), emptySet(), {}, {})
         val dal = report.result!!.opportunities.first { it.outcome.outcomeId == "dal" }
         assertNotNull(dal.fairProbability)
