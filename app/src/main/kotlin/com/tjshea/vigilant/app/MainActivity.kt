@@ -54,12 +54,11 @@ import com.tjshea.vigilant.app.ui.OpportunitySheet
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
-import com.tjshea.vigilant.app.ui.cnoStake
+import com.tjshea.vigilant.app.ui.cnoSlipStake
 import com.tjshea.vigilant.app.ui.feedMarketIds
 import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.novig.NovigLinks
-import com.tjshea.vigilant.data.novig.SlipStake
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.scanner.Opportunity
 import kotlinx.coroutines.flow.distinctUntilChanged
