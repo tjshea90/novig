@@ -267,6 +267,11 @@ data class ScanSettings(
         if (s.schema < 6) {
             s = s.copy(maxOdds = if (s.maxOdds <= 0 || s.maxOdds > MAX_ODDS_LIMIT) MAX_ODDS_LIMIT else s.maxOdds, schema = 6)
         }
+        // v0.19.0: tennis is new (Tj, 2026-09-28: "It may be missing many games and bets"). Turned on once,
+        // beside whatever leagues are picked; a tap on its chip turns it off for good.
+        if (s.schema < 7) {
+            s = s.copy(leagues = s.leagues + TENNIS, schema = 7)
+        }
         return s
     }
 
