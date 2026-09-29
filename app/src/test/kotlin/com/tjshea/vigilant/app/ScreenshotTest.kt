@@ -91,7 +91,8 @@ class ScreenshotTest {
 
     /** Settings is one page per tab (v0.22.0, Tj: "tabs on the top"): open [tab] before looking for what's on it. */
     private fun openSettingsTab(tab: com.tjshea.vigilant.app.ui.SettingsTab) {
-        compose.onNodeWithTag("settingsTab-${tab.name}").performClick()
+        // The row scrolls sideways: the later tabs start off screen, as they do on a phone.
+        compose.onNodeWithTag("settingsTab-${tab.name}").performScrollTo().performClick()
         compose.waitForIdle()
     }
 
