@@ -68,7 +68,7 @@ class ApiBettingControllerTest {
     }
 
     /** A Novig that fills what's asked for at the cost the plan expected; counts the orders. */
-    private class FakeNovig(val orders: AtomicInteger, val fillsFor: (qty: Long, price: Double) -> NovigFill?) :
+    private class FakeNovig(val orders: AtomicInteger, val slowMs: Long = 0, val fillsFor: (qty: Long, price: Double) -> NovigFill?) :
         NovigTradingClient(NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
             override val keyId = "kid"
             override val algorithm = NovigKeyAlgorithm.P256
@@ -78,6 +78,7 @@ class ApiBettingControllerTest {
         override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
             orders.incrementAndGet()
             last = Triple(outcomeId, price, qty)
+            if (slowMs > 0) kotlinx.coroutines.delay(slowMs)
             return "order-1"
         }
         override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", "FILLED", 1)
@@ -143,6 +144,25 @@ class ApiBettingControllerTest {
         // Nothing more can be done to a finished sheet.
         api.setStake(9.0)
         assertTrue(state.value.betSheet!!.result is PlaceResult.Placed)
+    }
+
+    @Test
+    fun `closing the sheet while an order is being placed does not lose the bet`() {
+        val (o, book) = sample()
+        val orders = AtomicInteger()
+        val state = startState()
+        val fake = FakeNovig(orders, slowMs = 400) { qty, price ->
+            NovigFill("f1", "order-1", null, o.market.marketId, o.outcome.outcomeId, qty, qty * price * 0.01, true, 0.0, now)
+        }
+        val api = controller(state, book, fake)
+        api.bet(o)
+        waitFor("a plan") { state.value.betSheet?.plan != null }
+        api.confirm()
+        waitFor("the order going out") { orders.get() == 1 }
+        api.dismiss() // the answer to the order hasn't come back yet
+        assertNull(state.value.betSheet)
+        waitFor("the bet being tracked") { kotlinx.coroutines.runBlocking { app.container.tracker.all() }.any { it.orderId == "order-1" } }
+        assertEquals(1, orders.get())
     }
 
     @Test
