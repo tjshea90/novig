@@ -2684,10 +2684,22 @@ Nothing at or above 1.0% EV."
       every CNO surface (tab, widget, mini window, alerts, auto-scan) reads CnoChecks.screen. Test: CnoChecksTest
       "only games are listed - a futures market on CNO's list is left out and counted" (failed before, passes after);
       full floor green cold 2026-09-29 (engine 39, data 494, app 228).
-- [ ] Z3 Answer: do the skills carry across Tj's three Claude accounts (they're committed in the repo), and what, if
+- [x] Z3 Answer: do the skills carry across Tj's three Claude accounts (they're committed in the repo), and what, if
       anything, each account needs before working on this repo (its own cloud environment's setup script, network).
-- [ ] Z4 The setup script: does the Maven Central mirror script work well? Prove it (a full test run here, timed) and
+      DONE: RESEARCH.md §33.6 + BRIEF.md build trap 6 ("Every account's cloud environment"): skills/CLAUDE.md/hooks
+      travel with the repo; each account's environment needs the one-line setup script and dl.google.com allowed.
+- [x] Z4 The setup script: does the Maven Central mirror script work well? Prove it (a full test run here, timed) and
       improve what's weak (e.g. every new session re-downloads ~1 GB of Gradle dependencies).
-- [ ] Z5 Other cleanups so future work is efficient and uses the skills: a compact test runner (short output),
+      DONE: works (cold floor 210 s, 1.5 GB via the mirror, 0 x 429; warm 110 s). tools/setup-android.sh now never exits
+      non-zero (WARN; tested with dl.google.com blocked + unwritable Gradle home: exit 0), installs build-tools 35.0.0
+      (the one AGP 8.13 builds with), and --prewarm fills the caches inside the setup script (cold total 210-235 s,
+      budget 250 s; cut test: WARN after 42 s, exit 0, nothing left running); first floor after it 106 s, 2 MB fetched.
+      One-line environment script in BRIEF.md build trap 6.
+- [x] Z5 Other cleanups so future work is efficient and uses the skills: a compact test runner (short output),
       Gradle speed settings if safe, CI caching, any other upstream skill worth adding.
+      DONE: tools/test.sh (+ tools/gradle_summary.py; fast check tools/test_gradle_summary.sh, 11 checks, fails on a
+      summarizer that ignores Gradle's exit code) used by ship.sh, CLAUDE.md "Skills for this app" and test-protocols;
+      data tests in parallel JVMs (71 s -> 38 s); VIGILANT_* live switches are data:test inputs (proven: before, a
+      changed switch left the task "up to date"; after, it reruns). Not adopted, with reasons (RESEARCH.md §33.6):
+      build/configuration cache, chrisbanes gradle-run skill, CI changes.
 - [ ] Z6 Full test floor, ship, Release link.

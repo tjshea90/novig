@@ -2527,6 +2527,8 @@ oversized briefing is trimmed…" (both failed before the fix).
   and the briefing scripts, report plus proposed diff, nothing applied until Tj says which hunks; (2) "add the Compose
   skills": read Chris Banes' four skills in full, commit them to `.claude/skills/` with the Apache-2.0 license.
 - No plugin installs, connectors or paid services are recommended.
+- Update 2026-09-29: one thing per account after all, its cloud environment: the one-line setup script and
+  `dl.google.com` allowed (33.6, BRIEF.md build trap 6).
 
 ### 33.6 Skills across accounts, the setup script, and test speed (2026-09-29 ~00:41Z, Tj: "Are the compose skills installed in the repo to use between different Claude accounts? I have three Claude accounts. Do I have to do anything to the other accounts before working on this repo again? … Think of and implement any other clean up or optimization for this repo so that future work is efficient and Claude can use skills for the best coding. The setup script for each cloud session should load a maven central script, does this work well?")
 - **What travels with the repo (nothing to do per account):** `.claude/skills/` (Chris Banes' four + `test-protocols`),
