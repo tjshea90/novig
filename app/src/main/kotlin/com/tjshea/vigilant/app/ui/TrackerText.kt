@@ -144,7 +144,7 @@ object TrackerText {
             pts < -0.0005 -> "${String.format(java.util.Locale.US, "%.1f", -pts * 100)} points worse than fair"
             else -> "right at fair"
         }
-        return "$bet Fair now ${Format.american(fair)} (${Format.percent(fair)}): $where, ${Format.evPercentShort(i.evNow ?: 0.0)} EV."
+        return "$bet Fair ${if (current) "now" else "when last read"} ${Format.american(fair)} (${Format.percent(fair)}): $where, ${Format.evPercentShort(i.evNow ?: 0.0)} EV."
     }
 
     /** "The market has moved 2.0 points toward your bet since you placed it." (null when either fair price is missing). */
