@@ -139,6 +139,11 @@ object Diagnostics {
         o.appendLine("Current EV: ${upcoming.count { TrackerText.currentEv(it, now) }} of ${upcoming.size} upcoming bets have one read inside the fair odds' age limit; ${upcoming.count { it.nowEv != null && !TrackerText.currentEv(it, now) }} have an old one; ${upcoming.count { it.nowEv == null }} none")
         val reasons = upcoming.filter { it.nowNote != null && it.nowEv == null }.groupingBy { it.nowNote!! }.eachCount().entries.sortedByDescending { it.value }.take(6)
         reasons.forEach { o.appendLine("  not priced ×${it.value}: ${it.key}") }
+        // The Tracker's counter (Tj, 2026-09-29): open bets re-priced since the last Check odds now began.
+        s.checkStartedAtMs?.let { since ->
+            val c = com.tjshea.vigilant.data.tracker.CheckOddsStats.of(bets, since)
+            o.appendLine("Check odds now counter (since ${at(since)}): ${TrackerText.checkCounts(c)} · ${TrackerText.checkAverage(c)}" + (if (c.outliers > 0) " (${c.outliers} over ±5% left out)" else ""))
+        }
         o.appendLine("Settled by: score feeds ${bets.count { it.settledBy == BetSettler.BY_SCORES }}, Novig's ledger ${bets.count { it.settledBy == BetSettler.BY_NOVIG }}, you ${bets.count { it.settledBy == BetSettler.BY_YOU }}")
         val overdue = started.filter { now - it.startsTs > 6 * 3_600_000L }
         o.appendLine("Started and still open: ${started.size} (${overdue.size} for over 6 hours, ${started.count { it.gradeManual || it.autoGradeOff }} need a tap)")

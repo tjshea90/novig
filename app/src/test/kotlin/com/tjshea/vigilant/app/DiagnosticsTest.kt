@@ -67,6 +67,15 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `it carries the Tracker's Check odds now counter once a check has run`() {
+        val base = SampleScan.state()
+        assertFalse(report(base.copy(checkStartedAtMs = null)).contains("Check odds now counter"))
+        val bets = base.bets.map { if (it.id == "b3") it.copy(nowEv = 0.02, nowAtMs = now) else if (it.id == "b4") it.copy(nowEv = -0.07, nowAtMs = now) else it }
+        val text = report(base.copy(bets = bets, checkStartedAtMs = now - 60_000))
+        assertTrue(text, text.contains("1 +EV · 1 −EV · 50% +EV · Avg +2.0% EV (1 over ±5% left out)"))
+    }
+
+    @Test
     fun `it says whether the management key is saved, by its last four only`() {
         val base = SampleScan.state()
         assertTrue(report(base).contains("management key not saved"))
