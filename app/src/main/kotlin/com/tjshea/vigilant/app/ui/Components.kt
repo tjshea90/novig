@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -100,9 +101,12 @@ fun EvBadge(ev: Double, modifier: Modifier = Modifier, large: Boolean = false, l
  * The rows a list keeps pinned at its top while its items scroll under them (Tj, 2026-09-29: "keep the top navigation tabs sticky"): an opaque
  * background, so a card never shows through the chips, and a hairline under it. Used as a `stickyHeader` item's content.
  */
+/** The test tag of a pinned bar. */
+const val STICKY_BAR = "stickyBar"
+
 @Composable
 internal fun StickyBar(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.background, modifier = modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = modifier.fillMaxWidth().testTag(STICKY_BAR)) {
         Column {
             content()
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
