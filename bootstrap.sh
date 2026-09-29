@@ -49,8 +49,8 @@ fi
 # prints it BEFORE calling this script. Saying it twice would just spend
 # context repeating one fact; bootstrap.sh only adds what resume.sh doesn't
 # already know.
-if [ -d .git ]; then
-  echo "  OK    checkpoint history present ($(git rev-list --count HEAD 2>/dev/null || echo 0) checkpoints)"
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "  OK    checkpoint history present ($(git rev-list --count HEAD 2>/dev/null || echo 0) commits)"
 else
   echo "  WARN  no .git — checkpoint history was lost. Run: git init && bash tools/ckpt.sh 'resumed'"
 fi

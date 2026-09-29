@@ -14,7 +14,11 @@ data class MarketFee(
     val charged: FeeCharge,
 ) {
     companion object {
-        /** Novig's documented game-market schedule, used only by tests and sample data. */
+        /**
+         * Novig's documented game-market schedule. Vigilant's own pricing never uses it (it reads each
+         * market's `fee` object); CNO's list re-check, its game-page verdict and tracked CNO bets do, because
+         * they don't read the bet's Novig market, so a futures market there is under-charged (TASKS Y7).
+         */
         val GAME = MarketFee(coefficient = 0.03, makerCredit = 0.5, charged = FeeCharge.WHEN_LIVE)
 
         /** Novig's documented NFL/MLB/NCAAF futures schedule: charged pregame too. */

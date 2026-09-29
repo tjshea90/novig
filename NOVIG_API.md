@@ -276,7 +276,8 @@ everything. The websocket (§6) is the right tool for broad coverage.
   **Pregame taker fills are fee-free.** Fees apply only while the event is
   `OPEN_INGAME`, decided at match time.
 - Futures in `NFL`/`MLB`/`NCAAF`: `coefficient 0.06`, `makerCredit 0.7`,
-  `charged: ALWAYS`. **These charge pregame too.** `Fees.kt` currently doesn't model this.
+  `charged: ALWAYS`. **These charge pregame too.** `Fees.kt` models this (`FeeCharge.ALWAYS`,
+  `MarketFee.FUTURES`), and Vigilant's pricing reads each market's own `fee` object.
 - Futures in PGA/ATP/WTA/UFC: `WHEN_LIVE`, which in practice means never charged.
 - `GOLIVE` **voids every resting order** and turns taker fees on. `UNLIVE` drains the
   book and turns them off. Both can repeat.

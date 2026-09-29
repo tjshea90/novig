@@ -18,8 +18,8 @@
 # Adapted from Portfolio's tools/test_resume.sh: the JSON-emission,
 # hook-merge, checkpoint-numbering, secretscan and unpushed-refuses-to-guess
 # checks are the same shape (this account already proved that shape catches
-# real bugs). Everything Android/Gradle/keystore-specific is gone — none of
-# that exists in this project yet. Also gone: Portfolio's multi-repo hook
+# real bugs). Everything Android/Gradle/keystore-specific is left out: the
+# Gradle suite, ship.sh and release.yml check those. Also gone: Portfolio's multi-repo hook
 # AGGREGATION tests — novig's hooks are deliberately scoped to this repo
 # only (see tools/install-hooks.sh's header for why: fantasy-football and
 # Portfolio are read-only for this project's work), so there is nothing to
