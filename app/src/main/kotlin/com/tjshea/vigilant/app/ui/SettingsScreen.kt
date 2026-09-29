@@ -204,10 +204,11 @@ fun SettingsScreen(
 
             // ---- Mini window --------------------------------------------------------------------
             SectionTitle("Mini window")
+            Hint("The widget opens only when you press its button at the top of the list.")
             SwitchRow(
-                "Float over ${AppBook.name}",
-                "When you leave Vigilant with bets to show (or a scan running), a small window with them stays on top of " +
-                    "${AppBook.name}. The button at the top of the list opens it any time.",
+                "Also open it when I leave Vigilant",
+                "Off (the default): leaving Vigilant for another app does nothing. On: leaving it with bets to show (or a scan " +
+                    "running), or opening a bet in ${AppBook.name}, brings the widget up over that app by itself.",
                 s.miniWindow,
             ) { v -> onUpdate { it.copy(miniWindow = v) } }
             // The floating widget, for either scanner (Tj, 2026-09-27: "on the regular vigilant
