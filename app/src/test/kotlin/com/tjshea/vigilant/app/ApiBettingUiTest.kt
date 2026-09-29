@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -193,5 +194,19 @@ class ApiBettingUiTest {
         sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.NotFilled("Nobody was selling at that price any more")), {}, {}, {}, {}, {}) }
         compose.onNodeWithTag("betNotPlaced").assertExists()
         compose.onNodeWithText("Nobody was selling", substring = true).assertExists()
+    }
+
+    // ---- pictures (written to app/screenshots/ with -Pscreenshots) ---------------------------------------------
+
+    @Test
+    fun `screenshots - Settings section and the Bet sheet`() {
+        screen { NovigBettingSection(BettingUi(enabled = true, balance = 12.5, message = "Added $10.00. The subaccount now holds $12.50."), ScanSettings(), BettingActions(), {}) }
+        compose.onRoot().captureRoboImage("screenshots/5f_settings_api_betting.png")
+    }
+
+    @Test
+    fun `screenshots - the Bet sheet before and after placing`() {
+        sheetScreen { ApiBetSheetContent(sheet(plan = plan.copy(note = "Only $1.85 of the $5.00 is offered at a positive edge right now: this bets $1.85.")), {}, {}, {}, {}, {}) }
+        compose.onRoot().captureRoboImage("screenshots/4f_api_bet_sheet.png")
     }
 }
