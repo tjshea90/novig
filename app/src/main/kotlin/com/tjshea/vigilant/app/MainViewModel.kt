@@ -91,6 +91,9 @@ data class NovigUi(
 )
 
 data class UiState(
+    /** Betting through Novig's API: set up or not, the balance; and the Bet sheet while one is open (Tj, 2026-09-29). */
+    val betting: BettingUi = BettingUi(),
+    val betSheet: BetSheetUi? = null,
     val settings: ScanSettings = ScanSettings(),
     val result: ScanResult? = null,
     val feed: List<Opportunity> = emptyList(),
@@ -316,6 +319,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** One-shot messages for a toast ("Tracked", save errors). Declared before [init]: its coroutines can run at once. */
     private val _toasts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
     val toasts: kotlinx.coroutines.flow.SharedFlow<String> = _toasts
+
+    /** Betting through Novig's API: setup, money, the Bet sheet ([ApiBettingController]). */
+    val api = ApiBettingController(c, _state, viewModelScope, _toasts)
 
     init {
         viewModelScope.launch {
