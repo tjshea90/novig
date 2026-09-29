@@ -178,7 +178,7 @@ fun BetSheetContent(
                 if (bet.gameUrl != null) {
                     OutlinedButton(onClick = { actions.onReread(bet.id, false) }, enabled = !rereading) { Text(if (rereading) "Reading…" else "Re-read books") }
                 } else if (settings.vigilantOn) {
-                    OutlinedButton(onClick = actions.onScan) { Text("Update from a scan") }
+                    OutlinedButton(onClick = { actions.onReread(bet.id, false) }, enabled = !rereading) { Text(if (rereading) "Pricing…" else "Price now") }
                 }
                 if (started) OutlinedButton(onClick = actions.onGrade, enabled = !grading) { Text(if (grading) "Grading…" else "Grade now") }
                 if (bet.autoGradeOff) OutlinedButton(onClick = { actions.onRegrade(bet.id) }) { Text("Grade automatically") }
