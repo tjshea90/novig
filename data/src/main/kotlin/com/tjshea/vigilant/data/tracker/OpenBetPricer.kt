@@ -95,6 +95,8 @@ class OpenBetPricer(
 
     /** Open bets among [ids] that Novig's ids and start let a pass ask about, and how many others there are (their reason is recorded). */
     suspend fun run(settings: ScanSettings, ids: Collection<String>, onProgress: (ScanProgress) -> Unit = {}): Report = mutex.withLock {
+        // CNO only: Vigilant's APIs are asleep, so nothing is asked of them, whoever calls (Tj, 2026-09-29).
+        if (!settings.vigilantOn) return@withLock Report(0, 0, 0)
         val now = clock()
         val wanted = ids.toHashSet()
         val open = tracker.all().filter { it.id in wanted && it.status == BetStatus.PENDING && it.startsTs > now }
