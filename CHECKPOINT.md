@@ -1,13 +1,13 @@
-# CHECKPOINT 2080 — read me first, then TASKS.md
+# CHECKPOINT 2081 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T16:54:18Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `d43615e2` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T16:58:57Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `52884d22` (this checkpoint is the commit after it)
 
 ## Just done
-X1 done (RESEARCH.md §38, TASKS X2-X4 broken into steps); X2a Scanner(betsOnly); X2b TrackedBet.nowVia/nowNote, BetTracker.applyPricing/applyFair, observe advances the age, CNO recheck sets nowVia
+X2a-c done: Scanner(betsOnly), BetsScope, BetPricingReasons, OpenBetPricer (+7 tests), BetTracker.applyPricing/observe age (+2 tests)
 
 ## Do this next
-X2c: BetsScope (settings for the bets), BetPricingReasons.explain, OpenBetPricer; then X2d wiring in checkOdds; compile first: bash tools/test.sh :data:test --tests '*BetTrackerTest'
+X2d: wire OpenBetPricer into the container and MainViewModel.checkOdds (CNO read + pricing pass together, CNO failures fall to the pass, CNO-only scanner note), BetRecheck.Report/summary counts
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ X2c: BetsScope (settings for the bets), BetPricingReasons.explain, OpenBetPricer
 
 ## Last ten checkpoints
 ```
+  c5a5cc70 ckpt 2080: X1 done (RESEARCH.md §38, TASKS X2-X4 broken into steps); X2a Scanner(betsO
   cc813115 ckpt 2079: Recorded Tj's tracker request (recheck every open bet incl. Vigilant scanner
   4101c936 ckpt 2078: v0.21.0 (code 46) released and recorded; W9 ticked
   57fa81d3 ckpt 2077: pre-release: v0.21.0: bet through Novig's API from a separate Vigilant walle
@@ -25,8 +26,7 @@ X2c: BetsScope (settings for the bets), BetPricingReasons.explain, OpenBetPricer
   2741c198 ckpt 2073: W6-W8 app layer done: connection store + container wiring, ApiBettingControl
   445ddb62 ckpt 2072: W6/W7 data: NovigBettingSetup (use the phone's trading key or revoke+mint, f
   6c651d47 ckpt 2071: W4/W5 data layer: NovigTradingClient, ApiBetPlanner, ApiBetPlacer (IOC at th
-  8c20dd5a ckpt 2070: W1/W2 done (MoneyLine tested: stale ~2 h, no Pinnacle, 3 MB for 3 events); N
 ```
 
-(12 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
