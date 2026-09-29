@@ -97,7 +97,7 @@ class ApiBetPlacer(
         } catch (e: Exception) {
             // No usable answer (a timeout, a dropped connection, a reply that couldn't be read): the order may have gone through, so look
             // for it by its clientId before saying anything.
-            withContext(NonCancellable) { findByClientId(clientId) } ?: return PlaceResult.Unconfirmed(
+            withContext(NonCancellable) { findByClientId(clientId, target.outcomeId) } ?: return PlaceResult.Unconfirmed(
                 "Novig didn't answer, and its lists don't show the order (${e.message ?: "no connection"}). Nothing is assumed: open the Tracker and tap " +
                     "Sync with Novig in a minute, and check Novig before betting this again.",
             )
