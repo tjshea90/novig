@@ -284,7 +284,15 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                 }
                 TrackerText.moveSentence(i)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 TrackerText.breakEvenSentence(i)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                bet.nowAtMs?.let { Caption("Fair price worked out ${Format.age(it, now)}, from the books' odds devigged worst case (the lower of their average and median).") }
+                bet.nowAtMs?.let {
+                    Caption(
+                        if (bet.nowVia == BetTracker.VIA_VIGILANT) {
+                            "Fair price worked out ${Format.age(it, now)} by Vigilant: the reference books' current odds, each devigged, then blended the way Settings › Fair odds says."
+                        } else {
+                            "Fair price worked out ${Format.age(it, now)}, from the books' odds devigged worst case (the lower of their average and median)."
+                        },
+                    )
+                }
             }
         }
     }
