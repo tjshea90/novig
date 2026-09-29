@@ -2447,3 +2447,26 @@ After all these features are built, run the full test protocol looking for ways 
 ```
 When I pressed check odds now in the tracker, it scanned very slow. Slower than before. And a lot of bets can't be tracked, see the screenshot. If they can't be tracked, how did the app know it was positive EV to begin with? And it said it only updated 61 bets, but I have 100 or so open. Investigate how to make all this work
 ```
+
+## 2026-09-29T07:24:04Z
+```
+New research projects: 
+
+1) review in depth the entire novig API docs. I read somewhere that it can show the bets I actually placed and grade them and I can place bets through the API. Find all the features and rules of the API and optimize the vigilant app to take full advantage of all features and speed and accuracy and grading of final bets if possible. Let me know if I need to do anything.  Right now the novig scan is slow, even though I tested my key and it says it works.
+
+2) research these API: https://www.moneylineapp.com/sports-betting-api?gad_source=1&gad_campaignid=24242015444&gbraid=0AAAAAB6aR43KijlNXtLfvzR8QcDopcKcK
+
+https://opticodds.com/sportsbooks/novig-api
+
+https://www.predictiondata.io/us/api-data/novig
+
+https://livefeedapi.com/offerta/?gad_source=1&gad_campaignid=24269151512&gbraid=0AAAABElr7m17wzeeK5EaWSjNhg1tFQeNl
+
+https://sharpapi.io/sportsbooks/novig-odds-api
+
+https://www.betstamp.com/odds/novig
+
+https://odds-api.io/sportsbooks/novig
+
+Are any of these free or very cheap that can help get odds quickly or improve the speed or accuracy of vigilant. Can any of the features help grade bets
+```
