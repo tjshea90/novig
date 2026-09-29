@@ -23,8 +23,11 @@ data class NovigOrder(
     val status: String,
     val createdTs: Long,
 ) {
-    /** No more can happen to it: filled, canceled or refused. */
-    val terminal: Boolean get() = status == "FILLED" || status == "CANCELED" || status == "REJECTED"
+    /**
+     * No more can happen to it: filled, canceled or refused (the docs: "a partly filled order stays OPEN, track `remaining`, not the status", so
+     * an open order with nothing left resting has filled all it will).
+     */
+    val terminal: Boolean get() = status == "FILLED" || status == "CANCELED" || status == "REJECTED" || (status == "OPEN" && remaining <= 0L)
 }
 
 /** One fill: [qty] contracts of 1¢ for [cost] dollars (`qty × price × 1¢`), plus a taker [fee] in dollars (none pregame). */
