@@ -1,6 +1,6 @@
 # Prompt audit of the novig repo (2026-09-29)
 
-> **Status (2026-09-29): applied.** Tj: "Fix all the things you can fix without breaking anything." All 21 edits (A1-A11, B1-B10) are in, and the flags were settled in BRIEF.md and the test-protocols skill (TASKS Y1-Y2), except F8 (the history stories stay: they carry the reasons) and F7 (the keystore: recorded as due for a decision, not changed, because a new key forces an uninstall that wipes the app's data). `PROMPT_AUDIT.patch` was deleted once applied; git history keeps it. Below is the report as written, before anything was applied.
+> **Status (2026-09-29): applied.** Tj: "Fix all the things you can fix without breaking anything." All 21 edits (A1-A11, B1-B10) are in, and the flags were settled in BRIEF.md and the test-protocols skill (TASKS Y1-Y2), except F8 (the history stories stay: they carry the reasons) and F7 (the keystore: Tj decided 2026-09-29 to keep the public committed key, "Public is fine"). `PROMPT_AUDIT.patch` was deleted once applied; git history keeps it. Below is the report as written, before anything was applied.
 
 Run for Tj's "run the prompt audit" (TASKS X1), following the procedure `/claude-api prompt-audit` runs (the claude-api skill's `shared/prompt-audit.md`). **Nothing here has been applied.** The report says what's stale or contradictory and why; `PROMPT_AUDIT.patch` holds every proposed edit (`git apply PROMPT_AUDIT.patch`, checked against the commit this was written on), and each finding's own diff is below so any subset can be taken.
 

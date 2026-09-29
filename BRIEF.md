@@ -83,10 +83,12 @@ writing) ships wired to sample data only and holds no real credentials.
 anything else worth protecting** — switch back to a Secret-held keystore
 (Portfolio's model, already built once this session, easy to redo) rather
 than leaving a forgeable signing key on an app handling real trading
-credentials. **That day came on 2026-09-25**: the app holds a Novig
-`trading::read` key (it reads; it can't move money). The committed key was
-kept, because a new one forces an uninstall that erases everything the app
-stores (next paragraph). Switching is Tj's call (PROMPT_AUDIT F7).
+credentials. **Decided 2026-09-29: keep the public committed key.** The
+app has held a Novig `trading::read` key since 2026-09-25 (it reads; it can't
+move money), and Tj's answer: "As far as keys, I'm not worried about app
+security. Public is fine." Don't propose a Secret-held keystore again; a new
+key would also force an uninstall that erases everything the app stores
+(next paragraph).
 
 Separately from *which* model is used, Android only performs a
 **data-preserving in-place update** when the package name AND the signing
@@ -314,6 +316,10 @@ robolectric.org/configuring/.
   names Vigilant MGM; `mgm/` is frozen at v0.17.0 and only in the build with `-Pmgm` (CLAUDE.md "Vigilant
   MGM is dormant").
 
+- **No futures (Tj, 2026-09-29): "I'm not interested in futures bets. Leave those out of the app
+  and don't investigate them further."** Futures markets never reach the +EV feed, the CNO list, the
+  Games board or alerts; don't research them or build anything for them.
+
 - **Novig data comes from Novig's official v3 API. Read
   [`NOVIG_API.md`](NOVIG_API.md) before touching any Novig client code.**
   (2026-09-25: Tj has beta access.) Public no-key routes cover the catalog and
@@ -478,8 +484,8 @@ robolectric.org/configuring/.
   too, makers never. Vigilant's pricing skips any market whose fee can't be
   read (`Pricing`), and `NovigLive` prices CNO bets with their market's own
   fee. CNO's list re-check, its game-page verdict and tracked CNO bets
-  assume the game schedule (`MarketFee.GAME`), which under-charges a futures
-  market (open: TASKS Y3). `EvMathTest` "a pregame edge can vanish once the
+  use the game schedule (`MarketFee.GAME`); futures are left out of the app
+  (below), so that's the schedule every bet there has. `EvMathTest` "a pregame edge can vanish once the
   live taker fee applies" proves a real, positive raw edge can net negative
   after the fee — don't "simplify" fees away, that's the exact failure mode
   this was built to avoid.

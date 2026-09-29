@@ -2663,7 +2663,8 @@ Nothing at or above 1.0% EV."
 - [x] Y6 (DONE: test_resume.sh green, briefing 6,270 chars, secretscan clean, `:engine:test` 39/0 (the only source
       change is a KDoc comment, so no app behavior changed and no release is needed); PROMPT_AUDIT.md marked applied,
       the patch deleted (git keeps it); reported to Tj.) Checks (test_resume.sh; the Gradle floor if app code changed), ship + Release link if the app changed, report.
-- [ ] Y7 (open, needs Tj's go-ahead: an app change + release) Charge CNO bets their own Novig market's fee: carry the
+- [x] Y7 (DROPPED 2026-09-29, Tj: "I'm not interested in futures bets. Leave those out of the app and don't
+      investigate them further." Futures are left out instead: Z2.) Charge CNO bets their own Novig market's fee: carry the
       market's `fee` (NovigLive's cache / the bet-slip link lookup) into `CnoChecks.netEv`, `CnoBooks.check` and
       `BetTracker.logCno`, keeping `MarketFee.GAME` only when the market is unknown. Today they assume the game
       schedule, so an NFL/MLB/NCAAF futures market at +150 or shorter on CNO's list shows EV ~3-4 points too high
