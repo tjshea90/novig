@@ -206,6 +206,29 @@ fun TrackerScreen(
                             }
                         }
                     }
+                    item(key = "sort") {
+                        // Tap a sort to choose it, tap it again to turn it round (newest / oldest first, best / worst EV first).
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Caption("Sort")
+                            BetSort.entries.forEach { s ->
+                                FilterChip(
+                                    selected = sort == s,
+                                    onClick = {
+                                        if (sort == s && s != BetSort.DEFAULT) sortReversed = !sortReversed else { sort = s; sortReversed = false }
+                                    },
+                                    label = { Text(TrackerSort.chipLabel(s, sort, sortReversed, defaultLabel(filter)), maxLines = 1) },
+                                )
+                            }
+                        }
+                    }
+                    item(key = "scanner") {
+                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Caption("Scanner")
+                            ScannerFilter.entries.forEach { s ->
+                                FilterChip(selected = scanner == s, onClick = { scanner = s }, label = { Text("${s.label} (${scannerCounts[s] ?: 0})", maxLines = 1) })
+                            }
+                        }
+                    }
                     if (filter == BetFilter.OPEN && shown.isNotEmpty()) {
                         item(key = "summary") {
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
