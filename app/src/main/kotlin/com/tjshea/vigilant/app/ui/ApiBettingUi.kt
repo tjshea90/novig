@@ -391,4 +391,3 @@ private fun ResultText(title: String, text: String, color: androidx.compose.ui.g
     Text(text, style = MaterialTheme.typography.bodyMedium)
 }
 
-internal fun formatStake(v: Double): String = String.format(Locale.US, "%.2f", v)
