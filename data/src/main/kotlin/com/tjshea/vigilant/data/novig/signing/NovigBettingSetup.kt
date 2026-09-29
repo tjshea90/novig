@@ -103,7 +103,8 @@ class NovigBettingSetup(
         require(amount > 0.0) { "amount must be positive" }
         val admin = NovigSignedClient(http, json, PemSigningKey(managementKeyId.trim(), managementPem), baseUrl, clock)
         val text = BigDecimal.valueOf(amount).setScale(5, RoundingMode.HALF_UP).toPlainString()
-        val clientId = "vigilant-" + UUID.randomUUID()
+        // A plain UUID, like an order's clientId: Novig parses that id as a UUID (Tj's first real order, 2026-09-29).
+        val clientId = com.tjshea.vigilant.data.novig.trading.NovigTradingClient.newClientId()
         onStep(if (direction == "fund") "Asking Novig to move $$text into the subaccount…" else "Asking Novig to move $$text back to your cash wallet…")
         val body = """{"direction":"$direction","amount":"$text","clientTransferId":"$clientId"}"""
         val sent = json.decodeFromString(TransferDto.serializer(), admin.call("POST", "/v3/account/subaccounts/${conn.subaccountKeyId}/transfer", body = body))
