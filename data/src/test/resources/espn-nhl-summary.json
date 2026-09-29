@@ -1,0 +1,876 @@
+{
+ "boxscore": {
+  "players": [
+   {
+    "team": {
+     "displayName": "Minnesota Wild"
+    },
+    "statistics": [
+     {
+      "name": "forwards",
+      "keys": [
+       "blockedShots",
+       "hits",
+       "takeaways",
+       "plusMinus",
+       "timeOnIce",
+       "powerPlayTimeOnIce",
+       "shortHandedTimeOnIce",
+       "evenStrengthTimeOnIce",
+       "shifts",
+       "goals",
+       "ytdGoals",
+       "assists",
+       "shotsTotal",
+       "shotsMissed",
+       "shootoutGoals",
+       "faceoffsWon",
+       "faceoffsLost",
+       "faceoffPercent",
+       "giveaways",
+       "penalties",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "BS",
+       "HT",
+       "TK",
+       "+/-",
+       "TOI",
+       "PPTOI",
+       "SHTOI",
+       "ESTOI",
+       "SHFT",
+       "G",
+       "YTDG",
+       "A",
+       "S",
+       "SM",
+       "SOG",
+       "FW",
+       "FL",
+       "FO%",
+       "GV",
+       "PN",
+       "PIM"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Matt Boldy"
+        },
+        "stats": [
+         "2",
+         "0",
+         "0",
+         "0",
+         "19:03",
+         "2:56",
+         "0:23",
+         "15:44",
+         "18",
+         "1",
+         "41",
+         "1",
+         "3",
+         "0",
+         "0",
+         "0",
+         "2",
+         "0.0",
+         "3",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Joel Eriksson Ek"
+        },
+        "stats": [
+         "0",
+         "2",
+         "0",
+         "0",
+         "19:11",
+         "3:00",
+         "0:25",
+         "15:46",
+         "20",
+         "0",
+         "18",
+         "1",
+         "0",
+         "1",
+         "0",
+         "7",
+         "10",
+         "41.2",
+         "1",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Nick Foligno"
+        },
+        "stats": [
+         "2",
+         "4",
+         "0",
+         "0",
+         "12:04",
+         "0:00",
+         "1:12",
+         "10:52",
+         "13",
+         "0",
+         "3",
+         "0",
+         "0",
+         "0",
+         "0",
+         "1",
+         "3",
+         "25.0",
+         "1",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Marcus Foligno"
+        },
+        "stats": [
+         "1",
+         "2",
+         "0",
+         "0",
+         "11:28",
+         "0:00",
+         "0:49",
+         "10:39",
+         "13",
+         "0",
+         "7",
+         "0",
+         "1",
+         "0",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "defenses",
+      "keys": [
+       "blockedShots",
+       "hits",
+       "takeaways",
+       "plusMinus",
+       "timeOnIce",
+       "powerPlayTimeOnIce",
+       "shortHandedTimeOnIce",
+       "evenStrengthTimeOnIce",
+       "shifts",
+       "goals",
+       "ytdGoals",
+       "assists",
+       "shotsTotal",
+       "shotsMissed",
+       "shootoutGoals",
+       "faceoffsWon",
+       "faceoffsLost",
+       "faceoffPercent",
+       "giveaways",
+       "penalties",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "BS",
+       "HT",
+       "TK",
+       "+/-",
+       "TOI",
+       "PPTOI",
+       "SHTOI",
+       "ESTOI",
+       "SHFT",
+       "G",
+       "YTDG",
+       "A",
+       "S",
+       "SM",
+       "SOG",
+       "FW",
+       "FL",
+       "FO%",
+       "GV",
+       "PN",
+       "PIM"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Jonas Brodin"
+        },
+        "stats": [
+         "2",
+         "0",
+         "0",
+         "2",
+         "17:17",
+         "0:00",
+         "0:46",
+         "16:31",
+         "21",
+         "0",
+         "4",
+         "0",
+         "2",
+         "0",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Brock Faber"
+        },
+        "stats": [
+         "4",
+         "0",
+         "1",
+         "0",
+         "23:33",
+         "0:27",
+         "1:13",
+         "21:53",
+         "26",
+         "0",
+         "15",
+         "1",
+         "1",
+         "1",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "1",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Quinn Hughes"
+        },
+        "stats": [
+         "1",
+         "0",
+         "0",
+         "0",
+         "25:05",
+         "3:15",
+         "0:00",
+         "21:50",
+         "23",
+         "0",
+         "6",
+         "0",
+         "2",
+         "2",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "3",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Jake Middleton"
+        },
+        "stats": [
+         "4",
+         "0",
+         "0",
+         "0",
+         "18:15",
+         "0:04",
+         "1:18",
+         "16:53",
+         "22",
+         "0",
+         "2",
+         "1",
+         "0",
+         "2",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "skaters",
+      "keys": [
+       "blockedShots",
+       "hits",
+       "takeaways",
+       "plusMinus",
+       "timeOnIce",
+       "powerPlayTimeOnIce",
+       "shortHandedTimeOnIce",
+       "evenStrengthTimeOnIce",
+       "shifts",
+       "goals",
+       "ytdGoals",
+       "assists",
+       "shotsTotal",
+       "shotsMissed",
+       "shootoutGoals",
+       "faceoffsWon",
+       "faceoffsLost",
+       "faceoffPercent",
+       "giveaways",
+       "penalties",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "BS",
+       "HT",
+       "TK",
+       "+/-",
+       "TOI",
+       "PPTOI",
+       "SHTOI",
+       "ESTOI",
+       "SHFT",
+       "G",
+       "YTDG",
+       "A",
+       "S",
+       "SM",
+       "SOG",
+       "FW",
+       "FL",
+       "FO%",
+       "GV",
+       "PN",
+       "PIM"
+      ],
+      "athletes": []
+     },
+     {
+      "name": "goalies",
+      "keys": [
+       "goalsAgainst",
+       "shotsAgainst",
+       "shootoutSaves",
+       "shootoutShotsAgainst",
+       "saves",
+       "savePct",
+       "evenStrengthSaves",
+       "powerPlaySaves",
+       "shortHandedSaves",
+       "timeOnIce",
+       "ytdGoals",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "GA",
+       "SA",
+       "SOS",
+       "SOSA",
+       "SV",
+       "SV%",
+       "ESSV",
+       "PPSV",
+       "SHSV",
+       "TOI",
+       "YTDG",
+       "PIM"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Filip Gustavsson"
+        },
+        "stats": [
+         "4",
+         "24",
+         "0",
+         "0",
+         "20",
+         ".833",
+         "18",
+         "2",
+         "0",
+         "60:00",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "team": {
+     "displayName": "Detroit Red Wings"
+    },
+    "statistics": [
+     {
+      "name": "forwards",
+      "keys": [
+       "blockedShots",
+       "hits",
+       "takeaways",
+       "plusMinus",
+       "timeOnIce",
+       "powerPlayTimeOnIce",
+       "shortHandedTimeOnIce",
+       "evenStrengthTimeOnIce",
+       "shifts",
+       "goals",
+       "ytdGoals",
+       "assists",
+       "shotsTotal",
+       "shotsMissed",
+       "shootoutGoals",
+       "faceoffsWon",
+       "faceoffsLost",
+       "faceoffPercent",
+       "giveaways",
+       "penalties",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "BS",
+       "HT",
+       "TK",
+       "+/-",
+       "TOI",
+       "PPTOI",
+       "SHTOI",
+       "ESTOI",
+       "SHFT",
+       "G",
+       "YTDG",
+       "A",
+       "S",
+       "SM",
+       "SOG",
+       "FW",
+       "FL",
+       "FO%",
+       "GV",
+       "PN",
+       "PIM"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "J.T. Compher"
+        },
+        "stats": [
+         "0",
+         "0",
+         "0",
+         "1",
+         "15:42",
+         "0:00",
+         "1:59",
+         "13:43",
+         "19",
+         "1",
+         "11",
+         "0",
+         "2",
+         "2",
+         "0",
+         "10",
+         "4",
+         "71.4",
+         "2",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Andrew Copp"
+        },
+        "stats": [
+         "0",
+         "1",
+         "0",
+         "1",
+         "19:22",
+         "0:24",
+         "1:52",
+         "17:06",
+         "23",
+         "0",
+         "9",
+         "1",
+         "1",
+         "1",
+         "0",
+         "8",
+         "5",
+         "61.5",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Alex DeBrincat"
+        },
+        "stats": [
+         "0",
+         "1",
+         "2",
+         "2",
+         "18:58",
+         "1:35",
+         "0:00",
+         "17:23",
+         "21",
+         "0",
+         "39",
+         "1",
+         "1",
+         "3",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "3",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Emmitt Finnie"
+        },
+        "stats": [
+         "0",
+         "2",
+         "0",
+         "-2",
+         "16:08",
+         "0:23",
+         "0:32",
+         "15:13",
+         "21",
+         "0",
+         "12",
+         "0",
+         "0",
+         "1",
+         "0",
+         "0",
+         "1",
+         "0.0",
+         "0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "defenses",
+      "keys": [
+       "blockedShots",
+       "hits",
+       "takeaways",
+       "plusMinus",
+       "timeOnIce",
+       "powerPlayTimeOnIce",
+       "shortHandedTimeOnIce",
+       "evenStrengthTimeOnIce",
+       "shifts",
+       "goals",
+       "ytdGoals",
+       "assists",
+       "shotsTotal",
+       "shotsMissed",
+       "shootoutGoals",
+       "faceoffsWon",
+       "faceoffsLost",
+       "faceoffPercent",
+       "giveaways",
+       "penalties",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "BS",
+       "HT",
+       "TK",
+       "+/-",
+       "TOI",
+       "PPTOI",
+       "SHTOI",
+       "ESTOI",
+       "SHFT",
+       "G",
+       "YTDG",
+       "A",
+       "S",
+       "SM",
+       "SOG",
+       "FW",
+       "FL",
+       "FO%",
+       "GV",
+       "PN",
+       "PIM"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Jacob Bernard-Docker"
+        },
+        "stats": [
+         "0",
+         "2",
+         "0",
+         "-1",
+         "14:34",
+         "0:00",
+         "0:40",
+         "13:54",
+         "21",
+         "0",
+         "1",
+         "0",
+         "1",
+         "1",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Ben Chiarot"
+        },
+        "stats": [
+         "1",
+         "0",
+         "0",
+         "-1",
+         "21:39",
+         "0:00",
+         "1:52",
+         "19:47",
+         "25",
+         "0",
+         "5",
+         "0",
+         "2",
+         "2",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Simon Edvinsson"
+        },
+        "stats": [
+         "3",
+         "2",
+         "0",
+         "1",
+         "23:13",
+         "0:00",
+         "1:28",
+         "21:45",
+         "25",
+         "0",
+         "9",
+         "1",
+         "0",
+         "2",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "4",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Albert Johansson"
+        },
+        "stats": [
+         "1",
+         "0",
+         "0",
+         "0",
+         "13:52",
+         "0:00",
+         "1:38",
+         "12:14",
+         "20",
+         "1",
+         "3",
+         "0",
+         "1",
+         "0",
+         "0",
+         "0",
+         "0",
+         "0.0",
+         "2",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "skaters",
+      "keys": [
+       "blockedShots",
+       "hits",
+       "takeaways",
+       "plusMinus",
+       "timeOnIce",
+       "powerPlayTimeOnIce",
+       "shortHandedTimeOnIce",
+       "evenStrengthTimeOnIce",
+       "shifts",
+       "goals",
+       "ytdGoals",
+       "assists",
+       "shotsTotal",
+       "shotsMissed",
+       "shootoutGoals",
+       "faceoffsWon",
+       "faceoffsLost",
+       "faceoffPercent",
+       "giveaways",
+       "penalties",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "BS",
+       "HT",
+       "TK",
+       "+/-",
+       "TOI",
+       "PPTOI",
+       "SHTOI",
+       "ESTOI",
+       "SHFT",
+       "G",
+       "YTDG",
+       "A",
+       "S",
+       "SM",
+       "SOG",
+       "FW",
+       "FL",
+       "FO%",
+       "GV",
+       "PN",
+       "PIM"
+      ],
+      "athletes": []
+     },
+     {
+      "name": "goalies",
+      "keys": [
+       "goalsAgainst",
+       "shotsAgainst",
+       "shootoutSaves",
+       "shootoutShotsAgainst",
+       "saves",
+       "savePct",
+       "evenStrengthSaves",
+       "powerPlaySaves",
+       "shortHandedSaves",
+       "timeOnIce",
+       "ytdGoals",
+       "penaltyMinutes"
+      ],
+      "labels": [
+       "GA",
+       "SA",
+       "SOS",
+       "SOSA",
+       "SV",
+       "SV%",
+       "ESSV",
+       "PPSV",
+       "SHSV",
+       "TOI",
+       "YTDG",
+       "PIM"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Cam Talbot"
+        },
+        "stats": [
+         "5",
+         "20",
+         "0",
+         "0",
+         "15",
+         ".750",
+         "14",
+         "1",
+         "0",
+         "58:24",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
