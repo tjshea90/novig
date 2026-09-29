@@ -106,7 +106,7 @@ fun SettingsScreen(
             SwitchRow(
                 "Pause all scanning",
                 "Stops a scan running now; nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) " +
-                    "until you switch it off. Also the pause button on the +EV and CNO tabs and the widget. Opening bets and settling tracked ones still work.",
+                    "until you switch it off. Also the pause button on the +EV and CNO tabs and the widget. Opening bets and grading tracked ones from final scores still work; the Tracker's Check odds now waits.",
                 s.paused,
             ) { v -> onUpdate { it.copy(paused = v) } }
             ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
@@ -690,8 +690,8 @@ fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
 fun alertHint(s: ScanSettings): String =
     if (s.alertMinEv <= 0.0) "Off: no alerts." else "A notification for each new bet at ${Math.round(s.alertMinEv * 100)}% EV or better that several books agree on " +
         "(${CnoBooks.MIN_TWO_SIDED}+ books price both sides and ${CnoBooks.MIN_AGREEING}+ of them alone make it +EV), found by a background scan " +
-        "or a scan you left running. Tap it to open the bet slip in ${AppBook.name}. Each bet alerts once; placed and removed bets, and games " +
-        "outside \"Starts within\", never do."
+        "or a scan you left running. Tap it to open the bet slip in ${AppBook.name}; its ✓ Placed button tracks the bet from the notification, without " +
+        "opening Vigilant (Undo right after). Each bet alerts once; placed and removed bets, and games outside \"Starts within\", never do."
 
 /** Tj's CNO Shared View link: paste, check, save. Blank means the app's book (Novig; BetMGM in Vigilant MGM) with CNO's defaults. */
 @Composable
