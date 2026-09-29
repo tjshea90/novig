@@ -338,7 +338,7 @@ private fun WalletBlock(betting: BettingUi, savedKey: ManagementKeyHint?, key: M
             if (betting.busy) CircularProgressIndicator(Modifier.padding(start = 4.dp).size(20.dp), strokeWidth = 2.dp)
         }
         if (overBalance) {
-            Text("The wallet holds ${Format.money(betting.balance ?: 0.0)}: that's the most you can take back.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("The wallet holds ${Format.money(betting.balance)}: that's the most you can take back.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         BettingStatus(betting)
     }
@@ -469,7 +469,7 @@ fun ApiBetSheetContent(
             val short = sheet.balance != null && sheet.balance + 1e-9 < plan.expectedCost
             if (short) {
                 Text(
-                    "The Vigilant wallet holds ${Format.money(sheet.balance ?: 0.0)}, less than this bet's ${Format.money(plan.expectedCost)}: add money to it first.",
+                    "The Vigilant wallet holds ${Format.money(sheet.balance)}, less than this bet's ${Format.money(plan.expectedCost)}: add money to it first.",
                     style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.testTag("walletShort"),
                 )
                 AddMoneyButton(onAddMoney)
