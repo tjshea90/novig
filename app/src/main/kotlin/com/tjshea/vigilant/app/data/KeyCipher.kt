@@ -28,13 +28,13 @@ internal object KeyCipher {
     private const val GCM_TAG_LENGTH_BITS = 128
     private const val GCM_IV_LENGTH_BYTES = 12
 
-    private fun getOrCreateSecretKey(): SecretKey {
+    private fun getOrCreateSecretKey(alias: String): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-        (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
+        (keyStore.getKey(alias, null) as? SecretKey)?.let { return it }
 
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val spec = KeyGenParameterSpec.Builder(
-            KEY_ALIAS,
+            alias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -45,20 +45,31 @@ internal object KeyCipher {
         return keyGenerator.generateKey()
     }
 
-    fun encrypt(plaintext: String): String {
+    /** [alias]: which Keystore key seals it (the odds keys' old store and the Novig management key each have their own). */
+    fun encrypt(plaintext: String, alias: String = KEY_ALIAS): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey(alias))
         val iv = cipher.iv
         val ciphertext = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
         return Base64.encodeToString(iv + ciphertext, Base64.NO_WRAP)
     }
 
-    fun decrypt(encoded: String): String {
+    fun decrypt(encoded: String, alias: String = KEY_ALIAS): String {
         val combined = Base64.decode(encoded, Base64.NO_WRAP)
         val iv = combined.copyOfRange(0, GCM_IV_LENGTH_BYTES)
         val ciphertext = combined.copyOfRange(GCM_IV_LENGTH_BYTES, combined.size)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
+        cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(alias), GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv))
         return String(cipher.doFinal(ciphertext), Charsets.UTF_8)
     }
+}
+
+/**
+ * Seals the Novig management key ([com.tjshea.vigilant.data.novig.signing.ManagementKeyStore]) with its own Keystore AES key. The Keystore
+ * keeps it through every app update (same app, same signing certificate); it can't be copied off the phone or restored from a backup.
+ */
+object KeystoreSecretBox : com.tjshea.vigilant.data.novig.signing.SecretBox {
+    private const val ALIAS = "vigilant_novig_management_seal"
+    override fun seal(plain: String): String = KeyCipher.encrypt(plain, ALIAS)
+    override fun open(sealed: String): String = KeyCipher.decrypt(sealed, ALIAS)
 }

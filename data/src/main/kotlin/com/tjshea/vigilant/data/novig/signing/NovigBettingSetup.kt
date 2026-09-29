@@ -32,6 +32,11 @@ class NovigBettingSetup(
     private val clock: () -> Long = System::currentTimeMillis,
     private val pause: suspend (Long) -> Unit = { delay(it) },
 ) {
+    /** Checks Novig accepts [key] (one signed echo) before it's saved, so a mistyped ID or the wrong file is never kept. */
+    suspend fun check(key: ManagementKey) {
+        NovigSignedClient(http, json, PemSigningKey(key.keyId, key.pem), baseUrl, clock).echo()
+    }
+
     /** Makes sure the phone can sign as the subaccount's trading key; returns [conn] with it set. */
     suspend fun enable(conn: NovigConnection, managementKeyId: String, managementPem: String, onStep: (String) -> Unit = {}): NovigConnection {
         val admin = NovigSignedClient(http, json, PemSigningKey(managementKeyId.trim(), managementPem), baseUrl, clock)
