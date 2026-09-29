@@ -139,8 +139,12 @@ fun SettingsScreen(
     // A tab that has gone (CNO only hides the fair-odds pages) falls back to the first one.
     val active = tabs.firstOrNull { it.name == picked } ?: tabs.first()
     val scroll = rememberScrollState()
-    // Each tab opens at its top.
-    LaunchedEffect(active) { scroll.scrollTo(0) }
+    // Each tab opens at its top; the first composition (and one restored after a rotation) keeps its place.
+    var shownTab by remember { mutableStateOf<SettingsTab?>(null) }
+    LaunchedEffect(active) {
+        if (shownTab != null && shownTab != active) scroll.scrollTo(0)
+        shownTab = active
+    }
     Scaffold(
         topBar = {
             Column {
