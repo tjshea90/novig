@@ -51,7 +51,7 @@ object Diagnostics {
         o.appendLine("Scan size: ${limit(set.maxBooksPerScan)} Novig prices · lines/game ${limit(set.linesPerGame)} · props/game ${limit(set.propsPerGame)} · fill the budget ${if (set.fillBudget) "on" else "off"} · window ${set.scanWindowHours} h")
         o.appendLine("Fair-odds sources on: ${set.enabledSources.sorted().joinToString(", ").ifEmpty { "none" }} · sportsbook props ${if (set.useBookProps) "on" else "off"} (credits/scan ${limit(set.bookPropCreditsPerScan)}, PropLine games ${limit(set.propLineGamesPerScan)})")
         o.appendLine("Keys saved: " + ApiProvider.entries.joinToString(" · ") { "${it.displayName} ${s.keysOf(it).size}" })
-        o.appendLine("CrazyNinjaOdds: ${if (set.cnoOn) "on" else "off"} · refresh ${if (set.cnoRefreshSeconds < 0) "real time" else "${set.cnoRefreshSeconds} s"} · only bets the books agree on ${if (set.cnoOnlyAgreed) "on" else "off"} · alerts ≥ ${pct(set.alertMinEv)}")
+        o.appendLine("CrazyNinjaOdds: ${if (set.cnoOn) "on" else "off"} · refresh ${when { set.cnoRefreshSeconds == com.tjshea.vigilant.data.cno.CnoFeed.REALTIME -> "real time"; set.cnoRefreshSeconds <= 0 -> "taps only"; else -> "${set.cnoRefreshSeconds} s" }} · only bets the books agree on ${if (set.cnoOnlyAgreed) "on" else "off"} · alerts ≥ ${pct(set.alertMinEv)}")
         o.appendLine(
             "Betting through the API: ${if (s.betting.enabled) "on" else "off"}" + (s.betting.balance?.let { String.format(Locale.US, " · wallet $%.2f", it) } ?: "") +
                 " · amount $${money(set.apiBetStake)}, most per bet $${money(set.apiMaxStake)}, most per day $${money(set.apiMaxPerDay)}, smallest edge ${pct(set.apiMinEv)}",
