@@ -57,7 +57,8 @@ private const val REREAD_AFTER_MS = 2 * 60_000L
  * An open bet in full (Tj, 2026-09-29): the odds he bet at, the fair price now and the gap between them,
  * every book's odds for the same bet with what each would make of his price, how it was graded, and
  * what to do with it (Replace, re-read, mark a result). CNO bets read their books again on opening
- * when the last read is old; Vigilant's own update with each scan.
+ * when the last read is old; Vigilant's own are priced from Vigilant's fair odds when Price now (or
+ * Check odds now on the list) is tapped, never on their own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
