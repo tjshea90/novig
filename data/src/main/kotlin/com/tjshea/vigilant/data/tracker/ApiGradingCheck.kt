@@ -44,13 +44,15 @@ class ApiGradingCheck(
         out.appendLine("== What Novig says (read just now) ==")
         val balance = tryRead { trading.balance(subaccountKeyId) }
         out.appendLine("Wallet: " + balance.fold({ String.format(Locale.US, "$%.2f", it) }, { "couldn't be read: $it" }))
-        val positions: List<NovigPosition> = tryRead { trading.positions() }.let { r ->
-            r.fold({ it }, { out.appendLine("Positions: couldn't be read: $it"); emptyList() })
-        }
-        if (positions.isNotEmpty() || balance.isSuccess) {
-            out.appendLine("Positions held: ${positions.size}" + if (positions.isEmpty()) " (none)" else "")
-            positions.forEach { out.appendLine("  market ${it.marketId} · outcome ${it.outcomeId} · ${it.qty} contracts · cost ${String.format(Locale.US, "$%.5f", it.cost)}") }
-        }
+        val positionsRead = tryRead { trading.positions() }
+        val positions: List<NovigPosition> = positionsRead.getOrDefault(emptyList())
+        positionsRead.fold(
+            {
+                out.appendLine("Positions held: ${it.size}" + if (it.isEmpty()) " (none)" else "")
+                it.forEach { p -> out.appendLine("  market ${p.marketId} · outcome ${p.outcomeId} · ${p.qty} contracts · cost ${String.format(Locale.US, "$%.5f", p.cost)}") }
+            },
+            { out.appendLine("Positions: couldn't be read: ${it.message}") },
+        )
         val from = bets.minOf { it.startsTs } - WINDOW_MS
         val to = bets.maxOf { it.startsTs } + WINDOW_MS
         val ledgerResult = tryRead { trading.ledger(subaccountKeyId, null, from, to, maxRows = MAX_ROWS) }
