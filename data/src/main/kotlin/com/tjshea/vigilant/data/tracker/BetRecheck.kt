@@ -159,7 +159,7 @@ class BetRecheck(
     suspend fun preview(): Plan = plan(tracker.all())
 
     /** What [readAll] did: reads tried, bets updated, reads that failed, whether it stopped early. */
-    private data class Tally(val checked: Int, val updated: Int, val failed: Int, val stopped: Boolean)
+    private data class Tally(val checked: Int, val updated: Int, val failed: Int, val stopped: Boolean, val updatedIds: Set<String> = emptySet())
 
     /**
      * Reads [todo]'s books, [concurrency] at a time, soonest game first, saving results in batches (a cancelled read keeps what it
