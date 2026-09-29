@@ -227,6 +227,23 @@ class ApiBettingUiTest {
     }
 
     @Test
+    fun `connecting the Novig key again uses the saved management key, or a typed one`() {
+        val sent = mutableListOf<ManagementKey?>()
+        screen { com.tjshea.vigilant.app.ui.NovigKeySection(NovigUi(managementKey = saved), onConnect = { sent += it }, onTest = {}, onDisconnect = {}) }
+        compose.onNodeWithTag("savedMgmtKey").assertExists()
+        compose.onNodeWithTag("novigConnect").assertIsEnabled().performClick()
+        assertEquals(listOf<ManagementKey?>(null), sent)
+        compose.onNodeWithTag("replaceMgmtKey").performClick()
+        compose.onNodeWithTag("novigConnect").assertIsNotEnabled()
+        compose.onNodeWithTag("mgmtKeyId").performTextInput("mgmt-key-new-9999")
+        compose.onNodeWithTag("mgmtKeyPem").performTextInput("-----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY-----") // FAKE
+        compose.onNodeWithTag("novigConnect").assertIsEnabled().performClick()
+        assertEquals("mgmt-key-new-9999", sent[1]!!.keyId)
+        // Connect has no separate Save: Novig accepting the key is what saves it.
+        compose.onNodeWithTag("saveMgmtKey").assertDoesNotExist()
+    }
+
+    @Test
     fun `messages and errors from setup show`() {
         screen { NovigBettingSection(BettingUi(message = "Betting is set up.", error = "Novig said no"), ScanSettings(), BettingActions(), {}) }
         compose.onNodeWithTag("bettingMessage").assertExists()

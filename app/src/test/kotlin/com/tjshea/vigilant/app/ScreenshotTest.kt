@@ -251,7 +251,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun novigKeySetup() = shoot("6_novig_key_setup") {
         androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
-            com.tjshea.vigilant.app.ui.NovigKeySection(NovigUi(), { _, _ -> }, {}, {})
+            com.tjshea.vigilant.app.ui.NovigKeySection(NovigUi(), {}, {}, {})
         }
     }
 
@@ -268,7 +268,7 @@ class ScreenshotTest {
                     connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("3f2504e0-4f89-11d3-9a0c-0305e82c9a1b", "a", "t", false),
                     message = "Novig accepted the key over Wi-Fi (signature, clock and network all OK).",
                 ),
-                { _, _ -> }, {}, {},
+                {}, {}, {},
                 lastScan = timedScan,
             )
         }
@@ -278,7 +278,7 @@ class ScreenshotTest {
         screen {
             com.tjshea.vigilant.app.ui.NovigKeySection(
                 NovigUi(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("3f2504e0-4f89-11d3-9a0c-0305e82c9a1b", "a", "t", false)),
-                { _, _ -> }, {}, {},
+                {}, {}, {},
                 lastScan = timedScan,
             )
         }
