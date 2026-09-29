@@ -207,6 +207,18 @@ class ApiBettingTest {
     }
 
     @Test
+    fun `an order id that isn't a UUID is refused before anything is sent, and the ones the app makes are UUIDs`() = runBlocking {
+        novig(Scenario())
+        val client = tradingClient()
+        val refused = runCatching { client.placeOrder("A", 0.465, 400, "IOC", "vigilant-" + java.util.UUID.randomUUID()) }.exceptionOrNull()
+        assertTrue(refused is IllegalArgumentException)
+        assertTrue(requests.none { it.method == "POST" })
+        repeat(50) { assertTrue(NovigTradingClient.isUuid(NovigTradingClient.newClientId())) }
+        assertTrue(!NovigTradingClient.isUuid("vigilant-" + java.util.UUID.randomUUID()))
+        assertTrue(!NovigTradingClient.isUuid("c"))
+    }
+
+    @Test
     fun `a partly filled order is tracked for what filled`() = runBlocking {
         novig(Scenario(orderStatus = "CANCELED", qty = 400, fills = """{"items":[{"fillId":"f1","orderId":"o1","marketId":"mkt","outcomeId":"A","qty":100,"cost":"0.46000","taker":true,"ts":1}]}"""))
         val t = tracker()
