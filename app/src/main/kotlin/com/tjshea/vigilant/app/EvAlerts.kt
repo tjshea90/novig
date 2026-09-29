@@ -134,7 +134,7 @@ object EvAlerts {
         )
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, "+EV alerts", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "A new bet at or over your alert minimum that several books agree on. Tap to open it in ${AppBook.name}."
+                description = "A new bet at or over your alert minimum that several books agree on. Tap to open it in ${AppBook.name}; ✓ Placed tracks it."
             },
         )
     }
