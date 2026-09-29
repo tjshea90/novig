@@ -2423,3 +2423,22 @@ Also, I'm not interested in futures bets. Leave those out of the app and don't i
 
 Think of and implement any other clean up or optimization for this repo so that future work is efficient and Claude can use skills for the best coding. The setup script for each cloud session should load a maven central script, does this work well?
 ```
+
+## 2026-09-29T04:38:42Z
+```
+Review the bet tracker in vigilant app. When I press the button to "check odds now" for my current bets, it says it check 40 out of 40 open bets, but I have 101 open bets. I want it to check all open bets.
+
+ Also, make it so I can click on any of my open bets and it shows the current odds for that same bet across other sports books, and other relevant information such as the odds I bet it at, the calculated difference in the odds I bet from the current fair, devigged odds based on current odds, etc.
+
+Some bets are still pending in the "open" bets tab that are final. Figure out how to make sure every bet is properly graded win or loss after the event is final. Look into the apis already used in the app, because one of them claims that the API can grade all props markets. Research this and see if vigilant can use this. 
+
+Also make sure that the bet tracking system is properly keeping track of accurate stats for wins, losses, push, and total profit. 
+
+Think of any other ways to make the tracking section better coded, more efficient, or more accurate. The goal is to see how well my positive EV bets profit with vigilant. 
+
+For open bets, add a button next to each one to replace the bet. This button will open novig with that exact bet in the betslip and any dollar amount preset in the options. 
+
+Think of the best way for me to be able to quickly and easily mark a bet as placed so vigilant tracks it if I select the bet from a push notification. Right now, if I click on the notification, it opens novig, but there isn't a fast way for me to add the bet as a tracked bet in vigilant. 
+
+After all these features are built, run the full test protocol looking for ways to improve the app and the UI and code and fix bugs.
+```
