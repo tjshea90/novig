@@ -912,6 +912,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun rereadBooks(id: String, quiet: Boolean = false) {
         if (_state.value.rereadingBet != null) return
+        if (_state.value.settings.paused) {
+            if (!quiet) _toasts.tryEmit(PAUSED_TOAST)
+            return
+        }
         _state.update { it.copy(rereadingBet = id) }
         viewModelScope.launch {
             val ok = try {
@@ -943,6 +947,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun checkOdds() {
         val start = _state.value
         if (start.checkingOdds) return
+        // Reading every bet's CNO page is CNO reading: held while scanning is paused (the switch's promise).
+        if (start.settings.paused) {
+            _toasts.tryEmit(PAUSED_TOAST)
+            return
+        }
         _state.update { it.copy(checkingOdds = true, checkProgress = null) }
         viewModelScope.launch {
             var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null

@@ -177,16 +177,18 @@ class BetRecheck(
         val lines = view.prices.map { BookLine(it.name, it.odds, it.otherOdds) }
         val ownCode = CnoBooks.codeFor(bet.book) ?: CnoBooks.NOVIG
         val ownNow = view.prices.firstOrNull { it.code == ownCode }?.odds
-        return {
+        return { b ->
             // Settled (tapped or graded) while this was being read: leave it as it is.
-            if (it.status != BetStatus.PENDING) it else {
-            val closing = now < it.startsTs
-            it.copy(
-                nowFair = fair, nowEv = fair / it.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
-                closingFair = if (closing) fair else it.closingFair,
-                closingSeenAtMs = if (closing) now else it.closingSeenAtMs,
-                books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: it.nowAmerican,
-            )
+            if (b.status != BetStatus.PENDING) {
+                b
+            } else {
+                val closing = now < b.startsTs
+                b.copy(
+                    nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
+                    closingFair = if (closing) fair else b.closingFair,
+                    closingSeenAtMs = if (closing) now else b.closingSeenAtMs,
+                    books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: b.nowAmerican,
+                )
             }
         }
     }

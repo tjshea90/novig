@@ -200,4 +200,15 @@ class BetRecheckTest {
         assertEquals(false, BetRecheck(t, books = { asked++; view(-125, 105) }, clock = { now }, paused = { true }).checkOne("one"))
         assertEquals(1, asked)
     }
+
+    @Test
+    fun `a bet settled while its page was being read isn't given a book snapshot or a new EV`() = runTest {
+        val t = tracker(bet("race"))
+        val r = BetRecheck(t, books = { t.settle("race", BetStatus.WON); view(-125, 105) }, clock = { now })
+        r.run()
+        val b = t.all().single()
+        assertEquals(BetStatus.WON, b.status)
+        assertEquals(emptyList<BookLine>(), b.books)
+        assertNull(b.nowEv)
+    }
 }
