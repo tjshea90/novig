@@ -170,8 +170,6 @@ class ApiBettingController(
         refreshSavedKey()
     }
 
-    // ---- setup, money ---------------------------------------------------------------------------------------------
-
     // ---- the saved management key ------------------------------------------------------------------------------------
 
     /** Reads what's saved (never the key itself) into [NovigUi.managementKey]: on open, and after a save or forget. */
@@ -198,7 +196,7 @@ class ApiBettingController(
     }
 
     /** Novig has just accepted [typed] (a call signed with it went through): it's saved, and never asked for again. */
-    private suspend fun remember(typed: ManagementKey?) {
+    private suspend fun keep(typed: ManagementKey?) {
         if (typed == null) return
         val hint = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.managementKeys.save(typed) }.getOrNull() }
         if (hint != null) state.update { it.copy(novig = it.novig.copy(managementKey = hint)) }
@@ -215,7 +213,7 @@ class ApiBettingController(
             state.update { it.copy(betting = it.betting.copy(busy = true, error = null, message = "Checking the key with Novig…")) }
             try {
                 withContext(Dispatchers.IO) { c.bettingSetup.check(typed) }
-                remember(typed)
+                keep(typed)
                 state.update { it.copy(betting = it.betting.copy(busy = false, message = "Management key saved on this phone. You won't be asked for it again.", error = null)) }
             } catch (e: CancellationException) {
                 throw e
@@ -237,6 +235,8 @@ class ApiBettingController(
         }
     }
 
+    // ---- setup, money ---------------------------------------------------------------------------------------------
+
     /** [typed]: the key Tj just entered (saved once Novig accepts it); null = the saved one. */
     fun enable(typed: ManagementKey? = null) {
         val conn = state.value.novig.connection ?: return
@@ -248,7 +248,7 @@ class ApiBettingController(
                 val updated = withContext(Dispatchers.IO) {
                     c.bettingSetup.enable(conn, key.keyId, key.pem) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
                 }
-                remember(typed)
+                keep(typed)
                 c.novigConnection.save(updated)
                 c.useConnection(updated)
                 state.update {
@@ -317,7 +317,7 @@ class ApiBettingController(
                     c.bettingSetup.transfer(conn, key.keyId, key.pem, direction, amount) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
                 }
                 // Novig answered the signed transfer (applied or rejected): the key is good.
-                remember(typed)
+                keep(typed)
                 state.update {
                     it.copy(betting = it.betting.copy(busy = false, message = out.message.takeIf { out.applied }, error = out.message.takeUnless { out.applied }, balance = out.balance ?: it.betting.balance))
                 }
