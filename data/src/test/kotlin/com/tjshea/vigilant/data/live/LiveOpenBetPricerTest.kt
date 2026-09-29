@@ -60,7 +60,7 @@ class LiveOpenBetPricerTest {
         val report = pricer.run(settings, bets.map { it.id })
         println("LIVE PRICER ${bets.size} bets in ${(System.currentTimeMillis() - t0) / 1000.0} s: $report")
         for (b in tracker.all()) {
-            println("LIVE PRICER ${b.league} ${b.selection}: ${b.nowEv?.let { "EV vs 50% cost %.1f%% fair %.3f via ${b.nowVia}, ${b.nowBooks} books".format(it * 100, b.nowFair) } ?: "no EV: ${b.nowNote}"}")
+            println("LIVE PRICER ${b.league} ${b.selection}: ${b.nowEv?.let { "EV at a 50-cent price %.1f%%, fair %.3f via ${b.nowVia}, ${b.nowBooks} books".format(it * 100, b.nowFair) } ?: "no EV: ${b.nowNote}"}")
         }
     }
 }
