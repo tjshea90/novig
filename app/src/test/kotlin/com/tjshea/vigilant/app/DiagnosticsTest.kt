@@ -1,7 +1,10 @@
 package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.data.keys.KeyUsage
+import com.tjshea.vigilant.data.keys.ProviderCost
 import com.tjshea.vigilant.data.keys.ProviderUsage
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.RoundCost
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScannerMode
@@ -27,7 +30,8 @@ class DiagnosticsTest {
         val text = report()
         listOf(
             "VIGILANT DIAGNOSTICS", "Version 0.21.3 (code 49) · Motorola moto g 2026 · Android 16 (API 36)", "== Settings ==", "== Last Vigilant scan ==",
-            "== API usage (each provider's own allowance) ==", "== CrazyNinjaOdds ==", "== Background auto-scan ==", "== Tracker ==",
+            "== API usage (each provider's own allowance) ==", "== Runway (will each API's allowance last?) ==", "== Last rounds (what they cost each API) ==",
+            "== CrazyNinjaOdds ==", "== Background auto-scan ==", "== Tracker ==",
         ).forEach { assertTrue("$it in:\n$text", text.contains(it)) }
         assertTrue(text, text.contains("Bets: 6 (open 3: 3 upcoming, 0 started; settled 3)"))
         assertTrue(text, text.contains("Current EV: 2 of 3 upcoming bets have one read inside the fair odds' age limit"))
@@ -75,6 +79,51 @@ class DiagnosticsTest {
         assertTrue(text, text.contains("Started and still open: 1 (1 for over 6 hours, 1 need a tap)"))
         assertTrue(text, text.contains("waiting ×1: Cam Talbot isn't in the box score"))
         assertTrue(text, text.contains("Results: "))
+    }
+
+    /** Tj, 2026-09-29: "tell me which apis deplete too quickly for daily use so I can add more keys". */
+    @Test
+    fun `the runway names the API running short and what a scan and a Check odds now each cost it`() {
+        val noon = java.time.Instant.parse("2026-09-29T12:00:00Z").toEpochMilli()
+        val day = QuotaPolicy.PINNWIRE.periodStart(noon)
+        val s = SampleScan.state().copy(
+            pinnwireKeys = listOf("wire-key-0001"),
+            proplineKeys = listOf("prop-key-0002"),
+            usage = UsageBook(
+                mapOf(
+                    "pinnwire" to ProviderUsage(keys = mapOf("wire-key-0001" to KeyUsage(periodStart = day, used = 90)), dayStart = day, callsToday = 90),
+                    "propline" to ProviderUsage(keys = mapOf("prop-key-0002" to KeyUsage(periodStart = day, used = 100, remaining = 900, limit = 1000)), dayStart = day, callsToday = 60),
+                ),
+            ),
+        )
+        val x = extras.copy(
+            lastScan = RoundCost(noon - 120_000, 30_000, listOf(ProviderCost("kalshi", 57, 57), ProviderCost("pinnwire", 6, 6))),
+            lastCheck = RoundCost(
+                noon - 30_000, 74_000, listOf(ProviderCost("kalshi", 103, 103), ProviderCost("propline", 14, 24)),
+                note = "covered 106 of 109 open bets: CNO read 50, 56 priced from Vigilant's own fair odds",
+            ),
+        )
+        val text = Diagnostics.report(s, x, noon, TimeZone.getTimeZone("UTC"))
+        // 90 by noon runs out at 1:20 PM, well before midnight; PropLine's 100 is on course for 200 of 1,000.
+        assertTrue(text, text.contains("Pinnacle (PinnWire): 90 of 100 requests used today (1 key), 10 left"))
+        assertTrue(text, text.contains("the last of it goes in 1h 20m, before the reset: SHORT (add keys, or scan less)"))
+        assertTrue(text, text.contains("PropLine: 100 of 1,000 requests used today (1 key), 900 left") && text.contains("at this pace about 200 by the reset: OK"))
+        assertTrue(text, text.contains("    a scan costs 6 → 16 a day"))
+        assertTrue(text, text.contains("    a Check odds now costs 24 → 41 a day"))
+        assertTrue(text, text.contains("Scan: 2m ago · took 30 s"))
+        assertTrue(text, text.contains("    cost: Kalshi 57, Pinnacle (PinnWire) 6"))
+        assertTrue(text, text.contains("Check odds now: 30s ago · took 74 s · covered 106 of 109 open bets: CNO read 50, 56 priced from Vigilant's own fair odds"))
+        assertTrue(text, text.contains("    cost: Kalshi 103, PropLine 14 (24 of its allowance)"))
+        // No key is ever shown.
+        assertFalse(text, text.contains("wire-key-0001"))
+        assertFalse(text, text.contains("prop-key-0002"))
+    }
+
+    @Test
+    fun `before any round ran it says none since the app opened`() {
+        val text = report()
+        assertTrue(text, text.contains("Scan: none since the app opened."))
+        assertTrue(text, text.contains("Check odds now: none since the app opened."))
     }
 
     @Test
