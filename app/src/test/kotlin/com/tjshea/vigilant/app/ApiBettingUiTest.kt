@@ -307,7 +307,7 @@ class ApiBettingUiTest {
     @Test
     fun `Novig refusing the order for the balance also offers Add money`() {
         var addMoney = 0
-        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Failed("Insufficient balance for this order")), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
+        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Failed(com.tjshea.vigilant.data.novig.signing.NovigApiException(422, null, null).advice)), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
         compose.onNodeWithTag("addMoney").performClick()
         assertEquals(1, addMoney)
     }

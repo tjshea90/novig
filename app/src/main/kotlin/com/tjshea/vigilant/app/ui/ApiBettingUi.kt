@@ -514,8 +514,8 @@ fun ApiBetSheetContent(
     }
 }
 
-/** What Novig says when an order is refused for the wallet's balance (its exact words aren't documented). */
-private val WALLET_WORDS = Regex("(?i)balance|insufficient|funds")
+/** What an order refused for the wallet's balance says: Novig's 422 ([NovigApiException.advice]: "doesn't have enough money") or its own words. */
+private val WALLET_WORDS = Regex("(?i)enough money|balance|insufficient|funds")
 
 /** The sheet's way to the wallet (Tj, 2026-09-29): Settings › Betting, scrolled to "Add money", with the shortfall typed in. */
 @Composable

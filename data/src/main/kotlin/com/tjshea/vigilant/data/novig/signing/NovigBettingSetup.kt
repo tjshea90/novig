@@ -15,8 +15,9 @@ data class TransferOutcome(val applied: Boolean, val message: String, val balanc
 
 /**
  * The management-key half of betting through Novig's API (Tj, 2026-09-29: "Build the betting through the API function"): making sure this phone
- * holds the Vigilant subaccount's `trading` key, and moving money between Tj's cash wallet and that subaccount. The management key is only
- * ever held in memory for the calls here, exactly as in [NovigSetup]; nothing secret is stored.
+ * holds the Vigilant subaccount's `trading` key, and moving money between Tj's cash wallet and that subaccount. This class holds the
+ * management key in memory for the calls here only; the app keeps it sealed on the phone ([ManagementKeyStore], Tj 2026-09-29: "I only
+ * input the API key and file one time").
  *
  * Novig lets a subaccount have ONE live `trading` key, and mints a second only after the first is revoked (docs.novig.com/api/api-keys):
  *  1. If this phone's Keystore holds a key that signs as the subaccount's live trading key, use it (Tj's setup created one).

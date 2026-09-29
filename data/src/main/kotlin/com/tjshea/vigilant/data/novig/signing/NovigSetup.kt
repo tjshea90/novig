@@ -39,8 +39,10 @@ data class NovigConnection(
  *  3. Mint a `trading::read` key on it from a second phone-generated keypair.
  *  4. `POST /v3/echo` with the new read key: proves it works before anything is saved.
  *
- * The management key is only ever held in memory for these few calls. The caller must not
- * persist it; only [NovigConnection] (key IDs and Keystore aliases, no secrets) is stored.
+ * This class holds the management key in memory for these few calls only, and stores nothing secret
+ * itself ([NovigConnection] is key IDs and Keystore aliases). Since 2026-09-29 the app keeps the
+ * management key too, sealed by the phone's Keystore, once Novig has accepted it ([ManagementKeyStore]:
+ * Tj, "I only input the API key and file one time").
  */
 class NovigSetup(
     private val http: OkHttpClient,

@@ -131,7 +131,8 @@ object ApiBetTargets {
 
 /**
  * The state and actions of betting through Novig's API, kept out of [MainViewModel] (which owns the [UiState] it edits): set up (the management
- * key, in memory only), fund and withdraw, the Bet sheet, and syncing the Tracker with what Novig holds.
+ * key, entered once and then saved sealed on this phone: [ManagementKeyStore]), fund and withdraw any amount Tj types, the Bet sheet and its
+ * way to the wallet ("Add money"), and syncing the Tracker with what Novig holds.
  */
 class ApiBettingController(
     private val c: AppContainer,

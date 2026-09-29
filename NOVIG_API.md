@@ -509,7 +509,12 @@ What is new here is the account/execution half of the API, which Vigilant has ne
 - Refusals: `403` (scope, or KYC not passed), `404` (no such outcome), `422` (wallet doesn't cover it, or a position cap), `423` (locked or self-excluded), `451`
   (anonymized network, restricted region, and, **for a placement only, no device geolocation in the last 3 days**: open the Novig app), `413`/HTML `403` (body too big).
 - Money never moves through a trading key ("a leaked trading key can lose its balance through trades, but it can't withdraw"). Only the management key funds
-  a subaccount, and it is never stored by Vigilant (§11.1).
+  a subaccount. **Since v0.23.0 Vigilant saves it** (Tj, 2026-09-29: "I only input the API key and file one time ... persist even through app
+  updates"): `ManagementKeyStore` writes `files/novig_management_key.json` with the key ID in the clear and the PEM sealed by an Android Keystore
+  AES/GCM key (alias `vigilant_novig_management_seal`, `KeystoreSecretBox`). Saved only after Novig accepted it (Connect, Enable betting, a
+  transfer, or Settings' "Save key" = one signed echo); survives every update (files and Keystore are kept for the same app and certificate);
+  left out of backups (it can't be opened on another phone); gone on uninstall / Clear storage, like the phone's read and trading keys.
+  Settings shows "••••last4 saved on this phone" with Replace and Forget; a 401 on the saved key says "Tap Replace".
 - QA (`api.qa.novig.com`, test money, published test identity in §1) exists for trying all of this without real money.
 
 ### 14.4 The websocket's private and lifecycle channels (unused so far)
