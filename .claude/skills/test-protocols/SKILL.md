@@ -158,6 +158,11 @@ unless Tj asks).
   `CnoOnlyAsleepTest`, `OpenBetPricerTest`, `AutoScanTest`, `PauseScanningAppTest`. Settings › Diagnostics: `Diagnostics.report` (app, pure, never a key;
   `DiagnosticsTest`), `ApiGradingCheck` (data; `ApiGradingCheckTest`: ledger of every kind, positions, each API bet beside the Tracker's grade),
   `ReportDialog`/`ReportActions`, `MainViewModel.showDiagnostics/showGradingCheck`, `ReportUiTest`, screenshot 5g. A sweep runs both reports and reads them.
+- **Diagnostics read, Runway, widget opt-in, Settings tabs, pinned bars (v0.22.0; RESEARCH.md §40; Tj 2026-09-29):** `BetsScope.familiesFor` (a Check odds now asks only
+  the bets' market families; unreadable wording = all), `data/keys/Runway` (`Runway.lines/roundsNote`, `UsageDelta`, `RoundCost`; Diagnostics "Runway" and "Last rounds"
+  blocks, `AppContainer.lastScanCost/lastCheckCost`), `ScanSettings.miniWindow` off by default + schema 10, `SettingsTab` (seven tabs, `SettingsScreen(startTab)`, tags
+  `settingsTabs`/`settingsTab-<NAME>`), `StickyBar`/`STICKY_BAR` on the Tracker, +EV, Games and CNO lists, Sort/Scanner menu chips (`TrackerSort.barLabel`). Tests:
+  `RunwayTest`, `OpenBetPricerTest` (families), `DiagnosticsTest`, `MiniWindowTest`, `SettingsTabsTest`, `StickyHeadersTest`; Settings UI tests open their tab first (`openSettingsTab`).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
