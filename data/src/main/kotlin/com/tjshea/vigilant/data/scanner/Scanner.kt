@@ -708,11 +708,16 @@ class Scanner(
             // Every event, not just the window: one small request, and the scan can then say how many games
             // start past "Days ahead" (Tj, 2026-09-28: "There are way more than 7 total games"). Their
             // markets (the big part) are only read inside the window.
-            val events = novig.events(leagues, statuses, null)
+            var events = novig.events(leagues, statuses, null)
             // Only the families being priced: player props alone are thousands of markets a week.
             // Main lines always come along (cheap), so turning those on and off re-prices from cache.
             val wanted = types + MAIN_TYPES
-            val markets = novig.markets(leagues, wanted.toList(), statuses, before)
+            var markets = novig.markets(leagues, wanted.toList(), statuses, before)
+            if (betsOnly) {
+                markets = markets.filter { it.marketId in pinned }
+                val games = markets.mapTo(HashSet()) { it.eventId }
+                events = events.filter { it.eventId in games }
+            }
             catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, wanted, events, markets, now)
         } catch (e: CancellationException) {
             throw e
