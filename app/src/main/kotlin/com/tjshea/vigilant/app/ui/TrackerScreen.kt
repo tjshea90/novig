@@ -108,7 +108,14 @@ fun TrackerScreen(
                 title = { Text("Bet tracker", fontWeight = FontWeight.Bold) },
                 actions = {
                     TextButton(onClick = onCheckOdds, enabled = !state.checkingOdds) {
-                        Text(if (state.checkingOdds) "Checking…" else "Check odds now")
+                        val progress = state.checkProgress
+                        Text(
+                            when {
+                                progress != null && progress.second > 0 -> "Checking ${progress.first}/${progress.second}…"
+                                state.checkingOdds -> "Checking…"
+                                else -> "Check odds now"
+                            },
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
