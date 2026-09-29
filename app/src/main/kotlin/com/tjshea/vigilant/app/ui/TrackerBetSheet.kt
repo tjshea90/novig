@@ -163,8 +163,8 @@ fun BetSheetContent(
 
         // ---- Actions ----
         if (open) {
+            val stake = BetReplace.stake(bet, settings)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                val stake = BetReplace.stake(bet, settings)
                 Button(onClick = { actions.onReplace(bet) }, enabled = !replacing, modifier = Modifier.testTag("replaceInSheet")) {
                     if (replacing) {
                         CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
