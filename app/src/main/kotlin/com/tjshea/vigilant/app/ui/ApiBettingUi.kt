@@ -163,6 +163,7 @@ fun NovigBettingSection(
         "Vigilant can place a bet on Novig for you from a separate \"Vigilant\" wallet on your Novig account, and grade it from Novig's own books. " +
             "It is not the cash wallet your Novig app bets use: you add money to it here, and only bets placed from Vigilant use it. " +
             "Every bet shows exactly what it will buy and asks you to confirm; nothing is sent before that, and it never bets a game that has started. " +
+            "Novig only lets an order through from a network it doesn't list as a VPN or proxy, and when you've opened the Novig app in the last 3 days. " +
             "Needs your management key (Novig › Profile › Settings › Novig API) for the steps below; Vigilant uses it once and never stores it.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
