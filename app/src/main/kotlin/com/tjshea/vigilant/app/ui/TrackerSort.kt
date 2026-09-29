@@ -49,9 +49,9 @@ object TrackerSort {
         }
     }
 
-    /** [cmp] ascending; a sort whose natural order is [natural] "biggest first" is the reverse of that. */
-    private fun direction(cmp: Comparator<TrackedBet>, natural: Boolean, reversed: Boolean): Comparator<TrackedBet> {
-        val descending = natural != reversed
+    /** [cmp] is ascending; [naturalDescending]: the sort's own order puts the biggest at the top ("newest first"), [reversed] turns that round. */
+    private fun direction(cmp: Comparator<TrackedBet>, naturalDescending: Boolean, reversed: Boolean): Comparator<TrackedBet> {
+        val descending = naturalDescending != reversed
         return if (descending) cmp.reversed() else cmp
     }
 }
