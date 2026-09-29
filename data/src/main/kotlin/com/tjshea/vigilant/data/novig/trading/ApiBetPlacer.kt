@@ -148,13 +148,16 @@ class ApiBetPlacer(
         emptyList()
     }
 
-    /** The order carrying [clientId], looked for in every status twice (a lost answer's order can appear late), or null. */
-    private suspend fun findByClientId(clientId: String): String? {
+    /**
+     * The order carrying [clientId] on [outcomeId], looked for in every status Novig has (a queued order is `PENDING`) twice (a lost answer's
+     * order can appear late), or null.
+     */
+    private suspend fun findByClientId(clientId: String, outcomeId: String): String? {
         repeat(2) { round ->
             pause(if (round == 0) 1_500 else 3_000)
-            for (status in listOf("OPEN", "FILLED", "CANCELED", "REJECTED")) {
+            for (status in listOf("PENDING", "OPEN", "FILLED", "CANCELED", "REJECTED")) {
                 val hit = try {
-                    trading.orders(status, 100).firstOrNull { it.clientId == clientId }
+                    trading.orders(status, outcomeId = outcomeId).firstOrNull { it.clientId == clientId }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
