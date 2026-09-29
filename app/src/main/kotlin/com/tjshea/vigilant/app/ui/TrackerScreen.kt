@@ -74,6 +74,7 @@ import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.CheckOddsStats
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerBreakdown
