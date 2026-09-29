@@ -59,4 +59,42 @@ class LiveScoresTest {
         assertEquals(BetSettler.BY_SCORES, byId.getValue("ml").settledBy)
         assertEquals(null, BetGrader.pickOf(bets[0].copy(marketLabel = "Moneyline 3-way")))
     }
+
+    /**
+     * Real hockey, basketball and tennis finals (ESPN, read 2026-09-29): Wild 5 @ Red Wings 4 (2026-04-05), Raptors 105 @ Cavaliers 115
+     * (2026-04-20), Muller d. Pavlovic 6-4 6-7 6-3 (2026-09-22). Graded directly (the settler only looks 30 days back).
+     */
+    @Test
+    fun `real hockey, basketball and tennis finals grade real bets`() = runBlocking {
+        assumeTrue(System.getenv("VIGILANT_LIVE") == "1")
+        val scores = FreeScores(OkHttpClient())
+        suspend fun grade(league: String, event: String, start: String, market: String, selection: String): BetStatus? {
+            val startMs = Instant.parse(start).toEpochMilli()
+            val bet = TrackedBet(
+                id = "x", createdAtMs = startMs, league = league, eventName = event, startsTs = startMs, marketLabel = market, selection = selection,
+                marketId = "", outcomeId = "", price = 0.5, cost = 0.5, fairAtBet = null, evPercentAtBet = null, stake = 1.0,
+            )
+            val pick = BetGrader.pickOf(bet) ?: return null
+            val day = FreeScores.etDate(startMs)
+            val game = listOf(day, day.minusDays(1), day.plusDays(1)).firstNotNullOfOrNull { d -> scores.games(league, d)?.let { BetGrader.gameOf(bet, it) } } ?: return null
+            val box = if (pick is BetGrader.Pick.Prop) scores.players(game) else null
+            return BetGrader.grade(pick, game, box).also { println("LIVE GRADE $league $selection ($market) -> $it") }
+        }
+        val nhl = "Minnesota Wild @ Detroit Red Wings"
+        assertEquals(BetStatus.WON, grade("NHL", nhl, "2026-04-05T17:00:00Z", "Moneyline", "Minnesota Wild"))
+        assertEquals(BetStatus.WON, grade("NHL", nhl, "2026-04-05T17:00:00Z", "Player Shots on Goal", "Matt Boldy Over 2.5")) // 3 shots
+        assertEquals(BetStatus.WON, grade("NHL", nhl, "2026-04-05T17:00:00Z", "Player Points", "Matt Boldy Over 1.5")) // 1 goal + 1 assist
+        assertEquals(BetStatus.LOST, grade("NHL", nhl, "2026-04-05T17:00:00Z", "Player Saves", "Filip Gustavsson Over 24.5")) // 20 saves
+        val nba = "Toronto Raptors @ Cleveland Cavaliers"
+        assertEquals(BetStatus.WON, grade("NBA", nba, "2026-04-20T23:00:00Z", "Point Spread", "Cleveland Cavaliers -9.5")) // won by 10
+        assertEquals(BetStatus.WON, grade("NBA", nba, "2026-04-20T23:00:00Z", "Total Points", "Over 219.5")) // 220
+        assertEquals(BetStatus.WON, grade("NBA", nba, "2026-04-20T23:00:00Z", "Player Steals", "James Harden Over 4.5")) // 5
+        assertEquals(BetStatus.LOST, grade("NBA", nba, "2026-04-20T23:00:00Z", "Player Points + Rebounds", "James Harden Over 34.5")) // 28 + 5
+        val atp = "Luka Pavlovic @ Alexandre Muller"
+        assertEquals(BetStatus.WON, grade("ATP", atp, "2026-09-22T05:00:00Z", "Moneyline", "Alexandre Muller"))
+        assertEquals(BetStatus.WON, grade("ATP", atp, "2026-09-22T05:00:00Z", "Total Games", "Over 31.5")) // 18 + 14
+        assertEquals(BetStatus.WON, grade("ATP", atp, "2026-09-22T05:00:00Z", "1st Set Winner", "Alexandre Muller")) // 6-4
+        assertEquals(BetStatus.LOST, grade("ATP", atp, "2026-09-22T05:00:00Z", "Games Spread", "Luka Pavlovic +3.5")) // 14 + 3.5 < 18
+    }
 }
+
