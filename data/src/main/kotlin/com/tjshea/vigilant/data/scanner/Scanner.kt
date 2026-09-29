@@ -222,7 +222,7 @@ class Scanner(
             pump.fairOddsDone()
             pumpJob.await()
             // A long scan's first edges were read minutes before its last books: read them again.
-            pump.rereadEarlyEdges()
+            if (!betsOnly) pump.rereadEarlyEdges()
             if (pump.readFrom != null) pump.readTo = elapsed() - t0
             reports
         }
