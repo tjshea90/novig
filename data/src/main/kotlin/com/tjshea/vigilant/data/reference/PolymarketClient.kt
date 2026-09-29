@@ -6,6 +6,9 @@ import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
@@ -50,8 +53,7 @@ class PolymarketClient(
         val from = Instant.ofEpochMilli(now).toString()
         val to = Instant.ofEpochMilli(now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L).toString()
 
-        val all = ArrayList<MarketDto>()
-        for (page in 0 until MAX_PAGES) {
+        suspend fun readPage(page: Int): List<MarketDto> {
             val url = "$baseUrl/markets".toHttpUrl().newBuilder().apply {
                 addQueryParameter("closed", "false")
                 addQueryParameter("tag_id", tag.toString())
@@ -62,14 +64,28 @@ class PolymarketClient(
                 addQueryParameter("limit", PAGE_SIZE.toString())
                 addQueryParameter("offset", (page * PAGE_SIZE).toString())
             }.build()
-            val items = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
+            return http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
                 usage?.countKeyless(QuotaPolicy.POLYMARKET, calls = 1, throttled = if (response.code == 429) 1 else 0)
                 if (!response.isSuccessful) throw ReferenceException("Polymarket HTTP ${response.code}")
                 json.decodeFromString(ListSerializer(MarketDto.serializer()), body)
             }
-            all += items
-            if (items.size < PAGE_SIZE) break
+        }
+
+        // The first page alone (most leagues fit in it); a full one means more, so the rest come [WAVE] pages at a time instead of
+        // one after another (an NFL week is ~8 pages of ~0.7 s each), in order, stopping at the first page that isn't full.
+        val all = ArrayList<MarketDto>()
+        var page = 0
+        while (page < MAX_PAGES) {
+            val wave = (page until minOf(MAX_PAGES, page + if (page == 0) 1 else WAVE)).toList()
+            val items = coroutineScope { wave.map { async { readPage(it) } }.awaitAll() }
+            var last = false
+            for (got in items) {
+                all += got
+                if (got.size < PAGE_SIZE) { last = true; break }
+            }
+            if (last) break
+            page += wave.size
         }
         return RefSnapshot(league.oddsApiSportKey, parse(all, league, settings.exchangeMaxSpread, now, json), now, provider = id)
     }
@@ -78,6 +94,9 @@ class PolymarketClient(
         const val BOOK_KEY = "polymarket"
         const val PAGE_SIZE = 100
         const val MAX_PAGES = 8
+
+        /** Pages read at once once the first one came back full. */
+        const val WAVE = 3
 
         /** Below this much resting liquidity a quote is too easy to push around to call fair. */
         const val MIN_LIQUIDITY = 1_000.0
