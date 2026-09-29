@@ -89,6 +89,9 @@ class ApiBettingController(
     private val state: MutableStateFlow<UiState>,
     private val scope: CoroutineScope,
     private val toasts: MutableSharedFlow<String>,
+    /** A market's book read from Novig now; null = the app's own reader ([AppContainer.novig]). Tests hand in their own. */
+    private val readBook: (suspend (String) -> NovigBook?)? = null,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private var betJob: Job? = null
     private var placerFor: Any? = null
@@ -101,7 +104,7 @@ class ApiBettingController(
         val t = c.trading ?: return null
         if (placerFor !== t) {
             placerFor = t
-            placerCache = ApiBetPlacer(t, c.tracker, books = ::freshBook, limits = ::limits, paused = { settings().paused })
+            placerCache = ApiBetPlacer(t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock)
         }
         return placerCache
     }
@@ -354,7 +357,7 @@ class ApiBettingController(
             c.placed.mark(
                 PlacedBet(
                     key = key, title = target.selection, detail = "${target.marketLabel} · ${target.eventName}", odds = MiniWindow.american(placed.bet.american ?: 0),
-                    placedAtMs = System.currentTimeMillis(), startsAtMs = target.startsTs, event = target.eventName, market = target.marketLabel,
+                    placedAtMs = clock(), startsAtMs = target.startsTs, event = target.eventName, market = target.marketLabel,
                     outcomeId = target.outcomeId, league = target.league,
                 ),
             )

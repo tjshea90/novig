@@ -158,6 +158,13 @@ class AppContainer(app: Application) {
         private set
     val bettingSetup = NovigBettingSetup(http, json, KeystoreVault)
 
+    /** Betting through a client the test built (a mock Novig), without a Keystore key. */
+    internal fun installTradingForTest(client: NovigTradingClient, subaccountKeyId: String) {
+        trading = client
+        apiSettler = ApiSettler(tracker, client, subaccountKeyId, scoreGrade = { bet -> settler.scoreGradeOf(bet) })
+        apiSync = ApiBetSync(tracker, client, novig)
+    }
+
     val settler = BetSettler(tracker, FreeScores(http, json), leaveApiBets = { trading != null })
 
     /**
