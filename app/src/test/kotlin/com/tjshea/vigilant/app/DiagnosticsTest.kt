@@ -67,6 +67,16 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `it says whether the management key is saved, by its last four only`() {
+        val base = SampleScan.state()
+        assertTrue(report(base).contains("management key not saved"))
+        val saved = base.copy(novig = base.novig.copy(managementKey = com.tjshea.vigilant.data.novig.signing.ManagementKeyHint("5678", 0L)))
+        assertTrue(report(saved).contains("management key saved on this phone (••••5678)"))
+        val locked = base.copy(novig = base.novig.copy(managementKey = com.tjshea.vigilant.data.novig.signing.ManagementKeyHint("5678", 0L, unreadable = true)))
+        assertTrue(report(locked).contains("management key saved but can't be unlocked"))
+    }
+
+    @Test
     fun `the Tracker part names what is priced, what is not and why, and what has been waiting since its game`() {
         val base = SampleScan.state()
         val noted = base.bets.map { if (it.id == "b3") it.copy(nowNote = "No fair-odds source has current prices for this game", nowNoteAtMs = now) else it }

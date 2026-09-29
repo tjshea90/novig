@@ -1,21 +1,23 @@
-# CHECKPOINT 2104 — read me first, then TASKS.md
+# CHECKPOINT 2105 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T21:13:55Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `63fb1e06` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T21:16:59Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `8d2a6619` (this checkpoint is the commit after it)
 
 ## Just done
-B1-B4 implemented and targeted tests green: ManagementKeyStoreTest (6), WalletAmountTest, ApiBettingUiTest (24 incl. typed amount, saved key, top-up banner, Add money button), ApiBettingControllerTest (top-up round trip, typed key saved only after Novig accepts, saved key signs next transfer), KeysSurviveUpdateTest
+docs updated (NOVIG_API.md §14 saved management key, NovigSetup/NovigBettingSetup KDoc), 422 advice matched for Add money, Diagnostics shows management key saved/not; SettingsScreen opens Betting on a top-up (SettingsTabsTest 9 green)
 
 ## Do this next
-move the Settings startTab-for-topUp logic into SettingsScreen and test it (SettingsTabsTest), then full floor, sweep, docs (NOVIG_API.md/BRIEF key persistence note), version bump, ship
+full floor: ANDROID_HOME=/opt/android-sdk bash tools/test.sh; then sweep, version bump 0.23.0 code 51, TASKS ticks, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/src/test/kotlin/com/tjshea/vigilant/app/DiagnosticsTest.kt
 
 ## Last ten checkpoints
 ```
+  ca5ef53e ckpt 2104: B1-B4 implemented and targeted tests green: ManagementKeyStoreTest (6), Wall
   121e16e5 ckpt 2103: B1-B4 code written (not compiled yet): ManagementKeyStore (data, sealed by K
   ae1154d4 ckpt 2102: Recorded Tj's request (wallet top-up by typed amount in Settings; 'add money
   4fa76cb1 ckpt 2101: v0.22.0 (code 50) released and recorded; A1-A6 ticked
@@ -27,5 +29,5 @@ move the Settings startTab-for-topUp logic into SettingsScreen and test it (Sett
   0da2dec5 ckpt 2095: A2: widget only opens from its button: miniWindow default off + schema-10 mi
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
