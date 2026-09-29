@@ -1,13 +1,13 @@
-# CHECKPOINT 2108 — read me first, then TASKS.md
+# CHECKPOINT 2109 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T21:33:04Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `4e947380` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T22:57:34Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `def3d22d` (this checkpoint is the commit after it)
 
 ## Just done
-v0.23.0 (code 51) released and recorded; B1-B5 ticked
+Recorded Tj's request (Check odds now counter: +EV/−EV counts, % +EV, resets each check; average current EV excluding ±5% outliers) as C1-C3
 
 ## Do this next
-nothing open for this request; older phone-only items L1161, L1164, P6, S2 remain; next time Tj adds money or updates, ask him to confirm Settings shows the management key saved and Diagnostics says 'management key saved on this phone'
+research TrackerScreen / BetRecheck / OpenBetPricer: how Check odds now reports progress and each bet's current EV, then build C1/C2
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ nothing open for this request; older phone-only items L1161, L1164, P6, S2 remai
 
 ## Last ten checkpoints
 ```
+  3e6dce93 ckpt 2108: v0.23.0 (code 51) released and recorded; B1-B5 ticked
   a65d1c12 ckpt 2107: pre-release: v0.23.0: the Novig management key is entered once and saved on 
   a62443f2 ckpt 2106: B1-B4 ticked; version 0.23.0 (code 51); sweep fixes (keep() rename, section 
   bd62a7ef ckpt 2105: docs updated (NOVIG_API.md §14 saved management key, NovigSetup/NovigBettin
@@ -26,5 +27,7 @@ nothing open for this request; older phone-only items L1161, L1164, P6, S2 remai
   4fa76cb1 ckpt 2101: v0.22.0 (code 50) released and recorded; A1-A6 ticked
   c1e67e57 ckpt 2100: pre-release: v0.22.0: the widget opens only from its button; Settings in sev
   37df2065 ckpt 2099: A1-A5 ticked; RESEARCH.md §40; version bumped to 0.22.0 (code 50); MGM sett
-  014c514c ckpt 2098: A5: tabs and filters pinned on the Tracker (Stats|Bets, Open/Settled/All, co
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
