@@ -279,9 +279,11 @@ class FreeScores(
         private val CALLED_ESPN = setOf("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED", "STATUS_FORFEIT", "STATUS_ABANDONED")
 
         /**
-         * ESPN's box score as Novig's stats. Football: passing, rushing, receiving and kicking lines
-         * (anytime touchdowns = rushing + receiving + return touchdowns). Basketball: points,
-         * rebounds, assists, threes.
+         * ESPN's box score as Novig's stats. Football: passing, rushing, receiving, defensive and kicking lines
+         * (anytime touchdowns = rushing + receiving + return touchdowns; tackles + assists = total tackles).
+         * Basketball: points, rebounds, assists, threes, steals, blocks, turnovers and every sum Novig lists
+         * (P+R+A, P+R, P+A, R+A, S+B) with double- and triple-doubles. Hockey: goals, assists, points, shots on
+         * goal, blocked shots, hits, and a goalie's saves.
          */
         fun parseEspnBox(root: JsonElement): List<PlayerLine> {
             val byPlayer = LinkedHashMap<String, HashMap<String, Double>>()
@@ -297,7 +299,10 @@ class FreeScores(
                         if (values.isEmpty()) continue
                         val raw = keys.zip(values).toMap()
                         val stats = byPlayer.getOrPut(name) { HashMap() }
-                        espnStats(kind, raw).forEach { (k, v) -> stats[k] = (stats[k] ?: 0.0) + v }
+                        // Football lines add up across groups (touchdowns); a hockey player is in one skater group,
+                        // listed again under "skaters" in some games: his line is set, never added twice.
+                        val add = kind !in HOCKEY_GROUPS
+                        espnStats(kind, raw).forEach { (k, v) -> stats[k] = if (add) (stats[k] ?: 0.0) + v else v }
                     }
                 }
             }
@@ -306,12 +311,32 @@ class FreeScores(
                 stats["RUSHING_YARDS"]?.let { r -> stats["RUSHING_AND_RECEIVING_YARDS"] = r + (stats["RECEIVING_YARDS"] ?: 0.0) }
                     ?: stats["RECEIVING_YARDS"]?.let { stats["RUSHING_AND_RECEIVING_YARDS"] = it }
                 stats["PASSING_YARDS"]?.let { p -> stats["PASSING_AND_RUSHING_YARDS"] = p + (stats["RUSHING_YARDS"] ?: 0.0) }
-                if (stats.containsKey("POINTS")) {
-                    stats["POINTS_REBOUNDS_ASSISTS"] = (stats["POINTS"] ?: 0.0) + (stats["REBOUNDS"] ?: 0.0) + (stats["ASSISTS"] ?: 0.0)
+                if (stats.containsKey("REBOUNDS")) {
+                    val pts = stats["POINTS"] ?: 0.0
+                    val reb = stats["REBOUNDS"] ?: 0.0
+                    val ast = stats["ASSISTS"] ?: 0.0
+                    val stl = stats["STEALS"] ?: 0.0
+                    val blk = stats["BLOCKS"] ?: 0.0
+                    stats["POINTS_REBOUNDS_ASSISTS"] = pts + reb + ast
+                    stats["POINTS_REBOUNDS"] = pts + reb
+                    stats["POINTS_ASSISTS"] = pts + ast
+                    stats["REBOUNDS_ASSISTS"] = reb + ast
+                    stats["STEALS_BLOCKS"] = stl + blk
+                    val tens = listOf(pts, reb, ast, stl, blk).count { it >= 10.0 }
+                    stats["DOUBLE_DOUBLE"] = if (tens >= 2) 1.0 else 0.0
+                    stats["TRIPLE_DOUBLE"] = if (tens >= 3) 1.0 else 0.0
+                }
+                if (stats.containsKey("PLAYER_GOALS")) {
+                    // Hockey "points" are goals + assists.
+                    val gp = (stats["PLAYER_GOALS"] ?: 0.0) + (stats["ASSISTS"] ?: 0.0)
+                    stats["POINTS"] = gp
+                    stats["GOALS_ASSISTS"] = gp
                 }
                 PlayerLine(name, stats)
             }
         }
+
+        private val HOCKEY_GROUPS = setOf("forwards", "defenses", "skaters", "goalies")
 
         /** One ESPN stat group's numbers as Novig stats (touchdowns summed across groups by the caller). */
         private fun espnStats(group: String?, raw: Map<String, String>): Map<String, Double> {
@@ -340,6 +365,25 @@ class FreeScores(
                     put("LONGEST_RECEPTION", n("longReception"))
                     put("TOUCHDOWNS", n("receivingTouchdowns"))
                 }
+                "defensive" -> {
+                    // Novig's "Tackles + Assists" is ESPN's total tackles (solo + assisted).
+                    put("TACKLES_ASSISTS", n("totalTackles"))
+                    put("SACKS", n("sacks"))
+                }
+                "forwards", "defenses", "skaters" -> {
+                    put("PLAYER_GOALS", n("goals"))
+                    put("ASSISTS", n("assists"))
+                    // ESPN's "shotsTotal" (label S) is shots on goal; "shotsMissed" (SM) is separate.
+                    put("SHOTS_ON_GOAL", n("shotsTotal"))
+                    put("BLOCKED_SHOTS", n("blockedShots"))
+                    put("HITS", n("hits"))
+                    put("TAKEAWAYS", n("takeaways"))
+                }
+                "goalies" -> {
+                    put("SAVES", n("saves"))
+                    put("GOALS_AGAINST", n("goalsAgainst"))
+                    put("SHOTS_AGAINST", n("shotsAgainst"))
+                }
                 "kickReturns" -> put("TOUCHDOWNS", n("kickReturnTouchdowns"))
                 "puntReturns" -> put("TOUCHDOWNS", n("puntReturnTouchdowns"))
                 "kicking" -> {
@@ -353,6 +397,9 @@ class FreeScores(
                         put("REBOUNDS", n("rebounds"))
                         put("ASSISTS", n("assists"))
                         put("THREE_POINTERS_MADE", made("threePointFieldGoalsMade-threePointFieldGoalsAttempted"))
+                        put("STEALS", n("steals"))
+                        put("BLOCKS", n("blocks"))
+                        put("TURNOVERS", n("turnovers"))
                     }
                 }
             }
@@ -379,6 +426,7 @@ class FreeScores(
                     startMs = o.str("gameDate")?.let(::isoMs) ?: return@mapNotNull null,
                     final = status?.str("abstractGameState") == "Final" && detailed !in CALLED_MLB && !detailed.startsWith("Suspended"),
                     called = detailed in CALLED_MLB || detailed.startsWith("Suspended"),
+                    calledReason = detailed.takeIf { it in CALLED_MLB || it.startsWith("Suspended") },
                     homeScore = home.num("score")?.toInt(),
                     awayScore = away.num("score")?.toInt(),
                     homePeriods = runs("home"),
