@@ -52,10 +52,10 @@ data class LedgerRow(val transactionId: String, val kind: String, val amount: Do
  * key to place and read, or its `trading::read` key to read. Every money and price field is a decimal string on the wire, parsed
  * exactly here; quantities are whole 1¢ contracts. A refusal is a [NovigApiException] with Novig's own code.
  */
-class NovigTradingClient(private val signer: NovigSignedClient, private val json: Json) {
+open class NovigTradingClient(private val signer: NovigSignedClient, private val json: Json) {
 
     /** The subaccount's balance in dollars (`trading` key; a `trading::read` key can't read it). */
-    suspend fun balance(subaccountKeyId: String): Double {
+    open suspend fun balance(subaccountKeyId: String): Double {
         val body = signer.call("GET", "/v3/account/subaccounts/$subaccountKeyId/balance")
         return json.decodeFromString(BalanceDto.serializer(), body).balance.toDouble()
     }
@@ -65,7 +65,7 @@ class NovigTradingClient(private val signer: NovigSignedClient, private val json
      * that price or better and cancels the rest. The reply only says the order was queued: read it back ([order]) for what came of it.
      * [clientId] is echoed on the order and its fills and is what finds it again after a lost answer (Novig never checks it for uniqueness).
      */
-    suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+    open suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
         val body = json.encodeToString(
             JsonObject.serializer(),
             JsonObject(
@@ -82,18 +82,18 @@ class NovigTradingClient(private val signer: NovigSignedClient, private val json
     }
 
     /** The order, or null while Novig answers 404 (it can, right after the 201). */
-    suspend fun order(orderId: String): NovigOrder? = try {
+    open suspend fun order(orderId: String): NovigOrder? = try {
         json.decodeFromString(OrderDto.serializer(), signer.call("GET", "/v3/orders/$orderId")).toDomain()
     } catch (e: NovigApiException) {
         if (e.status == 404) null else throw e
     }
 
     /** Up to [limit] orders in [status] (newest first is not promised: the whole page is returned). */
-    suspend fun orders(status: String, limit: Int = 100): List<NovigOrder> =
+    open suspend fun orders(status: String, limit: Int = 100): List<NovigOrder> =
         json.decodeFromString(OrderPageDto.serializer(), signer.call("GET", "/v3/orders", "limit=$limit&status=$status")).items.map { it.toDomain() }
 
     /** Fills of one [orderId], or every fill (up to [limit]) when null. */
-    suspend fun fills(orderId: String? = null, limit: Int = 500): List<NovigFill> {
+    open suspend fun fills(orderId: String? = null, limit: Int = 500): List<NovigFill> {
         val query = buildString {
             append("limit=").append(limit)
             if (orderId != null) append("&order=").append(URLEncoder.encode(orderId, "UTF-8"))
@@ -103,7 +103,7 @@ class NovigTradingClient(private val signer: NovigSignedClient, private val json
     }
 
     /** The subaccount's nonzero positions, or the ones in [marketId]. */
-    suspend fun positions(marketId: String? = null): List<NovigPosition> {
+    open suspend fun positions(marketId: String? = null): List<NovigPosition> {
         val query = marketId?.let { "market=" + URLEncoder.encode(it, "UTF-8") }
         return json.decodeFromString(ListSerializer(PositionDto.serializer()), signer.call("GET", "/v3/portfolio/positions", query)).map { it.toDomain() }
     }
@@ -112,7 +112,7 @@ class NovigTradingClient(private val signer: NovigSignedClient, private val json
      * Ledger rows of [kind] for [subaccountKeyId] whose event was scheduled in ([startsAfterMs], [startsBeforeMs]) (both exclusive;
      * the docs filter these by the event's scheduled start), paged until [maxRows].
      */
-    suspend fun ledger(subaccountKeyId: String, kind: String, startsAfterMs: Long, startsBeforeMs: Long, maxRows: Int = 1_000): List<LedgerRow> {
+    open suspend fun ledger(subaccountKeyId: String, kind: String, startsAfterMs: Long, startsBeforeMs: Long, maxRows: Int = 1_000): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
         var cursor: String? = null
         do {
