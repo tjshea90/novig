@@ -2754,3 +2754,28 @@ Tj's first two real orders (Taylor Trammell Under 0.5, Michael King Over 4.5) bo
 - **Shared sources:** the pass and the feed scan use the same client objects, so Kalshi's 2-a-second gate and the props sources' locks hold across both; PropLine/Odds API props re-use a game's props for ≤ 2 min across the two, so a scan and a Check odds now don't buy the same game twice.
 - **Cost:** a pass asks each metered source once per league it needs (pinnapi's 100 a day counts it like a scan), so a Check odds now with Vigilant bets in the list is about one scan of the leagues those bets are in. Bets read within the last minute are left alone.
 - **Not built (offers):** keeping the sort/scanner choice across app restarts (it survives rotation and the app being recreated); sharing one fair-odds fetch between a feed scan and a pass that start together.
+
+## 39. CNO only means Vigilant is asleep in the background too; what Tj can show to verify grading and tune the app (v0.21.3, 2026-09-29; Tj: "if I have cno only turned on in the settings that it doesn't scan vigilant in the background and waste api usage")
+
+### 39.1 The audit (every path that can spend a Vigilant API's allowance)
+| Path | Before | Now |
+| :- | :- | :- |
+| Background auto-scan cycle (`AutoScanner.cycle`, run by `AutoScanService` from an alarm or boot) | **Auto-scan "Both" ran Vigilant's whole scan even with the scanner on CNO only** (deliberate in v0.18.0, and Settings said so); "CNO" ran CNO even on Vigilant only | each part is gated on the scanner choice: `ScanSettings.autoScansCno` / `autoScansVigilant` (`activeAutoScan` is OFF when neither is left, so the service stops); the notification and the Settings hint say what really runs |
+| `ScanRunner.start` (the one door every feed scan goes through: Scan button, widget, background cycle) | no check | refuses when `!vigilantOn`, whoever asks |
+| Tracker "Check odds now" / "Price now" (`OpenBetPricer`) | guarded in the view model only | also refuses inside `OpenBetPricer.run` |
+| Widget "Vigilant's scan again" timer, Scan/Recheck buttons, mini-window buttons | guarded (`vigilantOn`) | unchanged; switching to CNO only now also stops a scan already running |
+| `SettleWorker` / grading | free score feeds (ESPN, MLB) and, with betting on, Novig's own ledger for your bets | not fair-odds APIs; unchanged (your bets are graded whatever the scanner) |
+| CNO's own reads, Novig's price now for CNO's listed bets | CNO feature | unchanged |
+Tests: `CnoOnlyAsleepTest` (the predicate for every scanner x auto-scan x paused, the runner never scans on CNO only, Both / Vigilant only still do), `OpenBetPricerTest` (asks Vigilant's APIs for nothing on CNO only), `AutoScanTest` (the cycle is gated; the notification and hint texts). Vigilant only now leaves CNO asleep in the background the same way (a "CNO"-only auto-scan choice then has nothing to do and stops).
+
+### 39.2 Grading check (Settings › Diagnostics, needs betting set up)
+`ApiGradingCheck` (data): the wallet, the positions, the ledger of **every kind** for the games' window (an ask without `kind`, so a loss's absence of a SETTLEMENT row can be seen against its FILL/FEE rows), each API bet with its order, fills, contracts, paid, the Tracker's grade and note, the ledger rows that name its market / order / fill (and which one the `ref` was), and whether Novig still holds the position. It reads only your own trading data. It answers the four unverified things (NOVIG_API.md §15): what a SETTLEMENT `ref` names, whether a loss leaves no row, whether a settled position leaves the list, and whether the time window brings the rows back.
+
+### 39.3 Diagnostics (Settings › Diagnostics › Show report → Copy)
+`Diagnostics.report` (app, pure): version and phone; every setting that changes speed or API use; what the background scan really runs; the last scan's timing line, errors and per-source results; each API's calls, refusals and per-key allowance (last four characters only); CNO's last read and errors; the background scan's last cycle; the Tracker (open, current EV coverage, why bets aren't priced, bets waiting since their game and why, results). **Never a key.**
+
+### 39.4 What Tj shows, and when
+1. **Grading:** after a game you bet through the API ends (baseball ~3-4 h), open the Tracker, tap Grade now, then Settings › Diagnostics › **Grading check › Copy** and paste it. Best with one win and one loss (a push or void if one happens). Add a screenshot of that bet's card. A bet still open a day after its game: the same.
+2. **Tuning:** Settings › Diagnostics › **Show report › Copy**, right after a normal Scan, and again right after a Tracker Check odds now; plus a sentence on what felt slow or wrong and when.
+3. **CNO only:** set the scanner to CNO only with auto-scan on Both, leave it an hour, then Show report: the API usage counters for Kalshi, Polymarket, Novig fair odds, The Odds API, PropLine and Pinnacle must not have moved.
+

@@ -152,6 +152,12 @@ unless Tj asks).
   `OpenBetPricerTest`, `BetTrackerTest` (applyPricing, observe age), `BetRecheckTest` (plan/withPricing), `TrackerSortTest`,
   `TrackerTextTest`, `TrackerUiTest` (sort/scanner rows, EV lines, sheet), screenshots 4d/4g; live `LiveOpenBetPricerTest`
   (`VIGILANT_LIVE=1`: real board + Polymarket + Kalshi, ~27 s for 10 bets in 5 leagues).
+- **CNO only sleeps Vigilant everywhere; Diagnostics and Grading check (v0.21.3; RESEARCH.md §39; Tj 2026-09-29):** the scanner choice is the master
+  switch: `ScanSettings.autoScansCno/autoScansVigilant/activeAutoScan` gate `AutoScanner.cycle` and the service; `ScanRunner.start` and
+  `OpenBetPricer.run` refuse when `!vigilantOn`; `AutoScanText.title`, `autoScanHint`, `Diagnostics.runsText` say what really runs. Tests:
+  `CnoOnlyAsleepTest`, `OpenBetPricerTest`, `AutoScanTest`, `PauseScanningAppTest`. Settings › Diagnostics: `Diagnostics.report` (app, pure, never a key;
+  `DiagnosticsTest`), `ApiGradingCheck` (data; `ApiGradingCheckTest`: ledger of every kind, positions, each API bet beside the Tracker's grade),
+  `ReportDialog`/`ReportActions`, `MainViewModel.showDiagnostics/showGradingCheck`, `ReportUiTest`, screenshot 5g. A sweep runs both reports and reads them.
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
