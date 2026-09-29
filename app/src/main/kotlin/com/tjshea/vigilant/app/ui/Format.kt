@@ -12,6 +12,11 @@ import kotlin.math.roundToLong
 object Format {
     private val dayTime = DateTimeFormatter.ofPattern("EEE h:mm a", Locale.US)
     private val date = DateTimeFormatter.ofPattern("MMM d", Locale.US)
+    private val dateTime = DateTimeFormatter.ofPattern("MMM d, h:mm a", Locale.US)
+
+    /** "Sep 29, 4:12 PM": when a bet was placed, by date and time (the Tracker's "date placed"). */
+    fun placedAt(epochMs: Long, zone: ZoneId = ZoneId.systemDefault()): String =
+        dateTime.format(Instant.ofEpochMilli(epochMs).atZone(zone))
 
     fun evPercent(ev: Double): String = (if (ev >= 0) "+" else "−") + String.format(Locale.US, "%.2f%%", abs(ev) * 100)
 
