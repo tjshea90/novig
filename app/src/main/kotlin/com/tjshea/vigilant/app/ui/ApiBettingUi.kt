@@ -317,7 +317,10 @@ private fun WalletBlock(betting: BettingUi, savedKey: ManagementKeyHint?, key: M
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MONEY_CHOICES.forEach { c ->
-                FilterChip(selected = amount != null && kotlin.math.abs(amount - c) < 1e-9, onClick = { amountText = WalletAmount.text(c) }, label = { Text(Format.money(c)) })
+                FilterChip(
+                    selected = amount != null && kotlin.math.abs(amount - c) < 1e-9, onClick = { amountText = WalletAmount.text(c) }, label = { Text(Format.money(c)) },
+                    modifier = Modifier.testTag("walletChip-${WalletAmount.text(c)}"),
+                )
             }
         }
         ManagementKeyBlock(savedKey, key, betting.busy, onSave = actions.onSaveKey, onForget = actions.onForgetKey)

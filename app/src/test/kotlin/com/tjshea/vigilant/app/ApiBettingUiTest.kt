@@ -158,7 +158,7 @@ class ApiBettingUiTest {
         field.performTextInput("50000")
         compose.onNodeWithTag("fundWallet").assertIsNotEnabled()
         // A quick-amount chip types its amount in.
-        compose.onNodeWithText("$20.00").performScrollTo().performClick()
+        compose.onNodeWithTag("walletChip-20").performScrollTo().performClick()
         compose.onNodeWithText("Add $20.00 to the wallet").assertExists()
     }
 
