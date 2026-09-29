@@ -277,6 +277,13 @@ class OpenBetPricerTest {
         val novig = FakeNovig()
         pricer(tracker(bet("a")), novig, fair).run(settings, listOf("a"))
         assertEquals(setOf(MarketFamily.MONEYLINE), fair.asked)
-        assertEquals(MarketFamily.MONEYLINE.novigTypes.toSet(), novig.catalogTypes.toSet())
+        // Novig's board always carries the main lines (cheap); the prop and period types only come when a bet is on them.
+        assertEquals((MarketFamily.MONEYLINE.novigTypes + MarketFamily.SPREAD.novigTypes + MarketFamily.TOTAL.novigTypes).toSet(), novig.catalogTypes.toSet())
+        // A prop bet's pass asks the sources for props alone, and its board for the prop types too.
+        val propFair = FakeOddsApi()
+        val propNovig = FakeNovig()
+        pricer(tracker(labelled("p", "Player Receiving Yards", "Brock Bowers Under 4.5")), propNovig, propFair).run(settings, listOf("p"))
+        assertEquals(setOf(MarketFamily.PLAYER_PROPS), propFair.asked)
+        assertTrue(propNovig.catalogTypes.containsAll(MarketFamily.PLAYER_PROPS.novigTypes - com.tjshea.vigilant.data.scanner.PropStats.BOOK_ONLY_TYPES))
     }
 }
