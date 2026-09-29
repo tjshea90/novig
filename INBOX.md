@@ -2522,3 +2522,8 @@ Also:
 ```
 For betting through the API, allow me to add custom amounts to the vigilant wallet in the app settings by typing in an amount. If my wallet is too low when I go to place a bet in the app, add a button to go directly to the setting to add money to the wallet. Make it so I only input the API key and file one time and the vigilant app saves it permanently in the settings so I don't have to keep entering it. Make this and all keys persist even through app updates
 ```
+
+## 2026-09-29T22:57:08Z
+```
+Add a stats function for when I check odds now in the bet tracker section, as the refreshed odds come in, there is a counter at the top of the section that shows how many of my open bets are currently positive EV and how many are currently negative EV plus a percentage of bets that are positive EV. This counter should refresh back to zero every time I do a new check for odds so that it only shows me the number of current positive EV bets that I placed which are still open. Then next to that, make an average EV stat that shows the average EV percentage of all of my current open bets but not counting any outliers such as any bets showing a current EV of more than 5% positive or a current EV of more than 5% negative.
+```
