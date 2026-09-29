@@ -49,7 +49,7 @@ class BetSettlerTest {
         }
         override suspend fun players(game: GameScore): List<PlayerLine>? {
             boxes++
-            return listOf(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
+            return BetGraderTest.padded(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
         }
     }
 
@@ -140,7 +140,7 @@ class BetSettlerTest {
             bet("ok", "Moneyline", "New York Mets"),
             bet("odd", "Some Novelty Market", "Something Over 1.5"),
             bet("ufc", "Moneyline", "Fighter A", league = "UFC"),
-            bet("nobody", "Player Total Bases", "Nobody Here Over 1.5"),
+            bet("nobody", "Player Total Bases", "Carter Benge Over 1.5"),
             bet("first", "First Touchdown Scorer", "Jonathan Taylor Yes"),
         )
         val report = BetSettler(t, FakeScores(), clock = { now }).run()
@@ -150,7 +150,7 @@ class BetSettlerTest {
         assertEquals("Final: New York Mets 7, Washington Nationals 1", notes["ok"])
         assertEquals(true, notes["odd"]!!.startsWith("Couldn't read \"Some Novelty Market\""))
         assertEquals("No score feed covers UFC: mark it yourself", notes["ufc"])
-        assertEquals(true, notes["nobody"]!!.startsWith("Nobody Here isn't in the box score"))
+        assertEquals(true, notes["nobody"]!!.startsWith("Carter Benge isn't in the box score under that name"))
         assertEquals(true, notes["first"]!!.contains("play-by-play"))
         assertEquals(now, t.all().first { it.id == "odd" }.gradeAtMs)
         // A reason only a tap can fix is flagged; a settled bet isn't waiting on anyone.

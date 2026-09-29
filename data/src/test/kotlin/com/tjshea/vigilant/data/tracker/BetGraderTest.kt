@@ -99,8 +99,8 @@ class BetGraderTest {
     }
 
     @Test
-    fun `props grade from the box score, and a player not in it waits`() {
-        val box = listOf(
+    fun `props grade from the box score`() {
+        val box = padded(
             PlayerLine("Bijan Robinson", mapOf("RUSHING_YARDS" to 194.0, "TOUCHDOWNS" to 2.0)),
             PlayerLine("Drake London", mapOf("RECEIVING_YARDS" to 194.0, "TOUCHDOWNS" to 0.0)),
         )
@@ -111,7 +111,13 @@ class BetGraderTest {
         assertEquals(BetStatus.WON, g("Player Touchdowns", "Drake London Under 0.5"))
         // "B. Robinson" is the one Robinson in the box score.
         assertEquals(BetStatus.WON, g("Player Rushing Yards", "B. Robinson Over 99.5"))
-        assertNull(g("Player Rushing Yards", "Kyle Pitts Over 9.5"))
+        // A football box score lists only players with a stat: Kyle Pitts isn't in it, so he had none (0 rushing yards).
+        assertEquals(BetStatus.LOST, g("Player Rushing Yards", "Kyle Pitts Over 9.5"))
+        assertEquals(BetStatus.WON, g("Player Rushing Yards", "Kyle Pitts Under 9.5"))
+        // Drake London's line has no rushing group: 0 rushing yards, he still played.
+        assertEquals(BetStatus.WON, g("Player Rushing Yards", "Drake London Under 0.5"))
+        // ...but a longest play with no play isn't a market to grade.
+        assertNull(g("Player Longest Rush", "Drake London Under 5.5"))
     }
 
     @Test
@@ -203,7 +209,7 @@ class BetGraderTest {
 
     @Test
     fun `hockey and basketball props grade from the box score, and say why one can't be`() {
-        val box = listOf(
+        val box = padded(
             PlayerLine("Matt Boldy", mapOf("PLAYER_GOALS" to 1.0, "ASSISTS" to 1.0, "POINTS" to 2.0, "SHOTS_ON_GOAL" to 3.0)),
             PlayerLine("Filip Gustavsson", mapOf("SAVES" to 20.0)),
         )
@@ -214,9 +220,14 @@ class BetGraderTest {
         assertEquals("Matt Boldy: 3 Shots On Goal", (g("Player Shots on Goal", "Matt Boldy Over 2.5") as BetGrader.Grade.Result).evidence)
         assertEquals(BetStatus.LOST, (g("Player Saves", "Filip Gustavsson Over 24.5") as BetGrader.Grade.Result).status)
         assertEquals(BetStatus.PUSH, (g("Player Points", "Matt Boldy Over 2") as BetGrader.Grade.Result).status)
-        // A player not in the box score, and a stat it doesn't carry, each say so and stay for a tap.
-        assertEquals(true, (g("Player Saves", "Cam Talbot Over 20.5") as BetGrader.Grade.Manual).reason.startsWith("Cam Talbot isn't in the box score"))
+        // A hockey box score lists everyone who dressed: a goalie who isn't in it didn't play, and Novig refunds the bet.
+        val talbot = g("Player Saves", "Cam Talbot Over 20.5") as BetGrader.Grade.Result
+        assertEquals(BetStatus.VOID, talbot.status)
+        assertEquals("Cam Talbot didn't play (not in the box score): void", talbot.evidence)
+        // A stat the box score doesn't carry says so and stays for a tap.
         assertEquals(true, (g("Player Steals", "Matt Boldy Over 0.5") as BetGrader.Grade.Manual).reason.contains("no Steals"))
+        // A name one letter off a player in it is a spelling, not a scratch: also left to a tap.
+        assertEquals(true, (g("Player Saves", "Filip Gustavson Over 20.5") as BetGrader.Grade.Manual).reason.contains("under that name"))
         // Before the game is over: waiting, not manual.
         val live = BetGrader.gradeDetailed(Pick.Moneyline("Minnesota Wild"), wild.copy(final = false))
         assertEquals(BetGrader.Grade.Waiting("The game isn't over yet"), live)
@@ -241,6 +252,10 @@ class BetGraderTest {
     }
 
     companion object {
+        /** [lines] among enough other players for the box score to count as posted (a real one lists dozens). */
+        fun padded(vararg lines: PlayerLine): List<PlayerLine> =
+            lines.toList() + (1..12).map { PlayerLine("Filler$it Bench$it", mapOf("HITS" to 0.0)) }
+
         val METS_START = java.time.Instant.parse("2026-09-26T16:35:00Z").toEpochMilli()
         val FALCONS_START = java.time.Instant.parse("2026-09-25T00:15:00Z").toEpochMilli()
         val TENNIS_START = java.time.Instant.parse("2026-09-22T05:00:00Z").toEpochMilli()
