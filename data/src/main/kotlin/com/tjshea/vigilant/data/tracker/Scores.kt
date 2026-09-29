@@ -217,12 +217,62 @@ class FreeScores(
                 startMs = ev.str("date")?.let(::isoMs) ?: return@mapNotNull null,
                 final = (type?.get("completed") as? JsonPrimitive)?.booleanOrNull == true && type.str("state") == "post" && status in FINAL_ESPN,
                 called = status in CALLED_ESPN,
+                calledReason = if (status in CALLED_ESPN) calledWord(status) else null,
                 homeScore = home.num("score")?.toInt(),
                 awayScore = away.num("score")?.toInt(),
                 homePeriods = periods(home),
                 awayPeriods = periods(away),
             )
         }
+
+        /** "STATUS_POSTPONED" -> "Postponed". */
+        private fun calledWord(status: String): String = status.removePrefix("STATUS_").lowercase().replaceFirstChar { it.uppercase() }
+
+        /**
+         * ESPN's tennis scoreboard as matches: the singles matches of [league]'s tour (a combined tournament's
+         * scoreboard lists both tours; doubles aren't bet). Sets won are the score; each set's games are the periods.
+         * A retirement or walkover is "called": books' rules for a match that wasn't finished vary.
+         */
+        fun parseEspnTennisDay(root: JsonElement, league: String): List<GameScore> {
+            val women = league == "WTA"
+            return root.obj()?.get("events").arr().flatMap { e ->
+                e.obj()?.get("groupings").arr().flatMap { g ->
+                    val slug = g.obj()?.get("grouping").obj()?.str("slug").orEmpty()
+                    if (!slug.endsWith("singles") || slug.startsWith("womens") != women) return@flatMap emptyList()
+                    g.obj()?.get("competitions").arr().mapNotNull { c ->
+                        val co = c.obj() ?: return@mapNotNull null
+                        val id = co.str("id") ?: return@mapNotNull null
+                        val type = co["status"].obj()?.get("type").obj()
+                        val sides = co["competitors"].arr().mapNotNull { it.obj() }
+                        val home = sides.firstOrNull { it.str("homeAway") == "home" } ?: return@mapNotNull null
+                        val away = sides.firstOrNull { it.str("homeAway") == "away" } ?: return@mapNotNull null
+                        fun name(t: JsonObject) = t["athlete"].obj()?.str("displayName")
+                        fun sets(t: JsonObject) = t["linescores"].arr().mapNotNull { it.obj() }
+                        val homeSets = sets(home)
+                        val awaySets = sets(away)
+                        fun won(l: List<JsonObject>) = l.count { (it["winner"] as? JsonPrimitive)?.booleanOrNull == true }
+                        val status = type?.str("name").orEmpty()
+                        val called = status in CALLED_ESPN || status in CALLED_TENNIS
+                        GameScore(
+                            id = id,
+                            league = league,
+                            home = name(home) ?: return@mapNotNull null,
+                            away = name(away) ?: return@mapNotNull null,
+                            startMs = (co.str("startDate") ?: co.str("date"))?.let(::isoMs) ?: return@mapNotNull null,
+                            final = (type?.get("completed") as? JsonPrimitive)?.booleanOrNull == true && type.str("state") == "post" && status == "STATUS_FINAL",
+                            called = called,
+                            calledReason = if (called) calledWord(status) else null,
+                            homeScore = won(homeSets),
+                            awayScore = won(awaySets),
+                            homePeriods = homeSets.map { it.num("value")?.toInt() ?: 0 },
+                            awayPeriods = awaySets.map { it.num("value")?.toInt() ?: 0 },
+                        )
+                    }
+                }
+            }
+        }
+
+        private val CALLED_TENNIS = setOf("STATUS_RETIRED", "STATUS_WALKOVER", "STATUS_DEFAULT")
 
         /** ESPN's final statuses (overtime and shootouts included). */
         private val FINAL_ESPN = setOf("STATUS_FINAL", "STATUS_FINAL_OT", "STATUS_FINAL_SO", "STATUS_FINAL_PEN", "STATUS_END_OF_EXTRA_TIME")
