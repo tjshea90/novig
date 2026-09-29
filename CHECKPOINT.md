@@ -1,13 +1,13 @@
-# CHECKPOINT 2094 — read me first, then TASKS.md
+# CHECKPOINT 2095 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T19:07:40Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `396897c2` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T19:12:06Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `7ca71600` (this checkpoint is the commit after it)
 
 ## Just done
-Recorded Tj's request (optimize from the two Diagnostics reports; widget must not auto-open; which APIs deplete; Settings tabs; sticky top navigation) as A1-A6
+A2: widget only opens from its button: miniWindow default off + schema-10 migration forces off once, Settings switch is an opt-in 'Also open it when I leave Vigilant'; MiniWindowTest + AltMarketsTest green
 
 ## Do this next
-A1/A3: read the reports against the code (Kalshi/PropLine/Odds API costs per scan and per Check odds now, QuotaPolicy allowances), A2: find the widget auto-open
+A1/A3: bets-only pass families restriction (BetsScope), Diagnostics Runway block + Check odds now timing; then A4 Settings tabs, A5 sticky headers, A6 ship v0.22.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ A1/A3: read the reports against the code (Kalshi/PropLine/Odds API costs per sca
 
 ## Last ten checkpoints
 ```
+  ba13d8ea ckpt 2094: Recorded Tj's request (optimize from the two Diagnostics reports; widget mus
   5b176f1d ckpt 2093: v0.21.3 (code 49) released and recorded; Z1-Z4 ticked
   523dda5e ckpt 2092: pre-release: v0.21.3: CNO only now sleeps Vigilant in the background too (au
   7b903e8f ckpt 2091: Z1-Z3: CNO only sleeps Vigilant in the background (autoScansVigilant/Cno, ru
@@ -26,8 +27,7 @@ A1/A3: read the reports against the code (Kalshi/PropLine/Odds API costs per sca
   cbe4faa2 ckpt 2087: Y1/Y2: first real API orders refused for clientId format (vigilant- prefix);
   5984e7b7 ckpt 2086: v0.21.1 (code 47) released and recorded; X1-X5 ticked
   55cdc46b ckpt 2085: pre-release: v0.21.1: Check odds now updates the EV of every open bet, Vigil
-  7d4c504e ckpt 2084: X2-X4 ticked with their tests; RESEARCH.md §38.3 (built, live 10/10 priced 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
