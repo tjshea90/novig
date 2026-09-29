@@ -592,6 +592,21 @@ fun SettingsScreen(
 
             }
 
+            // ---- Diagnostics ---------------------------------------------------------------------
+            SectionTitle("Diagnostics")
+            Hint(
+                "Something slow, odd or not grading? Tap Show report, then Copy, and paste it to Claude: your settings, the last scan's timing and errors, " +
+                    "each API's usage, the background scan and the Tracker's numbers, in one page. It never has a key in it.",
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = reportActions.onDiagnostics) { Text("Show report") }
+                // The ledger check needs the betting key: Novig's own record of each API bet against what the Tracker did with it.
+                if (AppBook.isNovig && state.betting.enabled) OutlinedButton(onClick = reportActions.onGradingCheck) { Text("Grading check") }
+            }
+            if (AppBook.isNovig && state.betting.enabled) {
+                Hint("Grading check: what Novig's ledger and positions say about each bet you placed through the API, beside how the Tracker graded it. Run it after a game ends.")
+            }
+
             SectionTitle("About")
             Hint(
                 (if (AppBook.isNovig) "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com"
