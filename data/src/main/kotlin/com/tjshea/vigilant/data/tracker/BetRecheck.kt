@@ -203,6 +203,7 @@ class BetRecheck(
                                 } else {
                                     failedInARow = 0
                                     pending[bet.id] = update
+                                    updatedIds += bet.id
                                     updated++
                                     if (pending.size >= BATCH) flush()
                                 }
