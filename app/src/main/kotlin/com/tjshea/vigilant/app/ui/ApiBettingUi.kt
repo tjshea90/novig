@@ -286,7 +286,7 @@ fun NovigBettingSection(
  * Adding money to (or taking it back from) the Vigilant wallet, any amount Tj types (Tj, 2026-09-29). Arriving from a Bet sheet the wallet
  * couldn't cover ([BettingUi.topUp]), it's scrolled into view with what the bet is short by typed in, and offers "Back to the bet".
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun WalletBlock(betting: BettingUi, savedKey: ManagementKeyHint?, key: ManagementKeyState, actions: BettingActions) {
     val topUp = betting.topUp
