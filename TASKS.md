@@ -2720,7 +2720,39 @@ Tj's words, in order (each becomes a job below; the design notes come after read
 - "Think of the best way for me to be able to quickly and easily mark a bet as placed so vigilant tracks it if I select the bet from a push notification. Right now, if I click on the notification, it opens novig, but there isn't a fast way for me to add the bet as a tracked bet in vigilant."
 - "After all these features are built, run the full test protocol looking for ways to improve the app and the UI and code and fix bugs."
 
-- [ ] T1 Read the tracker code end to end (BetTracker, BetRecheck, BetSettler, BetGrader, Scores, PlacedBets/PlacedIndex, TrackerScreen, the ViewModel's recheck/settle) and write the findings + the plan for T2-T9 here.
+- [x] T1 Read the tracker code end to end. FINDINGS + PLAN (2026-09-29; a resumed session builds from here, T2 first):
+      **Why "40 of 40":** `BetRecheck.MAX_PER_RUN = 40` caps a pass; `due()` also keeps only bets with a CNO game page (`gameUrl`)
+      and a start under 4 h ago, so Vigilant-tracked bets and games already over were never read, and the toast counted only
+      the 40 it took. 101 open = CNO bets (each 2 CNO requests: page + postback) + Vigilant bets (`track()` sets no gameUrl;
+      they're priced only when a scan pins their market: `startVigilantScan(pinned)` -> `BetTracker.observe`) + games over.
+      **Why bets stay open after the game is final** (I can't see Tj's phone data, so each cause is shown on the card, T4): (1) a
+      market `BetGrader.pickOf` can't read (3-way, quarters/periods, "alternate total" wording, combo props); (2) a stat the
+      box-score parsers don't produce (ESPN hockey has NO box parser at all; basketball has no steals/blocks/turnovers/P+R/P+A/R+A;
+      football no sacks/tackles; tennis/soccer/other sports not wired); (3) game not found/called; (4) `BetTracker.settle(id,
+      PENDING)` (Undo) sets `settledBy = "you"` and the auto-grader then never touches that bet again; (5) retries live in
+      memory (`nextTry`) and the settler runs only when the app opens, the Tracker shows, or the 3-hour worker fires.
+      **PropLine's grading (research, 2026-09-29, openapi.json + llms-full.txt):** `GET /v1/sports/{sport}/events/{id}/results`
+      (each prop won/lost/push/void + actual value, per book) is PAID (Hobby $9/mo+; the free key gets `redacted: true`, no
+      resolution). FREE: `/v1/sports/{sport}/scores?days_from=N` (id, teams, status final/postponed/..., scores) and
+      `/events/{id}/stats` (box score rows `player_name/stat_type/stat_value`: MLB hits, HR, RBI, runs, K, walks, SB; NBA/WNBA
+      points, rebounds, assists, threes, steals, blocks, turnovers; NFL/NCAAF passing/rushing/receiving yards, TDs, anytime TD;
+      NHL goals, points, SOG, blocked shots, saves; soccer goals, assists, shots, cards; tennis sets won, aces, total games);
+      1 request each of the key's 1,000/day; event ids join to the odds calls. Verdict: don't pay for `/results` (Vigilant grades
+      from box scores itself, which is more auditable); use the FREE `/scores` + `/stats` as a second score source behind ESPN/MLB
+      (hockey, soccer, tennis, anything ESPN can't parse), only with Tj's PropLine key, never on failure worse than today.
+      (Unverified live: the demo key answers 401 on /scores; schema is the published one.)
+      **Stats audit (`BetTracker.stats`):** `expectedProfit` sums OPEN bets too, so "Expected" is compared with a "Profit" that
+      only has settled bets (apples to oranges); voided bets have no count; the running-profit line orders by when Vigilant
+      graded (`settledAtMs`), not by game date; outliers are left out of everything with no line for the real bankroll total; FMV
+      counts as "pushed". Fix each (T5), with tests.
+      **Build order (each a checkpoint):** T2 (BetRecheck: no cap, one honest Report with every open bet accounted for, live
+      progress, Vigilant scan for Vigilant-only bets) -> data model (`TrackedBet.books` snapshot, `gradeNote`) -> T4 (reasons,
+      NHL/NBA/tennis parsers, PropLine fallback, Undo re-enables auto-grade with a button) -> T5/T6 (stats + breakdowns + expected
+      vs actual + batched saves + memoised UI) -> T3 (bet sheet: odds bet at vs fair now, every book's odds, EV now, CLV) + T7
+      (Replace: `novigapp://events/<outcome>` + Settings' bet-slip stake; resolves a missing outcome via `AppContainer.betLink`)
+      + price edit -> T8 (notification: `✓ Placed $X` / `Skip` action buttons that track without opening the app via a
+      BroadcastReceiver, the tap opens Novig but the notification stays (no auto-cancel); EvAlert carries league/gameUrl/
+      betUrl/marketId so the tracked bet rechecks and grades) -> T9 full test protocol, v0.20.0 (code 43), Release.
 - [ ] T2 "Check odds now" checks every open bet (101 of 101, not 40 of 40).
 - [ ] T3 Tap an open bet: a sheet with the bet's odds across the other books, the odds Tj bet at, the difference from the current devigged fair odds, etc.
 - [ ] T4 Every final event grades every open bet win/loss/push: research the API that claims to grade all props markets; use it if it works.
