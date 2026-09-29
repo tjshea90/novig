@@ -1,7 +1,9 @@
 package com.tjshea.vigilant.data.tracker
 
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Settles tracked bets from each game's final score (Tj, 2026-09-27: "keep track whether each bet
@@ -15,62 +17,135 @@ import kotlinx.coroutines.sync.withLock
  * scoreboard read covers every bet of that league and day. A game not over yet is looked at again
  * after [RETRY_MS]; a bet that can't be graded (a market it can't read, a player missing from the
  * box score, a postponed game) after [RETRY_UNGRADABLE_MS], and it can always be tapped. A result
- * tapped in the Tracker ([BetTracker.settle], "you") is never overwritten, and neither is an undo.
+ * tapped in the Tracker ([BetTracker.settle], "you") is never overwritten, and neither is an undo
+ * (until "Grade automatically", [BetTracker.regrade]).
+ *
+ * Every bet a pass looks at ends with a note on it ([TrackedBet.gradeNote]): what settled it ("Final:
+ * Mets 7, Nationals 1"), or exactly why it's still open (2026-09-29, Tj: "some bets are still pending in
+ * the open bets tab that are final"): the game isn't over, the market can't be read, the player isn't
+ * in the box score. So a bet that stays open never stays open silently.
  */
 class BetSettler(
     private val tracker: BetTracker,
     private val scores: ScoreSource,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    data class Report(val asked: Int, val settled: Int, val stopped: Boolean)
+    /** [waiting]: games not over yet; [manual]: bets nothing the feeds carry can settle (each has its reason on the bet). */
+    data class Report(val asked: Int, val settled: Int, val stopped: Boolean, val waiting: Int = 0, val manual: Int = 0)
 
     private val mutex = Mutex()
 
     /** When each bet may be looked at again (kept while the app runs). */
     private val nextTry = HashMap<String, Long>()
 
-    /** Bets due a look now. */
-    fun due(bets: List<TrackedBet>, now: Long = clock()): List<TrackedBet> = bets
+    /** Bets due a look now ([force]: every one, whenever it was last looked at). */
+    fun due(bets: List<TrackedBet>, now: Long = clock(), force: Boolean = false): List<TrackedBet> = bets
         .filter { it.status == BetStatus.PENDING && it.settledBy != BY_YOU }
         .filter { now - it.startsTs >= AFTER_START_MS && now - it.startsTs <= GIVE_UP_MS }
-        .filter { (nextTry[it.id] ?: 0L) <= now }
+        .filter { force || (nextTry[it.id] ?: 0L) <= now }
         .sortedBy { it.startsTs }
 
-    /** One pass: every due bet, oldest first. Runs one pass at a time; a second caller waits for it. */
-    suspend fun run(): Report = mutex.withLock {
+    /**
+     * One pass: every due bet, oldest first ([force]: the "Grade now" button: ignore when a bet was last
+     * tried). Runs one pass at a time; a second caller waits for it.
+     */
+    suspend fun run(force: Boolean = false): Report = mutex.withLock {
+        val startedAt = clock()
         var asked = 0
         var settled = 0
-        for (bet in due(tracker.all()).take(MAX_PER_RUN)) {
-            asked++
-            val pick = BetGrader.pickOf(bet)
-            if (pick == null) {
-                later(bet, RETRY_UNGRADABLE_MS)
-                continue
-            }
-            val found = when (val f = findGame(bet)) {
-                Lookup.Unreachable -> return@withLock Report(asked, settled, stopped = true)
-                Lookup.NotFound -> { later(bet, RETRY_UNGRADABLE_MS); continue }
-                is Lookup.Found -> f.game
-            }
-            if (found.called) { later(bet, RETRY_UNGRADABLE_MS); continue }
-            if (!found.final) { later(bet, RETRY_MS); continue }
-            val players = if (pick is BetGrader.Pick.Prop) {
-                scores.players(found) ?: return@withLock Report(asked, settled, stopped = true)
-            } else {
-                null
-            }
-            val status = BetGrader.grade(pick, found, players)
-            if (status == null) { later(bet, RETRY_UNGRADABLE_MS); continue }
-            val now = clock()
-            tracker.edit(bet.id) {
-                // Tapped (or undone) while this pass ran: the tap wins.
-                if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it
-                else it.copy(status = status, settledAtMs = now, settleValue = null, settledBy = BY_SCORES)
-            }
-            nextTry.remove(bet.id)
-            settled++
+        var waiting = 0
+        var manual = 0
+        val changes = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
+        val all = tracker.all()
+
+        // Bets left to a tap for good say so once, instead of sitting open with no word.
+        for (bet in all) {
+            if (bet.status != BetStatus.PENDING || bet.settledBy == BY_YOU) continue
+            if (startedAt - bet.startsTs > GIVE_UP_MS) note(changes, bet, TOO_OLD, startedAt)
         }
-        Report(asked, settled, stopped = false)
+
+        suspend fun flush() {
+            if (changes.isEmpty()) return
+            val batch = LinkedHashMap(changes)
+            changes.clear()
+            // A cancelled pass keeps what it found.
+            withContext(NonCancellable) { tracker.editMany(batch) }
+        }
+
+        try {
+            for (bet in due(all, startedAt, force).take(MAX_PER_RUN)) {
+                asked++
+                val pick = BetGrader.pickOf(bet)
+                if (pick == null) {
+                    manual++
+                    note(changes, bet, BetGrader.whyNot(bet.marketLabel, bet.selection), startedAt)
+                    later(bet, RETRY_UNGRADABLE_MS)
+                    continue
+                }
+                val found = when (val f = findGame(bet)) {
+                    Lookup.Unreachable -> return@withLock Report(asked - 1, settled, stopped = true, waiting = waiting, manual = manual)
+                    is Lookup.NotFound -> {
+                        manual++
+                        note(changes, bet, f.reason, startedAt)
+                        later(bet, RETRY_UNGRADABLE_MS)
+                        continue
+                    }
+                    is Lookup.Found -> f.game
+                }
+                if (found.called) {
+                    manual++
+                    note(changes, bet, "${found.calledReason ?: "Called off"}: the score feeds have no result to grade with. Mark it yourself (Void if ${AppBookName} refunded it)", startedAt)
+                    later(bet, RETRY_UNGRADABLE_MS)
+                    continue
+                }
+                if (!found.final) {
+                    waiting++
+                    note(changes, bet, "The game isn't over yet", startedAt)
+                    later(bet, RETRY_MS)
+                    continue
+                }
+                val players = if (pick is BetGrader.Pick.Prop && !found.tennis) {
+                    scores.players(found) ?: return@withLock Report(asked - 1, settled, stopped = true, waiting = waiting, manual = manual)
+                } else {
+                    null
+                }
+                when (val grade = BetGrader.gradeDetailed(pick, found, players)) {
+                    is BetGrader.Grade.Result -> {
+                        val now = clock()
+                        changes[bet.id] = {
+                            // Tapped (or undone) while this pass ran: the tap wins.
+                            if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it
+                            else it.copy(
+                                status = grade.status, settledAtMs = now, settleValue = null, settledBy = BY_SCORES,
+                                books = emptyList(), gradeNote = grade.evidence, gradeAtMs = now,
+                            )
+                        }
+                        nextTry.remove(bet.id)
+                        settled++
+                    }
+                    is BetGrader.Grade.Waiting -> {
+                        waiting++
+                        note(changes, bet, grade.reason, startedAt)
+                        later(bet, RETRY_MS)
+                    }
+                    is BetGrader.Grade.Manual -> {
+                        manual++
+                        note(changes, bet, grade.reason, startedAt)
+                        later(bet, RETRY_UNGRADABLE_MS)
+                    }
+                }
+                if (changes.size >= BATCH) flush()
+            }
+        } finally {
+            flush()
+        }
+        Report(asked, settled, stopped = false, waiting = waiting, manual = manual)
+    }
+
+    /** Puts [text] on [bet] when it's new (or the last look is old), so an unchanged answer never rewrites the file. */
+    private fun note(changes: MutableMap<String, (TrackedBet) -> TrackedBet>, bet: TrackedBet, text: String, now: Long) {
+        if (bet.gradeNote == text && bet.gradeAtMs != null && now - bet.gradeAtMs < NOTE_REFRESH_MS) return
+        changes[bet.id] = { if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it else it.copy(gradeNote = text, gradeAtMs = now) }
     }
 
     private fun later(bet: TrackedBet, afterMs: Long) {
@@ -79,7 +154,7 @@ class BetSettler(
 
     private sealed interface Lookup {
         data class Found(val game: GameScore) : Lookup
-        data object NotFound : Lookup
+        data class NotFound(val reason: String) : Lookup
         data object Unreachable : Lookup
     }
 
@@ -89,8 +164,9 @@ class BetSettler(
      * league the feeds cover.
      */
     private suspend fun findGame(bet: TrackedBet): Lookup {
-        val leagues = bet.league.trim().uppercase().takeIf { it.isNotEmpty() }?.let { l -> listOf(l).filter(scores::covers) } ?: ALL_LEAGUES
-        if (leagues.isEmpty()) return Lookup.NotFound
+        val named = bet.league.trim().uppercase().takeIf { it.isNotEmpty() }
+        val leagues = named?.let { l -> listOf(l).filter(scores::covers) } ?: ALL_LEAGUES
+        if (leagues.isEmpty()) return Lookup.NotFound("No score feed covers ${named ?: bet.league}: mark it yourself")
         val day = FreeScores.etDate(bet.startsTs)
         var readAny = false
         for (date in listOf(day, day.minusDays(1), day.plusDays(1))) {
@@ -102,7 +178,7 @@ class BetSettler(
             // The game's own day answered and it isn't there: the next days only for a late listing.
             if (!readAny) return Lookup.Unreachable
         }
-        return Lookup.NotFound
+        return Lookup.NotFound("Couldn't find this game on the ${leagues.singleOrNull() ?: "score"} scoreboard for $day: mark it yourself")
     }
 
     companion object {
@@ -130,7 +206,17 @@ class BetSettler(
         /** Bets per pass at most; the rest go next pass. */
         const val MAX_PER_RUN = 200
 
+        /** Notes saved together (one file write) every this many bets. */
+        const val BATCH = 20
+
+        /** An unchanged note is re-stamped (so "checked …" stays honest) only this long after the last one. */
+        const val NOTE_REFRESH_MS = 30 * 60_000L
+
+        private const val AppBookName = "Novig"
+
+        const val TOO_OLD = "Over 30 days old: the score feeds no longer look. Mark it yourself"
+
         /** Where a bet with no league is looked for, most likely first. */
-        val ALL_LEAGUES = listOf("NFL", "NCAAF", "MLB", "WNBA", "NBA", "NHL", "NCAAB")
+        val ALL_LEAGUES = listOf("NFL", "NCAAF", "MLB", "WNBA", "NBA", "NHL", "NCAAB", "ATP", "WTA")
     }
 }
