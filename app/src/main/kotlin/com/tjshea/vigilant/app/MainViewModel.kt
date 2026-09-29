@@ -90,7 +90,12 @@ data class NovigUi(
     val error: String? = null,
 )
 
+/** A report Tj can read, copy and paste (Settings › Diagnostics, Grading check): [busy] while it's being put together. */
+data class ReportUi(val title: String, val text: String, val busy: Boolean = false)
+
 data class UiState(
+    /** The Diagnostics / Grading check report being shown, if any (Tj, 2026-09-29). */
+    val report: ReportUi? = null,
     /** Betting through Novig's API: set up or not, the balance; and the Bet sheet while one is open (Tj, 2026-09-29). */
     val betting: BettingUi = BettingUi(),
     val betSheet: BetSheetUi? = null,
