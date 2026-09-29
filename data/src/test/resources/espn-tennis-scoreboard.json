@@ -1,0 +1,287 @@
+{
+ "events": [
+  {
+   "name": "Sample",
+   "groupings": [
+    {
+     "grouping": {
+      "slug": "mens-singles"
+     },
+     "competitions": [
+      {
+       "id": "186127",
+       "startDate": "2026-09-22T05:00Z",
+       "status": {
+        "type": {
+         "name": "STATUS_FINAL",
+         "state": "post",
+         "completed": true
+        }
+       },
+       "competitors": [
+        {
+         "homeAway": "away",
+         "winner": false,
+         "linescores": [
+          {
+           "value": 4.0,
+           "winner": false
+          },
+          {
+           "value": 7.0,
+           "tiebreak": 8,
+           "winner": true
+          },
+          {
+           "value": 3.0,
+           "winner": false
+          }
+         ],
+         "athlete": {
+          "displayName": "Luka Pavlovic"
+         }
+        },
+        {
+         "homeAway": "home",
+         "winner": true,
+         "linescores": [
+          {
+           "value": 6.0,
+           "winner": true
+          },
+          {
+           "value": 6.0,
+           "tiebreak": 6,
+           "winner": false
+          },
+          {
+           "value": 6.0,
+           "winner": true
+          }
+         ],
+         "athlete": {
+          "displayName": "Alexandre Muller"
+         }
+        }
+       ]
+      },
+      {
+       "id": "186131",
+       "startDate": "2026-09-22T05:00Z",
+       "status": {
+        "type": {
+         "name": "STATUS_FINAL",
+         "state": "post",
+         "completed": true
+        }
+       },
+       "competitors": [
+        {
+         "homeAway": "away",
+         "winner": true,
+         "linescores": [
+          {
+           "value": 7.0,
+           "winner": true
+          },
+          {
+           "value": 7.0,
+           "tiebreak": 7,
+           "winner": true
+          }
+         ],
+         "athlete": {
+          "displayName": "Alexis Galarneau"
+         }
+        },
+        {
+         "homeAway": "home",
+         "winner": false,
+         "linescores": [
+          {
+           "value": 5.0,
+           "winner": false
+          },
+          {
+           "value": 6.0,
+           "tiebreak": 5,
+           "winner": false
+          }
+         ],
+         "athlete": {
+          "displayName": "Elias Ymer"
+         }
+        }
+       ]
+      },
+      {
+       "id": "183422",
+       "startDate": "2026-09-29T11:00Z",
+       "status": {
+        "type": {
+         "name": "STATUS_SCHEDULED",
+         "state": "pre",
+         "completed": false
+        }
+       },
+       "competitors": [
+        {
+         "homeAway": "away",
+         "winner": null,
+         "linescores": [],
+         "athlete": {
+          "displayName": "Alejandro Davidovich Fokina"
+         }
+        },
+        {
+         "homeAway": "home",
+         "winner": null,
+         "linescores": [],
+         "athlete": {
+          "displayName": "Hubert Hurkacz"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "grouping": {
+      "slug": "womens-singles"
+     },
+     "competitions": [
+      {
+       "id": "186226",
+       "startDate": "2026-09-28T03:05Z",
+       "status": {
+        "type": {
+         "name": "STATUS_FINAL",
+         "state": "post",
+         "completed": true
+        }
+       },
+       "competitors": [
+        {
+         "homeAway": "away",
+         "winner": true,
+         "linescores": [
+          {
+           "value": 6.0,
+           "winner": true
+          },
+          {
+           "value": 6.0,
+           "winner": true
+          }
+         ],
+         "athlete": {
+          "displayName": "Vivian Wolff"
+         }
+        },
+        {
+         "homeAway": "home",
+         "winner": false,
+         "linescores": [
+          {
+           "value": 1.0,
+           "winner": false
+          },
+          {
+           "value": 1.0,
+           "winner": false
+          }
+         ],
+         "athlete": {
+          "displayName": "Carol Zhao"
+         }
+        }
+       ]
+      },
+      {
+       "id": "184060",
+       "startDate": "2026-09-26T09:40Z",
+       "status": {
+        "type": {
+         "name": "STATUS_RETIRED",
+         "state": "post",
+         "completed": true
+        }
+       },
+       "competitors": [
+        {
+         "homeAway": "away",
+         "winner": true,
+         "linescores": [
+          {
+           "value": 6.0,
+           "winner": true
+          },
+          {
+           "value": 1.0,
+           "winner": false
+          }
+         ],
+         "athlete": {
+          "displayName": "Maya Joint"
+         }
+        },
+        {
+         "homeAway": "home",
+         "winner": false,
+         "linescores": [
+          {
+           "value": 2.0,
+           "winner": false
+          },
+          {
+           "value": 0.0,
+           "winner": false
+          }
+         ],
+         "athlete": {
+          "displayName": "Alina Korneeva"
+         }
+        }
+       ]
+      },
+      {
+       "id": "184093",
+       "startDate": "2026-09-23T06:35Z",
+       "status": {
+        "type": {
+         "name": "STATUS_WALKOVER",
+         "state": "post",
+         "completed": true
+        }
+       },
+       "competitors": [
+        {
+         "homeAway": "away",
+         "winner": false,
+         "linescores": [],
+         "athlete": {
+          "displayName": "Barbora Krejcikova"
+         }
+        },
+        {
+         "homeAway": "home",
+         "winner": true,
+         "linescores": [],
+         "athlete": {
+          "displayName": "Elise Mertens"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "grouping": {
+      "slug": "mens-doubles"
+     },
+     "competitions": []
+    }
+   ]
+  }
+ ]
+}
