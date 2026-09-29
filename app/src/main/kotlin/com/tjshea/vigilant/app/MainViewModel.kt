@@ -1006,10 +1006,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
 
     /**
-     * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's books read again
-     * for its EV now, one CNO game page every two seconds with the count on the button. Vigilant's own bets
-     * (no CNO page) are priced by a Vigilant scan, started here when that scanner is on and none is running.
-     * The toast counts every open bet ([BetRecheck.Report.summary]).
+     * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's EV now, against the price it was bet at.
+     * CNO's bets have their CNO game page read again (a page every half second, three at once); Vigilant's own bets (no CNO page)
+     * are priced from Vigilant's own fair odds by [OpenBetPricer] at the same time, and so is any bet CNO couldn't read. The count on
+     * the button covers both; the toast counts every open bet ([BetRecheck.Report.summary]), and a bet that couldn't be priced
+     * says why on its own card. Finished games' results are graded in the same tap.
      */
     fun checkOdds() {
         val start = _state.value
@@ -1020,9 +1021,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _state.update { it.copy(checkingOdds = true, checkProgress = null) }
+        val settings = start.settings
         viewModelScope.launch {
             var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null
-            var scanStarted = false
             // The finished games' results are graded at the same time (the score feeds are ESPN and MLB, not CNO, so it costs no time):
             // one tap covers every open bet, the ones still to play and the ones already over.
             val grading = async(Dispatchers.IO) {
@@ -1035,9 +1036,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             try {
+                // Vigilant's own pricing is off when its scanner is (CNO only) or isn't Novig's (Vigilant MGM).
+                val pricer = c.betPricer?.takeIf { settings.vigilantOn }
                 val plan = c.recheck.preview()
-                if (plan.vigilantOnly > 0) scanStarted = startScanForOpenBets()
-                report = c.recheck.run { done, total -> _state.update { it.copy(checkProgress = done to total) } }
+                val cnoTotal = plan.todo.size
+                val ownBets = if (pricer != null) plan.vigilantBets.map { it.id } else emptyList()
+                val cnoDone = java.util.concurrent.atomic.AtomicInteger()
+                val ownDone = java.util.concurrent.atomic.AtomicInteger()
+                fun publish() {
+                    val total = cnoTotal + ownBets.size
+                    _state.update { it.copy(checkProgress = if (total > 0) (cnoDone.get() + ownDone.get()) to total else null) }
+                }
+                publish()
+                report = kotlinx.coroutines.coroutineScope {
+                    val own = if (pricer != null && ownBets.isNotEmpty()) async(Dispatchers.IO) {
+                        pricer.run(settings, ownBets).also { ownDone.set(ownBets.size); publish() }
+                    } else null
+                    val cno = async(Dispatchers.IO) { c.recheck.run { done, _ -> cnoDone.set(done); publish() } }
+                    var r = cno.await()
+                    own?.await()?.let { r = r.withPricing(it, rescue = false) }
+                    // Bets CNO couldn't read (a page gone, or it asked for a pause) are Vigilant's to price, when it can.
+                    if (pricer != null && r.unreadIds.isNotEmpty()) {
+                        r = r.withPricing(withContext(Dispatchers.IO) { pricer.run(settings, r.unreadIds) }, rescue = true)
+                    }
+                    r
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -1045,18 +1068,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _state.update { it.copy(checkingOdds = false, checkProgress = null) }
             }
-            _toasts.tryEmit(report?.summary(scanStarted, grading.await()) ?: "Couldn't check the odds")
+            _toasts.tryEmit(report?.summary(vigilantOff = !settings.vigilantOn, graded = grading.await()) ?: "Couldn't check the odds")
         }
-    }
-
-    /** Starts Vigilant's scan for the open bets it prices (their markets are pinned); false when it can't or needn't start. */
-    private fun startScanForOpenBets(): Boolean {
-        val current = _state.value
-        if (!current.loaded || !current.settings.vigilantOn || current.settings.paused || current.settings.leagues.isEmpty()) return false
-        if (c.runner.running || current.status.rechecking) return true // one is already pricing them
-        val started = c.startVigilantScan(current.settings, current.bets)
-        if (started) ScanService.start(getApplication())
-        return started
     }
 
     fun setStake(id: String, stake: Double) {
