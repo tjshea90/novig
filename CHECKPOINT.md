@@ -1,13 +1,13 @@
-# CHECKPOINT 2055 — read me first, then TASKS.md
+# CHECKPOINT 2056 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T07:02:26Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `e6502097` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T07:05:06Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `c56e4b72` (this checkpoint is the commit after it)
 
 ## Just done
-U4 grading fixes: football absent-from-box = 0 (ZERO stats), injury-report Out => VOID, other sports DNP => VOID, lookalike names => tap, MIN_BOX waits, CNO market aliases (earned runs allowed, outs recorded, walks allowed, RBI, batter K/BB, 3-pointers) + statOf noise retry; RealBoxGradingTest on the real Bengals/Steelers + Panthers/Browns box scores
+U4 verified live: LiveUngradedBetsTest settles the 3 screenshot bets from real ESPN/MLB feeds (Concepcion LOST, All WON, Anderson LOST); U5: openSummary 'odds read on N of M upcoming' + per-bet oddsNote
 
 ## Do this next
-U5: honest counts in BetRecheck report + TrackerText (odds checked on N; reasons for unchecked bets); then run the full floor, live check the 3 screenshot bets, U6 ship v0.20.1
+Check whether Check odds now also runs a grading pass; then TASKS/RESEARCH notes, floor, screenshots, sweep, ship v0.20.1
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ U5: honest counts in BetRecheck report + TrackerText (odds checked on N; reasons
 
 ## Last ten checkpoints
 ```
+  b825c950 ckpt 2055: U4 grading fixes: football absent-from-box = 0 (ZERO stats), injury-report O
   c3e46096 ckpt 2054: Recorded Tj's follow-up on the tracker (slow Check odds, ungradable bets, 61
   c0ed3975 ckpt 2053: v0.20.0 (code 43) released and recorded: CI green (run 36526989519), release
   c807f261 ckpt 2052: pre-release: v0.20.0: Tracker: Check odds now reads every open bet (no 40 ca
@@ -25,8 +26,7 @@ U5: honest counts in BetRecheck report + TrackerText (odds checked on N; reasons
   62106480 ckpt 2048: T2-T8 ticked in TASKS.md with evidence; RESEARCH.md §34 (PropLine grading i
   ecc43d25 ckpt 2047: T2/T3/T4/T5/T6/T7 UI built: TrackerScreen (open list sorted by need, summary
   167165c0 ckpt 2046: T4/T3/T5/T6/T7 data layer done and tested: BetGrader (tennis, alternate tota
-  bca5fd2a ckpt 2045: T4 in progress: FreeScores reads ESPN hockey box (goals/assists/points/SOG/b
 ```
 
-(24 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
