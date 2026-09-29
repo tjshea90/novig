@@ -6,6 +6,7 @@ import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.NovigBetFinder
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigMarket
+import com.tjshea.vigilant.data.novig.signing.ManagementKey
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.trading.ApiBetPlacer
 import com.tjshea.vigilant.data.novig.trading.BetLimits
@@ -36,7 +37,15 @@ data class BettingUi(
     val busy: Boolean = false,
     val message: String? = null,
     val error: String? = null,
+    /** Set while Tj came from a Bet sheet whose bet the wallet couldn't cover: Settings opens on the wallet with [TopUp.amount] typed in. */
+    val topUp: TopUp? = null,
 )
+
+/**
+ * "Add money" from the Bet sheet (Tj, 2026-09-29: "If my wallet is too low when I go to place a bet in the app, add a button to go directly to
+ * the setting to add money to the wallet"): [amount] is what the bet is short by (whole dollars, at least $1); "Back to the bet" re-opens [bet].
+ */
+data class TopUp(val amount: Double, val needed: Double, val bet: BetSheetUi)
 
 /** The Bet sheet: one bet being looked at, then placed. Nothing is sent until [confirm] and it re-checks the price then. */
 data class BetSheetUi(
@@ -119,19 +128,88 @@ class ApiBettingController(
     fun refreshEnabled() {
         state.update { it.copy(betting = it.betting.copy(enabled = c.trading != null)) }
         if (c.trading != null) refreshBalance(quiet = true)
+        refreshSavedKey()
     }
 
     // ---- setup, money ---------------------------------------------------------------------------------------------
 
-    fun enable(managementKeyId: String, managementPem: String) {
+    // ---- the saved management key ------------------------------------------------------------------------------------
+
+    /** Reads what's saved (never the key itself) into [NovigUi.managementKey]: on open, and after a save or forget. */
+    fun refreshSavedKey() {
+        scope.launch {
+            val hint = withContext(Dispatchers.IO) { runCatching { c.managementKeys.hint() }.getOrNull() }
+            state.update { it.copy(novig = it.novig.copy(managementKey = hint)) }
+        }
+    }
+
+    /**
+     * The key a setup or transfer uses: the one Tj just typed ([typed]), or the saved one. Null (with the reason shown) when neither is there.
+     */
+    private suspend fun keyFor(typed: ManagementKey?): ManagementKey? {
+        if (typed != null) return typed
+        val saved = withContext(Dispatchers.IO) { runCatching { c.managementKeys.load() }.getOrNull() }
+        if (saved == null) {
+            fail(
+                if (state.value.novig.managementKey?.unreadable == true) "The saved management key can't be unlocked on this phone any more: enter it once more below."
+                else "Enter your management key ID and its .pem file first.",
+            )
+        }
+        return saved
+    }
+
+    /** Novig has just accepted [typed] (a call signed with it went through): it's saved, and never asked for again. */
+    private suspend fun remember(typed: ManagementKey?) {
+        if (typed == null) return
+        val hint = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.managementKeys.save(typed) }.getOrNull() }
+        if (hint != null) state.update { it.copy(novig = it.novig.copy(managementKey = hint)) }
+    }
+
+    /** Novig refused the call: say why, and when it was the saved key's signature, how to fix that. */
+    private fun keyAdvice(e: NovigApiException, usedSaved: Boolean): String =
+        e.advice + if (usedSaved && e.status == 401 && e.serverMessage?.contains("timestamp") != true) " Tap Replace to enter the key again." else ""
+
+    /** "Save key": checks Novig accepts it (one signed echo), then saves it for every later setup and transfer. */
+    fun saveKey(typed: ManagementKey) {
+        if (state.value.betting.busy) return
+        scope.launch {
+            state.update { it.copy(betting = it.betting.copy(busy = true, error = null, message = "Checking the key with Novig…")) }
+            try {
+                withContext(Dispatchers.IO) { c.bettingSetup.check(typed) }
+                remember(typed)
+                state.update { it.copy(betting = it.betting.copy(busy = false, message = "Management key saved on this phone. You won't be asked for it again.", error = null)) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: NovigApiException) {
+                fail(keyAdvice(e, usedSaved = false))
+            } catch (e: IllegalArgumentException) {
+                fail(e.message ?: "That key file couldn't be read.")
+            } catch (e: Exception) {
+                fail("Couldn't check the key: ${e.message ?: e.javaClass.simpleName}")
+            }
+        }
+    }
+
+    /** "Forget": the saved key is deleted from this phone; the next setup or transfer asks for it again. */
+    fun forgetKey() {
+        scope.launch {
+            withContext(Dispatchers.IO + NonCancellable) { runCatching { c.managementKeys.clear() } }
+            state.update { it.copy(novig = it.novig.copy(managementKey = null), betting = it.betting.copy(message = "The saved management key was removed from this phone.", error = null)) }
+        }
+    }
+
+    /** [typed]: the key Tj just entered (saved once Novig accepts it); null = the saved one. */
+    fun enable(typed: ManagementKey? = null) {
         val conn = state.value.novig.connection ?: return
         if (state.value.betting.busy) return
         scope.launch {
             state.update { it.copy(betting = it.betting.copy(busy = true, error = null, message = "Starting…")) }
+            val key = keyFor(typed) ?: return@launch
             try {
                 val updated = withContext(Dispatchers.IO) {
-                    c.bettingSetup.enable(conn, managementKeyId, managementPem) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
+                    c.bettingSetup.enable(conn, key.keyId, key.pem) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
                 }
+                remember(typed)
                 c.novigConnection.save(updated)
                 c.useConnection(updated)
                 state.update {
@@ -144,7 +222,7 @@ class ApiBettingController(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: NovigApiException) {
-                fail(e.advice)
+                fail(keyAdvice(e, usedSaved = typed == null))
             } catch (e: IllegalArgumentException) {
                 fail(e.message ?: "That key file couldn't be read.")
             } catch (e: Exception) {
@@ -185,16 +263,22 @@ class ApiBettingController(
         }
     }
 
-    /** Moves money between the cash wallet and the subaccount ([direction] "fund" or "defund"), with the management key in memory for this call only. */
-    fun transfer(direction: String, amount: Double, managementKeyId: String, managementPem: String) {
+    /**
+     * Moves [amount] dollars (any amount Tj types, Tj 2026-09-29) between the cash wallet and the subaccount ([direction] "fund" or "defund").
+     * [typed]: the management key Tj just entered, saved once Novig accepts it; null = the saved one.
+     */
+    fun transfer(direction: String, amount: Double, typed: ManagementKey? = null) {
         val conn = state.value.novig.connection ?: return
         if (state.value.betting.busy || !(amount > 0.0)) return
         scope.launch {
             state.update { it.copy(betting = it.betting.copy(busy = true, error = null, message = "Starting…")) }
+            val key = keyFor(typed) ?: return@launch
             try {
                 val out = withContext(Dispatchers.IO) {
-                    c.bettingSetup.transfer(conn, managementKeyId, managementPem, direction, amount) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
+                    c.bettingSetup.transfer(conn, key.keyId, key.pem, direction, amount) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
                 }
+                // Novig answered the signed transfer (applied or rejected): the key is good.
+                remember(typed)
                 state.update {
                     it.copy(betting = it.betting.copy(busy = false, message = out.message.takeIf { out.applied }, error = out.message.takeUnless { out.applied }, balance = out.balance ?: it.betting.balance))
                 }
@@ -202,7 +286,7 @@ class ApiBettingController(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: NovigApiException) {
-                fail(e.advice)
+                fail(keyAdvice(e, usedSaved = typed == null))
             } catch (e: IllegalArgumentException) {
                 fail(e.message ?: "That key file couldn't be read.")
             } catch (e: Exception) {
@@ -369,6 +453,49 @@ class ApiBettingController(
                 ),
             )
         }
+    }
+
+    // ---- "Add money" from the sheet -------------------------------------------------------------------------------
+
+    /**
+     * The sheet's "Add money to the wallet": closes the sheet and asks Settings to open on the wallet with what the bet is short by typed in
+     * (the caller switches to Settings). The bet is kept for "Back to the bet".
+     */
+    fun requestTopUp() {
+        val sheet = state.value.betSheet ?: return
+        if (sheet.placing || sheet.result != null) return
+        val cost = sheet.plan?.expectedCost ?: sheet.stake
+        val needed = (cost - (state.value.betting.balance ?: sheet.balance ?: 0.0)).coerceAtLeast(0.0)
+        betJob?.cancel()
+        state.update {
+            it.copy(
+                betSheet = null,
+                betting = it.betting.copy(topUp = TopUp(WalletAmount.suggest(needed), needed, sheet.copy(plan = null, refusal = null)), message = null, error = null),
+            )
+        }
+    }
+
+    /** "Back to the bet": the same bet and amount, priced again from a fresh book against the wallet as it is now. */
+    fun backToBet() {
+        val top = state.value.betting.topUp ?: return
+        state.update { it.copy(betting = it.betting.copy(topUp = null)) }
+        val bet = top.bet
+        val target = bet.target
+        if (target == null) {
+            // A CNO bet whose Novig outcome wasn't found yet: nothing to re-open.
+            toasts.tryEmit("Open the bet again from its card")
+            return
+        }
+        state.update {
+            it.copy(betSheet = bet.copy(stake = bet.stake.coerceIn(0.0, settings().apiMaxStake), resolving = false, placing = false, result = null, maxStake = settings().apiMaxStake, balance = it.betting.balance))
+        }
+        betJob?.cancel()
+        betJob = scope.launch { replan() }
+    }
+
+    /** The wallet banner's ✕, or leaving Settings: the pending bet is let go. */
+    fun dismissTopUp() {
+        if (state.value.betting.topUp != null) state.update { it.copy(betting = it.betting.copy(topUp = null)) }
     }
 
     fun dismiss() {
