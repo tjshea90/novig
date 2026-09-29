@@ -19,6 +19,12 @@ interface CnoSource {
     /** Every book's price for [row] (its CNO game page). */
     suspend fun books(row: CnoRow): CnoBooksView? = null
 
+    /**
+     * [books] for a bet read alongside many others (the Tracker's "Check odds now" reads every open bet, several at a time): the
+     * same read at a brisker pace. Fakes answer as [books] does.
+     */
+    suspend fun booksBulk(row: CnoRow): CnoBooksView? = books(row)
+
     /** The Novig app link for [row]'s game (`novigapp://events/<id>/cno`), from CNO's deeplink. */
     suspend fun novigLink(row: CnoRow): String? = null
 }
@@ -41,6 +47,11 @@ class CnoClient(
     private val clock: () -> Long = System::currentTimeMillis,
     /** One pace for all of CNO's requests, the list's, the books' and the links' alike. */
     private val pace: CnoPace = CnoPace(),
+    /**
+     * A brisker pace for reading many bets' books at once ([booksBulk]): a page is two requests, so at the shared one-second pace
+     * a hundred open bets took over three minutes (Tj, 2026-09-29: "it scanned very slow"). Still never a burst: two requests a second.
+     */
+    private val bulkPace: CnoPace = CnoPace(BULK_GAP_MS),
     /**
      * Where replies are parsed: never the caller's thread, which is the main one (the list's
      * page is hundreds of KB of HTML every few seconds; parsed there, the widget stuttered).
@@ -86,18 +97,18 @@ class CnoClient(
         }
     }
 
-    override suspend fun books(row: CnoRow): CnoBooksView? = withContext(work) { booksHere(row) }
+    override suspend fun books(row: CnoRow): CnoBooksView? = withContext(work) { booksHere(row, pace) }
 
-    private suspend fun booksHere(row: CnoRow): CnoBooksView? {
-        val grid = gridHere(row.gameUrl ?: return null)
+    override suspend fun booksBulk(row: CnoRow): CnoBooksView? = withContext(work) { booksHere(row, bulkPace) }
+
+    private suspend fun booksHere(row: CnoRow, paceWith: CnoPace): CnoBooksView? {
+        val url = row.gameUrl ?: return null
+        val grid = try {
+            postback(open(url, paceWith), useTimer = true, paceWith).grid()
+        } catch (e: IOException) {
+            throw unreachable(e)
+        }
         return CnoBooks.parse(grid, row.sideId, row.bet, clock())
-    }
-
-    /** A game page's table (two requests: the page, then the postback its loader timer makes). */
-    internal suspend fun gridHere(url: String): String = try {
-        postback(open(url), useTimer = true).grid()
-    } catch (e: IOException) {
-        throw unreachable(e)
     }
 
     override suspend fun novigLink(row: CnoRow): String? = withContext(work) { novigLinkHere(row) }
@@ -123,7 +134,7 @@ class CnoClient(
         val pageUrl = url.toHttpUrl()
         val request = Request.Builder().url(pageUrl).get().header("User-Agent", USER_AGENT).build()
         val cookies = LinkedHashMap<String, String>()
-        val html = call(request).also { check(it); keepCookies(it, cookies) }.body
+        val html = call(request, paceWith).also { check(it); keepCookies(it, cookies) }.body
         val form = CnoPage.form(html)
         val postUrl = form.action?.let { pageUrl.resolve(it) } ?: pageUrl
         return Session(url, postUrl, cookies, form, LinkedHashMap(form.fields.toMap()), clock())
@@ -173,7 +184,7 @@ class CnoClient(
             .header("Referer", s.view)
             .apply { if (s.cookies.isNotEmpty()) header("Cookie", s.cookies.entries.joinToString("; ") { "${it.key}=${it.value}" }) }
             .build()
-        val reply = call(request).also { check(it); keepCookies(it, s.cookies) }.body
+        val reply = call(request, paceWith).also { check(it); keepCookies(it, s.cookies) }.body
         val records = CnoPage.delta(reply)
         records.firstOrNull { it.type == "error" }?.let { throw CnoException("CrazyNinjaOdds answered with an error: ${it.content.take(120)}") }
         if (records.any { it.type == "pageRedirect" }) throw CnoException("CrazyNinjaOdds restarted the page")
@@ -219,13 +230,13 @@ class CnoClient(
      * straight away on a fresh connection: most of the "timeout" and "unable to resolve" Tj saw
      * (2026-09-27) were one-off, and the second try goes through.
      */
-    private suspend fun call(request: Request): HttpText {
-        pace.await()
+    private suspend fun call(request: Request, paceWith: CnoPace = pace): HttpText {
+        paceWith.await()
         return try {
             http.newCall(request).awaitText()
         } catch (e: IOException) {
             http.connectionPool.evictAll()
-            pace.await()
+            paceWith.await()
             http.newCall(request).awaitText()
         }
     }
@@ -272,5 +283,8 @@ class CnoClient(
 
         /** Re-use a session this long after its last read; ASP.NET's own timeout is 20 minutes. */
         const val SESSION_MS = 15 * 60_000L
+
+        /** The least time between two requests of a bulk read ([booksBulk]): two a second at most. */
+        const val BULK_GAP_MS = 500L
     }
 }
