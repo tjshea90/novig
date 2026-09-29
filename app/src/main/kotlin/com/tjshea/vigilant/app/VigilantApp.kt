@@ -3,6 +3,7 @@ package com.tjshea.vigilant.app
 import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
 import com.tjshea.vigilant.app.data.KeystoreSigningKey
+import com.tjshea.vigilant.app.data.KeystoreVault
 import com.tjshea.vigilant.app.data.NovigConnectionStore
 import com.tjshea.vigilant.data.novig.signing.NovigBettingSetup
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
@@ -273,7 +274,7 @@ class AppContainer(app: Application) {
             null
         }
         trading = client
-        apiSettler = client?.let { ApiSettler(tracker, it, connection.subaccountKeyId, scoreGrade = { bet -> settler.scoreGradeOf(bet) }) }
+        apiSettler = client?.let { ApiSettler(tracker, it, connection?.subaccountKeyId.orEmpty(), scoreGrade = { bet -> settler.scoreGradeOf(bet) }) }
         apiSync = client?.let { ApiBetSync(tracker, it, novig) }
     }
 
