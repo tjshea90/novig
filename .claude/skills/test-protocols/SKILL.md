@@ -144,7 +144,11 @@ changes broke elsewhere in the app. Not a general audit.
 2. Re-read only the files this session actually touched, plus (via `grep`)
    whatever else calls into them, looking for obvious bugs and issues: stale
    copy, missing guards, a render or response that no longer matches
-   behavior.
+   behavior. Review each touched file with the skill for its kind (CLAUDE.md
+   "Skills for this app"): Compose screens with `compose-state-and-effects`
+   (and `compose-performance` for anything drawn per frame or per scroll),
+   coroutine/Flow code with `kotlin-concurrency-and-flow`, UI tests with
+   `compose-ui-testing-patterns`.
 3. Check whether anything ELSE in the app could have broken from this
    session's changes — the "who else calls this" check that has caught real
    bugs on this account's other projects (a shared helper's new behavior
@@ -176,7 +180,10 @@ Purpose: a comprehensive pass over the ENTIRE app, not just recent changes.
 3. Specifically look for, and fix:
    - **Code/UI improvements** — dead branches, inconsistent formatting,
      stale or misleading copy, accessibility gaps, missing dark/light
-     handling.
+     handling. Every Compose screen gets a `compose-state-and-effects`
+     review (state owners, effect keys, previewable content) and a
+     `compose-performance` pass on the feed, CNO list and widget, which
+     redraw most on a 120 Hz screen.
    - **Network efficiency** — duplicate requests against Novig, CNO or the
      reference-odds providers, or redundant re-computation of anything
      derived from a response already fetched.
@@ -184,20 +191,23 @@ Purpose: a comprehensive pass over the ENTIRE app, not just recent changes.
      or the user has entered should be silently lost, overwritten, or
      mis-filed by a race.
    - **Engine/logic correctness** — anything related to the actual
-     profit/edge-finding strategy checked against whatever this project ends
-     up designating as its ground truth (the equivalent of
-     fantasy-football's `RULES_2026.md` or Portfolio's scoring/accounting
-     rules) — that ground-truth document does not exist yet; note in
-     `BRIEF.md` once it does.
+     profit/edge-finding strategy, checked against BRIEF.md's "Locked
+     architecture decisions" (fair odds, taker price, fees, odds freshness)
+     and NOVIG_API.md: the closest thing to a ground truth this project has
+     (the equivalent of fantasy-football's `RULES_2026.md`).
    - **Bugs or corruption from recent changes** — diff against the last few
      ships if that's the fastest way to spot what moved.
    - **Resource/battery waste** — anything polling, syncing, or holding a
      wake lock with no reason to while the app isn't in active use, given
-     this is meant to run acceptably on a Moto G 2026; the app should sleep
-     properly when backgrounded.
+     this is meant to run acceptably on a Moto G 2026 (4 GB RAM; BRIEF.md
+     "Target hardware"); the app should sleep properly when backgrounded.
+     Review every long-lived coroutine owner (`ScanRunner`, the scan services,
+     `CnoFeed`, `NovigStream`, `WidgetRescan`) with
+     `kotlin-concurrency-and-flow`: who starts it, who cancels it, and what
+     stops it when the app leaves the screen.
 4. Fix everything found. Per this account's standing testing convention,
    give each fix a named test confirmed to FAIL against the pre-fix code
-   where a test can prove it; where it can't (e.g. a pure UI render with no
+   where a test can prove it (UI tests per `compose-ui-testing-patterns`); where it can't (e.g. a pure UI render with no
    test harness), a source-text pin is the established fallback.
 5. Full regression, verified by BOTH exit code AND output content, not a
    bare `grep FAIL` — Portfolio caught itself missing a silent crash that way
