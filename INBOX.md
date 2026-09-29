@@ -2492,3 +2492,8 @@ When I check the updated odds for the bet tracker to see the current EV:
 
 3) make sure the tracker is telling me the current, up to date EV, which is devigged and compared to the actual odds that I placed the bet at.
 ```
+
+## 2026-09-29T17:39:27Z
+```
+release it
+```
