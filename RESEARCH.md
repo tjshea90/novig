@@ -2595,3 +2595,48 @@ prop a box score can settle is covered; first-scorer markets (`FIRST_TOUCHDOWN_S
 quarter/period markets need play-by-play the feeds don't give and stay a tap, each saying so. Because Tj's bets live on his phone,
 the app now says why on every open bet instead of guessing.
 
+
+## 35. Slow "Check odds now", bets that "can't be graded", and 61 of ~100 (2026-09-29, Tj, after v0.20.0)
+
+Tj: "it scanned very slow. Slower than before. And a lot of bets can't be tracked … If they can't be tracked, how did the app know it
+was positive EV to begin with? And it said it only updated 61 bets, but I have 100 or so open."
+
+### 35.1 Why it was slow (measured live against CNO, 2026-09-29)
+A CNO game page costs **two requests** (GET the page, then the timer postback that fills the books' grid), about **2.4 s** and ~139K
+characters. About one open bet per game, so no page is shared, and CNO's session can't be reused for another game's page (a postback
+with another game's URL answers "game page changed"). v0.20.0 read them one at a time through `CnoPace` (global, 1 s minimum gap per
+request) with a 2 s wait on top, behind the same lock a Novig recheck uses. Result: ~2.1 s per bet live, so 100 bets took ~3.5 minutes.
+**Fix (v0.20.1):** bulk reads use their own 500 ms pace (`BULK_GAP_MS`), three worker coroutines read at once (`BetRecheck.concurrency`;
+`CnoFeed.readBooks`, lock-free), and the extra gap is gone. Measured live: **1041 ms a bet three at a time vs 2120 ms one at a time**
+(`LiveCnoBooksSpeedTest`), so ~100 bets in under two minutes. CNO's "retry after" pause still stops the whole pass (`CnoFeed.pausedUntilMs`),
+and five failures in a row stop it too.
+
+### 35.2 Why those three bets couldn't be graded (real ESPN and MLB data)
+| Bet | What the feed has | Was | Now |
+|---|---|---|---|
+| Kade Anderson Over 1.5, "Player Earned Runs Allowed" | MLB box: `EARNED_RUNS` 0 (Mariners 9/26) | CNO's label has "Allowed"; Novig's type is `EARNED_RUNS`, so no type fit and the market was unreadable | `marketWords` aliases: earned runs allowed, walks allowed, outs recorded (`PITCHER_OUTS`), runs batted in, batter strikeouts/walks, reception yards, 3-pointers made; `statOf` retries without a filler word ("Points Scored", "Total Rebounds") only when nothing fits |
+| KC Concepcion Over 5.5, "Player Rushing Yards" | Browns box: receiving 2 for 9 and punt returns; **no rushing group** | "box score has no Rushing Yards" | **Football box scores list a player only under the groups where he recorded something**, so a missing stat is 0 (rushing yards, receptions, TDs, tackles, kicking …). Longest rush/reception excluded (no play is no market). |
+| Erick All Jr. Under 0.5, "Player Receptions" | Steelers/Bengals box: not listed at all; ESPN's roster endpoint says `didNotPlay: false` (he played, no stats) | "isn't in the box score … mark it yourself" | Absent from a football box = played with no stat = 0 → **WON**; the card says "no Receptions recorded (no line in the box score, counted as 0)" |
+Other rules added: a player on the game's **injury report as Out / IR / Suspension** with no line is `inactive` and the bet is **VOID**
+(Novig refunds a player who sat out); in every other sport (basketball, hockey, baseball) the box lists everyone who played, so a
+player who isn't in it didn't play → **VOID**; a name one letter off a listed player (same first initial, surname ±1 letter) is a
+spelling, not a scratch → left to a tap; a box with fewer than 8 players is "not fully posted yet" (waits, never judged).
+Live check: `LiveUngradedBetsTest` grades the three from the real feeds (Concepcion LOST, All WON, Anderson LOST), and
+`RealBoxGradingTest` does the same offline from saved copies of the two ESPN box scores.
+**Not built (idea):** ESPN's core roster (`sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/{id}/competitions/{id}/competitors/{teamId}/roster`)
+has `didNotPlay` per player (7 a side, the game-day inactives) for NFL: it would tell a healthy scratch (void) from a player who
+played without a stat (zero) for certain. It costs two more requests a game and its names are short ("All Jr."), so it's only worth
+adding if a healthy scratch not on the injury report ever grades wrong.
+
+### 35.3 "How did it know it was +EV if it can't grade it?"
+Two unrelated data sources. **+EV is computed before the game** from odds: CNO's list gives the fair price from the books, and Novig's
+price is compared with it. **Grading happens after the game** from the RESULT (a score or box score), read from ESPN and MLB's Stats
+API. A bet can be priced perfectly and still fail to grade because a market name or a box-score row didn't match, which is what these
+three were. Nothing about a grading failure means the EV was wrong.
+
+### 35.4 "Updated 61 but I have ~100 open"
+The odds check only reads bets **with a CNO page whose game hasn't been on for four hours**. The rest were: games already over (the
+very bets that couldn't be graded, so they stayed "open"), and Vigilant-only bets (no CNO page; a Vigilant scan prices those). v0.20.1
+grades the finished games **in the same tap** (`checkOdds` runs `BetSettler.run(force = true)` beside the odds read; the toast says
+"1 game already over: graded 31 from final scores, 3 need a tap (each says why)"), the Open list says "odds read on N of M upcoming",
+and every upcoming bet without odds says why (a Vigilant bet, or "Odds not read yet: tap Check odds now").
