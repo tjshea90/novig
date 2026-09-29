@@ -2622,3 +2622,18 @@ Nothing at or above 1.0% EV."
       `allowed-tools`, inline shell blocks, hooks, network fetches, anything that fights CLAUDE.md); commit the ones that
       pass to `.claude/skills/` unchanged, with the Apache-2.0 license and a note naming the source commit.
 - [x] X3 (DONE: test_resume.sh green via ckpt, secretscan clean, audit patch re-checked with `git apply --check` after the skills landed; reported to Tj.) Checks + checkpoint; tell Tj the top audit findings (what applying each would change) and which skills landed.
+
+## "Fix all the things you can fix without breaking anything and make sure to take advantage of the new skills for all future tasks on this app" (Tj, 2026-09-29T00:28Z)
+
+- [ ] Y1 Apply the prompt audit's 21 fixes (PROMPT_AUDIT.patch: A1-A11, B1-B10); checks green, briefing under the cap.
+- [ ] Y2 Settle the flags whose answer is already Tj's own later decision or the code (F1-F6, F9, F10), and fill F11
+      (Moto G 2026 specs) if a reliable source exists. F7 (the keystore) is written up but NOT changed: a new signing
+      key forces an uninstall that wipes the app's saved data, which breaks things.
+- [ ] Y3 Side findings: `MarketFee.GAME` used for CNO books / tracked bets (a futures bet under-charged): fix it if that
+      can be done safely with a test, and ship if app code changes; `tools/test_resume.sh`'s stale header; bootstrap's
+      "checkpoints" label and its `.git` check in a worktree.
+- [ ] Y4 The skills in every future task: CLAUDE.md says when to load each one (with its path), the session briefing
+      lists them, the light/full test protocols use them. (The four already show up in this session's skill list.)
+- [ ] Y5 Stale open TASKS items: tick or mark superseded where the code shows it's done (evidence for each); leave real
+      ones open.
+- [ ] Y6 Checks (test_resume.sh; the Gradle floor if app code changed), ship + Release link if the app changed, report.
