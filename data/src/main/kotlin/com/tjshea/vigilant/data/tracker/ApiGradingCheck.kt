@@ -56,7 +56,8 @@ class ApiGradingCheck(
         val from = bets.minOf { it.startsTs } - WINDOW_MS
         val to = bets.maxOf { it.startsTs } + WINDOW_MS
         val ledgerResult = tryRead { trading.ledger(subaccountKeyId, null, from, to, maxRows = MAX_ROWS) }
-        val ledger: List<LedgerRow> = ledgerResult.fold({ it }, { out.appendLine("Ledger: couldn't be read: $it"); emptyList() })
+        val ledger: List<LedgerRow> = ledgerResult.getOrDefault(emptyList())
+        ledgerResult.exceptionOrNull()?.let { out.appendLine("Ledger: couldn't be read: ${it.message}") }
         out.appendLine("Ledger, games scheduled ${at(from)} to ${at(to)}: ${ledger.size} rows" + if (ledger.size >= MAX_ROWS) " (stopped at $MAX_ROWS)" else "")
         val names = HashMap<String, String>()
         for (b in bets) {
