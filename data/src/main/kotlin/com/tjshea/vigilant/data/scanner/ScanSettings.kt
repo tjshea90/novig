@@ -183,10 +183,13 @@ data class ScanSettings(
      */
     val maxOdds: Int = 300,
     /**
-     * Leaving Vigilant with a scan running or bets on the feed shrinks it to a floating
-     * picture-in-picture window, so the results stay in view in Novig (Tj, 2026-09-26).
+     * Opt-in: leaving Vigilant with a scan running or bets on the feed brings up the widget (or the
+     * picture-in-picture window) by itself, and opening Novig's app from a bet floats it over Novig
+     * (Tj, 2026-09-26). Off by default since v0.22.0 (Tj, 2026-09-29: "often when I switch from
+     * vigilant to another app, the widget opens automatically. Only open the widget if I press the
+     * icon to open it in the app"): the widget's own button is then the only thing that opens it.
      */
-    val miniWindow: Boolean = true,
+    val miniWindow: Boolean = false,
     /**
      * v0.13.0's on/off switch for CrazyNinjaOdds' list; read only by [migrate] now ([scanner]
      * decides). The list is the one thing Vigilant reads without a tap: only while its tab or a
