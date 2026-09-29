@@ -4,6 +4,10 @@ import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
 import com.tjshea.vigilant.app.data.KeystoreSigningKey
 import com.tjshea.vigilant.app.data.NovigConnectionStore
+import com.tjshea.vigilant.data.novig.signing.NovigBettingSetup
+import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
+import com.tjshea.vigilant.data.tracker.ApiBetSync
+import com.tjshea.vigilant.data.tracker.ApiSettler
 import com.tjshea.vigilant.data.cno.CnoCache
 import com.tjshea.vigilant.data.cno.CnoClient
 import com.tjshea.vigilant.data.cno.CnoFeed
@@ -140,7 +144,20 @@ class AppContainer(app: Application) {
      * Stats API): on app open, on the Tracker tab, and every 3 h in the background ([SettleWorker]).
      * Reads only for open bets whose game started over an hour ago, one scoreboard per league and day.
      */
-    val settler = BetSettler(tracker, FreeScores(http, json))
+    /**
+     * Betting through Novig's API (Tj, 2026-09-29): set when the connection holds the Vigilant subaccount's `trading` key and this phone still
+     * has its private half; null = betting isn't set up. Bets placed through it are graded from Novig's own ledger ([apiSettler]) and the score
+     * feeds leave them alone while it's set.
+     */
+    @Volatile var trading: NovigTradingClient? = null
+        private set
+    @Volatile var apiSettler: ApiSettler? = null
+        private set
+    @Volatile var apiSync: ApiBetSync? = null
+        private set
+    val bettingSetup = NovigBettingSetup(http, json, KeystoreVault)
+
+    val settler = BetSettler(tracker, FreeScores(http, json), leaveApiBets = { trading != null })
 
     /**
      * The Tracker's "Check odds now": every open bet's CNO game page re-read through [cno], [RECHECK_AT_ONCE] at a time at a brisk
@@ -248,6 +265,16 @@ class AppContainer(app: Application) {
         novig.stream?.close()
         novig.keyed = signer
         novig.stream = signer?.let { NovigStream(http, it, appScope) }
+        val alias = connection?.tradingAlias
+        val key = connection?.tradingKeyId
+        val client = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) {
+            NovigTradingClient(NovigSignedClient(http, json, KeystoreSigningKey(alias, key)), json)
+        } else {
+            null
+        }
+        trading = client
+        apiSettler = client?.let { ApiSettler(tracker, it, connection.subaccountKeyId, scoreGrade = { bet -> settler.scoreGradeOf(bet) }) }
+        apiSync = client?.let { ApiBetSync(tracker, it, novig) }
     }
 
     fun readKeyClient(connection: NovigConnection, client: OkHttpClient = http) =
