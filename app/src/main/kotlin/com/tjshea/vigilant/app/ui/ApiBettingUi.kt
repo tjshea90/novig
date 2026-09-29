@@ -60,12 +60,19 @@ import java.util.Locale
 
 /** What Settings' betting section can do. */
 data class BettingActions(
-    val onEnable: (managementKeyId: String, pem: String) -> Unit = { _, _ -> },
-    /** [direction] "fund" or "defund". */
-    val onTransfer: (direction: String, amount: Double, managementKeyId: String, pem: String) -> Unit = { _, _, _, _ -> },
+    /** [typed]: the management key Tj just entered (saved once Novig accepts it); null = the one saved on this phone. */
+    val onEnable: (typed: ManagementKey?) -> Unit = {},
+    /** [direction] "fund" or "defund"; [amount] in dollars, as typed; [typed] as in [onEnable]. */
+    val onTransfer: (direction: String, amount: Double, typed: ManagementKey?) -> Unit = { _, _, _ -> },
+    /** "Save key": checked with Novig, then saved for every later setup and transfer. */
+    val onSaveKey: (ManagementKey) -> Unit = {},
+    val onForgetKey: () -> Unit = {},
     val onDisable: () -> Unit = {},
     val onRefreshBalance: () -> Unit = {},
     val onSync: () -> Unit = {},
+    /** The top-up banner's "Back to the bet" and its ✕. */
+    val onBackToBet: () -> Unit = {},
+    val onDismissTopUp: () -> Unit = {},
 )
 
 /** What a card's Bet button does; null (or not [enabled]) = betting isn't set up and the button isn't there. */
@@ -84,20 +91,29 @@ fun ApiBetButton(modifier: Modifier = Modifier, onClick: (ApiBetActions) -> Unit
     ) { Text("Bet", maxLines = 1) }
 }
 
-// ---- the management key, held in memory while a form is open ---------------------------------------------------
+// ---- the management key: entered once, then saved on this phone ----------------------------------------------------
 
-/** The management key a setup or transfer needs: typed or picked, kept only in this state, cleared after use. */
+/** The management key being typed or picked (kept only in this state until it's used), and whether a saved one is being replaced. */
 @Stable
 class ManagementKeyState {
     var keyId by mutableStateOf("")
     var pem by mutableStateOf("")
     var fileName by mutableStateOf<String?>(null)
-    val ready: Boolean get() = keyId.length >= 8 && pem.contains("PRIVATE KEY")
+
+    /** Tj tapped Replace: the fields show although a key is saved. */
+    var replacing by mutableStateOf(false)
+    val ready: Boolean get() = typed() != null
+
+    /** What's been entered, when it's a whole key. */
+    fun typed(): ManagementKey? = ManagementKey(keyId, pem).takeIf { it.complete }
 
     fun clearSecret() {
         pem = ""
         fileName = null
     }
+
+    /** The key a button sends: the typed one, or null for the saved one ([usesSaved]). */
+    fun usesSaved(saved: ManagementKeyHint?): Boolean = saved != null && !saved.unreadable && !replacing
 }
 
 @Composable
@@ -139,6 +155,49 @@ fun ManagementKeyFields(state: ManagementKeyState) {
     }
 }
 
+/**
+ * The management key for the buttons below it: "saved on this phone" with Replace and Forget once it's saved (Tj, 2026-09-29: "I only input the
+ * API key and file one time"), else the fields, with Save key to save it without moving money. [onSave] null: no Save button (the Connect form).
+ */
+@Composable
+fun ManagementKeyBlock(saved: ManagementKeyHint?, key: ManagementKeyState, busy: Boolean, onSave: ((ManagementKey) -> Unit)?, onForget: () -> Unit) {
+    if (key.usesSaved(saved)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().testTag("savedMgmtKey")) {
+            Text(
+                "✓ Management key ••••${saved!!.keyIdEnd} saved on this phone",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = { key.replacing = true }, enabled = !busy, modifier = Modifier.testTag("replaceMgmtKey")) { Text("Replace") }
+            TextButton(onClick = onForget, enabled = !busy, modifier = Modifier.testTag("forgetMgmtKey")) { Text("Forget") }
+        }
+        return
+    }
+    if (saved?.unreadable == true) {
+        Text(
+            "A management key was saved, but this phone can't unlock it any more: enter it once more and it's saved again.",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(bottom = 4.dp),
+        )
+    }
+    ManagementKeyFields(key)
+    Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (onSave != null) {
+            OutlinedButton(
+                onClick = { key.typed()?.let(onSave); key.clearSecret(); key.replacing = false },
+                enabled = !busy && key.ready,
+                modifier = Modifier.testTag("saveMgmtKey"),
+            ) { Text("Save key") }
+        }
+        if (saved != null && !saved.unreadable) {
+            TextButton(onClick = { key.replacing = false; key.clearSecret() }, modifier = Modifier.testTag("keepMgmtKey")) { Text("Keep the saved key") }
+        }
+    }
+    Text(
+        "Saved on this phone once Novig accepts it, sealed by the phone's secure hardware, and kept through every app update: you enter it once.",
+        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
 // ---- Settings section --------------------------------------------------------------------------------------------
 
 private val STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
@@ -147,7 +206,7 @@ private val DAY_CHOICES = listOf(20.0, 50.0, 100.0, 250.0, 500.0)
 private val MIN_EV_CHOICES = listOf(0.0, 0.005, 0.01, 0.02, 0.03)
 private val MONEY_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 
-/** Settings › Novig API key › Betting through the API. Shown once a key is connected. */
+/** Settings › Betting › Betting through the API. Shown once a key is connected. [savedKey]: the management key saved on this phone. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NovigBettingSection(
@@ -155,26 +214,26 @@ fun NovigBettingSection(
     settings: ScanSettings,
     actions: BettingActions,
     onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
+    savedKey: ManagementKeyHint? = null,
 ) {
     val key = remember { ManagementKeyState() }
-    var amount by remember { mutableStateOf(10.0) }
     SectionTitle("Betting through the API")
     Text(
         "Vigilant can place a bet on Novig for you from a separate \"Vigilant\" wallet on your Novig account, and grade it from Novig's own books. " +
             "It is not the cash wallet your Novig app bets use: you add money to it here, and only bets placed from Vigilant use it. " +
             "Every bet shows exactly what it will buy and asks you to confirm; nothing is sent before that, and it never bets a game that has started. " +
             "Novig only lets an order through from a network it doesn't list as a VPN or proxy, and when you've opened the Novig app in the last 3 days. " +
-            "Needs your management key (Novig › Profile › Settings › Novig API) for the steps below; Vigilant uses it once and never stores it.",
+            "Setting up and moving money need your management key (Novig › Profile › Settings › Novig API); you enter it once and it's saved on this phone.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(vertical = 4.dp),
     )
     if (!betting.enabled) {
-        ManagementKeyFields(key)
+        ManagementKeyBlock(savedKey, key, betting.busy, onSave = null, onForget = actions.onForgetKey)
         Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(
-                onClick = { actions.onEnable(key.keyId, key.pem); key.clearSecret() },
-                enabled = !betting.busy && key.ready,
+                onClick = { actions.onEnable(if (key.usesSaved(savedKey)) null else key.typed()); key.clearSecret(); key.replacing = false },
+                enabled = !betting.busy && (key.usesSaved(savedKey) || key.ready),
                 modifier = Modifier.testTag("enableBetting"),
             ) { Text("Enable betting") }
             if (betting.busy) CircularProgressIndicator(Modifier.padding(start = 12.dp).size(20.dp), strokeWidth = 2.dp)
@@ -193,7 +252,9 @@ fun NovigBettingSection(
         TextButton(onClick = actions.onRefreshBalance, enabled = !betting.busy) { Text("Refresh") }
     }
 
-    Text("Amount a bet starts at", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    WalletBlock(betting, savedKey, key, actions)
+
+    Text("Amount a bet starts at", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 12.dp))
     ChoiceChips(STAKE_CHOICES, settings.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
     Text("Most for one bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(MAX_STAKE_CHOICES, settings.apiMaxStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
@@ -205,28 +266,102 @@ fun NovigBettingSection(
         "If Novig's price moves so the edge is below this, the bet is refused, not placed.",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-
-    Text("Move money", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 12.dp))
-    ChoiceChips(MONEY_CHOICES, amount, { Format.money(it) }) { amount = it }
-    ManagementKeyFields(key)
-    FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(
-            onClick = { actions.onTransfer("fund", amount, key.keyId, key.pem); key.clearSecret() },
-            enabled = !betting.busy && key.ready,
-            modifier = Modifier.testTag("fundWallet"),
-        ) { Text("Add ${Format.money(amount)} to the wallet") }
-        OutlinedButton(
-            onClick = { actions.onTransfer("defund", amount, key.keyId, key.pem); key.clearSecret() },
-            enabled = !betting.busy && key.ready,
-            modifier = Modifier.testTag("defundWallet"),
-        ) { Text("Take ${Format.money(amount)} back") }
-        if (betting.busy) CircularProgressIndicator(Modifier.padding(start = 4.dp).size(20.dp), strokeWidth = 2.dp)
-    }
-    BettingStatus(betting)
     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton(onClick = actions.onSync, enabled = !betting.busy) { Text("Sync Tracker with Novig's fills") }
         TextButton(onClick = actions.onDisable, enabled = !betting.busy) { Text("Turn betting off") }
     }
+}
+
+/**
+ * Adding money to (or taking it back from) the Vigilant wallet, any amount Tj types (Tj, 2026-09-29). Arriving from a Bet sheet the wallet
+ * couldn't cover ([BettingUi.topUp]), it's scrolled into view with what the bet is short by typed in, and offers "Back to the bet".
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WalletBlock(betting: BettingUi, savedKey: ManagementKeyHint?, key: ManagementKeyState, actions: BettingActions) {
+    val topUp = betting.topUp
+    // A new request types its amount in; otherwise the field keeps what Tj typed (also across a rotation).
+    var amountText by rememberSaveable(topUp?.amount) { mutableStateOf(topUp?.amount?.let(WalletAmount::text) ?: "10") }
+    val amount = WalletAmount.parse(amountText)
+    val problem = WalletAmount.problem(amountText)
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(topUp != null) {
+        if (topUp != null) {
+            withFrameNanos { } // once it's laid out
+            requester.bringIntoView()
+        }
+    }
+    Column(Modifier.bringIntoViewRequester(requester).padding(top = 8.dp).testTag("walletBlock")) {
+        Text("Add money to the Vigilant wallet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        topUp?.let { TopUpBanner(it, betting.balance, actions) }
+        OutlinedTextField(
+            value = amountText,
+            onValueChange = { t -> amountText = t.filter { it.isDigit() || it == '.' || it == ',' || it == '$' }.take(12) },
+            label = { Text("Amount") },
+            prefix = { Text("$") },
+            singleLine = true,
+            isError = problem != null,
+            supportingText = problem?.let { { Text(it) } },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("walletAmount"),
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MONEY_CHOICES.forEach { c ->
+                FilterChip(selected = amount != null && kotlin.math.abs(amount - c) < 1e-9, onClick = { amountText = WalletAmount.text(c) }, label = { Text(Format.money(c)) })
+            }
+        }
+        ManagementKeyBlock(savedKey, key, betting.busy, onSave = actions.onSaveKey, onForget = actions.onForgetKey)
+        val keyOk = key.usesSaved(savedKey) || key.ready
+        val sent = { if (key.usesSaved(savedKey)) null else key.typed() }
+        val overBalance = amount != null && betting.balance != null && amount > betting.balance + 1e-9
+        FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { amount?.let { actions.onTransfer("fund", it, sent()) }; key.clearSecret(); key.replacing = false },
+                enabled = !betting.busy && keyOk && amount != null,
+                modifier = Modifier.testTag("fundWallet"),
+            ) { Text(amount?.let { "Add ${Format.money(it)} to the wallet" } ?: "Add to the wallet") }
+            OutlinedButton(
+                onClick = { amount?.let { actions.onTransfer("defund", it, sent()) }; key.clearSecret(); key.replacing = false },
+                enabled = !betting.busy && keyOk && amount != null && !overBalance,
+                modifier = Modifier.testTag("defundWallet"),
+            ) { Text(amount?.let { "Take ${Format.money(it)} back" } ?: "Take back") }
+            if (betting.busy) CircularProgressIndicator(Modifier.padding(start = 4.dp).size(20.dp), strokeWidth = 2.dp)
+        }
+        if (overBalance) {
+            Text("The wallet holds ${Format.money(betting.balance ?: 0.0)}: that's the most you can take back.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        BettingStatus(betting)
+    }
+}
+
+/** "Your bet needs $X more": what the pending bet costs against the wallet, and the way back to it. */
+@Composable
+private fun TopUpBanner(topUp: TopUp, balance: Double?, actions: BettingActions) {
+    val cost = topUp.bet.plan?.expectedCost ?: (topUp.needed + (balance ?: 0.0))
+    val covered = balance != null && balance + 1e-9 >= topUp.cost
+    androidx.compose.material3.Surface(
+        color = if (covered) Edge.colors.positive.copy(alpha = 0.14f) else MaterialTheme.colorScheme.secondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("topUpBanner"),
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                if (covered) "The wallet now covers your bet on ${topUp.bet.title} (${Format.money(topUp.cost)})."
+                else "Your bet on ${topUp.bet.title} costs ${Format.money(topUp.cost)} and the wallet holds ${Format.money(balance ?: 0.0)}: " +
+                    "add at least ${Format.money(topUp.needed)} (typed in below), then go back to the bet.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (covered) {
+                    Button(onClick = actions.onBackToBet, modifier = Modifier.testTag("backToBet")) { Text("Back to the bet") }
+                } else {
+                    OutlinedButton(onClick = actions.onBackToBet, modifier = Modifier.testTag("backToBet")) { Text("Back to the bet") }
+                }
+                TextButton(onClick = actions.onDismissTopUp, modifier = Modifier.testTag("dismissTopUp")) { Text("Not now") }
+            }
+        }
+    }
+    @Suppress("UNUSED_VARIABLE") val unused = cost
 }
 
 @Composable
