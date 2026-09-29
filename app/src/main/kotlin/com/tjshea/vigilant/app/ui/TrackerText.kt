@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.tracker.BetInsight
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.CheckOddsStats
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerStats
 import com.tjshea.vigilant.engine.Odds
@@ -12,6 +13,23 @@ import kotlin.math.abs
 
 /** The Tracker's sentences, free of Compose so they're testable: what an open bet is waiting for, what a result means. */
 object TrackerText {
+
+    // ---- the "Check odds now" counter (Tj, 2026-09-29) -----------------------------------------------------------------
+
+    /** "12 +EV · 5 −EV · 71% +EV": open bets re-priced in this check, by whether they're +EV at the price placed. */
+    fun checkCounts(s: CheckOddsStats): String =
+        "${s.positive} +EV · ${s.negative} −EV" + (if (s.even > 0) " · ${s.even} even" else "") +
+            " · " + (s.positiveShare?.let { Format.percent(it, 0) } ?: "–") + " +EV"
+
+    /** "Avg +1.3% EV": the plain average of this check's EVs, the ones over ±5% left out. */
+    fun checkAverage(s: CheckOddsStats): String = "Avg " + (s.averageEv?.let(Format::evPercentShort) ?: "–") + " EV"
+
+    /** What the counter is counting: this check as it goes ([progress]: read, of), or the last one and how long ago; the outliers left out. */
+    fun checkCaption(s: CheckOddsStats, checking: Boolean, progress: Pair<Int, Int>?, startedAtMs: Long, now: Long): String = listOfNotNull(
+        if (checking) "Open bets re-priced so far in this check" + (progress?.takeIf { it.second > 0 }?.let { " (${it.first}/${it.second} read)" } ?: "")
+        else "Open bets re-priced in the check ${Format.age(startedAtMs, now)}",
+        "${s.outliers} over ±${Format.percent(CheckOddsStats.OUTLIER_EV, 0)} left out of the average".takeIf { s.outliers > 0 },
+    ).joinToString(" · ")
 
     /** How to colour a bet's status line: [WAITING] is normal, [ATTENTION] needs a tap from Tj. */
     enum class Tone { INFO, WAITING, ATTENTION }
