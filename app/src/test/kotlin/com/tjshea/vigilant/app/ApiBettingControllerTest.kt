@@ -84,7 +84,7 @@ class ApiBettingControllerTest {
         override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", "FILLED", 1)
         override suspend fun fills(orderId: String?, limit: Int) = listOfNotNull(fillsFor(last!!.third, last!!.second))
         override suspend fun balance(subaccountKeyId: String) = 25.0
-        override suspend fun orders(status: String, limit: Int) = emptyList<NovigOrder>()
+        override suspend fun orders(status: String, limit: Int, outcomeId: String?) = emptyList<NovigOrder>()
     }
 
     /** The first +EV card of the sample scan, and a book that offers exactly its ladder. */
