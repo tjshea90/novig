@@ -299,6 +299,7 @@ class ApiBettingController(
     /** "Bet it again": the sheet's plan may repeat an outcome already bet through the API. */
     fun allowRepeat() {
         val sheet = state.value.betSheet ?: return
+        if (sheet.placing || sheet.result != null) return
         state.update { it.copy(betSheet = sheet.copy(allowRepeat = true, plan = null, refusal = null)) }
         betJob?.cancel()
         betJob = scope.launch { replan() }
@@ -335,8 +336,10 @@ class ApiBettingController(
         state.update { it.copy(betSheet = sheet.copy(placing = true)) }
         betJob?.cancel()
         betJob = scope.launch {
+            // Once the order may be on its way it is always followed to its end (and recorded) even if the sheet is closed: a cancelled call
+            // would drop the answer to an order Novig has already taken.
             val result = try {
-                withContext(Dispatchers.IO) { placer.place(target, sheet.stake, plan.limitPrice, sheet.allowRepeat) }
+                withContext(Dispatchers.IO + NonCancellable) { placer.place(target, sheet.stake, plan.limitPrice, sheet.allowRepeat) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -344,8 +347,10 @@ class ApiBettingController(
             }
             state.update { it.copy(betSheet = it.betSheet?.copy(placing = false, result = result)) }
             if (result is PlaceResult.Placed) {
-                hideFromLists(target, result)
-                refreshBalance(quiet = true)
+                withContext(NonCancellable) {
+                    hideFromLists(target, result)
+                    refreshBalance(quiet = true)
+                }
                 toasts.tryEmit("Bet placed: ${money(result.bet.stake)} on ${target.selection}")
             }
         }
@@ -366,7 +371,8 @@ class ApiBettingController(
     }
 
     fun dismiss() {
-        betJob?.cancel()
+        // A bet being placed is never cancelled by closing the sheet: it finishes in the background and lands in the Tracker.
+        if (state.value.betSheet?.placing != true) betJob?.cancel()
         state.update { it.copy(betSheet = null) }
     }
 
