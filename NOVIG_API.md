@@ -525,3 +525,21 @@ What is new here is the account/execution half of the API, which Vigilant has ne
 - **Measured live 2026-09-29 from this container: Kalshi's game lines and props take ~27 s per scan** (57 series at the 2/s Vigilant paces anonymous reads to;
   429s came at ~3/s) and **Polymarket ~13 s**. A league's first bets wait for all its fair-odds sources (v0.19.2), so those free sources, not Novig, set
   "first bet at": the timing line now names them (v0.20.2).
+
+## 15. Key rules learned for API betting (2026-09-29, docs.novig.com/api/api-keys + the OpenAPI schemas; Tj: "Build the betting through the API function")
+
+- **One live `trading` key per subaccount.** `POST /v3/account/subaccounts/{keyId}/keys` "mints only `trading::read`" while the subaccount's `trading` key is live (`409` if
+  you ask for `trading`); after the trading key is **revoked** (`DELETE /v3/keys/{id}`, management key; "takes effect within 60 s") the same route creates its replacement. The
+  subaccount list's `keyId` is the *live* trading key; **a revoked trading key's ID still addresses the subaccount** (balance, transactions, transfers). So a phone whose Keystore
+  lost the trading key's private half must revoke and re-mint; a phone that still has it just signs.
+- **Balance** (`GET …/{keyId}/balance`): management, management::read and **trading**, not `trading::read`. Transactions (the ledger): all four scopes.
+- **Funding** is only the management key: `POST …/{keyId}/transfer {direction: fund|defund, amount: "10.00000", clientTransferId}` → `202 Requested`, then poll
+  `GET …/transfers/{id}` until `Applied` (money moved) or `Rejected`. 5 a second, 60 a minute. No route lists transfers.
+- **Order fields** (`PlaceOrder`): `outcomeId`, `price` (string on the grid), `qty` (integer, 1¢ contracts), `tif` (`GTC`, `GTT` + `ttl`, `IOC`, `FOK`, `PO`), optional `clientId`
+  (never checked for uniqueness: a replay places a second order). Answers `201 {orderId, clientId}` = queued only. `GET /v3/orders/{id}` "can answer 404 right after a 201".
+  An unfilled `IOC`/`FOK`/`PO` ends `REJECTED`; a partly filled `IOC` ends `CANCELED` with what filled kept. Fills: `qty`, `cost` (dollars, `qty × price × 1¢`), `taker`, `fee`.
+- **Placement location check:** as for any signed route, plus the device geolocation must be **under 3 days old** (open the Novig app); a read admits a stale one.
+- **What a settled bet looks like** (event-lifecycle page, ledger schema): `GET …/transactions?kind=SETTLEMENT` rows (`amount` signed, `ref` = the market the row settles): a win
+  credits `qty × 1¢`, a push credits the collateral back, a fair-market-value void credits `price × qty × 1¢`; a **loss moves no money** (the cost left the wallet at the fill), so it has
+  no row: a loss is "the position is gone and no settlement row paid it". `GET /v3/portfolio/positions` lists what's still held (`qty`, `cost`). **Not yet seen on the real API**: the
+  shape above is the documented one; Vigilant cross-checks every ledger grade against the score feeds and leaves a disagreement to a tap.
