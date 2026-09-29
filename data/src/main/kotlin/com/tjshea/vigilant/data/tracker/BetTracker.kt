@@ -584,6 +584,13 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         const val SOURCE_VIGILANT = "vigilant"
         const val SOURCE_CNO = "cno"
 
+        /** [TrackedBet.nowVia]: whose fair line the current EV rests on. */
+        const val VIA_CNO = "cno"
+        const val VIA_VIGILANT = "vigilant"
+
+        /** A scan re-writes an open bet's read only when its fair line moved or the last read is this old (the age on the card stays honest). */
+        const val OBSERVE_REFRESH_MS = 60_000L
+
         /** A ✓ logs a $1 bet: Novig's API can't read the app's own bets (NOVIG_API.md: subaccounts only). */
         const val DEFAULT_STAKE = 1.0
 
