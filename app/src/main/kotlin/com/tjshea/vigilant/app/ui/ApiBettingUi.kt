@@ -399,10 +399,11 @@ fun ApiBetSheet(
     onRefresh: () -> Unit,
     onRepeat: () -> Unit,
     onDismiss: () -> Unit,
+    onAddMoney: () -> Unit = {},
 ) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = { if (!sheet.placing) onDismiss() }, sheetState = state) {
-        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss)
+        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney)
     }
 }
 
@@ -416,6 +417,8 @@ fun ApiBetSheetContent(
     onRefresh: () -> Unit,
     onRepeat: () -> Unit,
     onDismiss: () -> Unit,
+    /** "Add money to the wallet": Settings' wallet, with what the bet is short by typed in. */
+    onAddMoney: () -> Unit = {},
 ) {
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp).navigationBarsPadding().testTag("apiBetSheet"),
@@ -427,6 +430,8 @@ fun ApiBetSheetContent(
         val result = sheet.result
         if (result != null) {
             ResultBlock(result)
+            // Novig refused it for the wallet's balance (the sheet's own check read an older balance).
+            if (result is PlaceResult.Failed && WALLET_WORDS.containsMatchIn(result.message)) AddMoneyButton(onAddMoney)
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().testTag("betDone")) { Text("Done") }
             return@Column
         }
@@ -464,9 +469,10 @@ fun ApiBetSheetContent(
             val short = sheet.balance != null && sheet.balance + 1e-9 < plan.expectedCost
             if (short) {
                 Text(
-                    "The wallet holds ${Format.money(sheet.balance ?: 0.0)}: add money in Settings › Novig API key › Betting through the API first.",
-                    style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative,
+                    "The Vigilant wallet holds ${Format.money(sheet.balance ?: 0.0)}, less than this bet's ${Format.money(plan.expectedCost)}: add money to it first.",
+                    style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.testTag("walletShort"),
                 )
+                AddMoneyButton(onAddMoney)
             }
             Text(
                 "It's placed as one order that buys at ${Format.american(plan.limitPrice)} or better and never rests: if Novig's price moves against you first, " +
@@ -503,6 +509,15 @@ fun ApiBetSheetContent(
         if (!sheet.placing) TextButton(onClick = onDismiss) { Text("Cancel") }
         Spacer(Modifier.height(4.dp))
     }
+}
+
+/** What Novig says when an order is refused for the wallet's balance (its exact words aren't documented). */
+private val WALLET_WORDS = Regex("(?i)balance|insufficient|funds")
+
+/** The sheet's way to the wallet (Tj, 2026-09-29): Settings › Betting, scrolled to "Add money", with the shortfall typed in. */
+@Composable
+private fun AddMoneyButton(onAddMoney: () -> Unit) {
+    FilledTonalButton(onClick = onAddMoney, modifier = Modifier.fillMaxWidth().testTag("addMoney")) { Text("Add money to the wallet") }
 }
 
 @Composable
