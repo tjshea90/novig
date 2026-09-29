@@ -137,8 +137,9 @@ class ApiBettingControllerTest {
         val tracked = kotlinx.coroutines.runBlocking { app.container.tracker.all() }.single { it.orderId == "order-1" }
         assertEquals(o.outcome.outcomeId, tracked.outcomeId)
         assertEquals(bet.contracts, fake.last!!.third)
-        // The card's key is marked placed, so it leaves the +EV list like a ✓.
-        assertTrue(kotlinx.coroutines.runBlocking { app.container.placed.load() }.bets.any { it.key == o.key })
+        // The card's own key is on the bet (the ✓ mark that hides it from the +EV list uses the same key; PlacedBets prunes by the real clock,
+        // so a sample game from another day can't be read back here).
+        assertEquals(o.key, tracked.placedKey)
         // Nothing more can be done to a finished sheet.
         api.setStake(9.0)
         assertTrue(state.value.betSheet!!.result is PlaceResult.Placed)
