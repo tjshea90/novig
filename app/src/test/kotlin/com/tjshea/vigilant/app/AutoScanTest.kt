@@ -231,7 +231,8 @@ class AutoScanTest {
         installNovig()
         shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         val nm = context.getSystemService(NotificationManager::class.java)
-        assertEquals(1, EvAlerts.post(context, listOf(fullAlert()), now))
+        val a = fullAlert()
+        assertEquals(1, EvAlerts.post(context, listOf(a), now))
         val n = shadowOf(nm).allNotifications.single()
         // Tapping opens Novig but doesn't take the alert down: the button is still there when the bet is in.
         assertEquals(0, n.flags and android.app.Notification.FLAG_AUTO_CANCEL)
@@ -242,7 +243,7 @@ class AutoScanTest {
         assertEquals(AlertActionReceiver::class.java.name, sent.component!!.className)
         assertTrue(shadowOf(action.actionIntent).isBroadcastIntent)
         // The button carries the whole alert: the receiver needs no scan, screen or list to log the bet.
-        assertEquals(fullAlert(), EvAlerts.alertOf(sent))
+        assertEquals(a, EvAlerts.alertOf(sent))
         assertEquals("✓ Placed", EvAlerts.placedLabel(fullAlert(stake = null)))
         assertNull(EvAlerts.alertOf(Intent("nothing")))
     }
