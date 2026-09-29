@@ -56,12 +56,28 @@ class BetRecheck(
         val skipped: Int = 0,
         /** Game started over [STALE_AFTER_START_MS] ago: nothing left to check, its result comes from the final score. */
         val over: Int = 0,
-        /** No CNO page (Vigilant's own bets): only a Vigilant scan can price them. */
+        /** No CNO page (Vigilant's own bets) and not priced by [OpenBetPricer] (yet): the Vigilant scanner is off, or it wasn't run. */
         val vigilantOnly: Int = 0,
         val stopped: Boolean = false,
+        /** No CNO page and the game has started: nothing to price, its result comes from the final score. */
+        val started: Int = 0,
+        /** [OpenBetPricer] gave these bets a current EV from Vigilant's own fair odds (Vigilant's own bets, and CNO bets CNO didn't read). */
+        val priced: Int = 0,
+        /** ...and these it couldn't price: each shows the reason ([TrackedBet.nowNote]). */
+        val unpriced: Int = 0,
+        /** The bets CNO tried and failed, or never tried: [OpenBetPricer]'s to take over. */
+        val unreadIds: List<String> = emptyList(),
     ) {
         /** Open bets whose odds are now current. */
-        val covered: Int get() = updated + current
+        val covered: Int get() = updated + current + priced
+
+        /** This report after [p], a pricing pass over some of the bets it hadn't covered: Vigilant's own ([rescue] false) or CNO's unread ones. */
+        fun withPricing(p: OpenBetPricer.Report, rescue: Boolean): Report {
+            if (!rescue) return copy(priced = priced + p.priced, unpriced = unpriced + p.unpriced, vigilantOnly = (vigilantOnly - p.asked).coerceAtLeast(0))
+            val fromFailed = minOf(failed, p.asked)
+            val fromSkipped = minOf(skipped, p.asked - fromFailed)
+            return copy(priced = priced + p.priced, unpriced = unpriced + p.unpriced, failed = failed - fromFailed, skipped = skipped - fromSkipped)
+        }
 
         /**
          * What the toast says: the counts, all of them, in words. [graded]: the grading pass that ran beside the odds check (the
