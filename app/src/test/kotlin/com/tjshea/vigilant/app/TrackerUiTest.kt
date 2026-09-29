@@ -111,6 +111,76 @@ class TrackerUiTest {
         compose.onNodeWithText("Final: Tampa Bay Rays 3, Boston Red Sox 5").assertExists()
     }
 
+    // ---- Sort and scanner filter (Tj, 2026-09-29) ----
+
+    /** The sample's open bets with stakes that tell them apart: b3 (Vigilant, no EV yet) $25, b4 (CNO, +3.1%) $5, b5 (CNO, −2.1%) $10. */
+    private fun stakes() = SampleScan.state().let { s ->
+        s.copy(bets = s.bets.map { b -> when (b.id) { "b3" -> b.copy(stake = 25.0); "b4" -> b.copy(stake = 5.0); "b5" -> b.copy(stake = 10.0); else -> b } })
+    }
+
+    private fun top(text: String) = compose.onNodeWithText(text).fetchSemanticsNode().boundsInRoot.top
+
+    /** The open bets, top to bottom. */
+    private fun listed(): List<String> = listOf("b3" to "Dallas Cowboys", "b4" to "Jaxon Smith-Njigba Over 5.5", "b5" to "Under 7.5")
+        .filter { (_, t) -> compose.onAllNodesWithText(t).fetchSemanticsNodes().isNotEmpty() }
+        .sortedBy { (_, t) -> top(t) }.map { it.first }
+
+    @Test
+    fun `the open bets are ordered by what needs a look until a sort is chosen`() {
+        screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        assertEquals(listOf("b5", "b4", "b3"), listed()) // the next games first
+        compose.onNodeWithText("Needs a look").assertExists()
+    }
+
+    @Test
+    fun `current EV puts the best first against the price each was placed at, and a second tap turns it round`() {
+        screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithText("Current EV").performClick()
+        assertEquals(listOf("b4", "b5", "b3"), listed()) // +3.1%, −2.1%, then the bet nothing has priced
+        compose.onNodeWithText("Current EV: best first").assertExists()
+        compose.onNodeWithText("Current EV: best first").performClick()
+        assertEquals(listOf("b5", "b4", "b3"), listed()) // worst first, unpriced still last
+        compose.onNodeWithText("Current EV: worst first").assertExists()
+    }
+
+    @Test
+    fun `date placed and amount order the bets, newest and largest first`() {
+        screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithText("Date placed").performClick()
+        assertEquals(listOf("b5", "b4", "b3"), listed()) // placed 50 min, 60 min, 2 h ago
+        compose.onNodeWithText("Date placed: newest first").performClick()
+        assertEquals(listOf("b3", "b4", "b5"), listed())
+        compose.onNodeWithText("Amount").performClick()
+        assertEquals(listOf("b3", "b5", "b4"), listed()) // $25, $10, $5
+    }
+
+    @Test
+    fun `the scanner filter lists one scanner's bets, with the counts`() {
+        screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithText("All scanners (3)").assertExists()
+        compose.onNodeWithText("Vigilant (1)").assertExists()
+        compose.onNodeWithText("CNO (2)").assertExists()
+        compose.onNodeWithText("Vigilant (1)").performClick()
+        assertEquals(listOf("b3"), listed())
+        compose.onNodeWithText("Open (1)").assertExists() // the list counts follow the scanner picked
+        compose.onNodeWithText("CNO (2)").performClick()
+        assertEquals(listOf("b5", "b4"), listed())
+        compose.onNodeWithText("All scanners (3)").performClick()
+        assertEquals(3, listed().size)
+    }
+
+    @Test
+    fun `a card says when it was placed, and an old EV is not called now`() {
+        val base = stakes()
+        val state = base.copy(bets = base.bets.map { if (it.id == "b4") it.copy(nowAtMs = now - 2 * hour, nowVia = com.tjshea.vigilant.data.tracker.BetTracker.VIA_CNO) else it })
+        screen { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onAllNodesWithText("placed ", substring = true).assertCountEquals(3)
+        // b5's read is 5 minutes old (inside the limit): "now"; b4's is 2 hours old: when it was read.
+        compose.onNodeWithText("now −2.1% EV at your −110").assertExists()
+        compose.onNodeWithText("+3.1% EV at your +100").assertExists()
+        compose.onNodeWithText("as of 2h ago", substring = true).assertExists()
+    }
+
     @Test
     fun `Check odds now counts as it goes`() {
         screen { TrackerScreen(SampleScan.state().copy(checkingOdds = true, checkProgress = 12 to 61), { _, _ -> }, {}) }
