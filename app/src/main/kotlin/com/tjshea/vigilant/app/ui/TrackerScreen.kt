@@ -519,24 +519,23 @@ private fun BetCard(
                     valueColor = bet.profit?.let { moneyColor(it) } ?: Color.Unspecified,
                 )
             }
-            if (open && bet.nowEv != null) {
-                val ev = bet.nowEv!!
-                Text(
-                    "now ${Format.evPercentShort(ev)} EV",
-                    Modifier.padding(top = 6.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (ev >= 0) Edge.colors.positive else Edge.colors.negative,
-                )
-                Text(
-                    listOfNotNull(
-                        bet.nowFair?.let { "fair now ${Format.american(it)}" },
-                        bet.nowBooks?.let { "$it book${if (it == 1) "" else "s"}" },
-                        Format.age(bet.nowAtMs, now),
-                    ).joinToString(" · "),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (open) {
+                // The EV the fair odds now (devigged) give the price this bet was placed at; "now" only while the read is young.
+                TrackerText.nowLine(bet, now)?.let { line ->
+                    val ev = bet.nowEv!!
+                    Text(
+                        line.headline,
+                        Modifier.padding(top = 6.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = when {
+                            line.stale -> MaterialTheme.colorScheme.onSurfaceVariant
+                            ev >= 0 -> Edge.colors.positive
+                            else -> Edge.colors.negative
+                        },
+                    )
+                    Text(line.detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             if (open) {
                 TrackerText.oddsNote(bet, now)?.let { note ->
