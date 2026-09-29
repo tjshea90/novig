@@ -101,6 +101,8 @@ data class UiState(
     val bets: List<TrackedBet> = emptyList(),
     /** The Tracker's "Check odds now" is running. */
     val checkingOdds: Boolean = false,
+    /** While it runs: bets read so far, of how many it reads (null until the first count). */
+    val checkProgress: Pair<Int, Int>? = null,
     val loaded: Boolean = false,
     val novig: NovigUi = NovigUi(),
     /** CrazyNinjaOdds' +EV list (its own tab, and the mini window). */
@@ -855,24 +857,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * "Check odds now" (Tj, 2026-09-27): every open CNO bet's books read again for its EV now.
-     * Vigilant's own bets update with each scan ([com.tjshea.vigilant.data.tracker.BetTracker.observe]).
+     * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's books read again
+     * for its EV now, one CNO game page every two seconds with the count on the button. Vigilant's own bets
+     * (no CNO page) are priced by a Vigilant scan, started here when that scanner is on and none is running.
+     * The toast counts every open bet ([BetRecheck.Report.summary]).
      */
     fun checkOdds() {
-        if (_state.value.checkingOdds) return
-        _state.update { it.copy(checkingOdds = true) }
+        val start = _state.value
+        if (start.checkingOdds) return
+        _state.update { it.copy(checkingOdds = true, checkProgress = null) }
         viewModelScope.launch {
-            val report = runCatching { c.recheck.run() }.getOrNull()
-            _state.update { it.copy(checkingOdds = false) }
-            _toasts.tryEmit(
-                when {
-                    report == null -> "Couldn't check the odds"
-                    report.checked == 0 -> "No open CNO bets to check (Vigilant's own update with each scan)"
-                    report.updated == 0 -> "CrazyNinjaOdds didn't answer: try again in a minute"
-                    else -> "Checked ${report.updated} of ${report.checked} open bet${if (report.checked == 1) "" else "s"}"
-                },
-            )
+            var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null
+            var scanStarted = false
+            try {
+                val plan = c.recheck.preview()
+                if (plan.vigilantOnly > 0) scanStarted = startScanForOpenBets()
+                report = c.recheck.run { done, total -> _state.update { it.copy(checkProgress = done to total) } }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                report = null
+            } finally {
+                _state.update { it.copy(checkingOdds = false, checkProgress = null) }
+            }
+            _toasts.tryEmit(report?.summary(scanStarted) ?: "Couldn't check the odds")
         }
+    }
+
+    /** Starts Vigilant's scan for the open bets it prices (their markets are pinned); false when it can't or needn't start. */
+    private fun startScanForOpenBets(): Boolean {
+        val current = _state.value
+        if (!current.loaded || !current.settings.vigilantOn || current.settings.paused || current.settings.leagues.isEmpty()) return false
+        if (c.runner.running || current.status.rechecking) return true // one is already pricing them
+        val started = c.startVigilantScan(current.settings, current.bets)
+        if (started) ScanService.start(getApplication())
+        return started
     }
 
     fun setStake(id: String, stake: Double) {
