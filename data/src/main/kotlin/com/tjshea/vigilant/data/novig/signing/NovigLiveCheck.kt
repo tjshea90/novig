@@ -146,7 +146,8 @@ class NovigLiveCheck(
     companion object {
         const val WAIT_MS = 40_000L
         const val SAMPLES = 5
-        const val WATCH_COUNT = 24
+        /** Few enough (10 x 16 = 160 of the 512 `stream` tokens) that a scan running on the same key isn't kept waiting long for a full bucket. */
+        const val WATCH_COUNT = 10
         private const val POLL_MS = 250L
     }
 }

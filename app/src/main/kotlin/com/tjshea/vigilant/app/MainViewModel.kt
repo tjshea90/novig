@@ -671,7 +671,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(novig = it.novig.copy(busy = false, message = report.message, error = report.error)) }
             // A key that's accepted still can be slow (Tj, 2026-09-29: "the novig scan is slow, even though I tested my key and it says
             // it works"): measure what it gets, once, from this phone: its limits, book reads, and the live feed.
-            if (report.message != null && report.error == null) {
+            // (Not while a scan runs on the same key: its live feed shares the key's `stream` bucket.)
+            if (report.message != null && report.error == null && !c.runner.running && !_state.value.status.scanning) {
                 val lines = try {
                     withContext(Dispatchers.IO) {
                         NovigLiveCheck(c.http, c.json, c.readKeyClient(conn), feed = { s -> NovigStream(c.http, s, viewModelScope) }).run { step ->
