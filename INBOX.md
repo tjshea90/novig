@@ -2470,3 +2470,14 @@ https://odds-api.io/sportsbooks/novig
 
 Are any of these free or very cheap that can help get odds quickly or improve the speed or accuracy of vigilant. Can any of the features help grade bets
 ```
+
+## 2026-09-29T15:14:49Z
+```
+Attached is the novig test.
+
+Here is the moneylineapp.com API key:
+
+ml_live_255409a542198b1ce59d50f5662d203b
+
+Build the betting through the API function, and include the API grading bets feature for the tracker system in vigilant
+```
