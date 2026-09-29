@@ -623,6 +623,8 @@ private fun CnoCard(
                     }
                 }
                 Spacer(Modifier.width(8.dp))
+                ApiBetButton { it.betCno(row) }
+                Spacer(Modifier.width(6.dp))
                 OpenInBookButton(cnoSlipStakeSuffix(pick, settings), opening = opening, onClick = onOpen)
             }
         }

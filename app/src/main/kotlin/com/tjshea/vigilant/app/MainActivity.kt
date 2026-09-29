@@ -583,6 +583,13 @@ private fun VigilantRoot(
     val tab = tabs.firstOrNull { it.name == tabName } ?: if (mode == ScannerMode.CNO) Tab.CNO else tabs.first()
     var detail by remember { mutableStateOf<Opportunity?>(null) }
 
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.tjshea.vigilant.app.ui.LocalApiBet provides com.tjshea.vigilant.app.ui.ApiBetActions(
+            enabled = state.betting.enabled,
+            betOpportunity = { o -> vm.api.bet(o) },
+            betCno = { row -> vm.api.bet(row) },
+        ),
+    ) {
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -648,9 +655,28 @@ private fun VigilantRoot(
                     onNovigConnect = vm::connectNovig,
                     onNovigTest = vm::testNovig,
                     onNovigDisconnect = vm::disconnectNovig,
+                    bettingActions = com.tjshea.vigilant.app.ui.BettingActions(
+                        onEnable = vm.api::enable,
+                        onTransfer = vm.api::transfer,
+                        onDisable = vm.api::disable,
+                        onRefreshBalance = { vm.api.refreshBalance() },
+                        onSync = { vm.api.sync() },
+                    ),
                 )
             }
         }
+    }
+    }
+
+    state.betSheet?.let { sheet ->
+        com.tjshea.vigilant.app.ui.ApiBetSheet(
+            sheet,
+            onStake = vm.api::setStake,
+            onConfirm = vm.api::confirm,
+            onRefresh = vm.api::refreshPlan,
+            onRepeat = vm.api::allowRepeat,
+            onDismiss = vm.api::dismiss,
+        )
     }
 
     detail?.let { o ->

@@ -401,6 +401,9 @@ fun OpportunityCard(
                 // One tap to the bet slip, as the widget does (Tj, 2026-09-28); tapping the card still opens its details.
                 if (onOpen) {
                     Spacer(Modifier.width(8.dp))
+                    // Betting through Novig's API (Tj, 2026-09-29): only when it's set up in Settings.
+                    ApiBetButton { it.betOpportunity(o) }
+                    Spacer(Modifier.width(6.dp))
                     OpenBetButton(o, settings)
                 }
             }

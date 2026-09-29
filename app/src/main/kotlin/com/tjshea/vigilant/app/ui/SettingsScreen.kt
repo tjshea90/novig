@@ -80,6 +80,7 @@ fun SettingsScreen(
     onNovigConnect: (String, String) -> Unit = { _, _ -> },
     onNovigTest: () -> Unit = {},
     onNovigDisconnect: () -> Unit = {},
+    bettingActions: BettingActions = BettingActions(),
 ) {
     val s = state.settings
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(keys.exportTo) }
@@ -583,6 +584,8 @@ fun SettingsScreen(
                 if (AppBook.isNovig) {
                     SectionTitle("Novig API key")
                     NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status)
+                    // Betting through Novig's API: needs the connected key's subaccount (Tj, 2026-09-29).
+                    if (state.novig.connection != null) NovigBettingSection(state.betting, s, bettingActions, onUpdate)
                 }
 
             }
