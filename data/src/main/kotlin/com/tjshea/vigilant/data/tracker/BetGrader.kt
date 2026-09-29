@@ -199,11 +199,26 @@ object BetGrader {
             is Pick.Prop -> {
                 if (game.tennis) return Grade.Manual("A tennis match's ${PropStats.displayName(pick.stat).lowercase()} isn't in the score feed: mark it yourself")
                 val box = players ?: return Grade.Waiting("The box score isn't available yet")
+                if (box.count { !it.inactive } < MIN_BOX) return Grade.Waiting("The box score isn't fully posted yet")
+                val label = PropStats.displayName(pick.stat)
+                val football = game.league in FOOTBALL
                 val line = playerOf(pick.player, box)
-                    ?: return Grade.Manual("${pick.player} isn't in the box score (didn't play, or the name is spelled differently): mark it yourself")
+                    ?: return when {
+                        // Someone with nearly his name is in it: a spelling, not a player who sat out.
+                        lookalike(pick.player, box) -> Grade.Manual("${pick.player} isn't in the box score under that name (a similar name is): mark it yourself")
+                        // A football box score lists only players who recorded a stat: no line is no stat, and he still played.
+                        football && pick.stat in FOOTBALL_ZERO_STATS ->
+                            result(overUnder(0.0, pick.over, pick.line), "${pick.player}: no $label recorded (no line in the box score, counted as 0)")
+                        football -> Grade.Manual("${pick.player} has no line in the box score for $label: mark it yourself")
+                        // Every other box score lists everyone who played, so he didn't (Novig refunds a player who sat out).
+                        else -> Grade.Result(BetStatus.VOID, "${pick.player} didn't play (not in the box score): void")
+                    }
+                if (line.inactive) return Grade.Result(BetStatus.VOID, "${line.name} was ruled out and didn't play: void")
                 val value = line.stats[pick.stat]
-                    ?: return Grade.Manual("The box score has no ${PropStats.displayName(pick.stat)} for ${pick.player}: mark it yourself")
-                result(overUnder(value, pick.over, pick.line), "${line.name}: ${trim(value)} ${PropStats.displayName(pick.stat)}")
+                    ?: if (football && pick.stat in FOOTBALL_ZERO_STATS) 0.0 else null
+                    ?: return Grade.Manual("The box score has no $label for ${pick.player}: mark it yourself")
+                val shown = if (line.stats.containsKey(pick.stat)) "${trim(value)} $label" else "no $label recorded (counted as 0)"
+                result(overUnder(value, pick.over, pick.line), "${line.name}: $shown")
             }
         }
     }
