@@ -7,6 +7,8 @@ import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.RoundCost
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageDelta
+import com.tjshea.vigilant.data.novig.signing.ManagementKey
+import com.tjshea.vigilant.data.novig.signing.ManagementKeyHint
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigKeyTest
 import com.tjshea.vigilant.data.novig.signing.NovigLiveCheck
@@ -52,6 +54,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
