@@ -248,17 +248,17 @@ class ExchangeClientsTest {
     private var seen = 0
 
     /**
-     * Tj, 2026-09-29: "the novig scan is slow". Kalshi's 57 series took ~27 s one at a time at 2 a second; a league's series are now read
-     * four at a time at a starting pace of 6 a second (which success raises), so a scan's slowest free source stops setting "first bet at".
+     * Tj, 2026-09-29: "the novig scan is slow". A league's series are read two at a time (a reply's own delay overlaps the next
+     * request; the 2-a-second pace is unchanged, since Kalshi refused the nested-markets route at 4 a second: RESEARCH.md §36.2).
      */
     @Test
-    fun `kalshi reads a league's series several at a time, never more than four`() = runBlocking {
+    fun `kalshi reads a league's series two at a time, never more`() = runBlocking {
         val inFlight = java.util.concurrent.atomic.AtomicInteger()
         val peak = java.util.concurrent.atomic.AtomicInteger()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 peak.accumulateAndGet(inFlight.incrementAndGet()) { a, b -> maxOf(a, b) }
-                Thread.sleep(150)
+                Thread.sleep(200)
                 inFlight.decrementAndGet()
                 return MockResponse().setBody(
                     when (request.requestUrl!!.queryParameter("series_ticker")) {
@@ -269,14 +269,10 @@ class ExchangeClientsTest {
                 )
             }
         }
-        val s = settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL, MarketFamily.SPREAD, MarketFamily.PLAYER_PROPS, MarketFamily.TEAM_TOTAL))
-        val t0 = System.currentTimeMillis()
+        val s = settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL, MarketFamily.SPREAD))
         val snap = KalshiClient(OkHttpClient(), json, base("/")).odds(nfl, s)
-        val took = System.currentTimeMillis() - t0
-        val asked = server.requestCount
-        assertTrue("several series in flight at once (peak ${peak.get()})", peak.get() in 2..KalshiClient.PARALLEL)
-        // The old fixed pace (2 a second) took asked / 2 seconds; the starting pace alone is 3 times faster, and success raises it.
-        assertTrue("$asked series took $took ms", took < asked * 1000L / 2 / 2)
+        assertEquals(3, server.requestCount)
+        assertTrue("two in flight at once, never more (peak ${peak.get()})", peak.get() in 2..KalshiClient.PARALLEL)
         assertEquals(2, snap.events.single().markets.size)
     }
 

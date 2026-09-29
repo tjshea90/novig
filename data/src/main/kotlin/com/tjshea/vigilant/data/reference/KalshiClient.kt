@@ -54,10 +54,10 @@ class KalshiClient(
     override fun supports(league: League) = league.kalshiSeries.isNotEmpty()
 
     /**
-     * Every request waits its turn here. Kalshi documents 20 reads a second for a basic account; anonymous reads were throttled
-     * at ~3/s on 2026-09-25 (429 after ~130 requests in ~40 s), but on 2026-09-29 a sustained 20/s for 300 requests and a burst at
-     * ~35/s for 200 got no refusal (RESEARCH.md §36.2). A scan starts at [START_RATE], steady success raises the pace to at most
-     * [MAX_RATE], and any 429 drops it back and halves it for a minute ([RateGate]): a shared address costs speed, not data.
+     * Every request waits its turn here. Kalshi documents 20 reads a second for a basic account, but a series read here is the
+     * events route with nested markets: 0.5-0.8 MB a reply uncompressed, and it refused (429, no Retry-After) 2 of 24 requests at
+     * 4 a second and 3 of 36 at 6 on 2026-09-29, though a light `limit=1` market read took 20 a second for 300 requests
+     * (RESEARCH.md §36.2). So the pace stays at the measured-safe 2 a second; [PARALLEL] only hides a reply's own delay.
      */
     private val gate = RateGate(
         ratePerSecond = START_RATE, burst = START_BURST, sleep = sleep, minRate = MIN_RATE,
@@ -200,16 +200,16 @@ class KalshiClient(
         private const val RFI = "RFI"
         const val MAX_PAGES = 5
 
-        /** Requests a second a scan starts at, and the most steady success raises it to (Kalshi's documented basic tier is 20). */
-        const val START_RATE = 6.0
-        const val MAX_RATE = 14.0
-        const val MIN_RATE = 2.0
-        const val START_BURST = 6
-        const val RAMP_EVERY = 20
-        const val RAMP_STEP = 2.0
+        /** Requests a second (no ramp: the measured-safe pace for the nested-markets route), and the burst allowed after a quiet spell. */
+        const val START_RATE = 2.0
+        const val MAX_RATE = 2.0
+        const val MIN_RATE = 1.0
+        const val START_BURST = 4
+        const val RAMP_EVERY = 40
+        const val RAMP_STEP = 0.5
 
         /** Series read at once, and tries per page (a 429 waits Retry-After, then tries again). */
-        const val PARALLEL = 4
+        const val PARALLEL = 2
         const val ATTEMPTS = 3
         private val ET: ZoneId = ZoneId.of("America/New_York")
         private val MONTHS = listOf("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
