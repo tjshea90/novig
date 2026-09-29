@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -58,6 +60,11 @@ class SettingsTabsTest {
         SettingsTab.TOOLS to listOf("DIAGNOSTICS", "ABOUT"),
     )
 
+    /** Every text on screen, as drawn (a heading's count, like "(7/10)", is part of it). */
+    private fun texts(): List<String> =
+        compose.onAllNodes(SemanticsMatcher("has text") { it.config.contains(SemanticsProperties.Text) })
+            .fetchSemanticsNodes().flatMap { n -> n.config[SemanticsProperties.Text].map { it.text } }
+
     @Test
     fun `every section of the old long page is on exactly one tab`() {
         screen()
@@ -65,7 +72,7 @@ class SettingsTabsTest {
             open(tab)
             for ((home, titles) in sections) {
                 for (title in titles) {
-                    val found = compose.onAllNodesWithText(title, substring = false).fetchSemanticsNodes().size
+                    val found = texts().count { it == title || it.startsWith("$title (") }
                     if (home == tab) assertTrue("$title should be on the ${tab.label} tab", found >= 1) else assertEquals("$title should not be on the ${tab.label} tab", 0, found)
                 }
             }
@@ -127,6 +134,6 @@ class SettingsTabsTest {
         open(SettingsTab.FAIR)
         compose.onNodeWithText("Sportsbooks for fair odds", substring = true, ignoreCase = true).performScrollTo()
         open(SettingsTab.FEED)
-        compose.onNodeWithText("+EV feed", ignoreCase = true).assertIsDisplayed()
+        compose.onNodeWithText("+EV FEED", ignoreCase = false).assertIsDisplayed()
     }
 }
