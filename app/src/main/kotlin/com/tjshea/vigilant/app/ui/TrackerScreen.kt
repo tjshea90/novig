@@ -346,7 +346,7 @@ private fun StatsCards(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBreakd
                 LabeledValue("Difference", Format.signedMoney(stats.vsExpected), valueColor = moneyColor(stats.vsExpected))
             }
             Text(TrackerText.luckMessage(stats), style = MaterialTheme.typography.bodySmall)
-            Caption("Same ${stats.settledWithEv} won and lost bets on both sides: what their EVs promised against what they paid. Bets with no EV on record, pushes and voids aren't in it.")
+            Caption("Both numbers count the same ${stats.settledWithEv} won and lost bet${if (stats.settledWithEv == 1) "" else "s"}: what their EVs promised, and what they actually paid. Bets with no EV on record, pushes and voids aren't in either.")
         }
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
