@@ -178,7 +178,13 @@ class AppContainer(app: Application) {
         private set
     @Volatile var apiSync: ApiBetSync? = null
         private set
-    val bettingSetup = NovigBettingSetup(http, json, KeystoreVault)
+    @Volatile var bettingSetup = NovigBettingSetup(http, json, KeystoreVault)
+        private set
+
+    /** Setup and transfers against a Novig the test fakes. */
+    internal fun installBettingSetupForTest(setup: NovigBettingSetup) {
+        bettingSetup = setup
+    }
 
     /** Betting through a client the test built (a mock Novig), without a Keystore key. */
     internal fun installTradingForTest(client: NovigTradingClient, subaccountKeyId: String) {
