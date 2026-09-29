@@ -1026,6 +1026,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
 
+    /** Settings › Diagnostics: one page of settings, the last scan, API usage, the background scan and the Tracker, to copy (Tj, 2026-09-29). */
+    fun showDiagnostics() {
+        val app = getApplication<Application>()
+        val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+        val extras = Diagnostics.Extras(
+            versionName = info?.versionName ?: "?",
+            versionCode = info?.let { androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(it).toInt() } ?: 0,
+            device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
+            autoScan = c.autoScan.status.value,
+            autoScanServiceRunning = AutoScanService.running,
+        )
+        _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it, extras, System.currentTimeMillis()))) }
+    }
+
+    /** Settings › Betting › Grading check: what Novig's ledger and positions say about each API bet, beside what the Tracker did (Tj, 2026-09-29). */
+    fun showGradingCheck() {
+        val connection = _state.value.novig.connection ?: return
+        val trading = c.trading
+        if (trading == null) {
+            _toasts.tryEmit("Betting through the API isn't set up on this phone")
+            return
+        }
+        _state.update { it.copy(report = ReportUi(GRADING_CHECK, "Reading Novig's ledger and positions…", busy = true)) }
+        viewModelScope.launch {
+            val text = try {
+                withContext(Dispatchers.IO) { com.tjshea.vigilant.data.tracker.ApiGradingCheck(c.tracker, trading, connection.subaccountKeyId).report() }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                "Couldn't build the report: ${e.message ?: e.javaClass.simpleName}"
+            }
+            _state.update { s -> if (s.report?.title == GRADING_CHECK) s.copy(report = ReportUi(GRADING_CHECK, text)) else s }
+        }
+    }
+
+    fun dismissReport() = _state.update { it.copy(report = null) }
+
     /**
      * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's EV now, against the price it was bet at.
      * CNO's bets have their CNO game page read again (a page every half second, three at once); Vigilant's own bets (no CNO page)
