@@ -75,9 +75,9 @@ class TrackerTextTest {
         assertEquals("2 open · $20.00 at risk · pays $20.00 · 1 started · current EV on 1 of 1 upcoming", TrackerText.openSummary(read, now))
         // A read older than the fair odds' own age limit is no longer current: 5 minutes for a game within 3 hours, 10 for a far-off one.
         val old = listOf(open[0].copy(nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("1 open · $5.00 at risk · pays $5.00 · current EV on 0 of 1 upcoming", TrackerText.openSummary(old, now))
+        assertEquals("1 open · $10.00 at risk · pays $10.00 · current EV on 0 of 1 upcoming", TrackerText.openSummary(old, now))
         val farOff = listOf(open[0].copy(startsTs = now + 30 * hour, nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("1 open · $5.00 at risk · pays $5.00 · current EV on 1 of 1 upcoming", TrackerText.openSummary(farOff, now))
+        assertEquals("1 open · $10.00 at risk · pays $10.00 · current EV on 1 of 1 upcoming", TrackerText.openSummary(farOff, now))
     }
 
     @Test
