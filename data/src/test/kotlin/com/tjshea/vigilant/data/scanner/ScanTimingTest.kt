@@ -37,6 +37,19 @@ class ScanTimingTest {
                 "500 through the key) · first bet at 12 s · Novig refused none · the key's limit is 16 a second",
             ScanTiming.text(t, prices = 1200, viaKey = 500, viaPush = 700, keyPerSec = 16.0),
         )
+        // With more than one fair-odds source, the slowest ones are named: the scan's first bets wait for them.
+        assertEquals(
+            "Last scan took 41 s: board 0.9 s · fair odds 27 s (Kalshi 27 s, Polymarket 13 s, Pinnacle 2.1 s) · first bet at 12 s · Novig refused none",
+            ScanTiming.text(
+                t.copy(sourceMs = listOf("Pinnacle" to 2_100L, "Kalshi" to 27_400L, "Polymarket" to 13_000L)),
+                prices = 0, viaKey = 0, viaPush = 0,
+            ),
+        )
+        // A lone source says nothing extra.
+        assertEquals(
+            "Last scan took 41 s: board 0.9 s · fair odds 27 s · first bet at 12 s · Novig refused none",
+            ScanTiming.text(t.copy(sourceMs = listOf("Kalshi" to 27_400L)), prices = 0, viaKey = 0, viaPush = 0),
+        )
         // No key: public prices, refusals counted, no bet.
         assertEquals(
             "Last scan took 1.5 s: board 0.2 s · fair odds 1.0 s · 8 Novig prices in 1.2 s (6.7 a second: 8 public) · no bet · Novig refused 3",
