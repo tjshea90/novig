@@ -81,8 +81,10 @@ fun SettingsScreen(
     onNovigTest: () -> Unit = {},
     onNovigDisconnect: () -> Unit = {},
     bettingActions: BettingActions = BettingActions(),
+    reportActions: ReportActions = ReportActions(),
 ) {
     val s = state.settings
+    state.report?.let { ReportDialog(it, reportActions) }
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(keys.exportTo) }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(keys.importFrom) }
     Scaffold(
