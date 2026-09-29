@@ -1,22 +1,24 @@
-# CHECKPOINT 2086 — read me first, then TASKS.md
+# CHECKPOINT 2087 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T17:47:30Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `76d953f8` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T17:55:27Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `aef5b236` (this checkpoint is the commit after it)
 
 ## Just done
-v0.21.1 (code 47) released and recorded; X1-X5 ticked
+Y1/Y2: first real API orders refused for clientId format (vigilant- prefix); plain UUID for clientId and clientTransferId, placeOrder refuses non-UUIDs, mock Novig enforces it, lost-answer lookup covers PENDING/outcome/pages, OPEN with 0 remaining is finished; spec re-read; docs; version 0.21.2/48
 
 ## Do this next
-Wait for Tj's report from his phone: does Check odds now price the Vigilant bets (toast counts add up), do reasons read right, sort/scanner rows; older phone items L1161 L1164 P6 S2 and the v0.21.0 API-betting first run (RESEARCH.md §37.4)
+Y3: full floor, ship.sh v0.21.2, wait CI, release.yml, record-release, tell Tj to try the bet again
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  5984e7b7 ckpt 2086: v0.21.1 (code 47) released and recorded; X1-X5 ticked
   55cdc46b ckpt 2085: pre-release: v0.21.1: Check odds now updates the EV of every open bet, Vigil
   7d4c504e ckpt 2084: X2-X4 ticked with their tests; RESEARCH.md §38.3 (built, live 10/10 priced 
   a080d3fb ckpt 2083: X2d/X3/X4 built and tested: bets-only pricing pass wired into Check odds now
@@ -26,8 +28,7 @@ Wait for Tj's report from his phone: does Check odds now price the Vigilant bets
   cc813115 ckpt 2079: Recorded Tj's tracker request (recheck every open bet incl. Vigilant scanner
   4101c936 ckpt 2078: v0.21.0 (code 46) released and recorded; W9 ticked
   57fa81d3 ckpt 2077: pre-release: v0.21.0: bet through Novig's API from a separate Vigilant walle
-  535e01eb ckpt 2076: W9: placement never cancelled by closing the sheet (+test that failed withou
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(18 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
