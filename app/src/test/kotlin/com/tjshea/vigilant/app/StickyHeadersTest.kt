@@ -161,6 +161,15 @@ class StickyHeadersTest {
         assertTrue("the bar is $heightDp dp tall", heightDp <= 175f)
     }
 
+    /** The Check odds now counter adds one row (Tj, 2026-09-29), not a block: the bar stays under a quarter of the list area. */
+    @Test
+    fun `with the Check odds now counter the pinned bar is still compact`() {
+        screen { TrackerScreen(manyBets().copy(checkStartedAtMs = SampleScan.NOW - 60_000), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        val heightDp = compose.onNodeWithTag(STICKY_BAR).fetchSemanticsNode().size.height / 3f // xxhdpi
+        println("pinned bar with the counter: $heightDp dp")
+        assertTrue("the bar is $heightDp dp tall", heightDp <= 200f)
+    }
+
     @Test
     fun `nothing else on these screens is pinned`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
