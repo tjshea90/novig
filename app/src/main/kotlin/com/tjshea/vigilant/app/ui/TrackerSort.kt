@@ -39,12 +39,12 @@ object TrackerSort {
      */
     fun sorted(bets: List<TrackedBet>, sort: BetSort, reversed: Boolean, default: (List<TrackedBet>) -> List<TrackedBet>): List<TrackedBet> = when (sort) {
         BetSort.DEFAULT -> default(bets)
-        BetSort.PLACED -> bets.sortedWith(direction(compareBy<TrackedBet> { it.createdAtMs }.thenBy { it.id }, natural = true, reversed))
-        BetSort.AMOUNT -> bets.sortedWith(direction(compareBy<TrackedBet> { it.stake }.thenBy { it.createdAtMs }.thenBy { it.id }, natural = true, reversed))
-        BetSort.STARTS -> bets.sortedWith(direction(compareBy<TrackedBet> { it.startsTs }.thenBy { it.createdAtMs }.thenBy { it.id }, natural = false, reversed))
+        BetSort.PLACED -> bets.sortedWith(direction(compareBy<TrackedBet> { it.createdAtMs }.thenBy { it.id }, naturalDescending = true, reversed))
+        BetSort.AMOUNT -> bets.sortedWith(direction(compareBy<TrackedBet> { it.stake }.thenBy { it.createdAtMs }.thenBy { it.id }, naturalDescending = true, reversed))
+        BetSort.STARTS -> bets.sortedWith(direction(compareBy<TrackedBet> { it.startsTs }.thenBy { it.createdAtMs }.thenBy { it.id }, naturalDescending = false, reversed))
         BetSort.EV -> {
             val (priced, unpriced) = bets.partition { it.nowEv != null }
-            priced.sortedWith(direction(compareBy<TrackedBet> { it.nowEv!! }.thenByDescending { it.stake }.thenBy { it.id }, natural = true, reversed)) +
+            priced.sortedWith(direction(compareBy<TrackedBet> { it.nowEv!! }.thenByDescending { it.stake }.thenBy { it.id }, naturalDescending = true, reversed)) +
                 unpriced.sortedWith(compareBy<TrackedBet> { it.startsTs }.thenBy { it.id })
         }
     }
