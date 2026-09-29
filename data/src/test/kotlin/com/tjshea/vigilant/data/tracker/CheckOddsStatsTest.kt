@@ -28,7 +28,7 @@ class CheckOddsStatsTest {
     }
 
     @Test
-    fun `a new check starts from zero: reads from before it began don't count`() {
+    fun `a new check starts from zero, reads from before it began don't count`() {
         val bets = listOf(bet("old+", 0.02, readAt = start - 1), bet("old-", -0.02, readAt = start - 60_000), bet("never", null, readAt = null))
         val s = CheckOddsStats.of(bets, start)
         assertEquals(CheckOddsStats.EMPTY, s)
