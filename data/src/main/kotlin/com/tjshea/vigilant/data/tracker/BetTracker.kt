@@ -86,6 +86,8 @@ data class TrackedBet(
      */
     val gradeNote: String? = null,
     val gradeAtMs: Long? = null,
+    /** [gradeNote] is a reason only Tj can fix with a tap (a market or player the feeds can't grade), not a game still being played. */
+    val gradeManual: Boolean = false,
 ) {
     /** What a win pays back in profit: every $1 of cost returns $1 / cost. */
     val profitIfWon: Double get() = stake * (1.0 / cost - 1.0)
@@ -279,7 +281,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
 
     /** Turns auto-grading back on for an open bet whose result Tj tapped and undid: the score feeds grade it again. */
     suspend fun regrade(id: String) = edit(id) {
-        if (it.status == BetStatus.PENDING && it.settledBy == BetSettler.BY_YOU) it.copy(settledBy = null, gradeNote = null, gradeAtMs = null) else it
+        if (it.status == BetStatus.PENDING && it.settledBy == BetSettler.BY_YOU) it.copy(settledBy = null, gradeNote = null, gradeAtMs = null, gradeManual = false) else it
     }
 
     /**
@@ -364,7 +366,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                         status = status, settledAtMs = if (status == BetStatus.PENDING) null else clock(), settleValue = null, settledBy = BetSettler.BY_YOU,
                         // A result ends the book snapshot (only open bets show it); an undo starts a clean grading note.
                         books = if (status == BetStatus.PENDING) it.books else emptyList(),
-                        gradeNote = if (status == BetStatus.PENDING) null else "Marked ${status.name.lowercase()} by you", gradeAtMs = if (status == BetStatus.PENDING) null else clock(),
+                        gradeNote = if (status == BetStatus.PENDING) null else "Marked ${status.name.lowercase()} by you", gradeAtMs = if (status == BetStatus.PENDING) null else clock(), gradeManual = false,
                     )
                 } else {
                     it

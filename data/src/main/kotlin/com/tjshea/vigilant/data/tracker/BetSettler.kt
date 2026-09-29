@@ -100,7 +100,7 @@ class BetSettler(
                 }
                 if (!found.final) {
                     waiting++
-                    note(changes, bet, "The game isn't over yet", startedAt)
+                    note(changes, bet, "The game isn't over yet", startedAt, manual = false)
                     later(bet, RETRY_MS)
                     continue
                 }
@@ -117,7 +117,7 @@ class BetSettler(
                             if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it
                             else it.copy(
                                 status = grade.status, settledAtMs = now, settleValue = null, settledBy = BY_SCORES,
-                                books = emptyList(), gradeNote = grade.evidence, gradeAtMs = now,
+                                books = emptyList(), gradeNote = grade.evidence, gradeAtMs = now, gradeManual = false,
                             )
                         }
                         nextTry.remove(bet.id)
@@ -125,7 +125,7 @@ class BetSettler(
                     }
                     is BetGrader.Grade.Waiting -> {
                         waiting++
-                        note(changes, bet, grade.reason, startedAt)
+                        note(changes, bet, grade.reason, startedAt, manual = false)
                         later(bet, RETRY_MS)
                     }
                     is BetGrader.Grade.Manual -> {
@@ -143,9 +143,9 @@ class BetSettler(
     }
 
     /** Puts [text] on [bet] when it's new (or the last look is old), so an unchanged answer never rewrites the file. */
-    private fun note(changes: MutableMap<String, (TrackedBet) -> TrackedBet>, bet: TrackedBet, text: String, now: Long) {
-        if (bet.gradeNote == text && bet.gradeAtMs != null && now - bet.gradeAtMs < NOTE_REFRESH_MS) return
-        changes[bet.id] = { if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it else it.copy(gradeNote = text, gradeAtMs = now) }
+    private fun note(changes: MutableMap<String, (TrackedBet) -> TrackedBet>, bet: TrackedBet, text: String, now: Long, manual: Boolean = true) {
+        if (bet.gradeNote == text && bet.gradeManual == manual && bet.gradeAtMs != null && now - bet.gradeAtMs < NOTE_REFRESH_MS) return
+        changes[bet.id] = { if (it.status != BetStatus.PENDING || it.settledBy == BY_YOU) it else it.copy(gradeNote = text, gradeAtMs = now, gradeManual = manual) }
     }
 
     private fun later(bet: TrackedBet, afterMs: Long) {

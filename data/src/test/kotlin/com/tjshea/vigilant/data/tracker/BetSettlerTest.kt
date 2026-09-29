@@ -153,6 +153,9 @@ class BetSettlerTest {
         assertEquals(true, notes["nobody"]!!.startsWith("Nobody Here isn't in the box score"))
         assertEquals(true, notes["first"]!!.contains("play-by-play"))
         assertEquals(now, t.all().first { it.id == "odd" }.gradeAtMs)
+        // A reason only a tap can fix is flagged; a settled bet isn't waiting on anyone.
+        assertEquals(true, t.all().first { it.id == "odd" }.gradeManual)
+        assertEquals(false, t.all().first { it.id == "ok" }.gradeManual)
     }
 
     @Test
@@ -163,6 +166,7 @@ class BetSettlerTest {
         val r = settler.run()
         assertEquals(1, r.waiting)
         assertEquals("The game isn't over yet", t.all().single().gradeNote)
+        assertEquals(false, t.all().single().gradeManual) // a game still being played needs nobody
 
         val called = object : ScoreSource by scores {
             override suspend fun games(league: String, date: LocalDate) = scores.games(league, date)?.map { it.copy(called = true, calledReason = "Postponed", final = false) }
