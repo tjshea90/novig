@@ -2559,3 +2559,39 @@ oversized briefing is trimmed…" (both failed before the fix).
   workflow ledger plus a mandatory diagnostic subagent for every Gradle workflow: heavier than this repo's flow, and
   `tools/test.sh` gives its main benefit, short output). CI changes (3 min 45 s per run, Gradle and Robolectric caches
   already on). Nothing on futures (Tj: leave them out, BRIEF.md).
+
+## 34. Grading bets: what leaves them open, and what PropLine's "grades every prop" is (2026-09-29, Tj)
+
+Tj: "Some bets are still pending in the open bets tab that are final … one of [the APIs] claims that the API can grade all props
+markets. Research this and see if vigilant can use this."
+
+### 34.1 PropLine (prop-line.com; openapi.json + llms-full.txt read 2026-09-29)
+| Endpoint | Free key? | What it gives |
+|---|---|---|
+| `GET /v1/sports/{sport}/events/{id}/results` | **No** (redacted: `resolution` and `actual_value` are null, `redacted: true`; Hobby / Pro / Streaming / Enterprise only, Hobby is $9/mo) | every prop of every book resolved won/lost/push/void with the actual stat |
+| `GET /v1/exports/resolved-props` | No (Pro+, 90 days) | the same as CSV |
+| `GET /v1/sports/{sport}/players/{name}/history` and `/trends` | Structure only | per-player resolved history |
+| `POST /v1/clv/grade` | No (Hobby+) | closing-line value of placed bets |
+| `GET /v1/sports/{sport}/scores?days_from=N` | **Yes** | id, teams, status (`final`, `postponed`, `cancelled`, …), scores, last N days |
+| `GET /v1/sports/{sport}/events/{id}/stats` | **Yes** | box score rows `player_name / stat_type / stat_value` (MLB hits, HR, RBI, runs, K, walks, SB; NBA points, rebounds, assists, threes, steals, blocks, turnovers; NFL passing/rushing/receiving yards, TDs, anytime TD; NHL goals, points, SOG, blocked shots, saves; soccer goals, assists, shots, cards; tennis sets won, aces, total games) |
+
+Every call is 1 of the key's 1,000 requests a day (the same quota scans spend); event ids match the odds calls'.
+
+**Verdict.** The claim is true but paid: PropLine grades every prop for every book **on a paid plan**. On the free key it publishes
+the box score and the final scores, which is what Vigilant already reads for nothing from ESPN and MLB's Stats API (and reading
+the box score is what makes a grade auditable: the Tracker now shows "Boldy: 3 Shots On Goal" next to "Over 2.5"). Wiring PropLine's
+free `/scores` + `/stats` in as a second source would add redundancy only, spend the daily quota scans depend on, and could not be
+checked live (the demo key answers 401 on `/scores`). Not built. If ESPN's feed ever breaks, or Tj buys a paid PropLine plan, the
+smallest change is a `PropLineScores : ScoreSource` behind `FreeScores` (games by `days_from`, players from `/stats`, stat names
+mapped to Novig's), used only for bets the free feeds couldn't grade.
+
+### 34.2 What was actually leaving bets open (fixed in v0.20.0)
+No score-feed parser for: **hockey** (ESPN's NHL box score was never read, so every NHL prop stayed open), basketball steals /
+blocks / turnovers and the P+R / P+A / R+A / S+B sums, double and triple doubles, football tackles, **tennis** (ESPN's scoreboard has
+each set's games; retired and walkover matches are "called": books' rules vary, so Tj taps those); market wordings `BetGrader` didn't
+read ("Alternate Total", "Game Total", "Total Games", "Games Won", "1st Set Winner", "Set Spread", "Total Sets"); and an Undo that
+switched auto-grading off for good. Novig's own market list (`GET /v3/public/types/markets`, 181 types) was read in full: every
+prop a box score can settle is covered; first-scorer markets (`FIRST_TOUCHDOWN_SCORER`, `FIRST_BASKET`, `FIRST_GOAL_SCORER`), 3-way and
+quarter/period markets need play-by-play the feeds don't give and stay a tap, each saying so. Because Tj's bets live on his phone,
+the app now says why on every open bet instead of guessing.
+
