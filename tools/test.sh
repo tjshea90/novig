@@ -34,22 +34,22 @@ for a in "$@"; do
   ARGS+=("$a")
   PREV="$a"
 done
-if [ "$HAS_TASK" = 0 ]; then
-  if [ "$HAS_FILTER" = 1 ]; then
-    echo "  name the test task with --tests, e.g.: bash tools/test.sh :data:test --tests '*CnoChecksTest'"
-    exit 2
-  fi
-  ARGS=(:engine:test :data:test :app:testDebugUnitTest "${ARGS[@]}")
+if [ "$HAS_TASK" = 0 ] && [ "$HAS_FILTER" = 1 ]; then
+  echo "  name the test task with --tests, e.g.: bash tools/test.sh :data:test --tests '*CnoChecksTest'"
+  exit 2
 fi
-
-if [ ! -d "$ANDROID_HOME/platforms" ]; then
+if [ -d "$ANDROID_HOME/platforms" ]; then
+  # The floor is `test`, exactly what CI runs: every module's unit tests (app's are debug only).
+  [ "$HAS_TASK" = 0 ] && ARGS=(test "${ARGS[@]}")
+else
+  [ "$HAS_TASK" = 0 ] && ARGS=(:engine:test :data:test :app:testDebugUnitTest "${ARGS[@]}")
   KEPT=()
   DROPPED=0
   for a in "${ARGS[@]}"; do
-    case "$a" in :app:*) DROPPED=1 ;; *) KEPT+=("$a") ;; esac
+    case "$a" in :app:*|test|check) DROPPED=1 ;; *) KEPT+=("$a") ;; esac
   done
-  ARGS=(--configure-on-demand "${KEPT[@]}")
   [ "$DROPPED" = 1 ] && echo "  note  no Android SDK at $ANDROID_HOME (bash tools/setup-android.sh): :app's tests left out, CI runs them"
+  ARGS=(--configure-on-demand "${KEPT[@]}")
 fi
 
 START=$(date +%s)
