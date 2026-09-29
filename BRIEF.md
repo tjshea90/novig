@@ -263,12 +263,15 @@ re-diagnose these from scratch:
   belongs on state changes, not unconditionally on every iteration, since
   each line is a separate event.
 
-### Build trap 6 (2026-09-25; one command since 2026-09-27): `bash tools/setup-android.sh`
+### Build trap 6 (2026-09-25; one command since 2026-09-27; checked and sped up 2026-09-29): `bash tools/setup-android.sh`
 
 The container has no Android SDK by default, and Maven Central answers 429 to Gradle here often.
-`tools/setup-android.sh` (idempotent, self-contained, ~1 min on a fresh container) fixes both:
-1. SDK: command-line tools from dl.google.com into `/opt/android-sdk`, then
-   `platforms;android-36`, `build-tools;36.0.0`, `platform-tools`. Build with `ANDROID_HOME=/opt/android-sdk`.
+`tools/setup-android.sh` (idempotent, self-contained, and it never fails: a step it can't finish prints
+WARN and it still exits 0, because a cloud setup script that exits non-zero stops the session from starting)
+fixes both:
+1. SDK: command-line tools from dl.google.com into `/opt/android-sdk`, then `platforms;android-36`,
+   `build-tools;35.0.0` (AGP 8.13's default, the one the build uses: before 2026-09-29 AGP fetched it itself
+   mid-build), `build-tools;36.0.0`, `platform-tools`. Build with `ANDROID_HOME=/opt/android-sdk`.
 2. Gradle mirror: `~/.gradle/init.d/mirror.gradle.kts` puts Google's Maven Central mirror
    (`https://maven-central.storage-download.googleapis.com/maven2/`) FIRST, inside
    `settingsEvaluated { }`, in `pluginManagement.repositories` and
@@ -282,9 +285,27 @@ The container has no Android SDK by default, and Maven Central answers 429 to Gr
    `app/build.gradle.kts` passes it to test JVMs as `robolectric.dependency.repo.url`. CI never sets
    it and keeps Maven Central (verified 2026-09-27: with the property pointing nowhere and the jar
    cache cleared, the tests fail to fetch; with the mirror they pass).
-With it run, `./gradlew :engine:test :data:test :app:testDebugUnitTest` runs every test, including
-the Robolectric screen tests. `-Pscreenshots` writes PNGs of every screen to `app/screenshots/`
+4. `--prewarm` (what the cloud environment runs): builds a throwaway clone and runs one Robolectric test, so
+   every Gradle dependency (1.3 GB) and Robolectric's android-all jar (191 MB) are on disk before Claude starts.
+   It gets what's left of a 250 s budget, so the whole script stays under the ~5 minutes a setup script has
+   to finish in to be snapshotted.
+With it run, `bash tools/test.sh` (= `./gradlew test`: engine, data, and app incl. the Robolectric screen
+tests, with a short summary) runs every test. `-Pscreenshots` writes PNGs of every screen to `app/screenshots/`
 (gitignored), and `:app:assembleRelease` builds the R8-minified APK. CI stays the authority on green.
+
+**Every account's cloud environment (checked 2026-09-29; environments belong to one account):**
+- **Setup script**, one line, the same on all of Tj's accounts (always the current script from `main`, whatever
+  repo the session is for): `curl -fsSL https://raw.githubusercontent.com/tjshea90/novig/main/tools/setup-android.sh | bash -s -- --prewarm`
+- **Network access** must allow `dl.google.com` (Custom with it added, or Full). It is NOT on the default
+  "Trusted" list; the mirror (`*.googleapis.com`), `maven.google.com`, `services.gradle.org` and
+  `raw.githubusercontent.com` are.
+- How it behaves (code.claude.com/docs/en/cloud-environments, "Setup scripts"): runs as root before Claude Code
+  launches (after the clone); exit non-zero = no session; finishing within ~5 minutes gets the filesystem
+  snapshotted and reused by new sessions for ~7 days (rebuilt when the script or the allowed hosts change);
+  running processes are not kept.
+- Measured here 2026-09-29 (4 cores): the full test floor from empty caches 210 s (1.5 GB through the mirror,
+  zero 429s) vs 106-110 s with the caches the pre-warm leaves (and 2 MB downloaded); the whole script cold with
+  `--prewarm` 210-235 s (SDK 13-65 s, pre-download 170 s).
 
 **Why Central 429s here (researched 2026-09-27, Sonatype's own docs):** Maven Central rate-limits by
 EGRESS IP on the aggregate traffic from that IP ("the source of the traffic may not be the build that
@@ -295,11 +316,11 @@ crossing the threshold and everyone on it gets 429s. Blocks start short and esca
 offenders (up to 30 days per Sonatype); repeated requests during a block extend it, so retrying
 makes it worse. Nothing one account does changes the pool's total; only the platform (Anthropic)
 can take it up with Sonatype ("infrastructure provider" path). The fix on our side is to not ask
-Central at all: Google's mirror above. **Done on Tj's side (seen 2026-09-28):** the cloud environment's
-**Setup script** installs the SDK and both mirrors before Claude starts (`/opt/android-sdk` and
-`~/.gradle/init.d/mirror.gradle.kts` are there at session start); keep Network access allowing
-`maven-central.storage-download.googleapis.com` and `dl.google.com`. Optional: report it to Anthropic
-(github.com/anthropics/claude-code issues) so they raise it with Sonatype.
+Central at all: Google's mirror above. **Done on Tj's side (seen 2026-09-28):** this account's cloud
+environment's **Setup script** installs the SDK and both mirrors before Claude starts (`/opt/android-sdk` and
+`~/.gradle/init.d/mirror.gradle.kts` are there at session start); the one line above replaces whatever it
+holds, on every account. Optional: report it to Anthropic (github.com/anthropics/claude-code issues) so they
+raise it with Sonatype.
 Sources: central.sonatype.org/faq/429-error/, central.sonatype.org/faq/429-contact-support/,
 robolectric.org/configuring/.
 
