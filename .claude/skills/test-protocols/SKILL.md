@@ -140,6 +140,18 @@ unless Tj asks).
   apiMaxPerDay/apiMinEv`. Tests: ApiBettingTest, NovigBettingSetupTest, ApiSettlerTest, ApiBettingControllerTest,
   ApiBettingUiTest, ApiBetTargetsTest (all mock Novig: the live behaviour is UNVERIFIED until Tj's first real bet, the list is
   in RESEARCH.md §37). Never test against a real key with real money from a session; never write a key into source or a fixture.
+- **Every open bet's current EV, and sorting the Tracker's bets (v0.21.1; RESEARCH.md §38; Tj 2026-09-29):** "Check odds now"
+  (`MainViewModel.checkOdds`) reads CNO bets' pages (`BetRecheck`) AND prices Vigilant's own bets, plus any bet CNO couldn't read, from
+  Vigilant's own fair odds in one bets-only pass (`data/tracker/OpenBetPricer`, `BetsScope.settingsFor`, `BetPricingReasons.explain`;
+  `Scanner(betsOnly = true)` is a second instance: catalog cut to the bets, no `watch()`, snapshots cleared each pass);
+  `BetTracker.applyPricing` writes `nowFair/nowEv/nowVia/nowAtMs` or `nowNote` (EV = devigged fair now / cost of the price actually
+  paid - 1; a reason never replaces a number, the card shows the number as old); `BetRecheck.Report.withPricing` keeps the toast's
+  counts adding up to the open bets; the bet sheet's "Price now" prices one. UI: `TrackerText.nowLine/currentEv/oddsNote` ("now" only
+  inside `Freshness.maxAgeMs`, else "as of 2h ago"), `TrackerSort` (`BetSort`: Default / Date placed / Current EV / Amount / Game start,
+  tap again to flip; `ScannerFilter`: All / Vigilant / CNO), the Sort and Scanner chip rows, "placed <date, time>" on the card. Tests:
+  `OpenBetPricerTest`, `BetTrackerTest` (applyPricing, observe age), `BetRecheckTest` (plan/withPricing), `TrackerSortTest`,
+  `TrackerTextTest`, `TrackerUiTest` (sort/scanner rows, EV lines, sheet), screenshots 4d/4g; live `LiveOpenBetPricerTest`
+  (`VIGILANT_LIVE=1`: real board + Polymarket + Kalshi, ~27 s for 10 bets in 5 leagues).
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
