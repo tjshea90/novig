@@ -520,7 +520,7 @@ private fun BetCard(
                 if (bet.viaApi) LabeledValue("Stake", Format.money(bet.stake))
                 else LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
                 LabeledValue("Price", bet.american?.let { Odds.formatAmerican(it) } ?: Format.american(bet.price))
-                LabeledValue("EV", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
+                LabeledValue("EV at bet", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
                 LabeledValue("CLV", bet.clvPercent?.let { Format.evPercent(it) } ?: "—")
                 LabeledValue(
                     if (open) "To win" else "Result",
