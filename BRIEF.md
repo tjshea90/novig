@@ -22,12 +22,13 @@ says so where it applies.
   shell) — decided 2026-09-20: a live-updating, WebSocket-driven scanner
   UI (RESEARCH.md §7) fits native Compose's state model and Android
   background-service story much better than a WebView bridge would.
-- **Target hardware:** a Moto G 2026. Nothing about that device's specific
-  chipset, RAM, or display has been researched yet as of this writing — "one
-  cheap-tier phone" should probably be a real constraint on wake locks,
-  polling frequency, and background work (the same battery discipline
-  Portfolio's `CLAUDE.md` "full tests" protocol checks for), but the
-  specifics need research before they're rules.
+- **Target hardware:** a Moto G 2026 (researched 2026-09-29, GSMArena's review and Motorola's listing):
+  MediaTek Dimensity 6300 (6 nm; 2x Cortex-A76 at 2.4 GHz + 6x A55 at 2.0 GHz), Mali-G57 MC2 GPU,
+  **4 GB RAM**, 128 GB + microSD, 6.7" 720x1604 IPS LCD at **120 Hz**, 5,200 mAh battery, 30 W charging,
+  Android 16. What that means for the app: little RAM, so Android kills background work early (long
+  jobs run in a foreground service, as `ScanService`/`AutoScanService` do); a 120 Hz screen, so a
+  state read every frame costs twice what it would at 60 Hz (the `compose-performance` skill); and
+  the battery discipline the full test checks for (wake locks, polling, sleep when backgrounded).
 - **Purpose:** find positive-EV opportunities on Novig — devig a reference
   line (a sharp book like Pinnacle/Circa if fetched, else average whatever
   major books were fetched — Tj's own instruction, 2026-09-20) and compare
@@ -82,7 +83,10 @@ writing) ships wired to sample data only and holds no real credentials.
 anything else worth protecting** — switch back to a Secret-held keystore
 (Portfolio's model, already built once this session, easy to redo) rather
 than leaving a forgeable signing key on an app handling real trading
-credentials.
+credentials. **That day came on 2026-09-25**: the app holds a Novig
+`trading::read` key (it reads; it can't move money). The committed key was
+kept, because a new one forces an uninstall that erases everything the app
+stores (next paragraph). Switching is Tj's call (PROMPT_AUDIT F7).
 
 Separately from *which* model is used, Android only performs a
 **data-preserving in-place update** when the package name AND the signing
@@ -162,7 +166,7 @@ re-diagnose these from scratch:
 - **A Kotlin class with an all-default-parameter constructor still only
   has ONE constructor at the JVM level** unless it's annotated
   `@JvmOverloads` — Kotlin's default-argument sugar is call-site only.
-  This bit `ScannerViewModel`: `by viewModels()`'s reflection-based
+  This bit the app's first ViewModel (`ScannerViewModel`, since replaced): `by viewModels()`'s reflection-based
   factory looks for a true zero-argument constructor, doesn't find one
   without `@JvmOverloads`, and it's a **runtime** crash the first time the
   screen opens — compiles clean, so neither `./gradlew build` nor a code
@@ -375,9 +379,8 @@ robolectric.org/configuring/.
   again after 5 min; ✓ = 3+ two-sided books whose consensus is +EV and 3+ of which say so alone)
   and **player teams** from ESPN's free rosters (the one non-CNO read in CNO-only mode; two small
   reads per new game, cached a day in `teams.json`). Both have a switch in Settings.
-- **Rechecks are the one network action besides a scan** (v0.11.0): Tj taps Recheck to
-  re-read the feed's (≤40) or one bet's Novig books, with no fair-odds calls. Still nothing on
-  a timer.
+- **Rechecks** (v0.11.0): Tj taps Recheck to re-read the feed's (≤40) or one bet's Novig books,
+  with no fair-odds calls.
 - **EV is always computed against Novig's executable taker price** (1 − best opposing bid,
   with depth), never last trade or mid. Stakes are fractional Kelly capped at +EV
   liquidity. Fees are read per market from Novig's `fee` object.
@@ -391,9 +394,13 @@ robolectric.org/configuring/.
   "taking full advantage of the novig API key"; RESEARCH.md §27): one subscribe loads the whole
   plan ~8 s in, pushes keep it current, and it closes 2 minutes after the last scan or recheck
   used it, or at once off screen (a background scan's end, or leaving Vigilant with no scan running).
-  No socket without a scan. Don't reintroduce auto-refresh without asking. (CrazyNinjaOdds' list is one
-  asked-for exception, above; it reads CNO only. Background auto-scan, below, is the other: off
-  by default, on only when Tj picks it.)
+  No socket without a scan. Don't reintroduce auto-refresh without asking. The asked-for exceptions, each
+  either on screen only or off until Tj turns it on: CrazyNinjaOdds' list (above; it reads CNO only),
+  background auto-scan (below; off by default), and the widget's rescan (`widgetRescanMinutes`, off by
+  default; Tj, 2026-09-27: a Vigilant scan every N minutes while CNO's list is on screen,
+  `WidgetRescan`). Settling bets reads final scores, not odds (`SettleWorker`, every 3 h). First asked
+  2026-09-20: "do not load any odds at all for any sport until I select the sport or sports and press
+  refresh or pull down to refresh gesture".
 - **Background auto-scan and +EV alerts, opt-in (Tj, 2026-09-28; v0.18.0, RESEARCH.md §26).**
   Settings › Background auto-scan: Off (default) / CNO / CNO + Vigilant, every 5 / 10 / 20 / 30 /
   40 min, with Vigilant closed. `AutoScanService` (foreground, `specialUse`: no daily cap like
@@ -453,12 +460,10 @@ robolectric.org/configuring/.
 - **Bets settle from final scores (v0.16.0):** ESPN's free scoreboard/box scores and MLB's Stats
   API (`data/tracker/Scores.kt`, `BetGrader`); Novig's public catalog drops finished games, so it
   can't settle (NOVIG_API.md). A bet it can't read for certain stays open for a tap.
-- **Reference-line source order: prefer a sharp book (Pinnacle/Circa) alone
-  when fetched, else average every major book fetched.** Tj's own explicit
-  instruction (2026-09-20). Implemented in `engine`'s `Consensus` object —
-  do not quietly change this to "always average" or "always prefer a sharp
-  book" without checking with Tj first, since it was a specific ask, not a
-  default we picked.
+- **Reference-line source order (Tj, 2026-09-20: a sharp book alone when fetched, else the average
+  of every major book):** superseded by his 2026-09-25 choice above ("Fair odds = per-book devig,
+  then SHARP / MARKET_AVERAGE / BLEND"); the 2026-09-20 rule is SHARP with fallback on. Changing the
+  default (BLEND, 70% sharp, POWER devig: `ScanSettings`) still needs Tj.
 - **Devig method is a parameter, never hard-coded.** `DevigMethod` (engine)
   supports multiplicative/additive/power/Shin, matching OddsJam's own
   "pick your source of truth and method" model (RESEARCH.md §5) — and
@@ -466,61 +471,26 @@ robolectric.org/configuring/.
   *undisclosed* method is exactly why its longshot edges can't be trusted
   blindly. Don't collapse this back down to one hard-coded method.
 - **Novig's own fee must be netted into EV, and a fee we don't have a
-  formula for must never silently become $0.** `engine.Fees`/`FeeResult`
-  models this explicitly — `FeeResult.Unknown` still exists as a type and
-  the UI still has a code path for it, but as of 2026-09-22 every
-  `TradeContext` has a confirmed formula (pregame straight: $0; live
-  straight taker: `price × (1-price) × 0.03`; parlay taker:
-  `price × (1-price) × 0.10`, confirmed by the novig_ev_scanner briefing —
-  RESEARCH.md §3/§10 item 3; maker side is always $0). A sample fixture
-  (`EvScannerTest`'s live-market case) exists specifically to prove a real,
-  positive raw edge can still net negative once Novig's live taker fee is
-  applied — don't "simplify" this back to ignoring fees, that's the exact
-  failure mode this was built to avoid.
+  formula for must never silently become $0.** Each Novig market carries
+  its own `fee` object (NOVIG_API.md §8), read into `MarketFee` (coefficient,
+  maker credit, charged `WHEN_LIVE` or `ALWAYS`) and applied by
+  `Fees.takerFee`: game markets 3% once live, NFL/MLB/NCAAF futures 6% pregame
+  too, makers never. Vigilant's pricing skips any market whose fee can't be
+  read (`Pricing`), and `NovigLive` prices CNO bets with their market's own
+  fee. CNO's list re-check, its game-page verdict and tracked CNO bets
+  assume the game schedule (`MarketFee.GAME`), which under-charges a futures
+  market (open: TASKS Y3). `EvMathTest` "a pregame edge can vanish once the
+  live taker fee applies" proves a real, positive raw edge can net negative
+  after the fee — don't "simplify" fees away, that's the exact failure mode
+  this was built to avoid.
 - **The UI must never present sample/demo data as if it were live.**
-  `ScannerViewModel`/`OpportunitiesScreen` carry explicit `novigIsLive`/
-  `referenceIsLive` flags (one per leg, not one combined flag — see below)
-  and render a visible banner naming exactly which leg(s) are sample when
-  either is false. Keep both flags wired correctly as real providers get
-  plugged in or swapped.
-- **API keys are stored encrypted on-device, never in plaintext, never
-  committed.** Researched `androidx.security:security-crypto`
-  (`EncryptedSharedPreferences`) first and found it **deprecated** (every
-  API deprecated since 1.1.0, no further releases planned) — did not build
-  against it. Current approach instead: **Jetpack DataStore Preferences**
-  (`androidx.datastore:datastore-preferences:1.2.1`) for storage, encrypted
-  with **Android Keystore-backed AES/256-GCM** (`KeyCipher.kt`, plain
-  `javax.crypto`/`android.security.keystore` platform APIs, no Tink
-  dependency — deliberately avoids pulling in another library's API
-  surface that can't be verified locally, no Android SDK in this
-  container). `EncryptedApiKeyStore implements ApiKeyStore`
-  (`data/keys/ApiKeyStore.kt`'s interface) is the real Android-side
-  implementation; order is preserved (a JSON array, not a Set) since
-  `KeyRotator` depends on trying keys in the order Tj entered them. Added
-  and removed via the in-app `SettingsScreen`/`SettingsViewModel`, reached
-  from a ⚙ icon in `OpportunitiesScreen`'s top bar (simple state-based
-  navigation in `MainActivity`, no Navigation-Compose library needed for
-  two screens).
-- **Resolved 2026-09-20 (was a known v1 limitation): sport is now a
-  multi-select picker, not hardcoded to NFL.** `data.scanner.SportsCatalog`
-  holds a curated subset of The Odds API's documented sport keys (not
-  exhaustive — RESEARCH.md §4.3); `EvScanner` takes a `List<String>` of
-  sport keys and fetches the reference leg once per selected sport,
-  merging the results before matching against Novig's board.
-- **Nothing loads until the user acts — Tj's own explicit instruction,
-  2026-09-20 ("do not load any odds at all for any sport until I select
-  the sport or sports and press refresh or pull down to refresh
-  gesture").** `ScannerViewModel` no longer auto-scans on init (starts in
-  a new `ScanUiState.Idle`); selecting a sport (`toggleSport`) only ever
-  updates local state, never triggers a fetch. `rescan()` is the single
-  path that touches a repository, and it's a no-op with zero sports
-  selected — both the FAB refresh button and Compose Material3's
-  `PullToRefreshBox` (the pull-down gesture) call the same `rescan()`, so
-  there's exactly one way odds ever load. This also means returning from
-  Settings after adding a key does **not** auto-rescan anymore (it did
-  briefly, for one request) — that would have silently violated this same
-  rule the moment a sport was already selected, so it was removed in the
-  same change that added the picker. `EvScanner.scan()` itself also
-  short-circuits to an empty result without calling either repository
-  when its sport-key list is empty, so the "don't load anything" guarantee
-  holds even if a future caller forgets to gate on the UI side.
+  Vigilant has no sample-data path any more; any future one must say so on
+  screen.
+- **API keys: plain JSON since 2026-09-25** (the "API keys: plain JSON in
+  app storage" bullet above, Tj: "don't worry about security, they are free
+  keys"). The first version encrypted them with an Android Keystore key
+  (`EncryptedApiKeyStore`, `KeyCipher`); `VigilantApp.migrateKeys` reads that
+  old store once to move any keys into `api_keys.json`. Never commit a key:
+  this repo is public.
+- **Leagues are multi-select chips** (since 2026-09-20; "Leagues and markets" above), and
+  **nothing loads until Tj acts** ("Manual scans only" above, with its asked-for exceptions).
