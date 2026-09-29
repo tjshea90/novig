@@ -157,6 +157,8 @@ class Scanner(
         onPartial: (ScanResult) -> Unit,
     ): ScanReport = mutex.withLock {
         this.pinned = pinned
+        // What a bets-only pass fetched was asked for these bets' games alone: never re-used for the next pass's bets.
+        if (betsOnly) synchronized(references) { references.clear() }
         val now = clock()
         val t0 = elapsed()
         val errors = ArrayList<String>()
