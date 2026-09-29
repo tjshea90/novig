@@ -253,8 +253,8 @@ class ExchangeClientsTest {
         val took = System.currentTimeMillis() - t0
         val asked = server.requestCount
         assertTrue("several series in flight at once (peak ${peak.get()})", peak.get() in 2..KalshiClient.PARALLEL)
-        // One at a time would be asked * 150 ms; four at a time is a quarter of that, plus the pace.
-        assertTrue("$asked series took $took ms", took < asked * 150L * 0.7)
+        // The old fixed pace (2 a second) took asked / 2 seconds; the starting pace alone is 3 times faster, and success raises it.
+        assertTrue("$asked series took $took ms", took < asked * 1000L / 2 / 2)
         assertEquals(2, snap.events.single().markets.size)
     }
 
