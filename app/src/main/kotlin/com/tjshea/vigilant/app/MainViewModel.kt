@@ -7,6 +7,8 @@ import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigKeyTest
+import com.tjshea.vigilant.data.novig.signing.NovigLiveCheck
+import com.tjshea.vigilant.data.novig.stream.NovigStream
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSetup
 import com.tjshea.vigilant.app.data.KeystoreVault
@@ -667,6 +669,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 NovigKeyTest.report(first, nets.vpnUp(), other)
             }
             _state.update { it.copy(novig = it.novig.copy(busy = false, message = report.message, error = report.error)) }
+            // A key that's accepted still can be slow (Tj, 2026-09-29: "the novig scan is slow, even though I tested my key and it says
+            // it works"): measure what it gets, once, from this phone: its limits, book reads, and the live feed.
+            if (report.message != null && report.error == null) {
+                val lines = try {
+                    withContext(Dispatchers.IO) {
+                        NovigLiveCheck(c.http, c.json, c.readKeyClient(conn), feed = { s -> NovigStream(c.http, s, viewModelScope) }).run { step ->
+                            _state.update { it.copy(novig = it.novig.copy(busy = true, message = report.message + "\n\n" + step)) }
+                        }
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    listOf("The speed check couldn't run: ${e.message ?: e.javaClass.simpleName}")
+                }
+                _state.update { it.copy(novig = it.novig.copy(busy = false, message = report.message + "\n\n" + lines.joinToString("\n"))) }
+            }
         }
     }
 
