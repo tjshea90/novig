@@ -2795,4 +2795,21 @@ Tj's words, in order (each becomes a job below; the design notes come after read
       into a quiet "Tracked ✓ … Undo"; tapping the alert still opens the bet in Novig but no longer dismisses it, so the button is
       there when the bet is in. `EvAlert` carries league/market/CNO page/fair so the tracked bet rechecks and grades. Price got differs?
       "Change price" in the Tracker. Tests: AlertPlacementTest (5), AutoScanTest (+3).
-- [ ] T9 Full test protocol (test-protocols skill) after T2-T8: improve the app, UI, code; fix bugs; ship + Release link.
+- [x] T9 Full test protocol (test-protocols skill) after T2-T8: improve the app, UI, code; fix bugs; ship + Release link.
+      DONE (full test 2026-09-29): floor 837 tests (engine 39, data 529, app 254; 15 live skipped by design), every screenshot rendered
+      (`-Pscreenshots`, 72 PNGs; the Tracker's five, Settings, feed, CNO, widget looked at), live check `VIGILANT_LIVE=1 ... --tests
+      '*LiveScoresTest'` against ESPN/MLB for real (old MLB/NFL bets still settle; new: real NHL Wild@Red Wings, NBA Raptors@Cavaliers,
+      ATP Muller d. Pavlovic all grade right), R8 release build. FOUND AND FIXED in the sweep (each with a test):
+      a recheck landing after a tap re-attached books to a settled bet (BetRecheckTest race); Vigilant's stored "price now" carried the
+      fee so Replace's Kelly counted it twice (now the price without it); Check odds now / Re-read ignored the Pause switch even though
+      they read CNO (now held, toast); a CNO alert's tracked bet never got Novig's market so scans couldn't follow its line
+      (`AlertPlacement.attachMarket`); the sheet's one-bet re-read queued behind a whole minutes-long pass (`checkOne` no longer takes
+      the pass's lock; test proves it); Replace could stay "Opening…" forever if the screen closed mid-lookup (finally); four compiler
+      dead-code warnings (Pricing, BetRecheck, GamesScreen, MiniFeed: now none). IMPROVED: CLV is now captured without Tj doing anything:
+      each background auto-scan cycle reads the books of open bets starting within the hour (`BetRecheck.captureClosing`; the last read
+      before the start is the closing line); Settings copy for the alert's ✓ Placed button, the Pause switch and auto-scan.
+      CONSIDERED, NOT CHANGED: 140 `runCatching` blocks that also catch cancellation (all short, view-model scoped, no harm found; a
+      rewrite would risk more than it fixes); PropLine's free box-score feed as a second grading source (RESEARCH.md §34).
+      Not testable here: a real device (notification actions, the overlay over Novig, the phone's own data): Tj's first "Check odds now"
+      over his 101 bets and first "✓ Placed" from a real alert are the live checks.
+      SHIP: v0.20.0 (code 43).
