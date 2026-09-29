@@ -1,0 +1,1058 @@
+{
+ "boxscore": {
+  "players": [
+   {
+    "team": {
+     "displayName": "Cincinnati Bengals"
+    },
+    "statistics": [
+     {
+      "name": "passing",
+      "keys": [
+       "completions/passingAttempts",
+       "passingYards",
+       "yardsPerPassAttempt",
+       "passingTouchdowns",
+       "interceptions",
+       "sacks-sackYardsLost",
+       "adjQBR",
+       "QBRating"
+      ],
+      "labels": [
+       "C/ATT",
+       "YDS",
+       "AVG",
+       "TD",
+       "INT",
+       "SACKS",
+       "QBR",
+       "RTG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Joe Burrow"
+        },
+        "stats": [
+         "28/37",
+         "282",
+         "7.6",
+         "3",
+         "0",
+         "1-13",
+         "92.2",
+         "123.9"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "rushing",
+      "keys": [
+       "rushingAttempts",
+       "rushingYards",
+       "yardsPerRushAttempt",
+       "rushingTouchdowns",
+       "longRushing"
+      ],
+      "labels": [
+       "CAR",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Chase Brown"
+        },
+        "stats": [
+         "13",
+         "61",
+         "4.7",
+         "0",
+         "13"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Joe Burrow"
+        },
+        "stats": [
+         "2",
+         "13",
+         "6.5",
+         "0",
+         "8"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Samaje Perine"
+        },
+        "stats": [
+         "3",
+         "9",
+         "3.0",
+         "0",
+         "5"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "receiving",
+      "keys": [
+       "receptions",
+       "receivingYards",
+       "yardsPerReception",
+       "receivingTouchdowns",
+       "longReception",
+       "receivingTargets"
+      ],
+      "labels": [
+       "REC",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG",
+       "TGTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Ja'Marr Chase"
+        },
+        "stats": [
+         "9",
+         "98",
+         "10.9",
+         "1",
+         "21",
+         "12"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Tee Higgins"
+        },
+        "stats": [
+         "6",
+         "90",
+         "15.0",
+         "1",
+         "28",
+         "7"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Chase Brown"
+        },
+        "stats": [
+         "2",
+         "8",
+         "4.0",
+         "0",
+         "12",
+         "2"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Mike Gesicki"
+        },
+        "stats": [
+         "3",
+         "37",
+         "12.3",
+         "1",
+         "25",
+         "3"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Dohnte Meyers"
+        },
+        "stats": [
+         "3",
+         "29",
+         "9.7",
+         "0",
+         "23",
+         "5"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Tanner Hudson"
+        },
+        "stats": [
+         "2",
+         "13",
+         "6.5",
+         "0",
+         "7",
+         "2"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Samaje Perine"
+        },
+        "stats": [
+         "1",
+         "5",
+         "5.0",
+         "0",
+         "5",
+         "3"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "fumbles",
+      "keys": [
+       "fumbles",
+       "fumblesLost",
+       "fumblesRecovered"
+      ],
+      "labels": [
+       "FUM",
+       "LOST",
+       "REC"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Joe Burrow"
+        },
+        "stats": [
+         "1",
+         "1",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Ke'Shawn Williams"
+        },
+        "stats": [
+         "1",
+         "1",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "defensive",
+      "keys": [
+       "totalTackles",
+       "soloTackles",
+       "sacks",
+       "tacklesForLoss",
+       "passesDefended",
+       "QBHits",
+       "defensiveTouchdowns"
+      ],
+      "labels": [
+       "TOT",
+       "SOLO",
+       "SACKS",
+       "TFL",
+       "PD",
+       "QB HTS",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Demetrius Knight Jr."
+        },
+        "stats": [
+         "9",
+         "2",
+         "0",
+         "0",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Kyle Dugger"
+        },
+        "stats": [
+         "8",
+         "4",
+         "0",
+         "0",
+         "1",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Barrett Carter"
+        },
+        "stats": [
+         "6",
+         "2",
+         "0",
+         "0",
+         "1",
+         "1",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Tacario Davis"
+        },
+        "stats": [
+         "5",
+         "5",
+         "0",
+         "0",
+         "1",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "interceptions",
+      "keys": [
+       "interceptions",
+       "interceptionYards",
+       "interceptionTouchdowns"
+      ],
+      "labels": [
+       "INT",
+       "YDS",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Jordan Battle"
+        },
+        "stats": [
+         "1",
+         "11",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "kickReturns",
+      "keys": [
+       "kickReturns",
+       "kickReturnYards",
+       "yardsPerKickReturn",
+       "longKickReturn",
+       "kickReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Ke'Shawn Williams"
+        },
+        "stats": [
+         "5",
+         "131",
+         "26.2",
+         "34",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Tahj Brooks"
+        },
+        "stats": [
+         "1",
+         "27",
+         "27.0",
+         "27",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Samaje Perine"
+        },
+        "stats": [
+         "1",
+         "26",
+         "26.0",
+         "26",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "puntReturns",
+      "keys": [
+       "puntReturns",
+       "puntReturnYards",
+       "yardsPerPuntReturn",
+       "longPuntReturn",
+       "puntReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Ke'Shawn Williams"
+        },
+        "stats": [
+         "1",
+         "0",
+         "0.0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "kicking",
+      "keys": [
+       "fieldGoalsMade/fieldGoalAttempts",
+       "fieldGoalPct",
+       "longFieldGoalMade",
+       "extraPointsMade/extraPointAttempts",
+       "totalKickingPoints"
+      ],
+      "labels": [
+       "FG",
+       "PCT",
+       "LONG",
+       "XP",
+       "PTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Evan McPherson"
+        },
+        "stats": [
+         "2/2",
+         "100.0",
+         "50",
+         "3/3",
+         "9"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "punting",
+      "keys": [
+       "punts",
+       "puntYards",
+       "grossAvgPuntYards",
+       "touchbacks",
+       "puntsInside20",
+       "longPunt"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "TB",
+       "In 20",
+       "LONG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Ryan Rehkow"
+        },
+        "stats": [
+         "2",
+         "84",
+         "42.0",
+         "0",
+         "2",
+         "43"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "team": {
+     "displayName": "Pittsburgh Steelers"
+    },
+    "statistics": [
+     {
+      "name": "passing",
+      "keys": [
+       "completions/passingAttempts",
+       "passingYards",
+       "yardsPerPassAttempt",
+       "passingTouchdowns",
+       "interceptions",
+       "sacks-sackYardsLost",
+       "adjQBR",
+       "QBRating"
+      ],
+      "labels": [
+       "C/ATT",
+       "YDS",
+       "AVG",
+       "TD",
+       "INT",
+       "SACKS",
+       "QBR",
+       "RTG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Aaron Rodgers"
+        },
+        "stats": [
+         "19/34",
+         "292",
+         "8.6",
+         "3",
+         "1",
+         "2-19",
+         "68.2",
+         "101.6"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "rushing",
+      "keys": [
+       "rushingAttempts",
+       "rushingYards",
+       "yardsPerRushAttempt",
+       "rushingTouchdowns",
+       "longRushing"
+      ],
+      "labels": [
+       "CAR",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Jaylen Warren"
+        },
+        "stats": [
+         "17",
+         "127",
+         "7.5",
+         "0",
+         "35"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Aaron Rodgers"
+        },
+        "stats": [
+         "3",
+         "10",
+         "3.3",
+         "0",
+         "12"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Pat Freiermuth"
+        },
+        "stats": [
+         "1",
+         "1",
+         "1.0",
+         "0",
+         "1"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Travis Homer"
+        },
+        "stats": [
+         "1",
+         "0",
+         "0.0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "receiving",
+      "keys": [
+       "receptions",
+       "receivingYards",
+       "yardsPerReception",
+       "receivingTouchdowns",
+       "longReception",
+       "receivingTargets"
+      ],
+      "labels": [
+       "REC",
+       "YDS",
+       "AVG",
+       "TD",
+       "LONG",
+       "TGTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Darnell Washington"
+        },
+        "stats": [
+         "3",
+         "67",
+         "22.3",
+         "0",
+         "47",
+         "4"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Roman Wilson"
+        },
+        "stats": [
+         "3",
+         "60",
+         "20.0",
+         "1",
+         "38",
+         "6"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Jaylen Warren"
+        },
+        "stats": [
+         "3",
+         "49",
+         "16.3",
+         "0",
+         "30",
+         "4"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "DK Metcalf"
+        },
+        "stats": [
+         "3",
+         "31",
+         "10.3",
+         "1",
+         "14",
+         "5"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "fumbles",
+      "keys": [
+       "fumbles",
+       "fumblesLost",
+       "fumblesRecovered"
+      ],
+      "labels": [
+       "FUM",
+       "LOST",
+       "REC"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Ben Skowronek"
+        },
+        "stats": [
+         "0",
+         "0",
+         "1"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Sebastian Joseph-Day"
+        },
+        "stats": [
+         "0",
+         "0",
+         "1"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "defensive",
+      "keys": [
+       "totalTackles",
+       "soloTackles",
+       "sacks",
+       "tacklesForLoss",
+       "passesDefended",
+       "QBHits",
+       "defensiveTouchdowns"
+      ],
+      "labels": [
+       "TOT",
+       "SOLO",
+       "SACKS",
+       "TFL",
+       "PD",
+       "QB HTS",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Patrick Queen"
+        },
+        "stats": [
+         "13",
+         "4",
+         "0",
+         "1",
+         "1",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Rayshawn Jenkins"
+        },
+        "stats": [
+         "9",
+         "5",
+         "0",
+         "0",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Jalen Ramsey"
+        },
+        "stats": [
+         "8",
+         "4",
+         "0",
+         "1",
+         "0",
+         "0",
+         "0"
+        ]
+       },
+       {
+        "athlete": {
+         "displayName": "Jaquan Brisker"
+        },
+        "stats": [
+         "8",
+         "3",
+         "0",
+         "0",
+         "0",
+         "0",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "interceptions",
+      "keys": [
+       "interceptions",
+       "interceptionYards",
+       "interceptionTouchdowns"
+      ],
+      "labels": [
+       "INT",
+       "YDS",
+       "TD"
+      ],
+      "athletes": []
+     },
+     {
+      "name": "kickReturns",
+      "keys": [
+       "kickReturns",
+       "kickReturnYards",
+       "yardsPerKickReturn",
+       "longKickReturn",
+       "kickReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Kaden Wetjen"
+        },
+        "stats": [
+         "5",
+         "102",
+         "20.4",
+         "22",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "puntReturns",
+      "keys": [
+       "puntReturns",
+       "puntReturnYards",
+       "yardsPerPuntReturn",
+       "longPuntReturn",
+       "puntReturnTouchdowns"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "LONG",
+       "TD"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Kaden Wetjen"
+        },
+        "stats": [
+         "1",
+         "5",
+         "5.0",
+         "5",
+         "0"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "kicking",
+      "keys": [
+       "fieldGoalsMade/fieldGoalAttempts",
+       "fieldGoalPct",
+       "longFieldGoalMade",
+       "extraPointsMade/extraPointAttempts",
+       "totalKickingPoints"
+      ],
+      "labels": [
+       "FG",
+       "PCT",
+       "LONG",
+       "XP",
+       "PTS"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Chris Boswell"
+        },
+        "stats": [
+         "3/3",
+         "100.0",
+         "44",
+         "3/3",
+         "12"
+        ]
+       }
+      ]
+     },
+     {
+      "name": "punting",
+      "keys": [
+       "punts",
+       "puntYards",
+       "grossAvgPuntYards",
+       "touchbacks",
+       "puntsInside20",
+       "longPunt"
+      ],
+      "labels": [
+       "NO",
+       "YDS",
+       "AVG",
+       "TB",
+       "In 20",
+       "LONG"
+      ],
+      "athletes": [
+       {
+        "athlete": {
+         "displayName": "Cameron Johnston"
+        },
+        "stats": [
+         "1",
+         "51",
+         "51.0",
+         "0",
+         "1",
+         "51"
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "injuries": [
+  {
+   "team": {
+    "displayName": "Pittsburgh Steelers"
+   },
+   "injuries": [
+    {
+     "athlete": {
+      "displayName": "Jalen Ramsey"
+     },
+     "status": "Questionable",
+     "type": {
+      "name": "INJURY_STATUS_QUESTIONABLE"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "Rico Dowdle"
+     },
+     "status": "Out",
+     "type": {
+      "name": "INJURY_STATUS_OUT"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "Brandin Echols"
+     },
+     "status": "Questionable",
+     "type": {
+      "name": "INJURY_STATUS_QUESTIONABLE"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "Gennings Dunker"
+     },
+     "status": "Injured Reserve",
+     "type": {
+      "name": "INJURY_STATUS_IR"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "DeShon Elliott"
+     },
+     "status": "Injured Reserve",
+     "type": {
+      "name": "INJURY_STATUS_IR"
+     }
+    }
+   ]
+  },
+  {
+   "team": {
+    "displayName": "Cincinnati Bengals"
+   },
+   "injuries": [
+    {
+     "athlete": {
+      "displayName": "Colbie Young"
+     },
+     "status": "Out",
+     "type": {
+      "name": "INJURY_STATUS_OUT"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "B.J. Hill"
+     },
+     "status": "Out",
+     "type": {
+      "name": "INJURY_STATUS_OUT"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "Jalen Davis"
+     },
+     "status": "Questionable",
+     "type": {
+      "name": "INJURY_STATUS_QUESTIONABLE"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "Andrei Iosivas"
+     },
+     "status": "Injured Reserve",
+     "type": {
+      "name": "INJURY_STATUS_IR"
+     }
+    },
+    {
+     "athlete": {
+      "displayName": "Brian Parker II"
+     },
+     "status": "Injured Reserve",
+     "type": {
+      "name": "INJURY_STATUS_IR"
+     }
+    }
+   ]
+  }
+ ]
+}
