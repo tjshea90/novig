@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -95,7 +96,7 @@ import com.tjshea.vigilant.engine.Odds
  * app's own checks ([CnoChecks]), and kept current while this tab or a widget is on screen ([CnoWatch]).
  * Tapping a bet shows every book's odds for it and Vigilant's own worst-case check.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CnoScreen(
     state: UiState,
@@ -208,32 +209,39 @@ fun CnoScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                // The scanner chip, its filters and the start-time window stay pinned while the bets scroll under them (Tj, 2026-09-29).
+                stickyHeader(key = "controls") {
+                    StickyBar {
+                        Column(Modifier.padding(horizontal = 12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FilterChip(
+                                    selected = state.settings.scanner == ScannerMode.CNO,
+                                    onClick = { onScanner(if (state.settings.scanner == ScannerMode.CNO) ScannerMode.BOTH else ScannerMode.CNO) },
+                                    label = { Text("CNO only") },
+                                )
+                                Text(
+                                    cnoFiltersLabel(state.settings.cnoFilters),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                TextButton(onClick = onOpenSettings, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                                    Text("Filters", style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                            // Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well".
+                            if (on) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
+                        }
+                    }
+                }
                 item(key = "summary") {
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(
-                                selected = state.settings.scanner == ScannerMode.CNO,
-                                onClick = { onScanner(if (state.settings.scanner == ScannerMode.CNO) ScannerMode.BOTH else ScannerMode.CNO) },
-                                label = { Text("CNO only") },
-                            )
-                            Text(
-                                cnoFiltersLabel(state.settings.cnoFilters),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f),
-                            )
-                            TextButton(onClick = onOpenSettings, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                                Text("Filters", style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
                         Text(
                             "View: " + CnoView.describe(state.cnoUrl),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         if (state.settings.paused) PausedBanner({ onPause(false) })
-                        // Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well".
-                        if (on) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
                         if (snap != null && CnoChecks.stuck(snap, now)) {
                             Banner("CrazyNinjaOdds hasn't updated its odds in ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} (it may be down). These prices are likely gone.")
                         }

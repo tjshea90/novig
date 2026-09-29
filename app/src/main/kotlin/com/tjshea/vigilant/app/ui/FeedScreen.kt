@@ -2,6 +2,7 @@ package com.tjshea.vigilant.app.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,7 +51,7 @@ import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.FairSource
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FeedScreen(
     state: UiState,
@@ -108,8 +110,15 @@ fun FeedScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
-                item(key = "leagues") {
-                    LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
+                // The league chips and the start-time window stay pinned while the bets scroll under them (Tj, 2026-09-29).
+                stickyHeader(key = "leagues") {
+                    StickyBar {
+                        LeagueChips(Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(vertical = 4.dp))
+                        // Tj, 2026-09-27: "only show games that start within the next 24 hours or 12 hours or 48 hours".
+                        if (AppBook.isNovig && state.result != null && state.settings.leagues.isNotEmpty()) {
+                            Box(Modifier.padding(horizontal = 12.dp)) { StartsWithinRow(state.settings.startsWithinHours, onStartsWithin) }
+                        }
+                    }
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now)
@@ -180,8 +189,6 @@ private fun FeedSummary(
 
         val result = state.result
         val status = state.status
-        // Tj, 2026-09-27: "only show games that start within the next 24 hours or 12 hours or 48 hours".
-        if (AppBook.isNovig && result != null && state.settings.leagues.isNotEmpty()) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
         // The feed's bets, current enough to compare, but all outside the start-time window.
         val allLater = state.settings.startsWithinHours > 0 &&
             state.feed.any { !it.fairIsOld(now) } && state.feed.none { !it.fairIsOld(now) && state.settings.startsInWindow(it.event.startsTs, now) }

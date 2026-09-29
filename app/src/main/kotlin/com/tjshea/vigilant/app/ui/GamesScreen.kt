@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +47,7 @@ import com.tjshea.vigilant.data.scanner.PricedGame
  * OddsJam's "odds screen", for Novig: every game on the board, and inside a game every line with
  * Novig's price from the last scan next to the fair price. Pull down (or Scan) to refresh.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (String) -> Unit, onScan: () -> Unit = {}) {
     var openEventId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -91,8 +92,9 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                 contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                item(key = "leagues") {
-                    LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(top = 4.dp))
+                // Pinned while the games scroll under it (Tj, 2026-09-29).
+                stickyHeader(key = "leagues") {
+                    StickyBar { LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(vertical = 4.dp)) }
                 }
                 if (games.isEmpty()) {
                     item(key = "empty") {
