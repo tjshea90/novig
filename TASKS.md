@@ -2660,7 +2660,9 @@ Nothing at or above 1.0% EV."
       because they need Tj's phone or his go-ahead (first live Novig key connect, first Odds API scan on device, P6
       PropLine props live, S2 PiP header).) Stale open TASKS items: tick or mark superseded where the code shows it's done (evidence for each); leave real
       ones open.
-- [ ] Y6 Checks (test_resume.sh; the Gradle floor if app code changed), ship + Release link if the app changed, report.
+- [x] Y6 (DONE: test_resume.sh green, briefing 6,270 chars, secretscan clean, `:engine:test` 39/0 (the only source
+      change is a KDoc comment, so no app behavior changed and no release is needed); PROMPT_AUDIT.md marked applied,
+      the patch deleted (git keeps it); reported to Tj.) Checks (test_resume.sh; the Gradle floor if app code changed), ship + Release link if the app changed, report.
 - [ ] Y7 (open, needs Tj's go-ahead: an app change + release) Charge CNO bets their own Novig market's fee: carry the
       market's `fee` (NovigLive's cache / the bet-slip link lookup) into `CnoChecks.netEv`, `CnoBooks.check` and
       `BetTracker.logCno`, keeping `MarketFee.GAME` only when the market is unknown. Today they assume the game

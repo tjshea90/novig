@@ -2523,7 +2523,7 @@ oversized briefing is trimmed…" (both failed before the fix).
 
 ### 33.5 What Tj needs to do
 - Nothing is required. The briefing fix is pushed (ckpt 605), and the environment's setup script already exists (S3).
-- Both opt-ins taken 2026-09-29 (Tj: "run the prompt audit and add the Compose skills"): the audit is in PROMPT_AUDIT.md (nothing applied yet), the skills are in `.claude/skills/`. The original offer: (1) "run the prompt audit": `/claude-api prompt-audit` over CLAUDE.md, BRIEF.md
+- Both opt-ins taken 2026-09-29 (Tj: "run the prompt audit and add the Compose skills"): the audit is in PROMPT_AUDIT.md, applied 2026-09-29 (TASKS Y1-Y2), the skills are in `.claude/skills/` and CLAUDE.md's "Skills for this app" says when each one loads (TASKS Y4). The original offer: (1) "run the prompt audit": `/claude-api prompt-audit` over CLAUDE.md, BRIEF.md
   and the briefing scripts, report plus proposed diff, nothing applied until Tj says which hunks; (2) "add the Compose
   skills": read Chris Banes' four skills in full, commit them to `.claude/skills/` with the Apache-2.0 license.
 - No plugin installs, connectors or paid services are recommended.
