@@ -1,0 +1,329 @@
+package com.tjshea.vigilant.data.novig.trading
+
+import com.tjshea.vigilant.data.novig.BidLevel
+import com.tjshea.vigilant.data.novig.NovigBook
+import com.tjshea.vigilant.data.novig.NovigMarket
+import com.tjshea.vigilant.data.novig.NovigOutcome
+import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
+import com.tjshea.vigilant.data.novig.signing.PemSigningKey
+import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.engine.MarketFee
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
+import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
+import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
+import org.bouncycastle.crypto.util.PrivateKeyInfoFactory
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.io.File
+import java.security.SecureRandom
+import java.util.Base64
+import java.util.concurrent.CopyOnWriteArrayList
+
+/**
+ * Betting through Novig's API (Tj, 2026-09-29): the planner's arithmetic and refusals, and the placer against a mock Novig speaking the documented
+ * routes (NOVIG_API.md §14-15): what goes on the wire, what the Tracker records from the fills, and what happens on a refusal, a partial fill,
+ * a moved price and a lost answer.
+ */
+class ApiBettingTest {
+
+    private lateinit var server: MockWebServer
+    private val json = Json { ignoreUnknownKeys = true }
+    private val pair = Ed25519KeyPairGenerator().apply { init(Ed25519KeyGenerationParameters(SecureRandom())) }.generateKeyPair()
+    private val pem = "-----BEGIN PRIVATE KEY-----\n" + // FAKE: wraps a key generated fresh by this test run
+        Base64.getEncoder().encodeToString(PrivateKeyInfoFactory.createPrivateKeyInfo(pair.private).encoded) + "\n-----END PRIVATE KEY-----"
+    private val requests = CopyOnWriteArrayList<RecordedRequest>()
+    private var now = 1_800_000_000_000L
+    private val startsTs = now + 6 * 3_600_000L
+
+    @Before fun setUp() { server = MockWebServer().also { it.start() } }
+    @After fun tearDown() { server.shutdown() }
+
+    private fun signer() = NovigSignedClient(OkHttpClient(), json, PemSigningKey("kid-1", pem), server.url("").toString().trimEnd('/'))
+    private fun tradingClient() = NovigTradingClient(signer(), json)
+    private fun tracker() = BetTracker(File.createTempFile("bets", ".json").also { it.delete() }, clock = { now })
+
+    // ---- a market: outcomes A (the bet) and B; the ladder for A is 1 - B's bids ---------------------------------
+
+    private val market = NovigMarket(
+        marketId = "mkt", eventId = "ev", marketType = "MONEY", status = "OPEN", description = "A vs B", startsTs = startsTs,
+        fee = MarketFee.GAME, outcomes = listOf(NovigOutcome("A", "Team A", "TBD"), NovigOutcome("B", "Team B", "TBD")),
+    )
+
+    /** Bids on B: 0.540 (100 contracts) and 0.535 (300), i.e. A costs 0.460 for 100 and 0.465 for 300. */
+    private fun book(fetchedAt: Long = now, bidsB: List<BidLevel> = listOf(BidLevel(540, 100), BidLevel(535, 300))) =
+        NovigBook("mkt", 1, mapOf("B" to bidsB, "A" to listOf(BidLevel(450, 50))), fetchedAt)
+
+    private fun target(fair: Double = 0.50, fairAsOf: Long? = now - 30_000, starts: Long = startsTs, placedKey: String? = "cno:row1") = BetTarget(
+        market = market.copy(startsTs = starts), outcomeId = "A", league = "NFL", eventName = "Team B @ Team A", startsTs = starts,
+        marketLabel = "Moneyline", selection = "Team A", fair = fair, fairAsOfMs = fairAsOf, source = BetTracker.SOURCE_CNO, placedKey = placedKey,
+    )
+
+    private val limits = BetLimits(maxStake = 20.0, maxPerDay = 50.0, minEv = 0.0)
+
+    // ---- the planner --------------------------------------------------------------------------------------------
+
+    private fun ready(r: PlanResult) = (r as PlanResult.Ready).plan
+    private fun refused(r: PlanResult) = (r as PlanResult.Refused).reason
+
+    @Test
+    fun `the plan buys the cheapest offers first and reaches only as deep as the stake needs`() {
+        // $10 at 0.46 = 2173 contracts wanted, 100 offered there; then 0.465 for the rest of the dollars.
+        val p = ready(ApiBetPlanner.plan(target(), book(), 10.0, now, limits, 0.0))
+        assertEquals(0.465, p.limitPrice, 1e-9)
+        assertEquals(0.46, p.bestPrice, 1e-9)
+        // 100 at 0.46 = $0.46; the $9.54 left buys floor(9.54 / (0.465 × 0.01)) = 2051 at 0.465, but only 300 are offered.
+        assertEquals(400L, p.contracts)
+        assertEquals(0.46 * 1.0 + 0.465 * 3.0, p.expectedCost, 1e-9)
+        assertEquals(4.0, p.payout, 1e-9)
+        assertEquals((0.46 * 100 + 0.465 * 300) / 400, p.averagePrice, 1e-9)
+        assertEquals(0.50 / p.averagePrice - 1.0, p.evPercent, 1e-9)
+        assertTrue("only about $1.85 is offered, so it says so", p.note!!.contains("Only "))
+    }
+
+    @Test
+    fun `a small stake stays on the first level`() {
+        val p = ready(ApiBetPlanner.plan(target(), book(), 0.46, now, limits, 0.0))
+        assertEquals(0.46, p.limitPrice, 1e-9)
+        assertEquals(100L, p.contracts)
+        assertNull(p.note)
+    }
+
+    @Test
+    fun `every refusal says why and sends nothing`() {
+        fun plan(t: BetTarget = target(), b: NovigBook? = book(), stake: Double = 5.0, l: BetLimits = limits, spent: Double = 0.0) =
+            ApiBetPlanner.plan(t, b, stake, now, l, spent)
+        assertTrue(refused(plan(stake = 0.0)).contains("Pick an amount"))
+        assertTrue(refused(plan(stake = 25.0)).contains("over your $20.00 limit per bet"))
+        assertTrue(refused(plan(spent = 48.0)).contains("daily limit"))
+        assertTrue(refused(plan(t = target(starts = now - 1))).contains("pregame only"))
+        assertTrue(refused(plan(t = target().let { it.copy(market = it.market.copy(status = "CLOSED")) })).contains("closed"))
+        assertTrue(refused(plan(t = target().let { it.copy(market = it.market.copy(fee = null)) })).contains("fee"))
+        assertTrue(refused(plan(t = target(fairAsOf = now - 20 * 60_000L))).contains("scan again"))
+        assertTrue(refused(plan(b = null)).contains("couldn't be read"))
+        assertTrue(refused(plan(b = book(fetchedAt = now - 60_000L))).contains("seconds old"))
+        assertTrue(refused(plan(b = book(bidsB = emptyList()))).contains("Nobody is offering"))
+        // Fair 0.45 against a 0.46 price: the edge is gone.
+        assertTrue(refused(plan(t = target(fair = 0.45))).contains("The edge is gone"))
+        assertTrue(refused(plan(stake = 0.004)).contains("less than one contract"))
+    }
+
+    @Test
+    fun `the minimum edge is respected level by level`() {
+        // Fair 0.4685: the 0.46 level is +1.8%, the 0.465 level +0.7%: with a 1% minimum only the first is taken.
+        val p = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 10.0, now, limits.copy(minEv = 0.01), 0.0))
+        assertEquals(100L, p.contracts)
+        assertEquals(0.46, p.limitPrice, 1e-9)
+    }
+
+    // ---- the placer against a mock Novig ------------------------------------------------------------------------
+
+    private class Scenario(
+        var orderStatus: String = "FILLED",
+        var fills: String = """{"items":[{"fillId":"f1","orderId":"o1","clientId":"c","marketId":"mkt","outcomeId":"A","qty":400,"cost":"1.85000","taker":true,"ts":1800000000123}]}""",
+        var postResponse: MockResponse? = null,
+        var listedOrders: Map<String, String> = emptyMap(),
+        var qty: Long = 400,
+    )
+
+    private fun novig(s: Scenario) {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                val path = request.path!!
+                return when {
+                    request.method == "POST" && path == "/v3/orders" -> s.postResponse ?: MockResponse().setResponseCode(201).setBody("""{"orderId":"o1","clientId":"c"}""")
+                    path == "/v3/orders/o1" -> MockResponse().setBody(
+                        """{"orderId":"o1","clientId":"c","marketId":"mkt","outcomeId":"A","price":"0.465","qty":${s.qty},"remaining":0,"tif":"IOC","status":"${s.orderStatus}","createdTs":1800000000000}""",
+                    )
+                    path.startsWith("/v3/portfolio/fills") -> MockResponse().setBody(s.fills)
+                    path.startsWith("/v3/orders?") -> {
+                        val status = Regex("status=([A-Z]+)").find(path)!!.groupValues[1]
+                        MockResponse().setBody(s.listedOrders[status] ?: """{"items":[]}""")
+                    }
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+    }
+
+    private fun placer(t: BetTracker, paused: Boolean = false, book: NovigBook? = book(), l: BetLimits = limits): ApiBetPlacer {
+        return ApiBetPlacer(tradingClient(), t, books = { book }, limits = { l }, paused = { paused }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { now += it })
+    }
+
+    private fun orderBody(): kotlinx.serialization.json.JsonObject =
+        json.parseToJsonElement(requests.first { it.method == "POST" }.body.readUtf8()).jsonObject
+
+    @Test
+    fun `a filled bet goes out as an IOC at the confirmed ceiling and is tracked from the real fills`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465) as PlaceResult.Placed
+        val body = orderBody()
+        assertEquals("A", body["outcomeId"]!!.jsonPrimitive.content)
+        assertEquals("0.465", body["price"]!!.jsonPrimitive.content)
+        assertEquals("400", body["qty"]!!.jsonPrimitive.content)
+        assertEquals("IOC", body["tif"]!!.jsonPrimitive.content)
+        assertTrue(body["clientId"]!!.jsonPrimitive.content.startsWith("vigilant-"))
+        // The Tracker gets what the fills say: 400 contracts for $1.85 (0.4625 each, better than the 0.465 ceiling).
+        val bet = r.bet
+        assertEquals("o1", bet.orderId)
+        assertEquals(400L, bet.contracts)
+        assertEquals(1.85, bet.paid!!, 1e-9)
+        assertEquals(1.85, bet.stake, 1e-9)
+        assertEquals(1.85 / 4.0, bet.price, 1e-9)
+        assertEquals(0.50 / (1.85 / 4.0) - 1.0, bet.evPercentAtBet!!, 1e-9)
+        assertEquals(2.15, bet.profitIfWon, 1e-9)
+        assertEquals(0L, r.unfilledContracts)
+        assertEquals(listOf(bet), t.all())
+        assertTrue(bet.viaApi)
+    }
+
+    @Test
+    fun `a partly filled order is tracked for what filled`() = runBlocking {
+        novig(Scenario(orderStatus = "CANCELED", qty = 400, fills = """{"items":[{"fillId":"f1","orderId":"o1","marketId":"mkt","outcomeId":"A","qty":100,"cost":"0.46000","taker":true,"ts":1}]}"""))
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465) as PlaceResult.Placed
+        assertEquals(100L, r.bet.contracts)
+        assertEquals(300L, r.unfilledContracts)
+    }
+
+    @Test
+    fun `an order that filled nothing places no bet`() = runBlocking {
+        novig(Scenario(orderStatus = "REJECTED", fills = """{"items":[]}"""))
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.NotFilled)
+        assertTrue(t.all().isEmpty())
+    }
+
+    @Test
+    fun `a price that moved against the confirm is refused and nothing is sent`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.46) as PlaceResult.Refused
+        assertTrue(r.reason, r.reason.startsWith("The price moved"))
+        assertTrue("no order went out", requests.none { it.method == "POST" })
+        assertTrue(t.all().isEmpty())
+    }
+
+    @Test
+    fun `Novig's refusal comes back as words, with no bet`() = runBlocking {
+        novig(Scenario(postResponse = MockResponse().setResponseCode(422).setBody("""{"code":"INSUFFICIENT_FUNDS","message":"balance too low"}""")))
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465) as PlaceResult.Failed
+        assertTrue(r.message, r.message.contains("doesn't have enough money"))
+        assertTrue(t.all().isEmpty())
+        // A location refusal says what to do.
+        novig(Scenario(postResponse = MockResponse().setResponseCode(451).setBody("""{"code":"GEOLOCATION_EXPIRED","message":"x"}""")))
+        val g = placer(t).place(target(), 10.0, confirmedLimit = 0.465) as PlaceResult.Failed
+        assertTrue(g.message, g.message.contains("open the Novig app"))
+    }
+
+    @Test
+    fun `a lost answer is looked up by its clientId before anything is called failed`() = runBlocking {
+        // The POST goes through and the connection drops: the order shows up as FILLED in the list, carrying the clientId sent.
+        val s = Scenario(postResponse = MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+        novig(s)
+        val t = tracker()
+        // The list answers with whatever clientId was sent: read it from the recorded POST.
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                val path = request.path!!
+                return when {
+                    request.method == "POST" && path == "/v3/orders" -> MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+                    path.startsWith("/v3/orders?") && path.contains("status=FILLED") -> {
+                        val sent = json.parseToJsonElement(requests.first { it.method == "POST" }.body.clone().readUtf8()).jsonObject["clientId"]!!.jsonPrimitive.content
+                        MockResponse().setBody("""{"items":[{"orderId":"o1","clientId":"$sent","marketId":"mkt","outcomeId":"A","price":"0.465","qty":400,"remaining":0,"tif":"IOC","status":"FILLED","createdTs":1}]}""")
+                    }
+                    path.startsWith("/v3/orders?") -> MockResponse().setBody("""{"items":[]}""")
+                    path == "/v3/orders/o1" -> MockResponse().setBody("""{"orderId":"o1","marketId":"mkt","outcomeId":"A","price":"0.465","qty":400,"remaining":0,"tif":"IOC","status":"FILLED","createdTs":1}""")
+                    path.startsWith("/v3/portfolio/fills") -> MockResponse().setBody(s.fills)
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.Placed)
+        assertEquals("o1", t.all().single().orderId)
+    }
+
+    @Test
+    fun `a lost answer with no trace is unconfirmed, never called placed or failed`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                return if (request.method == "POST") MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST) else MockResponse().setBody("""{"items":[]}""")
+            }
+        }
+        val t = tracker()
+        val r = placer(t).place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.Unconfirmed)
+        assertTrue(t.all().isEmpty())
+        assertEquals("the order was sent once, never again", 1, requests.count { it.method == "POST" })
+    }
+
+    @Test
+    fun `the same outcome isn't bet twice, the daily total counts, and pausing blocks it`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        val p = placer(t)
+        assertTrue(p.place(target(), 10.0, 0.465) is PlaceResult.Placed)
+        val again = p.plan(target(), 5.0)
+        assertTrue((again as PlanResult.Refused).reason.contains("already bet this through the API"))
+        // Allowed on purpose: the day's total is the first bet's $1.85 plus this one; a $49 cap would refuse a $48 bet.
+        val capped = placer(t, l = limits.copy(maxStake = 100.0, maxPerDay = 50.0)).plan(target(), 49.0, allowRepeat = true)
+        assertTrue((capped as PlanResult.Refused).reason.contains("daily limit"))
+        val paused = placer(t, paused = true).plan(target(), 5.0, allowRepeat = true)
+        assertTrue((paused as PlanResult.Refused).reason.contains("paused"))
+    }
+
+    @Test
+    fun `the trading client reads fills, positions, orders and the ledger from Novig's shapes`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                val path = request.path!!
+                return when {
+                    path.startsWith("/v3/portfolio/positions") -> MockResponse().setBody("""[{"marketId":"mkt","outcomeId":"A","qty":400,"cost":"1.85000"}]""")
+                    path.startsWith("/v3/account/subaccounts/sub/transactions") ->
+                        MockResponse().setBody("""{"items":[{"transactionId":"t1","kind":"SETTLEMENT","amount":"4.00000","ref":"mkt","ts":5}],"next":null}""")
+                    path.startsWith("/v3/account/subaccounts/sub/balance") -> MockResponse().setBody("""{"keyId":"sub","balance":"12.50000"}""")
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        val c = tradingClient()
+        assertEquals(listOf(NovigPosition("mkt", "A", 400, 1.85)), c.positions("mkt"))
+        assertEquals(LedgerRow("t1", "SETTLEMENT", 4.0, "mkt", 5), c.ledger("sub", "SETTLEMENT", 1, 2).single())
+        assertEquals(12.5, c.balance("sub"), 1e-9)
+        assertTrue(requests.any { it.path!!.contains("kind=SETTLEMENT") && it.path!!.contains("startsAfter=1") && it.path!!.contains("startsBefore=2") })
+        assertEquals("0.455", NovigTradingClient.priceText(0.455))
+        assertEquals("0.050", NovigTradingClient.priceText(0.05))
+    }
+
+    @Test
+    fun `an Undo of a check mark never removes a bet placed through the API`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        placer(t).place(target(placedKey = "cno:row1"), 10.0, 0.465)
+        t.untrack("cno:row1")
+        assertNotNull(t.all().singleOrNull { it.orderId == "o1" })
+        assertEquals(BetStatus.PENDING, t.all().single().status)
+    }
+}
