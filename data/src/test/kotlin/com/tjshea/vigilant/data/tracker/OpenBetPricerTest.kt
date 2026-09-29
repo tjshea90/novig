@@ -130,7 +130,7 @@ class OpenBetPricerTest {
     fun `leagues Tj switched off, games past Days ahead and market families he hid don't hide an open bet`() = runTest {
         // Feed filters: only MLB, one day ahead, moneylines off. The bet is an NFL moneyline nine days out.
         now = Fixtures.START_MS - 9 * 86_400_000L
-        val narrow = settings.copy(leagues = setOf("MLB"), daysAhead = 1, families = setOf(com.tjshea.vigilant.data.scanner.MarketFamily.PROPS))
+        val narrow = settings.copy(leagues = setOf("MLB"), daysAhead = 1, families = setOf(com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS))
         val t = tracker(bet("a"))
         val report = pricer(t, FakeNovig()).run(narrow, listOf("a"))
         assertEquals(1, report.priced)
