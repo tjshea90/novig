@@ -148,6 +148,11 @@ they appear once Claude works on files here), read `.claude/skills/<name>/SKILL.
 The first four are Chris Banes' (Apache-2.0, copied unchanged: `.claude/skills/THIRD_PARTY_NOTICES.md`);
 where one disagrees with this file or BRIEF.md, this repo's rules win.
 
+**Run tests with `bash tools/test.sh`** (the whole floor), or name tasks and filters:
+`bash tools/test.sh :data:test --tests '*CnoChecksTest'`. It prints one line per module and only the
+failing tests' messages (or the compiler errors), never Gradle's whole log (kept in
+/tmp/vigilant-test.log), so a test run costs a few lines of context instead of hundreds.
+
 ## Branches — `main` is the only source of truth
 
 Claude Code on the web puts each session on its own auto-generated branch
