@@ -25,8 +25,10 @@ import kotlinx.coroutines.withContext
  * There is no cap: every open bet with a CNO page whose game isn't long over is read, soonest game
  * first, [gapMs] apart. The [Report] accounts for every open bet, so the count Tj is told always adds
  * up to the count he has: read, already current, couldn't be read, game already over (its result comes
- * from [BetSettler]), and Vigilant's own bets (no CNO page: a Vigilant scan prices those,
- * [BetTracker.observe]).
+ * from [BetSettler]), and Vigilant's own bets (no CNO page). Those are priced from Vigilant's own fair
+ * odds by [OpenBetPricer] in the same tap (Tj, 2026-09-29: "update the EV for every single open bet,
+ * including bets added from vigilant scanner"), and so is any bet CNO couldn't read
+ * ([Report.unreadIds]); [Report.withPricing] folds that pass into the counts.
  */
 class BetRecheck(
     private val tracker: BetTracker,
