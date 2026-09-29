@@ -239,6 +239,7 @@ class AppContainer(app: Application) {
     fun startVigilantScan(settings: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>): Boolean {
         val now = System.currentTimeMillis()
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
+        val before = usage.flow.value
         return runner.start(settings, referenceSources(settings), pinned) { report ->
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
@@ -247,8 +248,14 @@ class AppContainer(app: Application) {
             report?.result?.let { runCatching { tracker.observe(it) } }
             // Keyed calls saved as they happened; this saves the keyless request counters.
             runCatching { usage.flush() }
+            // What this scan cost each API, for Settings › Diagnostics (a scan that failed outright has no report and no cost to show).
+            if (report != null) lastScanCost = RoundCost(now, System.currentTimeMillis() - now, UsageDelta.between(before, usage.flow.value))
         }
     }
+
+    /** What the last Vigilant scan and the last Check odds now cost each API since the app opened ([RoundCost]), for Diagnostics. */
+    @Volatile var lastScanCost: RoundCost? = null
+    @Volatile var lastCheckCost: RoundCost? = null
 
     /**
      * Where a CNO bet opens in Novig: its bet slip, else its game ([TapLink]); null when nothing
