@@ -947,7 +947,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val scores = c.settler.run(force)
         return if (api == null) scores else scores.copy(
             asked = scores.asked + api.asked, settled = scores.settled + api.settled, waiting = scores.waiting + api.waiting,
-            manual = scores.manual + api.manual, stopped = scores.stopped && api.stopped || scores.stopped && api.asked == 0,
+            manual = scores.manual + api.manual,
         )
     }
 
