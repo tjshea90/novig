@@ -103,8 +103,8 @@ class BetRecheck(
                 parts += if (over > 0) "$over game${if (over == 1) "" else "s"} already over: $word" else word.replaceFirstChar { it.uppercase() }
             }
             if (vigilantOnly > 0) {
-                parts += if (scanStarted) "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"} updating from a Vigilant scan"
-                else "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"} update with each Vigilant scan"
+                val n = "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"}"
+                parts += if (vigilantOff) "$n not updated: the Vigilant scanner is off (Settings › Scanner)" else "$n update with each Vigilant scan"
             }
             val text = parts.joinToString(" · ")
             return when {
