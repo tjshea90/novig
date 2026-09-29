@@ -284,8 +284,10 @@ class MainActivity : ComponentActivity() {
                 throw e
             } catch (e: Exception) {
                 null
+            } finally {
+                // Even when the screen closes mid-lookup: a stuck "Opening…" would leave Replace off until the app restarts.
+                vm.setReplacing(null)
             }
-            vm.setReplacing(null)
             found?.takeIf { it.exact }?.let { f -> com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(f.link)?.let { vm.rememberOutcome(bet.id, it) } }
             tellHowItOpened(found, row)
             floatOverNovig()

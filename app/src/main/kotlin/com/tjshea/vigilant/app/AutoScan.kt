@@ -150,6 +150,9 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                 if (settings.autoScan.cno) {
                     _status.update { it.copy(step = "Reading CrazyNinjaOdds") }
                     runCatching { alerts += cnoCheck(settings) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
+                    // The closing line of the open bets about to start, for the Tracker's CLV (Tj, 2026-09-29): the last read before the start.
+                    _status.update { it.copy(step = "Open bets about to start") }
+                    runCatching { c.recheck.captureClosing() }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 if (settings.autoScan.vigilant && settings.leagues.isNotEmpty()) {
                     _status.update { it.copy(step = "Vigilant scan") }

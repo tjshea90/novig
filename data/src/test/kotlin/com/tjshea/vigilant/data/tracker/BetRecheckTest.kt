@@ -211,4 +211,46 @@ class BetRecheckTest {
         assertEquals(emptyList<BookLine>(), b.books)
         assertNull(b.nowEv)
     }
+
+    @Test
+    fun `re-reading one bet never waits for a whole pass over the rest`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val t = tracker(bet("slow", startsTs = start + 1), bet("fast", startsTs = start + 2))
+        val r = BetRecheck(t, books = { row -> if (row.gameUrl!!.endsWith("slow")) gate.await(); view(-125, 105) }, clock = { now })
+        val pass = launch { r.run() }
+        kotlinx.coroutines.yield()
+        // The pass is stuck on the first bet; the second can still be read on its own (the sheet opening mid-pass).
+        assertEquals(true, r.checkOne("fast"))
+        assertEquals(true, t.all().first { it.id == "fast" }.nowEv != null)
+        gate.complete(Unit)
+        pass.join()
+        assertEquals(2, t.all().count { it.nowEv != null })
+    }
+
+    @Test
+    fun `the closing line is read for open bets about to start, and only those`() = runTest {
+        now = start - 30 * 60_000L
+        val t = tracker(
+            bet("soon", startsTs = start),
+            bet("later", startsTs = start + 3 * 60 * 60_000L),
+            bet("started", startsTs = now - 10 * 60_000L),
+            bet("fresh", startsTs = start).copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.0),
+            bet("vigilant", startsTs = start, gameUrl = null),
+            bet("won", startsTs = start).copy(status = BetStatus.WON),
+        )
+        val seen = mutableListOf<String>()
+        val r = BetRecheck(t, books = { row -> seen += row.gameUrl!!.substringAfter("side_id="); view(-125, 105) }, clock = { now })
+        assertEquals(1, r.captureClosing())
+        assertEquals(listOf("soon"), seen)
+        // What it read is the closing line so far: the fair price before the start.
+        val soon = t.all().first { it.id == "soon" }
+        assertEquals(soon.nowFair, soon.closingFair)
+        assertNull(t.all().first { it.id == "later" }.closingFair)
+        // Read again once its books are five minutes old, and the closing line follows.
+        now += 6 * 60_000L
+        assertEquals(2, r.captureClosing()) // soon (old now) and fresh (over five minutes since its read)
+        // Nothing to do: nothing is read.
+        val quiet = tracker()
+        assertEquals(0, BetRecheck(quiet, books = { seen += "x"; null }, clock = { now }).captureClosing())
+    }
 }
