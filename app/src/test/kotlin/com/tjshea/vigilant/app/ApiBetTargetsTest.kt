@@ -43,7 +43,7 @@ class ApiBetTargetsTest {
     }
 
     @Test
-    fun `no fair price, no bet; only Novig's own bets can be placed through Novig`() {
+    fun `no fair price means no bet, and only Novig's own bets can be placed through Novig`() {
         assertNull(ApiBetTargets.of(row(fair = null), found, market, 0))
         assertTrue(ApiBetTargets.atNovig(row("Novig")))
         assertTrue(ApiBetTargets.atNovig(row("")))
