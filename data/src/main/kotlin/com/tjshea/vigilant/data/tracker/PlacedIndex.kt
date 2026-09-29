@@ -144,6 +144,7 @@ class PlacedIndex private constructor(
                 is BetGrader.Pick.Total -> "tot|${pick.period}|${ou(pick.over)}|${pick.line}"
                 is BetGrader.Pick.TeamTotal -> "tt|${team(pick.team)}|${ou(pick.over)}|${pick.line}"
                 is BetGrader.Pick.Prop -> "prop|${PlayerNames.key(pick.player)}|${pick.stat}|${ou(pick.over)}|${pick.line}"
+                is BetGrader.Pick.FirstSet -> "fs|${team(pick.player)}"
             }
         }
 
