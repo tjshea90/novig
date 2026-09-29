@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -94,13 +95,16 @@ class MgmAppTest {
     @Test fun `Settings pick BetMGM's state and hide Novig's key and read limits`() {
         var saved: ScanSettings? = null
         val s = SampleMgm.state()
-        shoot("22_mgm_settings") { SettingsScreen(s, { t -> saved = t(s.settings) }) }
+        // BetMGM's state and the missing Novig key are on the Betting tab; the read limits on the +EV feed tab, Novig's price now on the CNO tab.
+        shoot("22_mgm_settings") { SettingsScreen(s, { t -> saved = t(s.settings) }, startTab = com.tjshea.vigilant.app.ui.SettingsTab.BETTING) }
         compose.onNodeWithText("BetMGM state", ignoreCase = true).assertExists()
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
-        compose.onAllNodesWithText("Most Novig prices per scan", substring = true).assertCountEquals(0)
-        compose.onAllNodesWithText("Novig's price now").assertCountEquals(0)
         compose.onNodeWithText("NJ").performScrollTo().performClick()
         assertEquals("nj", saved?.bookState)
+        compose.onNodeWithTag("settingsTab-FEED").performScrollTo().performClick()
+        compose.onAllNodesWithText("Most Novig prices per scan", substring = true).assertCountEquals(0)
+        compose.onNodeWithTag("settingsTab-CNO").performScrollTo().performClick()
+        compose.onAllNodesWithText("Novig's price now").assertCountEquals(0)
     }
 
     @Test fun `with no PropLine or Odds API key the feed says where BetMGM's odds come from`() {
