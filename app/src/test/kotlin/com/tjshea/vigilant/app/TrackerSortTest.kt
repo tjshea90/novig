@@ -76,6 +76,12 @@ class TrackerSortTest {
 
     @Test
     fun `a chip says which end of the list is at the top only once it is the chosen one`() {
+        // The pinned chip is short: the sort, and which way round it runs.
+        assertEquals("Sort: Needs a look", TrackerSort.barLabel(BetSort.DEFAULT, false, "Needs a look"))
+        assertEquals("Sort: Current EV · best", TrackerSort.barLabel(BetSort.EV, false, "Needs a look"))
+        assertEquals("Sort: Current EV · worst", TrackerSort.barLabel(BetSort.EV, true, "Needs a look"))
+        assertEquals("Sort: Date placed · newest", TrackerSort.barLabel(BetSort.PLACED, false, "Latest placed"))
+        assertEquals("Sort: Amount · smallest", TrackerSort.barLabel(BetSort.AMOUNT, true, "Needs a look"))
         assertEquals("Date placed", TrackerSort.chipLabel(BetSort.PLACED, BetSort.EV, false, "Needs a look"))
         assertEquals("Current EV: best first", TrackerSort.chipLabel(BetSort.EV, BetSort.EV, false, "Needs a look"))
         assertEquals("Current EV: worst first", TrackerSort.chipLabel(BetSort.EV, BetSort.EV, true, "Needs a look"))

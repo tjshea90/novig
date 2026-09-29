@@ -137,6 +137,15 @@ class StickyHeadersTest {
         compose.onNodeWithText("Starts within").assertIsDisplayed()
     }
 
+    /** The pinned bar takes a fifth of a phone's list area at most (wrapped Sort and Scanner chips took a third: 311 dp of 420 in this test). */
+    @Test
+    fun `the Tracker's pinned bar is compact`() {
+        screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        val heightDp = compose.onNodeWithTag(STICKY_BAR).fetchSemanticsNode().size.height / 3f // xxhdpi
+        println("PINNED-BAR-DP $heightDp")
+        assertTrue("the bar is $heightDp dp tall", heightDp <= 175f)
+    }
+
     @Test
     fun `nothing else on these screens is pinned`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
