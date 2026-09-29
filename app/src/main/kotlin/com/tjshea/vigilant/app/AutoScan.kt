@@ -156,7 +156,7 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                     _status.update { it.copy(step = "Open bets about to start") }
                     runCatching { c.recheck.captureClosing() }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
-                if (settings.autoScan.vigilant && settings.leagues.isNotEmpty()) {
+                if (settings.autoScansVigilant && settings.leagues.isNotEmpty()) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     runCatching { alerts += vigilantScan(settings) }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
                 }
