@@ -63,7 +63,10 @@ object Diagnostics {
             "Betting through the API: ${if (s.betting.enabled) "on" else "off"}" + (s.betting.balance?.let { String.format(Locale.US, " · wallet $%.2f", it) } ?: "") +
                 " · amount $${money(set.apiBetStake)}, most per bet $${money(set.apiMaxStake)}, most per day $${money(set.apiMaxPerDay)}, smallest edge ${pct(set.apiMinEv)}",
         )
-        o.appendLine("Novig key: ${if (s.novig.connection != null) "connected" else "not connected"}")
+        o.appendLine(
+            "Novig key: ${if (s.novig.connection != null) "connected" else "not connected"} · management key " +
+                (s.novig.managementKey?.let { if (it.unreadable) "saved but can't be unlocked (enter it again)" else "saved on this phone (••••${it.keyIdEnd})" } ?: "not saved"),
+        )
 
         o.appendLine()
         o.appendLine("== Last Vigilant scan ==")
