@@ -17,6 +17,17 @@ enum class BetStatus {
 }
 
 /**
+ * One book's American price for a bet and its other side, as last read ("Check odds now" reads CNO's
+ * game page, a Vigilant scan reads the books behind its fair line). Kept on the open bet so its sheet
+ * shows every book at once, offline; dropped when the bet settles (it would only grow the file).
+ */
+@Serializable
+data class BookLine(val name: String, val odds: Int? = null, val other: Int? = null) {
+    /** Only a book pricing both sides can be devigged honestly. */
+    val twoSided: Boolean get() = odds != null && other != null
+}
+
+/**
  * One bet Tj logged from a card. Prices are Novig prices (cost per $1 payout, fee included in
  * [cost]). [closingFair] is the last fair probability the scanner saw before the game started:
  * the closing-line value (CLV) this bet beat or didn't, which is the real test of an EV finder.
@@ -63,6 +74,18 @@ data class TrackedBet(
     val settledBy: String? = null,
     /** Logged from a ✓ mark made before the Tracker kept them (its EV and fair odds weren't kept). */
     val imported: Boolean = false,
+    /** Every book's price for this bet at the last read ([BookLine]), when it was read, and the other side's name ("Under 4.5"). */
+    val books: List<BookLine> = emptyList(),
+    val booksAtMs: Long? = null,
+    val otherSide: String? = null,
+    /** The bet's own book's price at the last read (American): Novig's price now, to set beside [american]. */
+    val nowAmerican: Int? = null,
+    /**
+     * How the last grading attempt went, and when: why an open bet isn't graded yet ("Game isn't over yet",
+     * "Can't grade this market automatically"), or, once settled, what settled it ("Final: Mets 7, Nationals 1").
+     */
+    val gradeNote: String? = null,
+    val gradeAtMs: Long? = null,
 ) {
     /** What a win pays back in profit: every $1 of cost returns $1 / cost. */
     val profitIfWon: Double get() = stake * (1.0 / cost - 1.0)
@@ -77,6 +100,18 @@ data class TrackedBet(
         }
 
     val expectedProfit: Double get() = stake * (evPercentAtBet ?: 0.0)
+
+    /** What the bet returns in total if it wins: the stake plus [profitIfWon]. */
+    val toWin: Double get() = profitIfWon
+
+    /** Open and the game has started: only its result is left. */
+    fun awaitingResult(now: Long): Boolean = status == BetStatus.PENDING && now >= startsTs
+
+    /**
+     * Auto-grading is off for this bet: Tj tapped a result and then undid it ([BetTracker.settle]), so
+     * [BetSettler] leaves it alone until "Grade automatically" turns it back on ([BetTracker.regrade]).
+     */
+    val autoGradeOff: Boolean get() = status == BetStatus.PENDING && settledBy == BetSettler.BY_YOU
 
     /** Closing-line value: the EV this price had against the closing fair line. */
     val clvPercent: Double? get() = closingFair?.let { it / cost - 1.0 }
