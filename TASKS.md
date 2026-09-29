@@ -2702,4 +2702,8 @@ Nothing at or above 1.0% EV."
       data tests in parallel JVMs (71 s -> 38 s); VIGILANT_* live switches are data:test inputs (proven: before, a
       changed switch left the task "up to date"; after, it reruns). Not adopted, with reasons (RESEARCH.md §33.6):
       build/configuration cache, chrisbanes gradle-run skill, CI changes.
-- [ ] Z6 Full test floor, ship, Release link.
+- [x] Z6 Full test floor, ship, Release link.
+      DONE: ship.sh (via tools/test.sh) 761 tests: 746 passed, 15 live skipped; CI green on 7ad5dfc1 (run 36507659205);
+      release.yml run 36508005071 published v0.19.7 (code 42, certificate verified), recorded in BUILDLOG.md. Light test of
+      this session's changes: LiveCnoSmokeTest (VIGILANT_LIVE=1) failed on a stale assertion (5+ books; the default is 4
+      since v0.19.3), fixed to follow the filters; live run then 13 CNO rows, 13 kept, none hidden as futures.

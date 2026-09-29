@@ -1,21 +1,23 @@
-# CHECKPOINT 2038 — read me first, then TASKS.md
+# CHECKPOINT 2041 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T01:23:16Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-690067b2-r33qn5` · **builds on:** `9b9532e8` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T01:31:48Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-690067b2-r33qn5` · **builds on:** `48a0363d` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.19.7: CNO's list leaves out futures and awards (games only; the CNO tab counts them as "futures (not a game)"). Dev: cloud setup script never blocks a session, installs the build-tools the build uses and can pre-download every dependency; compact test runner; data tests in parallel; live-test switches tracked by Gradle. 761 tests (versionCode 42, v0.19.7)
+Z6 done: v0.19.7 (code 42) released and recorded (CI + release green); light test fixed LiveCnoSmokeTest's stale 5-book assertion (live: 13 rows, 13 kept, no real game hidden as futures). Z1-Z6 all ticked.
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.19.7), then run: bash tools/record-release.sh v0.19.7 42 "v0.19.7: CNO's list leaves out futures and awards (games only; the CNO tab counts them as "futures (not a game)"). Dev: cloud setup script never blocks a session, installs the build-tools the build uses and can pre-download every dependency; compact test runner; data tests in parallel; live-test switches tracked by Gradle. 761 tests"
+Nothing open in this job. Tj: set each account's cloud environment (one-line setup script + dl.google.com, BRIEF.md build trap 6). Older open items: TASKS L1161/L1164/P6/S2.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  7ad5dfc1 ckpt 2038: pre-release: v0.19.7: CNO's list leaves out futures and awards (games only; 
   9b9532e8 ckpt 2037: Z3-Z5 done: setup script verified + hardened (never fails, build-tools 35, -
   fc37a770 ckpt 2029: Z4/Z5 in progress: setup-android.sh never fails a session start (WARN + exit
   0f7eae8e ckpt 2015: Z1: Tj's decisions recorded (public keystore fine; no futures) in BRIEF/TASK
@@ -25,5 +27,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   1cf5c103 ckpt 2004: Y2 + Y4: flags settled in BRIEF.md (F1-F7, F10, F11 Moto G 2026 specs; F9 in
   5936e866 ckpt 2000: Y1: applied PROMPT_AUDIT.patch (A1-A11 CLAUDE.md/briefing scripts incl. test
   fca73b59 ckpt 1998: Recorded Tj's request (fix everything fixable without breaking anything; use
-  08a2ad3c ckpt 1996: X2-X3 done: Chris Banes' four Compose/coroutine skills in .claude/skills (un
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
