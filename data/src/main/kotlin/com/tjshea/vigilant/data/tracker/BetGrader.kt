@@ -157,49 +157,109 @@ object BetGrader {
      * [pick]'s result in [game] ([players]: its box score, for props), or null while it can't be
      * told: the game isn't final, a period's score is missing, a player isn't in the box score.
      */
-    fun grade(pick: Pick, game: GameScore, players: List<PlayerLine>? = null): BetStatus? {
-        if (!game.final) return null
-        val home = game.homeScore ?: return null
-        val away = game.awayScore ?: return null
+    fun grade(pick: Pick, game: GameScore, players: List<PlayerLine>? = null): BetStatus? =
+        (gradeDetailed(pick, game, players) as? Grade.Result)?.status
+
+    /** [grade] with what the result rests on ("Final: Mets 7, Nationals 1"), or why there's none yet or ever. */
+    fun gradeDetailed(pick: Pick, game: GameScore, players: List<PlayerLine>? = null): Grade {
+        if (!game.final) return Grade.Waiting("The game isn't over yet")
+        val home = game.homeScore ?: return Grade.Waiting("The final score isn't posted yet")
+        val away = game.awayScore ?: return Grade.Waiting("The final score isn't posted yet")
+        val final = finalLine(game)
+        fun result(status: BetStatus?, detail: String = final): Grade =
+            if (status == null) Grade.Manual("Couldn't compare the result") else Grade.Result(status, detail)
         return when (pick) {
             is Pick.Moneyline -> {
-                val side = sideOf(pick.team, game) ?: return null
+                val side = sideOf(pick.team, game) ?: return unknownSide(pick.team, game)
                 val (mine, theirs) = if (side) away to home else home to away
-                compare(mine.toDouble(), theirs.toDouble())
+                result(compare(mine.toDouble(), theirs.toDouble()))
             }
             is Pick.Spread -> {
-                val side = sideOf(pick.team, game) ?: return null
-                val (h, a) = score(game, pick.period) ?: return null
+                val side = sideOf(pick.team, game) ?: return unknownSide(pick.team, game)
+                val (h, a) = score(game, pick.period) ?: return noPeriod(pick.period, game)
                 val (mine, theirs) = if (side) a to h else h to a
-                compare(mine + pick.line, theirs.toDouble())
+                result(compare(mine + pick.line, theirs.toDouble()), periodLine(game, pick.period, h, a))
             }
             is Pick.Total -> {
-                val (h, a) = score(game, pick.period) ?: return null
-                overUnder((h + a).toDouble(), pick.over, pick.line)
+                val (h, a) = score(game, pick.period) ?: return noPeriod(pick.period, game)
+                result(overUnder((h + a).toDouble(), pick.over, pick.line), periodLine(game, pick.period, h, a) + " (total ${h + a})")
             }
             is Pick.TeamTotal -> {
-                val side = sideOf(pick.team, game) ?: return null
-                overUnder((if (side) away else home).toDouble(), pick.over, pick.line)
+                val side = sideOf(pick.team, game) ?: return unknownSide(pick.team, game)
+                val (h, a) = score(game, Period.GAME) ?: return noPeriod(Period.GAME, game)
+                val mine = if (side) a else h
+                result(overUnder(mine.toDouble(), pick.over, pick.line), "${pick.team}: $mine")
+            }
+            is Pick.FirstSet -> {
+                val side = sideOf(pick.player, game) ?: return unknownSide(pick.player, game)
+                val (h, a) = score(game, Period.FIRST_SET) ?: return noPeriod(Period.FIRST_SET, game)
+                val (mine, theirs) = if (side) a to h else h to a
+                result(compare(mine.toDouble(), theirs.toDouble()), "1st set: ${game.away} $a, ${game.home} $h")
             }
             is Pick.Prop -> {
-                val line = players?.let { playerOf(pick.player, it) } ?: return null
-                val value = line.stats[pick.stat] ?: return null
-                overUnder(value, pick.over, pick.line)
+                if (game.tennis) return Grade.Manual("A tennis match's ${PropStats.displayName(pick.stat).lowercase()} isn't in the score feed: mark it yourself")
+                val box = players ?: return Grade.Waiting("The box score isn't available yet")
+                val line = playerOf(pick.player, box)
+                    ?: return Grade.Manual("${pick.player} isn't in the box score (didn't play, or the name is spelled differently): mark it yourself")
+                val value = line.stats[pick.stat]
+                    ?: return Grade.Manual("The box score has no ${PropStats.displayName(pick.stat)} for ${pick.player}: mark it yourself")
+                result(overUnder(value, pick.over, pick.line), "${line.name}: ${trim(value)} ${PropStats.displayName(pick.stat)}")
             }
         }
     }
 
+    private fun unknownSide(team: String, game: GameScore) =
+        Grade.Manual("Couldn't tell which side \"$team\" is in ${game.away} @ ${game.home}: mark it yourself")
+
+    private fun noPeriod(period: Period, game: GameScore) = Grade.Manual(
+        when (period) {
+            Period.FIRST_HALF -> "The score feed has no first-half score for this ${game.league} game: mark it yourself"
+            Period.FIRST_INNING -> "The score feed has no first-inning score for this game: mark it yourself"
+            Period.FIRST_SET -> "The score feed has no first-set score for this match: mark it yourself"
+            Period.SETS -> "Sets only apply to a tennis match: mark it yourself"
+            Period.GAME -> "The score feed has no game score to grade this with: mark it yourself"
+        },
+    )
+
+    /** "Final: New York Mets 7, Washington Nationals 1" (a tennis match: sets and each set's games). */
+    private fun finalLine(game: GameScore): String {
+        if (game.tennis) {
+            val sets = game.homePeriods.zip(game.awayPeriods) { h, a -> "$h-$a" }.joinToString(" ")
+            return "Final: ${game.home} ${game.homeScore}-${game.awayScore} ${game.away} (sets), games $sets"
+        }
+        return "Final: ${game.away} ${game.awayScore}, ${game.home} ${game.homeScore}"
+    }
+
+    private fun periodLine(game: GameScore, period: Period, h: Int, a: Int): String = when (period) {
+        Period.GAME -> if (game.tennis) "Games: ${game.home} $h, ${game.away} $a" else finalLine(game)
+        Period.SETS -> "Sets: ${game.home} $h, ${game.away} $a"
+        Period.FIRST_HALF -> "First half: ${game.away} $a, ${game.home} $h"
+        Period.FIRST_INNING -> "1st inning: ${game.away} $a, ${game.home} $h"
+        Period.FIRST_SET -> "1st set: ${game.away} $a, ${game.home} $h"
+    }
+
+    private fun trim(v: Double): String = if (v == Math.floor(v)) v.toLong().toString() else v.toString()
+
     /** True: [team] is [game]'s away side; false: home; null: can't tell. */
     private fun sideOf(team: String, game: GameScore): Boolean? = TeamMatcher.labelIsAway(team, game.away, game.home)
 
-    /** (home, away) points in [period]: the whole game, the first half (5 innings in baseball), or the 1st inning. */
+    /**
+     * (home, away) points in [period]: the whole game (a tennis match's games), the first half (5 innings in
+     * baseball), the 1st inning, a tennis match's sets or its first set.
+     */
     private fun score(game: GameScore, period: Period): Pair<Int, Int>? = when (period) {
-        Period.GAME -> (game.homeScore ?: return null) to (game.awayScore ?: return null)
+        Period.GAME -> if (game.tennis) {
+            if (game.homePeriods.isEmpty() || game.awayPeriods.isEmpty()) null else game.homePeriods.sum() to game.awayPeriods.sum()
+        } else {
+            (game.homeScore ?: return null) to (game.awayScore ?: return null)
+        }
+        Period.SETS -> if (!game.tennis) null else (game.homeScore ?: return null) to (game.awayScore ?: return null)
+        Period.FIRST_SET -> if (!game.tennis || game.homePeriods.isEmpty() || game.awayPeriods.isEmpty()) null else game.homePeriods[0] to game.awayPeriods[0]
         Period.FIRST_HALF -> {
             val n = when (game.league) {
                 "MLB" -> 5
                 "NCAAB" -> 1
-                "NHL" -> return null
+                "NHL", "ATP", "WTA" -> return null
                 else -> 2
             }
             if (game.homePeriods.size < n || game.awayPeriods.size < n) null
@@ -238,17 +298,41 @@ object BetGrader {
 
     private const val MIN_TEAM = 0.8
 
-    private val GAME_TOTAL = Regex("^total( points| runs| goals)?$")
+    private val GAME_TOTAL = Regex("^total( points| runs| goals| games| sets)?$")
     private val FIRST_INNING_WORDS = Regex("1st inning|first inning|nrfi|yrfi")
+    private val FIRST_SET_WORDS = Regex("1st set|first set|\\bset 1\\b")
+    private val SET_WORDS = Regex("\\bsets? (spread|handicap)|total sets|sets total")
+    private val PARENTHESES = Regex("\\([^)]*\\)")
+    private val SPACES = Regex("\\s+")
+    /** Words in a total's name that say nothing about which total it is ("Alternate Total", "Game Total", "Match Total"). */
+    private val TOTAL_NOISE = Regex("\\b(alternate|alt|game|match|full|time|regulation|incl\\.?|including|overtime|ot)\\b")
+    private val FIRST_SCORER = Regex("(first|last|next) (touchdown|td|goal|basket|scorer|team to score|to score)|\\bfirst basket|first (goal|touchdown) ?scorer")
     private val FIRST_HALF_WORDS = Regex("\\b1h\\b|1st half|first half|\\bf5\\b|first 5|1st 5")
     private val OTHER_PERIOD_WORDS = Regex("quarter|\\bq[1-4]\\b|period|2nd half|second half|\\b2h\\b|inning")
     private val SPREAD_WORDS = Regex("spread|run line|puck line|handicap")
     private val ANYTIME_TD = Regex("(?i)anytime (td|touchdown)( scorer)?")
     private val THREES = Regex("(?i)3-pointers made|3 pointers made|threes made|threes")
+    private val ANYTIME_GOAL = Regex("(?i)anytime goal ?scorer|to score a goal")
+
+    /**
+     * Every Novig player-prop type a bet can be on (its `types/markets`, 2026-09-29; futures, awards and
+     * first-scorer markets left out: no score feed carries them): the stats Vigilant prices plus the ones
+     * only CrazyNinjaOdds' list shows (tackles, saves, shots, steals, blocks, turnovers, combos).
+     */
+    private val PROP_TYPES: List<String> = (
+        PropStats.NOVIG_TYPES + listOf(
+            "TACKLES_ASSISTS", "SAVES", "SHOTS_ON_GOAL", "PLAYER_GOALS", "GOALS_ASSISTS", "ASSISTS", "POINTS",
+            "REBOUNDS", "POINTS_ASSISTS", "POINTS_REBOUNDS", "REBOUNDS_ASSISTS", "STEALS", "BLOCKS", "STEALS_BLOCKS",
+            "TURNOVERS", "TRIPLE_DOUBLE", "DOUBLE_DOUBLE", "PLAYER_ACES",
+        )
+    ).distinct()
 
     /** A period in front of a market's name ("F5 Total", "1st 5 Innings Total Runs"). */
     private val PERIOD_PREFIX = Regex("^(1h|f5|1st half|first half|1st inning|first inning|1st 5 innings|first 5 innings|1st five innings)\\s+")
 
     /** A score feed's game and the bet's must start within this (Novig's placeholder times, late starts). */
     const val MAX_START_GAP_MS = 12 * 60 * 60_000L
+
+    /** …and a tennis match's, whose start is only "after the previous match" (order of play). */
+    const val TENNIS_START_GAP_MS = 24 * 60 * 60_000L
 }
