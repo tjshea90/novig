@@ -181,7 +181,7 @@ class ExchangeClientsTest {
         }
         val snap = KalshiClient(OkHttpClient(), json, base("/")).odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL)))
         val asked = (1..server.requestCount).map { server.takeRequest().requestUrl!! }
-        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked.map { it.queryParameter("series_ticker") }.sorted())
+        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked.mapNotNull { it.queryParameter("series_ticker") }.sorted())
         assertTrue(asked.all { it.queryParameter("with_nested_markets") == "true" && it.queryParameter("status") == "open" })
         assertEquals(2, snap.events.single().markets.size)
     }
@@ -208,7 +208,7 @@ class ExchangeClientsTest {
         val lines = kalshi.lines(nfl, s)!!
         t = 21_000L
         fun asked() = (1..server.requestCount - seen).map { server.takeRequest().requestUrl!!.queryParameter("series_ticker") }.also { seen = server.requestCount }
-        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked().sorted())
+        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked().filterNotNull().sorted())
         assertEquals(2, lines.events.single().markets.size)
         val full = kalshi.odds(nfl, s)
         val props = asked()
@@ -261,13 +261,6 @@ class ExchangeClientsTest {
     /** A 429 costs a wait and a retry, not the series: the page comes back on the next try. */
     @Test
     fun `kalshi waits out a 429 and reads the series again`() = runBlocking {
-        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "0"))
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest) = MockResponse().setBody(
-                if (request.requestUrl!!.queryParameter("series_ticker") == "KXNFLGAME") ExchangeFixtures.kalshiNflGame else """{"events":[]}""",
-            )
-        }
-        // The queued 429 is served first (a dispatcher replaces the queue, so serve it by count).
         var first = true
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
