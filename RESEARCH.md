@@ -2669,7 +2669,7 @@ OpticOdds, PredictionData, LiveFeedAPI, SharpAPI, Betstamp, odds-api.io … free
 - **Polymarket 13 s → 5.6 s** (fixed in v0.20.2): the first page alone, and when it is full the next pages three at a time instead of one after another (`PolymarketClient.WAVE`).
 - Settings › Novig API's "Last scan took …" line now names the slowest fair-odds sources ("fair odds 27 s (Kalshi 27 s, Polymarket 6 s, Pinnacle 2.1 s)") so the next "slow" comes with
   the culprit. **Test key** now also measures, on the phone, what the key gets (`NovigLiveCheck`): its own limits from `GET /v3/limits`, a signed-catalog read, five book reads through the key
-  vs five public, and the websocket (connect, subscribe to 24 markets, seconds to the first books and how many arrived). That is the first time the live feed is checked against the real API.
+  vs five public, and the websocket (connect, subscribe to 10 markets, seconds to the first books and how many arrived). That is the first time the live feed is checked against the real API.
 
 ### 36.3 The seven third-party APIs (pages read 2026-09-29; prices as published; earlier notes in §4 for SharpAPI, odds-api.io, OpticOdds, Betstamp)
 | API | Novig? | Free / cheapest paid | Speed | Player props | Grades bets? | Verdict |
