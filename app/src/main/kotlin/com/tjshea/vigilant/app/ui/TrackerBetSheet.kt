@@ -247,22 +247,32 @@ private fun StatusCard(bet: TrackedBet, now: Long) {
 @Composable
 private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolean) {
     val ev = i.evNow
+    // "Now" only while the read is young; an older one says when it was read (the fair odds behind an EV go stale in minutes).
+    val current = TrackerText.currentEv(bet, now)
     val tone = when {
-        ev == null -> MaterialTheme.colorScheme.onSurfaceVariant
+        ev == null || !current -> MaterialTheme.colorScheme.onSurfaceVariant
         ev >= 0 -> Edge.colors.positive
         else -> Edge.colors.negative
     }
     Surface(color = tone.copy(alpha = 0.12f), shape = RoundedCornerShape(12.dp)) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                if (ev != null) "Now ${Format.evPercent(ev)} EV at your price" else "Fair price now",
+                when {
+                    ev == null -> "Fair price now"
+                    current -> "Now ${Format.evPercent(ev)} EV at your price"
+                    else -> "${Format.evPercent(ev)} EV at your price, as of ${Format.age(bet.nowAtMs, now)}"
+                },
                 color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall,
             )
+            TrackerText.oddsNote(bet, now)?.let { Caption(it) }
             if (ev == null && rereading) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(10.dp))
-                    Text("Reading every book's odds from CNO…", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        if (bet.gameUrl != null) "Reading every book's odds from CNO…" else "Pricing it from Vigilant's fair odds…",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             } else {
                 Text(TrackerText.edgeSentence(i), style = MaterialTheme.typography.bodySmall)
