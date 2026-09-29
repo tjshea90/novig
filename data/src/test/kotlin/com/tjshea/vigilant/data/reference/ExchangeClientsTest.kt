@@ -97,13 +97,35 @@ class ExchangeClientsTest {
     }
 
     @Test
-    fun `polymarket pages until a short page`() = runBlocking {
+    fun `polymarket pages until a short page, the pages after a full first one three at a time`() = runBlocking {
         val full = (1..100).joinToString(",", "[", "]") { """{"id":"$it","sportsMarketType":"moneyline"}""" }
-        server.enqueue(MockResponse().setBody(full))
-        server.enqueue(MockResponse().setBody("[]"))
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) =
+                MockResponse().setBody(if (request.requestUrl!!.queryParameter("offset") == "0") full else "[]")
+        }
         PolymarketClient(OkHttpClient(), json, base("/")).odds(nfl, settings)
-        server.takeRequest()
-        assertEquals("100", server.takeRequest().requestUrl!!.queryParameter("offset"))
+        // The first page alone; it was full, so the next wave asks pages 1-3 together (all short here: it ends).
+        val offsets = (1..server.requestCount).map { server.takeRequest().requestUrl!!.queryParameter("offset")!!.toInt() }
+        assertEquals(listOf(0, 100, 200, 300), offsets.sorted())
+    }
+
+    @Test
+    fun `polymarket keeps every page's markets, in order, when several pages are full`() = runBlocking {
+        fun page(from: Int, n: Int) = (from until from + n).joinToString(",", "[", "]") { """{"id":"$it","sportsMarketType":"moneyline"}""" }
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = MockResponse().setBody(
+                when (request.requestUrl!!.queryParameter("offset")) {
+                    "0" -> page(0, 100)
+                    "100" -> page(100, 100)
+                    "200" -> page(200, 30)
+                    else -> "[]"
+                },
+            )
+        }
+        val c = PolymarketClient(OkHttpClient(), json, base("/"))
+        c.odds(nfl, settings)
+        // Pages 0, then 1-3 together: 4 requests; page 3 is empty and page 2 short, so nothing else is asked.
+        assertEquals(4, server.requestCount)
     }
 
     @Test
