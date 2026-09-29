@@ -102,9 +102,20 @@ class ApiSettlerTest {
         assertEquals(BetSettler.BY_NOVIG, b.settledBy)
         assertEquals("Novig paid $4.00 on 400 contracts: a win", b.gradeNote)
         assertEquals(2.15, b.profit!!, 1e-9)
-        // The request asked for SETTLEMENT rows around the game's start.
+        // The request asked for SETTLEMENT rows around the game's start (a wide window: Novig's own start can differ from CNO's).
         val ask = server.takeRequest().path!!
-        assertTrue(ask, ask.contains("kind=SETTLEMENT") && ask.contains("startsAfter=${start - 1}") && ask.contains("startsBefore=${start + 1}"))
+        assertTrue(ask, ask.contains("kind=SETTLEMENT") && ask.contains("startsAfter=${start - ApiSettler.START_SLACK_MS}") && ask.contains("startsBefore=${start + ApiSettler.START_SLACK_MS}"))
+    }
+
+    @Test
+    fun `a ledger row that names the fill or the order settles the bet as well as one naming the market`() = runBlocking {
+        novig(ledger = listOf("f-o1" to "4.00000"))
+        val t = tracker(); bet(t)
+        assertEquals(BetStatus.WON, run { settler(t).run(); t.all().single().status })
+        novig(ledger = listOf("o1" to "4.00000"))
+        val t2 = tracker(); bet(t2)
+        settler(t2).run()
+        assertEquals(BetStatus.WON, t2.all().single().status)
     }
 
     @Test

@@ -114,6 +114,8 @@ class ApiBettingTest {
         assertTrue(refused(plan(t = target().let { it.copy(market = it.market.copy(status = "CLOSED")) })).contains("closed"))
         assertTrue(refused(plan(t = target().let { it.copy(market = it.market.copy(fee = null)) })).contains("fee"))
         assertTrue(refused(plan(t = target(fairAsOf = now - 20 * 60_000L))).contains("scan again"))
+        // An unknown age isn't taken as fresh when money is at stake.
+        assertTrue(refused(plan(t = target(fairAsOf = null))).contains("isn't known"))
         assertTrue(refused(plan(b = null)).contains("couldn't be read"))
         assertTrue(refused(plan(b = book(fetchedAt = now - 60_000L))).contains("seconds old"))
         assertTrue(refused(plan(b = book(bidsB = emptyList()))).contains("Nobody is offering"))
@@ -315,6 +317,23 @@ class ApiBettingTest {
         assertTrue(requests.any { it.path!!.contains("kind=SETTLEMENT") && it.path!!.contains("startsAfter=1") && it.path!!.contains("startsBefore=2") })
         assertEquals("0.455", NovigTradingClient.priceText(0.455))
         assertEquals("0.050", NovigTradingClient.priceText(0.05))
+    }
+
+    @Test
+    fun `fills are read page by page until the last one`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                val path = request.path!!
+                fun fill(id: String) = """{"fillId":"$id","orderId":"o","marketId":"m","outcomeId":"A","qty":1,"cost":"0.01000","taker":true,"ts":1}"""
+                return when {
+                    path.contains("after=CURSOR%2F2") -> MockResponse().setBody("""{"items":[${fill("f3")}]}""")
+                    path.startsWith("/v3/portfolio/fills") -> MockResponse().setBody("""{"items":[${fill("f1")},${fill("f2")}],"next":"CURSOR/2"}""")
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        assertEquals(listOf("f1", "f2", "f3"), tradingClient().fills().map { it.fillId })
     }
 
     @Test
