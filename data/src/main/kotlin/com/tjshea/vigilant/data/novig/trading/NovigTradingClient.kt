@@ -149,6 +149,13 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
 
         /** A grid price as Novig writes it: three decimals ("0.455", "0.050"). */
         fun priceText(price: Double): String = BigDecimal.valueOf(price).setScale(3, java.math.RoundingMode.HALF_UP).toPlainString()
+
+        /** An id for an order or a transfer: a plain UUID, the only shape Novig's `clientId` / `clientTransferId` accepts. */
+        fun newClientId(): String = java.util.UUID.randomUUID().toString()
+
+        private val UUID_SHAPE = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+        fun isUuid(id: String): Boolean = UUID_SHAPE.matches(id)
     }
 }
 
