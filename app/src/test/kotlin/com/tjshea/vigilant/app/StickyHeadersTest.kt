@@ -18,8 +18,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -81,18 +79,15 @@ class StickyHeadersTest {
         compose.onNodeWithText("Player 39 Over 1.5", substring = true).assertIsDisplayed()
         // Stats | Bets, Open / Settled / All, Sort and Scanner: all still there, without scrolling back up.
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
-        for (pinned in listOf("Stats", "Bets", "Open (40)", "Sort", "Date placed", "Current EV", "Amount", "Game start", "Scanner", "Vigilant (40)", "CNO (0)")) {
-            inBar(pinned).assertIsDisplayed()
-        }
+        for (pinned in listOf("Stats", "Bets", "Open (40)", "Settled (0)", "All (40)", "Sort: Needs a look", "Scanner: All")) inBar(pinned).assertIsDisplayed()
     }
 
     @Test
     fun `a pinned filter works from deep in the list, and the new list starts at its top`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         scrollToKey("x39")
-        inBar("Amount").performClick()
-        compose.waitForIdle()
-        println("DEBUG-TREE " + compose.onRoot().printToString(maxDepth = 12).replace("\n", " ¶ "))
+        inBar("Sort:").performClick()
+        compose.onNodeWithText("Amount").performClick()
         // Largest amount first: bet 0 ($99) is the first card, on screen with no scrolling back.
         compose.onNodeWithText("Player 0 Over 1.5", substring = true).assertIsDisplayed()
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()

@@ -118,6 +118,17 @@ class TrackerUiTest {
         s.copy(bets = s.bets.map { b -> when (b.id) { "b3" -> b.copy(stake = 25.0); "b4" -> b.copy(stake = 5.0); "b5" -> b.copy(stake = 10.0); else -> b } })
     }
 
+    /** The pinned Sort chip opens a menu (v0.22.0: chips would take a third of the screen while pinned); [item] is the choice in it. */
+    private fun chooseSort(item: String) {
+        compose.onNodeWithText("Sort:", substring = true).performClick()
+        compose.onNodeWithText(item).performClick()
+    }
+
+    private fun chooseScanner(item: String) {
+        compose.onNodeWithText("Scanner:", substring = true).performClick()
+        compose.onNodeWithText(item).performClick()
+    }
+
     private fun top(text: String) = compose.onNodeWithText(text).fetchSemanticsNode().boundsInRoot.top
 
     /** The open bets, top to bottom. */
@@ -129,43 +140,46 @@ class TrackerUiTest {
     fun `the open bets are ordered by what needs a look until a sort is chosen`() {
         screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         assertEquals(listOf("b5", "b4", "b3"), listed()) // the next games first
-        compose.onNodeWithText("Needs a look").assertExists()
+        compose.onNodeWithText("Sort: Needs a look").assertExists()
     }
 
     @Test
     fun `current EV puts the best first against the price each was placed at, and a second tap turns it round`() {
         screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
-        compose.onNodeWithText("Current EV").performClick()
+        chooseSort("Current EV")
         assertEquals(listOf("b4", "b5", "b3"), listed()) // +3.1%, −2.1%, then the bet nothing has priced
-        compose.onNodeWithText("Current EV: best first").assertExists()
-        compose.onNodeWithText("Current EV: best first").performClick()
+        compose.onNodeWithText("Sort: Current EV · best").assertExists()
+        chooseSort("Current EV: best first") // the menu says what a second tap does
         assertEquals(listOf("b5", "b4", "b3"), listed()) // worst first, unpriced still last
-        compose.onNodeWithText("Current EV: worst first").assertExists()
+        compose.onNodeWithText("Sort: Current EV · worst").assertExists()
     }
 
     @Test
     fun `date placed and amount order the bets, newest and largest first`() {
         screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
-        compose.onNodeWithText("Date placed").performClick()
+        chooseSort("Date placed")
         assertEquals(listOf("b5", "b4", "b3"), listed()) // placed 50 min, 60 min, 2 h ago
-        compose.onNodeWithText("Date placed: newest first").performClick()
+        chooseSort("Date placed: newest first")
         assertEquals(listOf("b3", "b4", "b5"), listed())
-        compose.onNodeWithText("Amount").performClick()
+        chooseSort("Amount")
         assertEquals(listOf("b3", "b5", "b4"), listed()) // $25, $10, $5
     }
 
     @Test
     fun `the scanner filter lists one scanner's bets, with the counts`() {
         screen { TrackerScreen(stakes(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithText("Scanner: All").assertExists()
+        compose.onNodeWithText("Scanner:", substring = true).performClick()
         compose.onNodeWithText("All scanners (3)").assertExists()
         compose.onNodeWithText("Vigilant (1)").assertExists()
         compose.onNodeWithText("CNO (2)").assertExists()
         compose.onNodeWithText("Vigilant (1)").performClick()
         assertEquals(listOf("b3"), listed())
+        compose.onNodeWithText("Scanner: Vigilant").assertExists()
         compose.onNodeWithText("Open (1)").assertExists() // the list counts follow the scanner picked
-        compose.onNodeWithText("CNO (2)").performClick()
+        chooseScanner("CNO (2)")
         assertEquals(listOf("b5", "b4"), listed())
-        compose.onNodeWithText("All scanners (3)").performClick()
+        chooseScanner("All scanners (3)")
         assertEquals(3, listed().size)
     }
 
@@ -259,7 +273,7 @@ class TrackerUiTest {
             },
         )
         screen { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) }
-        compose.onNodeWithText("Current EV").performClick()
+        chooseSort("Current EV")
         compose.onRoot().captureRoboImage("screenshots/4g_tracker_sorted_by_ev.png")
     }
 
