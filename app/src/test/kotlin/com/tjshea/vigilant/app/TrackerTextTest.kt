@@ -68,22 +68,52 @@ class TrackerTextTest {
         val open = listOf(
             bet("a", cost = 0.5, startsTs = now + hour), bet("b", cost = 0.5, startsTs = now - hour), bet("c", cost = 0.5, startsTs = now - 5 * hour, note = "x", manual = true),
         )
-        assertEquals("3 open · $30.00 at risk · pays $30.00 · 2 started · 1 need a tap · odds read on 0 of 1 upcoming", TrackerText.openSummary(open, now))
-        // Once its odds are read, the upcoming bet counts as read (a started game never counts: it waits for a result, not odds).
+        assertEquals("3 open · $30.00 at risk · pays $30.00 · 2 started · 1 need a tap · current EV on 0 of 1 upcoming", TrackerText.openSummary(open, now))
+        // Once its odds are read, the upcoming bet counts as current (a started game never counts: it waits for a result, not odds).
         val read = listOf(open[0].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1), open[1].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("2 open · $20.00 at risk · pays $20.00 · 1 started · odds read on 1 of 1 upcoming", TrackerText.openSummary(read, now))
+        assertEquals("2 open · $20.00 at risk · pays $20.00 · 1 started · current EV on 1 of 1 upcoming", TrackerText.openSummary(read, now))
+        // A read older than the fair odds' own age limit is no longer current: 5 minutes for a game within 3 hours, 10 for a far-off one.
+        val old = listOf(open[0].copy(nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
+        assertEquals("1 open · $5.00 at risk · pays $5.00 · current EV on 0 of 1 upcoming", TrackerText.openSummary(old, now))
+        val farOff = listOf(open[0].copy(startsTs = now + 30 * hour, nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
+        assertEquals("1 open · $5.00 at risk · pays $5.00 · current EV on 1 of 1 upcoming", TrackerText.openSummary(farOff, now))
     }
 
     @Test
-    fun `an upcoming bet with no odds says why - no CNO page, or not read yet`() {
+    fun `an upcoming bet with no EV says why - not priced yet, or the reason the last try found no fair price`() {
         val vigilant = bet("v")
         val cno = bet("c").copy(gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=1")
-        assertEquals(true, TrackerText.oddsNote(vigilant, now)!!.contains("Vigilant bet"))
+        assertEquals(true, TrackerText.oddsNote(vigilant, now)!!.startsWith("Not priced yet: tap Check odds now"))
         assertEquals("Odds not read yet: tap Check odds now", TrackerText.oddsNote(cno, now))
+        // The reason the last pricing pass found none, with when it tried; a newer number replaces it, an older one is kept beside it.
+        val tried = vigilant.copy(nowNote = "No fair-odds source lists this game", nowNoteAtMs = now - 2 * 60_000L)
+        assertEquals("Not priced: No fair-odds source lists this game (tried 2m ago)", TrackerText.oddsNote(tried, now))
+        val stale = tried.copy(nowFair = 0.5, nowEv = 0.1, nowAtMs = now - 3 * hour)
+        assertEquals("Not priced: No fair-odds source lists this game (tried 2m ago)", TrackerText.oddsNote(stale, now))
+        assertNull(TrackerText.oddsNote(tried.copy(nowFair = 0.5, nowEv = 0.1, nowAtMs = now), now))
         // Read already, started, or settled: nothing to explain.
         assertNull(TrackerText.oddsNote(cno.copy(nowFair = 0.5, nowEv = 0.1, nowAtMs = now), now))
         assertNull(TrackerText.oddsNote(cno.copy(startsTs = now - hour), now))
         assertNull(TrackerText.oddsNote(cno.copy(status = BetStatus.WON), now))
+    }
+
+    /** Tj, 2026-09-29: "the current, up to date EV, which is devigged and compared to the actual odds that I placed the bet at". */
+    @Test
+    fun `the EV line says now only while the read is young, against the price the bet was placed at`() {
+        // Bet at +150 (cost 0.40); the devigged fair now is 0.44: EV = 0.44 / 0.40 - 1 = +10%.
+        val fresh = bet(nowFair = 0.44).copy(nowEv = 0.10, nowAtMs = now - 3 * 60_000L, nowVia = BetTracker.VIA_VIGILANT, nowBooks = 5)
+        val line = TrackerText.nowLine(fresh, now)!!
+        assertEquals("now +10.0% EV at your +150", line.headline)
+        assertEquals("fair now +127 · Vigilant's fair odds · 5 books · read 3m ago", line.detail)
+        assertEquals(false, line.stale)
+        val old = TrackerText.nowLine(fresh.copy(nowAtMs = now - 2 * hour, nowVia = BetTracker.VIA_CNO), now)!!
+        assertEquals("+10.0% EV at your +150", old.headline)
+        assertEquals("fair then +127 · CNO's books · 5 books · as of 2h ago · tap Check odds now", old.detail)
+        assertEquals(true, old.stale)
+        assertNull(TrackerText.nowLine(bet(), now))
+        // A game far off keeps its read "now" for 10 minutes, one about to start for 5.
+        assertEquals(false, TrackerText.nowLine(fresh.copy(startsTs = now + 30 * hour, nowAtMs = now - 8 * 60_000L), now)!!.stale)
+        assertEquals(true, TrackerText.nowLine(fresh.copy(nowAtMs = now - 8 * 60_000L), now)!!.stale)
     }
 
     @Test
