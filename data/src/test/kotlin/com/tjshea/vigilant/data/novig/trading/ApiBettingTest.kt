@@ -148,7 +148,15 @@ class ApiBettingTest {
                 requests += request
                 val path = request.path!!
                 return when {
-                    request.method == "POST" && path == "/v3/orders" -> s.postResponse ?: MockResponse().setResponseCode(201).setBody("""{"orderId":"o1","clientId":"c"}""")
+                    request.method == "POST" && path == "/v3/orders" -> s.postResponse ?: run {
+                        // Novig parses clientId as a UUID and answers 4xx for anything else (Tj's first real order, 2026-09-29).
+                        val sent = json.parseToJsonElement(request.body.clone().readUtf8()).jsonObject["clientId"]?.jsonPrimitive?.content
+                        if (sent != null && !NovigTradingClient.isUuid(sent)) {
+                            MockResponse().setResponseCode(400).setBody("""{"code":"BAD_REQUEST","message":"clientId: UUID parsing failed: invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `v` at 1"}""")
+                        } else {
+                            MockResponse().setResponseCode(201).setBody("""{"orderId":"o1","clientId":"c"}""")
+                        }
+                    }
                     path == "/v3/orders/o1" -> MockResponse().setBody(
                         """{"orderId":"o1","clientId":"c","marketId":"mkt","outcomeId":"A","price":"0.465","qty":${s.qty},"remaining":0,"tif":"IOC","status":"${s.orderStatus}","createdTs":1800000000000}""",
                     )
