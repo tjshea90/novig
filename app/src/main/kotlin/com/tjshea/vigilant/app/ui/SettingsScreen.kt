@@ -135,7 +135,8 @@ fun SettingsScreen(
     val s = state.settings
     state.report?.let { ReportDialog(it, reportActions) }
     val tabs = SettingsTab.shown(s)
-    var picked by rememberSaveable { mutableStateOf(startTab.name) }
+    // A Bet sheet's "Add money" (Tj, 2026-09-29) opens on the Betting tab, where the wallet is.
+    var picked by rememberSaveable { mutableStateOf((if (state.betting.topUp != null) SettingsTab.BETTING else startTab).name) }
     // A tab that has gone (CNO only hides the fair-odds pages) falls back to the first one.
     val active = tabs.firstOrNull { it.name == picked } ?: tabs.first()
     val scroll = rememberScrollState()

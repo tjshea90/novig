@@ -136,4 +136,42 @@ class SettingsTabsTest {
         open(SettingsTab.FEED)
         compose.onNodeWithText("+EV FEED", ignoreCase = false).assertIsDisplayed()
     }
+
+    // ---- the Bet sheet's "Add money" (Tj, 2026-09-29) -----------------------------------------------------------
+
+    private fun connected(base: UiState = SampleScan.state()) = base.copy(
+        novig = NovigUi(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("read-1", "a", "sub-1", false, tradingKeyId = "t", tradingAlias = "a2")),
+        betting = BettingUi(enabled = true, balance = 1.0),
+    )
+
+    private fun topUp() = TopUp(
+        amount = 1.0, needed = 0.85, cost = 1.85,
+        bet = BetSheetUi("Team A", "Moneyline · Team B @ Team A", stake = 5.0, resolving = false),
+    )
+
+    @Test
+    fun `Add money opens Settings on the wallet, scrolled into view, with the shortfall typed in`() {
+        val state = connected().let { it.copy(betting = it.betting.copy(topUp = topUp())) }
+        screen(state)
+        compose.onNodeWithTag("settingsTab-BETTING").assertIsSelected()
+        compose.waitForIdle()
+        // No scrolling by hand: the wallet (far down the Betting page) is on screen.
+        compose.onNodeWithTag("topUpBanner").assertIsDisplayed()
+        compose.onNodeWithTag("walletAmount").assertIsDisplayed()
+        compose.onNodeWithText("1", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `without a bet waiting, Settings opens where it always does`() {
+        screen(connected())
+        compose.onNodeWithTag("settingsTab-SCAN").assertIsSelected()
+    }
+
+    @Test
+    fun `in CNO only the wallet is still there, since CNO's cards bet through the API too`() {
+        val base = connected()
+        screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO)))
+        open(SettingsTab.BETTING)
+        compose.onNodeWithTag("walletBlock").performScrollTo().assertIsDisplayed()
+    }
 }

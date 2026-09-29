@@ -683,8 +683,6 @@ private fun VigilantRoot(
                         },
                         onDismissTopUp = vm.api::dismissTopUp,
                     ),
-                    // A Bet sheet's "Add money" opens on the wallet.
-                    startTab = if (state.betting.topUp != null) com.tjshea.vigilant.app.ui.SettingsTab.BETTING else com.tjshea.vigilant.app.ui.SettingsTab.SCAN,
                 )
             }
         }
