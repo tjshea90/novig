@@ -535,8 +535,13 @@ What is new here is the account/execution half of the API, which Vigilant has ne
 - **Balance** (`GET …/{keyId}/balance`): management, management::read and **trading**, not `trading::read`. Transactions (the ledger): all four scopes.
 - **Funding** is only the management key: `POST …/{keyId}/transfer {direction: fund|defund, amount: "10.00000", clientTransferId}` → `202 Requested`, then poll
   `GET …/transfers/{id}` until `Applied` (money moved) or `Rejected`. 5 a second, 60 a minute. No route lists transfers.
-- **Order fields** (`PlaceOrder`): `outcomeId`, `price` (string on the grid), `qty` (integer, 1¢ contracts), `tif` (`GTC`, `GTT` + `ttl`, `IOC`, `FOK`, `PO`), optional `clientId`
-  (never checked for uniqueness: a replay places a second order). Answers `201 {orderId, clientId}` = queued only. `GET /v3/orders/{id}` "can answer 404 right after a 201".
+- **Order fields** (`PlaceOrder`): `outcomeId` (uuid), `price` (string on the grid), `qty` (int32, min 1, 1¢ contracts), `tif` (`GTC`, `GTT` + `ttl`, `IOC`, `FOK`, `PO`), optional
+  **`clientId`, which MUST be a UUID** (`format: uuid` in the spec; **verified live 2026-09-29**: Tj's first two real orders were refused `400` with
+  "clientId: UUID parsing failed … found `v`" for `vigilant-<uuid>`, nothing placed; fixed in v0.21.2, and `placeOrder` now refuses a non-UUID before sending). It is never checked for
+  uniqueness (a replay places a second order). `clientTransferId` on a transfer is a plain string (≤ 64), sent as a UUID too. Order `status` is `PENDING` (queued) / `OPEN` / `FILLED`
+  / `CANCELED` / `REJECTED`, and "a partly filled order stays `OPEN`: track `remaining`, not the status". `GET /v3/orders` filters: `event`, `market`, `outcome`, `status` (default
+  `OPEN`), `limit` 1–5000 (default 500), `after` (the `next` cursor). **Every request field of the placing path was re-checked against the spec on 2026-09-29** (orders, fills,
+  positions, ledger, balance, transfer, key mint): the only mismatch was `clientId`. Answers `201 {orderId, clientId}` = queued only. `GET /v3/orders/{id}` "can answer 404 right after a 201".
   An unfilled `IOC`/`FOK`/`PO` ends `REJECTED`; a partly filled `IOC` ends `CANCELED` with what filled kept. Fills: `qty`, `cost` (dollars, `qty × price × 1¢`), `taker`, `fee`.
 - **Placement location check:** as for any signed route, plus the device geolocation must be **under 3 days old** (open the Novig app); a read admits a stale one.
 - **What a settled bet looks like** (event-lifecycle page, ledger schema): `GET …/transactions?kind=SETTLEMENT` rows (`amount` signed, `ref` = the market the row settles): a win
