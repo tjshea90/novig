@@ -4,6 +4,7 @@ import com.tjshea.vigilant.data.cno.CnoClient
 import com.tjshea.vigilant.data.cno.CnoFilters
 import com.tjshea.vigilant.data.cno.CnoView
 import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -42,5 +43,30 @@ class LiveCnoPagesTest {
             val v = client.books(r)
             println("PROBE books(${r.bet}) ${System.currentTimeMillis() - s} ms, ${requests - before} requests, ${v?.prices?.size} books")
         }
+    }
+
+    /** Can one game page's session read other games' grids with one request each? */
+    @Test
+    fun `probe session reuse`() = runBlocking {
+        assumeTrue(System.getenv("VIGILANT_LIVE") == "1")
+        var requests = 0
+        val http = OkHttpClient.Builder().addInterceptor { chain -> requests++; chain.proceed(chain.request()) }.build()
+        val client = CnoClient(http)
+        val filters = CnoFilters(minEv = 0.0, maxOdds = 0, minBooks = 1, rows = 200, completeBook = false, minSides = 1)
+        val rows = client.fetch(CnoView.DEFAULT, filters).rows.filter { it.gameUrl != null }
+        val a = rows[0]
+        val session = client.open(a.gameUrl!!)
+        println("PROBE reuse: session opened for ${a.bet}; postUrl=${session.postUrl}")
+        var ok = 0
+        for (b in rows.drop(1).take(6)) {
+            val t0 = System.currentTimeMillis(); val before = requests
+            // Same session (cookies and form state), aimed at another game's page.
+            val other = com.tjshea.vigilant.data.cno.CnoClient.Session(b.gameUrl!!, b.gameUrl!!.toHttpUrl(), session.cookies, session.form, LinkedHashMap(session.fields), System.currentTimeMillis())
+            val grid = try { with(client) { client.postback(other, useTimer = true).grid() } } catch (e: Exception) { println("PROBE reuse: ${b.bet} FAILED ${e.message}"); continue }
+            val view = com.tjshea.vigilant.data.cno.CnoBooks.parse(grid, b.sideId, b.bet, System.currentTimeMillis())
+            println("PROBE reuse: ${b.bet} | ${b.market} | ${b.event} -> ${if (view == null) "NOT FOUND in grid" else "found ${view.prices.size} books, other ${view.otherBet}"} in ${System.currentTimeMillis() - t0} ms, ${requests - before} request(s)")
+            if (view != null) ok++
+        }
+        println("PROBE reuse: $ok of 6 found with one request each")
     }
 }
