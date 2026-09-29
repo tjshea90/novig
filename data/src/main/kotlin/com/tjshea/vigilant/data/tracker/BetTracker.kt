@@ -444,7 +444,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                     closingFair = fair, closingSeenAtMs = now, nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now,
                     books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
                     nowBooks = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() } ?: b.nowBooks,
-                    nowAmerican = o?.quote?.priceAmerican ?: b.nowAmerican,
+                    // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
+                    nowAmerican = o?.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican,
                 )
             }
         }
