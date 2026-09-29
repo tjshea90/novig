@@ -71,7 +71,7 @@ object Runway {
             val note = if (used <= 0) "none used yet" else "too early in the ${if (policy.period == QuotaPeriod.MONTH_UTC) "month" else "day"} to project a pace"
             return RunwayLine(policy.id, policy.displayName, level, "$head · $note: ${level.name}$refusedNote")
         }
-        val projected = (used.toDouble() * span / elapsed).toLong()
+        val projected = Math.round(used.toDouble() * span / elapsed)
         val perMs = used.toDouble() / elapsed
         val runsOutIn = (left / perMs).toLong()
         val level = when {

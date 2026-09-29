@@ -55,7 +55,7 @@ class RunwayTest {
         val wire = lines.getValue("pinnwire")
         assertEquals(RunwayLevel.OK, wire.level)
         assertTrue(wire.text, wire.text.startsWith("Pinnacle (PinnWire): 48 of 100 requests used today (1 key), 52 left · resets in 5h 2m"))
-        assertTrue(wire.text, wire.text.contains("at this pace about 60 by the reset: OK"))
+        assertTrue(wire.text, wire.text.contains("at this pace about 61 by the reset: OK"))
         assertEquals(RunwayLevel.OK, lines.getValue("propline").level)
         assertEquals(RunwayLevel.OK, lines.getValue("pinnacle").level)
         // Order follows the views handed in; the free-of-key providers have no line at all.
