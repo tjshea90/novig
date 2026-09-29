@@ -64,7 +64,7 @@ object Runway {
         val usable = live.any { it.state == KeyState.ACTIVE || it.state == KeyState.STANDBY || it.state == KeyState.COOLING }
         if (!usable || left <= 0) {
             val until = live.mapNotNull { it.until }.minOrNull() ?: reset
-            return RunwayLine(policy.id, policy.displayName, RunwayLevel.SHORT, "$head · SPENT until ${UsageMeter.whenText(until, now)}: add a key$refusedNote")
+            return RunwayLine(policy.id, policy.displayName, RunwayLevel.SHORT, "$head · SPENT ${UsageMeter.untilText(until, now)}: add a key$refusedNote")
         }
         if (elapsed < minElapsed(policy) || used <= 0) {
             val level = fractionLevel(used, allowance)
