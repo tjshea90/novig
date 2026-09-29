@@ -11,6 +11,7 @@ import com.tjshea.vigilant.data.novig.NovigSource
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.scanner.League
+import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.FairSource
@@ -80,7 +81,7 @@ class OpenBetPricerTest {
     private class FakeOddsApi : ReferenceSource {
         var calls = 0
         /** The families the last call was asked for. */
-        var asked: Set<com.tjshea.vigilant.data.scanner.MarketFamily> = emptySet()
+        var asked: Set<MarketFamily> = emptySet()
         override val id = "oddsapi"
         override val displayName = "The Odds API"
         override val metered = true
@@ -133,7 +134,7 @@ class OpenBetPricerTest {
     fun `leagues Tj switched off, games past Days ahead and market families he hid don't hide an open bet`() = runTest {
         // Feed filters: only MLB, one day ahead, moneylines off. The bet is an NFL moneyline nine days out.
         now = Fixtures.START_MS - 9 * 86_400_000L
-        val narrow = settings.copy(leagues = setOf("MLB"), daysAhead = 1, families = setOf(com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS))
+        val narrow = settings.copy(leagues = setOf("MLB"), daysAhead = 1, families = setOf(MarketFamily.PLAYER_PROPS))
         val t = tracker(bet("a"))
         val report = pricer(t, FakeNovig()).run(narrow, listOf("a"))
         assertEquals(1, report.priced)
@@ -235,7 +236,7 @@ class OpenBetPricerTest {
         assertEquals(0, s.startsWithinHours)
         assertTrue(s.scanWindowHours >= 24 * 4)
         // Both bets are moneylines: the pass asks for moneylines only, whatever families the feed shows.
-        assertEquals(setOf(com.tjshea.vigilant.data.scanner.MarketFamily.MONEYLINE), s.families)
+        assertEquals(setOf(MarketFamily.MONEYLINE), s.families)
         assertEquals(2, s.maxBooksPerScan)
         // How fair odds are worked out is Tj's: the same as the feed's.
         assertEquals(3, s.minBooks)
@@ -247,24 +248,23 @@ class OpenBetPricerTest {
     /** Tj's Diagnostics, 2026-09-29: a Check odds now read every family in every league (Kalshi 103 requests, Polymarket 44, PropLine 24). */
     @Test
     fun `a pass asks the fair-odds sources only for the market families the bets are on`() {
-        val family = com.tjshea.vigilant.data.scanner.MarketFamily
         val ml = labelled("ml", "Moneyline", "Dallas Cowboys")
         val spread = labelled("sp", "Point Spread", "Dallas Cowboys -3.5") // CNO's wording
         val total = labelled("to", "Total", "Over 45.5")
         val prop = labelled("pr", "Player Receiving Yards", "Brock Bowers Under 4.5")
         val f5 = labelled("f5", "F5 Total", "Over 4.5")
         val team = labelled("tt", "Team Total", "Dallas Cowboys Over 24.5")
-        assertEquals(setOf(family.MONEYLINE), BetsScope.familiesFor(listOf(ml)))
-        assertEquals(setOf(family.PLAYER_PROPS), BetsScope.familiesFor(listOf(prop, prop)))
-        assertEquals(setOf(family.MONEYLINE, family.SPREAD, family.TOTAL, family.PLAYER_PROPS), BetsScope.familiesFor(listOf(ml, spread, total, prop)))
+        assertEquals(setOf(MarketFamily.MONEYLINE), BetsScope.familiesFor(listOf(ml)))
+        assertEquals(setOf(MarketFamily.PLAYER_PROPS), BetsScope.familiesFor(listOf(prop, prop)))
+        assertEquals(setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL, MarketFamily.PLAYER_PROPS), BetsScope.familiesFor(listOf(ml, spread, total, prop)))
         // A period market is asked for as its own family, and as the full-game kind a source may file it under.
-        assertEquals(setOf(family.TOTAL, family.FIRST_HALF), BetsScope.familiesFor(listOf(f5)))
-        assertEquals(setOf(family.TEAM_TOTAL, family.TOTAL), BetsScope.familiesFor(listOf(team)))
+        assertEquals(setOf(MarketFamily.TOTAL, MarketFamily.FIRST_HALF), BetsScope.familiesFor(listOf(f5)))
+        assertEquals(setOf(MarketFamily.TEAM_TOTAL, MarketFamily.TOTAL), BetsScope.familiesFor(listOf(team)))
     }
 
     @Test
     fun `one bet whose wording can't be read asks for every family, so nothing is left unpriced to save a request`() {
-        val all = com.tjshea.vigilant.data.scanner.MarketFamily.entries.toSet()
+        val all = MarketFamily.entries.toSet()
         val odd = labelled("odd", "First Touchdown Scorer", "Somebody")
         assertEquals(all, BetsScope.familiesFor(listOf(labelled("ml", "Moneyline", "Dallas Cowboys"), odd)))
         assertEquals(all, BetsScope.familiesFor(listOf(labelled("q", "1st Quarter Moneyline", "Dallas Cowboys"))))
@@ -276,7 +276,7 @@ class OpenBetPricerTest {
         val fair = FakeOddsApi()
         val novig = FakeNovig()
         pricer(tracker(bet("a")), novig, fair).run(settings, listOf("a"))
-        assertEquals(setOf(com.tjshea.vigilant.data.scanner.MarketFamily.MONEYLINE), fair.asked)
-        assertEquals(com.tjshea.vigilant.data.scanner.MarketFamily.MONEYLINE.novigTypes.toSet(), novig.catalogTypes.toSet())
+        assertEquals(setOf(MarketFamily.MONEYLINE), fair.asked)
+        assertEquals(MarketFamily.MONEYLINE.novigTypes.toSet(), novig.catalogTypes.toSet())
     }
 }
