@@ -171,7 +171,9 @@ class BetTrackerTest {
             b("negative", -0.07, BetStatus.WON), b("open", 0.40, BetStatus.PENDING, BetTracker.SOURCE_VIGILANT),
         )
         val s = BetTracker.stats(normal + outliers)
-        assertEquals(BetTracker.stats(normal).copy(outliers = 4), s)
+        assertEquals(BetTracker.stats(normal).copy(outliers = 4, profitAll = s.profitAll), s)
+        // The bankroll's real result counts the outliers too: +1 -1 +1 on top of the normal bets' +1.
+        assertEquals(2.0, s.profitAll, 1e-12)
         assertEquals(4, s.bets)
         assertEquals(2, s.won) // "4" (no EV on record) counts; the 25% and −7% wins don't
         assertEquals(1, s.lost)
@@ -195,5 +197,103 @@ class BetTrackerTest {
         assertEquals(2.0 / 3.0, s.winRate!!, 1e-12)
         assertEquals(1.0, s.profit, 1e-12)
         assertNull(BetTracker.stats(emptyList()).winRate)
+    }
+
+    // ---- Tj, 2026-09-29: "make sure that the bet tracking system is properly keeping track of accurate stats" ----
+
+    private fun stakeBet(id: String, ev: Double?, st: BetStatus, stake: Double = 10.0, cost: Double = 0.5) = TrackedBet(
+        id, 0, "NFL", "A @ B", 0, "Moneyline", "A", "m", "o", cost, cost, ev?.let { cost * (1 + it) }, ev, stake, st,
+    )
+
+    @Test
+    fun `Expected and Profit are the same bets, open bets have their own numbers, voids and pushes stay out`() {
+        val s = BetTracker.stats(
+            listOf(
+                stakeBet("w", 0.04, BetStatus.WON), stakeBet("l", 0.04, BetStatus.LOST),
+                stakeBet("open", 0.05, BetStatus.PENDING, stake = 20.0),
+                stakeBet("void", 0.05, BetStatus.VOID), stakeBet("push", 0.03, BetStatus.PUSH),
+            ),
+        )
+        assertEquals(2, s.settledWithEv) // won and lost only: a push is refunded, a void never happened
+        assertEquals(0.8, s.expectedProfit, 1e-12) // 10 x 4% x 2 bets, not the open bet's $1 or the push's
+        assertEquals(0.0, s.profitWithEv, 1e-12)
+        assertEquals(-0.8, s.vsExpected, 1e-12)
+        assertEquals(20.0, s.openStaked, 1e-12)
+        assertEquals(20.0, s.openToWin, 1e-12) // $20 at even money pays $20
+        assertEquals(1.0, s.openExpected, 1e-12)
+        assertEquals(1, s.voided)
+        assertEquals(1, s.pending)
+        assertEquals(1, s.pushed)
+        assertEquals(30.0, s.staked, 1e-12) // won + lost + push (a refunded stake was still at risk)
+        assertNull(s.luck) // two bets say nothing about luck
+    }
+
+    @Test
+    fun `luck is how far the result sits from the promise in standard deviations`() {
+        val bets = (1..20).map { stakeBet("b$it", 0.04, if (it % 2 == 0) BetStatus.WON else BetStatus.LOST) }
+        val s = BetTracker.stats(bets)
+        assertEquals(20, s.settledWithEv)
+        assertEquals(8.0, s.expectedProfit, 1e-9)
+        assertEquals(0.0, s.profitWithEv, 1e-9)
+        // Each bet: stake^2 x p(1-p) / cost^2 = 100 x 0.52 x 0.48 / 0.25 = 99.84.
+        assertEquals(Math.sqrt(20 * 99.84), s.expectedSd, 1e-9)
+        assertEquals(-8.0 / Math.sqrt(20 * 99.84), s.luck!!, 1e-9)
+        // A bet with no EV on record (imported) isn't part of "expected vs actual", but its profit is in Profit.
+        val imported = BetTracker.stats(bets + stakeBet("imp", null, BetStatus.WON))
+        assertEquals(20, imported.settledWithEv)
+        assertEquals(10.0, imported.profit, 1e-9)
+        assertEquals(0.0, imported.profitWithEv, 1e-9)
+    }
+
+    @Test
+    fun `editMany changes several bets in one save and skips the ones that are gone`() = runTest {
+        val t = BetTracker(File(tmp.root, "many.json"), clock = { now })
+        val a = t.logCno(cnoRow, 0.05, false, "cno:a")
+        val b = t.logCno(cnoRow.copy(bet = "Other Over 1.5", gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=10"), 0.05, false, "cno:b")
+        t.editMany(mapOf(a.id to { x -> x.copy(stake = 5.0) }, b.id to { x -> x.copy(stake = 7.0) }, "gone" to { x -> x.copy(stake = 99.0) }))
+        assertEquals(listOf(5.0, 7.0), t.all().map { it.stake })
+        t.editMany(emptyMap())
+        assertEquals(2, t.all().size)
+    }
+
+    @Test
+    fun `correcting the price a bet was filled at moves its cost, EV and profit, keeping a live bet's fee`() = runTest {
+        val t = BetTracker(File(tmp.root, "price.json"), clock = { now })
+        val bet = t.logCno(cnoRow, 0.05, live = false, placedKey = "cno:p", stake = 10.0)
+        t.setPrice(bet.id, 150)
+        val moved = t.all().single()
+        assertEquals(150, moved.american)
+        assertEquals(0.4, moved.cost, 1e-9)
+        assertEquals(moved.fairAtBet!! / 0.4 - 1.0, moved.evPercentAtBet!!, 1e-9)
+        t.settle(moved.id, BetStatus.WON)
+        assertEquals(10.0 * (1 / 0.4 - 1), t.all().single().profit!!, 1e-9)
+        // Odds inside ±100 aren't a price.
+        t.setPrice(moved.id, 50)
+        assertEquals(150, t.all().single().american)
+        // A live bet keeps paying the taker fee at the new price.
+        val live = t.logCno(cnoRow, 0.05, live = true, placedKey = "cno:live")
+        assertTrue(live.cost > live.price)
+        t.setPrice(live.id, 120)
+        val liveMoved = t.all().first { it.id == live.id }
+        assertTrue(liveMoved.cost > liveMoved.price + 1e-9)
+    }
+
+    @Test
+    fun `undoing a tapped result turns auto-grading off until it's turned back on`() = runTest {
+        val t = BetTracker(File(tmp.root, "regrade.json"), clock = { now })
+        val bet = t.logCno(cnoRow, 0.05, false, "cno:r")
+        t.settle(bet.id, BetStatus.WON)
+        assertEquals("Marked won by you", t.all().single().gradeNote)
+        t.settle(bet.id, BetStatus.PENDING)
+        val undone = t.all().single()
+        assertTrue(undone.autoGradeOff)
+        assertNull(undone.gradeNote)
+        t.regrade(bet.id)
+        assertEquals(false, t.all().single().autoGradeOff)
+        assertNull(t.all().single().settledBy)
+        // A settled bet isn't touched by regrade.
+        t.settle(bet.id, BetStatus.LOST)
+        t.regrade(bet.id)
+        assertEquals(BetSettler.BY_YOU, t.all().single().settledBy)
     }
 }
