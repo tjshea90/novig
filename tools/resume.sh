@@ -175,7 +175,7 @@ BRIEF="$(
         echo "  !!    THE LAST SESSION WAS INTERRUPTED MID-CHANGE."
         echo "        $SINCE automatic checkpoint(s) were saved AFTER the last"
         echo "        deliberate one, which means the session stopped without"
-        echo "        finishing a step — almost certainly a usage cap."
+        echo "        finishing a step (a usage cap, or a restart mid-turn)."
         echo
         echo "        CHECKPOINT.md below describes the last DELIBERATE"
         echo "        checkpoint, NOT the current HEAD. The code in these files"

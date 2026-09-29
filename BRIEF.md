@@ -10,14 +10,10 @@ probability yet, not a stale line). Ships as a signed release APK, not to
 the Play Store — the same distribution model as this account's other
 Android projects (fantasy-football, Portfolio).
 
-**Status as of 2026-09-20:** first real app code exists — a Gradle
-multi-module project (`engine`, `data`, `app`) with a working devig/EV
-engine (54 passing unit tests, verified for real in this dev container),
-data-layer scaffolding for both the Novig and reference-odds legs, and a
-basic Compose UI running on sample data. See `TASKS.md` for what's done vs.
-open, and RESEARCH.md for the research this was built from. Sections below
-that used to say TBD are now filled in with the decisions made building it
-— sections still genuinely open stay marked TBD rather than invented.
+**Status:** shipping. `BUILDLOG.md` has every release and the current
+version, `TASKS.md` what's done vs. open, RESEARCH.md the research behind
+each decision. No section below is TBD any more; what's still undecided
+says so where it applies.
 
 ## What is actually decided
 
@@ -36,9 +32,10 @@ that used to say TBD are now filled in with the decisions made building it
   line (a sharp book like Pinnacle/Circa if fetched, else average whatever
   major books were fetched — Tj's own instruction, 2026-09-20) and compare
   it to Novig's live price, as close to real time as the data sources
-  allow. Not yet decided: automated bet placement (the engine computes EV,
-  nothing places a trade yet), position tracking, or anything beyond
-  finding and surfacing the edge — those remain open, ask before assuming.
+  allow. Tj places bets himself in Novig's app (Vigilant opens the bet
+  slip; nothing places a bet on its own), and every bet he marks placed is
+  tracked and settled (Tracker tab). Automated bet placement is not
+  decided: ask before assuming.
 - **Distribution:** sideloaded signed release APK, built and signed by
   GitHub Actions (not this container). Claude triggers the build via the
   GitHub API and confirms it went green; Tj gets a link, not a raw file.
@@ -48,10 +45,10 @@ that used to say TBD are now filled in with the decisions made building it
   does *not* match Portfolio's secret-based one; it matches
   fantasy-football's committed-keystore one, Tj's explicit call).
 
-## The rule that will apply the moment a keystore exists
+## The keystore rule
 
-**Now true — the keystore was generated 2026-09-20.** This rule is in
-force starting now, ported from this account's other two Android projects
+**The keystore was generated 2026-09-20** and this rule is in force,
+ported from this account's other two Android projects
 where getting it wrong has cost real user data. Read this alongside the
 note right after it — the *security model* here is deliberately not
 Portfolio's, but the *permanence* rules below apply exactly the same way
@@ -127,29 +124,22 @@ should never drift out of sync with each other):
 - **Module layout:** `engine` (plain Kotlin/JVM — the devig/EV math, zero
   Android dependency on purpose) → `data` (plain Kotlin/JVM — repositories,
   the Novig/The-Odds-API clients, also zero Android dependency) → `app`
-  (the actual Android module: Compose UI, manifest, eventually the
-  foreground WebSocket service from RESEARCH.md §7). Deliberate: keeping
+  (the actual Android module: Compose UI, manifest, the foreground scan
+  services). Deliberate: keeping
   `engine`/`data` Android-free is what lets their real logic be unit tested
   in a container with no Android SDK — see the next point.
 
-**Known, permanent constraint on this dev container: no Android SDK.**
-`ANDROID_HOME`/`ANDROID_SDK_ROOT` are unset here and there's no `sdkmanager`
-— confirmed 2026-09-20, not expected to change. This is *why* the module
-split above exists: `engine` and `data` compile and run their real test
-suites here (`./gradlew --configure-on-demand :engine:test :data:test` —
-54 tests, all green as of this writing), but the `app` module can only be
-verified by CI (`.github/workflows/ci.yml`). This matches this project's own
-release model (`CLAUDE.md`'s "Releasing" section) — GitHub Actions builds
-the real thing, not this container — so treat it as the expected shape,
-not a gap to keep re-flagging. **Confirmed green end-to-end 2026-09-20**
-(run 35493330913: all tests across all three modules pass, `assembleDebug`
-succeeds, a real debug APK was produced). Any session working on
-`app`-module code should confirm it via a pushed CI run, not assume compile-correctness from
-review alone.
+**The dev container has no Android SDK until `tools/setup-android.sh` runs**
+(build trap 6; the cloud environment's setup script runs it, so sessions
+start with `/opt/android-sdk`). With it, all three modules build and test
+here (`./gradlew :engine:test :data:test :app:testDebugUnitTest`); without
+it, `engine` and `data` still do (plain Kotlin/JVM: the reason for the
+module split). GitHub Actions (`ci.yml`) stays the authority on green and
+builds every release.
 
 ## Build traps
 
-Three hit and fixed 2026-09-20, standing into the future — don't
+Hit and fixed since 2026-09-20, standing into the future — don't
 re-diagnose these from scratch:
 
 - **`android-actions/setup-android@v3` unconditionally fails.** It runs
@@ -180,7 +170,7 @@ re-diagnose these from scratch:
   ViewModel (or anything else instantiated via reflection by an Android
   framework class) has a default-only constructor, it needs
   `@JvmOverloads`.
-- **A fourth one, found and fixed 2026-09-20, bigger than the others: this
+- **Found and fixed 2026-09-20, bigger than the others: this
   repo's actual GitHub default branch was NOT `main`** — it was
   `claude/novig-checkpoint-tests-qqgnnb`, an old session branch from when
   this repo was first created (whichever branch existed at repo-creation
@@ -204,7 +194,7 @@ re-diagnose these from scratch:
   `default_branch` on the repo via the API before assuming a
   `workflow_dispatch` 404 is a workflow-syntax problem, which is what it
   looked like at first here.
-- **A sixth, found and fixed 2026-09-20: an explicit import of `weight`
+- **Found and fixed 2026-09-20: an explicit import of `weight`
   from `androidx.compose.foundation.layout` breaks `Modifier.weight()`
   instead of merely being redundant.** `Modifier.weight(1f)` inside a
   `Column { }`/`Row { }` body resolves via `ColumnScope.weight`/
@@ -229,7 +219,7 @@ re-diagnose these from scratch:
   had already succeeded. `release.yml`'s verify step now strips colons and
   lowercases both sides before comparing — don't go back to a literal
   string match.
-- **A seventh, found and fixed 2026-09-22: cancelling an in-flight
+- **Found and fixed 2026-09-22: cancelling an in-flight
   `release.yml` run doesn't stop it instantly, and a step already running
   when the cancel signal arrives can still finish** — hit for real
   shipping v0.3.2's release: a run got cancelled while its "create the
@@ -299,11 +289,11 @@ crossing the threshold and everyone on it gets 429s. Blocks start short and esca
 offenders (up to 30 days per Sonatype); repeated requests during a block extend it, so retrying
 makes it worse. Nothing one account does changes the pool's total; only the platform (Anthropic)
 can take it up with Sonatype ("infrastructure provider" path). The fix on our side is to not ask
-Central at all: Google's mirror above. **What Tj can do:** paste `tools/setup-android.sh`'s contents
-into the cloud environment's **Setup script** (session title bar › cloud environment menu › Edit), so
-every new session starts with the SDK and both mirrors in place before the first build; keep Network
-access allowing `maven-central.storage-download.googleapis.com` and `dl.google.com`; and optionally
-report it to Anthropic (github.com/anthropics/claude-code issues) so they raise it with Sonatype.
+Central at all: Google's mirror above. **Done on Tj's side (seen 2026-09-28):** the cloud environment's
+**Setup script** installs the SDK and both mirrors before Claude starts (`/opt/android-sdk` and
+`~/.gradle/init.d/mirror.gradle.kts` are there at session start); keep Network access allowing
+`maven-central.storage-download.googleapis.com` and `dl.google.com`. Optional: report it to Anthropic
+(github.com/anthropics/claude-code issues) so they raise it with Sonatype.
 Sources: central.sonatype.org/faq/429-error/, central.sonatype.org/faq/429-contact-support/,
 robolectric.org/configuring/.
 
@@ -435,8 +425,8 @@ robolectric.org/configuring/.
   it can't afford a call, and rests a spent key until its provider's reset (1st of the month /
   midnight UTC), so rotation falls back to key 1 after each reset. Limits and ToS: RESEARCH.md §12
   (pinnapi's terms forbid circumventing its rate limits: warned in Settings).
-- **Leagues and markets (Tj, 2026-09-25 ~15:20Z).** Chip order NFL, NCAAF, MLB, WNBA, NHL, then
-  NBA, NCAAB, UFC, Boxing. Soccer, CFL, KBO and NPB are removed entirely (no 3-way markets remain).
+- **Leagues and markets (Tj, 2026-09-25 ~15:20Z).** Chip order NFL, NCAAF, MLB, WNBA, NHL, ATP, WTA
+  (tennis since v0.19.0), then NBA, NCAAB, UFC, Boxing. Soccer, CFL, KBO and NPB are removed entirely (no 3-way markets remain).
   Alternative markets priced where a fair source exists (RESEARCH.md §13, §15): 1st-half/F5 spreads
   and totals, MLB 1st-inning totals (NRFI/YRFI, Kalshi `KXMLBRFI`), team totals, and NFL/MLB/WNBA
   player props that Kalshi quotes on the same line (incl. pitcher outs, earned runs, walks, pass
@@ -493,79 +483,6 @@ robolectric.org/configuring/.
   and render a visible banner naming exactly which leg(s) are sample when
   either is false. Keep both flags wired correctly as real providers get
   plugged in or swapped.
-- **`NovigGraphQlClient` supplies the Novig leg (wired 2026-09-22,
-  superseding the SharpAPI wiring below), The Odds API supplies the
-  reference leg — each provider used only for the one leg it can actually
-  serve.** **History:** SharpAPI was originally wired for the Novig leg
-  (2026-09-20) on the premise its free tier uniquely included Novig among
-  ~40 books — wrong, proven by a real HTTP 403 against Tj's own account and
-  confirmed by SharpAPI's own product page ("Available on Hobby plan and
-  above," $79/mo; free tier is DraftKings/FanDuel only). `SharpApiClient`
-  was deleted 2026-09-22 (RESEARCH.md §4.2/§4.2.2) — dead code with no
-  future value once the free-tier path was proven categorically closed,
-  unlike `NovigApiClient` (kept dormant; still has future value if Novig's
-  official API reply ever lands). **The actual replacement, 2026-09-22
-  (RESEARCH.md §4.4):** Tj supplied a working, MIT-licensed, third-party
-  Python package (`novig-liquidity`) reverse-engineering unauthenticated
-  read access to Novig's own internal GraphQL backend
-  (`gql.novig.us/v1/graphql`) — verified directly against the package's
-  real source, not just a summary. **Real, disclosed tradeoff, not a free
-  lunch:** no account/login is involved (so it can't get Tj's Novig
-  *account* banned), but it requires a paid rotating-proxy subscription to
-  avoid IP-based anti-bot blocking, and sits in a genuine ToS gray area now
-  that Novig is CFTC-regulated (RESEARCH.md §9). Ships opt-in only — zero
-  proxies configured *and* direct mode off (the default) falls back to
-  sample data for this leg, same as every other provider, with the risk
-  spelled out directly in the Settings screen, not just in these docs. The
-  Odds API supplies Pinnacle/consensus for the reference side (RESEARCH.md
-  §4.3) and is unaffected — that leg is live whenever Tj has a key
-  configured.
-
-  **A free "direct, no proxy" mode was added 2026-09-22 (RESEARCH.md
-  §4.4.1)**, after Tj asked whether a free alternative to paid proxies
-  existed (a VPN, or airplane-mode IP cycling). Real finding: the
-  reference package's hard proxy requirement was written for its own
-  continuous, high-frequency polling — this app's manual-refresh usage is
-  much lighter and may not need a pool at all, so it's worth trying free
-  first. `NovigGraphQlClient` now accepts zero proxies and connects
-  directly over whatever network the device is currently routed through
-  (a system-wide VPN, if active, works automatically — no per-app
-  configuration needed). A separate Settings toggle is the explicit
-  opt-in for this — proxies and direct mode are two independent ways to
-  go live, neither is a silent default. Direct mode has no pool to retry
-  with, so a rate-limit or rejection there fails immediately and visibly
-  (`NovigDirectAccessException`) rather than being silently swallowed.
-
-  `NovigGraphQlClient implements NovigRepository`, `TheOddsApiClient implements ReferenceOddsRepository`
-  — both live in `data`, both real (the GraphQL client's queries/parsing
-  verified against the package's actual source and unit-tested against
-  fixture JSON matching that verified shape; `TheOddsApiClient`
-  `MockWebServer`-tested against its documented response shape), both fall
-  back independently to `SampleNovigRepository`/`SampleReferenceOddsRepository`
-  when that leg has no stored proxies/key yet — which is exactly the
-  mechanism keeping the Novig leg honest about running on sample data
-  rather than silently degraded. `NovigGraphQlClient`'s proxy pool reuses
-  `KeyRotator`/`ApiKeyStore`/the encrypted Settings-screen storage verbatim
-  (`ApiProvider.NOVIG_PROXY`) rather than building parallel plumbing for
-  what is functionally the same problem (a list of credentials to try in
-  order, rotating past ones that fail).
-- **Automatic multi-key rotation: `KeyRotator` (`data/keys/KeyRotator.kt`),
-  provider-agnostic — Tj's own explicit request, 2026-09-20 ("make a
-  system for the app to switch keys automatically when my usage runs
-  out").** Holds a list of keys per provider, tries them in the order Tj
-  added them, and on each attempt: 429 → mark that key cooling down
-  (honoring `Retry-After`/rate-limit-reset headers when present, else a
-  60s default) and try the next key, auto-recovering once the cooldown
-  passes; 401/403 → mark that key exhausted permanently (never
-  auto-recovers — a human has to add a fresh key); success → use it and
-  remember it worked. Throws `AllKeysExhaustedException` only once every
-  key for that provider is rate-limited or invalid. `NovigGraphQlClient`
-  and `TheOddsApiClient` are wired through the same `KeyRotator` — the
-  rotation logic itself has no provider-specific knowledge, only each
-  client's own mapping to `KeyAttemptResult` does (429/401 for
-  `TheOddsApiClient`; connection failures/HTTP errors/malformed proxy
-  strings for `NovigGraphQlClient`, which rotates *proxies* through the
-  exact same mechanism as an API key — see the bullet above).
 - **API keys are stored encrypted on-device, never in plaintext, never
   committed.** Researched `androidx.security:security-crypto`
   (`EncryptedSharedPreferences`) first and found it **deprecated** (every

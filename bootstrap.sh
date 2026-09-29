@@ -8,12 +8,8 @@
 # and the standing rules. Narrative detail belongs in CHECKPOINT.md, TASKS.md,
 # CLAUDE.md and BRIEF.md, not in growing this file.
 #
-# NO APP CODE EXISTS YET. This project's first job was the checkpoint system
-# itself (tools/, this file, CLAUDE.md, BRIEF.md) — there is no build system,
-# no keystore, no Gradle/Kotlin (or other) project scaffold to check yet.
-# The checks below are deliberately generic until that scaffold exists; add
-# the real ones (toolchain, signing keystore, SDK, build output) the same
-# way Portfolio's bootstrap.sh does, the day there is something to check.
+# The build checks stay to what a session needs before its first build: the
+# Android SDK (BRIEF.md build trap 6) and the committed signing keystore.
 set -uo pipefail
 D="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; cd "$D" || exit 1
 echo "== novig — bootstrap =="
@@ -24,15 +20,19 @@ command -v git >/dev/null 2>&1 && echo "  OK    git $(git --version 2>&1 | awk '
 command -v python3 >/dev/null 2>&1 && echo "  OK    python3 $(python3 -V 2>&1 | cut -d' ' -f2) (used by install-hooks.sh, ckpt.sh, capture_inbox.sh)" || echo "  WARN  no python3 — hook JSON emission falls back to plain text"
 command -v node >/dev/null 2>&1 && echo "  OK    node $(node -v 2>&1)" || echo "  note  no node yet — fine until a JS test suite exists"
 
-# --- no build system yet: say so plainly rather than checking for things
-#     that were never created, which would look like a failed check ---
-if [ -f app/build.gradle.kts ] || [ -f build.gradle.kts ] || [ -f package.json ]; then
-  echo "  note  a build system now exists — bootstrap.sh has not been updated"
-  echo "        to check it yet (toolchain pins, keystore, SDK). Do that next"
-  echo "        time real build rules land, the way Portfolio's bootstrap.sh does."
-else
-  echo "  note  no build system yet (no Gradle/Kotlin, no package.json). Expected"
-  echo "        at this stage — the app itself has not been started."
+# --- what the first build needs ---
+if [ -f app/build.gradle.kts ]; then
+  SDK="${ANDROID_HOME:-/opt/android-sdk}"
+  if [ -d "$SDK/platforms" ]; then
+    echo "  OK    Android SDK at $SDK (build with ANDROID_HOME=$SDK)"
+  else
+    echo "  WARN  no Android SDK at $SDK: bash tools/setup-android.sh (BRIEF.md build trap 6)"
+  fi
+  if [ -f app/keystore/vigilant-debug.jks ]; then
+    echo "  OK    signing keystore present (permanent: BRIEF.md)"
+  else
+    echo "  WARN  app/keystore/vigilant-debug.jks is missing: restore it from git, never regenerate it"
+  fi
 fi
 
 # --- is the safety net actually installed? ---
@@ -105,15 +105,12 @@ echo "##########################################################################
 echo "#  THE RULES THAT MUST NOT BE BROKEN  (full text: BRIEF.md)"
 echo "##############################################################################"
 cat <<'SHORT'
-- Android 16 (API 36) target, optimized for a Moto G 2026 — see BRIEF.md for
-  what that constrains once real code exists.
-- Purpose: profit using the Novig sportsbook. No strategy, data source or
-  architecture decision has been locked in yet — BRIEF.md says so plainly
-  rather than inventing rules nobody has actually decided.
-- NO signing keystore exists yet. The day one is generated, BRIEF.md's
-  "irreplaceable keystore" rule (ported from this account's other Android
-  projects) applies immediately and without exception: never regenerate it,
-  never change the applicationId, always bump versionCode.
+- Android 16 (API 36) target, optimized for a Moto G 2026.
+- Purpose: profit using the Novig sportsbook. What's decided (fair odds,
+  taker price, fees, when the app reads odds) is in BRIEF.md's "Locked
+  architecture decisions".
+- The signing keystore is committed and permanent (BRIEF.md): never
+  regenerate it, never change the applicationId, always bump versionCode.
 - Checkpoint constantly:  bash tools/ckpt.sh "did" "next"   (fast, no gate)
   Ship at milestones:     bash ship.sh "note"               (full gate)
 - Write new requests into TASKS.md, in Tj's own words, before writing any
