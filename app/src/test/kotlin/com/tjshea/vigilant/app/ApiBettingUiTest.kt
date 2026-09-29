@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -28,6 +29,8 @@ import com.tjshea.vigilant.app.ui.NovigBettingSection
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
+import com.tjshea.vigilant.data.novig.signing.ManagementKey
+import com.tjshea.vigilant.data.novig.signing.ManagementKeyHint
 import com.tjshea.vigilant.data.novig.trading.BetPlan
 import com.tjshea.vigilant.data.novig.trading.BetTarget
 import com.tjshea.vigilant.data.novig.trading.PlaceResult
@@ -66,6 +69,7 @@ class ApiBettingUiTest {
     private val market = NovigMarket("m", "e", "MONEY", "OPEN", "A vs B", 0, MarketFee.GAME, listOf(NovigOutcome("A", "Team A", "TBD"), NovigOutcome("B", "Team B", "TBD")))
     private val target = BetTarget(market, "A", "NFL", "Team B @ Team A", 0, "Moneyline", "Team A", 0.50, null, BetTracker.SOURCE_CNO)
     private val plan = BetPlan(limitPrice = 0.465, contracts = 400, expectedCost = 1.85, averagePrice = 0.4625, payout = 4.0, evPercent = 0.081, bestPrice = 0.46, note = null)
+    private val saved = ManagementKeyHint("5678", 0L)
     private fun sheet(plan: BetPlan? = this.plan, refusal: String? = null, result: PlaceResult? = null, placing: Boolean = false, balance: Double? = 12.5) =
         BetSheetUi("Team A", "Moneyline · Team B @ Team A", target, stake = 5.0, resolving = false, plan = plan, refusal = refusal, placing = placing, result = result, balance = balance)
 
@@ -73,28 +77,40 @@ class ApiBettingUiTest {
 
     @Test
     fun `betting is off until the management key is given, and the key never stays in the form`() {
-        var enabled: Pair<String, String>? = null
-        screen { NovigBettingSection(BettingUi(), ScanSettings(), BettingActions(onEnable = { id, pem -> enabled = id to pem }), {}) }
+        var enabled: ManagementKey? = null
+        screen { NovigBettingSection(BettingUi(), ScanSettings(), BettingActions(onEnable = { typed -> enabled = typed }), {}) }
         compose.onNodeWithTag("enableBetting").assertIsNotEnabled()
         compose.onNodeWithTag("mgmtKeyId").performTextInput("mgmt-key-1234")
         compose.onNodeWithTag("mgmtKeyPem").performTextInput("-----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY-----") // FAKE
         compose.onNodeWithTag("enableBetting").assertIsEnabled().performClick()
-        assertEquals("mgmt-key-1234", enabled!!.first)
-        assertTrue(enabled!!.second.contains("PRIVATE KEY"))
+        assertEquals("mgmt-key-1234", enabled!!.keyId)
+        assertTrue(enabled!!.pem.contains("PRIVATE KEY"))
         // Cleared after use: the button is disabled again.
         compose.onNodeWithTag("enableBetting").assertIsNotEnabled()
     }
 
     @Test
+    fun `with a saved management key, betting turns on without typing anything`() {
+        var enabled = 0
+        var sent: ManagementKey? = ManagementKey("x", "y")
+        screen { NovigBettingSection(BettingUi(), ScanSettings(), BettingActions(onEnable = { typed -> enabled++; sent = typed }), {}, savedKey = saved) }
+        compose.onNodeWithTag("savedMgmtKey").assertExists()
+        compose.onNodeWithTag("mgmtKeyId").assertDoesNotExist()
+        compose.onNodeWithTag("enableBetting").assertIsEnabled().performClick()
+        assertEquals(1, enabled)
+        assertEquals(null, sent) // null = the saved key
+    }
+
+    @Test
     fun `with betting on, the wallet balance shows and money moves only with the management key`() {
-        var moved: List<Any>? = null
+        var moved: List<Any?>? = null
         var synced = false
         var off = false
         var settings = ScanSettings()
         screen {
             NovigBettingSection(
                 BettingUi(enabled = true, balance = 12.5), settings,
-                BettingActions(onTransfer = { d, a, k, p -> moved = listOf(d, a, k, p) }, onSync = { synced = true }, onDisable = { off = true }),
+                BettingActions(onTransfer = { d, a, k -> moved = listOf(d, a, k) }, onSync = { synced = true }, onDisable = { off = true }),
                 { t -> settings = t(settings) },
             )
         }
@@ -104,13 +120,110 @@ class ApiBettingUiTest {
         compose.onNodeWithTag("mgmtKeyId").performTextInput("mgmt-key-1234")
         compose.onNodeWithTag("mgmtKeyPem").performTextInput("-----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY-----") // FAKE
         compose.onNodeWithTag("fundWallet").assertIsEnabled().performClick()
-        assertEquals(listOf("fund", 10.0, "mgmt-key-1234"), moved!!.take(3))
+        assertEquals(listOf("fund", 10.0), moved!!.take(2))
+        assertEquals("mgmt-key-1234", (moved!![2] as ManagementKey).keyId)
         compose.onNodeWithText("Sync Tracker with Novig's fills").performScrollTo().performClick()
         compose.onNodeWithText("Turn betting off").performScrollTo().performClick()
         assertTrue(synced && off)
         // A limit chip changes the setting.
         compose.onNodeWithText("Any +EV").performScrollTo().performClick()
         assertEquals(0.0, settings.apiMinEv, 1e-9)
+    }
+
+    @Test
+    fun `any amount can be typed in, and only a sendable one moves money`() {
+        var moved: Pair<String, Double>? = null
+        screen {
+            NovigBettingSection(BettingUi(enabled = true, balance = 12.5), ScanSettings(), BettingActions(onTransfer = { d, a, _ -> moved = d to a }), {}, savedKey = saved)
+        }
+        val field = compose.onNodeWithTag("walletAmount").performScrollTo()
+        field.performTextClearance()
+        field.performTextInput("37.25")
+        compose.onNodeWithText("Add $37.25 to the wallet").assertExists()
+        compose.onNodeWithTag("fundWallet").assertIsEnabled().performClick()
+        assertEquals("fund" to 37.25, moved)
+        // More than the wallet holds can't be taken back.
+        compose.onNodeWithTag("defundWallet").assertIsNotEnabled()
+        compose.onNodeWithText("that's the most you can take back", substring = true).assertExists()
+        field.performTextClearance()
+        field.performTextInput("5")
+        compose.onNodeWithTag("defundWallet").assertIsEnabled().performClick()
+        assertEquals("defund" to 5.0, moved)
+        // Not an amount: both buttons off, and the field says why.
+        field.performTextClearance()
+        field.performTextInput("12.345")
+        compose.onNodeWithTag("fundWallet").assertIsNotEnabled()
+        compose.onNodeWithText("Dollars and cents only (two decimal places)").assertExists()
+        field.performTextClearance()
+        field.performTextInput("50000")
+        compose.onNodeWithTag("fundWallet").assertIsNotEnabled()
+        // A quick-amount chip types its amount in.
+        compose.onNodeWithText("$20.00").performScrollTo().performClick()
+        compose.onNodeWithText("Add $20.00 to the wallet").assertExists()
+    }
+
+    @Test
+    fun `a saved key moves money with no typing, and can be replaced or forgotten`() {
+        val moved = mutableListOf<ManagementKey?>()
+        var forgot = 0
+        var savedNow: ManagementKey? = null
+        screen {
+            NovigBettingSection(
+                BettingUi(enabled = true, balance = 12.5), ScanSettings(),
+                BettingActions(onTransfer = { _, _, k -> moved += k }, onForgetKey = { forgot++ }, onSaveKey = { savedNow = it }), {}, savedKey = saved,
+            )
+        }
+        compose.onNodeWithText("✓ Management key ••••5678 saved on this phone").performScrollTo()
+        compose.onNodeWithTag("mgmtKeyId").assertDoesNotExist()
+        compose.onNodeWithTag("fundWallet").performScrollTo().assertIsEnabled().performClick()
+        assertEquals(listOf<ManagementKey?>(null), moved)
+        // Replace: the fields show, and the typed key is what's sent (and saved).
+        compose.onNodeWithTag("replaceMgmtKey").performClick()
+        compose.onNodeWithTag("fundWallet").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag("mgmtKeyId").performScrollTo().performTextInput("mgmt-key-new-9999")
+        compose.onNodeWithTag("mgmtKeyPem").performTextInput("-----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY-----") // FAKE
+        compose.onNodeWithTag("saveMgmtKey").performScrollTo().assertIsEnabled().performClick()
+        assertEquals("mgmt-key-new-9999", savedNow!!.keyId)
+        // Back to the saved key's row; Forget asks the controller.
+        compose.onNodeWithTag("forgetMgmtKey").performScrollTo().performClick()
+        assertEquals(1, forgot)
+    }
+
+    @Test
+    fun `a saved key this phone can't unlock asks for it once more`() {
+        screen { NovigBettingSection(BettingUi(enabled = true, balance = 1.0), ScanSettings(), BettingActions(), {}, savedKey = saved.copy(unreadable = true)) }
+        compose.onNodeWithText("can't unlock it any more", substring = true).performScrollTo()
+        compose.onNodeWithTag("mgmtKeyId").assertExists()
+        compose.onNodeWithTag("fundWallet").performScrollTo().assertIsNotEnabled()
+    }
+
+    @Test
+    fun `arriving from a bet the wallet can't cover, the shortfall is typed in and the bet is one tap away`() {
+        var back = 0
+        var notNow = 0
+        var moved: Double? = null
+        val top = TopUp(amount = 1.0, needed = 0.85, cost = 1.85, bet = sheet())
+        screen {
+            NovigBettingSection(
+                BettingUi(enabled = true, balance = 1.0, topUp = top), ScanSettings(),
+                BettingActions(onTransfer = { _, a, _ -> moved = a }, onBackToBet = { back++ }, onDismissTopUp = { notNow++ }), {}, savedKey = saved,
+            )
+        }
+        compose.onNodeWithTag("topUpBanner").assertExists()
+        compose.onNodeWithText("Your bet on Team A costs $1.85 and the wallet holds $1.00", substring = true).assertExists()
+        compose.onNodeWithText("Add $1.00 to the wallet").performScrollTo().performClick()
+        assertEquals(1.0, moved!!, 1e-9)
+        compose.onNodeWithTag("backToBet").performScrollTo().performClick()
+        compose.onNodeWithTag("dismissTopUp").performClick()
+        assertEquals(1, back)
+        assertEquals(1, notNow)
+    }
+
+    @Test
+    fun `once the wallet covers the bet the banner says so`() {
+        val top = TopUp(amount = 1.0, needed = 0.85, cost = 1.85, bet = sheet())
+        screen { NovigBettingSection(BettingUi(enabled = true, balance = 2.0, topUp = top), ScanSettings(), BettingActions(), {}, savedKey = saved) }
+        compose.onNodeWithText("The wallet now covers your bet on Team A ($1.85).").assertExists()
     }
 
     @Test
@@ -159,11 +272,31 @@ class ApiBettingUiTest {
     }
 
     @Test
-    fun `a wallet that's too small blocks the bet and says where to add money`() {
-        sheetScreen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}) }
+    fun `a wallet that's too small blocks the bet and offers a way straight to adding money`() {
+        var addMoney = 0
+        sheetScreen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
         compose.onNodeWithTag("confirmBet").assertIsNotEnabled()
-        compose.onNodeWithText("add money in Settings", substring = true).assertExists()
+        compose.onNodeWithTag("walletShort").assertExists()
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        assertEquals(1, addMoney)
     }
+
+    @Test
+    fun `a wallet that covers the bet shows no Add money button`() {
+        sheetScreen { ApiBetSheetContent(sheet(balance = 12.5), {}, {}, {}, {}, {}) }
+        compose.onNodeWithTag("addMoney").assertDoesNotExist()
+    }
+
+    @Test
+    fun `Novig refusing the order for the balance also offers Add money`() {
+        var addMoney = 0
+        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Failed("Insufficient balance for this order")), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
+        compose.onNodeWithTag("addMoney").performClick()
+        assertEquals(1, addMoney)
+        sheetScreen2Check()
+    }
+
+    private fun sheetScreen2Check() = Unit
 
     @Test
     fun `a refused bet says why and offers to look again, or to bet it again`() {
@@ -200,8 +333,21 @@ class ApiBettingUiTest {
 
     @Test
     fun `screenshots - Settings section and the Bet sheet`() {
-        screen { NovigBettingSection(BettingUi(enabled = true, balance = 12.5, message = "Added $10.00. The subaccount now holds $12.50."), ScanSettings(), BettingActions(), {}) }
+        screen { NovigBettingSection(BettingUi(enabled = true, balance = 12.5, message = "Added $10.00. The subaccount now holds $12.50."), ScanSettings(), BettingActions(), {}, savedKey = saved) }
         compose.onRoot().captureRoboImage("screenshots/5f_settings_api_betting.png")
+    }
+
+    @Test
+    fun `screenshots - the wallet opened from a Bet sheet the wallet couldn't cover`() {
+        val top = TopUp(amount = 1.0, needed = 0.85, cost = 1.85, bet = sheet())
+        screen { NovigBettingSection(BettingUi(enabled = true, balance = 1.0, topUp = top), ScanSettings(), BettingActions(), {}, savedKey = saved) }
+        compose.onRoot().captureRoboImage("screenshots/5g_settings_wallet_top_up.png")
+    }
+
+    @Test
+    fun `screenshots - the Bet sheet with too little in the wallet`() {
+        sheetScreen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}) }
+        compose.onRoot().captureRoboImage("screenshots/4g_api_bet_sheet_wallet_short.png")
     }
 
     @Test
