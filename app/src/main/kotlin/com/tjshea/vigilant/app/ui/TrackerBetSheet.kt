@@ -158,7 +158,7 @@ fun BetSheetContent(
         } else if (open && !rereading) {
             Caption(
                 if (bet.gameUrl != null) "No book has been read for this bet yet: tap Re-read books."
-                else "Vigilant's own bets get their books from a Vigilant scan: tap Update from a scan.",
+                else "No book has been read for this bet yet: Vigilant prices its own bets from Vigilant's fair odds. Tap Price now (or Check odds now on the list).",
             )
         }
 
