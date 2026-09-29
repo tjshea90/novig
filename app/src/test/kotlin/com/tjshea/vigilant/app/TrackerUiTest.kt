@@ -7,7 +7,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -367,5 +370,57 @@ class TrackerUiTest {
         compose.onNodeWithText("Final: Tampa Bay Rays 3, Boston Red Sox 5", substring = true).assertExists()
         compose.onNodeWithText("Won · undo").assertExists()
         compose.onAllNodesWithText("Replace bet", substring = true).assertCountEquals(0)
+    }
+
+    // ---- the "Check odds now" counter (Tj, 2026-09-29) --------------------------------------------------------------
+
+    /** The sample's open bets re-read [secondsAgo] ago with these EVs (b3, b4, b5), and a settled one read then too. */
+    private fun checked(evs: List<Double>, secondsAgo: Long = 30, startedSecondsAgo: Long = 60, checking: Boolean = false): UiState {
+        val base = SampleScan.state()
+        val open = listOf("b3", "b4", "b5")
+        val bets = base.bets.map { b ->
+            val i = open.indexOf(b.id)
+            when {
+                i in evs.indices -> b.copy(nowEv = evs[i], nowAtMs = now - secondsAgo * 1000)
+                b.id == "b1" -> b.copy(nowEv = 0.03, nowAtMs = now - secondsAgo * 1000) // settled: never counted
+                else -> b
+            }
+        }
+        return base.copy(bets = bets, checkStartedAtMs = now - startedSecondsAgo * 1000, checkingOdds = checking)
+    }
+
+    @Test
+    fun `before any Check odds now there is no counter`() {
+        screen { TrackerScreen(SampleScan.state().copy(checkStartedAtMs = null), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithTag("checkCounter").assertDoesNotExist()
+        compose.onNodeWithTag("checkCaption").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the counter shows +EV and −EV open bets, the share +EV, and the average EV without the ones over 5 percent`() {
+        screen { TrackerScreen(checked(listOf(0.02, -0.01, 0.09)), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        // 0.09 is +EV but over 5%: counted, left out of the average ((0.02 − 0.01) / 2).
+        compose.onNodeWithContentDescription("2 +EV · 1 −EV · 67% +EV · Avg +0.5% EV").assertIsDisplayed()
+        compose.onNodeWithTag("checkCaption").assertTextEquals("Open bets re-priced in the check 1m ago · 1 over ±5% left out of the average")
+    }
+
+    @Test
+    fun `a new check starts the counter from zero and counts up as the odds come in`() {
+        // The check began just now: the reads from 30 s ago are the last check's.
+        screen { TrackerScreen(checked(listOf(0.02, -0.01, 0.01), startedSecondsAgo = 0, checking = true).copy(checkProgress = 0 to 3), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithContentDescription("0 +EV · 0 −EV · – +EV · Avg – EV").assertIsDisplayed()
+        compose.onNodeWithTag("checkCaption").assertTextEquals("Open bets re-priced so far in this check (0/3 read)")
+    }
+
+    @Test
+    fun `the counter is on the Stats view too`() {
+        screen { TrackerScreen(checked(listOf(0.02, -0.01, -0.02)), { _, _ -> }, {}, initialView = TrackerView.STATS) }
+        compose.onNodeWithContentDescription("1 +EV · 2 −EV · 33% +EV · Avg −0.3% EV").assertIsDisplayed()
+    }
+
+    @Test
+    fun `screenshot - the Check odds now counter`() {
+        screen { TrackerScreen(checked(listOf(0.021, -0.012, 0.074)), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onRoot().captureRoboImage("screenshots/4i_tracker_check_counter.png")
     }
 }
