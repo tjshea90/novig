@@ -83,7 +83,7 @@ class BetSettler(
                     continue
                 }
                 val found = when (val f = findGame(bet)) {
-                    Lookup.Unreachable -> return@withLock Report(asked - 1, settled, stopped = true, waiting = waiting, manual = manual)
+                    Lookup.Unreachable -> return@withLock Report(asked, settled, stopped = true, waiting = waiting, manual = manual)
                     is Lookup.NotFound -> {
                         manual++
                         note(changes, bet, f.reason, startedAt)
@@ -94,7 +94,7 @@ class BetSettler(
                 }
                 if (found.called) {
                     manual++
-                    note(changes, bet, "${found.calledReason ?: "Called off"}: the score feeds have no result to grade with. Mark it yourself (Void if ${AppBookName} refunded it)", startedAt)
+                    note(changes, bet, "${found.calledReason ?: "Called off"}: the score feeds have no result to grade with. Mark it yourself (Void if Novig refunded it)", startedAt)
                     later(bet, RETRY_UNGRADABLE_MS)
                     continue
                 }
@@ -105,7 +105,7 @@ class BetSettler(
                     continue
                 }
                 val players = if (pick is BetGrader.Pick.Prop && !found.tennis) {
-                    scores.players(found) ?: return@withLock Report(asked - 1, settled, stopped = true, waiting = waiting, manual = manual)
+                    scores.players(found) ?: return@withLock Report(asked, settled, stopped = true, waiting = waiting, manual = manual)
                 } else {
                     null
                 }
@@ -211,8 +211,6 @@ class BetSettler(
 
         /** An unchanged note is re-stamped (so "checked …" stays honest) only this long after the last one. */
         const val NOTE_REFRESH_MS = 30 * 60_000L
-
-        private const val AppBookName = "Novig"
 
         const val TOO_OLD = "Over 30 days old: the score feeds no longer look. Mark it yourself"
 
