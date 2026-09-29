@@ -160,6 +160,7 @@ class MainActivity : ComponentActivity() {
                             onScan = { scan() },
                             onMiniWindow = { showWidget(moveBack = true); Unit }.takeIf { MiniWindow.supported(this) || state.settings.floatingWidget },
                             onOpenInNovig = ::openInNovig,
+                            onReplaceBet = ::replaceBet,
                             openingBet = openingBet,
                         )
                     }
@@ -570,6 +571,7 @@ private fun VigilantRoot(
     onScan: () -> Unit,
     onMiniWindow: (() -> Unit)?,
     onOpenInNovig: (CnoRow) -> Unit = {},
+    onReplaceBet: (com.tjshea.vigilant.data.tracker.TrackedBet) -> Unit = {},
     openingBet: String? = null,
 ) {
     val mode = state.settings.scanner
@@ -623,7 +625,7 @@ private fun VigilantRoot(
                     state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
                     onCheckOdds = vm::checkOdds, onShown = { vm.settleBets() },
                     actions = com.tjshea.vigilant.app.ui.BetActions(
-                        onReplace = ::replaceBet,
+                        onReplace = onReplaceBet,
                         onReread = vm::rereadBooks,
                         onGrade = { vm.settleBets(force = true, announce = true) },
                         onRegrade = vm::regradeBet,
