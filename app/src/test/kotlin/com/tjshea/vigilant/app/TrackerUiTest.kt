@@ -188,13 +188,32 @@ class TrackerUiTest {
     }
 
     @Test
-    fun `a Vigilant bet with no CNO page points at a scan instead`() {
-        var scans = 0
-        sheet(SampleScan.bets.first { it.id == "b3" }.copy(nowFair = null, nowEv = null, books = emptyList()), actions = BetActions(onScan = { scans++ }))
-        compose.onNodeWithText("Vigilant's own bets get their books from a Vigilant scan", substring = true).assertExists()
+    fun `a Vigilant bet with no CNO page is priced from Vigilant's fair odds on Price now`() {
+        val priced = mutableListOf<Pair<String, Boolean>>()
+        sheet(
+            SampleScan.bets.first { it.id == "b3" }.copy(nowFair = null, nowEv = null, books = emptyList()),
+            actions = BetActions(onReread = { id, quiet -> priced += id to quiet }),
+        )
+        compose.onNodeWithText("Vigilant prices its own bets from Vigilant's fair odds", substring = true).assertExists()
         compose.onAllNodesWithText("Re-read books").assertCountEquals(0)
-        compose.onNodeWithText("Update from a scan").performScrollTo().performClick()
-        assertEquals(1, scans)
+        compose.onNodeWithText("Price now").performScrollTo().performClick()
+        assertEquals(listOf("b3" to false), priced)
+    }
+
+    @Test
+    fun `an EV that is hours old says when it was read instead of now, and a bet nothing could price says why`() {
+        val old = sheetBet().copy(nowEv = 0.08, nowAtMs = now - 3 * hour, nowVia = com.tjshea.vigilant.data.tracker.BetTracker.VIA_VIGILANT)
+        sheet(old)
+        compose.onNodeWithText("EV at your price, as of 3h ago", substring = true).assertExists()
+        compose.onAllNodesWithText("Now +8.00% EV at your price").assertCountEquals(0)
+        compose.onNodeWithText("Fair price worked out 3h ago by Vigilant", substring = true).assertExists()
+    }
+
+    @Test
+    fun `the sheet of a bet nothing could price gives the reason`() {
+        val bare = SampleScan.bets.first { it.id == "b3" }.copy(nowFair = null, nowEv = null, books = emptyList(), nowNote = "No fair-odds source lists this game", nowNoteAtMs = now - 60_000L)
+        sheet(bare)
+        compose.onNodeWithText("Not priced: No fair-odds source lists this game (tried 1m ago)").assertExists()
     }
 
     @Test
