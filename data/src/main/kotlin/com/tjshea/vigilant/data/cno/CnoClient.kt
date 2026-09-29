@@ -89,14 +89,15 @@ class CnoClient(
     override suspend fun books(row: CnoRow): CnoBooksView? = withContext(work) { booksHere(row) }
 
     private suspend fun booksHere(row: CnoRow): CnoBooksView? {
-        val url = row.gameUrl ?: return null
-        return try {
-            val s = open(url)
-            val grid = postback(s, useTimer = true).grid()
-            CnoBooks.parse(grid, row.sideId, row.bet, clock())
-        } catch (e: IOException) {
-            throw unreachable(e)
-        }
+        val grid = gridHere(row.gameUrl ?: return null)
+        return CnoBooks.parse(grid, row.sideId, row.bet, clock())
+    }
+
+    /** A game page's table (two requests: the page, then the postback its loader timer makes). */
+    internal suspend fun gridHere(url: String): String = try {
+        postback(open(url), useTimer = true).grid()
+    } catch (e: IOException) {
+        throw unreachable(e)
     }
 
     override suspend fun novigLink(row: CnoRow): String? = withContext(work) { novigLinkHere(row) }
