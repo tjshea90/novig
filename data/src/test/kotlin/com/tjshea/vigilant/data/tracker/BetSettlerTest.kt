@@ -131,4 +131,98 @@ class BetSettlerTest {
         // UFC has no score feed: nothing was read for it.
         assertTrue(scores.asked.none { it.first == "UFC" })
     }
+
+    // ---- Tj, 2026-09-29: "Some bets are still pending in the open bets tab that are final" ------------
+
+    @Test
+    fun `every bet a pass can't settle says why on the bet, and a settled one says what it rests on`() = runTest {
+        val t = tracker(
+            bet("ok", "Moneyline", "New York Mets"),
+            bet("odd", "Some Novelty Market", "Something Over 1.5"),
+            bet("ufc", "Moneyline", "Fighter A", league = "UFC"),
+            bet("nobody", "Player Total Bases", "Nobody Here Over 1.5"),
+            bet("first", "First Touchdown Scorer", "Jonathan Taylor Yes"),
+        )
+        val report = BetSettler(t, FakeScores(), clock = { now }).run()
+        assertEquals(1, report.settled)
+        assertEquals(4, report.manual)
+        val notes = t.all().associate { it.id to it.gradeNote }
+        assertEquals("Final: New York Mets 7, Washington Nationals 1", notes["ok"])
+        assertEquals(true, notes["odd"]!!.startsWith("Couldn't read \"Some Novelty Market\""))
+        assertEquals("No score feed covers UFC: mark it yourself", notes["ufc"])
+        assertEquals(true, notes["nobody"]!!.startsWith("Nobody Here isn't in the box score"))
+        assertEquals(true, notes["first"]!!.contains("play-by-play"))
+        assertEquals(now, t.all().first { it.id == "odd" }.gradeAtMs)
+    }
+
+    @Test
+    fun `a game not over yet says so, and a postponed one says what the feed called it`() = runTest {
+        val t = tracker(bet("live", "Moneyline", "New York Mets"))
+        val scores = FakeScores(final = false)
+        val settler = BetSettler(t, scores, clock = { now })
+        val r = settler.run()
+        assertEquals(1, r.waiting)
+        assertEquals("The game isn't over yet", t.all().single().gradeNote)
+
+        val called = object : ScoreSource by scores {
+            override suspend fun games(league: String, date: LocalDate) = scores.games(league, date)?.map { it.copy(called = true, calledReason = "Postponed", final = false) }
+        }
+        val t2 = tracker(bet("ppd", "Moneyline", "New York Mets"))
+        BetSettler(t2, called, clock = { now }).run()
+        assertEquals(true, t2.all().single().gradeNote!!.startsWith("Postponed: the score feeds have no result"))
+    }
+
+    @Test
+    fun `Grade now looks at every bet again, an unchanged note isn't rewritten, an old bet says it's left to a tap`() = runTest {
+        val t = tracker(bet("odd", "Some Novelty Market", "Something Over 1.5"), bet("ancient", "Moneyline", "New York Mets", startsTs = now - BetSettler.GIVE_UP_MS - 1))
+        val settler = BetSettler(t, FakeScores(), clock = { now })
+        settler.run()
+        val first = t.all().first { it.id == "odd" }.gradeAtMs
+        assertEquals(BetSettler.TOO_OLD, t.all().first { it.id == "ancient" }.gradeNote)
+        // Not due for six hours, unless the button forces it.
+        assertEquals(0, settler.run().asked)
+        now += 60_000L
+        assertEquals(1, settler.run(force = true).asked)
+        // Same note a minute later: left as it was (no rewrite of the file for it).
+        assertEquals(first, t.all().first { it.id == "odd" }.gradeAtMs)
+        now += BetSettler.NOTE_REFRESH_MS
+        settler.run(force = true)
+        assertEquals(now, t.all().first { it.id == "odd" }.gradeAtMs)
+    }
+
+    @Test
+    fun `an undone result stays with Tj until he turns auto-grading back on`() = runTest {
+        val t = tracker(bet("undone", "Moneyline", "New York Mets", settledBy = BetSettler.BY_YOU))
+        val settler = BetSettler(t, FakeScores(), clock = { now })
+        assertEquals(0, settler.run().asked)
+        t.regrade("undone")
+        assertEquals(1, settler.run().settled)
+        assertEquals(BetStatus.WON, t.all().single().status)
+        assertEquals(BetSettler.BY_SCORES, t.all().single().settledBy)
+    }
+
+    /** ESPN's tennis scoreboard for the Chengdu Open match (Muller d. Pavlovic 6-4 6-7 6-3). */
+    private class TennisScores : ScoreSource {
+        override fun covers(league: String) = league == "ATP"
+        override suspend fun games(league: String, date: LocalDate): List<GameScore>? =
+            if (league != "ATP") emptyList() else listOf(
+                GameScore("186127", "ATP", "Alexandre Muller", "Luka Pavlovic", BetGraderTest.TENNIS_START, true, false, 2, 1, listOf(6, 6, 6), listOf(4, 7, 3)),
+            )
+        override suspend fun players(game: GameScore): List<PlayerLine>? = emptyList()
+    }
+
+    @Test
+    fun `a tennis bet settles from the match's sets and games`() = runTest {
+        val at = BetGraderTest.TENNIS_START
+        fun tb(id: String, market: String, selection: String) = bet(id, market, selection, league = "ATP", startsTs = at).copy(eventName = "Luka Pavlovic @ Alexandre Muller")
+        now = at + 6 * 60 * 60_000L
+        val t = tracker(tb("ml", "Moneyline", "Alexandre Muller"), tb("games", "Total Games", "Under 31.5"), tb("aces", "Player Aces", "Alexandre Muller Over 9.5"))
+        val r = BetSettler(t, TennisScores(), clock = { now }).run()
+        assertEquals(2, r.settled)
+        assertEquals(1, r.manual)
+        val byId = t.all().associateBy { it.id }
+        assertEquals(BetStatus.WON, byId.getValue("ml").status)
+        assertEquals(BetStatus.LOST, byId.getValue("games").status) // 32 games, under 31.5
+        assertEquals(true, byId.getValue("aces").gradeNote!!.contains("mark it yourself"))
+    }
 }
