@@ -138,6 +138,41 @@ class BetRecheckTest {
         assertEquals("Checked 5 of 5 open bets · Graded 2 from final scores", soon.summary(graded = BetSettler.Report(asked = 2, settled = 2, stopped = false)))
     }
 
+    /** Tj, 2026-09-29: "update the EV for every single open bet, including bets added from vigilant scanner". */
+    @Test
+    fun `Vigilant's own bets are planned for the pricing pass, and the bets CNO didn't cover are handed to it`() = runTest {
+        val t = tracker(
+            bet("cno1"), bet("cno2"), bet("gone"),
+            bet("vig1", gameUrl = null).copy(marketId = "m1", outcomeId = "o1"),
+            bet("vig2", gameUrl = null).copy(marketId = "m2", outcomeId = "o2", nowAtMs = now - 20_000L, nowEv = 0.02, nowFair = 0.52), // read 20 s ago
+            bet("vigLive", gameUrl = null, startsTs = now - 30 * 60_000L),
+        )
+        val re = BetRecheck(t, books = { row -> if (row.gameUrl!!.endsWith("gone")) null else view(-125, 105) }, clock = { now })
+        val plan = re.plan(t.all())
+        assertEquals(listOf("vig1"), plan.vigilantBets.map { it.id })
+        assertEquals(1, plan.vigilantOnly)
+        assertEquals(1, plan.current) // vig2: read inside the last minute
+        assertEquals(1, plan.started) // vigLive: in progress and no CNO page: nothing to price
+        val r = re.run()
+        assertEquals(6, r.open)
+        assertEquals(listOf("gone"), r.unreadIds)
+        assertEquals(r.open, r.updated + r.failed + r.skipped + r.current + r.over + r.vigilantOnly + r.started + r.priced + r.unpriced)
+
+        // The pricing pass over the Vigilant bets: those bets are priced (or explained), so they leave "vigilantOnly".
+        val afterVigilant = r.withPricing(OpenBetPricer.Report(asked = 1, priced = 1, unpriced = 0), rescue = false)
+        assertEquals(0, afterVigilant.vigilantOnly)
+        assertEquals(1, afterVigilant.priced)
+        // ...and the bet CNO couldn't read is taken over: no longer "couldn't be read", it is priced or explained.
+        val afterRescue = afterVigilant.withPricing(OpenBetPricer.Report(asked = 1, priced = 0, unpriced = 1), rescue = true)
+        assertEquals(0, afterRescue.failed)
+        assertEquals(1, afterRescue.unpriced)
+        assertEquals(afterRescue.open, afterRescue.updated + afterRescue.failed + afterRescue.skipped + afterRescue.current + afterRescue.over + afterRescue.vigilantOnly + afterRescue.started + afterRescue.priced + afterRescue.unpriced)
+        assertEquals(
+            "Checked 5 of 6 open bets · 1 couldn't be priced (each bet says why) · 1 game in progress (results come from final scores)",
+            afterRescue.summary(),
+        )
+    }
+
     @Test
     fun `each bet keeps every book's price, the other side and the price now, and the file is written in batches`() = runTest {
         val t = tracker(bet("up"))
