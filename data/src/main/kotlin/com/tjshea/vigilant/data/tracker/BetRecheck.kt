@@ -214,7 +214,7 @@ class BetRecheck(
         } finally {
             withContext(NonCancellable) { lock.withLock { flush() } }
         }
-        return Tally(checked, updated, failed, stopped.get())
+        return Tally(checked, updated, failed, stopped.get(), updatedIds)
     }
 
     /** One pass over every open bet. Runs one pass at a time; a second caller waits for it. [onProgress] gets (read so far, to read). */
