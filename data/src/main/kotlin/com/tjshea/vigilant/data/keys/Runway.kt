@@ -80,12 +80,15 @@ object Runway {
             else -> RunwayLevel.OK
         }
         val pace = if (level == RunwayLevel.SHORT) {
-            "at this pace the last of it goes ${UsageMeter.whenText(now + runsOutIn, now)}, before the reset: SHORT (add keys, or scan less)"
+            "at this pace the last of it goes ${whenAt(now + runsOutIn, now)}, before the reset: SHORT (add keys, or scan less)"
         } else {
             "at this pace about ${num(projected)} by the reset: ${level.name}"
         }
         return RunwayLine(policy.id, policy.displayName, level, "$head · $pace$refusedNote")
     }
+
+    /** "in 3h 12m" for soon, "on Oct 1" for later. */
+    private fun whenAt(at: Long, now: Long): String = UsageMeter.whenText(at, now).let { if (it.startsWith("in ") || it == "now") it else "on $it" }
 
     private fun fractionLevel(used: Int, allowance: Int): RunwayLevel = when {
         allowance <= 0 -> RunwayLevel.OK
