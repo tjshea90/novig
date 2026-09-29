@@ -83,7 +83,8 @@ fun NovigKeySection(
             "The read-only key can't place bets or move money. Its private half was generated in this " +
                 "phone's secure hardware and can't be copied off it. Novig refuses keyed requests from addresses its " +
                 "screen lists as a VPN or proxy (now and then a Wi-Fi's or carrier's shared address: Test key tries your " +
-                "other connection), and needs the Novig app opened every few days to confirm your location.",
+                "other connection), and needs the Novig app opened every few days to confirm your location. After the key is " +
+                "accepted, Test key also times the live feed, the key's limits and book reads (about a minute) and prints the numbers.",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),
