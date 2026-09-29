@@ -100,8 +100,6 @@ data class BetActions(
     val onRegrade: (String) -> Unit = {},
     /** Correct the American odds a bet was filled at. */
     val onPrice: (String, Int) -> Unit = { _, _ -> },
-    /** A Vigilant scan (it prices the open Vigilant bets). */
-    val onScan: () -> Unit = {},
     /** Betting through the API is set up: add what Novig filled that the Tracker doesn't have. */
     val onSync: () -> Unit = {},
 )
