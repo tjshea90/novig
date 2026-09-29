@@ -1,22 +1,23 @@
-# CHECKPOINT 2063 — read me first, then TASKS.md
+# CHECKPOINT 2064 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T07:24:30Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `f11f0702` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T07:33:44Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `e9b4802b` (this checkpoint is the commit after it)
 
 ## Just done
-Recorded Tj's two research projects (Novig API in depth + 7 third-party APIs) as V1-V8 in TASKS.md
+V1-V3 written up in NOVIG_API.md §14 (all 51 routes, subaccount-wallet finding, placing rules, speed numbers); scan timing line now names the slowest fair-odds sources (ScanTiming.sourceMs)
 
 ## Do this next
-V1: read docs.novig.com in full (WebFetch) and NOVIG_API.md; then V2/V3
+RESEARCH.md §36: seven third-party APIs + Kalshi auth + placing-bets offer; then decide builds; answer Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+    M  NOVIG_API.md
 
 ## Last ten checkpoints
 ```
+  69da58b4 ckpt 2063: Recorded Tj's two research projects (Novig API in depth + 7 third-party APIs
   92fa8cfd ckpt 2062: U6 ticked: v0.20.1 released
   330c2463 ckpt 2061: v0.20.1 (code 44) released and recorded: CI green (run 36535348703), release
   234f1dac ckpt 2060: pre-release: v0.20.1: Check odds now is ~2x faster (3 pages at once, 500 ms 
@@ -26,8 +27,7 @@ V1: read docs.novig.com in full (WebFetch) and NOVIG_API.md; then V2/V3
   7edc76bb ckpt 2056: U4 verified live: LiveUngradedBetsTest settles the 3 screenshot bets from re
   b825c950 ckpt 2055: U4 grading fixes: football absent-from-box = 0 (ZERO stats), injury-report O
   c3e46096 ckpt 2054: Recorded Tj's follow-up on the tracker (slow Check odds, ungradable bets, 61
-  c0ed3975 ckpt 2053: v0.20.0 (code 43) released and recorded: CI green (run 36526989519), release
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

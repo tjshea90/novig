@@ -455,3 +455,73 @@ Vigilant makes. What changed in the app (v0.19.1), and what was checked and left
 outcome's offered price) answers anonymous queries with `{"errors":[{"message":"query is not allowed"}]}` (an
 allow-list; checked 2026-09-28), needs keys "from your representative" (affiliates), and the docs say it's being migrated to
 REST. No batch book route exists in v3; the websocket is the bulk path (§6, §11.1).
+
+## 14. The trading side, and what a full re-read found (2026-09-29 ~08:00–09:30Z; Tj: "it can show the bets I actually placed and grade them and I can place bets through the API")
+
+Re-read: all 86 current pages of `llms.txt` (54 more under `deprecated/`, left alone) and the OpenAPI spec (`openapi-v3-target.json`, 51 routes),
+downloaded to disk and read from the spec's own schemas, not from page summaries. **No page changed the scanning design in §11.1.**
+What is new here is the account/execution half of the API, which Vigilant has never used.
+
+### 14.1 Every route, its key scope, its throttle and its cost
+| Group | Route | Key scopes | Throttle · cost |
+|---|---|---|---|
+| Public (no key) | `GET /v3/public/{types/*, catalog/events[/{id}], catalog/markets[/{id}], catalog/markets/{id}/book, catalog/markets/{id}/trades}` | none | per-IP edge ("public") |
+| Signed catalog | the same seven under `/v3/catalog/…` and `/v3/types/…` | `trading`, `trading::read` | `read` (64 burst, 16/s), 1 token a request |
+| Auth | `POST /v3/echo` (0 tokens, any key), `POST/GET /v3/keys`, `GET/DELETE /v3/keys/{id}` | management (create/revoke), management::read (list) | `account` |
+| Accounts | `POST/GET /v3/account/subaccounts`, `POST …/{keyId}/keys`, `GET …/{keyId}/balance`, `POST …/{keyId}/transfer`, `GET …/{keyId}/transfers/{id}`, `PATCH …/{keyId}`, **`GET …/{keyId}/transactions`** | management for opening, funding, keys, labels; balance also for trading keys; **transactions for management, management::read, trading and trading::read** | `account` (transactions: `history`, 6 + 1 per 100 rows) |
+| Execution | `POST /v3/orders`, `POST /v3/orders/batch` (≤256), `DELETE /v3/orders`, `DELETE /v3/orders/batch`, `DELETE /v3/orders/{id}` | `trading` only | `place` (256 burst, 8/s) and `cancel` (256, 16/s) |
+| Execution (reads) | **`GET /v3/orders`** (`status` filter, default OPEN; event/market/outcome filters), `GET /v3/orders/{id}`, **`GET /v3/portfolio/fills`**, **`GET /v3/portfolio/positions`** | **`trading` and `trading::read`** | `read`; settled orders and fills: `history` (fills 8 + 1 per 50 rows; settled orders 4 + 1 per 100) |
+| Execution (snapshots) | `GET /v3/account/orders`, `GET /v3/account/positions` (ETag/304, carry the private stream's `seq`) | `trading` | `account` |
+| Streaming | `GET /v3/ws` | `trading`, `trading::read` | `stream` (512 burst, 4/s) |
+| Throttle | `GET /v3/limits` (0 tokens, any key) | any | free |
+| RFQ (parlays) | separate LP-only pages | LP accounts (W-9, ~$30,000 deposit) | not for us |
+
+### 14.2 The bets you place: what the API can and can't see
+- **A trading key reaches ONE subaccount, forever** ("Each trading key reaches only its own subaccount, and that never changes"). A subaccount is a
+  **separate wallet**: its own balance, positions, orders and fills. Money moves between the trader's **cash wallet** and a subaccount only with the
+  management key's `POST …/transfer` (`fund` / `defund`, an idempotency `clientTransferId`, 5/s and 60/min).
+- **So the API cannot list bets placed in the Novig app.** By the docs' own account model, the Novig app trades from the cash wallet, and no route reads it
+  (no route lists the cash wallet's orders, fills or positions). The docs never say whether the Novig app also shows a subaccount's trades; unverified.
+- **What a `trading::read` key CAN read, for its own subaccount:** every order (open and settled: `GET /v3/orders?status=FILLED|CANCELED|REJECTED|OPEN`),
+  every fill (`fillId`, `orderId`, `clientId`, `marketId`, `outcomeId`, `qty`, `cost` in dollars (price = 100 × cost / qty), `taker`, `fee`, `ts`),
+  positions (`qty` and `cost` per outcome: average price = 100 × cost / qty), and the **ledger** (`GET …/transactions`, `kind` = `FILL`, `FEE`,
+  `MAKER_CREDIT`, **`SETTLEMENT`**, `TRANSFER_IN`, `TRANSFER_OUT`; signed `amount`, `ref` = the fill, transfer or market it settles). The ledger's
+  SETTLEMENT rows are Novig's own grade of every bet in that subaccount, including fair-market-value voids (a payout, not a refund).
+- **The Vigilant subaccount exists and is empty.** `NovigSetup.connect` opened it (label "Vigilant", never funded), registered a `trading` key whose
+  private half sits in the Android Keystore under `vigilant_novig_trading_<stamp>` (same `<stamp>` as the saved read key's alias
+  `vigilant_novig_read_<stamp>`; the app doesn't store the trading alias, but the read alias gives it), and minted the `trading::read` key the scanner uses.
+  So today the key sees nothing of Tj's betting: no order has ever been placed through it.
+- **Settled markets leave the catalog** (re-verified 2026-09-29: three `finalized` markets from data.novig.com's 2026-09-26 `markets.csv` answer 404 on
+  `/v3/public/catalog/markets/{id}`; the spec calls the catalog "the open set"). The signed catalog's answer for a finished market is untested (it needs the
+  key; the phone is the only place to try). `data.novig.com`'s CSVs carry `status` (`finalized` = settled) but **no winner**, so they can't grade a bet.
+- **Settlement semantics (event-lifecycle page):** an event ends, each market is graded `Winner` (WIN on one outcome, LOSS on the rest), `Pushes` (PUSH on
+  all: collateral back) or `FMV(price)` (each outcome's `status` is a bare decimal string, a payout per $1 contract; the prices sum to 1.000). A market voids
+  one way only: `voids` says `PUSH` or `FMV`, "the exchange never pushes an FMV market". Remediation can undo a settlement (market back to CLOSED, outcomes to
+  TBD, graded again): a graded bet can change.
+
+### 14.3 Placing bets through the API (not built; needs Tj's approval, see RESEARCH.md §36.9)
+- `POST /v3/orders {outcomeId, price, qty, tif, ttl?, clientId?}` with `tif` = `GTC`, `GTT` (needs `ttl` ms), `IOC`, `FOK`, `PO` (post-only; `ttl` optional).
+  `price` is on the 279-step grid (§7) and is what you're willing to pay for that outcome; `qty` counts 1¢ contracts (so a $10 stake at 0.50 is `qty` 2000; the fees
+  page says "N = qty / 100"). The answer `201 {orderId, clientId}` means queued, **not** filled: the private stream's `open` / `fill` / `cancel` / `reject` events say
+  what happened (an unfilled IOC/FOK/PO is a `reject` with no HTTP status; if no `201` came, match `clientId` before re-sending: it is NOT checked for uniqueness).
+- A taker bet is an `IOC` or `FOK` at `1 − best opposing bid` (§7): pregame it pays no fee (`WHEN_LIVE`), the fill's `price` can be better than the limit.
+  `GOLIVE` voids every resting order (their `cancel` carries `reason: GO_LIVE`); a resting maker order pays no fee (and earns a maker credit only when a fee was charged).
+- Refusals: `403` (scope, or KYC not passed), `404` (no such outcome), `422` (wallet doesn't cover it, or a position cap), `423` (locked or self-excluded), `451`
+  (anonymized network, restricted region, and, **for a placement only, no device geolocation in the last 3 days**: open the Novig app), `413`/HTML `403` (body too big).
+- Money never moves through a trading key ("a leaked trading key can lose its balance through trades, but it can't withdraw"). Only the management key funds
+  a subaccount, and it is never stored by Vigilant (§11.1).
+- QA (`api.qa.novig.com`, test money, published test identity in §1) exists for trying all of this without real money.
+
+### 14.4 The websocket's private and lifecycle channels (unused so far)
+`subscribe {private: ["orders","positions"]}` (1 token each) streams the subaccount's own `open` / `fill` / `cancel` / `reject` and position changes with per-subaccount
+`seq` (heartbeat every 15 s repeats the last `seq`; a gap means `snapshot`); the market channels' `lifecycle` transitions are `OPEN`, `CLOSE`, `GRADE` (→ SETTLED),
+`START`, `END`, `GOLIVE`, `UNLIVE`. `bbo` (8 tokens) exists in the cost table but no page documents its message shape: don't build on it unseen.
+`events:` subjects cost one pair per event but count as every market the event holds against the 2,048 cap.
+
+### 14.5 What this means for speed (with the measured numbers)
+- The key's REST reads top out at the `read` bucket, 16 a second: 1,200 prices = 75 s by REST alone; the websocket is the only bulk path (§6).
+- A fresh connection's first bulk subscribe can't go until the `stream` bucket is full again after the 32-token upgrade (512 ÷ 4/s ≈ 8 s); nothing in the docs shortens it.
+  A connection kept open avoids it, and 8 s hides inside the free fair-odds sources' time.
+- **Measured live 2026-09-29 from this container: Kalshi's game lines and props take ~27 s per scan** (57 series at the 2/s Vigilant paces anonymous reads to;
+  429s came at ~3/s) and **Polymarket ~13 s**. A league's first bets wait for all its fair-odds sources (v0.19.2), so those free sources, not Novig, set
+  "first bet at": the timing line now names them (v0.20.2).
