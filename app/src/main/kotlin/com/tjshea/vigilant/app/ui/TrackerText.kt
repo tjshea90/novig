@@ -1,8 +1,10 @@
 package com.tjshea.vigilant.app.ui
 
+import com.tjshea.vigilant.data.scanner.Freshness
 import com.tjshea.vigilant.data.tracker.BetInsight
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerStats
 import com.tjshea.vigilant.engine.Odds
