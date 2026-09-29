@@ -33,7 +33,7 @@ else
   STATE="WARNING: $UNPUSHED commit(s) are not pushed yet — run: git push origin HEAD"
 fi
 
-MSG="This session is now large enough to auto-compact, which is the point where it starts costing real usage: every turn resends the whole conversation, and compaction rewrites it rather than shrinking what you pay for. $STATE  Cheapest next move: run  bash tools/ckpt.sh \"what I just did\" \"what comes next\"  and then START A NEW SESSION. It resumes from GitHub in well under a hundred lines instead of re-reading this entire conversation. Nothing is lost by doing that."
+MSG="This session is now large enough to auto-compact, which is the point where it starts costing real usage: every turn resends the whole conversation, and compaction rewrites it rather than shrinking what you pay for. $STATE  Cheapest next move: run  bash tools/ckpt.sh \"what I just did\" \"what comes next\"  and then START A NEW SESSION. It resumes from GitHub in about 120 lines instead of re-reading this entire conversation. Nothing is lost by doing that."
 if [ "$TEXT_MODE" -eq 1 ]; then
   printf '%s\n' "$MSG"
 else
