@@ -219,6 +219,73 @@ class AutoScanTest {
         assertTrue(shadowOf(n.contentIntent).isActivityIntent)
     }
 
+    // ---- "✓ Placed" on the alert (Tj, 2026-09-29) ---------------------------------------------------------
+
+    private fun fullAlert(stake: Double? = 5.0) = alert().copy(
+        stake = stake, league = "NFL", gameUrl = "https://crazyninjaodds.com/game?side_id=9", betUrl = "https://crazyninjaodds.com/d?l=9", live = false,
+    )
+
+    @Test
+    fun `the alert stays after a tap and has a Placed button that says the amount it tracks`() {
+        installNovig()
+        shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        val nm = context.getSystemService(NotificationManager::class.java)
+        assertEquals(1, EvAlerts.post(context, listOf(fullAlert()), now))
+        val n = shadowOf(nm).allNotifications.single()
+        // Tapping opens Novig but doesn't take the alert down: the button is still there when the bet is in.
+        assertEquals(0, n.flags and android.app.Notification.FLAG_AUTO_CANCEL)
+        val action = n.actions.single()
+        assertEquals("✓ Placed $5", action.title.toString())
+        val sent = shadowOf(action.actionIntent).savedIntent
+        assertEquals(EvAlerts.ACTION_PLACED, sent.action)
+        assertEquals(AlertActionReceiver::class.java.name, sent.component!!.className)
+        assertTrue(shadowOf(action.actionIntent).isBroadcastIntent)
+        // The button carries the whole alert: the receiver needs no scan, screen or list to log the bet.
+        assertEquals(fullAlert(), EvAlerts.alertOf(sent))
+        assertEquals("✓ Placed", EvAlerts.placedLabel(fullAlert(stake = null)))
+        assertNull(EvAlerts.alertOf(Intent("nothing")))
+    }
+
+    @Test
+    fun `Placed tracks the bet, hides it everywhere and turns the alert into a quiet Tracked confirmation with Undo`() = kotlinx.coroutines.runBlocking {
+        shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        val app = context as VigilantApp
+        val nm = context.getSystemService(NotificationManager::class.java)
+        val a = fullAlert()
+        EvAlerts.post(context, listOf(a), now)
+        EvAlerts.handle(context, app.container, EvAlerts.ACTION_PLACED, a, now)
+        val bet = app.container.tracker.all().single { it.placedKey == a.key }
+        assertEquals(5.0, bet.stake, 0.0)
+        assertEquals(117, bet.american)
+        assertEquals("https://crazyninjaodds.com/game?side_id=9", bet.gameUrl)
+        assertEquals(a.key, app.container.placed.load().bets.single { it.key == a.key }.key)
+        // The alert was replaced, in place, by a low-importance confirmation with Undo.
+        val n = shadowOf(nm).allNotifications.single()
+        assertEquals(EvAlerts.DONE_CHANNEL, n.channelId)
+        assertEquals(NotificationManager.IMPORTANCE_LOW, nm.getNotificationChannel(EvAlerts.DONE_CHANNEL).importance)
+        assertTrue(n.extras.getCharSequence(android.app.Notification.EXTRA_TITLE).toString().startsWith("Tracked ✓ Justin Jefferson"))
+        assertEquals("Undo", n.actions.single().title.toString())
+        assertEquals(EvAlerts.ACTION_UNDO, shadowOf(n.actions.single().actionIntent).savedIntent.action)
+        // Undo: the bet, the mark and the confirmation all go.
+        EvAlerts.handle(context, app.container, EvAlerts.ACTION_UNDO, a, now)
+        assertTrue(app.container.tracker.all().none { it.placedKey == a.key })
+        assertTrue(app.container.placed.load().bets.none { it.key == a.key })
+        assertTrue(shadowOf(nm).allNotifications.isEmpty())
+    }
+
+    @Test
+    fun `the receiver reads the alert out of the button and does the same`() = kotlinx.coroutines.runBlocking {
+        val app = context as VigilantApp
+        val a = fullAlert().copy(key = "cno:receiver-test", outcomeId = "o-recv")
+        AlertActionReceiver().onReceive(context, EvAlerts.actionIntent(context, a, EvAlerts.ACTION_PLACED))
+        // It runs in the app's own scope; wait for it (a few ms of disk).
+        val deadline = System.currentTimeMillis() + 5_000
+        while (app.container.tracker.all().none { it.placedKey == a.key } && System.currentTimeMillis() < deadline) kotlinx.coroutines.delay(20)
+        assertTrue(app.container.tracker.all().any { it.placedKey == a.key })
+        // A broadcast with no alert in it does nothing.
+        AlertActionReceiver().onReceive(context, Intent(EvAlerts.ACTION_PLACED))
+    }
+
     // ---- the service's notification and alarm ------------------------------------------------------
 
     @Test
