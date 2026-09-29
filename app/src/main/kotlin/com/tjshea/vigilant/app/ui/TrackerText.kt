@@ -135,7 +135,7 @@ object TrackerText {
     }
 
     /** "You bet +150 (40.0% implied). Fair now +127 (44.0%): 4.0 points better than fair, +10.0% EV." */
-    fun edgeSentence(i: BetInsight): String {
+    fun edgeSentence(i: BetInsight, current: Boolean = true): String {
         val bet = "You bet ${Odds.formatAmerican(i.betOdds)} (${Format.percent(i.betImplied)} implied${if (i.cost - i.betImplied > 0.0005) ", ${Format.percent(i.cost)} with Novig's fee" else ""})."
         val fair = i.fairNow ?: return "$bet No fair price read yet: tap Re-read books."
         val pts = i.edgePoints ?: 0.0
