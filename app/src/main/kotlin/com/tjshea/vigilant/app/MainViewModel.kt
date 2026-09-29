@@ -103,6 +103,11 @@ data class UiState(
     val checkingOdds: Boolean = false,
     /** While it runs: bets read so far, of how many it reads (null until the first count). */
     val checkProgress: Pair<Int, Int>? = null,
+    /** The Tracker's "Grade now" is reading final scores. */
+    val gradingBets: Boolean = false,
+    /** The open bet (by id) whose books the Tracker is re-reading, and the one whose Novig link Replace is finding. */
+    val rereadingBet: String? = null,
+    val replacingBet: String? = null,
     val loaded: Boolean = false,
     val novig: NovigUi = NovigUi(),
     /** CrazyNinjaOdds' +EV list (its own tab, and the mini window). */
@@ -847,14 +852,87 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Settles open bets whose games are over from their final scores (the Tracker tab calls it when
-     * shown). Costs nothing when no bet is due; [BetSettler] runs one pass at a time.
+     * shown). Costs nothing when no bet is due; [BetSettler] runs one pass at a time. [force] ("Grade now")
+     * looks at every open bet again and [announce]s what came of it (Tj, 2026-09-29: some bets stayed open
+     * after the game was final): graded, not over yet, and the ones that need a tap, each with its reason on the bet.
      */
-    fun settleBets() {
+    fun settleBets(force: Boolean = false, announce: Boolean = false) {
+        if (announce) {
+            if (_state.value.gradingBets) return
+            _state.update { it.copy(gradingBets = true) }
+        }
         viewModelScope.launch {
-            val report = runCatching { withContext(Dispatchers.IO) { c.settler.run() } }.getOrNull() ?: return@launch
-            if (report.settled > 0) _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from final scores")
+            val report = try {
+                withContext(Dispatchers.IO) { c.settler.run(force) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            } finally {
+                if (announce) _state.update { it.copy(gradingBets = false) }
+            }
+            if (report == null) {
+                if (announce) _toasts.tryEmit("Couldn't read the final scores")
+                return@launch
+            }
+            if (announce) {
+                _toasts.tryEmit(
+                    when {
+                        report.stopped && report.settled == 0 -> "The score feeds (ESPN, MLB) didn't answer: try again in a minute"
+                        report.asked == 0 -> "No open bet is due a result yet (a game has to be an hour old)"
+                        else -> listOfNotNull(
+                            "Graded ${report.settled} of ${report.asked} bet${if (report.asked == 1) "" else "s"} from final scores",
+                            "${report.waiting} game${if (report.waiting == 1) "" else "s"} not over yet".takeIf { report.waiting > 0 },
+                            "${report.manual} need${if (report.manual == 1) "s" else ""} a tap (each says why)".takeIf { report.manual > 0 },
+                            "feeds stopped answering".takeIf { report.stopped },
+                        ).joinToString(" · ")
+                    },
+                )
+            } else if (report.settled > 0) {
+                _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from final scores")
+            }
         }
     }
+
+    /** "Grade automatically": an open bet whose result Tj tapped and undid goes back to the score feeds. */
+    fun regradeBet(id: String) {
+        viewModelScope.launch {
+            if (runCatching { c.tracker.regrade(id) }.isFailure) _toasts.tryEmit("Couldn't save") else settleBets(force = true)
+        }
+    }
+
+    /** Corrects the price a bet was filled at (American odds); its cost, EV and profit follow. */
+    fun setPrice(id: String, american: Int) {
+        viewModelScope.launch { if (runCatching { c.tracker.setPrice(id, american) }.isFailure) _toasts.tryEmit("Couldn't save") }
+    }
+
+    /**
+     * Re-reads one open bet's books now (the sheet's "Re-read books", and when it opens on old odds):
+     * its CNO game page; only a CNO bet has one. [quiet]: no word when it couldn't be read.
+     */
+    fun rereadBooks(id: String, quiet: Boolean = false) {
+        if (_state.value.rereadingBet != null) return
+        _state.update { it.copy(rereadingBet = id) }
+        viewModelScope.launch {
+            val ok = try {
+                withContext(Dispatchers.IO) { c.recheck.checkOne(id) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            } finally {
+                _state.update { it.copy(rereadingBet = null) }
+            }
+            if (!ok && !quiet) _toasts.tryEmit("Couldn't read this bet's books: CrazyNinjaOdds didn't answer, or the bet has left its page")
+        }
+    }
+
+    /** Remembers the Novig outcome a bet's link turned out to be (Replace found it), so the next tap needs no lookup. */
+    fun rememberOutcome(id: String, outcomeId: String) {
+        viewModelScope.launch { runCatching { c.tracker.edit(id) { if (it.outcomeId.isBlank()) it.copy(outcomeId = outcomeId) else it } } }
+    }
+
+    fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
 
     /**
      * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's books read again
