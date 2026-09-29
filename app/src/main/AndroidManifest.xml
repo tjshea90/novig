@@ -74,6 +74,11 @@
                 android:value="Scans sports odds on a schedule the user picks and alerts on new +EV bets" />
         </service>
 
+        <!-- The +EV alert's "✓ Placed" and the confirmation's "Undo": run in the background, no screen. -->
+        <receiver
+            android:name=".AlertActionReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".AutoScanReceiver"
             android:exported="false">

@@ -55,6 +55,8 @@ object AlertPicks {
                 bet = pick.row.bet, market = pick.row.market, event = pick.row.event, american = shown.row.odds, ev = shown.ev,
                 books = check.twoSided, agreeing = check.agreeing, startsAtMs = pick.row.startsAtMs, link = link, exact = link != null,
                 stake = state.settings.slipStakeFor(com.tjshea.vigilant.app.ui.cnoStake(shown, state.settings)),
+                league = pick.row.league, gameUrl = pick.row.gameUrl, betUrl = pick.row.betUrl,
+                fair = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(pick.row), live = pick.live, book = pick.row.book,
             )
         }
     }
@@ -74,6 +76,7 @@ object AlertPicks {
                 bet = o.selection, market = o.marketLabel, event = o.eventName, american = quote.priceAmerican, ev = ev,
                 books = agreement.twoSided, agreeing = agreement.agreeing, startsAtMs = o.event.startsTs, link = link, exact = link != null,
                 stake = state.settings.slipStakeFor(o.suggestedStake),
+                league = o.league.displayName, marketId = o.market.marketId, fair = o.fairProbability, live = o.isLive, book = AppBook.name,
             )
         }
     }
