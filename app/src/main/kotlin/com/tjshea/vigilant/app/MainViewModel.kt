@@ -1036,6 +1036,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
             autoScanServiceRunning = AutoScanService.running,
+            lastScan = c.lastScanCost,
+            lastCheck = c.lastCheckCost,
         )
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it, extras, System.currentTimeMillis()))) }
     }
@@ -1084,6 +1086,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         _state.update { it.copy(checkingOdds = true, checkProgress = null) }
         val settings = start.settings
+        val usageBefore = c.usage.flow.value
+        val began = System.currentTimeMillis()
         viewModelScope.launch {
             var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null
             // The finished games' results are graded at the same time (the score feeds are ESPN and MLB, not CNO, so it costs no time):
@@ -1129,6 +1133,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 report = null
             } finally {
                 _state.update { it.copy(checkingOdds = false, checkProgress = null) }
+            }
+            // What the round cost each API and how it went, for Settings › Diagnostics.
+            report?.let { r ->
+                c.lastCheckCost = RoundCost(
+                    began, System.currentTimeMillis() - began, UsageDelta.between(usageBefore, c.usage.flow.value),
+                    note = "covered ${r.covered} of ${r.open} open bets: CNO read ${r.updated}, ${r.priced} priced from Vigilant's own fair odds" +
+                        (if (r.unreadIds.isNotEmpty() && settings.vigilantOn) ", ${r.unreadIds.size} CNO couldn't read went to a second pricing pass" else "") +
+                        (if (r.unpriced > 0) ", ${r.unpriced} couldn't be priced" else "") + (if (r.failed > 0) ", ${r.failed} failed" else ""),
+                )
             }
             _toasts.tryEmit(report?.summary(vigilantOff = !settings.vigilantOn, graded = grading.await()) ?: "Couldn't check the odds")
         }
