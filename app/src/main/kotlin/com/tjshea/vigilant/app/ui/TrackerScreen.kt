@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -105,7 +107,7 @@ data class BetActions(
     val onSync: () -> Unit = {},
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun TrackerScreen(
     state: UiState,
@@ -145,6 +147,15 @@ fun TrackerScreen(
     val periodBets = remember(bets, period, minute) { inPeriod(bets, period, now) }
     val openBet = openId?.let { id -> bets.firstOrNull { it.id == id } }
     LaunchedEffect(openId, openBet == null) { if (openId != null && openBet == null) openId = null }
+    // A different list (tab, filter, sort, scanner, period) starts at its top, with the pinned tabs and filters just above it; the first
+    // composition, and one restored after a rotation, keep their place.
+    val listState = rememberLazyListState()
+    var shownKey by remember { mutableStateOf<List<Any>?>(null) }
+    val listKey = listOf(view, period, filter, sort, sortReversed, scanner)
+    LaunchedEffect(listKey) {
+        if (shownKey != null && shownKey != listKey) listState.scrollToItem(0)
+        shownKey = listKey
+    }
 
     Scaffold(
         topBar = {
@@ -168,29 +179,61 @@ fun TrackerScreen(
     ) { padding ->
         LazyColumn(
             Modifier.padding(padding).fillMaxSize(),
+            state = listState,
             contentPadding = PaddingValues(12.dp, 0.dp, 12.dp, 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            item(key = "switch") {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    TrackerView.entries.forEachIndexed { i, v ->
-                        SegmentedButton(
-                            selected = view == v,
-                            onClick = { view = v },
-                            shape = SegmentedButtonDefaults.itemShape(i, TrackerView.entries.size),
-                        ) { Text(v.label, maxLines = 1) }
+            // The tabs and filters stay pinned to the top while the bets scroll under them (Tj, 2026-09-29: "When I scroll down through the
+            // long list of my active bets, I still want to have the filters at the top without having to scroll all the way back up").
+            stickyHeader(key = "nav") {
+                StickyBar {
+                    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                        TrackerView.entries.forEachIndexed { i, v ->
+                            SegmentedButton(
+                                selected = view == v,
+                                onClick = { view = v },
+                                shape = SegmentedButtonDefaults.itemShape(i, TrackerView.entries.size),
+                            ) { Text(v.label, maxLines = 1) }
+                        }
+                    }
+                    when (view) {
+                        TrackerView.STATS -> Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TrackerPeriod.entries.forEach { p ->
+                                FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) })
+                            }
+                        }
+                        TrackerView.BETS -> Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                BetFilter.entries.forEach { f ->
+                                    FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text("${f.label} (${counts[f] ?: 0})") })
+                                }
+                            }
+                            // One line each (the sort's chips slide sideways): pinned, they must take as little of the screen as they can.
+                            // Tap a sort to choose it, tap it again to turn it round (newest / oldest first, best / worst EV first).
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                ChipCaption("Sort")
+                                BetSort.entries.forEach { s ->
+                                    FilterChip(
+                                        selected = sort == s,
+                                        onClick = {
+                                            if (sort == s && s != BetSort.DEFAULT) sortReversed = !sortReversed else { sort = s; sortReversed = false }
+                                        },
+                                        label = { Text(TrackerSort.chipLabel(s, sort, sortReversed, defaultLabel(filter)), maxLines = 1) },
+                                    )
+                                }
+                            }
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                ChipCaption("Scanner")
+                                ScannerFilter.entries.forEach { s ->
+                                    FilterChip(selected = scanner == s, onClick = { scanner = s }, label = { Text("${s.label} (${scannerCounts[s] ?: 0})", maxLines = 1) })
+                                }
+                            }
+                        }
                     }
                 }
             }
             when (view) {
                 TrackerView.STATS -> {
-                    item(key = "periods") {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            TrackerPeriod.entries.forEach { p ->
-                                FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) })
-                            }
-                        }
-                    }
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState("No bets ${if (period == TrackerPeriod.ALL) "tracked yet" else "in this period"}", EMPTY_HINT) }
                     } else {
@@ -198,36 +241,6 @@ fun TrackerScreen(
                     }
                 }
                 TrackerView.BETS -> {
-                    item(key = "filters") {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            BetFilter.entries.forEach { f ->
-                                FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text("${f.label} (${counts[f] ?: 0})") })
-                            }
-                        }
-                    }
-                    item(key = "sort") {
-                        // Tap a sort to choose it, tap it again to turn it round (newest / oldest first, best / worst EV first).
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            ChipCaption("Sort")
-                            BetSort.entries.forEach { s ->
-                                FilterChip(
-                                    selected = sort == s,
-                                    onClick = {
-                                        if (sort == s && s != BetSort.DEFAULT) sortReversed = !sortReversed else { sort = s; sortReversed = false }
-                                    },
-                                    label = { Text(TrackerSort.chipLabel(s, sort, sortReversed, defaultLabel(filter)), maxLines = 1) },
-                                )
-                            }
-                        }
-                    }
-                    item(key = "scanner") {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            ChipCaption("Scanner")
-                            ScannerFilter.entries.forEach { s ->
-                                FilterChip(selected = scanner == s, onClick = { scanner = s }, label = { Text("${s.label} (${scannerCounts[s] ?: 0})", maxLines = 1) })
-                            }
-                        }
-                    }
                     if (filter == BetFilter.OPEN && shown.isNotEmpty()) {
                         item(key = "summary") {
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

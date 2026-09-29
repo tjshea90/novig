@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -91,6 +93,20 @@ fun EvBadge(ev: Double, modifier: Modifier = Modifier, large: Boolean = false, l
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
         )
+    }
+}
+
+/**
+ * The rows a list keeps pinned at its top while its items scroll under them (Tj, 2026-09-29: "keep the top navigation tabs sticky"): an opaque
+ * background, so a card never shows through the chips, and a hairline under it. Used as a `stickyHeader` item's content.
+ */
+@Composable
+internal fun StickyBar(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = modifier.fillMaxWidth()) {
+        Column {
+            content()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+        }
     }
 }
 
