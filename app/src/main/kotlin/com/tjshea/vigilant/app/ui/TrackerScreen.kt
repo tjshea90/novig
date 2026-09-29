@@ -288,6 +288,11 @@ private fun StatsCard(content: @Composable () -> Unit) {
 }
 
 @Composable
+private fun CardTitle(text: String) {
+    Text(text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+}
+
+@Composable
 internal fun Caption(text: String) {
     Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
@@ -334,7 +339,7 @@ private fun StatsCards(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBreakd
             }
         }
         StatsCard {
-            SectionTitle("Are the edges real?")
+            CardTitle("Are the edges real?")
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 LabeledValue("Expected", Format.signedMoney(stats.expectedProfit))
                 LabeledValue("Actual", Format.signedMoney(stats.profitWithEv), valueColor = moneyColor(stats.profitWithEv))
@@ -363,7 +368,7 @@ private fun StatsCards(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBreakd
 private fun BreakdownCard(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBy: (TrackerBreakdown.By) -> Unit) {
     val rows = remember(bets, by) { TrackerBreakdown.of(bets, by) }
     StatsCard {
-        SectionTitle("Where it's working")
+        CardTitle("Where it's working")
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             TrackerBreakdown.By.entries.forEach { b -> FilterChip(selected = by == b, onClick = { onBy(b) }, label = { Text(b.label) }) }
         }

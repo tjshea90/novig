@@ -147,7 +147,8 @@ class TrackerUiTest {
         sheet()
         compose.onNodeWithText("Your bet").assertExists()
         compose.onNodeWithText("Odds bet at").assertExists()
-        compose.onNodeWithText("+100").assertExists()
+        // +100 is the price bet at and Novig's own row in the table.
+        compose.onAllNodesWithText("+100").assertCountEquals(2)
         compose.onNodeWithText("Every book").assertExists()
         listOf("Pinnacle", "DraftKings", "FanDuel", "BetMGM", "Novig").forEach { compose.onNodeWithText(it).assertExists() }
         // The fair price now and the gap to the price bet at, in words.
@@ -163,8 +164,16 @@ class TrackerUiTest {
         sheet(bare)
         compose.onNodeWithText("No fair price read yet: tap Re-read books.", substring = true).assertExists()
         compose.onNodeWithText("No book has been read for this bet yet: tap Re-read books.").assertExists()
-        // A Vigilant bet (no CNO page) points at a scan instead.
-        sheet(bare.copy(gameUrl = null))
+    }
+
+    @Test
+    fun `a Vigilant bet with no CNO page points at a scan instead`() {
+        var scans = 0
+        sheet(SampleScan.bets.first { it.id == "b3" }.copy(nowFair = null, nowEv = null, books = emptyList()), actions = BetActions(onScan = { scans++ }))
+        compose.onNodeWithText("Vigilant's own bets get their books from a Vigilant scan", substring = true).assertExists()
+        compose.onAllNodesWithText("Re-read books").assertCountEquals(0)
+        compose.onNodeWithText("Update from a scan").performScrollTo().performClick()
+        assertEquals(1, scans)
     }
 
     @Test
