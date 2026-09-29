@@ -180,4 +180,24 @@ class BetRecheckTest {
         // Two gaps between three reads, none before the first.
         assertEquals(4_000L, testScheduler.currentTime)
     }
+
+    @Test
+    fun `one bet can be re-read on its own, whatever it was last read`() = runTest {
+        val t = tracker(bet("one").copy(nowAtMs = now - 1_000L), bet("two"))
+        var asked = 0
+        val r = BetRecheck(t, books = { asked++; view(-125, 105) }, clock = { now })
+        assertEquals(true, r.checkOne("one"))
+        assertEquals(1, asked)
+        assertEquals(now, t.all().first { it.id == "one" }.nowAtMs)
+        assertNull(t.all().first { it.id == "two" }.nowEv)
+        // A bet that's settled, unknown, or off CNO can't be re-read.
+        t.settle("two", BetStatus.WON)
+        assertEquals(false, r.checkOne("two"))
+        assertEquals(false, r.checkOne("nobody"))
+        // A page that won't read says so.
+        assertEquals(false, BetRecheck(t, books = { null }, clock = { now }).checkOne("one"))
+        // And a pause from CNO means no read at all.
+        assertEquals(false, BetRecheck(t, books = { asked++; view(-125, 105) }, clock = { now }, paused = { true }).checkOne("one"))
+        assertEquals(1, asked)
+    }
 }
