@@ -2,6 +2,10 @@ package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.app.ui.TrackerText
 import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.keys.ProviderCost
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.RoundCost
+import com.tjshea.vigilant.data.keys.Runway
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScanTiming
@@ -28,6 +32,9 @@ object Diagnostics {
         val device: String,
         val autoScan: AutoScanner.Status = AutoScanner.Status(),
         val autoScanServiceRunning: Boolean = false,
+        /** What the last scan and the last Check odds now cost each API (since the app opened), null before one ran. */
+        val lastScan: RoundCost? = null,
+        val lastCheck: RoundCost? = null,
     )
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
@@ -90,6 +97,24 @@ object Diagnostics {
         }
 
         o.appendLine()
+        o.appendLine("== Runway (will each API's allowance last?) ==")
+        val views = com.tjshea.vigilant.app.ui.meterViews(s, now).filter { it.policy.keyed }
+        val runway = Runway.lines(views, now)
+        if (runway.isEmpty()) o.appendLine("No keyed API has a key saved.")
+        for (line in runway) {
+            o.appendLine(line.text)
+            val view = views.first { it.policy.id == line.id }
+            listOf("a scan" to x.lastScan, "a Check odds now" to x.lastCheck).forEach { (what, round) ->
+                round?.costs?.firstOrNull { it.id == line.id }?.let { c -> Runway.roundsNote(view, c, what)?.let { o.appendLine("    $it") } }
+            }
+        }
+
+        o.appendLine()
+        o.appendLine("== Last rounds (what they cost each API) ==")
+        roundText("Scan", x.lastScan, now).forEach { o.appendLine(it) }
+        roundText("Check odds now", x.lastCheck, now).forEach { o.appendLine(it) }
+
+        o.appendLine()
         o.appendLine("== CrazyNinjaOdds ==")
         val cno = s.cno
         o.appendLine("Last read: ${ago(cno.snapshot?.fetchedAtMs)} · ${cno.snapshot?.rows?.size ?: 0} rows · errors in a row ${cno.errors}" + (cno.error?.let { " · last error: $it" } ?: "") + (cno.pausedUntilMs?.takeIf { it > now }?.let { " · paused until ${at(it)}" } ?: ""))
@@ -118,6 +143,21 @@ object Diagnostics {
         val stats = BetTracker.stats(bets)
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
         return o.toString().trimEnd()
+    }
+
+    /** One round's when, how long, what it did and what it cost each API, in lines; "none since the app opened" without one. */
+    private fun roundText(name: String, r: RoundCost?, now: Long): List<String> {
+        if (r == null) return listOf("$name: none since the app opened.")
+        val took = if (r.tookMs < 1_000) "${r.tookMs} ms" else "${(r.tookMs + 500) / 1_000} s"
+        val lines = ArrayList<String>()
+        lines += "$name: ${com.tjshea.vigilant.app.ui.Format.age(r.startedAtMs, now)} · took $took" + (r.note?.let { " · $it" } ?: "")
+        lines += "    cost: " + (r.costs.takeIf { it.isNotEmpty() }?.joinToString(", ") { costText(it) } ?: "no API was asked (everything was re-used)")
+        return lines
+    }
+
+    private fun costText(c: ProviderCost): String {
+        val name = QuotaPolicy.ALL.firstOrNull { it.id == c.id }?.displayName ?: c.id
+        return "$name ${c.calls}" + if (c.units != c.calls) " (${c.units} of its allowance)" else ""
     }
 
     /** What a background cycle reads at these settings, in words. */

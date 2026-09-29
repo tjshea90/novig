@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.keys.RoundCost
 import com.tjshea.vigilant.data.keys.UsageBook
+import com.tjshea.vigilant.data.keys.UsageDelta
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigKeyTest
 import com.tjshea.vigilant.data.novig.signing.NovigLiveCheck
