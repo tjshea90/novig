@@ -2813,3 +2813,12 @@ Tj's words, in order (each becomes a job below; the design notes come after read
       Not testable here: a real device (notification actions, the overlay over Novig, the phone's own data): Tj's first "Check odds now"
       over his 101 bets and first "✓ Placed" from a real alert are the live checks.
       SHIP: v0.20.0 (code 43).
+
+## "When I pressed check odds now in the tracker, it scanned very slow. Slower than before. And a lot of bets can't be tracked, see the screenshot. If they can't be tracked, how did the app know it was positive EV to begin with? And it said it only updated 61 bets, but I have 100 or so open. Investigate how to make all this work" (Tj, 2026-09-29, after v0.20.0; screenshot: Kade Anderson Over 1.5 "Player Earned Runs Allowed" = "Couldn't read … well enough to grade it"; Erick All Jr. Under 0.5 Player Receptions = "isn't in the box score"; KC Concepcion Over 5.5 Player Rushing Yards = "The box score has no Rushing Yards")
+
+- [ ] U1 Investigate with real data: (a) why Check odds now is slower than v0.19.7 (per-bet CNO page cost, the 2 s gap I added, one page per bet); (b) why those three bets don't grade (market wording, box score naming, missing stat); (c) what the "61 of ~100" really was.
+- [ ] U2 Answer Tj's question in plain words: positive EV comes from the odds (CNO's list / fair price vs Novig's price), grading needs the RESULT from a box score: two different data sources.
+- [ ] U3 Make Check odds now fast: read pages in parallel and/or fewer pages, no wasted waiting.
+- [ ] U4 Make grading work for the markets CNO really lists: every CNO market label read, box-score misses handled (a player who played but has no stat in that group = 0; a player who didn't play = void only when it's certain), names matched.
+- [ ] U5 Make the count honest and complete: every open bet is either checked, or says why not (game over, no CNO page, waiting for a scan), and the ones that can be checked all are.
+- [ ] U6 Full test (test-protocols), ship, Release link.
