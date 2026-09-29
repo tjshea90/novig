@@ -165,7 +165,7 @@ data class TrackerStats(
 
     /**
      * How many standard deviations [profitWithEv] sits from [expectedProfit]: near 0 is what a real edge
-     * looks like, ±2 is unusual luck (or wrong fair prices) . Null with too few bets to say anything.
+     * looks like, ±2 is unusual luck (or wrong fair prices). Null with too few bets to say anything.
      */
     val luck: Double? get() = if (settledWithEv >= MIN_BETS_FOR_LUCK && expectedSd > 1e-9) vsExpected / expectedSd else null
 
@@ -448,8 +448,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             val live = bets.filter { it.status != BetStatus.VOID }
             val open = bets.filter { it.status == BetStatus.PENDING }
             val withClv = live.mapNotNull { it.clvPercent }
-            // "Expected vs actual" over the settled bets whose EV is on record (an imported ✓ has none).
-            val judged = settled.filter { it.evPercentAtBet != null && it.fairAtBet != null }
+            // "Expected vs actual" over the won and lost bets whose EV is on record (an imported ✓ has none; a push is refunded).
+            val judged = settled.filter { (it.status == BetStatus.WON || it.status == BetStatus.LOST) && it.evPercentAtBet != null && it.fairAtBet != null }
             // A bet's profit is stake x (1/cost - 1) with probability p (its fair chance) and -stake otherwise:
             // variance stake^2 x p(1-p) / cost^2.
             val variance = judged.sumOf { b ->
