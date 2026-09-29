@@ -1,22 +1,22 @@
-# CHECKPOINT 2102 — read me first, then TASKS.md
+# CHECKPOINT 2103 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T20:52:17Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `53c85d2d` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T21:03:09Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `7e94742e` (this checkpoint is the commit after it)
 
 ## Just done
-Recorded Tj's request (wallet top-up by typed amount in Settings; 'add money' button from the bet sheet when the wallet is too low; Novig API key+file saved once, permanently; all keys and wallet persist through updates) as B1-B5
+B1-B4 code written (not compiled yet): ManagementKeyStore (data, sealed by KeystoreSecretBox, excluded from backups), controller saveKey/forgetKey/keyFor/remember, typed wallet amount (WalletAmount), TopUp + requestTopUp/backToBet, sheet Add money button, Settings WalletBlock/TopUpBanner/ManagementKeyBlock, Connect with saved key, betting section shown in CNO only too
 
 ## Do this next
-B3/B4 research first: find where the Novig key/PEM, other API keys and the wallet are stored and why the key is re-asked; then B1, B2
+compile (ANDROID_HOME=/opt/android-sdk bash tools/test.sh :app:compileDebugKotlin), fix errors, then update ApiBettingUiTest/ControllerTest and add ManagementKeyStoreTest, WalletAmountTest, persistence-through-update test
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  ae1154d4 ckpt 2102: Recorded Tj's request (wallet top-up by typed amount in Settings; 'add money
   4fa76cb1 ckpt 2101: v0.22.0 (code 50) released and recorded; A1-A6 ticked
   c1e67e57 ckpt 2100: pre-release: v0.22.0: the widget opens only from its button; Settings in sev
   37df2065 ckpt 2099: A1-A5 ticked; RESEARCH.md §40; version bumped to 0.22.0 (code 50); MGM sett
@@ -26,5 +26,5 @@ B3/B4 research first: find where the Novig key/PEM, other API keys and the walle
   0da2dec5 ckpt 2095: A2: widget only opens from its button: miniWindow default off + schema-10 mi
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(14 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
