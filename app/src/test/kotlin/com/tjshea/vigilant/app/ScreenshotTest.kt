@@ -134,17 +134,15 @@ class ScreenshotTest {
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     /** One picture per Settings tab (v0.22.0). */
-    @Test fun settingsTabs() {
-        for (tab in SettingsTab.entries) {
-            compose.setContent {
-                CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
-                    VigilantTheme(darkTheme = true) { Surface(color = MaterialTheme.colorScheme.background) { SettingsScreen(SampleScan.state(), {}, startTab = tab) } }
-                }
-            }
-            compose.onRoot().captureRoboImage("screenshots/5_settings_tab_${tab.name.lowercase()}.png")
-            break
-        }
-    }
+    private fun settingsTab(tab: SettingsTab) = shoot("5_settings_tab_${tab.name.lowercase()}") { SettingsScreen(SampleScan.state(), {}, startTab = tab) }
+
+    @Test fun settingsTabScan() = settingsTab(SettingsTab.SCAN)
+    @Test fun settingsTabCno() = settingsTab(SettingsTab.CNO)
+    @Test fun settingsTabFair() = settingsTab(SettingsTab.FAIR)
+    @Test fun settingsTabFeed() = settingsTab(SettingsTab.FEED)
+    @Test fun settingsTabBetting() = settingsTab(SettingsTab.BETTING)
+    @Test fun settingsTabUsage() = settingsTab(SettingsTab.USAGE)
+    @Test fun settingsTabTools() = settingsTab(SettingsTab.TOOLS)
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
         // No PropLine key: The Odds API buys props on its own.
