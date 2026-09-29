@@ -688,7 +688,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: NovigApiException) {
-                val replace = if (typed == null && e.status == 401 && e.serverMessage?.contains("timestamp") != true) " Enter the key again below." else ""
+                val replace = if (typed == null && e.status == 401 && e.serverMessage?.contains("timestamp") != true) " Tap Replace to enter the key again." else ""
                 _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.advice + replace)) }
             } catch (e: IllegalArgumentException) {
                 _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.message ?: "That key file couldn't be read.")) }
