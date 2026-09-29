@@ -106,9 +106,14 @@ class BetRecheck(
     /** The bets a run would read now ([Plan.todo]) plus what it can't: for a progress line before the first read. */
     suspend fun preview(): Plan = plan(tracker.all())
 
-    /** One pass over every open bet. Runs one pass at a time; a second caller waits for it. [onProgress] gets (read so far, to read). */
-    suspend fun run(onProgress: (done: Int, total: Int) -> Unit = { _, _ -> }): Report = mutex.withLock {
-        val p = plan(tracker.all())
+    /** What [readAll] did: reads tried, bets updated, reads that failed, whether it stopped early. */
+    private data class Tally(val checked: Int, val updated: Int, val failed: Int, val stopped: Boolean)
+
+    /**
+     * Reads [todo]'s books one at a time, [gapMs] apart, saving results in batches (a cancelled read keeps what it got). Stops early when
+     * CNO asks for a pause or [MAX_FAILS_IN_ROW] reads in a row fail. [onProgress] gets (read so far, of how many).
+     */
+    private suspend fun readAll(todo: List<TrackedBet>, onProgress: (Int, Int) -> Unit): Tally {
         var updated = 0
         var failed = 0
         var checked = 0
@@ -123,8 +128,8 @@ class BetRecheck(
             withContext(NonCancellable) { tracker.editMany(batch) }
         }
         try {
-            onProgress(0, p.todo.size)
-            for ((i, bet) in p.todo.withIndex()) {
+            onProgress(0, todo.size)
+            for ((i, bet) in todo.withIndex()) {
                 if (paused()) { stopped = true; break }
                 if (i > 0 && gapMs > 0) delay(gapMs)
                 checked++
@@ -132,7 +137,7 @@ class BetRecheck(
                 if (update == null) {
                     failed++
                     failedInARow++
-                    onProgress(checked, p.todo.size)
+                    onProgress(checked, todo.size)
                     // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
                     if (paused() || failedInARow >= MAX_FAILS_IN_ROW) { stopped = true; break }
                     continue
@@ -140,25 +145,52 @@ class BetRecheck(
                 failedInARow = 0
                 pending[bet.id] = update
                 updated++
-                onProgress(checked, p.todo.size)
+                onProgress(checked, todo.size)
                 if (pending.size >= BATCH) flush()
             }
         } finally {
             flush()
         }
+        return Tally(checked, updated, failed, stopped)
+    }
+
+    /** One pass over every open bet. Runs one pass at a time; a second caller waits for it. [onProgress] gets (read so far, to read). */
+    suspend fun run(onProgress: (done: Int, total: Int) -> Unit = { _, _ -> }): Report = mutex.withLock {
+        val p = plan(tracker.all())
+        val t = readAll(p.todo, onProgress)
         Report(
-            open = p.open, checked = checked, updated = updated, current = p.current, failed = failed,
-            skipped = p.todo.size - checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = stopped,
+            open = p.open, checked = t.checked, updated = t.updated, current = p.current, failed = t.failed,
+            skipped = p.todo.size - t.checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = t.stopped,
         )
     }
 
-    /** Re-reads one bet's books now, whatever else runs or was read a minute ago (the sheet's "Re-read books"); false when it couldn't be read. */
-    suspend fun checkOne(id: String): Boolean = mutex.withLock {
-        val bet = tracker.all().firstOrNull { it.id == id && it.status == BetStatus.PENDING && it.gameUrl != null } ?: return@withLock false
-        if (paused()) return@withLock false
-        val update = read(bet) ?: return@withLock false
+    /**
+     * The closing line, kept (Tj, 2026-09-29: "how well my positive EV bets profit"): CLV, the best early sign an edge is real, is the
+     * fair price read just before the game starts, and it's only recorded when something reads the bet's books then. The background
+     * auto-scan calls this each cycle for the open bets starting within [withinMs] whose books weren't read in the last [freshMs]; the
+     * last read before the start is the closing line ([TrackedBet.closingFair]). Returns how many bets were updated.
+     */
+    suspend fun captureClosing(withinMs: Long = CLOSING_WITHIN_MS, freshMs: Long = CLOSING_FRESH_MS): Int = mutex.withLock {
+        val now = clock()
+        val todo = tracker.all()
+            .filter { b ->
+                b.status == BetStatus.PENDING && b.gameUrl != null && b.startsTs > now && b.startsTs - now <= withinMs &&
+                    (b.nowAtMs == null || now - b.nowAtMs < 0 || now - b.nowAtMs >= freshMs)
+            }
+            .sortedBy { it.startsTs }
+        if (todo.isEmpty()) 0 else readAll(todo) { _, _ -> }.updated
+    }
+
+    /**
+     * Re-reads one bet's books now, whatever else runs or was read a minute ago (the sheet's "Re-read books"); false when it couldn't
+     * be read. It never waits for a whole [run] (minutes): CNO's own one-read-at-a-time queue is all it waits behind.
+     */
+    suspend fun checkOne(id: String): Boolean {
+        val bet = tracker.all().firstOrNull { it.id == id && it.status == BetStatus.PENDING && it.gameUrl != null } ?: return false
+        if (paused()) return false
+        val update = read(bet) ?: return false
         tracker.editMany(mapOf(id to update))
-        true
+        return true
     }
 
     /** [bet]'s books read now and turned into what to change on it, or null when the page couldn't be read or has no two-sided book. */
@@ -205,6 +237,12 @@ class BetRecheck(
 
         /** Bets' results saved together (one file write) every this many reads. */
         const val BATCH = 5
+
+        /** The auto-scan re-reads open bets starting within this ([captureClosing])… */
+        const val CLOSING_WITHIN_MS = 60 * 60_000L
+
+        /** …unless they were read this recently. */
+        const val CLOSING_FRESH_MS = 5 * 60_000L
 
         /** The CNO row a tracked bet came from, as far as the Tracker kept it. */
         fun rowOf(b: TrackedBet) = CnoRow(
