@@ -26,9 +26,33 @@ object BetsScope {
         bets.filter { it.status == BetStatus.PENDING && it.startsTs > now && it.marketId.isNotBlank() && it.outcomeId.isNotBlank() }
 
     /**
-     * [base] widened to cover [bets]: their leagues, every market family, a window reaching past the last game (a day of slack: Novig's start can
-     * differ from the one a bet was logged with), no per-game caps and no live games. Everything else (which sources are on, the reference books,
-     * how fair odds are worked out, their credits) is Tj's, so the fair line is the one the feed uses.
+     * The market families [bets] are on, and so all a pass has to ask the fair-odds sources for (Tj's Diagnostics, 2026-09-29: a Check odds now
+     * cost Kalshi 103 requests, Polymarket 44 and PropLine 24 for 56 bets, because every family was asked for in every league; every source
+     * reads only the families it is given). A bet whose wording can't be read for certain ([BetGrader.pickOf]) asks for every family, so a
+     * market the classification doesn't know is never left unpriced to save a request. A period market (1st half, F5, a set) also counts as its
+     * full-game kind, since a source may file it there.
+     */
+    fun familiesFor(bets: List<TrackedBet>): Set<MarketFamily> {
+        val all = MarketFamily.entries.toSet()
+        val out = HashSet<MarketFamily>()
+        for (bet in bets) {
+            val pick = BetGrader.pickOf(bet) ?: return all
+            out += when (pick) {
+                is BetGrader.Pick.Moneyline -> setOf(MarketFamily.MONEYLINE)
+                is BetGrader.Pick.Spread -> if (pick.period == BetGrader.Period.GAME) setOf(MarketFamily.SPREAD) else setOf(MarketFamily.SPREAD, MarketFamily.FIRST_HALF)
+                is BetGrader.Pick.Total -> if (pick.period == BetGrader.Period.GAME) setOf(MarketFamily.TOTAL) else setOf(MarketFamily.TOTAL, MarketFamily.FIRST_HALF)
+                is BetGrader.Pick.TeamTotal -> setOf(MarketFamily.TEAM_TOTAL, MarketFamily.TOTAL)
+                is BetGrader.Pick.Prop -> setOf(MarketFamily.PLAYER_PROPS)
+                is BetGrader.Pick.FirstSet -> setOf(MarketFamily.FIRST_HALF)
+            }
+        }
+        return out.ifEmpty { all }
+    }
+
+    /**
+     * [base] widened to cover [bets]: their leagues and the market families they are on ([familiesFor]), a window reaching past the last game (a
+     * day of slack: Novig's start can differ from the one a bet was logged with), no per-game caps and no live games. Everything else (which
+     * sources are on, the reference books, how fair odds are worked out, their credits) is Tj's, so the fair line is the one the feed uses.
      */
     fun settingsFor(base: ScanSettings, bets: List<TrackedBet>, now: Long): ScanSettings {
         val leagues = bets.mapNotNullTo(HashSet()) { Leagues.byNovigName(it.league)?.novigName }
@@ -36,7 +60,7 @@ object BetsScope {
         val days = (((lastStart - now).coerceAtLeast(0L) / 86_400_000L) + 2L).toInt()
         return base.copy(
             leagues = leagues,
-            families = MarketFamily.entries.toSet(),
+            families = familiesFor(bets),
             includeLive = false,
             daysAhead = days,
             startsWithinHours = 0,
