@@ -67,7 +67,7 @@ object BetPricingReasons {
         return when {
             quote == null && bet.marketId !in listed -> "Novig no longer lists this market (closed, or the game moved)"
             quote == null -> "No fair-odds source has a line for this bet$trouble"
-            quote.refEvent == null -> "No fair-odds source lists this game$trouble"
+            quote.refEvent == null -> "No fair-odds source has current prices for this game$trouble"
             else -> "Too few current book prices for this exact line (prices older than ${Freshness.LIMIT_TEXT} are left out)$trouble"
         }
     }
