@@ -302,7 +302,8 @@ private fun InsightBooks(i: BetInsight, otherSide: String?, ownBook: String) {
                 Text(if (r.counted) r.fair?.let { Format.percent(it) } ?: "" else if (r.isOwn) "yours" else "—", Modifier.weight(0.8f), style = MaterialTheme.typography.bodySmall, color = dim, maxLines = 1)
                 val ev = r.ev.takeIf { r.counted }
                 Text(
-                    ev?.let { Format.evPercentShort(it) } ?: "—",
+                    // A price a hair either side of fair is "0.0%", not "−0.0%".
+                    ev?.let { if (kotlin.math.abs(it) < 0.0005) "0.0%" else Format.evPercentShort(it) } ?: "—",
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (ev == null) dim else moneyColor(ev),
