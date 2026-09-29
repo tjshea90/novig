@@ -293,10 +293,7 @@ class ApiBettingUiTest {
         sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Failed("Insufficient balance for this order")), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
         compose.onNodeWithTag("addMoney").performClick()
         assertEquals(1, addMoney)
-        sheetScreen2Check()
     }
-
-    private fun sheetScreen2Check() = Unit
 
     @Test
     fun `a refused bet says why and offers to look again, or to bet it again`() {
