@@ -18,7 +18,11 @@ enum class BetSort(val label: String, val natural: String, val reversed: String)
 }
 
 /** Which scanner's bets are listed: the one that found the bet when it was placed ([TrackedBet.source]). */
-enum class ScannerFilter(val label: String) { ALL("All scanners"), VIGILANT("Vigilant"), CNO("CNO") }
+enum class ScannerFilter(val label: String, val short: String) {
+    ALL("All scanners", "All"),
+    VIGILANT("Vigilant", "Vigilant"),
+    CNO("CNO", "CNO"),
+}
 
 object TrackerSort {
 
@@ -27,6 +31,10 @@ object TrackerSort {
     fun inScanner(bets: List<TrackedBet>, f: ScannerFilter): List<TrackedBet> = if (f == ScannerFilter.ALL) bets else bets.filter { scannerOf(it) == f }
 
     /** The chip's text: just the name, until it's the chosen one, when it also says which end is at the top. */
+    /** The pinned sort chip: "Sort: Needs a look", "Sort: Current EV · best" (or "worst" once turned round). */
+    fun barLabel(chosen: BetSort, reversed: Boolean, defaultLabel: String): String =
+        "Sort: " + if (chosen == BetSort.DEFAULT) defaultLabel else "${chosen.label} · ${(if (reversed) chosen.reversed else chosen.natural).substringBefore(' ')}"
+
     fun chipLabel(sort: BetSort, chosen: BetSort, reversed: Boolean, defaultLabel: String): String = when {
         sort == BetSort.DEFAULT -> defaultLabel
         sort != chosen -> sort.label

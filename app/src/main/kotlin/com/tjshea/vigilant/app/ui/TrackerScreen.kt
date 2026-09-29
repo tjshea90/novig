@@ -5,15 +5,19 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,11 +26,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -56,6 +64,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -208,23 +217,24 @@ fun TrackerScreen(
                                     FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text("${f.label} (${counts[f] ?: 0})") })
                                 }
                             }
-                            // Tap a sort to choose it, tap it again to turn it round (newest / oldest first, best / worst EV first).
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                ChipCaption("Sort")
-                                BetSort.entries.forEach { s ->
-                                    FilterChip(
-                                        selected = sort == s,
-                                        onClick = {
-                                            if (sort == s && s != BetSort.DEFAULT) sortReversed = !sortReversed else { sort = s; sortReversed = false }
-                                        },
-                                        label = { Text(TrackerSort.chipLabel(s, sort, sortReversed, defaultLabel(filter)), maxLines = 1) },
-                                    )
+                            // Sort and scanner are menus here, so the bar stays two chip rows tall while it is pinned (wrapped chips took a third of the screen).
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                MenuChip(TrackerSort.barLabel(sort, sortReversed, defaultLabel(filter)), active = sort != BetSort.DEFAULT, modifier = Modifier.weight(1.3f)) { close ->
+                                    // Tap a sort to choose it, tap it again to turn it round (newest / oldest first, best / worst EV first).
+                                    BetSort.entries.forEach { s ->
+                                        MenuChoice(
+                                            TrackerSort.chipLabel(s, sort, sortReversed, defaultLabel(filter)), selected = sort == s,
+                                            onClick = {
+                                                if (sort == s && s != BetSort.DEFAULT) sortReversed = !sortReversed else { sort = s; sortReversed = false }
+                                                close()
+                                            },
+                                        )
+                                    }
                                 }
-                            }
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                ChipCaption("Scanner")
-                                ScannerFilter.entries.forEach { s ->
-                                    FilterChip(selected = scanner == s, onClick = { scanner = s }, label = { Text("${s.label} (${scannerCounts[s] ?: 0})", maxLines = 1) })
+                                MenuChip("Scanner: ${scanner.short}", active = scanner != ScannerFilter.ALL, modifier = Modifier.weight(1f)) { close ->
+                                    ScannerFilter.entries.forEach { s ->
+                                        MenuChoice("${s.label} (${scannerCounts[s] ?: 0})", selected = scanner == s, onClick = { scanner = s; close() })
+                                    }
                                 }
                             }
                         }
@@ -313,12 +323,30 @@ private fun filtered(bets: List<TrackedBet>, f: BetFilter) = when (f) {
     BetFilter.ALL -> bets
 }
 
-/** A row's name ("Sort", "Scanner") centred against the chips beside it. */
+/** A chip that opens a menu of choices ([items] gets a function that closes it): "Sort: Current EV", "Scanner: CNO". */
 @Composable
-private fun ChipCaption(text: String) {
-    Text(
-        text, Modifier.height(32.dp).wrapContentHeight(Alignment.CenterVertically),
-        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun MenuChip(label: String, active: Boolean, modifier: Modifier = Modifier, items: @Composable ColumnScope.(close: () -> Unit) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box(modifier) {
+        FilterChip(
+            selected = active,
+            onClick = { open = true },
+            label = { Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null, Modifier.size(18.dp)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) { items { open = false } }
+    }
+}
+
+/** One choice in a [MenuChip]'s menu, ticked when it is the one in force. */
+@Composable
+private fun MenuChoice(text: String, selected: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(text) },
+        onClick = onClick,
+        leadingIcon = { if (selected) Icon(Icons.Filled.Check, contentDescription = "selected", Modifier.size(18.dp)) else Spacer(Modifier.size(18.dp)) },
+        modifier = Modifier.semantics { this.selected = selected },
     )
 }
 
