@@ -582,6 +582,8 @@ private fun VigilantRoot(
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
     // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
     val tab = tabs.firstOrNull { it.name == tabName } ?: if (mode == ScannerMode.CNO) Tab.CNO else tabs.first()
+    // The tab a Bet sheet's "Add money" left, for "Back to the bet" (Tj, 2026-09-29).
+    var betTab by rememberSaveable { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
 
     androidx.compose.runtime.CompositionLocalProvider(
@@ -597,7 +599,11 @@ private fun VigilantRoot(
                 tabs.forEach { t ->
                     NavigationBarItem(
                         selected = tab == t,
-                        onClick = { tabName = t.name },
+                        onClick = {
+                            // Leaving Settings lets go of a bet waiting on the wallet.
+                            if (t != Tab.SETTINGS) vm.api.dismissTopUp()
+                            tabName = t.name
+                        },
                         icon = { TabIconWithCount(t, state) },
                         label = { Text(t.label) },
                     )
@@ -659,16 +665,26 @@ private fun VigilantRoot(
                         onDismiss = vm::dismissReport,
                         onCopied = vm::reportCopied,
                     ),
-                    onNovigConnect = vm::connectNovig,
+                    onNovigConnect = { typed -> vm.connectNovig(typed) },
                     onNovigTest = vm::testNovig,
                     onNovigDisconnect = vm::disconnectNovig,
                     bettingActions = com.tjshea.vigilant.app.ui.BettingActions(
-                        onEnable = vm.api::enable,
-                        onTransfer = vm.api::transfer,
+                        onEnable = { typed -> vm.api.enable(typed) },
+                        onTransfer = { direction, amount, typed -> vm.api.transfer(direction, amount, typed) },
+                        onSaveKey = vm.api::saveKey,
+                        onForgetKey = vm.api::forgetKey,
                         onDisable = vm.api::disable,
                         onRefreshBalance = { vm.api.refreshBalance() },
                         onSync = { vm.api.sync() },
+                        onBackToBet = {
+                            vm.api.backToBet()
+                            tabName = betTab ?: tabName
+                            betTab = null
+                        },
+                        onDismissTopUp = vm.api::dismissTopUp,
                     ),
+                    // A Bet sheet's "Add money" opens on the wallet.
+                    startTab = if (state.betting.topUp != null) com.tjshea.vigilant.app.ui.SettingsTab.BETTING else com.tjshea.vigilant.app.ui.SettingsTab.SCAN,
                 )
             }
         }
@@ -683,6 +699,11 @@ private fun VigilantRoot(
             onRefresh = vm.api::refreshPlan,
             onRepeat = vm.api::allowRepeat,
             onDismiss = vm.api::dismiss,
+            onAddMoney = {
+                betTab = tab.name
+                vm.api.requestTopUp()
+                tabName = Tab.SETTINGS.name
+            },
         )
     }
 

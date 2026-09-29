@@ -614,7 +614,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
 private fun ColumnScope.BettingTab(
     state: UiState,
     onUpdate: SettingsUpdate,
-    onNovigConnect: (String, String) -> Unit,
+    onNovigConnect: (com.tjshea.vigilant.data.novig.signing.ManagementKey?) -> Unit,
     onNovigTest: () -> Unit,
     onNovigDisconnect: () -> Unit,
     bettingActions: BettingActions,
