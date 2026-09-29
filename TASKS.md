@@ -2753,11 +2753,46 @@ Tj's words, in order (each becomes a job below; the design notes come after read
       + price edit -> T8 (notification: `✓ Placed $X` / `Skip` action buttons that track without opening the app via a
       BroadcastReceiver, the tap opens Novig but the notification stays (no auto-cancel); EvAlert carries league/gameUrl/
       betUrl/marketId so the tracked bet rechecks and grades) -> T9 full test protocol, v0.20.0 (code 43), Release.
-- [ ] T2 "Check odds now" checks every open bet (101 of 101, not 40 of 40).
-- [ ] T3 Tap an open bet: a sheet with the bet's odds across the other books, the odds Tj bet at, the difference from the current devigged fair odds, etc.
-- [ ] T4 Every final event grades every open bet win/loss/push: research the API that claims to grade all props markets; use it if it works.
-- [ ] T5 Stats are right: wins, losses, pushes, total profit (audit, fix, test).
-- [ ] T6 Other tracker improvements (coding, efficiency, accuracy), aimed at "how well do my +EV bets profit with Vigilant".
-- [ ] T7 A Replace button on every open bet: opens Novig with that exact bet in the bet slip and the stake preset from Settings.
-- [ ] T8 A fast way to mark a bet placed from its push notification.
+- [x] T2 "Check odds now" checks every open bet (101 of 101, not 40 of 40).
+      DONE: `BetRecheck` has no cap; one `Report` where read + current + failed + not-tried + over + Vigilant-only always adds
+      up to the open count, and the toast says it in words (`Report.summary`); count on the button ("Checking 12/61…");
+      CNO pages read 2 s apart, results saved in batches of 5 (`BetTracker.editMany`), a cancelled run keeps what it read, a
+      run stops when CNO asks for a pause or 5 reads in a row fail; Vigilant-only bets start a Vigilant scan (their markets
+      pinned) when that scanner is on. Tests: BetRecheckTest (101 bets, accounting, pause/failure stop, cancel, pace, one bet).
+- [x] T3 Tap an open bet: a sheet with the bet's odds across the other books, the odds Tj bet at, the difference from the current devigged fair odds, etc.
+      DONE: `TrackerBetSheet.kt` (`BetSheet`/`BetSheetContent`) over `BetInsight`: odds bet at + implied chance, fair when bet, fair now,
+      EV now at the price bet, the gap in points, how far the market moved, break-even odds, Novig's price now, CLV, and every
+      book's odds with its own devigged fair and the EV of the price bet at against it; books kept on the bet (`TrackedBet.books`),
+      re-read on opening when over 2 minutes old (CNO bets), Vigilant bets fill from scans. Tests: BetInsightTest, TrackerTextTest, TrackerUiTest.
+- [x] T4 Every final event grades every open bet win/loss/push: research the API that claims to grade all props markets; use it if it works.
+      DONE (RESEARCH.md §34): the API is PropLine; its per-prop grading (`/events/{id}/results`) is paid ($9/mo+), the free key gets
+      it redacted; its free `/scores` + `/stats` duplicate what ESPN/MLB give the app for free and would spend the 1,000/day key
+      the scans use, so it is NOT wired (option kept in §34). What was actually leaving final bets open, fixed: no hockey box parser
+      (NHL props never graded), basketball steals/blocks/turnovers/P+R/P+A/R+A/S+B/double+triple double, football tackles, tennis
+      (ESPN scoreboard: sets/games; retired/walkover = called), alternate/game/match totals, "Games Won", "Games Spread", "1st Set
+      Winner", set spread/total sets, every Novig prop type in `statOf`. Every bet a pass can't grade now says WHY on the bet
+      (`gradeNote`, `gradeManual`: game not over / market can't be read / player not in the box score / no feed / called off / over 30
+      days) and every graded one says what it rests on ("Final: Mets 7, Nationals 1"); "Grade now" forces a pass; an undone result
+      shows "Grade automatically". Tests: BetGraderTest (+7), BetSettlerTest (+6), FreeScoresTest (+6, real ESPN fixtures).
+      NOT verifiable from here: which of Tj's real open bets were stuck (his bets.json is on his phone): each shows its reason now.
+- [x] T5 Stats are right: wins, losses, pushes, total profit (audit, fix, test).
+      DONE (`BetTracker.stats`): Expected is over the same won+lost bets as Profit (open bets had been in it), open bets have their
+      own at-risk / pays / expected, voids counted as voids, pushes and FMV as pushes, outliers out of everything with the real
+      bankroll's `profitAll` shown beside it, running-profit line ordered by game date (was: when Vigilant graded). Tests: BetTrackerTest (+5).
+- [x] T6 Other tracker improvements (coding, efficiency, accuracy), aimed at "how well do my +EV bets profit with Vigilant".
+      DONE: "Are the edges real?" (expected vs actual, difference, luck in standard deviations with a plain verdict), "Where it's working"
+      (`TrackerBreakdown`: by scanner / league / market kind / edge band / price band, each with record, profit, ROI, avg EV, CLV),
+      open-bet summary line, open list sorted by need (started + needs a tap first, then soonest game), price edit
+      (`BetTracker.setPrice`: the price really got), batched saves (one fsync per batch, not per bet), lists and stats memoised
+      (`remember`) instead of recomputed each recomposition. Tests: TrackerBreakdownTest, BetTrackerTest.
+- [x] T7 A Replace button on every open bet: opens Novig with that exact bet in the bet slip and the stake preset from Settings.
+      DONE: `BetReplace` (link `novigapp://events/<outcome>` + Settings' $1 / Kelly (from fair now vs Novig's price now) / my amount);
+      a bet with no known outcome is looked up like a widget tap and the outcome is kept; on every open bet's card and in the sheet.
+      Tests: BetReplaceTest, TrackerUiTest.
+- [x] T8 A fast way to mark a bet placed from its push notification.
+      DONE: the alert now has a "✓ Placed $X" button (X = Settings' bet-slip amount, else $1) that tracks the bet at the alert's price
+      and hides it everywhere without opening Vigilant (`AlertActionReceiver` -> `EvAlerts.handle` -> `AlertPlacement`), turning the alert
+      into a quiet "Tracked ✓ … Undo"; tapping the alert still opens the bet in Novig but no longer dismisses it, so the button is
+      there when the bet is in. `EvAlert` carries league/market/CNO page/fair so the tracked bet rechecks and grades. Price got differs?
+      "Change price" in the Tracker. Tests: AlertPlacementTest (5), AutoScanTest (+3).
 - [ ] T9 Full test protocol (test-protocols skill) after T2-T8: improve the app, UI, code; fix bugs; ship + Release link.
