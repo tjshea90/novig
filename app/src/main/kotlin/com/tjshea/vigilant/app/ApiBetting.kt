@@ -66,6 +66,43 @@ data class BetSheetUi(
     val maxStake: Double = 10.0,
 )
 
+/**
+ * The amount Tj types for the Vigilant wallet (Tj, 2026-09-29: "allow me to add custom amounts to the vigilant wallet in the app settings by
+ * typing in an amount"): dollars and cents, "$" and thousands commas allowed, more than $0 and at most [MAX] (a typo guard: an extra zero
+ * shouldn't move a month's bankroll).
+ */
+object WalletAmount {
+    const val MAX = 10_000.0
+
+    /** The dollars in [text], or null when it isn't an amount that can be sent. */
+    fun parse(text: String): Double? {
+        val t = text.trim().removePrefix("$").replace(",", "").trim()
+        if (!Regex("""\d{1,7}(\.\d{0,2})?|\.\d{1,2}""").matches(t)) return null
+        val v = t.toDoubleOrNull() ?: return null
+        return v.takeIf { it >= 0.01 && it <= MAX }
+    }
+
+    /** Why [text] can't be sent, in words; null when it can (or the field is still empty). */
+    fun problem(text: String): String? {
+        val t = text.trim()
+        if (t.isEmpty()) return null
+        if (parse(t) != null) return null
+        val v = t.removePrefix("$").replace(",", "").trim().toDoubleOrNull()
+        return when {
+            v == null -> "Type an amount in dollars, like 25 or 12.50"
+            v > MAX -> "At most ${String.format(Locale.US, "$%,.0f", MAX)} at a time"
+            v < 0.01 -> "More than \$0, please"
+            else -> "Dollars and cents only (two decimal places)"
+        }
+    }
+
+    /** What a bet short by [needed] dollars suggests adding: whole dollars, rounded up, at least $1. */
+    fun suggest(needed: Double): Double = kotlin.math.ceil(needed - 1e-9).coerceAtLeast(1.0).coerceAtMost(MAX)
+
+    /** [v] as the field shows it: "25" for whole dollars, "12.50" otherwise. */
+    fun text(v: Double): String = if (v == kotlin.math.floor(v)) String.format(Locale.US, "%.0f", v) else String.format(Locale.US, "%.2f", v)
+}
+
 /** What [BetTarget] is made of, from a +EV card or a CNO card. */
 object ApiBetTargets {
     fun of(o: Opportunity): BetTarget? {
