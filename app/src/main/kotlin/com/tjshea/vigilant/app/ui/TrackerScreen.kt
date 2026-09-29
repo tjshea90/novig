@@ -206,8 +206,8 @@ fun TrackerScreen(
                     }
                     item(key = "sort") {
                         // Tap a sort to choose it, tap it again to turn it round (newest / oldest first, best / worst EV first).
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-                            Caption("Sort")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            ChipCaption("Sort")
                             BetSort.entries.forEach { s ->
                                 FilterChip(
                                     selected = sort == s,
