@@ -210,9 +210,8 @@ fun TrackerScreen(
                             ) { Text(v.label, maxLines = 1) }
                         }
                     }
-                    if (checkStats != null && checkStart != null) {
-                        CheckOddsCounter(checkStats, state.checkingOdds, state.checkProgress, checkStart, now)
-                    }
+                    // One row, so the pinned bar stays compact; what it counts is said just below, in the list.
+                    if (checkStats != null) CheckOddsCounter(checkStats)
                     when (view) {
                         TrackerView.STATS -> Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TrackerPeriod.entries.forEach { p ->
@@ -247,6 +246,16 @@ fun TrackerScreen(
                             }
                         }
                     }
+                }
+            }
+            if (checkStats != null && checkStart != null) {
+                item(key = "checkCaption") {
+                    Text(
+                        TrackerText.checkCaption(checkStats, state.checkingOdds, state.checkProgress, checkStart, now),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp).testTag("checkCaption"),
+                    )
                 }
             }
             when (view) {
@@ -706,37 +715,28 @@ private fun PriceDialog(bet: TrackedBet, onSave: (Int) -> Unit, onDismiss: () ->
 /**
  * The "Check odds now" counter, pinned at the top of the Tracker (Tj, 2026-09-29): how many open bets are +EV and −EV right now at the price
  * they were placed, the share that's +EV, and their average EV with the ones over ±5% left out ([CheckOddsStats]). It starts at 0 with each new
- * check and counts up as the refreshed odds are saved.
+ * check and counts up as the refreshed odds are saved. One row: [TrackerText.checkCaption] says what it counts, below the pinned bar.
  */
 @Composable
-fun CheckOddsCounter(stats: CheckOddsStats, checking: Boolean, progress: Pair<Int, Int>?, startedAtMs: Long, now: Long, modifier: Modifier = Modifier) {
+fun CheckOddsCounter(stats: CheckOddsStats, modifier: Modifier = Modifier) {
     val said = TrackerText.checkCounts(stats) + " · " + TrackerText.checkAverage(stats)
-    Column(modifier.fillMaxWidth().padding(top = 6.dp).testTag("checkCounter")) {
-        Row(
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = said },
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            CounterValue(stats.positive.toString(), "+EV", Edge.colors.positive)
-            CounterValue(stats.negative.toString(), "−EV", Edge.colors.negative)
-            CounterValue(stats.positiveShare?.let { Format.percent(it, 0) } ?: "–", "+EV", MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.weight(1f))
-            val avg = stats.averageEv
-            CounterValue(
-                avg?.let(Format::evPercentShort) ?: "–", "avg EV",
-                when {
-                    avg == null -> MaterialTheme.colorScheme.onSurface
-                    avg >= 0 -> Edge.colors.positive
-                    else -> Edge.colors.negative
-                },
-            )
-        }
-        Text(
-            TrackerText.checkCaption(stats, checking, progress, startedAtMs, now),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            modifier = Modifier.testTag("checkCaption"),
+    Row(
+        modifier.fillMaxWidth().padding(top = 4.dp).semantics(mergeDescendants = true) { contentDescription = said }.testTag("checkCounter"),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        CounterValue(stats.positive.toString(), "+EV", Edge.colors.positive)
+        CounterValue(stats.negative.toString(), "−EV", Edge.colors.negative)
+        CounterValue(stats.positiveShare?.let { Format.percent(it, 0) } ?: "–", "+EV", MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.weight(1f))
+        val avg = stats.averageEv
+        CounterValue(
+            avg?.let(Format::evPercentShort) ?: "–", "avg EV",
+            when {
+                avg == null -> MaterialTheme.colorScheme.onSurface
+                avg >= 0 -> Edge.colors.positive
+                else -> Edge.colors.negative
+            },
         )
     }
 }
