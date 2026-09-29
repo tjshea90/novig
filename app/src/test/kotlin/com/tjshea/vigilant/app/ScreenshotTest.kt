@@ -1303,8 +1303,9 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
     @Test fun trackerBetsShowTheirEvNowGreenOrRed() {
         shoot("4b_tracker_bets") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}, initialView = com.tjshea.vigilant.app.ui.TrackerView.BETS) }
-        compose.onNodeWithText("now +3.1% EV").assertExists()
-        compose.onNodeWithText("now −2.1% EV").assertExists()
+        // The EV the fair odds now give the price each bet was placed at (+100 and -110), "now" while the read is young.
+        compose.onNodeWithText("now +3.1% EV at your +100").assertExists()
+        compose.onNodeWithText("now −2.1% EV at your -110").assertExists()
         compose.onNodeWithText("Open (3)").assertExists()
         // Open bets only by default: the settled ones are one tap away.
         compose.onAllNodesWithText("Won · undo").assertCountEquals(0)
