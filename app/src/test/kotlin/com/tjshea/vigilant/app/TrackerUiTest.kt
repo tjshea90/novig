@@ -243,6 +243,26 @@ class TrackerUiTest {
         compose.onRoot().captureRoboImage("screenshots/4d_tracker_open_bets.png")
     }
 
+    /** The Bets list sorted by current EV, with a Vigilant bet priced by Vigilant, an old read, and a bet nothing could price. */
+    @Test
+    fun sortedScreenshot() {
+        val base = SampleScan.state()
+        val vig = com.tjshea.vigilant.data.tracker.BetTracker.VIA_VIGILANT
+        val state = base.copy(
+            bets = base.bets.map { b ->
+                when (b.id) {
+                    "b3" -> b.copy(nowFair = 0.478, nowEv = 0.062, nowAtMs = now - 90_000L, nowBooks = 5, nowVia = vig, american = 110, stake = 25.0)
+                    "b4" -> b.copy(nowAtMs = now - 2 * hour, stake = 5.0)
+                    "b5" -> b.copy(nowFair = null, nowEv = null, nowAtMs = null, nowBooks = null, nowNote = "No fair-odds source lists this game", nowNoteAtMs = now - 60_000L, stake = 10.0)
+                    else -> b
+                }
+            },
+        )
+        screen { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onNodeWithText("Current EV").performClick()
+        compose.onRoot().captureRoboImage("screenshots/4g_tracker_sorted_by_ev.png")
+    }
+
     @Test
     fun sheetScreenshot() {
         sheet(settings = SampleScan.settings.copy(slipStake = SlipStake.ONE_DOLLAR))
