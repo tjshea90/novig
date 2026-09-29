@@ -6,7 +6,9 @@ import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.engine.Odds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -33,8 +35,11 @@ class BetRecheck(
     private val clock: () -> Long = System::currentTimeMillis,
     /** CNO asked for a pause: no more reads until it's over. */
     private val paused: () -> Boolean = { false },
-    /** Wait between two bets' reads: CNO's game page is two requests, and it's one small server. */
-    private val gapMs: Long = 0,
+    /**
+     * Pages read at once. CNO's pace, not the wait for each answer, is what limits a pass (a page is two requests and every request
+     * waits its turn), so a few at a time finish the hundred open bets in about a minute instead of five.
+     */
+    private val concurrency: Int = 1,
 ) {
     /** Every open bet, in exactly one of the last five groups (they add up to [open]). */
     data class Report(
@@ -110,16 +115,19 @@ class BetRecheck(
     private data class Tally(val checked: Int, val updated: Int, val failed: Int, val stopped: Boolean)
 
     /**
-     * Reads [todo]'s books one at a time, [gapMs] apart, saving results in batches (a cancelled read keeps what it got). Stops early when
-     * CNO asks for a pause or [MAX_FAILS_IN_ROW] reads in a row fail. [onProgress] gets (read so far, of how many).
+     * Reads [todo]'s books, [concurrency] at a time, soonest game first, saving results in batches (a cancelled read keeps what it
+     * got). Stops early when CNO asks for a pause or [MAX_FAILS_IN_ROW] reads in a row fail (reads already under way finish).
+     * [onProgress] gets (read so far, of how many).
      */
     private suspend fun readAll(todo: List<TrackedBet>, onProgress: (Int, Int) -> Unit): Tally {
         var updated = 0
         var failed = 0
         var checked = 0
         var failedInARow = 0
-        var stopped = false
+        @Volatile var stopped = false
         val pending = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
+        val lock = Mutex()
+        // Callers hold [lock].
         suspend fun flush() {
             if (pending.isEmpty()) return
             val batch = LinkedHashMap(pending)
@@ -127,29 +135,37 @@ class BetRecheck(
             // A cancelled pass still saves what it has read.
             withContext(NonCancellable) { tracker.editMany(batch) }
         }
+        val queue = Channel<TrackedBet>(Channel.UNLIMITED).apply { todo.forEach { trySend(it) }; close() }
         try {
             onProgress(0, todo.size)
-            for ((i, bet) in todo.withIndex()) {
-                if (paused()) { stopped = true; break }
-                if (i > 0 && gapMs > 0) delay(gapMs)
-                checked++
-                val update = read(bet)
-                if (update == null) {
-                    failed++
-                    failedInARow++
-                    onProgress(checked, todo.size)
-                    // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
-                    if (paused() || failedInARow >= MAX_FAILS_IN_ROW) { stopped = true; break }
-                    continue
+            coroutineScope {
+                repeat(concurrency.coerceIn(1, todo.size.coerceAtLeast(1))) {
+                    launch {
+                        for (bet in queue) {
+                            if (stopped) break
+                            if (paused()) { stopped = true; break }
+                            val update = read(bet)
+                            lock.withLock {
+                                checked++
+                                if (update == null) {
+                                    failed++
+                                    failedInARow++
+                                    // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
+                                    if (paused() || failedInARow >= MAX_FAILS_IN_ROW) stopped = true
+                                } else {
+                                    failedInARow = 0
+                                    pending[bet.id] = update
+                                    updated++
+                                    if (pending.size >= BATCH) flush()
+                                }
+                                onProgress(checked, todo.size)
+                            }
+                        }
+                    }
                 }
-                failedInARow = 0
-                pending[bet.id] = update
-                updated++
-                onProgress(checked, todo.size)
-                if (pending.size >= BATCH) flush()
             }
         } finally {
-            flush()
+            withContext(NonCancellable) { lock.withLock { flush() } }
         }
         return Tally(checked, updated, failed, stopped)
     }
