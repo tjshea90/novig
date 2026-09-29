@@ -79,12 +79,15 @@ class OpenBetPricerTest {
     /** The Odds API, faked: quotes the Ravens @ Cowboys game only, and counts its calls. */
     private class FakeOddsApi : ReferenceSource {
         var calls = 0
+        /** The families the last call was asked for. */
+        var asked: Set<com.tjshea.vigilant.data.scanner.MarketFamily> = emptySet()
         override val id = "oddsapi"
         override val displayName = "The Odds API"
         override val metered = true
         override fun reuseMs(settings: ScanSettings) = settings.oddsApiReuseMinutes * 60_000L
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
             calls++
+            asked = settings.families
             return RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0, 488, 12)
         }
     }
