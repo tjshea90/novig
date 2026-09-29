@@ -242,9 +242,8 @@ class PlayerTeams(
         /** The player a bet is on: "Dalton Schultz Over 5.5" → "Dalton Schultz". */
         fun playerOf(row: CnoRow): String? = if (isPlayerBet(row)) Picks.split(row.bet).first else null
 
-        /** "Houston Texans @ Indianapolis Colts" → both teams' names (also "A vs B", "A vs. B", "A at B"). */
-        fun sides(event: String): List<String> =
-            event.split(Regex("""\s+(?:@|vs\.?|at|v)\s+""", RegexOption.IGNORE_CASE)).map { it.trim() }.filter { it.isNotEmpty() }.take(2)
+        /** "Houston Texans @ Indianapolis Colts" → both teams' names ([Picks.sides]). */
+        fun sides(event: String): List<String> = com.tjshea.vigilant.data.match.Picks.sides(event)
 
         private fun norm(s: String) = s.lowercase().replace("&", "and").replace(Regex("[^a-z0-9]+"), " ").trim()
 

@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.cno
 
+import com.tjshea.vigilant.data.match.Picks
 import com.tjshea.vigilant.engine.Odds
 import kotlin.math.abs
 
@@ -21,6 +22,8 @@ data class CnoScreened(val picks: List<CnoPick>, val hidden: Map<CnoChecks.Reaso
  * RESEARCH.md §19). CNO already applies the same filters server-side; these catch anything its
  * page ignored or that the link overrode, plus what CNO doesn't check:
  *
+ *  - anything that isn't a game between two sides: futures and awards (Tj, 2026-09-29: "I'm not
+ *    interested in futures bets. Leave those out of the app");
  *  - EV that doesn't follow from the row's own fair odds and price (a misread row);
  *  - one-way devigs (CNO's ⚠️: fair value from a single side plus a guessed juice);
  *  - EV so high it's almost always a stale or mismatched line ([MAX_EV]);
@@ -38,6 +41,7 @@ object CnoChecks {
     const val STUCK_MS = 10 * 60_000L
 
     enum class Reason(val text: String) {
+        NOT_A_GAME("not a game (futures are left out)"),
         MISMATCH("EV doesn't follow from its fair odds"),
         ONE_WAY("devigged from one side only"),
         BOOKS("too few books"),
@@ -65,6 +69,7 @@ object CnoChecks {
     }
 
     private fun reject(row: CnoRow, f: CnoFilters, now: Long): Reason? {
+        if (!Picks.isGame(row.event)) return Reason.NOT_A_GAME
         val fair = fairProbability(row)
         val started = row.startsAtMs != null && row.startsAtMs <= now
         // Live rows may carry a fee in CNO's EV; pregame Novig fills are free, so there it must add up.

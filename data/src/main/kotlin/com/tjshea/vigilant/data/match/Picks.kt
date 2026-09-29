@@ -3,6 +3,15 @@ package com.tjshea.vigilant.data.match
 /** A bet's name read apart: who it's on, and which side and line ("Under 69.5", "-33.5", "Yes"). */
 object Picks {
 
+    private val SIDES = Regex("""\s+(?:@|vs\.?|at|v)\s+""", RegexOption.IGNORE_CASE)
+
+    /** "Houston Texans @ Indianapolis Colts" → both teams' names (also "A vs B", "A vs. B", "A at B", "A v B"). */
+    fun sides(event: String): List<String> =
+        event.split(SIDES).map { it.trim() }.filter { it.isNotEmpty() }.take(2)
+
+    /** A game between two sides, not a futures market ("NFL Championship 2026-27") or an award. */
+    fun isGame(event: String): Boolean = sides(event).size == 2
+
     private val PICK_LINE = Regex("""^(.*?)\s*((?:Over|Under)\s+[\d.]+|[+\-−][\d.]+|Yes|No)$""", RegexOption.IGNORE_CASE)
 
     /**

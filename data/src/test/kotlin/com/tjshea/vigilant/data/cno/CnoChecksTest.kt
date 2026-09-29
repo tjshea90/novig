@@ -38,6 +38,7 @@ class CnoChecksTest {
         val s = CnoChecks.screen(snap(futures, award, tennis, game), CnoFilters(), now)
         assertEquals(listOf("Buffalo Bills", "Jannik Sinner"), s.picks.map { it.row.bet }.sorted())
         assertEquals(2, s.hiddenCount)
+        assertEquals(mapOf(CnoChecks.Reason.NOT_A_GAME to 2), s.hidden)
     }
 
     @Test
