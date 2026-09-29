@@ -139,16 +139,16 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
     }
 
     /**
-     * Ledger rows of [kind] for [subaccountKeyId] whose event was scheduled in ([startsAfterMs], [startsBeforeMs]) (both exclusive;
-     * the docs filter these by the event's scheduled start), paged until [maxRows].
+     * Ledger rows of [kind] (every kind when null) for [subaccountKeyId] whose event was scheduled in ([startsAfterMs], [startsBeforeMs]) (both
+     * exclusive; the docs filter these by the event's scheduled start), paged until [maxRows].
      */
-    open suspend fun ledger(subaccountKeyId: String, kind: String, startsAfterMs: Long, startsBeforeMs: Long, maxRows: Int = 1_000): List<LedgerRow> {
+    open suspend fun ledger(subaccountKeyId: String, kind: String?, startsAfterMs: Long, startsBeforeMs: Long, maxRows: Int = 1_000): List<LedgerRow> {
         val out = ArrayList<LedgerRow>()
         var cursor: String? = null
         do {
             val query = buildString {
-                append("kind=").append(kind)
-                append("&limit=").append(minOf(500, maxRows))
+                kind?.let { append("kind=").append(it).append('&') }
+                append("limit=").append(minOf(500, maxRows))
                 append("&startsAfter=").append(startsAfterMs)
                 append("&startsBefore=").append(startsBeforeMs)
                 cursor?.let { append("&after=").append(percent(it)) }
