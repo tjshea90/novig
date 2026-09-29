@@ -974,8 +974,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Re-reads one open bet's books now (the sheet's "Re-read books", and when it opens on old odds):
-     * its CNO game page; only a CNO bet has one. [quiet]: no word when it couldn't be read.
+     * Re-reads one open bet's odds now (the sheet's "Re-read books" / "Price now", and, for a CNO bet, when it opens on old odds): a CNO
+     * bet's CNO game page; a Vigilant bet (no page), or a CNO bet whose page couldn't be read, is priced from Vigilant's own fair odds
+     * ([OpenBetPricer]). [quiet]: no word when it couldn't be read.
      */
     fun rereadBooks(id: String, quiet: Boolean = false) {
         if (_state.value.rereadingBet != null) return
@@ -984,9 +985,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _state.update { it.copy(rereadingBet = id) }
+        val settings = _state.value.settings
         viewModelScope.launch {
+            var why: String? = null
             val ok = try {
-                withContext(Dispatchers.IO) { c.recheck.checkOne(id) }
+                withContext(Dispatchers.IO) {
+                    val bet = c.tracker.all().firstOrNull { it.id == id }
+                    if (bet?.gameUrl != null && c.recheck.checkOne(id)) {
+                        true
+                    } else {
+                        val priced = c.betPricer?.takeIf { settings.vigilantOn }?.run(settings, listOf(id))?.priced == 1
+                        if (!priced) why = c.tracker.all().firstOrNull { it.id == id }?.nowNote
+                        priced
+                    }
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -994,7 +1006,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _state.update { it.copy(rereadingBet = null) }
             }
-            if (!ok && !quiet) _toasts.tryEmit("Couldn't read this bet's books: CrazyNinjaOdds didn't answer, or the bet has left its page")
+            if (!ok && !quiet) _toasts.tryEmit(why?.let { "Couldn't price this bet: $it" } ?: "Couldn't read this bet's odds: CrazyNinjaOdds didn't answer, or the bet has left its page")
         }
     }
 
