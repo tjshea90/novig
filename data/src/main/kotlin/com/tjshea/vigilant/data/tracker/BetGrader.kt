@@ -323,6 +323,21 @@ object BetGrader {
 
     private const val MIN_TEAM = 0.8
 
+    /** A box score with fewer players than this isn't posted yet (a real one has dozens): nobody is judged absent from it. */
+    private const val MIN_BOX = 8
+
+    private val FOOTBALL = setOf("NFL", "NCAAF")
+
+    /**
+     * Football stats ESPN lists only for a player who recorded one (a receiver with no carries has no rushing line): a player
+     * found in the box score, or not in it at all, with none of these has zero. Longest plays are left out: no play is no market.
+     */
+    private val FOOTBALL_ZERO_STATS = setOf(
+        "PASSING_YARDS", "PASSING_TOUCHDOWNS", "PASSING_COMPLETIONS", "PASSING_ATTEMPTS", "INTERCEPTIONS_THROWN",
+        "RUSHING_YARDS", "RUSHING_ATTEMPTS", "RECEIVING_YARDS", "RECEPTIONS", "RUSHING_AND_RECEIVING_YARDS", "PASSING_AND_RUSHING_YARDS",
+        "TOUCHDOWNS", "TACKLES_ASSISTS", "SACKS", "FIELD_GOALS_MADE", "KICKING_POINTS",
+    )
+
     private val GAME_TOTAL = Regex("^total( points| runs| goals| games| sets)?$")
     private val FIRST_INNING_WORDS = Regex("1st inning|first inning|nrfi|yrfi")
     private val FIRST_SET_WORDS = Regex("1st set|first set|\\bset 1\\b")
