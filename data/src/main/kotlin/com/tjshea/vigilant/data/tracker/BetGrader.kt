@@ -299,6 +299,16 @@ object BetGrader {
         }.singleOrNull()
     }
 
+    /** A box-score line whose name is close to [player]'s (same surname, first names starting alike) without being the same name. */
+    private fun lookalike(player: String, lines: List<PlayerLine>): Boolean {
+        val key = PlayerNames.key(player).split(' ')
+        if (key.size < 2) return false
+        return lines.any { l ->
+            val k = PlayerNames.key(l.name).split(' ')
+            k.size >= 2 && k.last() == key.last() && k.first().first() == key.first().first()
+        }
+    }
+
     private fun compare(mine: Double, theirs: Double): BetStatus = when {
         mine > theirs + 1e-9 -> BetStatus.WON
         mine < theirs - 1e-9 -> BetStatus.LOST
