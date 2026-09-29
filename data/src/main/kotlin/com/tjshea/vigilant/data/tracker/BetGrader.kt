@@ -302,14 +302,27 @@ object BetGrader {
         }.singleOrNull()
     }
 
-    /** A box-score line whose name is close to [player]'s (same surname, first names starting alike) without being the same name. */
+    /**
+     * A box-score line whose name is close to [player]'s: first names starting alike and the same surname, give or take a letter
+     * ("Gustavson" / "Gustavsson"), without being the same name. Someone who's this close is a spelling to check, not a scratch.
+     */
     private fun lookalike(player: String, lines: List<PlayerLine>): Boolean {
         val key = PlayerNames.key(player).split(' ')
         if (key.size < 2) return false
         return lines.any { l ->
             val k = PlayerNames.key(l.name).split(' ')
-            k.size >= 2 && k.last() == key.last() && k.first().first() == key.first().first()
+            k.size >= 2 && k.first().first() == key.first().first() && withinOneLetter(k.last(), key.last())
         }
+    }
+
+    /** Whether [a] and [b] are the same word, or differ by one letter added, dropped or changed (only for words of 5+ letters, or exactly equal). */
+    private fun withinOneLetter(a: String, b: String): Boolean {
+        if (a == b) return true
+        if (a.length < 5 || b.length < 5 || kotlin.math.abs(a.length - b.length) > 1) return false
+        if (a.length == b.length) return a.indices.count { a[it] != b[it] } == 1
+        val (long, short) = if (a.length > b.length) a to b else b to a
+        val at = short.indices.firstOrNull { short[it] != long[it] } ?: return true
+        return long.removeRange(at, at + 1) == short
     }
 
     private fun compare(mine: Double, theirs: Double): BetStatus = when {
