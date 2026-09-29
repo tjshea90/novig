@@ -88,7 +88,18 @@ data class TrackedBet(
     val gradeAtMs: Long? = null,
     /** [gradeNote] is a reason only Tj can fix with a tap (a market or player the feeds can't grade), not a game still being played. */
     val gradeManual: Boolean = false,
+    /**
+     * Placed through Novig's API from Vigilant (Tj, 2026-09-29): the order, the contracts that filled (1¢ each when they win), the dollars paid
+     * for them and the taker fee. Everything else about the bet is exact from the fills, and Novig's own ledger grades it.
+     */
+    val orderId: String? = null,
+    val contracts: Long? = null,
+    val paid: Double? = null,
+    val fee: Double? = null,
 ) {
+    /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
+    val viaApi: Boolean get() = orderId != null
+
     /** What a win pays back in profit: every $1 of cost returns $1 / cost. */
     val profitIfWon: Double get() = stake * (1.0 / cost - 1.0)
 
@@ -233,7 +244,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             gameUrl = row.gameUrl,
             betUrl = row.betUrl,
         )
-        store.update { list -> list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING } + bet }
+        store.update { list -> list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null } + bet }
         return bet
     }
 
@@ -274,13 +285,14 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             gameUrl = a.gameUrl,
             betUrl = a.betUrl,
         )
-        store.update { list -> list.filterNot { it.placedKey == a.key && it.status == BetStatus.PENDING } + bet }
+        store.update { list -> list.filterNot { it.placedKey == a.key && it.status == BetStatus.PENDING && it.orderId == null } + bet }
         return bet
     }
 
     /** Undo, or "not placed after all": the open bet that ✓ logged goes. Settled ones stay. */
     suspend fun untrack(placedKey: String) {
-        store.update { list -> if (list.none { it.placedKey == placedKey }) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING } }
+        // A bet placed through the API is a real order on Novig: only deleting it in the Tracker removes it.
+        store.update { list -> if (list.none { it.placedKey == placedKey }) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null } }
     }
 
     /** Changes one bet (stake, a recheck, a settlement): [transform] gets the stored bet. */
@@ -394,8 +406,63 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
             book = ownBook,
         )
-        store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING }) + bet }
+        store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet }
         return bet
+    }
+
+    /**
+     * A bet placed through Novig's API (Tj, 2026-09-29): logged from what the order really did, [fills] summed. The stake is the dollars
+     * paid plus the fee, the price the average paid, the EV that at the fair probability the bet rested on. The same order is never logged
+     * twice (a sync after a lost answer finds it already here). Null when nothing filled.
+     */
+    suspend fun logApi(target: com.tjshea.vigilant.data.novig.trading.BetTarget, orderId: String, fills: List<com.tjshea.vigilant.data.novig.trading.NovigFill>): TrackedBet? {
+        val contracts = fills.sumOf { it.qty }
+        if (contracts <= 0L) return null
+        val paid = fills.sumOf { it.cost }
+        val fee = fills.sumOf { it.fee }
+        val payout = contracts * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS
+        val stake = paid + fee
+        val price = paid / payout
+        val cost = stake / payout
+        val bet = TrackedBet(
+            id = UUID.randomUUID().toString(),
+            createdAtMs = fills.minOf { it.ts }.takeIf { it > 0 } ?: clock(),
+            league = target.league,
+            eventName = target.eventName,
+            startsTs = target.startsTs,
+            marketLabel = target.marketLabel,
+            selection = target.selection,
+            marketId = target.market.marketId,
+            outcomeId = target.outcomeId,
+            price = price,
+            cost = cost,
+            fairAtBet = target.fair,
+            evPercentAtBet = target.fair / cost - 1.0,
+            stake = stake,
+            source = target.source,
+            placedKey = target.placedKey,
+            american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)),
+            book = target.book,
+            gameUrl = target.gameUrl,
+            betUrl = target.betUrl,
+            orderId = orderId,
+            contracts = contracts,
+            paid = paid,
+            fee = fee,
+            gradeNote = "Placed through Novig's API: ${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
+        )
+        var logged: TrackedBet = bet
+        store.update { list ->
+            val have = list.firstOrNull { it.orderId == orderId }
+            if (have != null) {
+                logged = have
+                list
+            } else {
+                // The ✓ marks for the same row (a CNO bet or an alert) are replaced by the real bet.
+                (if (target.placedKey == null) list else list.filterNot { it.placedKey == target.placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet
+            }
+        }
+        return logged
     }
 
     suspend fun settle(id: String, status: BetStatus) {
