@@ -11,7 +11,10 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollToKeyAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
@@ -59,6 +62,9 @@ class StickyHeadersTest {
     /** The page's own list (the first scrollable-to-a-key node: the league chips' row is inside it). */
     private fun scrollToKey(key: Any) = compose.onAllNodes(hasScrollToKeyAction()).onFirst().performScrollToKey(key)
 
+    /** [text] as drawn inside the pinned bar (the same words are on cards too). */
+    private fun inBar(text: String) = compose.onNode(hasText(text, substring = true) and hasAnyAncestor(hasTestTag(STICKY_BAR)))
+
     /** Forty open bets, each a different player, the first with the biggest stake. */
     private fun manyBets(): UiState {
         val base = SampleScan.state()
@@ -73,8 +79,8 @@ class StickyHeadersTest {
         compose.onNodeWithText("Player 39 Over 1.5", substring = true).assertIsDisplayed()
         // Stats | Bets, Open / Settled / All, Sort and Scanner: all still there, without scrolling back up.
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
-        for (pinned in listOf("Stats", "Bets", "Open (40)", "Sort", "Amount", "Scanner", "Vigilant (40)")) {
-            compose.onNodeWithText(pinned, substring = true).assertIsDisplayed()
+        for (pinned in listOf("Stats", "Bets", "Open (40)", "Sort", "Date placed", "Current EV", "Amount", "Game start", "Scanner", "Vigilant (40)", "CNO (0)")) {
+            inBar(pinned).assertIsDisplayed()
         }
     }
 
@@ -82,7 +88,7 @@ class StickyHeadersTest {
     fun `a pinned filter works from deep in the list, and the new list starts at its top`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         scrollToKey("x39")
-        compose.onNodeWithText("Amount").performClick()
+        inBar("Amount").performClick()
         // Largest amount first: bet 0 ($99) is the first card, on screen with no scrolling back.
         compose.onNodeWithText("Player 0 Over 1.5", substring = true).assertIsDisplayed()
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
@@ -106,7 +112,7 @@ class StickyHeadersTest {
         scrollToKey(shown.last().key)
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
         compose.onNodeWithText("Starts within").assertIsDisplayed()
-        compose.onNodeWithText("NFL", substring = true).assertIsDisplayed()
+        inBar("NFL").assertIsDisplayed()
     }
 
     @Test
@@ -117,7 +123,7 @@ class StickyHeadersTest {
         assertTrue(games.isNotEmpty())
         scrollToKey(games.last().event.eventId)
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
-        compose.onNodeWithText("NFL", substring = true).assertIsDisplayed()
+        inBar("NFL").assertIsDisplayed()
     }
 
     @Test
