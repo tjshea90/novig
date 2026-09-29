@@ -109,6 +109,9 @@ class AppContainer(app: Application) {
 
     val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
     val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
+
+    /** When the last Tracker "Check odds now" began: its +EV / −EV counter counts the bets re-read since ([CheckOddsStats]). */
+    val lastCheck = JsonFileStore(File(app.filesDir, "last_check.json"), com.tjshea.vigilant.data.tracker.LastCheck.serializer(), { com.tjshea.vigilant.data.tracker.LastCheck() }, json)
     val novig = NovigPublicClient(http, json, usage = usage)
     val novigConnection = NovigConnectionStore(app)
 

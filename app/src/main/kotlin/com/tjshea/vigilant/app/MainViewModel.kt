@@ -122,6 +122,11 @@ data class UiState(
     val checkingOdds: Boolean = false,
     /** While it runs: bets read so far, of how many it reads (null until the first count). */
     val checkProgress: Pair<Int, Int>? = null,
+    /**
+     * When the last "Check odds now" began (Tj, 2026-09-29): the Tracker's +EV / −EV counter and average EV count only open bets re-read
+     * since, so each new check starts at 0. Null = no check yet.
+     */
+    val checkStartedAtMs: Long? = null,
     /** The Tracker's "Grade now" is reading final scores. */
     val gradingBets: Boolean = false,
     /** The open bet (by id) whose books the Tracker is re-reading, and the one whose Novig link Replace is finding. */
@@ -345,9 +350,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val connection = c.ensureLoaded()
             val keys = ApiProvider.entries.associateWith { c.keyStore.getKeys(it) }
             val bets = c.tracker.all()
+            val lastCheck = runCatching { c.lastCheck.read().startedAtMs }.getOrNull()
             _state.update {
                 keys.entries.fold(it) { s, (p, k) -> s.withKeys(p, k) }.copy(
-                    settings = settings, bets = bets, loaded = true,
+                    settings = settings, bets = bets, loaded = true, checkStartedAtMs = it.checkStartedAtMs ?: lastCheck,
                     novig = it.novig.copy(connection = connection),
                 )
             }
@@ -1109,11 +1115,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _toasts.tryEmit(PAUSED_TOAST)
             return
         }
-        _state.update { it.copy(checkingOdds = true, checkProgress = null) }
+        val began = System.currentTimeMillis()
+        // The counter starts again from 0: only bets re-read from here on count.
+        _state.update { it.copy(checkingOdds = true, checkProgress = null, checkStartedAtMs = began) }
         val settings = start.settings
         val usageBefore = c.usage.flow.value
-        val began = System.currentTimeMillis()
         viewModelScope.launch {
+            runCatching { c.lastCheck.update { com.tjshea.vigilant.data.tracker.LastCheck(began) } }
             var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null
             // The finished games' results are graded at the same time (the score feeds are ESPN and MLB, not CNO, so it costs no time):
             // one tap covers every open bet, the ones still to play and the ones already over.

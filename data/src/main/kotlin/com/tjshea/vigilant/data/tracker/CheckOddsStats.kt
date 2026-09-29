@@ -1,6 +1,11 @@
 package com.tjshea.vigilant.data.tracker
 
+import kotlinx.serialization.Serializable
 import kotlin.math.abs
+
+/** When the last "Check odds now" began (files/last_check.json): the counter's starting line, kept when the app is closed. */
+@Serializable
+data class LastCheck(val startedAtMs: Long? = null)
 
 /**
  * The Tracker's "Check odds now" counter (Tj, 2026-09-29: "as the refreshed odds come in, there is a counter at the top of the section that
