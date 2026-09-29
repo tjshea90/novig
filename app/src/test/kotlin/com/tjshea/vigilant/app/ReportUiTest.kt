@@ -17,6 +17,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.ReportActions
 import com.tjshea.vigilant.app.ui.ReportContent
 import com.tjshea.vigilant.app.ui.SettingsScreen
+import com.tjshea.vigilant.app.ui.SettingsTab
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -41,7 +42,7 @@ class ReportUiTest {
     fun `Show report asks for the Diagnostics page, and Grading check is there only with betting set up`() {
         var shown = 0
         var graded = 0
-        screen { SettingsScreen(SampleScan.state(), {}, reportActions = ReportActions(onDiagnostics = { shown++ }, onGradingCheck = { graded++ })) }
+        screen { SettingsScreen(SampleScan.state(), {}, reportActions = ReportActions(onDiagnostics = { shown++ }, onGradingCheck = { graded++ }), startTab = SettingsTab.TOOLS) }
         compose.onNodeWithText("Show report").performScrollTo().performClick()
         assertEquals(1, shown)
         compose.onAllNodesWithText("Grading check").assertCountEquals(0)
@@ -51,7 +52,7 @@ class ReportUiTest {
     fun `with betting on the Grading check button runs the ledger check`() {
         var graded = 0
         val s = SampleScan.state().let { it.copy(betting = BettingUi(enabled = true, balance = 12.5)) }
-        screen { SettingsScreen(s, {}, reportActions = ReportActions(onGradingCheck = { graded++ })) }
+        screen { SettingsScreen(s, {}, reportActions = ReportActions(onGradingCheck = { graded++ }), startTab = SettingsTab.TOOLS) }
         compose.onNodeWithText("Grading check").performScrollTo().performClick()
         assertEquals(1, graded)
     }

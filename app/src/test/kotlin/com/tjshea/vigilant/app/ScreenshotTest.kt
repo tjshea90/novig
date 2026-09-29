@@ -44,6 +44,7 @@ import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.MiniFeed
 import com.tjshea.vigilant.app.ui.OpportunityDetail
 import com.tjshea.vigilant.app.ui.SettingsScreen
+import com.tjshea.vigilant.app.ui.SettingsTab
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import org.junit.Rule
@@ -88,6 +89,12 @@ class ScreenshotTest {
         }
     }
 
+    /** Settings is one page per tab (v0.22.0, Tj: "tabs on the top"): open [tab] before looking for what's on it. */
+    private fun openSettingsTab(tab: com.tjshea.vigilant.app.ui.SettingsTab) {
+        compose.onNodeWithTag("settingsTab-${tab.name}").performClick()
+        compose.waitForIdle()
+    }
+
     @Test fun feed() = shoot("1_feed") { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
 
     @Test fun feedLight() = shoot("1b_feed_light", dark = false) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
@@ -128,6 +135,7 @@ class ScreenshotTest {
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
         // No PropLine key: The Odds API buys props on its own.
         screen { SettingsScreen(SampleScan.state().copy(proplineKeys = emptyList()), {}) }
+        openSettingsTab(SettingsTab.FAIR)
         compose.onNodeWithText("Sportsbook player props").assertExists()
         compose.onNodeWithText("Most credits per scan on props").assertExists()
         compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
@@ -136,12 +144,14 @@ class ScreenshotTest {
     /** With a PropLine key, The Odds API's prop credits go only to what PropLine didn't price (RESEARCH.md §23). */
     @Test fun settingsSayPropCreditsOnlyBackUpPropLine() {
         screen { SettingsScreen(SampleScan.state(), {}) }
+        openSettingsTab(SettingsTab.FAIR)
         compose.onNodeWithText("Only games and prop types PropLine didn't price", substring = true).assertExists()
         compose.onAllNodesWithText("up to 6 games a scan", substring = true).assertCountEquals(0)
     }
 
     @Test fun settingsTakePinnWireAndPropLineKeys() {
         screen { SettingsScreen(SampleScan.state().copy(pinnwireKeys = emptyList(), proplineKeys = emptyList()), {}) }
+        openSettingsTab(SettingsTab.FAIR)
         compose.onNodeWithText("PinnWire keys (game lines and player props)").assertExists()
         compose.onNodeWithText("Add a PinnWire key").assertExists()
         compose.onNodeWithText("Free key at prop-line.com", substring = true).assertExists()
@@ -317,15 +327,14 @@ class ScreenshotTest {
         compose.onAllNodesWithText("OR POST A BID (MAKER)").assertCountEquals(0)
     }
 
-    @Config(qualifiers = "w393dp-h8600dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        shoot("5e_settings_whole") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        shoot("5e_settings_feed") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.FEED) }
         // Up to 1,200 Novig prices a scan, and props per game up to 24 (v0.18.0).
         for (n in listOf("500", "800", "1200")) compose.onNodeWithText(n).assertExists()
-        compose.onAllNodesWithText("24").assertCountEquals(3) // props credits' 24, props per game's, and PropLine games per scan's (v0.19.6)
+        compose.onAllNodesWithText("24").assertCountEquals(1) // props per game's (props credits' and PropLine games per scan's are on the Fair odds tab)
         compose.onNodeWithText("300 is about a minute", substring = true).assertExists()
-        compose.onNodeWithText("Outlier guard").assertExists()
         // +300 at most since v0.18.0 (Tj, 2026-09-28: "Let me choose +200 +150 and +120 and get rid of any option over +300").
         compose.onNodeWithText("Longest odds shown: +300").assertExists()
         for (gone in listOf("Any", "+500", "+1000", "+2000")) compose.onAllNodesWithText(gone).assertCountEquals(0)
@@ -335,6 +344,10 @@ class ScreenshotTest {
         compose.onNodeWithText("arrives by live feed about 8 seconds in", substring = true).assertExists()
         compose.onNodeWithText("Fill the scan with every quoted line").performClick()
         assert(picked?.fillBudget == false) { "picked $picked" }
+        // The Fair odds tab: the outlier guard, props credits' 24 and PropLine games per scan's 24 (v0.19.6).
+        openSettingsTab(SettingsTab.FAIR)
+        compose.onNodeWithText("Outlier guard").assertExists()
+        compose.onAllNodesWithText("24").assertCountEquals(2)
     }
 
     /** Tj, 2026-09-28: "There are way more than 7 total games for it to scan". The feed says what it covered. */
@@ -443,8 +456,12 @@ class ScreenshotTest {
     @Test fun settingsOfferTheMiniWindowSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
-        compose.onNodeWithText("Float over Novig").performClick()
-        assert(picked?.miniWindow == false) { "picked $picked" }
+        openSettingsTab(SettingsTab.CNO)
+        // Off by default (Tj, 2026-09-29: the widget opens only from its button); the switch turns the auto-open on.
+        compose.onNodeWithText("The widget opens only when you press its button at the top of the list.").assertExists()
+        compose.onNodeWithText("Also open it when I leave Vigilant").assertExists()
+        compose.onNodeWithText("Also open it when I leave Vigilant").performClick()
+        assert(picked?.miniWindow == true) { "picked $picked" }
     }
 
     // ---- The CNO scanner (RESEARCH.md §18–19): its tab, bet detail, and in the mini window ----
@@ -643,10 +660,11 @@ class ScreenshotTest {
     @Test fun settingsOfferTheCnoScannerAndItsFilters() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        openSettingsTab(SettingsTab.CNO)
         compose.onNodeWithText("Shared View link").assertExists()
         compose.onNodeWithText("Longest odds").assertExists()
-        // CNO's +150 (the first), and Vigilant's own odds cap's since v0.18.0 (further down).
-        compose.onAllNodesWithText("+150").assertCountEquals(2)
+        // CNO's +150 here; Vigilant's own odds cap's (since v0.18.0) is on the +EV feed tab.
+        compose.onAllNodesWithText("+150").assertCountEquals(1)
         compose.onAllNodesWithText("+150")[0].assertIsSelected()
         compose.onNodeWithText("Fewest books behind the fair price").assertExists()
         // The chips read as numbers (a first draft printed "${'$'}it+" on every one): 1+ to 4+ since v0.19.3 (Tj: "add
@@ -660,10 +678,14 @@ class ScreenshotTest {
         compose.onAllNodesWithText("${'$'}it", substring = true).assertCountEquals(0)
         compose.onNodeWithText("Real time").assertExists()
         compose.onNodeWithText("Tap only").assertExists()
-        compose.onNodeWithText("CNO only").performClick()
-        assert(picked?.scanner == com.tjshea.vigilant.data.scanner.ScannerMode.CNO) { "picked $picked" }
         compose.onNodeWithText("+100").performClick()
         assert(picked?.cnoFilters?.maxOdds == 100) { "picked $picked" }
+        // The scanner choice is on the Scan tab; Vigilant's own odds cap on the +EV feed tab.
+        openSettingsTab(SettingsTab.SCAN)
+        compose.onNodeWithText("CNO only").performClick()
+        assert(picked?.scanner == com.tjshea.vigilant.data.scanner.ScannerMode.CNO) { "picked $picked" }
+        openSettingsTab(SettingsTab.FEED)
+        compose.onAllNodesWithText("+150").assertCountEquals(1)
     }
 
     /** Tj, 2026-09-28: background auto-scan (CNO, or CNO + Vigilant, every 5-40 min) and alerts at 2/3/4%+. */
@@ -699,19 +721,25 @@ class ScreenshotTest {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
         shoot("5c_settings_cno_only") { SettingsScreen(s, {}) }
+        // Vigilant's pages go with its scanner: no fair odds, feed or API usage tab (and no Novig key on the Betting one).
+        for (gone in listOf(SettingsTab.FAIR, SettingsTab.FEED, SettingsTab.USAGE)) compose.onAllNodesWithTag("settingsTab-${gone.name}").assertCountEquals(0)
         compose.onAllNodesWithText("Fair odds method", ignoreCase = true).assertCountEquals(0)
-        compose.onAllNodesWithText("API usage", ignoreCase = true).assertCountEquals(0)
-        compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
+        openSettingsTab(SettingsTab.CNO)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
+        openSettingsTab(SettingsTab.BETTING)
         compose.onNodeWithText("Bankroll & Kelly", ignoreCase = true).assertExists()
+        compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
     }
 
     /** The other half of the check above: with both scanners on, those sections are there. */
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun bothScannersSettingsShowVigilantsSections() {
         screen { SettingsScreen(SampleScan.state(), {}) }
+        openSettingsTab(SettingsTab.FAIR)
         compose.onNodeWithText("Fair odds method", ignoreCase = true).assertExists()
+        openSettingsTab(SettingsTab.USAGE)
         compose.onNodeWithText("API usage", ignoreCase = true).assertExists()
+        openSettingsTab(SettingsTab.CNO)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
     }
 
@@ -1071,7 +1099,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsHasTheOnlyAgreedSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.CNO) }
         compose.onNodeWithText("Only bets the books agree on").performClick()
         assert(picked?.cnoOnlyAgreed == true) { "picked $picked" }
     }
@@ -1195,7 +1223,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsOfferVigilantsScanAgainWhileTheWidgetIsOpen() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.CNO) }
         compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
         compose.onNodeWithText("10 min").performClick()
         assertEquals(10, picked?.widgetRescanMinutes)
@@ -1204,7 +1232,7 @@ class ScreenshotTest {
     /** RESEARCH.md §23: with a PropLine key, The Odds API says it only backs PropLine up, and what that costs. */
     @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
     @Test fun settingsSayTheOddsApiBacksUpPropLine() {
-        screen { SettingsScreen(SampleScan.state(), { }) }
+        screen { SettingsScreen(SampleScan.state(), { }, startTab = SettingsTab.FAIR) }
         compose.onNodeWithText("Backup to PropLine", substring = true).assertExists()
         compose.onNodeWithText("Nothing while PropLine answers", substring = true).assertExists()
         compose.onNodeWithText("Read from PropLine first", substring = true).assertExists()
@@ -1215,7 +1243,7 @@ class ScreenshotTest {
     @Test fun settingsOfferTheFloatingWidgetOnVigilantsScanAlone() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, floatingWidget = false))
-        screen { SettingsScreen(s, { t -> picked = t(s.settings) }) }
+        screen { SettingsScreen(s, { t -> picked = t(s.settings) }, startTab = SettingsTab.CNO) }
         compose.onNodeWithText("Floating widget you can touch").assertExists().performClick()
         assertEquals(true, picked?.floatingWidget)
         compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
@@ -1247,7 +1275,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsHaveTheNovigPriceNowSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.CNO) }
         compose.onNodeWithText("Novig's price now").performClick()
         assertEquals(false, picked?.cnoLivePrices)
     }
@@ -1281,7 +1309,7 @@ class ScreenshotTest {
 
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsDescribeTheWidgetAsItIsNow() {
-        screen { SettingsScreen(SampleCno.state(), { }) }
+        screen { SettingsScreen(SampleCno.state(), { }, startTab = SettingsTab.CNO) }
         compose.onNodeWithText("✕ to remove it without betting", substring = true).assertExists()
         compose.onNodeWithText("switch picks CNO only, Both or Vigilant only", substring = true).assertExists()
     }
@@ -1476,26 +1504,32 @@ class ScreenshotTest {
         val nl = com.tjshea.vigilant.data.scanner.ScanSettings.NO_LIMIT
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
-        // Each "No limit" chip sets its own cap: Novig prices, The Odds API credits, PropLine's games.
+        // Each "No limit" chip sets its own cap: Novig prices (+EV feed tab), The Odds API credits and PropLine's games (Fair odds tab).
         val set = HashSet<String>()
-        val noLimit = compose.onAllNodesWithText("No limit")
-        repeat(noLimit.fetchSemanticsNodes().size) { i ->
-            noLimit[i].performScrollTo().performClick()
-            val p = picked!!
-            if (p.maxBooksPerScan == nl) set += "prices"
-            if (p.bookPropCreditsPerScan == nl) set += "credits"
-            if (p.propLineGamesPerScan == nl) set += "propline"
+        for (tab in listOf(SettingsTab.FEED, SettingsTab.FAIR)) {
+            openSettingsTab(tab)
+            val noLimit = compose.onAllNodesWithText("No limit")
+            repeat(noLimit.fetchSemanticsNodes().size) { i ->
+                noLimit[i].performScrollTo().performClick()
+                val p = picked!!
+                if (p.maxBooksPerScan == nl) set += "prices"
+                if (p.bookPropCreditsPerScan == nl) set += "credits"
+                if (p.propLineGamesPerScan == nl) set += "propline"
+            }
         }
         assertEquals(setOf("prices", "credits", "propline"), set)
-        // "All": lines and props per game, and the sportsbook-props window.
+        // "All": lines and props per game (+EV feed tab), and the sportsbook-props window (Fair odds tab).
         val all = HashSet<String>()
-        val allChips = compose.onAllNodesWithText("All")
-        repeat(allChips.fetchSemanticsNodes().size) { i ->
-            allChips[i].performScrollTo().performClick()
-            val p = picked!!
-            if (p.linesPerGame == nl) all += "lines"
-            if (p.propsPerGame == nl) all += "props"
-            if (p.bookPropHours == nl) all += "hours"
+        for (tab in listOf(SettingsTab.FEED, SettingsTab.FAIR)) {
+            openSettingsTab(tab)
+            val allChips = compose.onAllNodesWithText("All")
+            repeat(allChips.fetchSemanticsNodes().size) { i ->
+                allChips[i].performScrollTo().performClick()
+                val p = picked!!
+                if (p.linesPerGame == nl) all += "lines"
+                if (p.propsPerGame == nl) all += "props"
+                if (p.bookPropHours == nl) all += "hours"
+            }
         }
         assertTrue(all.toString(), all.containsAll(setOf("lines", "props", "hours")))
     }
