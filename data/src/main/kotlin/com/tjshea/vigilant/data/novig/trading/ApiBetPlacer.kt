@@ -86,7 +86,8 @@ class ApiBetPlacer(
         if (plan.limitPrice > confirmedLimit + 1e-9) {
             return PlaceResult.Refused("The price moved while you were confirming (${percentText(confirmedLimit)} → ${percentText(plan.limitPrice)}): look at the new price and confirm again.")
         }
-        val clientId = "vigilant-" + UUID.randomUUID()
+        // Novig parses the clientId as a UUID and refuses anything else (a "vigilant-" prefix did, on the first real order).
+        val clientId = NovigTradingClient.newClientId()
         val orderId: String = try {
             trading.placeOrder(target.outcomeId, minOf(plan.limitPrice, confirmedLimit), plan.contracts, "IOC", clientId)
         } catch (e: CancellationException) {
