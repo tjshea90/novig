@@ -12,6 +12,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -156,6 +158,25 @@ class TrackerUiTest {
         compose.onNodeWithText("EV at your price", substring = true).assertExists()
         compose.onNodeWithText("Break-even against today's fair price", substring = true).assertExists()
         compose.onNodeWithText("Read 1m ago").assertExists()
+    }
+
+    /** PNGs for a look (`-Pscreenshots`); the assertions are in the tests above. */
+    @Test
+    fun screenshots() {
+        val base = SampleScan.state()
+        val state = base.copy(
+            bets = base.bets + stuck("waiting", "The game isn't over yet", manual = false, hoursAgo = 2) +
+                stuck("tap", "Cam Talbot isn't in the box score (didn't play, or the name is spelled differently): mark it yourself", manual = true),
+            checkingOdds = true, checkProgress = 12 to 61,
+        )
+        screen { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onRoot().captureRoboImage("screenshots/4d_tracker_open_bets.png")
+    }
+
+    @Test
+    fun sheetScreenshot() {
+        sheet(settings = SampleScan.settings.copy(slipStake = SlipStake.ONE_DOLLAR))
+        compose.onRoot().captureRoboImage("screenshots/4e_tracker_bet_sheet.png")
     }
 
     @Test
