@@ -799,8 +799,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
             else it.copy(settings = next).let { n -> n.copy(feed = n.feedOf(n.result)) }
         }
-        // CNO only now: a "scan done" note would name bets no screen shows any more.
-        if (before.vigilantOn && !next.vigilantOn) ScanService.cancelDone(getApplication())
+        // CNO only now: Vigilant is asleep. A scan running now (Tj's own or a background cycle's) stops so it spends no more API credits, and a
+        // "scan done" note would name bets no screen shows any more.
+        if (before.vigilantOn && !next.vigilantOn) {
+            c.runner.stop()
+            ScanService.cancelDone(getApplication())
+        }
         // Paused: a scan running now stops (CNO's reads stop by the watch's hold, auto-scan by its service).
         if (!before.paused && next.paused) c.runner.stop()
         // Resumed: background auto-scan starts again at once, from the widget too (Android lets an app showing an
