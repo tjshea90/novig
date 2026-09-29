@@ -97,6 +97,13 @@ class Scanner(
     private val catalogTtlMs: Long = 3 * 60_000L,
     /** Milliseconds on a steady clock, for [ScanTiming] only (the scan's own time is [clock]). */
     private val elapsed: () -> Long = { System.nanoTime() / 1_000_000L },
+    /**
+     * A scanner that prices only the `pinned` markets (Tj's open bets, Tj 2026-09-29: "update the EV for every single open bet"), never the
+     * board: its catalog is cut to those markets and their games, so sources that pick games from the board ask for those games alone;
+     * it never tells Novig's live feed what to watch (the feed scanner's subscription stays as it is) and doesn't re-read early edges.
+     * Kept as its own instance, so it can't touch the feed scanner's catalog, books or fair-odds snapshots.
+     */
+    private val betsOnly: Boolean = false,
 ) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
