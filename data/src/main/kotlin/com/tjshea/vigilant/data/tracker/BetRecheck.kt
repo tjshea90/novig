@@ -83,7 +83,7 @@ class BetRecheck(
          * What the toast says: the counts, all of them, in words. [graded]: the grading pass that ran beside the odds check (the
          * finished games' results, [BetSettler]); without one, finished games are only counted.
          */
-        fun summary(scanStarted: Boolean = false, graded: BetSettler.Report? = null): String {
+        fun summary(vigilantOff: Boolean = false, graded: BetSettler.Report? = null): String {
             if (open == 0) return "No open bets to check"
             val parts = ArrayList<String>()
             parts += "Checked $covered of $open open bet${if (open == 1) "" else "s"}"
