@@ -180,7 +180,10 @@ class ApiBettingTest {
         assertEquals("0.465", body["price"]!!.jsonPrimitive.content)
         assertEquals("400", body["qty"]!!.jsonPrimitive.content)
         assertEquals("IOC", body["tif"]!!.jsonPrimitive.content)
-        assertTrue(body["clientId"]!!.jsonPrimitive.content.startsWith("vigilant-"))
+        // Novig parses the clientId as a UUID (Tj's first real order was refused for a "vigilant-" prefix): a plain, valid one.
+        val clientId = body["clientId"]!!.jsonPrimitive.content
+        assertEquals(clientId, java.util.UUID.fromString(clientId).toString())
+        assertTrue(NovigTradingClient.isUuid(clientId))
         // The Tracker gets what the fills say: 400 contracts for $1.85 (0.4625 each, better than the 0.465 ceiling).
         val bet = r.bet
         assertEquals("o1", bet.orderId)
