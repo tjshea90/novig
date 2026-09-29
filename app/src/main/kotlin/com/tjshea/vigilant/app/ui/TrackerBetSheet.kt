@@ -276,7 +276,7 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                     )
                 }
             } else {
-                Text(TrackerText.edgeSentence(i), style = MaterialTheme.typography.bodySmall)
+                Text(TrackerText.edgeSentence(i, current), style = MaterialTheme.typography.bodySmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     i.fairNow?.let { LabeledValue(if (current) "Fair now" else "Fair then", "${Format.american(it)} · ${Format.percent(it)}") }
                     i.priceNow?.let { LabeledValue("${bet.book.ifBlank { AppBook.name }} now", Odds.formatAmerican(it)) }
