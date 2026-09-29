@@ -30,10 +30,9 @@ class ApiGradingCheck(
         fun at(ms: Long) = time.format(Date(ms))
         val out = StringBuilder()
         out.appendLine("GRADING CHECK · ${at(now)}")
-        val by = { pred: (TrackedBet) -> Int -> bets.count(pred) }
         out.appendLine(
-            "API bets in the Tracker: ${bets.size} (open ${by { it.status == BetStatus.PENDING }}, graded by Novig ${by { it.settledBy == BetSettler.BY_NOVIG }}, " +
-                "by the score feeds ${by { it.settledBy == BetSettler.BY_SCORES }}, by you ${by { it.settledBy == BetSettler.BY_YOU }}).",
+            "API bets in the Tracker: ${bets.size} (open ${bets.count { it.status == BetStatus.PENDING }}, graded by Novig ${bets.count { it.settledBy == BetSettler.BY_NOVIG }}, " +
+                "by the score feeds ${bets.count { it.settledBy == BetSettler.BY_SCORES }}, by you ${bets.count { it.settledBy == BetSettler.BY_YOU }}).",
         )
         if (bets.isEmpty()) {
             out.appendLine("Nothing to check yet: place a bet through the API first.")
