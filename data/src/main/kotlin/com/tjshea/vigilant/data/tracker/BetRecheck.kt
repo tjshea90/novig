@@ -88,7 +88,9 @@ class BetRecheck(
             val parts = ArrayList<String>()
             parts += "Checked $covered of $open open bet${if (open == 1) "" else "s"}"
             if (failed > 0) parts += "$failed couldn't be read"
+            if (unpriced > 0) parts += "$unpriced couldn't be priced (each bet says why)"
             if (skipped > 0) parts += "$skipped not tried"
+            if (started > 0) parts += "$started game${if (started == 1) "" else "s"} in progress (results come from final scores)"
             if (over > 0 && graded == null) {
                 parts += "$over game${if (over == 1) "" else "s"} already over (results come from final scores)"
             } else if (over > 0 || graded != null && graded.settled > 0) {
