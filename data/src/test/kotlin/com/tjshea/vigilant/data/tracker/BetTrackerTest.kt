@@ -86,6 +86,52 @@ class BetTrackerTest {
     }
 
     @Test
+    fun `a scan that changes nothing still moves an open bet's age on once the last read is a minute old`() = runTest {
+        val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
+        t.track(dal(scan()), stake = 10.0)
+        t.observe(scan())
+        val first = t.all().single()
+        assertEquals(BetTracker.VIA_VIGILANT, first.nowVia)
+        assertEquals(now, first.nowAtMs)
+        // Inside the minute: nothing to write. After it: the same fair line, read again, so the card's "now" is honest.
+        now += 30_000
+        assertEquals(false, t.observe(scan()))
+        assertEquals(first.nowAtMs, t.all().single().nowAtMs)
+        now += 31_000
+        assertEquals(true, t.observe(scan()))
+        assertEquals(now, t.all().single().nowAtMs)
+        assertEquals(first.nowEv, t.all().single().nowEv)
+    }
+
+    @Test
+    fun `a pricing pass changes only the open pregame bets it was asked about, and a reason never replaces a number`() = runTest {
+        val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
+        val a = t.track(dal(scan()), stake = 10.0)!!
+        val b = t.track(dal(scan()), stake = 5.0)!!
+        val c = t.track(dal(scan()), stake = 5.0)!!
+        t.settle(c.id, BetStatus.WON)
+        val result = scan(pinDal = 2.30)
+        // b is left out of the ask; c is settled.
+        val applied = t.applyPricing(result, listOf(a.id, c.id), mapOf(a.id to "nope", c.id to "nope"))
+        assertEquals(BetTracker.Applied(1, 0), applied)
+        val by = t.all().associateBy { it.id }
+        assertEquals(dal(result).fairProbability!! / a.cost - 1.0, by.getValue(a.id).nowEv!!, 1e-12)
+        assertNull(by.getValue(b.id).nowEv)
+        assertNull(by.getValue(c.id).nowEv)
+        assertNull(by.getValue(c.id).nowNote)
+        // A pass that doesn't price it leaves the number and adds the reason; a later pricing clears the reason.
+        val ev = by.getValue(a.id).nowEv
+        assertEquals(BetTracker.Applied(0, 1), t.applyPricing(null, listOf(a.id), mapOf(a.id to "no fair-odds source lists this game")))
+        assertEquals(ev, t.all().first { it.id == a.id }.nowEv)
+        assertEquals("no fair-odds source lists this game", t.all().first { it.id == a.id }.nowNote)
+        t.applyPricing(result, listOf(a.id))
+        assertNull(t.all().first { it.id == a.id }.nowNote)
+        // Once the game has started there's nothing to price.
+        now = Fixtures.START_MS + 1
+        assertEquals(BetTracker.Applied(0, 0), t.applyPricing(result, listOf(a.id)))
+    }
+
+    @Test
     fun `a voided bet counts toward nothing but the bet count`() {
         fun bet(id: String, ev: Double, status: BetStatus, closing: Double?) = TrackedBet(
             id, 0, "NFL", "A @ B", Fixtures.START_MS, "Moneyline", "A", "m", "o",
