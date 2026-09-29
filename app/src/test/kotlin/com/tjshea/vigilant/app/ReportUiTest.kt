@@ -42,7 +42,6 @@ class ReportUiTest {
         var shown = 0
         var graded = 0
         screen { SettingsScreen(SampleScan.state(), {}, reportActions = ReportActions(onDiagnostics = { shown++ }, onGradingCheck = { graded++ })) }
-        compose.onNodeWithText("Diagnostics").performScrollTo()
         compose.onNodeWithText("Show report").performScrollTo().performClick()
         assertEquals(1, shown)
         compose.onAllNodesWithText("Grading check").assertCountEquals(0)
