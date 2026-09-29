@@ -2611,7 +2611,7 @@ Nothing at or above 1.0% EV."
 
 ## "run the prompt audit and add the Compose skills" (Tj, 2026-09-28T22:53Z, on v0.19.6; his yes to RESEARCH §33.5's two offers)
 
-- [ ] X1 Prompt audit, following the claude-api skill's `shared/prompt-audit.md` (what `/claude-api prompt-audit` runs):
+- [x] X1 (DONE: PROMPT_AUDIT.md (report) + PROMPT_AUDIT.patch (every proposed edit): 21 findings with edits, 13 high / 8 medium (A1-A11 CLAUDE.md + briefing scripts, B1-B10 BRIEF.md), 11 flags left to Tj (rules, prohibitions, the keystore question); patch checked with `git apply --check`, and on a scratch checkout with it applied: `bash -n`, test_resume.sh all green, briefing 6,352 chars. Nothing applied. Also fixed directly: toobig.sh's "well under a hundred lines", left stale by the ckpt 605 briefing fix.) Prompt audit, following the claude-api skill's `shared/prompt-audit.md` (what `/claude-api prompt-audit` runs):
       scope = this repo's instruction surface (CLAUDE.md, BRIEF.md, bootstrap.sh's rules block, the text the hooks print:
       resume.sh / ckpt.sh / toobig.sh / capture_inbox.sh); target = the model running it (Claude Opus 5.5). Deliverables:
       a report (file:line, evidence, pattern, why, confidence, action) and a proposed diff, one finding per hunk, saved in
