@@ -2617,8 +2617,8 @@ Nothing at or above 1.0% EV."
       a report (file:line, evidence, pattern, why, confidence, action) and a proposed diff, one finding per hunk, saved in
       the repo. Nothing applied until Tj picks: "run" is not "apply", and the audit's rules keep stale-fact and
       contradiction fixes proposal-only.
-- [ ] X2 Compose skills: read Chris Banes' `compose-performance`, `compose-state-and-effects`,
+- [x] X2 (DONE: `.claude/skills/` compose-performance, compose-state-and-effects, kotlin-concurrency-and-flow, compose-ui-testing-patterns, unchanged from chrisbanes/skills @359126d (diff -r identical), all 16 files read first: guidance only, no allowed-tools / shell blocks / hooks / scripts / URLs; Apache-2.0 license + THIRD_PARTY_NOTICES.md; 6 links to upstream skills not copied dangle harmlessly. Loading can't be seen from this session; they should list from the next one.) Compose skills: read Chris Banes' `compose-performance`, `compose-state-and-effects`,
       `kotlin-concurrency-and-flow`, `compose-ui-testing-patterns` in full first (third-party instructions: check for
       `allowed-tools`, inline shell blocks, hooks, network fetches, anything that fights CLAUDE.md); commit the ones that
       pass to `.claude/skills/` unchanged, with the Apache-2.0 license and a note naming the source commit.
-- [ ] X3 Checks + checkpoint; tell Tj the top audit findings (what applying each would change) and which skills landed.
+- [x] X3 (DONE: test_resume.sh green via ckpt, secretscan clean, audit patch re-checked with `git apply --check` after the skills landed; reported to Tj.) Checks + checkpoint; tell Tj the top audit findings (what applying each would change) and which skills landed.
