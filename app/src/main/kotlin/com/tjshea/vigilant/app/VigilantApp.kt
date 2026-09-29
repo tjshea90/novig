@@ -179,6 +179,13 @@ class AppContainer(app: Application) {
         concurrency = RECHECK_AT_ONCE,
     )
 
+    /**
+     * The Tracker's "Check odds now" for Vigilant's own bets, and any bet CNO couldn't read (Tj, 2026-09-29: "update the EV for every single
+     * open bet, including bets added from vigilant scanner"): a bets-only [Scanner] of its own (never the feed's catalog, books or fair-odds
+     * snapshots) prices exactly those bets' games from the same fair-odds sources and rules as the feed. Null for Vigilant MGM.
+     */
+    val betPricer: OpenBetPricer? = if (AppBook.isNovig) OpenBetPricer(tracker, Scanner(novig, betsOnly = true), ::referenceSources) else null
+
     /** Novig's price now for CNO's listed bets, from Novig's order books (only while CNO's list is on screen). */
     val live = NovigLive(novig, { row -> betFinder.find(row) })
 
