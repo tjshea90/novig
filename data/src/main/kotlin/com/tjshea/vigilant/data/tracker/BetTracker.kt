@@ -101,9 +101,6 @@ data class TrackedBet(
 
     val expectedProfit: Double get() = stake * (evPercentAtBet ?: 0.0)
 
-    /** What the bet returns in total if it wins: the stake plus [profitIfWon]. */
-    val toWin: Double get() = profitIfWon
-
     /** Open and the game has started: only its result is left. */
     fun awaitingResult(now: Long): Boolean = status == BetStatus.PENDING && now >= startsTs
 
@@ -131,6 +128,11 @@ data class TrackerStats(
     val staked: Double,
     val profit: Double,
     val roi: Double?,
+    /**
+     * Expected profit on the settled bets that have an EV on record: the number [profitWithEv] is to be
+     * compared with. (Open bets' expected profit is [openExpected]; adding it in here made "Expected" a
+     * different set of bets from "Profit".)
+     */
     val expectedProfit: Double,
     val averageEv: Double?,
     val averageClv: Double?,
@@ -141,9 +143,35 @@ data class TrackerStats(
     val pushed: Int = 0,
     /** Bets left out of every number above ([TrackedBet.isOutlier]). */
     val outliers: Int = 0,
+    /** Bets voided: they never happened, so they count toward nothing else. */
+    val voided: Int = 0,
+    /** Money on open bets, what they pay if they all win, and their expected profit. */
+    val openStaked: Double = 0.0,
+    val openToWin: Double = 0.0,
+    val openExpected: Double = 0.0,
+    /** Actual profit over the settled bets that have an EV on record, and how many those are. */
+    val profitWithEv: Double = 0.0,
+    val settledWithEv: Int = 0,
+    /** Standard deviation of [profitWithEv] if every bet's fair probability were exactly right. */
+    val expectedSd: Double = 0.0,
+    /** Settled profit with the outliers counted too: what the bankroll really did. */
+    val profitAll: Double = 0.0,
 ) {
     /** Wins out of decided bets (Tj: "percentage of actual bet wins and losses"); null before any. */
     val winRate: Double? get() = (won + lost).takeIf { it > 0 }?.let { won.toDouble() / it }
+
+    /** Profit above (below) what the edges promised, on the same bets. */
+    val vsExpected: Double get() = profitWithEv - expectedProfit
+
+    /**
+     * How many standard deviations [profitWithEv] sits from [expectedProfit]: near 0 is what a real edge
+     * looks like, ±2 is unusual luck (or wrong fair prices) . Null with too few bets to say anything.
+     */
+    val luck: Double? get() = if (settledWithEv >= MIN_BETS_FOR_LUCK && expectedSd > 1e-9) vsExpected / expectedSd else null
+
+    companion object {
+        const val MIN_BETS_FOR_LUCK = 10
+    }
 }
 
 /**
