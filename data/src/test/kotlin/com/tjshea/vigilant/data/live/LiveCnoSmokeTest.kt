@@ -33,7 +33,8 @@ class LiveCnoSmokeTest {
         first.rows.take(5).forEach { println("  ${"%.2f".format(it.ev * 100)}% ${it.bet} | ${it.market} | ${it.event} | ${it.odds} (\$${it.available}) fair ${it.fairOdds} ${it.books} books | ${it.book}") }
         assertEquals(2, requests)
         assertEquals("C-WC", first.evLabel) // CNO honored the posted devig method
-        assertTrue(first.rows.all { it.book == "Novig" && it.odds <= 150 && (it.books ?: 99) >= 5 && it.gameUrl != null })
+        // CNO applied the posted filters (fewest books 1-4 since v0.19.3, default 4: this said 5 until 2026-09-29).
+        assertTrue(first.rows.all { it.book == "Novig" && it.odds <= filters.maxOdds && (it.books ?: 99) >= filters.minBooks && it.gameUrl != null })
         val screened = CnoChecks.screen(first, filters, System.currentTimeMillis())
         println("LIVE CNO screened: ${screened.picks.size} kept, hidden ${screened.hidden}")
 
