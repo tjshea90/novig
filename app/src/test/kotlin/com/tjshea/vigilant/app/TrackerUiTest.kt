@@ -176,7 +176,7 @@ class TrackerUiTest {
         screen { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) }
         compose.onAllNodesWithText("placed ", substring = true).assertCountEquals(3)
         // b5's read is 5 minutes old (inside the limit): "now"; b4's is 2 hours old: when it was read.
-        compose.onNodeWithText("now −2.1% EV at your −110").assertExists()
+        compose.onNodeWithText("now −2.1% EV at your -110").assertExists()
         compose.onNodeWithText("+3.1% EV at your +100").assertExists()
         compose.onNodeWithText("as of 2h ago", substring = true).assertExists()
     }
