@@ -46,6 +46,12 @@ class KeystoreSigningKey(private val alias: String, override val keyId: String) 
             return "-----BEGIN PUBLIC KEY-----\n$b64\n-----END PUBLIC KEY-----\n"
         }
 
+        /** Aliases in the Keystore that start with [prefix], newest first (an alias ends with its creation time in milliseconds). */
+        fun aliases(prefix: String): List<String> = runCatching {
+            KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }.aliases().toList().filter { it.startsWith(prefix) }
+                .sortedByDescending { it.removePrefix(prefix).toLongOrNull() ?: 0L }
+        }.getOrDefault(emptyList())
+
         fun delete(alias: String) {
             runCatching { KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }.deleteEntry(alias) }
         }

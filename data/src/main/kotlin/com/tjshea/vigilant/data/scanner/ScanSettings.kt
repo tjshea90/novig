@@ -91,6 +91,14 @@ data class ScanSettings(
     /** The dollars "My amount" ([SlipStake.CUSTOM]) fills in. */
     val slipCustomStake: Double = 5.0,
     /**
+     * Betting through Novig's API (Tj, 2026-09-29): the amount the Bet sheet starts with, the most one bet may be, the most a day's API bets
+     * may add up to (the device's day), and the smallest edge a bet is still placed at when the price has moved since the card was drawn.
+     */
+    val apiBetStake: Double = 5.0,
+    val apiMaxStake: Double = 10.0,
+    val apiMaxPerDay: Double = 50.0,
+    val apiMinEv: Double = 0.01,
+    /**
      * How long a feed's last answer is kept after a failed call, only to order reads: it never prices
      * past [Freshness.MAX_QUOTE_AGE_MS] (RESEARCH.md §24).
      */
