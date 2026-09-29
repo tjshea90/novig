@@ -198,6 +198,21 @@ class OpenBetPricerTest {
     }
 
     @Test
+    fun `with the scanner on CNO only the pass asks Vigilant's APIs for nothing`() = runTest {
+        val fair = FakeOddsApi()
+        val novig = FakeNovig()
+        val t = tracker(bet("a"))
+        val report = pricer(t, novig, fair).run(settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO), listOf("a"))
+        assertEquals(OpenBetPricer.Report(0, 0, 0), report)
+        assertEquals(0, fair.calls)
+        assertTrue(novig.bookIds.isEmpty())
+        assertNull(t.all().single().nowEv)
+        // Vigilant on: the same call asks.
+        assertEquals(1, pricer(t, FakeNovig(), fair).run(settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT), listOf("a")).priced)
+        assertEquals(1, fair.calls)
+    }
+
+    @Test
     fun `nothing to ask about is no pass at all`() = runTest {
         val fair = FakeOddsApi()
         val novig = FakeNovig()
