@@ -104,7 +104,7 @@ data class BetActions(
     val onSync: () -> Unit = {},
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun TrackerScreen(
     state: UiState,
