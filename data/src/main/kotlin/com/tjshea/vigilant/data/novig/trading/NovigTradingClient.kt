@@ -94,12 +94,20 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
 
     /** Fills of one [orderId], or every fill (up to [limit]) when null. */
     open suspend fun fills(orderId: String? = null, limit: Int = 500): List<NovigFill> {
-        val query = buildString {
-            append("limit=").append(limit)
-            if (orderId != null) append("&order=").append(URLEncoder.encode(orderId, "UTF-8"))
-        }
-        // Query parameters are signed sorted by name: limit, order.
-        return json.decodeFromString(FillPageDto.serializer(), signer.call("GET", "/v3/portfolio/fills", query)).items.map { it.toDomain() }
+        val out = ArrayList<NovigFill>()
+        var cursor: String? = null
+        // Every page, up to [MAX_FILL_ROWS]: the docs don't say which end of the history the first page is.
+        do {
+            val query = buildString {
+                append("limit=").append(minOf(limit, 500))
+                if (orderId != null) append("&order=").append(percent(orderId))
+                cursor?.let { append("&after=").append(percent(it)) }
+            }
+            val page = json.decodeFromString(FillPageDto.serializer(), signer.call("GET", "/v3/portfolio/fills", query))
+            out += page.items.map { it.toDomain() }
+            cursor = page.next?.takeIf { it.isNotBlank() }
+        } while (cursor != null && out.size < MAX_FILL_ROWS)
+        return out
     }
 
     /** The subaccount's nonzero positions, or the ones in [marketId]. */
@@ -133,6 +141,9 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
     private fun percent(s: String) = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     companion object {
+        /** The most fills one call reads (8 + 1 per 50 rows of the `history` bucket: 2,000 rows cost 48 tokens of 512). */
+        const val MAX_FILL_ROWS = 2_000
+
         /** A grid price as Novig writes it: three decimals ("0.455", "0.050"). */
         fun priceText(price: Double): String = BigDecimal.valueOf(price).setScale(3, java.math.RoundingMode.HALF_UP).toPlainString()
     }

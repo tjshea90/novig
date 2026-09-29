@@ -89,6 +89,8 @@ object ApiBetPlanner {
         if (target.startsTs <= now) return no("This game has started: bets through the API are pregame only.")
         if (target.market.status != "OPEN") return no("Novig has closed this market.")
         val fee = target.market.fee ?: return no("Novig's fee for this market couldn't be read, so its cost can't be worked out.")
+        // Money is at stake: an unknown age isn't taken as fresh (the app's lists do, to show a bet; a bet placed needs the age).
+        if (target.fairAsOfMs == null) return no("How old the fair odds behind this bet are isn't known: scan again first.")
         if (!Freshness.fresh(target.fairAsOfMs, now, target.startsTs)) {
             val minutes = target.fairAsOfMs?.let { (now - it) / 60_000L }
             return no("The fair odds behind this bet are ${minutes?.let { "$it minutes" } ?: "too"} old (${Freshness.LIMIT_TEXT}): scan again first.")

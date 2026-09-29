@@ -96,6 +96,8 @@ data class TrackedBet(
     val contracts: Long? = null,
     val paid: Double? = null,
     val fee: Double? = null,
+    /** Novig's ids for the fills, one of which (or the market's) a ledger row may name as what it settles. */
+    val fillIds: List<String> = emptyList(),
 ) {
     /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
     val viaApi: Boolean get() = orderId != null
@@ -458,6 +460,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             contracts = contracts,
             paid = paid,
             fee = fee,
+            fillIds = fills.map { it.fillId },
             gradeNote = "Placed through Novig's API: ${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
         )
         var logged: TrackedBet = bet

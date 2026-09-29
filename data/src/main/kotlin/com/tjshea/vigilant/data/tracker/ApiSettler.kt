@@ -48,7 +48,8 @@ class ApiSettler(
         val payouts: List<LedgerRow>
         val positions: List<NovigPosition>
         try {
-            payouts = trading.ledger(subaccountKeyId, "SETTLEMENT", todo.minOf { it.startsTs } - 1, todo.maxOf { it.startsTs } + 1)
+            // The ledger filters by Novig's own scheduled start, which a bet's start (CrazyNinjaOdds') can differ from by a while: a wide window.
+            payouts = trading.ledger(subaccountKeyId, "SETTLEMENT", todo.minOf { it.startsTs } - START_SLACK_MS, todo.maxOf { it.startsTs } + START_SLACK_MS)
             positions = trading.positions()
         } catch (e: CancellationException) {
             throw e
@@ -63,7 +64,9 @@ class ApiSettler(
             val contracts = bet.contracts ?: continue
             val win = contracts * EvMath.CONTRACT_PAYOUT_DOLLARS
             val paid = bet.paid ?: (bet.stake - (bet.fee ?: 0.0))
-            val payout = payouts.filter { it.ref == bet.marketId }.sumOf { it.amount }
+            // A row settles a market, and the docs also let it name the fill or order: any of the bet's own ids counts.
+            val ids = setOf(bet.marketId, bet.orderId) + bet.fillIds
+            val payout = payouts.filter { it.ref in ids }.sumOf { it.amount }
             val held = positions.any { it.marketId == bet.marketId && it.outcomeId == bet.outcomeId && it.qty > 0 }
             when {
                 payout > 1e-6 -> {
@@ -123,6 +126,9 @@ class ApiSettler(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** How far either way of a bet's start the ledger is asked about. */
+        const val START_SLACK_MS = 12 * 60 * 60_000L
+
         /** Ledger amounts are 5-decimal dollars; a payout within a hundredth of a cent of a win or of the cost is that. */
         const val TOLERANCE = 1e-4
 
