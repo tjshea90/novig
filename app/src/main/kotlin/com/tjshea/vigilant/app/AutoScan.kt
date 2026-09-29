@@ -195,8 +195,8 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
     ).indexed(clock())
 
     private suspend fun cnoCheck(settings: ScanSettings): List<EvAlert> {
-        // The auto-scan choice asked for CNO, whatever the app's own scanner switch shows.
-        val s = if (settings.cnoOn) settings else settings.copy(scanner = ScannerMode.BOTH)
+        // Only reached with the CNO scanner on ([ScanSettings.autoScansCno]).
+        val s = settings
         runCatching { c.cno.load() }
         val url = UiState(settings = s, loaded = true).cnoUrl
         // At most one read per 3 s: a read the widget just made is used as it is.
