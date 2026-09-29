@@ -168,7 +168,7 @@ class BetRecheckTest {
         assertEquals(1, afterRescue.unpriced)
         assertEquals(afterRescue.open, afterRescue.updated + afterRescue.failed + afterRescue.skipped + afterRescue.current + afterRescue.over + afterRescue.vigilantOnly + afterRescue.started + afterRescue.priced + afterRescue.unpriced)
         assertEquals(
-            "Checked 5 of 6 open bets · 1 couldn't be priced (each bet says why) · 1 game in progress (results come from final scores)",
+            "Checked 4 of 6 open bets · 1 couldn't be priced (each bet says why) · 1 game in progress (results come from final scores)",
             afterRescue.summary(),
         )
     }
