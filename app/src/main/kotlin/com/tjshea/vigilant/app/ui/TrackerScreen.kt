@@ -302,6 +302,13 @@ private fun filtered(bets: List<TrackedBet>, f: BetFilter) = when (f) {
     BetFilter.ALL -> bets
 }
 
+/** What the default order is called on each list. */
+internal fun defaultLabel(f: BetFilter): String = when (f) {
+    BetFilter.OPEN -> "Needs a look"
+    BetFilter.SETTLED -> "Latest result"
+    BetFilter.ALL -> "Latest placed"
+}
+
 /** Open bets: the ones that need a look first ([TrackerText.openOrder]); settled: latest result first; all: latest placed first. */
 private fun ordered(bets: List<TrackedBet>, f: BetFilter, now: Long): List<TrackedBet> = when (f) {
     BetFilter.OPEN -> TrackerText.openOrder(bets, now)
