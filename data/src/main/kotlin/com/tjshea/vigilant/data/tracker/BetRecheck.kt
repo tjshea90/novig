@@ -173,6 +173,7 @@ class BetRecheck(
         var failedInARow = 0
         val stopped = java.util.concurrent.atomic.AtomicBoolean(false)
         val pending = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
+        val updatedIds = HashSet<String>()
         val lock = Mutex()
         // Callers hold [lock].
         suspend fun flush() {
