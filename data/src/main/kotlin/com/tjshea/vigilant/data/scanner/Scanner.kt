@@ -131,6 +131,12 @@ class Scanner(
     private var books: Map<String, NovigBook> = emptyMap()
     private var pinned: Set<String> = emptySet()
 
+    /**
+     * The markets Novig's board listed open at the last scan's catalog (a bets-only scan's is cut to its bets): what says whether a bet's
+     * market is still there when nothing prices it.
+     */
+    val listed: Set<String> get() = catalog?.markets?.mapTo(HashSet()) { it.marketId } ?: emptySet()
+
     /** Each market's best EV on the last scan, to read the likeliest +EV lines first next time. */
     private var lastEv: Map<String, Double> = emptyMap()
 
