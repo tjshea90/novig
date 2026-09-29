@@ -64,8 +64,11 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
      * Places one order. [price] is a probability on Novig's grid ([com.tjshea.vigilant.engine.PriceGrid]); [tif] `IOC` fills what it can at
      * that price or better and cancels the rest. The reply only says the order was queued: read it back ([order]) for what came of it.
      * [clientId] is echoed on the order and its fills and is what finds it again after a lost answer (Novig never checks it for uniqueness).
+     * It must be a UUID: Novig parses it as one (Tj's first real order, 2026-09-29: "clientId: UUID parsing failed ... found `v`" for
+     * "vigilant-<uuid>"), so [newClientId] makes them and anything else is refused here, before a request is sent.
      */
     open suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+        require(isUuid(clientId)) { "clientId must be a UUID (Novig parses it as one): $clientId" }
         val body = json.encodeToString(
             JsonObject.serializer(),
             JsonObject(
