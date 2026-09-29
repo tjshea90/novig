@@ -46,7 +46,11 @@ else
   KEPT=()
   DROPPED=0
   for a in "${ARGS[@]}"; do
-    case "$a" in :app:*|test|check) DROPPED=1 ;; *) KEPT+=("$a") ;; esac
+    case "$a" in
+      :app:*) DROPPED=1 ;;
+      test) DROPPED=1; KEPT+=(:engine:test :data:test) ;;
+      *) KEPT+=("$a") ;;
+    esac
   done
   [ "$DROPPED" = 1 ] && echo "  note  no Android SDK at $ANDROID_HOME (bash tools/setup-android.sh): :app's tests left out, CI runs them"
   ARGS=(--configure-on-demand "${KEPT[@]}")
