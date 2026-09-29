@@ -234,7 +234,7 @@ fun SettingsScreen(
             if (s.cnoOn) {
                 Hint(
                     "CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read" +
-                        if (s.autoScan.cno) " (background auto-scan still reads it every ${s.autoScanMinutes} min)." else ".",
+                        if (s.autoScansCno) " (background auto-scan still reads it every ${s.autoScanMinutes} min)." else ".",
                 )
             }
             // Any mode: the widget's switch can turn Vigilant's scan on from there.
