@@ -9,6 +9,9 @@ interface KeyVault {
     fun generate(alias: String): String
     fun signer(alias: String, keyId: String): NovigSigningKey
     fun delete(alias: String)
+
+    /** Aliases this vault holds that start with [prefix], newest first (an alias carries its creation time). */
+    fun aliases(prefix: String): List<String> = emptyList()
 }
 
 data class NovigConnection(
@@ -18,6 +21,13 @@ data class NovigConnection(
     /** The Vigilant subaccount's trading key ID (its address). */
     val subaccountKeyId: String,
     val createdSubaccount: Boolean,
+    /**
+     * Betting through the API (Tj, 2026-09-29): the subaccount's live `trading` key and the Keystore alias holding its private half, once
+     * "Enable betting" has made sure this phone has it. Null = betting isn't set up. The subaccount's address ([subaccountKeyId]) stays the
+     * first trading key's ID even after that key is replaced (a revoked trading key's ID still addresses its subaccount).
+     */
+    val tradingKeyId: String? = null,
+    val tradingAlias: String? = null,
 )
 
 /**
@@ -50,15 +60,17 @@ class NovigSetup(
         val existing = admin.listSubaccounts().firstOrNull { it.label == LABEL }
         val stamp = clock()
         val subaccountKeyId: String
+        var tradingAlias: String? = null
         if (existing != null) {
             subaccountKeyId = existing.keyId
         } else {
             onStep("Opening a Vigilant subaccount (no money is moved)…")
-            val tradingAlias = "vigilant_novig_trading_$stamp"
-            val pub = vault.generate(tradingAlias)
+            val alias = "${NovigBettingSetup.TRADING_PREFIX}$stamp"
+            val pub = vault.generate(alias)
             subaccountKeyId = runCatching { admin.openSubaccount(LABEL, pub, NovigKeyAlgorithm.P256).keyId }
-                .onFailure { vault.delete(tradingAlias) }
+                .onFailure { vault.delete(alias) }
                 .getOrThrow()
+            tradingAlias = alias
         }
 
         onStep("Creating a read-only scanning key…")
@@ -74,7 +86,10 @@ class NovigSetup(
         onStep("Testing the new key…")
         NovigSignedClient(http, json, vault.signer(readAlias, readKeyId), baseUrl, clock).echo()
 
-        return NovigConnection(readKeyId, readAlias, subaccountKeyId, createdSubaccount = existing == null)
+        return NovigConnection(
+            readKeyId, readAlias, subaccountKeyId, createdSubaccount = existing == null,
+            tradingKeyId = subaccountKeyId.takeIf { tradingAlias != null }, tradingAlias = tradingAlias,
+        )
     }
 
     companion object {
