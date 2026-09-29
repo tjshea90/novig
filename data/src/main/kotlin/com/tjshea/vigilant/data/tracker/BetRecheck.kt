@@ -116,7 +116,17 @@ class BetRecheck(
     }
 
     /** How the open bets split for a run at [now] (no reads). */
-    data class Plan(val open: Int, val todo: List<TrackedBet>, val current: Int, val over: Int, val vigilantOnly: Int)
+    data class Plan(
+        val open: Int,
+        val todo: List<TrackedBet>,
+        val current: Int,
+        val over: Int,
+        val vigilantOnly: Int,
+        /** Pregame bets with no CNO page, not read within the last minute: [OpenBetPricer]'s to price. */
+        val vigilantBets: List<TrackedBet> = emptyList(),
+        /** Started games with no CNO page. */
+        val started: Int = 0,
+    )
 
     private val mutex = Mutex()
 
