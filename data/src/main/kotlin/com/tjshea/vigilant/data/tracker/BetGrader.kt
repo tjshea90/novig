@@ -331,6 +331,8 @@ object BetGrader {
 
     private val FOOTBALL = setOf("NFL", "NCAAF")
 
+    private val STAT_NOISE = setOf("total", "scored", "recorded", "game", "match", "in", "by", "a")
+
     /**
      * Football stats ESPN lists only for a player who recorded one (a receiver with no carries has no rushing line): a player
      * found in the box score, or not in it at all, with none of these has zero. Longest plays are left out: no play is no market.
