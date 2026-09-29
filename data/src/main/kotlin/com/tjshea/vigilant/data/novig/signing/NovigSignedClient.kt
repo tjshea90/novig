@@ -58,6 +58,8 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             status == 403 && serverMessage?.contains("KYC") == true -> "Novig needs your identity check (KYC) finished first."
             status == 403 -> "Novig's edge refused the request (usually too many requests). Wait a minute."
             status == 409 -> "Novig already has that key or limit (one management key, one trading key per subaccount)."
+            status == 422 -> "Novig refused the order: the Vigilant subaccount doesn't have enough money for it, or a position limit stopped it" + (serverMessage?.let { " ($it)." } ?: ".")
+            status == 404 -> serverMessage ?: "Novig doesn't know that market or order (it may have closed)."
             status == 429 -> "Novig asked us to slow down. Try again in a few seconds."
             code == "SIGNING_FAILED" -> serverMessage ?: "The Novig key on this phone can't sign. Connect it again in Settings."
             else -> serverMessage ?: "Novig returned HTTP $status."
@@ -132,7 +134,8 @@ class NovigSignedClient(
         return builder.method(verb, requestBody).build()
     }
 
-    private suspend fun call(verb: String, path: String, rawQuery: String? = null, body: String? = null): String {
+    /** One signed call; the reply's body, or a [NovigApiException] with Novig's own code. */
+    suspend fun call(verb: String, path: String, rawQuery: String? = null, body: String? = null): String {
         http.newCall(signedRequest(verb, path, rawQuery, body)).await().use { response ->
             val text = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
