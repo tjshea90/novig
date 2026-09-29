@@ -92,8 +92,7 @@ class StickyHeadersTest {
         scrollToKey("x39")
         inBar("Amount").performClick()
         compose.waitForIdle()
-        println("DEBUG-TREE " + compose.onRoot().printToString(maxDepth = 12).replace("
-", " ¶ "))
+        println("DEBUG-TREE " + compose.onRoot().printToString(maxDepth = 12).replace("\n", " ¶ "))
         // Largest amount first: bet 0 ($99) is the first card, on screen with no scrolling back.
         compose.onNodeWithText("Player 0 Over 1.5", substring = true).assertIsDisplayed()
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
