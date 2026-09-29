@@ -676,19 +676,23 @@ private fun ignoresBatteryLimits(context: android.content.Context): Boolean =
 fun alertLabel(ev: Double): String = if (ev <= 0.0) "Off" else "${Math.round(ev * 100)}%+"
 
 /** What background auto-scan does at these settings. */
-fun autoScanHint(s: ScanSettings): String = when (s.autoScan) {
-    AutoScanMode.OFF -> "Off: Vigilant scans only when you tap Scan, and CrazyNinjaOdds is read only while its tab or a widget is on screen."
-    AutoScanMode.CNO -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list, then Novig's price now and every book's odds " +
-        "for its best bets (the green check's reads), and the books of your open bets starting within the hour (the Tracker's closing line, " +
-        "for CLV). A quiet notification shows while it's on (Scan now, Stop). About " +
-        "${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} reads of CNO a day, each well under a second of work."
-    AutoScanMode.BOTH -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: CrazyNinjaOdds' list and its best bets' books (and the books of your open bets starting " +
-        "within the hour, the Tracker's closing line), then Vigilant's own " +
-        "scan exactly as the Scan button runs it (" + (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
-        "${scanTime(s.maxBooksPerScan)}). " +
-        "Each scan spends API credits like a tap on Scan: ${60 / s.autoScanMinutes.coerceAtLeast(1) * 24} scans a day at this setting. " +
-        "A quiet notification shows while it's on (Scan now, Stop)." +
-        if (!s.vigilantOn) " Vigilant's scan runs here even with the scanner above on CNO only." else ""
+fun autoScanHint(s: ScanSettings): String {
+    if (s.autoScan == AutoScanMode.OFF) return "Off: Vigilant scans only when you tap Scan, and CrazyNinjaOdds is read only while its tab or a widget is on screen."
+    val perDay = 60 / s.autoScanMinutes.coerceAtLeast(1) * 24
+    val cnoPart = "CrazyNinjaOdds' list, then Novig's price now and every book's odds for its best bets (the green check's reads), and the books of your " +
+        "open bets starting within the hour (the Tracker's closing line, for CLV)"
+    val vigilantPart = "Vigilant's own scan exactly as the Scan button runs it (" +
+        (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
+        "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $perDay scans a day at this setting"
+    val notification = " A quiet notification shows while it's on (Scan now, Stop)."
+    return when {
+        s.autoScansCno && s.autoScansVigilant -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: $cnoPart, then $vigilantPart.$notification"
+        s.autoScansCno -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work." +
+            if (s.autoScan.vigilant) " Vigilant's scan is skipped, because the scanner above is on CNO only: no API credits are spent in the background." else ""
+        s.autoScansVigilant -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: $vigilantPart.$notification CrazyNinjaOdds isn't read, because the scanner above is on Vigilant only."
+        s.paused -> "Paused with everything else: resume scanning (the ⏸ button) to run again."
+        else -> "Nothing runs in the background: the scanner above is on ${s.scanner.displayName}, which leaves nothing for this choice to read. Pick a scanner that is on."
+    }
 }
 
 /** Which bets alert, at these settings. */
