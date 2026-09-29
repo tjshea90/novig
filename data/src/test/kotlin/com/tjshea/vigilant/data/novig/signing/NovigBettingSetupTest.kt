@@ -121,7 +121,10 @@ class NovigBettingSetupTest {
         val sent = requests.first { it.path!!.endsWith("/transfer") }
         assertEquals("/v3/account/subaccounts/sub-1/transfer", sent.path)
         val body = sent.body.clone().readUtf8()
-        assertTrue(body, body.contains("\"direction\":\"fund\"") && body.contains("\"amount\":\"10.00000\"") && body.contains("\"clientTransferId\":\"vigilant-"))
+        assertTrue(body, body.contains("\"direction\":\"fund\"") && body.contains("\"amount\":\"10.00000\""))
+        // The id is a plain UUID, the shape Novig parses an order's clientId as (its first real order, 2026-09-29).
+        val id = Regex("\"clientTransferId\":\"([^\"]+)\"").find(body)!!.groupValues[1]
+        assertTrue(id, com.tjshea.vigilant.data.novig.trading.NovigTradingClient.isUuid(id))
     }
 
     @Test
