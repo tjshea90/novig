@@ -400,7 +400,8 @@ class Scanner(
                 // as its throttle allows, and keeps what it holds current (RESEARCH.md §27). Once per plan.
                 if (plan !== watchedPlan) {
                     watchedPlan = plan
-                    novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
+                    // A bets-only pass would replace the feed scanner's subscription with a few dozen markets.
+                    if (!betsOnly) novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
                 }
                 // A line whose other books' odds (read as the scan began) couldn't stay listed a couple of minutes once
                 // priced is left for the next scan: a long scan (a big budget, public routes) never shows a bet already
