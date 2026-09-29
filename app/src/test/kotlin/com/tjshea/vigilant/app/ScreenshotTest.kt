@@ -1295,7 +1295,9 @@ class ScreenshotTest {
         compose.onNodeWithText("66.7%").assertExists()
         compose.onNodeWithText("2-1").assertExists()
         compose.onNodeWithText("+$17.52").assertExists()
-        compose.onNodeWithText("By scanner").assertExists()
+        // The split by scanner, league, market, edge and price is one card now (TASKS.md T6).
+        compose.onNodeWithText("Where it's working").assertExists()
+        compose.onNodeWithText("Are the edges real?").assertExists()
     }
 
     @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
