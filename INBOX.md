@@ -2442,3 +2442,8 @@ Think of the best way for me to be able to quickly and easily mark a bet as plac
 
 After all these features are built, run the full test protocol looking for ways to improve the app and the UI and code and fix bugs.
 ```
+
+## 2026-09-29T06:40:08Z
+```
+When I pressed check odds now in the tracker, it scanned very slow. Slower than before. And a lot of bets can't be tracked, see the screenshot. If they can't be tracked, how did the app know it was positive EV to begin with? And it said it only updated 61 bets, but I have 100 or so open. Investigate how to make all this work
+```
