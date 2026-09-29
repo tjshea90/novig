@@ -935,6 +935,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * from final scores ([BetSettler]). One report that adds both up.
      */
     private suspend fun gradeAll(force: Boolean): com.tjshea.vigilant.data.tracker.BetSettler.Report {
+        // Fills Novig has that the Tracker doesn't (an order placed just as the app closed): added before grading, so nothing waits for a tap.
+        c.apiSync?.let { sync ->
+            try {
+                sync.run()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Novig unreachable: the next pass looks again.
+            }
+        }
         val api = c.apiSettler?.let { s ->
             try {
                 s.run()

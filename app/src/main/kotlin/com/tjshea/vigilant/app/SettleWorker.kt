@@ -20,6 +20,7 @@ class SettleWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     override suspend fun doWork(): Result {
         val app = applicationContext as? VigilantApp ?: return Result.success()
         // Bets placed through Novig's API are graded from Novig's own ledger (when betting is set up), the rest from final scores.
+        runCatching { app.container.apiSync?.run() }
         runCatching { app.container.apiSettler?.run() }
         val report = runCatching { app.container.settler.run() }.getOrNull()
         // A score feed out of reach: the next 3-hourly run tries again, no retry storm.

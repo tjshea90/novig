@@ -6,7 +6,9 @@ import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.Locale
@@ -94,12 +96,13 @@ class ApiBetPlacer(
         } catch (e: Exception) {
             // No usable answer (a timeout, a dropped connection, a reply that couldn't be read): the order may have gone through, so look
             // for it by its clientId before saying anything.
-            findByClientId(clientId) ?: return PlaceResult.Unconfirmed(
+            withContext(NonCancellable) { findByClientId(clientId) } ?: return PlaceResult.Unconfirmed(
                 "Novig didn't answer, and its lists don't show the order (${e.message ?: "no connection"}). Nothing is assumed: open the Tracker and tap " +
                     "Sync with Novig in a minute, and check Novig before betting this again.",
             )
         }
-        finish(target, orderId)
+        // Once the order is in, what came of it is always read and recorded, even if the screen that asked has gone: money spent never goes untracked.
+        withContext(NonCancellable) { finish(target, orderId) }
     }
 
     /** Waits for the order to end, reads its fills, and logs the bet. */
