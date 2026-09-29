@@ -133,7 +133,8 @@ fun BetSheetContent(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             LabeledValue("Odds bet at", Odds.formatAmerican(insight.betOdds))
             LabeledValue("Implied chance", Format.percent(insight.betImplied))
-            LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
+            if (bet.viaApi) LabeledValue("Stake", Format.money(bet.stake))
+            else LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
             LabeledValue(
                 if (open) "To win" else "Result",
                 bet.profit?.let { Format.signedMoney(it) } ?: Format.money(bet.profitIfWon),
@@ -204,8 +205,11 @@ fun BetSheetContent(
             AssistChip(onClick = { onSettle(BetStatus.PENDING) }, label = { Text("$name · undo") })
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TextButton(onClick = onStake) { Text("Change stake") }
-            TextButton(onClick = onPrice) { Text("Change price") }
+            // A bet placed through the API has its stake and price from Novig's fills: nothing to correct.
+            if (!bet.viaApi) {
+                TextButton(onClick = onStake) { Text("Change stake") }
+                TextButton(onClick = onPrice) { Text("Change price") }
+            }
             TextButton(onClick = onDelete) { Text("Delete") }
         }
     }
@@ -220,7 +224,8 @@ private fun StatusCard(bet: TrackedBet, now: Long) {
         !open -> {
             val name = if (bet.status == BetStatus.FMV) "Settled at fair value" else bet.status.name.lowercase().replaceFirstChar { it.uppercase() }
             val by = when (bet.settledBy) {
-                BetSettler.BY_SCORES, BetSettler.BY_NOVIG -> "graded from the final score"
+                BetSettler.BY_NOVIG -> if (bet.viaApi) "graded by Novig's own books" else "graded from the final score"
+                BetSettler.BY_SCORES -> "graded from the final score"
                 BetSettler.BY_YOU -> "marked by you"
                 else -> null
             }

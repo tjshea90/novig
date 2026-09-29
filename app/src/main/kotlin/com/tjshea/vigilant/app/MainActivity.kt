@@ -640,6 +640,7 @@ private fun VigilantRoot(
                         onRegrade = vm::regradeBet,
                         onPrice = vm::setPrice,
                         onScan = onScan,
+                        onSync = { vm.api.sync() },
                     ),
                 )
                 Tab.SETTINGS -> SettingsScreen(

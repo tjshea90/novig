@@ -321,6 +321,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     suspend fun setPrice(id: String, american: Int) {
         if (american > -100 && american < 100) return
         edit(id) { b ->
+            if (b.orderId != null) return@edit b
             val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(american)
             val live = b.cost > b.price + 1e-9
             val fee = if (live && price < 1.0) com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true) else 0.0

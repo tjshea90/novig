@@ -102,6 +102,8 @@ data class BetActions(
     val onPrice: (String, Int) -> Unit = { _, _ -> },
     /** A Vigilant scan (it prices the open Vigilant bets). */
     val onScan: () -> Unit = {},
+    /** Betting through the API is set up: add what Novig filled that the Tracker doesn't have. */
+    val onSync: () -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -205,6 +207,9 @@ fun TrackerScreen(
                                     TextButton(onClick = actions.onGrade, enabled = !state.gradingBets, contentPadding = PaddingValues(0.dp)) {
                                         Text(if (state.gradingBets) "Grading…" else "Grade now: read the final scores again")
                                     }
+                                }
+                                if (state.betting.enabled) {
+                                    TextButton(onClick = actions.onSync, contentPadding = PaddingValues(0.dp)) { Text("Sync with Novig's fills") }
                                 }
                             }
                         }
@@ -448,7 +453,8 @@ private fun BetCard(
                     Text(
                         (if (bet.source == BetTracker.SOURCE_CNO) "CNO" else "Vigilant") +
                             (if (bet.book != AppBook.name) " · ${bet.book}" else "") +
-                            (if (bet.imported) " · from an earlier ✓" else ""),
+                            (if (bet.viaApi) (if (bet.imported) " · found in Novig's fills" else " · placed through Novig's API") else "") +
+                            (if (bet.imported && !bet.viaApi) " · from an earlier ✓" else ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -464,7 +470,8 @@ private fun BetCard(
                 IconButton(onClick = onDelete) { Icon(Icons.Filled.Delete, contentDescription = "Delete bet") }
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp, end = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
+                if (bet.viaApi) LabeledValue("Stake", Format.money(bet.stake))
+                else LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
                 LabeledValue("Price", bet.american?.let { Odds.formatAmerican(it) } ?: Format.american(bet.price))
                 LabeledValue("EV", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
                 LabeledValue("CLV", bet.clvPercent?.let { Format.evPercent(it) } ?: "—")
