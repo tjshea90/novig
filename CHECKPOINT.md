@@ -1,13 +1,13 @@
-# CHECKPOINT 2052 — read me first, then TASKS.md
+# CHECKPOINT 2053 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T05:36:45Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `d698b684` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T05:45:07Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `a61e056a` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.20.0: Tracker: Check odds now reads every open bet (no 40 cap, the count adds up to your open bets); tap a bet for its odds vs fair now and every book's odds; Replace button (Novig bet slip + your amount); open bets say why they're not graded, and NHL/NBA/football/tennis bets grade from final scores; expected-vs-actual and where-it-works stats; closing line captured by the background scan; +EV alerts get a Placed button (track without opening Vigilant, Undo). 837 tests (versionCode 43, v0.20.0)
+v0.20.0 (code 43) released and recorded: CI green (run 36526989519), release.yml run 36527338773 success, Release with vigilant-v0.20.0.apk. T1-T9 all ticked.
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.20.0), then run: bash tools/record-release.sh v0.20.0 43 "v0.20.0: Tracker: Check odds now reads every open bet (no 40 cap, the count adds up to your open bets); tap a bet for its odds vs fair now and every book's odds; Replace button (Novig bet slip + your amount); open bets say why they're not graded, and NHL/NBA/football/tennis bets grade from final scores; expected-vs-actual and where-it-works stats; closing line captured by the background scan; +EV alerts get a Placed button (track without opening Vigilant, Undo). 837 tests"
+Nothing open in this job. Tj: install v0.20.0, tap Check odds now on the 101 open bets, open one bet, try Replace, and tap a +EV alert's Placed button; open items L1161/L1164/P6/S2 need his phone.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  c807f261 ckpt 2052: pre-release: v0.20.0: Tracker: Check odds now reads every open bet (no 40 ca
   d698b684 ckpt 2051: T9 full test: floor 837 green, live score check (NHL/NBA/tennis real), R8 bu
   d8925d3b ckpt 2050: Full-test sweep fixes: recheck never re-attaches books to a bet settled mid-
   b15d6a88 ckpt 2049: TASKS T2-T8 ticked with evidence; RESEARCH.md §34 (PropLine grading is paid
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   bca5fd2a ckpt 2045: T4 in progress: FreeScores reads ESPN hockey box (goals/assists/points/SOG/b
   7f48f897 ckpt 2044: T2 built: BetRecheck reads every open bet (no cap), one Report that adds up 
   7e5855dc ckpt 2043: T1 done: tracker read end to end; root causes, PropLine grading research and
-  f76a71d6 ckpt 2042: Recorded Tj's tracker request (T1-T9) in TASKS.md
 ```
