@@ -79,4 +79,105 @@ class BetRecheckTest {
         assertEquals(true, b.nowEv != null)
         assertNull(b.closingFair)
     }
+
+    // ---- Tj, 2026-09-29: "it says it check 40 out of 40 open bets, but I have 101 open bets" -----------
+
+    @Test
+    fun `every open bet is checked, not the first 40, and the count runs to the end`() = runTest {
+        val bets = (1..101).map { bet("b$it", startsTs = start + it * 60_000L) }
+        val t = tracker(*bets.toTypedArray())
+        val progress = mutableListOf<Pair<Int, Int>>()
+        val r = BetRecheck(t, books = { view(-125, 105) }, clock = { now }).run { done, total -> progress += done to total }
+        assertEquals(101, r.open)
+        assertEquals(101, r.checked)
+        assertEquals(101, r.updated)
+        assertEquals(101, t.all().count { it.nowEv != null })
+        assertEquals(0 to 101, progress.first())
+        assertEquals(101 to 101, progress.last())
+        assertEquals("Checked 101 of 101 open bets", r.summary())
+    }
+
+    @Test
+    fun `the report accounts for every open bet, so what Tj is told adds up to what he has`() = runTest {
+        val t = tracker(
+            bet("read"), bet("read2"),
+            bet("fresh").copy(nowAtMs = now - 10_000L, nowEv = 0.01, nowFair = 0.51),
+            bet("gone"),
+            bet("vigilant", gameUrl = null), bet("vigilant2", gameUrl = null),
+            bet("over", startsTs = now - BetRecheck.STALE_AFTER_START_MS - 1),
+            bet("won").copy(status = BetStatus.WON),
+        )
+        val r = BetRecheck(t, books = { row -> if (row.gameUrl!!.endsWith("gone")) null else view(-125, 105) }, clock = { now }).run()
+        assertEquals(7, r.open) // the won bet isn't open
+        assertEquals(2, r.updated)
+        assertEquals(1, r.current)
+        assertEquals(1, r.failed)
+        assertEquals(2, r.vigilantOnly)
+        assertEquals(1, r.over)
+        assertEquals(0, r.skipped)
+        assertEquals(r.open, r.updated + r.failed + r.skipped + r.current + r.over + r.vigilantOnly)
+        assertEquals(
+            "Checked 3 of 7 open bets · 1 couldn't be read · 1 game already over (results come from final scores) · 2 Vigilant bets update with each Vigilant scan",
+            r.summary(),
+        )
+        assertEquals(true, r.summary(scanStarted = true).contains("2 Vigilant bets updating from a Vigilant scan"))
+    }
+
+    @Test
+    fun `each bet keeps every book's price, the other side and the price now, and the file is written in batches`() = runTest {
+        val t = tracker(bet("up"))
+        BetRecheck(t, books = { CnoBooksView("SEA", "WSH", null, false, listOf(CnoBookPrice("PN", -125, null, 105, null), CnoBookPrice("DK", -120, null, 100, null), CnoBookPrice("FD", -130, null, 110, null), CnoBookPrice("NV", 102, null, -106, null)), now) }, clock = { now }).run()
+        val b = t.all().single()
+        assertEquals(listOf("Pinnacle", "DraftKings", "FanDuel", "Novig"), b.books.map { it.name })
+        assertEquals(BookLine("Pinnacle", -125, 105), b.books.first())
+        assertEquals("WSH", b.otherSide)
+        assertEquals(102, b.nowAmerican)
+        assertEquals(now, b.booksAtMs)
+        // Settling drops the snapshot: only open bets show it.
+        t.settle("up", BetStatus.WON)
+        assertEquals(emptyList<BookLine>(), t.all().single().books)
+    }
+
+    @Test
+    fun `a run stops, keeping what it read, when CNO asks for a pause or five reads in a row fail`() = runTest {
+        val bets = (1..10).map { bet("p$it", startsTs = start + it) }
+        var pausedNow = false
+        val t = tracker(*bets.toTypedArray())
+        var reads = 0
+        val r = BetRecheck(t, books = { reads++; if (reads == 3) pausedNow = true; view(-125, 105) }, clock = { now }, paused = { pausedNow }).run()
+        assertEquals(true, r.stopped)
+        assertEquals(3, r.updated)
+        assertEquals(7, r.skipped)
+        assertEquals(3, t.all().count { it.nowEv != null })
+        assertEquals(true, r.summary().contains("stopped early"))
+
+        val t2 = tracker(*bets.toTypedArray())
+        var asked = 0
+        val down = BetRecheck(t2, books = { asked++; null }, clock = { now }).run()
+        assertEquals(BetRecheck.MAX_FAILS_IN_ROW, asked)
+        assertEquals(true, down.stopped)
+        assertEquals(5, down.skipped)
+        assertEquals(true, down.summary().startsWith("CrazyNinjaOdds didn't answer"))
+    }
+
+    @Test
+    fun `a run cancelled part-way keeps the bets it already read`() = runTest {
+        val bets = (1..8).map { bet("c$it", startsTs = start + it) }
+        val t = tracker(*bets.toTypedArray())
+        var reads = 0
+        try {
+            BetRecheck(t, books = { if (++reads == 4) throw kotlinx.coroutines.CancellationException("left the screen"); view(-125, 105) }, clock = { now }).run()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // expected: cancellation is never swallowed
+        }
+        assertEquals(3, t.all().count { it.nowEv != null })
+    }
+
+    @Test
+    fun `the gap between bets is CNO's pace`() = runTest {
+        val t = tracker(bet("g1", startsTs = start + 1), bet("g2", startsTs = start + 2), bet("g3", startsTs = start + 3))
+        BetRecheck(t, books = { view(-125, 105) }, clock = { now }, gapMs = 2_000L).run()
+        // Two gaps between three reads, none before the first.
+        assertEquals(4_000L, testScheduler.currentTime)
+    }
 }
