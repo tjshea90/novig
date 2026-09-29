@@ -2636,15 +2636,33 @@ Nothing at or above 1.0% EV."
 
 ## "Fix all the things you can fix without breaking anything and make sure to take advantage of the new skills for all future tasks on this app" (Tj, 2026-09-29T00:28Z)
 
-- [ ] Y1 Apply the prompt audit's 21 fixes (PROMPT_AUDIT.patch: A1-A11, B1-B10); checks green, briefing under the cap.
-- [ ] Y2 Settle the flags whose answer is already Tj's own later decision or the code (F1-F6, F9, F10), and fill F11
+- [x] Y1 (DONE: PROMPT_AUDIT.patch applied (ckpt 2000): test_resume.sh green, briefing under the cap, CLAUDE.md
+      35,855 -> 18,114 chars, test protocols now `.claude/skills/test-protocols`.) Apply the prompt audit's 21 fixes (PROMPT_AUDIT.patch: A1-A11, B1-B10); checks green, briefing under the cap.
+- [x] Y2 (DONE: BRIEF.md F1 source order -> pointer to the BLEND decision, F2 keys -> plain JSON + one-time migration,
+      F3 fee rule kept with today's code, F4 no sample path, F5 two dead bullets -> one pointer, F6 every timed
+      exception named (widget rescan, SettleWorker) + Tj's 2026-09-20 quote, F7 revisit condition recorded as met, key
+      NOT changed, F10 history note, F11 Moto G 2026 specs (GSMArena review); F9 in the test-protocols skill. Name
+      check: no stale code names left but the one history note. F8 (history stories) left: they carry the reasons.)
+      Settle the flags whose answer is already Tj's own later decision or the code (F1-F6, F9, F10), and fill F11
       (Moto G 2026 specs) if a reliable source exists. F7 (the keystore) is written up but NOT changed: a new signing
       key forces an uninstall that wipes the app's saved data, which breaks things.
-- [ ] Y3 Side findings: `MarketFee.GAME` used for CNO books / tracked bets (a futures bet under-charged): fix it if that
+- [x] Y3 (DONE: `MarketFee.GAME` KDoc says who uses it and why; NOVIG_API.md §8 no longer says Fees.kt ignores
+      futures; test_resume.sh header; bootstrap counts "commits" and finds `.git` in a worktree. `./gradlew :engine:test`
+      39/0. The fee math itself is Y7: a real fix needs each CNO bet's own Novig market, so it's a feature change
+      with a release, not a safe quick edit.) Side findings: `MarketFee.GAME` used for CNO books / tracked bets (a futures bet under-charged): fix it if that
       can be done safely with a test, and ship if app code changes; `tools/test_resume.sh`'s stale header; bootstrap's
       "checkpoints" label and its `.git` check in a worktree.
-- [ ] Y4 The skills in every future task: CLAUDE.md says when to load each one (with its path), the session briefing
+- [x] Y4 (DONE: CLAUDE.md "Skills for this app" table (what to load before which work, with paths), the briefing's
+      rules list them, light test step 2 and full test step 3/4 review with them. The four Chris Banes skills show in this
+      session's skill list, so repo skills do load in cloud sessions.) The skills in every future task: CLAUDE.md says when to load each one (with its path), the session briefing
       lists them, the light/full test protocols use them. (The four already show up in this session's skill list.)
-- [ ] Y5 Stale open TASKS items: tick or mark superseded where the code shows it's done (evidence for each); leave real
+- [x] Y5 (DONE: six resolved with evidence (SharpAPI 403, Stage 1, Stage 2, Reference leg, H2, P2); four stay open
+      because they need Tj's phone or his go-ahead (first live Novig key connect, first Odds API scan on device, P6
+      PropLine props live, S2 PiP header).) Stale open TASKS items: tick or mark superseded where the code shows it's done (evidence for each); leave real
       ones open.
 - [ ] Y6 Checks (test_resume.sh; the Gradle floor if app code changed), ship + Release link if the app changed, report.
+- [ ] Y7 (open, needs Tj's go-ahead: an app change + release) Charge CNO bets their own Novig market's fee: carry the
+      market's `fee` (NovigLive's cache / the bet-slip link lookup) into `CnoChecks.netEv`, `CnoBooks.check` and
+      `BetTracker.logCno`, keeping `MarketFee.GAME` only when the market is unknown. Today they assume the game
+      schedule, so an NFL/MLB/NCAAF futures market at +150 or shorter on CNO's list shows EV ~3-4 points too high
+      before the game (6% × P × (1−P) not taken out). Tests: a futures row is charged pregame; a game row isn't.
