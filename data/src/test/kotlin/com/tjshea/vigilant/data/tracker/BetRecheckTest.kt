@@ -3,6 +3,7 @@ package com.tjshea.vigilant.data.tracker
 import com.tjshea.vigilant.data.cno.CnoBookPrice
 import com.tjshea.vigilant.data.cno.CnoBooksView
 import com.tjshea.vigilant.data.cno.CnoRow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
