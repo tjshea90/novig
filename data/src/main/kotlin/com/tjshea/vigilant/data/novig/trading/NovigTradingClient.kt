@@ -91,9 +91,25 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
         if (e.status == 404) null else throw e
     }
 
-    /** Up to [limit] orders in [status] (newest first is not promised: the whole page is returned). */
-    open suspend fun orders(status: String, limit: Int = 100): List<NovigOrder> =
-        json.decodeFromString(OrderPageDto.serializer(), signer.call("GET", "/v3/orders", "limit=$limit&status=$status")).items.map { it.toDomain() }
+    /**
+     * The orders in [status] (`PENDING`, `OPEN`, `FILLED`, `CANCELED` or `REJECTED`), every page up to [MAX_ORDER_ROWS] (which end the first page is isn't
+     * promised), only those on [outcomeId] when it's given.
+     */
+    open suspend fun orders(status: String, limit: Int = 500, outcomeId: String? = null): List<NovigOrder> {
+        val out = ArrayList<NovigOrder>()
+        var cursor: String? = null
+        do {
+            val query = buildString {
+                append("limit=").append(limit.coerceIn(1, 5000)).append("&status=").append(status)
+                outcomeId?.let { append("&outcome=").append(percent(it)) }
+                cursor?.let { append("&after=").append(percent(it)) }
+            }
+            val page = json.decodeFromString(OrderPageDto.serializer(), signer.call("GET", "/v3/orders", query))
+            out += page.items.map { it.toDomain() }
+            cursor = page.next?.takeIf { it.isNotBlank() }
+        } while (cursor != null && out.size < MAX_ORDER_ROWS)
+        return out
+    }
 
     /** Fills of one [orderId], or every fill (up to [limit]) when null. */
     open suspend fun fills(orderId: String? = null, limit: Int = 500): List<NovigFill> {
