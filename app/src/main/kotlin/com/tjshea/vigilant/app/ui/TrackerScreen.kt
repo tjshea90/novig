@@ -122,6 +122,10 @@ fun TrackerScreen(
     var view by rememberSaveable { mutableStateOf(initialView) }
     var period by rememberSaveable { mutableStateOf(TrackerPeriod.ALL) }
     var filter by rememberSaveable { mutableStateOf(BetFilter.OPEN) }
+    // How the bets are ordered and which scanner's are listed (Tj, 2026-09-29): kept through rotation and the app being recreated.
+    var sort by rememberSaveable { mutableStateOf(BetSort.DEFAULT) }
+    var sortReversed by rememberSaveable { mutableStateOf(false) }
+    var scanner by rememberSaveable { mutableStateOf(ScannerFilter.ALL) }
     var breakdownBy by rememberSaveable { mutableStateOf(TrackerBreakdown.By.LEAGUE) }
     // The open bet's sheet, by id, so a recheck that updates the bet updates the sheet, and deleting closes it.
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
