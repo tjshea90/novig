@@ -289,6 +289,39 @@ class ApiBettingTest {
     }
 
     @Test
+    fun `a lost answer's order still queued (PENDING) is found, asking only about this outcome's orders`() = runBlocking {
+        val s = Scenario()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                val path = request.path!!
+                return when {
+                    request.method == "POST" && path == "/v3/orders" -> MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
+                    path.startsWith("/v3/orders?") && path.contains("status=PENDING") -> {
+                        val sent = json.parseToJsonElement(requests.first { it.method == "POST" }.body.clone().readUtf8()).jsonObject["clientId"]!!.jsonPrimitive.content
+                        MockResponse().setBody("""{"items":[{"orderId":"o1","clientId":"$sent","marketId":"mkt","outcomeId":"A","price":"0.465","qty":400,"remaining":400,"tif":"IOC","status":"PENDING","createdTs":1}]}""")
+                    }
+                    path.startsWith("/v3/orders?") -> MockResponse().setBody("""{"items":[]}""")
+                    path == "/v3/orders/o1" -> MockResponse().setBody("""{"orderId":"o1","marketId":"mkt","outcomeId":"A","price":"0.465","qty":400,"remaining":0,"tif":"IOC","status":"FILLED","createdTs":1}""")
+                    path.startsWith("/v3/portfolio/fills") -> MockResponse().setBody(s.fills)
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        val r = placer(tracker()).place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.Placed)
+        assertTrue(requests.filter { it.method == "GET" && it.path!!.startsWith("/v3/orders?") }.all { it.path!!.contains("outcome=A") })
+    }
+
+    @Test
+    fun `an open order with nothing left resting has filled all it will`() {
+        val o = NovigOrder("o", null, "m", "A", 0.5, 400, 0, "IOC", "OPEN", 1)
+        assertTrue(o.terminal)
+        assertTrue(!o.copy(remaining = 10).terminal)
+        assertTrue(!o.copy(status = "PENDING", remaining = 400).terminal)
+    }
+
+    @Test
     fun `a lost answer with no trace is unconfirmed, never called placed or failed`() = runBlocking {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
