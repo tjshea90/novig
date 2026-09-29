@@ -122,6 +122,20 @@ class BetRecheckTest {
             r.summary(),
         )
         assertEquals(true, r.summary(scanStarted = true).contains("2 Vigilant bets updating from a Vigilant scan"))
+        // With the grading pass that runs beside it, the finished game says what came of it (Tj: "it only updated 61, I have 100").
+        assertEquals(
+            "Checked 3 of 7 open bets · 1 couldn't be read · 1 game already over: graded 1 from final scores · 2 Vigilant bets update with each Vigilant scan",
+            r.summary(graded = BetSettler.Report(asked = 1, settled = 1, stopped = false)),
+        )
+        assertEquals(
+            true,
+            r.summary(graded = BetSettler.Report(asked = 3, settled = 1, stopped = false, waiting = 1, manual = 1))
+                .contains("1 game already over: graded 1 from final scores, 1 not over yet, 1 needs a tap (each says why)"),
+        )
+        assertEquals(true, r.summary(graded = BetSettler.Report(asked = 1, settled = 0, stopped = true)).contains("1 game already over: the score feeds didn't answer"))
+        // Bets a few hours into their game (not "over" yet) that got graded are still told.
+        val soon = BetRecheck.Report(open = 5, checked = 5, updated = 5)
+        assertEquals("Checked 5 of 5 open bets · Graded 2 from final scores", soon.summary(graded = BetSettler.Report(asked = 2, settled = 2, stopped = false)))
     }
 
     @Test
