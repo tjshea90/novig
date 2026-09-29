@@ -162,7 +162,7 @@ class OpenBetPricerTest {
         assertEquals(OpenBetPricer.Report(4, 0, 4), first)
         val by = t.all().associateBy { it.id }
         assertEquals("Novig no longer lists this market (closed, or the game moved)", by.getValue("gone").nowNote)
-        assertTrue(by.getValue("nofair").nowNote!!.startsWith("No fair-odds source lists this game"))
+        assertTrue(by.getValue("nofair").nowNote!!.startsWith("No fair-odds source has current prices for this game"))
         assertEquals("Vigilant doesn't price MLS (USA)", by.getValue("league").nowNote)
         assertTrue(by.getValue("old").nowNote!!.contains("no Novig market on record"))
         assertNull(by.getValue("won").nowNote)
