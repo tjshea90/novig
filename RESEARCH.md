@@ -2527,3 +2527,33 @@ oversized briefing is trimmed…" (both failed before the fix).
   and the briefing scripts, report plus proposed diff, nothing applied until Tj says which hunks; (2) "add the Compose
   skills": read Chris Banes' four skills in full, commit them to `.claude/skills/` with the Apache-2.0 license.
 - No plugin installs, connectors or paid services are recommended.
+
+### 33.6 Skills across accounts, the setup script, and test speed (2026-09-29 ~00:41Z, Tj: "Are the compose skills installed in the repo to use between different Claude accounts? I have three Claude accounts. Do I have to do anything to the other accounts before working on this repo again? … Think of and implement any other clean up or optimization for this repo so that future work is efficient and Claude can use skills for the best coding. The setup script for each cloud session should load a maven central script, does this work well?")
+- **What travels with the repo (nothing to do per account):** `.claude/skills/` (Chris Banes' four + `test-protocols`),
+  CLAUDE.md, BRIEF.md and the briefing/checkpoint scripts. Any account's session on this repo gets them (33.3; all five
+  skills were listed in this session). The checkpoint hooks install themselves (CLAUDE.md "FIRST ACTION").
+- **What belongs to each account:** its cloud environments (Pro/Max environments aren't shared) and its GitHub
+  connection. Each environment needs the one-line setup script and `dl.google.com` allowed (BRIEF.md build trap 6).
+  Without them nothing breaks: `bootstrap.sh` warns, Claude runs `bash tools/setup-android.sh` in the session (the SDK
+  still needs `dl.google.com`; without it the app module is tested only on CI).
+- **Does the mirror script work well? Yes.** Cold, with an empty Gradle home and no `~/.m2`: the full floor (761 tests)
+  in 210 s, 1.3 GB of Gradle dependencies and 191 MB of Robolectric jars through Google's mirror, zero 429s. Warm: 110 s.
+  Weak spots found and fixed: (1) `set -e` made any failed step (e.g. `dl.google.com` blocked on a "Trusted" network)
+  exit non-zero, which stops a cloud session from starting: now WARN and exit 0; (2) it installed build-tools 36.0.0
+  but AGP 8.13 builds with 35.0.0, which AGP then fetched itself mid-build (22:26Z yesterday): both installed now;
+  (3) every new session re-downloaded 1.5 GB: `--prewarm` builds a throwaway clone and runs one Robolectric test inside
+  the setup script, so the environment's snapshot carries the caches. Cold with `--prewarm`: 210-235 s total (SDK 13-65 s,
+  pre-download 170 s with the Kotlin daemon; in-process compilation took 197 s). Then the first floor: 106 s, 2 MB
+  downloaded. The pre-download gets what's left of a 250 s budget (a cut test: WARN after 42 s, exit 0, no process left).
+- **Test speed:** `data:test` took 71 s in one JVM, mostly tests waiting out paced/retried requests (ExchangeClientsTest's
+  Kalshi test 13 s at Kalshi's 2 requests/s, CnoClientTest 18 s, PlayerTeamsTest 15 s). `maxParallelForks` = half the
+  cores: 38 s. `tools/test.sh` prints a per-module line and only failing tests' messages (`tools/gradle_summary.py`,
+  checked by `tools/test_gradle_summary.sh`), and `ship.sh` uses it.
+- **Fixed on the way:** the live checks' `VIGILANT_*` switches are now inputs of `data:test`. Before, turning one on
+  after a run with the same filter left the task "up to date": the live check silently didn't run (shown both ways).
+- **Not adopted:** Gradle's build cache and configuration cache (containers are thrown away, so a local cache rarely
+  hits; the screenshot PNGs and the live checks are side effects Gradle doesn't track, so a cache hit would skip them
+  silently; a configuration-cache problem fails the build, CI and release included). Chris Banes' `gradle-run` skill (a
+  workflow ledger plus a mandatory diagnostic subagent for every Gradle workflow: heavier than this repo's flow, and
+  `tools/test.sh` gives its main benefit, short output). CI changes (3 min 45 s per run, Gradle and Robolectric caches
+  already on). Nothing on futures (Tj: leave them out, BRIEF.md).
