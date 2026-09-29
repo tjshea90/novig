@@ -70,18 +70,18 @@ class TrackerTextTest {
         )
         assertEquals("3 open · $30.00 at risk · pays $30.00 · 2 started · 1 need a tap · odds read on 0 of 1 upcoming", TrackerText.openSummary(open, now))
         // Once its odds are read, the upcoming bet counts as read (a started game never counts: it waits for a result, not odds).
-        val read = listOf(open[0].copy(nowAtMs = now - 60_000L, nowFair = 0.5), open[1].copy(nowAtMs = now - 60_000L, nowFair = 0.5))
+        val read = listOf(open[0].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1), open[1].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1))
         assertEquals("2 open · $20.00 at risk · pays $20.00 · 1 started · odds read on 1 of 1 upcoming", TrackerText.openSummary(read, now))
     }
 
     @Test
-    fun `an upcoming bet with no odds says why: no CNO page, or not read yet`() {
+    fun `an upcoming bet with no odds says why - no CNO page, or not read yet`() {
         val vigilant = bet("v")
         val cno = bet("c").copy(gameUrl = "https://crazyninjaodds.com/site/browse/game.aspx?side_id=1")
         assertEquals(true, TrackerText.oddsNote(vigilant, now)!!.contains("Vigilant bet"))
         assertEquals("Odds not read yet: tap Check odds now", TrackerText.oddsNote(cno, now))
         // Read already, started, or settled: nothing to explain.
-        assertNull(TrackerText.oddsNote(cno.copy(nowFair = 0.5, nowAtMs = now), now))
+        assertNull(TrackerText.oddsNote(cno.copy(nowFair = 0.5, nowEv = 0.1, nowAtMs = now), now))
         assertNull(TrackerText.oddsNote(cno.copy(startsTs = now - hour), now))
         assertNull(TrackerText.oddsNote(cno.copy(status = BetStatus.WON), now))
     }
