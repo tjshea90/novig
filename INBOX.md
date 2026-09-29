@@ -2517,3 +2517,8 @@ Also:
 
 4) for any section with tabs on the top, such as the bet tracker section, keep the top navigation tabs "sticky" to the top. When I scroll down through the long list of my active bets, I still want to have the filters at the top without having to scroll all the way back up.
 ```
+
+## 2026-09-29T20:51:44Z
+```
+For betting through the API, allow me to add custom amounts to the vigilant wallet in the app settings by typing in an amount. If my wallet is too low when I go to place a bet in the app, add a button to go directly to the setting to add money to the wallet. Make it so I only input the API key and file one time and the vigilant app saves it permanently in the settings so I don't have to keep entering it. Make this and all keys persist even through app updates
+```
