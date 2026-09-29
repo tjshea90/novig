@@ -163,6 +163,9 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
         /** The most fills one call reads (8 + 1 per 50 rows of the `history` bucket: 2,000 rows cost 48 tokens of 512). */
         const val MAX_FILL_ROWS = 2_000
 
+        /** The most orders one listing reads. */
+        const val MAX_ORDER_ROWS = 2_000
+
         /** A grid price as Novig writes it: three decimals ("0.455", "0.050"). */
         fun priceText(price: Double): String = BigDecimal.valueOf(price).setScale(3, java.math.RoundingMode.HALF_UP).toPlainString()
 
