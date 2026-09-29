@@ -19,6 +19,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -91,7 +92,8 @@ class StickyHeadersTest {
         scrollToKey("x39")
         inBar("Amount").performClick()
         compose.waitForIdle()
-        println("DEBUG-TREE " + compose.onRoot().fetchSemanticsNode().let { n -> n.children.joinToString(" | ") { it.toString().take(400) } })
+        println("DEBUG-TREE " + compose.onRoot().printToString(maxDepth = 12).replace("
+", " ¶ "))
         // Largest amount first: bet 0 ($99) is the first card, on screen with no scrolling back.
         compose.onNodeWithText("Player 0 Over 1.5", substring = true).assertIsDisplayed()
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
