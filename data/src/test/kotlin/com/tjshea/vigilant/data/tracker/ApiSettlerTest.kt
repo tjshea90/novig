@@ -137,6 +137,52 @@ class ApiSettlerTest {
     }
 
     @Test
+    fun `two bets on one side of a market share the market's single payout - each is a win, not a fair-value void`() = runBlocking {
+        // 800 contracts across two bets pay $8.00 in one row for the market: judged on their total, never against one bet's $4.00.
+        novig(ledger = listOf("mkt" to "8.00000"))
+        val t = tracker(); bet(t, "o1"); bet(t, "o2")
+        val r = settler(t).run()
+        assertEquals(ApiSettler.Report(2, 2, 0, 0), r)
+        assertTrue(t.all().all { it.status == BetStatus.WON && it.settledBy == BetSettler.BY_NOVIG })
+
+        // The same two bets at different prices, paid their cost back (a push): still a push each, not a fair-value split.
+        val t2 = tracker()
+        t2.logApi(target("a"), "o1", listOf(fill("o1", cost = "1.00000")))
+        t2.logApi(target("b"), "o2", listOf(fill("o2", cost = "2.00000")))
+        novig(ledger = listOf("mkt" to "3.00000"))
+        settler(t2).run()
+        assertTrue(t2.all().all { it.status == BetStatus.PUSH })
+
+        // A fair-value void of the pair gives both the same fraction of a full win.
+        val t3 = tracker(); bet(t3, "o1"); bet(t3, "o2")
+        novig(ledger = listOf("mkt" to "4.00000"))
+        settler(t3).run()
+        assertTrue(t3.all().all { it.status == BetStatus.FMV && kotlin.math.abs(it.settleValue!! - 0.5) < 1e-9 })
+    }
+
+    @Test
+    fun `bets on both sides of a market are told apart only when the payout is exactly one side's win`() = runBlocking {
+        val t = tracker()
+        t.logApi(target("a"), "o1", listOf(fill("o1")))
+        val other = target("b").copy(outcomeId = "B", selection = "Team B")
+        t.logApi(other, "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 500, 2.0, true, 0.0, start - hour)))
+        // Side A's 400 contracts win $4.00: A won, B lost.
+        novig(ledger = listOf("mkt" to "4.00000"))
+        settler(t).run()
+        assertEquals(BetStatus.WON, t.all().single { it.orderId == "o1" }.status)
+        assertEquals(BetStatus.LOST, t.all().single { it.orderId == "o2" }.status)
+
+        // A payout that matches neither side is left to a tap with a note, and nothing is guessed.
+        val t2 = tracker()
+        t2.logApi(target("a"), "o1", listOf(fill("o1")))
+        t2.logApi(other, "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 500, 2.0, true, 0.0, start - hour)))
+        novig(ledger = listOf("mkt" to "3.30000"))
+        val r = settler(t2).run()
+        assertEquals(2, r.manual)
+        assertTrue(t2.all().all { it.status == BetStatus.PENDING && it.gradeManual })
+    }
+
+    @Test
     fun `a market Novig hasn't paid and still holds is waiting, and a day later it's flagged`() = runBlocking {
         novig(held = true)
         val t = tracker(); bet(t)
