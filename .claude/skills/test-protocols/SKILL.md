@@ -126,6 +126,20 @@ unless Tj asks).
   its odds' freshness (`canStillShow`), and lines left too late are read first next scan (`Scanner.leftLastScan`); feed
   banner when Starts within is wider than the last scan (`ScanStatus.scannedWindowHours`). Tests: BiggerScansTest no-limit
   tests, OddsApiPropsTest, PropLineClientTest, ScreenshotTest no-limit tests.
+- **Betting through Novig's API and grading from Novig's ledger (v0.21.0; NOVIG_API.md §14-15, RESEARCH.md §37; REAL MONEY, so
+  a sweep reads this diff adversarially every time):** data `data/novig/trading/` (`NovigTradingClient` orders/fills/positions/
+  ledger/balance, `ApiBetPlanner` pure checks + ladder walk, `ApiBetPlacer` one order at a time: IOC at the confirmed ceiling,
+  a moved price refused, lost answer looked up by `clientId`, recording under `NonCancellable`), `data/novig/signing/
+  NovigBettingSetup` (Enable betting: reuse the phone's trading key or revoke + mint; `transfer` fund/defund with the management
+  key held in memory only), `data/tracker/ApiSettler` (grades API bets from `SETTLEMENT` rows + positions, a loss = no row and
+  no position, score feeds cross-checked; bets sharing a market graded together) and `ApiBetSync` (Sync with Novig adds fills the
+  Tracker never got, no EV claimed), `BetTracker.logApi/viaApi` (real price, contracts, fee, `fillIds`; setStake/setPrice/Undo/
+  Replace guarded), `BetSettler.leaveApiBets`. App: `ApiBetting.kt` (`BettingUi`, `BetSheetUi`, `ApiBetTargets`,
+  `ApiBettingController`: closing the sheet never cancels an order in flight), `ui/ApiBettingUi` (Settings section, Bet button,
+  Bet sheet), Bet buttons on `FeedScreen`/`CnoScreen`, Tracker API badge + Sync button, `ScanSettings.apiBetStake/apiMaxStake/
+  apiMaxPerDay/apiMinEv`. Tests: ApiBettingTest, NovigBettingSetupTest, ApiSettlerTest, ApiBettingControllerTest,
+  ApiBettingUiTest, ApiBetTargetsTest (all mock Novig: the live behaviour is UNVERIFIED until Tj's first real bet, the list is
+  in RESEARCH.md §37). Never test against a real key with real money from a session; never write a key into source or a fixture.
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
