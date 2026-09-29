@@ -60,7 +60,7 @@ class RealBoxGradingTest {
         assertTrue(young.inactive)
         val g = grade("Player Receiving Yards", "Colbie Young Over 9.5", steelersGame, steelers, "Cincinnati Bengals @ Pittsburgh Steelers") as BetGrader.Grade.Result
         assertEquals(BetStatus.VOID, g.status)
-        assertEquals("Colbie Young was ruled out and didn't play: void", g.evidence)
+        assertEquals("Colbie Young was ruled out and didn't play: counted as a void, \$0 (Novig may settle it at a fair value instead)", g.evidence)
         // Questionable players who did play are graded from their lines, and a questionable one with no line isn't "out".
         assertTrue(steelers.none { it.name == "Jalen Davis" && it.inactive })
     }

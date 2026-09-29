@@ -223,7 +223,7 @@ class BetGraderTest {
         // A hockey box score lists everyone who dressed: a goalie who isn't in it didn't play, and Novig refunds the bet.
         val talbot = g("Player Saves", "Cam Talbot Over 20.5") as BetGrader.Grade.Result
         assertEquals(BetStatus.VOID, talbot.status)
-        assertEquals("Cam Talbot didn't play (not in the box score): void", talbot.evidence)
+        assertEquals("Cam Talbot didn't play (not in the box score): counted as a void, \$0 (Novig may settle it at a fair value instead)", talbot.evidence)
         // A stat the box score doesn't carry says so and stays for a tap.
         assertEquals(true, (g("Player Steals", "Matt Boldy Over 0.5") as BetGrader.Grade.Manual).reason.contains("no Steals"))
         // A name one letter off a player in it is a spelling, not a scratch: also left to a tap.

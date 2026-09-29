@@ -213,9 +213,9 @@ object BetGrader {
                             result(overUnder(0.0, pick.over, pick.line), "${pick.player}: no $label recorded (no line in the box score, counted as 0)")
                         football -> Grade.Manual("${pick.player} has no line in the box score for $label: mark it yourself")
                         // Every other box score lists everyone who played, so he didn't (Novig refunds a player who sat out).
-                        else -> Grade.Result(BetStatus.VOID, "${pick.player} didn't play (not in the box score): void")
+                        else -> Grade.Result(BetStatus.VOID, "${pick.player} didn't play (not in the box score): $VOIDED")
                     }
-                if (line.inactive) return Grade.Result(BetStatus.VOID, "${line.name} was ruled out and didn't play: void")
+                if (line.inactive) return Grade.Result(BetStatus.VOID, "${line.name} was ruled out and didn't play: $VOIDED")
                 val recorded = line.stats[pick.stat]
                 val value = recorded ?: if (football && pick.stat in FOOTBALL_ZERO_STATS) 0.0 else {
                     return Grade.Manual("The box score has no $label for ${pick.player}: mark it yourself")
@@ -343,6 +343,9 @@ object BetGrader {
     private const val MIN_BOX = 8
 
     private val FOOTBALL = setOf("NFL", "NCAAF")
+
+    /** Novig's props void at a fair market value, not always a refund (NOVIG_API.md): the Tracker can only count $0, and says so. */
+    private const val VOIDED = "counted as a void, \$0 (Novig may settle it at a fair value instead)"
 
     private val STAT_NOISE = setOf("total", "scored", "recorded", "game", "match", "in", "by", "a")
 
