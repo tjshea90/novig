@@ -265,6 +265,7 @@ class NovigBetFinder(
                 .replace(Regex("(?i)walks allowed"), " walks ")
                 .replace(Regex("(?i)outs recorded"), " pitcher outs ")
                 .replace(Regex("(?i)runs batted in"), " rbis ")
+                .replace(Regex("(?i)\\bbatter (strikeouts|walks)"), " batting $1 ")
                 .replace(Regex("(?i)reception yards"), " receiving yards ")
                 .replace(Regex("(?i)\\b3[- ]?pointers?( made)?\\b|\\bthrees( made)?\\b"), " three pointers made ")
                 .replace(Regex("(?i)1st half|first half"), " 1h ").replace(Regex("(?i)2nd half|second half"), " 2h ")
