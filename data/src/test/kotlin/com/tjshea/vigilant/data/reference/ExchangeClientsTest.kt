@@ -181,7 +181,7 @@ class ExchangeClientsTest {
         }
         val snap = KalshiClient(OkHttpClient(), json, base("/")).odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL)))
         val asked = (1..server.requestCount).map { server.takeRequest().requestUrl!! }
-        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked.map { it.queryParameter("series_ticker") })
+        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked.map { it.queryParameter("series_ticker") }.sorted())
         assertTrue(asked.all { it.queryParameter("with_nested_markets") == "true" && it.queryParameter("status") == "open" })
         assertEquals(2, snap.events.single().markets.size)
     }
@@ -208,7 +208,7 @@ class ExchangeClientsTest {
         val lines = kalshi.lines(nfl, s)!!
         t = 21_000L
         fun asked() = (1..server.requestCount - seen).map { server.takeRequest().requestUrl!!.queryParameter("series_ticker") }.also { seen = server.requestCount }
-        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked())
+        assertEquals(listOf("KXNFLGAME", "KXNFLTOTAL"), asked().sorted())
         assertEquals(2, lines.events.single().markets.size)
         val full = kalshi.odds(nfl, s)
         val props = asked()
@@ -224,6 +224,61 @@ class ExchangeClientsTest {
     }
 
     private var seen = 0
+
+    /**
+     * Tj, 2026-09-29: "the novig scan is slow". Kalshi's 57 series took ~27 s one at a time at 2 a second; a league's series are now read
+     * four at a time at a starting pace of 6 a second (which success raises), so a scan's slowest free source stops setting "first bet at".
+     */
+    @Test
+    fun `kalshi reads a league's series several at a time, never more than four`() = runBlocking {
+        val inFlight = java.util.concurrent.atomic.AtomicInteger()
+        val peak = java.util.concurrent.atomic.AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                peak.accumulateAndGet(inFlight.incrementAndGet()) { a, b -> maxOf(a, b) }
+                Thread.sleep(150)
+                inFlight.decrementAndGet()
+                return MockResponse().setBody(
+                    when (request.requestUrl!!.queryParameter("series_ticker")) {
+                        "KXNFLGAME" -> ExchangeFixtures.kalshiNflGame
+                        "KXNFLTOTAL" -> ExchangeFixtures.kalshiNflTotal
+                        else -> """{"events":[]}"""
+                    },
+                )
+            }
+        }
+        val s = settings.copy(families = setOf(MarketFamily.MONEYLINE, MarketFamily.TOTAL, MarketFamily.SPREAD, MarketFamily.PLAYER_PROPS, MarketFamily.TEAM_TOTAL))
+        val t0 = System.currentTimeMillis()
+        val snap = KalshiClient(OkHttpClient(), json, base("/")).odds(nfl, s)
+        val took = System.currentTimeMillis() - t0
+        val asked = server.requestCount
+        assertTrue("several series in flight at once (peak ${peak.get()})", peak.get() in 2..KalshiClient.PARALLEL)
+        // One at a time would be asked * 150 ms; four at a time is a quarter of that, plus the pace.
+        assertTrue("$asked series took $took ms", took < asked * 150L * 0.7)
+        assertEquals(2, snap.events.single().markets.size)
+    }
+
+    /** A 429 costs a wait and a retry, not the series: the page comes back on the next try. */
+    @Test
+    fun `kalshi waits out a 429 and reads the series again`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "0"))
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = MockResponse().setBody(
+                if (request.requestUrl!!.queryParameter("series_ticker") == "KXNFLGAME") ExchangeFixtures.kalshiNflGame else """{"events":[]}""",
+            )
+        }
+        // The queued 429 is served first (a dispatcher replaces the queue, so serve it by count).
+        var first = true
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (first) { first = false; return MockResponse().setResponseCode(429).setHeader("Retry-After", "0") }
+                return MockResponse().setBody(if (request.requestUrl!!.queryParameter("series_ticker") == "KXNFLGAME") ExchangeFixtures.kalshiNflGame else """{"events":[]}""")
+            }
+        }
+        val snap = KalshiClient(OkHttpClient(), json, base("/")).odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE)))
+        assertEquals(1, snap.events.size)
+        assertEquals(2, server.requestCount) // the refused try and the retry
+    }
 
     @Test
     fun `kalshi event codes parse with and without a time`() {
