@@ -83,7 +83,11 @@ install_sdk() {
     rm -rf "$tmp"
   fi
   yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1
-  "$SDK/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0" "build-tools;36.0.0" "platform-tools" > /dev/null
+  if ! "$SDK/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0" "build-tools;36.0.0" \
+      "platform-tools" > "$SDK/.setup.log" 2>&1; then
+    grep -v '^Picked up JAVA_TOOL_OPTIONS' "$SDK/.setup.log" | tail -5 | sed 's/^/        /'
+    return 1
+  fi
 }
 if [ -d "$SDK/platforms/android-36" ] && [ -d "$SDK/build-tools/35.0.0" ] && [ -d "$SDK/build-tools/36.0.0" ]; then
   echo "  OK    Android SDK already at $SDK"
@@ -96,7 +100,8 @@ fi
 # ---- 4. --prewarm: every download a build and a Robolectric test need, on disk now -------------
 # A throwaway copy (this repo's own checkout when there is one, else GitHub), so a real checkout is
 # never touched; one small Robolectric test (PauseScanningAppTest) compiles every module and pulls
-# Robolectric's android-all jar. Gradle's --stop afterwards leaves no daemon behind.
+# Robolectric's android-all jar. Gradle's --stop afterwards leaves no daemon behind (the Kotlin
+# compile daemon goes with it: checked 2026-09-29; it compiles in 69 s where in-process took 111).
 find_checkout() {
   local here="" d
   [ -f "${BASH_SOURCE[0]:-}" ] && here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)"
@@ -113,8 +118,7 @@ prewarm() {
   if src="$(find_checkout)"; then git clone -q --depth 1 "file://$src" "$warm/novig"
   else git clone -q --depth 1 "$REPO_URL" "$warm/novig"; fi || { rm -rf "$warm"; return 1; }
   (cd "$warm/novig" && ANDROID_HOME="$SDK" timeout -k 10 200 ./gradlew --no-daemon --console=plain \
-    -Pkotlin.compiler.execution.strategy=in-process :app:testDebugUnitTest --tests '*PauseScanningAppTest' \
-    > "$warm/prewarm.log" 2>&1)
+    :app:testDebugUnitTest --tests '*PauseScanningAppTest' > "$warm/prewarm.log" 2>&1)
   rc=$?
   (cd "$warm/novig" && ./gradlew --stop > /dev/null 2>&1)
   [ "$rc" -ne 0 ] && grep -v '^Picked up JAVA_TOOL_OPTIONS' "$warm/prewarm.log" | tail -5 | sed 's/^/        /'
