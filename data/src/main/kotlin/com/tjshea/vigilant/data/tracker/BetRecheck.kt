@@ -246,6 +246,7 @@ class BetRecheck(
                 val closing = now < b.startsTs
                 b.copy(
                     nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
+                    nowVia = BetTracker.VIA_CNO, nowNote = null, nowNoteAtMs = null,
                     closingFair = if (closing) fair else b.closingFair,
                     closingSeenAtMs = if (closing) now else b.closingSeenAtMs,
                     books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: b.nowAmerican,
