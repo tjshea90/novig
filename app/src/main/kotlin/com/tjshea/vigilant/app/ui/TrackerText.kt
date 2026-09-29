@@ -67,18 +67,52 @@ object TrackerText {
             "$started started".takeIf { started > 0 },
             "$needTap need a tap".takeIf { needTap > 0 },
             // Only games still to come have odds to check: a started game is waiting on its result instead.
-            "odds read on ${upcoming.count { it.nowAtMs != null }} of ${upcoming.size} upcoming".takeIf { upcoming.isNotEmpty() },
+            "current EV on ${upcoming.count { currentEv(it, now) }} of ${upcoming.size} upcoming".takeIf { upcoming.isNotEmpty() },
         ).joinToString(" · ")
     }
 
+    /** [b]'s EV was read recently enough to call it "now": inside the age its fair odds may have ([Freshness.maxAgeMs]: 5 minutes, 10 for a far-off game). */
+    fun currentEv(b: TrackedBet, now: Long): Boolean {
+        val at = b.nowAtMs ?: return false
+        return b.nowEv != null && now - at <= Freshness.maxAgeMs(b.startsTs, now)
+    }
+
     /**
-     * Why an upcoming open bet shows no "now … EV" (null when it shows one, or its game has started): Vigilant's own bets have no
-     * CrazyNinjaOdds page to read, the rest just haven't been read yet.
+     * An open bet's EV line (Tj, 2026-09-29: "the current, up to date EV, which is devigged and compared to the actual odds that I placed the
+     * bet at"): [headline] is the EV the fair odds ([TrackedBet.nowFair], devigged) give the price the bet was placed at; "now" only while the
+     * read is young, otherwise it says how old it is ([stale]). [detail]: the fair odds, whose they are, how many books, when.
      */
-    fun oddsNote(b: TrackedBet, now: Long): String? = when {
-        b.status != BetStatus.PENDING || now >= b.startsTs || b.nowEv != null -> null
-        b.gameUrl == null -> "Odds: a Vigilant bet, priced by each Vigilant scan (no CrazyNinjaOdds page to read)"
-        else -> "Odds not read yet: tap Check odds now"
+    data class NowLine(val headline: String, val detail: String, val stale: Boolean)
+
+    fun nowLine(b: TrackedBet, now: Long): NowLine? {
+        val ev = b.nowEv ?: return null
+        val fresh = currentEv(b, now)
+        val placed = b.american?.let { " at your ${Odds.formatAmerican(it)}" }.orEmpty()
+        val headline = (if (fresh) "now " else "") + Format.evPercentShort(ev) + " EV" + placed
+        val detail = listOfNotNull(
+            b.nowFair?.let { "fair ${if (fresh) "now" else "then"} ${Format.american(it)}" },
+            when (b.nowVia) {
+                BetTracker.VIA_CNO -> "CNO's books"
+                BetTracker.VIA_VIGILANT -> "Vigilant's fair odds"
+                else -> null
+            },
+            b.nowBooks?.let { "$it book${if (it == 1) "" else "s"}" },
+            if (fresh) "read ${Format.age(b.nowAtMs, now)}" else "as of ${Format.age(b.nowAtMs, now)}",
+            "tap Check odds now".takeIf { !fresh && now < b.startsTs },
+        ).joinToString(" · ")
+        return NowLine(headline, detail, stale = !fresh)
+    }
+
+    /**
+     * Why an upcoming open bet shows no current EV (null when its game has started, it's settled, or its EV is current): the reason the
+     * last pricing attempt found no fair price ([TrackedBet.nowNote], while it's newer than the last number), or that nothing has priced it yet.
+     */
+    fun oddsNote(b: TrackedBet, now: Long): String? {
+        if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
+        val note = b.nowNote
+        if (note != null && (b.nowNoteAtMs ?: 0L) >= (b.nowAtMs ?: 0L)) return "Not priced: $note (tried ${Format.age(b.nowNoteAtMs, now)})"
+        if (b.nowEv != null) return null
+        return if (b.gameUrl == null) "Not priced yet: tap Check odds now (Vigilant's own fair odds price this bet)" else "Odds not read yet: tap Check odds now"
     }
 
     /** What the gap between results and expectation means, in words (Tj: "how well my positive EV bets profit"). */
