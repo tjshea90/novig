@@ -147,7 +147,9 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
             val errors = ArrayList<String>()
             try {
                 c.ensureLoaded()
-                if (settings.autoScan.cno) {
+                // The scanner choice is the master switch: CNO only puts Vigilant's scan to sleep here too (no API credits spent in the
+                // background), Vigilant only does the same for CNO ([ScanSettings.autoScansVigilant], [ScanSettings.autoScansCno]).
+                if (settings.autoScansCno) {
                     _status.update { it.copy(step = "Reading CrazyNinjaOdds") }
                     runCatching { alerts += cnoCheck(settings) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
                     // The closing line of the open bets about to start, for the Tracker's CLV (Tj, 2026-09-29): the last read before the start.
