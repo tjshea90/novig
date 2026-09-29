@@ -30,8 +30,10 @@
 #      dependency and Robolectric's Android jar are on disk. A setup script that finishes within
 #      ~5 minutes is snapshotted and reused by new sessions for ~7 days, so they start with all of
 #      it: the full test floor took 210 s from empty caches and 110 s with them (2026-09-29).
-#      Capped at 200 s so the whole script stays under those 5 minutes.
+#      It gets what's left of a 250 s budget for the whole script (the SDK download alone took
+#      13-65 s), so the script stays under those 5 minutes even on a slow day.
 set -uo pipefail
+SCRIPT_START=$(date +%s)
 
 MIRROR="https://maven-central.storage-download.googleapis.com/maven2/"
 SDK="${ANDROID_HOME:-/opt/android-sdk}"
@@ -113,24 +115,28 @@ find_checkout() {
   return 1
 }
 prewarm() {
-  local warm src rc
+  local budget=$1 warm src rc
   warm="$(mktemp -d)" || return 1
   if src="$(find_checkout)"; then git clone -q --depth 1 "file://$src" "$warm/novig"
   else git clone -q --depth 1 "$REPO_URL" "$warm/novig"; fi || { rm -rf "$warm"; return 1; }
-  (cd "$warm/novig" && ANDROID_HOME="$SDK" timeout -k 10 200 ./gradlew --no-daemon --console=plain \
+  (cd "$warm/novig" && ANDROID_HOME="$SDK" timeout -k 10 "$budget" ./gradlew --no-daemon --console=plain \
     :app:testDebugUnitTest --tests '*PauseScanningAppTest' > "$warm/prewarm.log" 2>&1)
   rc=$?
   (cd "$warm/novig" && ./gradlew --stop > /dev/null 2>&1)
+  pkill -f "$GRADLE_HOME_DIR/caches/.*KotlinCompileDaemon" 2> /dev/null
   [ "$rc" -ne 0 ] && grep -v '^Picked up JAVA_TOOL_OPTIONS' "$warm/prewarm.log" | tail -5 | sed 's/^/        /'
   rm -rf "$warm"
   return "$rc"
 }
 if [ "$PREWARM" = 1 ]; then
+  BUDGET=$(( 250 - ($(date +%s) - SCRIPT_START) ))
   if [ ! -d "$SDK/platforms/android-36" ]; then
     warn "no pre-download without the Android SDK"
+  elif [ "$BUDGET" -lt 60 ]; then
+    warn "no pre-download: the SDK took most of the 5 minutes a setup script has to be snapshotted"
   else
     START=$(date +%s)
-    if prewarm; then
+    if prewarm "$BUDGET"; then
       echo "  OK    Gradle and Robolectric downloads are on disk ($(( $(date +%s) - START )) s)"
     else
       warn "pre-download stopped after $(( $(date +%s) - START )) s: a session's first build fetches the rest"
