@@ -2672,10 +2672,18 @@ Nothing at or above 1.0% EV."
 
 ## "As far as keys, I'm not worried about app security. Public is fine … Are the compose skills installed in the repo to use between different Claude accounts? … I'm not interested in futures bets. Leave those out of the app and don't investigate them further. Think of and implement any other clean up or optimization for this repo so that future work is efficient and Claude can use skills for the best coding. The setup script for each cloud session should load a maven central script, does this work well?" (Tj, 2026-09-29 ~01:0xZ; full text in INBOX.md)
 
-- [ ] Z1 Record Tj's decisions: the public committed keystore and plain-JSON API keys are fine (closes PROMPT_AUDIT F7);
+- [x] Z1 Record Tj's decisions: the public committed keystore and plain-JSON API keys are fine (closes PROMPT_AUDIT F7);
       futures are left out of the app, with no further futures work (replaces Y7). BRIEF.md + TASKS.
-- [ ] Z2 Futures out of the app: find where a futures market could show up (CNO's list, Vigilant's scan, the Games
+      DONE (ckpt 2015): BRIEF.md keystore section "Decided 2026-09-29: keep the public committed key" + locked decision
+      "No futures"; PROMPT_AUDIT.md F7 closed; Y7 dropped.
+- [x] Z2 Futures out of the app: find where a futures market could show up (CNO's list, Vigilant's scan, the Games
       board, alerts) and leave it out there, with tests. No fee work, no futures research.
+      DONE: Vigilant's own scan only plans matchups (Novig events with two sides, explicit game/prop market types), so
+      futures never reach the +EV feed/Games/alerts; CNO's list was the one door: CnoChecks.reject now drops any row
+      that isn't a two-sided game first (Reason.NOT_A_GAME via shared Picks.sides/isGame; PlayerTeams delegates), and
+      every CNO surface (tab, widget, mini window, alerts, auto-scan) reads CnoChecks.screen. Test: CnoChecksTest
+      "only games are listed - a futures market on CNO's list is left out and counted" (failed before, passes after);
+      full floor green cold 2026-09-29 (engine 39, data 494, app 228).
 - [ ] Z3 Answer: do the skills carry across Tj's three Claude accounts (they're committed in the repo), and what, if
       anything, each account needs before working on this repo (its own cloud environment's setup script, network).
 - [ ] Z4 The setup script: does the Maven Central mirror script work well? Prove it (a full test run here, timed) and

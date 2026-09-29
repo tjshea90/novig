@@ -41,7 +41,7 @@ object CnoChecks {
     const val STUCK_MS = 10 * 60_000L
 
     enum class Reason(val text: String) {
-        NOT_A_GAME("not a game (futures are left out)"),
+        NOT_A_GAME("futures (not a game)"),
         MISMATCH("EV doesn't follow from its fair odds"),
         ONE_WAY("devigged from one side only"),
         BOOKS("too few books"),
