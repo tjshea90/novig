@@ -137,8 +137,12 @@ fun TrackerScreen(
 
     val bets = state.bets
     val minute = now / 60_000L
-    val counts = remember(bets) { BetFilter.entries.associateWith { f -> filtered(bets, f).size } }
-    val shown = remember(bets, filter, minute) { ordered(filtered(bets, filter), filter, now) }
+    val scoped = remember(bets, scanner) { TrackerSort.inScanner(bets, scanner) }
+    val counts = remember(scoped) { BetFilter.entries.associateWith { f -> filtered(scoped, f).size } }
+    val scannerCounts = remember(bets, filter) { ScannerFilter.entries.associateWith { s -> TrackerSort.inScanner(filtered(bets, filter), s).size } }
+    val shown = remember(scoped, filter, minute, sort, sortReversed) {
+        TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
+    }
     val periodBets = remember(bets, period, minute) { inPeriod(bets, period, now) }
     val openBet = openId?.let { id -> bets.firstOrNull { it.id == id } }
     LaunchedEffect(openId, openBet == null) { if (openId != null && openBet == null) openId = null }
