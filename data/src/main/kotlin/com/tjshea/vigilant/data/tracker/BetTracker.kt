@@ -237,6 +237,47 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         return bet
     }
 
+    /**
+     * A bet Tj marked placed from a +EV push notification's "✓ Placed" (Tj, 2026-09-29): logged at the alert's
+     * price with [stake] ($1 unless the alert carried Settings' bet-slip amount; he can correct the stake and the
+     * price he got in the Tracker). [placedKey] is the alert's own key, the one the lists hide it by, so Undo
+     * ([untrack]) finds it. Marking the same alert again replaces the open bet, never duplicates it.
+     */
+    suspend fun logAlert(a: com.tjshea.vigilant.data.alerts.EvAlert, stake: Double = DEFAULT_STAKE): TrackedBet {
+        val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(a.american)
+        val fee = if (a.live && price > 0.0 && price < 1.0) {
+            com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
+        } else {
+            0.0
+        }
+        val cost = price + fee
+        val bet = TrackedBet(
+            id = UUID.randomUUID().toString(),
+            createdAtMs = clock(),
+            league = a.league,
+            eventName = a.event,
+            startsTs = a.startsAtMs ?: clock(),
+            marketLabel = a.market,
+            selection = a.bet,
+            marketId = a.marketId.orEmpty(),
+            outcomeId = a.outcomeId.orEmpty(),
+            price = price,
+            cost = cost,
+            // The alert's EV already has the live fee in it, so the fair probability is what that EV implies at the cost.
+            fairAtBet = a.fair ?: ((1.0 + a.ev) * cost),
+            evPercentAtBet = a.ev,
+            stake = stake,
+            source = if (a.isCno) SOURCE_CNO else SOURCE_VIGILANT,
+            placedKey = a.key,
+            american = a.american,
+            book = a.book,
+            gameUrl = a.gameUrl,
+            betUrl = a.betUrl,
+        )
+        store.update { list -> list.filterNot { it.placedKey == a.key && it.status == BetStatus.PENDING } + bet }
+        return bet
+    }
+
     /** Undo, or "not placed after all": the open bet that ✓ logged goes. Settled ones stay. */
     suspend fun untrack(placedKey: String) {
         store.update { list -> if (list.none { it.placedKey == placedKey }) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING } }

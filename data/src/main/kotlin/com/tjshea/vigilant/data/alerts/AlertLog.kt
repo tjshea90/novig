@@ -21,6 +21,7 @@ data class AlertBook(val bets: List<AlertedBet> = emptyList())
  * sends me an android push notification and I can click on the notification and it will open the
  * exact bet in novig immediately").
  */
+@Serializable
 data class EvAlert(
     /** Which scanner found it: "CNO" or "Vigilant". */
     val scanner: String,
@@ -45,7 +46,22 @@ data class EvAlert(
     val exact: Boolean,
     /** Dollars the bet slip opens with (Settings' bet-slip amount), added to [link] on the tap; null = none. */
     val stake: Double? = null,
+    /**
+     * What the notification's "✓ Placed" needs to log the bet as the Tracker keeps it (Tj, 2026-09-29: "a fast way
+     * to mark a bet as placed … from a push notification"): the league, Novig's market, CNO's game page and deeplink
+     * (so the tracked bet's odds can be checked and its result graded), the fair probability, whether the game was
+     * live (Novig's taker fee is in the price), and the book.
+     */
+    val league: String = "",
+    val marketId: String? = null,
+    val gameUrl: String? = null,
+    val betUrl: String? = null,
+    val fair: Double? = null,
+    val live: Boolean = false,
+    val book: String = "Novig",
 ) {
+    val isCno: Boolean get() = scanner.equals("CNO", ignoreCase = true)
+
     val dedupeKey: String get() = outcomeId?.let { "outcome:$it" } ?: "$scanner:$key"
 }
 
