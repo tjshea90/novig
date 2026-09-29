@@ -2407,3 +2407,8 @@ run the prompt audit and add the Compose skills
 ```
 Continue
 ```
+
+## 2026-09-29T00:28:39Z
+```
+Fix all the things you can fix without breaking anything and make sure to take advantage of the new skills for all future tasks on this app
+```
