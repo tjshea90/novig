@@ -29,6 +29,18 @@ class CnoChecksTest {
     }
 
     @Test
+    fun `only games are listed - a futures market on CNO's list is left out and counted`() {
+        // Tj, 2026-09-29: "I'm not interested in futures bets. Leave those out of the app."
+        val futures = row("Kansas City Chiefs", 110, 0.50).copy(event = "NFL Championship 2026-27", market = "Futures")
+        val award = row("Josh Allen", 120, 0.48).copy(event = "NFL MVP 2026-27", market = "Futures")
+        val tennis = row("Jannik Sinner", 110, 0.50).copy(event = "Jannik Sinner vs Carlos Alcaraz", market = "Moneyline")
+        val game = row("Buffalo Bills", 110, 0.50) // "A @ B"
+        val s = CnoChecks.screen(snap(futures, award, tennis, game), CnoFilters(), now)
+        assertEquals(listOf("Buffalo Bills", "Jannik Sinner"), s.picks.map { it.row.bet }.sorted())
+        assertEquals(2, s.hiddenCount)
+    }
+
+    @Test
     fun `thin markets, longshots, one-way devigs, too-good-to-be-true and tiny edges are left out and counted`() {
         val s = CnoChecks.screen(
             snap(
