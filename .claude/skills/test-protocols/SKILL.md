@@ -127,11 +127,12 @@ unless Tj asks).
   `scanner/OddsScanner`, `BetMgmLinks`), `PropLineClient(relayNovig, bookIds)`. Its screens are tested in `app`
   with the book switched (`MgmAppTest`, `SampleMgm`); `mgm/src/test` checks the real build (`MgmBuildTest`).
   A sweep covers Vigilant only while MGM is dormant.
-- **Automated floor:** `./gradlew :engine:test :data:test :app:testDebugUnitTest`
-  (needs BRIEF.md build trap 6 locally: `bash tools/setup-android.sh`). Add `-Pscreenshots` and look at every PNG
-  in `app/screenshots/`: this is the "Chromium check" for a Compose app.
-  `VIGILANT_LIVE=1 ... --tests '*LiveNovigSmokeTest'` re-verifies matching against
-  Novig's real catalog.
+- **Automated floor:** `bash tools/test.sh` (= `:engine:test :data:test :app:testDebugUnitTest`, with a
+  short summary: one line per module, only failing tests' messages; needs BRIEF.md build trap 6 locally:
+  `bash tools/setup-android.sh`). `bash tools/test.sh -Pscreenshots :app:testDebugUnitTest` renders every
+  screen: look at every PNG in `app/screenshots/`, the "Chromium check" for a Compose app.
+  `VIGILANT_LIVE=1 bash tools/test.sh :data:test --tests '*LiveNovigSmokeTest'` re-verifies matching
+  against Novig's real catalog.
 
 ## Light tests — low usage, run after the session's own work is done
 
