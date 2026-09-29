@@ -2489,7 +2489,7 @@ oversized briefing is trimmed…" (both failed before the fix).
 | Candidate | Source | Verdict |
 | :- | :- | :- |
 | `kotlin-lsp` (official plugin, JetBrains Kotlin language server) | claude-plugins-official | Not now: see 33.4.1 |
-| Chris Banes' skills (`compose-performance`, `compose-state-and-effects`, `kotlin-concurrency-and-flow`, `compose-ui-testing-patterns`) | github.com/chrisbanes/skills, Apache-2.0 | Worth adding with Tj's OK: plain SKILL.md folders work in cloud sessions when committed to `.claude/skills/`; they target exactly the Compose recomposition, battery and coroutine-cancellation code this app is full of. Read in full before committing (third-party instructions) |
+| Chris Banes' skills (`compose-performance`, `compose-state-and-effects`, `kotlin-concurrency-and-flow`, `compose-ui-testing-patterns`) | github.com/chrisbanes/skills, Apache-2.0 | ADDED 2026-09-29 (TASKS X2, `.claude/skills/THIRD_PARTY_NOTICES.md`). Plain SKILL.md folders work in cloud sessions when committed to `.claude/skills/`; they target exactly the Compose recomposition, battery and coroutine-cancellation code this app is full of. Read in full before committing (third-party instructions) |
 | `/code-review`, `/security-review`, `/simplify` | bundled with Claude Code | Already available, no install. `/code-review` on the diff since the last release fits the full-test protocol |
 | `/claude-api prompt-audit` | bundled | Yes, opt-in run (33.1) |
 | context7 (library docs MCP) | claude-plugins-official | No: a plugin (not loaded in cloud sessions), and WebFetch/WebSearch already reach the docs |
@@ -2523,7 +2523,7 @@ oversized briefing is trimmed…" (both failed before the fix).
 
 ### 33.5 What Tj needs to do
 - Nothing is required. The briefing fix is pushed (ckpt 605), and the environment's setup script already exists (S3).
-- Two opt-in choices, each one reply away: (1) "run the prompt audit": `/claude-api prompt-audit` over CLAUDE.md, BRIEF.md
+- Both opt-ins taken 2026-09-29 (Tj: "run the prompt audit and add the Compose skills"): the audit is in PROMPT_AUDIT.md (nothing applied yet), the skills are in `.claude/skills/`. The original offer: (1) "run the prompt audit": `/claude-api prompt-audit` over CLAUDE.md, BRIEF.md
   and the briefing scripts, report plus proposed diff, nothing applied until Tj says which hunks; (2) "add the Compose
   skills": read Chris Banes' four skills in full, commit them to `.claude/skills/` with the Apache-2.0 license.
 - No plugin installs, connectors or paid services are recommended.
