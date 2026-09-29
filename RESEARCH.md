@@ -2640,3 +2640,63 @@ very bets that couldn't be graded, so they stayed "open"), and Vigilant-only bet
 grades the finished games **in the same tap** (`checkOdds` runs `BetSettler.run(force = true)` beside the odds read; the toast says
 "1 game already over: graded 31 from final scores, 3 need a tap (each says why)"), the Open list says "odds read on N of M upcoming",
 and every upcoming bet without odds says why (a Vigilant bet, or "Odds not read yet: tap Check odds now").
+
+## 36. Novig's whole API, why a scan is slow, and seven third-party odds APIs (2026-09-29, Tj, after v0.20.1)
+
+Tj: "review in depth the entire novig API docs. I read somewhere that it can show the bets I actually placed and grade them and I can place bets through the
+API … optimize the vigilant app … Right now the novig scan is slow, even though I tested my key and it says it works." and "research these API: MoneyLineApp,
+OpticOdds, PredictionData, LiveFeedAPI, SharpAPI, Betstamp, odds-api.io … free or very cheap … help grade bets".
+
+### 36.1 Novig's API: the answers (details in NOVIG_API.md §14)
+| Question | Answer |
+|---|---|
+| Can it show the bets I placed? | **Only bets placed through an API subaccount.** Orders, fills, positions and the ledger (`GET /v3/orders`, `/v3/portfolio/fills`, `/v3/portfolio/positions`, `/v3/account/subaccounts/{keyId}/transactions`) all belong to one subaccount's wallet, and a trading key reaches only its own subaccount. Bets placed in the Novig app come from Tj's cash wallet, which **no route reads**. The `trading::read` key Vigilant already holds *can* read those routes, but its subaccount ("Vigilant", never funded) has no orders. |
+| Can it grade them? | For a subaccount's bets, yes and exactly: the ledger's `SETTLEMENT` rows, and an outcome's `status` (`WIN` / `LOSS` / `PUSH` / a decimal price for a fair-market-value void) are Novig's own grade, fair-value voids included. For app-placed bets, no: a settled market leaves the catalog (re-verified 2026-09-29: three finalized markets from `data.novig.com` answer 404), and the public CSVs say `finalized` but not who won. ESPN and MLB box scores stay Vigilant's grader. |
+| Can I place bets through it? | Yes: `POST /v3/orders` with a `trading` key (`IOC`/`FOK` is a taker bet at `1 − best opposing bid`; pregame it is fee-free), after the management key funds a subaccount from the cash wallet. Not built: it moves real money (§36.9). |
+| Does Vigilant use every feature it can? | Everything for reading: signed catalog, `GET /v3/limits` pacing, ETag/304 books, the websocket `book` channel with the one big subscribe, `events` left unsubscribed for the 2,048 cap. Unused: `trades` (last price, volume), the websocket's `private` and `lifecycle` channels, `bbo` (undocumented shape), `data.novig.com` CSVs, and the whole account/execution half. |
+
+### 36.2 Why a scan feels slow (measured live from this container, 2026-09-29)
+- A league's first bets wait for **every** fair-odds source of that league (v0.19.2). The free ones: **Kalshi took 27 s** for its 57 series at the 2 a second Vigilant paces it to
+  (game lines for a league arrive first: NFL at 1.2 s, MLB at 8 s, the last league's at 13 s; props after that, done at 27 s), **Polymarket 13 s** (one league after another,
+  pages one after another). Novig itself is not the wall: the key's websocket needs ~8 s before its first bulk subscribe (the `stream` bucket, 512 at 4 a second, after the 32-token
+  upgrade), which hides inside those seconds; REST alone would be 16 books a second, 75 s for 1,200 prices.
+- **Kalshi's real limit.** A light `GET /markets?limit=1` took 300 requests at a sustained 20 a second and 200 at ~35 a second with **no** 429 (Kalshi documents 20 reads a second for a basic
+  account: `docs.kalshi.com/getting_started/rate_limits`, "Basic 200 tokens/s, 10 a read"). Vigilant's real read is the nested-markets route
+  (`/events?series_ticker=…&status=open&with_nested_markets=true&limit=200`), **0.5–0.8 MB a reply uncompressed**: at 2 a second all 12 requests passed, at 4 a second 2 of 24 got
+  429 (no `Retry-After`), at 6 a second 3 of 36. A first attempt at 6 → 14 a second and four at a time made a scan **slower** (56 s: the 429s cost waits and retries): reverted to the
+  measured-safe 2 a second (`KalshiClient`: two series in flight to hide a reply's own delay, three tries a page, the pace unchanged). Only an authenticated Kalshi key might lift it
+  (unverifiable without one: see §36.10).
+- **Polymarket 13 s → 5.6 s** (fixed in v0.20.2): the first page alone, and when it is full the next pages three at a time instead of one after another (`PolymarketClient.WAVE`).
+- Settings › Novig API's "Last scan took …" line now names the slowest fair-odds sources ("fair odds 27 s (Kalshi 27 s, Polymarket 6 s, Pinnacle 2.1 s)") so the next "slow" comes with
+  the culprit. **Test key** now also measures, on the phone, what the key gets (`NovigLiveCheck`): its own limits from `GET /v3/limits`, a signed-catalog read, five book reads through the key
+  vs five public, and the websocket (connect, subscribe to 24 markets, seconds to the first books and how many arrived). That is the first time the live feed is checked against the real API.
+
+### 36.3 The seven third-party APIs (pages read 2026-09-29; prices as published; earlier notes in §4 for SharpAPI, odds-api.io, OpticOdds, Betstamp)
+| API | Novig? | Free / cheapest paid | Speed | Player props | Grades bets? | Verdict |
+|---|---|---|---|---|---|---|
+| **MoneyLine** (moneylineapp.com, `mlapi.bet/v1`, REST) | No (DK, FD, BetMGM, Caesars, ESPN BET, Fanatics, Hard Rock, BetRivers, **Pinnacle**, bet365, Bovada, BetOnline) | **Free $0: 1,000 requests a month, 10 a minute, every endpoint, commercial use allowed.** Starter $29: 150,000 a month, 60 a minute. Pro $149: 1.5M, 200 a minute. Business $299: 5M, 1,000 a minute. **1 credit = 1 request** for every standard endpoint (its docs) | "updates continuously", no figure | Yes, with L5/L10/L25/season hit rates, precomputed no-vig fair odds, +EV and arbitrage endpoints; NFL, NBA, MLB, NHL, NCAAF, NCAAB | Scores, statuses and **box scores and player stats by event/date** (NFL, NBA, MLB, NHL); no bet grader | **The only one worth a test.** Free tier can't feed a scan (1,000 requests a month = 33 a day). If its player-props call returns whole slates with Pinnacle's lines, Starter at $29 could be one fast fair-odds source next to Kalshi/Polymarket. Unknown: props payload, which stats, latency. Needs Tj's free key to measure (§36.10) |
+| **OpticOdds** | Yes ("trial basis", sales-gated) | No public price: "Book a Demo" | "1 million odds per second", push stream | Yes, plus futures and alternates | **Yes: `GET /api/v3/grader/odds`** (`fixture_id` + `market` + `name` → Won / Lost / Refunded / Pending / Half Won / Half Lost, with scores; errors like "Unsupported player over/under") and game/player results | The only real bet-grader API of the seven, and enterprise-priced. Not needed: Vigilant's ESPN/MLB grading now settles the props CNO lists (v0.20.1) |
+| **PredictionData** (predictiondata.io) | Yes (a page for it; also Pinnacle, Kalshi, Polymarket, DraftKings, 200+ books) | Prices are in a page the fetch couldn't render (`/pricing`); docs: `X-API-KEY`, 25 requests a second default, monthly quota by plan, REST pull and an SSE "Markets Stream" | Real time (SSE) | Yes (`/markets`: moneylines, spreads, totals, props, futures) | Not documented | Unknown price; Vigilant already reads Novig directly and free. Only worth a look if Tj wants one paid multi-book feed |
+| **LiveFeedAPI** | Not mentioned | €79 a month (no odds), €199 live score, €399–599 Pro, bookmaker packages €1,290–6,500; 14-day trial, 30 a minute | "<100 ms" | Bet-builder rules, soccer/cricket/MMA/horse racing focus | Verified settlement data for football (soccer) and cricket | B2B for operators. No. |
+| **SharpAPI** | Yes, **Hobby ($79) and up only** | Free: 12 a minute, 2 books (DK, FD), 60 s delayed. Hobby $79 (120 a minute, 5 books). Pro $229 (300 a minute, 15 books, +EV). Sharp $399. Streaming +$99, live state +$79 | SSE only as a paid add-on | Yes | No | No: Novig is free direct, and the free tier has neither Novig nor Pinnacle |
+| **Betstamp** | Yes | Trial keys "for evaluation", no public price | "sub-second", REST `/api/markets` and SSE `/v1/markets`, 200+ books | Yes | Not on the API (a separate consumer Bet Tracking product) | Sales-gated. No |
+| **odds-api.io** | Yes (pre-match and live main markets, **no player props**) | Solo $65 (2 books, 5,000 requests an hour), Starter $129 (5), Growth $239 (10), Pro $299 (15); websocket doubles the price; **free keys paused indefinitely** (2 recreational books, 100 an hour) | <150 ms on the websocket | No | No | No |
+Since 2026-09-25 Novig's own API is free with a key, so a reseller's Novig feed has **no advantage** here (no signature, no location check, no rate limit of its own): none of the seven improves the Novig side.
+None gives a free way to grade bets that ESPN + MLB's Stats API don't already give. **Nothing here is free *and* useful today; the cheapest thing worth testing is MoneyLine's free key.**
+
+### 36.4 Placing bets through the API: the decision Tj has to make (not built)
+What it would do: a "Bet" button on a +EV card places a `FOK`/`IOC` taker order at the exact taker price (`1 − best opposing bid`) for the preset stake from a funded "Vigilant" subaccount,
+so the fill is instant, the real fill price and fee land in the Tracker with no ✓ tap, and every bet is graded by Novig's own `SETTLEMENT` ledger row (fair-value voids included).
+What it needs: (1) a `trading` key: the phone's Keystore already holds one for the Vigilant subaccount (`vigilant_novig_trading_<stamp>`, not yet used), or a new one; (2) money in the subaccount
+(only the management key can move it: `POST …/transfer` `fund`, so the app would ask for the management key each time, or Tj funds it himself in a script); (3) the Novig app opened within
+3 days (the placement geolocation), no VPN; (4) KYC passed. What could go wrong: an automated order is real money (a bug, a wrong side or a stale price loses it; mitigations: a hard per-bet
+and per-day cap, a confirm tap, re-read the book right before sending, FOK so nothing rests); the subaccount is a separate wallet from the cash wallet Tj's app bets use; whether the Novig app
+also shows the subaccount's trades is not documented; GOLIVE voids resting orders (not relevant to IOC/FOK). QA (`api.qa.novig.com`) with test money exists to build and try it risk-free first.
+**Offered to Tj; needs his yes** (BRIEF.md: no major change without approval, and this one moves money).
+
+### 36.5 What Tj can do now
+1. **Send me the line under Settings › Novig API after a scan ("Last scan took …") and, after updating, the result text of Test key** (it prints limits, book speeds and the live feed's timing). That says
+   whether the key, the live feed or a fair-odds source is the slow part, on the phone itself.
+2. Optional, free: sign up at moneylineapp.com for the free key (1,000 requests) and give me the key through Settings (never commit it), to measure the props call.
+3. Optional: a free Kalshi account's API key might lift its 2 a second pace (docs promise 20 reads a second): unverifiable until one exists; Kalshi signs requests with RSA-PSS.
+4. Say whether to build API betting (§36.4), and if yes whether the cash wallet's money should be moved by the app (management key typed each time) or by him.
