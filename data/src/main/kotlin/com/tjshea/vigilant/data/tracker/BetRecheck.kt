@@ -226,6 +226,7 @@ class BetRecheck(
         Report(
             open = p.open, checked = t.checked, updated = t.updated, current = p.current, failed = t.failed,
             skipped = p.todo.size - t.checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = t.stopped,
+            started = p.started, unreadIds = p.todo.map { it.id }.filter { it !in t.updatedIds },
         )
     }
 
