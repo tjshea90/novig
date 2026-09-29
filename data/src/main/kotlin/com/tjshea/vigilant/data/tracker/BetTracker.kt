@@ -310,7 +310,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         store.update { list -> list.map { b -> changes[b.id]?.invoke(b) ?: b } }
     }
 
-    suspend fun setStake(id: String, stake: Double) = edit(id) { it.copy(stake = stake) }
+    /** A bet placed through the API has its stake and price from the fills: they can't be corrected by hand. */
+    suspend fun setStake(id: String, stake: Double) = edit(id) { if (it.orderId != null) it else it.copy(stake = stake) }
 
     /**
      * Corrects the price a bet was really filled at (an alert's price moved, or a $1 ✓ was placed at another
