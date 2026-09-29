@@ -273,7 +273,16 @@ class AutoScanService : Service() {
 
 /** The ongoing notification's words (pure, for tests). */
 object AutoScanText {
-    fun title(s: ScanSettings): String = "Auto-scan: ${s.autoScan.displayName} every ${s.autoScanMinutes} min"
+    /** What runs, not what was picked: the scanner choice can put half of it to sleep ([ScanSettings.autoScansCno], [ScanSettings.autoScansVigilant]). */
+    fun title(s: ScanSettings): String {
+        val what = when {
+            s.autoScansCno && s.autoScansVigilant -> "CNO + Vigilant"
+            s.autoScansVigilant -> "Vigilant"
+            s.autoScansCno -> "CNO"
+            else -> s.autoScan.displayName
+        }
+        return "Auto-scan: $what every ${s.autoScanMinutes} min"
+    }
 
     fun status(
         status: AutoScanner.Status,
