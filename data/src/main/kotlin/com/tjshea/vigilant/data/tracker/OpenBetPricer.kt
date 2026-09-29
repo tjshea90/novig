@@ -54,7 +54,7 @@ object BetsScope {
 object BetPricingReasons {
 
     /**
-     * [bet] found no fair price in [result], a bets-only pass that priced [ascertained] (null before the pass could run): the first reason that
+     * [bet] found no fair price in [result], the outcome of a bets-only pass (null when Novig's board couldn't be read): the first reason that
      * applies, in words for the card. [listed]: the markets Novig's board still lists open, [errors]: what the pass's sources said went wrong.
      */
     fun explain(bet: TrackedBet, result: ScanResult?, listed: Set<String>, errors: List<String>): String {
