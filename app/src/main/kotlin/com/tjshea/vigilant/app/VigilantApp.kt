@@ -51,6 +51,7 @@ import com.tjshea.vigilant.data.tracker.BetRecheck
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.FreeScores
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.OpenBetPricer
 import com.tjshea.vigilant.data.tracker.PlacedBets
 import com.tjshea.vigilant.data.tracker.PlacedBook
 import com.tjshea.vigilant.data.vigilantHttpClient
