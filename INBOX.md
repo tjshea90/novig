@@ -2412,3 +2412,14 @@ Continue
 ```
 Fix all the things you can fix without breaking anything and make sure to take advantage of the new skills for all future tasks on this app
 ```
+
+## 2026-09-29T00:41:03Z
+```
+As far as keys, I'm not worried about app security. Public is fine 
+
+Are the compose skills installed in the repo to use between different Claude accounts? I have three Claude accounts. Do I have to do anything to the other accounts before working on this repo again?
+
+Also, I'm not interested in futures bets. Leave those out of the app and don't investigate them further.
+
+Think of and implement any other clean up or optimization for this repo so that future work is efficient and Claude can use skills for the best coding. The setup script for each cloud session should load a maven central script, does this work well?
+```
