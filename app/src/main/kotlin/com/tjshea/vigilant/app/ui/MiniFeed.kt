@@ -273,7 +273,7 @@ internal fun MiniRow(
                 }
                 Text(
                     buildAnnotatedString {
-                        if (!oneLine && line != null) {
+                        if (!oneLine) {
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) { append(line) }
                             append(" · ")
                         }

@@ -206,7 +206,7 @@ object Pricing {
 
             for (po in pm.outcomes) {
                 val ladder = ladders[po.outcome.outcomeId].orEmpty()
-                val p = fair?.let { probabilityFor(po.target, pm.lineKey!!, it) }
+                val p = fair?.let { probabilityFor(po.target, pm.lineKey, it) }
                 val quote = if (p != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
                 val depth = if (p != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
                 val stake = if (quote != null && quote.evPercent > 0) {

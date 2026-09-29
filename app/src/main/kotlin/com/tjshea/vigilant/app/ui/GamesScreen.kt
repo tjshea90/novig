@@ -104,7 +104,7 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                                 action = "Scan now",
                                 onAction = onScan,
                             )
-                            state.settings.startsWithinHours > 0 && state.result?.games.orEmpty().isNotEmpty() -> EmptyState(
+                            state.settings.startsWithinHours > 0 && state.result.games.isNotEmpty() -> EmptyState(
                                 "No games in the next ${state.settings.startsWithinHours} hours",
                                 "Games later than that are hidden by the start-time filter (+EV tab or Settings).",
                             )

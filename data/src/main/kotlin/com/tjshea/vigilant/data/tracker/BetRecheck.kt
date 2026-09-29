@@ -93,7 +93,7 @@ class BetRecheck(
         val over = open.filter { now - it.startsTs >= STALE_AFTER_START_MS }
         val live = open - over.toSet()
         val readable = live.filter { it.gameUrl != null }
-        val current = readable.filter { freshMs > 0 && it.nowAtMs != null && now - it.nowAtMs!! < freshMs }
+        val current = readable.filter { freshMs > 0 && it.nowAtMs != null && now - it.nowAtMs < freshMs }
         return Plan(
             open = open.size,
             todo = (readable - current.toSet()).sortedBy { it.startsTs },
