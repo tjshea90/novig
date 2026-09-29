@@ -139,13 +139,19 @@ class BetRecheck(
         val over = open.filter { now - it.startsTs >= STALE_AFTER_START_MS }
         val live = open - over.toSet()
         val readable = live.filter { it.gameUrl != null }
-        val current = readable.filter { freshMs > 0 && it.nowAtMs != null && now - it.nowAtMs < freshMs }
+        val own = live - readable.toSet()
+        fun fresh(b: TrackedBet) = freshMs > 0 && b.nowAtMs != null && now - b.nowAtMs < freshMs
+        val current = readable.filter(::fresh)
+        val pregame = own.filter { now < it.startsTs }
+        val pricing = pregame.filterNot(::fresh)
         return Plan(
             open = open.size,
             todo = (readable - current.toSet()).sortedBy { it.startsTs },
-            current = current.size,
+            current = current.size + (pregame.size - pricing.size),
             over = over.size,
-            vigilantOnly = live.size - readable.size,
+            vigilantOnly = pricing.size,
+            vigilantBets = pricing.sortedBy { it.startsTs },
+            started = own.size - pregame.size,
         )
     }
 
