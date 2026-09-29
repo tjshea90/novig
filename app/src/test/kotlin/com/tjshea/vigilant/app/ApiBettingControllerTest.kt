@@ -23,7 +23,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -269,7 +271,7 @@ class ApiBettingControllerTest {
                 else -> 404 to "{}"
             }
             okhttp3.Response.Builder().request(req).protocol(okhttp3.Protocol.HTTP_1_1).code(code).message("x")
-                .body(okhttp3.ResponseBody.Companion.run { body.toResponseBody(okhttp3.MediaType.Companion.run { "application/json".toMediaType() }) }).build()
+                .body(body.toResponseBody("application/json".toMediaType())).build()
         }.build()
     }
 
