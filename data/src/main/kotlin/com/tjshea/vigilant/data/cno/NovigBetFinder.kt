@@ -260,6 +260,13 @@ class NovigBetFinder(
         /** CNO's market name as words, the way Novig's market types are spelled ("1st Half" → "1h"). */
         fun marketWords(market: String): Set<String> = norm(
             market.replace(Regex("(?i)passing interceptions"), " interceptions thrown ")
+                // Baseball and basketball wordings CNO uses that Novig spells shorter ("Earned Runs Allowed" is EARNED_RUNS).
+                .replace(Regex("(?i)earned runs allowed"), " earned runs ")
+                .replace(Regex("(?i)walks allowed"), " walks ")
+                .replace(Regex("(?i)outs recorded"), " pitcher outs ")
+                .replace(Regex("(?i)runs batted in"), " rbis ")
+                .replace(Regex("(?i)reception yards"), " receiving yards ")
+                .replace(Regex("(?i)\\b3[- ]?pointers?( made)?\\b|\\bthrees( made)?\\b"), " three pointers made ")
                 .replace(Regex("(?i)1st half|first half"), " 1h ").replace(Regex("(?i)2nd half|second half"), " 2h ")
                 .replace(Regex("(?i)point spread|run line|puck line|goal spread|spread"), " spread ")
                 .replace(Regex("(?i)total points|total runs|total goals"), " total ")
