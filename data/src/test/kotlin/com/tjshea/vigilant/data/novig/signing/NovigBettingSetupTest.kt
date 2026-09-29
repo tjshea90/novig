@@ -42,6 +42,7 @@ class NovigBettingSetupTest {
     /** [liveTradingKey] is the ID Novig treats as the subaccount's live trading key; [staleFor] mint attempts answer 409 first. */
     private fun novig(liveTradingKey: String = "sub-1", staleFor: Int = 0, transferStatuses: List<String> = listOf("Applied"), actualBalance: String? = null) {
         var mintTries = 0
+        var live = liveTradingKey
         val statuses = transferStatuses.toMutableList()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
@@ -51,13 +52,13 @@ class NovigBettingSetupTest {
                 return when {
                     request.method == "POST" && path == "/v3/echo" ->
                         // A trading key that isn't the live one is unknown to Novig.
-                        if (signedBy != null && signedBy.startsWith("trading-") && signedBy != liveTradingKey) MockResponse().setResponseCode(401).setBody("""{"code":"SIGNATURE_REJECTED","message":"api key not found"}""")
+                        if (signedBy != null && signedBy.startsWith("trading-") && signedBy != live) MockResponse().setResponseCode(401).setBody("""{"code":"SIGNATURE_REJECTED","message":"api key not found"}""")
                         else MockResponse().setBody("""{"hello":"vigilant"}""")
                     path == "/v3/account/subaccounts" -> MockResponse().setBody("""[{"keyId":"$liveTradingKey","label":"Vigilant","balance":"0.00000"}]""")
                     request.method == "DELETE" && path.startsWith("/v3/keys/") -> MockResponse().setResponseCode(204)
                     request.method == "POST" && path.endsWith("/keys") ->
                         if (mintTries++ < staleFor) MockResponse().setResponseCode(409).setBody("""{"code":"CONFLICT","message":"a live trading key already reaches this subaccount"}""")
-                        else MockResponse().setResponseCode(201).setBody("""{"keyId":"trading-new","fingerprint":"sha256:x"}""")
+                        else { live = "trading-new"; MockResponse().setResponseCode(201).setBody("""{"keyId":"trading-new","fingerprint":"sha256:x"}""") }
                     request.method == "POST" && path.endsWith("/transfer") -> MockResponse().setResponseCode(202).setBody("""{"transferId":"tr1","status":"Requested","direction":"fund","amount":"10.00000"}""")
                     path.contains("/transfers/tr1") -> {
                         val s = if (statuses.size > 1) statuses.removeAt(0) else statuses.first()
