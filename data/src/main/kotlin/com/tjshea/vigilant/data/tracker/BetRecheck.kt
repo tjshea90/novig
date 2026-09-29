@@ -124,7 +124,7 @@ class BetRecheck(
         var failed = 0
         var checked = 0
         var failedInARow = 0
-        @Volatile var stopped = false
+        val stopped = java.util.concurrent.atomic.AtomicBoolean(false)
         val pending = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
         val lock = Mutex()
         // Callers hold [lock].
@@ -142,8 +142,8 @@ class BetRecheck(
                 repeat(concurrency.coerceIn(1, todo.size.coerceAtLeast(1))) {
                     launch {
                         for (bet in queue) {
-                            if (stopped) break
-                            if (paused()) { stopped = true; break }
+                            if (stopped.get()) break
+                            if (paused()) { stopped.set(true); break }
                             val update = read(bet)
                             lock.withLock {
                                 checked++
@@ -151,7 +151,7 @@ class BetRecheck(
                                     failed++
                                     failedInARow++
                                     // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
-                                    if (paused() || failedInARow >= MAX_FAILS_IN_ROW) stopped = true
+                                    if (paused() || failedInARow >= MAX_FAILS_IN_ROW) stopped.set(true)
                                 } else {
                                     failedInARow = 0
                                     pending[bet.id] = update
@@ -167,7 +167,7 @@ class BetRecheck(
         } finally {
             withContext(NonCancellable) { lock.withLock { flush() } }
         }
-        return Tally(checked, updated, failed, stopped)
+        return Tally(checked, updated, failed, stopped.get())
     }
 
     /** One pass over every open bet. Runs one pass at a time; a second caller waits for it. [onProgress] gets (read so far, to read). */
