@@ -57,6 +57,11 @@ class ApiBettingUiTest {
         VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { Column(Modifier.verticalScroll(rememberScrollState())) { content() } } }
     }
 
+    /** The sheet scrolls on its own: no scroll around it. */
+    private fun sheetScreen(content: @androidx.compose.runtime.Composable () -> Unit) = compose.setContent {
+        VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() } }
+    }
+
     private val market = NovigMarket("m", "e", "MONEY", "OPEN", "A vs B", 0, MarketFee.GAME, listOf(NovigOutcome("A", "Team A", "TBD"), NovigOutcome("B", "Team B", "TBD")))
     private val target = BetTarget(market, "A", "NFL", "Team B @ Team A", 0, "Moneyline", "Team A", 0.50, null, BetTracker.SOURCE_CNO)
     private val plan = BetPlan(limitPrice = 0.465, contracts = 400, expectedCost = 1.85, averagePrice = 0.4625, payout = 4.0, evPercent = 0.081, bestPrice = 0.46, note = null)
@@ -103,7 +108,8 @@ class ApiBettingUiTest {
         compose.onNodeWithText("Turn betting off").performScrollTo().performClick()
         assertTrue(synced && off)
         // A limit chip changes the setting.
-        compose.onNodeWithText("$100.00", useUnmergedTree = true).performScrollTo()
+        compose.onNodeWithText("Any +EV").performScrollTo().performClick()
+        assertEquals(0.0, settings.apiMinEv, 1e-9)
     }
 
     @Test
@@ -116,15 +122,24 @@ class ApiBettingUiTest {
     // ---- the Bet button ---------------------------------------------------------------------------------------
 
     @Test
-    fun `the Bet button is there only when betting is set up`() {
-        var bets = 0
-        screen {
-            ApiBetButton { bets++ }
-        }
+    fun `the Bet button isn't there until betting is set up`() {
+        screen { ApiBetButton { } }
         compose.onNodeWithTag("apiBet").assertDoesNotExist()
-        compose.setContent {
-            CompositionLocalProvider(LocalApiBet provides ApiBetActions(true, {}, {})) { VigilantTheme { ApiBetButton { bets++ } } }
-        }
+    }
+
+    @Test
+    fun `with betting set up the Bet button hands back the card's actions`() {
+        var got: ApiBetActions? = null
+        val actions = ApiBetActions(true, {}, {})
+        screen { CompositionLocalProvider(LocalApiBet provides actions) { ApiBetButton { got = it } } }
+        compose.onNodeWithTag("apiBet").performClick()
+        assertTrue(got === actions)
+    }
+
+    @Test
+    fun `betting turned off in the actions hides the button too`() {
+        screen { CompositionLocalProvider(LocalApiBet provides ApiBetActions(false, {}, {})) { ApiBetButton { } } }
+        compose.onNodeWithTag("apiBet").assertDoesNotExist()
     }
 
     // ---- the Bet sheet ----------------------------------------------------------------------------------------
@@ -132,7 +147,7 @@ class ApiBettingUiTest {
     @Test
     fun `the sheet shows what will be bought, and only the confirm places it`() {
         var confirmed = 0
-        screen { ApiBetSheetContent(sheet(), {}, { confirmed++ }, {}, {}, {}) }
+        sheetScreen { ApiBetSheetContent(sheet(), {}, { confirmed++ }, {}, {}, {}) }
         compose.onNodeWithText("Team A").assertExists()
         compose.onNodeWithText("You pay").assertExists()
         compose.onNodeWithText("$1.85").assertExists()
@@ -144,7 +159,7 @@ class ApiBettingUiTest {
 
     @Test
     fun `a wallet that's too small blocks the bet and says where to add money`() {
-        screen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}) }
+        sheetScreen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}) }
         compose.onNodeWithTag("confirmBet").assertIsNotEnabled()
         compose.onNodeWithText("add money in Settings", substring = true).assertExists()
     }
@@ -153,7 +168,7 @@ class ApiBettingUiTest {
     fun `a refused bet says why and offers to look again, or to bet it again`() {
         var again = 0
         var repeat = 0
-        screen { ApiBetSheetContent(sheet(plan = null, refusal = "You've already bet this through the API and it's still open"), {}, {}, { again++ }, { repeat++ }, {}) }
+        sheetScreen { ApiBetSheetContent(sheet(plan = null, refusal = "You've already bet this through the API and it's still open"), {}, {}, { again++ }, { repeat++ }, {}) }
         compose.onNodeWithTag("betRefusal").assertExists()
         compose.onNodeWithText("Look again").performClick()
         compose.onNodeWithText("Bet it again").performClick()
@@ -167,7 +182,7 @@ class ApiBettingUiTest {
         val bet = TrackedBet(
             "x", 0, "NFL", "Team B @ Team A", 0, "Moneyline", "Team A", "m", "A", 0.4625, 0.4625, 0.5, 0.081, 1.85, orderId = "o1", contracts = 400, paid = 1.85, fee = 0.0,
         )
-        screen { ApiBetSheetContent(sheet(result = PlaceResult.Placed(bet, unfilledContracts = 0)), {}, {}, {}, {}, {}) }
+        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Placed(bet, unfilledContracts = 0)), {}, {}, {}, {}, {}) }
         compose.onNodeWithTag("betPlaced").assertExists()
         compose.onNodeWithText("400 contracts for $1.85", substring = true).assertExists()
         compose.onNodeWithTag("betDone").assertExists()
@@ -175,7 +190,7 @@ class ApiBettingUiTest {
 
     @Test
     fun `not placed, refused and unconfirmed results are told apart`() {
-        screen { ApiBetSheetContent(sheet(result = PlaceResult.NotFilled("Nobody was selling at that price any more")), {}, {}, {}, {}, {}) }
+        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.NotFilled("Nobody was selling at that price any more")), {}, {}, {}, {}, {}) }
         compose.onNodeWithTag("betNotPlaced").assertExists()
         compose.onNodeWithText("Nobody was selling", substring = true).assertExists()
     }
