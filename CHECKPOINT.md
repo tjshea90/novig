@@ -1,13 +1,13 @@
-# CHECKPOINT 2071 — read me first, then TASKS.md
+# CHECKPOINT 2072 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T15:27:38Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `f2e7852e` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T15:32:42Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `85d5632c` (this checkpoint is the commit after it)
 
 ## Just done
-W4/W5 data layer: NovigTradingClient, ApiBetPlanner, ApiBetPlacer (IOC at the confirmed ceiling, fills -> tracker via logApi, lost answer looked up by clientId), TrackedBet orderId/contracts/paid/fee; 14 tests
+W6/W7 data: NovigBettingSetup (use the phone's trading key or revoke+mint, fund/withdraw via management key), ApiSettler (ledger SETTLEMENT grading + score cross-check), ApiBetSync, BetSettler.leaveApiBets/scoreGradeOf, NovigSource.event; tests 5+9
 
 ## Do this next
-W6: enable betting (revoke+mint trading key via management key), fund/withdraw, connection store, app wiring
+App layer: connection store + container wiring, ScanSettings caps, VM state + actions, Settings section, bet sheet + buttons, Tracker badge/sync
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ W6: enable betting (revoke+mint trading key via management key), fund/withdraw, 
 
 ## Last ten checkpoints
 ```
+  6c651d47 ckpt 2071: W4/W5 data layer: NovigTradingClient, ApiBetPlanner, ApiBetPlacer (IOC at th
   8c20dd5a ckpt 2070: W1/W2 done (MoneyLine tested: stale ~2 h, no Pinnacle, 3 MB for 3 events); N
   a611dc3c ckpt 2069: Recorded Tj's request (build API betting + API grading for the Tracker; Mone
   cdfbe7b5 ckpt 2068: v0.20.2 (code 45) released and recorded; V1-V8 ticked
@@ -25,8 +26,7 @@ W6: enable betting (revoke+mint trading key via management key), fund/withdraw, 
   0dfd9ca3 ckpt 2064: V1-V3 written up in NOVIG_API.md §14 (all 51 routes, subaccount-wallet find
   69da58b4 ckpt 2063: Recorded Tj's two research projects (Novig API in depth + 7 third-party APIs
   92fa8cfd ckpt 2062: U6 ticked: v0.20.1 released
-  330c2463 ckpt 2061: v0.20.1 (code 44) released and recorded: CI green (run 36535348703), release
 ```
 
-(5 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
