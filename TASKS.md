@@ -2707,3 +2707,25 @@ Nothing at or above 1.0% EV."
       release.yml run 36508005071 published v0.19.7 (code 42, certificate verified), recorded in BUILDLOG.md. Light test of
       this session's changes: LiveCnoSmokeTest (VIGILANT_LIVE=1) failed on a stale assertion (5+ books; the default is 4
       since v0.19.3), fixed to follow the filters; live run then 13 CNO rows, 13 kept, none hidden as futures.
+
+## "Review the bet tracker in vigilant app. When I press the button to "check odds now" for my current bets, it says it check 40 out of 40 open bets, but I have 101 open bets. I want it to check all open bets. …" (Tj, 2026-09-29; full text in INBOX.md)
+
+Tj's words, in order (each becomes a job below; the design notes come after reading the code):
+- "it says it check 40 out of 40 open bets, but I have 101 open bets. I want it to check all open bets."
+- "make it so I can click on any of my open bets and it shows the current odds for that same bet across other sports books, and other relevant information such as the odds I bet it at, the calculated difference in the odds I bet from the current fair, devigged odds based on current odds, etc."
+- "Some bets are still pending in the "open" bets tab that are final. Figure out how to make sure every bet is properly graded win or loss after the event is final. Look into the apis already used in the app, because one of them claims that the API can grade all props markets. Research this and see if vigilant can use this."
+- "make sure that the bet tracking system is properly keeping track of accurate stats for wins, losses, push, and total profit."
+- "Think of any other ways to make the tracking section better coded, more efficient, or more accurate. The goal is to see how well my positive EV bets profit with vigilant."
+- "For open bets, add a button next to each one to replace the bet. This button will open novig with that exact bet in the betslip and any dollar amount preset in the options."
+- "Think of the best way for me to be able to quickly and easily mark a bet as placed so vigilant tracks it if I select the bet from a push notification. Right now, if I click on the notification, it opens novig, but there isn't a fast way for me to add the bet as a tracked bet in vigilant."
+- "After all these features are built, run the full test protocol looking for ways to improve the app and the UI and code and fix bugs."
+
+- [ ] T1 Read the tracker code end to end (BetTracker, BetRecheck, BetSettler, BetGrader, Scores, PlacedBets/PlacedIndex, TrackerScreen, the ViewModel's recheck/settle) and write the findings + the plan for T2-T9 here.
+- [ ] T2 "Check odds now" checks every open bet (101 of 101, not 40 of 40).
+- [ ] T3 Tap an open bet: a sheet with the bet's odds across the other books, the odds Tj bet at, the difference from the current devigged fair odds, etc.
+- [ ] T4 Every final event grades every open bet win/loss/push: research the API that claims to grade all props markets; use it if it works.
+- [ ] T5 Stats are right: wins, losses, pushes, total profit (audit, fix, test).
+- [ ] T6 Other tracker improvements (coding, efficiency, accuracy), aimed at "how well do my +EV bets profit with Vigilant".
+- [ ] T7 A Replace button on every open bet: opens Novig with that exact bet in the bet slip and the stake preset from Settings.
+- [ ] T8 A fast way to mark a bet placed from its push notification.
+- [ ] T9 Full test protocol (test-protocols skill) after T2-T8: improve the app, UI, code; fix bugs; ship + Release link.
