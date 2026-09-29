@@ -76,9 +76,9 @@ class VigilantApp : Application() {
  * books and player teams) while the CNO scanner is on screen ([cno], [teams]).
  */
 class AppContainer(app: Application) {
-    /** Pause between two open bets' CNO game pages in "Check odds now" (each page is two requests). */
     private companion object {
-        const val RECHECK_GAP_MS = 2_000L
+        /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
+        const val RECHECK_AT_ONCE = 3
     }
 
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -143,17 +143,15 @@ class AppContainer(app: Application) {
     val settler = BetSettler(tracker, FreeScores(http, json))
 
     /**
-     * The Tracker's "Check odds now": every open bet's CNO game page re-read through [cno] (its pace, two
-     * seconds apart; nothing while CNO asked for a pause), judged against what the bet cost.
+     * The Tracker's "Check odds now": every open bet's CNO game page re-read through [cno], [RECHECK_AT_ONCE] at a time at a brisk
+     * pace (a page is two requests; one after another a hundred bets took five minutes), nothing while CNO asked for a pause,
+     * judged against what the bet cost.
      */
     val recheck = BetRecheck(
         tracker,
-        books = { row ->
-            cno.loadBooks(row, force = true)
-            cno.books.value[row.key]?.takeIf { it.error == null }?.view
-        },
+        books = { row -> cno.readBooks(row) },
         paused = { (cno.state.value.pausedUntilMs ?: 0L) > System.currentTimeMillis() },
-        gapMs = RECHECK_GAP_MS,
+        concurrency = RECHECK_AT_ONCE,
     )
 
     /** Novig's price now for CNO's listed bets, from Novig's order books (only while CNO's list is on screen). */

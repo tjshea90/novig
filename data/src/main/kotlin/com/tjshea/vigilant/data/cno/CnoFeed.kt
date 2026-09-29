@@ -252,6 +252,23 @@ class CnoFeed(
         }
     }
 
+    /**
+     * One bet's books read now for the Tracker's "Check odds now" ([CnoSource.booksBulk]): several run at once, so it doesn't queue
+     * behind [booksMutex] (one read at a time is what made a hundred bets take five minutes), and the answer isn't kept in [books]
+     * (that's for the cards someone asked about). A read CNO answers with a pause (busy, refusing) pauses every read, as
+     * [loadBooks] does. Null when the page couldn't be read.
+     */
+    suspend fun readBooks(row: CnoRow): CnoBooksView? = try {
+        source.booksBulk(row)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        (e as? CnoException)?.retryAfterSeconds?.let { sec ->
+            _state.update { it.copy(pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L)) }
+        }
+        null
+    }
+
     // ---- The green check: the top bets' books, read slowly in the background ---------------
 
     /** When the agreement lane last started a read. */
