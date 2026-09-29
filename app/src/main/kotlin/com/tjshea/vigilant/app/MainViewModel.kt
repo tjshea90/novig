@@ -1144,5 +1144,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 
+private const val GRADING_CHECK = "Grading check"
+
 /** What Scan, Recheck and Refresh say while scanning is paused ([ScanSettings.paused]). */
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
