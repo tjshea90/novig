@@ -653,6 +653,12 @@ private fun VigilantRoot(
                         exportTo = vm::exportKeys,
                         importFrom = vm::importKeys,
                     ),
+                    reportActions = com.tjshea.vigilant.app.ui.ReportActions(
+                        onDiagnostics = vm::showDiagnostics,
+                        onGradingCheck = vm::showGradingCheck,
+                        onDismiss = vm::dismissReport,
+                        onCopied = vm::reportCopied,
+                    ),
                     onNovigConnect = vm::connectNovig,
                     onNovigTest = vm::testNovig,
                     onNovigDisconnect = vm::disconnectNovig,
