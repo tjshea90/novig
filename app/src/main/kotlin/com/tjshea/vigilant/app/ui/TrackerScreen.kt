@@ -154,6 +154,9 @@ fun TrackerScreen(
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
     val periodBets = remember(bets, period, minute) { inPeriod(bets, period, now) }
+    // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved.
+    val checkStart = state.checkStartedAtMs
+    val checkStats = remember(bets, checkStart) { checkStart?.let { CheckOddsStats.of(bets, it) } }
     val openBet = openId?.let { id -> bets.firstOrNull { it.id == id } }
     LaunchedEffect(openId, openBet == null) { if (openId != null && openBet == null) openId = null }
     // A different list (tab, filter, sort, scanner, period) starts at its top, with the pinned tabs and filters just above it; the first
@@ -204,6 +207,9 @@ fun TrackerScreen(
                                 shape = SegmentedButtonDefaults.itemShape(i, TrackerView.entries.size),
                             ) { Text(v.label, maxLines = 1) }
                         }
+                    }
+                    if (checkStats != null && checkStart != null) {
+                        CheckOddsCounter(checkStats, state.checkingOdds, state.checkProgress, checkStart, now)
                     }
                     when (view) {
                         TrackerView.STATS -> Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -693,4 +699,50 @@ private fun PriceDialog(bet: TrackedBet, onSave: (Int) -> Unit, onDismiss: () ->
         confirmButton = { TextButton(onClick = { value?.let(onSave) }, enabled = value != null) { Text("Save") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/**
+ * The "Check odds now" counter, pinned at the top of the Tracker (Tj, 2026-09-29): how many open bets are +EV and −EV right now at the price
+ * they were placed, the share that's +EV, and their average EV with the ones over ±5% left out ([CheckOddsStats]). It starts at 0 with each new
+ * check and counts up as the refreshed odds are saved.
+ */
+@Composable
+fun CheckOddsCounter(stats: CheckOddsStats, checking: Boolean, progress: Pair<Int, Int>?, startedAtMs: Long, now: Long, modifier: Modifier = Modifier) {
+    val said = TrackerText.checkCounts(stats) + " · " + TrackerText.checkAverage(stats)
+    Column(modifier.fillMaxWidth().padding(top = 6.dp).testTag("checkCounter")) {
+        Row(
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = said },
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            CounterValue(stats.positive.toString(), "+EV", Edge.colors.positive)
+            CounterValue(stats.negative.toString(), "−EV", Edge.colors.negative)
+            CounterValue(stats.positiveShare?.let { Format.percent(it, 0) } ?: "–", "+EV", MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.weight(1f))
+            val avg = stats.averageEv
+            CounterValue(
+                avg?.let(Format::evPercentShort) ?: "–", "avg EV",
+                when {
+                    avg == null -> MaterialTheme.colorScheme.onSurface
+                    avg >= 0 -> Edge.colors.positive
+                    else -> Edge.colors.negative
+                },
+            )
+        }
+        Text(
+            TrackerText.checkCaption(stats, checking, progress, startedAtMs, now),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            modifier = Modifier.testTag("checkCaption"),
+        )
+    }
+}
+
+@Composable
+private fun CounterValue(value: String, label: String, color: androidx.compose.ui.graphics.Color) {
+    Row(verticalAlignment = Alignment.Bottom) {
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(" $label", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 2.dp))
+    }
 }
