@@ -37,6 +37,7 @@ class MemoryVault : KeyVault {
             Signature.getInstance("SHA256withECDSA").run { initSign(keys.getValue(alias).private); update(message); sign() }
     }
     override fun delete(alias: String) { keys.remove(alias) }
+    override fun aliases(prefix: String) = keys.keys.filter { it.startsWith(prefix) }.sortedDescending()
 }
 
 class NovigSetupTest {
