@@ -181,7 +181,7 @@ object CnoBooks {
         val usable = view.prices.filter { usableForFair(it.code, judged) }
         val pairs = usable.filter { it.twoSided }
         val fairs = pairs.mapNotNull { fairFor(it.odds!!, it.otherOdds!!) }
-        val fair = if (fairs.isEmpty()) null else minOf(fairs.average(), median(fairs))
+        val fair = consensus(fairs)
         val novig = (if (preferListOdds) null else view.prices.firstOrNull { it.code == judged }?.odds) ?: listOdds
         val fee = live && judged == NOVIG
         val ev = fair?.let { evAt(it, novig, fee) }
@@ -202,6 +202,9 @@ object CnoBooks {
      */
     fun agrees(view: CnoBooksView, row: CnoRow, live: Boolean, listReadAtMs: Long): Boolean =
         check(view, row, live, preferListOdds = listReadAtMs > view.fetchedAtMs).verdict == Verdict.CONFIRMED
+
+    /** The fair probability the books' [fairs] agree on: the lower of their mean and median (null with none). */
+    fun consensus(fairs: List<Double>): Double? = if (fairs.isEmpty()) null else minOf(fairs.average(), median(fairs))
 
     /** One book's fair probability for the first side: worst-case devig, or plain normalizing when there's no vig to remove. */
     fun fairFor(odds: Int, otherOdds: Int): Double? {
