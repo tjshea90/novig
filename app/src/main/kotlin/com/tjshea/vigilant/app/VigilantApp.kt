@@ -2,9 +2,11 @@ package com.tjshea.vigilant.app
 
 import android.app.Application
 import com.tjshea.vigilant.app.data.EncryptedApiKeyStore
+import com.tjshea.vigilant.app.data.KeystoreSecretBox
 import com.tjshea.vigilant.app.data.KeystoreSigningKey
 import com.tjshea.vigilant.app.data.KeystoreVault
 import com.tjshea.vigilant.app.data.NovigConnectionStore
+import com.tjshea.vigilant.data.novig.signing.ManagementKeyStore
 import com.tjshea.vigilant.data.novig.signing.NovigBettingSetup
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.tracker.ApiBetSync
@@ -87,6 +89,9 @@ class AppContainer(app: Application) {
     private companion object {
         /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
         const val RECHECK_AT_ONCE = 3
+
+        /** Excluded from backups (res/xml): sealed by this phone's Keystore, it couldn't be opened anywhere else. */
+        const val MANAGEMENT_KEY_FILE = "novig_management_key.json"
     }
 
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -106,6 +111,20 @@ class AppContainer(app: Application) {
     val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
     val novig = NovigPublicClient(http, json, usage = usage)
     val novigConnection = NovigConnectionStore(app)
+
+    /**
+     * Tj's Novig management key, saved once Novig accepts it (Tj, 2026-09-29: "I only input the API key and file one time"): sealed by the
+     * Keystore, kept through every update, left out of backups. Tests swap in their own sealing ([installSecretBoxForTest]).
+     */
+    @Volatile var managementKeys = ManagementKeyStore(File(app.filesDir, MANAGEMENT_KEY_FILE), KeystoreSecretBox, json)
+        private set
+
+    /** Robolectric has no Android Keystore: tests seal the management key with [box] (same file). */
+    internal fun installSecretBoxForTest(box: com.tjshea.vigilant.data.novig.signing.SecretBox) {
+        managementKeys = ManagementKeyStore(File(filesDir, MANAGEMENT_KEY_FILE), box, json)
+    }
+
+    private val filesDir: File = app.filesDir
 
     /**
      * Novig's own books (Vigilant), or a sportsbook's posted odds out of the fair-odds feeds'
