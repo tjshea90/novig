@@ -115,4 +115,8 @@ cat <<'SHORT'
   Ship at milestones:     bash ship.sh "note"               (full gate)
 - Write new requests into TASKS.md, in Tj's own words, before writing any
   code — see CLAUDE.md's "When Tj asks for something new".
+- Skills (.claude/skills/): load the matching one before the work — compose-
+  state-and-effects, compose-performance, kotlin-concurrency-and-flow,
+  compose-ui-testing-patterns; test-protocols for light/full tests (CLAUDE.md
+  "Skills for this app").
 SHORT

@@ -129,6 +129,25 @@ Read the two warnings it can raise:
 - **"UNCOMMITTED WORK IS PRESENT"** — the same thing, one step worse: not
   even the hook got to it. `git diff` is what was in flight.
 
+## Skills for this app — load the matching one before the work, every task
+
+`.claude/skills/` holds skills whose full text loads only when used. Load the matching one before
+writing, changing or reviewing that kind of code, on every task (features and fixes too, not only
+reviews):
+
+| Before you touch… | Load |
+| :- | :- |
+| A Compose screen or component: state, `remember`, hoisting, effects, Flow collection in UI | `compose-state-and-effects` |
+| Anything drawn per frame, per scroll or in a list (the feed, CNO list, widget, mini window), or a jank/recomposition question | `compose-performance` |
+| Coroutines, scopes, services, `StateFlow`/`SharedFlow`/`Channel`, cancellation (scans, CNO reads, the websocket, auto-scan, settling) | `kotlin-concurrency-and-flow` |
+| A Compose UI or screenshot test | `compose-ui-testing-patterns` |
+| Tj says "light tests" or "full tests" | `test-protocols` |
+
+Use the Skill tool. If a session's skill list doesn't show them yet (they sit under `novig/`, so
+they appear once Claude works on files here), read `.claude/skills/<name>/SKILL.md` directly.
+The first four are Chris Banes' (Apache-2.0, copied unchanged: `.claude/skills/THIRD_PARTY_NOTICES.md`);
+where one disagrees with this file or BRIEF.md, this repo's rules win.
+
 ## Branches — `main` is the only source of truth
 
 Claude Code on the web puts each session on its own auto-generated branch
