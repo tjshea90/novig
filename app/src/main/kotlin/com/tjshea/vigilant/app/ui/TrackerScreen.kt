@@ -220,8 +220,8 @@ fun TrackerScreen(
                         }
                     }
                     item(key = "scanner") {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-                            Caption("Scanner")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            ChipCaption("Scanner")
                             ScannerFilter.entries.forEach { s ->
                                 FilterChip(selected = scanner == s, onClick = { scanner = s }, label = { Text("${s.label} (${scannerCounts[s] ?: 0})", maxLines = 1) })
                             }
