@@ -43,7 +43,7 @@ class ApiGradingCheck(
         out.appendLine()
         out.appendLine("== What Novig says (read just now) ==")
         val balance = tryRead { trading.balance(subaccountKeyId) }
-        out.appendLine("Wallet: " + balance.fold({ String.format(Locale.US, "$%.2f", it) }, { "couldn't be read: $it" }))
+        out.appendLine("Wallet: " + balance.fold({ String.format(Locale.US, "$%.2f", it) }, { "couldn't be read: ${it.message}" }))
         val positionsRead = tryRead { trading.positions() }
         val positions: List<NovigPosition> = positionsRead.getOrDefault(emptyList())
         positionsRead.fold(
