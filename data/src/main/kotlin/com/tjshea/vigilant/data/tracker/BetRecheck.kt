@@ -63,14 +63,27 @@ class BetRecheck(
         /** Open bets whose odds are now current. */
         val covered: Int get() = updated + current
 
-        /** What the toast says: the counts, all of them, in words. */
-        fun summary(scanStarted: Boolean = false): String {
+        /**
+         * What the toast says: the counts, all of them, in words. [graded]: the grading pass that ran beside the odds check (the
+         * finished games' results, [BetSettler]); without one, finished games are only counted.
+         */
+        fun summary(scanStarted: Boolean = false, graded: BetSettler.Report? = null): String {
             if (open == 0) return "No open bets to check"
             val parts = ArrayList<String>()
             parts += "Checked $covered of $open open bet${if (open == 1) "" else "s"}"
             if (failed > 0) parts += "$failed couldn't be read"
             if (skipped > 0) parts += "$skipped not tried"
-            if (over > 0) parts += "$over game${if (over == 1) "" else "s"} already over (results come from final scores)"
+            if (over > 0 && graded == null) {
+                parts += "$over game${if (over == 1) "" else "s"} already over (results come from final scores)"
+            } else if (over > 0 || graded != null && graded.settled > 0) {
+                val word = listOfNotNull(
+                    "graded ${graded!!.settled} from final scores".takeIf { graded.settled > 0 },
+                    "${graded.waiting} not over yet".takeIf { graded.waiting > 0 },
+                    "${graded.manual} need${if (graded.manual == 1) "s" else ""} a tap (each says why)".takeIf { graded.manual > 0 },
+                    "the score feeds didn't answer".takeIf { graded.stopped && graded.settled == 0 },
+                ).joinToString(", ").ifEmpty { "nothing due yet" }
+                parts += if (over > 0) "$over game${if (over == 1) "" else "s"} already over: $word" else word.replaceFirstChar { it.uppercase() }
+            }
             if (vigilantOnly > 0) {
                 parts += if (scanStarted) "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"} updating from a Vigilant scan"
                 else "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"} update with each Vigilant scan"

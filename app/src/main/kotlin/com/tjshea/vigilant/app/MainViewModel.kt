@@ -956,6 +956,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null
             var scanStarted = false
+            // The finished games' results are graded at the same time (the score feeds are ESPN and MLB, not CNO, so it costs no time):
+            // one tap covers every open bet, the ones still to play and the ones already over.
+            val grading = async(Dispatchers.IO) {
+                try {
+                    c.settler.run(force = true)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+            }
             try {
                 val plan = c.recheck.preview()
                 if (plan.vigilantOnly > 0) scanStarted = startScanForOpenBets()
@@ -967,7 +978,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _state.update { it.copy(checkingOdds = false, checkProgress = null) }
             }
-            _toasts.tryEmit(report?.summary(scanStarted) ?: "Couldn't check the odds")
+            _toasts.tryEmit(report?.summary(scanStarted, grading.await()) ?: "Couldn't check the odds")
         }
     }
 
