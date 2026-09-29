@@ -44,7 +44,7 @@ check "up-to-date task marked" "$OUT" ":engine:test             2 passed  (up to
 check "per-task counts" "$OUT" ":data:test               1 passed, 1 skipped, 1 FAILED"
 check "failing test named" "$OUT" "FAIL  data: CnoChecksTest > futures are left out"
 check "failure message shown" "$OUT" "expected:<2> but was:<3>"
-check "red verdict" "$OUT" "FAIL  3 of 5 tests passed in 7 s (Gradle exit 1"
+check "red verdict" "$OUT" "FAIL  5 tests: 3 passed, 1 skipped, 1 failed in 7 s (Gradle exit 1"
 if grep -q ScreenshotTest <<<"$OUT" || grep -q ':app:' <<<"$OUT"; then
   echo "  FAIL  a task the log doesn't name was counted"; FAILS=$((FAILS + 1))
 else
@@ -56,7 +56,7 @@ printf '%s\n' '> Task :data:compileKotlin FAILED' "e: file:///repo/data/src/main
   '* What went wrong:' "Execution failed for task ':data:compileKotlin'." '* Try:' 'BUILD FAILED in 7s' > "$T/compile.log"
 OUT="$(summary "$T/compile.log" 1)"
 check "compiler error shown" "$OUT" "e: file:///repo/data/src/main/kotlin/Foo.kt:3:5 Unresolved reference 'bar'."
-check "no test ran, still red" "$OUT" "FAIL  0 of 0 tests passed"
+check "no test ran, still red" "$OUT" "FAIL  0 tests: 0 passed in 7 s (Gradle exit 1"
 
 # 3. Any other failure: Gradle's "What went wrong" block.
 printf '%s\n' '* What went wrong:' 'Could not resolve all files for configuration :app:debugRuntimeClasspath.' \
@@ -68,7 +68,7 @@ check "what went wrong shown" "$OUT" "Could not resolve all files for configurat
 printf '%s\n' '> Task :engine:test' '> Task :app:testDebugUnitTest' 'BUILD SUCCESSFUL in 7s' > "$T/green.log"
 OUT="$(summary "$T/green.log" 0)"
 check "green task line" "$OUT" ":app:testDebugUnitTest   1 passed"
-check "green verdict" "$OUT" "PASS  3 of 3 tests passed in 7 s (Gradle exit 0"
+check "green verdict" "$OUT" "PASS  3 tests: 3 passed in 7 s (Gradle exit 0"
 
 if [ "$FAILS" -gt 0 ]; then
   echo "  FAIL  $FAILS check(s) on tools/gradle_summary.py"

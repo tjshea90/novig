@@ -18,7 +18,7 @@ for line in log:
     if m and os.path.isdir(f"{m.group(1)}/build/test-results/{m.group(2)}"):
         tasks[(m.group(1), m.group(2))] = m.group(3) or ""
 
-total = passed = 0
+total = passed = skipped = failed = 0
 failures = []
 for (mod, task), state in tasks.items():
     t = f = s = 0
@@ -40,6 +40,8 @@ for (mod, task), state in tasks.items():
                 s += 1
     total += t
     passed += t - f - s
+    skipped += s
+    failed += f
     parts = [f"{t - f - s} passed"]
     if s:
         parts.append(f"{s} skipped")
@@ -76,4 +78,5 @@ if rc != 0 and not failures:
             print("  " + l[:240])
 
 verdict = "PASS" if rc == 0 else "FAIL"
-print(f"  {verdict}  {passed} of {total} tests passed in {secs} s (Gradle exit {rc}; full log {log_path})")
+counts = [f"{passed} passed"] + ([f"{skipped} skipped"] if skipped else []) + ([f"{failed} failed"] if failed else [])
+print(f"  {verdict}  {total} tests: {', '.join(counts)} in {secs} s (Gradle exit {rc}; full log {log_path})")
