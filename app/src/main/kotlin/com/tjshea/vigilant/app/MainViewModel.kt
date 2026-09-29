@@ -1063,6 +1063,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissReport() = _state.update { it.copy(report = null) }
 
+    fun reportCopied() {
+        _toasts.tryEmit("Copied: paste it to Claude")
+    }
+
     /**
      * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's EV now, against the price it was bet at.
      * CNO's bets have their CNO game page read again (a page every half second, three at once); Vigilant's own bets (no CNO page)
