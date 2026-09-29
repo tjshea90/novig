@@ -18,6 +18,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -83,6 +85,13 @@ class StickyHeadersTest {
     }
 
     @Test
+    fun `screenshot - the Tracker scrolled down with its tabs and filters pinned`() {
+        screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        scrollToKey("x20")
+        compose.onRoot().captureRoboImage("screenshots/4h_tracker_pinned.png")
+    }
+
+    @Test
     fun `a pinned filter works from deep in the list, and the new list starts at its top`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         scrollToKey("x39")
@@ -142,7 +151,6 @@ class StickyHeadersTest {
     fun `the Tracker's pinned bar is compact`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         val heightDp = compose.onNodeWithTag(STICKY_BAR).fetchSemanticsNode().size.height / 3f // xxhdpi
-        println("PINNED-BAR-DP $heightDp")
         assertTrue("the bar is $heightDp dp tall", heightDp <= 175f)
     }
 

@@ -133,6 +133,19 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6800dp-xxhdpi")
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
+    /** One picture per Settings tab (v0.22.0). */
+    @Test fun settingsTabs() {
+        for (tab in SettingsTab.entries) {
+            compose.setContent {
+                CompositionLocalProvider(LocalClock provides { SampleScan.NOW }) {
+                    VigilantTheme(darkTheme = true) { Surface(color = MaterialTheme.colorScheme.background) { SettingsScreen(SampleScan.state(), {}, startTab = tab) } }
+                }
+            }
+            compose.onRoot().captureRoboImage("screenshots/5_settings_tab_${tab.name.lowercase()}.png")
+            break
+        }
+    }
+
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
         // No PropLine key: The Odds API buys props on its own.
         screen { SettingsScreen(SampleScan.state().copy(proplineKeys = emptyList()), {}) }
