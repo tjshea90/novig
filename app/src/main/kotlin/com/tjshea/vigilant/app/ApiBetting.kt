@@ -43,9 +43,10 @@ data class BettingUi(
 
 /**
  * "Add money" from the Bet sheet (Tj, 2026-09-29: "If my wallet is too low when I go to place a bet in the app, add a button to go directly to
- * the setting to add money to the wallet"): [amount] is what the bet is short by (whole dollars, at least $1); "Back to the bet" re-opens [bet].
+ * the setting to add money to the wallet"): [amount] is typed in for Tj ([needed], what the bet is short by, rounded up to whole dollars, at
+ * least $1); [cost] is what the bet costs; "Back to the bet" re-opens [bet].
  */
-data class TopUp(val amount: Double, val needed: Double, val bet: BetSheetUi)
+data class TopUp(val amount: Double, val needed: Double, val cost: Double, val bet: BetSheetUi)
 
 /** The Bet sheet: one bet being looked at, then placed. Nothing is sent until [confirm] and it re-checks the price then. */
 data class BetSheetUi(
@@ -507,7 +508,7 @@ class ApiBettingController(
         state.update {
             it.copy(
                 betSheet = null,
-                betting = it.betting.copy(topUp = TopUp(WalletAmount.suggest(needed), needed, sheet.copy(plan = null, refusal = null)), message = null, error = null),
+                betting = it.betting.copy(topUp = TopUp(WalletAmount.suggest(needed), needed, cost, sheet.copy(plan = null, refusal = null)), message = null, error = null),
             )
         }
     }

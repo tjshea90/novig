@@ -44,6 +44,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.text.input.KeyboardType
+import com.tjshea.vigilant.app.TopUp
+import com.tjshea.vigilant.app.WalletAmount
+import com.tjshea.vigilant.data.novig.signing.ManagementKey
+import com.tjshea.vigilant.data.novig.signing.ManagementKeyHint
 import com.tjshea.vigilant.app.BetSheetUi
 import com.tjshea.vigilant.app.BettingUi
 import com.tjshea.vigilant.data.cno.CnoRow
@@ -337,7 +347,6 @@ private fun WalletBlock(betting: BettingUi, savedKey: ManagementKeyHint?, key: M
 /** "Your bet needs $X more": what the pending bet costs against the wallet, and the way back to it. */
 @Composable
 private fun TopUpBanner(topUp: TopUp, balance: Double?, actions: BettingActions) {
-    val cost = topUp.bet.plan?.expectedCost ?: (topUp.needed + (balance ?: 0.0))
     val covered = balance != null && balance + 1e-9 >= topUp.cost
     androidx.compose.material3.Surface(
         color = if (covered) Edge.colors.positive.copy(alpha = 0.14f) else MaterialTheme.colorScheme.secondaryContainer,
@@ -361,7 +370,6 @@ private fun TopUpBanner(topUp: TopUp, balance: Double?, actions: BettingActions)
             }
         }
     }
-    @Suppress("UNUSED_VARIABLE") val unused = cost
 }
 
 @Composable
