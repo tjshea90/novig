@@ -48,7 +48,7 @@ class CnoClient(
     private val work: kotlin.coroutines.CoroutineContext = Dispatchers.Default,
 ) : CnoSource {
 
-    internal class Session(
+    private class Session(
         val view: String,
         var postUrl: HttpUrl,
         val cookies: MutableMap<String, String>,
@@ -119,7 +119,7 @@ class CnoClient(
     }
 
     /** Loads a page: its form and cookies. */
-    internal suspend fun open(url: String): Session {
+    private suspend fun open(url: String, paceWith: CnoPace = pace): Session {
         val pageUrl = url.toHttpUrl()
         val request = Request.Builder().url(pageUrl).get().header("User-Agent", USER_AGENT).build()
         val cookies = LinkedHashMap<String, String>()
@@ -149,7 +149,7 @@ class CnoClient(
     }
 
     /** One postback, as the page's loader timer or its Refresh button would make it. */
-    internal suspend fun postback(s: Session, useTimer: Boolean): List<CnoPage.Record> {
+    private suspend fun postback(s: Session, useTimer: Boolean, paceWith: CnoPace = pace): List<CnoPage.Record> {
         val form = s.form
         val timer = form.timer
         val body = FormBody.Builder()
@@ -184,7 +184,7 @@ class CnoClient(
         return records
     }
 
-    internal fun List<CnoPage.Record>.grid(): String =
+    private fun List<CnoPage.Record>.grid(): String =
         firstOrNull { it.type == "updatePanel" && it.id.endsWith("UpdatePanelGridView") }?.content
             ?: throw CnoException("CrazyNinjaOdds' reply had no table")
 
