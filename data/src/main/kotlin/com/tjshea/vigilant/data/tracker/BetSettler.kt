@@ -29,6 +29,11 @@ class BetSettler(
     private val tracker: BetTracker,
     private val scores: ScoreSource,
     private val clock: () -> Long = System::currentTimeMillis,
+    /**
+     * Bets placed through Novig's API are graded from Novig's own ledger ([ApiSettler], Tj, 2026-09-29), which is exact (fair-value voids
+     * included): while this says so, the score feeds leave them alone. Off (betting not set up on this phone): they're graded from scores like any other.
+     */
+    private val leaveApiBets: () -> Boolean = { false },
 ) {
     /** [waiting]: games not over yet; [manual]: bets nothing the feeds carry can settle (each has its reason on the bet). */
     data class Report(val asked: Int, val settled: Int, val stopped: Boolean, val waiting: Int = 0, val manual: Int = 0)
@@ -40,7 +45,7 @@ class BetSettler(
 
     /** Bets due a look now ([force]: every one, whenever it was last looked at). */
     fun due(bets: List<TrackedBet>, now: Long = clock(), force: Boolean = false): List<TrackedBet> = bets
-        .filter { it.status == BetStatus.PENDING && it.settledBy != BY_YOU }
+        .filter { it.status == BetStatus.PENDING && it.settledBy != BY_YOU && !(it.orderId != null && leaveApiBets()) }
         .filter { now - it.startsTs >= AFTER_START_MS && now - it.startsTs <= GIVE_UP_MS }
         .filter { force || (nextTry[it.id] ?: 0L) <= now }
         .sortedBy { it.startsTs }
@@ -60,7 +65,7 @@ class BetSettler(
 
         // Bets left to a tap for good say so once, instead of sitting open with no word.
         for (bet in all) {
-            if (bet.status != BetStatus.PENDING || bet.settledBy == BY_YOU) continue
+            if (bet.status != BetStatus.PENDING || bet.settledBy == BY_YOU || (bet.orderId != null && leaveApiBets())) continue
             if (startedAt - bet.startsTs > GIVE_UP_MS) note(changes, bet, TOO_OLD, startedAt)
         }
 
@@ -140,6 +145,19 @@ class BetSettler(
             flush()
         }
         Report(asked, settled, stopped = false, waiting = waiting, manual = manual)
+    }
+
+    /**
+     * What the score feeds say about [bet] without touching it (null when they can't say: no readable market, no game, no box score): the
+     * cross-check [ApiSettler] holds a ledger-inferred loss against.
+     */
+    suspend fun scoreGradeOf(bet: TrackedBet): BetGrader.Grade? {
+        val pick = BetGrader.pickOf(bet) ?: return null
+        val game = (findGame(bet) as? Lookup.Found)?.game ?: return null
+        if (game.called) return null
+        if (!game.final) return BetGrader.Grade.Waiting("The game isn't over yet")
+        val players = if (pick is BetGrader.Pick.Prop && !game.tennis) scores.players(game) ?: return null else null
+        return BetGrader.gradeDetailed(pick, game, players)
     }
 
     /** Puts [text] on [bet] when it's new (or the last look is old), so an unchanged answer never rewrites the file. */

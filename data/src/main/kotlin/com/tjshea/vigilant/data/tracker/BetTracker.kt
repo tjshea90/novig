@@ -415,7 +415,13 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * paid plus the fee, the price the average paid, the EV that at the fair probability the bet rested on. The same order is never logged
      * twice (a sync after a lost answer finds it already here). Null when nothing filled.
      */
-    suspend fun logApi(target: com.tjshea.vigilant.data.novig.trading.BetTarget, orderId: String, fills: List<com.tjshea.vigilant.data.novig.trading.NovigFill>): TrackedBet? {
+    suspend fun logApi(
+        target: com.tjshea.vigilant.data.novig.trading.BetTarget,
+        orderId: String,
+        fills: List<com.tjshea.vigilant.data.novig.trading.NovigFill>,
+        /** Found in Novig's fills after the fact (no fair odds on record): no EV is claimed. */
+        imported: Boolean = false,
+    ): TrackedBet? {
         val contracts = fills.sumOf { it.qty }
         if (contracts <= 0L) return null
         val paid = fills.sumOf { it.cost }
@@ -436,11 +442,12 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             outcomeId = target.outcomeId,
             price = price,
             cost = cost,
-            fairAtBet = target.fair,
-            evPercentAtBet = target.fair / cost - 1.0,
+            fairAtBet = target.fair.takeUnless { imported },
+            evPercentAtBet = (target.fair / cost - 1.0).takeUnless { imported },
             stake = stake,
             source = target.source,
             placedKey = target.placedKey,
+            imported = imported,
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)),
             book = target.book,
             gameUrl = target.gameUrl,

@@ -36,6 +36,9 @@ interface NovigSource {
     suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)? = null): BookBatch
     suspend fun market(marketId: String): NovigMarket?
 
+    /** One event by id (its league and "Away @ Home" description), or null when Novig no longer lists it. */
+    suspend fun event(eventId: String): NovigEvent? = null
+
     /**
      * The markets a scan will price, most important first: a source that can have them pushed (the
      * connected key's websocket) starts on them now. Nothing by default.
@@ -221,6 +224,18 @@ class NovigPublicClient(
             val body = response.body?.string().orEmpty()
             if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
             return json.decodeFromString(MarketDto.serializer(), body).toDomain()
+        }
+    }
+
+    override suspend fun event(eventId: String): NovigEvent? {
+        val request = Request.Builder().url("$baseUrl/v3/public/catalog/events/$eventId").get().build()
+        publicGate.acquire()
+        http.newCall(request).await().use { response ->
+            count(response.code)
+            if (response.code == 404) return null
+            val body = response.body?.string().orEmpty()
+            if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
+            return json.decodeFromString(EventDto.serializer(), body).toDomain()
         }
     }
 
