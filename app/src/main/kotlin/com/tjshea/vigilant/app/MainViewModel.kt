@@ -338,6 +338,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     novig = it.novig.copy(connection = connection),
                 )
             }
+            // Betting through Novig's API: the Bet buttons show when this phone holds the subaccount's trading key.
+            api.refreshEnabled()
             // After the settings, so a scan still running (or finished) is shown under them.
             follow()
         }
@@ -643,12 +645,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 // Replace any earlier read key: its Keystore entry is no longer needed.
-                _state.value.novig.connection?.let { old -> if (old.readAlias != conn.readAlias) KeystoreVault.delete(old.readAlias) }
-                c.novigConnection.save(conn)
-                c.useConnection(conn)
-                _state.update {
-                    it.copy(novig = it.novig.copy(connection = conn, busy = false, message = "Connected. Scans now read Novig prices through your key's own rate limit."))
+                val old = _state.value.novig.connection
+                old?.let { if (it.readAlias != conn.readAlias) KeystoreVault.delete(it.readAlias) }
+                // Reconnecting the same subaccount keeps the trading key betting through the API already set up.
+                val kept = if (old != null && conn.tradingKeyId == null && old.subaccountKeyId == conn.subaccountKeyId) {
+                    conn.copy(tradingKeyId = old.tradingKeyId, tradingAlias = old.tradingAlias)
+                } else {
+                    conn
                 }
+                c.novigConnection.save(kept)
+                c.useConnection(kept)
+                _state.update {
+                    it.copy(novig = it.novig.copy(connection = kept, busy = false, message = "Connected. Scans now read Novig prices through your key's own rate limit."))
+                }
+                api.refreshEnabled()
             } catch (e: NovigApiException) {
                 _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.advice)) }
             } catch (e: IllegalArgumentException) {
@@ -712,7 +722,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.useConnection(null)
             c.novigConnection.clear()
             conn?.let { KeystoreVault.delete(it.readAlias) }
-            _state.update { it.copy(novig = NovigUi(message = "Disconnected. Back to Novig's public prices.")) }
+            _state.update { it.copy(novig = NovigUi(message = "Disconnected. Back to Novig's public prices."), betting = BettingUi(), betSheet = null) }
         }
     }
 
@@ -889,7 +899,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch {
             val report = try {
-                withContext(Dispatchers.IO) { c.settler.run(force) }
+                withContext(Dispatchers.IO) { gradeAll(force) }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -918,6 +928,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _toasts.tryEmit("Settled ${report.settled} bet${if (report.settled == 1) "" else "s"} from final scores")
             }
         }
+    }
+
+    /**
+     * One grading pass: the bets placed through Novig's API from Novig's own ledger ([ApiSettler], when betting is set up), then every other bet
+     * from final scores ([BetSettler]). One report that adds both up.
+     */
+    private suspend fun gradeAll(force: Boolean): com.tjshea.vigilant.data.tracker.BetSettler.Report {
+        val api = c.apiSettler?.let { s ->
+            try {
+                s.run()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+        }
+        val scores = c.settler.run(force)
+        return if (api == null) scores else scores.copy(
+            asked = scores.asked + api.asked, settled = scores.settled + api.settled, waiting = scores.waiting + api.waiting,
+            manual = scores.manual + api.manual, stopped = scores.stopped && api.stopped || scores.stopped && api.asked == 0,
+        )
     }
 
     /** "Grade automatically": an open bet whose result Tj tapped and undid goes back to the score feeds. */
@@ -986,7 +1017,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // one tap covers every open bet, the ones still to play and the ones already over.
             val grading = async(Dispatchers.IO) {
                 try {
-                    c.settler.run(force = true)
+                    gradeAll(force = true)
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (e: Exception) {
