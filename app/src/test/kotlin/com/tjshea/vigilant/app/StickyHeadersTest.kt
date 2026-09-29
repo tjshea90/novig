@@ -146,6 +146,13 @@ class StickyHeadersTest {
         compose.onNodeWithText("Starts within").assertIsDisplayed()
     }
 
+    @Test
+    fun `the Check odds now counter stays pinned while the bets scroll`() {
+        screen { TrackerScreen(manyBets().copy(checkStartedAtMs = SampleScan.NOW - 60_000), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        scrollToKey("x39")
+        compose.onNode(hasTestTag("checkCounter") and hasAnyAncestor(hasTestTag(STICKY_BAR))).assertIsDisplayed()
+    }
+
     /** The pinned bar takes a fifth of a phone's list area at most (wrapped Sort and Scanner chips took a third: 311 dp of 420 in this test). */
     @Test
     fun `the Tracker's pinned bar is compact`() {
