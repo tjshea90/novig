@@ -120,10 +120,12 @@ object BetGrader {
                 .replace(ANYTIME_GOAL, "player goals")
                 .replace(THREES, "three pointers made"),
         )
-        val fits = PROP_TYPES.filter { NovigBetFinder.typeFits(it, words) }
+        fun fitting(w: Set<String>) = PROP_TYPES.filter { NovigBetFinder.typeFits(it, w) }
+        // A word that says nothing about the stat ("Points Scored", "Total Rebounds") is dropped only when nothing fits with it.
+        val fits = fitting(words).ifEmpty { fitting(words - STAT_NOISE) }
         return fits.singleOrNull()
             // "Strikeouts" alone: a pitcher's (the books' default), unless it says batter.
-            ?: if (fits.toSet() == setOf("PITCHER_STRIKEOUTS", "BATTING_STRIKEOUTS") || (fits.isEmpty() && words == setOf("strikeouts"))) {
+            ?: if (fits.toSet() == setOf("PITCHER_STRIKEOUTS", "BATTING_STRIKEOUTS") || (fits.isEmpty() && (words - "player") == setOf("strikeouts"))) {
                 if (market.contains("batter", true) || market.contains("batting", true)) "BATTING_STRIKEOUTS" else "PITCHER_STRIKEOUTS"
             } else {
                 null
