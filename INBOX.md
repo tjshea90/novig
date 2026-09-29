@@ -2502,3 +2502,18 @@ release it
 ```
 The betting from vigilant now works. Tell me what you need me to do or show you to make sure the grading works after the bets are done to track my wins and losses automatically. Also tell me what you need me to do or show you to optimize the app and make sure everything is working as designed. Ensure that if I have cno only turned on in the settings that it doesn't scan vigilant in the background and waste api usage. 
 ```
+
+## 2026-09-29T19:05:38Z
+```
+@"/root/.claude/uploads/1a624880-4ba0-54cd-b544-ee41067862c1/e7815890-checkoddsnow.txt" @"/root/.claude/uploads/1a624880-4ba0-54cd-b544-ee41067862c1/c55d09fe-regscan.txt" I'll start with the first two results. Attached are the reports from after a scan and another from after a check odds now. See what you can optimize from the diagnostics.
+
+Also: 
+
+1) often when I switch from vigilant to another app, the widget opens automatically. Only open the widget if I press the icon to open it in the app. 
+
+2) tell me which apis deplete too quickly for daily use so I can add more keys
+
+3) the settings section is getting very long. See how you can organize it. Maybe tabs on the top. 
+
+4) for any section with tabs on the top, such as the bet tracker section, keep the top navigation tabs "sticky" to the top. When I scroll down through the long list of my active bets, I still want to have the filters at the top without having to scroll all the way back up.
+```
