@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -165,6 +166,9 @@ class SettingsTabsTest {
     fun `without a bet waiting, Settings opens where it always does`() {
         screen(connected())
         compose.onNodeWithTag("settingsTab-SCAN").assertIsSelected()
+        // And the Betting page opens at its top: the wallet is further down (so the scroll above is real).
+        open(SettingsTab.BETTING)
+        compose.onNodeWithTag("walletBlock").assertIsNotDisplayed()
     }
 
     @Test
