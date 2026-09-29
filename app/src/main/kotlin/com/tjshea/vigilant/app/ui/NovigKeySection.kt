@@ -31,24 +31,28 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.NovigUi
 import com.tjshea.vigilant.app.ScanStatus
+import com.tjshea.vigilant.data.novig.signing.ManagementKey
 import com.tjshea.vigilant.data.scanner.ScanTiming
 
 /**
- * Settings → Novig API. Not connected: the one-time setup (management key ID + its .pem file).
+ * Settings → Novig API. Not connected: the one-time setup (management key ID + its .pem file, saved on this phone once Novig accepts it).
  * Connected: what the key does for scans, test, disconnect.
  */
 @Composable
 fun NovigKeySection(
     novig: NovigUi,
-    onConnect: (keyId: String, pem: String) -> Unit,
+    /** [typed]: the management key Tj just entered (saved once Novig accepts it); null = the one saved on this phone. */
+    onConnect: (typed: ManagementKey?) -> Unit,
     onTest: () -> Unit,
     onDisconnect: () -> Unit,
     /** The last scan, for how its prices came in. */
     lastScan: ScanStatus? = null,
+    /** Deletes the saved management key from this phone. */
+    onForgetKey: () -> Unit = {},
 ) {
     val conn = novig.connection
     if (conn == null) {
-        SetupForm(novig, onConnect)
+        SetupForm(novig, onConnect, onForgetKey)
     } else {
         Text(
             "Connected · read-only key ••••${conn.readKeyId.takeLast(4)}",
@@ -93,67 +97,34 @@ fun NovigKeySection(
 }
 
 @Composable
-private fun SetupForm(novig: NovigUi, onConnect: (String, String) -> Unit) {
-    val context = LocalContext.current
-    var keyId by remember { mutableStateOf("") }
-    var pem by remember { mutableStateOf("") }
-    var fileName by remember { mutableStateOf<String?>(null) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            runCatching { context.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } }
-                .getOrNull()?.takeIf { it.contains("PRIVATE KEY") }
-                ?.let {
-                    pem = it
-                    fileName = uri.lastPathSegment?.substringAfterLast('/') ?: "key file"
-                }
-        }
-    }
-
+private fun SetupForm(novig: NovigUi, onConnect: (ManagementKey?) -> Unit, onForgetKey: () -> Unit) {
+    val key = remember { ManagementKeyState() }
+    val saved = novig.managementKey
     Text(
         "Optional. Public prices already work with no key. Connecting your Novig API key lets scans read " +
             "prices under your key's own rate limit, so big scans are faster and never throttled by a shared network.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    Text(
-        "1. VPN off. On novig.com: Profile → Settings → Novig API → Create Key.\n" +
-            "2. Save the downloaded novig-api-key-….pem file and copy the key ID shown.\n" +
-            "3. Enter both below. Vigilant makes its own read-only key and forgets yours.",
-        style = MaterialTheme.typography.bodySmall,
-        modifier = Modifier.padding(vertical = 6.dp),
-    )
-    OutlinedTextField(
-        value = keyId,
-        onValueChange = { keyId = it.trim() },
-        label = { Text("Management key ID") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
-        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = { picker.launch(arrayOf("*/*")) }) { Text(if (fileName == null) "Choose .pem file" else "Change file") }
-        Text(fileName?.let { "✓ $it" } ?: "or paste it below", style = MaterialTheme.typography.bodySmall)
-    }
-    if (fileName == null) {
-        OutlinedTextField(
-            value = pem,
-            onValueChange = { pem = it },
-            label = { Text("…or paste the key text") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            maxLines = 3,
+    if (!key.usesSaved(saved)) {
+        Text(
+            "1. VPN off. On novig.com: Profile → Settings → Novig API → Create Key.\n" +
+                "2. Save the downloaded novig-api-key-….pem file and copy the key ID shown.\n" +
+                "3. Enter both below, once. Vigilant makes its own read-only key from it and saves yours on this phone for betting and moving money.",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(vertical = 6.dp),
         )
     }
+    ManagementKeyBlock(saved, key, novig.busy, onSave = null, onForget = onForgetKey)
     Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(
             onClick = {
-                onConnect(keyId, pem)
-                pem = "" // the management key never lingers in the UI state
-                fileName = null
+                onConnect(if (key.usesSaved(saved)) null else key.typed())
+                key.clearSecret() // the typed key never lingers in the UI state: it's saved (sealed) once Novig accepts it
+                key.replacing = false
             },
-            enabled = !novig.busy && keyId.length >= 8 && pem.contains("PRIVATE KEY"),
+            enabled = !novig.busy && (key.usesSaved(saved) || key.ready),
+            modifier = Modifier.testTag("novigConnect"),
         ) { Text("Connect") }
         if (novig.busy) CircularProgressIndicator(Modifier.padding(start = 12.dp).size(20.dp), strokeWidth = 2.dp)
     }

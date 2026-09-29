@@ -501,14 +501,15 @@ class ApiBettingController(
      */
     fun requestTopUp() {
         val sheet = state.value.betSheet ?: return
-        if (sheet.placing || sheet.result != null) return
+        // Also from a result Novig refused for the balance; never from a bet that's placed.
+        if (sheet.placing || sheet.result is PlaceResult.Placed) return
         val cost = sheet.plan?.expectedCost ?: sheet.stake
         val needed = (cost - (state.value.betting.balance ?: sheet.balance ?: 0.0)).coerceAtLeast(0.0)
         betJob?.cancel()
         state.update {
             it.copy(
                 betSheet = null,
-                betting = it.betting.copy(topUp = TopUp(WalletAmount.suggest(needed), needed, cost, sheet.copy(plan = null, refusal = null)), message = null, error = null),
+                betting = it.betting.copy(topUp = TopUp(WalletAmount.suggest(needed), needed, cost, sheet.copy(plan = null, refusal = null, result = null)), message = null, error = null),
             )
         }
     }
