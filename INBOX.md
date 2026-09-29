@@ -2497,3 +2497,8 @@ When I check the updated odds for the bet tracker to see the current EV:
 ```
 release it
 ```
+
+## 2026-09-29T18:20:17Z
+```
+The betting from vigilant now works. Tell me what you need me to do or show you to make sure the grading works after the bets are done to track my wins and losses automatically. Also tell me what you need me to do or show you to optimize the app and make sure everything is working as designed. Ensure that if I have cno only turned on in the settings that it doesn't scan vigilant in the background and waste api usage. 
+```
