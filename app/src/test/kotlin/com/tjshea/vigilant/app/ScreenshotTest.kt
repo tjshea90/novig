@@ -733,14 +733,15 @@ class ScreenshotTest {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
         shoot("5c_settings_cno_only") { SettingsScreen(s, {}) }
-        // Vigilant's pages go with its scanner: no fair odds, feed or API usage tab (and no Novig key on the Betting one).
+        // Vigilant's pages go with its scanner: no fair odds, feed or API usage tab. The Novig key stays on the Betting one: CNO's cards bet
+        // through Novig's API too, and a Bet sheet's "Add money" lands on its wallet (Tj, 2026-09-29).
         for (gone in listOf(SettingsTab.FAIR, SettingsTab.FEED, SettingsTab.USAGE)) compose.onAllNodesWithTag("settingsTab-${gone.name}").assertCountEquals(0)
         compose.onAllNodesWithText("Fair odds method", ignoreCase = true).assertCountEquals(0)
         openSettingsTab(SettingsTab.CNO)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
         openSettingsTab(SettingsTab.BETTING)
         compose.onNodeWithText("Bankroll & Kelly", ignoreCase = true).assertExists()
-        compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
+        compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(1)
     }
 
     /** The other half of the check above: with both scanners on, those sections are there. */
