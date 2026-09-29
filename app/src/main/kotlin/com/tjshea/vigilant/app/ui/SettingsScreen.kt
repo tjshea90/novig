@@ -118,7 +118,7 @@ fun SettingsScreen(
                     ScannerMode.BOTH -> "Vigilant's own scan (tap Scan) and CrazyNinjaOdds' list (kept current while on screen), both in the mini window."
                     ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read."
                     ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (${if (AppBook.isNovig) "Novig, " else "PropLine, "}Pinnacle, Polymarket, " +
-                        "Kalshi, The Odds API) are asleep: nothing of theirs loads, and their tabs and settings are hidden. " +
+                        "Kalshi, The Odds API) are asleep, in the background auto-scan too: nothing of theirs loads or spends credits, and their tabs and settings are hidden. " +
                         "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on)."
                 },
             )
