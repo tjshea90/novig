@@ -300,6 +300,15 @@ private fun filtered(bets: List<TrackedBet>, f: BetFilter) = when (f) {
     BetFilter.ALL -> bets
 }
 
+/** A row's name ("Sort", "Scanner") centred against the chips beside it. */
+@Composable
+private fun ChipCaption(text: String) {
+    Text(
+        text, Modifier.height(32.dp).wrapContentHeight(Alignment.CenterVertically),
+        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
 /** What the default order is called on each list. */
 internal fun defaultLabel(f: BetFilter): String = when (f) {
     BetFilter.OPEN -> "Needs a look"
