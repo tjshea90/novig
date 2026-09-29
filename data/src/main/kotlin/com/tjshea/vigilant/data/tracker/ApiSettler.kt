@@ -60,41 +60,67 @@ class ApiSettler(
         var settled = 0
         var waiting = 0
         var manual = 0
-        for (bet in todo) {
-            val contracts = bet.contracts ?: continue
-            val win = contracts * EvMath.CONTRACT_PAYOUT_DOLLARS
-            val paid = bet.paid ?: (bet.stake - (bet.fee ?: 0.0))
-            // A row settles a market, and the docs also let it name the fill or order: any of the bet's own ids counts.
-            val ids = setOf(bet.marketId, bet.orderId) + bet.fillIds
-            val payout = payouts.filter { it.ref in ids }.sumOf { it.amount }
-            val held = positions.any { it.marketId == bet.marketId && it.outcomeId == bet.outcomeId && it.qty > 0 }
-            when {
-                payout > 1e-6 -> {
-                    val (status, value, evidence) = classify(payout, win, paid, contracts)
-                    settle(changes, bet, status, value, evidence, now)
-                    settled++
-                }
-                held -> {
-                    // Still Novig's to settle. Well past the game it's worth a look by hand.
-                    val late = now - bet.startsTs > STUCK_AFTER_MS
-                    note(changes, bet, if (late) "Novig still lists this position a day after the game: check it in the Novig app" else "Novig hasn't settled this market yet", now, manual = late)
-                    if (late) manual++ else waiting++
-                }
-                else -> {
-                    val loss = "Novig paid nothing for it and no longer holds the position: a loss"
-                    when (val feed = scoreGrade(bet)) {
-                        is BetGrader.Grade.Result ->
-                            if (feed.status == BetStatus.LOST) {
-                                settle(changes, bet, BetStatus.LOST, null, "$loss (${feed.evidence})", now); settled++
-                            } else {
-                                note(changes, bet, "Novig shows no payout, but the score feeds say ${feed.status.name.lowercase()} (${feed.evidence}): check Novig", now, manual = true); manual++
+        for ((marketId, group) in todo.filter { it.contracts != null }.groupBy { it.marketId }) {
+            // A row can name the market (it covers every bet Tj has on it) or one bet's own fill or order.
+            val marketPaid = payouts.filter { it.ref == marketId }.sumOf { it.amount }
+            val sides = group.map { it.outcomeId }.distinct()
+            for (bet in group) {
+                val contracts = bet.contracts ?: continue
+                val win = contracts * EvMath.CONTRACT_PAYOUT_DOLLARS
+                val paid = bet.paid ?: (bet.stake - (bet.fee ?: 0.0))
+                val own = payouts.filter { it.ref == bet.orderId || it.ref in bet.fillIds }.sumOf { it.amount }
+                val held = positions.any { it.marketId == bet.marketId && it.outcomeId == bet.outcomeId && it.qty > 0 }
+                when {
+                    own > 1e-6 -> {
+                        val (status, value, evidence) = classify(own, win, paid, contracts)
+                        settle(changes, bet, status, value, evidence, now); settled++
+                    }
+                    marketPaid > 1e-6 && group.size > 1 -> {
+                        // Several bets share this market and Novig's row is for all of them, so it can't be handed to one: bets on one side share
+                        // its result (judged on their total); bets on both sides are told apart only when the payout is exactly one side's win.
+                        val mine = group.filter { it.outcomeId == bet.outcomeId }
+                        val mineWin = mine.sumOf { (it.contracts ?: 0L) * EvMath.CONTRACT_PAYOUT_DOLLARS }
+                        if (sides.size == 1) {
+                            val (status, value, evidence) = classify(marketPaid, mineWin, mine.sumOf { it.paid ?: (it.stake - (it.fee ?: 0.0)) }, mine.sumOf { it.contracts ?: 0L })
+                            settle(changes, bet, status, value, evidence, now); settled++
+                        } else {
+                            val winners = sides.filter { side -> kotlin.math.abs(marketPaid - group.filter { it.outcomeId == side }.sumOf { (it.contracts ?: 0L) * EvMath.CONTRACT_PAYOUT_DOLLARS }) <= TOLERANCE }
+                            when {
+                                winners.size == 1 && bet.outcomeId in winners ->
+                                    { settle(changes, bet, BetStatus.WON, null, "Novig paid ${money(marketPaid)} for the market, which is what this side's ${mine.sumOf { it.contracts ?: 0L }} contracts win: a win", now); settled++ }
+                                winners.size == 1 ->
+                                    { settle(changes, bet, BetStatus.LOST, null, "Novig paid ${money(marketPaid)} for the market, which is the other side's win: a loss", now); settled++ }
+                                else ->
+                                    { note(changes, bet, "You hold both sides of this market and Novig's payout (${money(marketPaid)}) doesn't say which won: check it in the Novig app", now, manual = true); manual++ }
                             }
-                        else ->
-                            if (now - bet.startsTs >= INFER_LOSS_AFTER_MS) {
-                                settle(changes, bet, BetStatus.LOST, null, loss, now); settled++
-                            } else {
-                                note(changes, bet, "Novig hasn't paid this market yet", now); waiting++
-                            }
+                        }
+                    }
+                    marketPaid > 1e-6 -> {
+                        val (status, value, evidence) = classify(marketPaid, win, paid, contracts)
+                        settle(changes, bet, status, value, evidence, now); settled++
+                    }
+                    held -> {
+                        // Still Novig's to settle. Well past the game it's worth a look by hand.
+                        val late = now - bet.startsTs > STUCK_AFTER_MS
+                        note(changes, bet, if (late) "Novig still lists this position a day after the game: check it in the Novig app" else "Novig hasn't settled this market yet", now, manual = late)
+                        if (late) manual++ else waiting++
+                    }
+                    else -> {
+                        val loss = "Novig paid nothing for it and no longer holds the position: a loss"
+                        when (val feed = scoreGrade(bet)) {
+                            is BetGrader.Grade.Result ->
+                                if (feed.status == BetStatus.LOST) {
+                                    settle(changes, bet, BetStatus.LOST, null, "$loss (${feed.evidence})", now); settled++
+                                } else {
+                                    note(changes, bet, "Novig shows no payout, but the score feeds say ${feed.status.name.lowercase()} (${feed.evidence}): check Novig", now, manual = true); manual++
+                                }
+                            else ->
+                                if (now - bet.startsTs >= INFER_LOSS_AFTER_MS) {
+                                    settle(changes, bet, BetStatus.LOST, null, loss, now); settled++
+                                } else {
+                                    note(changes, bet, "Novig hasn't paid this market yet", now); waiting++
+                                }
+                        }
                     }
                 }
             }
