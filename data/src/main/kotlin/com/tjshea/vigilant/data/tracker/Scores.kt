@@ -34,10 +34,17 @@ data class GameScore(
     val called: Boolean,
     val homeScore: Int?,
     val awayScore: Int?,
-    /** Runs, points or goals per quarter / inning / period, in order (overtime included). */
+    /**
+     * Runs, points or goals per quarter / inning / period, in order (overtime included). A tennis match
+     * ([homeScore] and [awayScore] are its sets won) has the games of each set here, tiebreaks not counted.
+     */
     val homePeriods: List<Int> = emptyList(),
     val awayPeriods: List<Int> = emptyList(),
-)
+    /** Why [called], when the feed says ("Retired", "Walkover", "Postponed"): what the Tracker tells Tj. */
+    val calledReason: String? = null,
+) {
+    val tennis: Boolean get() = league == "ATP" || league == "WTA"
+}
 
 /** One player's box-score line, in Novig's stat names ("RECEIVING_YARDS" to 94.0). */
 data class PlayerLine(val name: String, val stats: Map<String, Double>)
@@ -121,10 +128,12 @@ class FreeScores(
             else -> ""
         }
         val root = get("$espnBase/$path/scoreboard?dates=${date.format(DAY)}$extra") ?: return null
-        return parseEspnDay(root, league.uppercase())
+        return if (league.uppercase() in TENNIS) parseEspnTennisDay(root, league.uppercase()) else parseEspnDay(root, league.uppercase())
     }
 
     private suspend fun espnBox(game: GameScore): List<PlayerLine>? {
+        // A tennis match has no player box score here: its bets grade from the sets and games.
+        if (game.tennis) return emptyList()
         val path = espnPath(game.league) ?: return null
         val root = get("$espnBase/$path/summary?event=${game.id}") ?: return null
         return parseEspnBox(root)
@@ -177,8 +186,12 @@ class FreeScores(
             "WNBA" -> "basketball/wnba"
             "NCAAB" -> "basketball/mens-college-basketball"
             "NHL" -> "hockey/nhl"
+            "ATP" -> "tennis/atp"
+            "WTA" -> "tennis/wta"
             else -> null
         }
+
+        private val TENNIS = setOf("ATP", "WTA")
 
         private fun JsonElement?.obj() = this as? JsonObject
         private fun JsonElement?.arr() = (this as? JsonArray).orEmpty()
