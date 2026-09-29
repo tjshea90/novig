@@ -49,6 +49,8 @@ class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineS
         afterScan: suspend (ScanReport?) -> Unit = {},
     ): Boolean {
         if (job?.isActive == true) return false
+        // CNO only: Vigilant's scan and every API behind it are asleep, whoever asks (a tap, the widget, a background cycle: Tj, 2026-09-29).
+        if (!settings.vigilantOn) return false
         // Shown again if this scan ends without a result of its own (Novig's board failed).
         val before = _state.value.result?.takeIf { !it.partial }
         _state.update { it.copy(scanning = true, progress = ScanProgress("Starting"), settings = settings) }
