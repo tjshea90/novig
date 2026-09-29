@@ -288,6 +288,17 @@ class AutoScanTest {
         AlertActionReceiver().onReceive(context, Intent(EvAlerts.ACTION_PLACED))
     }
 
+    @Test
+    fun `each background cycle also records the closing line of the open bets about to start`() {
+        // The cycle needs CNO and a clock to run for real; this pins that the Tracker's CLV read is in it (Tj, 2026-09-29).
+        val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        assertTrue(src.contains("c.recheck.captureClosing()"))
+        // Inside the CNO branch: with CNO off, nothing reads CNO's game pages.
+        val cno = src.indexOf("if (settings.autoScan.cno) {")
+        assertTrue(cno in 0 until src.indexOf("c.recheck.captureClosing()"))
+        assertTrue(src.indexOf("c.recheck.captureClosing()") < src.indexOf("if (settings.autoScan.vigilant"))
+    }
+
     // ---- the service's notification and alarm ------------------------------------------------------
 
     @Test
