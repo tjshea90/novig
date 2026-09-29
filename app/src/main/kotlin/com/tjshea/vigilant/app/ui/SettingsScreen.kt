@@ -189,6 +189,7 @@ fun SettingsScreen(
 }
 
 /** Scan: pause, which scanner, the start window, background auto-scan and alerts. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.ScanTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     SectionTitle("Scanner")
@@ -224,6 +225,7 @@ private fun ColumnScope.ScanTab(s: ScanSettings, onUpdate: SettingsUpdate) {
 }
 
 /** CNO & widget: the CNO scanner's filters and refresh, and the widget / mini window. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.CnoTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     // ---- The CNO scanner ----------------------------------------------------------------
@@ -354,6 +356,7 @@ private fun ColumnScope.CnoTab(s: ScanSettings, onUpdate: SettingsUpdate) {
 }
 
 /** Fair odds: how fair odds are worked out, where they come from (and their keys), the sportsbooks. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: SettingsUpdate) {
     val s = state.settings
@@ -537,6 +540,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
 }
 
 /** +EV feed: what the feed shows and how big a scan is. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     SectionTitle("+EV feed")
@@ -601,6 +605,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
 }
 
 /** Betting: bankroll and Kelly, the bet slip's amount, and betting through Novig's API. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.BettingTab(
     state: UiState,
@@ -685,6 +690,7 @@ private fun ColumnScope.BettingTab(
 }
 
 /** Usage & keys: each API's usage meter and the keys backup. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(keys.exportTo) }
@@ -706,6 +712,7 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
 }
 
 /** Tools: Diagnostics, the grading check, About. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions) {
     // ---- Diagnostics ---------------------------------------------------------------------
