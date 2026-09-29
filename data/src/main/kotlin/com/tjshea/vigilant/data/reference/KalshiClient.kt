@@ -8,7 +8,12 @@ import com.tjshea.vigilant.data.novig.RateGate
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.PropStats
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import java.util.concurrent.atomic.AtomicBoolean
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -49,10 +54,15 @@ class KalshiClient(
     override fun supports(league: League) = league.kalshiSeries.isNotEmpty()
 
     /**
-     * Anonymous reads get throttled well below the documented 20/s once a burst adds up (seen live
-     * 2026-09-25: 429 after ~130 requests in ~40s), so every request waits its turn here.
+     * Every request waits its turn here. Kalshi documents 20 reads a second for a basic account; anonymous reads were throttled
+     * at ~3/s on 2026-09-25 (429 after ~130 requests in ~40 s), but on 2026-09-29 a sustained 20/s for 300 requests and a burst at
+     * ~35/s for 200 got no refusal (RESEARCH.md §36.2). A scan starts at [START_RATE], steady success raises the pace to at most
+     * [MAX_RATE], and any 429 drops it back and halves it for a minute ([RateGate]): a shared address costs speed, not data.
      */
-    private val gate = RateGate(ratePerSecond = 2.0, burst = 4, sleep = sleep)
+    private val gate = RateGate(
+        ratePerSecond = START_RATE, burst = START_BURST, sleep = sleep, minRate = MIN_RATE,
+        maxRate = MAX_RATE, rampEvery = RAMP_EVERY, rampStep = RAMP_STEP,
+    )
 
     /**
      * Game lines first (Tj, 2026-09-28: "now it is reading the API very slow"): 57 series at 2/s is ~28 s, and since
@@ -72,18 +82,13 @@ class KalshiClient(
         val series = selected(league, settings).filter { familyOf(it) != MarketFamily.PLAYER_PROPS }
         val events = ArrayList<EventDto>()
         var fetched = 0
+        val read = readSeries(series)
         for (s in series) {
-            try {
-                val got = fetchSeries(s)
-                synchronized(early) { early[s] = now to got }
-                events += got
-                fetched++
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // [odds] asks again for whatever didn't come, and reports it.
-                if (e is KalshiThrottled) break
-            }
+            // A failed read is left for [odds], which asks again for whatever didn't come and reports it.
+            val got = read[s]?.getOrNull() ?: continue
+            synchronized(early) { early[s] = now to got }
+            events += got
+            fetched++
         }
         if (fetched == 0) return null
         return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, now), now, provider = id)
@@ -98,25 +103,51 @@ class KalshiClient(
         // Every quote is stamped with the oldest read behind it: lines read by [lines] a few seconds ago never pass
         // for newer than they are (RESEARCH.md §24).
         var asOf = now
+        // What [lines] just read stands in for asking again; only the rest is asked, several at a time.
+        val already = series.associateWith { s -> synchronized(early) { early.remove(s) }?.takeIf { now - it.first in 0 until EARLY_MS } }
+        val read = readSeries(series.filter { already[it] == null })
         for (s in series) {
-            try {
-                val read = synchronized(early) { early.remove(s) }?.takeIf { now - it.first in 0 until EARLY_MS }
-                read?.let { asOf = minOf(asOf, it.first) }
-                events += read?.second ?: fetchSeries(s)
+            val kept = already[s]
+            if (kept != null) {
+                asOf = minOf(asOf, kept.first)
+                events += kept.second
                 fetched++
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // One series failing (or throttled) mustn't cost the others: keep what came back.
-                if (failure == null) failure = e
-                if (e is KalshiThrottled) break
+                continue
             }
+            // One series failing (or throttled) mustn't cost the others: keep what came back. Null: skipped after a throttle.
+            val got = read[s] ?: continue
+            got.onSuccess { events += it; fetched++ }.onFailure { if (failure == null) failure = it as? Exception ?: RuntimeException(it) }
         }
         if (fetched == 0 && failure != null) throw failure
         return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, asOf), asOf, provider = id)
     }
 
     private class KalshiThrottled : ReferenceException("Kalshi is limiting requests right now; it'll be back on the next scan.")
+
+    /**
+     * Each of [series] read, [PARALLEL] at a time (the [gate] still sets the pace: one request in flight was the real limit once the
+     * pace was raised, a read takes ~0.2 s). Once Kalshi refuses, series not yet started are skipped (null) instead of asking a
+     * limiting server more; a series that failed is its failure. Keyed by series.
+     */
+    private suspend fun readSeries(series: List<String>): Map<String, Result<List<EventDto>>?> = coroutineScope {
+        val throttled = AtomicBoolean(false)
+        val permits = Semaphore(PARALLEL)
+        series.map { s ->
+            s to async {
+                permits.withPermit {
+                    if (throttled.get()) return@withPermit null
+                    try {
+                        Result.success(fetchSeries(s))
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        if (e is KalshiThrottled) throttled.set(true)
+                        Result.failure(e)
+                    }
+                }
+            }
+        }.associate { (s, job) -> s to job.await() }
+    }
 
     private suspend fun fetchSeries(series: String): List<EventDto> {
         val out = ArrayList<EventDto>()
@@ -130,7 +161,7 @@ class KalshiClient(
                 cursor?.let { addQueryParameter("cursor", it) }
             }.build()
             var page: PageDto? = null
-            for (attempt in 0..1) {
+            for (attempt in 0 until ATTEMPTS) {
                 gate.acquire()
                 val result = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                     val body = response.body?.string().orEmpty()
@@ -143,7 +174,7 @@ class KalshiClient(
                             null
                         }
                         !response.isSuccessful -> throw ReferenceException("Kalshi HTTP ${response.code}")
-                        else -> json.decodeFromString(PageDto.serializer(), body)
+                        else -> json.decodeFromString(PageDto.serializer(), body).also { gate.success() }
                     }
                 }
                 if (result != null) {
@@ -168,6 +199,18 @@ class KalshiClient(
         /** "Run in first inning" (KXMLBRFI): Yes = at least one run = over 0.5 (its strike reads 1). */
         private const val RFI = "RFI"
         const val MAX_PAGES = 5
+
+        /** Requests a second a scan starts at, and the most steady success raises it to (Kalshi's documented basic tier is 20). */
+        const val START_RATE = 6.0
+        const val MAX_RATE = 14.0
+        const val MIN_RATE = 2.0
+        const val START_BURST = 6
+        const val RAMP_EVERY = 20
+        const val RAMP_STEP = 2.0
+
+        /** Series read at once, and tries per page (a 429 waits Retry-After, then tries again). */
+        const val PARALLEL = 4
+        const val ATTEMPTS = 3
         private val ET: ZoneId = ZoneId.of("America/New_York")
         private val MONTHS = listOf("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
 
