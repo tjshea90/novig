@@ -54,18 +54,31 @@ object TrackerText {
         }.thenBy { it.startsTs },
     )
 
-    /** "101 open · $101.00 at risk · pays $96.40 · 22 started · 9 need a tap". */
+    /** "101 open · $101.00 at risk · pays $96.40 · 22 started · 9 need a tap · odds read on 61 of 79 upcoming". */
     fun openSummary(open: List<TrackedBet>, now: Long): String {
         if (open.isEmpty()) return "No open bets"
         val started = open.count { now >= it.startsTs }
         val needTap = open.count { now >= it.startsTs && (it.gradeManual || it.autoGradeOff) }
+        val upcoming = open.filter { now < it.startsTs }
         return listOfNotNull(
             "${open.size} open",
             "${Format.money(open.sumOf { it.stake })} at risk",
             "pays ${Format.money(open.sumOf { it.profitIfWon })}",
             "$started started".takeIf { started > 0 },
             "$needTap need a tap".takeIf { needTap > 0 },
+            // Only games still to come have odds to check: a started game is waiting on its result instead.
+            "odds read on ${upcoming.count { it.nowAtMs != null }} of ${upcoming.size} upcoming".takeIf { upcoming.isNotEmpty() },
         ).joinToString(" · ")
+    }
+
+    /**
+     * Why an upcoming open bet shows no "now … EV" (null when it shows one, or its game has started): Vigilant's own bets have no
+     * CrazyNinjaOdds page to read, the rest just haven't been read yet.
+     */
+    fun oddsNote(b: TrackedBet, now: Long): String? = when {
+        b.status != BetStatus.PENDING || now >= b.startsTs || b.nowEv != null -> null
+        b.gameUrl == null -> "Odds: a Vigilant bet, priced by each Vigilant scan (no CrazyNinjaOdds page to read)"
+        else -> "Odds not read yet: tap Check odds now"
     }
 
     /** What the gap between results and expectation means, in words (Tj: "how well my positive EV bets profit"). */

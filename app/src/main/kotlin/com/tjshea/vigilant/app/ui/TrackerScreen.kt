@@ -493,6 +493,16 @@ private fun BetCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            if (open) {
+                TrackerText.oddsNote(bet, now)?.let { note ->
+                    Text(
+                        note,
+                        Modifier.padding(top = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             awaiting?.let { st ->
                 Text(
                     st.text,
