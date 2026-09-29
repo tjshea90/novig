@@ -46,8 +46,12 @@ data class GameScore(
     val tennis: Boolean get() = league == "ATP" || league == "WTA"
 }
 
-/** One player's box-score line, in Novig's stat names ("RECEIVING_YARDS" to 94.0). */
-data class PlayerLine(val name: String, val stats: Map<String, Double>)
+/**
+ * One player's box-score line, in Novig's stat names ("RECEIVING_YARDS" to 94.0). [inactive]: no line at all, but the game's injury
+ * report has him Out or on injured reserve, so he didn't play (a football box score lists only players who recorded a stat, so
+ * "not in it" alone doesn't say that).
+ */
+data class PlayerLine(val name: String, val stats: Map<String, Double>, val inactive: Boolean = false)
 
 /** Final scores and box scores for settling bets. */
 interface ScoreSource {
@@ -333,8 +337,20 @@ class FreeScores(
                     stats["GOALS_ASSISTS"] = gp
                 }
                 PlayerLine(name, stats)
+            }.let { lines ->
+                // Out or on injured reserve in the game's injury report, and no line: he didn't play.
+                val out = root.obj()?.get("injuries").arr().flatMap { team ->
+                    team.obj()?.get("injuries").arr().mapNotNull { i ->
+                        val o = i.obj() ?: return@mapNotNull null
+                        val status = o["type"].obj()?.str("name") ?: o.str("status")
+                        o["athlete"].obj()?.str("displayName")?.takeIf { status in OUT_STATUSES }
+                    }
+                }
+                lines + out.filter { n -> lines.none { it.name == n } }.distinct().map { PlayerLine(it, emptyMap(), inactive = true) }
             }
         }
+
+        private val OUT_STATUSES = setOf("INJURY_STATUS_OUT", "INJURY_STATUS_IR", "INJURY_STATUS_SUSPENSION", "Out", "Injured Reserve", "Suspension")
 
         private val HOCKEY_GROUPS = setOf("forwards", "defenses", "skaters", "goalies")
 
