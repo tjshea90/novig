@@ -32,16 +32,33 @@ class MiniWindowTest {
     }
 
     @Test
-    fun `leaving the app shrinks to the mini window only with something to watch, and never when switched off`() {
-        val on = ScanSettings()
-        assertTrue(on.miniWindow)
+    fun `leaving the app opens the widget only when Tj turned that on, and only with something to watch`() {
+        val on = ScanSettings(miniWindow = true)
         assertTrue(MiniWindow.shouldAutoEnter(on, ScanStatus(scanning = true), rows = 0))
         assertTrue(MiniWindow.shouldAutoEnter(on, ScanStatus(rechecking = true), rows = 0))
         assertTrue(MiniWindow.shouldAutoEnter(on, ScanStatus(), rows = 3))
         assertFalse(MiniWindow.shouldAutoEnter(on, ScanStatus(), rows = 0))
         assertFalse(MiniWindow.shouldAutoEnter(on.copy(miniWindow = false), ScanStatus(scanning = true), rows = 3))
-        // Settings saved before the switch existed read it as on.
-        assertTrue(Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"]}""").miniWindow)
+    }
+
+    @Test
+    fun `the widget never opens by itself by default (Tj, 2026-09-29), even for settings saved when it was on`() {
+        // Default: off, so leaving Vigilant with bets on the feed or a scan running opens nothing.
+        val fresh = ScanSettings()
+        assertFalse(fresh.miniWindow)
+        assertFalse(MiniWindow.shouldAutoEnter(fresh, ScanStatus(scanning = true), rows = 5))
+        // A file saved before v0.22.0 (schema 9, the switch on) moves to off once...
+        val old = Json { ignoreUnknownKeys = true }.decodeFromString(
+            ScanSettings.serializer(), """{"leagues":["NFL"],"miniWindow":true,"schema":9}""",
+        )
+        assertTrue(old.miniWindow)
+        val moved = old.migrate()
+        assertFalse(moved.miniWindow)
+        assertEquals(10, moved.schema)
+        // ...and once Tj turns it back on, later loads keep it.
+        assertTrue(moved.copy(miniWindow = true).migrate().miniWindow)
+        // A file with no switch at all reads as off.
+        assertFalse(Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"leagues":["NFL"]}""").migrate().miniWindow)
     }
 
     @Test
