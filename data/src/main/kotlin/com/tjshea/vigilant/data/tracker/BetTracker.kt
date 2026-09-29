@@ -245,7 +245,42 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         store.update { list -> list.map { if (it.id == id) transform(it) else it } }
     }
 
+    /**
+     * Changes several bets in one save: every save rewrites and fsyncs the whole file, so a recheck or a
+     * grading pass over a hundred bets writes it once per batch, not once per bet. Each transform gets the
+     * stored bet (so it never overwrites a change made since the pass read it). Bets gone meanwhile are skipped.
+     */
+    suspend fun editMany(changes: Map<String, (TrackedBet) -> TrackedBet>) {
+        if (changes.isEmpty()) return
+        store.update { list -> list.map { b -> changes[b.id]?.invoke(b) ?: b } }
+    }
+
     suspend fun setStake(id: String, stake: Double) = edit(id) { it.copy(stake = stake) }
+
+    /**
+     * Corrects the price a bet was really filled at (an alert's price moved, or a $1 ✓ was placed at another
+     * price): its cost, EV and profit follow. The taker fee is kept only if the bet had one (a live bet).
+     * Ignored for odds inside ±100.
+     */
+    suspend fun setPrice(id: String, american: Int) {
+        if (american > -100 && american < 100) return
+        edit(id) { b ->
+            val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(american)
+            val live = b.cost > b.price + 1e-9
+            val fee = if (live && price < 1.0) com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true) else 0.0
+            val cost = price + fee
+            b.copy(
+                price = price, cost = cost, american = american,
+                evPercentAtBet = b.fairAtBet?.let { it / cost - 1.0 } ?: b.evPercentAtBet,
+                nowEv = b.nowFair?.let { it / cost - 1.0 },
+            )
+        }
+    }
+
+    /** Turns auto-grading back on for an open bet whose result Tj tapped and undid: the score feeds grade it again. */
+    suspend fun regrade(id: String) = edit(id) {
+        if (it.status == BetStatus.PENDING && it.settledBy == BetSettler.BY_YOU) it.copy(settledBy = null, gradeNote = null, gradeAtMs = null) else it
+    }
 
     /**
      * ✓ marks made before the Tracker kept them (placed.json, Tj 2026-09-27: "It should move all of
@@ -322,10 +357,15 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
 
     suspend fun settle(id: String, status: BetStatus) {
         store.update { list ->
-            // A tap (or its undo) is Tj's call: the auto-settle leaves it alone from then on.
+            // A tap (or its undo) is Tj's call: the auto-settle leaves it alone from then on ([regrade] gives it back).
             list.map {
                 if (it.id == id) {
-                    it.copy(status = status, settledAtMs = if (status == BetStatus.PENDING) null else clock(), settleValue = null, settledBy = BetSettler.BY_YOU)
+                    it.copy(
+                        status = status, settledAtMs = if (status == BetStatus.PENDING) null else clock(), settleValue = null, settledBy = BetSettler.BY_YOU,
+                        // A result ends the book snapshot (only open bets show it); an undo starts a clean grading note.
+                        books = if (status == BetStatus.PENDING) it.books else emptyList(),
+                        gradeNote = if (status == BetStatus.PENDING) null else "Marked ${status.name.lowercase()} by you", gradeAtMs = if (status == BetStatus.PENDING) null else clock(),
+                    )
                 } else {
                     it
                 }
@@ -351,8 +391,20 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             return fair.takeIf { b.closingFair == null || kotlin.math.abs(it - b.closingFair) > 1e-9 }
         }
         if (store.read().none { fresh(it) != null }) return false
-        // The scan's fair line is also the bet's EV now (the Tracker's "now +3% EV").
-        store.update { list -> list.map { b -> fresh(b)?.let { b.copy(closingFair = it, closingSeenAtMs = now, nowFair = it, nowEv = it / b.cost - 1.0, nowAtMs = now) } ?: b } }
+        // The scan's fair line is also the bet's EV now (the Tracker's "now +3% EV"), and its books are the bet's books.
+        store.update { list ->
+            list.map { b ->
+                val fair = fresh(b) ?: return@map b
+                val o = byKey[b.marketId to b.outcomeId]
+                val lines = o?.let(::booksOf).orEmpty()
+                b.copy(
+                    closingFair = fair, closingSeenAtMs = now, nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now,
+                    books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
+                    nowBooks = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() } ?: b.nowBooks,
+                    nowAmerican = o?.quote?.priceAmerican ?: b.nowAmerican,
+                )
+            }
+        }
         return true
     }
 
