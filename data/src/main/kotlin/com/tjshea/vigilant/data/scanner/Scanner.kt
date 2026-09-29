@@ -691,7 +691,8 @@ class Scanner(
 
     private suspend fun refreshCatalog(settings: ScanSettings, types: Set<String>, now: Long, errors: MutableList<String>) {
         val c = catalog
-        val fresh = c != null && c.leagues == settings.leagues && c.includeLive == settings.includeLive &&
+        // A bets-only catalog is cut to this pass's bets, so it's never re-used for another.
+        val fresh = !betsOnly && c != null && c.leagues == settings.leagues && c.includeLive == settings.includeLive &&
             c.daysAhead == settings.daysAhead && c.types.containsAll(types) && now - c.fetchedAtMs < catalogTtlMs
         if (fresh) return
         try {
