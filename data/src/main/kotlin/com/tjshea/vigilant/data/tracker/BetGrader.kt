@@ -214,10 +214,11 @@ object BetGrader {
                         else -> Grade.Result(BetStatus.VOID, "${pick.player} didn't play (not in the box score): void")
                     }
                 if (line.inactive) return Grade.Result(BetStatus.VOID, "${line.name} was ruled out and didn't play: void")
-                val value = line.stats[pick.stat]
-                    ?: if (football && pick.stat in FOOTBALL_ZERO_STATS) 0.0 else null
-                    ?: return Grade.Manual("The box score has no $label for ${pick.player}: mark it yourself")
-                val shown = if (line.stats.containsKey(pick.stat)) "${trim(value)} $label" else "no $label recorded (counted as 0)"
+                val recorded = line.stats[pick.stat]
+                val value = recorded ?: if (football && pick.stat in FOOTBALL_ZERO_STATS) 0.0 else {
+                    return Grade.Manual("The box score has no $label for ${pick.player}: mark it yourself")
+                }
+                val shown = if (recorded != null) "${trim(value)} $label" else "no $label recorded (counted as 0)"
                 result(overUnder(value, pick.over, pick.line), "${line.name}: $shown")
             }
         }
