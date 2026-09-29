@@ -641,7 +641,9 @@ request.
 
 - [x] Ruled out rate-limiting definitively — the new diagnostic text did
       its job.
-- [ ] Two live hypotheses for a 403 specifically (not 401, which would
+- [x] (SUPERSEDED, checked 2026-09-29: SharpAPI's free tier doesn't include Novig (RESEARCH.md §4.2, confirmed live
+      §4.2.2: its $79/mo Hobby plan is needed); `SharpApiClient` was deleted, and Novig comes from its own v3 API since
+      v0.4.0.) Two live hypotheses for a 403 specifically (not 401, which would
       mean a flat-out bad/revoked key): (a) the free tier's "Odds"
       access doesn't actually extend to the Exchanges category Novig is
       listed under (RESEARCH.md §4.2.1 already flagged the free tier's
@@ -1057,18 +1059,25 @@ new error, not the same 503.
 
 ### Proposed next build (not started — waiting on Tj's go-ahead, see NOVIG_API.md §9)
 
-- [ ] Stage 1, no key needed: add a `NovigV3PublicClient` (`data` module)
+- [x] (DONE since v0.4.0, checked 2026-09-29: `NovigPublicClient` (data/novig) over `/v3/public/...`, executable
+      taker prices, per-market `MarketFee`; the GraphQL/proxy path is deleted; futures fees modeled (`FeeCharge.ALWAYS`,
+      `MarketFee.FUTURES`).) Stage 1, no key needed: add a `NovigV3PublicClient` (`data` module)
       over `/v3/public/...`. Use executable taker prices from the book
       (1 − best opposing bid, with depth) and per-market `fee`. Make it the
       default Novig leg. Retire the GraphQL/proxy path and its Settings UI.
       Fix `Fees.kt` for NFL/MLB/NCAAF futures (0.06, charged pregame).
-- [ ] Stage 2, needs Tj's management key once: `NOVIG-V3` signer
+- [x] (DONE, checked 2026-09-29: `NovigSigning`/`NovigSignedClient` (NovigV3Test, Novig's signing vectors),
+      `NovigSetup` (management PEM, then a `trading::read` key), Settings › Novig API (`NovigKeySection`), and the
+      websocket `NovigStream` since v0.19.0 (one market subscribe per scan instead of per-event `bbo`). The live check on
+      Tj's phone is the "First real Novig key connect" box below.) Stage 2, needs Tj's management key once: `NOVIG-V3` signer
       (unit-tested against Novig's 30 signing vectors), an in-app
       "Connect Novig" setup (import management PEM + key ID, then echo,
       open a "vigilant" subaccount, then create a `trading::read` key held in
       Android Keystore (P-256), then forget the management key), and a
       websocket `bbo` subscription per selected event for real-time repricing.
-- [ ] Reference leg: Tj decides between staying on The Odds API free tier
+- [x] (SUPERSEDED, checked 2026-09-29: fair odds come from several free sources instead (v0.6.0 pinnapi, Kalshi,
+      Polymarket; v0.16.0 PinnWire, PropLine; BRIEF "Fair odds come from several free sources"), with The Odds API
+      optional on its free tier.) Reference leg: Tj decides between staying on The Odds API free tier
       (500 credits/mo) and its $30/mo tier. This is now the freshness
       bottleneck, not Novig.
 
@@ -1629,7 +1638,8 @@ props calls themselves are fixture-tested only.
         scanner is on screen; `CnoBooks.check` already devigs each two-sided book.
 - [x] H1 Data: placed bets (`PlacedBets`, placed.json, kept through refreshes/restarts/backup,
       expire after the game) + tests. *PlacedBetsTest 4 (restart, undo, expiry, pick family).*
-- [ ] H2 Data: books agreement: per-book +EV count, new SPLIT verdict (green ✓ = CONFIRMED = 3+
+- [x] H2 (DONE, checked 2026-09-29: the data side noted below; CnoAgreementTest (18 tests) and CnoWatchTest `nothing is
+      read until something watches, and nothing after the last watcher closes`, which runs `keepBooksFresh`.) Data: books agreement: per-book +EV count, new SPLIT verdict (green ✓ = CONFIRMED = 3+
       two-sided books whose consensus is +EV and 3+ of them individually +EV); background
       agreement lane in CnoFeed (top bets, one game page at a time, ≥2 s apart, 5-min TTL,
       only inside the watch) + tests incl. "never runs when not watched".
@@ -2033,7 +2043,8 @@ shade: "Scan done: 7 +EV bets · Best: Milwaukee Brewers -3.5 · Spread · +3.4%
 - [x] P1 Local build/test floor ready (BRIEF.md build trap 6: SDK + mirror); run the full floor
       `:engine:test :data:test :app:testDebugUnitTest` (+ `-Pscreenshots`) and record the baseline.
       Baseline 2026-09-27 06:25Z: 496 tests, 0 failures, 0 errors, 7 skipped (live tests), exit 0.
-- [ ] P2 Research: every odds API / sportsbook / exchange with a free tier or free public data NOT
+- [x] P2 (DONE, checked 2026-09-29: RESEARCH.md §22 "Every free odds API / sportsbook feed, re-surveyed 2026-09-27",
+      ranked, and P3 built from it.) Research: every odds API / sportsbook / exchange with a free tier or free public data NOT
       already in RESEARCH.md §4/§11 (e.g. Odds-API.io, SportsGameOdds, OddsPapi re-check, API-Sports
       odds, The Rundown, BALLDONTLIE, ESPN core odds, Action Network, SX Bet, ProphetX, Sporttrade,
       Betfair/Smarkets/Matchbook, BetDEX, Pinnacle guest API, Kambi/Bovada public JSON). Measure live
