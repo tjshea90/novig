@@ -70,13 +70,17 @@ unless Tj asks).
   `FreeScores` = ESPN scoreboard/box score + MLB Stats API, graded by `tracker/BetGrader`; Novig's catalog
   forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
   `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": every open bet's CNO game
-  page → `nowEv` + every book's odds kept on the bet; one `Report` that adds up to the open count, no cap, 2 s apart, batched saves
-  (`BetTracker.editMany`), Vigilant-only bets priced by a scan), `ui/TrackerScreen` Stats | Bets (periods, running profit, expected vs actual +
+  page → `nowEv` + every book's odds kept on the bet; one `Report` that adds up to the open count, no cap, 3 pages at once at CNO's
+  500 ms bulk pace (`CnoClient.booksBulk`/`BULK_GAP_MS`, `CnoFeed.readBooks`; RESEARCH.md §35.1), batched saves
+  (`BetTracker.editMany`), Vigilant-only bets priced by a scan; the tap also grades finished games: `MainViewModel.checkOdds` runs
+  `BetSettler.run(force = true)` beside it and `Report.summary(graded = …)` says what came of it), `ui/TrackerScreen` Stats | Bets (periods, running profit, expected vs actual +
   luck, open money, `TrackerBreakdown` by scanner/league/market/edge/price, stake and price dialogs; bets over ±6% EV when bet are outliers,
   left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`), the bet sheet (`ui/TrackerBetSheet`, `data/tracker/BetInsight`: odds
   bet at vs fair now, every book's odds and per-book EV), Replace (`data/tracker/BetReplace`, Settings' bet-slip amount), grading that says why
   (`BetGrader.gradeDetailed`/`whyNot`, `BetSettler` notes `gradeNote`/`gradeManual`, Grade now, `BetTracker.regrade`; hockey/basketball/football
-  box scores and ESPN tennis in `FreeScores`; RESEARCH.md §34), and the +EV alert's "✓ Placed" (`app/EvAlerts.handle`,
+  box scores and ESPN tennis in `FreeScores`; RESEARCH.md §34; football box scores list only players with a stat, so a missing stat is 0 and a
+  player on the injury report as Out is `PlayerLine.inactive` = void, DNP in other sports = void, near-miss names wait for a tap, `MIN_BOX`;
+  CNO wording aliases in `NovigBetFinder.marketWords`; RESEARCH.md §35; `RealBoxGradingTest`, `LiveUngradedBetsTest`, `LiveCnoGradableTest`), and the +EV alert's "✓ Placed" (`app/EvAlerts.handle`,
   `AlertActionReceiver`, `data/alerts/AlertPlacement`)).
 - **Background auto-scan and +EV alerts (v0.18.0+, Vigilant only; RESEARCH.md §26):** `ScanSettings.autoScan`
   (Off / CNO / CNO + Vigilant) every `autoScanMinutes` (5-40) with Vigilant closed: `app/AutoScanService` (specialUse
