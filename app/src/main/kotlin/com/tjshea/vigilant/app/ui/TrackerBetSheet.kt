@@ -44,6 +44,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.BetInsight
 import com.tjshea.vigilant.data.tracker.BetRecheck
 import com.tjshea.vigilant.data.tracker.BetReplace
+import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
@@ -219,11 +220,11 @@ private fun StatusCard(bet: TrackedBet, now: Long) {
         !open -> {
             val name = if (bet.status == BetStatus.FMV) "Settled at fair value" else bet.status.name.lowercase().replaceFirstChar { it.uppercase() }
             val by = when (bet.settledBy) {
-                BetSettlerBy.SCORES, BetSettlerBy.NOVIG -> "graded from the final score"
-                BetSettlerBy.YOU -> "marked by you"
+                BetSettler.BY_SCORES, BetSettler.BY_NOVIG -> "graded from the final score"
+                BetSettler.BY_YOU -> "marked by you"
                 else -> null
             }
-            (listOfNotNull(name, by).joinToString(" · ") + (bet.gradeNote?.takeIf { bet.settledBy != BetSettlerBy.YOU }?.let { "\n$it" }.orEmpty())) to
+            (listOfNotNull(name, by).joinToString(" · ") + (bet.gradeNote?.takeIf { bet.settledBy != BetSettler.BY_YOU }?.let { "\n$it" }.orEmpty())) to
                 (bet.profit?.let { moneyColor(it) } ?: Color.Unspecified)
         }
         awaiting != null -> awaiting.text to if (awaiting.tone == TrackerText.Tone.ATTENTION) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant
@@ -234,12 +235,6 @@ private fun StatusCard(bet: TrackedBet, now: Long) {
             Text(text, Modifier.fillMaxWidth().padding(12.dp), style = MaterialTheme.typography.bodyMedium, color = color.takeIf { it != Color.Unspecified } ?: MaterialTheme.colorScheme.onSurface)
         }
     }
-}
-
-private object BetSettlerBy {
-    const val SCORES = com.tjshea.vigilant.data.tracker.BetSettler.BY_SCORES
-    const val NOVIG = com.tjshea.vigilant.data.tracker.BetSettler.BY_NOVIG
-    const val YOU = com.tjshea.vigilant.data.tracker.BetSettler.BY_YOU
 }
 
 /** The price bet at against the fair price now: the gap in points, the EV, how far the market moved. */

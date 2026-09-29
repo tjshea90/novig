@@ -109,7 +109,7 @@ object TrackerText {
         }
     }
 
-    /** "Beats the +127 break-even by 23 cents" is jargon; this says whether the price bet at still clears fair. */
+    /** Whether the price bet at still beats the price that breaks even against fair now ("Break-even … is +127: your +150 still clears it"). */
     fun breakEvenSentence(i: BetInsight): String? {
         val be = i.breakEvenOdds ?: return null
         val clears = i.betOdds != 0 && Odds.americanToDecimal(i.betOdds) >= Odds.americanToDecimal(be) - 1e-9

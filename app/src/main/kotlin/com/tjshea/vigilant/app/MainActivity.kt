@@ -59,6 +59,7 @@ import com.tjshea.vigilant.app.ui.feedMarketIds
 import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.novig.NovigLinks
+import com.tjshea.vigilant.data.tracker.BetReplace
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.scanner.Opportunity
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -257,6 +258,37 @@ class MainActivity : ComponentActivity() {
             if (widget.opening == item.key) widget.opening = null
             tellHowItOpened(found, row)
             launchNovig(NovigLinks.withStake(found?.link, stake))
+        }
+    }
+
+    /**
+     * The Tracker's Replace button (Tj, 2026-09-29): Novig's bet slip on the tracked bet's exact outcome, with the
+     * amount Settings asks for ([BetReplace]). A CNO bet whose Novig outcome isn't known yet is looked up like a
+     * widget tap (Novig's catalog, else CNO), and the outcome is kept on the bet so the next tap needs no lookup.
+     */
+    private fun replaceBet(bet: com.tjshea.vigilant.data.tracker.TrackedBet) {
+        val settings = vm.state.value.settings
+        if (vm.state.value.replacingBet != null) return
+        BetReplace.link(bet, settings)?.let { link ->
+            floatOverNovig()
+            launchNovig(link)
+            return
+        }
+        val row = com.tjshea.vigilant.data.tracker.BetRecheck.rowOf(bet)
+        vm.setReplacing(bet.id)
+        lifecycleScope.launch {
+            val found = try {
+                vm.betLink(row)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            vm.setReplacing(null)
+            found?.takeIf { it.exact }?.let { f -> com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(f.link)?.let { vm.rememberOutcome(bet.id, it) } }
+            tellHowItOpened(found, row)
+            floatOverNovig()
+            launchNovig(BetReplace.withStake(found?.link, bet, settings))
         }
     }
 
@@ -589,7 +621,15 @@ private fun VigilantRoot(
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
                 Tab.TRACKER -> TrackerScreen(
                     state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
-                    onCheckOdds = vm::checkOdds, onShown = vm::settleBets,
+                    onCheckOdds = vm::checkOdds, onShown = { vm.settleBets() },
+                    actions = com.tjshea.vigilant.app.ui.BetActions(
+                        onReplace = ::replaceBet,
+                        onReread = vm::rereadBooks,
+                        onGrade = { vm.settleBets(force = true, announce = true) },
+                        onRegrade = vm::regradeBet,
+                        onPrice = vm::setPrice,
+                        onScan = onScan,
+                    ),
                 )
                 Tab.SETTINGS -> SettingsScreen(
                     state,
