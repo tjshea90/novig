@@ -70,7 +70,8 @@ object ApiBetTargets {
     fun of(row: CnoRow, found: NovigBetFinder.Found.Bet, market: NovigMarket, fairAsOfMs: Long?): BetTarget? {
         val fair = CnoChecks.fairProbability(row) ?: return null
         return BetTarget(
-            market = market, outcomeId = found.outcomeId, league = row.league, eventName = row.event, startsTs = row.startsAtMs ?: market.startsTs,
+            // The earlier of CrazyNinjaOdds' start and Novig's own: a game Novig has started must never be bet as pregame.
+            market = market, outcomeId = found.outcomeId, league = row.league, eventName = row.event, startsTs = minOf(row.startsAtMs ?: market.startsTs, market.startsTs),
             marketLabel = row.market, selection = row.bet, fair = fair, fairAsOfMs = fairAsOfMs, source = BetTracker.SOURCE_CNO,
             placedKey = MiniWindow.cnoKey(row), book = row.book.ifBlank { "Novig" }, gameUrl = row.gameUrl, betUrl = row.betUrl,
         )
