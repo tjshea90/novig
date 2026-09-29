@@ -294,9 +294,38 @@ class AutoScanTest {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
         assertTrue(src.contains("c.recheck.captureClosing()"))
         // Inside the CNO branch: with CNO off, nothing reads CNO's game pages.
-        val cno = src.indexOf("if (settings.autoScan.cno) {")
+        val cno = src.indexOf("if (settings.autoScansCno) {")
         assertTrue(cno in 0 until src.indexOf("c.recheck.captureClosing()"))
-        assertTrue(src.indexOf("c.recheck.captureClosing()") < src.indexOf("if (settings.autoScan.vigilant"))
+        assertTrue(src.indexOf("c.recheck.captureClosing()") < src.indexOf("if (settings.autoScansVigilant"))
+    }
+
+    /** Tj, 2026-09-29: "if I have cno only turned on in the settings that it doesn't scan vigilant in the background and waste api usage". */
+    @Test
+    fun `a background cycle runs each scanner only when the scanner choice has it on`() {
+        val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        // Both parts are gated on the scanner choice, not on the auto-scan mode alone (which is what let "Both" scan Vigilant on CNO only).
+        assertTrue(src.contains("if (settings.autoScansVigilant && settings.leagues.isNotEmpty())"))
+        assertTrue(!src.contains("settings.autoScan.vigilant"))
+        assertTrue(!src.contains("settings.autoScan.cno"))
+        // The scan itself is refused for CNO only at the runner, whoever starts it (CnoOnlyAsleepTest).
+        assertTrue(File("../data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanRunner.kt").readText().contains("if (!settings.vigilantOn) return false"))
+    }
+
+    @Test
+    fun `the notification and the Settings hint say what really runs at each scanner choice`() {
+        fun s(scanner: com.tjshea.vigilant.data.scanner.ScannerMode) = ScanSettings(scanner = scanner, autoScan = AutoScanMode.BOTH, autoScanMinutes = 10)
+        assertEquals("Auto-scan: CNO + Vigilant every 10 min", AutoScanText.title(s(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)))
+        assertEquals("Auto-scan: CNO every 10 min", AutoScanText.title(s(com.tjshea.vigilant.data.scanner.ScannerMode.CNO)))
+        assertEquals("Auto-scan: Vigilant every 10 min", AutoScanText.title(s(com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT)))
+        val cnoOnly = com.tjshea.vigilant.app.ui.autoScanHint(s(com.tjshea.vigilant.data.scanner.ScannerMode.CNO))
+        assertTrue(cnoOnly, cnoOnly.contains("Vigilant's scan is skipped, because the scanner above is on CNO only: no API credits are spent in the background"))
+        assertTrue(cnoOnly, !cnoOnly.contains("scans a day"))
+        val both = com.tjshea.vigilant.app.ui.autoScanHint(s(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH))
+        assertTrue(both, both.contains("Each scan spends API credits like a tap on Scan"))
+        val vigilantOnly = com.tjshea.vigilant.app.ui.autoScanHint(s(com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT))
+        assertTrue(vigilantOnly, vigilantOnly.contains("CrazyNinjaOdds isn't read, because the scanner above is on Vigilant only"))
+        val nothing = com.tjshea.vigilant.app.ui.autoScanHint(s(com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT).copy(autoScan = AutoScanMode.CNO))
+        assertTrue(nothing, nothing.startsWith("Nothing runs in the background"))
     }
 
     // ---- the service's notification and alarm ------------------------------------------------------
