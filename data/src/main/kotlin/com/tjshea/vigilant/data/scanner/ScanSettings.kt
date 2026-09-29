@@ -327,6 +327,11 @@ data class ScanSettings(
         if (s.schema < 9) {
             s = s.copy(cnoFilters = s.cnoFilters.copy(minBooks = s.cnoFilters.minBooks.coerceIn(1, CNO_MIN_BOOKS_CHOICES.max())), schema = 9)
         }
+        // v0.22.0: the widget opens only from its button (Tj, 2026-09-29). The old default was on, so a saved
+        // file can't tell a chosen "on" from the default: it moves to off once, and the switch can turn it back on.
+        if (s.schema < 10) {
+            s = s.copy(miniWindow = false, schema = 10)
+        }
         return s
     }
 
