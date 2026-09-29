@@ -221,8 +221,9 @@ class AutoScanTest {
 
     // ---- "✓ Placed" on the alert (Tj, 2026-09-29) ---------------------------------------------------------
 
+    // The placed-bet store prunes by the real clock, so the game starts a real day from now.
     private fun fullAlert(stake: Double? = 5.0) = alert().copy(
-        stake = stake, league = "NFL", gameUrl = "https://crazyninjaodds.com/game?side_id=9", betUrl = "https://crazyninjaodds.com/d?l=9", live = false,
+        startsAtMs = System.currentTimeMillis() + 86_400_000L, stake = stake, league = "NFL", gameUrl = "https://crazyninjaodds.com/game?side_id=9", betUrl = "https://crazyninjaodds.com/d?l=9", live = false,
     )
 
     @Test
@@ -253,7 +254,7 @@ class AutoScanTest {
         val nm = context.getSystemService(NotificationManager::class.java)
         val a = fullAlert()
         EvAlerts.post(context, listOf(a), now)
-        EvAlerts.handle(context, app.container, EvAlerts.ACTION_PLACED, a, now)
+        EvAlerts.handle(context, app.container, EvAlerts.ACTION_PLACED, a)
         val bet = app.container.tracker.all().single { it.placedKey == a.key }
         assertEquals(5.0, bet.stake, 0.0)
         assertEquals(117, bet.american)
@@ -267,7 +268,7 @@ class AutoScanTest {
         assertEquals("Undo", n.actions.single().title.toString())
         assertEquals(EvAlerts.ACTION_UNDO, shadowOf(n.actions.single().actionIntent).savedIntent.action)
         // Undo: the bet, the mark and the confirmation all go.
-        EvAlerts.handle(context, app.container, EvAlerts.ACTION_UNDO, a, now)
+        EvAlerts.handle(context, app.container, EvAlerts.ACTION_UNDO, a)
         assertTrue(app.container.tracker.all().none { it.placedKey == a.key })
         assertTrue(app.container.placed.load().bets.none { it.key == a.key })
         assertTrue(shadowOf(nm).allNotifications.isEmpty())
