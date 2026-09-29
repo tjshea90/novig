@@ -4,63 +4,187 @@ import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoBooksView
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.engine.Odds
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * "Check odds now" in the Tracker (Tj, 2026-09-27: "scan for up to date average odds against sports
- * books for each of the bets I made … 'now +3% ev' … or 'now -2% ev'"): each open CNO bet's game
- * page is read again (every book's price, through [books], which keeps CNO's pace and pauses) and
- * the books' fair probability now is judged against what the bet cost: [TrackedBet.nowEv]. Before
- * the game starts it is also the closing line so far ([TrackedBet.closingFair], CLV).
+ * books for each of the bets I made … 'now +3% ev' … or 'now -2% ev'"; 2026-09-29: "it says it check
+ * 40 out of 40 open bets, but I have 101 open bets. I want it to check all open bets."): each open
+ * CNO bet's game page is read again (every book's price, through [books], which keeps CNO's pace and
+ * pauses) and the books' fair probability now is judged against what the bet cost: [TrackedBet.nowEv].
+ * Before the game starts it is also the closing line so far ([TrackedBet.closingFair], CLV). The books'
+ * prices themselves are kept on the bet ([TrackedBet.books]) for its sheet.
  *
- * Vigilant's own bets get the same from each scan instead ([BetTracker.observe]).
+ * There is no cap: every open bet with a CNO page whose game isn't long over is read, soonest game
+ * first, [gapMs] apart. The [Report] accounts for every open bet, so the count Tj is told always adds
+ * up to the count he has: read, already current, couldn't be read, game already over (its result comes
+ * from [BetSettler]), and Vigilant's own bets (no CNO page: a Vigilant scan prices those,
+ * [BetTracker.observe]).
  */
 class BetRecheck(
     private val tracker: BetTracker,
     /** The bet's game page on CNO, read now; null when it couldn't be read. */
     private val books: suspend (CnoRow) -> CnoBooksView?,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** CNO asked for a pause: no more reads until it's over. */
+    private val paused: () -> Boolean = { false },
+    /** Wait between two bets' reads: CNO's game page is two requests, and it's one small server. */
+    private val gapMs: Long = 0,
 ) {
-    data class Report(val checked: Int, val updated: Int)
+    /** Every open bet, in exactly one of the last five groups (they add up to [open]). */
+    data class Report(
+        val open: Int,
+        /** Bets a read was tried for. */
+        val checked: Int = 0,
+        /** Read, and the books' fair odds now are on the bet. */
+        val updated: Int = 0,
+        /** Read within the last minute already: left as they are. */
+        val current: Int = 0,
+        /** Tried, but the page was gone or had no book pricing both sides. */
+        val failed: Int = 0,
+        /** Not tried: the run stopped early (CNO asked for a pause, or five reads in a row failed). */
+        val skipped: Int = 0,
+        /** Game started over [STALE_AFTER_START_MS] ago: nothing left to check, its result comes from the final score. */
+        val over: Int = 0,
+        /** No CNO page (Vigilant's own bets): only a Vigilant scan can price them. */
+        val vigilantOnly: Int = 0,
+        val stopped: Boolean = false,
+    ) {
+        /** Open bets whose odds are now current. */
+        val covered: Int get() = updated + current
+
+        /** What the toast says: the counts, all of them, in words. */
+        fun summary(scanStarted: Boolean = false): String {
+            if (open == 0) return "No open bets to check"
+            val parts = ArrayList<String>()
+            parts += "Checked $covered of $open open bet${if (open == 1) "" else "s"}"
+            if (failed > 0) parts += "$failed couldn't be read"
+            if (skipped > 0) parts += "$skipped not tried"
+            if (over > 0) parts += "$over game${if (over == 1) "" else "s"} already over (results come from final scores)"
+            if (vigilantOnly > 0) {
+                parts += if (scanStarted) "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"} updating from a Vigilant scan"
+                else "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"} update with each Vigilant scan"
+            }
+            val text = parts.joinToString(" · ")
+            return when {
+                covered == 0 && checked > 0 && stopped -> "CrazyNinjaOdds didn't answer: try again in a minute · $text"
+                stopped -> "$text · stopped early: CrazyNinjaOdds asked for a pause, tap again in a minute"
+                else -> text
+            }
+        }
+    }
+
+    /** How the open bets split for a run at [now] (no reads). */
+    data class Plan(val open: Int, val todo: List<TrackedBet>, val current: Int, val over: Int, val vigilantOnly: Int)
 
     private val mutex = Mutex()
 
-    /** Open bets a recheck can price: CNO's game page known, the game not long over. */
-    fun due(bets: List<TrackedBet>, now: Long = clock()): List<TrackedBet> = bets
-        .filter { it.status == BetStatus.PENDING && it.gameUrl != null && now - it.startsTs < STALE_AFTER_START_MS }
-        .sortedBy { it.startsTs }
-        .take(MAX_PER_RUN)
+    /** Open bets whose game isn't long over and whose CNO page is known: the ones a run reads, soonest game first. */
+    fun due(bets: List<TrackedBet>, now: Long = clock()): List<TrackedBet> = plan(bets, now, freshMs = 0L).todo
 
-    suspend fun run(): Report = mutex.withLock {
-        var checked = 0
+    /** Splits [bets]' open ones into what a run reads, what's already current, and what it can't read. */
+    fun plan(bets: List<TrackedBet>, now: Long = clock(), freshMs: Long = FRESH_MS): Plan {
+        val open = bets.filter { it.status == BetStatus.PENDING }
+        val over = open.filter { now - it.startsTs >= STALE_AFTER_START_MS }
+        val live = open - over.toSet()
+        val readable = live.filter { it.gameUrl != null }
+        val current = readable.filter { freshMs > 0 && it.nowAtMs != null && now - it.nowAtMs!! < freshMs }
+        return Plan(
+            open = open.size,
+            todo = (readable - current.toSet()).sortedBy { it.startsTs },
+            current = current.size,
+            over = over.size,
+            vigilantOnly = live.size - readable.size,
+        )
+    }
+
+    /** The bets a run would read now ([Plan.todo]) plus what it can't: for a progress line before the first read. */
+    suspend fun preview(): Plan = plan(tracker.all())
+
+    /** One pass over every open bet. Runs one pass at a time; a second caller waits for it. [onProgress] gets (read so far, to read). */
+    suspend fun run(onProgress: (done: Int, total: Int) -> Unit = { _, _ -> }): Report = mutex.withLock {
+        val p = plan(tracker.all())
         var updated = 0
-        for (bet in due(tracker.all())) {
-            checked++
-            val row = rowOf(bet)
-            val view = runCatching { books(row) }.getOrNull() ?: continue
-            val check = CnoBooks.check(view, row, preferListOdds = true)
-            val fair = check.fairProbability ?: continue
-            val now = clock()
-            tracker.edit(bet.id) {
-                val closing = now < it.startsTs
-                it.copy(
-                    nowFair = fair, nowEv = fair / it.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
-                    closingFair = if (closing) fair else it.closingFair,
-                    closingSeenAtMs = if (closing) now else it.closingSeenAtMs,
-                )
-            }
-            updated++
+        var failed = 0
+        var checked = 0
+        var failedInARow = 0
+        var stopped = false
+        val pending = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
+        suspend fun flush() {
+            if (pending.isEmpty()) return
+            val batch = LinkedHashMap(pending)
+            pending.clear()
+            // A cancelled pass still saves what it has read.
+            withContext(NonCancellable) { tracker.editMany(batch) }
         }
-        Report(checked, updated)
+        try {
+            onProgress(0, p.todo.size)
+            for ((i, bet) in p.todo.withIndex()) {
+                if (paused()) { stopped = true; break }
+                if (i > 0 && gapMs > 0) delay(gapMs)
+                checked++
+                val row = rowOf(bet)
+                val view = try {
+                    books(row)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                val check = view?.let { CnoBooks.check(it, row, preferListOdds = true) }
+                val fair = check?.fairProbability
+                if (view == null || fair == null) {
+                    failed++
+                    failedInARow++
+                    onProgress(checked, p.todo.size)
+                    // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
+                    if (paused() || failedInARow >= MAX_FAILS_IN_ROW) { stopped = true; break }
+                    continue
+                }
+                failedInARow = 0
+                val now = clock()
+                val lines = view.prices.map { BookLine(it.name, it.odds, it.otherOdds) }
+                val ownCode = CnoBooks.codeFor(bet.book) ?: CnoBooks.NOVIG
+                val ownNow = view.prices.firstOrNull { it.code == ownCode }?.odds
+                pending[bet.id] = {
+                    val closing = now < it.startsTs
+                    it.copy(
+                        nowFair = fair, nowEv = fair / it.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
+                        closingFair = if (closing) fair else it.closingFair,
+                        closingSeenAtMs = if (closing) now else it.closingSeenAtMs,
+                        books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: it.nowAmerican,
+                    )
+                }
+                updated++
+                onProgress(checked, p.todo.size)
+                if (pending.size >= BATCH) flush()
+            }
+        } finally {
+            flush()
+        }
+        Report(
+            open = p.open, checked = checked, updated = updated, current = p.current, failed = failed,
+            skipped = p.todo.size - checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = stopped,
+        )
     }
 
     companion object {
         /** A game this far past its start is over, or nearly: nothing left to recheck. */
         const val STALE_AFTER_START_MS = 4 * 60 * 60_000L
 
-        /** CNO game pages per tap at most (each is a paced CNO read). */
-        const val MAX_PER_RUN = 40
+        /** A bet read this recently is left alone by the next tap: its odds are current. */
+        const val FRESH_MS = 60_000L
+
+        /** Reads that fail one after another before a run stops (CNO is down or refusing). */
+        const val MAX_FAILS_IN_ROW = 5
+
+        /** Bets' results saved together (one file write) every this many reads. */
+        const val BATCH = 5
 
         /** The CNO row a tracked bet came from, as far as the Tracker kept it. */
         fun rowOf(b: TrackedBet) = CnoRow(
