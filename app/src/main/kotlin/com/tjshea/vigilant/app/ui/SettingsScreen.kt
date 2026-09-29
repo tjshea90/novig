@@ -124,7 +124,7 @@ fun SettingsScreen(
     state: UiState,
     onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
     keys: KeyActions = KeyActions(),
-    onNovigConnect: (String, String) -> Unit = { _, _ -> },
+    onNovigConnect: (com.tjshea.vigilant.data.novig.signing.ManagementKey?) -> Unit = {},
     onNovigTest: () -> Unit = {},
     onNovigDisconnect: () -> Unit = {},
     bettingActions: BettingActions = BettingActions(),
@@ -685,11 +685,12 @@ private fun ColumnScope.BettingTab(
         )
     }
 
-    if (s.vigilantOn && AppBook.isNovig) {
+    // In CNO only too: CNO's cards bet through the API as well, and the Bet sheet's "Add money" lands on this wallet.
+    if (AppBook.isNovig) {
         SectionTitle("Novig API key")
-        NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status)
+        NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status, onForgetKey = bettingActions.onForgetKey)
         // Betting through Novig's API: needs the connected key's subaccount (Tj, 2026-09-29).
-        if (state.novig.connection != null) NovigBettingSection(state.betting, s, bettingActions, onUpdate)
+        if (state.novig.connection != null) NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
     }
 }
 
