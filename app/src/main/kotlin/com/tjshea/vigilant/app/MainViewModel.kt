@@ -90,6 +90,8 @@ data class NovigUi(
     /** Progress or result text for setup/test. */
     val message: String? = null,
     val error: String? = null,
+    /** The management key saved on this phone (its ID's last four, never the key), or null: setup and transfers use it without asking. */
+    val managementKey: ManagementKeyHint? = null,
 )
 
 /** A report Tj can read, copy and paste (Settings › Diagnostics, Grading check): [busy] while it's being put together. */
@@ -640,16 +642,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun connectNovig(managementKeyId: String, managementPem: String) {
+    /**
+     * Connects the Novig key. [typed]: the management key Tj just entered, saved on this phone once Novig accepts it (Tj, 2026-09-29: "I only
+     * input the API key and file one time"); null = the saved one.
+     */
+    fun connectNovig(typed: ManagementKey? = null) {
         if (_state.value.novig.busy) return
         viewModelScope.launch {
             _state.update { it.copy(novig = it.novig.copy(busy = true, error = null, message = "Starting…")) }
+            val key = typed ?: withContext(Dispatchers.IO) { runCatching { c.managementKeys.load() }.getOrNull() }
+            if (key == null) {
+                _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = "Enter your management key ID and its .pem file first.")) }
+                return@launch
+            }
             try {
                 val setup = NovigSetup(c.http, c.json, KeystoreVault)
                 val conn = withContext(Dispatchers.IO) {
-                    setup.connect(managementKeyId, managementPem) { step ->
+                    setup.connect(key.keyId, key.pem) { step ->
                         _state.update { it.copy(novig = it.novig.copy(message = step)) }
                     }
+                }
+                if (typed != null) {
+                    val hint = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.managementKeys.save(typed) }.getOrNull() }
+                    if (hint != null) _state.update { it.copy(novig = it.novig.copy(managementKey = hint)) }
                 }
                 // Replace any earlier read key: its Keystore entry is no longer needed.
                 val old = _state.value.novig.connection
@@ -666,8 +681,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(novig = it.novig.copy(connection = kept, busy = false, message = "Connected. Scans now read Novig prices through your key's own rate limit."))
                 }
                 api.refreshEnabled()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: NovigApiException) {
-                _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.advice)) }
+                val replace = if (typed == null && e.status == 401 && e.serverMessage?.contains("timestamp") != true) " Enter the key again below." else ""
+                _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.advice + replace)) }
             } catch (e: IllegalArgumentException) {
                 _state.update { it.copy(novig = it.novig.copy(busy = false, message = null, error = e.message ?: "That key file couldn't be read.")) }
             } catch (e: Exception) {
@@ -729,7 +747,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.useConnection(null)
             c.novigConnection.clear()
             conn?.let { KeystoreVault.delete(it.readAlias) }
-            _state.update { it.copy(novig = NovigUi(message = "Disconnected. Back to Novig's public prices."), betting = BettingUi(), betSheet = null) }
+            // The saved management key stays (Settings › Forget removes it): connecting again needs no typing.
+            _state.update { it.copy(novig = NovigUi(message = "Disconnected. Back to Novig's public prices.", managementKey = it.novig.managementKey), betting = BettingUi(), betSheet = null) }
         }
     }
 
