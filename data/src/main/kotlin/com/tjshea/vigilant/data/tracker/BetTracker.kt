@@ -514,29 +514,70 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     suspend fun observe(result: ScanResult): Boolean {
         val now = clock()
         val byKey = result.opportunities.associateBy { it.market.marketId to it.outcome.outcomeId }
-        fun fresh(b: TrackedBet): Double? {
+        fun fresh(b: TrackedBet): Opportunity? {
             if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
-            val fair = byKey[b.marketId to b.outcomeId]?.fairProbability ?: return null
-            // Only a real change is worth a disk write.
-            return fair.takeIf { b.closingFair == null || kotlin.math.abs(it - b.closingFair) > 1e-9 }
+            val o = byKey[b.marketId to b.outcomeId] ?: return null
+            val fair = o.fairProbability ?: return null
+            // Only a real change is worth a disk write, and so is the age of a read: "3 min ago" must not stay 3 min ago.
+            val changed = b.closingFair == null || kotlin.math.abs(fair - b.closingFair) > 1e-9 || b.nowVia != VIA_VIGILANT
+            val aged = b.nowAtMs == null || now - b.nowAtMs >= OBSERVE_REFRESH_MS
+            return o.takeIf { changed || aged }
         }
         if (store.read().none { fresh(it) != null }) return false
         // The scan's fair line is also the bet's EV now (the Tracker's "now +3% EV"), and its books are the bet's books.
         store.update { list ->
             list.map { b ->
-                val fair = fresh(b) ?: return@map b
-                val o = byKey[b.marketId to b.outcomeId]
-                val lines = o?.let(::booksOf).orEmpty()
-                b.copy(
-                    closingFair = fair, closingSeenAtMs = now, nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now,
-                    books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
-                    nowBooks = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() } ?: b.nowBooks,
-                    // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
-                    nowAmerican = o?.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican,
-                )
+                val o = fresh(b) ?: return@map b
+                applyFair(b, o, now, VIA_VIGILANT)
             }
         }
         return true
+    }
+
+    /** What [applyPricing] did: [priced] open bets now have a current EV, [unpriced] got the reason they have none. */
+    data class Applied(val priced: Int, val unpriced: Int)
+
+    /**
+     * The result of a bets-only pricing pass ([com.tjshea.vigilant.data.scanner.Scanner]'s `betsOnly`; Tj, 2026-09-29: "update the EV for every
+     * single open bet, including bets added from vigilant scanner"): each of [betIds] still open and pregame that the [result] prices gets its
+     * fair price, EV against the price it was bet at, age, books and Novig's price now; one it doesn't price keeps what it had and gets its
+     * reason from [reasons] (the card says why, never a stale number that looks current).
+     */
+    suspend fun applyPricing(result: ScanResult?, betIds: Collection<String>, reasons: Map<String, String> = emptyMap()): Applied {
+        val now = clock()
+        val ids = betIds.toHashSet()
+        val byKey = result?.opportunities?.filter { it.fairProbability != null }?.associateBy { it.market.marketId to it.outcome.outcomeId }.orEmpty()
+        var priced = 0
+        var unpriced = 0
+        store.update { list ->
+            priced = 0
+            unpriced = 0
+            list.map { b ->
+                if (b.id !in ids || b.status != BetStatus.PENDING || now >= b.startsTs) return@map b
+                val o = byKey[b.marketId to b.outcomeId]
+                when {
+                    o != null -> { priced++; applyFair(b, o, now, VIA_VIGILANT) }
+                    else -> {
+                        unpriced++
+                        reasons[b.id]?.let { b.copy(nowNote = it, nowNoteAtMs = now) } ?: b
+                    }
+                }
+            }
+        }
+        return Applied(priced, unpriced)
+    }
+
+    /** [b] with [o]'s fair line as its fair now: EV at the price it was bet at, the books behind it, Novig's price now, and the closing line so far. */
+    private fun applyFair(b: TrackedBet, o: Opportunity, now: Long, via: String): TrackedBet {
+        val fair = o.fairProbability ?: return b
+        val lines = booksOf(o)
+        return b.copy(
+            closingFair = fair, closingSeenAtMs = now, nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
+            books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
+            nowBooks = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() } ?: b.nowBooks,
+            // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
+            nowAmerican = o.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican,
+        )
     }
 
     companion object {
