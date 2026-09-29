@@ -174,12 +174,51 @@ class BetRecheckTest {
         assertEquals(3, t.all().count { it.nowEv != null })
     }
 
+    /** Tj, 2026-09-29: "When I pressed check odds now in the tracker, it scanned very slow. Slower than before." */
     @Test
-    fun `the gap between bets is CNO's pace`() = runTest {
-        val t = tracker(bet("g1", startsTs = start + 1), bet("g2", startsTs = start + 2), bet("g3", startsTs = start + 3))
-        BetRecheck(t, books = { view(-125, 105) }, clock = { now }, gapMs = 2_000L).run()
-        // Two gaps between three reads, none before the first.
+    fun `several pages are read at once, soonest game first, and every bet is still read exactly once`() = runTest {
+        val bets = (1..12).map { bet("p$it", startsTs = start + it * 60_000L) }
+        val t = tracker(*bets.toTypedArray())
+        var inFlight = 0
+        var mostAtOnce = 0
+        val order = mutableListOf<String>()
+        val r = BetRecheck(
+            t,
+            books = { row ->
+                inFlight++
+                mostAtOnce = maxOf(mostAtOnce, inFlight)
+                order += row.gameUrl!!.substringAfter("side_id=")
+                kotlinx.coroutines.delay(1_000L) // a page takes a moment
+                inFlight--
+                view(-125, 105)
+            },
+            clock = { now },
+            concurrency = 3,
+        )
+        val report = r.run()
+        assertEquals(3, mostAtOnce)
+        assertEquals(12, report.updated)
+        assertEquals(bets.map { it.id }, order.take(3) + order.drop(3)) // every bet, none twice, in order taken
+        assertEquals(12, order.toSet().size)
+        assertEquals(listOf("p1", "p2", "p3"), order.take(3)) // the soonest games go first
+        // Twelve one-second pages, three at a time: four seconds, not twelve.
         assertEquals(4_000L, testScheduler.currentTime)
+        assertEquals(12, t.all().count { it.nowEv != null })
+    }
+
+    @Test
+    fun `with several at once a run still stops when CNO keeps failing, and no bet is counted twice`() = runTest {
+        val bets = (1..20).map { bet("f$it", startsTs = start + it) }
+        val t = tracker(*bets.toTypedArray())
+        var asked = 0
+        val down = BetRecheck(t, books = { asked++; kotlinx.coroutines.delay(10L); null }, clock = { now }, concurrency = 3).run()
+        assertEquals(true, down.stopped)
+        // Five in a row, plus the reads already under way when the fifth failed.
+        assertEquals(true, asked in BetRecheck.MAX_FAILS_IN_ROW..(BetRecheck.MAX_FAILS_IN_ROW + 2))
+        assertEquals(asked, down.checked)
+        assertEquals(down.checked, down.failed)
+        assertEquals(20 - asked, down.skipped)
+        assertEquals(down.open, down.updated + down.failed + down.skipped + down.current + down.over + down.vigilantOnly)
     }
 
     @Test
