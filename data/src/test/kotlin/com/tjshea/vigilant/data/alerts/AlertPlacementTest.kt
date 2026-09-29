@@ -39,7 +39,7 @@ class AlertPlacementTest {
     )
 
     @Test
-    fun `placed from a CNO alert: tracked at the alert's price and stake with everything a recheck and grading need`() = runTest {
+    fun `placed from a CNO alert, tracked at the alert's price and stake with everything a recheck and grading need`() = runTest {
         val t = tracker()
         val p = placedBets()
         val bet = AlertPlacement.place(cnoAlert(), 5.0, t, p, now)!!
@@ -67,7 +67,7 @@ class AlertPlacementTest {
     }
 
     @Test
-    fun `placed from a Vigilant alert: its Novig market and outcome, so scans follow it to the close`() = runTest {
+    fun `placed from a Vigilant alert keeps its Novig market and outcome, so scans follow it to the close`() = runTest {
         val t = tracker()
         val bet = AlertPlacement.place(vigilantAlert(), null, t, placedBets(), now)!!
         assertEquals(1.0, bet.stake, 0.0) // no amount in the alert: $1, corrected in the Tracker
