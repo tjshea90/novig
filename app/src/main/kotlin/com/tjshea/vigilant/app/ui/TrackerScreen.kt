@@ -490,6 +490,7 @@ private fun BetCard(
                     Text(bet.eventName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
                         (if (bet.source == BetTracker.SOURCE_CNO) "CNO" else "Vigilant") +
+                            " · placed ${Format.placedAt(bet.createdAtMs)}" +
                             (if (bet.book != AppBook.name) " · ${bet.book}" else "") +
                             (if (bet.viaApi) (if (bet.imported) " · found in Novig's fills" else " · placed through Novig's API") else "") +
                             (if (bet.imported && !bet.viaApi) " · from an earlier ✓" else ""),
