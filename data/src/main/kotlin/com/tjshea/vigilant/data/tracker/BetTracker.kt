@@ -68,6 +68,14 @@ data class TrackedBet(
     val nowEv: Double? = null,
     val nowAtMs: Long? = null,
     val nowBooks: Int? = null,
+    /**
+     * Whose fair line [nowFair] is ([BetTracker.VIA_CNO]: CrazyNinjaOdds' books and its devig; [BetTracker.VIA_VIGILANT]: Vigilant's own
+     * blend of the reference books), null for a read made before this was kept.
+     */
+    val nowVia: String? = null,
+    /** Why the last try at pricing this open bet found no fair price (Tj, 2026-09-29: every open bet is priced or says why not), and when. */
+    val nowNote: String? = null,
+    val nowNoteAtMs: Long? = null,
     /** A fair-market-value settlement's payout per $1 contract ([BetStatus.FMV]). */
     val settleValue: Double? = null,
     /** "novig" (settled from Novig's catalog) or "you" (tapped). */
