@@ -421,23 +421,49 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
          */
         const val OUTLIER_EV = 0.06
 
-        /** The Tracker's numbers for [all], outliers ([TrackedBet.isOutlier]) left out completely. */
+        /** Every book's price behind [o]'s fair line, for [TrackedBet.books]: this outcome's odds and, on a two-way line, the other side's. */
+        fun booksOf(o: Opportunity): List<BookLine> {
+            val idx = o.referenceIndex ?: return emptyList()
+            val perBook = o.fair?.perBook ?: return emptyList()
+            return perBook.mapNotNull { bf ->
+                val odds = bf.book.decimalOdds
+                val mine = odds.getOrNull(idx)?.takeIf { it > 1.0 }?.let(com.tjshea.vigilant.engine.Odds::decimalToAmerican) ?: return@mapNotNull null
+                val other = if (odds.size == 2) odds[1 - idx].takeIf { it > 1.0 }?.let(com.tjshea.vigilant.engine.Odds::decimalToAmerican) else null
+                BookLine(bf.book.bookTitle, mine, other)
+            }
+        }
+
+        /**
+         * The Tracker's numbers for [all]: outliers ([TrackedBet.isOutlier]) left out of everything but
+         * [TrackerStats.profitAll]; voided bets counted only as voided. "Profit" and "Expected" are over the
+         * same settled bets, so they can be compared (the edge is real when they run together).
+         */
         fun stats(all: List<TrackedBet>): TrackerStats {
             val bets = all.filterNot { it.isOutlier }
-            val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }
+            val decided = { b: TrackedBet -> b.status != BetStatus.PENDING && b.status != BetStatus.VOID }
+            val settled = bets.filter(decided)
             val staked = settled.sumOf { it.stake }
             val profit = settled.sumOf { it.profit ?: 0.0 }
             // A voided bet never happened: it counts toward nothing but the bet count.
             val live = bets.filter { it.status != BetStatus.VOID }
+            val open = bets.filter { it.status == BetStatus.PENDING }
             val withClv = live.mapNotNull { it.clvPercent }
+            // "Expected vs actual" over the settled bets whose EV is on record (an imported ✓ has none).
+            val judged = settled.filter { it.evPercentAtBet != null && it.fairAtBet != null }
+            // A bet's profit is stake x (1/cost - 1) with probability p (its fair chance) and -stake otherwise:
+            // variance stake^2 x p(1-p) / cost^2.
+            val variance = judged.sumOf { b ->
+                val p = (b.fairAtBet ?: 0.0).coerceIn(0.0, 1.0)
+                b.stake * b.stake * p * (1.0 - p) / (b.cost * b.cost)
+            }
             return TrackerStats(
                 bets = bets.size,
-                pending = bets.count { it.status == BetStatus.PENDING },
+                pending = open.size,
                 settled = settled.size,
                 staked = staked,
                 profit = profit,
                 roi = if (staked > 0) profit / staked else null,
-                expectedProfit = live.sumOf { it.expectedProfit },
+                expectedProfit = judged.sumOf { it.expectedProfit },
                 averageEv = live.mapNotNull { it.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average(),
                 averageClv = withClv.takeIf { it.isNotEmpty() }?.average(),
                 beatClosePercent = withClv.takeIf { it.isNotEmpty() }?.let { l -> l.count { it > 0 }.toDouble() / l.size },
@@ -445,6 +471,14 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 lost = bets.count { it.status == BetStatus.LOST },
                 pushed = bets.count { it.status == BetStatus.PUSH || it.status == BetStatus.FMV },
                 outliers = all.size - bets.size,
+                voided = bets.count { it.status == BetStatus.VOID },
+                openStaked = open.sumOf { it.stake },
+                openToWin = open.sumOf { it.profitIfWon },
+                openExpected = open.sumOf { it.expectedProfit },
+                profitWithEv = judged.sumOf { it.profit ?: 0.0 },
+                settledWithEv = judged.size,
+                expectedSd = kotlin.math.sqrt(variance),
+                profitAll = all.filter(decided).sumOf { it.profit ?: 0.0 },
             )
         }
     }
