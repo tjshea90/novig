@@ -116,4 +116,28 @@ class AlertPlacementTest {
         assertEquals("Novig", old.book)
         assertEquals("", old.league)
     }
+
+    @Test
+    fun `a CNO bet gets its Novig market afterwards so scans can follow its line, and nothing changes when it can't be found`() = runTest {
+        val t = tracker()
+        val a = cnoAlert()
+        AlertPlacement.place(a, 5.0, t, placedBets(), now)
+        var asked = 0
+        val none = AlertPlacement.attachMarket(t, a.key) { asked++; com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Game("ev-1") }
+        assertFalse(none)
+        assertEquals("", t.all().single().marketId)
+        val down = AlertPlacement.attachMarket(t, a.key) { throw java.io.IOException("Novig didn't answer") }
+        assertFalse(down)
+        val set = AlertPlacement.attachMarket(t, a.key) { com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet("out-9", "ev-1", "mkt-9") }
+        assertTrue(set)
+        assertEquals("mkt-9", t.all().single().marketId)
+        assertEquals("out-9", t.all().single().outcomeId)
+        // Once it has its market it isn't asked again.
+        assertFalse(AlertPlacement.attachMarket(t, a.key) { asked++; null })
+        assertEquals(1, asked)
+        // A Vigilant alert already has its market from the start.
+        AlertPlacement.place(vigilantAlert(), null, t, placedBets(), now)
+        assertFalse(AlertPlacement.attachMarket(t, vigilantAlert().key) { asked++; null })
+        assertEquals(1, asked)
+    }
 }

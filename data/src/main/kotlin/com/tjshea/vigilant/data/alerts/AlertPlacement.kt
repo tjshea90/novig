@@ -52,6 +52,25 @@ object AlertPlacement {
         }
     }
 
+    /**
+     * A CNO bet's Novig market, found afterwards (Novig's public catalog, [find]) and put on the open bet placed under [key], so
+     * Vigilant's own scans can follow its line to the close (`BetTracker.observe` needs the market and the outcome). Best effort:
+     * nothing changes when the bet already has its market, is gone or settled, or the catalog can't say. Returns whether it was set.
+     */
+    suspend fun attachMarket(tracker: BetTracker, key: String, find: suspend (com.tjshea.vigilant.data.cno.CnoRow) -> com.tjshea.vigilant.data.cno.NovigBetFinder.Found?): Boolean {
+        val bet = tracker.all().firstOrNull { it.placedKey == key && it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.marketId.isBlank() } ?: return false
+        val found = try {
+            find(com.tjshea.vigilant.data.tracker.BetRecheck.rowOf(bet))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } as? com.tjshea.vigilant.data.cno.NovigBetFinder.Found.Bet ?: return false
+        val market = found.marketId ?: return false
+        tracker.edit(bet.id) { if (it.marketId.isBlank()) it.copy(marketId = market, outcomeId = found.outcomeId) else it }
+        return true
+    }
+
     /** Undo: the mark and the open bet go, and the bet shows in the lists again. Settled bets stay. */
     suspend fun undo(a: EvAlert, tracker: BetTracker, placed: PlacedBets) {
         try {
