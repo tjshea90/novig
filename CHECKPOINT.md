@@ -1,13 +1,13 @@
-# CHECKPOINT 2075 — read me first, then TASKS.md
+# CHECKPOINT 2076 — read me first, then TASKS.md
 
-**Written:** 2026-09-29T15:58:31Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-538c37db-finzj9` · **builds on:** `b0faf552` (this checkpoint is the commit after it)
+**Written:** 2026-09-29T16:02:09Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-538c37db-finzj9` · **builds on:** `1580eba8` (this checkpoint is the commit after it)
 
 ## Just done
-ApiSettler: bets sharing a market are graded together (one market payout no longer read as a fair-value void); +2 tests
+W9: placement never cancelled by closing the sheet (+test that failed without the fix), shared-market grading, skill map, screenshots checked, version 0.21.0/46
 
 ## Do this next
-W9: read ApiBettingController confirm path for double-tap, skill map update, bump 0.21.0/46, ship
+ship.sh v0.21.0, wait for CI green, trigger release.yml, record-release, tick W9, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ W9: read ApiBettingController confirm path for double-tap, skill map update, bum
 
 ## Last ten checkpoints
 ```
+  a9194471 ckpt 2075: ApiSettler: bets sharing a market are graded together (one market payout no 
   32c7dac5 ckpt 2074: W1-W8 ticked; RESEARCH.md §36.6 (MoneyLine tested) and §37 (API betting de
   2741c198 ckpt 2073: W6-W8 app layer done: connection store + container wiring, ApiBettingControl
   445ddb62 ckpt 2072: W6/W7 data: NovigBettingSetup (use the phone's trading key or revoke+mint, f
@@ -25,8 +26,7 @@ W9: read ApiBettingController confirm path for double-tap, skill map update, bum
   cdfbe7b5 ckpt 2068: v0.20.2 (code 45) released and recorded; V1-V8 ticked
   fa5ee5b9 ckpt 2067: pre-release: v0.20.2: Polymarket reads ~2x faster (13 s to 5.6 s live); the 
   76c46f2d ckpt 2066: floor green (839 passed, 19 live skipped, exit 0); probe limited to 10 marke
-  37d09d09 ckpt 2065: V1-V7 done: RESEARCH.md §36 (Novig API answers, measured slowness, Kalshi 4
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
