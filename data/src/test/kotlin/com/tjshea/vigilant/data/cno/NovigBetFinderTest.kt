@@ -87,6 +87,14 @@ class NovigBetFinderTest {
         assertFalse(NovigBetFinder.typeFits("RUSHING_YARDS", w("Player Rushing + Receiving Yards")))
         assertFalse(NovigBetFinder.typeFits("PASSING_YARDS", w("Player Passing + Rushing Yards")))
         assertTrue(NovigBetFinder.typeFits("PASSING_AND_RUSHING_YARDS", w("Player Passing + Rushing Yards")))
+        // CNO's longer baseball wordings (Tj's 2026-09-29 screenshot: "Player Earned Runs Allowed" couldn't be read).
+        assertTrue(NovigBetFinder.typeFits("EARNED_RUNS", w("Player Earned Runs Allowed")))
+        assertTrue(NovigBetFinder.typeFits("PITCHER_OUTS", w("Player Outs Recorded")))
+        assertTrue(NovigBetFinder.typeFits("WALKS", w("Player Walks Allowed")))
+        assertTrue(NovigBetFinder.typeFits("RBIS", w("Player Runs Batted In")))
+        assertTrue(NovigBetFinder.typeFits("BATTING_STRIKEOUTS", w("Player Batter Strikeouts")))
+        assertTrue(NovigBetFinder.typeFits("THREE_POINTERS_MADE", w("Player 3-Pointers Made")))
+        assertFalse(NovigBetFinder.typeFits("WALKS", w("Player Batter Walks")))
     }
 
     @Test
