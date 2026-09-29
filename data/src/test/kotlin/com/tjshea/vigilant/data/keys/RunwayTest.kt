@@ -46,7 +46,7 @@ class RunwayTest {
     )
 
     @Test
-    fun `Tj's report reads as it is: everything on pace, The Odds API's month almost over`() {
+    fun `Tj's report reads as it is - everything on pace, The Odds API's month almost over`() {
         val lines = Runway.lines(views(tjsBook(), tjsKeys), now).associateBy { it.id }
         val odds = lines.getValue("oddsapi")
         assertEquals(RunwayLevel.OK, odds.level)
