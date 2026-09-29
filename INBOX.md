@@ -2481,3 +2481,14 @@ ml_live_255409a542198b1ce59d50f5662d203b
 
 Build the betting through the API function, and include the API grading bets feature for the tracker system in vigilant
 ```
+
+## 2026-09-29T16:46:29Z
+```
+When I check the updated odds for the bet tracker to see the current EV:
+
+1) right now it only checks cno scanned EV. Make it update the EV for every single open bet, including bets added from vigilant scanner. 
+
+2) add filter options on the top of this bet tracker section, including date placed (orders bets placed by date and time), current EV (orders bets by current EV with the best current EV at the top of the list compared to the odds I placed the bet), amount of bet, scanner used to place bet 
+
+3) make sure the tracker is telling me the current, up to date EV, which is devigged and compared to the actual odds that I placed the bet at.
+```
