@@ -4,6 +4,7 @@ import com.tjshea.vigilant.app.ui.TrackerText
 import com.tjshea.vigilant.app.ui.parseAmerican
 import com.tjshea.vigilant.data.tracker.BetInsight
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerStats
 import org.junit.Assert.assertEquals
