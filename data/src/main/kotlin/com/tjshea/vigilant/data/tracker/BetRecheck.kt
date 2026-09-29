@@ -128,17 +128,8 @@ class BetRecheck(
                 if (paused()) { stopped = true; break }
                 if (i > 0 && gapMs > 0) delay(gapMs)
                 checked++
-                val row = rowOf(bet)
-                val view = try {
-                    books(row)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    null
-                }
-                val check = view?.let { CnoBooks.check(it, row, preferListOdds = true) }
-                val fair = check?.fairProbability
-                if (view == null || fair == null) {
+                val update = read(bet)
+                if (update == null) {
                     failed++
                     failedInARow++
                     onProgress(checked, p.todo.size)
@@ -147,19 +138,7 @@ class BetRecheck(
                     continue
                 }
                 failedInARow = 0
-                val now = clock()
-                val lines = view.prices.map { BookLine(it.name, it.odds, it.otherOdds) }
-                val ownCode = CnoBooks.codeFor(bet.book) ?: CnoBooks.NOVIG
-                val ownNow = view.prices.firstOrNull { it.code == ownCode }?.odds
-                pending[bet.id] = {
-                    val closing = now < it.startsTs
-                    it.copy(
-                        nowFair = fair, nowEv = fair / it.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
-                        closingFair = if (closing) fair else it.closingFair,
-                        closingSeenAtMs = if (closing) now else it.closingSeenAtMs,
-                        books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: it.nowAmerican,
-                    )
-                }
+                pending[bet.id] = update
                 updated++
                 onProgress(checked, p.todo.size)
                 if (pending.size >= BATCH) flush()
@@ -171,6 +150,42 @@ class BetRecheck(
             open = p.open, checked = checked, updated = updated, current = p.current, failed = failed,
             skipped = p.todo.size - checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = stopped,
         )
+    }
+
+    /** Re-reads one bet's books now, whatever else runs or was read a minute ago (the sheet's "Re-read books"); false when it couldn't be read. */
+    suspend fun checkOne(id: String): Boolean = mutex.withLock {
+        val bet = tracker.all().firstOrNull { it.id == id && it.status == BetStatus.PENDING && it.gameUrl != null } ?: return@withLock false
+        if (paused()) return@withLock false
+        val update = read(bet) ?: return@withLock false
+        tracker.editMany(mapOf(id to update))
+        true
+    }
+
+    /** [bet]'s books read now and turned into what to change on it, or null when the page couldn't be read or has no two-sided book. */
+    private suspend fun read(bet: TrackedBet): ((TrackedBet) -> TrackedBet)? {
+        val row = rowOf(bet)
+        val view = try {
+            books(row)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return null
+        val check = CnoBooks.check(view, row, preferListOdds = true)
+        val fair = check.fairProbability ?: return null
+        val now = clock()
+        val lines = view.prices.map { BookLine(it.name, it.odds, it.otherOdds) }
+        val ownCode = CnoBooks.codeFor(bet.book) ?: CnoBooks.NOVIG
+        val ownNow = view.prices.firstOrNull { it.code == ownCode }?.odds
+        return {
+            val closing = now < it.startsTs
+            it.copy(
+                nowFair = fair, nowEv = fair / it.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
+                closingFair = if (closing) fair else it.closingFair,
+                closingSeenAtMs = if (closing) now else it.closingSeenAtMs,
+                books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: it.nowAmerican,
+            )
+        }
     }
 
     companion object {
