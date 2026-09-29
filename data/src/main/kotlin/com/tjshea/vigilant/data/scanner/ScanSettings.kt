@@ -337,7 +337,17 @@ data class ScanSettings(
     val vigilantOn: Boolean get() = scanner != ScannerMode.CNO
 
     /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
-    val activeAutoScan: AutoScanMode get() = if (paused) AutoScanMode.OFF else autoScan
+    val activeAutoScan: AutoScanMode get() = if (autoScansCno || autoScansVigilant) autoScan else AutoScanMode.OFF
+
+    /**
+     * A background cycle reads CrazyNinjaOdds' list: auto-scan is on CNO or Both, scanning isn't paused and the CNO scanner is on. The scanner
+     * choice is the master switch (Tj, 2026-09-29: "if I have cno only turned on in the settings … it doesn't scan vigilant in the background and
+     * waste api usage"): on Vigilant only, CNO is asleep in the background as it is in the app.
+     */
+    val autoScansCno: Boolean get() = !paused && autoScan.cno && cnoOn
+
+    /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
+    val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn
 
     /**
      * How far ahead Vigilant's scan reads, in hours: [daysAhead], or [startsWithinHours] when that's shorter (Tj,
