@@ -163,6 +163,7 @@ class Scanner(
         val settled = java.util.Collections.synchronizedSet(HashSet<String>())
         val pump = BookPump(settings, now, progress, onPartial, ordered, settled, t0)
         val boardAt = java.util.concurrent.atomic.AtomicLong(0)
+        val sourceMs = java.util.Collections.synchronizedList(ArrayList<Pair<String, Long>>())
         var fairAt = 0L
 
         synchronized(answered) { answered.clear() }
@@ -194,11 +195,14 @@ class Scanner(
                             pump.wake()
                         }
                     }
-                    fetchSource(source, leagues, settings, now, errors, context, fallback = first != null) { league ->
+                    val report = fetchSource(source, leagues, settings, now, errors, context, fallback = first != null) { league ->
                         settled += "${source.id}|${league.novigName}"
                         progress.fairDone()
                         pump.wake()
                     }
+                    // When this source finished, for Settings' timing line: the slowest one sets when bets first show.
+                    if (report.fetched + report.reused > 0) sourceMs += source.displayName to (elapsed() - t0)
+                    report
                 }
             }
             // Novig's prices start as soon as the board is in, alongside the fair odds.
@@ -274,6 +278,7 @@ class Scanner(
                 totalMs = elapsed() - t0,
                 refused = pump.refused,
                 leftTooLate = pump.tooLate.size,
+                sourceMs = synchronized(sourceMs) { sourceMs.toList() },
             ),
         )
     }

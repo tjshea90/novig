@@ -21,6 +21,8 @@ data class ScanTiming(
     val refused: Int = 0,
     /** Lines left for the next scan: read any later, their other books' odds would have been too old to show. */
     val leftTooLate: Int = 0,
+    /** When each fair-odds source finished, from the scan's start (a source that answered nothing is left out). */
+    val sourceMs: List<Pair<String, Long>> = emptyList(),
 ) {
     val novigMs: Long get() = if (novigFromMs != null && novigToMs != null) (novigToMs - novigFromMs).coerceAtLeast(0) else 0
 
@@ -33,6 +35,10 @@ data class ScanTiming(
         fun text(t: ScanTiming, prices: Int, viaKey: Int, viaPush: Int, keyPerSec: Double? = null): String = buildString {
             append("Last scan took ").append(seconds(t.totalMs)).append(": board ").append(seconds(t.boardAtMs))
             append(" · fair odds ").append(seconds(t.fairAtMs))
+            // Which source it waited for (a league's bets wait for all its sources): "Kalshi 27 s, Polymarket 13 s".
+            t.sourceMs.sortedByDescending { it.second }.take(3).takeIf { it.size > 1 }?.let { slow ->
+                append(" (").append(slow.joinToString(", ") { "${it.first} ${seconds(it.second)}" }).append(")")
+            }
             if (prices > 0) {
                 append(" · ").append(String.format(Locale.US, "%,d", prices)).append(" Novig price").append(if (prices == 1) "" else "s")
                 append(" in ").append(seconds(t.novigMs))
