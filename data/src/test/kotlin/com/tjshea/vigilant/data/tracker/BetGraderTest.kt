@@ -123,8 +123,126 @@ class BetGraderTest {
         assertNull(BetGrader.gameOf(bet("Moneyline", "New York Mets", event = "Chicago Cubs @ Boston Red Sox"), listOf(mets)))
     }
 
+    // ---- Tj, 2026-09-29: "make sure every bet is properly graded win or loss after the event is final" ----
+
+    /** Alexandre Muller d. Luka Pavlovic 6-4 6-7(6-8) 6-3 (ESPN, Chengdu Open 2026-09-22): Muller home, sets 2-1, games 18-14. */
+    private val muller = GameScore(
+        "186127", "ATP", home = "Alexandre Muller", away = "Luka Pavlovic", startMs = TENNIS_START, final = true, called = false,
+        homeScore = 2, awayScore = 1, homePeriods = listOf(6, 6, 6), awayPeriods = listOf(4, 7, 3),
+    )
+
+    private fun tennis(market: String, selection: String, event: String = "Luka Pavlovic @ Alexandre Muller") =
+        BetGrader.pickOf(bet(market, selection, event, "ATP", TENNIS_START))!!
+
+    @Test
+    fun `tennis markets read as picks`() {
+        assertEquals(Pick.Spread("Daniil Medvedev", -3.5, Period.GAME), BetGrader.pickOf(bet("Games Spread", "Daniil Medvedev -3.5")))
+        assertEquals(Pick.Total(true, 21.5, Period.GAME), BetGrader.pickOf(bet("Total Games", "Over 21.5")))
+        assertEquals(Pick.TeamTotal("Roman Safiullin", true, 12.5), BetGrader.pickOf(bet("Games Won", "Roman Safiullin Over 12.5")))
+        assertEquals(Pick.FirstSet("Daniil Medvedev"), BetGrader.pickOf(bet("1st Set Winner", "Daniil Medvedev")))
+        assertEquals(Pick.FirstSet("Daniil Medvedev"), BetGrader.pickOf(bet("1st Set Moneyline", "Daniil Medvedev")))
+        assertEquals(Pick.Spread("Daniil Medvedev", -1.5, Period.SETS), BetGrader.pickOf(bet("Set Spread", "Daniil Medvedev -1.5")))
+        assertEquals(Pick.Total(false, 2.5, Period.SETS), BetGrader.pickOf(bet("Total Sets", "Under 2.5")))
+        assertEquals(Pick.Moneyline("Daniil Medvedev"), BetGrader.pickOf(bet("Moneyline", "Daniil Medvedev")))
+    }
+
+    @Test
+    fun `a tennis match grades from its sets and games`() {
+        fun g(market: String, selection: String) = BetGrader.grade(tennis(market, selection), muller)
+        assertEquals(BetStatus.WON, g("Moneyline", "Alexandre Muller"))
+        assertEquals(BetStatus.LOST, g("Moneyline", "Luka Pavlovic"))
+        // Games 18-14: the spread and the total are in games, not sets.
+        assertEquals(BetStatus.LOST, g("Games Spread", "Luka Pavlovic +3.5"))
+        assertEquals(BetStatus.WON, g("Games Spread", "Luka Pavlovic +4.5"))
+        assertEquals(BetStatus.WON, g("Games Spread", "Alexandre Muller -3.5"))
+        assertEquals(BetStatus.WON, g("Total Games", "Over 31.5"))
+        assertEquals(BetStatus.PUSH, g("Total Games", "Under 32"))
+        assertEquals(BetStatus.WON, g("Games Won", "Alexandre Muller Over 17.5"))
+        assertEquals(BetStatus.WON, g("Games Won", "Luka Pavlovic Under 14.5"))
+        // Sets 2-1.
+        assertEquals(BetStatus.WON, g("Set Spread", "Luka Pavlovic +1.5"))
+        assertEquals(BetStatus.LOST, g("Set Spread", "Luka Pavlovic -1.5"))
+        assertEquals(BetStatus.WON, g("Total Sets", "Over 2.5"))
+        // The first set: Muller 6-4.
+        assertEquals(BetStatus.WON, g("1st Set Winner", "Alexandre Muller"))
+        assertEquals(BetStatus.LOST, g("1st Set Winner", "Luka Pavlovic"))
+    }
+
+    @Test
+    fun `a tennis match is found whichever way Novig ordered the two players, a team game only in its order`() {
+        // ESPN has Muller at home; Novig wrote "Muller @ Pavlovic".
+        val swapped = bet("Moneyline", "Alexandre Muller", "Alexandre Muller @ Luka Pavlovic", "ATP", TENNIS_START)
+        assertEquals("186127", BetGrader.gameOf(swapped, listOf(muller))?.id)
+        // The order of play is loose: a start hours off is still the match (never in a team sport).
+        assertEquals("186127", BetGrader.gameOf(swapped.copy(startsTs = TENNIS_START + 20 * 3_600_000L), listOf(muller))?.id)
+        assertNull(BetGrader.gameOf(bet("Moneyline", "New York Mets", "Washington Nationals @ New York Mets"), listOf(mets)))
+        assertNull(BetGrader.gameOf(bet("Moneyline", "New York Mets", start = METS_START + 13 * 3_600_000L), listOf(mets)))
+    }
+
+    @Test
+    fun `alternate lines, game totals and combo props read as picks`() {
+        assertEquals(Pick.Total(true, 47.5, Period.GAME), BetGrader.pickOf(bet("Alternate Total", "Over 47.5")))
+        assertEquals(Pick.Total(false, 8.5, Period.GAME), BetGrader.pickOf(bet("Game Total", "Under 8.5")))
+        assertEquals(Pick.Total(true, 220.5, Period.GAME), BetGrader.pickOf(bet("Total Points (Incl. Overtime)", "Over 220.5")))
+        assertEquals(Pick.Spread("Boston Celtics", -4.5, Period.GAME), BetGrader.pickOf(bet("Alternate Point Spread", "Boston Celtics -4.5")))
+        fun prop(market: String, selection: String) = BetGrader.pickOf(bet(market, selection)) as? Pick.Prop
+        assertEquals("SHOTS_ON_GOAL", prop("Player Shots on Goal", "Matt Boldy Over 2.5")?.stat)
+        assertEquals("SAVES", prop("Player Saves", "Filip Gustavsson Over 24.5")?.stat)
+        assertEquals("TACKLES_ASSISTS", prop("Player Tackles + Assists", "Roquan Smith Over 8.5")?.stat)
+        assertEquals("POINTS_REBOUNDS", prop("Player Points + Rebounds", "James Harden Over 30.5")?.stat)
+        assertEquals("POINTS_ASSISTS", prop("Player Points + Assists", "James Harden Over 30.5")?.stat)
+        assertEquals("REBOUNDS_ASSISTS", prop("Player Rebounds + Assists", "James Harden Over 8.5")?.stat)
+        assertEquals("POINTS_REBOUNDS_ASSISTS", prop("Player Points + Rebounds + Assists", "James Harden Over 36.5")?.stat)
+        assertEquals("STEALS", prop("Player Steals", "James Harden Over 1.5")?.stat)
+        assertEquals("BLOCKS", prop("Player Blocks", "Jarrett Allen Over 1.5")?.stat)
+        assertEquals("TURNOVERS", prop("Player Turnovers", "James Harden Under 3.5")?.stat)
+        assertEquals("POINTS", prop("Player Points", "Matt Boldy Over 0.5")?.stat)
+        assertEquals(Pick.Prop("Matt Boldy", "PLAYER_GOALS", true, 0.5), prop("Anytime Goalscorer", "Matt Boldy Yes"))
+        assertEquals(Pick.Prop("Nikola Jokic", "DOUBLE_DOUBLE", false, 0.5), prop("Player Double Double", "Nikola Jokic No"))
+    }
+
+    @Test
+    fun `hockey and basketball props grade from the box score, and say why one can't be`() {
+        val box = listOf(
+            PlayerLine("Matt Boldy", mapOf("PLAYER_GOALS" to 1.0, "ASSISTS" to 1.0, "POINTS" to 2.0, "SHOTS_ON_GOAL" to 3.0)),
+            PlayerLine("Filip Gustavsson", mapOf("SAVES" to 20.0)),
+        )
+        val wild = GameScore("1", "NHL", home = "Detroit Red Wings", away = "Minnesota Wild", startMs = METS_START, final = true, called = false, homeScore = 4, awayScore = 5)
+        fun g(market: String, selection: String) =
+            BetGrader.gradeDetailed(BetGrader.pickOf(bet(market, selection, "Minnesota Wild @ Detroit Red Wings", "NHL"))!!, wild, box)
+        assertEquals(BetStatus.WON, (g("Player Shots on Goal", "Matt Boldy Over 2.5") as BetGrader.Grade.Result).status)
+        assertEquals("Matt Boldy: 3 Shots On Goal", (g("Player Shots on Goal", "Matt Boldy Over 2.5") as BetGrader.Grade.Result).evidence)
+        assertEquals(BetStatus.LOST, (g("Player Saves", "Filip Gustavsson Over 24.5") as BetGrader.Grade.Result).status)
+        assertEquals(BetStatus.PUSH, (g("Player Points", "Matt Boldy Over 2") as BetGrader.Grade.Result).status)
+        // A player not in the box score, and a stat it doesn't carry, each say so and stay for a tap.
+        assertEquals(true, (g("Player Saves", "Cam Talbot Over 20.5") as BetGrader.Grade.Manual).reason.startsWith("Cam Talbot isn't in the box score"))
+        assertEquals(true, (g("Player Steals", "Matt Boldy Over 0.5") as BetGrader.Grade.Manual).reason.contains("no Steals"))
+        // Before the game is over: waiting, not manual.
+        val live = BetGrader.gradeDetailed(Pick.Moneyline("Minnesota Wild"), wild.copy(final = false))
+        assertEquals(BetGrader.Grade.Waiting("The game isn't over yet"), live)
+    }
+
+    @Test
+    fun `a graded bet says what it rests on`() {
+        fun ev(market: String, selection: String) = (BetGrader.gradeDetailed(BetGrader.pickOf(bet(market, selection))!!, mets) as BetGrader.Grade.Result).evidence
+        assertEquals("Final: New York Mets 7, Washington Nationals 1", ev("Moneyline", "New York Mets"))
+        assertEquals("Final: New York Mets 7, Washington Nationals 1 (total 8)", ev("Total Runs", "Over 8"))
+        assertEquals("First half: New York Mets 0, Washington Nationals 1", ev("F5 Spread", "New York Mets -0.5"))
+        val t = (BetGrader.gradeDetailed(tennis("Moneyline", "Alexandre Muller"), muller) as BetGrader.Grade.Result).evidence
+        assertEquals("Final: Alexandre Muller 2-1 Luka Pavlovic (sets), games 6-4 6-7 6-3", t)
+    }
+
+    @Test
+    fun `a market that can't be read says why`() {
+        assertEquals("3-way (draw) markets aren't graded automatically", BetGrader.whyNot("Moneyline 3-way", "Draw"))
+        assertEquals("Quarter, period and second-half markets aren't graded automatically", BetGrader.whyNot("1st Quarter Spread", "Dallas Cowboys -0.5"))
+        assertEquals(true, BetGrader.whyNot("First Touchdown Scorer", "Jonathan Taylor Yes").contains("play-by-play"))
+        assertEquals(true, BetGrader.whyNot("Some Novelty Market", "Something Over 1.5").startsWith("Couldn't read \"Some Novelty Market\""))
+    }
+
     companion object {
         val METS_START = java.time.Instant.parse("2026-09-26T16:35:00Z").toEpochMilli()
         val FALCONS_START = java.time.Instant.parse("2026-09-25T00:15:00Z").toEpochMilli()
+        val TENNIS_START = java.time.Instant.parse("2026-09-22T05:00:00Z").toEpochMilli()
     }
 }
