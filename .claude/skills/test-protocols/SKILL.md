@@ -69,8 +69,15 @@ unless Tj asks).
   one-time import flag `tracker_imported`), `data/tracker/BetSettler` (final scores: `tracker/Scores.kt`
   `FreeScores` = ESPN scoreboard/box score + MLB Stats API, graded by `tracker/BetGrader`; Novig's catalog
   forgets finished games, NOVIG_API.md; live check `VIGILANT_LIVE=1 ... --tests '*LiveScoresTest'`) run on app open, on the Tracker tab and by
-  `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": CNO game
-  page → `nowEv`), `ui/TrackerScreen` Stats | Bets (periods, running profit, by scanner, stake dialog; bets over ±6% EV when bet are outliers, left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`)).
+  `app/SettleWorker` (WorkManager, every 3 h), `data/tracker/BetRecheck` ("Check odds now": every open bet's CNO game
+  page → `nowEv` + every book's odds kept on the bet; one `Report` that adds up to the open count, no cap, 2 s apart, batched saves
+  (`BetTracker.editMany`), Vigilant-only bets priced by a scan), `ui/TrackerScreen` Stats | Bets (periods, running profit, expected vs actual +
+  luck, open money, `TrackerBreakdown` by scanner/league/market/edge/price, stake and price dialogs; bets over ±6% EV when bet are outliers,
+  left out of every stat: `BetTracker.OUTLIER_EV`, `TrackedBet.isOutlier`), the bet sheet (`ui/TrackerBetSheet`, `data/tracker/BetInsight`: odds
+  bet at vs fair now, every book's odds and per-book EV), Replace (`data/tracker/BetReplace`, Settings' bet-slip amount), grading that says why
+  (`BetGrader.gradeDetailed`/`whyNot`, `BetSettler` notes `gradeNote`/`gradeManual`, Grade now, `BetTracker.regrade`; hockey/basketball/football
+  box scores and ESPN tennis in `FreeScores`; RESEARCH.md §34), and the +EV alert's "✓ Placed" (`app/EvAlerts.handle`,
+  `AlertActionReceiver`, `data/alerts/AlertPlacement`)).
 - **Background auto-scan and +EV alerts (v0.18.0+, Vigilant only; RESEARCH.md §26):** `ScanSettings.autoScan`
   (Off / CNO / CNO + Vigilant) every `autoScanMinutes` (5-40) with Vigilant closed: `app/AutoScanService` (specialUse
   foreground service, ongoing note with Scan now/Stop), `AutoScanAlarm` (exact while idle), `AutoScanReceiver` (alarm,
