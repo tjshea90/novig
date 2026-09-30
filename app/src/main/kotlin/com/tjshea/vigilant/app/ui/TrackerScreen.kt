@@ -311,6 +311,7 @@ fun TrackerScreen(
                             onStake = { editStake = bet },
                             onDelete = { confirmDelete = bet },
                             injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
+                            move = state.lineMoves[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
                         )
                     }
                 }
@@ -549,6 +550,8 @@ private fun BetCard(
     onDelete: () -> Unit,
     /** An open prop bet's player may not play (PARLAY_API.md §6.1): a tag after the pick. */
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
+    /** An open team bet's game moved at Pinnacle (PARLAY_API.md §6.3). */
+    move: com.tjshea.vigilant.data.reference.LineMove? = null,
 ) {
     val open = bet.status == BetStatus.PENDING
     val awaiting = TrackerText.awaiting(bet, now)
@@ -570,6 +573,7 @@ private fun BetCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(bet.eventName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (open) move?.let { LineMoveNote(it) }
                     Text(
                         (if (bet.source == BetTracker.SOURCE_CNO) "CNO" else "Vigilant") +
                             " · placed ${Format.placedAt(bet.createdAtMs)}" +

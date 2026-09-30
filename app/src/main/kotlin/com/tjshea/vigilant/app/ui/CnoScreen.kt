@@ -320,6 +320,7 @@ fun CnoScreen(
                             live = state.livePrice(pick.row, now) != null,
                             team = state.teams[pick.row.key],
                             injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(pick.row)],
+                            move = state.lineMoves[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(pick.row)],
                             placedOther = state.placedFamilies[com.tjshea.vigilant.data.match.Picks.familyKey(pick.row.event, pick.row.market, pick.row.bet)]?.title,
                             modifier = Modifier.padding(horizontal = 12.dp).animateItem(),
                             onPlaced = { markPlaced(pick) },
@@ -552,6 +553,8 @@ private fun CnoCard(
     placedOther: String? = null,
     /** The player's injury report when he may not play (PARLAY_API.md §6.1): a tag after the pick. */
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
+    /** A team bet's game moved at Pinnacle (PARLAY_API.md §6.3). */
+    move: com.tjshea.vigilant.data.reference.LineMove? = null,
     /** CNO's price when Novig's now (the one shown) differs. */
     listedOdds: Int? = null,
     /** When the price shown was read (Novig's live read, or CNO's list). */
@@ -617,6 +620,7 @@ private fun CnoCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(row.book.uppercase() + if (live) " NOW" else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)

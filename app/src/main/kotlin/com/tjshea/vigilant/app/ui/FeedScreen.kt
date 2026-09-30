@@ -159,7 +159,7 @@ fun FeedScreen(
                     }
                 }
                 items(shown, key = { it.key }) { o ->
-                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key]) { selected = o }
+                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key]) { selected = o }
                 }
             }
         }
@@ -385,6 +385,8 @@ fun OpportunityCard(
     onHide: (() -> Unit)? = null,
     /** The player's injury report when he may not play (a prop bet): a tag after the pick. */
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
+    /** A team bet's game moved at Pinnacle (PARLAY_API.md §6.3): toward this side or against it. */
+    move: com.tjshea.vigilant.data.reference.LineMove? = null,
     onClick: () -> Unit,
 ) {
     val q = o.quote ?: return
@@ -433,6 +435,7 @@ fun OpportunityCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(AppBook.name.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)

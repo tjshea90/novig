@@ -96,6 +96,10 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
                 stickyHeader(key = "leagues") {
                     StickyBar { LeagueChips(com.tjshea.vigilant.data.scanner.Leagues.ALL, state.settings.leagues, onToggleLeague, Modifier.padding(vertical = 4.dp)) }
                 }
+                // Pinnacle's biggest moves in the picked leagues (ParlayAPI's movers, free; PARLAY_API.md §6.3).
+                if (state.settings.useParlay && topMoves(state.movers, state.settings.leagues).isNotEmpty()) {
+                    item(key = "lineMoves") { LineMovesCard(state.movers, state.settings.leagues, Modifier.padding(horizontal = 12.dp)) }
+                }
                 if (games.isEmpty()) {
                     item(key = "empty") {
                         when {
