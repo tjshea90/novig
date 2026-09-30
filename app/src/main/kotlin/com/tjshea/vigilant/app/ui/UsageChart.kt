@@ -62,7 +62,7 @@ fun ParlayUsageChart(history: ParlayAccount.History, now: Long, modifier: Modifi
     val slots = remember(history, now / 3_600_000L) { usageSlots(history, now) }
     val peak = slots.maxOfOrNull { it.credits } ?: 0
     // The day read out under the bars: the tapped one, else today.
-    var picked by rememberSaveable(history.readAtMs) { mutableStateOf<String?>(null) }
+    var picked by rememberSaveable { mutableStateOf<String?>(null) }
     val shown = slots.firstOrNull { it.day == picked } ?: slots.last()
     val bar = MaterialTheme.colorScheme.primary
     val axis = MaterialTheme.colorScheme.outlineVariant

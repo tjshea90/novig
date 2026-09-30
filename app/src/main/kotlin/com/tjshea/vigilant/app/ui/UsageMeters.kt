@@ -79,12 +79,15 @@ private fun meterColor(left: Int?, allowance: Int?): Color {
 fun UsageSection(state: UiState, modifier: Modifier = Modifier) {
     val now = rememberNow(30_000)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        meterViews(state, now).forEach { ProviderMeter(it, now) }
+        meterViews(state, now).forEach { v ->
+            // ParlayAPI's own day-by-day log under its meter (PARLAY_API.md §6.2).
+            ProviderMeter(v, now, history = state.parlayHistory.takeIf { v.policy.id == QuotaPolicy.PARLAY.id && v.keys.isNotEmpty() })
+        }
     }
 }
 
 @Composable
-private fun ProviderMeter(v: ProviderView, now: Long) {
+private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -120,6 +123,7 @@ private fun ProviderMeter(v: ProviderView, now: Long) {
                     color = if (v.throttledToday > 0) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            history?.let { ParlayUsageChart(it, now) }
             Text(v.policy.rule, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
