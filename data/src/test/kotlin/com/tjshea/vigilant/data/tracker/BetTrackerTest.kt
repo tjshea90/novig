@@ -131,8 +131,14 @@ class BetTrackerTest {
         assertEquals("no fair-odds source lists this game", t.all().first { it.id == a.id }.nowNote)
         t.applyPricing(result, listOf(a.id))
         assertNull(t.all().first { it.id == a.id }.nowNote)
-        // Once the game has started there's nothing to price.
+        // A game under way is priced too (Tj, 2026-09-30: "every single open bet refreshed"), but that read is its odds now, never its close;
+        // four hours in, nothing is read any more.
+        val close = t.all().first { it.id == a.id }.closingFair
         now = Fixtures.START_MS + 1
+        assertEquals(BetTracker.Applied(1, 0), t.applyPricing(result, listOf(a.id)))
+        assertEquals(now, t.all().first { it.id == a.id }.nowAtMs)
+        assertEquals(close, t.all().first { it.id == a.id }.closingFair)
+        now = Fixtures.START_MS + BetsScope.LIVE_WINDOW_MS
         assertEquals(BetTracker.Applied(0, 0), t.applyPricing(result, listOf(a.id)))
     }
 

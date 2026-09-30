@@ -183,6 +183,8 @@ class OpenBetPricer(
         }
     }
 
+    private val LIVE_HOURS = BetsScope.LIVE_WINDOW_MS / 3_600_000L
+
     /** Vigilant's own fair line for one Novig outcome ([fair], 0-1, read at [atMs]), or why there's none. */
     data class FairRead(val fair: Double?, val atMs: Long?, val why: String?)
 
@@ -206,7 +208,7 @@ class OpenBetPricer(
                 a !in askable -> FairRead(null, null, when {
                     Leagues.byNovigName(a.league) == null -> "Vigilant doesn't price ${a.league.ifBlank { "this league" }}"
                     a.marketId.isBlank() || a.outcomeId.isBlank() -> "Novig's exact bet wasn't found"
-                    else -> "the game has started"
+                    else -> "the game started over ${LIVE_HOURS} hours ago"
                 })
                 o != null -> FairRead(o.fairProbability, o.fairAsOfMs ?: now, null)
                 else -> FairRead(null, null, BetPricingReasons.explain(a, pass.result, pass.listed, pass.errors))

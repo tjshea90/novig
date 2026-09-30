@@ -159,10 +159,10 @@ class OpenBetPricerTest {
             bet("league", league = "MLS (USA)"),
             bet("old", marketId = "", outcomeId = ""),
             bet("won", status = BetStatus.WON),
-            bet("started", startsTs = now - 60_000L),
+            bet("started", startsTs = now - 5 * 3_600_000L),
         )
         val first = pricer(t, FakeNovig()).run(settings, listOf("gone", "nofair", "league", "old", "won", "started"))
-        // The settled bet and the started game aren't asked about at all; the other four each get their own reason.
+        // The settled bet and the game five hours in aren't asked about at all; the other four each get their own reason.
         assertEquals(OpenBetPricer.Report(4, 0, 4), first.copy(reasons = emptyMap()))
         // The same reasons come back in the report, for a check that reads CNO's pages alongside (BetTracker.mergeReads writes them then).
         assertEquals(setOf("gone", "nofair", "league", "old"), first.reasons.keys)
@@ -299,7 +299,7 @@ class OpenBetPricerTest {
                 bet("parlay:dal"),
                 bet("parlay:mia", marketId = otherMarket, outcomeId = "o-mia"),
                 bet("parlay:none", marketId = "", outcomeId = ""),
-                bet("parlay:started", startsTs = now - 60_000L),
+                bet("parlay:started", startsTs = now - 5 * 3_600_000L),
             ),
         )
         // The Cowboys are priced by the feed's own fair line (the same as a Tracker bet's pass); nobody quotes Dolphins-Broncos.
@@ -309,7 +309,7 @@ class OpenBetPricerTest {
         assertNull(reads.getValue("parlay:mia").fair)
         assertEquals("No fair-odds source has current prices for this game", reads.getValue("parlay:mia").why)
         assertEquals("Novig's exact bet wasn't found", reads.getValue("parlay:none").why)
-        assertEquals("the game has started", reads.getValue("parlay:started").why)
+        assertEquals("the game started over 4 hours ago", reads.getValue("parlay:started").why)
         assertTrue("nothing written to the Tracker", t.all().isEmpty())
         // Only the asked games' books were read.
         assertEquals(setOf(Fixtures.ML_MARKET, otherMarket), novig.bookIds.toSet())
@@ -321,5 +321,21 @@ class OpenBetPricerTest {
         val reads = pricer(tracker(), FakeNovig(), fair).fairs(settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO), listOf(bet("parlay:dal")))
         assertEquals("Vigilant's scanner is asleep (CNO only)", reads.getValue("parlay:dal").why)
         assertEquals(0, fair.calls)
+    }
+
+    @Test
+    fun `a bet whose game is under way is re-priced from live odds, as CNO's pages are read (Tj, 2026-09-30)`() = runTest {
+        // Half an hour in; Novig still lists the market (live).
+        val startMs = now - 30 * 60_000L
+        val t = tracker(bet("live", startsTs = startMs).copy(nowFair = 0.40, nowEv = 0.0, nowAtMs = now - 3 * 3_600_000L, closingFair = 0.41, closingSeenAtMs = startMs - 60_000L))
+        val report = pricer(t, FakeNovig(startsMs = startMs)).run(settings, listOf("live"))
+        assertEquals(1, report.priced)
+        val b = t.all().single()
+        assertEquals(now, b.nowAtMs)
+        assertNotNull(b.nowEv)
+        // Its close stays the last read before the start.
+        assertEquals(0.41, b.closingFair!!, 1e-12)
+        // The pass asked Novig for live markets too.
+        assertTrue(BetsScope.settingsFor(settings, listOf(b), now).includeLive)
     }
 }
