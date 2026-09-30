@@ -639,6 +639,7 @@ private fun VigilantRoot(
                         onHide = vm::markHidden,
                         onOpen = onOpenInNovig,
                         opening = openingBet,
+                        onLoadBooks = vm::loadPickBooks,
                     ),
                 )
                 Tab.CNO -> CnoTab(
