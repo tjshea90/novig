@@ -74,5 +74,10 @@ class CheckOddsCounterAppTest {
             "Open bets re-priced in the check 2h ago · 1 over ±5% left out of the average",
             TrackerText.checkCaption(s, checking = false, progress = 5 to 5, startedAtMs = 0, now = 2 * 3_600_000L),
         )
+        // Live games are left out of the counter, and the caption says how many (Tj, 2026-09-30).
+        assertEquals(
+            "Open bets re-priced in the check 2h ago · 2 live games left out",
+            TrackerText.checkCaption(s.copy(outliers = 0, live = 2), checking = false, progress = null, startedAtMs = 0, now = 2 * 3_600_000L),
+        )
     }
 }
