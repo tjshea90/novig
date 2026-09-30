@@ -2728,3 +2728,8 @@ Nevermind it works now
 ```
 Still do the through research of parlayapi docs to make sure the app is using it correctly and to full advantage and if the API offers any other features I may want in the app let me know
 ```
+
+## 2026-09-30T04:31:12Z
+```
+For the +ev vigilant scan tab, give me the x option for each bet to remove the bet from the list permanently, even through refreshes and rescans, exactly like the cno section already does
+```
