@@ -320,9 +320,11 @@ class OtherBooks(
                 .filter { (_, _, s) -> startsTs == null || s == null || abs(s - startsTs) <= GAME_GAP_MS }
                 .minByOrNull { (_, _, s) -> if (startsTs != null && s != null) abs(s - startsTs) else (s ?: Long.MAX_VALUE) }
 
-        private fun sameGame(home: String, away: String, startsMs: Long?, game: Triple<String, String, Long?>): Boolean =
-            TeamMatcher.similarity(home, game.first) >= 0.5 && TeamMatcher.similarity(away, game.second) >= 0.5 &&
-                (startsMs == null || game.third == null || abs(startsMs - game.third) <= GAME_GAP_MS)
+        private fun sameGame(home: String, away: String, startsMs: Long?, game: Triple<String, String, Long?>): Boolean {
+            val start = game.third
+            return TeamMatcher.similarity(home, game.first) >= 0.5 && TeamMatcher.similarity(away, game.second) >= 0.5 &&
+                (startsMs == null || start == null || abs(startsMs - start) <= GAME_GAP_MS)
+        }
 
         /** A feed's start can differ from Novig's by a little; a doubleheader's second game is 3+ hours later. */
         private const val GAME_GAP_MS = 2 * 60 * 60_000L
