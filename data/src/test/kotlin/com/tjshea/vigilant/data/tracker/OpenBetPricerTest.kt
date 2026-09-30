@@ -163,7 +163,9 @@ class OpenBetPricerTest {
         )
         val first = pricer(t, FakeNovig()).run(settings, listOf("gone", "nofair", "league", "old", "won", "started"))
         // The settled bet and the started game aren't asked about at all; the other four each get their own reason.
-        assertEquals(OpenBetPricer.Report(4, 0, 4), first)
+        assertEquals(OpenBetPricer.Report(4, 0, 4), first.copy(reasons = emptyMap()))
+        // The same reasons come back in the report, for a check that reads CNO's pages alongside (BetTracker.mergeReads writes them then).
+        assertEquals(setOf("gone", "nofair", "league", "old"), first.reasons.keys)
         val by = t.all().associateBy { it.id }
         assertEquals("Novig no longer lists this market (closed, or the game moved)", by.getValue("gone").nowNote)
         assertTrue(by.getValue("nofair").nowNote!!.startsWith("No fair-odds source has current prices for this game"))
