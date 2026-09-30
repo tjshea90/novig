@@ -55,7 +55,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.NonCancellable
-import com.tjshea.vigilant.app.ui.parlayShown
+import com.tjshea.vigilant.app.ui.vigilantAsks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -556,10 +556,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val s = _state.value
         val pricer = c.betPricer ?: return
         val now = System.currentTimeMillis()
-        val index = com.tjshea.vigilant.data.reference.ParlayCompare.Index(emptyList(), s.result?.opportunities.orEmpty())
-        val asks = s.parlayShown(now).filter { p ->
-            index.opportunityFor(p)?.takeIf { com.tjshea.vigilant.data.scanner.Freshness.fresh(it.fairAsOfMs, now, p.row.startsAtMs) } == null
-        }
+        val asks = s.vigilantAsks(now)
         if (asks.isEmpty()) return
         vigilantFairsJob?.cancel()
         // A newer read replaces this one: only the newest clears the "reading" line when it ends.

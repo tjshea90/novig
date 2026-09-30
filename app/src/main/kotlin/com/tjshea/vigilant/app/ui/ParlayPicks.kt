@@ -99,6 +99,20 @@ fun UiState.pickReads(picks: List<ParlayPick>, now: Long): Map<String, PickReads
     }
 }
 
+/**
+ * The shown picks Vigilant's own fair odds are read for after a ParlayAPI scan or recheck (TASKS.md P2): not the ones the last scan already
+ * priced freshly, nor ones read in the last [com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS] (a recheck right after a scan asks the
+ * fair-odds sources nothing new for them: credits are a real budget).
+ */
+fun UiState.vigilantAsks(now: Long): List<ParlayPick> {
+    val index = ParlayCompare.Index(emptyList(), result?.opportunities.orEmpty())
+    return parlayShown(now).filter { p ->
+        val scanned = index.opportunityFor(p)?.takeIf { com.tjshea.vigilant.data.scanner.Freshness.fresh(it.fairAsOfMs, now, p.row.startsAtMs) }
+        val read = parlayPicks.vigilant[p.key]?.takeIf { it.fair != null && it.atMs != null && now - it.atMs < com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS }
+        scanned == null && read == null
+    }
+}
+
 /** CNO's list row for the same bet as [p], when CNO is on and its game page can be read (TASKS.md P4). */
 fun pickCnoRow(state: UiState, p: ParlayPick): CnoRow? =
     if (!state.settings.cnoOn) null
@@ -353,9 +367,11 @@ fun ParlayPickSheet(
     val onLoadBooks by androidx.compose.runtime.rememberUpdatedState(actions.onLoadBooks)
     val latest by androidx.compose.runtime.rememberUpdatedState(p)
     androidx.compose.runtime.LaunchedEffect(p.key) { onLoadBooks(latest, false) }
+    // Which books show (CNO's page or ParlayAPI's): worked out when they change, not on every redraw.
+    val books = androidx.compose.runtime.remember(p.key, state.cno.snapshot, state.books, state.parlayPicks.books, state.settings.scanner) { state.pickBooks(p) }
     androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
         ParlayPickDetail(
-            p, state.settings, now, reads, state.pickBooks(p),
+            p, state.settings, now, reads, books,
             injury = state.injuries[p.key],
             opening = actions.opening == p.row.key,
             onOpen = { actions.onOpen(p.row) },
