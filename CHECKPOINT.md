@@ -1,23 +1,23 @@
-# CHECKPOINT 2180 — read me first, then TASKS.md
+# CHECKPOINT 2181 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T06:42:04Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `c0af9949` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T06:42:54Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `7cf9c8b2` (this checkpoint is the commit after it)
 
 ## Just done
-Corrected the probe tally to 15 credits (19,867 -> 19,852)
+Wrote Tj's 06:50Z request into TASKS.md as O1-O3 (Check odds now always adds Vigilant's pricing; API tuning pass; schedule automatic full tests in 4 h)
 
 ## Do this next
-Nothing open from §M; Tj decides on rotating the ParlayAPI key
+O1: read MainViewModel.checkOdds / BetRecheck / OpenBetPricer / CheckOddsStats and make every open bet get Vigilant's own pricing too
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M PARLAY_API.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  e8b4fe3b ckpt 2180: Corrected the probe tally to 15 credits (19,867 -> 19,852)
   c0af9949 ckpt 2179: v0.30.0 (code 58) released (release.yml green, Release + APK confirmed) and 
   a6208d0f ckpt 2178: pre-release: v0.30.0: ParlayAPI: injury tags on prop bets; credits-a-day cha
   a6e3eb00 ckpt 2177: v0.30.0 (code 58) gated by ship.sh (1168 tests green) and pushed; M1-M5, M7 
@@ -27,5 +27,7 @@ Nothing open from §M; Tj decides on rotating the ParlayAPI key
   ec0c2790 ckpt 2173: M5 data: ParlayBestBets (/best-bets?books=novig 10 cr/league, tap only, bet 
   4906819b ckpt 2172: M4 done: Second opinion (ParlayAPI /verdict, 5 cr, tap only) in +EV, CNO and
   52770233 ckpt 2171: M3 done: Pinnacle line moves (ParlayMovers public/free, Games-tab card, towa
-  5a128378 ckpt 2170: M2 done: ParlayAPI credits-a-day chart + top endpoints under its meter (/v1/
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
