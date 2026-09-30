@@ -177,33 +177,7 @@ class AutoScanTest {
     }
 
     @Test
-    fun `tapping it opens the bet in Novig's app, or Novig's site when the app isn't installed`() {
-        // Not installed: Novig's site (a novigapp:// link would open nothing).
-        val web = EvAlerts.intent(context, alert())
-        assertEquals(Uri.parse("https://novig.com"), web.data)
-        installNovig()
-        val app = EvAlerts.intent(context, alert())
-        assertEquals(Intent.ACTION_VIEW, app.action)
-        assertEquals(Uri.parse("novigapp://events/o1"), app.data)
-        assertEquals(MiniWindow.NOVIG_PACKAGE, app.`package`)
-        // No link at all: Novig itself.
-        assertEquals(MiniWindow.NOVIG_PACKAGE, EvAlerts.intent(context, alert(link = null)).`package`)
-    }
-
-    /** Tj, 2026-09-28: "automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into the settings". */
-    @Test
-    fun `an alert's bet slip opens with the stake Settings asks for`() {
-        installNovig()
-        assertEquals(Uri.parse("novigapp://events/o1/novig/1"), EvAlerts.intent(context, alert().copy(stake = 1.0)).data)
-        assertEquals(Uri.parse("novigapp://events/o1/cno/12.27"), EvAlerts.intent(context, alert(link = "novigapp://events/o1/cno").copy(stake = 12.27)).data)
-        // The stake comes from Settings, with each bet's Kelly stake.
-        val s = com.tjshea.vigilant.data.scanner.ScanSettings(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY)
-        assertEquals(8.5, s.slipStakeFor(8.5)!!, 0.0)
-        assertEquals(null, com.tjshea.vigilant.data.scanner.ScanSettings().slipStakeFor(8.5))
-    }
-
-    @Test
-    fun `alerts post as high-importance notifications that open the bet, once notifications are allowed`() {
+    fun `alerts post as high-importance notifications that open Vigilant full screen, once notifications are allowed`() {
         installNovig()
         val nm = context.getSystemService(NotificationManager::class.java)
         shadowOf(context).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
@@ -213,9 +187,13 @@ class AutoScanTest {
         val n = shadowOf(nm).allNotifications.single()
         assertEquals(EvAlerts.CHANNEL, n.channelId)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, nm.getNotificationChannel(EvAlerts.CHANNEL).importance)
+        // Tj, 2026-09-30: "when I click on anything in the push notifications for vigilant, instead of opening the bet, it opens the vigilant
+        // app in full screen": Vigilant's own screen, never Novig's bet slip, even with Novig installed.
         val tap = shadowOf(n.contentIntent).savedIntent
-        assertEquals(Uri.parse("novigapp://events/o1"), tap.data)
-        assertEquals(MiniWindow.NOVIG_PACKAGE, tap.`package`)
+        assertEquals(MainActivity::class.java.name, tap.component!!.className)
+        assertEquals(context.packageName, tap.component!!.packageName)
+        assertNull(tap.data)
+        assertTrue(tap.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0 && tap.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
         assertTrue(shadowOf(n.contentIntent).isActivityIntent)
     }
 
