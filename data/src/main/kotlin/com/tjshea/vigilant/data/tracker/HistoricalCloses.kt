@@ -65,6 +65,8 @@ class EspnCloses(
     private val gapMs: Long = 250,
 ) : CloseSource {
 
+    override val id: String get() = ID
+
     /** Requests made (tests count them). */
     @Volatile
     var requests = 0
@@ -126,6 +128,8 @@ class EspnCloses(
     }
 
     companion object {
+        const val ID = "espn"
+
         /** Leagues whose odds ESPN keeps, to its site path. */
         val PATHS = mapOf(
             "NFL" to "football/nfl",
@@ -229,6 +233,8 @@ class NovigTradeCloses(
 
     /** A kickoff's half hour of trades is 0.5 to 4 MB (the app reads it on any network: Tj's data is unlimited). */
     override val heavy: Boolean get() = true
+
+    override val id: String get() = ID
 
     /** Bytes read (tests and Diagnostics). */
     @Volatile
@@ -374,6 +380,8 @@ class NovigTradeCloses(
     }
 
     companion object {
+        const val ID = "novig"
+
         /** The close is what traded in the last half hour before the start. */
         const val WINDOW_MS = 30 * 60_000L
 

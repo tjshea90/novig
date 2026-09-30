@@ -49,6 +49,8 @@ class ParlayCloses(
 
     private val kept = HashMap<String, Kept>()
 
+    override val id: String get() = ID
+
     /** Settings' ParlayAPI switch: off, nothing is spent on closes either. */
     @Volatile
     var enabled: Boolean = true
@@ -143,6 +145,8 @@ class ParlayCloses(
     }
 
     companion object {
+        const val ID = "parlay"
+
         /** A league-day's closes are kept this long: the file itself is cached 6 hours on their side. */
         const val KEEP_MS = 6 * 60 * 60_000L
 
