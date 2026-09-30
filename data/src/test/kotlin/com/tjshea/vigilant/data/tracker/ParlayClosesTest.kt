@@ -119,6 +119,78 @@ class ParlayClosesTest {
         assertTrue(ParlayCloses.parseGameLine(root, late, pick("Moneyline", "Buffalo Bills")) is CloseLookup.None)
     }
 
+    /** Rows as ParlayAPI's closes file sent them for MLB on 2026-09-29 (Tj's key), trimmed to one game. */
+    private val mlbFile = """
+        {"as_of":"2026-09-30T04:10:00Z","date":"2026-09-29","row_count":9,"rows":[
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Atlanta Braves","market_key":"moneyline","market_label":"Moneyline","line":null,"over_price":-174,"under_price":null,"snapshot_time":"2026-09-29T16:54:29+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Philadelphia Phillies","market_key":"moneyline","market_label":"Moneyline","line":null,"over_price":160,"under_price":null,"snapshot_time":"2026-09-29T16:54:29+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Atlanta Braves","market_key":"spreads","market_label":"Spread","line":-1.5,"over_price":126,"under_price":null,"snapshot_time":"2026-09-29T16:54:29+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Philadelphia Phillies","market_key":"spreads","market_label":"Spread","line":1.5,"over_price":-145,"under_price":null,"snapshot_time":"2026-09-29T16:54:29+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Total","market_key":"totals","market_label":"Total","line":6.5,"over_price":-121,"under_price":108,"snapshot_time":"2026-09-29T16:54:29+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Total","market_key":"alternate_totals","market_label":"Alternate Total Runs","line":7.5,"over_price":110,"under_price":-128,"snapshot_time":"2026-09-29T02:34:09+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Matt Olson","market_key":"player_bases","market_label":"Total Bases","line":1.5,"over_price":-105,"under_price":-115,"snapshot_time":"2026-09-29T17:40:00+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Kyle Schwarber","market_key":"player_home_runs","market_label":"Home Runs","line":0.5,"over_price":210,"under_price":-280,"snapshot_time":"2026-09-29T03:05:00+00:00"},
+          {"game_date":"2026-09-29","sport_key":"baseball_mlb","commence_time":"2026-09-29T18:10:00Z","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","source":"pinnacle","player_name":"Chris Sale","market_key":"player_strikeouts","market_label":"Strikeouts","line":6.5,"over_price":-130,"under_price":110,"snapshot_time":"2026-09-29T17:55:00+00:00"}
+        ]}
+    """.trimIndent()
+
+    private val mlbStart = Instant.parse("2026-09-29T18:10:00Z").toEpochMilli()
+
+    private fun mlbBet(id: String, market: String, selection: String) = TrackedBet(
+        id, mlbStart - 86_400_000L, "MLB", "Philadelphia Phillies @ Atlanta Braves", mlbStart, market, selection, "m", "", 0.5, 0.5, 0.52, 0.04, 10.0,
+    )
+
+    @Test
+    fun `the closes file's game lines, one team a row, at the closing number, and a price from hours before isn't a close`() {
+        val root = json.parseToJsonElement(mlbFile)
+        val ml = ParlayCloses.parseFileGameLine(root, mlbBet("ml", "Moneyline", "Atlanta Braves"), pick("Moneyline", "Atlanta Braves")) as CloseLookup.Found
+        assertEquals(p(-174) / (p(-174) + p(160)), ml.fair, 1e-9)
+        val dog = ParlayCloses.parseFileGameLine(root, mlbBet("d", "Moneyline", "Philadelphia Phillies"), pick("Moneyline", "Philadelphia Phillies")) as CloseLookup.Found
+        assertEquals(1.0, ml.fair + dog.fair, 1e-9)
+        val rl = ParlayCloses.parseFileGameLine(root, mlbBet("s", "Spread", "Atlanta Braves -1.5"), pick("Spread", "Atlanta Braves -1.5")) as CloseLookup.Found
+        assertEquals(p(126) / (p(126) + p(-145)), rl.fair, 1e-9)
+        assertTrue(ParlayCloses.parseFileGameLine(root, mlbBet("s2", "Spread", "Atlanta Braves -2.5"), pick("Spread", "Atlanta Braves -2.5")) is CloseLookup.None)
+        val under = ParlayCloses.parseFileGameLine(root, mlbBet("t", "Total", "Under 6.5"), pick("Total", "Under 6.5")) as CloseLookup.Found
+        assertEquals(p(108) / (p(-121) + p(108)), under.fair, 1e-9)
+        // The 7.5 was last priced 15 hours before first pitch: not a close.
+        val early = ParlayCloses.parseFileGameLine(root, mlbBet("t2", "Total", "Over 7.5"), pick("Total", "Over 7.5")) as CloseLookup.None
+        assertTrue(early.reason, early.reason.contains("15h before the start"))
+    }
+
+    @Test
+    fun `props in the closes file under each book's own market name, and one priced the night before isn't a close`() {
+        val root = json.parseToJsonElement(mlbFile)
+        val olson = ParlayCloses.parseProp(root, pick("Total Bases", "Matt Olson Over 1.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart) as CloseLookup.Found
+        assertEquals(p(-105) / (p(-105) + p(-115)), olson.fair, 1e-9)
+        val sale = ParlayCloses.parseProp(root, pick("Pitcher Strikeouts", "Chris Sale Under 6.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart) as CloseLookup.Found
+        assertEquals(p(110) / (p(-130) + p(110)), sale.fair, 1e-9)
+        val hr = ParlayCloses.parseProp(root, pick("Home Runs", "Kyle Schwarber Over 0.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart)
+        assertTrue(hr.toString(), hr is CloseLookup.None && hr.reason.contains("h before the start"))
+    }
+
+    /** A row as ParlayAPI's `/sports/{sport}/closing-lines` sent it on 2026-09-30 (Tj's key): Pinnacle's moneyline at the start. */
+    private val flatLines = """
+        [{"sport_key":"baseball_mlb","game_date":"2026-09-29","home_team":"Atlanta Braves","away_team":"Philadelphia Phillies","bookmaker":"pinnacle",
+          "bookmaker_title":"Pinnacle","home_odds":-170,"away_odds":155,"draw_odds":null,"market_key":"h2h","commence_time":"2026-09-29T18:10:00Z",
+          "last_update":"2026-09-29T18:10:00Z","archive_source":"pinnacle","event_id":"2026-09-29_Atlanta_Braves_Philadelphia_Phillies"},
+         {"sport_key":"soccer_epl","game_date":"2026-09-29","home_team":"Arsenal","away_team":"Chelsea","bookmaker":"pinnacle","home_odds":120,
+          "away_odds":230,"draw_odds":250,"market_key":"h2h","commence_time":"2026-09-29T19:00:00Z","last_update":"2026-09-29T19:00:00Z"}]
+    """.trimIndent()
+
+    @Test
+    fun `closing-lines' flat rows give the moneyline at the start, never a three-way one`() {
+        val root = json.parseToJsonElement(flatLines)
+        val home = ParlayCloses.parseGameLine(root, mlbBet("ml", "Moneyline", "Atlanta Braves"), pick("Moneyline", "Atlanta Braves")) as CloseLookup.Found
+        assertEquals(p(-170) / (p(-170) + p(155)), home.fair, 1e-9)
+        val away = ParlayCloses.parseGameLine(root, mlbBet("a", "Moneyline", "Philadelphia Phillies"), pick("Moneyline", "Philadelphia Phillies")) as CloseLookup.Found
+        assertEquals(1.0, home.fair + away.fair, 1e-9)
+        assertTrue(ParlayCloses.parseGameLine(root, mlbBet("s", "Spread", "Atlanta Braves -1.5"), pick("Spread", "Atlanta Braves -1.5")) is CloseLookup.None)
+        val soccer = TrackedBet(
+            "x", mlbStart, "EPL", "Chelsea @ Arsenal", Instant.parse("2026-09-29T19:00:00Z").toEpochMilli(), "Moneyline", "Arsenal", "m", "", 0.5, 0.5, 0.52, 0.04, 10.0,
+        )
+        assertTrue(ParlayCloses.parseGameLine(root, soccer, pick("Moneyline", "Arsenal")) is CloseLookup.None)
+    }
+
     @Test
     fun `the Odds API sport key of a bet's league`() {
         assertEquals("americanfootball_nfl", ParlayCloses.sportKeyOf(bet("a", "Moneyline", "Buffalo Bills")))
