@@ -461,13 +461,16 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     if (s.usePropLine) {
         KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
     }
-    // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 14 more books in The Odds API's format, and closing lines for CLV.
+    // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 9 more books, a league's props and alternate lines in one call each, and
+    // Pinnacle's closing lines for CLV. Paced to a day's share of the plan; a free key only buys the closes.
     SwitchRow(
         "ParlayAPI",
-        if (state.parlayKeys.isEmpty()) "Optional: Pinnacle, ProphetX, bet365, BetOnline, Bovada and the US books, player props included, plus " +
-            "Pinnacle's closing lines for your CLV. Free key at parlay-api.com (1,000 credits a month); \$5-\$40 a month for more."
-        else "Pinnacle and 9 more books each scan (1 credit per market per league; props 1 per prop type per game), and Pinnacle's " +
-            "closing lines for your CLV (a few credits a day). Keys are used in order.",
+        if (state.parlayKeys.isEmpty()) "Optional, best on its \$5 plan: Pinnacle, ProphetX, BetOnline, bet365, Bovada and the US books, a " +
+            "whole league's player props and alternate lines in one call each, and Pinnacle's closing lines for your CLV. Free key at " +
+            "parlay-api.com (1,000 credits a month: closing lines only); \$5 a month (20,000) for scans too."
+        else "Pinnacle and 9 more books with alternate spreads and totals (5 credits a league) and every book's player props (3 a league) " +
+            "each scan, paced to a day's share of your plan, plus Pinnacle's closing lines for your CLV (the last 300 credits are kept " +
+            "for them). A free key is kept for closing lines. Off, spent or gone: the other feeds carry on.",
         s.useParlay,
     ) { v -> onUpdate { it.copy(useParlay = v) } }
     if (s.useParlay) {
@@ -504,8 +507,8 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         SwitchRow(
             "Sportsbook player props",
             "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Pinnacle and " +
-                "Kalshi where they have the same line. PropLine first: 1 request per game. The Odds API: 1 credit per prop type " +
-                "per game, only for games and prop types PropLine didn't price.",
+                "Kalshi where they have the same line. ParlayAPI (paid plan): a whole league's in one call. PropLine: 1 request per " +
+                "game. The Odds API: 1 credit per prop type per game, only for games and prop types PropLine didn't price.",
             s.useBookProps,
         ) { v -> onUpdate { it.copy(useBookProps = v) } }
         if (s.useBookProps) {
@@ -520,8 +523,8 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
                 }
                 Hint(propLineGamesHint(s))
             }
-            if (s.useOddsApi || s.useParlay) {
-                Text("Prop types per game (The Odds API, ParlayAPI)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            if (s.useOddsApi) {
+                Text("Prop types per game (The Odds API)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
                 Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else if (it >= ScanSettings.NO_LIMIT) "No limit" else it.toString() }) { v ->
