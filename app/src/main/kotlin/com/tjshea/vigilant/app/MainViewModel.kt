@@ -152,6 +152,8 @@ data class UiState(
     val movers: Map<String, com.tjshea.vigilant.data.reference.MoversBoard> = emptyMap(),
     /** The listed and open team bets whose game moved at Pinnacle, by item key ([com.tjshea.vigilant.data.reference.LineMoves]). */
     val lineMoves: Map<String, com.tjshea.vigilant.data.reference.LineMove> = emptyMap(),
+    /** ParlayAPI's own +EV picks at Novig, re-priced at Novig's book (read only on a tap; PARLAY_API.md §6.5). */
+    val parlayPicks: com.tjshea.vigilant.app.ui.ParlayPicksUi = com.tjshea.vigilant.app.ui.ParlayPicksUi(),
     /** ParlayAPI's "Second opinion" on the bets Tj asked about, by item key (a +EV bet's key, "cno:<row key>", "bet:<id>"). */
     val opinions: Map<String, com.tjshea.vigilant.app.ui.OpinionUi> = emptyMap(),
     /** ParlayAPI's own usage log, day by day, and where the credits went (Settings › API usage; PARLAY_API.md §6.2). */
@@ -493,6 +495,78 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * ParlayAPI's own +EV list at Novig (Tj, 2026-09-30, PARLAY_API.md §6.5): each picked league's /best-bets (10 credits a league, only
+     * on this tap), every play found in Novig's catalog and priced from Novig's own book, so only what's +EV at Novig's real price shows.
+     */
+    fun scanParlayPicks() {
+        val s = _state.value
+        if (!s.canAskParlay || s.parlayPicks.loading) return
+        val leagues = s.settings.leagues.mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it) }
+            .filter { com.tjshea.vigilant.data.reference.ParlayBestBets.supports(it) }
+        if (leagues.isEmpty()) {
+            _toasts.tryEmit("Pick a league with player props first (ParlayAPI's list is props only)")
+            return
+        }
+        _state.update { it.copy(parlayPicks = it.parlayPicks.copy(loading = true, errors = emptyList())) }
+        viewModelScope.launch {
+            val boards = ArrayList<com.tjshea.vigilant.data.reference.ParlayBoard>()
+            val errors = ArrayList<String>()
+            try {
+                withContext(Dispatchers.IO) {
+                    for (l in leagues) {
+                        try {
+                            c.parlayBestBets.read(l)?.let(boards::add)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            errors += "${l.displayName}: ${com.tjshea.vigilant.data.reference.readableError(e)}"
+                        }
+                    }
+                }
+                val plays = boards.flatMap { it.plays }
+                val picks = withContext(Dispatchers.IO) { priceAtNovig(plays) }
+                val now = System.currentTimeMillis()
+                _state.update {
+                    it.copy(
+                        parlayPicks = com.tjshea.vigilant.app.ui.ParlayPicksUi(
+                            picks = picks, readAtMs = now, leagues = leagues.map { l -> l.displayName },
+                            errors = errors, summaries = boards.mapNotNull { b -> b.summary },
+                        ),
+                    )
+                }
+            } finally {
+                _state.update { if (it.parlayPicks.loading) it.copy(parlayPicks = it.parlayPicks.copy(loading = false)) else it }
+            }
+        }
+    }
+
+    /** ParlayAPI's picks at Novig's price now again: Novig's books only, no ParlayAPI credits. */
+    fun recheckParlayPicks() {
+        val current = _state.value.parlayPicks
+        if (current.picks.isEmpty() || current.rechecking || current.loading) return
+        _state.update { it.copy(parlayPicks = it.parlayPicks.copy(rechecking = true)) }
+        viewModelScope.launch {
+            try {
+                val picks = withContext(Dispatchers.IO) { priceAtNovig(current.picks.map { it.play }) }
+                _state.update { it.copy(parlayPicks = it.parlayPicks.copy(picks = picks)) }
+            } finally {
+                _state.update { it.copy(parlayPicks = it.parlayPicks.copy(rechecking = false)) }
+            }
+        }
+    }
+
+    /** [plays] found in Novig's catalog (their starts) and priced from Novig's own books: nothing at ParlayAPI's listed price is trusted. */
+    private suspend fun priceAtNovig(plays: List<com.tjshea.vigilant.data.reference.ParlayPlay>): List<com.tjshea.vigilant.data.reference.ParlayPick> {
+        if (plays.isEmpty()) return emptyList()
+        val rows = plays.map { p ->
+            val start = runCatching { c.betFinder.event(p.row()) }.getOrNull()?.startsTs?.takeIf { it > 0 }
+            p.row(startsAtMs = start)
+        }
+        val live = runCatching { c.live.readNow(rows) }.getOrDefault(emptyMap())
+        return com.tjshea.vigilant.data.reference.ParlayPick.priced(plays, rows, live)
+    }
+
     /** The rows whose players' teams are wanted (all of the list's player bets). */
     private fun teamRows(): Flow<List<CnoRow>> = state.map { it.cnoTeamRows }
 
@@ -577,7 +651,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         val pick = item.cno ?: return
-        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key, outcomeId = outcomeOf(item).orEmpty())
+        // ParlayAPI's picks are CNO-shaped rows too, logged as ParlayAPI's.
+        val source = if (item.key.startsWith(com.tjshea.vigilant.data.reference.ParlayPlay.KEY_PREFIX)) com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_PARLAY
+        else com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO
+        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key, outcomeId = outcomeOf(item).orEmpty(), source = source)
         // Novig's outcome, so Vigilant's own scans can follow its line to the close (best effort).
         if (!AppBook.isNovig) return
         viewModelScope.launch {

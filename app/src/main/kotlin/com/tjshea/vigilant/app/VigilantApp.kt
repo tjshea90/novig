@@ -419,6 +419,9 @@ class AppContainer(private val app: Application) {
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
     val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
 
+    /** ParlayAPI's own +EV list at Novig (its /best-bets, 10 credits a league, only on a tap; PARLAY_API.md §6.5). */
+    val parlayBestBets = com.tjshea.vigilant.data.reference.ParlayBestBets(parlayOdds, json, active = { parlayActive() })
+
     /** "Second opinion" on one bet (ParlayAPI's /v1/verdict, 5 credits, only on a tap; PARLAY_API.md §6.4). */
     val parlayVerdicts = com.tjshea.vigilant.data.reference.ParlayVerdicts(parlayOdds, json, active = { parlayActive() })
 
