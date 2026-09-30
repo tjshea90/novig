@@ -1,5 +1,14 @@
 package com.tjshea.vigilant.data.tracker
 
+import com.tjshea.vigilant.data.Fixtures
+import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
+import com.tjshea.vigilant.data.keys.KeyPool
+import com.tjshea.vigilant.data.keys.QuotaPolicy
+import com.tjshea.vigilant.data.keys.UsageBook
+import com.tjshea.vigilant.data.keys.UsageMeter
+import com.tjshea.vigilant.data.reference.OddsFeed
+import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.data.store.JsonFileStore
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -22,6 +31,10 @@ import java.time.Instant
 class ParlayClosesTest {
 
     private val json = Json { ignoreUnknownKeys = true }
+
+    private fun meter() = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
+
+    private fun pool(vararg keys: String, meter: UsageMeter = meter()) = KeyPool(QuotaPolicy.PARLAY, { keys.toList() }, meter)
     private val start = Instant.parse("2026-09-27T17:00:00Z").toEpochMilli()
 
     private fun bet(id: String, market: String, selection: String, starts: Long = start, league: String = "NFL") = TrackedBet(
@@ -131,7 +144,7 @@ class ParlayClosesTest {
         }
         try {
             var now = start + 2 * 86_400_000L
-            val closes = ParlayCloses(OkHttpClient(), { listOf("pk-1") }, json, server.url("/v1").toString().trimEnd('/'), clock = { now })
+            val closes = ParlayCloses(OkHttpClient(), pool("pk-1"), json, server.url("/v1").toString().trimEnd('/'), clock = { now })
             val bets = listOf(bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5"), bet("ml", "Moneyline", "Buffalo Bills"))
             val out = closes.closes(bets)
             assertTrue(out["prop"] is CloseLookup.Found)
@@ -164,13 +177,13 @@ class ParlayClosesTest {
         try {
             val now = start + 5 * 86_400_000L
             val ml = bet("ml", "Moneyline", "Buffalo Bills")
-            val limit = ParlayCloses(OkHttpClient(), { listOf("k") }, json, server.url("/v1").toString().trimEnd('/'), clock = { now })
+            val limit = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { now })
             assertTrue(limit.closes(listOf(ml))["ml"] is CloseLookup.None)
             body = """{"error":"credit_limit_exceeded"}"""
-            val broke = ParlayCloses(OkHttpClient(), { listOf("k") }, json, server.url("/v1").toString().trimEnd('/'), clock = { now })
+            val broke = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { now })
             assertTrue(broke.closes(listOf(ml))["ml"] is CloseLookup.Later)
             // Older than the 30 days its game-line call reaches: not asked at all.
-            val old = ParlayCloses(OkHttpClient(), { listOf("k") }, json, server.url("/v1").toString().trimEnd('/'), clock = { start + 40 * 86_400_000L })
+            val old = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { start + 40 * 86_400_000L })
             assertTrue(old.closes(listOf(ml))["ml"] is CloseLookup.None)
             assertEquals(0, old.requests)
         } finally {
@@ -199,7 +212,7 @@ class ParlayClosesTest {
             val url = server.url("/v1").toString().trimEnd('/')
             val espn = Fake(CloseLookup.Found(0.7, "ESPN · DraftKings close"))
             val t = tracker(bet("ml", "Moneyline", "Buffalo Bills"))
-            val withKey = ParlayCloses(OkHttpClient(), { listOf("k") }, json, url, clock = { now })
+            val withKey = ParlayCloses(OkHttpClient(), pool("k"), json, url, clock = { now })
             CloseBackfill(t, listOf(withKey, espn), clock = { now }).run()
             assertEquals("ParlayAPI · Pinnacle close", t.all().single().closeVia)
             assertEquals(0, espn.asked)
@@ -207,7 +220,7 @@ class ParlayClosesTest {
 
             // No key: never asked, and ESPN + Novig saying "never" is enough to stop looking.
             val t2 = tracker(bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5"))
-            val keyless = ParlayCloses(OkHttpClient(), { emptyList() }, json, url, clock = { now })
+            val keyless = ParlayCloses(OkHttpClient(), pool(), json, url, clock = { now })
             assertFalse(keyless.active)
             val none = Fake(CloseLookup.None("nope"))
             CloseBackfill(t2, listOf(keyless, none, Fake(CloseLookup.None("nor here"))), clock = { now }).run()
@@ -215,6 +228,31 @@ class ParlayClosesTest {
             val b = t2.all().single()
             assertTrue(b.closeFinal)
             assertEquals("nope; nor here", b.closeNote)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun `scans leave a key's last credits to the closing lines`() = runBlocking {
+        val server = serve { r ->
+            if (r.path!!.contains("/closing-lines")) MockResponse().setBody(gameFile).setHeader("x-requests-remaining", "285").setHeader("x-requests-used", "19715")
+            else MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "290").setHeader("x-requests-used", "19710").setHeader("x-requests-last", "3")
+        }
+        try {
+            val url = server.url("/v1").toString().trimEnd('/')
+            val shared = pool("pk")
+            val scans = TheOddsApiClient(OkHttpClient(), shared, json, baseUrl = url, minIntervalMs = 0, feed = OddsFeed.PARLAY)
+            scans.fetch("americanfootball_nfl", listOf("pinnacle")) // the server says 290 left: under the 300 kept back
+            val refused = runCatching { scans.fetch("americanfootball_nfl", listOf("pinnacle")) }.exceptionOrNull()
+            assertTrue(refused is AllKeysExhaustedException)
+            assertEquals("The last 300 credits on your ParlayAPI key are kept for closing lines.", refused!!.message)
+            assertEquals(1, server.requestCount)
+            // The closing lines still get them.
+            val now = start + 86_400_000L
+            val closes = ParlayCloses(OkHttpClient(), shared, json, url, clock = { now })
+            assertTrue(closes.closes(listOf(bet("ml", "Moneyline", "Buffalo Bills")))["ml"] is CloseLookup.Found)
+            assertEquals(2, server.requestCount)
         } finally {
             server.shutdown()
         }
