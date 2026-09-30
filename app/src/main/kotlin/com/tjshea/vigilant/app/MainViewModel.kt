@@ -115,6 +115,7 @@ data class UiState(
     val pinnapiKeys: List<String> = emptyList(),
     val pinnwireKeys: List<String> = emptyList(),
     val proplineKeys: List<String> = emptyList(),
+    val parlayKeys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),

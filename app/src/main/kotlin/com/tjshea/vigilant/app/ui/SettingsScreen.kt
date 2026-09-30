@@ -461,6 +461,18 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     if (s.usePropLine) {
         KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
     }
+    // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 14 more books in The Odds API's format, and closing lines for CLV.
+    SwitchRow(
+        "ParlayAPI",
+        if (state.parlayKeys.isEmpty()) "Optional: Pinnacle, ProphetX, bet365, BetOnline, Bovada and the US books, player props included, plus " +
+            "Pinnacle's closing lines for your CLV. Free key at parlay-api.com (1,000 credits a month); \$5-\$40 a month for more."
+        else "Pinnacle and 9 more books each scan (1 credit per market per league; props 1 per prop type per game), and Pinnacle's " +
+            "closing lines for your CLV (a few credits a day). Keys are used in order.",
+        s.useParlay,
+    ) { v -> onUpdate { it.copy(useParlay = v) } }
+    if (s.useParlay) {
+        KeyListEditor(ApiProvider.PARLAY, state.parlayKeys, keys, "Add a ParlayAPI key")
+    }
     if (!AppBook.isNovig) {
         Hint(
             "${AppBook.name}'s own odds come in these same requests (no request just for ${AppBook.name}): PropLine first, " +
@@ -488,7 +500,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         }
         Hint(creditEstimate(s, backup = propLineFirst))
     }
-    if (s.useOddsApi || s.usePropLine) {
+    if (s.useOddsApi || s.usePropLine || s.useParlay) {
         SwitchRow(
             "Sportsbook player props",
             "Your books' props (DraftKings, FanDuel, BetMGM…), each devigged, then averaged and blended with Pinnacle and " +
@@ -508,8 +520,8 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
                 }
                 Hint(propLineGamesHint(s))
             }
-            if (s.useOddsApi) {
-                Text("Prop types per game (The Odds API)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            if (s.useOddsApi || s.useParlay) {
+                Text("Prop types per game (The Odds API, ParlayAPI)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(BookPropSet.entries, s.bookPropSet, { it.displayName }) { v -> onUpdate { it.copy(bookPropSet = v) } }
                 Text("Most credits per scan on props", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else if (it >= ScanSettings.NO_LIMIT) "No limit" else it.toString() }) { v ->

@@ -40,6 +40,7 @@ fun providerFor(policy: QuotaPolicy): ApiProvider? = when (policy.id) {
     QuotaPolicy.PINNAPI.id -> ApiProvider.PINNAPI
     QuotaPolicy.PINNWIRE.id -> ApiProvider.PINNWIRE
     QuotaPolicy.PROPLINE.id -> ApiProvider.PROPLINE
+    QuotaPolicy.PARLAY.id -> ApiProvider.PARLAY
     else -> null
 }
 
