@@ -318,8 +318,18 @@ class TheOddsApiClient(
         fun bookTitle(key: String): String = when (key) {
             PolymarketClient.BOOK_KEY -> "Polymarket"
             KalshiClient.BOOK_KEY -> "Kalshi"
+            "prophetx" -> "ProphetX"
+            "bet365" -> "bet365"
             else -> KNOWN_BOOKMAKERS[key] ?: key
         }
+
+        /**
+         * One key per book whichever feed named it: ParlayAPI calls some books by other names than The Odds API (whose keys PropLine and
+         * Settings use), and the same book under two keys would count twice in the fair price.
+         */
+        fun canonicalBook(key: String): String = PARLAY_BOOK_KEYS[key] ?: key
+
+        private val PARLAY_BOOK_KEYS = mapOf("caesars" to "williamhill_us", "betonline" to "betonlineag", "hardrock" to "hardrockbet")
 
         fun parseEvents(rawJson: String, json: Json): List<RefEvent> =
             json.decodeFromString(ListSerializer(EventDto.serializer()), rawJson).map { it.toDomain() }
@@ -346,7 +356,8 @@ private data class EventDto(
     val bookmakers: List<BookmakerDto> = emptyList(),
 ) {
     fun toDomain(): RefEvent {
-        val markets = bookmakers.flatMap { book ->
+        val markets = bookmakers.flatMap { b ->
+            val book = b.copy(key = TheOddsApiClient.canonicalBook(b.key), title = TheOddsApiClient.bookTitle(TheOddsApiClient.canonicalBook(b.key)).takeIf { it != b.key } ?: b.title)
             book.markets.flatMap { m -> m.toDomain(book, home_team, away_team) }
         }
         return RefEvent(

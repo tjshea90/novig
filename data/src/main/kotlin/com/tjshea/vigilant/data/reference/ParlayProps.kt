@@ -118,7 +118,7 @@ object ParlayProps {
             val line = if (yesNo) 0.5 else r.num("line") ?: r.num("point") ?: continue
             val over = decimal(r.num("over_price")) ?: continue
             val under = decimal(r.num("under_price")) ?: continue
-            val book = r.str("bookmaker") ?: r.str("source") ?: continue
+            val book = TheOddsApiClient.canonicalBook(r.str("bookmaker") ?: r.str("source") ?: continue)
             val eventId = r.str("event_id") ?: r.str("eventId") ?: r.str("id") ?: continue
             val home = r.str("home_team") ?: continue
             val away = r.str("away_team") ?: continue
