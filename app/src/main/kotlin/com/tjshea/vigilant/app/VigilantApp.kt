@@ -392,7 +392,8 @@ class AppContainer(private val app: Application) {
         http, parlayPool, json,
         baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY,
     )
-    private val parlayProps = OddsApiPropsSource(parlayOdds)
+    /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
+    private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */
     private val bookProps = OddsApiPropsSource(oddsApi)
     /** Pinnacle: PinnWire's keys first (their free keys include player props), then pinnapi's. */
