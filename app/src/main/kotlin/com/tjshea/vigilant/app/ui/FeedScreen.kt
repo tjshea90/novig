@@ -85,8 +85,15 @@ fun FeedScreen(
     parlay: ParlayPickActions? = null,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
+    // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
+    var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
     val now = rememberNow(15_000)
+    // ParlayAPI's picks shown, and CNO's and Vigilant's EV for each (TASKS.md P2): worked out once per change, not per card or per tick.
+    val parlayPicks = remember(state.parlayPicks, state.placedIndex, state.placedKeys, state.settings, now) { state.parlayShown(now) }
+    val parlayReads = remember(parlayPicks, state.cno.snapshot, state.result, state.parlayPicks.vigilant, state.parlayPicks.vigilantReading, state.settings, now / 60_000L) {
+        state.pickReads(parlayPicks, now)
+    }
     // Vigilant's own bets Tj removed with ✕ (CNO's are listed on its tab), to put back.
     val removed = state.placed.filter { it.hidden && !it.key.startsWith("cno:") }
     var showRemoved by remember { mutableStateOf(false) }
@@ -109,6 +116,8 @@ fun FeedScreen(
             onScan = a.onScan, onRecheck = a.onRecheck, onOpen = a.onOpen, opening = a.opening,
             onPlaced = { item -> a.onPlaced(item); undoable("Placed: ${item.title}. Logged in the Tracker.", item.key) },
             onHide = { item -> a.onHide(item); undoable("Removed: ${item.title}.", item.key) },
+            onSelect = { p -> parlaySelected = p.key },
+            onLoadBooks = a.onLoadBooks,
         )
     }
 
@@ -173,18 +182,25 @@ fun FeedScreen(
                 }
                 // ParlayAPI's picks, above Vigilant's own: read only on a tap (10 credits a league), each re-priced at Novig.
                 if (parlayActions != null && state.canAskParlay && state.settings.leagues.isNotEmpty()) {
-                    val picks = state.parlayShown(now)
-                    item(key = "parlayHeader") { ParlayPicksHeader(state, picks.size, now, parlayActions, Modifier.padding(horizontal = 12.dp)) }
-                    items(picks, key = { "parlay/" + it.key }) { p ->
+                    item(key = "parlayHeader") { ParlayPicksHeader(state, parlayPicks.size, now, parlayActions, Modifier.padding(horizontal = 12.dp)) }
+                    items(parlayPicks, key = { "parlay/" + it.key }) { p ->
                         ParlayPickCard(
                             p, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(),
-                            injury = state.injuries[p.key], actions = parlayActions,
+                            injury = state.injuries[p.key], actions = parlayActions, reads = parlayReads[p.key],
                         )
                     }
                 }
                 items(shown, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key]) { selected = o }
                 }
+            }
+        }
+    }
+
+    if (parlayActions != null) {
+        parlaySelected?.let { key ->
+            state.parlayPicks.picks.firstOrNull { it.key == key }?.let { p ->
+                ParlayPickSheet(p, state, parlayReads[key] ?: state.pickReads(listOf(p), now)[key], parlayActions, onDismiss = { parlaySelected = null })
             }
         }
     }
