@@ -593,7 +593,9 @@ private fun VigilantRoot(
             betCno = { row -> vm.api.bet(row) },
         ),
         // ParlayAPI's second opinion in every bet sheet (PARLAY_API.md §6.4).
-        com.tjshea.vigilant.app.ui.LocalOpinions provides com.tjshea.vigilant.app.ui.OpinionActions(state.canAskParlay, state.opinions, vm::askOpinion),
+        com.tjshea.vigilant.app.ui.LocalOpinions provides remember(state.canAskParlay, state.opinions) {
+            com.tjshea.vigilant.app.ui.OpinionActions(state.canAskParlay, state.opinions, vm::askOpinion)
+        },
     ) {
     Scaffold(
         bottomBar = {
