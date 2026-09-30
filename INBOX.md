@@ -2783,3 +2783,8 @@ Make it so I'm the parlayapi pick section, if I click on a bet, it opens a scree
 ```
 When I'm using the parlayapi picks section and I click on a bet to see the current odds from different sports books, most of the time it says parlayapi couldn't find other sports books with this bet. Is there a backup fall back provider or api that can be used so that I always see other sports books odds for any bet when I click on it
 ```
+
+## 2026-09-30T15:00:43Z
+```
+Also when I press a notification and the app opens full screen, that notification should be removed
+```
