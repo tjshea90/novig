@@ -45,9 +45,11 @@ class ParlayCloses(
 
     private val kept = HashMap<String, Kept>()
 
+    /** Asked only when Tj has a ParlayAPI key. */
+    override val active: Boolean get() = keys().isNotEmpty()
+
     override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> {
-        val key = keys().firstOrNull()
-        if (key == null) return bets.associate { it.id to CloseLookup.None("No ParlayAPI key") }
+        val key = keys().firstOrNull() ?: return emptyMap()
         val out = HashMap<String, CloseLookup>()
         for (b in bets) {
             val sport = sportKeyOf(b)
@@ -68,18 +70,28 @@ class ParlayCloses(
     // ---- props ------------------------------------------------------------------------------------------------------
 
     private suspend fun prop(b: TrackedBet, pick: BetGrader.Pick.Prop, sport: String, key: String): CloseLookup {
-        val market = PropStats.SPORT_MARKETS[sport].orEmpty().firstOrNull { it.second == pick.stat }?.first
-            ?: return CloseLookup.None("ParlayAPI has no ${pick.stat.lowercase()} closes")
-        val date = Instant.ofEpochMilli(b.startsTs).atZone(ZoneOffset.UTC).toLocalDate().toString()
-        val root = get("/historical/closing-lines.json", listOf("date" to date, "sport_key" to sport, "source" to "pinnacle", "limit" to "10000"), key)
-            ?: return CloseLookup.Later("ParlayAPI didn't answer")
-        return parseProp(root, pick, market, b.startsTs)
+        val markets = PropStats.oddsApiMarketsFor(sport, pick.stat)
+        if (markets.isEmpty()) return CloseLookup.None("ParlayAPI has no ${PropStats.displayName(pick.stat).lowercase()} closes")
+        // One file per UTC day; an evening game in the US can sit under either its UTC date or its US date.
+        val start = Instant.ofEpochMilli(b.startsTs)
+        val dates = listOf(start.atZone(ZoneOffset.UTC).toLocalDate(), start.atZone(US_EAST).toLocalDate()).distinct()
+        var last: CloseLookup = CloseLookup.Later("ParlayAPI didn't answer")
+        for (date in dates) {
+            val root = get("/historical/closing-lines.json", listOf("date" to date.toString(), "sport_key" to sport, "source" to "pinnacle", "limit" to "10000"), key)
+                ?: return CloseLookup.Later("ParlayAPI didn't answer")
+            last = parseProp(root, pick, markets, b.startsTs)
+            if (last is CloseLookup.Found) return last
+        }
+        return last
     }
 
     // ---- game lines -------------------------------------------------------------------------------------------------
 
     private suspend fun gameLine(b: TrackedBet, pick: BetGrader.Pick, sport: String, key: String): CloseLookup {
-        val days = (((clock() - b.startsTs) / 86_400_000L) + 1).coerceIn(1, 90)
+        // Their API takes 1..30 days back; a game longer ago than that is past what a game-line call can reach.
+        val back = (clock() - b.startsTs) / 86_400_000L + 1
+        if (back > MAX_DAYS) return CloseLookup.None("Older than ParlayAPI's $MAX_DAYS-day closing-lines window")
+        val days = back.coerceIn(1, MAX_DAYS.toLong())
         val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to days.toString(), "oddsFormat" to "american"), key)
             ?: return CloseLookup.Later("ParlayAPI didn't answer")
         return parseGameLine(root, b, pick)
@@ -94,8 +106,9 @@ class ParlayCloses(
             val reply = http.newCall(Request.Builder().url(url).get().build()).awaitText()
             when {
                 reply.isSuccessful -> runCatching { json.parseToJsonElement(reply.body) }.getOrNull()
-                // Past the plan's history window, or no such sport: an answer (nothing to find), not a failure.
-                reply.code == 403 || reply.code == 404 -> JsonArray(emptyList())
+                // Past the plan's history window, or no such sport: an answer (nothing to find), not a failure. Out of credits or a
+                // refused key is a failure: asked again later.
+                reply.code == 404 || (reply.code == 403 && reply.body.contains("HISTORICAL_LIMIT", ignoreCase = true)) -> JsonArray(emptyList())
                 else -> null
             }
         } catch (e: IOException) {
@@ -112,6 +125,11 @@ class ParlayCloses(
         /** A close's game must start within this of the bet's. */
         private const val START_GAP_MS = 3 * 60 * 60_000L
 
+        /** The most days back `/sports/{sport}/closing-lines` takes. */
+        const val MAX_DAYS = 30
+
+        private val US_EAST = java.time.ZoneId.of("America/New_York")
+
         private fun JsonElement?.obj() = this as? JsonObject
         private fun JsonElement?.arr() = (this as? JsonArray).orEmpty()
         private fun JsonObject.str(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.content
@@ -123,12 +141,17 @@ class ParlayCloses(
 
         private fun ms(s: String?): Long? = s?.let { runCatching { Instant.parse(if (it.endsWith("Z") || it.contains('+')) it else it + "Z").toEpochMilli() }.getOrNull() }
 
-        /** American odds (a number or "+120") to the vigged implied probability. */
-        private fun implied(v: Double?): Double? {
-            val n = v?.toInt() ?: return null
-            if (abs(n) < 100) return null
-            return 1.0 / Odds.americanToDecimal(n)
+        /** A price to its vigged implied probability: American (-110, +120), or decimal (1.91) if a feed ever sends that. */
+        private fun implied(v: Double?): Double? = when {
+            v == null -> null
+            abs(v) >= 100 -> 1.0 / Odds.americanToDecimal(Math.round(v).toInt())
+            v > 1.0 && v < 100 -> 1.0 / v
+            else -> null
         }
+
+        /** A row's side: its price, else the implied probability it carries (0..1, or a percent). */
+        private fun side(r: JsonObject, price: String, prob: String): Double? =
+            implied(r.num(price)) ?: r.num(prob)?.let { if (it > 1.0) it / 100 else it }?.takeIf { it > 0.0 && it < 1.0 }
 
         private fun fair(mine: Double, other: Double) = Devig.multiplicative(listOf(mine, other))[0]
 
@@ -136,16 +159,17 @@ class ParlayCloses(
         private fun rowsOf(root: JsonElement): List<JsonObject> = ((root.obj()?.get("rows") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }
 
         /** [pick]'s Pinnacle close in a closing-lines file: its player, its market, its exact line, its game's start. */
-        fun parseProp(root: JsonElement, pick: BetGrader.Pick.Prop, market: String, startsTs: Long): CloseLookup {
+        fun parseProp(root: JsonElement, pick: BetGrader.Pick.Prop, markets: Collection<String>, startsTs: Long): CloseLookup {
             val rows = rowsOf(root).filter { r ->
-                r.str("market_key") == market && PlayerNames.same(r.str("player_name") ?: r.str("player"), pick.player) &&
+                r.str("market_key") in markets && (r.str("source") ?: r.str("bookmaker") ?: "pinnacle").equals("pinnacle", true) &&
+                    PlayerNames.same(r.str("player_name") ?: r.str("player"), pick.player) &&
                     (r.str("commence_time")?.let(::ms)?.let { abs(it - startsTs) <= START_GAP_MS } ?: true)
             }
             if (rows.isEmpty()) return CloseLookup.None("Pinnacle's close for this prop isn't in ParlayAPI's file")
             val exact = rows.firstOrNull { r -> r.num("line")?.let { abs(it - pick.line) < 1e-6 } == true }
                 ?: return CloseLookup.None("Pinnacle closed this prop at ${rows.mapNotNull { it.num("line") }.distinct().joinToString(" / ")}, not your ${pick.line}")
-            val over = implied(exact.num("over_price")) ?: return CloseLookup.None("ParlayAPI's row has no over price")
-            val under = implied(exact.num("under_price")) ?: return CloseLookup.None("ParlayAPI's row has no under price")
+            val over = side(exact, "over_price", "over_implied_prob") ?: return CloseLookup.None("Pinnacle's close has no over price")
+            val under = side(exact, "under_price", "under_implied_prob") ?: return CloseLookup.None("Pinnacle's close has no under price")
             return CloseLookup.Found(if (pick.over) fair(over, under) else fair(under, over), "ParlayAPI · Pinnacle close")
         }
 
