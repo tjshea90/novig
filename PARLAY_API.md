@@ -189,6 +189,22 @@ unless the task says so, and only while `useParlay` is on with a key.
   (`ParlayPickDetail`): the three EVs plus "Books" (Vigilant's worst case), every book's odds for the bet and its other side with
   CNO's verdict card and book table: CNO's game page when CNO lists the same bet, else (or when that page can't be read)
   ParlayAPI's own books (`ParlayBooks.view(league, event, start, market, bet)`: its `/props` or game lines, shared 2 min).
+- **Why a pick's sheet so often said "no other book", and the fix (v0.33.0, TASKS.md Q1-Q2; measured with Tj's key 2026-09-30 14:4xZ):**
+  ParlayAPI's picks are mostly home-run and touchdown props, and the books list those one-sided. MLB home runs (4 games): the scans'
+  request (`markets=batter_home_runs`, which ParlayAPI answers with its own `player_home_runs` rows: aliases work; books = Pinnacle, DK, FD,
+  Caesars, Bovada, ProphetX; `maxAgeSec=600`) got 146 rows, 138 of them "Over" only (FanDuel, Bovada, Caesars, most of ProphetX's), and the
+  scans' reader keeps two-sided lines only; the books that price both sides (bet365, Hard Rock, Fliff, betPARX) weren't asked for. DraftKings
+  had no HR rows. NFL anytime TD (`player_anytime_td`): 2,512 rows, **every** book "Yes" only (bet365, FanDuel, Caesars, Fanatics, Hard
+  Rock, DraftKings, Bovada). Pick'em apps (PrizePicks, Underdog, Pick6, Sleeper) send flat payouts, flagged `is_dfs_flat_payout` /
+  `dfs_normalized`. Rows mix time formats for one game (`…000Z`, `…Z`, `…-04:00`, `…+00:00`) and the same book can come twice.
+  `age_seconds` spread widely (a book's HR price 20-50 min old next to others seconds old). `/props` can answer 200 with
+  `{"error":"props_temporarily_busy","detail":"… Retry in a couple of seconds."}` (or a 503): asked again once.
+  Fix: `data/.../reference/OtherBooks.kt`, for a tapped pick's sheet only (never a fair line): ParlayAPI `/props` for that market, **every
+  book** (no `bookmakers`), `maxAgeSec=3600`, one-sided kept, pick'em apps and Novig left out, shared 2 min per league+market (3 credits);
+  **PropLine** for that game at the same time (its events list + one game board, 18 books, one-sided kept: 1-2 of its free 1,000 a day);
+  **The Odds API** (10 US books, about 1 credit) only when neither found another book. One line per book (a current price first, then
+  two-sided); prices past the freshness limit listed apart with their age, never counted; Novig's live price is the judged row. The scans'
+  own readers are unchanged (they still need both sides for a fair line).
 
 ### 6.6 Line-movement chart (M6) — `GET /v1/sports/{s}/line-movement?eventId=&market=&player=&hours=`, 2 credits
 - **Unreliable (2026-09-30):** props lookups answered 503 `LINE_MOVEMENT_TIMEOUT` three times (**charged 2 credits each**), a moneyline
