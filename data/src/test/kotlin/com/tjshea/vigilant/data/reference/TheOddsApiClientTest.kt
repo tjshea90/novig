@@ -216,7 +216,10 @@ class TheOddsApiClientTest {
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
         val snap = parlay(listOf("spent", "fresh")).fetch("americanfootball_nfl", listOf("pinnacle"))
         assertFalse(snap.events.isEmpty())
-        assertEquals("spent", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
-        assertEquals("fresh", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+        // ParlayAPI's best practices (2026-09-30): the key in the X-API-Key header, never in the URL.
+        val first = server.takeRequest()
+        assertEquals("spent", first.getHeader("X-API-Key"))
+        assertEquals(null, first.requestUrl!!.queryParameter("apiKey"))
+        assertEquals("fresh", server.takeRequest().getHeader("X-API-Key"))
     }
 }

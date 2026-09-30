@@ -113,24 +113,36 @@ class ParlayCloses(
         kept[cacheKey]?.takeIf { clock() - it.atMs < KEEP_MS }?.let { return it.value }
         val value = try {
             pool.execute(cost) { key ->
-                val url = (base + path).toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.addQueryParameter("apiKey", key).build()
+                // ParlayAPI's best practices: the key in the X-API-Key header, not the URL; one retry a second later for a 502/503/504 or a
+                // dropped connection, none for 4xx.
+                val url = (base + path).toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
+                val request = Request.Builder().url(url).get().header("X-API-Key", key).build()
                 requests++
-                val reply = http.newCall(Request.Builder().url(url).get().build()).awaitText()
-                val remaining = reply.headers["x-requests-remaining"]?.toDoubleOrNull()?.toInt()
-                val used = reply.headers["x-requests-used"]?.toDoubleOrNull()?.toInt()
-                val charged = (reply.headers["x-requests-last"] ?: reply.headers["X-Export-Credits"])?.toDoubleOrNull()?.toInt()
+                var reply = try {
+                    http.newCall(request).awaitText()
+                } catch (e: IOException) {
+                    kotlinx.coroutines.delay(RETRY_AFTER_MS)
+                    requests++
+                    http.newCall(request).awaitText()
+                }
+                if (reply.code in 502..504) {
+                    kotlinx.coroutines.delay(RETRY_AFTER_MS)
+                    requests++
+                    reply = http.newCall(request).awaitText()
+                }
+                val credits = com.tjshea.vigilant.data.keys.CreditHeaders.read({ reply.headers[it] }, clock())
                 val body = reply.body
                 when {
-                    reply.isSuccessful -> KeyAttemptResult.Success(json.parseToJsonElement(body), charged, remaining, used)
+                    reply.isSuccessful -> KeyAttemptResult.Success(json.parseToJsonElement(body), credits.cost ?: reply.headers["X-Export-Credits"]?.toDoubleOrNull()?.toInt(), credits.remaining, credits.used, credits.resetAtMs)
                     // Past the plan's history window, or no such sport: an answer (nothing to find), not a failure.
                     reply.code == 404 || (reply.code == 403 && body.contains("HISTORICAL_LIMIT", ignoreCase = true)) ->
-                        KeyAttemptResult.Success(JsonArray(emptyList()), charged ?: 0, remaining, used)
+                        KeyAttemptResult.Success(JsonArray(emptyList()), credits.cost ?: 0, credits.remaining, credits.used, credits.resetAtMs)
                     reply.code == 429 -> KeyAttemptResult.RateLimited(reply.headers["Retry-After"]?.toLongOrNull()?.times(1000) ?: 2_000, "HTTP 429")
                     (reply.code == 401 || reply.code == 403) &&
                         (body.contains("credit_limit_exceeded") || body.contains("quota", ignoreCase = true) || body.contains("OUT_OF_USAGE_CREDITS")) ->
                         KeyAttemptResult.Depleted("monthly credits used up")
-                    reply.code == 401 || reply.code == 403 -> KeyAttemptResult.Invalid("HTTP ${reply.code}")
-                    else -> throw IOException("HTTP ${reply.code}")
+                    reply.code == 401 || reply.code == 403 -> KeyAttemptResult.Invalid("HTTP ${reply.code}" + credits.requestId?.let { " (request $it)" }.orEmpty())
+                    else -> throw IOException("HTTP ${reply.code}" + credits.requestId?.let { " (request $it)" }.orEmpty())
                 }
             }
         } catch (e: IOException) {
@@ -146,6 +158,9 @@ class ParlayCloses(
 
     companion object {
         const val ID = "parlay"
+
+        /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
+        const val RETRY_AFTER_MS = 1_000L
 
         /** A league-day's closes are kept this long: the file itself is cached 6 hours on their side. */
         const val KEEP_MS = 6 * 60 * 60_000L

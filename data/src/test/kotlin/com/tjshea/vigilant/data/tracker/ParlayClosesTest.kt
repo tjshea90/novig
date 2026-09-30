@@ -153,7 +153,7 @@ class ParlayClosesTest {
             assertEquals("2026-09-27", file.queryParameter("date"))
             assertEquals("americanfootball_nfl", file.queryParameter("sport_key"))
             assertEquals("pinnacle", file.queryParameter("source"))
-            assertEquals("pk-1", file.queryParameter("apiKey"))
+            assertEquals(null, file.queryParameter("apiKey")) // ParlayAPI's best practices: the key in a header, never the URL
             val lines = seen.first { it.encodedPath.endsWith("/closing-lines") }
             assertEquals("pinnacle", lines.queryParameter("bookmakers"))
             assertEquals("3", lines.queryParameter("daysFrom"))
