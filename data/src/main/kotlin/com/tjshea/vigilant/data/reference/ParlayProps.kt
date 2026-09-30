@@ -50,6 +50,7 @@ class ParlayPropsSource(
         val markets = PropStats.parlayMarkets(sport).map { it.first }.distinct()
         val events = ArrayList<RefEvent>()
         val hurt = ArrayList<Injury>()
+        val unreported = HashSet<String>()
         var remaining: Int? = null
         var used: Int? = null
         var offset = 0
@@ -64,10 +65,12 @@ class ParlayPropsSource(
             used = answer.used ?: used
             events += answer.value.events
             hurt += answer.value.injuries
+            unreported += answer.value.unreported
             if (answer.value.rows < ParlayProps.PAGE) break
             offset += answer.value.rows
         }
-        injuries?.record(sport, hurt)
+        // Players listed with no report are covered too: nothing to ask /injuries about.
+        injuries?.record(sport, hurt, asked = unreported)
         // A player whose books straddle a page boundary comes back in two parts: one game, all its lines.
         val merged = events.groupBy { it.id }.values.map { parts -> parts.first().copy(markets = parts.flatMap { it.markets }) }
         val snap = RefSnapshot(sport, merged, System.currentTimeMillis(), remaining, used, id)
@@ -88,8 +91,11 @@ object ParlayProps {
     /** Real sportsbooks with real two-sided prices (the pick'em apps and Novig itself left out). Pinnacle is the sharp one. */
     val BOOKS = listOf("pinnacle", "draftkings", "fanduel", "caesars", "bovada", "prophetx")
 
-    /** One page: [rows] rows came back (a full page means there may be more), grouped into games; each player's injury report once. */
-    class Page(val rows: Int, val events: List<RefEvent>, val injuries: List<Injury> = emptyList())
+    /**
+     * One page: [rows] rows came back (a full page means there may be more), grouped into games; each player's injury report once, and
+     * the players whose rows carried none ([unreported]).
+     */
+    class Page(val rows: Int, val events: List<RefEvent>, val injuries: List<Injury> = emptyList(), val unreported: List<String> = emptyList())
 
     private fun JsonElement?.obj() = this as? JsonObject
     private fun JsonObject.str(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content?.takeIf { it.isNotBlank() }
@@ -116,11 +122,12 @@ object ParlayProps {
         }
         val games = LinkedHashMap<String, Game>()
         val injuries = LinkedHashMap<String, Injury>()
+        val unreported = LinkedHashSet<String>()
         for (r in rows) {
             // Every row names its player's injury status (null: none reported), whatever its market or period.
             (r.str("player") ?: r.str("player_name"))?.trim()?.let { p ->
                 val key = p + "|" + (r.str("home_team") ?: "")
-                if (key !in injuries) ParlayInjuries.fromPropsRow(r, p)?.let { injuries[key] = it }
+                if (key !in injuries) ParlayInjuries.fromPropsRow(r, p)?.let { injuries[key] = it } ?: unreported.add(p)
             }
             val period = r.str("period")
             if (period != null && !period.equals("FULL", true)) continue
@@ -155,6 +162,7 @@ object ParlayProps {
             rows.size,
             games.values.map { g -> RefEvent(g.id, sportKey, g.commence, g.home, g.away, g.markets.distinctBy { Triple(it.bookKey, it.subject, it.stat to it.line) }) },
             injuries.values.toList(),
+            unreported.filter { p -> injuries.values.none { it.player == p } },
         )
     }
 }
