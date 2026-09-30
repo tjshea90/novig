@@ -1,13 +1,13 @@
-# CHECKPOINT 2154 — read me first, then TASKS.md
+# CHECKPOINT 2155 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T04:06:44Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `71dd1bf3` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T04:20:31Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `1efdd10f` (this checkpoint is the commit after it)
 
 ## Just done
-Recorded Tj's key-sharing request as I1-I3 (key kept in scratchpad only, masked in INBOX)
+Real-key probe findings coded (ParlayMarkets normalizer, NHL props, flat closing-lines, closes-file snapshot window); I4/I5 recorded
 
 ## Do this next
-I1: probe the real ParlayAPI with the key from the scratchpad file
+I4: ParlayAccount reads /v1/usage + api-key-check (credits_total, period_end); CreditPace calendar-period fix; then drop alternates, fix ParlayClosesTest, fixtures, I5 docs pass, ship v0.29.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ I1: probe the real ParlayAPI with the key from the scratchpad file
 
 ## Last ten checkpoints
 ```
+  36f64899 ckpt 2154: Recorded Tj's key-sharing request as I1-I3 (key kept in scratchpad only, mas
   3d70cba6 ckpt 2153: v0.28.0 (code 56) released and recorded; H1-H6 ticked
   c974b2a9 ckpt 2152: pre-release: v0.28.0: ParlayAPI fixes from Tj's diagnostics and its best pra
   2661b457 ckpt 2151: pre-ship: v0.28.0: ParlayAPI fixes from Tj's diagnostics and its best practi
@@ -26,8 +27,7 @@ I1: probe the real ParlayAPI with the key from the scratchpad file
   69e64611 ckpt 2147: H1-B fixed: CNO pause reason kept (CnoState.lastPause/At, pauseFor), Check o
   97657671 ckpt 2146: Pacing bugs fixed (stale out-of-order answers ignored, STALE_WINDOW/SLACK; f
   4901bda3 ckpt 2145: Recorded Tj's diagnostics-review request as H1-H3
-  18e92257 ckpt 2144: v0.27.0 (code 55) released and recorded (CI 36659840921 + release.yml 366601
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
