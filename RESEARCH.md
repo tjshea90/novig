@@ -2964,3 +2964,47 @@ added; `UsageMeter.recordBalance` puts the key's own figures in the meter. Its f
 (the scan's window plus a day): smaller, faster replies for the same credits. **Looked at, not used:** `/v1/prediction-markets/{sport}` (1
 credit; Kalshi and Polymarket prices relayed with a 90 s cache, where Vigilant reads both directly, fresher, for free), `/scores` (ESPN and
 MLB grade for free), `/consensus`/`/ev` (Vigilant prices its own), `/v1/clv` (the Tracker does it), streaming (Business tier).
+
+## 45. ParlayAPI checked with Tj's own key, and every call matched to its docs (v0.29.0, 2026-09-30; Tj: "Here is the parlayapi key for you to use … Make sure the app is making full use of parlayapi's features and speeds", "Make sure the app can read my parlayAPI usage credits remaining", "Thoroughly research parlayapi docs to get endpoints and everything matched and all commands and usage correct", "if the API offers any other features I may want in the app let me know")
+
+The key lived only in the session's scratchpad (never in this public repo, a fixture, a checkpoint or a commit); every fixture below is
+ParlayAPI's public odds data with the key, key fingerprint and account email removed. Tested 2026-09-30 ~04:05–04:50Z; ~130 credits spent.
+
+**Account (free).** `/v1/usage` (alias `/v1/account`, "usage and remaining credits"): `credits_used`, `credits_remaining`,
+`credits_total` (plan + `credits_granted`), `period_start`/`period_end` = **the calendar month, UTC** (a plan bought 2026-09-30 02:51Z had
+the whole 20,000 for Sep 1 → Oct 1). `/v1/meta/api-key-check`: the same counts, `valid`, `reason` (`credit_exhausted`, `key_inactive`),
+and `subscription.period_end_iso`, which is **Stripe's billing date, not the credits reset**. `/v1/meta/usage` reads `credits_remaining: 0`
+(broken) but has a 7-day daily breakdown. Both answered live (no cache: `cf-cache-status: DYNAMIC`). → `ParlayAccount` reads `/v1/usage`
+first, the key check when that fails, at most once a minute; the pace spreads a new plan's credits over the days left in its month.
+
+**Headers.** Paid replies carry `x-requests-remaining/used/last` (exact) and `x-ratelimit-limit/remaining: unlimited` (no per-second cap,
+no reset header). `/v1/meta/limits` lists `X-Rate-Limit-*` too: both spellings are read.
+
+**Costs measured** (x-requests-last): `/odds` = markets × ⌈books/10⌉ (h2h+spreads+totals = 3; +alternate_spreads/totals = 5);
+`/props` = 3 a league (one call held every two-sided line; `x-result-truncated: true` names a book writing faster than one read, and
+narrowing `markets=` is their fix, which the app already does); `/sports/{s}/closing-lines` = 5; the closes file = 1 per 1,000 rows.
+
+**Shapes that differed from the docs or from what the app parsed:**
+- `/props` rows name each book's own market (`player_passing_attempts`, `batter_total_bases`, "Total Bases"): `ParlayMarkets` normalizes
+  key + label to Novig's stat. NHL props (goals, points, assists, shots on goal, saves, power-play points) are ParlayAPI-only in Vigilant.
+- `/sports/{s}/closing-lines` answers **flat rows** (`home_odds`, `away_odds`, `draw_odds`, `last_update` = the start), and **only h2h**
+  (15 of 15 NFL rows, 4 of 4 MLB), though its docs promise spreads and totals. → moneylines there; spreads and totals from the closes file.
+- The closes file (`/historical/closing-lines.json?source=pinnacle`) has Pinnacle's game lines too, one team a row (`player_name` = the
+  team, `over_price` = its price; totals as `player_name: "Total"` with both sides), and **many snapshots are hours old** (MLB props 12–15 h
+  before first pitch, game lines ~75 min): a price taken more than 2 h before the start isn't used as a close.
+- `/odds` alternates are **Pinnacle's alone**, already sent by PinnWire/pinnapi: bought only when neither is on (2 credits a league saved).
+- `/odds` leaves games under way out unless `include_live=true` (no extra cost): sent when Settings' live games are on.
+- **History by plan** (`/v1/meta/limits`, public): free 48 h, Starter 7 days, Pro 30, Business 90. `closing-lines` past it is 403
+  `HISTORICAL_LIMIT`: nothing older than the key's plan is asked (`ParlayAccount.historyDays`).
+
+**New use: Check odds now's backup for CNO** (`ParlayBooks`). Tj's "crazyninjaodds didn't answer" was mostly CNO answering *without the
+bet* (its game page lists current lines only, and the soonest games' lines had moved): five such pages in a row stopped the pass and the
+toast blamed CNO. Now a page without the bet is no reason to stop, a real no-answer is told apart, and either way the bet is re-priced from
+ParlayAPI's books (one `/odds` + one `/props` call per league, kept 2 minutes) shaped like CNO's page, so `CnoBooks.check` judges them
+with CNO's exact math (each two-sided book devigged worst case, the lower of mean and median).
+
+**Offered to Tj, not built (his call):** `/sports/{s}/best-bets?books=novig` (10 credits a league: ParlayAPI's own ranked +EV list at
+Novig, a third list beside CNO's and Vigilant's); `/v1/verdict` (5 credits a bet: BET/LEAN/FAIR/PASS for one bet); `/line-movement`
+(2 credits: a bet's price history, steam); injury status (already on every `/props` row, free: an OUT/Questionable tag on prop cards);
+`/v1/meta/movers` (free: biggest moneyline moves); `/live/period_markets` (2 credits: 1st-half/quarter/F5 lines from more books);
+`/v1/meta/usage`'s daily breakdown (free: a per-day chart in API usage). Streams (SSE/websocket) need the Business tier.
