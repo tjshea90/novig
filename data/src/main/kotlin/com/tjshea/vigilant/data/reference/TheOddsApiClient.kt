@@ -112,7 +112,7 @@ class TheOddsApiClient(
     }
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        val markets = marketsFor(settings.families)
+        val markets = marketsFor(settings.families, feed)
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
         return fetch(league.oddsApiSportKey, booksFor(settings), markets)
     }
@@ -248,8 +248,18 @@ class TheOddsApiClient(
         private const val LIST_REUSE_MS = 5 * 60_000L
         private val FAMILY_MARKETS = mapOf(MarketFamily.MONEYLINE to "h2h", MarketFamily.SPREAD to "spreads", MarketFamily.TOTAL to "totals")
 
-        /** The main-line markets a sport refresh buys: one credit each. Alt markets come from elsewhere. */
-        fun marketsFor(families: Collection<MarketFamily>): List<String> = families.mapNotNull { FAMILY_MARKETS[it] }.sorted()
+        /**
+         * The markets a sport refresh buys, one credit each: the main lines, and on ParlayAPI (which serves them for a whole league in one
+         * call, where The Odds API only sells them game by game) every alternate spread and total, so Novig's alternate lines are priced
+         * at their own numbers.
+         */
+        fun marketsFor(families: Collection<MarketFamily>, feed: OddsFeed = OddsFeed.ODDS_API): List<String> {
+            val main = families.mapNotNull { FAMILY_MARKETS[it] }
+            val alt = if (feed == OddsFeed.ODDS_API) emptyList() else families.mapNotNull { ALT_MARKETS[it] }
+            return (main + alt).sorted()
+        }
+
+        private val ALT_MARKETS = mapOf(MarketFamily.SPREAD to "alternate_spreads", MarketFamily.TOTAL to "alternate_totals")
         const val CREDITS_REMAINING = "x-credits-remaining"
         const val CREDITS_COST = "x-credits-cost"
         const val REMAINING = "x-requests-remaining"
@@ -346,6 +356,7 @@ private data class MarketDto(
 ) {
     fun toDomain(book: BookmakerDto, home: String, away: String): List<RefBookMarket> {
         PropStats.ODDS_API_MARKETS[key]?.let { stat -> return props(book, stat) }
+        if (key == "alternate_spreads" || key == "alternate_totals") return alternates(book, home, away)
         val kind = when (key) {
             "h2h" -> LineKind.MONEYLINE
             "spreads" -> LineKind.SPREAD
@@ -372,6 +383,34 @@ private data class MarketDto(
                 lastUpdateMs = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update),
             ),
         )
+    }
+
+    /**
+     * An alternate-lines market lists every number in one flat outcome list: a spread's home side at -6.5 pairs with the away side at
+     * +6.5, a total's Over 44.5 with its Under 44.5. A number priced on one side only can't be devigged and is dropped.
+     */
+    private fun alternates(book: BookmakerDto, home: String, away: String): List<RefBookMarket> {
+        val spread = key == "alternate_spreads"
+        val updated = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update)
+        val sided = outcomes.mapNotNull { o ->
+            val point = o.point ?: return@mapNotNull null
+            if (o.price <= 1.0 || !o.price.isFinite()) return@mapNotNull null
+            val side = when {
+                !spread && o.name.equals("Over", true) -> Side.OVER
+                !spread && o.name.equals("Under", true) -> Side.UNDER
+                spread && o.name == home -> Side.HOME
+                spread && o.name == away -> Side.AWAY
+                else -> return@mapNotNull null
+            }
+            RefQuote(side, o.price, point)
+        }
+        // Keyed by the home side's handicap (spreads) or the number (totals), like [RefBookMarket.line].
+        val byLine = sided.groupBy { q -> if (spread && q.side == Side.AWAY) -q.point!! else q.point!! }
+        return byLine.values.mapNotNull { qs ->
+            val a = qs.singleOrNull { it.side == (if (spread) Side.HOME else Side.OVER) } ?: return@mapNotNull null
+            val b = qs.singleOrNull { it.side == (if (spread) Side.AWAY else Side.UNDER) } ?: return@mapNotNull null
+            RefBookMarket(book.key, book.title, if (spread) LineKind.SPREAD else LineKind.TOTAL, listOf(a, b), updated)
+        }
     }
 
     /**
