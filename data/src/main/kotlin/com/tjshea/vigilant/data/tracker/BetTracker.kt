@@ -94,6 +94,18 @@ data class TrackedBet(
     /** Why the last try at pricing this open bet found no fair price (Tj, 2026-09-29: every open bet is priced or says why not), and when. */
     val nowNote: String? = null,
     val nowNoteAtMs: Long? = null,
+    /**
+     * The two reads "Check odds now" makes of every open bet (Tj, 2026-09-30: "always scan relevant vigilant odds in addition to the cno
+     * scan … always get full updates on all of my bets and an accurate stats reading"): CNO's ([cnoFair]: its game page, or ParlayAPI's books
+     * judged CNO's way) and Vigilant's own fair odds ([vigFair], every source it scans with, ParlayAPI included), each with when it was made
+     * and, for Vigilant's, how many books it came from. A bet read both ways in one check has their average as its [nowFair]
+     * ([BetTracker.VIA_BOTH]), and as its closing line so far.
+     */
+    val cnoFair: Double? = null,
+    val cnoAtMs: Long? = null,
+    val vigFair: Double? = null,
+    val vigAtMs: Long? = null,
+    val vigBooks: Int? = null,
     /** A fair-market-value settlement's payout per $1 contract ([BetStatus.FMV]). */
     val settleValue: Double? = null,
     /** "novig" (settled from Novig's catalog) or "you" (tapped). */
