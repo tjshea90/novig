@@ -2699,3 +2699,12 @@ https://parlay-api.com/docs/best-practices
 Make sure the app follows these best practices.
 It allows the API key to tell the app how many credits I have left. Add this to the app so the meter is accurate
 ```
+
+## 2026-09-30T04:06:08Z
+```
+Here is the parlayapi key for you to use: 
+
+[key redacted …15d0]
+
+Make sure the app is making full use of parlayapi's features and speeds. Study the docs if needed
+```
