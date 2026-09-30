@@ -3005,3 +3005,7 @@ Build free ones first; checkpoint after each box; ship as one release (v0.30.0) 
 - [x] T3 Ship, send Tj the link. SHIPPED v0.34.0 (code 62): CI 36737500463 attempt 2 + release.yml 36739656421 green, Release + APK confirmed.
 - [x] T4 Harden `NovigPublicClientTest` "with a key, a refused wave is waited out once and every book still comes": it failed once on CI under load (run 36737500463 attempt 1, passed on re-run; 12/12 locally under 6-core CPU load; its third flake after 2026-09-28 and 2026-09-30 04:25Z). Its fake edge refuses "the first 10 distinct books whenever they arrive", not a time-bound wave: make the fake refuse only first attempts that arrive before any retry does, and assert what the test is about (every book comes, none failed, all via the key). DONE: the fake edge refuses first reads only until the client's first retry arrives (one wave, as the edge sends it); asserts 1-10 refused, none failed, all 16 via the key. 8/8 under 6-core CPU load, full NovigPublicClientTest green.
 
+## Tj's question 2026-09-30 (raw text in INBOX.md): "Can this help the app https://apify.com/mrdoe/bet-clv-tracker/api"
+
+- [ ] U1 Research the Apify actor "bet-clv-tracker" (what it returns, sources, cost, freshness, reliability) against what Vigilant already has for CLV (closing capture both ways, ParlayAPI Pinnacle closes, ESPN, Novig trades); answer plainly whether it adds anything, and build it only if it does and Tj wants it.
+
