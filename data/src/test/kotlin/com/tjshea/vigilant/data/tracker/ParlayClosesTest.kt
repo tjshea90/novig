@@ -193,9 +193,7 @@ class ParlayClosesTest {
 
     @Test
     fun `with a key ParlayAPI is asked first, without one it isn't asked or counted`() = runBlocking {
-        val server = serve { r ->
-            if (r.path!!.contains("/closing-lines?") || r.path!!.contains("/closing-lines&")) MockResponse().setBody(gameFile) else MockResponse().setBody(gameFile)
-        }
+        val server = serve { MockResponse().setBody(gameFile) }
         try {
             val now = start + 86_400_000L
             val url = server.url("/v1").toString().trimEnd('/')
