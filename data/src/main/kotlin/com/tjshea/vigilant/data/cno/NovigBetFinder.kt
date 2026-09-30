@@ -97,6 +97,12 @@ class NovigBetFinder(
         return Found.Bet(outcome.id, event.id, market?.id, market?.novig)
     }
 
+    /** [row]'s game in Novig's catalog (its start, for a bet that came without one: ParlayAPI's plays), or null. */
+    suspend fun event(row: CnoRow): Event? {
+        val league = novigLeague(row.league) ?: return null
+        return eventsOf(league)?.let { matchEvent(row, it) }
+    }
+
     private suspend fun eventsOf(league: String): List<Event>? = cached(events, league) {
         get("$baseUrl/v3/public/catalog/events?league=$league&status=OPEN_PREGAME,OPEN_INGAME&limit=1000")?.let(::parseEvents)
     }

@@ -158,6 +158,23 @@ class ParlayBestBets(
                 .filter { a -> plays.none { it.bet == a.bet && it.event == a.event } }
             return ParlayBoard(sport, plays + alerts, root.str("summary"), now)
         }
+    }
+}
 
+/**
+ * A ParlayAPI play at Novig's price now (PARLAY_API.md §6.5): its row at that price, Vigilant's EV there against ParlayAPI's fair price (Novig's
+ * taker fee taken out on a live game), the dollars at it, when Novig's book was read; [found] false when Novig's catalog has no such bet.
+ */
+data class ParlayPick(val play: ParlayPlay, val row: CnoRow, val ev: Double?, val available: Double?, val novigAtMs: Long?, val found: Boolean) {
+    val key: String get() = play.key
+
+    companion object {
+        /** [plays] (as [rows], their starts filled in from Novig's catalog) priced from Novig's books [live] (by row key). */
+        fun priced(plays: List<ParlayPlay>, rows: List<CnoRow>, live: Map<String, com.tjshea.vigilant.data.cno.LivePrice>): List<ParlayPick> =
+            plays.zip(rows).map { (p, r) ->
+                val l = live[r.key]
+                if (l == null) ParlayPick(p, r, null, null, null, found = false)
+                else ParlayPick(p, r.copy(odds = l.american, available = l.available, ev = l.ev ?: 0.0), l.ev, l.available, l.atMs, found = true)
+            }
     }
 }
