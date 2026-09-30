@@ -85,6 +85,8 @@ class BetRecheck(
         val cnoNoAnswer: Int = 0,
         /** CNO stopped answering (or asked for a pause) part-way: the rest went to the backup, or weren't tried without one. */
         val cnoStopped: Boolean = false,
+        /** Read both ways in this check, CNO's page and Vigilant's own fair odds: their current EV is the two lines' average. */
+        val both: Int = 0,
     ) {
         /** Open bets whose odds are now current. */
         val covered: Int get() = updated + current + priced
@@ -95,6 +97,21 @@ class BetRecheck(
             val fromFailed = minOf(failed, p.asked)
             val fromSkipped = minOf(skipped, p.asked - fromFailed)
             return copy(priced = priced + p.priced, unpriced = unpriced + p.unpriced, failed = failed - fromFailed, skipped = skipped - fromSkipped)
+        }
+
+        /**
+         * This report once Vigilant's own fair odds have also priced every open bet beside CNO's reads ([merged]: [BetTracker.mergeReads]):
+         * Vigilant's own bets ([ownIds], no CNO page) priced or not, CNO's misses that Vigilant's read covered, and how many were read both ways.
+         * Every open bet stays in exactly one group.
+         */
+        fun withEveryRead(merged: BetTracker.Merged, ownIds: Collection<String>): Report {
+            val own = ownIds.toHashSet()
+            val ownPriced = own.count { it in merged.vigOnly || it in merged.both }
+            val unread = unreadIds.toHashSet()
+            val rescued = unread.count { it in merged.vigOnly || it in merged.both }
+            return withPricing(OpenBetPricer.Report(own.size, ownPriced, own.size - ownPriced), rescue = false)
+                .withPricing(OpenBetPricer.Report(unread.size, rescued, unread.size - rescued), rescue = true)
+                .copy(both = merged.both.size)
         }
 
         /**
@@ -114,6 +131,7 @@ class BetRecheck(
                     .append(if (stopped || cnoStopped) ": stopped early" + (pauseWhy?.let { ", $it" } ?: "") else "").append(")")
             }
             return "covered $covered of $open open bets: $cno, $priced priced from Vigilant's own fair odds" +
+                (if (both > 0) ", $both read both ways (averaged)" else "") +
                 (if (unreadIds.isNotEmpty() && vigilantOn) ", ${unreadIds.size} CNO didn't read went to a second pricing pass" else "") +
                 (if (unpriced > 0) ", $unpriced couldn't be priced" else "") + (if (failed > 0) ", $failed failed" else "")
         }
@@ -126,6 +144,7 @@ class BetRecheck(
             if (open == 0) return "No open bets to check"
             val parts = ArrayList<String>()
             parts += "Checked $covered of $open open bet${if (open == 1) "" else "s"}"
+            if (both > 0) parts += "$both read by both CNO and Vigilant (their fair lines averaged)"
             if (viaBackup > 0) parts += "$viaBackup from ParlayAPI's books (CrazyNinjaOdds didn't have ${if (viaBackup == 1) "it" else "them"})"
             if (failed > 0) parts += "$failed couldn't be read (each bet says why)"
             if (unpriced > 0) parts += "$unpriced couldn't be priced (each bet says why)"

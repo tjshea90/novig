@@ -112,13 +112,22 @@ class OpenBetPricer(
     private val sources: (ScanSettings) -> List<ReferenceSource>,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    /** Of [asked] open bets: [priced] have a current EV now, the rest got their reason. [error]: the pass couldn't run at all. */
-    data class Report(val asked: Int, val priced: Int, val unpriced: Int, val error: String? = null)
+    /**
+     * Of [asked] open bets: [priced] have a current EV now, the rest got their reason ([reasons], by bet id: written on the bet unless the pass
+     * ran `alongside` CNO's, when [BetTracker.mergeReads] writes them). [error]: the pass couldn't run at all.
+     */
+    data class Report(val asked: Int, val priced: Int, val unpriced: Int, val error: String? = null, val reasons: Map<String, String> = emptyMap())
 
     private val mutex = Mutex()
 
     /** Open bets among [ids] that Novig's ids and start let a pass ask about, and how many others there are (their reason is recorded). */
-    suspend fun run(settings: ScanSettings, ids: Collection<String>, onProgress: (ScanProgress) -> Unit = {}): Report = mutex.withLock {
+    suspend fun run(
+        settings: ScanSettings,
+        ids: Collection<String>,
+        onProgress: (ScanProgress) -> Unit = {},
+        /** Beside CNO's reads of the same bets ([BetTracker.applyPricing] `alongside`): only Vigilant's own read is written. */
+        alongside: Boolean = false,
+    ): Report = mutex.withLock {
         // CNO only: Vigilant's APIs are asleep, so nothing is asked of them, whoever calls (Tj, 2026-09-29).
         if (!settings.vigilantOn) return@withLock Report(0, 0, 0)
         val now = clock()
@@ -154,7 +163,7 @@ class OpenBetPricer(
             if ((b.marketId to b.outcomeId) !in pricedKeys) reasons[b.id] = BetPricingReasons.explain(b, result, listed, errors)
         }
         // What was read is saved even if the screen that asked has gone.
-        val applied = withContext(NonCancellable) { tracker.applyPricing(result, open.map { it.id }, reasons) }
-        Report(open.size, applied.priced, applied.unpriced, error = error ?: report?.errors?.takeIf { result == null }?.firstOrNull())
+        val applied = withContext(NonCancellable) { tracker.applyPricing(result, open.map { it.id }, reasons, alongside) }
+        Report(open.size, applied.priced, applied.unpriced, error = error ?: report?.errors?.takeIf { result == null }?.firstOrNull(), reasons = reasons)
     }
 }
