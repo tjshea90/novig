@@ -58,6 +58,15 @@ object ClosingLine {
         return b.closingFair?.takeIf { seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS }
     }
 
+    /** A close's source in a word or two, for the card and Diagnostics. */
+    fun sourceLabel(source: String): String = when {
+        source == SOURCE_CAPTURED -> "read before the start"
+        source == SOURCE_AT_BET -> "bet in the last minutes"
+        source.startsWith("ESPN") -> "ESPN"
+        source.startsWith("Novig") -> "Novig's trades"
+        else -> source
+    }
+
     /** [closeOf]'s source for a close read before the start by Vigilant itself. */
     const val SOURCE_CAPTURED = "captured"
 
@@ -133,6 +142,8 @@ data class ClvStats(
     val missed: Int,
     /** The average EV when bet of the same [closed] bets: the edge the price was thought to have, beside what the close says it had. */
     val averageEvAtBet: Double? = null,
+    /** How many of [closed]'s closes came from where ([ClosingLine.sourceLabel]): read before the start, ESPN, Novig's trades. */
+    val bySource: Map<String, Int> = emptyMap(),
 ) {
     val beatShare: Double? get() = if (closed > 0) beat.toDouble() / closed else null
 
@@ -156,6 +167,7 @@ data class ClvStats(
                 waiting = inPeriod.count { it.status == BetStatus.PENDING && now < it.startsTs },
                 missed = inPeriod.count { now >= it.startsTs && ClosingLine.closeFair(it, now) == null },
                 averageEvAtBet = keptBets.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average(),
+                bySource = keptBets.mapNotNull { ClosingLine.closeOf(it.first, now)?.second?.let(ClosingLine::sourceLabel) }.groupingBy { it }.eachCount(),
             )
         }
 

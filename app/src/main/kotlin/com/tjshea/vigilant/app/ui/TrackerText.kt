@@ -24,9 +24,10 @@ object TrackerText {
 
     /** What the CLV card counts and doesn't: bets with a close, waiting for one, started without one, outliers. */
     fun clvCounts(s: com.tjshea.vigilant.data.tracker.ClvStats): String = listOfNotNull(
-        "${s.closed} bet${if (s.closed == 1) "" else "s"} with a true close",
+        "${s.closed} bet${if (s.closed == 1) "" else "s"} with a true close" +
+            (s.bySource.entries.sortedByDescending { it.value }.takeIf { it.isNotEmpty() }?.joinToString(", ", " (", ")") { "${it.value} ${it.key}" } ?: ""),
         "${s.waiting} waiting for their close (game not started)".takeIf { s.waiting > 0 },
-        "${s.missed} started with no close read".takeIf { s.missed > 0 },
+        "${s.missed} started with no close found yet".takeIf { s.missed > 0 },
         when {
             s.outliers == 0 -> null
             s.outliersLeftOut -> "${s.outliers} over ±${Format.percent(com.tjshea.vigilant.data.tracker.ClosingLine.OUTLIER_CLV, 0)} left out"
