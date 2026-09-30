@@ -54,22 +54,21 @@ object EvAlerts {
         return "$odds on ${AppBook.name} · ${a.market} · ${a.event}$start"
     }
 
-    /** "4 of 5 books agree · found by CNO". Plus a word when the tap opens only the game. */
-    fun detail(a: EvAlert): String =
-        "${a.agreeing} of ${a.books} books agree · found by ${a.scanner}" + if (!a.exact) " · opens the game: the bet is under ${a.market}" else ""
+    /** "4 of 5 books agree · found by CNO". */
+    fun detail(a: EvAlert): String = "${a.agreeing} of ${a.books} books agree · found by ${a.scanner}"
 
     fun id(a: EvAlert): Int = ID_BASE + (abs(a.dedupeKey.hashCode()) % 1_000_000)
 
-    /** What tapping opens: [a]'s link in Novig's app (never a browser when it's installed), else Novig itself. */
-    fun intent(context: Context, a: EvAlert): Intent {
-        // With the stake Settings asks for in the bet slip (Tj, 2026-09-28), a CNO link resolved late included.
-        val link = com.tjshea.vigilant.data.novig.NovigLinks.withStake(a.link, a.stake)
-        val installed = context.packageManager.getLaunchIntentForPackage(MiniWindow.NOVIG_PACKAGE) != null
-        if (link == null || (link.startsWith("novigapp://") && !installed && AppBook.isNovig)) return AppBook.homeIntent(context)
-        return Intent(Intent.ACTION_VIEW, Uri.parse(link))
-            .apply { if (installed && link.startsWith("novigapp://")) setPackage(MiniWindow.NOVIG_PACKAGE) }
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
+    /**
+     * What tapping any of Vigilant's alerts opens: Vigilant itself, full screen (out of the mini window too), never the bet in Novig (Tj,
+     * 2026-09-30: "when I click on anything in the push notifications for vigilant, instead of opening the bet, it opens the vigilant app in
+     * full screen"). The alert is taken down by the tap (setAutoCancel).
+     */
+    fun openVigilant(context: Context, requestCode: Int): PendingIntent = PendingIntent.getActivity(
+        context, requestCode,
+        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     /** "✓ Placed" or "✓ Placed $5": the amount the bet is tracked at (Settings' bet-slip amount; $1 when there is none). */
     fun placedLabel(a: EvAlert): String = "✓ Placed" + (a.stake?.let { " $" + com.tjshea.vigilant.data.novig.NovigLinks.amountText(it) } ?: "")
@@ -119,6 +118,7 @@ object EvAlerts {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
+            .setContentIntent(openVigilant(context, id(a)))
             .setTimeoutAfter(DONE_SHOWN_FOR_MS)
             .apply { if (undo) addAction(0, "Undo", broadcast(context, a, ACTION_UNDO)) }
             .build()
@@ -134,7 +134,7 @@ object EvAlerts {
         )
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, "+EV alerts", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "A new bet at or over your alert minimum that several books agree on. Tap to open it in ${AppBook.name}; ✓ Placed tracks it."
+                description = "A new bet at or over your alert minimum that several books agree on. Tap to open Vigilant; ✓ Placed tracks it."
             },
         )
     }
@@ -147,7 +147,7 @@ object EvAlerts {
         var posted = 0
         for (a in alerts) {
             val id = id(a)
-            val tap = PendingIntent.getActivity(context, id, intent(context, a), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            val tap = openVigilant(context, id)
             val body = text(a) + "\n" + detail(a)
             val timeout = a.startsAtMs?.let { minOf(SHOWN_FOR_MS, (it - now).coerceAtLeast(60_000L)) } ?: SHOWN_FOR_MS
             val n = NotificationCompat.Builder(context, CHANNEL)
@@ -157,8 +157,7 @@ object EvAlerts {
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                // Tapping opens Novig's bet slip full screen and takes the alert down (Tj, 2026-09-30: "when I press a notification and the app
-                // opens full screen, that notification should be removed"); ✓ Placed works from the alert before that tap.
+                // Tapping opens Vigilant full screen and takes the alert down (Tj, 2026-09-30); ✓ Placed works from the alert before that tap.
                 .setAutoCancel(true)
                 .addAction(0, placedLabel(a), broadcast(context, a, ACTION_PLACED))
                 .setTimeoutAfter(timeout)
