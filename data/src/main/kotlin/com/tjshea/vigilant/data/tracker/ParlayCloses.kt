@@ -80,16 +80,22 @@ class ParlayCloses(
     // ---- props ------------------------------------------------------------------------------------------------------
 
     private suspend fun prop(b: TrackedBet, pick: BetGrader.Pick.Prop, sport: String): CloseLookup {
-        val markets = PropStats.oddsApiMarketsFor(sport, pick.stat)
-        if (markets.isEmpty()) return CloseLookup.None("ParlayAPI has no ${PropStats.displayName(pick.stat).lowercase()} closes")
-        // One file per UTC day; an evening game in the US can sit under either its UTC date or its US date.
+        if (pick.stat !in PropStats.parlayStats(sport)) return CloseLookup.None("ParlayAPI has no ${PropStats.displayName(pick.stat).lowercase()} closes")
+        return fromFile(b, sport) { root -> parseProp(root, pick, sport, b.startsTs) }
+    }
+
+    /**
+     * The day's closes file (props and Pinnacle's spreads, totals and moneylines, 1 credit per 1,000 rows), read with [parse]: one file per
+     * UTC day, and an evening game in the US can sit under either its UTC date or its US date.
+     */
+    private suspend fun fromFile(b: TrackedBet, sport: String, parse: (JsonElement) -> CloseLookup): CloseLookup {
         val start = Instant.ofEpochMilli(b.startsTs)
         val dates = listOf(start.atZone(ZoneOffset.UTC).toLocalDate(), start.atZone(US_EAST).toLocalDate()).distinct()
         var last: CloseLookup = CloseLookup.Later("ParlayAPI didn't answer")
         for (date in dates) {
             val root = get("/historical/closing-lines.json", listOf("date" to date.toString(), "sport_key" to sport, "source" to "pinnacle", "limit" to "10000"), cost = 1)
                 ?: return CloseLookup.Later("ParlayAPI didn't answer")
-            last = parseProp(root, pick, markets, b.startsTs)
+            last = parse(root)
             if (last is CloseLookup.Found) return last
         }
         return last
@@ -98,13 +104,18 @@ class ParlayCloses(
     // ---- game lines -------------------------------------------------------------------------------------------------
 
     private suspend fun gameLine(b: TrackedBet, pick: BetGrader.Pick, sport: String): CloseLookup {
+        // Spreads and totals: Pinnacle's in the day's closes file. Moneylines: its price at the start from `closing-lines` (5 credits a
+        // league for every game in the window, the truest close there is), else the file's.
+        if (pick !is BetGrader.Pick.Moneyline) return fromFile(b, sport) { root -> parseFileGameLine(root, b, pick) }
         // Their API takes 1..30 days back; a game longer ago than that is past what a game-line call can reach.
         val back = (clock() - b.startsTs) / 86_400_000L + 1
-        if (back > MAX_DAYS) return CloseLookup.None("Older than ParlayAPI's $MAX_DAYS-day closing-lines window")
-        val days = back.coerceIn(1, MAX_DAYS.toLong())
-        val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to days.toString(), "oddsFormat" to "american"), cost = 5)
-            ?: return CloseLookup.Later("ParlayAPI didn't answer")
-        return parseGameLine(root, b, pick)
+        if (back <= MAX_DAYS) {
+            val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to back.coerceIn(1, MAX_DAYS.toLong()).toString(), "oddsFormat" to "american"), cost = 5)
+                ?: return CloseLookup.Later("ParlayAPI didn't answer")
+            val found = parseGameLine(root, b, pick)
+            if (found is CloseLookup.Found) return found
+        }
+        return fromFile(b, sport) { root -> parseFileGameLine(root, b, pick) }
     }
 
     /** [cost]: what the call is expected to cost (the server's own figure is recorded when it sends one). Null: ask again later. */
