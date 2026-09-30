@@ -659,24 +659,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * while Vigilant is on screen and ParlayAPI is on, again at once when the leagues change or Vigilant comes back on screen (the
      * notes are never minutes stale on return), and not at all off screen: no timer wakes the phone in a pocket.
      */
-    private suspend fun keepMovers() {
-        combine(
-            state.map { s -> if (s.loaded && s.settings.useParlay) s.settings.leagues else null }.distinctUntilChanged(),
-            c.screen,
-        ) { leagues, onScreen -> leagues to onScreen }.collectLatest { (leagues, onScreen) ->
-            val sports = leagues.orEmpty().mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it)?.takeIf { l -> l.oddsApiListed }?.oddsApiSportKey }.distinct()
-            if (sports.isEmpty()) {
-                c.parlayMovers.refresh(emptyList())
-                return@collectLatest
-            }
-            // Off screen: nothing until Vigilant is back (then this block starts again at once).
-            if (!onScreen) return@collectLatest
-            while (true) {
-                c.parlayMovers.refresh(sports)
-                kotlinx.coroutines.delay(com.tjshea.vigilant.data.reference.ParlayMovers.EVERY_MS)
-            }
-        }
-    }
+    private suspend fun keepMovers() = refreshWhileOnScreen(
+        state.map { s ->
+            if (!s.loaded || !s.settings.useParlay) emptyList()
+            else s.settings.leagues.mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it)?.takeIf { l -> l.oddsApiListed }?.oddsApiSportKey }.distinct()
+        },
+        c.screen,
+        com.tjshea.vigilant.data.reference.ParlayMovers.EVERY_MS,
+    ) { sports -> c.parlayMovers.refresh(sports) }
 
     /** The "Pinnacle moved toward/against" notes, recomputed off the main thread when a list or a board changes. */
     private suspend fun keepLineMoves() {
@@ -1518,3 +1508,27 @@ private const val GRADING_CHECK = "Grading check"
 
 /** What Scan, Recheck and Refresh say while scanning is paused ([ScanSettings.paused]). */
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
+
+/**
+ * [refresh] for the current [sports] at once and then every [everyMs] while Vigilant is [onScreen]; again at once when either changes (back on
+ * screen: never minutes stale); nothing at all off screen, so no timer wakes a phone in a pocket. No sports: [refresh] with none once (drops
+ * what was read).
+ */
+internal suspend fun refreshWhileOnScreen(
+    sports: kotlinx.coroutines.flow.Flow<List<String>>,
+    onScreen: kotlinx.coroutines.flow.Flow<Boolean>,
+    everyMs: Long,
+    refresh: suspend (List<String>) -> Unit,
+) {
+    combine(sports.distinctUntilChanged(), onScreen.distinctUntilChanged()) { s, on -> s to on }.collectLatest { (s, on) ->
+        if (s.isEmpty()) {
+            refresh(emptyList())
+            return@collectLatest
+        }
+        if (!on) return@collectLatest
+        while (true) {
+            refresh(s)
+            kotlinx.coroutines.delay(everyMs)
+        }
+    }
+}
