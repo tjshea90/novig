@@ -59,6 +59,24 @@ class BetTrackerTest {
         assertEquals(won.profit!! / 38.5, s.roi!!, 1e-12)
     }
 
+    /** Tj's diagnostics 2026-09-30: which fair odds Vigilant's losing bets rested on couldn't be told. Each new bet keeps it. */
+    @Test
+    fun `a tracked bet keeps what its fair odds were made of`() = runTest {
+        val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
+        val o = dal(scan())
+        val bet = t.track(o, stake = 10.0)!!
+        val basis = bet.fairBasis!!
+        assertEquals(o.fair!!.sourceUsed.name, basis.source)
+        assertEquals(o.fair!!.sharpBooksUsed.distinct(), basis.sharp)
+        assertEquals(o.fair!!.booksUsed.size, basis.books)
+        // Kept through a save and a read back.
+        assertEquals(basis, BetTracker(File(tmp.root, "bets.json"), clock = { now }).all().single().fairBasis)
+        assertEquals("Pinnacle in the fair", FairBasis("BLEND", listOf("pinnacle", "kalshi"), 6).group)
+        assertEquals("exchange sharp only (Kalshi), one book", FairBasis("SHARP", listOf("kalshi"), 1).group)
+        assertEquals("books' average only", FairBasis("MARKET_AVERAGE", emptyList(), 4).group)
+        assertEquals("CNO", FairBasis(FairBasis.SOURCE_CNO, books = 12).group)
+    }
+
     @Test
     fun `closing fair keeps updating until kickoff, then freezes`() = runTest {
         val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
