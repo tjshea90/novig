@@ -92,8 +92,9 @@ Pinnacle feed is on). Settings switch: `ScanSettings.useParlay`; keys: `ApiProvi
   "−2.6% EV" though the real EV is about −5%). Show Vigilant's own EV (fair ÷ price − 1) next to it, never edge_pct as if it were EV.
 - /verdict's "fair" can be **Novig's own no-vig price** (`fair.source: "novig"`) when no sharper book lists the bet, even with
   `sharpBook=pinnacle`: for a Novig bet that's circular. The second-opinion card says so (`Verdict.fairFromNovig`).
-- Period markets and props rows carry two ages: `age_seconds` (since the price last **changed**) and `observed_age_seconds` /
-  `last_observed_ms` (since ParlayAPI last **saw** it). A line unchanged for hours is still current: freshness uses the observed age.
+- Period-market rows carry two ages: `age_seconds` (since the price last **changed**) and `observed_age_seconds` / `last_observed_ms`
+  (since ParlayAPI last **saw** it). A line unchanged for hours is still current: freshness uses the observed age. (The `/props` rows in
+  `parlay-props-with-injury.json` have only `age_seconds` and `last_update`.)
 
 ## 6. Build guide: the features Tj asked for on 2026-09-30
 
