@@ -95,7 +95,7 @@ class OtherBooksTest {
         {"key":"novig","title":"Novig","markets":[{"key":"batter_home_runs","outcomes":[{"name":"Over","description":"$player","price":590,"point":0.5}]}]}]}"""
 
     @Test
-    fun `ParlayAPI's real rows: every real sportsbook, one-sided books kept, pick'em apps and Novig left out`() {
+    fun `ParlayAPI's real rows keep every real sportsbook, one-sided books kept, pick'em apps and Novig left out`() {
         val rows = OtherBooks.parlayRows(hr, json, "baseball_mlb", now).filter { it.player == "Jahmai Jones" }
         val byBook = rows.associateBy { it.book }
         assertEquals(setOf("bet365", "caesars", "fanduel", "fliff", "hardrock", "parx", "pinnacle", "prophetx"), byBook.keys)
@@ -181,7 +181,7 @@ class OtherBooksTest {
     }
 
     @Test
-    fun `one line per book: a current price beats an older two-sided one, then two-sided beats one-sided`() {
+    fun `one line per book, a current price beating an older two-sided one, then two-sided beats one-sided`() {
         val stale = OtherBooks.Line("fanduel", 570, -900, OtherBooks.PARLAY, now - 30 * 60_000L)
         val fresh = OtherBooks.Line("fanduel", 560, null, OtherBooks.PROPLINE, now - 30_000L)
         assertEquals(fresh, OtherBooks.merge(listOf(stale, fresh), now, start).single())
