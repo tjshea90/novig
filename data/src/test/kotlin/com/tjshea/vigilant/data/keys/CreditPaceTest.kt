@@ -167,7 +167,10 @@ class CreditPaceTest {
         val u2 = m2.flow.value.providers.getValue("parlay").keys.getValue("k")
         val share = newYork.spendableToday(u2, mid)
         assertTrue("$share", share in (19_700 / 16 - 10)..(19_700 / 15))
-        // A key seen since before the month began: the whole month, as before.
-        assertEquals(20_000 - 300, newYork.floor(u2.copy(firstSeenMs = sept1 - 1), Instant.parse("2026-09-30T23:00:00Z").toEpochMilli()) + (19_700L * 0).toInt() + 20_000 - 300 - (20_000 - 300))
+        // A key seen since before the month began: paced over the whole month, as before (on the 10th, ten days' shares spent at most)...
+        val tenth = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
+        assertEquals(20_000 - 19_700 * 10 / 30, newYork.floor(u2.copy(firstSeenMs = sept1 - 1), tenth))
+        // ...and on the month's last evening only the reserve is kept.
+        assertEquals(300, newYork.floor(u2.copy(firstSeenMs = sept1 - 1), Instant.parse("2026-09-30T23:00:00Z").toEpochMilli()))
     }
 }
