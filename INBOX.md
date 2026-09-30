@@ -2788,3 +2788,12 @@ When I'm using the parlayapi picks section and I click on a bet to see the curre
 ```
 Also when I press a notification and the app opens full screen, that notification should be removed
 ```
+
+## 2026-09-30T15:13:32Z
+```
+Two changes: 
+
+1) when I click on anything in the push notifications for vigilant, instead of opening the bet, it opens the vigilant app in full screen
+
+2) when I press check odds now to get updated EV and stats in the bet tracker, all the vigilant results show stale odds and aren't refreshed. When I press this button I want every single open bet refreshed regardless of what scanner found the bet, so that I can see the current odds and positive EV for every open bet I have in the tracker 
+```
