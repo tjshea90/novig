@@ -409,6 +409,7 @@ data class ScanSettings(
             if (useOddsApi) add("oddsapi")
             if (useOddsApi && useBookProps) add("oddsapi_props")
             if (useParlay) add("parlay")
+            if (useParlay) add("parlay_1h")
             if (useParlay && useBookProps) add("parlay_props")
             if (usePropLine) add("propline")
             if (usePropLine && useBookProps) add("propline_props")

@@ -879,6 +879,7 @@ class Scanner(
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "parlay" -> "${settings.families.sorted()}|${settings.scanWindowHours}"
         "parlay_props" -> (MarketFamily.PLAYER_PROPS in settings.families).toString()
+        "parlay_1h" -> (MarketFamily.FIRST_HALF in settings.families).toString()
         "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
         "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropWindowHours}|${settings.propLineGamesPerScan}"
@@ -963,7 +964,7 @@ class Scanner(
          * "prioritize its use if it can do anything better"): its books are polled every few seconds and each quote carries its measured
          * age, where PropLine runs ~20 s behind; between ParlayAPI's paced refreshes its quotes age out (Freshness) and PropLine's price.
          */
-        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "parlay", "propline", "oddsapi", "parlay_props", "propline_props", "oddsapi_props")
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "parlay", "parlay_1h", "propline", "oddsapi", "parlay_props", "propline_props", "oddsapi_props")
 
         /** Sportsbook feeds whose books follow the reference-book picker in Settings. */
         private val PICKED_BOOK_FEEDS = setOf("oddsapi", "oddsapi_props", "propline", "propline_props")
