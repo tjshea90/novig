@@ -99,4 +99,19 @@ class CreditPaceTest {
         assertEquals(null, UsageViews.build(QuotaPolicy.PARLAY, listOf("new"), book, now, pace).scanShareToday)
         assertEquals(null, UsageViews.build(QuotaPolicy.ODDS_API, listOf("a"), book, now).scanShareToday)
     }
+
+    @Test
+    fun `background auto-scans leave half of today's share for Tj's own scans`() {
+        val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
+        val background = CreditPace(QuotaPolicy.PARLAY, reserve = 300, freeLimit = 1_000, zone = { utc }, keepOfDay = 0.5)
+        val day = 19_700 / 30
+        // On pace (6,567 used by the end of the 10th's share): Tj's scans can spend today's share, a background cycle only half of it.
+        val onPace = starter(20_000 - (300 + 19_700 * 21 / 30))
+        assertEquals(day, pace.spendableToday(onPace, now), 1)
+        assertEquals(day / 2, background.spendableToday(onPace, now), 1)
+        // Days left unspent are open to both.
+        assertTrue(background.spendableToday(starter(1_000), now) > 5 * day)
+    }
+
+    private fun assertEquals(expected: Int, actual: Int, tolerance: Int) = assertTrue("$expected vs $actual", kotlin.math.abs(expected - actual) <= tolerance)
 }
