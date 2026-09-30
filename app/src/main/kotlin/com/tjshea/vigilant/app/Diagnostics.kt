@@ -35,6 +35,8 @@ object Diagnostics {
         /** What the last scan and the last Check odds now cost each API (since the app opened), null before one ran. */
         val lastScan: RoundCost? = null,
         val lastCheck: RoundCost? = null,
+        /** When the closing capture's alarm is armed for ([ClosingAlarm]), as this process set it. */
+        val closingAlarmAtMs: Long? = null,
     )
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
@@ -148,7 +150,12 @@ object Diagnostics {
         val overdue = started.filter { now - it.startsTs > 6 * 3_600_000L }
         o.appendLine("Started and still open: ${started.size} (${overdue.size} for over 6 hours, ${started.count { it.gradeManual || it.autoGradeOff }} need a tap)")
         overdue.groupingBy { it.gradeNote ?: "no note yet" }.eachCount().entries.sortedByDescending { it.value }.take(6).forEach { o.appendLine("  waiting ×${it.value}: ${it.key}") }
-        val stats = BetTracker.stats(bets)
+        val stats = BetTracker.stats(bets, now)
+        // True closing line value (Tj, 2026-09-29): all time, outliers in, and when the next close is read.
+        val clv = com.tjshea.vigilant.data.tracker.ClvStats.of(bets, now, zone = zone.toZoneId())
+        o.appendLine("Closing line value (all time): ${TrackerText.clvLine(clv)} · ${TrackerText.clvCounts(clv)}")
+        o.appendLine("Next closing-line read: " + (com.tjshea.vigilant.data.tracker.ClosingLine.nextAt(bets, now)?.let { at(it) } ?: "none needed") +
+            " · alarm " + (x.closingAlarmAtMs?.let { at(it) } ?: "not set in this process"))
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
         return o.toString().trimEnd()
     }
