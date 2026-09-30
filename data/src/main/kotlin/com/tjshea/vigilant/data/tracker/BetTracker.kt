@@ -53,6 +53,8 @@ data class TrackedBet(
     val settledAtMs: Long? = null,
     val closingFair: Double? = null,
     val closingSeenAtMs: Long? = null,
+    /** The last time the closing capture tried to read this bet just before its start ([ClosingLine]), so a failed read waits before the next. */
+    val closeTriedAtMs: Long? = null,
     /** "vigilant" (a +EV card or a Vigilant bet's ✓) or "cno" (a CNO bet's ✓). */
     val source: String = BetTracker.SOURCE_VIGILANT,
     /** The widget/CNO-tab key of the ✓ that logged it ("cno:<row key>"): Undo removes the bet. */
@@ -133,7 +135,10 @@ data class TrackedBet(
      */
     val autoGradeOff: Boolean get() = status == BetStatus.PENDING && settledBy == BetSettler.BY_YOU
 
-    /** Closing-line value: the EV this price had against the closing fair line. */
+    /**
+     * The EV this price has against the last pregame fair line read ([closingFair]): CLV "so far". It's the true CLV only when that read was
+     * made just before the start ([ClosingLine.clv], what every stat uses).
+     */
     val clvPercent: Double? get() = closingFair?.let { it / cost - 1.0 }
 
     /**
@@ -303,6 +308,13 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     suspend fun untrack(placedKey: String) {
         // A bet placed through the API is a real order on Novig: only deleting it in the Tracker removes it.
         store.update { list -> if (list.none { it.placedKey == placedKey }) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null } }
+    }
+
+    /** The closing capture is reading these bets now ([ClosingLine.due]): a failed read isn't tried again for [ClosingLine.RETRY_MS]. */
+    suspend fun markCloseTried(ids: Collection<String>, at: Long = clock()) {
+        if (ids.isEmpty()) return
+        val set = ids.toHashSet()
+        store.update { list -> list.map { if (it.id in set) it.copy(closeTriedAtMs = at) else it } }
     }
 
     /** Changes one bet (stake, a recheck, a settlement): [transform] gets the stored bet. */
@@ -617,7 +629,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
          * [TrackerStats.profitAll]; voided bets counted only as voided. "Profit" and "Expected" are over the
          * same settled bets, so they can be compared (the edge is real when they run together).
          */
-        fun stats(all: List<TrackedBet>): TrackerStats {
+        fun stats(all: List<TrackedBet>, now: Long = System.currentTimeMillis()): TrackerStats {
             val bets = all.filterNot { it.isOutlier }
             val decided = { b: TrackedBet -> b.status != BetStatus.PENDING && b.status != BetStatus.VOID }
             val settled = bets.filter(decided)
@@ -626,7 +638,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             // A voided bet never happened: it counts toward nothing but the bet count.
             val live = bets.filter { it.status != BetStatus.VOID }
             val open = bets.filter { it.status == BetStatus.PENDING }
-            val withClv = live.mapNotNull { it.clvPercent }
+            // True closing lines only (Tj, 2026-09-29): read just before the start, final once it's started ([ClosingLine]).
+            val withClv = live.mapNotNull { ClosingLine.clv(it, now) }
             // "Expected vs actual" over the won and lost bets whose EV is on record (an imported ✓ has none; a push is refunded).
             val judged = settled.filter { (it.status == BetStatus.WON || it.status == BetStatus.LOST) && it.evPercentAtBet != null && it.fairAtBet != null }
             // A bet's profit is stake x (1/cost - 1) with probability p (its fair chance) and -stake otherwise:
