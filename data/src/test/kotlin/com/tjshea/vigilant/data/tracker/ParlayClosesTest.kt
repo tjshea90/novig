@@ -24,13 +24,14 @@ import java.io.File
 import java.time.Instant
 
 /**
- * Pinnacle's closes from ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): its daily player-prop closing-lines file and its game-line
- * closing-lines events, in the shapes its OpenAPI spec documents (`rows` of `player_name`/`market_key`/`line`/`over_price`/`under_price`;
- * The Odds API's event shape for game lines), and how the back-fill asks it first, only with a key.
+ * Pinnacle's closes from ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43, §45): its daily closes file (player props and Pinnacle's game lines,
+ * `rows` of `player_name`/`market_key`/`line`/`over_price`/`under_price`/`snapshot_time`) and its game-line `closing-lines` (flat
+ * `home_odds`/`away_odds` rows), in the shapes Tj's key got back on 2026-09-30, and how the back-fill asks it first, only with a key.
  */
 class ParlayClosesTest {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val NFL = "americanfootball_nfl"
 
     private fun meter() = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
 
@@ -80,30 +81,30 @@ class ParlayClosesTest {
     @Test
     fun `a prop's Pinnacle close, devigged, at its exact line, for either side`() {
         val root = json.parseToJsonElement(propFile)
-        val over = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Over 3.5") as BetGrader.Pick.Prop, listOf("player_receptions"), start)
+        val over = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Over 3.5") as BetGrader.Pick.Prop, NFL, start)
             as CloseLookup.Found
         assertEquals(p(-125) / (p(-125) + p(105)), over.fair, 1e-9)
         assertEquals("ParlayAPI · Pinnacle close", over.via)
-        val under = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Under 3.5") as BetGrader.Pick.Prop, listOf("player_receptions"), start)
+        val under = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Under 3.5") as BetGrader.Pick.Prop, NFL, start)
             as CloseLookup.Found
         assertEquals(1.0, over.fair + under.fair, 1e-9)
         // Another line isn't the same bet; last week's game isn't this one.
-        val moved = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Over 4.5") as BetGrader.Pick.Prop, listOf("player_receptions"), start)
+        val moved = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Over 4.5") as BetGrader.Pick.Prop, NFL, start)
         assertEquals("Pinnacle closed this prop at 3.5, not your 4.5", (moved as CloseLookup.None).reason)
     }
 
     @Test
     fun `implied probabilities stand in for a missing price, and another book's row is never Pinnacle's`() {
         val root = json.parseToJsonElement(propFile)
-        val allen = ParlayCloses.parseProp(root, pick("Player Passing Yards", "Josh Allen Over 245.5") as BetGrader.Pick.Prop, listOf("player_pass_yds"), start)
+        val allen = ParlayCloses.parseProp(root, pick("Player Passing Yards", "Josh Allen Over 245.5") as BetGrader.Pick.Prop, NFL, start)
             as CloseLookup.Found
         assertEquals(0.52 / 1.02, allen.fair, 1e-9)
-        val shakir = ParlayCloses.parseProp(root, pick("Player Receptions", "Khalil Shakir Over 4.5") as BetGrader.Pick.Prop, listOf("player_receptions"), start)
+        val shakir = ParlayCloses.parseProp(root, pick("Player Receptions", "Khalil Shakir Over 4.5") as BetGrader.Pick.Prop, NFL, start)
         assertTrue(shakir is CloseLookup.None)
     }
 
     @Test
-    fun `a game line's Pinnacle close, moneyline, spread and total, at the closing number only`() {
+    fun `a game line's Pinnacle close in The Odds API's event shape, should closing-lines ever answer so`() {
         val root = json.parseToJsonElement(gameFile)
         val ml = ParlayCloses.parseGameLine(root, bet("ml", "Moneyline", "Buffalo Bills"), pick("Moneyline", "Buffalo Bills")) as CloseLookup.Found
         assertEquals(p(-320) / (p(-320) + p(280)), ml.fair, 1e-9)
@@ -182,10 +183,14 @@ class ParlayClosesTest {
             body = """{"error":"credit_limit_exceeded"}"""
             val broke = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { now })
             assertTrue(broke.closes(listOf(ml))["ml"] is CloseLookup.Later)
-            // Older than the 30 days its game-line call reaches: not asked at all.
+            // Older than the 30 days `closing-lines` reaches: only the day's closes file is asked.
+            body = """{"detail":{"error":"HISTORICAL_LIMIT"}}"""
+            val before = server.requestCount
             val old = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { start + 40 * 86_400_000L })
             assertTrue(old.closes(listOf(ml))["ml"] is CloseLookup.None)
-            assertEquals(0, old.requests)
+            assertEquals(1, old.requests)
+            repeat(before) { server.takeRequest() }
+            assertTrue(server.takeRequest().path!!.startsWith("/v1/historical/closing-lines.json"))
         } finally {
             server.shutdown()
         }
