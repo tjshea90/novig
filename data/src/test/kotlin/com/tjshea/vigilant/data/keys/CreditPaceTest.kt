@@ -74,4 +74,14 @@ class CreditPaceTest {
             runBlocking { spent.execute(cost = 5, reserve = 300, pace = pace) { KeyAttemptResult.Success(Unit) } }
         }
     }
+
+    @Test
+    fun `a free key says why scans leave it alone`() = runBlocking {
+        val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("f") }, meter())
+        pool.execute(cost = 1) { KeyAttemptResult.Success(Unit, cost = 1, remaining = 950, used = 50) }
+        val e = assertThrows(CreditsHeldBackException::class.java) {
+            runBlocking { pool.execute(cost = 5, reserve = 300, pace = pace) { KeyAttemptResult.Success(Unit) } }
+        }
+        assertEquals("ParlayAPI is on its free plan: its credits are kept for closing lines (scans use a paid plan's).", e.message)
+    }
 }

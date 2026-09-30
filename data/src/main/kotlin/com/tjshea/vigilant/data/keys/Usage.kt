@@ -350,7 +350,7 @@ class CreditPace(
     fun floor(u: KeyUsage, now: Long): Int {
         // Until the server has said what the key's plan is (its first answer's used + remaining), only the reserve: that first call tells.
         val limit = u.limit ?: return reserve
-        if (limit <= freeLimit) return FREE_ONLY
+        if (isFree(u)) return FREE_ONLY
         val start = u.periodStart.takeIf { it > 0 } ?: policy.periodStart(now)
         val reset = policy.nextReset(start)
         val z = zone()
@@ -359,6 +359,9 @@ class CreditPace(
         val span = (reset - start).coerceAtLeast(1)
         return reserve + ((limit - reserve).coerceAtLeast(0).toLong() * later / span).toInt()
     }
+
+    /** A free plan's key (the server said its allowance is [freeLimit] or less): kept for closing lines. */
+    fun isFree(u: KeyUsage): Boolean = u.limit != null && u.limit <= freeLimit
 
     /** Credits [u] may still spend today. */
     fun spendableToday(u: KeyUsage, now: Long): Int = ((u.left(policy) ?: 0) - floor(u, now)).coerceAtLeast(0)
@@ -400,8 +403,11 @@ class KeyPool(
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
                     // Past the reserve only when a key could pay and keep it: then it's the day's pace holding back.
                     val paced = pace != null && meter.pick(policy, open, cost) { _, _ -> reserve } != null
+                    val usages = open.mapNotNull { meter.flow.value.providers[policy.id]?.keys?.get(it) }
+                    val free = pace != null && usages.size == open.size && usages.all { pace.isFree(it) }
                     throw CreditsHeldBackException(
-                        if (paced) "${policy.displayName} has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)."
+                        if (free) "${policy.displayName} is on its free plan: its ${policy.unit} are kept for closing lines (scans use a paid plan's)."
+                        else if (paced) "${policy.displayName} has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)."
                         else "The last $reserve ${policy.unit} on ${if (all.size == 1) "your ${policy.displayName} key" else "each ${policy.displayName} key"} are kept for closing lines.",
                     )
                 } else {
