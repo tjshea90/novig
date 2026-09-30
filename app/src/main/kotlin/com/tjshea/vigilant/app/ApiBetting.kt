@@ -506,16 +506,12 @@ class ApiBettingController(
         val amount = stake.coerceIn(0.0, settings().apiMaxStake)
         if (sheet.stakeChosen && kotlin.math.abs(amount - sheet.stake) < 1e-9 && (sheet.plan != null || sheet.refusal != null)) return
         state.update { it.copy(betSheet = sheet.copy(stake = amount, stakeChosen = true, plan = null, refusal = null)) }
-        System.out.println("DBG choose amount=$amount target=${sheet.target != null} resolving=${sheet.resolving}")
         if (sheet.target == null || sheet.resolving) return // planned once the bet is found
-        System.out.println("DBG choose cancelling ${betJob}")
         betJob?.cancel()
         betJob = scope.launch {
             if (waitMs > 0) delay(waitMs)
             replan()
         }
-        System.out.println("DBG choose launched ${betJob}")
-        betJob!!.invokeOnCompletion { System.out.println("DBG J2 completed cause=$it") }
     }
 
     /** Looks at the bet again: a fresh book, the plan for the stake now, or why it can't be placed. */
@@ -538,21 +534,17 @@ class ApiBettingController(
 
     private suspend fun replan() {
         val sheet = state.value.betSheet ?: return
-        System.out.println("DBG replan start stake=${sheet.stake} t=${Thread.currentThread().name}")
         val target = sheet.target ?: return
         val placer = placer() ?: return
         val result = try {
             placer.plan(target, sheet.stake, sheet.allowRepeat)
         } catch (e: CancellationException) {
-            System.out.println("DBG replan CANCELLED stake=${sheet.stake} ${e}")
             throw e
         } catch (e: Exception) {
             PlanResult.Refused("Couldn't check the price: ${e.message ?: e.javaClass.simpleName}")
         }
-        System.out.println("DBG replan result stake=${sheet.stake} $result")
         state.update { s ->
             val cur = s.betSheet ?: return@update s
-            System.out.println("DBG replan update cur=${cur.stake} mine=${sheet.stake} sameTarget=${cur.target === target}")
             if (cur.stake != sheet.stake || cur.target !== target) s // The sheet moved on (a new stake, another bet): this answer is old.
             else s.copy(betSheet = when (result) {
                 is PlanResult.Ready -> cur.copy(plan = result.plan, refusal = null)
