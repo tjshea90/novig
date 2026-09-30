@@ -199,7 +199,11 @@ fun FeedScreen(
 
     if (parlayActions != null) {
         parlaySelected?.let { key ->
-            state.parlayPicks.picks.firstOrNull { it.key == key }?.let { p ->
+            val p = state.parlayPicks.picks.firstOrNull { it.key == key }
+            if (p == null) {
+                // A new ParlayAPI read dropped this pick: let the selection go too, so the sheet never pops open by itself if a later read lists it again.
+                androidx.compose.runtime.LaunchedEffect(key) { parlaySelected = null }
+            } else {
                 ParlayPickSheet(p, state, parlayReads[key] ?: state.pickReads(listOf(p), now)[key], parlayActions, onDismiss = { parlaySelected = null })
             }
         }

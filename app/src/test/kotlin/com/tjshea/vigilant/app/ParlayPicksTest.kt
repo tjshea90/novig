@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -254,5 +256,28 @@ class ParlayPicksTest {
         // Read 5 minutes ago, or a read that found no line: asked again.
         val old = base.copy(parlayPicks = base.parlayPicks.copy(vigilant = mapOf(k.key to OpenBetPricer.FairRead(0.1, now - 300_000L, null), h.key to OpenBetPricer.FairRead(null, null, "No fair-odds source has a line for this bet"))))
         assertEquals(setOf(h.key, k.key), old.vigilantAsks(now).map { it.key }.toSet())
+    }
+
+    @Test
+    fun `P4 a sheet whose pick a new read dropped closes for good, and doesn't pop open when a later read lists it again`() {
+        val first = state()
+        var s by androidx.compose.runtime.mutableStateOf(first)
+        compose.setContent {
+            CompositionLocalProvider(LocalClock provides { now }) {
+                VigilantTheme(darkTheme = true) {
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        FeedScreen(s, onScan = {}, onToggleLeague = {}, onOpenSettings = {}, onTrack = { _, _ -> }, parlay = ParlayPickActions())
+                    }
+                }
+            }
+        }
+        compose.onNodeWithText("Ian Happ Over 0.5").performClick()
+        compose.onNodeWithTag("parlayPickSheet").assertExists()
+        s = first.copy(parlayPicks = first.parlayPicks.copy(picks = emptyList()))
+        compose.waitForIdle()
+        compose.onNodeWithTag("parlayPickSheet").assertDoesNotExist()
+        s = first
+        compose.waitForIdle()
+        compose.onNodeWithTag("parlayPickSheet").assertDoesNotExist()
     }
 }
