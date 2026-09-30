@@ -164,9 +164,10 @@ fun TrackerScreen(
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
     val periodBets = remember(bets, period, minute) { inPeriod(bets, period, now) }
-    // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved.
+    // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved; a game
+    // that starts drops out within the minute.
     val checkStart = state.checkStartedAtMs
-    val checkStats = remember(bets, checkStart) { checkStart?.let { CheckOddsStats.of(bets, it) } }
+    val checkStats = remember(bets, checkStart, minute) { checkStart?.let { CheckOddsStats.of(bets, it, now) } }
     val openBet = openId?.let { id -> bets.firstOrNull { it.id == id } }
     LaunchedEffect(openId, openBet == null) { if (openId != null && openBet == null) openId = null }
     // A different list (tab, filter, sort, scanner, period) starts at its top, with the pinned tabs and filters just above it; the first

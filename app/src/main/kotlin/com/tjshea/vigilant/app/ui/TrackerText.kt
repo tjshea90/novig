@@ -56,11 +56,13 @@ object TrackerText {
     /** "Avg +1.3% EV": the plain average of this check's EVs, the ones over ±5% left out. */
     fun checkAverage(s: CheckOddsStats): String = "Avg " + (s.averageEv?.let(Format::evPercentShort) ?: "–") + " EV"
 
-    /** What the counter is counting: this check as it goes ([progress]: read, of), or the last one and how long ago; the outliers left out. */
+    /** What the counter is counting: this check as it goes ([progress]: read, of), or the last one and how long ago; what it leaves out. */
     fun checkCaption(s: CheckOddsStats, checking: Boolean, progress: Pair<Int, Int>?, startedAtMs: Long, now: Long): String = listOfNotNull(
         if (checking) "Open bets re-priced so far in this check" + (progress?.takeIf { it.second > 0 }?.let { " (${it.first}/${it.second} read)" } ?: "")
         else "Open bets re-priced in the check ${Format.age(startedAtMs, now)}",
         "${s.outliers} over ±${Format.percent(CheckOddsStats.OUTLIER_EV, 0)} left out of the average".takeIf { s.outliers > 0 },
+        // In-play odds swing with every play: those bets' own cards show them, the counter doesn't (Tj, 2026-09-30).
+        "${s.live} live game${if (s.live == 1) "" else "s"} left out".takeIf { s.live > 0 },
     ).joinToString(" · ")
 
     /** How to colour a bet's status line: [WAITING] is normal, [ATTENTION] needs a tap from Tj. */

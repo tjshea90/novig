@@ -174,8 +174,8 @@ object Diagnostics {
         reasons.forEach { o.appendLine("  not priced ×${it.value}: ${it.key}") }
         // The Tracker's counter (Tj, 2026-09-29): open bets re-priced since the last Check odds now began.
         s.checkStartedAtMs?.let { since ->
-            val c = com.tjshea.vigilant.data.tracker.CheckOddsStats.of(bets, since)
-            o.appendLine("Check odds now counter (since ${at(since)}): ${TrackerText.checkCounts(c)} · ${TrackerText.checkAverage(c)}" + (if (c.outliers > 0) " (${c.outliers} over ±5% left out)" else ""))
+            val c = com.tjshea.vigilant.data.tracker.CheckOddsStats.of(bets, since, now)
+            o.appendLine("Check odds now counter (since ${at(since)}): ${TrackerText.checkCounts(c)} · ${TrackerText.checkAverage(c)}" + (if (c.outliers > 0) " (${c.outliers} over ±5% left out)" else "") + (if (c.live > 0) " (${c.live} live games left out)" else ""))
         }
         o.appendLine("Settled by: score feeds ${bets.count { it.settledBy == BetSettler.BY_SCORES }}, Novig's ledger ${bets.count { it.settledBy == BetSettler.BY_NOVIG }}, you ${bets.count { it.settledBy == BetSettler.BY_YOU }}")
         val overdue = started.filter { now - it.startsTs > 6 * 3_600_000L }
