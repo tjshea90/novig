@@ -2903,6 +2903,8 @@ Its pre-game period markets (1st half, F5) are live-only, and team totals come t
   credits are kept for the closes. Past today's share ParlayAPI stands by quietly (`CreditsHeldBackException`: no error banner; Diagnostics
   says so) and the other feeds price, as they do between its refreshes anyway (quotes older than a couple of minutes never price, §24). Stateless:
   read from the meter, so it survives restarts and follows the server's own figures. On 20,000 credits: ~650 a day ≈ 80 league refreshes.
+  Background auto-scan cycles leave half of each day's share for the scans Tj starts himself (found in the v0.27.0 full test: 15-minute
+  cycles for four leagues would otherwise spend the day's share by mid-morning, leaving the evening, when he bets, with none).
 - **Free plan (1,000 credits):** worth keeping for the closes alone (Pinnacle's close for CLV, a few credits a league-day); not for scans (it
   would be spent in a day). A key the server says has 1,000 or fewer is used for closes only; a key not yet heard from gets one scan call,
   whose headers say its plan.
