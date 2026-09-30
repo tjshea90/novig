@@ -24,13 +24,15 @@ data class CreditHeaders(
         /** [header] reads one header by name (case-insensitive, as OkHttp's are); [now] judges the reset time. */
         fun read(header: (String) -> String?, now: Long): CreditHeaders {
             fun int(name: String) = header(name)?.trim()?.toDoubleOrNull()?.toInt()
-            val limit = header("x-ratelimit-limit")?.trim()
+            // ParlayAPI's replies say x-ratelimit-*; its /v1/meta/limits lists X-Rate-Limit-*: either is read.
+            fun rate(name: String) = header("x-ratelimit-$name") ?: header("x-rate-limit-$name")
+            val limit = rate("limit")?.trim()
             val monthly = limit != null && (limit.equals("unlimited", true) || (limit.toDoubleOrNull() ?: 0.0) >= 1_000)
-            val reset = if (!monthly) null else header("x-ratelimit-reset")?.trim()?.toDoubleOrNull()?.toLong()?.let { v ->
+            val reset = if (!monthly) null else rate("reset")?.trim()?.toDoubleOrNull()?.toLong()?.let { v ->
                 if (v > 100_000_000_000L) v else v * 1000
             }?.takeIf { it - now in MIN_PERIOD_MS..MAX_PERIOD_MS }
             return CreditHeaders(
-                remaining = int("x-requests-remaining") ?: int("x-credits-remaining") ?: if (monthly) int("x-ratelimit-remaining") else null,
+                remaining = int("x-requests-remaining") ?: int("x-credits-remaining") ?: if (monthly) rate("remaining")?.trim()?.toDoubleOrNull()?.toInt() else null,
                 used = int("x-requests-used"),
                 cost = int("x-requests-last") ?: int("x-credits-cost"),
                 resetAtMs = reset,

@@ -54,6 +54,9 @@ class ParlayAccountTest {
         val f = CreditHeaders.read({ free[it.lowercase()] }, now)
         assertEquals(950, f.remaining)
         assertNull(f.resetAtMs)
+        // The spelling ParlayAPI's /v1/meta/limits lists is read the same.
+        val hyphen = mapOf("x-rate-limit-limit" to "unlimited", "x-rate-limit-remaining" to "19000", "x-rate-limit-reset" to "$resetSec")
+        assertEquals(19_000, CreditHeaders.read({ hyphen[it.lowercase()] }, now).remaining)
         // The Odds API's names still win where they're sent.
         val odds = mapOf("x-requests-remaining" to "488", "x-requests-used" to "12", "x-requests-last" to "3")
         assertEquals(CreditHeaders(488, 12, 3), CreditHeaders.read({ odds[it.lowercase()] }, now))
