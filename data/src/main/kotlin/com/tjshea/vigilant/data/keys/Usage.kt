@@ -398,8 +398,10 @@ class KeyPool(
             val open = all.filter { it !in tried }
             val key = meter.pick(policy, open, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
+                    // Past the reserve only when a key could pay and keep it: then it's the day's pace holding back.
+                    val paced = pace != null && meter.pick(policy, open, cost) { _, _ -> reserve } != null
                     throw CreditsHeldBackException(
-                        if (pace != null) "${policy.displayName} has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)."
+                        if (paced) "${policy.displayName} has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)."
                         else "The last $reserve ${policy.unit} on ${if (all.size == 1) "your ${policy.displayName} key" else "each ${policy.displayName} key"} are kept for closing lines.",
                     )
                 } else {
