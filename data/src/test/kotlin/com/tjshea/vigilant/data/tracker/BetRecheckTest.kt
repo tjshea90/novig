@@ -149,26 +149,28 @@ class BetRecheckTest {
         )
         val re = BetRecheck(t, books = { row -> if (row.gameUrl!!.endsWith("gone")) null else view(-125, 105) }, clock = { now })
         val plan = re.plan(t.all())
-        assertEquals(listOf("vig1"), plan.vigilantBets.map { it.id })
-        assertEquals(1, plan.vigilantOnly)
+        // vigLive (half an hour into its game, no CNO page) is priced too now, as CNO's pages are read (Tj, 2026-09-30: "every single open bet
+        // refreshed regardless of what scanner found the bet"); it used to be left as "in progress".
+        assertEquals(listOf("vigLive", "vig1"), plan.vigilantBets.map { it.id })
+        assertEquals(2, plan.vigilantOnly)
         assertEquals(1, plan.current) // vig2: read inside the last minute
-        assertEquals(1, plan.started) // vigLive: in progress and no CNO page: nothing to price
+        assertEquals(0, plan.started)
         val r = re.run()
         assertEquals(6, r.open)
         assertEquals(listOf("gone"), r.unreadIds)
         assertEquals(r.open, r.updated + r.failed + r.skipped + r.current + r.over + r.vigilantOnly + r.started + r.priced + r.unpriced)
 
         // The pricing pass over the Vigilant bets: those bets are priced (or explained), so they leave "vigilantOnly".
-        val afterVigilant = r.withPricing(OpenBetPricer.Report(asked = 1, priced = 1, unpriced = 0), rescue = false)
+        val afterVigilant = r.withPricing(OpenBetPricer.Report(asked = 2, priced = 2, unpriced = 0), rescue = false)
         assertEquals(0, afterVigilant.vigilantOnly)
-        assertEquals(1, afterVigilant.priced)
+        assertEquals(2, afterVigilant.priced)
         // ...and the bet CNO couldn't read is taken over: no longer "couldn't be read", it is priced or explained.
         val afterRescue = afterVigilant.withPricing(OpenBetPricer.Report(asked = 1, priced = 0, unpriced = 1), rescue = true)
         assertEquals(0, afterRescue.failed)
         assertEquals(1, afterRescue.unpriced)
         assertEquals(afterRescue.open, afterRescue.updated + afterRescue.failed + afterRescue.skipped + afterRescue.current + afterRescue.over + afterRescue.vigilantOnly + afterRescue.started + afterRescue.priced + afterRescue.unpriced)
         assertEquals(
-            "Checked 4 of 6 open bets · 1 couldn't be priced (each bet says why) · 1 game in progress (results come from final scores)",
+            "Checked 5 of 6 open bets · 1 couldn't be priced (each bet says why)",
             afterRescue.summary(),
         )
     }

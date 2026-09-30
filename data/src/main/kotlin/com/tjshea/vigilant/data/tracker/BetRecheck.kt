@@ -71,7 +71,7 @@ class BetRecheck(
         val cnoTried: Int = 0,
         val cnoFailed: Int = 0,
         val cnoSkipped: Int = 0,
-        /** No CNO page and the game has started: nothing to price, its result comes from the final score. */
+        /** No CNO page and the game has started: not priced (before 2026-09-30; now [OpenBetPricer] prices them, so a plan leaves this 0). */
         val started: Int = 0,
         /** [OpenBetPricer] gave these bets a current EV from Vigilant's own fair odds (Vigilant's own bets, and CNO bets CNO didn't read). */
         val priced: Int = 0,
@@ -181,7 +181,7 @@ class BetRecheck(
         val current: Int,
         val over: Int,
         val vigilantOnly: Int,
-        /** Pregame bets with no CNO page, not read within the last minute: [OpenBetPricer]'s to price. */
+        /** Bets with no CNO page (still to start or under way), not read within the last minute: [OpenBetPricer]'s to price. */
         val vigilantBets: List<TrackedBet> = emptyList(),
         /** Started games with no CNO page. */
         val started: Int = 0,
@@ -201,16 +201,17 @@ class BetRecheck(
         val own = live - readable.toSet()
         fun fresh(b: TrackedBet) = freshMs > 0 && b.nowAtMs != null && now - b.nowAtMs < freshMs
         val current = readable.filter(::fresh)
-        val pregame = own.filter { now < it.startsTs }
-        val pricing = pregame.filterNot(::fresh)
+        // Every one with no CNO page is Vigilant's to price, a game under way too (Tj, 2026-09-30: "every single open bet refreshed regardless of
+        // what scanner found the bet"): [OpenBetPricer] prices games up to [STALE_AFTER_START_MS] after their start, as CNO's pages are read.
+        val pricing = own.filterNot(::fresh)
         return Plan(
             open = open.size,
             todo = (readable - current.toSet()).sortedBy { it.startsTs },
-            current = current.size + (pregame.size - pricing.size),
+            current = current.size + (own.size - pricing.size),
             over = over.size,
             vigilantOnly = pricing.size,
             vigilantBets = pricing.sortedBy { it.startsTs },
-            started = own.size - pregame.size,
+            started = 0,
         )
     }
 
