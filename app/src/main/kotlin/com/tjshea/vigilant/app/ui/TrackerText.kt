@@ -147,6 +147,11 @@ object TrackerText {
                 BetTracker.VIA_CNO -> "CNO's books"
                 BetTracker.VIA_VIGILANT -> "Vigilant's fair odds"
                 BetTracker.VIA_PARLAY -> "ParlayAPI's books"
+                // Both reads of this check, averaged: each one's EV, so a split between them shows.
+                BetTracker.VIA_BOTH -> listOfNotNull(
+                    b.cnoFair?.let { "CNO ${Format.evPercentShort(it / b.cost - 1.0)}" },
+                    b.vigFair?.let { "Vigilant ${Format.evPercentShort(it / b.cost - 1.0)}" },
+                ).joinToString(" + ", postfix = " averaged")
                 else -> null
             },
             b.nowBooks?.let { "$it book${if (it == 1) "" else "s"}" },

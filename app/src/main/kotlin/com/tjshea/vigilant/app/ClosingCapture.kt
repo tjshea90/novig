@@ -22,6 +22,10 @@ import androidx.work.WorkerParameters
 import com.tjshea.vigilant.data.tracker.ClosingLine
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 
 /**
  * The true closing line of every bet (Tj, 2026-09-29: "make a system that finds the true closing odds for each of my bets"): an exact alarm
