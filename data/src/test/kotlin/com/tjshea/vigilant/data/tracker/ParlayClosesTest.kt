@@ -259,4 +259,32 @@ class ParlayClosesTest {
             server.shutdown()
         }
     }
+
+    /** Tj's diagnostics, 2026-09-30: "100 started with no close found yet", 69 of them marked final by ESPN and Novig before ParlayAPI existed. */
+    @Test
+    fun `a bet every old source gave up on is asked again once ParlayAPI is added, and not again after`() = runBlocking {
+        val now = start + 2 * 86_400_000L
+        val given = bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5").copy(
+            closeFinal = true, closeLookedAtMs = start + 3_600_000L, closeNote = "ESPN keeps full-game moneylines, spreads and totals only; No Novig outcome on record for this bet",
+        )
+        val t = tracker(given)
+        val pinnacle = object : CloseSource {
+            var asked = 0
+            override val id = ParlayCloses.ID
+            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> { asked += bets.size; return bets.associate { it.id to CloseLookup.None("Not in ParlayAPI's file") } }
+        }
+        val espn = Fake(CloseLookup.None("ESPN keeps full-game moneylines, spreads and totals only"))
+        CloseBackfill(t, listOf(pinnacle, espn), clock = { now }).run()
+        assertEquals(1, pinnacle.asked)
+        val b = t.all().single()
+        assertTrue(b.closeFinal)
+        assertTrue(ParlayCloses.ID in b.closeAskedOf!!)
+        // Asked of every source now: left alone.
+        CloseBackfill(t, listOf(pinnacle, espn), clock = { now + CloseBackfill.RETRY_MS }).run()
+        assertEquals(1, pinnacle.asked)
+        // Found: the Pinnacle close counts.
+        val found = tracker(given)
+        CloseBackfill(found, listOf(Fake(CloseLookup.Found(0.58, "ParlayAPI · Pinnacle close"))), clock = { now }).run()
+        assertEquals(0.58, found.all().single().closeFair!!, 0.0)
+    }
 }
