@@ -44,14 +44,19 @@ class TheOddsApiClient(
     private val httpClient: OkHttpClient,
     private val pool: KeyPool,
     private val json: Json,
-    private val baseUrl: String = "https://api.the-odds-api.com/v4",
+    private val baseUrl: String = OddsFeed.ODDS_API.base,
     private val clock: () -> Long = System::currentTimeMillis,
     private val minIntervalMs: Long = 500,
+    /** Which feed in The Odds API's format this is: The Odds API itself, or ParlayAPI's drop-in copy ([OddsFeed.PARLAY]). */
+    val feed: OddsFeed = OddsFeed.ODDS_API,
 ) : ReferenceSource {
 
-    override val id = ID
-    override val displayName = "The Odds API"
+    override val id = feed.sourceId
+    override val displayName = feed.title
     override val metered = true
+
+    /** The books asked for: the feed's own list (ParlayAPI), else the reference books picked in Settings (their keys are The Odds API's). */
+    fun booksFor(settings: ScanSettings): List<String> = feed.books ?: settings.referenceBooks
 
     /** Tennis is keyed per tournament there, never by the league key the app groups it under. */
     override fun supports(league: League) = league.oddsApiListed
@@ -62,7 +67,7 @@ class TheOddsApiClient(
      * PropLine carries the same sportsbooks for 1 of 1,000 daily requests per league; this costs 3 of
      * 500 monthly credits. So with a PropLine key this is PropLine's fallback (RESEARCH.md §23).
      */
-    override val fallbackFor: String get() = PropLineClient.ID
+    override val fallbackFor: String? get() = if (feed == OddsFeed.ODDS_API) PropLineClient.ID else null
 
     /**
      * Worth credits only when PropLine didn't answer [league] this scan, when a book picked as sharp is
@@ -70,6 +75,8 @@ class TheOddsApiClient(
      * game list has at least one of them.
      */
     override suspend fun needed(league: League, settings: ScanSettings, context: ScanContext): Boolean {
+        // ParlayAPI is a feed of its own (Pinnacle among its books), not PropLine's backup.
+        if (feed != OddsFeed.ODDS_API) return true
         if (league.novigName !in context.firstAnswered) return true
         if (settings.referenceBooks.any { it in KNOWN_BOOKMAKERS && it in settings.sharpBooks && !PropLineClient.carries(it) }) return true
         val horizon = context.now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
@@ -87,7 +94,7 @@ class TheOddsApiClient(
         } catch (e: Exception) {
             return false
         }
-        return Planner.matchEvents(missing, listOf(RefSnapshot(league.oddsApiSportKey, listed, context.now, provider = ID)))
+        return Planner.matchEvents(missing, listOf(RefSnapshot(league.oddsApiSportKey, listed, context.now, provider = id)))
             .any { it.refEvent != null }
     }
 
@@ -102,8 +109,8 @@ class TheOddsApiClient(
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val markets = marketsFor(settings.families)
-        if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
-        return fetch(league.oddsApiSportKey, settings.referenceBooks, markets)
+        if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
+        return fetch(league.oddsApiSportKey, booksFor(settings), markets)
     }
 
     private val spacing = Mutex()
@@ -124,7 +131,7 @@ class TheOddsApiClient(
             // Their rule: no events returned = no charge.
             charged = { if (it.isEmpty()) 0 else markets.size },
         )
-        return RefSnapshot(sportKey, answer.value, clock(), answer.remaining, answer.used, ID)
+        return RefSnapshot(sportKey, answer.value, clock(), answer.remaining, answer.used, id)
     }
 
     /**
@@ -192,9 +199,10 @@ class TheOddsApiClient(
 
             httpClient.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
-                val remaining = response.intHeader(REMAINING)
+                // ParlayAPI names them x-credits-*; The Odds API x-requests-*.
+                val remaining = response.intHeader(REMAINING) ?: response.intHeader(CREDITS_REMAINING)
                 val used = response.intHeader(USED)
-                val last = response.intHeader(LAST)
+                val last = response.intHeader(LAST) ?: response.intHeader(CREDITS_COST)
                 when (response.code) {
                     429 -> {
                         val retry = response.header("Retry-After")
@@ -204,7 +212,7 @@ class TheOddsApiClient(
                         )
                     }
                     401, 403 -> when {
-                        body.contains("OUT_OF_USAGE_CREDITS") || body.contains("quota", ignoreCase = true) ->
+                        body.contains("OUT_OF_USAGE_CREDITS") || body.contains("quota", ignoreCase = true) || body.contains("credit_limit_exceeded") ->
                             KeyAttemptResult.Depleted("monthly credits used up")
                         else -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}" + errorCode(body)?.let { " $it" }.orEmpty())
                     }
@@ -212,7 +220,7 @@ class TheOddsApiClient(
                     404 -> KeyAttemptResult.Success(Answer(notFound, remaining, used), cost = last ?: 0, remaining = remaining, used = used)
                     else -> {
                         if (!response.isSuccessful) {
-                            throw TheOddsApiException("The Odds API failed for $what: HTTP ${response.code} ${body.take(200)}")
+                            throw TheOddsApiException("${feed.title} failed for $what: HTTP ${response.code} ${body.take(200)}")
                         }
                         val value = parse(body)
                         KeyAttemptResult.Success(Answer(value, remaining, used), cost = last ?: charged(value), remaining = remaining, used = used)
@@ -238,6 +246,8 @@ class TheOddsApiClient(
 
         /** The main-line markets a sport refresh buys: one credit each. Alt markets come from elsewhere. */
         fun marketsFor(families: Collection<MarketFamily>): List<String> = families.mapNotNull { FAMILY_MARKETS[it] }.sorted()
+        const val CREDITS_REMAINING = "x-credits-remaining"
+        const val CREDITS_COST = "x-credits-cost"
         const val REMAINING = "x-requests-remaining"
         const val USED = "x-requests-used"
         const val LAST = "x-requests-last"
@@ -404,3 +414,18 @@ private data class OutcomeDto(
     /** Player props: the player's name. */
     val description: String? = null,
 )
+
+/**
+ * A feed in The Odds API's format. ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43) is "a drop-in replacement for the-odds-api: same endpoints, same
+ * params, same response format" at `parlay-api.com/v1`, with Pinnacle, Novig, ProphetX, bet365 and the US books, player props included, at a
+ * fraction of the price per credit; checked live on its free endpoint 2026-09-30 (15 books on an NFL game, Pinnacle's price seconds old).
+ */
+enum class OddsFeed(val sourceId: String, val propsId: String, val title: String, val base: String, val books: List<String>?) {
+    ODDS_API("oddsapi", "oddsapi_props", "The Odds API", "https://api.the-odds-api.com/v4", null),
+
+    /** Its own ten books (its keys differ from The Odds API's for some): the sharp ones first, the Settings picker doesn't apply. */
+    PARLAY(
+        "parlay", "parlay_props", "ParlayAPI", "https://parlay-api.com/v1",
+        listOf("pinnacle", "prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics"),
+    ),
+}

@@ -33,7 +33,7 @@ class OddsApiPropsSource(
     private val client: TheOddsApiClient,
 ) : ReferenceSource {
 
-    override val id = ID
+    override val id = client.feed.propsId
     override val propsOnly = true
     override val displayName = "Sportsbook props"
     override val metered = true
@@ -51,7 +51,7 @@ class OddsApiPropsSource(
      * PropLine key these credits go only to the games and prop types PropLine didn't price this scan
      * (RESEARCH.md §23): see [allocate].
      */
-    override val fallbackFor: String get() = PropLinePropsSource.ID
+    override val fallbackFor: String? get() = if (client.feed == OddsFeed.ODDS_API) PropLinePropsSource.ID else null
 
     /** A game's props, bought at [atMs] with request [ask]. [ref] may have no markets (no book posted any). */
     private data class Bought(val novigEventId: String, val ref: RefEvent, val atMs: Long, val ask: String)
@@ -89,12 +89,12 @@ class OddsApiPropsSource(
                 val listed = client.events(sport, now + (settings.bookPropWindowHours + 24L) * 3_600_000L)
                 remaining = listed.remaining ?: remaining
                 used = listed.used ?: used
-                val matches = Planner.matchEvents(buying, listOf(RefSnapshot(sport, listed.value, now, provider = ID)))
+                val matches = Planner.matchEvents(buying, listOf(RefSnapshot(sport, listed.value, now, provider = id)))
                 for (m in matches.sortedBy { it.event.startsTs }) {
                     val ref = m.refEvent ?: continue
                     val markets = toBuy[m.event.eventId].orEmpty()
                     if (markets.isEmpty()) continue
-                    val answer = client.eventOdds(sport, ref.id, settings.referenceBooks, markets)
+                    val answer = client.eventOdds(sport, ref.id, client.booksFor(settings), markets)
                     remaining = answer.remaining ?: remaining
                     used = answer.used ?: used
                     // Keep the listing's teams and time (the ones matched on) with the odds call's quotes.
@@ -113,7 +113,7 @@ class OddsApiPropsSource(
             .filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < reuseMs && it.ref.markets.isNotEmpty() }
             .map { it.ref }
             .distinctBy { it.id }
-        val snapshot = RefSnapshot(sport, events, now, remaining, used, ID)
+        val snapshot = RefSnapshot(sport, events, now, remaining, used, id)
         failure?.let { e ->
             val message = when (e) {
                 is AllKeysExhaustedException, is ReferenceException -> e.message ?: displayName
