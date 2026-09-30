@@ -1362,6 +1362,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun buildDiagnostics() {
+        viewModelScope.launch {
+            val problems = withContext(Dispatchers.IO) { runCatching { c.problems.recent() }.getOrDefault(emptyList()) }
+            buildDiagnostics(problems)
+        }
+    }
+
+    /** What Android allows Vigilant on this phone, for Diagnostics' health checks (each null where it couldn't be read). */
+    private fun phoneNow(app: Application): Diagnostics.Phone {
+        val cm = app.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = runCatching { cm?.getNetworkCapabilities(cm.activeNetwork) }.getOrNull()
+        val network = caps?.let {
+            listOfNotNull(
+                "Wi-Fi".takeIf { _ -> it.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) },
+                "mobile".takeIf { _ -> it.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) },
+                "VPN".takeIf { _ -> it.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) },
+            ).joinToString(" + ").ifEmpty { null }
+        }
+        return Diagnostics.Phone(
+            notifications = runCatching { androidx.core.app.NotificationManagerCompat.from(app).areNotificationsEnabled() }.getOrNull(),
+            exactAlarms = runCatching {
+                if (android.os.Build.VERSION.SDK_INT >= 31) app.getSystemService(android.app.AlarmManager::class.java).canScheduleExactAlarms() else true
+            }.getOrNull(),
+            batteryUnrestricted = runCatching { app.getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(app.packageName) }.getOrNull(),
+            overlay = runCatching { android.provider.Settings.canDrawOverlays(app) }.getOrNull(),
+            dataSaver = runCatching { cm?.restrictBackgroundStatus?.let { it == android.net.ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED } }.getOrNull(),
+            online = caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?: (cm != null).takeIf { !it },
+            network = network,
+        )
+    }
+
+    private fun buildDiagnostics(problems: List<com.tjshea.vigilant.data.diag.Problem>) {
         val app = getApplication<Application>()
         val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
         val extras = Diagnostics.Extras(
@@ -1382,6 +1413,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 "second opinions" to c.parlayVerdicts.requests, "picks" to c.parlayBestBets.requests,
             ),
             injuryReports = c.injuries.book.value.size,
+            phone = phoneNow(app),
+            problems = problems,
         )
         // The meter as it stands this moment (a balance just read may not have reached the state yet).
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it.copy(usage = c.usage.flow.value), extras, System.currentTimeMillis()))) }
