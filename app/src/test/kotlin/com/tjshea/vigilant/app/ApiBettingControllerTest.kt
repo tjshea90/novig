@@ -175,6 +175,25 @@ class ApiBettingControllerTest {
         assertEquals(state.value.settings.apiMaxStake, state.value.betSheet!!.stake, 0.0)
     }
 
+    /**
+     * A plan started while the sheet's first one is still running (an amount typed or picked right after it opened) always answers: the
+     * placer is made once under a lock (two plans on two threads once saw it half set up, and the second planned nothing).
+     */
+    @Test
+    fun `an amount changed while the first price read is running is always priced`() {
+        val (o, book) = sample()
+        val state = startState()
+        val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        repeat(40) { i ->
+            api.bet(o)
+            val stake = if (i % 2 == 0) 1.0 else 2.0
+            api.setStake(stake)
+            waitFor("a plan for \$$stake (round $i)") { state.value.betSheet?.let { it.stake == stake && (it.plan != null || it.refusal != null) } == true }
+            assertNotNull("round $i: ${state.value.betSheet?.refusal}", state.value.betSheet!!.plan)
+            api.dismiss()
+        }
+    }
+
     @Test
     fun `the confirm places one order, tracks the real fill, and hides the bet from the lists`() {
         val (o, book) = sample()
