@@ -165,8 +165,9 @@ class RunwayTest {
         )
         val both = Runway.lines(views(book, mapOf(QuotaPolicy.PINNWIRE to listOf("w"), QuotaPolicy.PINNAPI to listOf("a")), t), t)
         val wire = both.first { it.id == QuotaPolicy.PINNWIRE.id }
-        assertEquals(RunwayLevel.OK, wire.level)
-        assertTrue(wire.text, wire.text.contains("then pinnapi takes over (100 left)"))
+        // 22 in 3 hours is ~170 by midnight UTC: past PinnWire's 100, within the two's 200 (a WATCH, not SHORT).
+        assertEquals(RunwayLevel.WATCH, wire.level)
+        assertTrue(wire.text, wire.text.contains("then pinnapi takes over (100 left): about 170 of the two's 200 by the reset: WATCH"))
         // Without pinnapi it's SHORT, as before.
         val alone = Runway.lines(views(book, mapOf(QuotaPolicy.PINNWIRE to listOf("w")), t), t).first { it.id == QuotaPolicy.PINNWIRE.id }
         assertEquals(RunwayLevel.SHORT, alone.level)
