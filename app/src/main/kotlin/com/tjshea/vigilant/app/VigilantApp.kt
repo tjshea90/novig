@@ -115,19 +115,6 @@ class AppContainer(private val app: Application) {
     val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
     val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
 
-    init {
-        // The closing capture's alarm follows the open bets (Tj, 2026-09-29: true closing lines): armed for the next start, moved when a bet is
-        // added, settled or deleted, cancelled when none is left to close ([ClosingAlarm]). Whatever started this process: a screen, an alert's
-        // ✓, a worker.
-        appScope.launch {
-            runCatching { tracker.all() }
-            tracker.flow.filterNotNull()
-                .map { bets -> ClosingLine.nextAt(bets, System.currentTimeMillis()) }
-                .distinctUntilChanged()
-                .collect { at -> ClosingAlarm.set(app, at) }
-        }
-    }
-
     /** When the last Tracker "Check odds now" began: its +EV / −EV counter counts the bets re-read since ([CheckOddsStats]). */
     val lastCheck = JsonFileStore(File(app.filesDir, "last_check.json"), com.tjshea.vigilant.data.tracker.LastCheck.serializer(), { com.tjshea.vigilant.data.tracker.LastCheck() }, json)
     val novig = NovigPublicClient(http, json, usage = usage)
@@ -159,6 +146,19 @@ class AppContainer(private val app: Application) {
      */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val runner = ScanRunner(scanner, appScope)
+
+    init {
+        // The closing capture's alarm follows the open bets (Tj, 2026-09-29: true closing lines): armed for the next start, moved when a bet is
+        // added, settled or deleted, cancelled when none is left to close ([ClosingAlarm]). Whatever started this process: a screen, an alert's
+        // ✓, a worker.
+        appScope.launch {
+            runCatching { tracker.all() }
+            tracker.flow.filterNotNull()
+                .map { bets -> ClosingLine.nextAt(bets, System.currentTimeMillis()) }
+                .distinctUntilChanged()
+                .collect { at -> ClosingAlarm.set(app, at) }
+        }
+    }
 
     /**
      * CrazyNinjaOdds' +EV list (RESEARCH.md §18). It reads only while [MainActivity] is started
