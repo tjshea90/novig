@@ -86,7 +86,13 @@ data class BettingActions(
 )
 
 /** What a card's Bet button does; null (or not [enabled]) = betting isn't set up and the button isn't there. */
-class ApiBetActions(val enabled: Boolean, val betOpportunity: (Opportunity) -> Unit, val betCno: (CnoRow) -> Unit)
+class ApiBetActions(
+    val enabled: Boolean,
+    val betOpportunity: (Opportunity) -> Unit,
+    val betCno: (CnoRow) -> Unit,
+    /** A ParlayAPI pick (TASKS.md P1): as a CNO bet, at ParlayAPI's fair odds, logged as ParlayAPI's. */
+    val betParlay: (com.tjshea.vigilant.data.reference.ParlayPick) -> Unit = {},
+)
 
 val LocalApiBet = staticCompositionLocalOf<ApiBetActions?> { null }
 

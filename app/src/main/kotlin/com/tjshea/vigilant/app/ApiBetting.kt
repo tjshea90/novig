@@ -394,10 +394,10 @@ class ApiBettingController(
      * scanner"): the same as a CNO card's, with ParlayAPI's fair odds as read at [boardAtMs] (the sheet refuses them once too old) and logged
      * to the Tracker as ParlayAPI's.
      */
-    fun bet(p: com.tjshea.vigilant.data.reference.ParlayPick, boardAtMs: Long?) =
+    fun bet(p: com.tjshea.vigilant.data.reference.ParlayPick, boardAtMs: Long? = state.value.parlayPicks.readAtMs) =
         betRow(p.row, "ParlayAPI") { found, market -> ApiBetTargets.of(p, found, market, boardAtMs) }
 
-    private fun betRow(row: CnoRow, lister: String, target: (NovigBetFinder.Found.Bet, com.tjshea.vigilant.data.novig.NovigMarket) -> BetTarget?) {
+    private fun betRow(row: CnoRow, lister: String, target: (NovigBetFinder.Found.Bet, NovigMarket) -> BetTarget?) {
         if (c.trading == null) return
         if (!ApiBetTargets.atNovig(row)) {
             toasts.tryEmit("Only bets priced at Novig can be placed through Novig's API")
