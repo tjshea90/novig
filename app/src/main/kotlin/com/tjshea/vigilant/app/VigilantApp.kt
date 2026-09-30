@@ -282,8 +282,12 @@ class AppContainer(private val app: Application) {
     val teams = PlayerTeams(http, json, JsonFileStore(File(app.filesDir, "teams.json"), TeamsCache.serializer(), { TeamsCache() }, json))
 
     /** Whether Vigilant is on screen: a finished scan only notifies when it isn't. */
-    @Volatile
-    var onScreen = false
+    var onScreen: Boolean
+        get() = screen.value
+        set(value) { screen.value = value }
+
+    /** [onScreen] as a flow: what reads only while Tj is looking (ParlayAPI's movers) waits on it instead of waking on a timer. */
+    val screen = kotlinx.coroutines.flow.MutableStateFlow(false)
 
     /** Bets a push alert went out for (alerts.json), so each bet alerts once (Tj, 2026-09-28). */
     val alertLog = AlertLog(JsonFileStore(File(app.filesDir, "alerts.json"), AlertBook.serializer(), { AlertBook() }, json))

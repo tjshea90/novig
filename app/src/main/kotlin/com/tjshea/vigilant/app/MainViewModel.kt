@@ -656,17 +656,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Pinnacle's moves in the picked leagues (PARLAY_API.md §6.3): ParlayAPI's public movers board (free, no key) read every few minutes
-     * while Vigilant is on screen and ParlayAPI is on, and again at once when the leagues change.
+     * while Vigilant is on screen and ParlayAPI is on, again at once when the leagues change or Vigilant comes back on screen (the
+     * notes are never minutes stale on return), and not at all off screen: no timer wakes the phone in a pocket.
      */
     private suspend fun keepMovers() {
-        state.map { s -> if (s.loaded && s.settings.useParlay) s.settings.leagues else null }.distinctUntilChanged().collectLatest { leagues ->
+        combine(
+            state.map { s -> if (s.loaded && s.settings.useParlay) s.settings.leagues else null }.distinctUntilChanged(),
+            c.screen,
+        ) { leagues, onScreen -> leagues to onScreen }.collectLatest { (leagues, onScreen) ->
             val sports = leagues.orEmpty().mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it)?.takeIf { l -> l.oddsApiListed }?.oddsApiSportKey }.distinct()
             if (sports.isEmpty()) {
                 c.parlayMovers.refresh(emptyList())
                 return@collectLatest
             }
+            // Off screen: nothing until Vigilant is back (then this block starts again at once).
+            if (!onScreen) return@collectLatest
             while (true) {
-                if (c.onScreen) c.parlayMovers.refresh(sports)
+                c.parlayMovers.refresh(sports)
                 kotlinx.coroutines.delay(com.tjshea.vigilant.data.reference.ParlayMovers.EVERY_MS)
             }
         }
