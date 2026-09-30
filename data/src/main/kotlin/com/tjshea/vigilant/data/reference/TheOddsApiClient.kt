@@ -199,7 +199,7 @@ class TheOddsApiClient(
 
             httpClient.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
-                // ParlayAPI names them x-credits-*; The Odds API x-requests-*.
+                // x-requests-* on both (ParlayAPI keeps The Odds API's names); x-credits-* read too, should ParlayAPI send only those.
                 val remaining = response.intHeader(REMAINING) ?: response.intHeader(CREDITS_REMAINING)
                 val used = response.intHeader(USED)
                 val last = response.intHeader(LAST) ?: response.intHeader(CREDITS_COST)
