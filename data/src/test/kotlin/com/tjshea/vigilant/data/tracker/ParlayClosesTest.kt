@@ -90,7 +90,7 @@ class ParlayClosesTest {
     }
 
     @Test
-    fun `a game line's Pinnacle close: moneyline, spread and total at the closing number only`() {
+    fun `a game line's Pinnacle close, moneyline, spread and total, at the closing number only`() {
         val root = json.parseToJsonElement(gameFile)
         val ml = ParlayCloses.parseGameLine(root, bet("ml", "Moneyline", "Buffalo Bills"), pick("Moneyline", "Buffalo Bills")) as CloseLookup.Found
         assertEquals(p(-320) / (p(-320) + p(280)), ml.fair, 1e-9)
