@@ -165,6 +165,34 @@ class ParlayAccount(
         /** Days of usage log asked for (the chart's width). */
         const val HISTORY_DAYS_ASKED = 30
 
+        /**
+         * An endpoint as its usage log names it ("props:baseball_mlb", "closing-lines:json") in words: "Props · MLB", "Closing lines · history
+         * file".
+         */
+        fun endpointName(endpoint: String): String {
+            val kind = endpoint.substringBefore(':').trim()
+            val what = endpoint.substringAfter(':', "").trim()
+            val name = when (kind.lowercase().replace('-', '_')) {
+                "props" -> "Props"
+                "odds" -> "Game lines"
+                "closing_lines" -> "Closing lines"
+                "best_bets" -> "Best bets"
+                "injuries" -> "Injuries"
+                "verdict" -> "Second opinion"
+                "line_movement" -> "Line movement"
+                "period_markets", "live_period_markets" -> "Period lines"
+                "events" -> "Games list"
+                "historical" -> "History"
+                else -> kind.replace('_', ' ').replace('-', ' ').replaceFirstChar { it.uppercase() }
+            }
+            val sport = when {
+                what.isEmpty() -> null
+                what == "json" -> "history file"
+                else -> com.tjshea.vigilant.data.scanner.Leagues.ALL.firstOrNull { it.oddsApiSportKey == what }?.displayName ?: what
+            }
+            return listOfNotNull(name, sport).joinToString(" · ")
+        }
+
         /** Several keys' logs as one: each day's and each endpoint's credits added up. */
         fun combine(all: Collection<History>): History? {
             if (all.isEmpty()) return null
