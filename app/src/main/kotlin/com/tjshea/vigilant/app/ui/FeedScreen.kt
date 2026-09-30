@@ -81,6 +81,8 @@ fun FeedScreen(
     onHide: (Opportunity) -> Unit = {},
     /** Undo, or "Put back" in the removed list: the bet (by key) shows again. */
     onUnhide: (String) -> Unit = {},
+    /** ParlayAPI's own picks at Novig (PARLAY_API.md §6.5): shown while ParlayAPI is on with a key. Null: no section. */
+    parlay: ParlayPickActions? = null,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
@@ -156,6 +158,17 @@ fun FeedScreen(
                         Column(Modifier.padding(horizontal = 12.dp)) {
                             SetAsideList(removed, "you removed", "✕", "Put back", showRemoved, { showRemoved = !showRemoved }, onUnhide)
                         }
+                    }
+                }
+                // ParlayAPI's picks, above Vigilant's own: read only on a tap (10 credits a league), each re-priced at Novig.
+                if (parlay != null && state.canAskParlay && state.settings.leagues.isNotEmpty()) {
+                    val picks = state.parlayShown(now)
+                    item(key = "parlayHeader") { ParlayPicksHeader(state, picks.size, now, parlay, Modifier.padding(horizontal = 12.dp)) }
+                    items(picks, key = { "parlay/" + it.key }) { p ->
+                        ParlayPickCard(
+                            p, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(),
+                            injury = state.injuries[p.key], actions = parlay,
+                        )
                     }
                 }
                 items(shown, key = { it.key }) { o ->

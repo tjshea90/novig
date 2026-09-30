@@ -166,6 +166,7 @@ fun ParlayPicksHeader(state: UiState, shown: Int, now: Long, actions: ParlayPick
 fun ParlayPickCard(
     p: ParlayPick,
     settings: ScanSettings,
+    now: Long,
     modifier: Modifier = Modifier,
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
     actions: ParlayPickActions = ParlayPickActions(),
@@ -227,7 +228,7 @@ fun ParlayPickCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    (play.verdict?.let { "ParlayAPI: $it" } ?: "ParlayAPI edge alert") + (p.novigAtMs?.let { " · ${com.tjshea.vigilant.app.AppBook.name}'s book read ${Format.age(it, System.currentTimeMillis())}" } ?: ""),
+                    (play.verdict?.let { "ParlayAPI: $it" } ?: "ParlayAPI edge alert") + (p.novigAtMs?.let { " · ${com.tjshea.vigilant.app.AppBook.name}'s book read ${Format.age(it, now)}" } ?: ""),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),

@@ -629,6 +629,14 @@ private fun VigilantRoot(
                     onPause = vm::setPaused,
                     onHide = vm::hideOpportunity,
                     onUnhide = vm::unmarkPlaced,
+                    parlay = com.tjshea.vigilant.app.ui.ParlayPickActions(
+                        onScan = vm::scanParlayPicks,
+                        onRecheck = vm::recheckParlayPicks,
+                        onPlaced = vm::markPlaced,
+                        onHide = vm::markHidden,
+                        onOpen = onOpenInNovig,
+                        opening = openingBet,
+                    ),
                 )
                 Tab.CNO -> CnoTab(
                     state, vm,
