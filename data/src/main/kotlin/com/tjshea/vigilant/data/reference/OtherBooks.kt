@@ -108,7 +108,7 @@ class OtherBooks(
         }
         val now = clock()
         val lines = tried.flatMap { it.lines.orEmpty() }.filter { it.code != CnoBooks.NOVIG }
-        val (fresh, older) = merge(lines).partition { Freshness.fresh(it.seenAtMs, now, startsTs) }
+        val (fresh, older) = merge(lines, now, startsTs).partition { Freshness.fresh(it.seenAtMs, now, startsTs) }
         val answered = tried.filter { t -> t.lines.orEmpty().any { it.code != CnoBooks.NOVIG } }.map { it.source }
         val view = fresh.takeIf { it.isNotEmpty() }?.let { f ->
             CnoBooksView(
@@ -330,12 +330,14 @@ class OtherBooks(
         private const val GAME_GAP_MS = 2 * 60 * 60_000L
 
         /**
-         * One line per book: a two-sided price first (it can be devigged), then the freshest; the sources in the order asked (ParlayAPI,
-         * PropLine, The Odds API). Pinnacle and the exchanges lead, as on CNO's page, then the books pricing both sides. Pure.
+         * One line per book: a current price first, then a two-sided one (it can be devigged), then the freshest (the sources were asked
+         * ParlayAPI, PropLine, then The Odds API). Pinnacle and the exchanges lead, as on CNO's page, then the books pricing both sides. Pure.
          */
-        fun merge(lines: List<Line>): List<Line> =
+        fun merge(lines: List<Line>, now: Long, startsTs: Long?): List<Line> =
             lines.groupBy { it.code }.values.map { same ->
-                same.sortedWith(compareByDescending<Line> { it.twoSided }.thenByDescending { it.seenAtMs ?: 0L }).first()
+                same.sortedWith(
+                    compareByDescending<Line> { Freshness.fresh(it.seenAtMs, now, startsTs) }.thenByDescending { it.twoSided }.thenByDescending { it.seenAtMs ?: 0L },
+                ).first()
             }.sortedWith(compareBy<Line>({ LEAD.indexOf(it.code).let { i -> if (i < 0) LEAD.size else i } }, { !it.twoSided }, { it.code }))
 
         private val LEAD = listOf("PN", "CS", "PX", "KI")
