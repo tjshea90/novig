@@ -285,6 +285,9 @@ class UsageMeter(
     }
 
     companion object {
+        /** [pick]'s floor when nothing is held back. */
+        val NO_FLOOR: (KeyUsage, Long) -> Int = { _, _ -> 0 }
+
         const val MINUTE = 60_000L
         const val HOUR = 3_600_000L
         const val REPROBE = 6 * HOUR

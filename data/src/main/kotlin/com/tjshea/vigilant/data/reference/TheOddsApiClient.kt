@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
+import com.tjshea.vigilant.data.keys.CreditPace
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.scanner.League
@@ -50,6 +51,9 @@ class TheOddsApiClient(
     /** Which feed in The Odds API's format this is: The Odds API itself, or ParlayAPI's drop-in copy ([OddsFeed.PARLAY]). */
     val feed: OddsFeed = OddsFeed.ODDS_API,
 ) : ReferenceSource {
+
+    /** ParlayAPI's scans spend a day's share of the month at most ([CreditPace]); The Odds API's aren't paced. */
+    private val pace: CreditPace? = if (feed.reserve > 0) CreditPace(pool.policy, feed.reserve, freeLimit = feed.freeLimit) else null
 
     override val id = feed.sourceId
     override val displayName = feed.title
@@ -190,7 +194,7 @@ class TheOddsApiClient(
             if (wait > 0) delay(wait)
             lastCallAt = System.currentTimeMillis()
         }
-        return pool.execute(cost = cost, reserve = feed.reserve) { key ->
+        return pool.execute(cost = cost, reserve = feed.reserve, pace = pace) { key ->
             val url = "$baseUrl$path".toHttpUrl().newBuilder()
                 .addQueryParameter("apiKey", key)
                 .apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }
@@ -428,6 +432,8 @@ enum class OddsFeed(
     val books: List<String>?,
     /** Credits a scan leaves on each key ([KeyPool.execute]'s reserve): ParlayAPI's last ones go to Pinnacle's closing lines for CLV. */
     val reserve: Int = 0,
+    /** A key with this allowance or less (the free plan) isn't used for scans at all: too few credits to be worth more than the closes. */
+    val freeLimit: Int = 0,
 ) {
     ODDS_API("oddsapi", "oddsapi_props", "The Odds API", "https://api.the-odds-api.com/v4", null),
 
@@ -436,5 +442,6 @@ enum class OddsFeed(
         "parlay", "parlay_props", "ParlayAPI", "https://parlay-api.com/v1",
         listOf("pinnacle", "prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics"),
         reserve = 300,
+        freeLimit = 1_000,
     ),
 }
