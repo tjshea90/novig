@@ -67,7 +67,8 @@ class ParlayCloses(
         for (b in bets) {
             val sport = sportKeyOf(b)
             if (sport == null) {
-                out[b.id] = CloseLookup.None("ParlayAPI has no key for ${b.league.ifBlank { "this league" }}")
+                // A bet with no league on record is one of the ✓ marks imported before the Tracker kept bets (BetTracker.importPlaced).
+                out[b.id] = CloseLookup.None(if (b.league.isBlank()) "No league on record (a ✓ mark imported before the Tracker)" else "ParlayAPI has no key for ${b.league}")
                 continue
             }
             val pick = BetGrader.pickOf(b)
