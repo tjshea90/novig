@@ -60,12 +60,17 @@ class BetTrackerTest {
     fun `closing fair keeps updating until kickoff, then freezes`() = runTest {
         val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
         t.track(dal(scan()), stake = 10.0)
-        t.observe(scan(pinDal = 2.30)) // line moved toward DAL: we beat the close
+        t.observe(scan(pinDal = 2.30)) // a day out, the line moved toward DAL
+        // A read a day before the start isn't the close (ClosingLine): no CLV in the stats yet, even once the game has started.
+        assertNull(BetTracker.stats(t.all(), Fixtures.START_MS + 1).beatClosePercent)
+        now = Fixtures.START_MS - 5 * 60_000L
+        t.observe(scan(pinDal = 2.30)) // 5 minutes before kickoff: the close, and we beat it
         val clv1 = t.all().single().clvPercent!!
         now = Fixtures.START_MS + 1
         t.observe(scan(pinDal = 3.00)) // after kickoff: ignored
         assertEquals(clv1, t.all().single().clvPercent!!, 0.0)
-        assertEquals(1.0, BetTracker.stats(t.all()).beatClosePercent!!, 0.0)
+        assertEquals(1.0, BetTracker.stats(t.all(), now).beatClosePercent!!, 0.0)
+        assertEquals(clv1, BetTracker.stats(t.all(), now).averageClv!!, 1e-12)
     }
 
     @Test
@@ -136,9 +141,10 @@ class BetTrackerTest {
         fun bet(id: String, ev: Double, status: BetStatus, closing: Double?) = TrackedBet(
             id, 0, "NFL", "A @ B", Fixtures.START_MS, "Moneyline", "A", "m", "o",
             price = 0.5, cost = 0.5, fairAtBet = 0.5 * (1 + ev), evPercentAtBet = ev, stake = 10.0, status = status, closingFair = closing,
+            closingSeenAtMs = Fixtures.START_MS - 60_000L,
         )
         val bets = listOf(bet("1", 0.03, BetStatus.WON, 0.52), bet("2", 0.05, BetStatus.VOID, 0.40))
-        val s = BetTracker.stats(bets)
+        val s = BetTracker.stats(bets, Fixtures.START_MS + 1)
         assertEquals(2, s.bets)
         assertEquals(0.03, s.averageEv!!, 1e-12)
         assertEquals(0.52 / 0.5 - 1, s.averageClv!!, 1e-12)
