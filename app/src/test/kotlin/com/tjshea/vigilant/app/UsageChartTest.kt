@@ -83,7 +83,11 @@ class UsageChartTest {
         val state = SampleScan.state().copy(parlayKeys = listOf("pk-FAKE-0000"), parlayHistory = history)
         screen { UsageSection(state) }
         compose.onNodeWithText("Credits a day · last 30 days").assertExists()
-        // No key: no chart, whatever was read before.
-        compose.setContent { }
+    }
+
+    @Test
+    fun `no ParlayAPI key, no chart, whatever was read before`() {
+        screen { UsageSection(SampleScan.state().copy(parlayKeys = emptyList(), parlayHistory = history)) }
+        compose.onNodeWithText("Credits a day · last 30 days").assertDoesNotExist()
     }
 }
