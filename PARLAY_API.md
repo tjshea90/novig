@@ -190,12 +190,24 @@ unless the task says so, and only while `useParlay` is on with a key.
 - Use: a `ReferenceSource` feeding `RefBookMarket(period = 1)` (1st half; baseball's first 5 innings are period 1 too) and quarters only
   if Novig lists quarter markets; periods and hockey's P1–P3 need checking against Novig's catalog. Priced like any other source by the
   scanner; one call per league per period asked (1H by default), paced.
+- **Built (v0.30.0):** `data/.../reference/ParlayPeriods.kt` (`ParlayPeriodSource`, id `parlay_1h`, in `Scanner.SOURCE_ORDER` after
+  `parlay` and in `ScanSettings.enabledSources`: **a source id missing from those two is fetched but never priced**). Novig lists only
+  `SPREAD_1H` / `TOTAL_1H` (no 1st-half moneyline), so only spreads and totals are paired. `needsCatalog`: no call (no credits) for a
+  league whose Novig board has no 1H spread/total, or with the 1st-half family off. Football and basketball only (their "1H" is Novig's
+  first half). **MLB and NHL are left out** until a keyed probe shows their period keys: the free sandbox
+  (`/v1/sandbox/sports/{s}/live/period_markets`, no key) answers every sport with the same made-up rows (FT/1H/Q1…, random lines), so it
+  proves nothing about baseball's first 5 innings or hockey's periods. In the real NFL answer Pinnacle's 1H rows were ~5 h old
+  (`age_seconds` 19542): the freshness rule drops them; the US books' were seconds old.
 
 ### 6.8 Not buildable on Starter
 Streaming odds (`/v1/sse/odds/{s}`, `/v1/odds-drop/{s}`, websocket) need the Business plan ($40). Prop-line alerts (`/v1/alerts/…`) and
 webhooks need a server to receive them.
 
 ## 7. Still unverified
+- `/line-movement`'s answer when it works (M6 is waiting on one keyed probe, 2 credits: the spec gives no response schema).
+- `/live/period_markets` for MLB (is "1H" the first 5 innings?) and NHL (P1?): one keyed probe each before adding them to
+  `ParlayPeriodSource.SPORTS`.
+- Whether /verdict answers with the canonical prop keys (`player_pass_attempts`) as well as the board's (`player_passing_attempts`).
 - Whether the credits actually reset on the 1st (UTC) for a plan bought on the 30th (the /v1/usage period says so; check on Oct 1).
 - /line-movement's answer when it works; /live/period_markets for MLB (first 5 innings?) and NHL.
 - Whether best-bets' `edge_pct` is probability points (§5) — confirm on a second sample.
