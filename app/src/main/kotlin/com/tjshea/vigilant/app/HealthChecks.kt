@@ -236,14 +236,19 @@ object HealthChecks {
             add(Check(Level.OK, "Grading", "no bet waiting over 6 h for its result"))
         }
         // Closes: every bet placed before its start in the last week should have a true close once it's started.
-        val week = bets.filter { it.status != BetStatus.VOID && it.createdAtMs < it.startsTs && now >= it.startsTs && now - it.startsTs < 7 * 24 * HOUR }
+        // A ✓ mark imported before the Tracker kept bets has no league and no Novig ids: no source can ever find its close, so it isn't counted.
+        val (week, unclosable) = bets
+            .filter { it.status != BetStatus.VOID && it.createdAtMs < it.startsTs && now >= it.startsTs && now - it.startsTs < 7 * 24 * HOUR }
+            .partition { !neverCloses(it) }
         if (week.size >= 5) {
             val closed = week.count { ClosingLine.closeOf(it, now) != null }
             val share = closed.toDouble() / week.size
             val top = week.filter { ClosingLine.closeOf(it, now) == null }.groupingBy { it.closeNote ?: "not looked for yet" }.eachCount().maxByOrNull { it.value }
             add(
                 Check(
-                    if (share < 0.7) Level.WARN else Level.OK, "Closing lines", "${pct0(share)} of last week's started bets have a true close", "$closed of ${week.size}" + (top?.let { "; missing ×${it.value}: ${it.key.take(100)}" } ?: ""),
+                    if (share < 0.7) Level.WARN else Level.OK, "Closing lines", "${pct0(share)} of last week's started bets have a true close",
+                    "$closed of ${week.size}" + (top?.let { "; missing ×${it.value}: ${it.key.take(100)}" } ?: "") +
+                        (if (unclosable.isNotEmpty()) "; ${unclosable.size} imported ✓ mark${plural(unclosable.size)} left out (no league or Novig ids to find a close by)" else ""),
                     if (share < 0.7) "data/tracker/ClosingLine.kt (capture), HistoricalCloses.kt, ParlayCloses.kt" else null,
                 ),
             )
@@ -287,6 +292,36 @@ object HealthChecks {
         } else if (withClv.isNotEmpty()) {
             add(Check(Level.OK, "Edge accuracy (CLV)", "${withClv.size} bets with a true close so far: 20 needed to judge"))
         }
+        // Each scanner judged on its own (Tj's diagnostics 2026-09-30: CNO's bets beat the close, Vigilant's own lost to it, and the
+        // overall number hid that).
+        withClv.groupBy { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it.first, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER) }
+            .filter { it.value.size >= MIN_SCANNER_CLV }
+            .toSortedMap()
+            .forEach { (scanner, group) ->
+                val clv = group.map { it.second }.average()
+                val beat = group.count { it.second > 0 }.toDouble() / group.size
+                val ev = group.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average()
+                val level = when {
+                    clv < 0 -> Level.FAIL
+                    ev != null && ev - clv > 0.02 -> Level.WARN
+                    else -> Level.OK
+                }
+                add(
+                    Check(
+                        level, "$scanner's edges (CLV)",
+                        when (level) {
+                            Level.FAIL -> "its bets lose to the close on average: the edges it shows aren't real"
+                            Level.WARN -> "the EV it shows runs ${pts(ev!! - clv)} above what the close says"
+                            Level.OK -> "its bets beat the close"
+                        },
+                        "CLV ${pctSigned(clv)} on ${group.size} bets, beat the close ${pct0(beat)}, EV when bet ${ev?.let(::pctSigned) ?: "?"}",
+                        if (level == Level.OK) null else when (scanner) {
+                            "Vigilant" -> "its fair odds (engine/FairValue.kt; ScanSettings.fairSource, sharpBooks, minBooks); by market and by what made the fair below"
+                            else -> "that list's filters (minimum EV, fewest books, devig)"
+                        },
+                    ),
+                )
+            }
         val stats = BetTracker.stats(bets, now)
         stats.luck?.let { z ->
             if (kotlin.math.abs(z) >= 2.0 && stats.settledWithEv >= 30) {
@@ -300,6 +335,31 @@ object HealthChecks {
         val b = s.betting.balance ?: return
         if (b < 1.0) add(Check(Level.WARN, "Vigilant wallet", "holds ${String.format(Locale.US, "$%.2f", b)}: bets start at what's left", look = "Settings › Betting › Add money"))
     }
+
+    /** A bet no source can find a close for: an early ✓ import with no league and no Novig outcome id. */
+    fun neverCloses(b: TrackedBet): Boolean = b.league.isBlank() && b.outcomeId.isBlank()
+
+    /** A source's answer "busy, try again shortly" (ParlayAPI's 503 `…temporarily_busy`, a gateway 502-504): not a fault of the app's. */
+    fun transient(error: String): Boolean = Regex("(?i)temporarily_busy|busy|HTTP 50[234]|timeout").containsMatchIn(error)
+
+    /** An error without its JSON body and request id: what it was, in a line. */
+    fun shortError(error: String): String {
+        val code = Regex("\"error\"\\s*:\\s*\"([a-z_]+)\"").find(error)?.groupValues?.get(1)
+        val head = error.substringBefore(" {").replace(Regex("\\s*\\(request [0-9a-f]+\\)"), "").trim()
+        return (head + (code?.let { " ($it)" } ?: "")).take(160)
+    }
+
+    /** A duration ahead: "2h 25m", "40m". */
+    private fun inTime(ms: Long): String {
+        val m = (ms / 60_000L).coerceAtLeast(0)
+        return if (m >= 60) "${m / 60}h ${m % 60}m" else "${m}m"
+    }
+
+    /** Sources that only back another up: nothing matched is normal for them. */
+    private val BACKUP_SOURCES = setOf(com.tjshea.vigilant.data.reference.OddsFeed.ODDS_API.sourceId, com.tjshea.vigilant.data.reference.OddsFeed.ODDS_API.propsId)
+
+    /** A scanner is judged on its own closes once it has this many. */
+    const val MIN_SCANNER_CLV = 15
 
     /** "Novig refused" words in a scan error: a 403/429/451 from Novig is the scan's own reads failing, not a source's. */
     private val NOVIG_REFUSED = Regex("(?i)novig.*(403|429|451|refused|blocked)")
