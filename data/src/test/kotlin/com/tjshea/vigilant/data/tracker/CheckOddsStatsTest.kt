@@ -22,7 +22,7 @@ class CheckOddsStatsTest {
 
     @Test
     fun `counts the open bets re-read in this check by +EV and −EV, with the share that's +EV`() {
-        val s = CheckOddsStats.of(listOf(bet("a", 0.021), bet("b", 0.004), bet("c", -0.013), bet("d", 0.03)), start)
+        val s = CheckOddsStats.of(listOf(bet("a", 0.021), bet("b", 0.004), bet("c", -0.013), bet("d", 0.03)), start, now)
         assertEquals(3, s.positive)
         assertEquals(1, s.negative)
         assertEquals(0, s.even)
@@ -47,7 +47,7 @@ class CheckOddsStatsTest {
     fun `settled bets never count, even when their odds were read in this check`() {
         val s = CheckOddsStats.of(
             listOf(bet("won", 0.02, status = BetStatus.WON), bet("lost", -0.03, status = BetStatus.LOST), bet("void", 0.01, status = BetStatus.VOID), bet("open", -0.01)),
-            start,
+            start, now,
         )
         assertEquals(0, s.positive)
         assertEquals(1, s.negative)
@@ -55,7 +55,7 @@ class CheckOddsStatsTest {
 
     @Test
     fun `the average leaves out EVs over 5 percent either way, but they still count as + or −`() {
-        val s = CheckOddsStats.of(listOf(bet("a", 0.02), bet("b", -0.01), bet("big+", 0.12), bet("big-", -0.08), bet("edge+", 0.05), bet("edge-", -0.05)), start)
+        val s = CheckOddsStats.of(listOf(bet("a", 0.02), bet("b", -0.01), bet("big+", 0.12), bet("big-", -0.08), bet("edge+", 0.05), bet("edge-", -0.05)), start, now)
         assertEquals(3, s.positive)
         assertEquals(3, s.negative)
         assertEquals(2, s.outliers)
@@ -66,10 +66,10 @@ class CheckOddsStatsTest {
 
     @Test
     fun `when every EV is an outlier there is no average, and a bet at exactly fair value is neither`() {
-        val s = CheckOddsStats.of(listOf(bet("a", 0.2), bet("b", -0.3)), start)
+        val s = CheckOddsStats.of(listOf(bet("a", 0.2), bet("b", -0.3)), start, now)
         assertNull(s.averageEv)
         assertEquals(2, s.outliers)
-        val even = CheckOddsStats.of(listOf(bet("fair", 0.0), bet("a", 0.01)), start)
+        val even = CheckOddsStats.of(listOf(bet("fair", 0.0), bet("a", 0.01)), start, now)
         assertEquals(1, even.even)
         assertEquals(1, even.positive)
         assertEquals(0.5, even.positiveShare!!, 1e-9)
