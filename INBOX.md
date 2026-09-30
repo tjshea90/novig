@@ -2556,3 +2556,10 @@ Then research online if there is anything I can buy, such as api subscriptions, 
 
 Also, I noticed in your last prompt that you were considering mobile data usage. My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone storage always.
 ```
+
+## 2026-09-30T01:10:26Z
+```
+Add this source to my last prompt for research:
+
+https://skills.rest/skill/odds-api-historical
+```
