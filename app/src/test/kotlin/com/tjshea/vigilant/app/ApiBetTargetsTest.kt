@@ -49,4 +49,25 @@ class ApiBetTargetsTest {
         assertTrue(ApiBetTargets.atNovig(row("")))
         assertFalse(ApiBetTargets.atNovig(row("DraftKings")))
     }
+
+    @Test
+    fun `a ParlayAPI pick (P1) is the same Novig bet at ParlayAPI's fair price, logged as ParlayAPI's under its own key`() {
+        val play = com.tjshea.vigilant.data.reference.ParlayPlay(
+            sportKey = "americanfootball_nfl", league = "NFL", player = "Brock Bowers", over = true, line = 5.5, statLabel = "Receptions", stat = "RECEPTIONS",
+            away = "A", home = "B", marketKey = "player_receptions", fairAmerican = -130, listedAmerican = -110,
+        )
+        val r = play.row(startsAtMs = start)
+        val pick = com.tjshea.vigilant.data.reference.ParlayPick.priced(
+            listOf(play), listOf(r), mapOf(r.key to com.tjshea.vigilant.data.cno.LivePrice(-105, 40.0, 0.03, start - 120_000, "mkt", "o-over")),
+        ).single()
+        val t = ApiBetTargets.of(pick, found, market, boardAtMs = start - 300_000)!!
+        assertEquals(BetTracker.SOURCE_PARLAY, t.source)
+        assertEquals(pick.key, t.placedKey)
+        assertTrue(t.placedKey!!.startsWith("parlay:"))
+        assertEquals(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(-130), t.fair, 1e-9)
+        // How old ParlayAPI's fair line is: when its board was read (the sheet refuses it once past the freshness limit).
+        assertEquals(start - 300_000, t.fairAsOfMs)
+        assertEquals("o-over", t.outcomeId)
+        assertEquals("Novig", t.book)
+    }
 }
