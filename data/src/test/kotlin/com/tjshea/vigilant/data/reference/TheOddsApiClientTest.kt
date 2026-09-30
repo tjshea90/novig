@@ -172,4 +172,45 @@ class TheOddsApiClientTest {
         val u = meter.flow.value.providers.getValue("oddsapi").keys.getValue("test-key")
         assertTrue(u.lastNote!!.contains("INVALID_KEY"))
     }
+
+    // ---- ParlayAPI: the same format under /v1 (Tj, 2026-09-30, RESEARCH.md §43) ---------------------------------------
+
+    private fun parlay(keys: List<String> = listOf("pk")) = TheOddsApiClient(
+        httpClient = OkHttpClient(),
+        pool = KeyPool(QuotaPolicy.PARLAY, { keys }, meter),
+        json = json,
+        baseUrl = server.url("/v1").toString().trimEnd('/'),
+        clock = { 42L },
+        minIntervalMs = 0,
+        feed = OddsFeed.PARLAY,
+    )
+
+    @Test
+    fun `ParlayAPI is its own source with its own books, and its x-credits headers land in its meter`() = runTest {
+        val c = parlay()
+        assertEquals("parlay", c.id)
+        assertEquals("ParlayAPI", c.displayName)
+        // Its own list (Pinnacle first), whatever books Settings picked for The Odds API.
+        val books = c.booksFor(ScanSettings(referenceBooks = listOf("draftkings")))
+        assertEquals("pinnacle", books.first())
+        assertFalse("novig" in books)
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-credits-remaining", "970").setHeader("x-credits-cost", "1"))
+        val snap = c.fetch("americanfootball_nfl", books)
+        assertEquals(970, snap.creditsRemaining)
+        assertEquals("parlay", snap.provider)
+        assertTrue(server.takeRequest().requestUrl!!.encodedPath.startsWith("/v1/sports/americanfootball_nfl/odds"))
+        val u = meter.flow.value.providers.getValue("parlay").keys.getValue("pk")
+        assertEquals(970, u.remaining)
+        assertEquals(1, u.lastCost)
+    }
+
+    @Test
+    fun `a ParlayAPI key out of credits rotates to the next`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"credit_limit_exceeded"}"""))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        val snap = parlay(listOf("spent", "fresh")).fetch("americanfootball_nfl", listOf("pinnacle"))
+        assertFalse(snap.events.isEmpty())
+        assertEquals("spent", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+        assertEquals("fresh", server.takeRequest().requestUrl!!.queryParameter("apiKey"))
+    }
 }
