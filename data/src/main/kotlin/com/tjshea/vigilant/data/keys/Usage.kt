@@ -353,7 +353,7 @@ class KeyPool(
             val key = meter.pick(policy, all.filter { it !in tried }, cost + reserve)
                 ?: throw AllKeysExhaustedException(
                     if (reserve > 0 && all.isNotEmpty() && meter.pick(policy, all.filter { it !in tried }, cost) != null) {
-                        "The last $reserve ${policy.unit} on your ${policy.displayName} key${if (all.size == 1) " is" else "s are"} kept for closing lines."
+                        "The last $reserve ${policy.unit} on ${if (all.size == 1) "your ${policy.displayName} key" else "each ${policy.displayName} key"} are kept for closing lines."
                     } else {
                         meter.exhaustedMessage(policy, all, lastProblem)
                     },
