@@ -747,9 +747,6 @@ fun CnoDetail(
             cnoStake(pick, settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
         }
 
-        // ParlayAPI's call on this bet at the price shown, only on a tap (5 credits; PARLAY_API.md §6.4).
-        SecondOpinionFor(com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(row), remember(row.key, row.odds) { com.tjshea.vigilant.data.reference.VerdictQueries.of(row) })
-
         // ---- Vigilant's own check, from every book that prices both sides ----
         when {
             books == null || (books.loading && view == null) -> Row(verticalAlignment = Alignment.CenterVertically) {
@@ -793,6 +790,8 @@ fun CnoDetail(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (view != null) TextButton(onClick = onReloadBooks, enabled = !books.loading) { Text(if (books.loading) "Reading…" else "Re-read books") }
         }
+        // ParlayAPI's call on this bet at the price shown, only on a tap (5 credits; PARLAY_API.md §6.4).
+        SecondOpinionFor(com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(row), remember(row.key, row.odds) { com.tjshea.vigilant.data.reference.VerdictQueries.of(row) })
         Text(
             "Open in ${AppBook.name} puts this bet in ${AppBook.name}'s bet slip." +
                 if (onPlaced != null) " \"I placed it\" hides it here and in the widget until the game is over." else "",
