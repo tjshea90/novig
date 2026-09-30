@@ -159,7 +159,7 @@ fun FeedScreen(
                     }
                 }
                 items(shown, key = { it.key }) { o ->
-                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }) { selected = o }
+                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key]) { selected = o }
                 }
             }
         }
@@ -382,6 +382,8 @@ fun OpportunityCard(
     onOpen: Boolean = true,
     /** ✕ at the top right, as on CNO's cards: removes the bet for good. Null: no ✕ (a preview). */
     onHide: (() -> Unit)? = null,
+    /** The player's injury report when he may not play (a prop bet): a tag after the pick. */
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
     onClick: () -> Unit,
 ) {
     val q = o.quote ?: return
@@ -416,7 +418,13 @@ fun OpportunityCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(o.selection, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            o.selection, Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
+                        injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
+                    }
                     Text(
                         "${o.marketLabel} · ${o.eventName}",
                         style = MaterialTheme.typography.bodySmall,
