@@ -42,7 +42,15 @@ import json, sys
 try:
     d = json.load(sys.stdin)
     p = d.get("prompt", "")
-    sys.stdout.write(p if isinstance(p, str) else "")
+    p = p if isinstance(p, str) else ""
+    # Never commit a key Tj pastes into chat: this repo is public (tools/redact_keys.py).
+    try:
+        sys.path.insert(0, "tools")
+        from redact_keys import redact
+        p = redact(p)
+    except Exception:
+        pass
+    sys.stdout.write(p)
 except Exception:
     pass
 ' 2>/dev/null)"
