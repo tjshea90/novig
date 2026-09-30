@@ -801,8 +801,12 @@ fun CnoDetail(
     }
 }
 
+/**
+ * Vigilant's worst-case verdict on a bet's books. [lister]: whose fair line the list used ("CNO", or "ParlayAPI" on its picks' sheet);
+ * [page]: where the books came from.
+ */
 @Composable
-private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
+internal fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?, lister: String = "CNO", page: String = "CNO's game page") {
     val (title, color) = verdictLabel(check)
     val body = when (check.verdict) {
         CnoBooks.Verdict.CONFIRMED ->
@@ -822,10 +826,10 @@ private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
         CnoBooks.Verdict.NOT_CONFIRMED ->
             "${check.twoSided} books price both sides, and by them (worst case) the fair price is " +
                 "${Format.american(check.fairProbability!!)}: ${MiniWindow.american(check.novigOdds)} on ${AppBook.name} is ${Format.evPercent(check.ev!!)} EV. " +
-                "CNO's weighting sees it differently; skip it or look closer."
+                "$lister's weighting sees it differently; skip it or look closer."
         CnoBooks.Verdict.NO_DATA ->
             "No book (${AppBook.name} aside) prices both " + (otherBet?.let { "this and $it" } ?: "sides") +
-                ", so CNO's fair value comes from one side and a guessed margin. Treat it as unconfirmed."
+                ", so $lister's fair value comes from one side and a guessed margin. Treat it as unconfirmed."
     }
     Surface(color = color.copy(alpha = 0.12f), shape = RoundedCornerShape(12.dp)) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -833,7 +837,7 @@ private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
             Text(body, style = MaterialTheme.typography.bodySmall)
             if (check.novigOdds != row.odds) {
                 Text(
-                    "${AppBook.name}'s price on CNO's game page is ${MiniWindow.american(check.novigOdds)} (the list said ${MiniWindow.american(row.odds)}).",
+                    "${AppBook.name}'s price on $page is ${MiniWindow.american(check.novigOdds)} (the list said ${MiniWindow.american(row.odds)}).",
                     style = MaterialTheme.typography.bodySmall,
                     color = Edge.colors.warning,
                 )
@@ -844,7 +848,7 @@ private fun VerdictCard(check: CnoBooks.Check, row: CnoRow, otherBet: String?) {
 
 /** Every book's odds for the bet and its other side, sharp books first; [judged] is the bet's own book. */
 @Composable
-private fun BookTable(prices: List<CnoBookPrice>, otherBet: String?, judged: String) {
+internal fun BookTable(prices: List<CnoBookPrice>, otherBet: String?, judged: String) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.fillMaxWidth()) {
             Text("Book", Modifier.weight(1.4f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
