@@ -82,6 +82,16 @@ class SecondOpinionTest {
         compose.onNodeWithText("EV at +133: −2.14%").assertExists()
         compose.onNodeWithText("best +133 at Novig · 17 books compared · confidence medium · -1.2 pts since open").assertExists()
         compose.onNodeWithText(opinionButtonText(true)).assertExists()
+        compose.onNodeWithText("not an independent check", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a fair price that is Novig's own is flagged as no independent check`() {
+        val o = moneyline()
+        val q = VerdictQueries.of(o)!!
+        val v = Verdict("PASS", null, 113, 0.469, "novig", 102, "novig", 6, null, null, null)
+        screen(opinions = mapOf(o.key to OpinionUi(q, verdict = v, atMs = now))) { OpportunityDetail(o, state.settings, onTrack = {}) }
+        compose.onNodeWithText("Its fair price is Novig's own (no sharper book lists this bet): not an independent check.").assertExists()
     }
 
     @Test
