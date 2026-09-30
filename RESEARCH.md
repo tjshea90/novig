@@ -2918,3 +2918,49 @@ Its pre-game period markets (1st half, F5) are live-only, and team totals come t
 - Business $40: its extra is streaming; Vigilant's scans are on demand, so no.
 - Not worth it: TheRundown ($49 Starter: 60 s delay, no closes; $149 for closes), The Odds API paid ($30 for 20,000: 6× ParlayAPI's price),
   SportsGameOdds ($99+), theoddsapi.com Business ($99), a Pinnacle-only feed ($299).
+
+## 44. Tj's first diagnostics with ParlayAPI, its best practices, and the key's own credit count (v0.28.0, 2026-09-30; Tj: "Review this diagnostic report", "Let me know exactly what you need to make sure I'm using parlayapi to its fullest extent but also efficiently and not wasteful", "Look at parlayapi docs and use whatever they have in my starter api that can help the vigilant app", "Also study this: https://parlay-api.com/docs/best-practices … It allows the API key to tell the app how many credits I have left. Add this to the app so the meter is accurate")
+
+**What the report showed (v0.27.0, 2026-09-29 11:06 PM ET, Starter key 26 of 20,000 used):**
+- **"ParlayAPI props: … has spent today's share"** with 19,974 left: a real bug. Game lines and props run at once on one key; a big props reply
+  charged at used = 8 landed after lines replies that said 18, and the meter read "the count went down" as a new billing cycle (periodStart =
+  now), so the pace thought a month had begun at 11 pm and allowed an hour's share. Fixed: a lower count within 2 minutes of the last answer and
+  within 100 credits is a late reply, kept out (`UsageMeter.STALE_WINDOW_MS/STALE_SLACK`); a real reset (a bigger drop, or after a gap) is
+  still followed.
+- **The opposite risk, found beside it:** a plan bought on the 29th was paced as if it had existed since the 1st (29 days "unspent": ~19,000
+  credits allowed on its first day). Now paced from the key's first answer (`KeyUsage.firstSeenMs`), and the first day always gets a whole
+  day's share.
+- **Check odds now: "CNO read 1 … 81 CNO couldn't read"**, no failures listed: the pass stopped because CNO asked for a pause, and the rescue
+  pass (Vigilant pricing the rest) zeroed the counts that said so. CNO's game pages read fine from the dev container (18 bets 3 at a time,
+  ~1.1 s a bet, `LiveCnoBooksSpeedTest`), so the pause was CNO's answer to the phone at that moment. Now kept: `CnoState.lastPause` (which
+  read, CNO's words, how long) and the round's note keeps CNO's own counts ("CNO read 1 of 82 (81 not tried: stopped early, …)").
+- **"100 started with no close found yet"**, 69 of them marked final by ESPN + Novig before ParlayAPI existed: a new close source now reopens
+  them once (`TrackedBet.closeAskedOf`, `CloseBackfill.reopened`); Starter's 7 days reach the recent ones.
+- **PinnWire "SHORT"** at 22 of 100 three hours into the UTC day: pinnapi's 100 take over when PinnWire's run out; the runway now judges the two
+  together (WATCH at that pace: ~170 of 200).
+- Not changed: Kalshi's 29 s (paced at the measured-safe 2 a second, §36.2; it runs beside Novig's 59 s of reads, which the key's 16/s caps);
+  The Odds API standing by (PropLine covered every league). The record: 160 settled, +8.2% ROI, beat the close 58%, average CLV +0.5% against
+  +2.4% EV at bet.
+
+**ParlayAPI's best practices (parlay-api.com/docs/best-practices, read 2026-09-30) and what Vigilant does:**
+| Practice | Vigilant |
+| :- | :- |
+| Key in the `X-API-Key` header, not the query string (query strings leak into logs) | ParlayAPI calls send the header; The Odds API keeps `apiKey=` (its only way) |
+| `X-RateLimit-Limit/Remaining/Reset` on every reply (paid: limit "unlimited", remaining = credits in the period, reset = epoch seconds) | `CreditHeaders` reads them (only as the month's figures when the limit is "unlimited" or monthly-sized: the free tier's are per second) with `x-requests-*`/`x-credits-*`; the reset time becomes the key's cycle (`KeyUsage.resetAtMs`) for the meter, the pace and the runway |
+| Retry 502 once after 1 s, honor 503/429 `Retry-After`, never retry 400/401/403/404 | One retry for 502-504 and a dropped connection; 429 through the key pool's wait; 4xx never retried |
+| Log `X-Request-ID` on every non-2xx | In the error text (Diagnostics shows errors) |
+| Degraded mode: `/v1/meta/source-quality`; `breach`/`stale`/`missing` unsafe for live execution | `ParlaySourceQuality` (free, every 5 min): `stale`, `missing`, or `breach` past the book's own stale threshold leave that book out of ParlayAPI's quotes; a book a minute behind stays (Vigilant's own age rule is 5-10 min) |
+| Cost: `/v1/usage`, quotes, burst alerts (50/75/90% webhooks in the dashboard) | The pace, the meter line; the dashboard alerts are Tj's to switch on |
+| WebSocket/SSE, idempotency keys, ETags | Business-tier streaming; no POSTs; meta endpoints aren't polled |
+
+**The key telling the app its credits:** `ParlayAccount` reads each key's free `/v1/meta/api-key-check` (tier, credits left, reset; "no
+credit cost" per its docs) when a scan starts (every 5 minutes at most), when Settings › API usage or Diagnostics opens, and when a key is
+added; `UsageMeter.recordBalance` puts the key's own figures in the meter. Its field names aren't documented, so they're read loosely
+(`credits_remaining`/`monthly_credits`/`reset_at` and kin, nested or not) and the reply's headers win where they carry the same thing.
+**Unverified until a real key answers:** that check's field names, `/props` row fields (`event_id`, `home_team`, `away_team`,
+`commence_time`, `player`, `market_key`, `line`, `over_price`, `under_price`, `age_seconds`, `period`), and the closing-lines file's rows.
+
+**Also from the docs, used:** `/props?maxAgeSec=600` (rows older than a quote may be to price stay on the server) and `/odds?commenceTimeTo=`
+(the scan's window plus a day): smaller, faster replies for the same credits. **Looked at, not used:** `/v1/prediction-markets/{sport}` (1
+credit; Kalshi and Polymarket prices relayed with a 90 s cache, where Vigilant reads both directly, fresher, for free), `/scores` (ESPN and
+MLB grade for free), `/consensus`/`/ev` (Vigilant prices its own), `/v1/clv` (the Tracker does it), streaming (Business tier).
