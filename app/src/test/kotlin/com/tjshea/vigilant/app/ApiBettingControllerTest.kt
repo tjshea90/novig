@@ -259,7 +259,9 @@ class ApiBettingControllerTest {
         api.bet(o)
         // The sheet opens at the 10 cents the wallet holds (BetAmount.starting); Tj picks more than that.
         assertEquals(0.10, state.value.betSheet!!.stake, 1e-9)
+        System.out.println("DBG TOPUP before setStake")
         api.setStake(state.value.settings.apiBetStake.coerceAtLeast(1.0))
+        System.out.println("DBG TOPUP after setStake")
         try { waitFor("an answer") { state.value.betSheet?.let { it.stakeChosen && (it.plan != null || it.refusal != null) } == true } } catch (e: AssertionError) { throw AssertionError("DEBUG sheet=${state.value.betSheet?.copy(target = null)}") }
         val sheet = state.value.betSheet!!
         assertNotNull("refused: ${sheet.refusal}", sheet.plan)
