@@ -658,6 +658,7 @@ private fun VigilantRoot(
                         moveUp = vm::moveKeyUp,
                         exportTo = vm::exportKeys,
                         importFrom = vm::importKeys,
+                        onUsageShown = { vm.refreshBalances() },
                     ),
                     reportActions = com.tjshea.vigilant.app.ui.ReportActions(
                         onDiagnostics = vm::showDiagnostics,

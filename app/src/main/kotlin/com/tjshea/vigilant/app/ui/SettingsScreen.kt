@@ -718,6 +718,9 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(keys.exportTo) }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(keys.importFrom) }
     // ---- Usage meters ------------------------------------------------------------------
+    // Opening the tab asks ParlayAPI's keys what they have left (free, at most every few minutes): the meter shows the provider's figures.
+    val onShown by androidx.compose.runtime.rememberUpdatedState(keys.onUsageShown)
+    androidx.compose.runtime.LaunchedEffect(Unit) { onShown() }
     SectionTitle("API usage")
     UsageSection(state)
 
@@ -1045,6 +1048,8 @@ class KeyActions(
     val moveUp: (ApiProvider, String) -> Unit = { _, _ -> },
     val exportTo: (android.net.Uri) -> Unit = {},
     val importFrom: (android.net.Uri) -> Unit = {},
+    /** Settings › API usage opened: the providers that can say what's left (ParlayAPI) are asked, for free. */
+    val onUsageShown: () -> Unit = {},
 )
 
 /** A provider's keys in rotation order (key 1 is always tried first), with add, remove, reorder. */

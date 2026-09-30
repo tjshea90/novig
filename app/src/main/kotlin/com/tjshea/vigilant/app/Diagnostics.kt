@@ -104,7 +104,18 @@ object Diagnostics {
             o.appendLine("$id: ${p.callsToday} calls today, ${p.throttledToday} refused/throttled" + (p.lastThrottleMs?.let { ", last throttle ${ago(it)}" } ?: ""))
             for ((key, u) in p.keys) {
                 val left = u.remaining ?: (u.limit?.let { (it - u.used).coerceAtLeast(0) })
-                o.appendLine("    key …${key.takeLast(4)}: used ${u.used}${left?.let { ", $it left" } ?: ""}${if (u.refused) ", REFUSED" else ""}${u.depletedUntil?.let { ", spent until ${at(it)}" } ?: ""}${u.lastNote?.let { " · $it" } ?: ""}")
+                o.appendLine("    key …${key.takeLast(4)}: used ${u.used}${left?.let { ", $it left" } ?: ""}${if (u.refused) ", REFUSED" else ""}${u.depletedUntil?.let { ", spent until ${at(it)}" } ?: ""}${u.resetAtMs?.let { ", resets ${at(it)} (the provider's time)" } ?: ""}${u.lastNote?.let { " · $it" } ?: ""}")
+                // What a ParlayAPI key said of itself (Tj, 2026-09-30: "the API key to tell the app how many credits I have left").
+                if (id == com.tjshea.vigilant.data.keys.QuotaPolicy.PARLAY.id) x.parlayAccounts[key]?.let { a ->
+                    o.appendLine(
+                        "      its own account: " + listOfNotNull(
+                            a.tier?.let { "plan $it" },
+                            a.remaining?.let { r -> "$r left" + (a.limit?.let { " of $it" } ?: "") },
+                            a.resetAtMs?.let { "resets ${at(it)}" },
+                            if (a.valid == false) "NOT VALID" + (a.reason?.let { ": $it" } ?: "") else null,
+                        ).joinToString(" · ").ifEmpty { "answered, no figures" },
+                    )
+                }
             }
         }
 
