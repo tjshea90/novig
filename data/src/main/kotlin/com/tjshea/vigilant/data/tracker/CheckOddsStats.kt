@@ -17,6 +17,10 @@ data class LastCheck(val startedAtMs: Long? = null)
  * Counts only open bets whose EV was re-read since the check began ([of]'s `sinceMs`): a new check starts at 0 and counts up as each batch
  * of refreshed odds is saved; a bet settled meanwhile drops out. The EV is [TrackedBet.nowEv]: the devigged fair odds now against the price the
  * bet was placed at. [averageEv] leaves out every EV beyond [OUTLIER_EV] either way ([outliers] says how many).
+ *
+ * A bet whose game has started is left out of every number here ([live] says how many were re-read): in-play odds jump with each play, so
+ * they'd skew what the pregame edges look like (Tj, 2026-09-30: "does not count any bets in which the game or bet is currently live"). Its own
+ * card still shows its odds now; its CLV was fixed at the start ([ClosingLine]).
  */
 data class CheckOddsStats(
     val positive: Int,
@@ -29,6 +33,8 @@ data class CheckOddsStats(
     val averaged: Int,
     /** Re-read EVs over +[OUTLIER_EV] or under −[OUTLIER_EV]: counted as + or −, left out of [averageEv]. */
     val outliers: Int,
+    /** Open bets re-read in this check whose game has started: left out of everything above. */
+    val live: Int = 0,
 ) {
     /** Open bets re-read in this check. */
     val priced: Int get() = positive + negative + even
@@ -44,10 +50,12 @@ data class CheckOddsStats(
 
         val EMPTY = CheckOddsStats(0, 0, 0, null, 0, 0)
 
-        /** [bets]' open ones whose current EV was read at or after [sinceMs] (when the check began). */
-        fun of(bets: List<TrackedBet>, sinceMs: Long): CheckOddsStats {
-            val evs = bets.mapNotNull { b -> b.nowEv?.takeIf { b.status == BetStatus.PENDING && (b.nowAtMs ?: Long.MIN_VALUE) >= sinceMs && !it.isNaN() } }
-            if (evs.isEmpty()) return EMPTY
+        /** [bets]' open ones whose current EV was read at or after [sinceMs] (when the check began), games that have started by [now] aside. */
+        fun of(bets: List<TrackedBet>, sinceMs: Long, now: Long): CheckOddsStats {
+            val reRead = bets.filter { b -> b.status == BetStatus.PENDING && (b.nowAtMs ?: Long.MIN_VALUE) >= sinceMs && b.nowEv?.isNaN() == false }
+            val (started, pregame) = reRead.partition { now >= it.startsTs }
+            val evs = pregame.map { it.nowEv!! }
+            if (evs.isEmpty()) return EMPTY.copy(live = started.size)
             val positive = evs.count { it > EPS }
             val negative = evs.count { it < -EPS }
             val kept = evs.filter { abs(it) <= OUTLIER_EV + EPS }
@@ -58,6 +66,7 @@ data class CheckOddsStats(
                 averageEv = if (kept.isEmpty()) null else kept.average(),
                 averaged = kept.size,
                 outliers = evs.size - kept.size,
+                live = started.size,
             )
         }
     }
