@@ -1,13 +1,13 @@
-# CHECKPOINT 2115 — read me first, then TASKS.md
+# CHECKPOINT 2116 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T00:07:45Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `a6d82dc6` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T00:12:23Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `c470dcf7` (this checkpoint is the commit after it)
 
 ## Just done
-D2 core written and compiling: ClosingLine (true close = pregame read within 15 min of start, final at start; due/nextAt/retry), ClvStats + ClvPeriod, TrackedBet.closeTriedAtMs, BetTracker.markCloseTried, stats() now true-CLV only, BetRecheck.captureClosing(ids), app ClosingCapture/ClosingAlarm/ClosingReceiver/ClosingWorker (expedited), manifest, AppContainer watcher arms the alarm on tracker changes, boot reschedule
+D2-D4 code in: CLV card (own period chips + Hide outliers switch) replaces the old CLV row in Stats; bet card CLV column = true CLV; sheet 'CLV' vs 'CLV so far'; data tests green (ClosingLineTest 11, BetRecheckTest captureClosing(ids), BetTrackerTest updated)
 
 ## Do this next
-D3/D4 UI: CLV card in Stats (periods all/today/yesterday/3 days/week + hide >5% outliers), bet card CLV column = true CLV, sheet 'CLV so far', breakdown CLV; then tests (ClosingLineTest, ClvStats, BetTrackerTest fixes, capture test), Diagnostics line
+app tests: ClosingLineCard UI test + screenshot, ClosingCapture (paused marks tried, nothing due), alarm armed by AppContainer watcher (ShadowAlarmManager); Diagnostics CLV + next capture line; full floor
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ D3/D4 UI: CLV card in Stats (periods all/today/yesterday/3 days/week + hide >5% 
 
 ## Last ten checkpoints
 ```
+  2c00d584 ckpt 2115: D2 core written and compiling: ClosingLine (true close = pregame read within
   bf19dc84 ckpt 2114: Recorded Tj's request (true closing line value: find each bet's true close, 
   80a2c490 ckpt 2113: v0.24.0 (code 52) released and recorded; C1-C3 ticked
   c1a35dc8 ckpt 2112: pre-release: v0.24.0: the Tracker's Check odds now counter, pinned at the to
@@ -25,8 +26,7 @@ D3/D4 UI: CLV card in Stats (periods all/today/yesterday/3 days/week + hide >5% 
   3e6dce93 ckpt 2108: v0.23.0 (code 51) released and recorded; B1-B5 ticked
   a65d1c12 ckpt 2107: pre-release: v0.23.0: the Novig management key is entered once and saved on 
   a62443f2 ckpt 2106: B1-B4 ticked; version 0.23.0 (code 51); sweep fixes (keep() rename, section 
-  bd62a7ef ckpt 2105: docs updated (NOVIG_API.md §14 saved management key, NovigSetup/NovigBettin
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
