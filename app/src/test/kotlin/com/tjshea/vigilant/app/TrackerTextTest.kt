@@ -118,6 +118,10 @@ class TrackerTextTest {
         // A game far off keeps its read "now" for 10 minutes, one about to start for 5.
         assertEquals(false, TrackerText.nowLine(fresh.copy(startsTs = now + 30 * hour, nowAtMs = now - 8 * 60_000L), now)!!.stale)
         assertEquals(true, TrackerText.nowLine(fresh.copy(nowAtMs = now - 8 * 60_000L), now)!!.stale)
+        // Read once the game was under way: in-play odds, marked live and left out of the counter (Tj, 2026-09-30).
+        val inPlay = TrackerText.nowLine(fresh.copy(startsTs = now - hour), now)!!
+        assertEquals("live now +10.0% EV at your +150", inPlay.headline)
+        assertEquals("fair now +127 · Vigilant's fair odds · 5 books · in-play odds, not in the counter · read 3m ago", inPlay.detail)
     }
 
     @Test
