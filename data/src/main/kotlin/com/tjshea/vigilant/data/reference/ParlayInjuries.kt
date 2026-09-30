@@ -137,10 +137,16 @@ class InjuryBook internal constructor(internal val sports: Map<String, Sport>) {
 
         internal fun surname(key: String): String = key.substringAfterLast(' ')
 
+        /**
+         * Whether this report's team is one of [teams]: the same abbreviation, or every word of the shorter full name in the other (never
+         * a half match: "Los Angeles Rams" isn't the Chargers, "Boston Red Sox" isn't the White Sox).
+         */
         private fun Injury.onAnyOf(teams: List<String>): Boolean {
-            val names = listOfNotNull(team, teamAbbr)
-            if (names.isEmpty()) return false
-            return teams.any { t -> names.any { n -> n.equals(t, ignoreCase = true) || TeamMatcher.similarity(n, t) >= 0.5 } }
+            if (team == null && teamAbbr == null) return false
+            return teams.any { t ->
+                teamAbbr?.equals(t.trim(), ignoreCase = true) == true || team?.equals(t.trim(), ignoreCase = true) == true ||
+                    (team != null && TeamMatcher.similarity(team, t) >= 0.999)
+            }
         }
     }
 }
