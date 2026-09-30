@@ -168,4 +168,109 @@ class DiagnosticsTest {
         assertTrue(text, text.contains("Nothing counted yet."))
         assertTrue(text, text.contains("Bets: 0"))
     }
+
+    // ---- V3 (Tj, 2026-09-30: "make the diagnostics section in settings as smart as possible so that when I output it to Claude, Claude can
+    // run deep analysis on the app and know what is working or broken and how to improve the app") --------------------------------------
+
+    @Test
+    fun `health checks come first, worst first, each with its evidence and the code that owns it`() {
+        val base = SampleScan.state()
+        val s = base.copy(
+            settings = base.settings.copy(autoScan = AutoScanMode.BOTH),
+            status = base.status.copy(sources = base.status.sources + com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 0, 0, 0, "HTTP 503")),
+        )
+        val x = extras.copy(autoScanServiceRunning = false, phone = Diagnostics.Phone(notifications = false, exactAlarms = false, batteryUnrestricted = false, online = true))
+        val text = report(s, x)
+        assertTrue(text, text.indexOf("== Health checks (worst first) ==") in 0 until text.indexOf("== Settings =="))
+        assertTrue(text, text.contains("For Claude: code at github.com/tjshea90/novig"))
+        val checks = HealthChecks.of(s, x, now)
+        assertEquals(checks.sortedBy { it.level.ordinal }, checks)
+        fun find(area: String, level: HealthChecks.Level) = checks.firstOrNull { it.area == area && it.level == level }
+        // The background scan is on but its service isn't running; alerts can't reach a phone with notifications off.
+        assertTrue(text, find("Background auto-scan", HealthChecks.Level.FAIL)!!.look!!.contains("AutoScanService"))
+        assertTrue(text, find("Phone", HealthChecks.Level.FAIL)!!.finding.contains("notifications are off"))
+        assertTrue(text, checks.any { it.area == "Phone" && it.finding.contains("exact alarms") })
+        assertTrue(text, checks.any { it.area == "Phone" && it.finding.contains("battery optimization") })
+        // A source that failed names the error and where to look.
+        val kalshi = find("Source Kalshi", HealthChecks.Level.FAIL)!!
+        assertEquals("HTTP 503", kalshi.evidence)
+        assertTrue(text, text.contains("FAIL Source Kalshi: failed in the last scan [HTTP 503] → data/reference/"))
+        // The counts line says how many of each.
+        assertTrue(text, Regex("\\d+ FAIL · \\d+ WARN · \\d+ OK").containsMatchIn(text))
+    }
+
+    @Test
+    fun `before a scan or a check it says what to tap so the report has numbers`() {
+        val base = SampleScan.fresh()
+        val checks = HealthChecks.of(base, extras, now)
+        assertTrue(checks.joinToString("\n") { it.text() }, checks.any { it.area == "Vigilant scan" && it.look!!.contains("tap Scan") })
+    }
+
+    @Test
+    fun `edges that lose to the close are called out as not real, with the numbers`() {
+        val base = SampleScan.state()
+        val start = now - 2 * 3_600_000L
+        // 20 bets at +3% EV when bet, each closing 2% worse than its price: CLV −2%.
+        val bets = (1..20).map { i ->
+            val cost = 0.50
+            com.tjshea.vigilant.data.tracker.TrackedBet(
+                "c$i", start - 3_600_000L, "NFL", "A @ B", start, "Moneyline", "A", "m$i", "o$i", cost, cost, 0.515, 0.03, 1.0,
+                status = BetStatus.PENDING, closingFair = cost * 0.98, closingSeenAtMs = start - 5 * 60_000L,
+            )
+        }
+        val checks = HealthChecks.of(base.copy(bets = bets), extras, now)
+        val clv = checks.first { it.area == "Edge accuracy (CLV)" }
+        assertEquals(HealthChecks.Level.FAIL, clv.level)
+        assertTrue(clv.evidence!!, clv.evidence!!.contains("average CLV -2.0%") && clv.evidence!!.contains("EV when bet +3.0%") && clv.evidence!!.contains("20 bets"))
+        // Beating the close by less than the EV claimed: overstated, a warning.
+        val over = bets.map { it.copy(closingFair = it.cost * 1.005) }
+        assertEquals(HealthChecks.Level.WARN, HealthChecks.of(base.copy(bets = over), extras, now).first { it.area == "Edge accuracy (CLV)" }.level)
+        val real = bets.map { it.copy(closingFair = it.cost * 1.03) }
+        assertEquals(HealthChecks.Level.OK, HealthChecks.of(base.copy(bets = real), extras, now).first { it.area == "Edge accuracy (CLV)" }.level)
+    }
+
+    @Test
+    fun `the report splits accuracy by scanner and market, compares open bets' edge now with when bet, and lists the phone`() {
+        val base = SampleScan.state()
+        val bets = base.bets.map { if (it.status == BetStatus.PENDING && it.nowEv != null) it.copy(nowFair = (it.fairAtBet ?: 0.5) + 0.01, nowAtMs = now) else it }
+        val text = report(base.copy(bets = bets), extras.copy(phone = Diagnostics.Phone(true, true, true, false, false, true, "Wi-Fi")))
+        listOf("== Accuracy by scanner and by market (outliers aside) ==", "== Open bets: edge now vs when bet (pregame, current reads only) ==", "== Phone ==", "== Recent problems (saved across restarts, newest first) ==")
+            .forEach { assertTrue("$it in:\n$text", text.contains(it)) }
+        assertTrue(text, text.contains("Scanner Vigilant:") || text.contains("Scanner CNO:"))
+        assertTrue(text, text.contains("Notifications yes · exact alarms yes · battery unrestricted yes · draw over apps NO · Data Saver off · online yes (Wi-Fi)"))
+        assertTrue(text, text.contains("None recorded."))
+    }
+
+    @Test
+    fun `recent problems are listed newest first with their counts, and only failures shown on screen go in`() {
+        val p = listOf(
+            com.tjshea.vigilant.data.diag.Problem("CrazyNinjaOdds", "Couldn't reach CrazyNinjaOdds (timeout)", now - 3_600_000L, now - 60_000L, 4),
+            com.tjshea.vigilant.data.diag.Problem("Vigilant scan", "Kalshi: HTTP 503", now - 7_200_000L),
+        )
+        val text = report(x = extras.copy(problems = p))
+        assertTrue(text, text.contains("CrazyNinjaOdds: Couldn't reach CrazyNinjaOdds (timeout) (×4 since"))
+        assertTrue(text, text.indexOf("CrazyNinjaOdds: Couldn't reach") < text.indexOf("Vigilant scan: Kalshi: HTTP 503"))
+        assertTrue(Diagnostics.isProblem("Couldn't save"))
+        assertTrue(Diagnostics.isProblem("Check odds failed: timeout"))
+        assertTrue(Diagnostics.isProblem("ParlayAPI answered HTTP 503"))
+        assertFalse(Diagnostics.isProblem("Tracked: $1 on Team A"))
+        assertFalse(Diagnostics.isProblem("Bet placed: $5.00 on Team A"))
+    }
+
+    @Test
+    fun `open bets' edge now compares with when bet, overall and by scanner`() {
+        val start = now + 3_600_000L
+        fun bet(id: String, source: String, fairAtBet: Double, fairNow: Double) = com.tjshea.vigilant.data.tracker.TrackedBet(
+            id, now - 3_600_000L, "NFL", "A @ B", start, "Moneyline", "A", "m$id", "o$id", 0.5, 0.5, fairAtBet, fairAtBet / 0.5 - 1, 1.0,
+            status = BetStatus.PENDING, source = source, nowFair = fairNow, nowEv = fairNow / 0.5 - 1, nowAtMs = now,
+        )
+        val lines = Diagnostics.edgeNowLines(
+            listOf(bet("a", com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO, 0.52, 0.53), bet("b", com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT, 0.52, 0.49)),
+            now,
+        )
+        assertEquals("All: 2 bets · EV when bet +4.0% → now +2.0% · fair moved toward the bet on 1, away on 1 · still +EV 1", lines[0])
+        assertTrue(lines.toString(), lines.any { it.startsWith("CNO: 1 bets · EV when bet +4.0% → now +6.0%") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("Vigilant: 1 bets") })
+        assertEquals(listOf("No open pregame bet has a current EV (tap Check odds now, then copy Diagnostics again)."), Diagnostics.edgeNowLines(emptyList(), now))
+    }
 }
