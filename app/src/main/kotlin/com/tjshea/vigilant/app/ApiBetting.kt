@@ -65,7 +65,34 @@ data class BetSheetUi(
     val allowRepeat: Boolean = false,
     val balance: Double? = null,
     val maxStake: Double = 10.0,
+    /** Tj picked or typed the amount: the wallet's balance, read after the sheet opened, never changes it. */
+    val stakeChosen: Boolean = false,
 )
+
+/**
+ * The Bet sheet's amount (Tj, 2026-09-30: "anywhere in the app where I use the vigilant wallet to place bets in the app, I can type in a custom
+ * account for any bet manually. And if I have less than one dollar in the wallet, it automatically enters whatever is left in the wallet as the
+ * bet amount"): any amount in dollars and cents up to the per-bet limit, typed or picked; a sheet opens at Settings' bet amount, or at what's
+ * left in the wallet when that's less (a wallet under $1 bets all it holds).
+ */
+object BetAmount {
+    /** The dollars in [text], when it's an amount this bet can take (more than $0, at most [max]); else null. */
+    fun parse(text: String, max: Double): Double? = WalletAmount.parse(text)?.takeIf { it <= max + 1e-9 }
+
+    /** Why [text] can't be bet, in words; null when it can (or the field is still empty). */
+    fun problem(text: String, max: Double): String? {
+        if (text.isBlank()) return null
+        WalletAmount.parse(text)?.let { v -> return if (v > max + 1e-9) "Over your ${money(max)} limit per bet (Settings › Novig API › Betting)" else null }
+        return WalletAmount.problem(text)
+    }
+
+    /** What a sheet opens with: [setting] (within [max]), or [balance] rounded down to the cent when the wallet holds less but not nothing. */
+    fun starting(setting: Double, max: Double, balance: Double?): Double {
+        val base = setting.coerceIn(0.01, max)
+        val left = balance?.let { kotlin.math.floor(it * 100.0 + 1e-6) / 100.0 } ?: return base
+        return if (left >= 0.01 && left < base - 1e-9) left else base
+    }
+}
 
 /**
  * The amount Tj types for the Vigilant wallet (Tj, 2026-09-29: "allow me to add custom amounts to the vigilant wallet in the app settings by
@@ -298,21 +325,27 @@ class ApiBettingController(
     }
 
     fun refreshBalance(quiet: Boolean = false) {
-        val trading = c.trading ?: return
-        val address = state.value.novig.connection?.subaccountKeyId ?: return
+        if (c.trading == null || state.value.novig.connection?.subaccountKeyId == null) return
         scope.launch {
-            val balance = try {
-                withContext(Dispatchers.IO) { trading.balance(address) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: NovigApiException) {
-                if (!quiet) fail(e.advice)
-                return@launch
-            } catch (e: Exception) {
-                if (!quiet) fail("Couldn't read the balance: ${e.message ?: e.javaClass.simpleName}")
-                return@launch
-            }
+            val balance = readBalance(quiet) ?: return@launch
             state.update { it.copy(betting = it.betting.copy(balance = balance)) }
+        }
+    }
+
+    /** The subaccount's balance now, or null (said unless [quiet]) when it can't be read. */
+    private suspend fun readBalance(quiet: Boolean = true): Double? {
+        val trading = c.trading ?: return null
+        val address = state.value.novig.connection?.subaccountKeyId ?: return null
+        return try {
+            withContext(Dispatchers.IO) { trading.balance(address) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: NovigApiException) {
+            if (!quiet) fail(e.advice)
+            null
+        } catch (e: Exception) {
+            if (!quiet) fail("Couldn't read the balance: ${e.message ?: e.javaClass.simpleName}")
+            null
         }
     }
 
@@ -374,7 +407,32 @@ class ApiBettingController(
 
     // ---- the Bet sheet --------------------------------------------------------------------------------------------
 
-    private fun startingStake(): Double = settings().apiBetStake.coerceIn(0.01, settings().apiMaxStake)
+    private fun startingStake(): Double = BetAmount.starting(settings().apiBetStake, settings().apiMaxStake, state.value.betting.balance)
+
+    /**
+     * Reads the wallet as a sheet opens (the balance on hand may be old), and when Tj hasn't picked an amount yet and the wallet holds less
+     * than the sheet opened with, the amount becomes what's left in it.
+     */
+    private fun checkWallet() {
+        if (c.trading == null) return
+        scope.launch {
+            val balance = readBalance() ?: return@launch
+            state.update { it.copy(betting = it.betting.copy(balance = balance)) }
+            val sheet = state.value.betSheet ?: return@launch
+            if (sheet.placing || sheet.result != null) return@launch
+            val stake = if (sheet.stakeChosen) sheet.stake else startingStake()
+            if (kotlin.math.abs(stake - sheet.stake) < 1e-9) {
+                state.update { s -> s.copy(betSheet = s.betSheet?.takeIf { it === sheet }?.copy(balance = balance) ?: s.betSheet) }
+                return@launch
+            }
+            state.update { s -> s.copy(betSheet = s.betSheet?.takeIf { it === sheet }?.copy(stake = stake, balance = balance, plan = null, refusal = null) ?: s.betSheet) }
+            // A sheet still finding its bet plans with the new amount once it's found; one that has it plans again now.
+            if (state.value.betSheet?.let { it.stake == stake && it.target != null && !it.resolving } == true) {
+                betJob?.cancel()
+                betJob = scope.launch { replan() }
+            }
+        }
+    }
 
     fun bet(o: Opportunity) {
         if (c.trading == null) return
@@ -404,6 +462,7 @@ class ApiBettingController(
             return
         }
         state.update { it.copy(betSheet = BetSheetUi(row.bet, "${row.market} · ${row.event}", stake = startingStake(), maxStake = settings().apiMaxStake, balance = it.betting.balance)) }
+        checkWallet()
         betJob?.cancel()
         betJob = scope.launch {
             val found = withContext(Dispatchers.IO) { runCatching { c.betFinder.find(row) }.getOrNull() } as? NovigBetFinder.Found.Bet
@@ -424,14 +483,27 @@ class ApiBettingController(
         }
         betJob?.cancel()
         betJob = scope.launch { replan() }
+        checkWallet()
     }
 
-    fun setStake(stake: Double) {
+    /** An amount picked from the chips. */
+    fun setStake(stake: Double) = chooseStake(stake, waitMs = 0L)
+
+    /** An amount typed in the sheet: priced once typing pauses, so each keystroke isn't a read of Novig's book. */
+    fun typeStake(stake: Double) = chooseStake(stake, waitMs = TYPING_PAUSE_MS)
+
+    private fun chooseStake(stake: Double, waitMs: Long) {
         val sheet = state.value.betSheet ?: return
         if (sheet.placing || sheet.result != null) return
-        state.update { it.copy(betSheet = sheet.copy(stake = stake.coerceIn(0.0, settings().apiMaxStake), plan = null, refusal = null)) }
+        val amount = stake.coerceIn(0.0, settings().apiMaxStake)
+        if (sheet.stakeChosen && kotlin.math.abs(amount - sheet.stake) < 1e-9 && (sheet.plan != null || sheet.refusal != null)) return
+        state.update { it.copy(betSheet = sheet.copy(stake = amount, stakeChosen = true, plan = null, refusal = null)) }
+        if (sheet.target == null || sheet.resolving) return // planned once the bet is found
         betJob?.cancel()
-        betJob = scope.launch { replan() }
+        betJob = scope.launch {
+            if (waitMs > 0) delay(waitMs)
+            replan()
+        }
     }
 
     /** Looks at the bet again: a fresh book, the plan for the stake now, or why it can't be placed. */
@@ -550,7 +622,7 @@ class ApiBettingController(
             return
         }
         state.update {
-            it.copy(betSheet = bet.copy(stake = bet.stake.coerceIn(0.0, settings().apiMaxStake), resolving = false, placing = false, result = null, maxStake = settings().apiMaxStake, balance = it.betting.balance))
+            it.copy(betSheet = bet.copy(stake = bet.stake.coerceIn(0.0, settings().apiMaxStake), stakeChosen = true, resolving = false, placing = false, result = null, maxStake = settings().apiMaxStake, balance = it.betting.balance))
         }
         betJob?.cancel()
         betJob = scope.launch { replan() }
