@@ -41,7 +41,7 @@ data class VerdictQuery(
     val sportKey: String,
     /** `h2h`, `spreads`, `totals` or a player prop key. */
     val market: String,
-    /** `home` / `away` (game lines) or `over` / `under` (totals, props). */
+    /** The team's full name (game lines) or `over` / `under` (totals, props). */
     val side: String,
     val home: String,
     val away: String,
@@ -65,7 +65,9 @@ data class VerdictQuery(
          */
         fun of(sportKey: String, event: String, pick: BetGrader.Pick, american: Int): VerdictQuery? {
             val m = NovigText.parseMatchup(event) ?: return null
-            fun sideOf(team: String): String? = TeamMatcher.labelIsAway(team, m.away, m.home)?.let { if (it) "away" else "home" }
+            // The side by its full name ("DAL" → "Dallas Cowboys"), never "home"/"away": a feed that lists the game the other way round
+            // (a neutral site) can't flip it.
+            fun sideOf(team: String): String? = TeamMatcher.labelIsAway(team, m.away, m.home)?.let { if (it) m.away else m.home }
             return when (pick) {
                 is BetGrader.Pick.Moneyline -> sideOf(pick.team)?.let { VerdictQuery(sportKey, "h2h", it, m.home, m.away, price = american) }
                 is BetGrader.Pick.Spread -> if (pick.period != BetGrader.Period.GAME) null
@@ -78,6 +80,29 @@ data class VerdictQuery(
                 else -> null
             }
         }
+    }
+}
+
+/** The queries for the bets Vigilant lists: its own +EV cards, CNO's rows and the Tracker's bets, each at the price shown or bet. */
+object VerdictQueries {
+    fun of(o: com.tjshea.vigilant.data.scanner.Opportunity): VerdictQuery? {
+        if (!o.league.oddsApiListed) return null
+        val cost = o.quote?.cost?.takeIf { it > 0 && it < 1 } ?: return null
+        val pick = BetGrader.pickOf(o.marketLabel, o.selection) ?: return null
+        return VerdictQuery.of(o.league.oddsApiSportKey, o.event.description, pick, Odds.decimalToAmerican(1.0 / cost))
+    }
+
+    fun of(row: com.tjshea.vigilant.data.cno.CnoRow): VerdictQuery? {
+        val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(row.league.trim())?.takeIf { it.oddsApiListed } ?: return null
+        val pick = BetGrader.pickOf(row.market, row.bet) ?: return null
+        return VerdictQuery.of(league.oddsApiSportKey, row.event, pick, row.odds)
+    }
+
+    fun of(bet: com.tjshea.vigilant.data.tracker.TrackedBet): VerdictQuery? {
+        val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(bet.league.trim())?.takeIf { it.oddsApiListed } ?: return null
+        val pick = BetGrader.pickOf(bet) ?: return null
+        val american = bet.american ?: bet.cost.takeIf { it > 0 && it < 1 }?.let { Odds.decimalToAmerican(1.0 / it) } ?: return null
+        return VerdictQuery.of(league.oddsApiSportKey, bet.eventName, pick, american)
     }
 }
 
