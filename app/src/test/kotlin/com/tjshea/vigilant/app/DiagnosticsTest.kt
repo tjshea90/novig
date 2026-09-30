@@ -366,4 +366,27 @@ class DiagnosticsTest {
         assertTrue(basis.toString(), basis.any { it.startsWith("exchange sharp only (Kalshi), one book: 1 bets") })
         assertEquals("(1 older bets: not recorded)", basis.last())
     }
+
+    // ---- X2 (Tj, 2026-09-30: "The app just crashed a couple times") ----------------------------------------------------------------------
+
+    @Test
+    fun `a crash or freeze in the last day is a FAIL, and the report shows where the main thread was stuck`() {
+        val freeze = AppExits.Exit(
+            now - 20 * 60_000L, "not responding", "Input dispatching timed out", true, 412,
+            listOf("\"main\" prio=5 tid=1 Runnable", "at com.tjshea.vigilant.app.UiState.feedAt(MainViewModel.kt:250)"),
+        )
+        val old = AppExits.Exit(now - 3 * 86_400_000L, "crash", "java.lang.OutOfMemoryError", true, 500)
+        val quit = AppExits.Exit(now - 60 * 60_000L, "closed by you", null, false, null)
+        val x = extras.copy(exits = listOf(freeze, quit, old))
+        val check = HealthChecks.of(SampleScan.state(), x, now).first { it.area == "App stability" }
+        assertEquals(HealthChecks.Level.FAIL, check.level)
+        assertEquals("the app ended badly 1 time in the last day (1 not responding)", check.finding)
+        assertTrue(check.evidence!!, check.evidence!!.contains("on screen: Input dispatching timed out"))
+        val text = report(x = x)
+        assertTrue(text, text.contains("== How the app last ended (Android's own record, newest first) =="))
+        assertTrue(text, text.contains("not responding · on screen · 412 MB · Input dispatching timed out"))
+        assertTrue(text, text.contains("    at com.tjshea.vigilant.app.UiState.feedAt(MainViewModel.kt:250)"))
+        // Only ordinary exits lately: OK.
+        assertEquals(HealthChecks.Level.OK, HealthChecks.of(SampleScan.state(), extras.copy(exits = listOf(quit, old)), now).first { it.area == "App stability" }.level)
+    }
 }

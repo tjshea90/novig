@@ -46,4 +46,14 @@ class ProblemLogTest {
         assertFalse(File(tmp.root, "problems.json").readText().contains("abcdefghijklmnop"))
         assertEquals("refused key …6789 (401)", l.recent().first().message)
     }
+
+    @Test
+    fun `a crash saved as the app went down is filed at its own time, with more of its stack`() = runTest {
+        val l = log()
+        val stack = "on main: java.lang.IllegalStateException: boom | " + (1..40).joinToString(" | ") { "at com.tjshea.vigilant.app.Frame$it(File.kt:$it)" }
+        l.add("App crash", stack, atMs = now - 3_600_000L, maxLength = l.crashLength)
+        val p = l.recent().single()
+        assertEquals(now - 3_600_000L, p.firstAtMs)
+        assertEquals(ProblemLog.CRASH_LENGTH, p.message.length)
+    }
 }
