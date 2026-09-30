@@ -413,6 +413,9 @@ class AppContainer(private val app: Application) {
     /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
     private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds, injuries)
 
+    /** Pinnacle's biggest moneyline moves per league (ParlayAPI's public /v1/meta/movers: free, no key; PARLAY_API.md §6.3). */
+    val parlayMovers = com.tjshea.vigilant.data.reference.ParlayMovers(http, json)
+
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
     val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
 

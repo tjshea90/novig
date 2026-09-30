@@ -148,6 +148,10 @@ data class UiState(
      * item's key ([com.tjshea.vigilant.data.reference.InjuryTags]: a +EV bet's own key, "cno:<row key>", "bet:<id>").
      */
     val injuries: Map<String, com.tjshea.vigilant.data.reference.Injury> = emptyMap(),
+    /** Pinnacle's biggest moneyline moves in the picked leagues, by sport key (ParlayAPI's movers; PARLAY_API.md §6.3). */
+    val movers: Map<String, com.tjshea.vigilant.data.reference.MoversBoard> = emptyMap(),
+    /** The listed and open team bets whose game moved at Pinnacle, by item key ([com.tjshea.vigilant.data.reference.LineMoves]). */
+    val lineMoves: Map<String, com.tjshea.vigilant.data.reference.LineMove> = emptyMap(),
     /** ParlayAPI's own usage log, day by day, and where the credits went (Settings › API usage; PARLAY_API.md §6.2). */
     val parlayHistory: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null,
     /** CNO is being kept current right now: its tab or a widget is on screen. */
@@ -419,6 +423,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.flowOn(Dispatchers.Default).collect { t -> _state.update { if (it.teams == t) it else it.copy(teams = t) } }
         }
         viewModelScope.launch { keepInjuryTags() }
+        viewModelScope.launch { keepMovers() }
+        viewModelScope.launch { keepLineMoves() }
         viewModelScope.launch { c.parlayAccount.history.collect { h -> _state.update { it.copy(parlayHistory = h) } } }
         // Nothing of CNO's is read before the settings say whether scanning is paused, or while it is
         // (Tj, 2026-09-28: "pause all scanning"). Before the watch below starts, so it starts held.
@@ -465,6 +471,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The rows whose players' teams are wanted (all of the list's player bets). */
     private fun teamRows(): Flow<List<CnoRow>> = state.map { it.cnoTeamRows }
+
+    /**
+     * Pinnacle's moves in the picked leagues (PARLAY_API.md §6.3): ParlayAPI's public movers board (free, no key) read every few minutes
+     * while Vigilant is on screen and ParlayAPI is on, and again at once when the leagues change.
+     */
+    private suspend fun keepMovers() {
+        launch { c.parlayMovers.boards.collect { b -> _state.update { if (it.movers == b) it else it.copy(movers = b) } } }
+        state.map { s -> if (s.loaded && s.settings.useParlay) s.settings.leagues else null }.distinctUntilChanged().collectLatest { leagues ->
+            val sports = leagues.orEmpty().mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it)?.takeIf { l -> l.oddsApiListed }?.oddsApiSportKey }.distinct()
+            if (sports.isEmpty()) {
+                c.parlayMovers.refresh(emptyList())
+                return@collectLatest
+            }
+            while (true) {
+                if (c.onScreen) c.parlayMovers.refresh(sports)
+                kotlinx.coroutines.delay(com.tjshea.vigilant.data.reference.ParlayMovers.EVERY_MS)
+            }
+        }
+    }
+
+    /** The "Pinnacle moved toward/against" notes, recomputed off the main thread when a list or a board changes. */
+    private suspend fun keepLineMoves() {
+        state.map { s -> LineMoveInputs(s.movers, s.feed, if (s.settings.cnoOn) s.cno.snapshot?.rows.orEmpty() else emptyList(), s.bets) }
+            .distinctUntilChanged { a, b -> a.movers === b.movers && a.feed === b.feed && a.rows === b.rows && a.bets === b.bets }
+            .map { i -> com.tjshea.vigilant.data.reference.LineMoves.notes(i.movers, i.feed, i.rows, i.bets, System.currentTimeMillis()) }
+            .flowOn(Dispatchers.Default)
+            .collect { m -> _state.update { if (it.lineMoves == m) it else it.copy(lineMoves = m) } }
+    }
+
+    private class LineMoveInputs(
+        val movers: Map<String, com.tjshea.vigilant.data.reference.MoversBoard>,
+        val feed: List<Opportunity>,
+        val rows: List<CnoRow>,
+        val bets: List<TrackedBet>,
+    )
 
     /**
      * Injury tags for every listed and open prop bet (Tj, 2026-09-30, PARLAY_API.md §6.1), recomputed off the main thread when a list or
