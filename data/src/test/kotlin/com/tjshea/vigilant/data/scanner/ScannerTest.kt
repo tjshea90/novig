@@ -397,4 +397,24 @@ class ScannerTest {
         assertEquals(0, r.sources.single { it.id == "oddsapi" }.matched)
         assertEquals(1, r.sources.single { it.id == "propline" }.matched)
     }
+
+    /** Tj's ParlayAPI Starter plan (2026-09-30): past its day's share it stands by quietly, and the other feeds price. */
+    @Test
+    fun `a paced source stands by without an error while the others price`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val paced = object : ReferenceSource {
+            override val id = "parlay"
+            override val displayName = "ParlayAPI"
+            override val metered = true
+            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot =
+                throw com.tjshea.vigilant.data.keys.CreditsHeldBackException("ParlayAPI has spent today's share of its credits: back tomorrow (unused days carry over).")
+        }
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(paced, FakeFirst(log)))
+        val report = r.sources.single { it.id == "parlay" }
+        assertEquals(1, report.standingBy)
+        assertNull(report.error)
+        assertTrue(report.heldBack!!.contains("today's share"))
+        assertTrue(r.errors.none { it.contains("ParlayAPI") })
+        assertTrue(r.result!!.opportunities.isNotEmpty())
+    }
 }
