@@ -341,4 +341,24 @@ class BetRecheckTest {
         val quiet = tracker()
         assertEquals(0, BetRecheck(quiet, books = { seen += "x"; null }, clock = { now }).captureClosing())
     }
+
+    @Test
+    fun `the closing capture reads the bets it's given just before their start, however recently they were read`() = runTest {
+        val t = tracker(bet("a").copy(nowAtMs = now - 1_000L), bet("b"), bet("c", gameUrl = null), bet("other"))
+        now = start - 6 * 60_000L
+        val asked = mutableListOf<String>()
+        val read = BetRecheck(t, books = { row -> asked += row.gameUrl!!.substringAfter("side_id="); view(-125, 105) }, clock = { now })
+            .captureClosing(listOf("a", "b", "c"))
+        // "c" isn't a CNO bet (Vigilant's own pricing closes it); "other" wasn't asked for.
+        assertEquals(setOf("a", "b"), read)
+        assertEquals(setOf("a", "b"), asked.toSet())
+        val a = t.all().first { it.id == "a" }
+        assertEquals(now, a.closingSeenAtMs)
+        // Read 6 minutes before the start: once the game starts, that's a true close.
+        assertEquals(a.closingFair!! / a.cost - 1.0, ClosingLine.clv(a, start)!!, 1e-12)
+        assertNull(t.all().first { it.id == "other" }.closingSeenAtMs)
+        // After the start there's nothing left to capture.
+        now = start + 1
+        assertEquals(emptySet<String>(), BetRecheck(t, books = { view(-125, 105) }, clock = { now }).captureClosing(listOf("a", "b")))
+    }
 }
