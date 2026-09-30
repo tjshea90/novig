@@ -40,6 +40,9 @@ sealed interface CloseLookup {
 interface CloseSource {
     /** Each of [bets]' ids to what this source knows of its close. */
     suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup>
+
+    /** Megabytes a look can cost ([NovigTradeCloses]): asked only on Wi-Fi ([CloseBackfill.run]'s `heavyOk`). */
+    val heavy: Boolean get() = false
 }
 
 /**
@@ -218,6 +221,9 @@ class NovigTradeCloses(
     private val windowMs: Long = WINDOW_MS,
 ) : CloseSource {
 
+    /** A kickoff's half hour of trades is 0.5 to 4 MB: Wi-Fi only. */
+    override val heavy: Boolean get() = true
+
     /** Bytes read (tests and Diagnostics). */
     @Volatile
     var bytesRead = 0L
@@ -394,7 +400,8 @@ class CloseBackfill(
 
     private val mutex = Mutex()
 
-    suspend fun run(): Report = mutex.withLock {
+    /** [heavyOk]: the sources that download megabytes ([CloseSource.heavy]) may run (Wi-Fi); otherwise their bets wait for the next look. */
+    suspend fun run(heavyOk: Boolean = true): Report = mutex.withLock {
         val now = clock()
         val todo = tracker.all().filter { due(it, now) }.sortedByDescending { it.startsTs }.take(MAX_PER_RUN)
         if (todo.isEmpty()) return@withLock Report(0, 0, emptyMap())
@@ -403,6 +410,10 @@ class CloseBackfill(
         var left = todo
         for (source in sources) {
             if (left.isEmpty()) break
+            if (source.heavy && !heavyOk) {
+                left.forEach { notes.getOrPut(it.id) { ArrayList() } += CloseLookup.Later("Novig's trade history is read on Wi-Fi (a few MB)") }
+                continue
+            }
             val answers = runCatching { source.closes(left) }.getOrElse { e ->
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 left.associate { it.id to CloseLookup.Later(e.message ?: "failed") }

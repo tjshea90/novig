@@ -270,4 +270,25 @@ class HistoricalClosesTest {
         assertEquals(0.7, ClosingLine.closeFair(plain.copy(closeFair = 0.7, closeVia = "Novig's last trades (3)"), billsStart + 1)!!, 0.0)
         assertNull(ClosingLine.closeFair(plain.copy(closeFair = 0.7), billsStart - 1))
     }
+
+    @Test
+    fun `off Wi-Fi the heavy source waits, the light one still runs`() = runBlocking {
+        val now = billsStart + 3_600_000L
+        val t = tracker(bet("ml", "Moneyline", "Buffalo Bills"), bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5", outcomeId = phi))
+        val espn = Fake { b -> if (b.id == "ml") CloseLookup.Found(0.74, "ESPN · DraftKings close") else CloseLookup.None("ESPN keeps full-game moneylines, spreads and totals only") }
+        val heavy = object : CloseSource {
+            var asked = 0
+            override val heavy = true
+            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> { asked++; return bets.associate { it.id to CloseLookup.Found(0.5, "Novig's last trades (1)") } }
+        }
+        val r = CloseBackfill(t, listOf(espn, heavy), clock = { now }).run(heavyOk = false)
+        assertEquals(1, r.found)
+        assertEquals(0, heavy.asked)
+        val prop = t.all().first { it.id == "prop" }
+        assertFalse(prop.closeFinal)
+        assertTrue(prop.closeNote!!.endsWith("Novig's trade history is read on Wi-Fi (a few MB)"))
+        // On Wi-Fi, 3 hours later, it's found.
+        CloseBackfill(t, listOf(espn, heavy), clock = { now + CloseBackfill.RETRY_MS }).run(heavyOk = true)
+        assertEquals(0.5, t.all().first { it.id == "prop" }.closeFair!!, 0.0)
+    }
 }
