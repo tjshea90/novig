@@ -2708,3 +2708,8 @@ Here is the parlayapi key for you to use:
 
 Make sure the app is making full use of parlayapi's features and speeds. Study the docs if needed
 ```
+
+## 2026-09-30T04:18:08Z
+```
+Make sure the app can read my parlayAPI usage credits remaining because right now in the app it says 20,000 credits left even though it used credits 
+```
