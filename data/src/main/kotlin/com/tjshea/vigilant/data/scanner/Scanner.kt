@@ -878,7 +878,7 @@ class Scanner(
     private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "parlay" -> settings.families.sorted().toString()
-        "parlay_props" -> "${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
+        "parlay_props" -> (MarketFamily.PLAYER_PROPS in settings.families).toString()
         "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
         "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropWindowHours}|${settings.propLineGamesPerScan}"
