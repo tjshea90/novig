@@ -1288,6 +1288,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             novigTradeBytes = c.novigCloses.bytesRead,
             parlayCloseRequests = c.parlayCloses.requests,
             parlayAccounts = c.parlayAccount.last,
+            parlayExtras = mapOf(
+                "injuries" to c.parlayInjuries.requests, "movers" to c.parlayMovers.requests,
+                "second opinions" to c.parlayVerdicts.requests, "picks" to c.parlayBestBets.requests,
+            ),
+            injuryReports = c.injuries.book.value.size,
         )
         // The meter as it stands this moment (a balance just read may not have reached the state yet).
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it.copy(usage = c.usage.flow.value), extras, System.currentTimeMillis()))) }
