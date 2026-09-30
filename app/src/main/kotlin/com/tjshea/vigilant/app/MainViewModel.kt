@@ -1364,24 +1364,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val pricer = c.betPricer?.takeIf { settings.vigilantOn }
                 val plan = c.recheck.preview()
                 val cnoTotal = plan.todo.size
-                val ownBets = if (pricer != null) plan.vigilantBets.map { it.id } else emptyList()
+                val ownBets = plan.vigilantBets.map { it.id }
+                // Every open bet still to start is priced from Vigilant's own fair odds too, CNO's included (Tj, 2026-09-30: "always scan
+                // relevant vigilant odds in addition to the cno scan ... always get full updates on all of my bets and an accurate stats
+                // reading"): one bets-only pass beside CNO's page reads, then each bet's two reads are combined (BetTracker.mergeReads).
+                val everyBet = if (pricer != null) c.tracker.all().filter { it.status == BetStatus.PENDING && it.startsTs > began }.map { it.id } else emptyList()
                 val cnoDone = java.util.concurrent.atomic.AtomicInteger()
                 val ownDone = java.util.concurrent.atomic.AtomicInteger()
                 fun publish() {
-                    val total = cnoTotal + ownBets.size
+                    val total = cnoTotal + everyBet.size
                     _state.update { it.copy(checkProgress = if (total > 0) (cnoDone.get() + ownDone.get()) to total else null) }
                 }
                 publish()
                 report = kotlinx.coroutines.coroutineScope {
-                    val own = if (pricer != null && ownBets.isNotEmpty()) async(Dispatchers.IO) {
-                        pricer.run(settings, ownBets).also { ownDone.set(ownBets.size); publish() }
+                    val own = if (pricer != null && everyBet.isNotEmpty()) async(Dispatchers.IO) {
+                        pricer.run(settings, everyBet, alongside = true).also { ownDone.set(everyBet.size); publish() }
                     } else null
                     val cno = async(Dispatchers.IO) { c.recheck.run { done, _ -> cnoDone.set(done); publish() } }
                     var r = cno.await()
-                    own?.await()?.let { r = r.withPricing(it, rescue = false) }
-                    // Bets CNO couldn't read (a page gone, or it asked for a pause) are Vigilant's to price, when it can.
-                    if (pricer != null && r.unreadIds.isNotEmpty()) {
-                        r = r.withPricing(withContext(Dispatchers.IO) { pricer.run(settings, r.unreadIds) }, rescue = true)
+                    val priced = own?.await()
+                    if (pricer != null) {
+                        // What each bet shows and counts: both reads averaged, else whichever it got, else why not. Saved even if the screen went.
+                        val merged = withContext(NonCancellable + Dispatchers.IO) {
+                            c.tracker.mergeReads(everyBet, since = began, cnoSince = began - com.tjshea.vigilant.data.tracker.BetRecheck.FRESH_MS, reasons = priced?.reasons.orEmpty())
+                        }
+                        r = r.withEveryRead(merged, ownBets)
                     }
                     r
                 }
