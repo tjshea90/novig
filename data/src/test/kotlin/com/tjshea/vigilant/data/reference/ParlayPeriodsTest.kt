@@ -70,10 +70,11 @@ class ParlayPeriodsTest {
         val mgm = game.markets.single { it.bookKey == "betmgm" && it.kind == LineKind.TOTAL }
         assertEquals(19.5, mgm.line!!, 0.0)
         assertEquals(Side.OVER, mgm.quotes.first().side)
-        // Each quote timed by its own age: Pinnacle's rows here were 5 hours old (the scan's freshness rule drops them).
+        // Each quote timed by when ParlayAPI last saw it: Pinnacle's price hadn't changed in 5.4 hours (age_seconds 19542) but was seen
+        // 9 seconds before the answer (observed_age_seconds), so it's current, not stale.
         val pin = game.markets.filter { it.bookKey == "pinnacle" }
         assertTrue(pin.isNotEmpty())
-        assertTrue(pin.all { now - it.lastUpdateMs!! > 5 * 3_600_000L })
+        assertTrue(pin.all { now - it.lastUpdateMs!! == 9_000L })
         assertTrue(game.markets.filter { it.bookKey == "draftkings" }.all { now - it.lastUpdateMs!! < 60_000 })
     }
 
@@ -104,10 +105,29 @@ class ParlayPeriodsTest {
     }
 
     @Test
-    fun `bought only for football and basketball, only with 1st-half lines on, and only when Novig lists one in the league`() = runTest {
+    fun `baseball's first 5 innings are ParlayAPI's F5, Pinnacle's alone, paired the same way`() {
+        // Tj's key, 2026-09-30: MLB answered F5 (and NHL P1-P3, which Novig doesn't list); the rows' price last changed 70 min before,
+        // seen 200 s before.
+        val game = ParlayPeriodSource.parse(res("parlay-period-markets-mlb-all.json"), json, "baseball_mlb", now).single()
+        assertEquals("Atlanta Braves", game.home)
+        assertTrue(game.markets.all { it.bookKey == "pinnacle" && it.period == 1 })
+        // Braves -1.0 (+227) pairs with Phillies +1.0 (-301): the line is the home side's number.
+        val minusOne = game.markets.single { it.kind == LineKind.SPREAD && it.line == -1.0 }
+        assertEquals(1.0, minusOne.quotes.single { it.side == Side.AWAY }.point!!, 0.0)
+        assertEquals(3.27, minusOne.quotes.single { it.side == Side.HOME }.decimalOdds, 1e-9)
+        assertTrue(game.markets.any { it.kind == LineKind.TOTAL && it.line == 3.5 })
+        assertTrue(game.markets.all { now - it.lastUpdateMs!! == 200_000L })
+        // Asked as F5, a 1H filter finds nothing in it.
+        assertTrue(ParlayPeriodSource.parse(res("parlay-period-markets-mlb-all.json"), json, "baseball_mlb", now, period = "1H").isEmpty())
+        // Hockey's periods: never read into Novig's first half.
+        assertTrue(ParlayPeriodSource.parse(res("parlay-period-markets-nhl-all.json"), json, "icehockey_nhl", now, period = "1H").isEmpty())
+    }
+
+    @Test
+    fun `bought only where Novig lists a 1st-half line in the league, with 1st-half lines on`() = runTest {
         val src = source()
         assertTrue(src.supports(nfl))
-        assertFalse(src.supports(Leagues.byNovigName("MLB")!!))
+        assertTrue(src.supports(Leagues.byNovigName("MLB")!!))
         assertFalse(src.supports(Leagues.byNovigName("NHL")!!))
         val event = NovigEvent("e1", "FOOTBALL", "NFL", "OPEN_PREGAME", "Pittsburgh Steelers @ Cleveland Browns", now + 86_400_000L)
         fun market(type: String) = NovigMarket("m-$type", "e1", type, "OPEN", "PIT @ CLE $type", now + 86_400_000L, null, emptyList())
@@ -124,5 +144,16 @@ class ParlayPeriodsTest {
         val url = server.takeRequest().requestUrl!!
         assertEquals("/v1/sports/americanfootball_nfl/live/period_markets", url.encodedPath)
         assertEquals("1H", url.queryParameter("period"))
+        // Baseball: F5, and not bought while a Pinnacle feed of Vigilant's own sends Pinnacle's lines.
+        val mlb = Leagues.byNovigName("MLB")!!
+        val bEvent = NovigEvent("b1", "BASEBALL", "MLB", "OPEN_PREGAME", "Philadelphia Phillies @ Atlanta Braves", now + 86_400_000L)
+        val f5 = ScanContext(listOf(bEvent), listOf(NovigMarket("f5", "b1", "TOTAL_1H", "OPEN", "PHI @ ATL t4.5 1H", now + 86_400_000L, null, emptyList())))
+        src.pinnacleFeedOn = true
+        assertTrue(src.odds(mlb, ScanSettings(), f5).events.isEmpty())
+        assertEquals(1, server.requestCount)
+        src.pinnacleFeedOn = false
+        server.enqueue(MockResponse().setBody(res("parlay-period-markets-mlb-all.json")))
+        assertEquals(1, src.odds(mlb, ScanSettings(), f5).events.size)
+        assertEquals("F5", server.takeRequest().requestUrl!!.queryParameter("period"))
     }
 }
