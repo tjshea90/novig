@@ -2771,3 +2771,10 @@ Then, next to parlayapi's percent positive EV number in that section, put cno/vi
 
 After this is done, run the full tests protocol exactly how I already explained that was scheduled for this session.
 ```
+
+## 2026-09-30T07:13:00Z
+```
+For the 10:43Z auto scheduled Claude session, before the full tests, add (simply add this task, do not remove or alter the tasks I already have scheduled):
+
+Make it so I'm the parlayapi pick section, if I click on a bet, it opens a screen that shows other sports books odds on the same bet, exactly how other sections of this app such as cno scanner do it
+```
