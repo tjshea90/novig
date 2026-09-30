@@ -15,6 +15,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +46,20 @@ data class OpinionUi(
             is ParlayVerdicts.Result.Failed -> OpinionUi(query, error = result.message, atMs = now)
         }
     }
+}
+
+/** What the sheets need to offer a second opinion: whether ParlayAPI can be asked, the answers so far by bet key, and the ask. */
+class OpinionActions(val enabled: Boolean, val opinions: Map<String, OpinionUi>, val ask: (String, VerdictQuery) -> Unit)
+
+/** Provided by the activity; null (tests, previews) offers none. */
+val LocalOpinions = compositionLocalOf<OpinionActions?> { null }
+
+/** A bet sheet's second opinion for the bet [key] ([query] null: a bet /verdict can't grade). */
+@Composable
+fun SecondOpinionFor(key: String, query: VerdictQuery?, modifier: Modifier = Modifier) {
+    val a = LocalOpinions.current ?: return
+    val onAsk: (() -> Unit)? = if (a.enabled && query != null) ({ a.ask(key, query) }) else null
+    SecondOpinion(a.opinions[key], onAsk, modifier)
 }
 
 /** The test tag of a second opinion's answer. */

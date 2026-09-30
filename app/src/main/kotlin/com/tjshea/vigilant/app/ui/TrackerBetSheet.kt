@@ -133,6 +133,11 @@ fun BetSheetContent(
         // ---- What happened / what it's waiting for ----
         StatusCard(bet, now)
 
+        // ParlayAPI's call on this open bet at the price bet, only on a tap (5 credits; PARLAY_API.md §6.4).
+        if (open && !started) {
+            SecondOpinionFor(com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet), remember(bet.id, bet.american, bet.cost) { com.tjshea.vigilant.data.reference.VerdictQueries.of(bet) })
+        }
+
         // ---- Your bet ----
         Text("Your bet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

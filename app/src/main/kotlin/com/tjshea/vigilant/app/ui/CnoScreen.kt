@@ -747,6 +747,9 @@ fun CnoDetail(
             cnoStake(pick, settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
         }
 
+        // ParlayAPI's call on this bet at the price shown, only on a tap (5 credits; PARLAY_API.md §6.4).
+        SecondOpinionFor(com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(row), remember(row.key, row.odds) { com.tjshea.vigilant.data.reference.VerdictQueries.of(row) })
+
         // ---- Vigilant's own check, from every book that prices both sides ----
         when {
             books == null || (books.loading && view == null) -> Row(verticalAlignment = Alignment.CenterVertically) {

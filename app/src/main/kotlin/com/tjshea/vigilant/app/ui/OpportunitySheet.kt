@@ -272,6 +272,8 @@ fun OpportunityDetail(
             }
         }
 
+        // ParlayAPI's call on this bet at this price, only on a tap (5 credits; PARLAY_API.md §6.4).
+        SecondOpinionFor(o.key, remember(o.key, q?.cost) { com.tjshea.vigilant.data.reference.VerdictQueries.of(o) }, Modifier.padding(top = 16.dp))
         // A second opinion from an independent calculator, prefilled with the sharpest book's line.
         CrossCheck.devigger(o)?.let { link ->
             OutlinedButton(onClick = { open(link.url) }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
