@@ -42,6 +42,8 @@ object Diagnostics {
         val novigTradeBytes: Long = 0,
         /** Calls to ParlayAPI's closing lines since the app opened (Pinnacle's closes, when Tj has a key). */
         val parlayCloseRequests: Int = 0,
+        /** What each ParlayAPI key said of itself (its free account check): plan, credits left, reset. */
+        val parlayAccounts: Map<String, com.tjshea.vigilant.data.reference.ParlayAccount.Check> = emptyMap(),
     )
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {

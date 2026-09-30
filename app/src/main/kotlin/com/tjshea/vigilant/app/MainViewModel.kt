@@ -865,6 +865,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val trimmed = key.trim()
         if (trimmed.isEmpty() || trimmed in keysFor(provider)) return
         setKeys(provider, keysFor(provider) + trimmed)
+        // A new ParlayAPI key: its plan and credits from the key itself, at once (free).
+        if (provider == ApiProvider.PARLAY) refreshBalances(force = true)
+    }
+
+    /** ParlayAPI's keys asked what they have left (free), so the meters show the provider's own figures (Tj, 2026-09-30). */
+    fun refreshBalances(force: Boolean = false) {
+        if (keysFor(ApiProvider.PARLAY).isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) { runCatching { c.parlayAccount.refresh(force) } }
     }
 
     fun removeKey(provider: ApiProvider, key: String) = setKeys(provider, keysFor(provider) - key)
@@ -1064,6 +1072,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Settings › Diagnostics: one page of settings, the last scan, API usage, the background scan and the Tracker, to copy (Tj, 2026-09-29). */
     fun showDiagnostics() {
+        buildDiagnostics()
+        // ParlayAPI's own figures (free) and the report again with them, while it's still open.
+        if (keysFor(ApiProvider.PARLAY).isEmpty()) return
+        viewModelScope.launch {
+            val answered = withContext(Dispatchers.IO) { runCatching { c.parlayAccount.refresh(force = true) }.getOrDefault(0) }
+            if (answered > 0 && _state.value.report?.title == "Diagnostics") buildDiagnostics()
+        }
+    }
+
+    private fun buildDiagnostics() {
         val app = getApplication<Application>()
         val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
         val extras = Diagnostics.Extras(
@@ -1078,8 +1096,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             backfill = c.lastBackfill,
             novigTradeBytes = c.novigCloses.bytesRead,
             parlayCloseRequests = c.parlayCloses.requests,
+            parlayAccounts = c.parlayAccount.last,
         )
-        _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it, extras, System.currentTimeMillis()))) }
+        // The meter as it stands this moment (a balance just read may not have reached the state yet).
+        _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it.copy(usage = c.usage.flow.value), extras, System.currentTimeMillis()))) }
     }
 
     /** Settings › Betting › Grading check: what Novig's ledger and positions say about each API bet, beside what the Tracker did (Tj, 2026-09-29). */
