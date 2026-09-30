@@ -43,6 +43,9 @@ interface CloseSource {
 
     /** Megabytes a look can cost ([NovigTradeCloses]): skipped only when a caller says so ([CloseBackfill.run]'s `heavyOk`). */
     val heavy: Boolean get() = false
+
+    /** False: not asked at all this look (no key for it), and not counted when deciding every source has said "never". */
+    val active: Boolean get() = true
 }
 
 /**
@@ -408,7 +411,8 @@ class CloseBackfill(
         val found = HashMap<String, CloseLookup.Found>()
         val notes = HashMap<String, MutableList<CloseLookup>>()
         var left = todo
-        for (source in sources) {
+        val asked = sources.filter { it.active }
+        for (source in asked) {
             if (left.isEmpty()) break
             if (source.heavy && !heavyOk) {
                 left.forEach { notes.getOrPut(it.id) { ArrayList() } += CloseLookup.Later("Novig's trade history wasn't read this time") }
@@ -431,7 +435,7 @@ class CloseBackfill(
                         closeNote = tried.joinToString("; ") { (it as? CloseLookup.None)?.reason ?: (it as CloseLookup.Later).reason }.ifBlank { null },
                         closeLookedAtMs = now,
                         // Every source said it never will: stop looking.
-                        closeFinal = tried.isNotEmpty() && tried.size >= sources.size && tried.all { it is CloseLookup.None },
+                        closeFinal = tried.isNotEmpty() && tried.size >= asked.size && tried.all { it is CloseLookup.None },
                     )
                 }
             }

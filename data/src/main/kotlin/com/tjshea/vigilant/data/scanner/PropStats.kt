@@ -95,6 +95,10 @@ object PropStats {
         ),
     )
 
+    /** The Odds API prop market keys that price a Novig stat in a sport (a closing-line lookup's markets). */
+    fun oddsApiMarketsFor(sportKey: String, novigStat: String): List<String> =
+        SPORT_MARKETS[sportKey].orEmpty().filter { it.second == novigStat }.map { it.first }
+
     /** Every Odds API prop key Vigilant uses, to its Novig stat. */
     val ODDS_API_MARKETS: Map<String, String> = SPORT_MARKETS.values.flatten().toMap()
 
