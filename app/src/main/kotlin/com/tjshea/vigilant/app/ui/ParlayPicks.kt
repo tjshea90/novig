@@ -243,16 +243,18 @@ fun ParlayPickCard(
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("ParlayAPI", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    EvBadge(p.ev ?: 0.0)
-                }
-                // CNO's and Vigilant's EV at the same price, beside ParlayAPI's (Tj: "so I can compare and see if it is truly positive EV").
-                reads?.let {
-                    Spacer(Modifier.width(8.dp))
-                    ScannerEv("CNO", it.cno)
-                    Spacer(Modifier.width(8.dp))
-                    ScannerEv("Vigilant", it.vigilant)
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Column {
+                        Text("ParlayAPI", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        EvBadge(p.ev ?: 0.0)
+                    }
+                    // CNO's and Vigilant's EV at the same price, beside ParlayAPI's (Tj: "so I can compare and see if it is truly positive EV").
+                    reads?.let {
+                        Spacer(Modifier.width(10.dp))
+                        ScannerEv("CNO", it.cno, Modifier.padding(bottom = 3.dp))
+                        Spacer(Modifier.width(10.dp))
+                        ScannerEv("Vigilant", it.vigilant, Modifier.padding(bottom = 3.dp))
+                    }
                 }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = { actions.onPlaced(parlayItem(p)) }, modifier = Modifier.size(36.dp)) {
