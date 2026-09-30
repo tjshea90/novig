@@ -163,6 +163,14 @@ unless the task says so, and only while `useParlay` is on with a key.
 - Where (suggested): a third scanner beside CNO and Vigilant (the scanner switch already has CNO only / Both / Vigilant only), refreshed
   only on tap or pull (10 credits a league), each card with Open in Novig, ✓/✕ like the others (placed.json keys `parlay:<…>`), logged
   to the Tracker like CNO's.
+- **Built (v0.30.0):** `data/.../reference/ParlayBestBets.kt` (`ParlayBestBets`, `ParlayPlay`, `ParlayPick`), UI `app/.../ui/ParlayPicks.kt`:
+  a "ParlayAPI's picks at Novig" section at the top of the +EV tab (only while ParlayAPI is on with a key), read only on its button
+  (`min_edge=1`, `min_books=3`, `limit=50`: wide, since every play is judged again at Novig). Each play becomes a CNO-shaped row
+  (`ParlayPlay.row()`), so `NovigBetFinder` finds the exact Novig outcome (and the game's start, `NovigBetFinder.event`) and
+  `NovigLive.readNow` prices it from Novig's own book: shown only if +EV at Novig's price now against ParlayAPI's fair, within Tj's EV
+  range, odds cap (counted when over it) and start window. "Recheck" re-reads Novig only (free). Edge alerts have no fair price: one is
+  taken from their `apparent_edge_pct` as probability points over the price's own. ✓ logs to the Tracker as source `parlay`
+  (`BetTracker.SOURCE_PARLAY`, its own Tracker scanner filter). Not in the widget.
 
 ### 6.6 Line-movement chart (M6) — `GET /v1/sports/{s}/line-movement?eventId=&market=&player=&hours=`, 2 credits
 - **Unreliable (2026-09-30):** props lookups answered 503 `LINE_MOVEMENT_TIMEOUT` three times (**charged 2 credits each**), a moneyline
