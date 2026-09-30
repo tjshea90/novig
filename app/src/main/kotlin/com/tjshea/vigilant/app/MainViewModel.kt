@@ -183,6 +183,7 @@ data class UiState(
         ApiProvider.PINNAPI -> pinnapiKeys
         ApiProvider.PINNWIRE -> pinnwireKeys
         ApiProvider.PROPLINE -> proplineKeys
+        ApiProvider.PARLAY -> parlayKeys
     }
 
     /** This state with [provider]'s keys replaced. */
@@ -191,6 +192,7 @@ data class UiState(
         ApiProvider.PINNAPI -> copy(pinnapiKeys = keys)
         ApiProvider.PINNWIRE -> copy(pinnwireKeys = keys)
         ApiProvider.PROPLINE -> copy(proplineKeys = keys)
+        ApiProvider.PARLAY -> copy(parlayKeys = keys)
     }
 
     /** Novig's live price for [row], when that setting is on and it was read in the last minute (never in Vigilant MGM). */

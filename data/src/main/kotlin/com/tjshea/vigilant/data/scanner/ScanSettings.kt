@@ -112,6 +112,8 @@ data class ScanSettings(
     val useKalshi: Boolean = true,
     /** The Odds API (500 credits/month free). */
     val useOddsApi: Boolean = true,
+    /** ParlayAPI (The Odds API's format with Pinnacle and 14 more books, props included; RESEARCH.md §43). Needs a key in Settings. */
+    val useParlay: Boolean = true,
     /**
      * PropLine (1,000 requests a day free, RESEARCH.md §22): every reference sportsbook's game lines
      * each scan, and their player props per game when [useBookProps] is on. Needs a key in Settings.
@@ -406,6 +408,8 @@ data class ScanSettings(
             if (useKalshi) add("kalshi")
             if (useOddsApi) add("oddsapi")
             if (useOddsApi && useBookProps) add("oddsapi_props")
+            if (useParlay) add("parlay")
+            if (useParlay && useBookProps) add("parlay_props")
             if (usePropLine) add("propline")
             if (usePropLine && useBookProps) add("propline_props")
         }

@@ -381,6 +381,13 @@ class AppContainer(private val app: Application) {
     private val polymarket = PolymarketClient(http, json, usage = usage)
     private val kalshi = KalshiClient(http, json, usage = usage)
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
+
+    /** ParlayAPI: The Odds API's format at parlay-api.com (Pinnacle, ProphetX, bet365 and the US books, props too; RESEARCH.md §43). */
+    val parlayOdds = TheOddsApiClient(
+        http, KeyPool(QuotaPolicy.PARLAY, { keyStore.current(ApiProvider.PARLAY) }, usage), json,
+        baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY,
+    )
+    private val parlayProps = OddsApiPropsSource(parlayOdds)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */
     private val bookProps = OddsApiPropsSource(oddsApi)
     /** Pinnacle: PinnWire's keys first (their free keys include player props), then pinnapi's. */
@@ -432,6 +439,10 @@ class AppContainer(private val app: Application) {
         if (settings.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty()) {
             add(oddsApi)
             if (settings.useBookProps) add(bookProps)
+        }
+        if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) {
+            add(parlayOdds)
+            if (settings.useBookProps) add(parlayProps)
         }
     }
 }
