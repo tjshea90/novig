@@ -122,6 +122,14 @@ object Diagnostics {
                 }
             }
         }
+        // ParlayAPI's extras (v0.30.0, PARLAY_API.md §6): what they've been asked since the app opened.
+        if (s.settings.useParlay) {
+            o.appendLine(
+                "ParlayAPI extras since the app opened: " + x.parlayExtras.entries.joinToString(", ") { "${it.key} ${it.value}" }.ifEmpty { "none" } +
+                    " · injury reports kept ${x.injuryReports} · tagged now ${s.injuries.size} · line moves ${s.lineMoves.size}" +
+                    " · picks listed ${s.parlayPicks.picks.size} (${s.parlayPicks.picks.count { it.found }} found at Novig)",
+            )
+        }
 
         o.appendLine()
         o.appendLine("== Runway (will each API's allowance last?) ==")
