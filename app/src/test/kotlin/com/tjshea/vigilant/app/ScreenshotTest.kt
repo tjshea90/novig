@@ -228,7 +228,7 @@ class ScreenshotTest {
             cno = com.tjshea.vigilant.data.reference.ParlayCompare.Read.none("not on CNO's +EV list"),
             vigilant = com.tjshea.vigilant.data.reference.ParlayCompare.Read(0.05, 0.10, SampleScan.NOW - 20_000, null),
         )
-        shoot("1h_parlay_pick_sheet") {
+        shoot("1m_parlay_pick_sheet") {
             androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalApiBet provides com.tjshea.vigilant.app.ui.ApiBetActions(true, {}, {})) {
                 com.tjshea.vigilant.app.ui.ParlayPickDetail(
                     p, SampleScan.settings, SampleScan.NOW, reads,
