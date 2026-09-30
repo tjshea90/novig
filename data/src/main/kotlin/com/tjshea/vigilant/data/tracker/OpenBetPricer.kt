@@ -143,27 +143,60 @@ class OpenBetPricer(
                 else -> "This bet has no Novig market on record (it was logged from an old ✓), so Vigilant can't price it: tap Replace to find it"
             }
         }
-        var report: ScanReport? = null
-        var error: String? = null
-        if (askable.isNotEmpty()) {
-            val scoped = BetsScope.settingsFor(settings, askable, now)
-            try {
-                report = scanner.scan(scoped, sources(scoped), askable.mapTo(HashSet()) { it.marketId }, onProgress)
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                error = e.message ?: e.javaClass.simpleName
-            }
-        }
-        val result = report?.result
-        val errors = report?.errors.orEmpty() + listOfNotNull(error)
-        val listed = scanner.listed
-        val pricedKeys = result?.opportunities?.filter { it.fairProbability != null }?.mapTo(HashSet()) { it.market.marketId to it.outcome.outcomeId }.orEmpty()
+        val pass = pass(settings, askable, now, onProgress)
+        val result = pass.result
         for (b in askable) {
-            if ((b.marketId to b.outcomeId) !in pricedKeys) reasons[b.id] = BetPricingReasons.explain(b, result, listed, errors)
+            if ((b.marketId to b.outcomeId) !in pass.priced) reasons[b.id] = BetPricingReasons.explain(b, result, pass.listed, pass.errors)
         }
         // What was read is saved even if the screen that asked has gone.
         val applied = withContext(NonCancellable) { tracker.applyPricing(result, open.map { it.id }, reasons, alongside) }
-        Report(open.size, applied.priced, applied.unpriced, error = error ?: report?.errors?.takeIf { result == null }?.firstOrNull(), reasons = reasons)
+        Report(open.size, applied.priced, applied.unpriced, error = pass.error ?: pass.report?.errors?.takeIf { result == null }?.firstOrNull(), reasons = reasons)
+    }
+
+    /** One bets-only pass over [askable] (pregame, with Novig ids): what it read, which outcomes came out priced, and what went wrong. */
+    private class Pass(val report: ScanReport?, val error: String?, val listed: Set<String>) {
+        val result: ScanResult? get() = report?.result
+        val errors: List<String> get() = report?.errors.orEmpty() + listOfNotNull(error)
+        val priced: Set<Pair<String, String>> =
+            result?.opportunities?.filter { it.fairProbability != null }?.mapTo(HashSet()) { it.market.marketId to it.outcome.outcomeId }.orEmpty()
+    }
+
+    private suspend fun pass(settings: ScanSettings, askable: List<TrackedBet>, now: Long, onProgress: (ScanProgress) -> Unit): Pass {
+        if (askable.isEmpty()) return Pass(null, null, scanner.listed)
+        val scoped = BetsScope.settingsFor(settings, askable, now)
+        return try {
+            Pass(scanner.scan(scoped, sources(scoped), askable.mapTo(HashSet()) { it.marketId }, onProgress), null, scanner.listed)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Pass(null, e.message ?: e.javaClass.simpleName, scanner.listed)
+        }
+    }
+
+    /** Vigilant's own fair line for one Novig outcome ([fair], 0-1, read at [atMs]), or why there's none. */
+    data class FairRead(val fair: Double?, val atMs: Long?, val why: String?)
+
+    /**
+     * Vigilant's own fair odds for Novig outcomes that aren't bets in the Tracker (ParlayAPI's picks, TASKS.md P2: "put cno/vigilant's percentage
+     * so I can compare and see if it is truly positive EV"), from the same bets-only pass [run] makes (the feed's sources, freshness, devig and
+     * blend), one pass at a time with it. Nothing is written anywhere. [asks] are shaped as bets (their Novig ids, game, wording, start); the
+     * answer is by [TrackedBet.id]. CNO only: Vigilant's APIs are asleep and nothing is asked.
+     */
+    suspend fun fairs(settings: ScanSettings, asks: List<TrackedBet>, onProgress: (ScanProgress) -> Unit = {}): Map<String, FairRead> = mutex.withLock {
+        if (asks.isEmpty()) return@withLock emptyMap()
+        if (!settings.vigilantOn) return@withLock asks.associate { it.id to FairRead(null, null, "Vigilant's scanner is asleep (CNO only)") }
+        val now = clock()
+        val askable = BetsScope.priceable(asks, now).filter { Leagues.byNovigName(it.league) != null }
+        val pass = pass(settings, askable, now, onProgress)
+        val byOutcome = pass.result?.opportunities?.filter { it.fairProbability != null }
+            ?.associateBy { it.market.marketId to it.outcome.outcomeId }.orEmpty()
+        asks.associate { a ->
+            val o = byOutcome[a.marketId to a.outcomeId]
+            a.id to when {
+                o != null -> FairRead(o.fairProbability, o.fairAsOfMs ?: now, null)
+                a !in askable -> FairRead(null, null, if (Leagues.byNovigName(a.league) == null) "Vigilant doesn't price ${a.league.ifBlank { "this league" }}" else "Novig's exact bet wasn't found")
+                else -> FairRead(null, null, BetPricingReasons.explain(a, pass.result, pass.listed, pass.errors))
+            }
+        }
     }
 }
