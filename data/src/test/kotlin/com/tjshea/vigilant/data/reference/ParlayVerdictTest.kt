@@ -70,6 +70,14 @@ class ParlayVerdictTest {
         assertEquals(0.486, prop.fairProbability!!, 1e-9)
         assertTrue(prop.note!!.contains("outside your set"))
         assertNull(Verdict.parse(res("parlay-verdict-busy-503.json"), json))
+        // The canonical prop key answers too (Tj's key, 2026-09-30: player_rush_yds), and a prop Pinnacle doesn't list is priced from Novig
+        // itself: flagged, since that's no independent check of a Novig bet.
+        val canonical = Verdict.parse(res("parlay-verdict-prop-canonical.json"), json)!!
+        assertEquals("PASS", canonical.verdict)
+        assertEquals(113, canonical.fairAmerican)
+        assertEquals(6, canonical.booksCompared)
+        assertTrue(canonical.fairFromNovig)
+        assertTrue(!h2h.fairFromNovig)
     }
 
     @Test
