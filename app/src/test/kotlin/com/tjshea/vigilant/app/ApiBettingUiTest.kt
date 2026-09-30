@@ -288,6 +288,31 @@ class ApiBettingUiTest {
         assertEquals(1, confirmed)
     }
 
+    /** Tj, 2026-09-30: "I can type in a custom account for any bet manually". */
+    @Test
+    fun `any amount can be typed for the bet, up to the per-bet limit`() {
+        val typed = mutableListOf<Double>()
+        val picked = mutableListOf<Double>()
+        sheetScreen { ApiBetSheetContent(sheet(), { picked += it }, {}, {}, {}, {}, onTypeStake = { typed += it }) }
+        compose.onNodeWithTag("betAmount").assertExists()
+        compose.onNodeWithTag("betAmount").performTextClearance()
+        compose.onNodeWithTag("betAmount").performTextInput("3.75")
+        assertEquals(3.75, typed.last(), 0.0)
+        // Over the limit ($10 here): said, and nothing is sent.
+        val before = typed.size
+        compose.onNodeWithTag("betAmount").performTextClearance()
+        compose.onNodeWithTag("betAmount").performTextInput("25")
+        assertEquals(before + 1, typed.size) // "2" on the way to "25"
+        compose.onNodeWithText("Over your $10.00 limit per bet (Settings › Novig API › Betting)").assertExists()
+        assertTrue(picked.isEmpty())
+    }
+
+    @Test
+    fun `a sheet opened at what's left in the wallet says so`() {
+        sheetScreen { ApiBetSheetContent(sheet(balance = 0.63).copy(stake = 0.63), {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("All that's left in the wallet").assertExists()
+    }
+
     @Test
     fun `a wallet that's too small blocks the bet and offers a way straight to adding money`() {
         var addMoney = 0

@@ -72,7 +72,9 @@ class ApiBettingControllerTest {
     }
 
     /** A Novig that fills what's asked for at the cost the plan expected; counts the orders. */
-    private class FakeNovig(val orders: AtomicInteger, val slowMs: Long = 0, val fillsFor: (qty: Long, price: Double) -> NovigFill?) :
+    private class FakeNovig(
+        val orders: AtomicInteger, val slowMs: Long = 0, val wallet: Double = 25.0, val walletMs: Long = 0, val fillsFor: (qty: Long, price: Double) -> NovigFill?,
+    ) :
         NovigTradingClient(NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
             override val keyId = "kid"
             override val algorithm = NovigKeyAlgorithm.P256
@@ -87,7 +89,10 @@ class ApiBettingControllerTest {
         }
         override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", "FILLED", 1)
         override suspend fun fills(orderId: String?, limit: Int) = listOfNotNull(fillsFor(last!!.third, last!!.second))
-        override suspend fun balance(subaccountKeyId: String) = 25.0
+        override suspend fun balance(subaccountKeyId: String): Double {
+            if (walletMs > 0) kotlinx.coroutines.delay(walletMs)
+            return wallet
+        }
         override suspend fun orders(status: String, limit: Int, outcomeId: String?) = emptyList<NovigOrder>()
     }
 
@@ -120,6 +125,54 @@ class ApiBettingControllerTest {
         waitFor("the plan for \$1") { state.value.betSheet?.plan?.let { it.expectedCost <= 1.0 + 1e-9 && it.contracts < plan.contracts } == true }
         api.dismiss()
         assertNull(state.value.betSheet)
+    }
+
+    /** A state whose Novig connection has a subaccount, so the sheet reads the wallet as it opens; [balance] is the one on hand (maybe old). */
+    private fun walletState(balance: Double?) = MutableStateFlow(
+        SampleScan.state().let { st ->
+            st.copy(
+                betting = BettingUi(enabled = true, balance = balance),
+                novig = st.novig.copy(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("r", "r", "sub", false, tradingKeyId = "t")),
+            )
+        },
+    )
+
+    /** Tj, 2026-09-30: "if I have less than one dollar in the wallet, it automatically enters whatever is left in the wallet as the bet amount". */
+    @Test
+    fun `a wallet holding less than the bet amount opens the sheet at what's left, read as the sheet opens`() {
+        val (o, book) = sample()
+        val state = walletState(balance = 25.0) // the balance on hand is old: the wallet now holds 63 cents
+        val api = controller(state, book, FakeNovig(AtomicInteger(), wallet = 0.638) { _, _ -> null })
+        api.bet(o)
+        waitFor("the wallet's 63 cents as the amount") { state.value.betSheet?.stake == 0.63 }
+        assertEquals(0.638, state.value.betting.balance!!, 0.0)
+        assertEquals(0.638, state.value.betSheet!!.balance!!, 0.0)
+        assertEquals(false, state.value.betSheet!!.stakeChosen)
+        // Its price is read for that amount (a plan, or why 63 cents can't buy it).
+        waitFor("an answer for 63 cents") { state.value.betSheet?.let { it.stake == 0.63 && (it.plan != null || it.refusal != null) } == true }
+        state.value.betSheet!!.plan?.let { assertTrue(it.expectedCost <= 0.63 + 1e-9) }
+        // A sheet opened when the balance on hand is already small starts there straight away.
+        api.dismiss()
+        api.bet(o)
+        assertEquals(0.63, state.value.betSheet!!.stake, 0.0)
+    }
+
+    @Test
+    fun `an amount Tj picks or types is never changed by the wallet read, and a typed one is priced once typing pauses`() {
+        val (o, book) = sample()
+        val state = walletState(balance = null)
+        val api = controller(state, book, FakeNovig(AtomicInteger(), wallet = 0.5, walletMs = 300) { _, _ -> null })
+        api.bet(o)
+        api.typeStake(3.0)
+        api.typeStake(3.5) // the next keystroke
+        assertEquals(3.5, state.value.betSheet!!.stake, 0.0)
+        assertTrue(state.value.betSheet!!.stakeChosen)
+        waitFor("the wallet read") { state.value.betting.balance == 0.5 }
+        assertEquals(3.5, state.value.betSheet!!.stake, 0.0)
+        waitFor("the plan for \$3.50") { state.value.betSheet?.plan?.let { it.expectedCost <= 3.5 + 1e-9 } == true }
+        // Over the limit is held at the limit (the field says so and doesn't send it; this is the guard behind it).
+        api.typeStake(500.0)
+        assertEquals(state.value.settings.apiMaxStake, state.value.betSheet!!.stake, 0.0)
     }
 
     @Test
