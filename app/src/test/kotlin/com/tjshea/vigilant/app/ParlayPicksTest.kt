@@ -26,6 +26,7 @@ import com.tjshea.vigilant.app.ui.ParlayPicksUi
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.app.ui.parlayItem
 import com.tjshea.vigilant.app.ui.parlayShown
+import com.tjshea.vigilant.app.ui.vigilantAsks
 import com.tjshea.vigilant.data.cno.CnoBookPrice
 import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoBooksState
@@ -239,5 +240,19 @@ class ParlayPicksTest {
         compose.onNodeWithText("Ian Happ Over 0.5").performClick()
         compose.onNodeWithText("ParlayAPI has no other book pricing this exact bet right now").assertExists()
         compose.onNodeWithText("Retry").assertExists()
+    }
+
+    @Test
+    fun `P2 Vigilant's read asks only for picks not priced freshly by the last scan or read in the last 2 minutes`() {
+        val base = state()
+        val k = kelly(base)
+        val h = happ(base)
+        assertEquals(setOf(h.key, k.key), base.vigilantAsks(now).map { it.key }.toSet())
+        // Kelly read 30 s ago: a recheck now asks for Happ only (no credits spent twice on the same answer).
+        val recent = base.copy(parlayPicks = base.parlayPicks.copy(vigilant = mapOf(k.key to OpenBetPricer.FairRead(0.1, now - 30_000L, null))))
+        assertEquals(listOf(h.key), recent.vigilantAsks(now).map { it.key })
+        // Read 5 minutes ago, or a read that found no line: asked again.
+        val old = base.copy(parlayPicks = base.parlayPicks.copy(vigilant = mapOf(k.key to OpenBetPricer.FairRead(0.1, now - 300_000L, null), h.key to OpenBetPricer.FairRead(null, null, "No fair-odds source has a line for this bet"))))
+        assertEquals(setOf(h.key, k.key), old.vigilantAsks(now).map { it.key }.toSet())
     }
 }
