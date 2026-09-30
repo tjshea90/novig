@@ -114,16 +114,30 @@ object ApiBetTargets {
         )
     }
 
-    /** A CNO bet at Novig, once its Novig outcome is found; [fairAsOfMs] is when CNO's list was current. */
-    fun of(row: CnoRow, found: NovigBetFinder.Found.Bet, market: NovigMarket, fairAsOfMs: Long?): BetTarget? {
+    /**
+     * A CNO bet at Novig, once its Novig outcome is found; [fairAsOfMs] is when CNO's list was current. A ParlayAPI pick (TASKS.md P1) is the
+     * same CNO-shaped row with ParlayAPI's fair odds: [source] [BetTracker.SOURCE_PARLAY], its own [placedKey], [fairAsOfMs] when its board was read.
+     */
+    fun of(
+        row: CnoRow,
+        found: NovigBetFinder.Found.Bet,
+        market: NovigMarket,
+        fairAsOfMs: Long?,
+        source: String = BetTracker.SOURCE_CNO,
+        placedKey: String = MiniWindow.cnoKey(row),
+    ): BetTarget? {
         val fair = CnoChecks.fairProbability(row) ?: return null
         return BetTarget(
             // The earlier of CrazyNinjaOdds' start and Novig's own: a game Novig has started must never be bet as pregame.
             market = market, outcomeId = found.outcomeId, league = row.league, eventName = row.event, startsTs = minOf(row.startsAtMs ?: market.startsTs, market.startsTs),
-            marketLabel = row.market, selection = row.bet, fair = fair, fairAsOfMs = fairAsOfMs, source = BetTracker.SOURCE_CNO,
-            placedKey = MiniWindow.cnoKey(row), book = row.book.ifBlank { "Novig" }, gameUrl = row.gameUrl, betUrl = row.betUrl,
+            marketLabel = row.market, selection = row.bet, fair = fair, fairAsOfMs = fairAsOfMs, source = source,
+            placedKey = placedKey, book = row.book.ifBlank { "Novig" }, gameUrl = row.gameUrl, betUrl = row.betUrl,
         )
     }
+
+    /** A ParlayAPI pick's target (TASKS.md P1): its Novig row at ParlayAPI's fair odds, read at [boardAtMs]. */
+    fun of(p: com.tjshea.vigilant.data.reference.ParlayPick, found: NovigBetFinder.Found.Bet, market: NovigMarket, boardAtMs: Long?): BetTarget? =
+        of(p.row, found, market, boardAtMs, BetTracker.SOURCE_PARLAY, p.key)
 
     /** Only a bet priced at Novig can be placed through Novig's API. */
     fun atNovig(row: CnoRow): Boolean = row.book.isBlank() || CnoBooks.codeFor(row.book) == CnoBooks.NOVIG
@@ -373,7 +387,17 @@ class ApiBettingController(
     }
 
     /** A CNO card's bet: its Novig outcome is found first (the same match the Open button uses), then the sheet opens. */
-    fun bet(row: CnoRow) {
+    fun bet(row: CnoRow) = betRow(row, "CrazyNinjaOdds") { found, market -> ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs) }
+
+    /**
+     * A ParlayAPI pick's bet (TASKS.md P1, Tj 2026-09-30: "a button where I can bet each bet inside the app using the same logic as … the cno
+     * scanner"): the same as a CNO card's, with ParlayAPI's fair odds as read at [boardAtMs] (the sheet refuses them once too old) and logged
+     * to the Tracker as ParlayAPI's.
+     */
+    fun bet(p: com.tjshea.vigilant.data.reference.ParlayPick, boardAtMs: Long?) =
+        betRow(p.row, "ParlayAPI") { found, market -> ApiBetTargets.of(p, found, market, boardAtMs) }
+
+    private fun betRow(row: CnoRow, lister: String, target: (NovigBetFinder.Found.Bet, com.tjshea.vigilant.data.novig.NovigMarket) -> BetTarget?) {
         if (c.trading == null) return
         if (!ApiBetTargets.atNovig(row)) {
             toasts.tryEmit("Only bets priced at Novig can be placed through Novig's API")
@@ -384,13 +408,12 @@ class ApiBettingController(
         betJob = scope.launch {
             val found = withContext(Dispatchers.IO) { runCatching { c.betFinder.find(row) }.getOrNull() } as? NovigBetFinder.Found.Bet
             val market = found?.let { f -> f.market ?: f.marketId?.let { id -> withContext(Dispatchers.IO) { runCatching { c.novig.market(id) }.getOrNull() } } }
-            val asOf = c.cno.state.value.snapshot?.dataAtMs
-            val target = if (found != null && market != null) ApiBetTargets.of(row, found, market, asOf) else null
-            if (target == null) {
-                state.update { it.copy(betSheet = it.betSheet?.copy(resolving = false, refusal = "Novig's exact bet couldn't be found for this one (its market or line isn't listed the way CrazyNinjaOdds names it): use Open in Novig instead.")) }
+            val t = if (found != null && market != null) target(found, market) else null
+            if (t == null) {
+                state.update { it.copy(betSheet = it.betSheet?.copy(resolving = false, refusal = "Novig's exact bet couldn't be found for this one (its market or line isn't listed the way $lister names it): use Open in Novig instead.")) }
                 return@launch
             }
-            state.update { it.copy(betSheet = it.betSheet?.copy(target = target, resolving = false)) }
+            state.update { it.copy(betSheet = it.betSheet?.copy(target = t, resolving = false)) }
             replan()
         }
     }
