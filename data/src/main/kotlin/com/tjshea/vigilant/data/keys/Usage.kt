@@ -269,7 +269,7 @@ class UsageMeter(
         val until = when {
             retryAfterMs != null -> now + retryAfterMs
             u.calls == 0 && now - u.periodStart < RESET_GRACE -> now + REPROBE
-            else -> policy.nextReset(u.periodStart)
+            else -> u.nextReset(policy)
         }
         u.copy(depletedUntil = until, remaining = 0, lastNote = note, lastCallMs = now, recent = u.recent + now)
     }
@@ -281,7 +281,7 @@ class UsageMeter(
 
     /** The key itself was refused (wrong, deleted, deactivated). Skipped until the next period. */
     suspend fun recordRejected(policy: QuotaPolicy, key: String, note: String) = edit(policy, key) { u, now ->
-        u.copy(depletedUntil = policy.nextReset(u.periodStart), refused = true, lastNote = note, lastCallMs = now)
+        u.copy(depletedUntil = u.nextReset(policy), refused = true, lastNote = note, lastCallMs = now)
     }
 
     /** Requests (and throttles) to any provider, for the "today" counters. In memory until [flush]. */

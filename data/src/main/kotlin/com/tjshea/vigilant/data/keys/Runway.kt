@@ -52,7 +52,7 @@ object Runway {
         val used = live.sumOf { it.used }
         val left = v.totalLeft ?: (allowance - used).coerceAtLeast(0)
         val reset = v.nextReset ?: policy.nextReset(policy.periodStart(now))
-        val start = policy.periodStart(now)
+        val start = v.periodStart ?: policy.periodStart(now)
         val elapsed = now - start
         val span = (reset - start).coerceAtLeast(1L)
         val period = if (policy.period == QuotaPeriod.MONTH_UTC) "this month" else "today"

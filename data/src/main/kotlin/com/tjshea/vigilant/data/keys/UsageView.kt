@@ -38,7 +38,7 @@ data class ProviderView(
     val keys: List<KeyView>,
     val totalLeft: Int?,
     val totalAllowance: Int?,
-    /** When the current period ends (the 1st for monthly, midnight UTC for daily). */
+    /** When the current period ends (the 1st for monthly, midnight UTC for daily; the provider's own time when it says). */
     val nextReset: Long?,
     val callsToday: Int,
     val throttledToday: Int,
@@ -47,6 +47,8 @@ data class ProviderView(
     val scanShareToday: Int? = null,
     /** A paced provider whose every key is on a free plan: its credits are kept for closing lines, never scans. */
     val scansFreeOnly: Boolean = false,
+    /** When the current period began, to match [nextReset]. */
+    val periodStart: Long? = null,
 ) {
     val activeIndex: Int? get() = keys.firstOrNull { it.state == KeyState.ACTIVE }?.index
     val fractionUsed: Float?
@@ -74,7 +76,7 @@ object UsageViews {
                 else -> KeyState.SPENT
             }
             val until = when (state) {
-                KeyState.SPENT, KeyState.REFUSED -> u.depletedUntil ?: policy.nextReset(u.periodStart)
+                KeyState.SPENT, KeyState.REFUSED -> u.depletedUntil ?: u.nextReset(policy)
                 KeyState.COOLING -> u.coolUntil ?: u.recent.filter { now - it < UsageMeter.MINUTE }.minOrNull()?.plus(UsageMeter.MINUTE)
                 else -> null
             }
@@ -96,6 +98,8 @@ object UsageViews {
         val freeOnly = pace != null && live.isNotEmpty() && live.all { pace.isFree(it) }
         val share = if (pace == null || freeOnly || live.none { it.limit != null }) null
         else live.filter { it.limit != null && !pace.isFree(it) }.sumOf { pace.spendableToday(it, now) }
+        val serverResets = live.mapNotNull { it.resetAtMs }
+        val serverStarts = live.filter { it.resetAtMs != null }.map { it.periodStart }
         val lefts = rows.filter { it.state != KeyState.REFUSED }.map { it.left }
         val allowances = rows.filter { it.state != KeyState.REFUSED }.map { it.allowance }
         return ProviderView(
@@ -103,7 +107,9 @@ object UsageViews {
             keys = rows,
             totalLeft = if (policy.keyed && lefts.isNotEmpty() && lefts.all { it != null }) lefts.sumOf { it!! } else null,
             totalAllowance = if (policy.keyed && allowances.isNotEmpty() && allowances.all { it != null }) allowances.sumOf { it!! } else null,
-            nextReset = if (policy.keyed) policy.nextReset(policy.periodStart(now)) else null,
+            // The provider's own reset time when it gave one (ParlayAPI's X-RateLimit-Reset), else the calendar's.
+            nextReset = if (!policy.keyed) null else serverResets.minOrNull() ?: policy.nextReset(policy.periodStart(now)),
+            periodStart = if (!policy.keyed) null else if (serverResets.isNotEmpty()) serverStarts.minOrNull() else policy.periodStart(now),
             callsToday = fresh?.callsToday ?: 0,
             throttledToday = fresh?.throttledToday ?: 0,
             lastThrottleMs = usage?.lastThrottleMs,
