@@ -261,13 +261,17 @@ class CnoFeed(
      * (that's for the cards someone asked about). A read CNO answers with a pause (busy, refusing) pauses every read, as
      * [loadBooks] does. Null when the page couldn't be read.
      */
+    /**
+     * [row]'s game page for Check odds now: null when CNO answered but its page doesn't list the bet (a line that moved, a prop pulled);
+     * throws when CNO didn't answer (after noting any pause it asked for), so the two are told apart ([BetRecheck]).
+     */
     suspend fun readBooks(row: CnoRow): CnoBooksView? = try {
         source.booksBulk(row)
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
         (e as? CnoException)?.let { pauseFor(it, "Check odds now") }
-        null
+        throw e
     }
 
     /** CNO asked for a pause ([CnoException.retryAfterSeconds]): every lane waits it out, and Diagnostics keeps what was asked, by which read. */

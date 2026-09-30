@@ -262,6 +262,7 @@ class AppContainer(private val app: Application) {
         books = { row -> cno.readBooks(row) },
         paused = { (cno.state.value.pausedUntilMs ?: 0L) > System.currentTimeMillis() },
         concurrency = RECHECK_AT_ONCE,
+        backup = { bet -> parlayBooks.view(bet) },
     )
 
     /**

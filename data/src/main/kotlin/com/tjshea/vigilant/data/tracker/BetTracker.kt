@@ -615,6 +615,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         /** [TrackedBet.nowVia]: whose fair line the current EV rests on. */
         const val VIA_CNO = "cno"
         const val VIA_VIGILANT = "vigilant"
+        /** [TrackedBet.nowVia]: every book's price from ParlayAPI, judged with CNO's check ([ParlayBooks]), when CNO didn't have the bet. */
+        const val VIA_PARLAY = "parlay"
 
         /** A scan re-writes an open bet's read only when its fair line moved or the last read is this old (the age on the card stays honest). */
         const val OBSERVE_REFRESH_MS = 60_000L

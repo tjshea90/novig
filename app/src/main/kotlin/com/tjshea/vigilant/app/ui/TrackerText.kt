@@ -146,6 +146,7 @@ object TrackerText {
             when (b.nowVia) {
                 BetTracker.VIA_CNO -> "CNO's books"
                 BetTracker.VIA_VIGILANT -> "Vigilant's fair odds"
+                BetTracker.VIA_PARLAY -> "ParlayAPI's books"
                 else -> null
             },
             b.nowBooks?.let { "$it book${if (it == 1) "" else "s"}" },
