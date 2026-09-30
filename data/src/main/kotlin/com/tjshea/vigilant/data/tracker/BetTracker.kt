@@ -245,6 +245,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         stake: Double = DEFAULT_STAKE,
         marketId: String = "",
         outcomeId: String = "",
+        /** Whose list it came from: CNO's ([SOURCE_CNO]) or ParlayAPI's ([SOURCE_PARLAY]), both CNO-shaped rows. */
+        source: String = SOURCE_CNO,
     ): TrackedBet {
         val decimal = com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
         val price = 1.0 / decimal
@@ -268,7 +270,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             fairAtBet = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: ((1 + ev) / decimal),
             evPercentAtBet = ev,
             stake = stake,
-            source = SOURCE_CNO,
+            source = source,
             placedKey = placedKey,
             american = row.odds,
             book = row.book,
@@ -611,6 +613,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     companion object {
         const val SOURCE_VIGILANT = "vigilant"
         const val SOURCE_CNO = "cno"
+
+        /** ParlayAPI's own +EV list at Novig (its /best-bets, re-priced at Novig; PARLAY_API.md §6.5). */
+        const val SOURCE_PARLAY = "parlay"
 
         /** [TrackedBet.nowVia]: whose fair line the current EV rests on. */
         const val VIA_CNO = "cno"

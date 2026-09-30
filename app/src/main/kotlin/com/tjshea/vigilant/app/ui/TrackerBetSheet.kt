@@ -122,7 +122,7 @@ fun BetSheetContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                (if (bet.source == BetTracker.SOURCE_CNO) "Found by CNO" else "Found by Vigilant") + " · ${bet.book.ifBlank { AppBook.name }}" +
+                ("Found by " + TrackerSort.scannerOf(bet).short) + " · ${bet.book.ifBlank { AppBook.name }}" +
                     " · placed ${Format.startTime(bet.createdAtMs)}" + (if (bet.imported) " · from an earlier ✓" else ""),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -157,7 +157,7 @@ object Diagnostics {
         val upcoming = open.filter { now < it.startsTs }
         val started = open.filter { now >= it.startsTs }
         o.appendLine("Bets: ${bets.size} (open ${open.size}: ${upcoming.size} upcoming, ${started.size} started; settled ${bets.size - open.size})")
-        o.appendLine("By scanner: Vigilant ${bets.count { it.source == BetTracker.SOURCE_VIGILANT }}, CNO ${bets.count { it.source == BetTracker.SOURCE_CNO }} · placed through the API ${bets.count { it.viaApi }}")
+        o.appendLine("By scanner: Vigilant ${bets.count { it.source == BetTracker.SOURCE_VIGILANT }}, CNO ${bets.count { it.source == BetTracker.SOURCE_CNO }}, ParlayAPI ${bets.count { it.source == BetTracker.SOURCE_PARLAY }} · placed through the API ${bets.count { it.viaApi }}")
         o.appendLine("Current EV: ${upcoming.count { TrackerText.currentEv(it, now) }} of ${upcoming.size} upcoming bets have one read inside the fair odds' age limit; ${upcoming.count { it.nowEv != null && !TrackerText.currentEv(it, now) }} have an old one; ${upcoming.count { it.nowEv == null }} none")
         val reasons = upcoming.filter { it.nowNote != null && it.nowEv == null }.groupingBy { it.nowNote!! }.eachCount().entries.sortedByDescending { it.value }.take(6)
         reasons.forEach { o.appendLine("  not priced ×${it.value}: ${it.key}") }

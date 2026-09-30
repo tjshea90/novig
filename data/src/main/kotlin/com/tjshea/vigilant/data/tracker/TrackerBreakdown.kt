@@ -24,7 +24,11 @@ object TrackerBreakdown {
         .sortedWith(compareByDescending<Row> { it.stats.settled }.thenByDescending { it.stats.bets }.thenBy { it.label })
 
     fun keyOf(b: TrackedBet, by: By): String = when (by) {
-        By.SCANNER -> if (b.source == BetTracker.SOURCE_CNO) "CNO" else "Vigilant"
+        By.SCANNER -> when (b.source) {
+            BetTracker.SOURCE_CNO -> "CNO"
+            BetTracker.SOURCE_PARLAY -> "ParlayAPI"
+            else -> "Vigilant"
+        }
         By.LEAGUE -> b.league.trim().ifEmpty { "Unknown" }
         By.MARKET -> marketOf(b)
         By.EV -> evBand(b.evPercentAtBet)

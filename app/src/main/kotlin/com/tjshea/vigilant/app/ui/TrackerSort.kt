@@ -22,11 +22,16 @@ enum class ScannerFilter(val label: String, val short: String) {
     ALL("All scanners", "All"),
     VIGILANT("Vigilant", "Vigilant"),
     CNO("CNO", "CNO"),
+    PARLAY("ParlayAPI", "ParlayAPI"),
 }
 
 object TrackerSort {
 
-    fun scannerOf(b: TrackedBet): ScannerFilter = if (b.source == BetTracker.SOURCE_CNO) ScannerFilter.CNO else ScannerFilter.VIGILANT
+    fun scannerOf(b: TrackedBet): ScannerFilter = when (b.source) {
+        BetTracker.SOURCE_CNO -> ScannerFilter.CNO
+        BetTracker.SOURCE_PARLAY -> ScannerFilter.PARLAY
+        else -> ScannerFilter.VIGILANT
+    }
 
     fun inScanner(bets: List<TrackedBet>, f: ScannerFilter): List<TrackedBet> = if (f == ScannerFilter.ALL) bets else bets.filter { scannerOf(it) == f }
 
