@@ -92,13 +92,24 @@ fun FeedScreen(
     var showRemoved by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val hide: (Opportunity) -> Unit = { o ->
-        onHide(o)
+    fun undoable(text: String, key: String) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            val r = snackbar.showSnackbar("Removed: ${o.selection}. Hidden here and in the widget.", actionLabel = "Undo", duration = SnackbarDuration.Short)
-            if (r == SnackbarResult.ActionPerformed) onUnhide(o.key)
+            val r = snackbar.showSnackbar(text, actionLabel = "Undo", duration = SnackbarDuration.Short)
+            if (r == SnackbarResult.ActionPerformed) onUnhide(key)
         }
+    }
+    val hide: (Opportunity) -> Unit = { o ->
+        onHide(o)
+        undoable("Removed: ${o.selection}. Hidden here and in the widget.", o.key)
+    }
+    // ParlayAPI's ✓ and ✕ offer Undo the way CNO's do.
+    val parlayActions = parlay?.let { a ->
+        ParlayPickActions(
+            onScan = a.onScan, onRecheck = a.onRecheck, onOpen = a.onOpen, opening = a.opening,
+            onPlaced = { item -> a.onPlaced(item); undoable("Placed: ${item.title}. Logged in the Tracker.", item.key) },
+            onHide = { item -> a.onHide(item); undoable("Removed: ${item.title}.", item.key) },
+        )
     }
 
     Scaffold(
@@ -161,13 +172,13 @@ fun FeedScreen(
                     }
                 }
                 // ParlayAPI's picks, above Vigilant's own: read only on a tap (10 credits a league), each re-priced at Novig.
-                if (parlay != null && state.canAskParlay && state.settings.leagues.isNotEmpty()) {
+                if (parlayActions != null && state.canAskParlay && state.settings.leagues.isNotEmpty()) {
                     val picks = state.parlayShown(now)
-                    item(key = "parlayHeader") { ParlayPicksHeader(state, picks.size, now, parlay, Modifier.padding(horizontal = 12.dp)) }
+                    item(key = "parlayHeader") { ParlayPicksHeader(state, picks.size, now, parlayActions, Modifier.padding(horizontal = 12.dp)) }
                     items(picks, key = { "parlay/" + it.key }) { p ->
                         ParlayPickCard(
                             p, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(),
-                            injury = state.injuries[p.key], actions = parlay,
+                            injury = state.injuries[p.key], actions = parlayActions,
                         )
                     }
                 }

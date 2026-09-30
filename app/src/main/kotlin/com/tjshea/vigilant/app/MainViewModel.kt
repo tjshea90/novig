@@ -610,12 +610,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * 1 credit a league, 10 minutes apart at most, only while ParlayAPI is on with a key).
      */
     private suspend fun keepInjuryTags() {
-        class Lists(val feed: List<Opportunity>, val rows: List<CnoRow>, val teams: Map<String, String>, val bets: List<TrackedBet>)
+        class Lists(
+            val feed: List<Opportunity>, val rows: List<CnoRow>, val teams: Map<String, String>, val bets: List<TrackedBet>,
+            val picks: List<com.tjshea.vigilant.data.reference.ParlayPick>,
+        )
         val wants = state
-            .map { s -> Lists(s.feed, if (s.settings.cnoOn) s.cno.snapshot?.rows.orEmpty() else emptyList(), s.teams, s.bets) }
+            .map { s -> Lists(s.feed, if (s.settings.cnoOn) s.cno.snapshot?.rows.orEmpty() else emptyList(), s.teams, s.bets, s.parlayPicks.picks) }
             // The same lists (by reference) as last time: nothing to look up again.
-            .distinctUntilChanged { a, b -> a.feed === b.feed && a.rows === b.rows && a.teams === b.teams && a.bets === b.bets }
-            .map { l -> com.tjshea.vigilant.data.reference.InjuryTags.wants(l.feed, l.rows, l.teams, l.bets, System.currentTimeMillis()) }
+            .distinctUntilChanged { a, b -> a.feed === b.feed && a.rows === b.rows && a.teams === b.teams && a.bets === b.bets && a.picks === b.picks }
+            .map { l -> com.tjshea.vigilant.data.reference.InjuryTags.wants(l.feed, l.rows, l.teams, l.bets, System.currentTimeMillis(), l.picks.map { it.row }) }
             .distinctUntilChanged()
         combine(wants, c.injuries.book) { w, book ->
             val now = System.currentTimeMillis()

@@ -31,7 +31,15 @@ object InjuryTags {
     private fun teamsOf(event: String): List<String> = NovigText.parseMatchup(event)?.let { listOf(it.away, it.home) } ?: Picks.sides(event)
 
     /** The prop bets among [feed], [cnoRows] (with ESPN's [cnoTeams] by row key) and [bets] (open ones) to look up. */
-    fun wants(feed: List<Opportunity>, cnoRows: List<CnoRow>, cnoTeams: Map<String, String>, bets: List<TrackedBet>, now: Long): List<Want> {
+    fun wants(
+        feed: List<Opportunity>,
+        cnoRows: List<CnoRow>,
+        cnoTeams: Map<String, String>,
+        bets: List<TrackedBet>,
+        now: Long,
+        /** ParlayAPI's picks, as the rows Novig re-priced ([ParlayPlay.row]): keyed "parlay:<row key>". */
+        parlayRows: List<CnoRow> = emptyList(),
+    ): List<Want> {
         val out = ArrayList<Want>()
         for (o in feed) {
             if (o.kind != LineKind.PLAYER_PROP || !o.league.oddsApiListed) continue
@@ -43,6 +51,11 @@ object InjuryTags {
             val player = Picks.split(r.bet).first.trim().takeIf { it.isNotEmpty() } ?: continue
             val sport = sportOf(r.league) ?: continue
             out += Want(cnoKey(r), sport, player, listOfNotNull(cnoTeams[r.key]) + teamsOf(r.event))
+        }
+        for (r in parlayRows) {
+            val player = Picks.split(r.bet).first.trim().takeIf { it.isNotEmpty() } ?: continue
+            val sport = sportOf(r.league) ?: continue
+            out += Want(ParlayPlay.KEY_PREFIX + r.key, sport, player, teamsOf(r.event))
         }
         for (b in bets) {
             if (b.status != BetStatus.PENDING || now - b.startsTs > OPEN_AFTER_START_MS) continue
