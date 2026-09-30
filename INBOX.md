@@ -2582,3 +2582,100 @@ Then after everything is built and completed, do full test protocol on the app t
 ```
 Continue from where you left off.
 ```
+
+## 2026-09-30T03:07:26Z
+```
+Review this diagnostic report: 
+
+VIGILANT DIAGNOSTICS · Sep 29, 11:06:57 PM
+Version 0.27.0 (code 55) · motorola moto g - 2026 · Android 16 (API 36)
+
+== Settings ==
+Scanner: Both · paused: no
+Background auto-scan: Off → actually runs: nothing · service not running
+Leagues: ATP, MLB, NCAAF, NFL, NHL, WNBA, WTA · days ahead 2 · starts within any time · live games off
+Edge shown: 1.0% to 25.0% · max odds +150 · fair odds BLEND / WORST_CASE, at least 2 books
+Scan size: no limit Novig prices · lines/game no limit · props/game no limit · fill the budget on · window 48 h
+Fair-odds sources on: kalshi, oddsapi, oddsapi_props, parlay, parlay_props, pinnacle, polymarket, propline, propline_props · sportsbook props on (credits/scan no limit, PropLine games no limit)
+Keys saved: The Odds API 2 · Pinnacle (pinnapi) 1 · Pinnacle (PinnWire) 1 · PropLine 1 · ParlayAPI 1
+CrazyNinjaOdds: on · refresh 30 s · only bets the books agree on off · alerts ≥ 2.0%
+Betting through the API: on · wallet $3.12 · amount $1.00, most per bet $10.00, most per day $50.00, smallest edge 1.0%
+Novig key: connected · management key saved on this phone (••••8db9)
+
+== Last Vigilant scan ==
+Finished 8m ago (Sep 29, 10:58:29 PM) · window 48 h
+Last scan took 60 s: board 0.5 s · fair odds 29 s (Kalshi 29 s, PropLine 9.7 s, ParlayAPI props 7.2 s) · 893 Novig prices in 59 s (15.1 a second: 893 through the key) · first bet at 12 s · Novig refused none · the key's limit is 16 a second
+Novig prices: 893 read (893 through the key, 0 pushed), 0 shown from the last scan
+Games 94 on Novig, 49 matched to fair odds · 882 lines priced · 1242 sides with a fair price · 40 +EV · 110 games past days ahead
+Feed now: 15 bets
+  Pinnacle: 7 fetched, 0 re-used, 16 games matched
+  Polymarket: 5 fetched, 0 re-used, 10 games matched
+  Kalshi: 7 fetched, 0 re-used, 49 games matched
+  ParlayAPI: 5 fetched, 0 re-used, 10 games matched
+  PropLine: 5 fetched, 0 re-used, 10 games matched
+  The Odds API: 0 fetched, 0 re-used, 5 standing by, 0 games matched
+  ParlayAPI props: 2 fetched, 0 re-used, 1 standing by, 1 games matched · ParlayAPI has spent today's share of its credits: back tomorrow (unused days carry over).
+  PropLine props: 4 fetched, 0 re-used, 5 games matched
+  Sportsbook props: 3 fetched, 0 re-used, 2 games matched
+Errors: none
+
+== API usage (each provider's own allowance) ==
+kalshi: 367 calls today, 0 refused/throttled
+novig: 3108 calls today, 0 refused/throttled, last throttle 20h ago
+oddsapi: 24 calls today, 0 refused/throttled
+    key …16a7: used 500, 0 left, spent until Sep 30, 8:00:00 PM
+    key …71c4: used 174, 326 left
+parlay: 7 calls today, 0 refused/throttled
+    key …15d0: used 26, 19974 left
+pinnacle: 1 calls today, 0 refused/throttled
+    key …wLaD: used 2
+pinnwire: 21 calls today, 0 refused/throttled
+    key …c6e5: used 22
+polymarket: 110 calls today, 0 refused/throttled
+propline: 60 calls today, 0 refused/throttled
+    key …0c2f: used 51, 949 left
+
+== Runway (will each API's allowance last?) ==
+Pinnacle (PinnWire): 22 of 100 requests used today (1 key), 78 left · resets in 20h 53m · at this pace the last of it goes in 11h 2m, before the reset: SHORT (add keys, or scan less)
+    a scan costs 5 → 20 a day
+    a Check odds now costs 2 → 50 a day
+Pinnacle (pinnapi): 0 of 100 requests used today (1 key), 100 left · resets in 20h 53m · none used yet: OK
+PropLine: 51 of 1,000 requests used today (1 key), 949 left · resets in 20h 53m · at this pace about 393 by the reset: OK
+    a scan costs 28 → 35 a day
+    a Check odds now costs 51 → 19 a day
+ParlayAPI: 26 of 20,000 credits used this month (1 key), 19,974 left · resets in 20h 53m · at this pace about 27 by the reset: OK
+    a scan costs 26 → 769 a month
+The Odds API: 674 of 1,000 credits used this month (2 keys), 326 left · resets in 20h 53m · at this pace about 694 by the reset: OK
+    a scan costs 5 → 100 a month per key, 200 with 2 keys
+    a Check odds now costs 2 → 250 a month per key, 500 with 2 keys
+
+== Last rounds (what they cost each API) ==
+Scan: 8m ago · took 60 s
+    cost: Novig 898, Kalshi 61, PropLine 13 (28 of its allowance), The Odds API 8 (5 of its allowance), Polymarket 8, ParlayAPI 7 (26 of its allowance), Pinnacle (PinnWire) 5
+Check odds now: 1m ago · took 31 s · covered 89 of 108 open bets: CNO read 1, 88 priced from Vigilant's own fair odds, 81 CNO couldn't read went to a second pricing pass, 7 couldn't be priced
+    cost: Novig 96, Kalshi 66, Polymarket 34, PropLine 12 (51 of its allowance), The Odds API 3 (2 of its allowance), Pinnacle (PinnWire) 2
+
+== CrazyNinjaOdds ==
+Last read: 40m ago · 18 rows · errors in a row 0
+Kept current now: no
+
+== Background auto-scan ==
+Now: idle · last started never · ended never · found 0, alerts sent 0
+
+== Tracker ==
+Bets: 269 (open 108: 95 upcoming, 13 started; settled 161)
+By scanner: Vigilant 58, CNO 211 · placed through the API 27
+Current EV: 88 of 95 upcoming bets have one read inside the fair odds' age limit; 6 have an old one; 1 none
+  not priced ×1: Too few current book prices for this exact line (prices older than over 5 minutes, or 10 for games more than 3 hours away are left out)
+Check odds now counter (since Sep 29, 11:05:32 PM): 54 +EV · 35 −EV · 61% +EV · Avg +0.7% EV (21 over ±5% left out)
+Settled by: score feeds 159, Novig's ledger 0, you 2
+Started and still open: 13 (0 for over 6 hours, 0 need a tap)
+Closing line value (all time): Beat the close 58% (42 of 73) · avg vs close +0.5% · avg EV at bet +2.4% · 73 bets with a true close (49 Novig's trades, 12 bet in the last minutes, 9 read before the start, 3 ESPN) · 95 waiting for their close (game not started) · 100 started with no close found yet · 22 over ±5% included
+Next closing-line read: Sep 30, 6:54:00 PM · alarm Sep 30, 6:54:00 PM
+Closes found after the start: last look 0 bets, found 0 · Novig trade data read 21766 KB
+  still looking for 31 closes:
+    ×29: ESPN keeps full-game moneylines, spreads and totals only; Novig publishes this day's trades the next morning
+    ×1: DraftKings closed at -3.5, not your -2.5; Novig publishes this day's trades the next morning
+    ×1: ESPN has no closing odds for WTA; Novig publishes this day's trades the next morning
+Results: 84-76 · profit +13.17 on 160.55 staked (+8.2%) · average EV when bet +2.5% · average CLV +0.5%
+```
