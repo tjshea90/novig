@@ -1,0 +1,14 @@
+{
+ "sport": "americanfootball_nfl",
+ "region": "custom",
+ "count": 0,
+ "summary": "No +EV plays clear 2% at your books right now (region=custom).",
+ "best_bets": [],
+ "edge_alerts": [],
+ "note": "Player props priced by >= 4 books, scoped to books you can bet at (prediction markets and game moneylines excluded). For a game moneyline/spread/total, use /v1/verdict.",
+ "credits": {
+  "monthly_remaining": 19899,
+  "monthly_limit": 20000
+ },
+ "usage_note": null
+}

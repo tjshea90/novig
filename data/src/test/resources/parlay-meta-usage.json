@@ -1,0 +1,70 @@
+{
+ "as_of": "2026-09-30T05:10:47.466241+00:00",
+ "current_period": "2026-09",
+ "tier": "starter",
+ "credits_used_this_period": 0,
+ "credits_total_this_period": 0,
+ "credits_remaining": 0,
+ "credits_used_pct": 0,
+ "window_days": 30,
+ "daily_breakdown": [
+  {
+   "day": "2026-09-30",
+   "credits": 112,
+   "requests": 34
+  }
+ ],
+ "top_endpoints": [
+  {
+   "endpoint": "props:baseball_mlb",
+   "credits": 15,
+   "requests": 5
+  },
+  {
+   "endpoint": "best_bets:americanfootball_nfl",
+   "credits": 10,
+   "requests": 1
+  },
+  {
+   "endpoint": "odds:americanfootball_nfl",
+   "credits": 10,
+   "requests": 2
+  },
+  {
+   "endpoint": "odds:baseball_mlb",
+   "credits": 9,
+   "requests": 3
+  },
+  {
+   "endpoint": "closing-lines:json",
+   "credits": 7,
+   "requests": 5
+  },
+  {
+   "endpoint": "odds:americanfootball_ncaaf",
+   "credits": 7,
+   "requests": 2
+  },
+  {
+   "endpoint": "props:americanfootball_nfl",
+   "credits": 6,
+   "requests": 2
+  },
+  {
+   "endpoint": "props:basketball_wnba",
+   "credits": 6,
+   "requests": 2
+  },
+  {
+   "endpoint": "props:icehockey_nhl",
+   "credits": 6,
+   "requests": 2
+  },
+  {
+   "endpoint": "closing-lines:americanfootball_nfl",
+   "credits": 5,
+   "requests": 1
+  }
+ ],
+ "_note": "Costs 0 credits. Reading your own usage doesn't draw down your allowance. Daily breakdown covers the last `days` days; top_endpoints lists the 10 endpoints that consumed the most credits in that window."
+}

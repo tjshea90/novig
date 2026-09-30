@@ -1,0 +1,73 @@
+{
+ "sport": "baseball_mlb",
+ "region": "custom",
+ "count": 5,
+ "summary": "5 +EV play(s) you can bet at your books (region=custom), ranked by edge.",
+ "best_bets": [
+  {
+   "bet": "Carson Kelly Over 0.5 Home Runs (Chicago Cubs @ San Diego Padres)",
+   "market_key": "player_home_runs",
+   "fair_price": 900,
+   "best_price": 2122,
+   "best_book": "novig",
+   "edge_pct": 5.5,
+   "verdict": "BET",
+   "books_compared": 3
+  },
+  {
+   "bet": "Seiya Suzuki Over 0.5 Home Runs (Chicago Cubs @ San Diego Padres)",
+   "market_key": "player_home_runs",
+   "fair_price": 525,
+   "best_price": 809,
+   "best_book": "novig",
+   "edge_pct": 5.0,
+   "verdict": "BET",
+   "books_compared": 3
+  },
+  {
+   "bet": "Austin Wells Over 0.5 Batter Home Runs (Boston Red Sox @ New York Yankees)",
+   "market_key": "player_home_runs",
+   "fair_price": 530,
+   "best_price": 733,
+   "best_book": "novig",
+   "edge_pct": 3.87,
+   "verdict": "BET",
+   "books_compared": 4
+  },
+  {
+   "bet": "Mauricio Dubon Over 0.5 Rbis (Philadelphia Phillies @ Atlanta Braves)",
+   "market_key": "player_rbis",
+   "fair_price": 205,
+   "best_price": 245,
+   "best_book": "novig",
+   "edge_pct": 3.8,
+   "verdict": "BET",
+   "books_compared": 5
+  },
+  {
+   "bet": "Ceddanne Rafaela Over 0.5 Batter Home Runs (Boston Red Sox @ New York Yankees)",
+   "market_key": "player_home_runs",
+   "fair_price": 600,
+   "best_price": 852,
+   "best_book": "novig",
+   "edge_pct": 3.78,
+   "verdict": "BET",
+   "books_compared": 4
+  }
+ ],
+ "edge_alerts": [
+  {
+   "bet": "Ian Happ Over 0.5 Home Runs (Chicago Cubs @ San Diego Padres)",
+   "book": "novig",
+   "price": 5163,
+   "apparent_edge_pct": 10.6,
+   "caveat": "far better than the rest of the market, so it is either a rare soft mispricing worth grabbing fast or a stale/limited line; verify it is still live before betting"
+  }
+ ],
+ "note": "Player props priced by >= 3 books, scoped to books you can bet at (prediction markets and game moneylines excluded). For a game moneyline/spread/total, use /v1/verdict.",
+ "credits": {
+  "monthly_remaining": 19871,
+  "monthly_limit": 20000
+ },
+ "usage_note": null
+}

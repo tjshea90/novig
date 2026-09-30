@@ -1,0 +1,4 @@
+{
+ "error": "props_temporarily_busy",
+ "detail": "The props board is being rebuilt under load. Retry in a couple of seconds."
+}

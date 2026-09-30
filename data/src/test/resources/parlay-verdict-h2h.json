@@ -1,0 +1,37 @@
+{
+ "bet": {
+  "sport": "americanfootball_nfl",
+  "market": "h2h",
+  "matchup": "Pittsburgh Steelers @ Cleveland Browns",
+  "side": "Cleveland Browns",
+  "line": null
+ },
+ "verdict": "FAIR",
+ "worth_betting": false,
+ "summary": "Fair value for Cleveland Browns (Pittsburgh Steelers @ Cleveland Browns) is +138 (42%), from pinnacle. The best number is +133 at novig, priced about right (-0.9% EV). No real edge either way.",
+ "region": "custom",
+ "note": null,
+ "stake": null,
+ "fair": {
+  "price": 138,
+  "implied_prob": 42.0,
+  "source": "pinnacle"
+ },
+ "best_available": {
+  "price": 133,
+  "book": "novig",
+  "implied_prob": 42.9,
+  "edge_pct": -0.88
+ },
+ "your_bet": null,
+ "shop_to": null,
+ "edge_alert": null,
+ "movement_pp_since_open": -1.2,
+ "books_compared": 17,
+ "confidence": "medium",
+ "credits": {
+  "monthly_remaining": 19894,
+  "monthly_limit": 20000
+ },
+ "usage_note": null
+}

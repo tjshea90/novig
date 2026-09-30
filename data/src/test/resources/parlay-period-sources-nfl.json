@@ -1,0 +1,156 @@
+{
+ "sport_key": "americanfootball_nfl",
+ "count": 25,
+ "results": [
+  {
+   "source": "bet365",
+   "period_key": "1H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "bet365",
+   "period_key": "2H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "bet365",
+   "period_key": "Q1",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "bet365",
+   "period_key": "Q2",
+   "rows_10m": 6784,
+   "last_age_s": 5
+  },
+  {
+   "source": "bet365",
+   "period_key": "Q3",
+   "rows_10m": 6784,
+   "last_age_s": 5
+  },
+  {
+   "source": "bet365",
+   "period_key": "Q4",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "betmgm",
+   "period_key": "1H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "betmgm",
+   "period_key": "Q1",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "caesars",
+   "period_key": "1H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "draftkings",
+   "period_key": "1H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "draftkings",
+   "period_key": "2H",
+   "rows_10m": 636,
+   "last_age_s": 5
+  },
+  {
+   "source": "draftkings",
+   "period_key": "Q1",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "draftkings",
+   "period_key": "Q2",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "draftkings",
+   "period_key": "Q3",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "draftkings",
+   "period_key": "Q4",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanatics",
+   "period_key": "1H",
+   "rows_10m": 9752,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanatics",
+   "period_key": "Q1",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanduel",
+   "period_key": "1H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanduel",
+   "period_key": "2H",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanduel",
+   "period_key": "Q1",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanduel",
+   "period_key": "Q2",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanduel",
+   "period_key": "Q3",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "fanduel",
+   "period_key": "Q4",
+   "rows_10m": 10176,
+   "last_age_s": 5
+  },
+  {
+   "source": "pinnacle",
+   "period_key": "1H",
+   "rows_10m": 210368,
+   "last_age_s": 521
+  },
+  {
+   "source": "pinnacle",
+   "period_key": "Q1",
+   "rows_10m": 77504,
+   "last_age_s": 521
+  }
+ ]
+}

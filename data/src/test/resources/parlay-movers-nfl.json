@@ -1,0 +1,49 @@
+{
+ "as_of": "2026-09-30T05:10:40.134485+00:00",
+ "window_minutes": 360,
+ "sport_key": "americanfootball_nfl",
+ "anchor": "pinnacle",
+ "pre_game_only": true,
+ "movers_returned": 2,
+ "noise_floor_prob_pp": 1.0,
+ "ranked_by": "abs_max_prob_delta_pp",
+ "movers": [
+  {
+   "sport_key": "americanfootball_nfl",
+   "home_team": "San Francisco 49ers",
+   "away_team": "Denver Broncos",
+   "commence_time": "2026-10-04T20:25:00Z",
+   "source": "pinnacle",
+   "home_ml_first": -150,
+   "home_ml_last": -142,
+   "home_ml_delta": 8,
+   "away_ml_first": 130,
+   "away_ml_last": 123,
+   "away_ml_delta": -7,
+   "home_prob_delta_pp": -1.32,
+   "away_prob_delta_pp": 1.36,
+   "abs_max_prob_delta_pp": 1.36,
+   "abs_max_delta": 8,
+   "snapshots_seen": 95
+  },
+  {
+   "sport_key": "americanfootball_nfl",
+   "home_team": "Cleveland Browns",
+   "away_team": "Pittsburgh Steelers",
+   "commence_time": "2026-10-02T00:15:00Z",
+   "source": "pinnacle",
+   "home_ml_first": 125,
+   "home_ml_last": 131,
+   "home_ml_delta": 6,
+   "away_ml_first": -141,
+   "away_ml_last": -148,
+   "away_ml_delta": -7,
+   "home_prob_delta_pp": -1.15,
+   "away_prob_delta_pp": 1.17,
+   "abs_max_prob_delta_pp": 1.17,
+   "abs_max_delta": 7,
+   "snapshots_seen": 94
+  }
+ ],
+ "_note": "Movers are computed from Pinnacle as the sharp anchor's view of the line, ranked by how far the implied probability moved (abs_max_prob_delta_pp), not raw cents -- so a 200-cent wobble on a 97% favorite does not outrank a genuine 3-point steam move. Markets that moved fewer than 1.0 probability point(s) are filtered as noise, and a game carried under multiple sport-key aliases is shown once. pre_game_only=true (default) filters out in-play events whose live-game price collapse would otherwise dominate."
+}

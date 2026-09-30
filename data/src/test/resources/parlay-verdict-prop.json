@@ -1,0 +1,37 @@
+{
+ "bet": {
+  "sport": "americanfootball_nfl",
+  "market": "player_passing_attempts",
+  "player": "Josh Allen",
+  "side": "under",
+  "line": 29.5
+ },
+ "verdict": "NO_DATA",
+ "worth_betting": null,
+ "summary": "Fair value for Josh Allen Under 29.5 is +106 (49%), from fanduel. This bet is only offered right now by books outside your set (region=custom). Fair value is still shown from the sharp reference. Pass region= or books= to include other books.",
+ "region": "custom",
+ "note": "This bet is only offered right now by books outside your set (region=custom). Fair value is still shown from the sharp reference. Pass region= or books= to include other books.",
+ "stake": null,
+ "fair": {
+  "price": 106,
+  "implied_prob": 48.6,
+  "source": "fanduel"
+ },
+ "best_available": null,
+ "your_bet": {
+  "price": -110,
+  "book": null,
+  "implied_prob": 52.4,
+  "edge_pct": null
+ },
+ "shop_to": null,
+ "edge_alert": null,
+ "movement_pp_since_open": null,
+ "books_compared": 7,
+ "confidence": null,
+ "credits": {
+  "monthly_remaining": 19883,
+  "monthly_limit": 20000
+ },
+ "usage_note": null
+}

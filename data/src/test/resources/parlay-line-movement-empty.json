@@ -1,0 +1,17 @@
+{
+ "movements": [],
+ "count": 0,
+ "event_id": "02466c20070007c5fc3867453fa291ce",
+ "sport_key": "americanfootball_nfl",
+ "row_cap": 5000,
+ "min_snapshots_per_series": 2,
+ "filters": {
+  "market": "h2h",
+  "player": null,
+  "source": null,
+  "bookmaker": null,
+  "hours": 24,
+  "window_minutes": 180
+ },
+ "note": "No line-movement rows matched. Possible causes: (1) the event_id is correct but no book has moved the line in the lookback window; (2) every series found had a single snapshot, and a series needs 2 to describe movement; (3) the event has no prop_snapshots data because no source covered it; (4) the event_id is malformed (use the id from /v1/sports/{key}/events, /v1/sports/{key}/odds or the canonical_event_id on a /v1/sports/{key}/props row). Try widening `hours`, removing filters, or checking /v1/sports/{key}/odds?regions=us first to confirm the event has live prices. Note that this endpoint reads the live prop_snapshots table, which holds roughly the last 6.5 hours; there is no deeper history here for player-keyed books such as PrizePicks."
+}
