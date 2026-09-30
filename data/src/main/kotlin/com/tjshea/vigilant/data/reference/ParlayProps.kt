@@ -22,7 +22,11 @@ import kotlin.math.roundToInt
  * per game per credit (a Sunday's NFL props there cost ~60 credits; here 3). Pinnacle, DraftKings, FanDuel, Caesars, Bovada and ProphetX,
  * each row timed by the age ParlayAPI measured for it, so the scan's freshness rule (RESEARCH.md §24) applies to each book's own quote.
  */
-class ParlayPropsSource(private val client: TheOddsApiClient) : ReferenceSource {
+class ParlayPropsSource(
+    private val client: TheOddsApiClient,
+    /** Where each row's `injury` report goes (PARLAY_API.md §6.1): free with every answer. */
+    private val injuries: InjuryIndex? = null,
+) : ReferenceSource {
 
     init {
         require(client.feed == OddsFeed.PARLAY) { "ParlayAPI only" }
@@ -45,6 +49,7 @@ class ParlayPropsSource(private val client: TheOddsApiClient) : ReferenceSource 
         // milestone ladders and alternates from crowding the reply: measured 2026-09-30, one call held every two-sided line).
         val markets = PropStats.parlayMarkets(sport).map { it.first }.distinct()
         val events = ArrayList<RefEvent>()
+        val hurt = ArrayList<Injury>()
         var remaining: Int? = null
         var used: Int? = null
         var offset = 0
@@ -58,9 +63,11 @@ class ParlayPropsSource(private val client: TheOddsApiClient) : ReferenceSource 
             remaining = answer.remaining ?: remaining
             used = answer.used ?: used
             events += answer.value.events
+            hurt += answer.value.injuries
             if (answer.value.rows < ParlayProps.PAGE) break
             offset += answer.value.rows
         }
+        injuries?.record(sport, hurt)
         // A player whose books straddle a page boundary comes back in two parts: one game, all its lines.
         val merged = events.groupBy { it.id }.values.map { parts -> parts.first().copy(markets = parts.flatMap { it.markets }) }
         val snap = RefSnapshot(sport, merged, System.currentTimeMillis(), remaining, used, id)
@@ -81,8 +88,8 @@ object ParlayProps {
     /** Real sportsbooks with real two-sided prices (the pick'em apps and Novig itself left out). Pinnacle is the sharp one. */
     val BOOKS = listOf("pinnacle", "draftkings", "fanduel", "caesars", "bovada", "prophetx")
 
-    /** One page: [rows] rows came back (a full page means there may be more), grouped into games. */
-    class Page(val rows: Int, val events: List<RefEvent>)
+    /** One page: [rows] rows came back (a full page means there may be more), grouped into games; each player's injury report once. */
+    class Page(val rows: Int, val events: List<RefEvent>, val injuries: List<Injury> = emptyList())
 
     private fun JsonElement?.obj() = this as? JsonObject
     private fun JsonObject.str(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content?.takeIf { it.isNotBlank() }
@@ -108,7 +115,13 @@ object ParlayProps {
             val markets = ArrayList<RefBookMarket>()
         }
         val games = LinkedHashMap<String, Game>()
+        val injuries = LinkedHashMap<String, Injury>()
         for (r in rows) {
+            // Every row names its player's injury status (null: none reported), whatever its market or period.
+            (r.str("player") ?: r.str("player_name"))?.trim()?.let { p ->
+                val key = p + "|" + (r.str("home_team") ?: "")
+                if (key !in injuries) ParlayInjuries.fromPropsRow(r, p)?.let { injuries[key] = it }
+            }
             val period = r.str("period")
             if (period != null && !period.equals("FULL", true)) continue
             val marketKey = r.str("market_key") ?: continue
@@ -138,6 +151,10 @@ object ParlayProps {
                 stat = stat,
             )
         }
-        return Page(rows.size, games.values.map { g -> RefEvent(g.id, sportKey, g.commence, g.home, g.away, g.markets.distinctBy { Triple(it.bookKey, it.subject, it.stat to it.line) }) })
+        return Page(
+            rows.size,
+            games.values.map { g -> RefEvent(g.id, sportKey, g.commence, g.home, g.away, g.markets.distinctBy { Triple(it.bookKey, it.subject, it.stat to it.line) }) },
+            injuries.values.toList(),
+        )
     }
 }
