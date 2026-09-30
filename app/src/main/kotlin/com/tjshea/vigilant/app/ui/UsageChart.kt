@@ -70,7 +70,7 @@ fun ParlayUsageChart(history: ParlayAccount.History, now: Long, modifier: Modifi
     Column(modifier.fillMaxWidth().padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row {
             Text("Credits a day · last ${slots.size} days", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text("${history.total} in all", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${"%,d".format(Locale.US, history.total)} in all", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Canvas(
             Modifier
