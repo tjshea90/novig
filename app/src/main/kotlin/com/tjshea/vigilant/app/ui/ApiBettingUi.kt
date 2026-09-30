@@ -273,6 +273,10 @@ fun NovigBettingSection(
 
     Text("Amount a bet starts at", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 12.dp))
     ChoiceChips(STAKE_CHOICES, settings.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
+    Text(
+        "Each Bet sheet also takes any amount you type. When the wallet holds less than this, a bet starts at what's left in it.",
+        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Text("Most for one bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(MAX_STAKE_CHOICES, settings.apiMaxStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
     Text("Most in a day", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
