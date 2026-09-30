@@ -431,7 +431,7 @@ fun onlyAgreedText(state: UiState, heldBack: Int, now: Long): String {
 
 /** The bets Tj placed (or removed), folded away under a button, each with a way to bring it back. */
 @Composable
-private fun SetAsideList(
+internal fun SetAsideList(
     bets: List<com.tjshea.vigilant.data.tracker.PlacedBet>,
     what: String,
     mark: String,

@@ -231,6 +231,9 @@ object MiniWindow {
         )
     }
 
+    /** A +EV card's bet as a widget item (its ✕ on the +EV tab, Tj 2026-09-30); null without a price. */
+    fun itemFor(o: Opportunity, now: Long): Item? = o.miniItem(now)
+
     private fun Opportunity.miniItem(now: Long): Item? {
         val q = quote ?: return null
         return Item(

@@ -497,6 +497,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * The +EV tab's ✕ (Tj, 2026-09-30: "remove the bet from the list permanently, even through refreshes and rescans, exactly like the
+     * cno section already does"): the same record as CNO's ✕, so it stays gone from the list and the widget through every scan and restart.
+     */
+    fun hideOpportunity(o: Opportunity) {
+        val item = MiniWindow.itemFor(o, System.currentTimeMillis()) ?: return
+        markHidden(item)
+    }
+
     /** Undo, or "not placed after all": the bet shows again. */
     fun unmarkPlaced(key: String) {
         viewModelScope.launch {
