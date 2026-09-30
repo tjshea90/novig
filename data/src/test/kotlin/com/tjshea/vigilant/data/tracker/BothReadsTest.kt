@@ -180,4 +180,56 @@ class BothReadsTest {
         // Written 20 s ago by this same check's page read: kept.
         assertEquals(old, by.getValue(b.id).books)
     }
+
+    /**
+     * Tj, 2026-09-30: "make sure these sections accurately capture actual positive EV percentages and true line closing values". A bet's
+     * close is only ever a pregame read: once the game is under way, a read (alone, or both ways and averaged) is its odds now and nothing more.
+     */
+    @Test
+    fun `a read once the game has started is its odds now, never its close, whichever way it came`() = runTest {
+        val t = tracker()
+        val a = t.track(dal(scan()), stake = 10.0)!!
+        now = Fixtures.START_MS - 5 * 60_000L
+        t.applyPricing(scan(), listOf(a.id))
+        val pregame = t.all().single()
+        val close = pregame.closingFair!!
+        val seen = pregame.closingSeenAtMs!!
+        assertTrue(Fixtures.START_MS - seen <= ClosingLine.TRUE_CLOSE_MS)
+        val inPlay = scan(pinDal = 1.60)
+        now = Fixtures.START_MS + 30 * 60_000L
+        assertEquals(BetTracker.Applied(1, 0), t.applyPricing(inPlay, listOf(a.id)))
+        val live = t.all().single()
+        assertEquals(dal(inPlay).fairProbability!!, live.nowFair!!, 1e-12)
+        assertEquals(close, live.closingFair!!, 0.0)
+        assertEquals(seen, live.closingSeenAtMs)
+        // Both ways in a check after the start: the average is the odds now; the close stays the pregame read.
+        val began = now
+        now += 1_000
+        cnoRead(t, a.id, 0.70)
+        t.edit(a.id) { it.copy(closingFair = close, closingSeenAtMs = seen) } // CNO's own read keeps the close too (BetRecheckTest)
+        t.applyPricing(inPlay, listOf(a.id), alongside = true)
+        now += 1_000
+        assertEquals(setOf(a.id), t.mergeReads(listOf(a.id), since = began).both)
+        val merged = t.all().single()
+        assertEquals((0.70 + dal(inPlay).fairProbability!!) / 2, merged.nowFair!!, 1e-12)
+        assertEquals(close, merged.closingFair!!, 0.0)
+        assertEquals(close / merged.cost - 1.0, ClosingLine.clv(merged, now)!!, 1e-12)
+    }
+
+    @Test
+    fun `a close is dated by the oldest price behind it, so a stale line never passes for the true close`() = runTest {
+        val t = tracker()
+        val a = t.track(dal(scan()), stake = 10.0)!!
+        now = Fixtures.START_MS - 5 * 60_000L
+        val r = scan()
+        fun asOf(ms: Long) = r.copy(opportunities = r.opportunities.map { if (it.outcome.outcomeId == Fixtures.ML_DAL) it.copy(fairAsOfMs = ms) else it })
+        // Saved 5 minutes before the start, but its oldest book price was 20 minutes old: not the close.
+        t.applyPricing(asOf(Fixtures.START_MS - 20 * 60_000L), listOf(a.id))
+        assertEquals(Fixtures.START_MS - 20 * 60_000L, t.all().single().closingSeenAtMs)
+        assertNull(ClosingLine.captured(t.all().single()))
+        // The capture reads it again, and a line current 8 minutes before the start is the close.
+        assertTrue(ClosingLine.needsClose(t.all().single(), now))
+        t.applyPricing(asOf(Fixtures.START_MS - 8 * 60_000L), listOf(a.id))
+        assertEquals(dal(r).fairProbability!!, ClosingLine.captured(t.all().single())!!, 1e-12)
+    }
 }
