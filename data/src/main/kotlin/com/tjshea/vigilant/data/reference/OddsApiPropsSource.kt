@@ -159,7 +159,7 @@ class OddsApiPropsSource(
     }
 
     private fun ask(settings: ScanSettings) =
-        "${settings.referenceBooks.filter { it != "novig" }.distinct().take(TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION).sorted()}|${settings.bookPropSet}"
+        "${client.booksFor(settings).filter { it != "novig" }.distinct().take(TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION).sorted()}|${settings.bookPropSet}"
 
     companion object {
         const val ID = "oddsapi_props"

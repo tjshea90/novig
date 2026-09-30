@@ -869,6 +869,8 @@ class Scanner(
     /** What a snapshot was asked for; a different ask can't re-use it. */
     private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
+        "parlay" -> settings.families.sorted().toString()
+        "parlay_props" -> "${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
         "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
         "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropWindowHours}|${settings.propLineGamesPerScan}"
@@ -949,7 +951,7 @@ class Scanner(
 
     companion object {
         /** Merge order: when two feeds carry the same book, the earlier one's quote is priced. */
-        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "propline", "oddsapi", "propline_props", "oddsapi_props")
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "propline", "parlay", "oddsapi", "propline_props", "parlay_props", "oddsapi_props")
 
         /** Sportsbook feeds whose books follow the reference-book picker in Settings. */
         private val PICKED_BOOK_FEEDS = setOf("oddsapi", "oddsapi_props", "propline", "propline_props")

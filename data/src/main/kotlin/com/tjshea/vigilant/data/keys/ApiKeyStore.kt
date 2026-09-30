@@ -24,6 +24,12 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
 
     /** prop-line.com: 30 sportsbooks' lines and props in one feed, 1,000 requests a day free (RESEARCH.md §22). */
     PROPLINE("propline", "PropLine"),
+
+    /**
+     * parlay-api.com: The Odds API's format with Pinnacle, ProphetX, bet365 and the US books, props included, and closing lines for CLV
+     * (Tj, 2026-09-30, RESEARCH.md §43). Free key 1,000 credits a month; paid from $5.
+     */
+    PARLAY("parlay", "ParlayAPI"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */
