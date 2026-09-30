@@ -78,23 +78,63 @@ class ParlayAccountTest {
     private fun account(keys: List<String> = listOf("pk")) =
         ParlayAccount(OkHttpClient(), { keys }, meter, json, server.url("/v1").toString().trimEnd('/'), clock = { now })
 
+    /** `/v1/usage` as Tj's Starter key answered it on 2026-09-30 (email and key fingerprint left out). */
+    private val usage = """{"credits_used":86,"credits_granted":0,"credits_remaining":19914,"credits_total":20000,"tier":"starter",
+        "period_start":"2026-09-01T00:00:00+00:00","period_end":"2026-10-01T00:00:00+00:00",
+        "plan":{"tier":"starter","name":"Starter","monthly_price_usd":5.0,"credits_per_month":20000,"rate_limit_per_sec":10000}}"""
+
+    /** `/v1/meta/api-key-check` as the same key answered it (Stripe ids left out): its `period_end_iso` is the billing date. */
+    private val keyCheck = """{"valid":true,"tier":"starter","credits_used":86,"credits_total":20000,"credits_remaining":19914,"credits_used_pct":0.43,
+        "subscription":{"state":"active","period_end_iso":"2026-10-30T02:51:30Z"},"last_request_at_iso":"2026-09-30T04:12:58Z"}"""
+
     @Test
     fun `the key says what it has left, for free, and the meter shows exactly that`() = runBlocking<Unit> {
-        server.enqueue(
-            MockResponse().setBody("""{"valid":true,"tier":"starter","active":true,"credits":{"credits_remaining":19974,"monthly_credits":20000,"credits_used":26,"reset_at":"2026-10-29T23:00:00Z"}}""")
-                .setHeader("X-Request-ID", "abc123"),
-        )
+        server.enqueue(MockResponse().setBody(usage).setHeader("x-ratelimit-limit", "unlimited").setHeader("x-ratelimit-remaining", "unlimited"))
         assertEquals(1, account().refresh())
         val req = server.takeRequest()
-        assertEquals("/v1/meta/api-key-check", req.requestUrl!!.encodedPath)
+        assertEquals("/v1/usage", req.requestUrl!!.encodedPath)
         assertEquals("pk", req.getHeader("X-API-Key"))
         assertNull(req.requestUrl!!.queryParameter("apiKey"))
+        assertEquals(1, server.requestCount) // one free call when /v1/usage answers
         val u = key()
-        assertEquals(19_974, u.remaining)
+        assertEquals(19_914, u.remaining)
         assertEquals(20_000, u.limit)
-        assertEquals(26, u.used)
-        assertEquals(Instant.parse("2026-10-29T23:00:00Z").toEpochMilli(), u.resetAtMs)
+        assertEquals(86, u.used)
+        // The credits month (the 1st to the 1st, UTC), not Stripe's billing date.
+        assertEquals(Instant.parse("2026-10-01T00:00:00Z").toEpochMilli(), u.resetAtMs)
+        assertEquals(Instant.parse("2026-09-01T00:00:00Z").toEpochMilli(), u.periodStart)
         assertEquals("plan: starter", u.lastNote)
+        val view = com.tjshea.vigilant.data.keys.UsageViews.build(QuotaPolicy.PARLAY, listOf("pk"), meter.flow.value.providers["parlay"], now)
+        assertEquals(19_914, view.totalLeft)
+        assertEquals(Instant.parse("2026-10-01T00:00:00Z").toEpochMilli(), view.nextReset)
+        assertEquals("usage", account().let { a -> server.enqueue(MockResponse().setBody(usage)); a.refresh(); a.last.getValue("pk").source })
+    }
+
+    @Test
+    fun `when usage can't be read the key check answers, and its billing date is never taken for the credits reset`() = runBlocking<Unit> {
+        server.enqueue(MockResponse().setResponseCode(404))
+        server.enqueue(MockResponse().setBody(keyCheck))
+        val a = account()
+        assertEquals(1, a.refresh())
+        assertEquals("/v1/usage", server.takeRequest().requestUrl!!.encodedPath)
+        assertEquals("/v1/meta/api-key-check", server.takeRequest().requestUrl!!.encodedPath)
+        val u = key()
+        assertEquals(19_914, u.remaining)
+        assertEquals(20_000, u.limit)
+        assertNull(u.resetAtMs)
+        assertEquals("api-key-check", a.last.getValue("pk").source)
+    }
+
+    @Test
+    fun `a check sent before a call's answer landed doesn't wind the meter back`() = runBlocking<Unit> {
+        meter.recordCall(QuotaPolicy.PARLAY, "pk", 3, serverRemaining = 19_900, serverUsed = 100)
+        now += 5_000
+        meter.recordBalance(QuotaPolicy.PARLAY, "pk", remaining = 19_914, limit = 20_000, used = 86)
+        assertEquals(19_900, key().remaining)
+        // Minutes later the account's word goes (a new month's lower count, or our count was off).
+        now += 3 * 60_000
+        meter.recordBalance(QuotaPolicy.PARLAY, "pk", remaining = 19_914, limit = 20_000, used = 86)
+        assertEquals(19_914, key().remaining)
     }
 
     @Test
@@ -116,6 +156,7 @@ class ParlayAccountTest {
 
     @Test
     fun `a check that can't be read changes nothing`() = runBlocking<Unit> {
+        server.enqueue(MockResponse().setResponseCode(500))
         server.enqueue(MockResponse().setResponseCode(500))
         assertEquals(0, account().refresh())
         assertTrue(meter.flow.value.providers["parlay"]?.keys?.get("pk") == null)
