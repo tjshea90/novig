@@ -191,8 +191,8 @@ class ParlayPicksTest {
         screen(s, ParlayPickActions())
         val cnoFair = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(800)
         // Kelly: CNO's fair +800 and Vigilant's 10% at Novig's +950.
-        compose.onNode(hasTestTag("pickEv-CNO") and androidx.compose.ui.test.hasAnyDescendant(hasText(Format.evPercent(CnoBooks.evAt(cnoFair, 950, false))))).assertExists()
-        compose.onNode(hasTestTag("pickEv-Vigilant") and androidx.compose.ui.test.hasAnyDescendant(hasText(Format.evPercent(CnoBooks.evAt(0.10, 950, false))))).assertExists()
+        compose.onNode(hasTestTag("pickEv-CNO") and androidx.compose.ui.test.hasAnyDescendant(hasText(Format.evPercent(CnoBooks.evAt(cnoFair, 950, false)))), useUnmergedTree = true).assertExists()
+        compose.onNode(hasTestTag("pickEv-Vigilant") and androidx.compose.ui.test.hasAnyDescendant(hasText(Format.evPercent(CnoBooks.evAt(0.10, 950, false)))), useUnmergedTree = true).assertExists()
         // Happ: CNO doesn't list it, and Vigilant hasn't read it: "—", and the card says why.
         compose.onNodeWithText("CNO: not on CNO's +EV list · Vigilant: not read yet: tap Recheck").assertExists()
     }
@@ -214,7 +214,7 @@ class ParlayPicksTest {
         compose.onNodeWithText("This bet").assertExists()
         compose.onNodeWithText("Books read 10s ago from ParlayAPI's books").assertExists()
         compose.onNode(hasTestTag("pickEv-Books")).assertExists()
-        compose.onNodeWithText("Open in Novig").assertExists()
+        compose.onNodeWithTag("openInSheet").assertExists()
         compose.onNodeWithText("Re-read books").performClick()
         assertEquals("Ian Happ Over 0.5" to true, loads.last())
     }
