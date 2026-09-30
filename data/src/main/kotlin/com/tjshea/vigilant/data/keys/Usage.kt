@@ -174,7 +174,7 @@ class UsageMeter(
      * The first key, in Tj's order, that can afford a call costing [cost] right now. Because it
      * always starts from key 1, rotation falls back to key 1 as soon as its period resets.
      */
-    suspend fun pick(policy: QuotaPolicy, keys: List<String>, cost: Int): String? = mutex.withLock {
+    suspend fun pick(policy: QuotaPolicy, keys: List<String>, cost: Int, floor: (KeyUsage, Long) -> Int = NO_FLOOR): String? = mutex.withLock {
         ensureLoaded()
         val now = clock()
         val p = provider(policy.id)
@@ -183,7 +183,8 @@ class UsageMeter(
         for (k in keys) {
             val u = policy.roll(p.keys[k] ?: KeyUsage(), now)
             updated[k] = u
-            if (chosen == null && policy.usable(u, cost, now)) chosen = k
+            // [floor]: credits the key must still have after this call (a reserve, a day's pace).
+            if (chosen == null && policy.usable(u, cost + floor(u, now), now)) chosen = k
         }
         put(policy.id, p.copy(keys = updated))
         chosen
@@ -326,6 +327,44 @@ sealed interface KeyAttemptResult<out T> {
 /** No key could make the call: every one is spent, cooling down, or refused. */
 class AllKeysExhaustedException(message: String) : Exception(message)
 
+/** A key could pay for the call but its credits are held back ([KeyPool.execute]'s reserve or pace): the call waits, nothing failed. */
+class CreditsHeldBackException(message: String) : Exception(message)
+
+/**
+ * A month's credits spread over its days (Tj's ParlayAPI Starter plan, 2026-09-30: 20,000 credits a month). After a call a key must still
+ * hold [reserve] plus the share of every day after today (Tj's own day, [zone]), so a busy evening can spend the whole of today's share and
+ * anything earlier days left unspent, never tomorrow's. Stateless: it reads the meter, so it survives restarts and follows the server's
+ * figures. A key whose allowance is [freeLimit] or less (a free plan) isn't paced but held back entirely: its few credits are for [reserve]'s
+ * purpose (closing lines).
+ */
+class CreditPace(
+    private val policy: QuotaPolicy,
+    private val reserve: Int,
+    private val freeLimit: Int,
+    private val zone: () -> java.time.ZoneId = java.time.ZoneId::systemDefault,
+) {
+    /** Credits [u] must still hold after a call at [now]. */
+    fun floor(u: KeyUsage, now: Long): Int {
+        val limit = u.allowance(policy) ?: return reserve
+        if (limit <= freeLimit) return FREE_ONLY
+        val start = u.periodStart.takeIf { it > 0 } ?: policy.periodStart(now)
+        val reset = policy.nextReset(start)
+        val z = zone()
+        val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
+        val later = (reset - endOfToday).coerceAtLeast(0)
+        val span = (reset - start).coerceAtLeast(1)
+        return reserve + ((limit - reserve).coerceAtLeast(0).toLong() * later / span).toInt()
+    }
+
+    /** Credits [u] may still spend today. */
+    fun spendableToday(u: KeyUsage, now: Long): Int = ((u.left(policy) ?: 0) - floor(u, now)).coerceAtLeast(0)
+
+    companion object {
+        /** A floor no key reaches: held back from these calls altogether. */
+        const val FREE_ONLY = Int.MAX_VALUE / 4
+    }
+}
+
 /**
  * Tries Tj's keys for one provider in order (Tj's request, 2026-09-25): key 1 until it's spent,
  * then key 2, and so on. The [UsageMeter] decides before each call whether a key can afford it,
@@ -342,22 +381,26 @@ class KeyPool(
 
     /**
      * [reserve]: credits each key keeps back for other calls (ParlayAPI's scans leave the last few hundred to the closing lines, which
-     * matter more): a key is used only while it can afford [cost] and still keep them.
+     * matter more); [pace]: a month's credits spread over its days ([CreditPace]). A key is used only while it can afford [cost] and
+     * still keep both. A key that could pay but is held back throws [CreditsHeldBackException] (not a failure: the call waits).
      */
-    suspend fun <T> execute(cost: Int, reserve: Int = 0, action: suspend (key: String) -> KeyAttemptResult<T>): T {
+    suspend fun <T> execute(cost: Int, reserve: Int = 0, pace: CreditPace? = null, action: suspend (key: String) -> KeyAttemptResult<T>): T {
         val tried = HashSet<String>()
         var lastProblem: String? = null
         var shortWaits = 0
+        val held: (KeyUsage, Long) -> Int = if (reserve <= 0 && pace == null) UsageMeter.NO_FLOOR else { u, now -> maxOf(reserve, pace?.floor(u, now) ?: 0) }
         while (true) {
             val all = keys()
-            val key = meter.pick(policy, all.filter { it !in tried }, cost + reserve)
-                ?: throw AllKeysExhaustedException(
-                    if (reserve > 0 && all.isNotEmpty() && meter.pick(policy, all.filter { it !in tried }, cost) != null) {
-                        "The last $reserve ${policy.unit} on ${if (all.size == 1) "your ${policy.displayName} key" else "each ${policy.displayName} key"} are kept for closing lines."
-                    } else {
-                        meter.exhaustedMessage(policy, all, lastProblem)
-                    },
-                )
+            val open = all.filter { it !in tried }
+            val key = meter.pick(policy, open, cost, held)
+                ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
+                    throw CreditsHeldBackException(
+                        if (pace != null) "${policy.displayName} has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)."
+                        else "The last $reserve ${policy.unit} on ${if (all.size == 1) "your ${policy.displayName} key" else "each ${policy.displayName} key"} are kept for closing lines.",
+                    )
+                } else {
+                    throw AllKeysExhaustedException(meter.exhaustedMessage(policy, all, lastProblem))
+                }
             when (val r = action(key)) {
                 is KeyAttemptResult.Success -> {
                     meter.recordCall(policy, key, r.cost ?: cost, r.remaining, r.used)
