@@ -92,7 +92,7 @@ data class Injury(
  * Every injury report seen lately, by sport and player ([InjuryIndex.book]'s value): immutable, so a list's tags are read from one
  * consistent picture. [find] matches a player's name as [PlayerNames.same] does, and his team against the game's when it's known.
  */
-class InjuryBook internal constructor(private val sports: Map<String, Sport>) {
+class InjuryBook internal constructor(internal val sports: Map<String, Sport>) {
     internal class Entry(val injury: Injury, val seenAtMs: Long)
 
     internal class Sport(
@@ -162,7 +162,7 @@ class InjuryIndex(private val clock: () -> Long = System::currentTimeMillis) {
         if (injuries.isEmpty() && asked.isEmpty()) return
         val now = clock()
         state.update { old ->
-            val sports = HashMap(old.sportsView())
+            val sports = HashMap(old.sports)
             val prev = sports[sportKey]
             val byKey = HashMap<String, List<InjuryBook.Entry>>()
             // Old reports kept while fresh; a newer report of the same player (and team) replaces his.
@@ -192,12 +192,6 @@ class InjuryIndex(private val clock: () -> Long = System::currentTimeMillis) {
         const val KEEP_MS = 6 * 3_600_000L
     }
 }
-
-private fun InjuryBook.sportsView(): Map<String, InjuryBook.Sport> = sportsField(this)
-
-// The index builds each new picture from the last one's parts.
-private fun sportsField(book: InjuryBook): Map<String, InjuryBook.Sport> =
-    InjuryBook::class.java.getDeclaredField("sports").let { it.isAccessible = true; @Suppress("UNCHECKED_CAST") (it.get(book) as Map<String, InjuryBook.Sport>) }
 
 /**
  * `GET /v1/sports/{s}/injuries` (1 credit a league; PARLAY_API.md §6.1): ESPN's injury list for the five sports ParlayAPI covers, refreshed
