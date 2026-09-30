@@ -1,13 +1,13 @@
-# CHECKPOINT 2165 — read me first, then TASKS.md
+# CHECKPOINT 2166 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T04:55:27Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `1c2128d8` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T05:05:17Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `2d48614f` (this checkpoint is the commit after it)
 
 ## Just done
-v0.29.0 gated and pushed (1117 tests green); I1,I2,I4-I6 ticked
+v0.29.0 (code 57) released and recorded; I3/J3/K3 ticked
 
 ## Do this next
-When CI 36670999620 is green: trigger release.yml on main, confirm v0.29.0 Release, record-release.sh v0.29.0 57, tick I3/J3/K3, answer Tj (Release link plain text; key rotation reminder; features list)
+Answer Tj: what changed, the Release link (plain text), features ParlayAPI offers that he may want (his call), rotate the shared key
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ When CI 36670999620 is green: trigger release.yml on main, confirm v0.29.0 Relea
 
 ## Last ten checkpoints
 ```
+  597ed3f4 ckpt 2165: v0.29.0 gated and pushed (1117 tests green); I1,I2,I4-I6 ticked
   1c2128d8 ckpt 2164: pre-release: v0.29.0: ParlayAPI matched to its docs and Tj's real key: the m
   64fb7853 ckpt 2163: pre-ship: v0.29.0: ParlayAPI matched to its docs and Tj's real key: the mete
   8d5bb257 ckpt 2162: RESEARCH §45 written (real-key findings, docs pass, backup, features to off
@@ -26,5 +27,4 @@ When CI 36670999620 is green: trigger release.yml on main, confirm v0.29.0 Relea
   8d36a404 ckpt 2158: J2 coded: +EV cards get CNO's ✕ (hideOpportunity -> markHidden, same place
   90340774 ckpt 2157: ParlayAPI alternates bought only when no Pinnacle feed is on (marketsFor alt
   1808bb5e ckpt 2156: I4: ParlayAccount reads /v1/usage (credits month, reset Oct 1) with api-key-
-  4f81f856 ckpt 2155: Real-key probe findings coded (ParlayMarkets normalizer, NHL props, flat clo
 ```
