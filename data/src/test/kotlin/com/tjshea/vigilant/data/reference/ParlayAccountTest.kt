@@ -108,6 +108,8 @@ class ParlayAccountTest {
         assertEquals(19_914, view.totalLeft)
         assertEquals(Instant.parse("2026-10-01T00:00:00Z").toEpochMilli(), view.nextReset)
         assertEquals("usage", account().let { a -> server.enqueue(MockResponse().setBody(usage)); a.refresh(); a.last.getValue("pk").source })
+        // The plan's closing-lines history (/v1/meta/limits): Starter reaches back 7 days.
+        assertEquals(7, account().let { a -> server.enqueue(MockResponse().setBody(usage)); a.refresh(); a.historyDays() })
     }
 
     @Test

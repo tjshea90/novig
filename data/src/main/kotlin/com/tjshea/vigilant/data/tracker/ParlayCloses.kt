@@ -29,7 +29,7 @@ import kotlin.math.abs
  * Pinnacle's closing lines from ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43), the sharpest close there is, asked first when Tj has a ParlayAPI
  * key: player props from its daily closing-lines file (`/v1/historical/closing-lines.json?date=&sport_key=&source=pinnacle`, 1 credit per 1,000
  * rows) and game lines from `/v1/sports/{sport}/closing-lines?bookmakers=pinnacle&daysFrom=` (5 credits a league), each the book's last price
- * before the start, devigged across its two sides. What a key's plan can reach back to is its own (free 48 hours, $5 a week, $20 a month); a
+ * before the start, devigged across its two sides. What a key's plan can reach back to is its own (free 48 hours, $5 a week, $20 a month: /v1/meta/limits), and nothing older is asked; a
  * league-day's answers are kept for [KEEP_MS], so the 3-hourly look doesn't buy them twice. Calls go through the same [KeyPool] as ParlayAPI's
  * scans (metered, key 1 first, a spent key skipped), and scans leave each key's last credits to these ([OddsFeed.PARLAY]'s reserve).
  */
@@ -39,6 +39,8 @@ class ParlayCloses(
     private val json: Json = Json { ignoreUnknownKeys = true },
     private val base: String = "https://parlay-api.com/v1",
     private val clock: () -> Long = System::currentTimeMillis,
+    /** How many days back the key's plan reaches ([ParlayAccount.historyDays]: free 2, Starter 7, Pro 30); nothing older is asked. */
+    private val historyDays: () -> Int = { DEFAULT_HISTORY_DAYS },
 ) : CloseSource {
 
     /** Requests made (tests, Diagnostics). */
@@ -69,6 +71,12 @@ class ParlayCloses(
                 continue
             }
             val pick = BetGrader.pickOf(b)
+            // Past the plan's history (ParlayAPI's /v1/meta/limits: free 48 hours, Starter 7 days, Pro 30): it answers HISTORICAL_LIMIT.
+            val days = historyDays()
+            if (clock() - b.startsTs > days * 86_400_000L) {
+                out[b.id] = CloseLookup.None("Older than your ParlayAPI plan's $days-day history")
+                continue
+            }
             out[b.id] = when {
                 pick is BetGrader.Pick.Prop -> prop(b, pick, sport)
                 EspnCloses.gameLine(pick) -> gameLine(b, pick!!, sport)
@@ -108,10 +116,11 @@ class ParlayCloses(
         // Spreads and totals: Pinnacle's in the day's closes file. Moneylines: its price at the start from `closing-lines` (5 credits a
         // league for every game in the window, the truest close there is), else the file's.
         if (pick !is BetGrader.Pick.Moneyline) return fromFile(b, sport) { root -> parseFileGameLine(root, b, pick) }
-        // Their API takes 1..30 days back; a game longer ago than that is past what a game-line call can reach.
+        // daysFrom reaches back whole days, never past the plan's history (asked beyond it, the answer is 403 HISTORICAL_LIMIT).
         val back = (clock() - b.startsTs) / 86_400_000L + 1
-        if (back <= MAX_DAYS) {
-            val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to back.coerceIn(1, MAX_DAYS.toLong()).toString(), "oddsFormat" to "american"), cost = 5)
+        val most = historyDays().coerceAtMost(MAX_DAYS).toLong()
+        if (back <= most) {
+            val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to back.coerceIn(1, most).toString(), "oddsFormat" to "american"), cost = 5)
                 ?: return CloseLookup.Later("ParlayAPI didn't answer")
             val found = parseGameLine(root, b, pick)
             if (found is CloseLookup.Found) return found
@@ -180,8 +189,11 @@ class ParlayCloses(
         /** A close's game must start within this of the bet's. */
         private const val START_GAP_MS = 3 * 60 * 60_000L
 
-        /** The most days back `/sports/{sport}/closing-lines` takes. */
+        /** The most days back `/sports/{sport}/closing-lines` is asked for (a plan's own history can be shorter: [historyDays]). */
         const val MAX_DAYS = 30
+
+        /** Until a key's plan is known: Starter's 7 days (Tj's plan, 2026-09-30). */
+        const val DEFAULT_HISTORY_DAYS = 7
 
         /** A closes-file price taken longer than this before the start isn't the close. */
         const val CLOSE_WITHIN_MS = 2 * 60 * 60_000L

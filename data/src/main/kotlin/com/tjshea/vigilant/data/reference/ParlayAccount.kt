@@ -91,7 +91,15 @@ class ParlayAccount(
         return parse(root, CreditHeaders.read({ reply.headers[it] }, clock()), clock()).takeIf { it.remaining != null || it.valid != null }
     }
 
+    /**
+     * How many days back the best plan among the keys reaches for closing lines (ParlayAPI's /v1/meta/limits `historical_hours`: free 48
+     * hours, Starter 7 days, Pro 30, Business 90), from the last check; Starter's 7 until a check says.
+     */
+    fun historyDays(): Int = last.values.mapNotNull { HISTORY_DAYS[it.tier?.lowercase()] }.maxOrNull() ?: 7
+
     companion object {
+        private val HISTORY_DAYS = mapOf("free" to 2, "starter" to 7, "pro" to 30, "business" to 90, "enterprise" to 365, "scale" to 3650)
+
         /** A key's account is read again after this at the soonest, unless asked (free, and ParlayAPI has no per-second cap on paid plans). */
         const val REFRESH_MS = 60_000L
 

@@ -255,14 +255,17 @@ class ParlayClosesTest {
             body = """{"error":"credit_limit_exceeded"}"""
             val broke = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { now })
             assertTrue(broke.closes(listOf(ml))["ml"] is CloseLookup.Later)
-            // Older than the 30 days `closing-lines` reaches: only the day's closes file is asked.
+            // Older than the plan's history (Starter: 7 days, /v1/meta/limits): not asked at all.
+            val old = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { start + 8 * 86_400_000L })
+            assertEquals("Older than your ParlayAPI plan's 7-day history", (old.closes(listOf(ml))["ml"] as CloseLookup.None).reason)
+            assertEquals(0, old.requests)
+            // On Pro (30 days) a 20-day-old game is asked, never further back than the plan reaches.
             body = """{"detail":{"error":"HISTORICAL_LIMIT"}}"""
             val before = server.requestCount
-            val old = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { start + 40 * 86_400_000L })
-            assertTrue(old.closes(listOf(ml))["ml"] is CloseLookup.None)
-            assertEquals(1, old.requests)
+            val pro = ParlayCloses(OkHttpClient(), pool("k"), json, server.url("/v1").toString().trimEnd('/'), clock = { start + 20 * 86_400_000L }, historyDays = { 30 })
+            pro.closes(listOf(ml))
             repeat(before) { server.takeRequest() }
-            assertTrue(server.takeRequest().path!!.startsWith("/v1/historical/closing-lines.json"))
+            assertEquals("21", server.takeRequest().requestUrl!!.queryParameter("daysFrom"))
         } finally {
             server.shutdown()
         }
