@@ -43,6 +43,10 @@ data class ProviderView(
     val callsToday: Int,
     val throttledToday: Int,
     val lastThrottleMs: Long?,
+    /** A paced provider ([CreditPace], ParlayAPI): credits its scans may still spend today; null when not paced or not known yet. */
+    val scanShareToday: Int? = null,
+    /** A paced provider whose every key is on a free plan: its credits are kept for closing lines, never scans. */
+    val scansFreeOnly: Boolean = false,
 ) {
     val activeIndex: Int? get() = keys.firstOrNull { it.state == KeyState.ACTIVE }?.index
     val fractionUsed: Float?
@@ -54,7 +58,7 @@ object UsageViews {
     fun mask(key: String): String = if (key.length <= 8) "••••" else key.take(4) + "…" + key.takeLast(4)
 
     /** Builds [policy]'s meter from the ledger as it stands at [now]. Pure: nothing is changed. */
-    fun build(policy: QuotaPolicy, keys: List<String>, usage: ProviderUsage?, now: Long): ProviderView {
+    fun build(policy: QuotaPolicy, keys: List<String>, usage: ProviderUsage?, now: Long, pace: CreditPace? = null): ProviderView {
         val today = QuotaPolicy.NOVIG.periodStart(now)
         val fresh = usage?.takeIf { it.dayStart == today }
         var activeFound = false
@@ -87,6 +91,11 @@ object UsageViews {
                 serverReported = u.remaining != null,
             )
         }
+        // Paced: what today's scans may still spend, over the keys a scan could use (known plans only; a free one isn't used by scans).
+        val live = keys.map { policy.roll(usage?.keys?.get(it) ?: KeyUsage(), now) }.filter { !it.refused }
+        val freeOnly = pace != null && live.isNotEmpty() && live.all { pace.isFree(it) }
+        val share = if (pace == null || freeOnly || live.none { it.limit != null }) null
+        else live.filter { it.limit != null && !pace.isFree(it) }.sumOf { pace.spendableToday(it, now) }
         val lefts = rows.filter { it.state != KeyState.REFUSED }.map { it.left }
         val allowances = rows.filter { it.state != KeyState.REFUSED }.map { it.allowance }
         return ProviderView(
@@ -98,6 +107,8 @@ object UsageViews {
             callsToday = fresh?.callsToday ?: 0,
             throttledToday = fresh?.throttledToday ?: 0,
             lastThrottleMs = usage?.lastThrottleMs,
+            scanShareToday = share,
+            scansFreeOnly = freeOnly,
         )
     }
 }

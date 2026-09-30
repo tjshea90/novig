@@ -56,7 +56,10 @@ fun shortName(policy: QuotaPolicy): String = when (policy.id) {
 fun meterViews(state: UiState, now: Long): List<ProviderView> =
     // Vigilant MGM never calls Novig: no Novig meter there.
     QuotaPolicy.ALL.filter { AppBook.isNovig || it.id != QuotaPolicy.NOVIG.id }
-        .map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now) }
+        .map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now, if (p.id == QuotaPolicy.PARLAY.id) PARLAY_PACE else null) }
+
+/** ParlayAPI's scans spend a day's share at most (Tj's Starter plan, RESEARCH.md §43): the meter says how much is left today. */
+private val PARLAY_PACE = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.pace(QuotaPolicy.PARLAY)
 
 /** Green with plenty left, amber under half, red under a fifth or spent. */
 @Composable
@@ -99,6 +102,16 @@ private fun ProviderMeter(v: ProviderView, now: Long) {
                 Text("No key added.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             v.keys.forEach { KeyRow(v.policy, it, now) }
+            when {
+                v.scansFreeOnly -> Text(
+                    "Free plan: kept for Pinnacle's closing lines (CLV). Scans use ParlayAPI on a paid plan.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                v.scanShareToday != null -> Text(
+                    "Scans can spend ${v.scanShareToday} more today (a day's share; unused days carry over; the last 300 are kept for closing lines).",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (!v.policy.keyed || v.callsToday > 0) {
                 Text(
                     "${v.callsToday} request${if (v.callsToday == 1) "" else "s"} today" +

@@ -98,7 +98,7 @@ data class QuotaPolicy(
         )
         val PARLAY = QuotaPolicy(
             "parlay", "ParlayAPI", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 1000,
-            rule = "1,000 credits a month per free key (paid: 20,000 for \$5, 100,000 for \$20, 1,000,000 for \$40), reset on the 1st. Game lines 1 credit per market per league; props 1 per prop type per game; closing lines 1 to 5 a day.",
+            rule = "Free: 1,000 credits a month, kept for Pinnacle's closing lines. Paid (\$5: 20,000; \$20: 100,000): scans too, a day's share at most, the last 300 kept for closing lines. Game lines 5 credits a league (alternate lines included); a league's props 3; closes 1 to 5 a day. Resets with the plan's month.",
         )
         val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")

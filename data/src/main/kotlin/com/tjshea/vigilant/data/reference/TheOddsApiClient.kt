@@ -4,6 +4,7 @@ import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
 import com.tjshea.vigilant.data.keys.CreditPace
 import com.tjshea.vigilant.data.keys.KeyPool
+import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
@@ -53,7 +54,7 @@ class TheOddsApiClient(
 ) : ReferenceSource {
 
     /** ParlayAPI's scans spend a day's share of the month at most ([CreditPace]); The Odds API's aren't paced. */
-    private val pace: CreditPace? = if (feed.reserve > 0) CreditPace(pool.policy, feed.reserve, freeLimit = feed.freeLimit) else null
+    private val pace: CreditPace? = feed.pace(pool.policy)
 
     override val id = feed.sourceId
     override val displayName = feed.title
@@ -514,4 +515,8 @@ enum class OddsFeed(
         reserve = 300,
         freeLimit = 1_000,
     ),
+    ;
+
+    /** How this feed's scans spend a key's credits ([CreditPace]); null: as they come. */
+    fun pace(policy: QuotaPolicy): CreditPace? = if (reserve > 0) CreditPace(policy, reserve, freeLimit) else null
 }
