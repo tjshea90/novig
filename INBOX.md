@@ -2568,3 +2568,12 @@ https://skills.rest/skill/odds-api-historical
 ```
 Usage is about to run out. Save all progress immediately and schedule an auto resume of this session 17 minutes from now
 ```
+
+## 2026-09-30T01:42:25Z
+```
+Add this knowledge for when you resume this session (add it to the checkpoint to-do): 
+
+I will buy the parlay-api $5 per month starter plan to try it out. You can code vigilant to take full use of what the starter plan offers. Make sure it takes full advantage of the paid API and everything it offers, and prioritize its use if it can do anything better than the apis that vigilant already uses. However, in the options, make sure the app can fall back if I don't have the paid parlay-api anymore, and consider if the free API is still worth using for the app.
+
+Then after everything is built and completed, do full test protocol on the app to make sure everything works well and is fully optimized. Make sure the features are well coded as designed. Make sure when the app is closed and not in use, it properly sleeps, unless I have the background scanner turned on.
+```
