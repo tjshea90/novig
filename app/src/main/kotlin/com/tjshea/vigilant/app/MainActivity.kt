@@ -710,6 +710,7 @@ private fun VigilantRoot(
         com.tjshea.vigilant.app.ui.ApiBetSheet(
             sheet,
             onStake = vm.api::setStake,
+            onTypeStake = vm.api::typeStake,
             onConfirm = vm.api::confirm,
             onRefresh = vm.api::refreshPlan,
             onRepeat = vm.api::allowRepeat,

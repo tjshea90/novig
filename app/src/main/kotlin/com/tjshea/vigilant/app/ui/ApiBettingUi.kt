@@ -51,6 +51,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.text.input.KeyboardType
 import com.tjshea.vigilant.app.TopUp
+import com.tjshea.vigilant.app.BetAmount
 import com.tjshea.vigilant.app.WalletAmount
 import com.tjshea.vigilant.data.novig.signing.ManagementKey
 import com.tjshea.vigilant.data.novig.signing.ManagementKeyHint
