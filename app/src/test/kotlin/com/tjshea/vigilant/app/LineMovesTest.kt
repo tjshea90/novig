@@ -6,7 +6,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -88,7 +90,8 @@ class LineMovesTest {
     fun `the Games tab lists the biggest moves with the side the money went to`() {
         screen { GamesScreen(state(), onOpen = {}, onToggleLeague = {}) }
         compose.onNodeWithText("Line moves at Pinnacle · last 6 h").assertExists()
-        compose.onNodeWithText("Baltimore Ravens @ Dallas Cowboys").assertExists()
+        // The game is named in the card and again in the games list under it.
+        compose.onAllNodesWithText("Baltimore Ravens @ Dallas Cowboys").assertCountEquals(2)
         compose.onNodeWithText("Money on Dallas Cowboys: -160 → -175 (+2.1 pts)").assertExists()
     }
 
