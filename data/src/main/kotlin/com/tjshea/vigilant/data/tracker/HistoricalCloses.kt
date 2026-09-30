@@ -41,7 +41,7 @@ interface CloseSource {
     /** Each of [bets]' ids to what this source knows of its close. */
     suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup>
 
-    /** Megabytes a look can cost ([NovigTradeCloses]): asked only on Wi-Fi ([CloseBackfill.run]'s `heavyOk`). */
+    /** Megabytes a look can cost ([NovigTradeCloses]): skipped only when a caller says so ([CloseBackfill.run]'s `heavyOk`). */
     val heavy: Boolean get() = false
 }
 
@@ -221,7 +221,7 @@ class NovigTradeCloses(
     private val windowMs: Long = WINDOW_MS,
 ) : CloseSource {
 
-    /** A kickoff's half hour of trades is 0.5 to 4 MB: Wi-Fi only. */
+    /** A kickoff's half hour of trades is 0.5 to 4 MB (the app reads it on any network: Tj's data is unlimited). */
     override val heavy: Boolean get() = true
 
     /** Bytes read (tests and Diagnostics). */
@@ -411,7 +411,7 @@ class CloseBackfill(
         for (source in sources) {
             if (left.isEmpty()) break
             if (source.heavy && !heavyOk) {
-                left.forEach { notes.getOrPut(it.id) { ArrayList() } += CloseLookup.Later("Novig's trade history is read on Wi-Fi (a few MB)") }
+                left.forEach { notes.getOrPut(it.id) { ArrayList() } += CloseLookup.Later("Novig's trade history wasn't read this time") }
                 continue
             }
             val answers = runCatching { source.closes(left) }.getOrElse { e ->

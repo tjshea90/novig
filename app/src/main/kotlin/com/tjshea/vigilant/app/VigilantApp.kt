@@ -228,11 +228,14 @@ class AppContainer(private val app: Application) {
     /** The last back-fill's report (this process), for Diagnostics. */
     @Volatile var lastBackfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null
 
-    /** Runs the back-fill, never throwing (a feed down is looked at again next time); Novig's trade files (MBs) only on an unmetered network. */
+    /**
+     * Runs the back-fill, never throwing (a feed down is looked at again next time). Novig's trade files (a few MB a kickoff) are read on any
+     * network: Tj, 2026-09-30, "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data
+     * or phone storage always."
+     */
     suspend fun backfillCloses() {
         try {
-            val unmetered = runCatching { app.getSystemService(android.net.ConnectivityManager::class.java)?.isActiveNetworkMetered == false }.getOrDefault(false)
-            lastBackfill = closeBackfill.run(heavyOk = unmetered)
+            lastBackfill = closeBackfill.run(heavyOk = true)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
