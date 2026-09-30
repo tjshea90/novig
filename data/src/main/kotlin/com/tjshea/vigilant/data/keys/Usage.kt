@@ -345,6 +345,11 @@ class CreditPace(
     private val reserve: Int,
     private val freeLimit: Int,
     private val zone: () -> java.time.ZoneId = java.time.ZoneId::systemDefault,
+    /**
+     * The part of a day's share this caller leaves for others: background auto-scans keep half of it for the scans Tj starts himself, so a
+     * morning of 15-minute cycles can't spend the evening's credits (earlier days' leftovers stay open to both).
+     */
+    private val keepOfDay: Double = 0.0,
 ) {
     /** Credits [u] must still hold after a call at [now]. */
     fun floor(u: KeyUsage, now: Long): Int {
@@ -357,7 +362,9 @@ class CreditPace(
         val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
         val later = (reset - endOfToday).coerceAtLeast(0)
         val span = (reset - start).coerceAtLeast(1)
-        return reserve + ((limit - reserve).coerceAtLeast(0).toLong() * later / span).toInt()
+        val pool = (limit - reserve).coerceAtLeast(0).toLong()
+        val kept = if (keepOfDay > 0.0) (pool * DAY_MS / span * keepOfDay).toInt() else 0
+        return reserve + (pool * later / span).toInt() + kept
     }
 
     /** A free plan's key (the server said its allowance is [freeLimit] or less): kept for closing lines. */
@@ -369,6 +376,8 @@ class CreditPace(
     companion object {
         /** A floor no key reaches: held back from these calls altogether. */
         const val FREE_ONLY = Int.MAX_VALUE / 4
+
+        private const val DAY_MS = 86_400_000L
     }
 }
 

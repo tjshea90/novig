@@ -51,10 +51,12 @@ class TheOddsApiClient(
     private val minIntervalMs: Long = 500,
     /** Which feed in The Odds API's format this is: The Odds API itself, or ParlayAPI's drop-in copy ([OddsFeed.PARLAY]). */
     val feed: OddsFeed = OddsFeed.ODDS_API,
+    /** Background auto-scan's client: a paced feed leaves part of the day's share for Tj's own scans ([OddsFeed.pace]). */
+    background: Boolean = false,
 ) : ReferenceSource {
 
     /** ParlayAPI's scans spend a day's share of the month at most ([CreditPace]); The Odds API's aren't paced. */
-    private val pace: CreditPace? = feed.pace(pool.policy)
+    private val pace: CreditPace? = feed.pace(pool.policy, background)
 
     override val id = feed.sourceId
     override val displayName = feed.title
@@ -517,6 +519,12 @@ enum class OddsFeed(
     ),
     ;
 
-    /** How this feed's scans spend a key's credits ([CreditPace]); null: as they come. */
-    fun pace(policy: QuotaPolicy): CreditPace? = if (reserve > 0) CreditPace(policy, reserve, freeLimit) else null
+    /** How this feed's scans spend a key's credits ([CreditPace]); null: as they come. [background]: auto-scan's, which leave half a day's share. */
+    fun pace(policy: QuotaPolicy, background: Boolean = false): CreditPace? =
+        if (reserve > 0) CreditPace(policy, reserve, freeLimit, keepOfDay = if (background) BACKGROUND_KEEP else 0.0) else null
+
+    companion object {
+        /** The part of a day's share background auto-scans leave for the scans Tj starts himself. */
+        const val BACKGROUND_KEEP = 0.5
+    }
 }
