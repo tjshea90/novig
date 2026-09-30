@@ -42,6 +42,12 @@ class BetRecheck(
      * waits its turn), so a few at a time finish the hundred open bets in about a minute instead of five.
      */
     private val concurrency: Int = 1,
+    /**
+     * Every book's price for a bet from elsewhere when CNO doesn't answer, or answers without the bet at its line ([ParlayBooks], Tj
+     * 2026-09-30: "if there is a good backup that does the same exact odds check, I think parlayapi can do this same odds check"): judged
+     * with CNO's own check. Null: no backup, and a run stops when CNO does.
+     */
+    private val backup: (suspend (TrackedBet) -> CnoBooksView?)? = null,
 ) {
     /** Every open bet, in exactly one of the last five groups (they add up to [open]). */
     data class Report(
@@ -73,6 +79,12 @@ class BetRecheck(
         val unpriced: Int = 0,
         /** The bets CNO tried and failed, or never tried: [OpenBetPricer]'s to take over. */
         val unreadIds: List<String> = emptyList(),
+        /** Of [updated], priced from the backup's books (ParlayAPI) because CNO didn't answer or didn't list the bet at its line. */
+        val viaBackup: Int = 0,
+        /** CNO reads that got no answer at all (as opposed to a page without the bet at its line). */
+        val cnoNoAnswer: Int = 0,
+        /** CNO stopped answering (or asked for a pause) part-way: the rest went to the backup, or weren't tried without one. */
+        val cnoStopped: Boolean = false,
     ) {
         /** Open bets whose odds are now current. */
         val covered: Int get() = updated + current + priced
@@ -91,13 +103,15 @@ class BetRecheck(
          */
         fun roundNote(vigilantOn: Boolean, pauseWhy: String? = null): String {
             val cno = buildString {
-                append("CNO read $updated of $cnoTried")
+                append("CNO read ${updated - viaBackup} of $cnoTried")
+                if (viaBackup > 0) append(", ParlayAPI's books $viaBackup")
+                if (cnoNoAnswer > 0) append(", $cnoNoAnswer CNO reads unanswered")
                 val misses = listOfNotNull(
                     "$cnoFailed failed".takeIf { cnoFailed > 0 },
                     "$cnoSkipped not tried".takeIf { cnoSkipped > 0 },
                 )
                 if (misses.isNotEmpty()) append(" (").append(misses.joinToString(", "))
-                    .append(if (stopped) ": stopped early" + (pauseWhy?.let { ", $it" } ?: "") else "").append(")")
+                    .append(if (stopped || cnoStopped) ": stopped early" + (pauseWhy?.let { ", $it" } ?: "") else "").append(")")
             }
             return "covered $covered of $open open bets: $cno, $priced priced from Vigilant's own fair odds" +
                 (if (unreadIds.isNotEmpty() && vigilantOn) ", ${unreadIds.size} CNO didn't read went to a second pricing pass" else "") +
@@ -112,7 +126,8 @@ class BetRecheck(
             if (open == 0) return "No open bets to check"
             val parts = ArrayList<String>()
             parts += "Checked $covered of $open open bet${if (open == 1) "" else "s"}"
-            if (failed > 0) parts += "$failed couldn't be read"
+            if (viaBackup > 0) parts += "$viaBackup from ParlayAPI's books (CrazyNinjaOdds didn't have ${if (viaBackup == 1) "it" else "them"})"
+            if (failed > 0) parts += "$failed couldn't be read (each bet says why)"
             if (unpriced > 0) parts += "$unpriced couldn't be priced (each bet says why)"
             if (skipped > 0) parts += "$skipped not tried"
             if (started > 0) parts += "$started game${if (started == 1) "" else "s"} in progress (results come from final scores)"
@@ -133,7 +148,7 @@ class BetRecheck(
             }
             val text = parts.joinToString(" · ")
             return when {
-                covered == 0 && checked > 0 && stopped -> "CrazyNinjaOdds didn't answer: try again in a minute · $text"
+                covered == 0 && checked > 0 && stopped && cnoNoAnswer > 0 -> "CrazyNinjaOdds didn't answer: try again in a minute · $text"
                 stopped -> "$text · stopped early: CrazyNinjaOdds asked for a pause, tap again in a minute"
                 else -> text
             }
@@ -184,7 +199,17 @@ class BetRecheck(
     suspend fun preview(): Plan = plan(tracker.all())
 
     /** What [readAll] did: reads tried, bets updated, reads that failed, whether it stopped early. */
-    private data class Tally(val checked: Int, val updated: Int, val failed: Int, val stopped: Boolean, val updatedIds: Set<String> = emptySet())
+    private data class Tally(
+        val checked: Int, val updated: Int, val failed: Int, val stopped: Boolean, val updatedIds: Set<String> = emptySet(),
+        val viaBackup: Int = 0, val noAnswer: Int = 0, val cnoAsked: Int = 0, val cnoStopped: Boolean = false,
+    )
+
+    /** How one bet's read came out. [cnoAnswered]: null when CNO wasn't asked (it had stopped answering). */
+    private sealed interface Outcome {
+        val cnoAnswered: Boolean?
+        class Updated(val change: (TrackedBet) -> TrackedBet, val viaBackup: Boolean, override val cnoAnswered: Boolean?) : Outcome
+        class Failed(val note: String, override val cnoAnswered: Boolean?) : Outcome
+    }
 
     /**
      * Reads [todo]'s books, [concurrency] at a time, soonest game first, saving results in batches (a cancelled read keeps what it
@@ -196,7 +221,12 @@ class BetRecheck(
         var failed = 0
         var checked = 0
         var failedInARow = 0
+        var viaBackup = 0
+        var noAnswer = 0
+        var cnoAsked = 0
         val stopped = java.util.concurrent.atomic.AtomicBoolean(false)
+        // CNO stopped answering (or paused): the rest go to the backup alone, or the run stops without one.
+        val cnoDown = java.util.concurrent.atomic.AtomicBoolean(false)
         val pending = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
         val updatedIds = HashSet<String>()
         val lock = Mutex()
@@ -216,22 +246,38 @@ class BetRecheck(
                     launch {
                         for (bet in queue) {
                             if (stopped.get()) break
-                            if (paused()) { stopped.set(true); break }
-                            val update = read(bet)
+                            if (paused()) cnoDown.set(true)
+                            val askCno = !cnoDown.get()
+                            if (!askCno && backup == null) { stopped.set(true); break }
+                            val outcome = read(bet, askCno)
                             lock.withLock {
                                 checked++
-                                if (update == null) {
-                                    failed++
-                                    failedInARow++
-                                    // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
-                                    if (paused() || failedInARow >= MAX_FAILS_IN_ROW) stopped.set(true)
-                                } else {
-                                    failedInARow = 0
-                                    pending[bet.id] = update
-                                    updatedIds += bet.id
-                                    updated++
-                                    if (pending.size >= BATCH) flush()
+                                if (outcome.cnoAnswered != null) cnoAsked++
+                                when (outcome.cnoAnswered) {
+                                    false -> { failedInARow++; noAnswer++ }
+                                    true -> failedInARow = 0
+                                    null -> Unit
                                 }
+                                when (outcome) {
+                                    is Outcome.Updated -> {
+                                        pending[bet.id] = outcome.change
+                                        updatedIds += bet.id
+                                        updated++
+                                        if (outcome.viaBackup) viaBackup++
+                                    }
+                                    is Outcome.Failed -> {
+                                        failed++
+                                        // Every open bet is priced or says why (Tj, 2026-09-29).
+                                        val at = clock()
+                                        pending[bet.id] = { b -> if (b.status != BetStatus.PENDING) b else b.copy(nowNote = outcome.note, nowNoteAtMs = at) }
+                                    }
+                                }
+                                // CNO is down, refusing, or asked for a pause: don't hammer it for the other bets.
+                                if (paused() || failedInARow >= MAX_FAILS_IN_ROW) {
+                                    cnoDown.set(true)
+                                    if (backup == null) stopped.set(true)
+                                }
+                                if (pending.size >= BATCH) flush()
                                 onProgress(checked, todo.size)
                             }
                         }
@@ -241,7 +287,7 @@ class BetRecheck(
         } finally {
             withContext(NonCancellable) { lock.withLock { flush() } }
         }
-        return Tally(checked, updated, failed, stopped.get(), updatedIds)
+        return Tally(checked, updated, failed, stopped.get(), updatedIds, viaBackup, noAnswer, cnoAsked, cnoDown.get())
     }
 
     /** One pass over every open bet. Runs one pass at a time; a second caller waits for it. [onProgress] gets (read so far, to read). */
@@ -252,7 +298,8 @@ class BetRecheck(
             open = p.open, checked = t.checked, updated = t.updated, current = p.current, failed = t.failed,
             skipped = p.todo.size - t.checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = t.stopped,
             started = p.started, unreadIds = p.todo.map { it.id }.filter { it !in t.updatedIds },
-            cnoTried = p.todo.size, cnoFailed = t.failed, cnoSkipped = p.todo.size - t.checked,
+            cnoTried = p.todo.size, cnoFailed = t.failed, cnoSkipped = p.todo.size - t.cnoAsked,
+            viaBackup = t.viaBackup, cnoNoAnswer = t.noAnswer, cnoStopped = t.cnoStopped,
         )
     }
 
@@ -291,22 +338,54 @@ class BetRecheck(
      */
     suspend fun checkOne(id: String): Boolean {
         val bet = tracker.all().firstOrNull { it.id == id && it.status == BetStatus.PENDING && it.gameUrl != null } ?: return false
-        if (paused()) return false
-        val update = read(bet) ?: return false
-        tracker.editMany(mapOf(id to update))
+        val outcome = read(bet, askCno = !paused())
+        if (outcome !is Outcome.Updated) return false
+        tracker.editMany(mapOf(id to outcome.change))
         return true
     }
 
-    /** [bet]'s books read now and turned into what to change on it, or null when the page couldn't be read or has no two-sided book. */
-    private suspend fun read(bet: TrackedBet): ((TrackedBet) -> TrackedBet)? {
+    /**
+     * [bet]'s books read now ([askCno]: CNO's game page first) and turned into what to change on it. CNO not answering, or answering
+     * without the bet at its line (a line that moved, a prop pulled), goes to [backup]; each miss says why.
+     */
+    private suspend fun read(bet: TrackedBet, askCno: Boolean): Outcome {
         val row = rowOf(bet)
-        val view = try {
-            books(row)
+        var cnoAnswered: Boolean? = null
+        var cnoMiss: String? = null
+        if (askCno) {
+            val view = try {
+                books(row).also { cnoAnswered = true }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                cnoAnswered = false
+                null
+            }
+            val change = view?.let { changeFor(bet, row, it, BetTracker.VIA_CNO) }
+            if (change != null) return Outcome.Updated(change, viaBackup = false, cnoAnswered = cnoAnswered)
+            cnoMiss = when {
+                cnoAnswered == false -> "CrazyNinjaOdds didn't answer"
+                view == null -> "CrazyNinjaOdds' game page doesn't list this bet at your line now"
+                else -> "No book on CrazyNinjaOdds' page prices both sides of this bet now"
+            }
+        } else {
+            cnoMiss = "CrazyNinjaOdds had stopped answering"
+        }
+        val b = backup ?: return Outcome.Failed(cnoMiss, cnoAnswered)
+        val other = try {
+            b(bet)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             null
-        } ?: return null
+        }
+        val change = other?.let { changeFor(bet, row, it, BetTracker.VIA_PARLAY) }
+        return if (change != null) Outcome.Updated(change, viaBackup = true, cnoAnswered = cnoAnswered)
+        else Outcome.Failed("$cnoMiss, and ParlayAPI's books don't price it at your line", cnoAnswered)
+    }
+
+    /** What [view] (every book's price for [bet], from [via]) changes on it, or null when no book prices both sides. */
+    private fun changeFor(bet: TrackedBet, row: CnoRow, view: CnoBooksView, via: String): ((TrackedBet) -> TrackedBet)? {
         val check = CnoBooks.check(view, row, preferListOdds = true)
         val fair = check.fairProbability ?: return null
         val now = clock()
@@ -321,7 +400,7 @@ class BetRecheck(
                 val closing = now < b.startsTs
                 b.copy(
                     nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowBooks = check.twoSided,
-                    nowVia = BetTracker.VIA_CNO, nowNote = null, nowNoteAtMs = null,
+                    nowVia = via, nowNote = null, nowNoteAtMs = null,
                     closingFair = if (closing) fair else b.closingFair,
                     closingSeenAtMs = if (closing) now else b.closingSeenAtMs,
                     books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: b.nowAmerican,
