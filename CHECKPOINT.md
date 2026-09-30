@@ -1,21 +1,23 @@
-# CHECKPOINT 2143 — read me first, then TASKS.md
+# CHECKPOINT 2144 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T02:26:11Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `c5b40f47` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T02:35:50Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `22569efe` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle's closing lines for CLV (back 7 days, checked first), a whole league's player props from Pinnacle, DraftKings, FanDuel, Caesars, Bovada and ProphetX in one 3-credit call, alternate spreads and totals, paced to a day's share (auto-scan half of it; 300 kept for closes; a free key only for closes), falling back to the other feeds when off, spent or gone (versionCode 55, v0.27.0)
+v0.27.0 (code 55) released and recorded (CI 36659840921 + release.yml 36660165667 green); F1-F4 and G1-G6 all ticked
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.27.0), then run: bash tools/record-release.sh v0.27.0 55 "v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle's closing lines for CLV (back 7 days, checked first), a whole league's player props from Pinnacle, DraftKings, FanDuel, Caesars, Bovada and ProphetX in one 3-credit call, alternate spreads and totals, paced to a day's share (auto-scan half of it; 300 kept for closes; a free key only for closes), falling back to the other feeds when off, spent or gone"
+Nothing open from Tj's 2026-09-30 requests. When Tj adds his ParlayAPI Starter key: check Diagnostics (ParlayAPI close calls, sources held back) and the ParlayAPI meter line after a day of use; verify /props row shape on the real API (ParlayProps.parse assumes event_id/home_team/away_team/commence_time/player/market_key/line/over_price/under_price/age_seconds per the OpenAPI text)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  07ce7847 ckpt 2143: pre-release: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle'
   c5b40f47 ckpt 2142: pre-ship: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle's c
   2e0a6863 ckpt 2141: Full test findings #2-#3 fixed: CLV card copy now names Pinnacle's ParlayAPI
   ebc4a263 ckpt 2140: Full test finding #1 fixed: background auto-scans could spend ParlayAPI's wh
@@ -25,5 +27,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   90b0a29f ckpt 2136: G1/G2 code in, compiling: CreditPace (day's share, unused carries over, 300 
   db89f8d6 ckpt 2135: F2 mid-change finished: one ParlayAPI KeyPool shared by scans + closes (Vigi
   e23ad8a5 ckpt 2134: Recorded Tj's 01:42Z request as G1-G6 (use ParlayAPI Starter fully, prioriti
-  21f454a8 ckpt 2133: MID-CHANGE (not yet compiled): KeyPool.execute(reserve) + OddsFeed.reserve (
 ```
