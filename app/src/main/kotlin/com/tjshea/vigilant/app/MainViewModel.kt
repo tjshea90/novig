@@ -148,6 +148,8 @@ data class UiState(
      * item's key ([com.tjshea.vigilant.data.reference.InjuryTags]: a +EV bet's own key, "cno:<row key>", "bet:<id>").
      */
     val injuries: Map<String, com.tjshea.vigilant.data.reference.Injury> = emptyMap(),
+    /** ParlayAPI's own usage log, day by day, and where the credits went (Settings › API usage; PARLAY_API.md §6.2). */
+    val parlayHistory: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null,
     /** CNO is being kept current right now: its tab or a widget is on screen. */
     val cnoLive: Boolean = false,
     /** CNO bets' Novig links by [com.tjshea.vigilant.data.cno.CnoFeed.linkKey] (a bet both scanners list is shown once). */
@@ -417,6 +419,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.flowOn(Dispatchers.Default).collect { t -> _state.update { if (it.teams == t) it else it.copy(teams = t) } }
         }
         viewModelScope.launch { keepInjuryTags() }
+        viewModelScope.launch { c.parlayAccount.history.collect { h -> _state.update { it.copy(parlayHistory = h) } } }
         // Nothing of CNO's is read before the settings say whether scanning is paused, or while it is
         // (Tj, 2026-09-28: "pause all scanning"). Before the watch below starts, so it starts held.
         viewModelScope.launch {
@@ -907,10 +910,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (provider == ApiProvider.PARLAY) refreshBalances(force = true)
     }
 
-    /** ParlayAPI's keys asked what they have left (free), so the meters show the provider's own figures (Tj, 2026-09-30). */
-    fun refreshBalances(force: Boolean = false) {
+    /**
+     * ParlayAPI's keys asked what they have left (free), so the meters show the provider's own figures (Tj, 2026-09-30); with [history]
+     * (Settings › API usage on screen) its day-by-day usage log too, for the chart under its meter (free, at most once a minute).
+     */
+    fun refreshBalances(force: Boolean = false, history: Boolean = false) {
         if (keysFor(ApiProvider.PARLAY).isEmpty()) return
-        viewModelScope.launch(Dispatchers.IO) { runCatching { c.parlayAccount.refresh(force) } }
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { c.parlayAccount.refresh(force) }
+            if (history) runCatching { c.parlayAccount.refreshHistory(force) }
+        }
     }
 
     fun removeKey(provider: ApiProvider, key: String) = setKeys(provider, keysFor(provider) - key)
