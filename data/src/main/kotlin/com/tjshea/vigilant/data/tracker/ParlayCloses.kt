@@ -1,6 +1,9 @@
 package com.tjshea.vigilant.data.tracker
 
 import com.tjshea.vigilant.data.awaitText
+import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
+import com.tjshea.vigilant.data.keys.KeyAttemptResult
+import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigText
@@ -26,11 +29,12 @@ import kotlin.math.abs
  * key: player props from its daily closing-lines file (`/v1/historical/closing-lines.json?date=&sport_key=&source=pinnacle`, 1 credit per 1,000
  * rows) and game lines from `/v1/sports/{sport}/closing-lines?bookmakers=pinnacle&daysFrom=` (5 credits a league), each the book's last price
  * before the start, devigged across its two sides. What a key's plan can reach back to is its own (free 48 hours, $5 a week, $20 a month); a
- * league-day's answers are kept for [KEEP_MS], so the 3-hourly look doesn't buy them twice.
+ * league-day's answers are kept for [KEEP_MS], so the 3-hourly look doesn't buy them twice. Calls go through the same [KeyPool] as ParlayAPI's
+ * scans (metered, key 1 first, a spent key skipped), and scans leave each key's last credits to these ([OddsFeed.PARLAY]'s reserve).
  */
 class ParlayCloses(
     private val http: OkHttpClient,
-    private val keys: () -> List<String>,
+    private val pool: KeyPool,
     private val json: Json = Json { ignoreUnknownKeys = true },
     private val base: String = "https://parlay-api.com/v1",
     private val clock: () -> Long = System::currentTimeMillis,
@@ -46,10 +50,10 @@ class ParlayCloses(
     private val kept = HashMap<String, Kept>()
 
     /** Asked only when Tj has a ParlayAPI key. */
-    override val active: Boolean get() = keys().isNotEmpty()
+    override val active: Boolean get() = pool.keyCount() > 0
 
     override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> {
-        val key = keys().firstOrNull() ?: return emptyMap()
+        if (!active) return emptyMap()
         val out = HashMap<String, CloseLookup>()
         for (b in bets) {
             val sport = sportKeyOf(b)
@@ -59,8 +63,8 @@ class ParlayCloses(
             }
             val pick = BetGrader.pickOf(b)
             out[b.id] = when {
-                pick is BetGrader.Pick.Prop -> prop(b, pick, sport, key)
-                EspnCloses.gameLine(pick) -> gameLine(b, pick!!, sport, key)
+                pick is BetGrader.Pick.Prop -> prop(b, pick, sport)
+                EspnCloses.gameLine(pick) -> gameLine(b, pick!!, sport)
                 else -> CloseLookup.None("ParlayAPI keeps full-game lines and player props")
             }
         }
@@ -69,7 +73,7 @@ class ParlayCloses(
 
     // ---- props ------------------------------------------------------------------------------------------------------
 
-    private suspend fun prop(b: TrackedBet, pick: BetGrader.Pick.Prop, sport: String, key: String): CloseLookup {
+    private suspend fun prop(b: TrackedBet, pick: BetGrader.Pick.Prop, sport: String): CloseLookup {
         val markets = PropStats.oddsApiMarketsFor(sport, pick.stat)
         if (markets.isEmpty()) return CloseLookup.None("ParlayAPI has no ${PropStats.displayName(pick.stat).lowercase()} closes")
         // One file per UTC day; an evening game in the US can sit under either its UTC date or its US date.
@@ -77,7 +81,7 @@ class ParlayCloses(
         val dates = listOf(start.atZone(ZoneOffset.UTC).toLocalDate(), start.atZone(US_EAST).toLocalDate()).distinct()
         var last: CloseLookup = CloseLookup.Later("ParlayAPI didn't answer")
         for (date in dates) {
-            val root = get("/historical/closing-lines.json", listOf("date" to date.toString(), "sport_key" to sport, "source" to "pinnacle", "limit" to "10000"), key)
+            val root = get("/historical/closing-lines.json", listOf("date" to date.toString(), "sport_key" to sport, "source" to "pinnacle", "limit" to "10000"), cost = 1)
                 ?: return CloseLookup.Later("ParlayAPI didn't answer")
             last = parseProp(root, pick, markets, b.startsTs)
             if (last is CloseLookup.Found) return last
@@ -87,31 +91,47 @@ class ParlayCloses(
 
     // ---- game lines -------------------------------------------------------------------------------------------------
 
-    private suspend fun gameLine(b: TrackedBet, pick: BetGrader.Pick, sport: String, key: String): CloseLookup {
+    private suspend fun gameLine(b: TrackedBet, pick: BetGrader.Pick, sport: String): CloseLookup {
         // Their API takes 1..30 days back; a game longer ago than that is past what a game-line call can reach.
         val back = (clock() - b.startsTs) / 86_400_000L + 1
         if (back > MAX_DAYS) return CloseLookup.None("Older than ParlayAPI's $MAX_DAYS-day closing-lines window")
         val days = back.coerceIn(1, MAX_DAYS.toLong())
-        val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to days.toString(), "oddsFormat" to "american"), key)
+        val root = get("/sports/$sport/closing-lines", listOf("bookmakers" to "pinnacle", "daysFrom" to days.toString(), "oddsFormat" to "american"), cost = 5)
             ?: return CloseLookup.Later("ParlayAPI didn't answer")
         return parseGameLine(root, b, pick)
     }
 
-    private suspend fun get(path: String, params: List<Pair<String, String>>, key: String): JsonElement? {
+    /** [cost]: what the call is expected to cost (the server's own figure is recorded when it sends one). Null: ask again later. */
+    private suspend fun get(path: String, params: List<Pair<String, String>>, cost: Int): JsonElement? {
         val cacheKey = path + params
         kept[cacheKey]?.takeIf { clock() - it.atMs < KEEP_MS }?.let { return it.value }
-        val url = (base + path).toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.addQueryParameter("apiKey", key).build()
-        requests++
         val value = try {
-            val reply = http.newCall(Request.Builder().url(url).get().build()).awaitText()
-            when {
-                reply.isSuccessful -> runCatching { json.parseToJsonElement(reply.body) }.getOrNull()
-                // Past the plan's history window, or no such sport: an answer (nothing to find), not a failure. Out of credits or a
-                // refused key is a failure: asked again later.
-                reply.code == 404 || (reply.code == 403 && reply.body.contains("HISTORICAL_LIMIT", ignoreCase = true)) -> JsonArray(emptyList())
-                else -> null
+            pool.execute(cost) { key ->
+                val url = (base + path).toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.addQueryParameter("apiKey", key).build()
+                requests++
+                val reply = http.newCall(Request.Builder().url(url).get().build()).awaitText()
+                val remaining = reply.headers["x-requests-remaining"]?.toDoubleOrNull()?.toInt()
+                val used = reply.headers["x-requests-used"]?.toDoubleOrNull()?.toInt()
+                val charged = (reply.headers["x-requests-last"] ?: reply.headers["X-Export-Credits"])?.toDoubleOrNull()?.toInt()
+                val body = reply.body
+                when {
+                    reply.isSuccessful -> KeyAttemptResult.Success(json.parseToJsonElement(body), charged, remaining, used)
+                    // Past the plan's history window, or no such sport: an answer (nothing to find), not a failure.
+                    reply.code == 404 || (reply.code == 403 && body.contains("HISTORICAL_LIMIT", ignoreCase = true)) ->
+                        KeyAttemptResult.Success(JsonArray(emptyList()), charged ?: 0, remaining, used)
+                    reply.code == 429 -> KeyAttemptResult.RateLimited(reply.headers["Retry-After"]?.toLongOrNull()?.times(1000) ?: 2_000, "HTTP 429")
+                    (reply.code == 401 || reply.code == 403) &&
+                        (body.contains("credit_limit_exceeded") || body.contains("quota", ignoreCase = true) || body.contains("OUT_OF_USAGE_CREDITS")) ->
+                        KeyAttemptResult.Depleted("monthly credits used up")
+                    reply.code == 401 || reply.code == 403 -> KeyAttemptResult.Invalid("HTTP ${reply.code}")
+                    else -> throw IOException("HTTP ${reply.code}")
+                }
             }
         } catch (e: IOException) {
+            null
+        } catch (e: AllKeysExhaustedException) {
+            null
+        } catch (e: kotlinx.serialization.SerializationException) {
             null
         }
         if (value != null) kept[cacheKey] = Kept(clock(), value)
