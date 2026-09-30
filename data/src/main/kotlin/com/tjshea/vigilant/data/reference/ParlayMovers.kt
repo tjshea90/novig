@@ -184,7 +184,7 @@ object LineMoves {
                 ((same(sides[0], mv.away) && same(sides[1], mv.home)) || (same(sides[0], mv.home) && same(sides[1], mv.away)))
         } ?: return null
         // The side bet may be an abbreviation ("DAL +3.5"): the matcher that names Novig's outcomes decides.
-        val away = TeamMatcher.labelIsAway(team, mover.away, mover.home) ?: return null
+        val away = TeamMatcher.labelIsAway(teamOf(team), mover.away, mover.home) ?: return null
         return if (!away) LineMove(mover.home, mover.homePp, mover.homeFirst, mover.homeLast, board.windowMinutes)
         else LineMove(mover.away, mover.awayPp, mover.awayFirst, mover.awayLast, board.windowMinutes)
     }
