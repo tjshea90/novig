@@ -204,7 +204,13 @@ class ParlayPicksTest {
     fun `P4 tapping a pick opens its sheet with every book's odds, ParlayAPI's books when CNO doesn't list it`() {
         val base = state()
         val h = happ(base)
-        val s = base.copy(parlayPicks = base.parlayPicks.copy(books = mapOf(h.key to CnoBooksState(view = books(h.row.bet, now - 10_000L)))))
+        val s = base.copy(
+            parlayPicks = base.parlayPicks.copy(
+                books = mapOf(h.key to CnoBooksState(view = books(h.row.bet, now - 10_000L))),
+                bookSources = mapOf(h.key to listOf("ParlayAPI", "PropLine")),
+                olderBooks = mapOf(h.key to listOf(com.tjshea.vigilant.data.reference.OtherBooks.Line("hardrockbet", 575, -950, "ParlayAPI", now - 45 * 60_000L))),
+            ),
+        )
         val loads = ArrayList<Pair<String, Boolean>>()
         screen(s, ParlayPickActions(onLoadBooks = { p, force -> loads += p.row.bet to force }))
         compose.onNodeWithText("Ian Happ Over 0.5").performClick()
@@ -215,7 +221,12 @@ class ParlayPicksTest {
         compose.onNodeWithText("Pinnacle").assertExists()
         compose.onNodeWithText("DraftKings").assertExists()
         compose.onNodeWithText("This bet").assertExists()
-        compose.onNodeWithText("Books read 10s ago from ParlayAPI's books").assertExists()
+        compose.onNodeWithText("Books read 10s ago from ParlayAPI + PropLine").assertExists()
+        // Novig's price now is the judged row (not an older Novig price from a source), as on CNO's page.
+        compose.onNodeWithText("Novig").assertExists()
+        // A book whose last price is 45 minutes old is listed apart with its age, never counted (Q2).
+        compose.onNodeWithTag("olderBooks").assertExists()
+        compose.onNodeWithText("Hard Rock  +575 / -950 · 45m ago · ParlayAPI").assertExists()
         compose.onNode(hasTestTag("pickEv-Books")).assertExists()
         compose.onNodeWithTag("openInSheet").assertExists()
         compose.onNodeWithText("Re-read books").performClick()
