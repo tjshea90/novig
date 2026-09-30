@@ -34,8 +34,10 @@ data class SourceReport(
     /** Novig games it matched. */
     val matched: Int,
     val error: String?,
-    /** Leagues a fallback source wasn't asked for: the API it backs up had already given them (RESEARCH.md §23). */
+    /** Leagues a fallback source wasn't asked for (the API it backs up had already given them, RESEARCH.md §23), or whose credits are paced. */
     val standingBy: Int = 0,
+    /** Why a paced source held back this scan ([com.tjshea.vigilant.data.keys.CreditsHeldBackException]), for Diagnostics. */
+    val heldBack: String? = null,
 )
 
 /** What a [Scanner.recheck] read: [read] books refreshed, [failed] not (shown as they were). */
