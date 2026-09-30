@@ -2778,3 +2778,8 @@ For the 10:43Z auto scheduled Claude session, before the full tests, add (simply
 
 Make it so I'm the parlayapi pick section, if I click on a bet, it opens a screen that shows other sports books odds on the same bet, exactly how other sections of this app such as cno scanner do it
 ```
+
+## 2026-09-30T14:34:23Z
+```
+When I'm using the parlayapi picks section and I click on a bet to see the current odds from different sports books, most of the time it says parlayapi couldn't find other sports books with this bet. Is there a backup fall back provider or api that can be used so that I always see other sports books odds for any bet when I click on it
+```
