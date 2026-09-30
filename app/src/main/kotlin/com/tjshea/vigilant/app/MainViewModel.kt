@@ -1072,6 +1072,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             lastScan = c.lastScanCost,
             lastCheck = c.lastCheckCost,
             closingAlarmAtMs = ClosingAlarm.nextAtMs,
+            backfill = c.lastBackfill,
+            novigTradeBytes = c.novigCloses.bytesRead,
         )
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it, extras, System.currentTimeMillis()))) }
     }

@@ -37,6 +37,9 @@ object Diagnostics {
         val lastCheck: RoundCost? = null,
         /** When the closing capture's alarm is armed for ([ClosingAlarm]), as this process set it. */
         val closingAlarmAtMs: Long? = null,
+        /** The last look for closes after the start ([com.tjshea.vigilant.data.tracker.CloseBackfill]) and the bytes Novig's trade files cost. */
+        val backfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null,
+        val novigTradeBytes: Long = 0,
     )
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
@@ -156,6 +159,16 @@ object Diagnostics {
         o.appendLine("Closing line value (all time): ${TrackerText.clvLine(clv)} · ${TrackerText.clvCounts(clv)}")
         o.appendLine("Next closing-line read: " + (com.tjshea.vigilant.data.tracker.ClosingLine.nextAt(bets, now)?.let { at(it) } ?: "none needed") +
             " · alarm " + (x.closingAlarmAtMs?.let { at(it) } ?: "not set in this process"))
+        // Closes found after the start (Tj, 2026-09-30: ESPN's closing odds, Novig's trade history).
+        o.appendLine(
+            "Closes found after the start: " + (x.backfill?.let { r -> "last look ${r.looked} bet${if (r.looked == 1) "" else "s"}, found ${r.found}" + (r.bySource.takeIf { it.isNotEmpty() }?.entries?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: "") } ?: "none looked for since the app opened") +
+                " · Novig trade data read ${x.novigTradeBytes / 1024} KB",
+        )
+        val stillLooking = bets.filter { now >= it.startsTs && !it.closeFinal && com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(it, now) == null && it.status != BetStatus.VOID && it.createdAtMs < it.startsTs }
+        if (stillLooking.isNotEmpty()) {
+            o.appendLine("  still looking for ${stillLooking.size} close${if (stillLooking.size == 1) "" else "s"}:")
+            stillLooking.groupingBy { it.closeNote ?: "not looked for yet" }.eachCount().entries.sortedByDescending { it.value }.take(5).forEach { o.appendLine("    ×${it.value}: ${it.key}") }
+        }
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
         return o.toString().trimEnd()
     }
