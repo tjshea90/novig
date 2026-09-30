@@ -3026,3 +3026,9 @@ Build free ones first; checkpoint after each box; ship as one release (v0.30.0) 
   DONE W1-W3 (RESEARCH.md §47): Diagnostics' false alarms fixed (busy source = WARN/OK, backup source matched nothing = OK, spent key with another = OK and worded right, Novig throttles judged by share and recency, imported ✓ marks out of close coverage and their note fixed); round cost from `KeyUsage.charged` (the "600 credits a scan" was the month's count landing in one round); per-scanner CLV health checks; CLV averages say their n; matching by league with unmatched names; each scanner by market; bets keep `FairBasis` (what made their fair odds) and Diagnostics splits CLV by it; Vigilant's bets against the close listed one by one. Why Vigilant loses to the close can't be proven from this report (bets didn't record their fair's books until now); recommendation to Tj in §47. Tests: DiagnosticsTest (4 new), RunwayTest (charged), BetTrackerTest (fair basis), ParlayClosesTest (import note).
 - [ ] W5 (offered, not built) Tennis from ParlayAPI's tour keys (`tennis_atp`/`tennis_wta`, 3 credits a tour): handle Pinnacle's set lines vs the books' game lines per book before it can price anything (RESEARCH.md §47).
 - [x] W4 Tests; ship; send Tj the link. DONE: v0.36.0 (code 64) released 2026-09-30 ~22:01Z, CI green, recorded.
+
+## Tj's crash report 2026-09-30 ~22:10Z (raw text in INBOX.md): "The app just crashed a couple times. Both times it was scanning vigilant and I tried to switch tabs, which got very laggy then crashed"
+
+- [ ] X1 Find why switching tabs during a Vigilant scan gets laggy and then crashes (main-thread work per streamed result, memory held per scan, what a tab builds on first show) and fix it. Tests.
+- [ ] X2 Make the next crash say why by itself: keep Android's own record of how the app last ended (crash with its stack, not responding, out of memory) and the stack of any crash the app sees, in Diagnostics. Tests.
+- [ ] X3 Ship, send Tj the link.
