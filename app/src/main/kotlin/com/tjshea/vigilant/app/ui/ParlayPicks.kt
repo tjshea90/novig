@@ -371,6 +371,7 @@ fun ParlayPickSheet(
  * how other sections of this app such as cno scanner do it"): the three EVs at Novig's price now, every book's odds for the bet and its other
  * side with Vigilant's worst-case verdict on them (CNO's game page when CNO lists the bet, else ParlayAPI's own books), and Bet / Open / placed.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun ParlayPickDetail(
     p: ParlayPick,
