@@ -29,6 +29,8 @@ data class BetTarget(
     val book: String = "Novig",
     val gameUrl: String? = null,
     val betUrl: String? = null,
+    /** How [fair] was made, kept on the bet when it's placed ([com.tjshea.vigilant.data.tracker.FairBasis]). */
+    val basis: com.tjshea.vigilant.data.tracker.FairBasis? = null,
 )
 
 /** The limits Tj sets in Settings, all in dollars except [minEv]. */

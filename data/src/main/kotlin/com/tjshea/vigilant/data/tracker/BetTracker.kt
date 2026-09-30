@@ -136,6 +136,8 @@ data class TrackedBet(
     val fee: Double? = null,
     /** Novig's ids for the fills, one of which (or the market's) a ledger row may name as what it settles. */
     val fillIds: List<String> = emptyList(),
+    /** How the fair odds behind [fairAtBet] were made ([FairBasis]); null for a bet logged before v0.36.0. */
+    val fairBasis: FairBasis? = null,
 ) {
     /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
     val viaApi: Boolean get() = orderId != null
@@ -459,6 +461,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             placedKey = placedKey,
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
             book = ownBook,
+            fairBasis = FairBasis.of(o),
         )
         store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet }
         return bet
@@ -511,6 +514,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             paid = paid,
             fee = fee,
             fillIds = fills.map { it.fillId },
+            fairBasis = target.basis.takeUnless { imported },
             gradeNote = "Placed through Novig's API: ${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
         )
         var logged: TrackedBet = bet
@@ -793,6 +797,32 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 expectedSd = kotlin.math.sqrt(variance),
                 profitAll = all.filter(decided).sumOf { it.profit ?: 0.0 },
             )
+        }
+    }
+}
+
+/**
+ * What a bet's fair odds were made of when it was placed (Tj's diagnostics 2026-09-30: Vigilant's own bets lose to the close while CNO's beat
+ * it, and nothing said which fair odds were to blame): the method ("SHARP", "BLEND", "MARKET_AVERAGE" for Vigilant's own; "CNO" or
+ * "ParlayAPI" for a list's), the sharp books in it, and how many books in all. Diagnostics splits closing-line value by it.
+ */
+@kotlinx.serialization.Serializable
+data class FairBasis(val source: String, val sharp: List<String> = emptyList(), val books: Int = 0) {
+    /** A short group name: "Pinnacle-anchored", "exchange only (Kalshi)", "books' average", "CNO". */
+    val group: String get() = when {
+        source == SOURCE_CNO || source == SOURCE_PARLAY -> source
+        "pinnacle" in sharp -> "Pinnacle in the fair"
+        sharp.isNotEmpty() -> "exchange sharp only (${sharp.joinToString("+") { com.tjshea.vigilant.data.reference.TheOddsApiClient.bookTitle(it) }})"
+        else -> "books' average only"
+    } + (if (books == 1) ", one book" else "")
+
+    companion object {
+        const val SOURCE_CNO = "CNO"
+        const val SOURCE_PARLAY = "ParlayAPI"
+
+        /** [o]'s fair line as it was when bet; null when it has none. */
+        fun of(o: com.tjshea.vigilant.data.scanner.Opportunity): FairBasis? = o.fair?.let { f ->
+            FairBasis(f.sourceUsed.name, f.sharpBooksUsed.distinct(), f.booksUsed.size)
         }
     }
 }
