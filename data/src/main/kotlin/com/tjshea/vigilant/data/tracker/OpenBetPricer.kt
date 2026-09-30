@@ -21,9 +21,18 @@ import kotlinx.coroutines.withContext
  */
 object BetsScope {
 
-    /** Open bets a pass can ask about: pregame, with the Novig market and outcome that were bet. */
+    /**
+     * Open bets a pass can ask about: with the Novig market and outcome that were bet, still to start or under way (up to [LIVE_WINDOW_MS] after
+     * the start, as CNO's pages are read: Tj, 2026-09-30: "every single open bet refreshed regardless of what scanner found the bet").
+     */
     fun priceable(bets: List<TrackedBet>, now: Long): List<TrackedBet> =
-        bets.filter { it.status == BetStatus.PENDING && it.startsTs > now && it.marketId.isNotBlank() && it.outcomeId.isNotBlank() }
+        bets.filter { it.status == BetStatus.PENDING && readable(it, now) && it.marketId.isNotBlank() && it.outcomeId.isNotBlank() }
+
+    /** A game still to start, or under way for less than [LIVE_WINDOW_MS]: its odds can still be read. */
+    fun readable(bet: TrackedBet, now: Long): Boolean = now - bet.startsTs < LIVE_WINDOW_MS
+
+    /** How long after its start a game's odds are still read (as CNO's pages are: [BetRecheck.STALE_AFTER_START_MS]). */
+    const val LIVE_WINDOW_MS = BetRecheck.STALE_AFTER_START_MS
 
     /**
      * The market families [bets] are on, and so all a pass has to ask the fair-odds sources for (Tj's Diagnostics, 2026-09-29: a Check odds now
@@ -51,7 +60,7 @@ object BetsScope {
 
     /**
      * [base] widened to cover [bets]: their leagues and the market families they are on ([familiesFor]), a window reaching past the last game (a
-     * day of slack: Novig's start can differ from the one a bet was logged with), no per-game caps and no live games. Everything else (which
+     * day of slack: Novig's start can differ from the one a bet was logged with), no per-game caps, and live games only when a bet's is under way. Everything else (which
      * sources are on, the reference books, how fair odds are worked out, their credits) is Tj's, so the fair line is the one the feed uses.
      */
     fun settingsFor(base: ScanSettings, bets: List<TrackedBet>, now: Long): ScanSettings {
@@ -61,7 +70,8 @@ object BetsScope {
         return base.copy(
             leagues = leagues,
             families = familiesFor(bets),
-            includeLive = false,
+            // A game under way is priced from live odds (Novig's taker fee is already in what each bet cost).
+            includeLive = bets.any { it.startsTs <= now },
             daysAhead = days,
             startsWithinHours = 0,
             bookPropHours = ScanSettings.NO_LIMIT,
@@ -132,7 +142,7 @@ class OpenBetPricer(
         if (!settings.vigilantOn) return@withLock Report(0, 0, 0)
         val now = clock()
         val wanted = ids.toHashSet()
-        val open = tracker.all().filter { it.id in wanted && it.status == BetStatus.PENDING && it.startsTs > now }
+        val open = tracker.all().filter { it.id in wanted && it.status == BetStatus.PENDING && BetsScope.readable(it, now) }
         if (open.isEmpty()) return@withLock Report(0, 0, 0)
         val askable = BetsScope.priceable(open, now).filter { Leagues.byNovigName(it.league) != null }
         val reasons = HashMap<String, String>()

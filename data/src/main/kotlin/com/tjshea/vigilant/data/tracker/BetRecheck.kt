@@ -352,6 +352,40 @@ class BetRecheck(
     }
 
     /**
+     * Every book's price for open bets with no CNO page (Vigilant's own, ParlayAPI's picks, fills synced from Novig; Tj 2026-09-30: "every
+     * single open bet refreshed regardless of what scanner found the bet"): the backup's read ([ParlayBooks]: ParlayAPI's books judged with
+     * CNO's own check), beside Vigilant's own fair odds ([BetTracker.mergeReads] combines the two), games under way too (up to
+     * [STALE_AFTER_START_MS] after the start). Doesn't wait for a [run] (CNO's pages are another source). Returns the ids read; none without a backup.
+     */
+    suspend fun readWithoutPage(ids: Collection<String>, onProgress: (done: Int, total: Int) -> Unit = { _, _ -> }): Set<String> {
+        val b = backup ?: return emptySet()
+        val now = clock()
+        val wanted = ids.toHashSet()
+        val todo = tracker.all()
+            .filter { it.id in wanted && it.status == BetStatus.PENDING && it.gameUrl == null && now - it.startsTs < STALE_AFTER_START_MS }
+            .sortedBy { it.startsTs }
+        if (todo.isEmpty()) return emptySet()
+        val changes = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
+        try {
+            todo.forEachIndexed { i, bet ->
+                val view = try {
+                    b(bet)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                view?.let { changeFor(bet, rowOf(bet), it, BetTracker.VIA_PARLAY) }?.let { changes[bet.id] = it }
+                onProgress(i + 1, todo.size)
+            }
+        } finally {
+            // A cancelled pass still saves what it has read.
+            withContext(NonCancellable) { if (changes.isNotEmpty()) tracker.editMany(changes) }
+        }
+        return changes.keys.toSet()
+    }
+
+    /**
      * Re-reads one bet's books now, whatever else runs or was read a minute ago (the sheet's "Re-read books"); false when it couldn't
      * be read. It never waits for a whole [run] (minutes): CNO's own one-read-at-a-time queue is all it waits behind.
      */

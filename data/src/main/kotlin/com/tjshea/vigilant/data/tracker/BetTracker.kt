@@ -604,7 +604,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             priced = 0
             unpriced = 0
             list.map { b ->
-                if (b.id !in ids || b.status != BetStatus.PENDING || now >= b.startsTs) return@map b
+                if (b.id !in ids || b.status != BetStatus.PENDING || !BetsScope.readable(b, now)) return@map b
                 val o = byKey[b.marketId to b.outcomeId]
                 when {
                     o != null -> { priced++; applyFair(b, o, now, VIA_VIGILANT, alongside) }
@@ -629,14 +629,19 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
         val novigNow = o.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican
         if (alongside) {
-            val keepBooks = b.books.isNotEmpty() || lines.isEmpty()
+            // The book list CNO's page (or its backup) wrote in this same check stays; an older one gives way to this read's (Tj, 2026-09-30:
+            // "all the vigilant results show stale odds").
+            val keepBooks = lines.isEmpty() || b.booksAtMs?.let { now - it < BetRecheck.FRESH_MS } == true
             return b.copy(
                 vigFair = fair, vigAtMs = now, vigBooks = twoSided ?: b.vigBooks, nowAmerican = novigNow,
                 books = if (keepBooks) b.books else lines, booksAtMs = if (keepBooks) b.booksAtMs else now,
             )
         }
+        // A read once the game is under way is its odds now, never its close.
+        val closing = now < b.startsTs
         return b.copy(
-            closingFair = fair, closingSeenAtMs = now, nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
+            closingFair = if (closing) fair else b.closingFair, closingSeenAtMs = if (closing) now else b.closingSeenAtMs,
+            nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
             books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
             nowBooks = twoSided ?: b.nowBooks,
             vigFair = fair, vigAtMs = now, vigBooks = twoSided ?: b.vigBooks,
