@@ -37,7 +37,7 @@ class ProblemLog(private val store: JsonFileStore<ProblemBook>, private val cloc
     }
 
     /** Newest first. */
-    suspend fun recent(): List<Problem> = store.read().items.sortedByDescending { it.lastAtMs }
+    suspend fun recent(): List<Problem> = store.read().items.asReversed().sortedByDescending { it.lastAtMs }
 
     companion object {
         const val KEEP = 60
