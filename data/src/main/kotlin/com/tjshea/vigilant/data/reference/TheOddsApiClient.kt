@@ -223,7 +223,12 @@ class TheOddsApiClient(
     class Answer<T>(val value: T, val remaining: Int?, val used: Int?)
 
     /** One of ParlayAPI's other endpoints' raw reply ([parlayGet]): 2xx, 404 (nothing to find) or 503 ([busy]). */
-    class Reply(val code: Int, val body: String) {
+    class Reply(
+        val code: Int,
+        val body: String,
+        /** How long a busy answer said to wait: its Retry-After header, else the body's `retry_after_seconds` (capped at [MAX_RETRY_AFTER_MS]). */
+        val retryAfterMs: Long? = null,
+    ) {
         /** ParlayAPI's "busy, retry shortly" (/verdict's `props_temporarily_busy`, /line-movement's `LINE_MOVEMENT_TIMEOUT`). */
         val busy: Boolean get() = code == 503
         val ok: Boolean get() = code in 200..299
@@ -277,7 +282,11 @@ class TheOddsApiClient(
                             KeyAttemptResult.Invalid(reason = "HTTP ${r.code}" + errorCode(body)?.let { " $it" }.orEmpty())
                         }
                         404 -> KeyAttemptResult.Success(Answer(Reply(404, body), remaining, used), cost = credits.cost ?: 0, remaining = remaining, used = used)
-                        503 -> KeyAttemptResult.Success(Answer(Reply(503, body), remaining, used), cost = credits.cost ?: busyCost, remaining = remaining, used = used)
+                        503 -> {
+                            val wait = retryAfterMs(r.header("Retry-After"))
+                                ?: RETRY_SECONDS.find(body)?.groupValues?.get(1)?.let { retryAfterMs(it) }
+                            KeyAttemptResult.Success(Answer(Reply(503, body, wait), remaining, used), cost = credits.cost ?: busyCost, remaining = remaining, used = used)
+                        }
                         else -> {
                             if (!r.isSuccessful) throw TheOddsApiException("${feed.title} failed for $what: HTTP ${r.code} ${body.take(200)}")
                             KeyAttemptResult.Success(Answer(Reply(r.code, body), remaining, used), cost = credits.cost ?: cost, remaining = remaining, used = used, resetAtMs = credits.resetAtMs)
@@ -330,8 +339,10 @@ class TheOddsApiClient(
                     throw e
                 }
                 if (retryable && attempt == 1 && response.code in 502..504) {
+                    // ParlayAPI's best practices: a 503 with Retry-After says how long to wait; honor it (capped), else a second.
+                    val wait = retryAfterMs(response.header("Retry-After")) ?: RETRY_AFTER_MS
                     response.close()
-                    delay(RETRY_AFTER_MS)
+                    delay(wait)
                     continue
                 }
                 return@execute response.use { answer(it, what, notFound, parse, charged) }
@@ -385,6 +396,14 @@ class TheOddsApiClient(
 
         /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
         const val RETRY_AFTER_MS = 1_000L
+
+        /** The longest Retry-After honored before a retry: past it the caller gives up and says it's busy. */
+        const val MAX_RETRY_AFTER_MS = 20_000L
+
+        private val RETRY_SECONDS = Regex("\"retry_after_seconds\"\\s*:\\s*(\\d+)")
+
+        /** A Retry-After value in seconds ("15") as milliseconds, capped at [MAX_RETRY_AFTER_MS]; null when there's none or it isn't a number. */
+        fun retryAfterMs(seconds: String?): Long? = seconds?.trim()?.toDoubleOrNull()?.takeIf { it >= 0 }?.let { (it * 1000).toLong().coerceAtMost(MAX_RETRY_AFTER_MS) }
 
         private val MONTHLY_REMAINING = Regex("\"monthly_remaining\"\\s*:\\s*(\\d+)")
         private val MONTHLY_LIMIT = Regex("\"monthly_limit\"\\s*:\\s*(\\d+)")

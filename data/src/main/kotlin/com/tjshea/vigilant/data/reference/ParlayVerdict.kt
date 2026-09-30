@@ -195,7 +195,8 @@ class ParlayVerdicts(
                 return Result.Failed(readableError(e))
             }
             when {
-                reply.busy -> if (attempt == 0) delay(BUSY_WAIT_MS) else return Result.Busy
+                // As long as it asked to wait (Retry-After), else a couple of seconds; once.
+                reply.busy -> if (attempt == 0) delay(reply.retryAfterMs ?: BUSY_WAIT_MS) else return Result.Busy
                 reply.ok -> return Verdict.parse(reply.body, json)?.let { Result.Answered(it) } ?: Result.Failed("ParlayAPI's answer couldn't be read")
                 else -> return Result.Failed("ParlayAPI couldn't grade this bet (HTTP ${reply.code})")
             }
