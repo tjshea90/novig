@@ -404,7 +404,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.tracker.flow.filterNotNull().collect { bets -> _state.update { it.copy(bets = bets).indexed() } }
         }
         viewModelScope.launch {
-            c.usage.flow.collect { u -> _state.update { it.copy(usage = u) } }
+            // Every API call is counted as it happens (a scan's 1,500 Novig reads each change the meter): the screen takes the newest count
+            // at most once a second, or each read would recompose the whole app mid-scan (Tj, 2026-09-30: "very laggy then crashed").
+            followThrottled(c.usage.flow, USAGE_MIRROR_MS) { u -> _state.update { it.copy(usage = u) } }
         }
         viewModelScope.launch {
             runCatching { c.cno.load() }
@@ -1578,6 +1580,9 @@ internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan ag
 
 /** How often, at most, a running scan's newest state reaches the screen ([followThrottled]). */
 internal const val SCAN_MIRROR_MS = 350L
+
+/** How often, at most, the API usage count reaches the screen (the meters in Settings). */
+internal const val USAGE_MIRROR_MS = 1_000L
 
 /**
  * Hands [runs]' newest value to [onRun] no more often than every [everyMs]. A StateFlow keeps only its latest value while the collector
