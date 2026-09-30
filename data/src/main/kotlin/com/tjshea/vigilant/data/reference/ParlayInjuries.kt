@@ -42,6 +42,17 @@ data class Injury(
     /** The tag a card shows ("OUT", "IR", "DOUBTFUL", "QUESTIONABLE"), or null for a player who's active. */
     val tag: String? get() = tagOf(status)
 
+    /** The widget's shorter tag: "OUT", "IR", "IL", "SUSP", "D" (doubtful), "Q" (questionable), "DTD". */
+    val shortTag: String?
+        get() = when (val t = tag) {
+            null -> null
+            "SUSPENDED" -> "SUSP"
+            "DOUBTFUL" -> "D"
+            "QUESTIONABLE" -> "Q"
+            "DAY-TO-DAY" -> "DTD"
+            else -> t.take(5)
+        }
+
     /** Everything known, for the tap: "Doubtful · Right Hamstring (Strain) · back 2026-10-04 · <ESPN's note>". */
     val details: String
         get() = buildList {
