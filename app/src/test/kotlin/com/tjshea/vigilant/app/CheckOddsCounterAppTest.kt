@@ -52,7 +52,7 @@ class CheckOddsCounterAppTest {
         vm.checkOdds()
         val second = vm.state.value.checkStartedAtMs!!
         assertTrue(second > first)
-        assertEquals(CheckOddsStats.EMPTY, CheckOddsStats.of(vm.state.value.bets, second))
+        assertEquals(CheckOddsStats.EMPTY, CheckOddsStats.of(vm.state.value.bets, second, System.currentTimeMillis()))
         waitFor("the second check finishing") { !vm.state.value.checkingOdds }
 
         // The file the next process reads, and a state holder opened again.

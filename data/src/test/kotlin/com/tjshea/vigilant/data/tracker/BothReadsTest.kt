@@ -98,7 +98,7 @@ class BothReadsTest {
         assertEquals(0.40, b.cnoFair!!, 0.0)
         assertEquals(vig, b.vigFair!!, 0.0)
         // The Tracker's counter counts the averaged EV.
-        val stats = CheckOddsStats.of(t.all(), began)
+        val stats = CheckOddsStats.of(t.all(), began, now)
         assertEquals(1, stats.priced)
         assertEquals(if (avg / b.cost - 1.0 > 0) 1 else 0, stats.positive)
     }
