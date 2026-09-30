@@ -316,6 +316,10 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                     Caption(
                         if (bet.nowVia == BetTracker.VIA_VIGILANT) {
                             "Fair price worked out ${Format.age(it, now)} by Vigilant: the reference books' current odds, each devigged, then blended the way Settings › Fair odds says."
+                        } else if (bet.nowVia == BetTracker.VIA_BOTH) {
+                            "Fair price worked out ${Format.age(it, now)} two ways and averaged: CNO's books devigged worst case" +
+                                (bet.cnoFair?.let { " (${Format.american(it)})" } ?: "") + ", and Vigilant's own fair odds" +
+                                (bet.vigFair?.let { " (${Format.american(it)})" } ?: "") + ", every reference book it scans, ParlayAPI's included."
                         } else {
                             "Fair price worked out ${Format.age(it, now)}, from the books' odds devigged worst case (the lower of their average and median)."
                         },
