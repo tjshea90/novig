@@ -271,7 +271,7 @@ object Diagnostics {
      * toward the bet since it was placed is the same sign as beating the close; one that moved away says the edge wasn't there.
      */
     internal fun edgeNowLines(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): List<String> {
-        val live = bets.filter { it.status == BetStatus.PENDING && now < it.startsTs && it.evPercentAtBet != null && it.fairAtBet != null && TrackerText.currentEv(it, now) }
+        val live = bets.filter { it.status == BetStatus.PENDING && now < it.startsTs && it.evPercentAtBet != null && it.fairAtBet != null && it.nowFair != null && TrackerText.currentEv(it, now) }
         if (live.isEmpty()) return listOf("No open pregame bet has a current EV (tap Check odds now, then copy Diagnostics again).")
         fun line(label: String, group: List<com.tjshea.vigilant.data.tracker.TrackedBet>): String {
             val atBet = group.map { it.evPercentAtBet!! }.average()
