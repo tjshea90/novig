@@ -2995,6 +2995,6 @@ Build free ones first; checkpoint after each box; ship as one release (v0.30.0) 
 
 ## Tj's request 2026-09-30 ~15:01Z (raw text in INBOX.md): "Also when I press a notification and the app opens full screen, that notification should be removed"
 
-- [ ] R1 Every Vigilant notification that opens the app when tapped (+EV alerts, scan done, auto-scan's, any other) is removed once tapped and the app is open full screen; the ongoing service notes that must stay while a service runs are handled as Android requires (they can't be swiped away while running) and say so. Tests.
+- [x] R1 Every Vigilant notification that opens the app when tapped (+EV alerts, scan done, auto-scan's, any other) is removed once tapped and the app is open full screen; the ongoing service notes that must stay while a service runs are handled as Android requires (they can't be swiped away while running) and say so. Tests. DONE 2026-09-30 ~15:10Z: the +EV alert was the one that stayed (setAutoCancel(false) by design, so ✓ Placed stayed after opening Novig): now auto-cancels on tap. Scan done and auto-scan paused already did. The scan-in-progress and auto-scan-running notes are foreground-service notes Android keeps while they run. Test: AutoScanTest (a tap removes the alert).
 - [ ] R2 Ship with Q1-Q2 as one release, send Tj the link.
 
