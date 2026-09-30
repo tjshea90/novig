@@ -1384,7 +1384,8 @@ class ScreenshotTest {
 
     @Test fun trackerSaysCloseForEverySportNotJustFootball() {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, { }) }
-        compose.onNodeWithText("last fair line seen before the game started", substring = true).assertExists()
+        // The closing line is read before any game's start, whatever the sport (ClosingLine).
+        compose.onNodeWithText("devigged fair line read in the last 15 minutes before the start", substring = true).performScrollTo().assertExists()
     }
 
     /** "Open in Novig" on the CNO tab: it says it's working while the bet's link is found. */

@@ -105,7 +105,8 @@ class StickyHeadersTest {
     @Test
     fun `the Stats view keeps its period chips pinned too`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.STATS) }
-        for (pinned in listOf("Stats", "Bets", "Today", "7 days", "30 days")) compose.onNodeWithText(pinned).assertIsDisplayed()
+        // In the pinned bar (the closing-line card below has its own "Today").
+        for (pinned in listOf("Stats", "Bets", "Today", "7 days", "30 days")) inBar(pinned).assertIsDisplayed()
         compose.onAllNodes(androidx.compose.ui.test.hasScrollAction()).onFirst().performTouchScrollBy(1_500f)
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
         compose.onNodeWithText("7 days").assertIsDisplayed()
