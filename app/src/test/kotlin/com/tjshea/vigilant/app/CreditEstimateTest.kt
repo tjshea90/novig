@@ -65,8 +65,10 @@ class CreditEstimateTest {
 
     @Test
     fun `the feed names The Odds API as PropLine's backup`() {
-        val s = SampleScan.state()
+        val s = SampleScan.state().copy(parlayKeys = emptyList())
         assertEquals("Pinnacle, Polymarket, Kalshi and PropLine (The Odds API as backup)", sourceNames(s))
         assertEquals("Pinnacle, Polymarket, Kalshi and The Odds API", sourceNames(s.copy(proplineKeys = emptyList())))
+        // With a ParlayAPI key (Tj's Starter plan, 2026-09-30) it's named too.
+        assertEquals("Pinnacle, Polymarket, Kalshi, PropLine and ParlayAPI (The Odds API as backup)", sourceNames(s.copy(parlayKeys = listOf("k"))))
     }
 }
