@@ -436,6 +436,19 @@ class BetRecheckTest {
     }
 
     @Test
+    fun `a page's close is dated by when the page was read, so an old page never passes for the true close`() = runTest {
+        val t = tracker(bet("a"))
+        now = start - 5 * 60_000L
+        // A page CNO's feed read 20 minutes before the start, handed over now.
+        val old = view(-125, 105).copy(fetchedAtMs = start - 20 * 60_000L)
+        BetRecheck(t, books = { old }, clock = { now }).captureClosing(listOf("a"))
+        val a = t.all().single()
+        assertEquals(start - 20 * 60_000L, a.closingSeenAtMs)
+        assertNull(ClosingLine.clv(a, start + 1))
+        assertEquals(true, ClosingLine.needsClose(a, now))
+    }
+
+    @Test
     fun `bets with no CNO page get every book's read too (ParlayAPI's), games under way included, four hours in not`() = runTest {
         val t = tracker(
             bet("vig", gameUrl = null), bet("vigLive", gameUrl = null, startsTs = now - 30 * 60_000L),
