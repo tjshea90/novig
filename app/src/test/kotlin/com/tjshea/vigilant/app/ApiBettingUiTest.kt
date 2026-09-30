@@ -302,7 +302,7 @@ class ApiBettingUiTest {
         val before = typed.size
         compose.onNodeWithTag("betAmount").performTextClearance()
         compose.onNodeWithTag("betAmount").performTextInput("25")
-        assertEquals(before + 1, typed.size) // "2" on the way to "25"
+        assertEquals(before, typed.size)
         compose.onNodeWithText("Over your $10.00 limit per bet (Settings › Novig API › Betting)").assertExists()
         assertTrue(picked.isEmpty())
     }

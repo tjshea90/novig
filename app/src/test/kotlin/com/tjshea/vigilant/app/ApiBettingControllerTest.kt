@@ -257,7 +257,10 @@ class ApiBettingControllerTest {
         val state = MutableStateFlow(SampleScan.state().copy(betting = BettingUi(enabled = true, balance = 0.10)))
         val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
         api.bet(o)
-        waitFor("a plan") { state.value.betSheet?.plan != null }
+        // The sheet opens at the 10 cents the wallet holds (BetAmount.starting); Tj picks more than that.
+        assertEquals(0.10, state.value.betSheet!!.stake, 1e-9)
+        api.setStake(state.value.settings.apiBetStake.coerceAtLeast(1.0))
+        waitFor("a plan") { state.value.betSheet?.let { it.stakeChosen && it.plan != null } == true }
         val sheet = state.value.betSheet!!
         val cost = sheet.plan!!.expectedCost
         assertTrue("the sample bet must cost more than the wallet holds", cost > 0.10)
