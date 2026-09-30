@@ -290,6 +290,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             book = row.book,
             gameUrl = row.gameUrl,
             betUrl = row.betUrl,
+            fairBasis = FairBasis(if (source == SOURCE_PARLAY) FairBasis.SOURCE_PARLAY else FairBasis.SOURCE_CNO, books = row.books ?: 0),
         )
         store.update { list -> list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null } + bet }
         return bet
