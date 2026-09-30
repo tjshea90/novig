@@ -555,10 +555,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val s = _state.value
         val pricer = c.betPricer ?: return
         val now = System.currentTimeMillis()
-        val opportunities = s.result?.opportunities.orEmpty()
+        val index = com.tjshea.vigilant.data.reference.ParlayCompare.Index(emptyList(), s.result?.opportunities.orEmpty())
         val asks = s.parlayShown(now).filter { p ->
-            com.tjshea.vigilant.data.reference.ParlayCompare.opportunityFor(p, opportunities)
-                ?.takeIf { com.tjshea.vigilant.data.scanner.Freshness.fresh(it.fairAsOfMs, now, p.row.startsAtMs) } == null
+            index.opportunityFor(p)?.takeIf { com.tjshea.vigilant.data.scanner.Freshness.fresh(it.fairAsOfMs, now, p.row.startsAtMs) } == null
         }
         if (asks.isEmpty()) return
         vigilantFairsJob?.cancel()
