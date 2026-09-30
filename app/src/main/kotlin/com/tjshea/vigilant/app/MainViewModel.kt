@@ -1069,6 +1069,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             autoScanServiceRunning = AutoScanService.running,
             lastScan = c.lastScanCost,
             lastCheck = c.lastCheckCost,
+            closingAlarmAtMs = ClosingAlarm.nextAtMs,
         )
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it, extras, System.currentTimeMillis()))) }
     }
