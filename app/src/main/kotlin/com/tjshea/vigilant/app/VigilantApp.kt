@@ -394,10 +394,14 @@ class AppContainer(private val app: Application) {
     private val kalshi = KalshiClient(http, json, usage = usage)
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
 
+    /** ParlayAPI's degraded-mode check (free): books it says aren't keeping up don't price from it. */
+    private val parlayQuality = com.tjshea.vigilant.data.reference.ParlaySourceQuality(http, json)
+
     /** ParlayAPI: The Odds API's format at parlay-api.com (Pinnacle, ProphetX, bet365 and the US books, props too; RESEARCH.md §43). */
     val parlayOdds = TheOddsApiClient(
         http, parlayPool, json,
         baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY,
+        quality = parlayQuality,
     )
     /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
     private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds)
@@ -406,6 +410,7 @@ class AppContainer(private val app: Application) {
     private val parlayOddsBackground = TheOddsApiClient(
         http, parlayPool, json,
         baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY, background = true,
+        quality = parlayQuality,
     )
     private val parlayPropsBackground = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOddsBackground)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */

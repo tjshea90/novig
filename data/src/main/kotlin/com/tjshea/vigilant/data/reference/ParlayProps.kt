@@ -64,7 +64,8 @@ class ParlayPropsSource(private val client: TheOddsApiClient) : ReferenceSource 
         }
         // A player whose books straddle a page boundary comes back in two parts: one game, all its lines.
         val merged = events.groupBy { it.id }.values.map { parts -> parts.first().copy(markets = parts.flatMap { it.markets }) }
-        return RefSnapshot(sport, merged, System.currentTimeMillis(), remaining, used, id)
+        val snap = RefSnapshot(sport, merged, System.currentTimeMillis(), remaining, used, id)
+        return client.quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
     }
 }
 

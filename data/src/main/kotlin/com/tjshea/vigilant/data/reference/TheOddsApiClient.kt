@@ -55,6 +55,8 @@ class TheOddsApiClient(
     val feed: OddsFeed = OddsFeed.ODDS_API,
     /** Background auto-scan's client: a paced feed leaves part of the day's share for Tj's own scans ([OddsFeed.pace]). */
     background: Boolean = false,
+    /** ParlayAPI's degraded-mode check: books it says aren't keeping up are left out of its quotes (null: none left out). */
+    val quality: ParlaySourceQuality? = null,
 ) : ReferenceSource {
 
     /** ParlayAPI's scans spend a day's share of the month at most ([CreditPace]); The Odds API's aren't paced. */
@@ -121,7 +123,8 @@ class TheOddsApiClient(
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
         // ParlayAPI: only the games the scan can price (its window, plus a day for loose kickoff times), a smaller reply for the same credits.
         val until = if (feed == OddsFeed.ODDS_API) null else Planner.horizon(settings, clock()) + WINDOW_SLACK_MS
-        return fetch(league.oddsApiSportKey, booksFor(settings), markets, startsBeforeMs = until)
+        val snap = fetch(league.oddsApiSportKey, booksFor(settings), markets, startsBeforeMs = until)
+        return quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
     }
 
     private val spacing = Mutex()

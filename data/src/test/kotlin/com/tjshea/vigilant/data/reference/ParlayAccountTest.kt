@@ -158,4 +158,27 @@ class ParlayAccountTest {
     }
 
     private fun assertEquals(expected: Long, actual: Long, tolerance: Double) = assertTrue("$expected vs $actual", kotlin.math.abs(expected - actual) <= tolerance)
+
+    // ---- degraded-mode handling ---------------------------------------------------------------------------------------
+
+    @Test
+    fun `a book ParlayAPI says has gone stale is left out of its quotes, one a minute behind stays`() = runBlocking<Unit> {
+        val quality = """{"sources":[
+            {"source":"pinnacle","sla":"ok","age_s":2.1,"thresholds_s":{"tight":10,"stale":120}},
+            {"source":"betonline","sla":"degraded","age_s":42.9,"thresholds_s":{"tight":30,"stale":600}},
+            {"source":"caesars","sla":"breach","age_s":55.0,"thresholds_s":{"tight":10,"stale":120}},
+            {"source":"draftkings","sla":"breach","age_s":900.0,"thresholds_s":{"tight":10,"stale":120}},
+            {"source":"fanduel","sla":"stale","age_s":2000}]}"""
+        assertEquals(setOf("draftkings", "fanduel"), ParlaySourceQuality.parse(json.parseToJsonElement(quality)))
+        server.enqueue(MockResponse().setBody(quality))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        val client = TheOddsApiClient(
+            OkHttpClient(), KeyPool(QuotaPolicy.PARLAY, { listOf("pk") }, meter), json,
+            baseUrl = server.url("/v1").toString().trimEnd('/'), clock = { now }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
+            quality = ParlaySourceQuality(OkHttpClient(), json, server.url("/v1").toString().trimEnd('/'), clock = { now }),
+        )
+        val snap = client.odds(com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NFL")!!, com.tjshea.vigilant.data.scanner.ScanSettings())
+        val books = snap.events.flatMap { e -> e.markets.map { it.bookKey } }.toSet()
+        assertTrue(books.toString(), "draftkings" !in books && "pinnacle" in books)
+    }
 }
