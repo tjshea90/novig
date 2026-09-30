@@ -278,7 +278,7 @@ internal fun MiniRow(
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) { append(line) }
                             append(" · ")
                         }
-                        // The player may not play (PARLAY_API.md §6.1): first, so it's never cut off.
+                        // The player may not play (PARLAY_API.md §6.1): before market and game, so it is never cut off.
                         item.injury?.shortTag?.let {
                             withStyle(SpanStyle(color = injuryColor(item.injury.level), fontWeight = FontWeight.Bold)) { append(it) }
                             append(" · ")
