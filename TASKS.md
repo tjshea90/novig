@@ -2925,3 +2925,9 @@ Tj's words, in order (each becomes a job below; the design notes come after read
 - [x] G4 Full test protocol (`.claude/skills/test-protocols`), fix what it finds, optimized and coded as designed. DONE 2026-09-30: floor 1106 green, -Pscreenshots rendered and read, release APK (R8) built; found+fixed: background auto-scans could spend the day's ParlayAPI share (CreditPaceTest), CLV card copy missing ParlayAPI + nested-paren label (ClosingLineAppTest +2), meter line untested (ScreenshotTest), sleep audit clean (G5).
 - [x] G5 When the app is closed and not in use it properly sleeps (no scans, sockets, alarms or workers doing work) unless the background scanner is on; verify with tests. DONE 2026-09-30 (audit, no change needed): with auto-scan Off nothing loops; CNO/widget/rescan/clocks/stream are screen-bound; what still wakes is SettleWorker (3 h, grading + closes, Tj 2026-09-27/30) and the closing alarm before each open bet (Tj 2026-09-29), both bounded by open bets and paused-aware (CnoOnlyAsleepTest, PauseScanningAppTest, AutoScanTest).
 - [x] G6 Ship (version bump), Release link, answer plainly. DONE 2026-09-30: https://github.com/tjshea90/novig/releases/tag/v0.27.0
+
+## Tj's request 2026-09-30 ~03:07Z (raw text in INBOX.md): "Review this diagnostic report: VIGILANT DIAGNOSTICS · Sep 29, 11:06:57 PM · Version 0.27.0 (code 55) … [full report in INBOX.md]"
+
+- [ ] H1 Read the report against the code: every number that looks wrong, every stat that says SHORT or refused, what can be faster or more accurate; list findings (and per Tj's standing preference, fix the bugs and optimizations found without being asked again, no major changes without approval).
+- [ ] H2 Fix what H1 finds, each with a test that fails before the fix.
+- [ ] H3 Floor, ship, Release link, answer plainly (what the report shows, what was wrong, what changed).

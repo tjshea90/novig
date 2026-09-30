@@ -1,13 +1,13 @@
-# CHECKPOINT 2144 — read me first, then TASKS.md
+# CHECKPOINT 2145 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T02:35:50Z · **tests:** all 2 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `22569efe` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T03:09:30Z · **tests:** all 2 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `2e4125e3` (this checkpoint is the commit after it)
 
 ## Just done
-v0.27.0 (code 55) released and recorded (CI 36659840921 + release.yml 36660165667 green); F1-F4 and G1-G6 all ticked
+Recorded Tj's diagnostics-review request as H1-H3
 
 ## Do this next
-Nothing open from Tj's 2026-09-30 requests. When Tj adds his ParlayAPI Starter key: check Diagnostics (ParlayAPI close calls, sources held back) and the ParlayAPI meter line after a day of use; verify /props row shape on the real API (ParlayProps.parse assumes event_id/home_team/away_team/commence_time/player/market_key/line/over_price/under_price/age_seconds per the OpenAPI text)
+H1: analyse report (ParlayAPI props held back at 26/20000 used = pace bug: out-of-order concurrent responses trip KeyUsage 'count went down' cycle reset -> periodStart=now; Kalshi 29 s pacing; CNO read 1 of 82 in Check odds; 69 bets closeFinal before ParlayAPI existed never re-looked; PinnWire runway SHORT ignores pinnapi fallback; ParlayAPI meter month vs billing cycle)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nothing open from Tj's 2026-09-30 requests. When Tj adds his ParlayAPI Starter k
 
 ## Last ten checkpoints
 ```
+  18e92257 ckpt 2144: v0.27.0 (code 55) released and recorded (CI 36659840921 + release.yml 366601
   07ce7847 ckpt 2143: pre-release: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle'
   c5b40f47 ckpt 2142: pre-ship: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle's c
   2e0a6863 ckpt 2141: Full test findings #2-#3 fixed: CLV card copy now names Pinnacle's ParlayAPI
@@ -26,5 +27,7 @@ Nothing open from Tj's 2026-09-30 requests. When Tj adds his ParlayAPI Starter k
   9178cca7 ckpt 2137: G1/G2 tests green (67): CreditPaceTest 5, ParlayPropsTest 7 (bulk props pars
   90b0a29f ckpt 2136: G1/G2 code in, compiling: CreditPace (day's share, unused carries over, 300 
   db89f8d6 ckpt 2135: F2 mid-change finished: one ParlayAPI KeyPool shared by scans + closes (Vigi
-  e23ad8a5 ckpt 2134: Recorded Tj's 01:42Z request as G1-G6 (use ParlayAPI Starter fully, prioriti
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
