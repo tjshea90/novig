@@ -108,6 +108,19 @@ class PropLineClient(
         ) { raw -> parseEventBoard(raw, json, sportKey) }.value
     }
 
+    /**
+     * One game's [markets] from [books] as PropLine sent it (a tapped bet's sheet reads it with one-sided books kept: [OtherBooks]); null when
+     * PropLine no longer lists the game. One request.
+     */
+    suspend fun eventRaw(sportKey: String, eventId: String, markets: List<String>, books: List<String>): String? {
+        require(markets.isNotEmpty()) { "No markets to ask for" }
+        return call(
+            "/sports/$sportKey/events/$eventId/odds",
+            listOf("markets" to markets.joinToString(","), "bookmakers" to books.distinct().joinToString(",")),
+            notFound = null,
+        ) { raw -> raw }.value
+    }
+
     /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 
@@ -185,6 +198,9 @@ class PropLineClient(
             "novig", "kalshi", "polymarket", "polymarket_us", "prophetx",
             "underdog", "prizepicks", "sleeper", "dabble", "parlayplay",
         )
+
+        /** Every sportsbook and exchange PropLine lists, for a tapped bet's sheet ([OtherBooks]): its fair-line books, and ProphetX. */
+        val DISPLAY_BOOKS: List<String> get() = KNOWN.toList() + "prophetx"
 
         /** Whether PropLine carries [book] (The Odds API's name) as a sportsbook that can price a fair line. */
         fun carries(book: String): Boolean = (TO_PROPLINE[book] ?: book).let { it in KNOWN && it !in EXCLUDED }

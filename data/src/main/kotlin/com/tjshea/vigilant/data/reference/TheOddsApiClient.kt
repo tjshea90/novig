@@ -198,6 +198,23 @@ class TheOddsApiClient(
     }
 
     /**
+     * [eventOdds] as the feed sent it (a tapped bet's sheet reads it with one-sided books kept: [OtherBooks]); null when the game is gone.
+     * Costs one credit per market (x 1 region, ten books at most).
+     */
+    suspend fun eventOddsRaw(sportKey: String, eventId: String, bookmakers: List<String>, markets: List<String>): String? {
+        require(markets.isNotEmpty()) { "No markets to ask for" }
+        return call(
+            path = "/sports/$sportKey/events/$eventId/odds",
+            params = listOf("bookmakers" to pickBooks(bookmakers).joinToString(","), "markets" to markets.joinToString(","), "oddsFormat" to "decimal"),
+            cost = markets.size,
+            what = "$sportKey event $eventId (a bet's books)",
+            notFound = null,
+            parse = { it },
+            charged = { raw -> if (raw == null) 0 else markets.count { m -> raw.contains("\"$m\"") } },
+        ).value
+    }
+
+    /**
      * ParlayAPI's player props for a whole league in one call (3 credits, whatever the markets and books): every book's over/under for
      * every player, [offset] rows in ([ParlayProps.PAGE] rows a page). Only on [OddsFeed.PARLAY].
      */

@@ -88,7 +88,6 @@ class OtherBooks(
         val game = NovigText.parseMatchup(eventName) ?: return Result(null, emptyList(), emptyList(), "The game couldn't be read from \"$eventName\"")
         val sport = league.oddsApiSportKey
         val s = on()
-        class Tried(val source: String, val lines: List<Line>?, val error: String?)
         suspend fun attempt(source: String, read: suspend () -> List<Line>): Tried = try {
             calls.merge(source, 1, Int::plus)
             Tried(source, read(), null)
@@ -122,12 +121,18 @@ class OtherBooks(
         return Result(view, older.sortedBy { -(it.seenAtMs ?: 0L) }, answered, why)
     }
 
-    private fun whyNone(tried: List<Any>, older: List<Line>, s: Sources, selection: String): String {
-        @Suppress("UNCHECKED_CAST")
-        val t = tried as List<Any>
-        if (t.isEmpty()) return "No odds source is on with a key (ParlayAPI, PropLine or The Odds API in Settings)"
-        return if (older.isNotEmpty()) "No book has a current price for $selection: only older ones (below)"
-        else "No other sportsbook prices $selection right now" + (if (!s.propLine || !s.oddsApi) " at the sources that are on" else "")
+    /** What one source said: its lines, or why it couldn't answer. */
+    private class Tried(val source: String, val lines: List<Line>?, val error: String?)
+
+    private fun whyNone(tried: List<Tried>, older: List<Line>, s: Sources, selection: String): String {
+        if (tried.isEmpty()) return "No odds source is on with a key (ParlayAPI, PropLine or The Odds API in Settings)"
+        if (older.isNotEmpty()) return "No book has a current price for $selection: only older ones (below)"
+        val failed = tried.filter { it.error != null }.joinToString("; ") { "${it.source}: ${it.error}" }
+        val asked = tried.joinToString(", ") { it.source }
+        val off = listOfNotNull(PROPLINE.takeIf { !s.propLine }, ODDS_API.takeIf { !s.oddsApi })
+        return "No other sportsbook prices $selection right now ($asked asked" +
+            (if (off.isNotEmpty()) "; ${off.joinToString(" and ")} off or without a key" else "") + ")" +
+            (if (failed.isNotEmpty()) ". $failed" else "")
     }
 
     // ---- ParlayAPI: that market's rows for the whole league, every real sportsbook ----------------------------------------------------------
@@ -215,8 +220,11 @@ class OtherBooks(
         fun codeOf(book: String): String {
             val key = TheOddsApiClient.canonicalBook(book.lowercase())
             val code = ParlayBooks.codeOf(key)
-            return if (code != key.uppercase()) code else TheOddsApiClient.bookTitle(key)
+            return if (code != key.uppercase()) code else TITLES[key] ?: TheOddsApiClient.KNOWN_BOOKMAKERS[key] ?: TheOddsApiClient.bookTitle(key)
         }
+
+        /** Names for books CNO's page has no column code for. */
+        private val TITLES = mapOf("parx" to "betPARX", "betparx" to "betPARX", "espnbet" to "ESPN BET", "ballybet" to "Bally Bet", "betway" to "Betway")
 
         /** "Carson Kelly Over 0.5" → "Carson Kelly Under 0.5" (the other side's name, as the table heads it). */
         fun otherSide(selection: String): String? = when {
