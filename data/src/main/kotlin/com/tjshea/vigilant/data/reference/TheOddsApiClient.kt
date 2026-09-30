@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
+import com.tjshea.vigilant.data.keys.CreditHeaders
 import com.tjshea.vigilant.data.keys.CreditPace
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
@@ -219,40 +220,66 @@ class TheOddsApiClient(
         }
         return pool.execute(cost = cost, reserve = feed.reserve, pace = pace) { key ->
             val url = "$baseUrl$path".toHttpUrl().newBuilder()
-                .addQueryParameter("apiKey", key)
+                // ParlayAPI's best practices (2026-09-30): the key in the X-API-Key header, not the URL (query strings end up in logs).
+                .apply { if (feed == OddsFeed.ODDS_API) addQueryParameter("apiKey", key) }
                 .apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }
                 .addQueryParameter("dateFormat", "iso")
                 .build()
+            val request = Request.Builder().url(url).get().apply { if (feed != OddsFeed.ODDS_API) header("X-API-Key", key) }.build()
 
-            httpClient.newCall(Request.Builder().url(url).get().build()).await().use { response ->
-                val body = response.body?.string().orEmpty()
-                // x-requests-* on both (ParlayAPI keeps The Odds API's names); x-credits-* read too, should ParlayAPI send only those.
-                val remaining = response.intHeader(REMAINING) ?: response.intHeader(CREDITS_REMAINING)
-                val used = response.intHeader(USED)
-                val last = response.intHeader(LAST) ?: response.intHeader(CREDITS_COST)
-                when (response.code) {
-                    429 -> {
-                        val retry = response.header("Retry-After")
-                        KeyAttemptResult.RateLimited(
-                            retry?.toLongOrNull()?.times(1000) ?: 2_000,
-                            reason = "HTTP 429" + (retry?.let { ", Retry-After=${it}s" } ?: ""),
-                        )
-                    }
-                    401, 403 -> when {
-                        body.contains("OUT_OF_USAGE_CREDITS") || body.contains("quota", ignoreCase = true) || body.contains("credit_limit_exceeded") ->
-                            KeyAttemptResult.Depleted("monthly credits used up")
-                        else -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}" + errorCode(body)?.let { " $it" }.orEmpty())
-                    }
-                    // An out-of-season sport or a finished game isn't the key's fault, and costs nothing.
-                    404 -> KeyAttemptResult.Success(Answer(notFound, remaining, used), cost = last ?: 0, remaining = remaining, used = used)
-                    else -> {
-                        if (!response.isSuccessful) {
-                            throw TheOddsApiException("${feed.title} failed for $what: HTTP ${response.code} ${body.take(200)}")
-                        }
-                        val value = parse(body)
-                        KeyAttemptResult.Success(Answer(value, remaining, used), cost = last ?: charged(value), remaining = remaining, used = used)
-                    }
+            // ParlayAPI's best practices: a gateway blip (502/503/504) or a dropped connection is worth one retry a second later;
+            // 400/401/403/404 never are.
+            val retryable = feed != OddsFeed.ODDS_API
+            var attempt = 0
+            while (true) {
+                attempt++
+                val response = try {
+                    httpClient.newCall(request).await()
+                } catch (e: java.io.IOException) {
+                    if (retryable && attempt == 1) { delay(RETRY_AFTER_MS); continue }
+                    throw e
                 }
+                if (retryable && attempt == 1 && response.code in 502..504) {
+                    response.close()
+                    delay(RETRY_AFTER_MS)
+                    continue
+                }
+                return@execute response.use { answer(it, what, notFound, parse, charged) }
+            }
+            @Suppress("UNREACHABLE_CODE")
+            throw IllegalStateException("unreachable")
+        }
+    }
+
+    /** One reply turned into what the key pool records: the provider's own credit figures ([CreditHeaders]) and the value. */
+    private fun <T> answer(response: okhttp3.Response, what: String, notFound: T, parse: (String) -> T, charged: (T) -> Int): KeyAttemptResult<Answer<T>> {
+        val body = response.body?.string().orEmpty()
+        val credits = CreditHeaders.read({ response.header(it) }, clock())
+        val remaining = credits.remaining
+        val used = credits.used
+        val last = credits.cost
+        val requestNote = credits.requestId?.let { " (request $it)" }.orEmpty()
+        return when (response.code) {
+            429 -> {
+                val retry = response.header("Retry-After")
+                KeyAttemptResult.RateLimited(
+                    retry?.toLongOrNull()?.times(1000) ?: 2_000,
+                    reason = "HTTP 429" + (retry?.let { ", Retry-After=${it}s" } ?: ""),
+                )
+            }
+            401, 403 -> when {
+                body.contains("OUT_OF_USAGE_CREDITS") || body.contains("quota", ignoreCase = true) || body.contains("credit_limit_exceeded") ->
+                    KeyAttemptResult.Depleted("monthly credits used up")
+                else -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}" + errorCode(body)?.let { " $it" }.orEmpty() + requestNote)
+            }
+            // An out-of-season sport or a finished game isn't the key's fault, and costs nothing.
+            404 -> KeyAttemptResult.Success(Answer(notFound, remaining, used), cost = last ?: 0, remaining = remaining, used = used, resetAtMs = credits.resetAtMs)
+            else -> {
+                if (!response.isSuccessful) {
+                    throw TheOddsApiException("${feed.title} failed for $what: HTTP ${response.code}$requestNote ${body.take(200)}")
+                }
+                val value = parse(body)
+                KeyAttemptResult.Success(Answer(value, remaining, used), cost = last ?: charged(value), remaining = remaining, used = used, resetAtMs = credits.resetAtMs)
             }
         }
     }
@@ -265,6 +292,9 @@ class TheOddsApiClient(
     companion object {
         const val ID = "oddsapi"
         val ALL_MARKETS = listOf("h2h", "spreads", "totals")
+
+        /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
+        const val RETRY_AFTER_MS = 1_000L
 
         /** What a PropLine board covers for a game ([RefBookMarket.coverage]): its full-game lines. */
         private val GAME_LINES = setOf("MONEYLINE:0", "SPREAD:0", "TOTAL:0")
