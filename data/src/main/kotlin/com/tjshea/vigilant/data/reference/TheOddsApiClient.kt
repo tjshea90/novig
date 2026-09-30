@@ -464,7 +464,7 @@ class TheOddsApiClient(
          * The books a scan asks for, sharp first (Tj, 2026-09-30: "can I add more sports books to scan … Would it make the app more
          * accurate?"). PropLine reads every one of them at no extra cost; The Odds API, only PropLine's backup, asks the first
          * [MAX_BOOKMAKERS_ONE_REGION] (one credit per market per league). Every book here prices its own line: LowVig (BetOnline's
-         * reduced-juice twin, the same line devigged) and betPARX/Unibet (BetRivers' Kambi line) would count one line twice (RESEARCH.md §44).
+         * reduced-juice twin, the same line devigged) and betPARX/Unibet (BetRivers' Kambi line) would count one line twice (RESEARCH.md §46).
          */
         val DEFAULT_BOOKMAKERS = listOf(
             "pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers",

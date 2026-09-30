@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * More sportsbooks where they make fair odds better (Tj, 2026-09-30: "can I add more sports books to scan on vigilant either for cno scanner
- * or vigilant scanner? Can parlayapi do it? Would it make the app more accurate? If so, add sports books to each scanner"; RESEARCH.md §44):
+ * or vigilant scanner? Can parlayapi do it? Would it make the app more accurate? If so, add sports books to each scanner"; RESEARCH.md §46):
  * PropLine reads Hard Rock, Bovada and Fliff too (free per book), The Odds API still asks 10 at most (its credits), and no line is
  * counted twice (LowVig is BetOnline's line).
  */

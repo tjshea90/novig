@@ -3012,3 +3012,32 @@ Novig, a third list beside CNO's and Vigilant's); `/v1/verdict` (5 credits a bet
 Tj then asked (2026-09-30 ~05:10Z) for all of these to be built in a new session: the build guide, with real answers probed for each
 (best-bets, verdict, movers, injuries, period markets, usage breakdown; line-movement only ever answered busy or empty), is PARLAY_API.md §6,
 the tasks TASKS.md §M.
+
+## 46. More sportsbooks for each scanner, and whether they'd make fair odds better (v0.35.0, 2026-09-30; Tj: "can I add more sports books to scan on vigilant either for cno scanner or vigilant scanner? Can parlayapi do it? Would it make the app more accurate? If so, add sports books to each scanner")
+
+Checked live 2026-09-30 ~20:00Z (CNO's page once, ParlayAPI ~10 credits of Tj's key).
+
+- **CNO scanner: nothing to add from the app.** CNO's +EV form has no book choice for the fair line: its fields are devig method, odds
+  range, minimum EV, fewest books, sides, result count, sport/league, live/main, and one dropdown, `DropDownListSportsbookSite_All`, which
+  is the book you bet AT (27 options: 17 = Novig). The fair line is CNO's own, from the ~20-25 books on its game pages (FD, DK, CZR, MGM, BR,
+  BB, TSB, B365, FN, HR, FL, BV, BO, **CS = Circa, PN = Pinnacle, PX = ProphetX, KI = Kalshi**, ST, PP), sharp ones included. Adding
+  ParlayAPI's books to Vigilant's own worst-case check of CNO bets would cost credits on every widget/Tracker read for books CNO already has.
+- **ParlayAPI can't add a sharp book today.** Its `/v1/bookmakers` lists `bookmaker_eu` (BookMaker, sharp for US sports) and `superbet`,
+  but a 20-book `/odds?markets=h2h` read returned **no BookMaker, Superbet, Betr or Polymarket line** for any MLB (3) or NFL (32) game.
+  What it did return beyond Vigilant's 10 game-line books: BetRivers, Hard Rock, Fliff, betPARX (soft) and Kalshi (Vigilant reads Kalshi
+  itself). `/odds` costs markets × ⌈books/10⌉: 11+ books doubles game lines from 3 to 6 credits a league, for soft books that barely move
+  a fair line Pinnacle (and BetOnline, ProphetX) already anchor.
+- **Props: already every book ParlayAPI has.** An unfiltered `/props` read (MLB hits+Ks: 1,356 rows; NFL pass+rec yards: 5,925) had only
+  books already in `ParlayProps.BOOKS`, plus pick'em apps (PrizePicks, Underdog, Sleeper, Pick6: flat payouts, rightly left out). One
+  page is 3 credits whatever the books.
+- **Some books are one line under two names.** BetRivers and betPARX (both Kambi) posted **94% identical NFL moneylines** (15 of 16);
+  bet365 and Hard Rock 75% identical on 28 NFL props (small sample: watch it). LowVig is BetOnline's reduced-juice site: the same line,
+  devigged. Counting both halves of such a pair gives one line two votes in the consensus: less accurate, not more.
+- **The Odds API free keys don't get Caesars or Fanatics** (its docs: "paid subscriptions only"); `espnbet` is theScore Bet now.
+- **What was changed (free, no extra credits):** the reference books (PropLine reads every one at no extra cost; The Odds API, its backup,
+  asks the first 10) are now Pinnacle, BetOnline, DraftKings, FanDuel, BetMGM, BetRivers, **Hard Rock, Bovada, Fliff**, Caesars, Fanatics,
+  theScore Bet; **LowVig out** (a saved list loses it only beside BetOnline: `ScanSettings.migrate` schema 11); the Settings picker has no
+  10-book cap any more (The Odds API still takes 10). PropLine goes from 8 books to 10 independent ones: more props priced by 2+ books,
+  and a wider consensus where Pinnacle has no line. `MoreBooksTest`.
+- **What would help most next:** a second sharp book for game lines. Circa is on CNO's pages but no API Vigilant has carries it;
+  BookMaker via ParlayAPI once it has lines (re-check `/odds?bookmakers=bookmaker_eu` now and then, 1 credit).

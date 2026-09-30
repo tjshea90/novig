@@ -275,6 +275,12 @@ webhooks need a server to receive them.
 - Check odds now now prices every open bet from Vigilant's own sources too (ParlayAPI's game lines, props and 1st-half lines among them),
   beside CNO's pages (TASKS.md O1): the pass is paced like a scan, so it spends from the day's share.
 
+### 6.10 More books? (2026-09-30 ~20:00Z, RESEARCH.md §46)
+- `bookmaker_eu`, `superbet`, `betr`, `polymarket` answered **no MLB or NFL game lines** on `/odds` (20 books asked, 2 credits a sport). Game lines
+  beyond Vigilant's 10: BetRivers, Hard Rock, Fliff, betPARX, Kalshi only; 11+ books costs ⌈books/10⌉× the credits.
+- Unfiltered `/props`: only books already in `ParlayProps.BOOKS`, plus DFS (pick6, prizepicks, underdog, sleeper). BetRivers ≈ betPARX (Kambi,
+  94% identical NFL moneylines); bet365 ≈ Hard Rock on 75% of 28 NFL props.
+
 ## 7. Still unverified
 - Whether the credits actually reset on the 1st (UTC) for a plan bought on the 30th (the /v1/usage period says so; check on Oct 1).
 - Settled 2026-09-30 with Tj's key (15 credits in all: 19,867 → 19,852): /line-movement's shape (§6.6, pick'em apps only), MLB `F5` / NHL `P1–P3`
