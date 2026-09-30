@@ -222,5 +222,5 @@ webhooks need a server to receive them.
 
 ## 7. Still unverified
 - Whether the credits actually reset on the 1st (UTC) for a plan bought on the 30th (the /v1/usage period says so; check on Oct 1).
-- Settled 2026-09-30 with Tj's key (12 credits in all): /line-movement's shape (§6.6, pick'em apps only), MLB `F5` / NHL `P1–P3`
+- Settled 2026-09-30 with Tj's key (15 credits in all: 19,867 → 19,852): /line-movement's shape (§6.6, pick'em apps only), MLB `F5` / NHL `P1–P3`
   (§6.7), /verdict answering the canonical prop key `player_rush_yds` (§6.4), `edge_pct` as probability points (§5).
