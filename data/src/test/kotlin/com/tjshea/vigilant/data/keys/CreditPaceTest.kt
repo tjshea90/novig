@@ -55,7 +55,7 @@ class CreditPaceTest {
     private fun meter() = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = { Instant.parse("2026-09-10T12:00:00Z").toEpochMilli() })
 
     @Test
-    fun `a paced call past today's share waits without failing, an unpaced one still goes`() = runBlocking {
+    fun `a paced call past today's share waits without failing, an unpaced one still goes`() = runBlocking<Unit> {
         val m = meter()
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("k") }, m)
         // The server says: 7,000 used of 20,000 by the 10th, ahead of the pace.
@@ -76,7 +76,7 @@ class CreditPaceTest {
     }
 
     @Test
-    fun `a free key says why scans leave it alone`() = runBlocking {
+    fun `a free key says why scans leave it alone`() = runBlocking<Unit> {
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("f") }, meter())
         pool.execute(cost = 1) { KeyAttemptResult.Success(Unit, cost = 1, remaining = 950, used = 50) }
         val e = assertThrows(CreditsHeldBackException::class.java) {

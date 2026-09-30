@@ -195,17 +195,19 @@ class TheOddsApiClientTest {
         assertEquals("pinnacle", books.first())
         assertFalse("novig" in books)
         // Its docs: "Every response includes x-requests-used, x-requests-remaining, and x-requests-last" (parlay-api.com/docs, 2026-09-30).
-        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "970").setHeader("x-requests-used", "30").setHeader("x-requests-last", "1"))
+        // A Starter key (20,000 a month), early in its month.
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "19970").setHeader("x-requests-used", "30").setHeader("x-requests-last", "1"))
         val snap = c.fetch("americanfootball_nfl", books)
-        assertEquals(970, snap.creditsRemaining)
+        assertEquals(19970, snap.creditsRemaining)
         assertEquals("parlay", snap.provider)
         assertTrue(server.takeRequest().requestUrl!!.encodedPath.startsWith("/v1/sports/americanfootball_nfl/odds"))
         val u = meter.flow.value.providers.getValue("parlay").keys.getValue("pk")
-        assertEquals(970, u.remaining)
+        assertEquals(19970, u.remaining)
+        assertEquals(20000, u.limit)
         assertEquals(1, u.lastCost)
         // x-credits-* names are read too, should a response carry only those.
-        server.enqueue(MockResponse().setBody("[]").setHeader("x-credits-remaining", "969"))
-        assertEquals(969, c.fetch("americanfootball_nfl", books).creditsRemaining)
+        server.enqueue(MockResponse().setBody("[]").setHeader("x-credits-remaining", "19969"))
+        assertEquals(19969, c.fetch("americanfootball_nfl", books).creditsRemaining)
     }
 
     @Test

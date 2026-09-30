@@ -111,7 +111,7 @@ class ParlayPropsTest {
 
     private fun client() = TheOddsApiClient(
         OkHttpClient(),
-        KeyPool(QuotaPolicy.PARLAY, { listOf("pk") }, UsageMeter(JsonFileStore(File.createTempFile("u", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))),
+        KeyPool(QuotaPolicy.PARLAY, { listOf("pk") }, UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))),
         json, baseUrl = server.url("/v1").toString().trimEnd('/'), clock = { now }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
     )
 
