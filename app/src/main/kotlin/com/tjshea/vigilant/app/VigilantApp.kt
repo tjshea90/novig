@@ -484,6 +484,9 @@ class AppContainer(private val app: Application) {
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).
         parlayOdds.alternates = !pinnacleOn
         parlayOddsBackground.alternates = !pinnacleOn
+        // Baseball's first 5 innings are Pinnacle's alone at ParlayAPI: not bought while a Pinnacle feed sends them.
+        parlayHalves.pinnacleFeedOn = pinnacleOn
+        parlayHalvesBackground.pinnacleFeedOn = pinnacleOn
         if (settings.usePolymarket) add(polymarket)
         if (settings.useKalshi) add(kalshi)
         if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) {
