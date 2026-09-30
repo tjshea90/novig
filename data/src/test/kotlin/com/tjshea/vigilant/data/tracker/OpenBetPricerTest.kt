@@ -288,4 +288,38 @@ class OpenBetPricerTest {
         assertEquals(setOf(MarketFamily.PLAYER_PROPS), propFair.asked)
         assertTrue(propNovig.catalogTypes.containsAll(MarketFamily.PLAYER_PROPS.novigTypes - com.tjshea.vigilant.data.scanner.PropStats.BOOK_ONLY_TYPES))
     }
+
+    @Test
+    fun `fairs prices outcomes that aren't Tracker bets (ParlayAPI's picks, P2) and writes nothing`() = runTest {
+        val t = tracker()
+        val novig = FakeNovig()
+        val reads = pricer(t, novig).fairs(
+            settings,
+            listOf(
+                bet("parlay:dal"),
+                bet("parlay:mia", marketId = otherMarket, outcomeId = "o-mia"),
+                bet("parlay:none", marketId = "", outcomeId = ""),
+                bet("parlay:started", startsTs = now - 60_000L),
+            ),
+        )
+        // The Cowboys are priced by the feed's own fair line (the same as a Tracker bet's pass); nobody quotes Dolphins-Broncos.
+        val dal = reads.getValue("parlay:dal")
+        assertNotNull(dal.fair)
+        assertEquals(now, dal.atMs ?: now)
+        assertNull(reads.getValue("parlay:mia").fair)
+        assertEquals("No fair-odds source has current prices for this game", reads.getValue("parlay:mia").why)
+        assertEquals("Novig's exact bet wasn't found", reads.getValue("parlay:none").why)
+        assertEquals("the game has started", reads.getValue("parlay:started").why)
+        assertTrue("nothing written to the Tracker", t.all().isEmpty())
+        // Only the asked games' books were read.
+        assertEquals(setOf(Fixtures.ML_MARKET, otherMarket), novig.bookIds.toSet())
+    }
+
+    @Test
+    fun `fairs asks nothing while Vigilant is asleep (CNO only)`() = runTest {
+        val fair = FakeOddsApi()
+        val reads = pricer(tracker(), FakeNovig(), fair).fairs(settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO), listOf(bet("parlay:dal")))
+        assertEquals("Vigilant's scanner is asleep (CNO only)", reads.getValue("parlay:dal").why)
+        assertEquals(0, fair.calls)
+    }
 }
