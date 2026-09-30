@@ -99,7 +99,7 @@ class SecondOpinionTest {
     }
 
     @Test
-    fun `an open Tracker bet is asked about at the price it was bet, a started one isn't offered`() {
+    fun `an open Tracker bet is asked about at the price it was bet`() {
         val bet = com.tjshea.vigilant.data.tracker.TrackedBet(
             "b1", now - 3_600_000L, "NFL", "Baltimore Ravens @ Dallas Cowboys", now + 50 * 3_600_000L, "Moneyline", "Dallas Cowboys", "m", "o",
             0.62, 0.62, 0.64, 0.03, 10.0, american = -163,

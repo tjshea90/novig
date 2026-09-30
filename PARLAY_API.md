@@ -142,6 +142,15 @@ unless the task says so, and only while `useParlay` is on with a key.
   that line comes back `NO_DATA` with the fair still given. `parlay-verdict-busy-503.json`: retry once after 2 s, then say it's busy.
 - Where: a "Second opinion (ParlayAPI, 5 credits)" button in the +EV bet sheet, the CNO bet sheet and the Tracker's bet sheet; shows the
   verdict, its fair and Vigilant's EV at the bet's price, books compared. Never automatic (5 credits each).
+- **Built (v0.30.0):** `data/.../reference/ParlayVerdict.kt` (`VerdictQuery`, `VerdictQueries`, `Verdict`, `ParlayVerdicts`,
+  `ParlayMarketKeys`); UI `app/.../ui/SecondOpinion.kt` (`LocalOpinions`). `side` is sent as the team's **full name** (the spec allows "Team
+  name or home/away"), so a game listed the other way round can't flip it. Prop keys: the spec's canonical list (`GET /v1/meta/markets`,
+  public: `player_pass_attempts`, `batter_hits`, …) is what Vigilant stores, but the one real prop verdict used the board's
+  `player_passing_attempts` and answered with a fair price, so the key a `/props` answer actually used for the stat is preferred
+  (`ParlayMarketKeys`, book-prefixed names like `prophetx_…` ignored), the canonical one otherwise. **Unverified:** whether the canonical
+  key answers too (probe once with a key).
+- Also in the spec (2026-09-30): `GET /v1/try/verdict` — **free, no key**, 60/hour per IP, US books, no staking/movement. Not used (a demo
+  endpoint; Tj asked for the 5-credit call). A cheaper second opinion if Tj ever wants one.
 
 ### 6.5 ParlayAPI's own +EV list at Novig (M5) — `GET /v1/sports/{s}/best-bets?books=novig&min_edge=&min_books=&limit=&markets=`, 10 credits a league
 - Samples `parlay-best-bets-mlb.json` (5 plays + an edge alert) and `parlay-best-bets-empty-nfl.json`. `best_bets:[{bet:"Carson Kelly Over
