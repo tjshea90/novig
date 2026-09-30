@@ -864,25 +864,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Where a tapped CNO bet opens in Novig: its bet slip, else its game ([TapLink]). Null when nothing answered. */
     suspend fun betLink(row: CnoRow): TapLink.Link? = c.betLink(row)
 
-    /** Mirrors the runner into the screen's state, for as long as this screen lives. */
+    /**
+     * Mirrors the runner into the screen's state, for as long as this screen lives. A scan publishes after every Novig price it reads (about
+     * 14 a second through the key), and every new state recomposes the whole app, its tab badges' counts included: that many a second kept
+     * the main thread busy until switching tabs mid-scan froze and then crashed the app (Tj, 2026-09-30: "very laggy then crashed"). So the
+     * screen takes the scan's newest state at most every [SCAN_MIRROR_MS] ([followThrottled]), rebuilds the feed only when the result itself
+     * changed, and rebuilds it off the main thread.
+     */
     private suspend fun follow() {
         var seen = c.runner.state.value.finished
         var first = true
-        c.runner.state.collect { run ->
+        var shown: ScanResult? = null
+        followThrottled(c.runner.state, SCAN_MIRROR_MS) { run ->
             val report = run.report
             val ended = run.finished != seen
             seen = run.finished
             if (!run.scanning && report != null && (ended || first)) {
                 // A scan just ended, or this screen opened after one did.
                 applyReport(report, run.settings ?: _state.value.settings, run.result)
+                shown = _state.value.result
             } else {
-                _state.update { s ->
-                    val r = run.result ?: s.result
-                    s.copy(
-                        result = r,
-                        feed = if (r != null) s.feedOf(r) else s.feed,
-                        status = s.status.copy(scanning = run.scanning, progress = run.progress),
-                    )
+                val r = run.result
+                if (r != null && r !== shown) {
+                    val before = _state.value
+                    val feed = withContext(Dispatchers.Default) { before.feedOf(r) }
+                    shown = r
+                    _state.update { s ->
+                        // Settings or the placed marks changed while it was built: built again from what's current (rare, and cheap once).
+                        val current = s.settings == before.settings && s.placedIndex === before.placedIndex
+                        s.copy(result = r, feed = if (current) feed else s.feedOf(r), status = s.status.copy(scanning = run.scanning, progress = run.progress))
+                    }
+                } else {
+                    // Only the progress moved: the feed is what it was.
+                    _state.update { s -> s.copy(status = s.status.copy(scanning = run.scanning, progress = run.progress)) }
                 }
             }
             first = false
