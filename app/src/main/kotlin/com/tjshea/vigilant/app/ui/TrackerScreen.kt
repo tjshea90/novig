@@ -139,6 +139,9 @@ fun TrackerScreen(
     var sortReversed by rememberSaveable { mutableStateOf(false) }
     var scanner by rememberSaveable { mutableStateOf(ScannerFilter.ALL) }
     var breakdownBy by rememberSaveable { mutableStateOf(TrackerBreakdown.By.LEAGUE) }
+    // The closing-line card's own period and outlier switch (Tj, 2026-09-29).
+    var clvPeriod by rememberSaveable { mutableStateOf(ClvPeriod.ALL) }
+    var clvHideOutliers by rememberSaveable { mutableStateOf(false) }
     // The open bet's sheet, by id, so a recheck that updates the bet updates the sheet, and deleting closes it.
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmDelete by remember { mutableStateOf<TrackedBet?>(null) }
@@ -263,7 +266,11 @@ fun TrackerScreen(
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState("No bets ${if (period == TrackerPeriod.ALL) "tracked yet" else "in this period"}", EMPTY_HINT) }
                     } else {
-                        item(key = "stats") { StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) }
+                        item(key = "stats") {
+                            StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
+                                ClosingLineCard(bets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
+                            }
+                        }
                     }
                 }
                 TrackerView.BETS -> {
@@ -406,8 +413,15 @@ internal fun Caption(text: String) {
 }
 
 @Composable
-private fun StatsCards(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBreakdown: (TrackerBreakdown.By) -> Unit) {
-    val stats = remember(bets) { BetTracker.stats(bets) }
+private fun StatsCards(
+    bets: List<TrackedBet>,
+    by: TrackerBreakdown.By,
+    onBreakdown: (TrackerBreakdown.By) -> Unit,
+    /** The closing-line card's own filters, and every bet (it runs over all time, whatever the period at the top). */
+    clv: @Composable () -> Unit = {},
+) {
+    val now = rememberNow(60_000)
+    val stats = remember(bets, now / 60_000L) { BetTracker.stats(bets, now) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (stats.outliers > 0) {
             Caption(
@@ -425,6 +439,7 @@ private fun StatsCards(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBreakd
             Caption("Profit % is profit over money staked on settled bets (ROI): it runs with every result.")
             if (stats.outliers > 0) Caption("With the outliers counted too, your bankroll's result is ${Format.signedMoney(stats.profitAll)}.")
         }
+        clv()
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 LabeledValue("Win %", stats.winRate?.let { Format.percent(it, 1) } ?: "—")
@@ -456,17 +471,6 @@ private fun StatsCards(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBreakd
             Text(TrackerText.luckMessage(stats), style = MaterialTheme.typography.bodySmall)
             Caption("Both numbers count the same ${stats.settledWithEv} won and lost bet${if (stats.settledWithEv == 1) "" else "s"}: what their EVs promised, and what they actually paid. Bets with no EV on record, pushes and voids aren't in either.")
         }
-        StatsCard {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                LabeledValue("Avg EV", stats.averageEv?.let { Format.evPercent(it) } ?: "—")
-                LabeledValue("Avg CLV", stats.averageClv?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(stats.averageClv ?: 0.0))
-                LabeledValue("Beat the close", stats.beatClosePercent?.let { Format.percent(it, 0) } ?: "—")
-            }
-            Caption(
-                "CLV compares your price to the last fair line seen before the game started. Beating the close consistently is the best " +
-                    "sign the edges are real, and it shows up far sooner than profit does.",
-            )
-        }
         BreakdownCard(bets, by, onBreakdown)
     }
 }
@@ -492,7 +496,7 @@ private fun BreakdownCard(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBy:
                     "${s.bets} bet${if (s.bets == 1) "" else "s"} · ${s.won}-${s.lost}" + (if (s.pushed > 0) "-${s.pushed}" else "") +
                         (if (s.pending > 0) " · ${s.pending} open" else "") +
                         (s.averageEv?.let { " · avg EV ${Format.evPercentShort(it)}" } ?: "") +
-                        (s.averageClv?.let { " · CLV ${Format.evPercentShort(it)}" } ?: ""),
+                        (s.averageClv?.let { " · CLV ${Format.evPercentShort(it)}" } ?: ""), // true closes only (BetTracker.stats)
                 )
             }
         }
@@ -578,7 +582,9 @@ private fun BetCard(
                 else LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
                 LabeledValue("Price", bet.american?.let { Odds.formatAmerican(it) } ?: Format.american(bet.price))
                 LabeledValue("EV at bet", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
-                LabeledValue("CLV", bet.clvPercent?.let { Format.evPercent(it) } ?: "—")
+                // The true CLV once the game has started with a close read just before it; until then the "now" line below is the one to watch.
+                val clv = ClosingLine.clv(bet, now)
+                LabeledValue("CLV", clv?.let { Format.evPercent(it) } ?: "—", valueColor = clv?.let { moneyColor(it) } ?: Color.Unspecified)
                 LabeledValue(
                     if (open) "To win" else "Result",
                     bet.profit?.let { Format.signedMoney(it) } ?: Format.money(bet.profitIfWon),
@@ -746,5 +752,53 @@ private fun CounterValue(value: String, label: String, color: androidx.compose.u
     Row(verticalAlignment = Alignment.Bottom) {
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = color)
         Text(" $label", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 2.dp))
+    }
+}
+
+/**
+ * Closing line value (Tj, 2026-09-29: "the percentage of my bets that beat closing line value ... the average percentage that my bets beat the
+ * closing line ... Keep this stat line running forever, it does not reset ... a filter system ... (all time, today, yesterday, last 3 days, last
+ * week), and an option to remove outliers (bets over 5% different than closing line value)"). Over every bet ever tracked ([ClvStats]), with
+ * its own period chips (by when each bet was placed) and outlier switch; only true closes count ([ClosingLine]).
+ */
+@Composable
+fun ClosingLineCard(
+    allBets: List<TrackedBet>,
+    now: Long,
+    period: ClvPeriod,
+    onPeriod: (ClvPeriod) -> Unit,
+    hideOutliers: Boolean,
+    onHideOutliers: (Boolean) -> Unit,
+) {
+    val s = remember(allBets, now / 60_000L, period, hideOutliers) { ClvStats.of(allBets, now, period, hideOutliers) }
+    StatsCard(Modifier.testTag("clvCard")) {
+        CardTitle("Closing line value")
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            ClvPeriod.entries.forEach { p ->
+                FilterChip(selected = period == p, onClick = { onPeriod(p) }, label = { Text(p.label) }, modifier = Modifier.testTag("clvPeriod-${p.name}"))
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth().clickable(onClickLabel = "Hide outliers") { onHideOutliers(!hideOutliers) }.testTag("clvOutliers"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Hide outliers (over ±${Format.percent(ClosingLine.OUTLIER_CLV, 0)} from the close)", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            Switch(checked = hideOutliers, onCheckedChange = onHideOutliers)
+        }
+        Row(
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = TrackerText.clvLine(s) }.testTag("clvValues"),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            LabeledValue("Beat the close", s.beatShare?.let { "${Format.percent(it, 0)} (${s.beat}/${s.closed})" } ?: "—")
+            LabeledValue("Avg vs close", s.averageClv?.let { Format.evPercent(it) } ?: "—", valueColor = s.averageClv?.let { moneyColor(it) } ?: Color.Unspecified)
+            LabeledValue("Avg EV at bet", s.averageEvAtBet?.let { Format.evPercent(it) } ?: "—")
+        }
+        Caption(TrackerText.clvCounts(s))
+        Caption(
+            "The close is the devigged fair line read in the last ${ClosingLine.TRUE_CLOSE_MS / 60_000} minutes before the start: Vigilant reads it about " +
+                "${ClosingLine.LEAD_MS / 60_000} minutes before each of your games, even when it's closed. \"Avg vs close\" is how much better your odds were " +
+                "than the closing odds, averaged over the bets. Beating the close is the best early sign your edges are real. This card has its own " +
+                "period; the one at the top doesn't change it.",
+        )
     }
 }

@@ -112,6 +112,8 @@ data class ClvStats(
     val waiting: Int,
     /** Games that started without a close read in the last [ClosingLine.TRUE_CLOSE_MS] (the phone asleep or offline, CNO only, paused). */
     val missed: Int,
+    /** The average EV when bet of the same [closed] bets: the edge the price was thought to have, beside what the close says it had. */
+    val averageEvAtBet: Double? = null,
 ) {
     val beatShare: Double? get() = if (closed > 0) beat.toDouble() / closed else null
 
@@ -121,9 +123,11 @@ data class ClvStats(
             val inPeriod = bets.filter { b ->
                 b.status != BetStatus.VOID && b.createdAtMs < b.startsTs && (range == null || (b.createdAtMs >= range.first && b.createdAtMs < range.second))
             }
-            val clvs = inPeriod.mapNotNull { ClosingLine.clv(it, now) }
+            val closedBets = inPeriod.mapNotNull { b -> ClosingLine.clv(b, now)?.let { b to it } }
+            val clvs = closedBets.map { it.second }
             val outliers = clvs.count { abs(it) > ClosingLine.OUTLIER_CLV + EPS }
-            val kept = if (dropOutliers) clvs.filter { abs(it) <= ClosingLine.OUTLIER_CLV + EPS } else clvs
+            val keptBets = if (dropOutliers) closedBets.filter { abs(it.second) <= ClosingLine.OUTLIER_CLV + EPS } else closedBets
+            val kept = keptBets.map { it.second }
             return ClvStats(
                 closed = kept.size,
                 beat = kept.count { it > EPS },
@@ -132,6 +136,7 @@ data class ClvStats(
                 outliersLeftOut = dropOutliers,
                 waiting = inPeriod.count { it.status == BetStatus.PENDING && now < it.startsTs },
                 missed = inPeriod.count { now >= it.startsTs && ClosingLine.closeFair(it, now) == null },
+                averageEvAtBet = keptBets.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average(),
             )
         }
 
