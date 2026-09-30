@@ -118,13 +118,13 @@ class BetRecheckTest {
         assertEquals(0, r.skipped)
         assertEquals(r.open, r.updated + r.failed + r.skipped + r.current + r.over + r.vigilantOnly)
         assertEquals(
-            "Checked 3 of 7 open bets · 1 couldn't be read · 1 game already over (results come from final scores) · 2 Vigilant bets update with each Vigilant scan",
+            "Checked 3 of 7 open bets · 1 couldn't be read (each bet says why) · 1 game already over (results come from final scores) · 2 Vigilant bets update with each Vigilant scan",
             r.summary(),
         )
         assertEquals(true, r.summary(vigilantOff = true).contains("2 Vigilant bets not updated: the Vigilant scanner is off (Settings › Scanner)"))
         // With the grading pass that runs beside it, the finished game says what came of it (Tj: "it only updated 61, I have 100").
         assertEquals(
-            "Checked 3 of 7 open bets · 1 couldn't be read · 1 game already over: graded 1 from final scores · 2 Vigilant bets update with each Vigilant scan",
+            "Checked 3 of 7 open bets · 1 couldn't be read (each bet says why) · 1 game already over: graded 1 from final scores · 2 Vigilant bets update with each Vigilant scan",
             r.summary(graded = BetSettler.Report(asked = 1, settled = 1, stopped = false)),
         )
         assertEquals(
@@ -203,11 +203,61 @@ class BetRecheckTest {
 
         val t2 = tracker(*bets.toTypedArray())
         var asked = 0
-        val down = BetRecheck(t2, books = { asked++; null }, clock = { now }).run()
+        val down = BetRecheck(t2, books = { asked++; throw java.io.IOException("timeout") }, clock = { now }).run()
         assertEquals(BetRecheck.MAX_FAILS_IN_ROW, asked)
         assertEquals(true, down.stopped)
         assertEquals(5, down.skipped)
         assertEquals(true, down.summary().startsWith("CrazyNinjaOdds didn't answer"))
+    }
+
+    /**
+     * Tj, 2026-09-30: "it started and scanned a few then it said crazyninjaodds didn't answer". CNO answered: its pages just didn't list the
+     * bets at their lines any more (lines move before a game). That never stops the run or blames CNO, and each bet says why.
+     */
+    @Test
+    fun `pages that answer without the bet at its line are no reason to stop, and each bet says why`() = runTest {
+        val bets = (1..10).map { bet("m$it", startsTs = start + it) }
+        val t = tracker(*bets.toTypedArray())
+        var asked = 0
+        val r = BetRecheck(t, books = { row -> asked++; if (row.gameUrl!!.endsWith("m9") || row.gameUrl!!.endsWith("m10")) view(-125, 105) else null }, clock = { now }).run()
+        assertEquals(10, asked)
+        assertEquals(false, r.stopped)
+        assertEquals(2, r.updated)
+        assertEquals(8, r.failed)
+        assertEquals(0, r.cnoNoAnswer)
+        assertEquals(false, r.summary().contains("didn't answer"))
+        assertEquals("CrazyNinjaOdds' game page doesn't list this bet at your line now", t.all().first { it.id == "m1" }.nowNote)
+    }
+
+    /** Tj, 2026-09-30: "if there is a good backup that does the same exact odds check, I think parlayapi can do this same odds check". */
+    @Test
+    fun `when CNO stops answering, ParlayAPI's books price the rest with CNO's own check`() = runTest {
+        val bets = (1..10).map { bet("b$it", startsTs = start + it) }
+        val t = tracker(*bets.toTypedArray())
+        var cnoAsked = 0
+        var backupAsked = 0
+        val r = BetRecheck(
+            t, books = { cnoAsked++; throw java.io.IOException("timeout") }, clock = { now },
+            backup = { b -> backupAsked++; if (b.id == "b10") null else view(-125, 105) },
+        ).run()
+        // CNO is asked until it's clearly down, then left alone; the backup covers every bet.
+        assertEquals(BetRecheck.MAX_FAILS_IN_ROW, cnoAsked)
+        assertEquals(10, backupAsked)
+        assertEquals(false, r.stopped)
+        assertEquals(9, r.updated)
+        assertEquals(9, r.viaBackup)
+        assertEquals(1, r.failed)
+        assertEquals(0, r.skipped)
+        assertEquals(true, r.cnoStopped)
+        val priced = t.all().first { it.id == "b1" }
+        assertEquals(BetTracker.VIA_PARLAY, priced.nowVia)
+        // The same check CNO's page gets: the bet's own price against the books' worst-case devig.
+        val fair = com.tjshea.vigilant.data.cno.CnoBooks.check(view(-125, 105), BetRecheck.rowOf(priced), preferListOdds = true).fairProbability!!
+        assertEquals(fair, priced.nowFair!!, 1e-12)
+        assertEquals("CrazyNinjaOdds had stopped answering, and ParlayAPI's books don't price it at your line", t.all().first { it.id == "b10" }.nowNote)
+        assertEquals(true, r.summary().contains("9 from ParlayAPI's books (CrazyNinjaOdds didn't have them)"))
+        assertEquals(false, r.summary().startsWith("CrazyNinjaOdds didn't answer"))
+        assertEquals(true, r.roundNote(vigilantOn = true).contains("ParlayAPI's books 9, 5 CNO reads unanswered"))
     }
 
     /** Tj's diagnostics, 2026-09-30: "CNO read 1, … 81 CNO couldn't read went to a second pricing pass", and nothing said why. */
@@ -278,7 +328,7 @@ class BetRecheckTest {
         val bets = (1..20).map { bet("f$it", startsTs = start + it) }
         val t = tracker(*bets.toTypedArray())
         var asked = 0
-        val down = BetRecheck(t, books = { asked++; kotlinx.coroutines.delay(10L); null }, clock = { now }, concurrency = 3).run()
+        val down = BetRecheck(t, books = { asked++; kotlinx.coroutines.delay(10L); throw java.io.IOException("no answer") }, clock = { now }, concurrency = 3).run()
         assertEquals(true, down.stopped)
         // Five in a row, plus the reads already under way when the fifth failed.
         assertEquals(true, asked in BetRecheck.MAX_FAILS_IN_ROW..(BetRecheck.MAX_FAILS_IN_ROW + 2))
