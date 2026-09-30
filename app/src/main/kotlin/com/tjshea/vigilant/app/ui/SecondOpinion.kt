@@ -117,6 +117,13 @@ private fun VerdictCard(v: Verdict, q: VerdictQuery) {
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
+            if (v.fairFromNovig) {
+                Text(
+                    "Its fair price is Novig's own (no sharper book lists this bet): not an independent check.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Edge.colors.warning,
+                )
+            }
             // Vigilant's own EV at the price shown, from their fair line.
             v.evAt(1.0 / Odds.americanToDecimal(q.price))?.let { ev ->
                 Text(
