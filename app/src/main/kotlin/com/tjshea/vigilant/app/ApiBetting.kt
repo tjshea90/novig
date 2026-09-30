@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -82,7 +83,9 @@ object BetAmount {
     /** Why [text] can't be bet, in words; null when it can (or the field is still empty). */
     fun problem(text: String, max: Double): String? {
         if (text.isBlank()) return null
-        WalletAmount.parse(text)?.let { v -> return if (v > max + 1e-9) "Over your ${money(max)} limit per bet (Settings › Novig API › Betting)" else null }
+        WalletAmount.parse(text)?.let { v ->
+            return if (v > max + 1e-9) "Over your ${String.format(Locale.US, "$%.2f", max)} limit per bet (Settings › Novig API › Betting)" else null
+        }
         return WalletAmount.problem(text)
     }
 
@@ -640,4 +643,9 @@ class ApiBettingController(
     }
 
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
+
+    companion object {
+        /** A typed amount is priced once typing has paused this long. */
+        const val TYPING_PAUSE_MS = 400L
+    }
 }
