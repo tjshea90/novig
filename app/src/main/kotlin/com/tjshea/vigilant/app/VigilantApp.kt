@@ -405,7 +405,7 @@ class AppContainer(private val app: Application) {
         quality = parlayQuality,
     )
     /** Whether ParlayAPI is on and has a key: its extra calls (injuries, the Check odds now backup, …) are made only then. */
-    private fun parlayActive(): Boolean = keyStore.current(ApiProvider.PARLAY).isNotEmpty() && currentSettings().useParlay
+    private suspend fun parlayActive(): Boolean = keyStore.current(ApiProvider.PARLAY).isNotEmpty() && currentSettings().useParlay
 
     /** Players' injury reports (Tj, 2026-09-30, PARLAY_API.md §6.1): free from every ParlayAPI props answer, and its /injuries list. */
     val injuries = com.tjshea.vigilant.data.reference.InjuryIndex()
