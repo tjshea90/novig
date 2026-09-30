@@ -178,6 +178,8 @@ class ScreenshotTest {
         }
     }
 
+    // Tall enough for every meter card (ParlayAPI's joined them in v0.27.0).
+    @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
         screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
