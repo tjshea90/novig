@@ -56,7 +56,11 @@ object ClosingCapture {
         // and Vigilant's own fair odds side by side, then combined into the close (BetTracker.mergeReads: both averaged, else either one).
         coroutineScope {
             val vigilant = if (pricer != null) async { attempt { pricer.run(settings, ids, alongside = true) } } else null
+            // Bets with no CNO page get every book's read too (ParlayAPI's), beside Vigilant's: two reads for their close as well.
+            val noPage = due.filter { it.gameUrl == null }.map { it.id }
+            val books = if (pricer != null && noPage.isNotEmpty()) async { attempt { c.recheck.readWithoutPage(noPage) } } else null
             if (cnoIds.isNotEmpty()) read += attempt { c.recheck.captureClosing(cnoIds) }.orEmpty()
+            read += books?.await().orEmpty()
             val priced = vigilant?.await()
             if (pricer != null) {
                 withContext(NonCancellable) { attempt { c.tracker.mergeReads(ids, since = now, reasons = priced?.reasons.orEmpty()) } }

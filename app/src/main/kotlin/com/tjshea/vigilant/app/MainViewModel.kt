@@ -1450,20 +1450,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Every open bet still to start is priced from Vigilant's own fair odds too, CNO's included (Tj, 2026-09-30: "always scan
                 // relevant vigilant odds in addition to the cno scan ... always get full updates on all of my bets and an accurate stats
                 // reading"): one bets-only pass beside CNO's page reads, then each bet's two reads are combined (BetTracker.mergeReads).
-                val everyBet = if (pricer != null) c.tracker.all().filter { it.status == BetStatus.PENDING && it.startsTs > began }.map { it.id } else emptyList()
+                // Games under way too, up to 4 hours in, as CNO's pages are read (Tj, 2026-09-30: "every single open bet refreshed regardless of
+                // what scanner found the bet").
+                val open = if (pricer != null) c.tracker.all().filter { it.status == BetStatus.PENDING && com.tjshea.vigilant.data.tracker.BetsScope.readable(it, began) } else emptyList()
+                val everyBet = open.map { it.id }
+                // Bets with no CNO page (Vigilant's own, ParlayAPI's, synced from Novig) get every book's read too, as CNO's bets get CNO's page.
+                val noPage = open.filter { it.gameUrl == null }.map { it.id }
                 val cnoDone = java.util.concurrent.atomic.AtomicInteger()
                 val ownDone = java.util.concurrent.atomic.AtomicInteger()
+                val booksDone = java.util.concurrent.atomic.AtomicInteger()
                 fun publish() {
-                    val total = cnoTotal + everyBet.size
-                    _state.update { it.copy(checkProgress = if (total > 0) (cnoDone.get() + ownDone.get()) to total else null) }
+                    val total = cnoTotal + everyBet.size + noPage.size
+                    _state.update { it.copy(checkProgress = if (total > 0) (cnoDone.get() + ownDone.get() + booksDone.get()) to total else null) }
                 }
                 publish()
                 report = kotlinx.coroutines.coroutineScope {
                     val own = if (pricer != null && everyBet.isNotEmpty()) async(Dispatchers.IO) {
                         pricer.run(settings, everyBet, alongside = true).also { ownDone.set(everyBet.size); publish() }
                     } else null
+                    val books = if (noPage.isNotEmpty()) async(Dispatchers.IO) {
+                        c.recheck.readWithoutPage(noPage) { done, _ -> booksDone.set(done); publish() }.also { booksDone.set(noPage.size); publish() }
+                    } else null
                     val cno = async(Dispatchers.IO) { c.recheck.run { done, _ -> cnoDone.set(done); publish() } }
                     var r = cno.await()
+                    books?.await()
                     val priced = own?.await()
                     if (pricer != null) {
                         // What each bet shows and counts: both reads averaged, else whichever it got, else why not. Saved even if the screen went.
