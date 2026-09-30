@@ -1,13 +1,13 @@
-# CHECKPOINT 2169 — read me first, then TASKS.md
+# CHECKPOINT 2170 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T05:38:59Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `6ad534af` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T05:45:08Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `20b5e01b` (this checkpoint is the commit after it)
 
 ## Just done
-M1 done: injury tags (InjuryIndex from /props free + /injuries 1 cr/10 min for uncovered; tags on +EV card/sheet, CNO card/sheet, widget, Tracker open bets). ParlayInjuriesTest 7 + InjuryTagTest 5 green
+M2 done: ParlayAPI credits-a-day chart + top endpoints under its meter (/v1/meta/usage, free, read when API usage is shown). ParlayUsageHistoryTest 4 + UsageChartTest 4 green
 
 ## Do this next
-M2: /v1/meta/usage?days=30 (free) per-day credit bar chart + top endpoints under ParlayAPI's meter in Settings > API usage, read with ParlayAccount.refresh (<=1/min); test on parlay-meta-usage.json + UI test (load dataviz skill first)
+M3: /v1/meta/movers (free, public, 90s cache) for picked leagues: 'Line moves' card on Games tab + 'Pinnacle moved toward/against' note on +EV cards, CNO cards, open Tracker bets; probe once first to check the answer shape vs parlay-movers-nfl.json
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ M2: /v1/meta/usage?days=30 (free) per-day credit bar chart + top endpoints under
 
 ## Last ten checkpoints
 ```
+  7330ce20 ckpt 2169: M1 done: injury tags (InjuryIndex from /props free + /injuries 1 cr/10 min f
   73e819e2 ckpt 2168: M1 data: Injury/InjuryIndex/ParlayInjuries (/props rows' injury free, /injur
   7742a805 ckpt 2167: Handoff for Tj's next session: PARLAY_API.md (permanent ParlayAPI memory + �
   36843185 ckpt 2166: v0.29.0 (code 57) released and recorded; I3/J3/K3 ticked
@@ -26,8 +27,7 @@ M2: /v1/meta/usage?days=30 (free) per-day credit bar chart + top endpoints under
   8d5bb257 ckpt 2162: RESEARCH §45 written (real-key findings, docs pass, backup, features to off
   e877fe78 ckpt 2161: I5 docs pass fixes: include_live on ParlayAPI /odds when live is on, closing
   400540ff ckpt 2160: K1-K2 done: Check odds now tells 'CNO didn't answer' from 'page doesn't list
-  ece79c95 ckpt 2159: J1-J2 done: +EV ✕ with Undo and Put back (FeedRemoveTest 3 green)
 ```
 
-(15 automatic checkpoint(s) since the last deliberate one — the
+(13 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
