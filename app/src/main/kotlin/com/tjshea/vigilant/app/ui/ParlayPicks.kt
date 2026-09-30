@@ -1,6 +1,9 @@
 package com.tjshea.vigilant.app.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +38,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.cno.CnoPick
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.reference.ParlayBestBets
+import com.tjshea.vigilant.data.reference.ParlayCompare
 import com.tjshea.vigilant.data.reference.ParlayPick
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -70,7 +74,50 @@ class ParlayPickActions(
     val onOpen: (CnoRow) -> Unit = {},
     /** The bet (row key) whose Novig link is being found. */
     val opening: String? = null,
+    /** Tapping a card: its sheet, every book's odds on the bet (TASKS.md P4). */
+    val onSelect: (ParlayPick) -> Unit = {},
+    /** The sheet's books: CNO's game page, else ParlayAPI's ([com.tjshea.vigilant.app.MainViewModel.loadPickBooks]); true = read again. */
+    val onLoadBooks: (ParlayPick, Boolean) -> Unit = { _, _ -> },
 )
+
+/** CNO's and Vigilant's EV for a pick at Novig's price now, beside ParlayAPI's (TASKS.md P2). */
+data class PickReads(val cno: ParlayCompare.Read, val vigilant: ParlayCompare.Read) {
+    /** Why one or both have no number, for the line under them; null when both do. */
+    val why: String?
+        get() = listOfNotNull(cno.why?.let { "CNO: $it" }, vigilant.why?.let { "Vigilant: $it" }).joinToString(" · ").ifEmpty { null }
+}
+
+/** [picks]' CNO and Vigilant reads by pick key, from one [ParlayCompare.Index] of CNO's list and the last scan. */
+fun UiState.pickReads(picks: List<ParlayPick>, now: Long): Map<String, PickReads> {
+    if (picks.isEmpty()) return emptyMap()
+    val index = ParlayCompare.Index(cno.snapshot?.rows.orEmpty(), result?.opportunities.orEmpty())
+    return picks.associate { p ->
+        p.key to PickReads(
+            cno = ParlayCompare.cno(p, index, cno.snapshot?.dataAtMs, now, settings.cnoOn),
+            vigilant = ParlayCompare.vigilant(p, index, parlayPicks.vigilant, now, settings.vigilantOn, parlayPicks.vigilantReading),
+        )
+    }
+}
+
+/** CNO's list row for the same bet as [p], when CNO is on and its game page can be read (TASKS.md P4). */
+fun pickCnoRow(state: UiState, p: ParlayPick): CnoRow? =
+    if (!state.settings.cnoOn) null
+    else ParlayCompare.Index(state.cno.snapshot?.rows.orEmpty(), emptyList()).cnoRowFor(p)?.takeIf { it.gameUrl != null }
+
+/** A pick's books as its sheet shows them: CNO's game page once read, else ParlayAPI's; [fromCno] says which. */
+data class PickBooks(val books: com.tjshea.vigilant.data.cno.CnoBooksState?, val fromCno: Boolean)
+
+fun UiState.pickBooks(p: ParlayPick): PickBooks {
+    val cnoRow = pickCnoRow(this, p)
+    val fromCno = cnoRow?.let { books[it.key] }
+    val parlay = parlayPicks.books[p.key]
+    return when {
+        fromCno?.view != null -> PickBooks(fromCno, true)
+        parlay != null -> PickBooks(parlay, false)
+        fromCno != null -> PickBooks(fromCno, true)
+        else -> PickBooks(null, cnoRow != null)
+    }
+}
 
 /** The test tag of the ParlayAPI section's header. */
 const val PARLAY_PICKS = "parlayPicks"
@@ -172,7 +219,10 @@ fun ParlayPicksHeader(state: UiState, shown: Int, now: Long, actions: ParlayPick
     }
 }
 
-/** One ParlayAPI pick at Novig's price now: Vigilant's EV there against ParlayAPI's fair price, and what ParlayAPI had listed. */
+/**
+ * One ParlayAPI pick at Novig's price now: its EV there against ParlayAPI's fair price, with CNO's and Vigilant's own beside it ([reads], TASKS.md
+ * P2), and what ParlayAPI had listed. A tap opens its sheet with every book's odds (P4); Bet places it through Novig's API (P1).
+ */
 @Composable
 fun ParlayPickCard(
     p: ParlayPick,
@@ -181,25 +231,27 @@ fun ParlayPickCard(
     modifier: Modifier = Modifier,
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
     actions: ParlayPickActions = ParlayPickActions(),
+    reads: PickReads? = null,
 ) {
     val row = p.row
     val play = p.play
     val league = Leagues.byNovigName(row.league)
     Card(
-        modifier.fillMaxWidth().clickable { actions.onOpen(row) },
+        modifier.fillMaxWidth().testTag("parlayPick").clickable { actions.onSelect(p) },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(p.ev ?: 0.0)
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    listOfNotNull(league?.let { "${it.emoji} ${it.displayName}" }, row.startsAtMs?.let { Format.startTime(it) }, "ParlayAPI").joinToString(" · "),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
+                // CNO's and Vigilant's EV at the same price, beside ParlayAPI's (Tj: "so I can compare and see if it is truly positive EV").
+                reads?.let {
+                    Spacer(Modifier.width(8.dp))
+                    ScannerEv("CNO", it.cno)
+                    Spacer(Modifier.width(8.dp))
+                    ScannerEv("Vigilant", it.vigilant)
+                }
+                Spacer(Modifier.weight(1f))
                 IconButton(onClick = { actions.onPlaced(parlayItem(p)) }, modifier = Modifier.size(36.dp)) {
                     Icon(Icons.Outlined.CheckCircle, contentDescription = "I placed ${row.bet}: hide it", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -207,6 +259,11 @@ fun ParlayPickCard(
                     Icon(Icons.Filled.Close, contentDescription = "Remove ${row.bet} from the list", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            Text(
+                listOfNotNull(league?.let { "${it.emoji} ${it.displayName}" }, row.startsAtMs?.let { Format.startTime(it) }, "ParlayAPI's pick").joinToString(" · "),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -230,6 +287,7 @@ fun ParlayPickCard(
                 play.booksCompared?.let { LabeledValue("Books", it.toString()) }
                 cnoStake(CnoPick(row, p.ev ?: 0.0, false), settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
             }
+            reads?.why?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (play.alert) {
                 Text(
                     "Verify first: ParlayAPI flagged this price as far off the market" + (play.caveat?.let { " ($it)" } ?: "") + ".",
@@ -245,8 +303,173 @@ fun ParlayPickCard(
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(8.dp))
+                // Betting through Novig's API, as on CNO's cards (TASKS.md P1): only when it's set up.
+                ApiBetButton { it.betParlay(p) }
+                Spacer(Modifier.width(6.dp))
                 OpenInBookButton("", opening = actions.opening == row.key, onClick = { actions.onOpen(row) })
             }
         }
+    }
+}
+
+/** "CNO +2.31%" beside ParlayAPI's badge, or "CNO —" when it has no line (the card says why underneath). */
+@Composable
+fun ScannerEv(label: String, read: ParlayCompare.Read, modifier: Modifier = Modifier) {
+    val ev = read.ev
+    val edge = Edge.colors
+    Column(modifier.testTag("pickEv-$label"), horizontalAlignment = Alignment.Start) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            ev?.let { Format.evPercent(it) } ?: "—",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace,
+            color = when {
+                ev == null -> MaterialTheme.colorScheme.onSurfaceVariant
+                ev >= 0 -> edge.positive
+                else -> edge.negative
+            },
+        )
+    }
+}
+
+/** A tapped pick's sheet (TASKS.md P4): [ParlayPickDetail] in a bottom sheet; its books are read when it opens. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun ParlayPickSheet(
+    p: ParlayPick,
+    state: UiState,
+    reads: PickReads?,
+    actions: ParlayPickActions,
+    onDismiss: () -> Unit,
+) {
+    val sheet = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val now = rememberNow(15_000)
+    val onLoadBooks by androidx.compose.runtime.rememberUpdatedState(actions.onLoadBooks)
+    val latest by androidx.compose.runtime.rememberUpdatedState(p)
+    androidx.compose.runtime.LaunchedEffect(p.key) { onLoadBooks(latest, false) }
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
+        ParlayPickDetail(
+            p, state.settings, now, reads, state.pickBooks(p),
+            injury = state.injuries[p.key],
+            opening = actions.opening == p.row.key,
+            onOpen = { actions.onOpen(p.row) },
+            onPlaced = {
+                actions.onPlaced(parlayItem(p))
+                onDismiss()
+            },
+            onReloadBooks = { actions.onLoadBooks(p, true) },
+        )
+    }
+}
+
+/**
+ * A ParlayAPI pick in full, as CNO's sheet shows its bets (TASKS.md P4, Tj 2026-09-30: "shows other sports books odds on the same bet, exactly
+ * how other sections of this app such as cno scanner do it"): the three EVs at Novig's price now, every book's odds for the bet and its other
+ * side with Vigilant's worst-case verdict on them (CNO's game page when CNO lists the bet, else ParlayAPI's own books), and Bet / Open / placed.
+ */
+@Composable
+fun ParlayPickDetail(
+    p: ParlayPick,
+    settings: ScanSettings,
+    now: Long,
+    reads: PickReads?,
+    books: PickBooks,
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
+    opening: Boolean = false,
+    onOpen: () -> Unit = {},
+    onPlaced: (() -> Unit)? = null,
+    onReloadBooks: () -> Unit = {},
+) {
+    val row = p.row
+    val play = p.play
+    val live = row.startsAtMs?.let { it <= now } == true
+    val state = books.books
+    val view = state?.view
+    val source = if (books.fromCno) "CNO's game page" else "ParlayAPI's books"
+    val check = view?.let { com.tjshea.vigilant.data.cno.CnoBooks.check(it, row, live, preferListOdds = (p.novigAtMs ?: 0L) > it.fetchedAtMs) }
+    Column(
+        Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState()).testTag("parlayPickSheet"),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            EvBadge(p.ev ?: 0.0, large = true, low = (p.ev ?: 0.0) < settings.minEvPercent - 1e-9)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "ParlayAPI's pick · ${com.tjshea.vigilant.app.AppBook.name}" + if (live) " · LIVE (fee included)" else "",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Column {
+            Text(row.bet, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("${row.market} · ${row.event}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            row.startsAtMs?.let { Text("${row.league} · ${Format.startTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            injury?.let { InjuryLine(it, Modifier.padding(top = 6.dp)) }
+        }
+        // ---- the three scanners' EV at the same Novig price (TASKS.md P2) ----
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("EV at ${com.tjshea.vigilant.app.AppBook.name}'s price now", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                ScannerEv("ParlayAPI", ParlayCompare.Read(p.ev, row.fairProbability, null, null))
+                reads?.let {
+                    ScannerEv("CNO", it.cno)
+                    ScannerEv("Vigilant", it.vigilant)
+                }
+                check?.ev?.let { ScannerEv("Books", ParlayCompare.Read(it, check.fairProbability, view.fetchedAtMs, null)) }
+            }
+            reads?.why?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            LabeledValue("${com.tjshea.vigilant.app.AppBook.name} now", MiniWindow.american(row.odds))
+            if (play.listedAmerican != row.odds) LabeledValue("ParlayAPI had", MiniWindow.american(play.listedAmerican), valueColor = Edge.colors.warning)
+            play.fairAmerican?.let { LabeledValue("ParlayAPI fair", MiniWindow.american(it)) }
+            p.available?.let { LabeledValue("Available", Format.money(it)) }
+            cnoStake(CnoPick(row, p.ev ?: 0.0, live), settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
+        }
+
+        // ---- every book's odds, and Vigilant's own check on them, as CNO's sheet shows them ----
+        when {
+            state == null || (state.loading && view == null) -> Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.width(10.dp))
+                Text("Reading every book's odds from ${if (books.fromCno) "CNO" else "ParlayAPI"}…", style = MaterialTheme.typography.bodySmall)
+            }
+            view == null -> Banner(state.error ?: "No book list is available for this bet.", action = "Retry", onAction = onReloadBooks)
+            check != null -> VerdictCard(check, row, view.otherBet, lister = "ParlayAPI", page = source)
+        }
+        if (view != null) {
+            BookTable(view.prices, view.otherBet, com.tjshea.vigilant.data.cno.CnoBooks.NOVIG)
+            Text(
+                "Books read ${Format.age(view.fetchedAtMs, now)} from $source" + (state.error?.let { " · re-read failed: $it" } ?: ""),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            "ParlayAPI's EV is its fair price against ${com.tjshea.vigilant.app.AppBook.name}'s order book now" +
+                (p.novigAtMs?.let { " (read ${Format.age(it, now)})" } ?: "") +
+                "; CNO's and Vigilant's are their own fair lines at that same price" +
+                (if (check?.ev != null) ", and Books is Vigilant's worst case of the books above." else ".") +
+                if (com.tjshea.vigilant.app.AppBook.exchange) " Live bets pay Novig's taker fee; the EV here already takes it out." else "",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            ApiBetButton { it.betParlay(p) }
+            androidx.compose.material3.Button(onClick = onOpen, enabled = !opening, modifier = Modifier.testTag("openInSheet")) {
+                if (opening) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Opening…")
+                } else {
+                    Text("Open in ${com.tjshea.vigilant.app.AppBook.name}")
+                }
+            }
+            if (onPlaced != null) OutlinedButton(onClick = onPlaced) { Text("I placed it") }
+        }
+        if (view != null) TextButton(onClick = onReloadBooks, enabled = !state.loading) { Text(if (state.loading) "Reading…" else "Re-read books") }
+        // ParlayAPI's call on this bet at the price shown, only on a tap (5 credits; PARLAY_API.md §6.4).
+        SecondOpinionFor(p.key, androidx.compose.runtime.remember(row.key, row.odds) { com.tjshea.vigilant.data.reference.VerdictQueries.of(row) })
     }
 }
