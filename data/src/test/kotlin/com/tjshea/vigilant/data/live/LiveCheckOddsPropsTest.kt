@@ -71,14 +71,20 @@ class LiveCheckOddsPropsTest {
         val sources = listOf(ParlayPropsSource(parlay), PolymarketClient(http, json), KalshiClient(http, json))
         val settings = ScanSettings(leagues = setOf("MLB"), useBookProps = true)
         val pricer = OpenBetPricer(tracker, Scanner(novig, betsOnly = true), { sources })
+        // Check odds now's other read for bets with no CNO page: every book's price from ParlayAPI, judged with CNO's check.
+        val recheck = com.tjshea.vigilant.data.tracker.BetRecheck(
+            tracker, books = { null }, backup = { bet -> com.tjshea.vigilant.data.tracker.ParlayBooks(parlay, active = { true }).view(bet) },
+        )
         val began = System.currentTimeMillis()
         val report = pricer.run(settings, bets.map { it.id }, alongside = true)
-        val merged = tracker.mergeReads(bets.map { it.id }, since = began, reasons = report.reasons)
-        println("LIVE CHECK ${bets.size} bets in ${(System.currentTimeMillis() - began) / 1000.0} s: priced ${report.priced}, unpriced ${report.unpriced}, error ${report.error}; merged $merged")
+        val booksRead = recheck.readWithoutPage(bets.map { it.id })
+        println("LIVE CHECK books read (ParlayAPI's, CNO's check): ${booksRead.size} of ${bets.size}")
+        val merged = tracker.mergeReads(bets.map { it.id }, since = began, cnoSince = began, reasons = report.reasons)
+        println("LIVE CHECK ${bets.size} bets in ${(System.currentTimeMillis() - began) / 1000.0} s: Vigilant priced ${report.priced}; both ${merged.both.size}, books only ${merged.cnoOnly.size}, Vigilant only ${merged.vigOnly.size}, neither ${merged.neither.size}")
         for (b in tracker.all()) {
             val refreshed = (b.nowAtMs ?: 0L) >= began
             println("LIVE CHECK ${if (refreshed) "REFRESHED" else "STALE    "} ${b.marketLabel} ${b.selection}: " +
-                (if (refreshed) "fair %.3f".format(b.nowFair) else "note: ${b.nowNote}"))
+                (if (refreshed) "fair %.3f via ${b.nowVia}, ${b.nowBooks} books".format(b.nowFair) else "note: ${b.nowNote}"))
         }
     }
 }
