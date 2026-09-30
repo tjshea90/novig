@@ -2537,3 +2537,22 @@ Do any of these stats check true closing line value based on the closing line fo
 ```
 My phone will not always be on. The app has to be able to find clv from closing lines after the games started or even days later. Espn may have the closing lines information. Check for sources that the app can use for this and implement it
 ```
+
+## 2026-09-30T01:05:29Z
+```
+Research these two sources and see if they can help improve anything in the app, whether it is speed or accuracy or grading or finding historical closing lines to calculate clv.
+
+https://github.com/the-odds-api/apps-script/blob/master/ClosingLinesAnyMarket.gs
+
+https://therundown.io/api
+
+https://www.reddit.com/r/ParlayAPI/comments/1t8vtbl/the_complete_sports_betting_data_stack_for_2026/
+
+https://github.com/DeliciousPipe1326/edge-scanner
+
+After researching those, implement into the app anything from these sources that can help or improve the app in any way. 
+
+Then research online if there is anything I can buy, such as api subscriptions, that will greatly improve the app and is worth the price. My budget is around $40 per month, but only if this money can be put to great use.
+
+Also, I noticed in your last prompt that you were considering mobile data usage. My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone storage always.
+```
