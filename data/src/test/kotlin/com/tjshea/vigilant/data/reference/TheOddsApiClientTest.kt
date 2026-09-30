@@ -186,7 +186,7 @@ class TheOddsApiClientTest {
     )
 
     @Test
-    fun `ParlayAPI is its own source with its own books, and its x-credits headers land in its meter`() = runTest {
+    fun `ParlayAPI is its own source with its own books, and its usage headers land in its own meter`() = runTest {
         val c = parlay()
         assertEquals("parlay", c.id)
         assertEquals("ParlayAPI", c.displayName)
@@ -194,7 +194,8 @@ class TheOddsApiClientTest {
         val books = c.booksFor(ScanSettings(referenceBooks = listOf("draftkings")))
         assertEquals("pinnacle", books.first())
         assertFalse("novig" in books)
-        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-credits-remaining", "970").setHeader("x-credits-cost", "1"))
+        // Its docs: "Every response includes x-requests-used, x-requests-remaining, and x-requests-last" (parlay-api.com/docs, 2026-09-30).
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "970").setHeader("x-requests-used", "30").setHeader("x-requests-last", "1"))
         val snap = c.fetch("americanfootball_nfl", books)
         assertEquals(970, snap.creditsRemaining)
         assertEquals("parlay", snap.provider)
@@ -202,6 +203,9 @@ class TheOddsApiClientTest {
         val u = meter.flow.value.providers.getValue("parlay").keys.getValue("pk")
         assertEquals(970, u.remaining)
         assertEquals(1, u.lastCost)
+        // x-credits-* names are read too, should a response carry only those.
+        server.enqueue(MockResponse().setBody("[]").setHeader("x-credits-remaining", "969"))
+        assertEquals(969, c.fetch("americanfootball_nfl", books).creditsRemaining)
     }
 
     @Test
