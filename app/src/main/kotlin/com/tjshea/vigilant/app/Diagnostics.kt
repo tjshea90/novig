@@ -51,6 +51,8 @@ object Diagnostics {
         val phone: Phone = Phone(),
         /** Diagnostics' "Recent problems": saved across restarts, newest first ([com.tjshea.vigilant.data.diag.ProblemLog]). */
         val problems: List<com.tjshea.vigilant.data.diag.Problem> = emptyList(),
+        /** Android's record of how the app's process last ended, newest first ([AppExits.recent]). */
+        val exits: List<AppExits.Exit> = emptyList(),
     )
 
     /** The phone's side of it: permissions and settings that decide whether background scans, alerts and the closing capture run. */
@@ -271,6 +273,18 @@ object Diagnostics {
         val p = x.phone
         fun yn(v: Boolean?) = when (v) { true -> "yes"; false -> "NO"; null -> "?" }
         o.appendLine("Notifications ${yn(p.notifications)} · exact alarms ${yn(p.exactAlarms)} · battery unrestricted ${yn(p.batteryUnrestricted)} · draw over apps ${yn(p.overlay)} · Data Saver ${when (p.dataSaver) { true -> "ON"; false -> "off"; null -> "?" }} · online ${yn(p.online)}" + (p.network?.let { " ($it)" } ?: ""))
+
+        o.appendLine()
+        o.appendLine("== How the app last ended (Android's own record, newest first) ==")
+        if (x.exits.isEmpty()) o.appendLine("Nothing recorded.")
+        x.exits.forEach { e ->
+            o.appendLine(
+                "${at(e.atMs)} · ${e.reason}" + (if (e.foreground) " · on screen" else " · in the background") + (e.pssMb?.let { " · ${it} MB" } ?: "") +
+                    (e.description?.takeIf { it.isNotBlank() }?.let { " · ${com.tjshea.vigilant.data.diag.ProblemLog.clean(it).take(200)}" } ?: ""),
+            )
+            // Where the main thread was stuck when Android said "not responding".
+            e.trace.forEach { o.appendLine("    $it") }
+        }
 
         o.appendLine()
         o.appendLine("== Recent problems (saved across restarts, newest first) ==")

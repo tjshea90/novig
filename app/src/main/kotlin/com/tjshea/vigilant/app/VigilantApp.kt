@@ -76,6 +76,8 @@ class VigilantApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // A crash's stack is kept before the process goes (Diagnostics' Recent problems, Tj 2026-09-30).
+        AppExits.install(this)
         // A new process has no scan results (they live in memory): a "scan done" notification left
         // from before Android closed Vigilant names bets the app can no longer show (Tj, 2026-09-27:
         // "it says the best bet is Milwaukee, but this bet isn't even shown in the widget").
@@ -312,6 +314,10 @@ class AppContainer(private val app: Application) {
         }
         appScope.launch {
             cno.state.map { it.error }.distinctUntilChanged().filterNotNull().collect { runCatching { problems.add("CrazyNinjaOdds", it) } }
+        }
+        // A crash saved as the last process went down ([AppExits.install]): into Recent problems at the time it happened.
+        appScope.launch(Dispatchers.IO) {
+            AppExits.takeSavedCrash(app)?.let { (at, text) -> runCatching { problems.add("App crash", text, atMs = at, maxLength = problems.crashLength) } }
         }
     }
 

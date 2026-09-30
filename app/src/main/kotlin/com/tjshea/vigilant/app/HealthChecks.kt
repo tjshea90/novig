@@ -33,7 +33,7 @@ object HealthChecks {
         apis(s, x, now)
         if (set.cnoOn && !set.paused) cno(s, now)
         background(s, x, now)
-        phone(s, x)
+        phone(s, x, now)
         tracker(s, x, now)
         accuracy(s, now)
         betting(s)
@@ -191,7 +191,21 @@ object HealthChecks {
         if (!late && a.lastError == null && x.autoScanServiceRunning) add(Check(Level.OK, "Background auto-scan", "running: last cycle ${a.lastStartMs?.let { Format.age(it, now) }}, found ${a.lastFound}, alerts ${a.lastAlerts}"))
     }
 
-    private fun MutableList<Check>.phone(s: UiState, x: Diagnostics.Extras) {
+    private fun MutableList<Check>.phone(s: UiState, x: Diagnostics.Extras, now: Long) {
+        // Crashes, freezes and kills for memory in the last day (Android's own record: AppExits).
+        val bad = x.exits.filter { it.bad && now - it.atMs < 24 * HOUR }
+        if (bad.isNotEmpty()) {
+            val last = bad.maxByOrNull { it.atMs }!!
+            add(
+                Check(
+                    Level.FAIL, "App stability", "the app ended badly ${bad.size} time${plural(bad.size)} in the last day (${bad.groupingBy { it.reason }.eachCount().entries.joinToString { "${it.value} ${it.key}" }})",
+                    "the last ${Format.age(last.atMs, now)}, ${if (last.foreground) "on screen" else "in the background"}" + (last.description?.takeIf { it.isNotBlank() }?.let { ": ${com.tjshea.vigilant.data.diag.ProblemLog.clean(it).take(140)}" } ?: ""),
+                    "How the app last ended (a freeze's main-thread stack) and Recent problems (a crash's stack) below",
+                ),
+            )
+        } else if (x.exits.isNotEmpty()) {
+            add(Check(Level.OK, "App stability", "no crash, freeze or memory kill in the last day"))
+        }
         val p = x.phone
         val set = s.settings
         if (p.notifications == false) {

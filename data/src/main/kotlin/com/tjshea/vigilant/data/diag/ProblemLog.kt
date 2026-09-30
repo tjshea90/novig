@@ -19,10 +19,11 @@ data class ProblemBook(val items: List<Problem> = emptyList())
  */
 class ProblemLog(private val store: JsonFileStore<ProblemBook>, private val clock: () -> Long = System::currentTimeMillis) {
 
-    suspend fun add(area: String, message: String) {
-        val text = clean(message).take(MAX_LENGTH)
+    /** [atMs]: when it happened, when that was before now (a crash saved as the app went down). [maxLength]: a crash's stack keeps more. */
+    suspend fun add(area: String, message: String, atMs: Long? = null, maxLength: Int = MAX_LENGTH) {
+        val text = clean(message).take(maxLength)
         if (text.isBlank()) return
-        val now = clock()
+        val now = atMs ?: clock()
         store.update { book ->
             val items = book.items.toMutableList()
             val i = items.indexOfLast { it.area == area && it.message == text }
@@ -39,10 +40,14 @@ class ProblemLog(private val store: JsonFileStore<ProblemBook>, private val cloc
     /** Newest first. */
     suspend fun recent(): List<Problem> = store.read().items.asReversed().sortedByDescending { it.lastAtMs }
 
+    /** A crash's stack: kept longer than other problems. */
+    val crashLength: Int get() = CRASH_LENGTH
+
     companion object {
         const val KEEP = 60
         const val MERGE_MS = 6 * 60 * 60_000L
         const val MAX_LENGTH = 300
+        const val CRASH_LENGTH = 1_500
 
         /** Long runs of letters and digits (a key, a token, a signature) masked to their last four; the app's words stay. */
         fun clean(message: String): String =

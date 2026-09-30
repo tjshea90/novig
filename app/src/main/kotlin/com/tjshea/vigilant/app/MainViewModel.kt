@@ -1429,6 +1429,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             injuryReports = c.injuries.book.value.size,
             phone = phoneNow(app),
             problems = problems,
+            exits = runCatching { AppExits.recent(app) }.getOrDefault(emptyList()),
         )
         // The meter as it stands this moment (a balance just read may not have reached the state yet).
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it.copy(usage = c.usage.flow.value), extras, System.currentTimeMillis()))) }
