@@ -223,7 +223,7 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
     private suspend fun vigilantScan(settings: ScanSettings): List<EvAlert> {
         val before = c.runner.state.value.finished
         // Tj's own scan may be running: then its result is this cycle's.
-        c.startVigilantScan(settings, runCatching { c.tracker.all() }.getOrDefault(emptyList()))
+        c.startVigilantScan(settings, runCatching { c.tracker.all() }.getOrDefault(emptyList()), background = true)
         val run = c.runner.state.first { !it.scanning && it.finished > before }
         if (settings.alertMinEv <= 0.0) return emptyList()
         val state = snapshot(settings).copy(result = run.result).indexed(clock())

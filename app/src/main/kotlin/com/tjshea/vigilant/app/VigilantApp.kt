@@ -317,11 +317,12 @@ class AppContainer(private val app: Application) {
      * so their closing value updates. Afterwards, even with no screen: the Tracker follows the new
      * prices, and the usage counters are saved.
      */
-    fun startVigilantScan(settings: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>): Boolean {
+    /** [background]: a background auto-scan's cycle, not a scan Tj started (paced feeds leave part of the day for his: [referenceSources]). */
+    fun startVigilantScan(settings: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, background: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
         val before = usage.flow.value
-        return runner.start(settings, referenceSources(settings), pinned) { report ->
+        return runner.start(settings, referenceSources(settings, background), pinned) { report ->
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
             if (!onScreen) novig.stream?.close()
@@ -395,6 +396,13 @@ class AppContainer(private val app: Application) {
     )
     /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
     private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds)
+
+    /** The same for background auto-scans: they leave half of each day's ParlayAPI share for the scans Tj starts himself. */
+    private val parlayOddsBackground = TheOddsApiClient(
+        http, parlayPool, json,
+        baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY, background = true,
+    )
+    private val parlayPropsBackground = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOddsBackground)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */
     private val bookProps = OddsApiPropsSource(oddsApi)
     /** Pinnacle: PinnWire's keys first (their free keys include player props), then pinnapi's. */
@@ -435,7 +443,7 @@ class AppContainer(private val app: Application) {
      * this phone. Clients live for the whole process; the key pools read the current keys on
      * every call, so adding or removing a key takes effect on the next scan.
      */
-    fun referenceSources(settings: ScanSettings): List<ReferenceSource> = buildList {
+    fun referenceSources(settings: ScanSettings, background: Boolean = false): List<ReferenceSource> = buildList {
         if (settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())) add(pinnacle)
         if (settings.usePolymarket) add(polymarket)
         if (settings.useKalshi) add(kalshi)
@@ -448,8 +456,8 @@ class AppContainer(private val app: Application) {
             if (settings.useBookProps) add(bookProps)
         }
         if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) {
-            add(parlayOdds)
-            if (settings.useBookProps) add(parlayProps)
+            add(if (background) parlayOddsBackground else parlayOdds)
+            if (settings.useBookProps) add(if (background) parlayPropsBackground else parlayProps)
         }
     }
 }
