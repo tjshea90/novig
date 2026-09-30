@@ -222,12 +222,18 @@ class NovigPublicClientTest {
     fun `with a key, a refused wave is waited out once and every book still comes`() = runBlocking {
         val arrived = AtomicInteger()
         val refused = AtomicInteger()
+        val refusedBooks = HashSet<String>()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 if (request.requestUrl!!.encodedPath == "/v3/limits") return MockResponse().setBody(limitsBody)
                 // The wave in flight (the key's 10 reads) is refused, Retry-After: 1. Counted, not timed: a busy CI
-                // runner spread the wave past a 300 ms window once and only 8 were refused (flake, 2026-09-28).
-                return if (arrived.incrementAndGet() <= 10) {
+                // runner spread the wave past a 300 ms window once and only 8 were refused (flake, 2026-09-28). Ten
+                // different books, each once: under a full test run's load one book's retry could land before the rest
+                // of the wave had arrived and be refused again (2026-09-30), which isn't the wave this test is about.
+                val book = request.requestUrl!!.encodedPath
+                val refuse = synchronized(refusedBooks) { refusedBooks.size < 10 && refusedBooks.add(book) }
+                arrived.incrementAndGet()
+                return if (refuse) {
                     refused.incrementAndGet()
                     MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
                         .setBody("""{"code":"RATE_LIMIT_EXCEEDED","message":"Rate limit exceeded. Please wait before retrying."}""")
