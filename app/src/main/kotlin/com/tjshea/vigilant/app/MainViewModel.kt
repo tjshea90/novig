@@ -365,6 +365,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val api = ApiBettingController(c, _state, viewModelScope, _toasts)
 
     init {
+        // Every failure shown on screen goes in Diagnostics' "Recent problems" too (Tj, 2026-09-30).
+        viewModelScope.launch {
+            _toasts.collect { text -> if (Diagnostics.isProblem(text)) runCatching { c.problems.add("Shown on screen", text) } }
+        }
+    }
+
+    init {
         viewModelScope.launch {
             val stored = c.settingsStore.read()
             val settings = stored.migrate()
