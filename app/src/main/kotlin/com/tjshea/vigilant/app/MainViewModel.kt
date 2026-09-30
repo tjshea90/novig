@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -543,6 +544,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private var vigilantFairsJob: Job? = null
+    private var vigilantFairsRound = 0
 
     /**
      * Vigilant's own fair line for the ParlayAPI picks shown (TASKS.md P2, Tj 2026-09-30: "put cno/vigilant's percentage so I can compare and
@@ -560,6 +562,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (asks.isEmpty()) return
         vigilantFairsJob?.cancel()
+        // A newer read replaces this one: only the newest clears the "reading" line when it ends.
+        val round = ++vigilantFairsRound
         _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilantReading = true)) }
         vigilantFairsJob = viewModelScope.launch {
             try {
@@ -573,7 +577,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val reads = withContext(Dispatchers.IO) { pricer.fairs(_state.value.settings, bets) }
                 _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilant = it.parlayPicks.vigilant + reads)) }
             } finally {
-                _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilantReading = false)) }
+                if (round == vigilantFairsRound) _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilantReading = false)) }
             }
         }
     }
