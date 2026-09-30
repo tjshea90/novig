@@ -134,6 +134,8 @@ object ParlayProps {
             val marketKey = r.str("market_key") ?: continue
             // Each book's own name for the market ("player_rec_yds", "player_receiving_yards"): read as words ([ParlayMarkets]).
             val stat = ParlayMarkets.statOf(sportKey, marketKey, r.str("market") ?: r.str("market_label")) ?: continue
+            // The names ParlayAPI's own board uses for the stat: what /verdict is asked with (ParlayMarketKeys).
+            ParlayMarketKeys.record(sportKey, stat, marketKey)
             val player = (r.str("player") ?: r.str("player_name") ?: r.str("description"))?.trim() ?: continue
             val yesNo = marketKey in PropStats.YES_NO || "anytime" in marketKey
             val line = r.num("line") ?: r.num("point") ?: if (yesNo) 0.5 else continue

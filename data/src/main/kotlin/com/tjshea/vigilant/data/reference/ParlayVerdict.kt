@@ -20,9 +20,13 @@ import java.util.concurrent.ConcurrentHashMap
 object ParlayMarketKeys {
     private val seen = ConcurrentHashMap<String, ConcurrentHashMap<String, Int>>()
 
+    /** A row of [stat] named [key]; a book's own prefixed name ("prophetx_player_total_…") isn't one to ask with. */
     fun record(sportKey: String, stat: String, key: String) {
+        if (!PLAIN.matches(key)) return
         seen.getOrPut("$sportKey|$stat") { ConcurrentHashMap() }.merge(key, 1, Int::plus)
     }
+
+    private val PLAIN = Regex("^(player|batter|pitcher)_[a-z0-9_]+$")
 
     /** The key to ask /verdict for [stat] in [sportKey], or null when Vigilant doesn't price it there. */
     fun keyFor(sportKey: String, stat: String): String? =
