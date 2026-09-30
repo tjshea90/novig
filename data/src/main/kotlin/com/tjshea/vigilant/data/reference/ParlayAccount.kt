@@ -87,8 +87,12 @@ class ParlayAccount(
             last = last + (key to check)
             // Where the credits went, day by day (free, same cadence).
             readHistory(key)?.let { h ->
-                histories[key] = h
-                historyState.value = combine(histories.filterKeys { it in keys() }.values)
+                val current = keys().toSet()
+                historyState.value = synchronized(histories) {
+                    histories[key] = h
+                    histories.keys.retainAll(current)
+                    combine(histories.values.toList())
+                }
             }
             val reason = check.reason?.lowercase().orEmpty()
             meter.recordBalance(
