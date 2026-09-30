@@ -280,7 +280,9 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     i.fairNow?.let { LabeledValue(if (current) "Fair now" else "Fair then", "${Format.american(it)} · ${Format.percent(it)}") }
                     i.priceNow?.let { LabeledValue("${bet.book.ifBlank { AppBook.name }} now", Odds.formatAmerican(it)) }
-                    i.clv?.let { LabeledValue("CLV so far", Format.evPercent(it), valueColor = moneyColor(it)) }
+                    // The true CLV once the game started with a close read just before it (ClosingLine); before that, against the last read.
+                    (com.tjshea.vigilant.data.tracker.ClosingLine.clv(bet, now)?.let { "CLV" to it } ?: i.clv?.let { "CLV so far" to it })
+                        ?.let { (label, v) -> LabeledValue(label, Format.evPercent(v), valueColor = moneyColor(v)) }
                     i.booksBehind?.let { LabeledValue("Books behind it", "$it") }
                 }
                 TrackerText.moveSentence(i)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
