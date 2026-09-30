@@ -585,7 +585,16 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * fair price, EV against the price it was bet at, age, books and Novig's price now; one it doesn't price keeps what it had and gets its
      * reason from [reasons] (the card says why, never a stale number that looks current).
      */
-    suspend fun applyPricing(result: ScanResult?, betIds: Collection<String>, reasons: Map<String, String> = emptyMap()): Applied {
+    suspend fun applyPricing(
+        result: ScanResult?,
+        betIds: Collection<String>,
+        reasons: Map<String, String> = emptyMap(),
+        /**
+         * Vigilant's read beside CNO's, in a check that reads both ([mergeReads] decides what the bet shows): only [TrackedBet.vigFair] and
+         * its time are written (and every book's price when the bet has none yet), never the current EV, the closing line or a reason.
+         */
+        alongside: Boolean = false,
+    ): Applied {
         val now = clock()
         val ids = betIds.toHashSet()
         val byKey = result?.opportunities?.filter { it.fairProbability != null }?.associateBy { it.market.marketId to it.outcome.outcomeId }.orEmpty()
@@ -598,10 +607,10 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 if (b.id !in ids || b.status != BetStatus.PENDING || now >= b.startsTs) return@map b
                 val o = byKey[b.marketId to b.outcomeId]
                 when {
-                    o != null -> { priced++; applyFair(b, o, now, VIA_VIGILANT) }
+                    o != null -> { priced++; applyFair(b, o, now, VIA_VIGILANT, alongside) }
                     else -> {
                         unpriced++
-                        reasons[b.id]?.let { b.copy(nowNote = it, nowNoteAtMs = now) } ?: b
+                        if (alongside) b else reasons[b.id]?.let { b.copy(nowNote = it, nowNoteAtMs = now) } ?: b
                     }
                 }
             }
@@ -609,17 +618,81 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         return Applied(priced, unpriced)
     }
 
-    /** [b] with [o]'s fair line as its fair now: EV at the price it was bet at, the books behind it, Novig's price now, and the closing line so far. */
-    private fun applyFair(b: TrackedBet, o: Opportunity, now: Long, via: String): TrackedBet {
+    /**
+     * [b] with [o]'s fair line as its fair now: EV at the price it was bet at, the books behind it, Novig's price now, and the closing line so far.
+     * [alongside]: Vigilant's read only ([TrackedBet.vigFair]), the rest left to [mergeReads].
+     */
+    private fun applyFair(b: TrackedBet, o: Opportunity, now: Long, via: String, alongside: Boolean = false): TrackedBet {
         val fair = o.fairProbability ?: return b
         val lines = booksOf(o)
+        val twoSided = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() }
+        // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
+        val novigNow = o.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican
+        if (alongside) {
+            val keepBooks = b.books.isNotEmpty() || lines.isEmpty()
+            return b.copy(
+                vigFair = fair, vigAtMs = now, vigBooks = twoSided ?: b.vigBooks, nowAmerican = novigNow,
+                books = if (keepBooks) b.books else lines, booksAtMs = if (keepBooks) b.booksAtMs else now,
+            )
+        }
         return b.copy(
             closingFair = fair, closingSeenAtMs = now, nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
             books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
-            nowBooks = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() } ?: b.nowBooks,
-            // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
-            nowAmerican = o.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican,
+            nowBooks = twoSided ?: b.nowBooks,
+            vigFair = fair, vigAtMs = now, vigBooks = twoSided ?: b.vigBooks,
+            nowAmerican = novigNow,
         )
+    }
+
+    /** Which open bets a check read both ways, by CNO alone, by Vigilant alone, or neither ([mergeReads]). */
+    data class Merged(val both: Set<String>, val cnoOnly: Set<String>, val vigOnly: Set<String>, val neither: Set<String>) {
+        companion object {
+            val EMPTY = Merged(emptySet(), emptySet(), emptySet(), emptySet())
+        }
+    }
+
+    /**
+     * After a check that read [ids] both ways (CNO's pages and Vigilant's own fair odds, [applyPricing] `alongside`): each bet's current EV
+     * from what was read since [since] (CNO's since [cnoSince]: a page read in the minute before the tap is left as current, not read again).
+     * Both: the average of the two fair lines ([VIA_BOTH]), a better estimate than either alone for the stats Tj reads; CNO's alone: as read;
+     * Vigilant's alone: its line ([VIA_VIGILANT]). Before the start the same line is the closing line so far (CLV). Neither: [reasons]' why,
+     * unless CNO's read already left one.
+     */
+    suspend fun mergeReads(ids: Collection<String>, since: Long, cnoSince: Long = since, reasons: Map<String, String> = emptyMap()): Merged {
+        val now = clock()
+        val wanted = ids.toHashSet()
+        val both = HashSet<String>()
+        val cnoOnly = HashSet<String>()
+        val vigOnly = HashSet<String>()
+        val neither = HashSet<String>()
+        store.update { list ->
+            both.clear(); cnoOnly.clear(); vigOnly.clear(); neither.clear()
+            list.map { b ->
+                if (b.id !in wanted || b.status != BetStatus.PENDING) return@map b
+                val c = b.cnoFair?.takeIf { (b.cnoAtMs ?: Long.MIN_VALUE) >= cnoSince }
+                val v = b.vigFair?.takeIf { (b.vigAtMs ?: Long.MIN_VALUE) >= since }
+                fun withFair(fair: Double, at: Long, via: String, books: Int?) = b.copy(
+                    nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = at, nowVia = via, nowBooks = books ?: b.nowBooks,
+                    nowNote = null, nowNoteAtMs = null,
+                    closingFair = if (at < b.startsTs) fair else b.closingFair,
+                    closingSeenAtMs = if (at < b.startsTs) at else b.closingSeenAtMs,
+                )
+                when {
+                    c != null && v != null -> {
+                        both += b.id
+                        withFair((c + v) / 2.0, maxOf(b.cnoAtMs!!, b.vigAtMs!!), VIA_BOTH, maxOf(b.nowBooks ?: 0, b.vigBooks ?: 0).takeIf { it > 0 })
+                    }
+                    c != null -> { cnoOnly += b.id; b }
+                    v != null -> { vigOnly += b.id; withFair(v, b.vigAtMs!!, VIA_VIGILANT, b.vigBooks) }
+                    else -> {
+                        neither += b.id
+                        val cnoSaid = b.nowNote != null && (b.nowNoteAtMs ?: Long.MIN_VALUE) >= cnoSince
+                        reasons[b.id]?.takeIf { !cnoSaid }?.let { b.copy(nowNote = it, nowNoteAtMs = now) } ?: b
+                    }
+                }
+            }
+        }
+        return Merged(both.toSet(), cnoOnly.toSet(), vigOnly.toSet(), neither.toSet())
     }
 
     companion object {
