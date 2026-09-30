@@ -44,6 +44,26 @@ class ParlayAccount(
 
     private val checkedAt = HashMap<String, Long>()
 
+    /** One day of ParlayAPI's own usage log (`day` is its UTC date, "2026-09-30"). */
+    data class Day(val day: String, val credits: Int, val requests: Int)
+
+    /** An endpoint's share of the window ("props:baseball_mlb"). */
+    data class Endpoint(val endpoint: String, val credits: Int, val requests: Int)
+
+    /**
+     * Where the credits went (Tj, 2026-09-30, PARLAY_API.md §6.2): `GET /v1/meta/usage?days=30` (free), every key's added together. Only
+     * its `daily_breakdown` and `top_endpoints` are read: its `credits_*` totals read 0 (broken on their side).
+     */
+    data class History(val days: List<Day>, val top: List<Endpoint>, val windowDays: Int, val readAtMs: Long) {
+        val total: Int get() = days.sumOf { it.credits }
+    }
+
+    private val histories = HashMap<String, History>()
+    private val historyState = kotlinx.coroutines.flow.MutableStateFlow<History?>(null)
+
+    /** The keys' usage log, added together, as last read (null until one answers). */
+    val history: kotlinx.coroutines.flow.StateFlow<History?> = historyState
+
     /** The last answer per key (this process), for Diagnostics. */
     @Volatile
     var last: Map<String, Check> = emptyMap()
@@ -65,6 +85,11 @@ class ParlayAccount(
             } ?: continue
             answered++
             last = last + (key to check)
+            // Where the credits went, day by day (free, same cadence).
+            readHistory(key)?.let { h ->
+                histories[key] = h
+                historyState.value = combine(histories.filterKeys { it in keys() }.values)
+            }
             val reason = check.reason?.lowercase().orEmpty()
             meter.recordBalance(
                 QuotaPolicy.PARLAY, key, check.remaining, check.limit, check.used, check.resetAtMs, periodStartMs = check.periodStartMs,
@@ -74,6 +99,17 @@ class ParlayAccount(
             )
         }
         return answered
+    }
+
+    private suspend fun readHistory(key: String): History? {
+        val url = "$base/meta/usage".toHttpUrl().newBuilder().addQueryParameter("days", HISTORY_DAYS_ASKED.toString()).build()
+        val reply = try {
+            http.newCall(Request.Builder().url(url).get().header("X-API-Key", key).build()).awaitText()
+        } catch (e: IOException) {
+            return null
+        }
+        if (!reply.isSuccessful) return null
+        return runCatching { parseHistory(json.parseToJsonElement(reply.body), clock()) }.getOrNull()
     }
 
     /** `/v1/usage`, else the key check (an invalid or spent key answers there with its reason). */
@@ -98,6 +134,34 @@ class ParlayAccount(
     fun historyDays(): Int = last.values.mapNotNull { HISTORY_DAYS[it.tier?.lowercase()] }.maxOrNull() ?: 7
 
     companion object {
+        /** Days of usage log asked for (the chart's width). */
+        const val HISTORY_DAYS_ASKED = 30
+
+        /** Several keys' logs as one: each day's and each endpoint's credits added up. */
+        fun combine(all: Collection<History>): History? {
+            if (all.isEmpty()) return null
+            val days = all.flatMap { it.days }.groupBy { it.day }.map { (d, l) -> Day(d, l.sumOf { it.credits }, l.sumOf { it.requests }) }.sortedBy { it.day }
+            val top = all.flatMap { it.top }.groupBy { it.endpoint }.map { (e, l) -> Endpoint(e, l.sumOf { it.credits }, l.sumOf { it.requests }) }
+                .sortedByDescending { it.credits }
+            return History(days, top, all.maxOf { it.windowDays }, all.maxOf { it.readAtMs })
+        }
+
+        /** A `/v1/meta/usage` answer's day-by-day log and top endpoints. */
+        fun parseHistory(root: JsonElement, now: Long): History? {
+            val o = root as? JsonObject ?: return null
+            fun JsonObject.int(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content?.toDoubleOrNull()?.toInt()
+            fun JsonObject.text(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content?.takeIf { it.isNotBlank() }
+            val days = (o["daily_breakdown"] as? JsonArray)?.mapNotNull { e ->
+                val d = e as? JsonObject ?: return@mapNotNull null
+                Day(d.text("day")?.take(10) ?: return@mapNotNull null, d.int("credits") ?: 0, d.int("requests") ?: 0)
+            } ?: return null
+            val top = (o["top_endpoints"] as? JsonArray)?.mapNotNull { e ->
+                val d = e as? JsonObject ?: return@mapNotNull null
+                Endpoint(d.text("endpoint") ?: return@mapNotNull null, d.int("credits") ?: 0, d.int("requests") ?: 0)
+            }.orEmpty()
+            return History(days.sortedBy { it.day }, top.sortedByDescending { it.credits }, o.int("window_days") ?: HISTORY_DAYS_ASKED, now)
+        }
+
         private val HISTORY_DAYS = mapOf("free" to 2, "starter" to 7, "pro" to 30, "business" to 90, "enterprise" to 365, "scale" to 3650)
 
         /** A key's account is read again after this at the soonest, unless asked (free, and ParlayAPI has no per-second cap on paid plans). */
