@@ -47,7 +47,28 @@ object Diagnostics {
         /** Calls to ParlayAPI's other endpoints since the app opened, by name (injuries, movers, second opinions, picks), and players' reports kept. */
         val parlayExtras: Map<String, Int> = emptyMap(),
         val injuryReports: Int = 0,
+        /** What Android allows Vigilant on this phone; null where it couldn't be read. */
+        val phone: Phone = Phone(),
+        /** Diagnostics' "Recent problems": saved across restarts, newest first ([com.tjshea.vigilant.data.diag.ProblemLog]). */
+        val problems: List<com.tjshea.vigilant.data.diag.Problem> = emptyList(),
     )
+
+    /** The phone's side of it: permissions and settings that decide whether background scans, alerts and the closing capture run. */
+    data class Phone(
+        val notifications: Boolean? = null,
+        val exactAlarms: Boolean? = null,
+        val batteryUnrestricted: Boolean? = null,
+        val overlay: Boolean? = null,
+        val dataSaver: Boolean? = null,
+        val online: Boolean? = null,
+        /** "Wi-Fi", "mobile", "VPN"… */
+        val network: String? = null,
+    )
+
+    /** A message shown on screen that says something failed (what goes in Recent problems), not a confirmation. */
+    fun isProblem(text: String): Boolean = PROBLEM_WORDS.containsMatchIn(text)
+
+    private val PROBLEM_WORDS = Regex("(?i)couldn't|could not|can't|failed|error|refused|not found|timed? ?out|unable|isn't|wasn't|no internet|HTTP [45]\\d\\d")
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
         val time = SimpleDateFormat("MMM d, h:mm:ss a", Locale.US).apply { timeZone = zone }
@@ -56,7 +77,15 @@ object Diagnostics {
         val o = StringBuilder()
         o.appendLine("VIGILANT DIAGNOSTICS · ${at(now)}")
         o.appendLine("Version ${x.versionName} (code ${x.versionCode}) · ${x.device}")
+        // For whoever reads it next (Tj pastes it to Claude): where the code is, and how the report is laid out.
+        o.appendLine("For Claude: code at github.com/tjshea90/novig (modules engine/data/app; paths below are under data/src/main/kotlin/com/tjshea/vigilant/ or app's). Health checks come first, worst first, each with its evidence [in brackets] and the code that owns it (→); the blocks after are the numbers behind them. No keys are ever included.")
         val set = s.settings
+
+        o.appendLine()
+        o.appendLine("== Health checks (worst first) ==")
+        val checks = HealthChecks.of(s, x, now)
+        o.appendLine("${checks.count { it.level == HealthChecks.Level.FAIL }} FAIL · ${checks.count { it.level == HealthChecks.Level.WARN }} WARN · ${checks.count { it.level == HealthChecks.Level.OK }} OK")
+        checks.forEach { o.appendLine(it.text()) }
 
         o.appendLine()
         o.appendLine("== Settings ==")
@@ -199,7 +228,63 @@ object Diagnostics {
             stillLooking.groupingBy { it.closeNote ?: "not looked for yet" }.eachCount().entries.sortedByDescending { it.value }.take(5).forEach { o.appendLine("    ×${it.value}: ${it.key}") }
         }
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
+        stats.luck?.let { o.appendLine(String.format(Locale.US, "Expected %+.2f vs actual %+.2f over %d settled bets with an EV: %+.1f standard deviations", stats.expectedProfit, stats.profitWithEv, stats.settledWithEv, it)) }
+
+        // Where the edge is real (Tj, 2026-09-30: "know … how to improve the app … accuracy"): the same numbers split, then open bets' edge now.
+        o.appendLine()
+        o.appendLine("== Accuracy by scanner and by market (outliers aside) ==")
+        for (by in listOf(com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.EV)) {
+            com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(bets, by).forEach { row -> o.appendLine("${by.label} ${row.label}: ${breakdownText(row.stats)}") }
+        }
+        o.appendLine()
+        o.appendLine("== Open bets: edge now vs when bet (pregame, current reads only) ==")
+        edgeNowLines(bets, now).forEach { o.appendLine(it) }
+
+        o.appendLine()
+        o.appendLine("== Phone ==")
+        val p = x.phone
+        fun yn(v: Boolean?) = when (v) { true -> "yes"; false -> "NO"; null -> "?" }
+        o.appendLine("Notifications ${yn(p.notifications)} · exact alarms ${yn(p.exactAlarms)} · battery unrestricted ${yn(p.batteryUnrestricted)} · draw over apps ${yn(p.overlay)} · Data Saver ${when (p.dataSaver) { true -> "ON"; false -> "off"; null -> "?" }} · online ${yn(p.online)}" + (p.network?.let { " ($it)" } ?: ""))
+
+        o.appendLine()
+        o.appendLine("== Recent problems (saved across restarts, newest first) ==")
+        if (x.problems.isEmpty()) o.appendLine("None recorded.")
+        x.problems.take(MAX_PROBLEMS).forEach { pr ->
+            o.appendLine("${at(pr.lastAtMs)} · ${pr.area}: ${pr.message}" + if (pr.count > 1) " (×${pr.count} since ${at(pr.firstAtMs)})" else "")
+        }
         return o.toString().trimEnd()
+    }
+
+    /** One breakdown row: bets, record, ROI, EV when bet, CLV and how often it beat the close. */
+    private fun breakdownText(st: com.tjshea.vigilant.data.tracker.TrackerStats): String = listOfNotNull(
+        "${st.bets} bets (${st.pending} open)",
+        "${st.won}-${st.lost}${if (st.pushed > 0) "-${st.pushed}" else ""}".takeIf { st.settled > 0 },
+        st.roi?.let { String.format(Locale.US, "ROI %+.1f%%", it * 100) },
+        st.averageEv?.let { String.format(Locale.US, "EV when bet %+.1f%%", it * 100) },
+        st.averageClv?.let { String.format(Locale.US, "CLV %+.1f%%", it * 100) },
+        st.beatClosePercent?.let { String.format(Locale.US, "beat close %.0f%%", it * 100) },
+        String.format(Locale.US, "expected %+.2f vs actual %+.2f", st.expectedProfit, st.profitWithEv).takeIf { st.settledWithEv > 0 },
+    ).joinToString(" · ")
+
+    /**
+     * Open pregame bets with a current EV: how their EV now compares with the EV when bet, overall and by scanner. A fair line that moved
+     * toward the bet since it was placed is the same sign as beating the close; one that moved away says the edge wasn't there.
+     */
+    internal fun edgeNowLines(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): List<String> {
+        val live = bets.filter { it.status == BetStatus.PENDING && now < it.startsTs && it.evPercentAtBet != null && it.fairAtBet != null && TrackerText.currentEv(it, now) }
+        if (live.isEmpty()) return listOf("No open pregame bet has a current EV (tap Check odds now, then copy Diagnostics again).")
+        fun line(label: String, group: List<com.tjshea.vigilant.data.tracker.TrackedBet>): String {
+            val atBet = group.map { it.evPercentAtBet!! }.average()
+            val nowEv = group.map { it.nowEv!! }.average()
+            val toward = group.count { it.nowFair!! > it.fairAtBet!! + 1e-9 }
+            val stillPositive = group.count { it.nowEv!! > 0 }
+            return String.format(
+                Locale.US, "%s: %d bets · EV when bet %+.1f%% → now %+.1f%% · fair moved toward the bet on %d, away on %d · still +EV %d",
+                label, group.size, atBet * 100, nowEv * 100, toward, group.count { it.nowFair!! < it.fairAtBet!! - 1e-9 }, stillPositive,
+            )
+        }
+        return listOf(line("All", live)) + live.groupBy { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER) }
+            .toSortedMap().map { (k, v) -> line(k, v) }
     }
 
     /** One round's when, how long, what it did and what it cost each API, in lines; "none since the app opened" without one. */
@@ -232,4 +317,5 @@ object Diagnostics {
     private fun money(v: Double) = String.format(Locale.US, "%.2f", v)
 
     private const val MAX_ERRORS = 8
+    private const val MAX_PROBLEMS = 25
 }
