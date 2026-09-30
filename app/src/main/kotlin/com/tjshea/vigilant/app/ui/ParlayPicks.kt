@@ -108,7 +108,7 @@ fun UiState.vigilantAsks(now: Long): List<ParlayPick> {
     val index = ParlayCompare.Index(emptyList(), result?.opportunities.orEmpty())
     return parlayShown(now).filter { p ->
         val scanned = index.opportunityFor(p)?.takeIf { com.tjshea.vigilant.data.scanner.Freshness.fresh(it.fairAsOfMs, now, p.row.startsAtMs) }
-        val read = parlayPicks.vigilant[p.key]?.takeIf { it.fair != null && it.atMs != null && now - it.atMs < com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS }
+        val read = parlayPicks.vigilant[p.key]?.takeIf { r -> r.fair != null && r.atMs?.let { now - it < com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS } == true }
         scanned == null && read == null
     }
 }
