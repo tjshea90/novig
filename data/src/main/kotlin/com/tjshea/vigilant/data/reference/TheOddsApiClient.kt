@@ -127,7 +127,8 @@ class TheOddsApiClient(
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
         // ParlayAPI: only the games the scan can price (its window, plus a day for loose kickoff times), a smaller reply for the same credits.
         val until = if (feed == OddsFeed.ODDS_API) null else Planner.horizon(settings, clock()) + WINDOW_SLACK_MS
-        val snap = fetch(league.oddsApiSportKey, booksFor(settings), markets, startsBeforeMs = until)
+        // ParlayAPI's /odds leaves games under way out unless asked (its docs: include_live, no extra cost); The Odds API sends them anyway.
+        val snap = fetch(league.oddsApiSportKey, booksFor(settings), markets, startsBeforeMs = until, includeLive = settings.includeLive && feed != OddsFeed.ODDS_API)
         return quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
     }
 
@@ -135,12 +136,14 @@ class TheOddsApiClient(
     private var lastCallAt = 0L
 
     /** One sport's odds from the named [bookmakers]. Costs `markets.size` credits when anything comes back. */
-    suspend fun fetch(sportKey: String, bookmakers: List<String>, markets: List<String> = ALL_MARKETS, startsBeforeMs: Long? = null): RefSnapshot {
+    suspend fun fetch(
+        sportKey: String, bookmakers: List<String>, markets: List<String> = ALL_MARKETS, startsBeforeMs: Long? = null, includeLive: Boolean = false,
+    ): RefSnapshot {
         val books = pickBooks(bookmakers)
         val answer = call(
             path = "/sports/$sportKey/odds",
             params = listOf("bookmakers" to books.joinToString(","), "markets" to markets.joinToString(","), "oddsFormat" to "decimal") +
-                listOfNotNull(startsBeforeMs?.let { "commenceTimeTo" to isoSeconds(it) }),
+                listOfNotNull(startsBeforeMs?.let { "commenceTimeTo" to isoSeconds(it) }, ("include_live" to "true").takeIf { includeLive }),
             // Cost = markets asked for x 1 region (<=10 named books), so the pool can skip a key
             // that can't afford it before asking.
             cost = markets.size,

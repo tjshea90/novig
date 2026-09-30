@@ -198,6 +198,17 @@ class ParlayAccountTest {
         assertEquals(now + (48 + 24) * 3_600_000L, until, 1_000.0)
     }
 
+    @Test
+    fun `with live games on, ParlayAPI is asked for them (its odds leave them out by default)`() = runBlocking<Unit> {
+        val nfl = com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NFL")!!
+        server.enqueue(MockResponse().setBody("[]"))
+        parlay().odds(nfl, com.tjshea.vigilant.data.scanner.ScanSettings(includeLive = true))
+        assertEquals("true", server.takeRequest().requestUrl!!.queryParameter("include_live"))
+        server.enqueue(MockResponse().setBody("[]"))
+        parlay().odds(nfl, com.tjshea.vigilant.data.scanner.ScanSettings())
+        assertNull(server.takeRequest().requestUrl!!.queryParameter("include_live"))
+    }
+
     private fun assertEquals(expected: Long, actual: Long, tolerance: Double) = assertTrue("$expected vs $actual", kotlin.math.abs(expected - actual) <= tolerance)
 
     // ---- degraded-mode handling ---------------------------------------------------------------------------------------
