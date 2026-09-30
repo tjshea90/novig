@@ -215,14 +215,19 @@ class ScreenshotTest {
         val play = com.tjshea.vigilant.data.reference.ParlayPlay("baseball_mlb", "MLB", "Carson Kelly", true, 0.5, "Home Runs", null, "Chicago Cubs", "San Diego Padres", "player_home_runs", 900, 2122, 5.5, "BET", 3)
         val row = play.row(startsAtMs = SampleScan.NOW + 5 * 3_600_000L)
         val p = com.tjshea.vigilant.data.reference.ParlayPick.priced(listOf(play), listOf(row), mapOf(row.key to com.tjshea.vigilant.data.cno.LivePrice(950, 25.0, 0.045, SampleScan.NOW))).single()
+        // As ParlayAPI and PropLine send a home run (TASKS.md Q2): a few books price both sides, most the over only; older ones listed apart.
         val view = com.tjshea.vigilant.data.cno.CnoBooksView(
             bet = row.bet, otherBet = "Carson Kelly Under 0.5",
             prices = listOf(
-                com.tjshea.vigilant.data.cno.CnoBookPrice("PN", 800, null, -1400, null), com.tjshea.vigilant.data.cno.CnoBookPrice("DK", 750, null, -1300, null),
-                com.tjshea.vigilant.data.cno.CnoBookPrice("FD", 820, null, -1500, null), com.tjshea.vigilant.data.cno.CnoBookPrice("CZR", 700, null, -1200, null),
-                com.tjshea.vigilant.data.cno.CnoBookPrice("NV", 900, 10.0, null, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("PX", 880, null, null, null), com.tjshea.vigilant.data.cno.CnoBookPrice("B365", 800, null, -1400, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("DK", 750, null, -1300, null), com.tjshea.vigilant.data.cno.CnoBookPrice("FD", 820, null, null, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("BV", 700, null, null, null),
             ),
             fetchedAtMs = SampleScan.NOW - 10_000,
+        )
+        val older = listOf(
+            com.tjshea.vigilant.data.reference.OtherBooks.Line("pinnacle", 760, -1250, "ParlayAPI", SampleScan.NOW - 20 * 60_000),
+            com.tjshea.vigilant.data.reference.OtherBooks.Line("hardrockbet", 775, -1200, "ParlayAPI", SampleScan.NOW - 45 * 60_000),
         )
         val reads = com.tjshea.vigilant.app.ui.PickReads(
             cno = com.tjshea.vigilant.data.reference.ParlayCompare.Read.none("not on CNO's +EV list"),
@@ -232,7 +237,7 @@ class ScreenshotTest {
             androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalApiBet provides com.tjshea.vigilant.app.ui.ApiBetActions(true, {}, {})) {
                 com.tjshea.vigilant.app.ui.ParlayPickDetail(
                     p, SampleScan.settings, SampleScan.NOW, reads,
-                    com.tjshea.vigilant.app.ui.PickBooks(com.tjshea.vigilant.data.cno.CnoBooksState(view = view), fromCno = false),
+                    com.tjshea.vigilant.app.ui.PickBooks(com.tjshea.vigilant.data.cno.CnoBooksState(view = view), fromCno = false, listOf("ParlayAPI", "PropLine"), older),
                     onPlaced = {},
                 )
             }
