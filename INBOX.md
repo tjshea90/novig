@@ -2689,3 +2689,13 @@ Let me know exactly what you need to make sure I'm using parlayapi to its fulles
 ```
 Look at parlayapi docs and use whatever they have in my starter api that can help the vigilant app
 ```
+
+## 2026-09-30T03:23:02Z
+```
+Also study this: 
+
+https://parlay-api.com/docs/best-practices
+
+Make sure the app follows these best practices.
+It allows the API key to tell the app how many credits I have left. Add this to the app so the meter is accurate
+```
