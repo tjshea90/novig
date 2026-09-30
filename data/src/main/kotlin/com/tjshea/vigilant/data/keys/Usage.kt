@@ -340,14 +340,24 @@ class KeyPool(
     /** How many keys Tj has for this provider right now. */
     fun keyCount(): Int = keys().size
 
-    suspend fun <T> execute(cost: Int, action: suspend (key: String) -> KeyAttemptResult<T>): T {
+    /**
+     * [reserve]: credits each key keeps back for other calls (ParlayAPI's scans leave the last few hundred to the closing lines, which
+     * matter more): a key is used only while it can afford [cost] and still keep them.
+     */
+    suspend fun <T> execute(cost: Int, reserve: Int = 0, action: suspend (key: String) -> KeyAttemptResult<T>): T {
         val tried = HashSet<String>()
         var lastProblem: String? = null
         var shortWaits = 0
         while (true) {
             val all = keys()
-            val key = meter.pick(policy, all.filter { it !in tried }, cost)
-                ?: throw AllKeysExhaustedException(meter.exhaustedMessage(policy, all, lastProblem))
+            val key = meter.pick(policy, all.filter { it !in tried }, cost + reserve)
+                ?: throw AllKeysExhaustedException(
+                    if (reserve > 0 && all.isNotEmpty() && meter.pick(policy, all.filter { it !in tried }, cost) != null) {
+                        "The last $reserve ${policy.unit} on your ${policy.displayName} key${if (all.size == 1) " is" else "s are"} kept for closing lines."
+                    } else {
+                        meter.exhaustedMessage(policy, all, lastProblem)
+                    },
+                )
             when (val r = action(key)) {
                 is KeyAttemptResult.Success -> {
                     meter.recordCall(policy, key, r.cost ?: cost, r.remaining, r.used)
