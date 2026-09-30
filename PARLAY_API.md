@@ -185,6 +185,13 @@ unless the task says so, and only while `useParlay` is on with a key.
   building the chart**.
 - Build with guardrails: only on tap in a bet sheet, at most one retry after `retry_after_seconds`, then "ParlayAPI's history is busy";
   window ≤ 6 h. Show the bet's price over time per book as a small line chart. Say plainly if it stays unreliable.
+- **Probed with Tj's key 2026-09-30 06:3xZ, and left out (not built):** `hours=6` for Aaron Rodgers (PIT @ CLE) answered 503 again (4th
+  time, charged 2); `hours=1` answered 200 in 2 s: a list of series `{event_id, home_team, away_team, matched_by, source, player,
+  market_key, line, snapshots:[{timestamp_ms, time, over_price, under_price, line}], count, opening_over, current_over, over_movement,
+  opening_under, current_under, hours_tracked}` (sample `parlay-line-movement-prop.json`), but **only from the pick'em apps (Underdog,
+  Pick6)**, none of the sportsbooks Vigilant prices from; the same lookup filtered to `bookmaker=caesars` (which listed the prop) came
+  back empty. A chart of pick'em prices says nothing about a Novig bet's value, and a wide window costs credits for a 503, so the chart
+  isn't worth building. Pinnacle's moneyline moves come free from `/v1/meta/movers` (§6.3) instead.
 
 ### 6.7 Period lines from more books (M7) — `GET /v1/sports/{s}/live/period_markets?period=1H|2H|Q1..Q4|OT|all&market=&source=`, 2 credits
 - Samples `parlay-period-markets-nfl-1h.json` (one game) and `parlay-period-sources-nfl.json` (`/live/period_markets/sources`, 1 credit:
