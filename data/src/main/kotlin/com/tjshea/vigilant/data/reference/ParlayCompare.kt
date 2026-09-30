@@ -63,6 +63,8 @@ object ParlayCompare {
     fun cno(pick: ParlayPick, rows: List<CnoRow>, listAtMs: Long?, now: Long, cnoOn: Boolean): Read {
         if (!cnoOn) return Read.none("CNO is asleep (Vigilant only)")
         if (listAtMs == null) return Read.none("CNO's list hasn't been read yet: open the CNO tab")
+        // An old list's fair line isn't compared (the feed's rule for any book's price): the CNO tab reads it again.
+        if (!Freshness.fresh(listAtMs, now, pick.row.startsAtMs)) return Read.none("CNO's list is ${(now - listAtMs) / 60_000L} min old: open the CNO tab")
         val row = cnoRowFor(pick, rows) ?: return Read.none("not on CNO's +EV list")
         val fair = CnoChecks.fairProbability(row) ?: return Read.none("CNO lists it with no fair odds")
         return Read(evAt(fair, pick, now), fair, listAtMs, null)

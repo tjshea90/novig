@@ -194,7 +194,11 @@ class OpenBetPricer(
             val o = byOutcome[a.marketId to a.outcomeId]
             a.id to when {
                 o != null -> FairRead(o.fairProbability, o.fairAsOfMs ?: now, null)
-                a !in askable -> FairRead(null, null, if (Leagues.byNovigName(a.league) == null) "Vigilant doesn't price ${a.league.ifBlank { "this league" }}" else "Novig's exact bet wasn't found")
+                a !in askable -> FairRead(null, null, when {
+                    Leagues.byNovigName(a.league) == null -> "Vigilant doesn't price ${a.league.ifBlank { "this league" }}"
+                    a.marketId.isBlank() || a.outcomeId.isBlank() -> "Novig's exact bet wasn't found"
+                    else -> "the game has started"
+                })
                 else -> FairRead(null, null, BetPricingReasons.explain(a, pass.result, pass.listed, pass.errors))
             }
         }
