@@ -473,6 +473,7 @@ private fun StatsCards(
                 LabeledValue("Difference", Format.signedMoney(stats.vsExpected), valueColor = moneyColor(stats.vsExpected))
             }
             Text(TrackerText.luckMessage(stats), style = MaterialTheme.typography.bodySmall)
+            stats.averageEv?.let { Text("Average EV when bet: ${Format.evPercent(it)} (these ${stats.bets} bets, outliers aside).", style = MaterialTheme.typography.bodySmall) }
             Caption("Both numbers count the same ${stats.settledWithEv} won and lost bet${if (stats.settledWithEv == 1) "" else "s"}: what their EVs promised, and what they actually paid. Bets with no EV on record, pushes and voids aren't in either.")
         }
         BreakdownCard(bets, by, onBreakdown)
