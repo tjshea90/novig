@@ -205,11 +205,14 @@ unless the task says so, and only while `useParlay` is on with a key.
 - **Built (v0.30.0):** `data/.../reference/ParlayPeriods.kt` (`ParlayPeriodSource`, id `parlay_1h`, in `Scanner.SOURCE_ORDER` after
   `parlay` and in `ScanSettings.enabledSources`: **a source id missing from those two is fetched but never priced**). Novig lists only
   `SPREAD_1H` / `TOTAL_1H` (no 1st-half moneyline), so only spreads and totals are paired. `needsCatalog`: no call (no credits) for a
-  league whose Novig board has no 1H spread/total, or with the 1st-half family off. Football and basketball only (their "1H" is Novig's
-  first half). **MLB and NHL are left out** until a keyed probe shows their period keys: the free sandbox
-  (`/v1/sandbox/sports/{s}/live/period_markets`, no key) answers every sport with the same made-up rows (FT/1H/Q1…, random lines), so it
-  proves nothing about baseball's first 5 innings or hockey's periods. In the real NFL answer Pinnacle's 1H rows were ~5 h old
-  (`age_seconds` 19542): the freshness rule drops them; the US books' were seconds old.
+  league whose Novig board has no 1H spread/total, or with the 1st-half family off. Football and basketball ask `period=1H`.
+- **Probed with Tj's key 2026-09-30** (`period=all`, 2 credits each; samples `parlay-period-markets-mlb-all.json`,
+  `parlay-period-markets-nhl-all.json`): **MLB names the first 5 innings `F5`** (Pinnacle only, spreads with alternates and totals, pairing
+  as football's) and is asked `period=F5`, only while no Pinnacle feed of Vigilant's own is on (`pinnacleFeedOn`: those send Pinnacle's
+  lines already). **NHL answers `P1`/`P2`/`P3`** (Pinnacle only); Novig lists no hockey period markets, so it isn't asked. The free sandbox
+  (`/v1/sandbox/…/period_markets`, no key) answers every sport with the same made-up rows: useless for this.
+- Freshness uses `observed_age_seconds` (§5): in the NFL answer Pinnacle's price had last changed 5.4 h earlier (`age_seconds` 19542) but
+  was seen 9 s earlier, so it's priced, not dropped as stale (the first build read `age_seconds` and dropped it).
 
 ### 6.8 Not buildable on Starter
 Streaming odds (`/v1/sse/odds/{s}`, `/v1/odds-drop/{s}`, websocket) need the Business plan ($40). Prop-line alerts (`/v1/alerts/…`) and
