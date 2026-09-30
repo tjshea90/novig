@@ -1,0 +1,409 @@
+{
+ "count": 2,
+ "items": [
+  {
+   "provider": {
+    "id": "58",
+    "name": "ESPN BET",
+    "priority": 0
+   },
+   "details": "DEN -6.5",
+   "overUnder": 43.5,
+   "spread": 6.5,
+   "overOdds": -110.0,
+   "underOdds": -110.0,
+   "awayTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": -340,
+    "spreadOdds": -125.0,
+    "open": {
+     "favorite": true,
+     "pointSpread": {
+      "alternateDisplayValue": "-7.5",
+      "american": "-7.5"
+     },
+     "spread": {
+      "value": 2.05,
+      "displayValue": "21/20",
+      "alternateDisplayValue": "+105",
+      "decimal": 2.05,
+      "fraction": "21/20",
+      "american": "+105"
+     },
+     "moneyLine": {
+      "value": 1.278,
+      "displayValue": "5/18",
+      "alternateDisplayValue": "-360",
+      "decimal": 1.278,
+      "fraction": "5/18",
+      "american": "-360"
+     }
+    },
+    "close": {
+     "pointSpread": {
+      "alternateDisplayValue": "-6.5",
+      "american": "-6.5"
+     },
+     "spread": {
+      "value": 1.8,
+      "displayValue": "4/5",
+      "alternateDisplayValue": "-125",
+      "decimal": 1.8,
+      "fraction": "4/5",
+      "american": "-125"
+     },
+     "moneyLine": {
+      "value": 1.294,
+      "displayValue": "5/17",
+      "alternateDisplayValue": "-340",
+      "decimal": 1.294,
+      "fraction": "5/17",
+      "american": "-340"
+     }
+    },
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-6.5",
+      "american": "-6.5"
+     },
+     "spread": {
+      "value": 1.8,
+      "displayValue": "4/5",
+      "alternateDisplayValue": "-125",
+      "decimal": 1.8,
+      "fraction": "4/5",
+      "american": "-125"
+     },
+     "moneyLine": {
+      "value": 1.294,
+      "displayValue": "5/17",
+      "alternateDisplayValue": "-340",
+      "decimal": 1.294,
+      "fraction": "5/17",
+      "american": "-340"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 270,
+    "spreadOdds": 105.0,
+    "open": {
+     "favorite": false,
+     "pointSpread": {
+      "value": 1.8,
+      "displayValue": "4/5",
+      "alternateDisplayValue": "+7.5",
+      "decimal": 1.8,
+      "fraction": "4/5",
+      "american": "+7.5"
+     },
+     "spread": {
+      "value": 1.8,
+      "displayValue": "4/5",
+      "alternateDisplayValue": "-125",
+      "decimal": 1.8,
+      "fraction": "4/5",
+      "american": "-125"
+     },
+     "moneyLine": {
+      "value": 3.8,
+      "displayValue": "14/5",
+      "alternateDisplayValue": "+280",
+      "decimal": 3.8,
+      "fraction": "14/5",
+      "american": "+280"
+     }
+    },
+    "close": {
+     "pointSpread": {
+      "alternateDisplayValue": "+6.5",
+      "american": "+6.5"
+     },
+     "spread": {
+      "value": 2.05,
+      "displayValue": "21/20",
+      "alternateDisplayValue": "+105",
+      "decimal": 2.05,
+      "fraction": "21/20",
+      "american": "+105"
+     },
+     "moneyLine": {
+      "value": 3.7,
+      "displayValue": "27/10",
+      "alternateDisplayValue": "+270",
+      "decimal": 3.7,
+      "fraction": "27/10",
+      "american": "+270"
+     }
+    },
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+6.5",
+      "american": "+6.5"
+     },
+     "spread": {
+      "value": 2.05,
+      "displayValue": "21/20",
+      "alternateDisplayValue": "+105",
+      "decimal": 2.05,
+      "fraction": "21/20",
+      "american": "+105"
+     },
+     "moneyLine": {
+      "value": 3.7,
+      "displayValue": "27/10",
+      "alternateDisplayValue": "+270",
+      "decimal": 3.7,
+      "fraction": "27/10",
+      "american": "+270"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "open": {
+    "over": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "under": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "total": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "43.5",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "43.5"
+    }
+   },
+   "close": {
+    "over": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "under": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "total": {
+     "alternateDisplayValue": "43.5",
+     "american": "43.5"
+    }
+   },
+   "current": {
+    "over": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "under": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "total": {
+     "alternateDisplayValue": "43.5",
+     "american": "43.5"
+    }
+   },
+   "propBets": {}
+  },
+  {
+   "provider": {
+    "id": "59",
+    "name": "ESPN Bet - Live Odds",
+    "priority": 0
+   },
+   "details": "DEN -1.5",
+   "overUnder": 24.5,
+   "spread": 1.5,
+   "overOdds": -290.0,
+   "underOdds": 200.0,
+   "awayTeamOdds": {
+    "favorite": true,
+    "underdog": false,
+    "moneyLine": -350,
+    "spreadOdds": 135.0,
+    "open": {
+     "favorite": true,
+     "pointSpread": {
+      "alternateDisplayValue": "-7.5",
+      "american": "-7.5"
+     },
+     "spread": {
+      "value": 2.05,
+      "displayValue": "21/20",
+      "alternateDisplayValue": "+105",
+      "decimal": 2.05,
+      "fraction": "21/20",
+      "american": "+105"
+     },
+     "moneyLine": {
+      "value": 1.278,
+      "displayValue": "5/18",
+      "alternateDisplayValue": "-360",
+      "decimal": 1.278,
+      "fraction": "5/18",
+      "american": "-360"
+     }
+    },
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "-1.5",
+      "american": "-1.5"
+     },
+     "spread": {
+      "value": 2.35,
+      "displayValue": "27/20",
+      "alternateDisplayValue": "+135",
+      "decimal": 2.35,
+      "fraction": "27/20",
+      "american": "+135"
+     },
+     "moneyLine": {
+      "value": 1.286,
+      "displayValue": "2/7",
+      "alternateDisplayValue": "-350",
+      "decimal": 1.286,
+      "fraction": "2/7",
+      "american": "-350"
+     }
+    }
+   },
+   "homeTeamOdds": {
+    "favorite": false,
+    "underdog": true,
+    "moneyLine": 250,
+    "spreadOdds": -190.0,
+    "open": {
+     "favorite": false,
+     "pointSpread": {
+      "value": 1.8,
+      "displayValue": "4/5",
+      "alternateDisplayValue": "+7.5",
+      "decimal": 1.8,
+      "fraction": "4/5",
+      "american": "+7.5"
+     },
+     "spread": {
+      "value": 1.8,
+      "displayValue": "4/5",
+      "alternateDisplayValue": "-125",
+      "decimal": 1.8,
+      "fraction": "4/5",
+      "american": "-125"
+     },
+     "moneyLine": {
+      "value": 3.8,
+      "displayValue": "14/5",
+      "alternateDisplayValue": "+280",
+      "decimal": 3.8,
+      "fraction": "14/5",
+      "american": "+280"
+     }
+    },
+    "current": {
+     "pointSpread": {
+      "alternateDisplayValue": "+1.5",
+      "american": "+1.5"
+     },
+     "spread": {
+      "value": 1.526,
+      "displayValue": "10/19",
+      "alternateDisplayValue": "-190",
+      "decimal": 1.526,
+      "fraction": "10/19",
+      "american": "-190"
+     },
+     "moneyLine": {
+      "value": 3.5,
+      "displayValue": "5/2",
+      "alternateDisplayValue": "+250",
+      "decimal": 3.5,
+      "fraction": "5/2",
+      "american": "+250"
+     }
+    }
+   },
+   "moneylineWinner": false,
+   "spreadWinner": false,
+   "open": {
+    "over": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "under": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "-110",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "-110"
+    },
+    "total": {
+     "value": 1.909,
+     "displayValue": "10/11",
+     "alternateDisplayValue": "43.5",
+     "decimal": 1.909,
+     "fraction": "10/11",
+     "american": "43.5"
+    }
+   },
+   "current": {
+    "over": {
+     "value": 1.345,
+     "displayValue": "10/29",
+     "alternateDisplayValue": "-290",
+     "decimal": 1.345,
+     "fraction": "10/29",
+     "american": "-290"
+    },
+    "under": {
+     "value": 3.0,
+     "displayValue": "2/1",
+     "alternateDisplayValue": "+200",
+     "decimal": 3.0,
+     "fraction": "2/1",
+     "american": "+200"
+    },
+    "total": {
+     "alternateDisplayValue": "24.5",
+     "american": "24.5"
+    }
+   },
+   "propBets": {}
+  }
+ ]
+}
