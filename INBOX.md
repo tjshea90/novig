@@ -2684,3 +2684,8 @@ Results: 84-76 · profit +13.17 on 160.55 staked (+8.2%) · average EV when bet 
 ```
 Let me know exactly what you need to make sure I'm using parlayapi to its fullest extent but also efficiently and not wasteful, whether that is diagnostics or the API key itself, which I don't mind sharing
 ```
+
+## 2026-09-30T03:18:04Z
+```
+Look at parlayapi docs and use whatever they have in my starter api that can help the vigilant app
+```
