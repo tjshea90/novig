@@ -637,10 +637,12 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 books = if (keepBooks) b.books else lines, booksAtMs = if (keepBooks) b.booksAtMs else now,
             )
         }
-        // A read once the game is under way is its odds now, never its close.
+        // A read once the game is under way is its odds now, never its close. The close is dated by its oldest book price, not by when it
+        // was saved, so only a line that was really current in the last minutes before the start counts as the true close.
         val closing = now < b.startsTs
+        val asOf = minOf(now, o.fairAsOfMs ?: now)
         return b.copy(
-            closingFair = if (closing) fair else b.closingFair, closingSeenAtMs = if (closing) now else b.closingSeenAtMs,
+            closingFair = if (closing) fair else b.closingFair, closingSeenAtMs = if (closing) asOf else b.closingSeenAtMs,
             nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
             books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
             nowBooks = twoSided ?: b.nowBooks,
