@@ -178,6 +178,28 @@ class ScreenshotTest {
         }
     }
 
+    /** ParlayAPI's credits a day under its meter (v0.30.0, PARLAY_API.md §6.2). */
+    @Test fun parlayUsageChart() {
+        val now = java.time.Instant.parse("2026-09-30T06:00:00Z").toEpochMilli()
+        val days = (0 until 30).mapNotNull { i ->
+            val d = java.time.LocalDate.parse("2026-09-01").plusDays(i.toLong())
+            val c = listOf(0, 0, 40, 120, 90, 0, 310, 260, 80, 45)[i % 10] + i * 3
+            if (c == 0) null else com.tjshea.vigilant.data.reference.ParlayAccount.Day(d.toString(), c, c / 3)
+        }
+        val h = com.tjshea.vigilant.data.reference.ParlayAccount.History(
+            days,
+            listOf("props:baseball_mlb" to 1200, "odds:americanfootball_nfl" to 640, "props:americanfootball_nfl" to 420, "closing-lines:json" to 90, "injuries:americanfootball_nfl" to 12)
+                .map { (e, c) -> com.tjshea.vigilant.data.reference.ParlayAccount.Endpoint(e, c, c / 3) },
+            30, now,
+        )
+        screen(now = now) {
+            Surface(color = MaterialTheme.colorScheme.background) {
+                androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) { com.tjshea.vigilant.app.ui.ParlayUsageChart(h, now) }
+            }
+        }
+        compose.onRoot().captureRoboImage("screenshots/5c_parlay_usage_chart.png")
+    }
+
     // Tall enough for every meter card (ParlayAPI's joined them in v0.27.0).
     @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
