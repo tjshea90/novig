@@ -40,6 +40,8 @@ object Diagnostics {
         /** The last look for closes after the start ([com.tjshea.vigilant.data.tracker.CloseBackfill]) and the bytes Novig's trade files cost. */
         val backfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null,
         val novigTradeBytes: Long = 0,
+        /** Calls to ParlayAPI's closing lines since the app opened (Pinnacle's closes, when Tj has a key). */
+        val parlayCloseRequests: Int = 0,
     )
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
@@ -159,10 +161,11 @@ object Diagnostics {
         o.appendLine("Closing line value (all time): ${TrackerText.clvLine(clv)} · ${TrackerText.clvCounts(clv)}")
         o.appendLine("Next closing-line read: " + (com.tjshea.vigilant.data.tracker.ClosingLine.nextAt(bets, now)?.let { at(it) } ?: "none needed") +
             " · alarm " + (x.closingAlarmAtMs?.let { at(it) } ?: "not set in this process"))
-        // Closes found after the start (Tj, 2026-09-30: ESPN's closing odds, Novig's trade history).
+        // Closes found after the start (Tj, 2026-09-30: ESPN's closing odds, Novig's trade history, Pinnacle's via ParlayAPI).
         o.appendLine(
             "Closes found after the start: " + (x.backfill?.let { r -> "last look ${r.looked} bet${if (r.looked == 1) "" else "s"}, found ${r.found}" + (r.bySource.takeIf { it.isNotEmpty() }?.entries?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: "") } ?: "none looked for since the app opened") +
-                " · Novig trade data read ${x.novigTradeBytes / 1024} KB",
+                " · Novig trade data read ${x.novigTradeBytes / 1024} KB" +
+                (if (x.parlayCloseRequests > 0) " · ParlayAPI close calls ${x.parlayCloseRequests}" else ""),
         )
         val stillLooking = bets.filter { now >= it.startsTs && !it.closeFinal && com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(it, now) == null && it.status != BetStatus.VOID && it.createdAtMs < it.startsTs }
         if (stillLooking.isNotEmpty()) {

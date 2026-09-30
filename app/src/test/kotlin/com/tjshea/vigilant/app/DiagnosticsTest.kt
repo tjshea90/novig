@@ -83,6 +83,9 @@ class DiagnosticsTest {
         val text = Diagnostics.report(base.copy(bets = bets), x, now, TimeZone.getTimeZone("UTC"))
         assertTrue(text, text.contains("Closes found after the start: last look 5 bets, found 3 (ESPN 2, Novig's last trades 1) · Novig trade data read 2000 KB"))
         assertTrue(text, text.contains("×1: Novig publishes this day's trades the next morning"))
+        assertFalse(text, text.contains("ParlayAPI close calls"))
+        val parlay = Diagnostics.report(base.copy(bets = bets), x.copy(parlayCloseRequests = 4), now, TimeZone.getTimeZone("UTC"))
+        assertTrue(parlay, parlay.contains("Novig trade data read 2000 KB · ParlayAPI close calls 4"))
         assertTrue(report(base).contains("Closes found after the start: none looked for since the app opened"))
     }
 

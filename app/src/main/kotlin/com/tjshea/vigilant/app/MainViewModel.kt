@@ -1077,6 +1077,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             closingAlarmAtMs = ClosingAlarm.nextAtMs,
             backfill = c.lastBackfill,
             novigTradeBytes = c.novigCloses.bytesRead,
+            parlayCloseRequests = c.parlayCloses.requests,
         )
         _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it, extras, System.currentTimeMillis()))) }
     }
