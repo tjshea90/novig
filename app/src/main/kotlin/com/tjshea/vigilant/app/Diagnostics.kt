@@ -121,6 +121,12 @@ object Diagnostics {
             s.result?.stats?.let {
                 o.appendLine("Games ${it.novigEvents} on Novig, ${it.matchedEvents} matched to fair odds · ${it.marketsPriced} lines priced · ${it.outcomesWithFair} sides with a fair price · ${it.positiveEv} +EV · ${it.laterGames} games past days ahead")
             }
+            // Which leagues the unmatched games are in, and a few of them by name: a league's sources decide its matching.
+            val byLeague = matchingByLeague(s)
+            if (byLeague.isNotEmpty()) {
+                o.appendLine("Matched by league (games, futures aside): " + byLeague.joinToString(" · ") { "${it.league} ${it.matched}/${it.games}" })
+                byLeague.flatMap { l -> l.unmatched.take(3).map { "${l.league}: $it" } }.take(8).takeIf { it.isNotEmpty() }?.let { o.appendLine("  unmatched, e.g.: " + it.joinToString(" | ")) }
+            }
             o.appendLine("Feed now: ${s.feed.size} bets")
             for (r in st.sources) {
                 o.appendLine("  ${r.name}: ${r.fetched} fetched, ${r.reused} re-used${if (r.standingBy > 0) ", ${r.standingBy} standing by" else ""}, ${r.matched} games matched" + (r.error?.let { " · ERROR: $it" } ?: "") + (r.heldBack?.let { " · $it" } ?: ""))
@@ -232,10 +238,30 @@ object Diagnostics {
 
         // Where the edge is real (Tj, 2026-09-30: "know … how to improve the app … accuracy"): the same numbers split, then open bets' edge now.
         o.appendLine()
-        o.appendLine("== Accuracy by scanner and by market (outliers aside) ==")
+        o.appendLine("== Accuracy by scanner and by market (outliers aside; CLV on n = bets with a true close) ==")
+        val kept = bets.filterNot { it.isOutlier }
         for (by in listOf(com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.EV)) {
-            com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(bets, by).forEach { row -> o.appendLine("${by.label} ${row.label}: ${breakdownText(row.stats)}") }
+            com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(bets, by).forEach { row ->
+                val group = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, by) == row.label }
+                o.appendLine("${by.label} ${row.label}: ${breakdownText(row.stats, closedCount(group, now))}")
+            }
         }
+
+        // Each scanner by market, and Vigilant's own by what made its fair odds (Tj's diagnostics 2026-09-30: where Vigilant loses to the close).
+        o.appendLine()
+        o.appendLine("== Each scanner by market ==")
+        for ((scanner, group) in kept.groupBy { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER) }.toSortedMap()) {
+            com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(group, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET).forEach { row ->
+                val rows = group.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET) == row.label }
+                o.appendLine("$scanner · ${row.label}: ${breakdownText(row.stats, closedCount(rows, now))}")
+            }
+        }
+        o.appendLine()
+        o.appendLine("== Bets by what made their fair odds (recorded from v0.36.0) ==")
+        basisLines(kept, now).forEach { o.appendLine(it) }
+        o.appendLine()
+        o.appendLine("== Vigilant's own bets against the close (newest ${MAX_CLOSE_ROWS}) ==")
+        closeRows(kept, now, zone).forEach { o.appendLine(it) }
         o.appendLine()
         o.appendLine("== Open bets: edge now vs when bet (pregame, current reads only) ==")
         edgeNowLines(bets, now).forEach { o.appendLine(it) }
@@ -255,16 +281,76 @@ object Diagnostics {
         return o.toString().trimEnd()
     }
 
-    /** One breakdown row: bets, record, ROI, EV when bet, CLV and how often it beat the close. */
-    private fun breakdownText(st: com.tjshea.vigilant.data.tracker.TrackerStats): String = listOfNotNull(
-        "${st.bets} bets (${st.pending} open)",
+    /** One breakdown row: bets, record, ROI, EV when bet, CLV on how many true closes and how often it beat the close. */
+    private fun breakdownText(st: com.tjshea.vigilant.data.tracker.TrackerStats, closed: Int? = null): String = listOfNotNull(
+        "${st.bets} bet${if (st.bets == 1) "" else "s"} (${st.pending} open)",
         "${st.won}-${st.lost}${if (st.pushed > 0) "-${st.pushed}" else ""}".takeIf { st.settled > 0 },
         st.roi?.let { String.format(Locale.US, "ROI %+.1f%%", it * 100) },
         st.averageEv?.let { String.format(Locale.US, "EV when bet %+.1f%%", it * 100) },
-        st.averageClv?.let { String.format(Locale.US, "CLV %+.1f%%", it * 100) },
+        st.averageClv?.let { String.format(Locale.US, "CLV %+.1f%%", it * 100) + (closed?.let { n -> " on $n" } ?: "") },
         st.beatClosePercent?.let { String.format(Locale.US, "beat close %.0f%%", it * 100) },
         String.format(Locale.US, "expected %+.2f vs actual %+.2f", st.expectedProfit, st.profitWithEv).takeIf { st.settledWithEv > 0 },
     ).joinToString(" · ")
+
+    /** How many of [bets] have a true close (the n behind a CLV average). */
+    private fun closedCount(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): Int =
+        bets.count { it.status != BetStatus.VOID && com.tjshea.vigilant.data.tracker.ClosingLine.clv(it, now) != null }
+
+    /** One Novig league's games in the last scan (futures aside), how many matched a fair-odds source, and a few that didn't. */
+    data class LeagueMatch(val league: String, val games: Int, val matched: Int, val unmatched: List<String>)
+
+    /**
+     * The last scan's games by league: matched = a source's game was found for it. Futures ("Super Bowl Winner": no "@" or "vs") can't
+     * match a game and are left out. Leagues with the most games first.
+     */
+    fun matchingByLeague(s: UiState): List<LeagueMatch> {
+        val games = s.result?.games ?: return emptyList()
+        return games.filter { g -> FUTURES_NOT.containsMatchIn(g.event.description) }
+            .groupBy { it.league.displayName }
+            .map { (league, gs) ->
+                val (hit, miss) = gs.partition { g -> g.refEvent != null || g.outcomes.any { it.fairProbability != null } }
+                LeagueMatch(league, gs.size, hit.size, miss.map { it.event.description })
+            }
+            .sortedByDescending { it.games }
+    }
+
+    private val FUTURES_NOT = Regex(" @ | vs\\.? ", RegexOption.IGNORE_CASE)
+
+    /** Closing-line value by what made each bet's fair odds ([com.tjshea.vigilant.data.tracker.FairBasis]); bets from before it was kept are counted apart. */
+    internal fun basisLines(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): List<String> {
+        val live = bets.filter { it.status != BetStatus.VOID }
+        val (known, unknown) = live.partition { it.fairBasis != null }
+        if (known.isEmpty()) return listOf("None recorded yet (${unknown.size} bets were placed before it was kept): the next report after a few days of bets will split CLV by it.")
+        val lines = known.groupBy { it.fairBasis!!.group }.toSortedMap().map { (group, gs) ->
+            val clvs = gs.mapNotNull { com.tjshea.vigilant.data.tracker.ClosingLine.clv(it, now) }
+            String.format(Locale.US, "%s: %d bets", group, gs.size) +
+                (gs.mapNotNull { it.evPercentAtBet }.takeIf { it.isNotEmpty() }?.let { String.format(Locale.US, " · EV when bet %+.1f%%", it.average() * 100) } ?: "") +
+                (if (clvs.isNotEmpty()) String.format(Locale.US, " · CLV %+.1f%% on %d, beat close %.0f%%", clvs.average() * 100, clvs.size, clvs.count { it > 0 } * 100.0 / clvs.size) else " · no true close yet")
+        }
+        return lines + "(${unknown.size} older bets: not recorded)"
+    }
+
+    /** Vigilant's own bets with a true close, newest first: what was bet, at what, the EV then, the close and where it came from. */
+    internal fun closeRows(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long, zone: TimeZone): List<String> {
+        val day = SimpleDateFormat("MMM d", Locale.US).apply { timeZone = zone }
+        val rows = bets.filter { it.source == BetTracker.SOURCE_VIGILANT && it.status != BetStatus.VOID }
+            .mapNotNull { b -> com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(b, now)?.let { b to it } }
+            .sortedByDescending { it.first.startsTs }
+            .take(MAX_CLOSE_ROWS)
+        if (rows.isEmpty()) return listOf("None with a true close yet.")
+        return rows.map { (b, close) ->
+            val clv = close.first / b.cost - 1.0
+            listOfNotNull(
+                day.format(Date(b.startsTs)), b.league.ifBlank { "?" }, "${b.marketLabel}: ${b.selection}",
+                b.american?.let { com.tjshea.vigilant.engine.Odds.formatAmerican(it) } ?: com.tjshea.vigilant.app.ui.Format.american(b.price),
+                b.evPercentAtBet?.let { String.format(Locale.US, "EV %+.1f%%", it * 100) },
+                String.format(Locale.US, "fair %s → close %s", b.fairAtBet?.let { com.tjshea.vigilant.app.ui.Format.american(it) } ?: "?", com.tjshea.vigilant.app.ui.Format.american(close.first)),
+                String.format(Locale.US, "CLV %+.1f%%", clv * 100) + " (" + com.tjshea.vigilant.data.tracker.ClosingLine.sourceLabel(close.second) + ")",
+                b.fairBasis?.group,
+                b.status.name.lowercase(),
+            ).joinToString(" · ")
+        }
+    }
 
     /**
      * Open pregame bets with a current EV: how their EV now compares with the EV when bet, overall and by scanner. A fair line that moved
@@ -318,4 +404,5 @@ object Diagnostics {
 
     private const val MAX_ERRORS = 8
     private const val MAX_PROBLEMS = 25
+    private const val MAX_CLOSE_ROWS = 30
 }
