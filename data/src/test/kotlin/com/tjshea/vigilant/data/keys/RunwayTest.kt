@@ -151,4 +151,24 @@ class RunwayTest {
         assertNotNull(Runway.roundsNote(UsageViews.build(QuotaPolicy.ODDS_API, listOf("a"), null, now), ProviderCost("oddsapi", 3, 18), "a scan"))
         assertNull(Runway.roundsNote(UsageViews.build(QuotaPolicy.KALSHI, emptyList(), null, now), ProviderCost("kalshi", 57, 57), "a scan"))
     }
+
+    /** Tj's diagnostics, 2026-09-30 03:06Z: PinnWire 22 of 100 three hours into the UTC day read SHORT, with pinnapi's 100 unused behind it. */
+    @Test
+    fun `PinnWire running short is judged with pinnapi's allowance behind it`() {
+        val t = java.time.Instant.parse("2026-09-30T03:06:00Z").toEpochMilli()
+        val day = QuotaPolicy.PINNWIRE.periodStart(t)
+        val book = UsageBook(
+            mapOf(
+                "pinnwire" to ProviderUsage(keys = mapOf("w" to KeyUsage(periodStart = day, used = 22, calls = 22)), dayStart = day, callsToday = 21),
+                "pinnacle" to ProviderUsage(keys = mapOf("a" to KeyUsage(periodStart = day, used = 0)), dayStart = day),
+            ),
+        )
+        val both = Runway.lines(views(book, mapOf(QuotaPolicy.PINNWIRE to listOf("w"), QuotaPolicy.PINNAPI to listOf("a")), t), t)
+        val wire = both.first { it.id == QuotaPolicy.PINNWIRE.id }
+        assertEquals(RunwayLevel.OK, wire.level)
+        assertTrue(wire.text, wire.text.contains("then pinnapi takes over (100 left)"))
+        // Without pinnapi it's SHORT, as before.
+        val alone = Runway.lines(views(book, mapOf(QuotaPolicy.PINNWIRE to listOf("w")), t), t).first { it.id == QuotaPolicy.PINNWIRE.id }
+        assertEquals(RunwayLevel.SHORT, alone.level)
+    }
 }
