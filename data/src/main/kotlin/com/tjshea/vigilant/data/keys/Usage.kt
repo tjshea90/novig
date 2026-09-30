@@ -399,7 +399,8 @@ class CreditsHeldBackException(message: String) : Exception(message)
 /**
  * A month's credits spread over its days (Tj's ParlayAPI Starter plan, 2026-09-30: 20,000 credits a month). After a call a key must still
  * hold [reserve] plus the share of every day after today (Tj's own day, [zone]), so a busy evening can spend the whole of today's share and
- * anything earlier days left unspent, never tomorrow's. Stateless: it reads the meter, so it survives restarts and follows the server's
+ * anything earlier days left unspent, never tomorrow's. A key first seen part-way through its period spreads the period's credits over the
+ * days left in it. Stateless: it reads the meter, so it survives restarts and follows the server's
  * figures. A key whose allowance is [freeLimit] or less (a free plan) isn't paced but held back entirely: its few credits are for [reserve]'s
  * purpose (closing lines).
  */
@@ -423,14 +424,15 @@ class CreditPace(
         val reset = u.resetAtMs ?: policy.nextReset(start)
         val z = zone()
         val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
-        val span = (reset - start).coerceAtLeast(DAY_MS)
         val pool = (limit - reserve).coerceAtLeast(0).toLong()
-        // The days this key has had through the end of today: from its first answer when that came after the period began (a plan bought
-        // on the 29th has had one day, not 29 "left unspent"), and never less than a whole day (bought at 11 pm, it still gets today's share).
-        val from = maxOf(start, u.firstSeenMs ?: start)
-        val elapsed = maxOf(endOfToday - from, DAY_MS).coerceAtMost(span)
-        val allowed = pool * elapsed / span
-        val kept = if (keepOfDay > 0.0) (pool * DAY_MS / span * keepOfDay).toLong() else 0L
+        // Spread over what's left of the period from the key's first answer (ParlayAPI's credits run on the calendar month: a plan bought on
+        // the 30th gets its whole month's credits for that last day, not a thirtieth of them; checked with Tj's key 2026-09-30), and a key
+        // seen since before the period began over the whole period. Through the end of today (Tj's day), never less than a whole day.
+        val from = maxOf(start, u.firstSeenMs ?: start).coerceAtMost(reset - 1)
+        val window = reset - from
+        val elapsed = maxOf(endOfToday - from, minOf(DAY_MS, window)).coerceAtMost(window)
+        val allowed = pool * elapsed / window
+        val kept = if (keepOfDay > 0.0) (pool * minOf(DAY_MS, window) / window * keepOfDay).toLong() else 0L
         return (limit - allowed + kept).toInt()
     }
 
