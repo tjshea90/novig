@@ -78,6 +78,32 @@ class ParlayPeriodsTest {
     }
 
     @Test
+    fun `Novig's 1st-half spread and total are planned against these lines, the Browns' +0 5 side on the home number`() {
+        val start = Instant.parse("2026-10-02T00:15:00Z").toEpochMilli()
+        // Two minutes after the rows were read, so each book's quote is fresh except Pinnacle's.
+        val at = now + 2 * 60_000L
+        val snap = RefSnapshot("americanfootball_nfl", ParlayPeriodSource.parse(res("parlay-period-markets-nfl-1h.json"), json, "americanfootball_nfl", now), now, provider = "parlay_1h")
+        val event = NovigEvent("e1", "FOOTBALL", "NFL", "OPEN_PREGAME", "Pittsburgh Steelers @ Cleveland Browns", start)
+        val fee = com.tjshea.vigilant.engine.MarketFee.GAME
+        val spread = NovigMarket(
+            "s1h", "e1", "SPREAD_1H", "OPEN", "CLE +0.5 1H", start, fee,
+            listOf(com.tjshea.vigilant.data.novig.NovigOutcome("cle", "CLE +0.5", "TBD"), com.tjshea.vigilant.data.novig.NovigOutcome("pit", "PIT -0.5", "TBD")), strike = 0.5,
+        )
+        val total = NovigMarket(
+            "t1h", "e1", "TOTAL_1H", "OPEN", "PIT @ CLE t18.5 1H", start, fee,
+            listOf(com.tjshea.vigilant.data.novig.NovigOutcome("o", "Over 18.5", "TBD"), com.tjshea.vigilant.data.novig.NovigOutcome("u", "Under 18.5", "TBD")), strike = 18.5,
+        )
+        val settings = ScanSettings(leagues = setOf("NFL"), minBooks = 1, fairSource = com.tjshea.vigilant.engine.FairSource.MARKET_AVERAGE)
+        val plan = com.tjshea.vigilant.data.scanner.Planner.plan(listOf(event), listOf(spread, total), listOf(snap), settings, at)
+        assertEquals(setOf("s1h", "t1h"), plan.marketIds.toSet())
+        val sp = plan.markets.single { it.market.marketId == "s1h" }
+        assertEquals(1, sp.lineKey!!.period)
+        assertEquals(0.5, sp.lineKey!!.line!!, 0.0)
+        // The Browns +0.5 is the home side of ParlayAPI's pairs.
+        assertEquals(Side.HOME, (sp.outcomes.single { it.outcome.outcomeId == "cle" }.target as com.tjshea.vigilant.data.scanner.OutcomeTarget.Is).side)
+    }
+
+    @Test
     fun `bought only for football and basketball, only with 1st-half lines on, and only when Novig lists one in the league`() = runTest {
         val src = source()
         assertTrue(src.supports(nfl))
