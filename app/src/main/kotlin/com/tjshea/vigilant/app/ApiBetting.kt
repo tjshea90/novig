@@ -188,19 +188,24 @@ class ApiBettingController(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private var betJob: Job? = null
-    private var placerFor: Any? = null
-    private var placerCache: ApiBetPlacer? = null
+
+    /** The one placer for the trading client in use (its lock keeps orders one at a time), made under [placerLock]. */
+    private var placerCache: Pair<Any, ApiBetPlacer>? = null
+    private val placerLock = Any()
 
     private fun settings() = state.value.settings
     private fun limits() = settings().let { BetLimits(it.apiMaxStake, it.apiMaxPerDay, it.apiMinEv) }
 
-    private fun placer(): ApiBetPlacer? {
+    /**
+     * Plans run on the default dispatcher's threads, and two can start together (a typed amount right after the sheet opened): made and
+     * read under one lock, so neither sees a placer half set up (one did, and planned nothing) and there's never a second placer with a
+     * second order lock.
+     */
+    private fun placer(): ApiBetPlacer? = synchronized(placerLock) {
         val t = c.trading ?: return null
-        if (placerFor !== t) {
-            placerFor = t
-            placerCache = ApiBetPlacer(t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock)
-        }
-        return placerCache
+        placerCache?.takeIf { it.first === t }?.second
+            ?: ApiBetPlacer(t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock)
+                .also { placerCache = t to it }
     }
 
     /** The market's book read from Novig just now (never one shown from the last scan). */
