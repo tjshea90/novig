@@ -159,8 +159,8 @@ unless the task says so, and only while `useParlay` is on with a key.
 - Samples `parlay-period-markets-nfl-1h.json` (one game) and `parlay-period-sources-nfl.json` (`/live/period_markets/sources`, 1 credit:
   which books carry which periods; NFL: bet365, BetMGM, Caesars, DraftKings, Fanatics, FanDuel for 1H/Q1…; Pinnacle 1H spreads/totals
   with alternates). Rows: `{source, match_id, home_team, away_team, commence_time, period_key, market: h2h|spread|total, line, side:
-  home|away|over|under, price (American), timestamp_ms, age_seconds}`; one row per side, so pair home/away (over/under) at the same
-  `line` (a spread's away row carries the opposite sign: check). Pregame too, despite "live" in the path.
+  home|away|over|under, price (American), timestamp_ms, age_seconds}`; one row per side, each with its own number: a spread's away row
+  at −0.5 pairs with the home row at +0.5 (checked in the sample); totals pair over/under at the same `line`. Pregame too, despite "live" in the path.
 - Use: a `ReferenceSource` feeding `RefBookMarket(period = 1)` (1st half; baseball's first 5 innings are period 1 too) and quarters only
   if Novig lists quarter markets; periods and hockey's P1–P3 need checking against Novig's catalog. Priced like any other source by the
   scanner; one call per league per period asked (1H by default), paced.
