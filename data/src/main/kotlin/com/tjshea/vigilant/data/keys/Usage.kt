@@ -84,7 +84,7 @@ data class QuotaPolicy(
     companion object {
         val ODDS_API = QuotaPolicy(
             "oddsapi", "The Odds API", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 500,
-            rule = "500 credits a month per free key, reset on the 1st. Game lines cost 1 credit per market per league; sportsbook props 1 per prop type per game. With a PropLine key, only asked for what PropLine couldn't give.",
+            rule = "500 credits a month per free key, reset on the 1st. Game lines cost 1 credit per market per league; sportsbook props 1 per prop type per game. With a PropLine key, only asked for what PropLine couldn't give. A tapped ParlayAPI pick's books: about 1 credit, only when ParlayAPI and PropLine have no other book.",
         )
         val PINNAPI = QuotaPolicy(
             "pinnacle", "Pinnacle (pinnapi)", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 100,
@@ -98,11 +98,11 @@ data class QuotaPolicy(
         )
         val PROPLINE = QuotaPolicy(
             "propline", "PropLine", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 1000,
-            rule = "1,000 requests a day per free key, reset at midnight UTC. 1 per league per scan for game lines, 1 per game for props.",
+            rule = "1,000 requests a day per free key, reset at midnight UTC. 1 per league per scan for game lines, 1 per game for props; a tapped ParlayAPI pick's books 1-2.",
         )
         val PARLAY = QuotaPolicy(
             "parlay", "ParlayAPI", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 1000,
-            rule = "Free: 1,000 credits a month, kept for Pinnacle's closing lines. Paid (\$5: 20,000; \$20: 100,000): scans too, a day's share at most, the last 300 kept for closing lines. Game lines 3 credits a league (5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are off); a league's props 3; 1st-half lines 2 (only where Novig lists them); injuries 1 (only for players its props didn't cover); closes 1 to 5 a day; on a tap only: its picks at Novig 10 a league (then Vigilant's own read of them, a league's props 3), a pick's books when CrazyNinjaOdds doesn't list it (that league's props 3, shared 2 minutes), a second opinion 5. Credits reset on the 1st (UTC), read from ParlayAPI.",
+            rule = "Free: 1,000 credits a month, kept for Pinnacle's closing lines. Paid (\$5: 20,000; \$20: 100,000): scans too, a day's share at most, the last 300 kept for closing lines. Game lines 3 credits a league (5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are off); a league's props 3; 1st-half lines 2 (only where Novig lists them); injuries 1 (only for players its props didn't cover); closes 1 to 5 a day; on a tap only: its picks at Novig 10 a league (then Vigilant's own read of them, a league's props 3), a pick's books when CrazyNinjaOdds doesn't list it (that market's props for the league 3, shared 2 minutes), a second opinion 5. Credits reset on the 1st (UTC), read from ParlayAPI.",
         )
         val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
