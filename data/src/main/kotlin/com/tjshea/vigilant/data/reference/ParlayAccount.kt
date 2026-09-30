@@ -85,15 +85,7 @@ class ParlayAccount(
             } ?: continue
             answered++
             last = last + (key to check)
-            // Where the credits went, day by day (free, same cadence).
-            readHistory(key)?.let { h ->
-                val current = keys().toSet()
-                historyState.value = synchronized(histories) {
-                    histories[key] = h
-                    histories.keys.retainAll(current)
-                    combine(histories.values.toList())
-                }
-            }
+
             val reason = check.reason?.lowercase().orEmpty()
             meter.recordBalance(
                 QuotaPolicy.PARLAY, key, check.remaining, check.limit, check.used, check.resetAtMs, periodStartMs = check.periodStartMs,
@@ -101,6 +93,38 @@ class ParlayAccount(
                 inactive = check.valid == false && (reason.contains("inactive") || reason.contains("invalid") || reason.contains("revoked")),
                 note = check.tier?.let { "plan: $it" },
             )
+        }
+        return answered
+    }
+
+    private val historyAt = HashMap<String, Long>()
+
+    /**
+     * Reads every key's usage log (free), at most every [REFRESH_MS] a key unless [force]d: when Settings › API usage opens. Returns how many
+     * answered; never throws.
+     */
+    suspend fun refreshHistory(force: Boolean = false): Int {
+        var answered = 0
+        val all = keys()
+        for (key in all) {
+            val now = clock()
+            val due = synchronized(historyAt) {
+                (force || historyAt[key]?.let { now - it >= REFRESH_MS } != false).also { if (it) historyAt[key] = now }
+            }
+            if (!due) continue
+            val h = try {
+                readHistory(key)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            } ?: continue
+            answered++
+            historyState.value = synchronized(histories) {
+                histories[key] = h
+                histories.keys.retainAll(all.toSet())
+                combine(histories.values.toList())
+            }
         }
         return answered
     }
