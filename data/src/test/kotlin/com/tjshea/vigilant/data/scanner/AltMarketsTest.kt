@@ -201,7 +201,7 @@ class AltMarketsTest {
         // v0.14.0 added schema 5 (the scanner choice), v0.18.0 schema 6 (odds cap ≤ +300), v0.19.0 schema 7 (tennis),
         // v0.19.1 schema 8 (a week ahead), v0.19.3 schema 9 (CNO's fewest books 1-4), v0.22.0 schema 10 (the widget
         // opens only from its button).
-        assertEquals(10, picked.schema)
+        assertEquals(11, picked.schema)
         // A current file is left alone.
         assertEquals(ScanSettings(propsPerGame = 4, schema = 10), ScanSettings(propsPerGame = 4, schema = 10).migrate())
     }

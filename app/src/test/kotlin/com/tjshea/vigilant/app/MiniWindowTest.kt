@@ -54,7 +54,7 @@ class MiniWindowTest {
         assertTrue(old.miniWindow)
         val moved = old.migrate()
         assertFalse(moved.miniWindow)
-        assertEquals(10, moved.schema)
+        assertEquals(11, moved.schema)
         // ...and once Tj turns it back on, later loads keep it.
         assertTrue(moved.copy(miniWindow = true).migrate().miniWindow)
         // A file with no switch at all reads as off.
