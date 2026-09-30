@@ -147,7 +147,8 @@ class CnoAgreementTest {
             override suspend fun books(row: CnoRow): CnoBooksView = throw IllegalStateException("not this one")
         }
         val feed = CnoFeed(busy, clock = { currentTime })
-        assertNull(feed.readBooks(row(1)))
+        // No answer is thrown (Check odds now tells it from a page without the bet), the pause noted first.
+        assertTrue(runCatching { feed.readBooks(row(1)) }.exceptionOrNull() is CnoException)
         val at = currentTime
         advanceTimeBy(10 * 60_000L)
         val s = feed.state.value
