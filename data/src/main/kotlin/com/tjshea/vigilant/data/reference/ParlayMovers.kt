@@ -176,23 +176,16 @@ object LineMoves {
 
     /** The move of [team]'s side in the board's game of [event] (both teams matched, start within 12 h), or null. */
     fun moveFor(board: MoversBoard, event: String, startsMs: Long?, team: String): LineMove? {
-        val m = NovigText.parseMatchup(event) ?: Picks.sides(event).takeIf { it.size == 2 }?.let { NovigText.Matchup(it[0], it[1]) } ?: return null
-        fun same(a: String, b: String) = a.equals(b, ignoreCase = true) || TeamMatcher.similarity(a, b) >= 0.999 || TeamMatcher.abbreviationScore(a, b) > 0
+        val sides = NovigText.parseMatchup(event)?.let { listOf(it.away, it.home) } ?: Picks.sides(event).takeIf { it.size == 2 } ?: return null
+        // Full names on both sides (Novig's, CNO's and ParlayAPI's games all name them so): every word of one in the other.
+        fun same(a: String, b: String) = a.equals(b, ignoreCase = true) || TeamMatcher.similarity(a, b) >= 0.999
         val mover = board.movers.firstOrNull { mv ->
             (startsMs == null || abs(mv.commenceMs - startsMs) <= START_GAP_MS) &&
-                ((same(m.home, mv.home) && same(m.away, mv.away)) || (same(m.home, mv.away) && same(m.away, mv.home)))
+                ((same(sides[0], mv.away) && same(sides[1], mv.home)) || (same(sides[0], mv.home) && same(sides[1], mv.away)))
         } ?: return null
-        val isHome = when {
-            same(team, mover.home) && !same(team, mover.away) -> true
-            same(team, mover.away) && !same(team, mover.home) -> false
-            else -> {
-                val h = TeamMatcher.similarity(team, mover.home)
-                val a = TeamMatcher.similarity(team, mover.away)
-                if (h == a || maxOf(h, a) < 0.5) return null
-                h > a
-            }
-        }
-        return if (isHome) LineMove(mover.home, mover.homePp, mover.homeFirst, mover.homeLast, board.windowMinutes)
+        // The side bet may be an abbreviation ("DAL +3.5"): the matcher that names Novig's outcomes decides.
+        val away = TeamMatcher.labelIsAway(team, mover.away, mover.home) ?: return null
+        return if (!away) LineMove(mover.home, mover.homePp, mover.homeFirst, mover.homeLast, board.windowMinutes)
         else LineMove(mover.away, mover.awayPp, mover.awayFirst, mover.awayLast, board.windowMinutes)
     }
 
