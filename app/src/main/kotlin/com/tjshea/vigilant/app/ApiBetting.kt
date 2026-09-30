@@ -141,6 +141,7 @@ object ApiBetTargets {
         return BetTarget(
             market = o.market, outcomeId = o.outcome.outcomeId, league = o.league.displayName, eventName = o.event.description, startsTs = o.event.startsTs,
             marketLabel = o.marketLabel, selection = o.selection, fair = fair, fairAsOfMs = o.fairAsOfMs, source = BetTracker.SOURCE_VIGILANT, placedKey = o.key,
+            basis = com.tjshea.vigilant.data.tracker.FairBasis.of(o),
         )
     }
 
@@ -162,6 +163,10 @@ object ApiBetTargets {
             market = market, outcomeId = found.outcomeId, league = row.league, eventName = row.event, startsTs = minOf(row.startsAtMs ?: market.startsTs, market.startsTs),
             marketLabel = row.market, selection = row.bet, fair = fair, fairAsOfMs = fairAsOfMs, source = source,
             placedKey = placedKey, book = row.book.ifBlank { "Novig" }, gameUrl = row.gameUrl, betUrl = row.betUrl,
+            basis = com.tjshea.vigilant.data.tracker.FairBasis(
+                if (source == BetTracker.SOURCE_PARLAY) com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_PARLAY else com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_CNO,
+                books = row.books ?: 0,
+            ),
         )
     }
 
