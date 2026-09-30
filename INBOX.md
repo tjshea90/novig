@@ -2733,3 +2733,8 @@ Still do the through research of parlayapi docs to make sure the app is using it
 ```
 For the +ev vigilant scan tab, give me the x option for each bet to remove the bet from the list permanently, even through refreshes and rescans, exactly like the cno section already does
 ```
+
+## 2026-09-30T04:35:09Z
+```
+When I just tried to get updated odds to see if my bets are EV using the check odds now button, it started and scanned a few then it said crazyninjaodds didn't answer. See if there is a fix to get cno to always respond, or if there is a good backup that does the same exact odds check, I think parlayapi can do this same odds check
+```
