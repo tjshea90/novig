@@ -144,7 +144,7 @@ class OtherBooks(
         val cacheKey = "$sport|${keys.sorted().joinToString(",")}"
         val rows = mutex.withLock {
             kept[cacheKey]?.takeIf { clock() - it.atMs < KEEP_MS }?.rows ?: run {
-                val reply = parlay!!.parlayGet(
+                suspend fun ask() = parlay!!.parlayGet(
                     "/sports/$sport/props",
                     listOf(
                         "markets" to keys.joinToString(","), "oddsFormat" to "american", "limit" to ParlayProps.PAGE.toString(),
@@ -153,6 +153,8 @@ class OtherBooks(
                     ),
                     cost = ParlayProps.COST, what = "$sport props (a pick's books)",
                 ).value
+                // "The props board is being rebuilt under load. Retry in a couple of seconds" (seen 2026-09-30): once, after the wait it names.
+                val reply = ask().let { first -> if (first.busy) { kotlinx.coroutines.delay(first.retryAfterMs ?: BUSY_WAIT_MS); ask() } else first }
                 if (reply.busy) throw ReferenceException("ParlayAPI's props are busy: try again in a minute")
                 val parsed = if (reply.ok) parlayRows(reply.body, json, sport, clock()) else emptyList()
                 kept[cacheKey] = Kept(clock(), parsed)
@@ -201,6 +203,9 @@ class OtherBooks(
 
         /** A league's rows for one market are shared by every pick's sheet this long. */
         const val KEEP_MS = 2 * 60_000L
+
+        /** A busy props board is asked again this much later (when it names no wait), once. */
+        const val BUSY_WAIT_MS = 2_000L
 
         /** Prices up to this old are asked for; past the freshness limit they're shown apart, never counted. */
         const val MAX_AGE_MS = 60 * 60_000L

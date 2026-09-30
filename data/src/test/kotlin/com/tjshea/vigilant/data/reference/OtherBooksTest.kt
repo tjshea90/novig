@@ -212,4 +212,17 @@ class OtherBooksTest {
         assertNotNull(v)
         return v!!
     }
+
+    @Test
+    fun `a busy props board is asked again once, after the wait it names`() = runBlocking {
+        var n = 0
+        routes["/parlay/v1/sports/baseball_mlb/props"] = {
+            if (n++ == 0) MockResponse().setResponseCode(503).setHeader("Retry-After", "1")
+                .setBody("""{"error":"props_temporarily_busy","detail":"The props board is being rebuilt under load. Retry in a couple of seconds."}""")
+            else MockResponse().setBody(hr)
+        }
+        val r = books().view("MLB", game, start, market, "Jahmai Jones Over 0.5")
+        assertEquals(2, n)
+        assertNotNull(r.view)
+    }
 }
