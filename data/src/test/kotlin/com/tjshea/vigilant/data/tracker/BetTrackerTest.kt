@@ -35,11 +35,14 @@ class BetTrackerTest {
         val market = NovigMarket(Fixtures.ML_MARKET, Fixtures.EVENT_ID, "MONEY", "OPEN", "DAL", Fixtures.START_MS, MarketFee.GAME,
             listOf(NovigOutcome(Fixtures.ML_DAL, "DAL", "TBD"), NovigOutcome(Fixtures.ML_BAL, "BAL", "TBD")))
         val refs = mapOf("americanfootball_nfl" to RefSnapshot("americanfootball_nfl",
-            TheOddsApiClient.parseEvents(Fixtures.oddsApi.replace("\"price\":2.45", "\"price\":$pinDal"), Json { ignoreUnknownKeys = true }), now))
+            TheOddsApiClient.parseEvents(fresh(Fixtures.oddsApi).replace("\"price\":2.45", "\"price\":$pinDal"), Json { ignoreUnknownKeys = true }), now))
         val plan = Planner.plan(listOf(event), listOf(market), refs, settings, now)
         val book = NovigBook(Fixtures.ML_MARKET, 1, mapOf(Fixtures.ML_DAL to listOf(BidLevel(dalBid, 1000)), Fixtures.ML_BAL to listOf(BidLevel(balBid, 1000))), now)
         return Pricing.price(plan, mapOf(Fixtures.ML_MARKET to book), settings, now)
     }
+
+    /** The fixture's books as just seen (a scan never prices a stale line: `Scanner`'s freshness cut), so a read's close is dated as now. */
+    private fun fresh(json: String) = json.replace(Regex("\"last_update\":\"[^\"]+\""), "\"last_update\":\"${java.time.Instant.ofEpochMilli(now)}\"")
 
     private fun dal(r: ScanResult) = r.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
 
