@@ -2797,3 +2797,8 @@ Two changes:
 
 2) when I press check odds now to get updated EV and stats in the bet tracker, all the vigilant results show stale odds and aren't refreshed. When I press this button I want every single open bet refreshed regardless of what scanner found the bet, so that I can see the current odds and positive EV for every open bet I have in the tracker 
 ```
+
+## 2026-09-30T16:05:42Z
+```
+Is this still running
+```
