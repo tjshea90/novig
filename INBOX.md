@@ -2532,3 +2532,8 @@ Add a stats function for when I check odds now in the bet tracker section, as th
 ```
 Do any of these stats check true closing line value based on the closing line for each bet? If not, make a system that finds the true closing odds for each of my bets (keep in mind many bets will not have closing odds yet because the games are too far in the future).  Add somewhere in the stats or bet tracking system a feature that shows the percentage of my bets that beat closing line value (the percentage of my bets that I bet at more favorable odds for me than the closing line). Also include the average percentage that my bets beat the closing line (the percentage difference of each of the bets at the odds I placed them vs the closing line odds, averaged together). Keep this stat line running forever, it does not reset. New bets will add to this statistic. Also make a filter system where I can see the statistics in this section based on time period (all time, today, yesterday, last 3 days , last week), and an option to remove outliers (bets over 5% different than closing line value).
 ```
+
+## 2026-09-30T00:43:36Z
+```
+My phone will not always be on. The app has to be able to find clv from closing lines after the games started or even days later. Espn may have the closing lines information. Check for sources that the app can use for this and implement it
+```
