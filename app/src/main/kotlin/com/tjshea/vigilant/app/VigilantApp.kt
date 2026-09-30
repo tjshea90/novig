@@ -407,6 +407,11 @@ class AppContainer(private val app: Application) {
     /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
     private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds)
 
+    /** Check odds now's backup for CNO (Tj, 2026-09-30): every book's price for a bet from ParlayAPI, while it's on with a key. */
+    val parlayBooks = com.tjshea.vigilant.data.tracker.ParlayBooks(
+        parlayOdds, active = { keyStore.current(ApiProvider.PARLAY).isNotEmpty() && currentSettings().useParlay },
+    )
+
     /** The same for background auto-scans: they leave half of each day's ParlayAPI share for the scans Tj starts himself. */
     private val parlayOddsBackground = TheOddsApiClient(
         http, parlayPool, json,

@@ -29,7 +29,7 @@ import kotlin.math.abs
  */
 class ParlayBooks(
     private val client: TheOddsApiClient,
-    private val active: () -> Boolean,
+    private val active: suspend () -> Boolean,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private class Kept(val atMs: Long, val snap: RefSnapshot?)
