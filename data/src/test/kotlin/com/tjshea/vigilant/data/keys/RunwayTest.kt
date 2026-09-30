@@ -141,6 +141,28 @@ class RunwayTest {
         assertEquals(ProviderCost("pinnwire", 5, 5), cost.getValue("pinnwire"))
     }
 
+    /** Tj's diagnostics 2026-09-30: "Scan: ParlayAPI 14 (600 of its allowance)" and "a scan costs 600 → 33 a month" for a scan of ~40 credits. */
+    @Test
+    fun `a round's cost is what the app's own calls were charged, not a jump in the provider's count`() {
+        val month = QuotaPolicy.PARLAY.periodStart(now)
+        // A key the ledger first hears of in this round: the provider says 600 used this month; this round's 14 calls were charged 42.
+        val before = UsageBook(mapOf("parlay" to ProviderUsage(keys = mapOf("old" to KeyUsage(periodStart = month, used = 40, charged = 40)), callsToday = 10)))
+        val after = UsageBook(
+            mapOf("parlay" to ProviderUsage(keys = mapOf("old" to KeyUsage(periodStart = month, used = 40, charged = 40), "new" to KeyUsage(periodStart = month, used = 600, charged = 42)), callsToday = 24)),
+        )
+        assertEquals(ProviderCost("parlay", 14, 42), UsageDelta.between(before, after).single())
+        // The provider's count synced upward mid-round (an account read): only the calls' charges count.
+        val synced = UsageBook(mapOf("parlay" to ProviderUsage(keys = mapOf("old" to KeyUsage(periodStart = month, used = 900, charged = 49)), callsToday = 12)))
+        assertEquals(ProviderCost("parlay", 2, 9), UsageDelta.between(before, synced).single())
+        // The ledger counts every call's charge.
+        val meter = com.tjshea.vigilant.data.keys.UsageMeter(com.tjshea.vigilant.data.store.JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
+        kotlinx.coroutines.runBlocking {
+            meter.recordCall(QuotaPolicy.PARLAY, "k", cost = 3, serverRemaining = 19_400, serverUsed = 600)
+            meter.recordCall(QuotaPolicy.PARLAY, "k", cost = 5, serverRemaining = 19_395, serverUsed = 605)
+        }
+        assertEquals(8L, meter.flow.value.providers.getValue("parlay").keys.getValue("k").charged)
+    }
+
     @Test
     fun `it says how many rounds an allowance buys`() {
         val view = UsageViews.build(QuotaPolicy.PINNWIRE, listOf("k"), null, now)
