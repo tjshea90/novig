@@ -435,6 +435,9 @@ class AppContainer(private val app: Application) {
         quality = parlayQuality,
     )
     private val parlayPropsBackground = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOddsBackground, injuries)
+    /** 1st-half spreads and totals from more books (ParlayAPI's period markets), for Tj's scans and for auto-scan's. */
+    private val parlayHalves = com.tjshea.vigilant.data.reference.ParlayPeriodSource(parlayOdds, json)
+    private val parlayHalvesBackground = com.tjshea.vigilant.data.reference.ParlayPeriodSource(parlayOddsBackground, json)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */
     private val bookProps = OddsApiPropsSource(oddsApi)
     /** Pinnacle: PinnWire's keys first (their free keys include player props), then pinnapi's. */
@@ -494,6 +497,8 @@ class AppContainer(private val app: Application) {
         if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) {
             add(if (background) parlayOddsBackground else parlayOdds)
             if (settings.useBookProps) add(if (background) parlayPropsBackground else parlayProps)
+            // More books' 1st-half lines (2 credits a league, only where Novig lists a 1st-half spread or total; PARLAY_API.md §6.7).
+            add(if (background) parlayHalvesBackground else parlayHalves)
         }
     }
 }
