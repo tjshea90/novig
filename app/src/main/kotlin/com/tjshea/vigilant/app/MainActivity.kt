@@ -625,6 +625,8 @@ private fun VigilantRoot(
                     onRecheck = vm::recheck,
                     onMiniWindow = onMiniWindow,
                     onPause = vm::setPaused,
+                    onHide = vm::hideOpportunity,
+                    onUnhide = vm::unmarkPlaced,
                 )
                 Tab.CNO -> CnoTab(
                     state, vm,

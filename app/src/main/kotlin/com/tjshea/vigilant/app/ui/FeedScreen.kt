@@ -50,6 +50,15 @@ import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.FairSource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.size
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -68,12 +77,30 @@ fun FeedScreen(
     onMiniWindow: (() -> Unit)? = null,
     /** Pause every scan (true) or resume (false). */
     onPause: (Boolean) -> Unit = {},
+    /** ✕: the bet leaves this list (and the widget) for good, through refreshes and rescans, as on the CNO tab. */
+    onHide: (Opportunity) -> Unit = {},
+    /** Undo, or "Put back" in the removed list: the bet (by key) shows again. */
+    onUnhide: (String) -> Unit = {},
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
     val now = rememberNow(15_000)
+    // Vigilant's own bets Tj removed with ✕ (CNO's are listed on its tab), to put back.
+    val removed = state.placed.filter { it.hidden && !it.key.startsWith("cno:") }
+    var showRemoved by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val hide: (Opportunity) -> Unit = { o ->
+        onHide(o)
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            val r = snackbar.showSnackbar("Removed: ${o.selection}. Hidden here and in the widget.", actionLabel = "Undo", duration = SnackbarDuration.Short)
+            if (r == SnackbarResult.ActionPerformed) onUnhide(o.key)
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             Column {
                 TopAppBar(
@@ -124,8 +151,15 @@ fun FeedScreen(
                 val shown = state.feedAt(now)
                 if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
+                if (removed.isNotEmpty() && state.settings.leagues.isNotEmpty()) {
+                    item(key = "removed") {
+                        Column(Modifier.padding(horizontal = 12.dp)) {
+                            SetAsideList(removed, "you removed", "✕", "Put back", showRemoved, { showRemoved = !showRemoved }, onUnhide)
+                        }
+                    }
+                }
                 items(shown, key = { it.key }) { o ->
-                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem()) { selected = o }
+                    OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }) { selected = o }
                 }
             }
         }
@@ -346,6 +380,8 @@ fun OpportunityCard(
     modifier: Modifier = Modifier,
     /** Show the one-tap "Open in Novig" button (the +EV tab; off where a card is only a preview). */
     onOpen: Boolean = true,
+    /** ✕ at the top right, as on CNO's cards: removes the bet for good. Null: no ✕ (a preview). */
+    onHide: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     val q = o.quote ?: return
@@ -370,6 +406,12 @@ fun OpportunityCard(
                 // game more than 3 hours away: Freshness.maxAgeMs).
                 o.fairAsOfMs?.let { now - it }?.takeIf { it > FAIR_AGING_MS }?.let { age ->
                     Text("odds ${age / 60_000} min old", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                }
+                // Top right, where CNO's cards have theirs.
+                if (onHide != null) {
+                    IconButton(onClick = onHide, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Filled.Close, contentDescription = "Remove ${o.selection} from the list", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
