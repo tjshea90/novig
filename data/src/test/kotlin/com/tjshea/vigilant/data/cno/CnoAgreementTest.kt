@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -135,6 +136,23 @@ class CnoAgreementTest {
         feed.loadBooks(row(1))
         assertTrue(feed.waitForGapMs() >= 119_000L)
         assertFalse(feed.refresh("u"))
+    }
+
+    /** Tj's diagnostics, 2026-09-30: Check odds now read 1 of 82 CNO bets and nothing kept why; the pause and its reason stay for Diagnostics. */
+    @Test
+    fun `a pause CNO asks for during Check odds now is kept, with its reason, after it's over`() = runTest {
+        val busy = object : CnoSource {
+            override suspend fun fetch(url: String, filters: CnoFilters) = CnoSnapshot(url, emptyList(), currentTime)
+            override suspend fun booksBulk(row: CnoRow): CnoBooksView = throw CnoException("CrazyNinjaOdds is busy (HTTP 429); trying again later", retryAfterSeconds = 120)
+            override suspend fun books(row: CnoRow): CnoBooksView = throw IllegalStateException("not this one")
+        }
+        val feed = CnoFeed(busy, clock = { currentTime })
+        assertNull(feed.readBooks(row(1)))
+        val at = currentTime
+        advanceTimeBy(10 * 60_000L)
+        val s = feed.state.value
+        assertEquals("Check odds now: CrazyNinjaOdds is busy (HTTP 429); trying again later (120s)", s.lastPause)
+        assertEquals(at, s.lastPauseAtMs)
     }
 
     @Test
