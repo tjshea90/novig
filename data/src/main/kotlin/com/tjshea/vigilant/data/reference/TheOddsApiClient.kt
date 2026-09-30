@@ -190,7 +190,7 @@ class TheOddsApiClient(
             if (wait > 0) delay(wait)
             lastCallAt = System.currentTimeMillis()
         }
-        return pool.execute(cost = cost) { key ->
+        return pool.execute(cost = cost, reserve = feed.reserve) { key ->
             val url = "$baseUrl$path".toHttpUrl().newBuilder()
                 .addQueryParameter("apiKey", key)
                 .apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }
@@ -420,12 +420,21 @@ private data class OutcomeDto(
  * params, same response format" at `parlay-api.com/v1`, with Pinnacle, Novig, ProphetX, bet365 and the US books, player props included, at a
  * fraction of the price per credit; checked live on its free endpoint 2026-09-30 (15 books on an NFL game, Pinnacle's price seconds old).
  */
-enum class OddsFeed(val sourceId: String, val propsId: String, val title: String, val base: String, val books: List<String>?) {
+enum class OddsFeed(
+    val sourceId: String,
+    val propsId: String,
+    val title: String,
+    val base: String,
+    val books: List<String>?,
+    /** Credits a scan leaves on each key ([KeyPool.execute]'s reserve): ParlayAPI's last ones go to Pinnacle's closing lines for CLV. */
+    val reserve: Int = 0,
+) {
     ODDS_API("oddsapi", "oddsapi_props", "The Odds API", "https://api.the-odds-api.com/v4", null),
 
     /** Its own ten books (its keys differ from The Odds API's for some): the sharp ones first, the Settings picker doesn't apply. */
     PARLAY(
         "parlay", "parlay_props", "ParlayAPI", "https://parlay-api.com/v1",
         listOf("pinnacle", "prophetx", "betonline", "bet365", "bovada", "draftkings", "fanduel", "caesars", "betmgm", "fanatics"),
+        reserve = 300,
     ),
 }
