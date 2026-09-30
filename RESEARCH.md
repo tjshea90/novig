@@ -3077,3 +3077,24 @@ matched all 19 other games. Tennis is priced only by Kalshi and Pinnacle today. 
 Pinnacle on 75, FanDuel 36, ProphetX 21; `tennis_wta`: 60; 3 credits a tour), **but its Pinnacle rows put SET lines (±1.5 sets, 2.5
 sets) in the match event and game lines in a separate "Name (Games)" event, while bet365/Caesars put game lines in the match event**:
 merged naively a sets spread −1.5 would price Novig's games spread −1.5, a fake edge. Worth building only with that split handled per book.
+
+## 48. Lag, then a crash, when switching tabs during a Vigilant scan (v0.36.1, 2026-09-30; Tj: "The app just crashed a couple times. Both times it was scanning vigilant and I tried to switch tabs, which got very laggy then crashed")
+
+No stack came with it (the app kept none), so the cause was found in the code and measured where it could be. A scan's progress is
+emitted after every Novig price read (`Scanner.Progress.emit` per book: ~14 a second through the key; Tj's no-limit scans read 1,474 in
+105 s), and so is the API usage count (`UsageMeter.recordCall` per request). `MainViewModel.follow()` and the usage mirror copied each one
+into `UiState` on the main thread, `follow()` rebuilding the +EV feed (`feedOf`) every time even when only the progress moved. The whole
+`UiState` is collected at the root (`MainActivity`), so every tick recomposed the app, and the tab badges recompute the +EV feed and
+CNO's list (with its books-agree check) on each recomposition. `feedOf` alone is small (0.46 ms over 5,000 priced sides on a desktop JVM,
+maybe 5-10 ms on the phone); the full recomposition 20-30 times a second is what kept the main thread busy, so a tab switch (a new screen
+to build) couldn't get through and Android ended the app. The notifications already limited themselves (ScanService 2 a second, auto-scan
+1 a second); the screen didn't.
+
+Fixed: the screen takes a running scan's newest state at most every 350 ms (`followThrottled`: a StateFlow keeps only its latest value
+while the collector waits, so the scan's end is never missed), the feed is rebuilt only when the result itself changed and off the main
+thread, and the usage meters take the newest count at most once a second. `ScanMirrorTest`: 1,500 ticks at 14 a second arrive as ~300
+states instead of 1,500, the last one always.
+
+So the next one says why by itself: `AppExits` keeps a crash's stack as the process goes (files/last_crash.txt → Recent problems as "App
+crash"), and Diagnostics reads Android's own record of each exit (`ApplicationExitInfo`: crash, "not responding" with the main thread's
+stack from its dump, low memory…) into "How the app last ended", with an "App stability" health check.
