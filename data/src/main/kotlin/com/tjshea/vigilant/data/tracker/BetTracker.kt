@@ -678,16 +678,20 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 if (b.id !in wanted || b.status != BetStatus.PENDING) return@map b
                 val c = b.cnoFair?.takeIf { (b.cnoAtMs ?: Long.MIN_VALUE) >= cnoSince }
                 val v = b.vigFair?.takeIf { (b.vigAtMs ?: Long.MIN_VALUE) >= since }
-                fun withFair(fair: Double, at: Long, via: String, books: Int?) = b.copy(
+                // A close is as old as the older of the reads behind it ([seen]), and only a read made before the start is one.
+                fun withFair(fair: Double, at: Long, via: String, books: Int?, seen: Long = at) = b.copy(
                     nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = at, nowVia = via, nowBooks = books ?: b.nowBooks,
                     nowNote = null, nowNoteAtMs = null,
                     closingFair = if (at < b.startsTs) fair else b.closingFair,
-                    closingSeenAtMs = if (at < b.startsTs) at else b.closingSeenAtMs,
+                    closingSeenAtMs = if (at < b.startsTs) seen else b.closingSeenAtMs,
                 )
                 when {
                     c != null && v != null -> {
                         both += b.id
-                        withFair((c + v) / 2.0, maxOf(b.cnoAtMs!!, b.vigAtMs!!), VIA_BOTH, maxOf(b.nowBooks ?: 0, b.vigBooks ?: 0).takeIf { it > 0 })
+                        withFair(
+                            (c + v) / 2.0, maxOf(b.cnoAtMs!!, b.vigAtMs!!), VIA_BOTH, maxOf(b.nowBooks ?: 0, b.vigBooks ?: 0).takeIf { it > 0 },
+                            seen = minOf(b.cnoAtMs, b.vigAtMs),
+                        )
                     }
                     c != null -> { cnoOnly += b.id; b }
                     v != null -> { vigOnly += b.id; withFair(v, b.vigAtMs!!, VIA_VIGILANT, b.vigBooks) }
