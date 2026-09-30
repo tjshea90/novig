@@ -279,8 +279,8 @@ object Diagnostics {
             val toward = group.count { it.nowFair!! > it.fairAtBet!! + 1e-9 }
             val stillPositive = group.count { it.nowEv!! > 0 }
             return String.format(
-                Locale.US, "%s: %d bets · EV when bet %+.1f%% → now %+.1f%% · fair moved toward the bet on %d, away on %d · still +EV %d",
-                label, group.size, atBet * 100, nowEv * 100, toward, group.count { it.nowFair!! < it.fairAtBet!! - 1e-9 }, stillPositive,
+                Locale.US, "%s: %d bet%s · EV when bet %+.1f%% → now %+.1f%% · fair moved toward the bet on %d, away on %d · still +EV %d",
+                label, group.size, if (group.size == 1) "" else "s", atBet * 100, nowEv * 100, toward, group.count { it.nowFair!! < it.fairAtBet!! - 1e-9 }, stillPositive,
             )
         }
         return listOf(line("All", live)) + live.groupBy { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER) }

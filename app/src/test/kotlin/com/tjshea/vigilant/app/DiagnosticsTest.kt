@@ -269,8 +269,8 @@ class DiagnosticsTest {
             now,
         )
         assertEquals("All: 2 bets · EV when bet +4.0% → now +2.0% · fair moved toward the bet on 1, away on 1 · still +EV 1", lines[0])
-        assertTrue(lines.toString(), lines.any { it.startsWith("CNO: 1 bets · EV when bet +4.0% → now +6.0%") })
-        assertTrue(lines.toString(), lines.any { it.startsWith("Vigilant: 1 bets") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("CNO: 1 bet · EV when bet +4.0% → now +6.0%") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("Vigilant: 1 bet ·") })
         assertEquals(listOf("No open pregame bet has a current EV (tap Check odds now, then copy Diagnostics again)."), Diagnostics.edgeNowLines(emptyList(), now))
     }
 }

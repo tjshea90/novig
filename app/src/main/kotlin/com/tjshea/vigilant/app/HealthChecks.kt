@@ -104,7 +104,7 @@ object HealthChecks {
         val views = com.tjshea.vigilant.app.ui.meterViews(s, now).filter { it.policy.keyed }
         for (line in Runway.lines(views, now)) {
             when (line.level) {
-                RunwayLevel.SHORT -> add(Check(Level.WARN, "Runway ${line.name}", "won't last to its reset at this pace", line.text.take(160), "add a key, or scan less often (Runway block)"))
+                RunwayLevel.SHORT -> add(Check(Level.WARN, "Runway ${line.name}", "won't last to its reset at this pace", line.text, "add a key, or scan less often (Runway block)"))
                 RunwayLevel.WATCH -> add(Check(Level.OK, "Runway ${line.name}", "tight but lasting", line.text.take(120)))
                 RunwayLevel.OK -> {}
             }
@@ -205,7 +205,7 @@ object HealthChecks {
         val dupes = open.groupBy { Triple(it.marketId, it.outcomeId, it.startsTs) }.filter { (k, v) -> k.first.isNotBlank() && k.second.isNotBlank() && v.size > 1 }
         if (dupes.isNotEmpty()) add(Check(Level.WARN, "Tracker data", "${dupes.size} open bet${plural(dupes.size)} tracked more than once", dupes.values.first().first().let { "${it.marketLabel} ${it.selection}" }, "BetTracker.track/logCno/logApi keys; delete the copy in the Tracker"))
         val noEv = bets.count { it.evPercentAtBet == null && it.status != BetStatus.VOID }
-        if (noEv > 0) add(Check(Level.OK, "Tracker data", "$noEv bet${plural(noEv)} have no EV on record (imported or synced): left out of expected vs actual"))
+        if (noEv > 0) add(Check(Level.OK, "Tracker data", "$noEv bet${plural(noEv)} ${if (noEv == 1) "has" else "have"} no EV on record (imported or synced): left out of expected vs actual"))
         val outliers = bets.count { it.isOutlier }
         if (outliers > 0) add(Check(Level.OK, "Tracker data", "$outliers outlier bet${plural(outliers)} (over ±${pct0(BetTracker.OUTLIER_EV)} EV when bet) left out of the stats"))
     }
