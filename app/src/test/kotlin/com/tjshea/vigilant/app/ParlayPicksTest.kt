@@ -7,12 +7,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.tjshea.vigilant.app.ui.ApiBetActions
 import com.tjshea.vigilant.app.ui.FeedScreen
+import com.tjshea.vigilant.app.ui.LocalApiBet
+import com.tjshea.vigilant.app.ui.Format
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.PARLAY_PICKS
 import com.tjshea.vigilant.app.ui.ParlayPickActions
@@ -20,7 +26,15 @@ import com.tjshea.vigilant.app.ui.ParlayPicksUi
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.app.ui.parlayItem
 import com.tjshea.vigilant.app.ui.parlayShown
+import com.tjshea.vigilant.data.cno.CnoBookPrice
+import com.tjshea.vigilant.data.cno.CnoBooks
+import com.tjshea.vigilant.data.cno.CnoBooksState
+import com.tjshea.vigilant.data.cno.CnoBooksView
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.cno.CnoSnapshot
+import com.tjshea.vigilant.data.cno.CnoState
 import com.tjshea.vigilant.data.cno.LivePrice
+import com.tjshea.vigilant.data.tracker.OpenBetPricer
 import com.tjshea.vigilant.data.reference.ParlayBestBets
 import com.tjshea.vigilant.data.reference.ParlayPick
 import com.tjshea.vigilant.data.scanner.Leagues
@@ -73,8 +87,8 @@ class ParlayPicksTest {
         parlayPicks = ParlayPicksUi(picks = picks(), readAtMs = now - 60_000, leagues = listOf("MLB")),
     ).indexed(now)
 
-    private fun screen(state: UiState, actions: ParlayPickActions) = compose.setContent {
-        CompositionLocalProvider(LocalClock provides { now }) {
+    private fun screen(state: UiState, actions: ParlayPickActions, bet: ApiBetActions? = null) = compose.setContent {
+        CompositionLocalProvider(LocalClock provides { now }, LocalApiBet provides bet) {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     FeedScreen(state, onScan = {}, onToggleLeague = {}, onOpenSettings = {}, onTrack = { _, _ -> }, parlay = actions)
@@ -126,5 +140,104 @@ class ParlayPicksTest {
     fun `with ParlayAPI off there's no section`() {
         screen(state(on = false), ParlayPickActions())
         compose.onNodeWithTag(PARLAY_PICKS).assertDoesNotExist()
+    }
+
+    // ---- TASKS.md P1 / P2 / P4 (Tj, 2026-09-30) ---------------------------------------------------------------------------
+
+    private fun happ(s: UiState) = s.parlayShown(now).first { it.row.bet == "Ian Happ Over 0.5" }
+    private fun kelly(s: UiState) = s.parlayShown(now).first { it.row.bet == "Carson Kelly Over 0.5" }
+
+    /** CNO's list with Carson Kelly's bet (fair +800) at Novig, read 30 s ago, and its game page. */
+    private fun cnoKelly(start: Long) = CnoRow(
+        ev = 0.03, startsAtMs = start, sport = "Baseball", league = "MLB", event = "Chicago Cubs @ San Diego Padres", market = "Player Home Runs",
+        bet = "Carson Kelly Over 0.5", odds = 950, available = 20.0, book = "Novig", fairOdds = 800, books = 5, gameUrl = "https://crazyninjaodds.com/game?side_id=9",
+    )
+
+    private fun withCno(s: UiState): UiState {
+        val row = cnoKelly(kelly(s).row.startsAtMs!!)
+        return s.copy(cno = CnoState(snapshot = CnoSnapshot(url = "https://crazyninjaodds.com/view", rows = listOf(row), fetchedAtMs = now - 30_000L).let { it }))
+    }
+
+    private fun books(bet: String, at: Long) = CnoBooksView(
+        bet = bet, otherBet = bet.replace("Over", "Under"),
+        prices = listOf(
+            CnoBookPrice("PN", 800, null, -1400, null), CnoBookPrice("DK", 750, null, -1300, null),
+            CnoBookPrice("FD", 820, null, -1500, null), CnoBookPrice("NV", 900, 10.0, null, null),
+        ),
+        fetchedAtMs = at,
+    )
+
+    @Test
+    fun `P1 each pick has the Bet button when betting through Novig's API is set up, and it bets that pick`() {
+        val s = state()
+        var got: ParlayPick? = null
+        screen(s, ParlayPickActions(), ApiBetActions(true, {}, {}, betParlay = { got = it }))
+        compose.onAllNodesWithTag("apiBet")[0].performClick()
+        assertEquals("Ian Happ Over 0.5", got!!.row.bet)
+        assertTrue(got!!.key.startsWith("parlay:"))
+    }
+
+    @Test
+    fun `P1 without betting set up there's no Bet button on a pick`() {
+        screen(state(), ParlayPickActions(), ApiBetActions(false, {}, {}))
+        compose.onAllNodesWithTag("apiBet").fetchSemanticsNodes().let { assertTrue(it.isEmpty()) }
+    }
+
+    @Test
+    fun `P2 each card shows CNO's and Vigilant's EV at the same Novig price beside ParlayAPI's, or why one has none`() {
+        val base = withCno(state())
+        val k = kelly(base)
+        val s = base.copy(parlayPicks = base.parlayPicks.copy(vigilant = mapOf(k.key to OpenBetPricer.FairRead(0.10, now - 20_000L, null))))
+        screen(s, ParlayPickActions())
+        val cnoFair = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(800)
+        // Kelly: CNO's fair +800 and Vigilant's 10% at Novig's +950.
+        compose.onNode(hasTestTag("pickEv-CNO") and androidx.compose.ui.test.hasAnyDescendant(hasText(Format.evPercent(CnoBooks.evAt(cnoFair, 950, false))))).assertExists()
+        compose.onNode(hasTestTag("pickEv-Vigilant") and androidx.compose.ui.test.hasAnyDescendant(hasText(Format.evPercent(CnoBooks.evAt(0.10, 950, false))))).assertExists()
+        // Happ: CNO doesn't list it, and Vigilant hasn't read it: "—", and the card says why.
+        compose.onNodeWithText("CNO: not on CNO's +EV list · Vigilant: not read yet: tap Recheck").assertExists()
+    }
+
+    @Test
+    fun `P4 tapping a pick opens its sheet with every book's odds, ParlayAPI's books when CNO doesn't list it`() {
+        val base = state()
+        val h = happ(base)
+        val s = base.copy(parlayPicks = base.parlayPicks.copy(books = mapOf(h.key to CnoBooksState(view = books(h.row.bet, now - 10_000L)))))
+        val loads = ArrayList<Pair<String, Boolean>>()
+        screen(s, ParlayPickActions(onLoadBooks = { p, force -> loads += p.row.bet to force }))
+        compose.onNodeWithText("Ian Happ Over 0.5").performClick()
+        compose.onNodeWithTag("parlayPickSheet").assertExists()
+        compose.waitForIdle()
+        assertEquals(listOf("Ian Happ Over 0.5" to false), loads)
+        // The books, as CNO's sheet lists them: this bet, the other side, and Vigilant's worst-case verdict on them.
+        compose.onNodeWithText("Pinnacle").assertExists()
+        compose.onNodeWithText("DraftKings").assertExists()
+        compose.onNodeWithText("This bet").assertExists()
+        compose.onNodeWithText("Books read 10s ago from ParlayAPI's books").assertExists()
+        compose.onNode(hasTestTag("pickEv-Books")).assertExists()
+        compose.onNodeWithText("Open in Novig").assertExists()
+        compose.onNodeWithText("Re-read books").performClick()
+        assertEquals("Ian Happ Over 0.5" to true, loads.last())
+    }
+
+    @Test
+    fun `P4 when CNO lists the same bet, its game page's books are the ones shown`() {
+        val base = withCno(state())
+        val k = kelly(base)
+        val cnoRow = base.cno.snapshot!!.rows.single()
+        val s = base.copy(books = mapOf(cnoRow.key to CnoBooksState(view = books(k.row.bet, now - 5_000L))))
+        assertEquals(cnoRow, com.tjshea.vigilant.app.ui.pickCnoRow(s, k))
+        screen(s, ParlayPickActions())
+        compose.onNodeWithText("Carson Kelly Over 0.5").performClick()
+        compose.onNodeWithText("Books read 5s ago from CNO's game page").assertExists()
+    }
+
+    @Test
+    fun `P4 the sheet says what it's reading, and why when there's no book list`() {
+        val base = state()
+        val h = happ(base)
+        screen(base.copy(parlayPicks = base.parlayPicks.copy(books = mapOf(h.key to CnoBooksState(error = "ParlayAPI has no other book pricing this exact bet right now")))), ParlayPickActions())
+        compose.onNodeWithText("Ian Happ Over 0.5").performClick()
+        compose.onNodeWithText("ParlayAPI has no other book pricing this exact bet right now").assertExists()
+        compose.onNodeWithText("Retry").assertExists()
     }
 }
