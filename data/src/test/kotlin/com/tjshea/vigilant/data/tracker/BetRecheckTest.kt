@@ -210,6 +210,25 @@ class BetRecheckTest {
         assertEquals(true, down.summary().startsWith("CrazyNinjaOdds didn't answer"))
     }
 
+    /** Tj's diagnostics, 2026-09-30: "CNO read 1, … 81 CNO couldn't read went to a second pricing pass", and nothing said why. */
+    @Test
+    fun `the round's note keeps what CNO itself read and why it stopped, after Vigilant priced the rest`() = runTest {
+        val bets = (1..10).map { bet("p$it", startsTs = start + it) }
+        var pausedNow = false
+        val t = tracker(*bets.toTypedArray())
+        var reads = 0
+        val r = BetRecheck(t, books = { reads++; pausedNow = true; view(-125, 105) }, clock = { now }, paused = { pausedNow }).run()
+        // Vigilant then prices the nine CNO didn't read.
+        val rescued = r.withPricing(OpenBetPricer.Report(asked = 9, priced = 9, unpriced = 0), rescue = true)
+        assertEquals(0, rescued.skipped)
+        val note = rescued.roundNote(vigilantOn = true, pauseWhy = "Check odds now: CrazyNinjaOdds is busy (HTTP 429) (120s)")
+        assertEquals(
+            "covered 10 of 10 open bets: CNO read 1 of 10 (9 not tried: stopped early, Check odds now: CrazyNinjaOdds is busy (HTTP 429) (120s)), " +
+                "9 priced from Vigilant's own fair odds, 9 CNO didn't read went to a second pricing pass",
+            note,
+        )
+    }
+
     @Test
     fun `a run cancelled part-way keeps the bets it already read`() = runTest {
         val bets = (1..8).map { bet("c$it", startsTs = start + it) }
