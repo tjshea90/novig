@@ -250,6 +250,18 @@ class BetRecheck(
     }
 
     /**
+     * The closing capture's CNO half ([ClosingLine], Tj 2026-09-29: "finds the true closing odds for each of my bets"): reads the books of
+     * [ids] that are CNO bets still to start, however recently they were read (the read just before the start is the close). Returns the ids
+     * whose books were read.
+     */
+    suspend fun captureClosing(ids: Collection<String>): Set<String> = mutex.withLock {
+        val now = clock()
+        val wanted = ids.toHashSet()
+        val todo = tracker.all().filter { it.id in wanted && it.status == BetStatus.PENDING && it.gameUrl != null && it.startsTs > now }.sortedBy { it.startsTs }
+        if (todo.isEmpty()) emptySet() else readAll(todo) { _, _ -> }.updatedIds
+    }
+
+    /**
      * Re-reads one bet's books now, whatever else runs or was read a minute ago (the sheet's "Re-read books"); false when it couldn't
      * be read. It never waits for a whole [run] (minutes): CNO's own one-read-at-a-time queue is all it waits behind.
      */
