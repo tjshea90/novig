@@ -2723,3 +2723,8 @@ Thoroughly research parlayapi docs to get endpoints and everything matched and a
 ```
 Nevermind it works now
 ```
+
+## 2026-09-30T04:25:49Z
+```
+Still do the through research of parlayapi docs to make sure the app is using it correctly and to full advantage and if the API offers any other features I may want in the app let me know
+```
