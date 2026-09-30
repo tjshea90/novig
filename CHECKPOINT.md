@@ -1,13 +1,13 @@
-# CHECKPOINT 2212 — read me first, then TASKS.md
+# CHECKPOINT 2213 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T20:57:26Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `466fb22d` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T21:36:19Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `bea7d2a0` (this checkpoint is the commit after it)
 
 ## Just done
-v0.35.0 (code 63) released and recorded: V1-V4 done
+Logged Tj's pasted v0.35.0 Diagnostics as TASKS.md W1-W4
 
 ## Do this next
-Nothing open from Tj's 19:30Z request; older items need Tj's phone (L1161, L1164, P6, S2)
+W1: investigate the report (ParlayAPI 'no key for this league' close note, Sportsbook props 0 matched, 36% game matching, Vigilant totals CLV), then fix
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nothing open from Tj's 19:30Z request; older items need Tj's phone (L1161, L1164
 
 ## Last ten checkpoints
 ```
+  d857f629 ckpt 2212: v0.35.0 (code 63) released and recorded: V1-V4 done
   03124699 ckpt 2211: pre-release: v0.35.0: Bet sheet takes any typed amount and opens at the wall
   7830ace6 ckpt 2210: Fixed a real race in ApiBettingController.placer() (two plans on two threads
   47c2a353 ckpt 2209: V3 done: Diagnostics health checks (FAIL/WARN/OK with evidence and code), ac
@@ -26,5 +27,7 @@ Nothing open from Tj's 19:30Z request; older items need Tj's phone (L1161, L1164
   1397fbd7 ckpt 2205: V4 audit: CLV correct (pregame close only); CheckOddsStats counts live bets 
   5a1de17f ckpt 2204: Logged Tj's 19:30Z request as TASKS.md V1-V5 (more books, custom bet amount 
   8d5c8324 ckpt 2203: U1 answered: the Apify bet-clv-tracker adds nothing (a CLV calculator needin
-  5045e52e ckpt 2202: Logged Tj's question on the Apify bet-clv-tracker actor as TASKS.md U1
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
