@@ -301,8 +301,10 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     i.fairNow?.let { LabeledValue(if (current) "Fair now" else "Fair then", "${Format.american(it)} · ${Format.percent(it)}") }
                     i.priceNow?.let { LabeledValue("${bet.book.ifBlank { AppBook.name }} now", Odds.formatAmerican(it)) }
-                    // The true CLV once the game started with a close read just before it (ClosingLine); before that, against the last read.
-                    (com.tjshea.vigilant.data.tracker.ClosingLine.clv(bet, now)?.let { "CLV" to it } ?: i.clv?.let { "CLV so far" to it })
+                    // The true CLV once the game started with a close read just before it (ClosingLine); before that, against the last read;
+                    // a started game with no true close says its number is only against the last pregame read, which isn't a close.
+                    (com.tjshea.vigilant.data.tracker.ClosingLine.clv(bet, now)?.let { "CLV" to it }
+                        ?: i.clv?.let { (if (now < bet.startsTs) "CLV so far" else "Vs last pregame read") to it })
                         ?.let { (label, v) -> LabeledValue(label, Format.evPercent(v), valueColor = moneyColor(v)) }
                     // Where the close came from (Tj, 2026-09-30): read before the start, or found afterwards (ESPN, Novig's trades).
                     com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(bet, now)?.let { (fair, via) ->
