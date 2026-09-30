@@ -120,6 +120,10 @@ class ParlayInjuriesTest {
         assertNull(book.find("americanfootball_nfl", "Nico Collins", now = now))
         // Six hours on, the report is too old to show.
         assertNull(book.find("americanfootball_nfl", "CJ Stroud", now = now + InjuryIndex.KEEP_MS + 1))
+        // A newer answer that lists him with no report: the old one no longer holds.
+        index.record("americanfootball_nfl", emptyList(), asked = listOf("CJ Stroud"))
+        assertNull(index.book.value.find("americanfootball_nfl", "C.J. Stroud", now = now))
+        assertTrue(index.book.value.covers("americanfootball_nfl", "C.J. Stroud", now))
     }
 
     @Test

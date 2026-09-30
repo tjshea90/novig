@@ -191,9 +191,13 @@ class InjuryIndex(private val clock: () -> Long = System::currentTimeMillis) {
                 byKey[k] = others + InjuryBook.Entry(inj, now)
             }
             val absent = HashMap(prev?.absent.orEmpty().filterValues { now - it <= KEEP_MS })
+            val reported = injuries.mapTo(HashSet()) { PlayerNames.key(it.player) }
             for (p in asked) {
                 val k = PlayerNames.key(p)
-                if (k.isNotBlank() && k !in byKey) absent[k] = now
+                if (k.isBlank() || k in reported) continue
+                // This answer has no report for him: an older one ("Out" yesterday) no longer holds.
+                byKey.remove(k)
+                absent[k] = now
             }
             val bySurname = byKey.values.flatten().groupBy { InjuryBook.surname(PlayerNames.key(it.injury.player)) }
             sports[sportKey] = InjuryBook.Sport(byKey, bySurname, absent)
