@@ -174,6 +174,7 @@ fun FeedScreen(
             onTrack = { stake -> onTrack(live, stake); selected = null },
             onRecheck = { onRecheck(listOf(live.market.marketId)) }.takeIf { !state.status.scanning },
             rechecking = state.status.rechecking,
+            injury = state.injuries[live.key],
         )
     }
 }

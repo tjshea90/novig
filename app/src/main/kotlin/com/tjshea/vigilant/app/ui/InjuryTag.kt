@@ -3,7 +3,10 @@ package com.tjshea.vigilant.app.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -22,6 +26,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.data.reference.Injury
 import com.tjshea.vigilant.data.reference.InjuryLevel
@@ -60,6 +65,17 @@ fun InjuryTag(injury: Injury, modifier: Modifier = Modifier) {
         )
     }
     if (open) InjuryDialog(injury) { open = false }
+}
+
+/** A bet sheet's injury line: the tag, then the whole report in words (a sheet has the room a card hasn't). */
+@Composable
+fun InjuryLine(injury: Injury, modifier: Modifier = Modifier) {
+    if (injury.tag == null) return
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        InjuryTag(injury)
+        Spacer(Modifier.width(8.dp))
+        Text(injury.details, style = MaterialTheme.typography.bodySmall, color = injuryColor(injury.level), maxLines = 3, overflow = TextOverflow.Ellipsis)
+    }
 }
 
 /** ESPN's report for [injury]'s player, as ParlayAPI relays it. */

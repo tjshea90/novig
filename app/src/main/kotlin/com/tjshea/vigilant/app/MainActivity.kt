@@ -716,6 +716,7 @@ private fun VigilantRoot(
             onTrack = { stake -> vm.trackBet(live, stake); detail = null },
             onRecheck = { vm.recheck(listOf(live.market.marketId)) }.takeIf { !state.status.scanning },
             rechecking = state.status.rechecking,
+            injury = state.injuries[live.key],
         )
     }
 }

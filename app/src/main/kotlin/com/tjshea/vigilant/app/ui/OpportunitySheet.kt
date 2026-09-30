@@ -58,10 +58,12 @@ fun OpportunitySheet(
     onTrack: (Double) -> Unit,
     onRecheck: (() -> Unit)? = null,
     rechecking: Boolean = false,
+    /** The player's injury report when he may not play (PARLAY_API.md §6.1). */
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
 ) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
-        OpportunityDetail(o, settings, onRecheck = onRecheck, rechecking = rechecking, onTrack = onTrack)
+        OpportunityDetail(o, settings, onRecheck = onRecheck, rechecking = rechecking, injury = injury, onTrack = onTrack)
     }
 }
 
@@ -84,6 +86,7 @@ fun OpportunityDetail(
     settings: ScanSettings,
     onRecheck: (() -> Unit)? = null,
     rechecking: Boolean = false,
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
     onTrack: (Double) -> Unit,
 ) {
     val context = LocalContext.current
@@ -114,6 +117,7 @@ fun OpportunityDetail(
             }
             q?.takeIf { !o.fairIsOld(now) }?.let { EvBadge(it.evPercent, large = true) }
         }
+        injury?.let { InjuryLine(it, Modifier.padding(top = 8.dp)) }
         // Left open past a few minutes: the other books' prices behind this EV aren't current (RESEARCH.md §24).
         if (o.fairIsOld(now)) {
             Banner(
