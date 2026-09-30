@@ -222,16 +222,22 @@ class NovigPublicClientTest {
     fun `with a key, a refused wave is waited out once and every book still comes`() = runBlocking {
         val arrived = AtomicInteger()
         val refused = AtomicInteger()
-        val refusedBooks = HashSet<String>()
+        val seen = HashSet<String>()
+        var retried = false
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 if (request.requestUrl!!.encodedPath == "/v3/limits") return MockResponse().setBody(limitsBody)
-                // The wave in flight (the key's 10 reads) is refused, Retry-After: 1. Counted, not timed: a busy CI
-                // runner spread the wave past a 300 ms window once and only 8 were refused (flake, 2026-09-28). Ten
-                // different books, each once: under a full test run's load one book's retry could land before the rest
-                // of the wave had arrived and be refused again (2026-09-30), which isn't the wave this test is about.
+                // One wave, as the edge sends it: every first read that arrives before the client's first retry is refused
+                // (Retry-After: 1); once a retry arrives the pause has passed and everything is served. Neither timed nor a
+                // fixed count: a busy CI runner spread the wave past a 300 ms window (2026-09-28), a book's retry landed
+                // inside it (2026-09-30), and "the first 10 books whenever they arrive" refused late first reads the edge
+                // would have served, as a second wave (CI run 36737500463, 2026-09-30).
                 val book = request.requestUrl!!.encodedPath
-                val refuse = synchronized(refusedBooks) { refusedBooks.size < 10 && refusedBooks.add(book) }
+                val refuse = synchronized(seen) {
+                    val first = seen.add(book)
+                    if (!first) retried = true
+                    first && !retried
+                }
                 arrived.incrementAndGet()
                 return if (refuse) {
                     refused.incrementAndGet()
@@ -243,7 +249,8 @@ class NovigPublicClientTest {
             }
         }
         val batch = keyed(client()).books((1..16).map { "m$it" })
-        assertEquals(10, refused.get())
+        // The wave is what was in flight: the key's 10 reads at most ("ten books are in flight at once"), fewer on a slow runner.
+        assertTrue("refused ${refused.get()}", refused.get() in 1..10)
         assertEquals(0, batch.failed)
         assertEquals(16, batch.fetched)
         assertEquals(16, batch.viaKey)
