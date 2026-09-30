@@ -52,7 +52,9 @@ class ParlayPeriodSource(private val client: TheOddsApiClient, private val json:
         val reply = answer.value
         if (reply.busy) throw ReferenceException("ParlayAPI's 1st-half lines are busy")
         if (!reply.ok) return none
-        return RefSnapshot(sport, parse(reply.body, json, sport, System.currentTimeMillis()), System.currentTimeMillis(), answer.remaining, answer.used, id)
+        val snap = RefSnapshot(sport, parse(reply.body, json, sport, System.currentTimeMillis()), System.currentTimeMillis(), answer.remaining, answer.used, id)
+        // Books ParlayAPI says aren't keeping up are left out, as from its full-game lines.
+        return client.quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
     }
 
     companion object {
