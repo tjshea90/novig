@@ -1,13 +1,13 @@
-# CHECKPOINT 2177 — read me first, then TASKS.md
+# CHECKPOINT 2178 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T06:22:29Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `0d90eeca` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T06:31:09Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `9148755c` (this checkpoint is the commit after it)
 
 ## Just done
-v0.30.0 (code 58) gated by ship.sh (1168 tests green) and pushed; M1-M5, M7 built; Diagnostics line for ParlayAPI extras; M9 added (key-gated probes: line-movement, MLB/NHL 1H, verdict canonical key)
+pre-release: v0.30.0: ParlayAPI: injury tags on prop bets; credits-a-day chart; Pinnacle line moves (free) on Games + team-bet notes; Second opinion (/verdict, 5 cr, tap only) in bet sheets; ParlayAPI's picks at Novig re-priced at Novig's book (+EV tab, 10 cr/league, tap only); 1st-half lines (football/basketball) and MLB first-5 lines (2 cr, only where Novig lists them) (versionCode 58, v0.30.0)
 
 ## Do this next
-Wait for CI run 36677835675 on main green, trigger release.yml on main, confirm v0.30.0 Release, bash tools/record-release.sh v0.30.0 58 '<note>', tick M8, send Tj the Release link and the plain answer; M6/M9 need Tj's key
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.30.0), then run: bash tools/record-release.sh v0.30.0 58 "v0.30.0: ParlayAPI: injury tags on prop bets; credits-a-day chart; Pinnacle line moves (free) on Games + team-bet notes; Second opinion (/verdict, 5 cr, tap only) in bet sheets; ParlayAPI's picks at Novig re-priced at Novig's book (+EV tab, 10 cr/league, tap only); 1st-half lines (football/basketball) and MLB first-5 lines (2 cr, only where Novig lists them)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Wait for CI run 36677835675 on main green, trigger release.yml on main, confirm 
 
 ## Last ten checkpoints
 ```
+  a6e3eb00 ckpt 2177: v0.30.0 (code 58) gated by ship.sh (1168 tests green) and pushed; M1-M5, M7 
   0d90eeca ckpt 2176: pre-release: v0.30.0: ParlayAPI features: injury tags on prop bets (ESPN via
   bfec9e2b ckpt 2175: M7 done (football+basketball): ParlayAPI 1st-half lines as source parlay_1h 
   1ecf0021 ckpt 2174: M5 done: ParlayAPI's picks at Novig on the +EV tab (tap-only best-bets, re-p
@@ -25,5 +26,7 @@ Wait for CI run 36677835675 on main green, trigger release.yml on main, confirm 
   5a128378 ckpt 2170: M2 done: ParlayAPI credits-a-day chart + top endpoints under its meter (/v1/
   7330ce20 ckpt 2169: M1 done: injury tags (InjuryIndex from /props free + /injuries 1 cr/10 min f
   73e819e2 ckpt 2168: M1 data: Injury/InjuryIndex/ParlayInjuries (/props rows' injury free, /injur
-  7742a805 ckpt 2167: Handoff for Tj's next session: PARLAY_API.md (permanent ParlayAPI memory + �
 ```
+
+(16 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
