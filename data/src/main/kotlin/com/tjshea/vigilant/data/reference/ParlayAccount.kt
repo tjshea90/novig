@@ -38,7 +38,7 @@ class ParlayAccount(
         val remaining: Int?, val limit: Int?, val used: Int?, val resetAtMs: Long?, val tier: String?, val valid: Boolean?, val reason: String?,
         /** When the credits month began (`period_start`), when the answer said. */
         val periodStartMs: Long? = null,
-        /** Which endpoint answered: "usage" or "api-key-check". */
+        /** Which endpoint answered: "usage" or "meta/api-key-check". */
         val source: String? = null,
     )
 
@@ -77,7 +77,7 @@ class ParlayAccount(
     }
 
     /** `/v1/usage`, else the key check (an invalid or spent key answers there with its reason). */
-    private suspend fun read(key: String): Check? = get(key, "usage")?.copy(source = "usage") ?: get(key, "meta/api-key-check")?.copy(source = "api-key-check")
+    private suspend fun read(key: String): Check? = get(key, "usage")?.copy(source = "usage") ?: get(key, "meta/api-key-check")?.copy(source = "meta/api-key-check")
 
     private suspend fun get(key: String, path: String): Check? {
         val url = "$base/$path".toHttpUrl()

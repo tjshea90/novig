@@ -127,7 +127,7 @@ class ParlayAccountTest {
         assertEquals(19_914, u.remaining)
         assertEquals(20_000, u.limit)
         assertNull(u.resetAtMs)
-        assertEquals("api-key-check", a.last.getValue("pk").source)
+        assertEquals("meta/api-key-check", a.last.getValue("pk").source)
     }
 
     @Test

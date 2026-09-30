@@ -54,7 +54,7 @@ class ParlayBooks(
             // Every page of the league's props, as a scan reads them.
             is BetGrader.Pick.Prop -> snapshot("props:$sport") { props.odds(league, ScanSettings()) }
             is BetGrader.Pick.Moneyline, is BetGrader.Pick.Spread, is BetGrader.Pick.Total ->
-                snapshot("odds:$sport") { client.fetch(sport, client.booksFor(ScanSettings()), GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS) }
+                snapshot("odds:$sport") { client.fetchCurrent(sport, client.booksFor(ScanSettings()), GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS) }
             else -> null
         } ?: return null
         return viewOf(snap, bet, pick, clock())

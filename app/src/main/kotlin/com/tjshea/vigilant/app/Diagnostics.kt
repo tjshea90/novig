@@ -113,6 +113,7 @@ object Diagnostics {
                             a.remaining?.let { r -> "$r left" + (a.limit?.let { " of $it" } ?: "") },
                             a.resetAtMs?.let { "resets ${at(it)}" },
                             if (a.valid == false) "NOT VALID" + (a.reason?.let { ": $it" } ?: "") else null,
+                            a.source?.let { "read from /v1/$it" },
                         ).joinToString(" · ").ifEmpty { "answered, no figures" },
                     )
                 }

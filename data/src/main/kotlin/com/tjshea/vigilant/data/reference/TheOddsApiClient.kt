@@ -132,6 +132,12 @@ class TheOddsApiClient(
         return quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
     }
 
+    /** [fetch], without the books ParlayAPI says aren't keeping up ([ParlaySourceQuality]), as [odds] leaves them out of a scan. */
+    suspend fun fetchCurrent(sportKey: String, bookmakers: List<String>, markets: List<String>, startsBeforeMs: Long? = null): RefSnapshot {
+        val snap = fetch(sportKey, bookmakers, markets, startsBeforeMs)
+        return quality?.let { ParlaySourceQuality.without(snap, it.unsafeBooks()) } ?: snap
+    }
+
     private val spacing = Mutex()
     private var lastCallAt = 0L
 
