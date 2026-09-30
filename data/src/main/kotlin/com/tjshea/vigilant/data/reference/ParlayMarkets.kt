@@ -49,7 +49,7 @@ object ParlayMarkets {
         if (stats.isEmpty()) return null
         PropStats.ODDS_API_MARKETS[key]?.takeIf { it in stats }?.let { return it }
         val all = words(key)
-        if (all.any { it in NOT_FULL_GAME } || words(label.orEmpty()).any { it in NOT_FULL_GAME && it != "spread" }) return null
+        if (all.any { it in NOT_FULL_GAME } || words(label.orEmpty()).any { it in NOT_FULL_GAME }) return null
         val core = all.toSet() - FILLER - ROLE
         if (core.isEmpty()) return null
         val text = "$key ${label.orEmpty()}".lowercase()

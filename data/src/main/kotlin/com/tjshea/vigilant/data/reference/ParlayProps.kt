@@ -35,16 +35,16 @@ class ParlayPropsSource(private val client: TheOddsApiClient) : ReferenceSource 
     override val propsOnly = true
     override val extraPropTypes: Set<String> get() = PropStats.BOOK_ONLY_TYPES
 
-    override fun supports(league: League): Boolean =
-        league.oddsApiListed && PropStats.oddsApiMarkets(league.oddsApiSportKey, BookPropSet.ALL).isNotEmpty()
+    override fun supports(league: League): Boolean = league.oddsApiListed && PropStats.parlayMarkets(league.oddsApiSportKey).isNotEmpty()
 
     override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMs
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val sport = league.oddsApiSportKey
         if (MarketFamily.PLAYER_PROPS !in settings.families) return RefSnapshot(sport, emptyList(), System.currentTimeMillis(), provider = id)
-        // One flat price whatever is asked: every stat Vigilant prices for the sport.
-        val markets = PropStats.oddsApiMarkets(sport, BookPropSet.ALL)
+        // One flat price whatever is asked: every stat Vigilant prices for the sport (the market filter also keeps the books'
+        // milestone ladders and alternates from crowding the reply: measured 2026-09-30, one call held every two-sided line).
+        val markets = PropStats.parlayMarkets(sport).map { it.first }.distinct()
         val events = ArrayList<RefEvent>()
         var remaining: Int? = null
         var used: Int? = null
@@ -113,10 +113,11 @@ object ParlayProps {
             val period = r.str("period")
             if (period != null && !period.equals("FULL", true)) continue
             val marketKey = r.str("market_key") ?: continue
-            val stat = PropStats.ODDS_API_MARKETS[marketKey] ?: continue
+            // Each book's own name for the market ("player_rec_yds", "player_receiving_yards"): read as words ([ParlayMarkets]).
+            val stat = ParlayMarkets.statOf(sportKey, marketKey, r.str("market") ?: r.str("market_label")) ?: continue
             val player = (r.str("player") ?: r.str("player_name") ?: r.str("description"))?.trim() ?: continue
-            val yesNo = marketKey in PropStats.YES_NO
-            val line = if (yesNo) 0.5 else r.num("line") ?: r.num("point") ?: continue
+            val yesNo = marketKey in PropStats.YES_NO || "anytime" in marketKey
+            val line = r.num("line") ?: r.num("point") ?: if (yesNo) 0.5 else continue
             val over = decimal(r.num("over_price")) ?: continue
             val under = decimal(r.num("under_price")) ?: continue
             val book = TheOddsApiClient.canonicalBook(r.str("bookmaker") ?: r.str("source") ?: continue)
