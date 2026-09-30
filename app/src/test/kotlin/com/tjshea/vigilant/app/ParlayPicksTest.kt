@@ -48,7 +48,13 @@ class ParlayPicksTest {
     private val now = SampleScan.NOW
 
     private fun picks(): List<ParlayPick> {
-        val body = javaClass.classLoader!!.getResource("parlay-best-bets-mlb.json")!!.readText()
+        // Four entries of ParlayAPI's real MLB answer (data/src/test/resources/parlay-best-bets-mlb.json), trimmed.
+        val body = """{"best_bets":[
+            {"bet":"Carson Kelly Over 0.5 Home Runs (Chicago Cubs @ San Diego Padres)","market_key":"player_home_runs","fair_price":900,"best_price":2122,"best_book":"novig","edge_pct":5.5,"verdict":"BET","books_compared":3},
+            {"bet":"Seiya Suzuki Over 0.5 Home Runs (Chicago Cubs @ San Diego Padres)","market_key":"player_home_runs","fair_price":525,"best_price":809,"best_book":"novig","edge_pct":5.0,"verdict":"BET","books_compared":3},
+            {"bet":"Austin Wells Over 0.5 Batter Home Runs (Boston Red Sox @ New York Yankees)","market_key":"player_home_runs","fair_price":530,"best_price":733,"best_book":"novig","edge_pct":3.87,"verdict":"BET","books_compared":4}],
+            "edge_alerts":[{"bet":"Ian Happ Over 0.5 Home Runs (Chicago Cubs @ San Diego Padres)","book":"novig","price":5163,"apparent_edge_pct":10.6,
+            "caveat":"far better than the rest of the market, so it is either a rare soft mispricing worth grabbing fast or a stale/limited line; verify it is still live before betting"}]}"""
         val board = ParlayBestBets.parse(body, Json { ignoreUnknownKeys = true }, Leagues.byNovigName("MLB")!!, now)!!
         // Kelly (+2122 listed) is +950 at Novig now: still +EV against +900. Suzuki went against it; Wells isn't on Novig; the Happ alert holds up.
         val plays = board.plays.filter { it.player in setOf("Carson Kelly", "Seiya Suzuki", "Austin Wells", "Ian Happ") }
