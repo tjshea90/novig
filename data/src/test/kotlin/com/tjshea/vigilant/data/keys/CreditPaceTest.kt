@@ -25,10 +25,10 @@ class CreditPaceTest {
     @Test
     fun `a Starter key keeps the reserve plus every later day's share`() {
         val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
-        // 20 of September's 30 days come after today: 300 + 19,700 x 20/30.
-        assertEquals(300 + 19_700 * 20 / 30, pace.floor(starter(5_000), now))
-        // Nine days' share unspent (5,000 used by the 10th, 6,567 allowed through today): all of it can go today.
-        assertEquals(15_000 - (300 + 19_700 * 20 / 30), pace.spendableToday(starter(5_000), now))
+        // Ten of September's 30 days' shares allowed through today (the rest, and the reserve, held): 20,000 - 19,700 x 10/30.
+        assertEquals(20_000 - 19_700 * 10 / 30, pace.floor(starter(5_000), now))
+        // Several days' share unspent (5,000 used by the 10th, 6,566 allowed through today): all of it can go today.
+        assertEquals(15_000 - (20_000 - 19_700 * 10 / 30), pace.spendableToday(starter(5_000), now))
         // Ahead of the pace: nothing more today.
         assertEquals(0, pace.spendableToday(starter(7_000), now))
         // The last day of the cycle: only the reserve is held.
@@ -42,7 +42,7 @@ class CreditPaceTest {
         val now = Instant.parse("2026-09-11T01:00:00Z").toEpochMilli()
         val endOfDay = Instant.parse("2026-09-11T04:00:00Z").toEpochMilli()
         val reset = Instant.parse("2026-10-01T00:00:00Z").toEpochMilli()
-        assertEquals(300 + (19_700L * (reset - endOfDay) / (reset - sept1)).toInt(), eastern.floor(starter(5_000), now))
+        assertEquals(20_000 - (19_700L * (endOfDay - sept1) / (reset - sept1)).toInt(), eastern.floor(starter(5_000), now))
     }
 
     @Test
@@ -90,7 +90,7 @@ class CreditPaceTest {
         val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
         val book = ProviderUsage(keys = mapOf("a" to starter(5_000), "f" to KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000)))
         val both = UsageViews.build(QuotaPolicy.PARLAY, listOf("a", "f"), book, now, pace)
-        assertEquals(15_000 - (300 + 19_700 * 20 / 30), both.scanShareToday)
+        assertEquals(15_000 - (20_000 - 19_700 * 10 / 30), both.scanShareToday)
         assertEquals(false, both.scansFreeOnly)
         val free = UsageViews.build(QuotaPolicy.PARLAY, listOf("f"), book, now, pace)
         assertEquals(true, free.scansFreeOnly)

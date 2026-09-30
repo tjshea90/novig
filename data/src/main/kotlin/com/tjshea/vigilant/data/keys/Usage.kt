@@ -130,6 +130,8 @@ data class KeyUsage(
     val recent: List<Long> = emptyList(),
     /** The provider refused the key itself (wrong or deleted), not just its allowance. */
     val refused: Boolean = false,
+    /** When this key first answered (kept across periods): a plan bought mid-month is paced from here ([CreditPace]), not from the 1st. */
+    val firstSeenMs: Long? = null,
 ) {
     fun left(policy: QuotaPolicy): Int? = remaining ?: (limit ?: policy.defaultLimit)?.let { (it - used).coerceAtLeast(0) }
     fun allowance(policy: QuotaPolicy): Int? = limit ?: policy.defaultLimit
@@ -192,12 +194,19 @@ class UsageMeter(
 
     /** A call the provider answered. [serverUsed]/[serverRemaining] are its own figures, if sent. */
     suspend fun recordCall(policy: QuotaPolicy, key: String, cost: Int, serverRemaining: Int? = null, serverUsed: Int? = null) = edit(policy, key) { u, now ->
-        var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null)
+        var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null, firstSeenMs = u.firstSeenMs ?: now)
         if (serverUsed != null && serverRemaining != null) {
-            // The server's count went DOWN without our period changing: this key runs on its own
-            // cycle (a paid plan's billing date), so follow the server from here.
-            if (serverUsed + cost < u.used) x = x.copy(periodStart = now)
-            x = x.copy(used = serverUsed, remaining = serverRemaining, limit = serverUsed + serverRemaining)
+            val drop = u.used - serverUsed
+            val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
+            if (u.remaining != null && drop > 0 && drop <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) {
+                // An answer to a call made before one already recorded (calls in parallel on one key: a big props reply landing after
+                // two small game-line ones, Tj's diagnostics 2026-09-30): its figures are older than the ones kept, so they're left out.
+            } else {
+                // The server's count went DOWN without our period changing: this key runs on its own
+                // cycle (a paid plan's billing date), so follow the server from here.
+                if (serverUsed + cost < u.used) x = x.copy(periodStart = now)
+                x = x.copy(used = serverUsed, remaining = serverRemaining, limit = serverUsed + serverRemaining)
+            }
         } else {
             x = x.copy(used = u.used + cost, remaining = null)
         }
@@ -288,6 +297,10 @@ class UsageMeter(
         /** [pick]'s floor when nothing is held back. */
         val NO_FLOOR: (KeyUsage, Long) -> Int = { _, _ -> 0 }
 
+        /** A lower count from the server this soon after the last answer, and by no more than [STALE_SLACK], is a late reply, not a new cycle. */
+        const val STALE_WINDOW_MS = 2 * 60_000L
+        const val STALE_SLACK = 100
+
         const val MINUTE = 60_000L
         const val HOUR = 3_600_000L
         const val REPROBE = 6 * HOUR
@@ -360,11 +373,15 @@ class CreditPace(
         val reset = policy.nextReset(start)
         val z = zone()
         val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
-        val later = (reset - endOfToday).coerceAtLeast(0)
-        val span = (reset - start).coerceAtLeast(1)
+        val span = (reset - start).coerceAtLeast(DAY_MS)
         val pool = (limit - reserve).coerceAtLeast(0).toLong()
-        val kept = if (keepOfDay > 0.0) (pool * DAY_MS / span * keepOfDay).toInt() else 0
-        return reserve + (pool * later / span).toInt() + kept
+        // The days this key has had through the end of today: from its first answer when that came after the period began (a plan bought
+        // on the 29th has had one day, not 29 "left unspent"), and never less than a whole day (bought at 11 pm, it still gets today's share).
+        val from = maxOf(start, u.firstSeenMs ?: start)
+        val elapsed = maxOf(endOfToday - from, DAY_MS).coerceAtMost(span)
+        val allowed = pool * elapsed / span
+        val kept = if (keepOfDay > 0.0) (pool * DAY_MS / span * keepOfDay).toLong() else 0L
+        return (limit - allowed + kept).toInt()
     }
 
     /** A free plan's key (the server said its allowance is [freeLimit] or less): kept for closing lines. */
