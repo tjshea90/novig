@@ -61,6 +61,10 @@ class BetRecheck(
         /** No CNO page (Vigilant's own bets) and not priced by [OpenBetPricer] (yet): the Vigilant scanner is off, or it wasn't run. */
         val vigilantOnly: Int = 0,
         val stopped: Boolean = false,
+        /** CNO's own part as it went, kept when [withPricing] rescues its misses (Tj's diagnostics, 2026-09-30: "CNO read 1" and no why). */
+        val cnoTried: Int = 0,
+        val cnoFailed: Int = 0,
+        val cnoSkipped: Int = 0,
         /** No CNO page and the game has started: nothing to price, its result comes from the final score. */
         val started: Int = 0,
         /** [OpenBetPricer] gave these bets a current EV from Vigilant's own fair odds (Vigilant's own bets, and CNO bets CNO didn't read). */
@@ -79,6 +83,25 @@ class BetRecheck(
             val fromFailed = minOf(failed, p.asked)
             val fromSkipped = minOf(skipped, p.asked - fromFailed)
             return copy(priced = priced + p.priced, unpriced = unpriced + p.unpriced, failed = failed - fromFailed, skipped = skipped - fromSkipped)
+        }
+
+        /**
+         * The round's line in Diagnostics: what CNO read of its bets (and why the rest weren't, [pauseWhy] being CNO's last pause), what
+         * Vigilant priced, what nothing could.
+         */
+        fun roundNote(vigilantOn: Boolean, pauseWhy: String? = null): String {
+            val cno = buildString {
+                append("CNO read $updated of $cnoTried")
+                val misses = listOfNotNull(
+                    "$cnoFailed failed".takeIf { cnoFailed > 0 },
+                    "$cnoSkipped not tried".takeIf { cnoSkipped > 0 },
+                )
+                if (misses.isNotEmpty()) append(" (").append(misses.joinToString(", "))
+                    .append(if (stopped) ": stopped early" + (pauseWhy?.let { ", $it" } ?: "") else "").append(")")
+            }
+            return "covered $covered of $open open bets: $cno, $priced priced from Vigilant's own fair odds" +
+                (if (unreadIds.isNotEmpty() && vigilantOn) ", ${unreadIds.size} CNO didn't read went to a second pricing pass" else "") +
+                (if (unpriced > 0) ", $unpriced couldn't be priced" else "") + (if (failed > 0) ", $failed failed" else "")
         }
 
         /**
@@ -229,6 +252,7 @@ class BetRecheck(
             open = p.open, checked = t.checked, updated = t.updated, current = p.current, failed = t.failed,
             skipped = p.todo.size - t.checked, over = p.over, vigilantOnly = p.vigilantOnly, stopped = t.stopped,
             started = p.started, unreadIds = p.todo.map { it.id }.filter { it !in t.updatedIds },
+            cnoTried = p.todo.size, cnoFailed = t.failed, cnoSkipped = p.todo.size - t.checked,
         )
     }
 

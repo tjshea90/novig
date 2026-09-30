@@ -1180,9 +1180,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             report?.let { r ->
                 c.lastCheckCost = RoundCost(
                     began, System.currentTimeMillis() - began, UsageDelta.between(usageBefore, c.usage.flow.value),
-                    note = "covered ${r.covered} of ${r.open} open bets: CNO read ${r.updated}, ${r.priced} priced from Vigilant's own fair odds" +
-                        (if (r.unreadIds.isNotEmpty() && settings.vigilantOn) ", ${r.unreadIds.size} CNO couldn't read went to a second pricing pass" else "") +
-                        (if (r.unpriced > 0) ", ${r.unpriced} couldn't be priced" else "") + (if (r.failed > 0) ", ${r.failed} failed" else ""),
+                    note = r.roundNote(settings.vigilantOn, c.cno.state.value.lastPause?.takeIf { (c.cno.state.value.lastPauseAtMs ?: 0L) >= began }),
                 )
             }
             _toasts.tryEmit(report?.summary(vigilantOff = !settings.vigilantOn, graded = grading.await()) ?: "Couldn't check the odds")

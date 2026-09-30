@@ -127,7 +127,8 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== CrazyNinjaOdds ==")
         val cno = s.cno
-        o.appendLine("Last read: ${ago(cno.snapshot?.fetchedAtMs)} · ${cno.snapshot?.rows?.size ?: 0} rows · errors in a row ${cno.errors}" + (cno.error?.let { " · last error: $it" } ?: "") + (cno.pausedUntilMs?.takeIf { it > now }?.let { " · paused until ${at(it)}" } ?: ""))
+        o.appendLine("Last read: ${ago(cno.snapshot?.fetchedAtMs)} · ${cno.snapshot?.rows?.size ?: 0} rows · errors in a row ${cno.errors}" + (cno.error?.let { " · last error: $it" } ?: "") + (cno.pausedUntilMs?.takeIf { it > now }?.let { " · paused until ${at(it)}" } ?: "") +
+            (cno.lastPause?.let { " · last pause CNO asked for ${ago(cno.lastPauseAtMs)}: $it" } ?: ""))
         o.appendLine("Kept current now: ${if (s.cnoLive) "yes (its tab or a widget is on screen)" else "no"}")
 
         o.appendLine()

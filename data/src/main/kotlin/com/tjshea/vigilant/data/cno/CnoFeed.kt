@@ -29,6 +29,9 @@ data class CnoState(
     val lastAttemptMs: Long? = null,
     /** CNO asked for a pause (HTTP 429/503/403): no read before this. */
     val pausedUntilMs: Long? = null,
+    /** The last pause CNO asked for, and why ("CrazyNinjaOdds is busy (HTTP 429)"): kept after it's over, for Diagnostics. */
+    val lastPause: String? = null,
+    val lastPauseAtMs: Long? = null,
 )
 
 /** Which view to keep current, with which filters, and how often ([CnoFeed.REALTIME], seconds, or 0 = taps only). */
@@ -136,6 +139,8 @@ class CnoFeed(
                     error = message,
                     errors = it.errors + 1,
                     pausedUntilMs = maxOf(retry?.let { sec -> clock() + sec * 1000L } ?: 0L, it.pausedUntilMs ?: 0L).takeIf { p -> p > clock() },
+                    lastPause = if (retry != null) "the list: $message" else it.lastPause,
+                    lastPauseAtMs = if (retry != null) clock() else it.lastPauseAtMs,
                 )
             }
         }
@@ -233,9 +238,7 @@ class CnoFeed(
         }
         result.onSuccess { booksReadAt[key] = clock() }
         // CNO asked for a pause (busy, or refusing): no read of any kind until it's over.
-        (result.exceptionOrNull() as? CnoException)?.retryAfterSeconds?.let { sec ->
-            _state.update { it.copy(pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L)) }
-        }
+        (result.exceptionOrNull() as? CnoException)?.let { e -> pauseFor(e, "a bet's books") }
         _books.update {
             it + (key to CnoBooksState(
                 loading = false,
@@ -263,10 +266,19 @@ class CnoFeed(
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
-        (e as? CnoException)?.retryAfterSeconds?.let { sec ->
-            _state.update { it.copy(pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L)) }
-        }
+        (e as? CnoException)?.let { pauseFor(it, "Check odds now") }
         null
+    }
+
+    /** CNO asked for a pause ([CnoException.retryAfterSeconds]): every lane waits it out, and Diagnostics keeps what was asked, by which read. */
+    private fun pauseFor(e: CnoException, what: String) {
+        val sec = e.retryAfterSeconds ?: return
+        _state.update {
+            it.copy(
+                pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L),
+                lastPause = "$what: ${e.message ?: "paused"} (${sec}s)", lastPauseAtMs = clock(),
+            )
+        }
     }
 
     // ---- The green check: the top bets' books, read slowly in the background ---------------
@@ -389,9 +401,7 @@ class CnoFeed(
         } catch (e: Exception) {
             if (!currentCoroutineContext().isActive) throw kotlinx.coroutines.CancellationException("cancelled").apply { initCause(e) }
             // CNO asked for a pause (busy, or refusing): every lane waits it out, the list included.
-            (e as? CnoException)?.retryAfterSeconds?.let { sec ->
-                _state.update { it.copy(pausedUntilMs = maxOf(it.pausedUntilMs ?: 0L, clock() + sec * 1000L)) }
-            }
+            (e as? CnoException)?.let { pauseFor(it, "a bet slip link") }
             null
         } ?: return null
         novigLinks[key] = link
