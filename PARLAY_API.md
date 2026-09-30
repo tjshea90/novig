@@ -219,10 +219,6 @@ Streaming odds (`/v1/sse/odds/{s}`, `/v1/odds-drop/{s}`, websocket) need the Bus
 webhooks need a server to receive them.
 
 ## 7. Still unverified
-- `/line-movement`'s answer when it works (M6 is waiting on one keyed probe, 2 credits: the spec gives no response schema).
-- `/live/period_markets` for MLB (is "1H" the first 5 innings?) and NHL (P1?): one keyed probe each before adding them to
-  `ParlayPeriodSource.SPORTS`.
-- Whether /verdict answers with the canonical prop keys (`player_pass_attempts`) as well as the board's (`player_passing_attempts`).
 - Whether the credits actually reset on the 1st (UTC) for a plan bought on the 30th (the /v1/usage period says so; check on Oct 1).
-- /line-movement's answer when it works; /live/period_markets for MLB (first 5 innings?) and NHL.
-- Whether best-bets' `edge_pct` is probability points (§5) — confirm on a second sample.
+- Settled 2026-09-30 with Tj's key (12 credits in all): /line-movement's shape (§6.6, pick'em apps only), MLB `F5` / NHL `P1–P3`
+  (§6.7), /verdict answering the canonical prop key `player_rush_yds` (§6.4), `edge_pct` as probability points (§5).
