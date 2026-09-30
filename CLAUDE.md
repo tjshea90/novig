@@ -345,6 +345,13 @@ fresh session learns this, so don't re-research what's already recorded there.
 `RESEARCH.md` holds the wider EV/market research. This repo is **public**:
 never commit a Novig key, PEM, or key ID paired with a private key.
 
+## ParlayAPI — permanent research memory
+
+ParlayAPI (parlay-api.com, Tj's $5 Starter plan since 2026-09-30) is documented for this project in **`PARLAY_API.md`**: how Vigilant
+uses it, its real answer shapes (they differ from its docs), costs, credits, plan limits, and the build guide (§6) for the features
+Tj asked for next (TASKS.md §M). Real answers, trimmed and keyless, are in `data/src/test/resources/parlay-*.json`. Read it before
+writing or changing any ParlayAPI code, and update it whenever something is verified or turns out wrong. Never commit a ParlayAPI key.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:

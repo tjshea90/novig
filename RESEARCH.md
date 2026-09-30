@@ -3008,3 +3008,7 @@ Novig, a third list beside CNO's and Vigilant's); `/v1/verdict` (5 credits a bet
 (2 credits: a bet's price history, steam); injury status (already on every `/props` row, free: an OUT/Questionable tag on prop cards);
 `/v1/meta/movers` (free: biggest moneyline moves); `/live/period_markets` (2 credits: 1st-half/quarter/F5 lines from more books);
 `/v1/meta/usage`'s daily breakdown (free: a per-day chart in API usage). Streams (SSE/websocket) need the Business tier.
+
+Tj then asked (2026-09-30 ~05:10Z) for all of these to be built in a new session: the build guide, with real answers probed for each
+(best-bets, verdict, movers, injuries, period markets, usage breakdown; line-movement only ever answered busy or empty), is PARLAY_API.md §6,
+the tasks TASKS.md §M.
