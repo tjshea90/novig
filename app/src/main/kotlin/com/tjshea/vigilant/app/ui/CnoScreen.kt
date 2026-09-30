@@ -319,6 +319,7 @@ fun CnoScreen(
                             priceAtMs = state.priceReadAtMs(pick.row, now) ?: snap.fetchedAtMs,
                             live = state.livePrice(pick.row, now) != null,
                             team = state.teams[pick.row.key],
+                            injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(pick.row)],
                             placedOther = state.placedFamilies[com.tjshea.vigilant.data.match.Picks.familyKey(pick.row.event, pick.row.market, pick.row.bet)]?.title,
                             modifier = Modifier.padding(horizontal = 12.dp).animateItem(),
                             onPlaced = { markPlaced(pick) },
@@ -359,6 +360,7 @@ fun CnoScreen(
             onOpenInNovig = onOpenInNovig,
             onDismiss = { selected = null },
             team = state.teams[live.row.key],
+            injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(live.row)],
             opening = opening == live.row.key,
             onPlaced = {
                 markPlaced(live)
@@ -548,6 +550,8 @@ private fun CnoCard(
     team: String? = null,
     /** Tj placed this bet at another line (that bet's name). */
     placedOther: String? = null,
+    /** The player's injury report when he may not play (PARLAY_API.md §6.1): a tag after the pick. */
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
     /** CNO's price when Novig's now (the one shown) differs. */
     listedOdds: Int? = null,
     /** When the price shown was read (Novig's live read, or CNO's list). */
@@ -592,13 +596,17 @@ private fun CnoCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(
-                        pickText(row.bet, team, check?.verdict == CnoBooks.Verdict.CONFIRMED),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            pickText(row.bet, team, check?.verdict == CnoBooks.Verdict.CONFIRMED),
+                            Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
+                    }
                     placedOther?.let {
                         Text("You placed $it", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, fontWeight = FontWeight.SemiBold)
                     }
@@ -655,6 +663,7 @@ private fun CnoSheet(
     opening: Boolean = false,
     listedOdds: Int? = null,
     liveAtMs: Long? = null,
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
 ) {
     val row = pick.row
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -672,6 +681,7 @@ private fun CnoSheet(
             opening = opening,
             listedOdds = listedOdds,
             liveAtMs = liveAtMs,
+            injury = injury,
         )
     }
 }
@@ -697,6 +707,8 @@ fun CnoDetail(
     listedOdds: Int? = null,
     /** When Novig's price shown was read live (null: the price is CNO's). */
     liveAtMs: Long? = null,
+    /** The player's injury report when he may not play (PARLAY_API.md §6.1). */
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
 ) {
     val row = pick.row
     val view = books?.view
@@ -721,6 +733,7 @@ fun CnoDetail(
             Text(pickText(row.bet, team, agrees = false), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("${row.market} · ${row.event}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             row.startsAtMs?.let { Text("${row.league.ifEmpty { row.sport }} · ${Format.startTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            injury?.let { InjuryLine(it, Modifier.padding(top = 6.dp)) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             LabeledValue(if (liveAtMs != null) "${row.book} now" else row.book, MiniWindow.american(row.odds))
