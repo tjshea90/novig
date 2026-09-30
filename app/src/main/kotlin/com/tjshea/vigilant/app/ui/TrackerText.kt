@@ -141,8 +141,10 @@ object TrackerText {
     fun nowLine(b: TrackedBet, now: Long): NowLine? {
         val ev = b.nowEv ?: return null
         val fresh = currentEv(b, now)
+        // Read once the game was under way: in-play odds, which the Check odds now counter leaves out.
+        val inPlay = (b.nowAtMs ?: Long.MIN_VALUE) >= b.startsTs
         val placed = b.american?.let { " at your ${Odds.formatAmerican(it)}" }.orEmpty()
-        val headline = (if (fresh) "now " else "") + Format.evPercentShort(ev) + " EV" + placed
+        val headline = (if (inPlay) "live " else "") + (if (fresh) "now " else "") + Format.evPercentShort(ev) + " EV" + placed
         val detail = listOfNotNull(
             b.nowFair?.let { "fair ${if (fresh) "now" else "then"} ${Format.american(it)}" },
             when (b.nowVia) {
@@ -157,6 +159,7 @@ object TrackerText {
                 else -> null
             },
             b.nowBooks?.let { "$it book${if (it == 1) "" else "s"}" },
+            "in-play odds, not in the counter".takeIf { inPlay },
             if (fresh) "read ${Format.age(b.nowAtMs, now)}" else "as of ${Format.age(b.nowAtMs, now)}",
             "tap Check odds now".takeIf { !fresh && now < b.startsTs },
         ).joinToString(" · ")
