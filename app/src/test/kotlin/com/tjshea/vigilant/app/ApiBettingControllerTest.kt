@@ -176,8 +176,10 @@ class ApiBettingControllerTest {
     }
 
     /**
-     * A plan started while the sheet's first one is still running (an amount typed or picked right after it opened) always answers: the
-     * placer is made once under a lock (two plans on two threads once saw it half set up, and the second planned nothing).
+     * A plan started while the sheet's first one is still running (an amount typed or picked right after it opened) always answers. The
+     * placer is made once under a lock: two plans on two threads once saw it half set up and the second planned nothing (seen in about one
+     * run of this class in five, 2026-09-30). This loop exercises that path; it can't force the threads' exact timing, so it doesn't prove
+     * the race is gone on its own (the lock in `ApiBettingController.placer` does).
      */
     @Test
     fun `an amount changed while the first price read is running is always priced`() {
