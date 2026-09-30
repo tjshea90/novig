@@ -80,7 +80,12 @@ fun LineMovesCard(boards: Map<String, MoversBoard>, leagues: Set<String>, modifi
             Text("Line moves at Pinnacle · last ${window(windowMinutes)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             moves.forEach { mv ->
                 val league = Leagues.ALL.firstOrNull { it.oddsApiSportKey == mv.sportKey }
-                val (team, first, last, pp) = if (mv.steamHome) listOf(mv.home, mv.homeFirst, mv.homeLast, mv.homePp) else listOf(mv.away, mv.awayFirst, mv.awayLast, mv.awayPp)
+                // The side the money went to: its chance rose.
+                val home = mv.steamHome
+                val team = if (home) mv.home else mv.away
+                val first = if (home) mv.homeFirst else mv.awayFirst
+                val last = if (home) mv.homeLast else mv.awayLast
+                val pp = if (home) mv.homePp else mv.awayPp
                 Column {
                     Text(
                         "${league?.emoji.orEmpty()} ${league?.displayName.orEmpty()} · ${Format.startTime(mv.commenceMs)}".trim(),
@@ -89,7 +94,7 @@ fun LineMovesCard(boards: Map<String, MoversBoard>, leagues: Set<String>, modifi
                     )
                     Text("${mv.away} @ ${mv.home}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        "Money on $team: ${american(first as Int?)} → ${american(last as Int?)} (${pts(abs(pp as Double))})",
+                        "Money on $team: ${american(first)} → ${american(last)} (${pts(abs(pp))})",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
