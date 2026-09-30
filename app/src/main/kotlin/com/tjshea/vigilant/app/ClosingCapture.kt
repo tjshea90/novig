@@ -47,12 +47,17 @@ object ClosingCapture {
         if (settings.paused) return Result(due.size, 0)
         val read = HashSet<String>()
         val cnoIds = due.filter { it.gameUrl != null }.map { it.id }
-        if (cnoIds.isNotEmpty()) read += attempt { c.recheck.captureClosing(cnoIds) }.orEmpty()
-        val left = ids.filterNot { it in read }
         val pricer = c.betPricer?.takeIf { settings.vigilantOn }
-        if (pricer != null && left.isNotEmpty()) {
-            attempt { pricer.run(settings, left) }
-            read += c.tracker.all().filter { it.id in left && (it.closingSeenAtMs ?: Long.MIN_VALUE) >= now }.map { it.id }
+        // Both reads of every bet about to start, as Check odds now makes them (Tj, 2026-09-30: an accurate beat-the-close stat): CNO's page
+        // and Vigilant's own fair odds side by side, then combined into the close (BetTracker.mergeReads: both averaged, else either one).
+        coroutineScope {
+            val vigilant = if (pricer != null) async { attempt { pricer.run(settings, ids, alongside = true) } } else null
+            if (cnoIds.isNotEmpty()) read += attempt { c.recheck.captureClosing(cnoIds) }.orEmpty()
+            val priced = vigilant?.await()
+            if (pricer != null) {
+                withContext(NonCancellable) { attempt { c.tracker.mergeReads(ids, since = now, reasons = priced?.reasons.orEmpty()) } }
+                read += c.tracker.all().filter { it.id in ids && (it.closingSeenAtMs ?: Long.MIN_VALUE) >= now }.map { it.id }
+            }
         }
         return Result(due.size, read.size)
     }
