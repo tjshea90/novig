@@ -243,7 +243,10 @@ fun ParlayPickCard(
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                EvBadge(p.ev ?: 0.0)
+                Column {
+                    Text("ParlayAPI", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    EvBadge(p.ev ?: 0.0)
+                }
                 // CNO's and Vigilant's EV at the same price, beside ParlayAPI's (Tj: "so I can compare and see if it is truly positive EV").
                 reads?.let {
                     Spacer(Modifier.width(8.dp))
@@ -420,7 +423,8 @@ fun ParlayPickDetail(
             }
             reads?.why?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        // Wraps on a phone: five values don't fit one line at 393 dp.
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             LabeledValue("${com.tjshea.vigilant.app.AppBook.name} now", MiniWindow.american(row.odds))
             if (play.listedAmerican != row.odds) LabeledValue("ParlayAPI had", MiniWindow.american(play.listedAmerican), valueColor = Edge.colors.warning)
             play.fairAmerican?.let { LabeledValue("ParlayAPI fair", MiniWindow.american(it)) }
