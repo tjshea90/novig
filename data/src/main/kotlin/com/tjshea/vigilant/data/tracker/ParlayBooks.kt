@@ -48,9 +48,22 @@ class ParlayBooks(
 
     /** [bet]'s books as ParlayAPI has them now, or null (off, not a bet it carries, not found, or no answer). */
     suspend fun view(bet: TrackedBet): CnoBooksView? {
-        if (!active()) return null
-        val league = Leagues.byNovigName(bet.league)?.takeIf { it.oddsApiListed } ?: return null
         val pick = BetGrader.pickOf(bet) ?: return null
+        return view(bet.league, bet.eventName, bet.startsTs, bet.selection, pick)
+    }
+
+    /**
+     * A bet that isn't in the Tracker (a ParlayAPI pick's sheet, TASKS.md P4: "opens a screen that shows other sports books odds on the same
+     * bet"), by its league, game ("Away @ Home"), start (null: not known) and wording: its books as ParlayAPI has them now, or null.
+     */
+    suspend fun view(league: String, eventName: String, startsTs: Long?, marketLabel: String, selection: String): CnoBooksView? {
+        val pick = BetGrader.pickOf(marketLabel, selection) ?: return null
+        return view(league, eventName, startsTs, selection, pick)
+    }
+
+    private suspend fun view(leagueName: String, eventName: String, startsTs: Long?, selection: String, pick: BetGrader.Pick): CnoBooksView? {
+        if (!active()) return null
+        val league = Leagues.byNovigName(leagueName)?.takeIf { it.oddsApiListed } ?: return null
         val sport = league.oddsApiSportKey
         val snap = when (pick) {
             // Every page of the league's props, as a scan reads them.
@@ -59,7 +72,7 @@ class ParlayBooks(
                 snapshot("odds:$sport") { client.fetchCurrent(sport, client.booksFor(ScanSettings()), GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS) }
             else -> null
         } ?: return null
-        return viewOf(snap, bet, pick, clock())
+        return viewOf(snap, eventName, startsTs, selection, pick, clock())
     }
 
     private suspend fun snapshot(key: String, read: suspend () -> RefSnapshot): RefSnapshot? = mutex.withLock {
@@ -99,9 +112,13 @@ class ParlayBooks(
         fun codeOf(bookKey: String): String = CODES[bookKey.lowercase()] ?: bookKey.uppercase()
 
         /** [pick]'s side and the other side in [snap], one price pair per book, as a CNO game page would list them. Pure. */
-        fun viewOf(snap: RefSnapshot, bet: TrackedBet, pick: BetGrader.Pick, now: Long): CnoBooksView? {
-            val m = NovigText.parseMatchup(bet.eventName) ?: return null
-            val game = snap.events.filter { abs(it.commenceMs - bet.startsTs) <= START_GAP_MS }
+        fun viewOf(snap: RefSnapshot, bet: TrackedBet, pick: BetGrader.Pick, now: Long): CnoBooksView? =
+            viewOf(snap, bet.eventName, bet.startsTs, bet.selection, pick, now)
+
+        /** The same for a bet by its game ("Away @ Home"), start (null: any game of those two teams in [snap]) and wording. Pure. */
+        fun viewOf(snap: RefSnapshot, eventName: String, startsTs: Long?, selection: String, pick: BetGrader.Pick, now: Long): CnoBooksView? {
+            val m = NovigText.parseMatchup(eventName) ?: return null
+            val game = snap.events.filter { startsTs == null || abs(it.commenceMs - startsTs) <= START_GAP_MS }
                 .map { e -> e to (TeamMatcher.similarity(m.home, e.home) + TeamMatcher.similarity(m.away, e.away)) }
                 .filter { (e, _) -> TeamMatcher.similarity(m.home, e.home) >= 0.5 && TeamMatcher.similarity(m.away, e.away) >= 0.5 }
                 .maxByOrNull { it.second }?.first ?: return null
@@ -113,7 +130,7 @@ class ParlayBooks(
                 if (code !in prices) prices[code] = CnoBookPrice(code, odds = pair.first, otherOdds = pair.second)
             }
             if (prices.isEmpty()) return null
-            return CnoBooksView(bet = bet.selection, prices = prices.values.toList(), fetchedAtMs = snap.fetchedAtMs.takeIf { it > 0 } ?: now)
+            return CnoBooksView(bet = selection, prices = prices.values.toList(), fetchedAtMs = snap.fetchedAtMs.takeIf { it > 0 } ?: now)
         }
 
         private fun american(d: Double?): Int? = d?.takeIf { it > 1.0 }?.let { Odds.decimalToAmerican(it) }
