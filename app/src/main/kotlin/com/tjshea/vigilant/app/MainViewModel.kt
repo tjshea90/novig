@@ -1575,6 +1575,20 @@ private const val GRADING_CHECK = "Grading check"
 /** What Scan, Recheck and Refresh say while scanning is paused ([ScanSettings.paused]). */
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
 
+/** How often, at most, a running scan's newest state reaches the screen ([followThrottled]). */
+internal const val SCAN_MIRROR_MS = 350L
+
+/**
+ * Hands [runs]' newest value to [onRun] no more often than every [everyMs]. A StateFlow keeps only its latest value while the collector
+ * waits, so whatever happened meanwhile arrives as one state and the last one (a scan's end) always gets through.
+ */
+internal suspend fun <T> followThrottled(runs: StateFlow<T>, everyMs: Long, onRun: suspend (T) -> Unit) {
+    runs.collect { run ->
+        onRun(run)
+        kotlinx.coroutines.delay(everyMs)
+    }
+}
+
 /**
  * [refresh] for the current [sports] at once and then every [everyMs] while Vigilant is [onScreen]; again at once when either changes (back on
  * screen: never minutes stale); nothing at all off screen, so no timer wakes a phone in a pocket. No sports: [refresh] with none once (drops
