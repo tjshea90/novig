@@ -1,7 +1,6 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.keys.CreditsHeldBackException
-import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.PropStats
