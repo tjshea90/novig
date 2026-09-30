@@ -178,6 +178,22 @@ class ScreenshotTest {
         }
     }
 
+    /** ParlayAPI's own picks at Novig on the +EV tab (v0.30.0, PARLAY_API.md §6.5), each at Novig's price now. */
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
+    @Test fun feedParlayPicks() {
+        val plays = listOf(
+            com.tjshea.vigilant.data.reference.ParlayPlay("baseball_mlb", "MLB", "Carson Kelly", true, 0.5, "Home Runs", null, "Chicago Cubs", "San Diego Padres", "player_home_runs", 900, 2122, 5.5, "BET", 3),
+            com.tjshea.vigilant.data.reference.ParlayPlay("baseball_mlb", "MLB", "Ian Happ", true, 0.5, "Home Runs", null, "Chicago Cubs", "San Diego Padres", null, 700, 5163, 10.6, null, null, alert = true, caveat = "far better than the rest of the market; verify it is still live before betting"),
+        )
+        val rows = plays.map { it.row(startsAtMs = SampleScan.NOW + 5 * 3_600_000L) }
+        val live = mapOf(rows[0].key to com.tjshea.vigilant.data.cno.LivePrice(950, 25.0, 0.045, SampleScan.NOW), rows[1].key to com.tjshea.vigilant.data.cno.LivePrice(900, 10.0, 0.06, SampleScan.NOW))
+        val s = SampleScan.state(SampleScan.settings.copy(useParlay = true, maxOdds = 0)).copy(
+            parlayKeys = listOf("pk-FAKE-0000"),
+            parlayPicks = com.tjshea.vigilant.app.ui.ParlayPicksUi(picks = com.tjshea.vigilant.data.reference.ParlayPick.priced(plays, rows, live), readAtMs = SampleScan.NOW - 60_000),
+        ).indexed(SampleScan.NOW)
+        shoot("1g_feed_parlay_picks") { FeedScreen(s, {}, {}, {}, { _, _ -> }, parlay = com.tjshea.vigilant.app.ui.ParlayPickActions()) }
+    }
+
     /** ParlayAPI's credits a day under its meter (v0.30.0, PARLAY_API.md §6.2). */
     @Test fun parlayUsageChart() {
         val now = java.time.Instant.parse("2026-09-30T06:00:00Z").toEpochMilli()
