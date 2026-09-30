@@ -163,6 +163,7 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }
             } finally {
                 _status.update { it.copy(running = false, step = null, lastEndMs = clock(), lastError = errors.firstOrNull()) }
+                withContext(NonCancellable) { errors.forEach { e -> runCatching { c.problems.add("Background auto-scan", e) } } }
             }
             return true
         } finally {

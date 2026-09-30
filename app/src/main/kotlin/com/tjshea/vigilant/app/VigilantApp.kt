@@ -295,6 +295,26 @@ class AppContainer(private val app: Application) {
     /** The background auto-scan and its +EV alerts (Tj, 2026-09-28), run by [AutoScanService]. */
     val autoScan: AutoScanner by lazy { AutoScanner(app, this) }
 
+    /** Diagnostics' "Recent problems" (files/problems.json, Tj 2026-09-30): what went wrong, kept across restarts, never a key. */
+    val problems = com.tjshea.vigilant.data.diag.ProblemLog(
+        JsonFileStore(File(app.filesDir, "problems.json"), com.tjshea.vigilant.data.diag.ProblemBook.serializer(), { com.tjshea.vigilant.data.diag.ProblemBook() }, json),
+    )
+
+    init {
+        // Written down as it happens, whatever screen is open: a finished scan's errors and failed fair-odds sources, and CNO's errors
+        // (the background scan's own are added where it ends: [AutoScanner]).
+        appScope.launch {
+            runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run ->
+                val r = run.report ?: return@collect
+                r.errors.forEach { runCatching { problems.add("Vigilant scan", it) } }
+                r.sources.forEach { src -> src.error?.let { runCatching { problems.add("Fair odds: ${src.name}", it) } } }
+            }
+        }
+        appScope.launch {
+            cno.state.map { it.error }.distinctUntilChanged().filterNotNull().collect { runCatching { problems.add("CrazyNinjaOdds", it) } }
+        }
+    }
+
     private val loadMutex = kotlinx.coroutines.sync.Mutex()
 
     @Volatile
