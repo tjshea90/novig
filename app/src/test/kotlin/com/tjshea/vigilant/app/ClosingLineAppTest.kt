@@ -150,7 +150,7 @@ class ClosingLineAppTest {
         card()
         // 4 true closes (+4, +2, −2, +12): 3 beat it; average +4%.
         compose.onNodeWithContentDescription("Beat the close 75% (3 of 4) · avg vs close +4.0% · avg EV at bet +3.0%").assertExists()
-        compose.onNodeWithText("4 bets with a true close · 1 waiting for their close (game not started) · 1 started with no close read · 1 over ±5% included").assertExists()
+        compose.onNodeWithText("4 bets with a true close (4 read before the start) · 1 waiting for their close (game not started) · 1 started with no close found yet · 1 over ±5% included").assertExists()
     }
 
     @Test
@@ -195,5 +195,52 @@ class ClosingLineAppTest {
     fun `screenshot - the closing line value card`() {
         card()
         compose.onRoot().captureRoboImage("screenshots/4j_tracker_clv_card.png")
+    }
+
+    // ---- closes found after the start (Tj, 2026-09-30: "My phone will not always be on") -------------------------------
+
+    @Test
+    fun `closes found after the start count too, and the card says where they came from`() {
+        val later = closed + listOf(
+            bet("espn", start, closingFair = 0.52, seenBefore = 5 * hour).copy(closeFair = 0.53, closeVia = "ESPN · DraftKings close", closeFinal = true),   // +6%
+            bet("novig", start, closingFair = null, seenBefore = null).copy(closeFair = 0.505, closeVia = "Novig's last trades (8)", closeFinal = true), // +1%
+        )
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    ClosingLineCard(later, SampleScan.NOW, ClvPeriod.ALL, {}, true, {})
+                }
+            }
+        }
+        // Outliers out (+12%, +6%): +4, +2, −2 read before the start, +1 from Novig.
+        compose.onNodeWithContentDescription("Beat the close 75% (3 of 4) · avg vs close +1.3% · avg EV at bet +3.0%").assertExists()
+        compose.onNodeWithText("4 bets with a true close (3 read before the start, 1 Novig's trades)", substring = true).assertExists()
+    }
+
+    @Test
+    fun `a settled bet's sheet shows its close, where it came from, and its CLV`() {
+        val settled = bet("espn", start, status = BetStatus.WON).copy(closeFair = 0.55, closeVia = "ESPN · DraftKings close", closeFinal = true)
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    com.tjshea.vigilant.app.ui.BetSheetContent(
+                        settled, com.tjshea.vigilant.data.tracker.BetInsight.of(settled), SampleScan.NOW, SampleScan.settings,
+                        false, false, false, com.tjshea.vigilant.app.ui.BetActions(), {}, {}, {}, {},
+                    )
+                }
+            }
+        }
+        compose.onNodeWithText("Close (ESPN)").assertExists()
+        compose.onNodeWithText("+10.00%").assertExists()
+    }
+
+    @Test
+    fun `a started bet with no close yet says it's still being looked for`() {
+        val waiting = bet("w", start).copy(closeNote = "Novig publishes this day's trades the next morning", closeLookedAtMs = SampleScan.NOW - 60 * min)
+        assertEquals(
+            "Closing line not found yet (Novig publishes this day's trades the next morning): looked 1h ago, looked again every few hours.",
+            com.tjshea.vigilant.app.ui.TrackerText.closeMissing(waiting, SampleScan.NOW),
+        )
+        assertEquals("No closing line found: No trades on Novig in the 30 minutes before the start.", com.tjshea.vigilant.app.ui.TrackerText.closeMissing(waiting.copy(closeFinal = true, closeNote = "No trades on Novig in the 30 minutes before the start"), SampleScan.NOW))
     }
 }
