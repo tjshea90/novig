@@ -223,8 +223,11 @@ class AppContainer(private val app: Application) {
      */
     val espnCloses = com.tjshea.vigilant.data.tracker.EspnCloses(http, json)
     val novigCloses = com.tjshea.vigilant.data.tracker.NovigTradeCloses(http, json)
+    /** Tj's ParlayAPI keys, one pool (and one meter) for its scans and its closing lines. */
+    private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keyStore.current(ApiProvider.PARLAY) }, usage)
+
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when Tj has a ParlayAPI key; nothing without one. */
-    val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, { keyStore.current(ApiProvider.PARLAY) }, json)
+    val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json)
     val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(parlayCloses, espnCloses, novigCloses))
 
     /** The last back-fill's report (this process), for Diagnostics. */
@@ -386,7 +389,7 @@ class AppContainer(private val app: Application) {
 
     /** ParlayAPI: The Odds API's format at parlay-api.com (Pinnacle, ProphetX, bet365 and the US books, props too; RESEARCH.md §43). */
     val parlayOdds = TheOddsApiClient(
-        http, KeyPool(QuotaPolicy.PARLAY, { keyStore.current(ApiProvider.PARLAY) }, usage), json,
+        http, parlayPool, json,
         baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY,
     )
     private val parlayProps = OddsApiPropsSource(parlayOdds)
