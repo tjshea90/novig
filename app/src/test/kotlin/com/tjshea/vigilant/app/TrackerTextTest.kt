@@ -112,6 +112,9 @@ class TrackerTextTest {
         assertEquals("fair then +127 · CNO's books · 5 books · as of 2h ago · tap Check odds now", old.detail)
         assertEquals(true, old.stale)
         assertNull(TrackerText.nowLine(bet(), now))
+        // Read both ways in one check (Tj, 2026-09-30): the average, with each read's own EV so a split shows.
+        val both = fresh.copy(nowFair = 0.44, nowVia = BetTracker.VIA_BOTH, cnoFair = 0.42, vigFair = 0.46)
+        assertEquals("fair now +127 · CNO +5.0% + Vigilant +15.0% averaged · 5 books · read 3m ago", TrackerText.nowLine(both, now)!!.detail)
         // A game far off keeps its read "now" for 10 minutes, one about to start for 5.
         assertEquals(false, TrackerText.nowLine(fresh.copy(startsTs = now + 30 * hour, nowAtMs = now - 8 * 60_000L), now)!!.stale)
         assertEquals(true, TrackerText.nowLine(fresh.copy(nowAtMs = now - 8 * 60_000L), now)!!.stale)
