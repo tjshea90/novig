@@ -47,7 +47,11 @@ data class QuotaPolicy(
     fun roll(u: KeyUsage, now: Long): KeyUsage {
         var x = u
         if (x.periodStart == 0L) x = x.copy(periodStart = periodStart(now))
-        if (now >= nextReset(x.periodStart)) {
+        val reset = x.resetAtMs
+        if (reset != null && now >= reset) {
+            // The provider's own reset time passed: a new period from then, its figures unknown until its next answer.
+            x = x.copy(periodStart = reset, resetAtMs = null, used = 0, calls = 0, remaining = null, lastNote = null, refused = false)
+        } else if (reset == null && now >= nextReset(x.periodStart)) {
             x = x.copy(periodStart = periodStart(now), used = 0, calls = 0, remaining = null, lastNote = null, refused = false)
         }
         // A hold that ran out means "try again": a remembered zero no longer applies.
@@ -132,7 +136,12 @@ data class KeyUsage(
     val refused: Boolean = false,
     /** When this key first answered (kept across periods): a plan bought mid-month is paced from here ([CreditPace]), not from the 1st. */
     val firstSeenMs: Long? = null,
+    /** When the provider says this key's period resets ([CreditHeaders.resetAtMs], ParlayAPI's `X-RateLimit-Reset`): its plan's own cycle. */
+    val resetAtMs: Long? = null,
 ) {
+    /** When this key's period ends: the provider's own word when it gave one, else [policy]'s calendar. */
+    fun nextReset(policy: QuotaPolicy): Long = resetAtMs ?: policy.nextReset(periodStart)
+
     fun left(policy: QuotaPolicy): Int? = remaining ?: (limit ?: policy.defaultLimit)?.let { (it - used).coerceAtLeast(0) }
     fun allowance(policy: QuotaPolicy): Int? = limit ?: policy.defaultLimit
 }
@@ -193,7 +202,9 @@ class UsageMeter(
     }
 
     /** A call the provider answered. [serverUsed]/[serverRemaining] are its own figures, if sent. */
-    suspend fun recordCall(policy: QuotaPolicy, key: String, cost: Int, serverRemaining: Int? = null, serverUsed: Int? = null) = edit(policy, key) { u, now ->
+    suspend fun recordCall(
+        policy: QuotaPolicy, key: String, cost: Int, serverRemaining: Int? = null, serverUsed: Int? = null, resetAtMs: Long? = null,
+    ) = edit(policy, key) { u, now ->
         var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null, firstSeenMs = u.firstSeenMs ?: now)
         if (serverUsed != null && serverRemaining != null) {
             val drop = u.used - serverUsed
@@ -207,11 +218,45 @@ class UsageMeter(
                 if (serverUsed + cost < u.used) x = x.copy(periodStart = now)
                 x = x.copy(used = serverUsed, remaining = serverRemaining, limit = serverUsed + serverRemaining)
             }
+        } else if (serverRemaining != null) {
+            // Only what's left (ParlayAPI's X-RateLimit-Remaining): the server's word for it; the count used is ours, the allowance as known.
+            x = x.copy(used = u.used + cost, remaining = serverRemaining)
         } else {
             x = x.copy(used = u.used + cost, remaining = null)
         }
+        // The provider's own reset time: its plan's cycle, which the pace and the meter then follow.
+        if (resetAtMs != null) {
+            val cycleStart = Instant.ofEpochMilli(resetAtMs).atZone(ZoneOffset.UTC).minusMonths(1).toInstant().toEpochMilli()
+            x = x.copy(resetAtMs = resetAtMs, periodStart = if (policy.period == QuotaPeriod.MONTH_UTC && cycleStart <= now) cycleStart else x.periodStart)
+        }
         // Nothing left: rest the key until its reset instead of spending a refused call on it.
-        if (x.left(policy) == 0) x = x.copy(depletedUntil = policy.nextReset(x.periodStart))
+        if (x.left(policy) == 0) x = x.copy(depletedUntil = x.nextReset(policy))
+        x
+    }
+
+    /**
+     * The provider's own account figures, read without a call to count (ParlayAPI's free `/v1/meta/api-key-check`, Tj 2026-09-30: "so
+     * the meter is accurate"): credits left, and when known the allowance, the count used and the reset time. [exhausted]: the key is
+     * spent until its reset; [inactive]: the provider refused the key.
+     */
+    suspend fun recordBalance(
+        policy: QuotaPolicy, key: String, remaining: Int?, limit: Int? = null, used: Int? = null, resetAtMs: Long? = null,
+        exhausted: Boolean = false, inactive: Boolean = false, note: String? = null,
+    ) = edit(policy, key) { u, now ->
+        var x = u.copy(firstSeenMs = u.firstSeenMs ?: now)
+        if (resetAtMs != null && resetAtMs > now) {
+            val cycleStart = Instant.ofEpochMilli(resetAtMs).atZone(ZoneOffset.UTC).minusMonths(1).toInstant().toEpochMilli()
+            x = x.copy(resetAtMs = resetAtMs, periodStart = if (policy.period == QuotaPeriod.MONTH_UTC && cycleStart <= now) cycleStart else x.periodStart)
+        }
+        val lim = limit ?: if (remaining != null && used != null) remaining + used else x.limit
+        if (remaining != null) x = x.copy(remaining = remaining, used = used ?: lim?.let { (it - remaining).coerceAtLeast(0) } ?: x.used, limit = lim)
+        else if (lim != null) x = x.copy(limit = lim)
+        if (note != null) x = x.copy(lastNote = note)
+        when {
+            inactive -> x = x.copy(refused = true)
+            exhausted || x.left(policy) == 0 -> x = x.copy(remaining = 0, depletedUntil = x.nextReset(policy))
+            else -> if (x.depletedUntil != null && (x.left(policy) ?: 0) > 0) x = x.copy(depletedUntil = null, refused = false)
+        }
         x
     }
 
@@ -328,7 +373,7 @@ class UsageMeter(
 /** How a single attempt with one key went. */
 sealed interface KeyAttemptResult<out T> {
     /** Answered. [cost] is what it charged when the server says; [remaining]/[used] likewise. */
-    data class Success<T>(val value: T, val cost: Int? = null, val remaining: Int? = null, val used: Int? = null) : KeyAttemptResult<T>
+    data class Success<T>(val value: T, val cost: Int? = null, val remaining: Int? = null, val used: Int? = null, val resetAtMs: Long? = null) : KeyAttemptResult<T>
 
     /** Slow down: fine again after [retryAfterMs]. */
     data class RateLimited(val retryAfterMs: Long, val reason: String? = null) : KeyAttemptResult<Nothing>
@@ -370,7 +415,7 @@ class CreditPace(
         val limit = u.limit ?: return reserve
         if (isFree(u)) return FREE_ONLY
         val start = u.periodStart.takeIf { it > 0 } ?: policy.periodStart(now)
-        val reset = policy.nextReset(start)
+        val reset = u.resetAtMs ?: policy.nextReset(start)
         val z = zone()
         val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
         val span = (reset - start).coerceAtLeast(DAY_MS)
@@ -441,7 +486,7 @@ class KeyPool(
                 }
             when (val r = action(key)) {
                 is KeyAttemptResult.Success -> {
-                    meter.recordCall(policy, key, r.cost ?: cost, r.remaining, r.used)
+                    meter.recordCall(policy, key, r.cost ?: cost, r.remaining, r.used, r.resetAtMs)
                     return r.value
                 }
                 is KeyAttemptResult.RateLimited -> {
