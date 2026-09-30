@@ -2813,3 +2813,31 @@ Keys of one feed: the terms of PinnWire and pinnapi forbid getting round a rate 
 ### 40.5 Settings tabs and pinned tabs and filters
 * Settings is seven tabs in a scrolling tab row outside the scrolling page (`SettingsTab`): Scan (pause, scanner, start window, background auto-scan and alerts), CNO & widget (CNO filters and refresh, widget; "Widget" when CNO is off), Fair odds (method, devig, sources with their keys, sportsbooks), +EV feed, Betting (bankroll, Kelly, bet-slip amount, Novig key and betting through the API), Usage & keys (each API's meter, keys backup), Tools (Diagnostics, Grading check, About). CNO only hides Fair odds, +EV feed and Usage & keys with Vigilant's scanner. The choice survives rotation (`rememberSaveable`), each tab opens at its top. `SettingsTabsTest` checks every old section is on exactly one tab.
 * Pinned (`stickyHeader` + `StickyBar`): the **Tracker**'s Stats | Bets, its period chips or Open / Settled / All, and Sort and Scanner; the **+EV** tab's league chips and start window; **Games**' league chips; **CNO**'s scanner chip, filters and start window. Sort and Scanner became two **menu chips** ("Sort: Current EV · best", "Scanner: CNO"; tap a sort again in the menu to turn it round, as before): as wrapped chips the pinned bar was 311 dp of a 420 dp screen in the test, as menus 161 dp (`StickyHeadersTest` caps it at 175). A different tab, filter, sort or scanner starts the list at its top. Tests: `StickyHeadersTest`, `TrackerUiTest`, `TrackerSortTest`; screenshots 4h, 5_settings_tab_*.
+
+## 41. True closing line value (v0.25.0, 2026-09-30; Tj: "Do any of these stats check true closing line value based on the closing line for each bet? If not, make a system that finds the true closing odds for each of my bets … the percentage of my bets that beat closing line value … the average percentage that my bets beat the closing line … Keep this stat line running forever … filter … (all time, today, yesterday, last 3 days, last week), and an option to remove outliers (bets over 5% different than closing line value)")
+
+**Answer to the question (audit, before v0.25.0): no.** `TrackedBet.closingFair` was the last pregame fair line any read happened to write
+(a scan's `observe`, Check odds now, the pricing pass), however long before the start; the Stats' "Avg CLV" and "Beat the close" used it for
+every bet, open ones included. Only the background auto-scan (off by default, CNO bets only, within the hour) ever read a line near the start.
+
+**What v0.25.0 does (`ClosingLine`, `ClosingCapture`):**
+- A **true close** is a pregame read made in the last **15 minutes** before the start (`TRUE_CLOSE_MS`), and it's final once the game has
+  started. A bet placed inside those 15 minutes with nothing read after it closes at the line it was bet at. A bet placed after the start has no
+  close. Everything else has no CLV (it's "started with no close read", counted, never guessed).
+- **CLV** = closing fair probability / cost − 1: how much better the bet's odds were than the closing (devigged, fair) odds. Positive = beat
+  the close. Same fair lines and devig as the bet's EV (CNO's books for CNO bets, Vigilant's own fair odds for the rest).
+- **The capture:** an exact alarm (`USE_EXACT_ALARM`, allowed in Doze) goes off **6 minutes** before the next open bet's start
+  (`ClosingLine.nextAt`) → `ClosingReceiver` → expedited `ClosingWorker` (needs a network) → `ClosingCapture.run`: every open bet starting
+  within **12 minutes** is read (CNO's game page for CNO bets; one bets-only Vigilant pricing pass for the rest, only while Vigilant's
+  scanner is on, so CNO only spends no API credits). A failed read retries 2 minutes later, never in the last minute (`closeTriedAtMs`).
+  Nothing is read while scanning is paused. `AppContainer` re-arms the alarm whenever the bets change; the boot/update receiver re-arms it
+  after a reboot. The auto-scan's older within-the-hour capture still runs too.
+- **Stats:** the Stats tab's "Closing line value" card (`ClvStats`) runs over every bet ever (never reset), with its own periods by when each
+  bet was placed, in local calendar days (All time, Today, Yesterday, Last 3 days = today and the two before, Last week = today and the six
+  before) and "Hide outliers" (|CLV| > 5%). It shows the share that beat the close, the average CLV and the average EV at bet of the same
+  bets, and counts how many are waiting for their close and how many started without one. The old CLV row and the bet card's CLV column now
+  use true closes only; the bet sheet says "CLV so far" before the close. Diagnostics prints the all-time line and the next capture time.
+- **Limits:** bets tracked before v0.25.0 mostly have no true close (their last read wasn't near the start). A phone that's off or offline at
+  the capture misses that close. Inexact alarms (if Android ever withdraws exact-alarm permission) can fire late enough to miss the window.
+  Historical closing prices (to back-fill old bets) would need a source that keeps price history (Kalshi candlesticks, Polymarket's
+  prices-history); not built.
