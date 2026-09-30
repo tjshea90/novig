@@ -166,7 +166,8 @@ class AutoScanTest {
             EvAlerts.text(a, TimeZone.getTimeZone("America/New_York")),
         )
         assertEquals("3 of 3 books agree · found by CNO", EvAlerts.detail(a))
-        assertTrue(EvAlerts.detail(alert(exact = false)).contains("opens the game"))
+        // A tap opens Vigilant now, so no alert says it opens only the game.
+        assertEquals("3 of 3 books agree · found by CNO", EvAlerts.detail(alert(exact = false)))
     }
 
     private fun installNovig() {
