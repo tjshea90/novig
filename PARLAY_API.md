@@ -106,11 +106,16 @@ unless the task says so, and only while `useParlay` is on with a key.
 - /injuries covers only `baseball_mlb, basketball_nba, basketball_wnba, icehockey_nhl, americanfootball_nfl` (others 400). ESPN refreshed
   every ~10 min.
 - Show a tag only when status isn't `Active`: Out / Injured Reserve (red), Doubtful / Questionable (amber), with the short comment on tap.
+- **Built (v0.30.0):** `data/.../reference/ParlayInjuries.kt` (`Injury`, `InjuryIndex`, `ParlayInjuries`), `InjuryTags.kt`. A player listed in
+  a /props answer with `injury: null` counts as covered (no /injuries read for him). /injuries is read through the new generic
+  `TheOddsApiClient.parlayGet` (metered, paced, body credits read, 503 handed back to the caller).
   Where: Vigilant's +EV prop cards and sheet, CNO's prop cards, the widget, and the Tracker's open prop bets. Match by player name
   (`PlayerNames.same`) and team when known. Keep the index from the last /props answers (free); ask /injuries (1 credit a league, cached
   10 min) only for open or listed prop bets whose player isn't in a recent /props answer.
 
 ### 6.2 Per-day credit chart (M2) — `GET /v1/meta/usage?days=30`, free
+- **Built (v0.30.0):** `ParlayAccount.refreshHistory` / `History`, chart `app/.../ui/UsageChart.kt`; read only when Settings › API usage
+  is on screen (not on every scan).
 - Sample `parlay-meta-usage.json`. Use `daily_breakdown` and `top_endpoints` only (its `credits_*` fields read 0). A small bar chart in
   Settings › API usage under ParlayAPI's meter ("credits a day, last 30 days") plus the top endpoints ("props:baseball_mlb 15"); read when
   the tab opens, at most once a minute (with `ParlayAccount`'s refresh).
@@ -121,6 +126,10 @@ unless the task says so, and only while `useParlay` is on with a key.
   points moved; moves under 1.0 pp are filtered as noise. Moneyline only, Pinnacle as the anchor, window 5–360 min.
 - Where (suggested; Tj decides placement): a "Line moves" card on the Games tab for the picked leagues, and a small "Pinnacle moved
   toward/against" note on +EV cards, CNO cards and open Tracker bets whose game is in the list (a move toward your side is good CLV).
+- **Built (v0.30.0):** `data/.../reference/ParlayMovers.kt` (`ParlayMovers` reads it, `LineMoves` matches team bets). Verified 2026-09-30
+  05:45Z: answers **without a key** (no `X-API-Key` sent), `cache-control: public, max-age=90`, an MLB board at night came back with
+  `movers_returned: 0`. Read every 3 min per picked league while Vigilant is on screen and ParlayAPI is on; notes only on moneyline and
+  full-game spread bets (a moneyline move says nothing sure about totals or players).
 
 ### 6.4 One-bet verdict (M4) — `GET /v1/verdict`, 5 credits a bet
 - Params: `sport` (sport key), `market` (`h2h` | `spreads` | `totals` | a player prop key), `side` (team name, or `over`/`under`), `home` +
