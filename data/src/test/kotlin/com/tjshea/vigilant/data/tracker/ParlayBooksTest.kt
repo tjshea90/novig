@@ -128,19 +128,4 @@ class ParlayBooksTest {
         assertNull(books().view(bet("x", "A @ B", "2026-10-04T17:00:00Z", "Moneyline", "A").copy(league = "Nowhere League")))
         assertTrue(asked.isEmpty())
     }
-
-    @Test
-    fun `a bet that isn't in the Tracker (a ParlayAPI pick's sheet, P4) reads the same books by its game and wording, start or not`() = runBlocking<Unit> {
-        val b = books()
-        val game = "New England Patriots @ Buffalo Bills"
-        val view = b.view("NFL", game, Instant.parse("2026-10-04T17:00:00Z").toEpochMilli(), "Player Passing Attempts", "Josh Allen Under 29.5")!!
-        assertEquals(setOf("CZR", "DK", "FD"), view.prices.map { it.code }.toSet())
-        assertEquals("Josh Allen Under 29.5", view.bet)
-        // No start known (Novig's catalog didn't say): the game of those two teams still answers.
-        assertEquals(view.prices, b.view("NFL", game, null, "Player Passing Attempts", "Josh Allen Under 29.5")!!.prices)
-        // A game days away from the one listed isn't it.
-        assertNull(b.view("NFL", game, Instant.parse("2026-10-11T17:00:00Z").toEpochMilli(), "Player Passing Attempts", "Josh Allen Under 29.5"))
-        // One props call for all three.
-        assertEquals(1, b.requests)
-    }
 }

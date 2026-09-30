@@ -52,15 +52,6 @@ class ParlayBooks(
         return view(bet.league, bet.eventName, bet.startsTs, bet.selection, pick)
     }
 
-    /**
-     * A bet that isn't in the Tracker (a ParlayAPI pick's sheet, TASKS.md P4: "opens a screen that shows other sports books odds on the same
-     * bet"), by its league, game ("Away @ Home"), start (null: not known) and wording: its books as ParlayAPI has them now, or null.
-     */
-    suspend fun view(league: String, eventName: String, startsTs: Long?, marketLabel: String, selection: String): CnoBooksView? {
-        val pick = BetGrader.pickOf(marketLabel, selection) ?: return null
-        return view(league, eventName, startsTs, selection, pick)
-    }
-
     private suspend fun view(leagueName: String, eventName: String, startsTs: Long?, selection: String, pick: BetGrader.Pick): CnoBooksView? {
         if (!active()) return null
         val league = Leagues.byNovigName(leagueName)?.takeIf { it.oddsApiListed } ?: return null
