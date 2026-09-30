@@ -177,7 +177,7 @@ class DiagnosticsTest {
         val base = SampleScan.state()
         val s = base.copy(
             settings = base.settings.copy(autoScan = AutoScanMode.BOTH),
-            status = base.status.copy(sources = base.status.sources + com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 0, 0, 0, "HTTP 503")),
+            status = base.status.copy(sources = base.status.sources + com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 0, 0, 0, "HTTP 401 key refused")),
         )
         val x = extras.copy(autoScanServiceRunning = false, phone = Diagnostics.Phone(notifications = false, exactAlarms = false, batteryUnrestricted = false, online = true))
         val text = report(s, x)
@@ -193,8 +193,8 @@ class DiagnosticsTest {
         assertTrue(text, checks.any { it.area == "Phone" && it.finding.contains("battery optimization") })
         // A source that failed names the error and where to look.
         val kalshi = find("Source Kalshi", HealthChecks.Level.FAIL)!!
-        assertEquals("HTTP 503", kalshi.evidence)
-        assertTrue(text, text.contains("FAIL Source Kalshi: failed in the last scan [HTTP 503] → data/reference/"))
+        assertEquals("HTTP 401 key refused", kalshi.evidence)
+        assertTrue(text, text.contains("FAIL Source Kalshi: failed in the last scan [HTTP 401 key refused] → data/reference/"))
         // The counts line says how many of each.
         assertTrue(text, Regex("\\d+ FAIL · \\d+ WARN · \\d+ OK").containsMatchIn(text))
     }
@@ -234,7 +234,7 @@ class DiagnosticsTest {
         val base = SampleScan.state()
         val bets = base.bets.map { if (it.status == BetStatus.PENDING && it.nowEv != null) it.copy(nowFair = (it.fairAtBet ?: 0.5) + 0.01, nowAtMs = now) else it }
         val text = report(base.copy(bets = bets), extras.copy(phone = Diagnostics.Phone(true, true, true, false, false, true, "Wi-Fi")))
-        listOf("== Accuracy by scanner and by market (outliers aside) ==", "== Open bets: edge now vs when bet (pregame, current reads only) ==", "== Phone ==", "== Recent problems (saved across restarts, newest first) ==")
+        listOf("== Accuracy by scanner and by market (outliers aside; CLV on n = bets with a true close) ==", "== Each scanner by market ==", "== Bets by what made their fair odds (recorded from v0.36.0) ==", "== Vigilant's own bets against the close (newest 30) ==", "== Open bets: edge now vs when bet (pregame, current reads only) ==", "== Phone ==", "== Recent problems (saved across restarts, newest first) ==")
             .forEach { assertTrue("$it in:\n$text", text.contains(it)) }
         assertTrue(text, text.contains("Scanner Vigilant:") || text.contains("Scanner CNO:"))
         assertTrue(text, text.contains("Notifications yes · exact alarms yes · battery unrestricted yes · draw over apps NO · Data Saver off · online yes (Wi-Fi)"))
@@ -272,5 +272,98 @@ class DiagnosticsTest {
         assertTrue(lines.toString(), lines.any { it.startsWith("CNO: 1 bet · EV when bet +4.0% → now +6.0%") })
         assertTrue(lines.toString(), lines.any { it.startsWith("Vigilant: 1 bet ·") })
         assertEquals(listOf("No open pregame bet has a current EV (tap Check odds now, then copy Diagnostics again)."), Diagnostics.edgeNowLines(emptyList(), now))
+    }
+
+    // ---- W2/W3 (Tj's v0.35.0 report, 2026-09-30) --------------------------------------------------------------------------------------
+
+    @Test
+    fun `a busy source that answered its other leagues is a passing miss, and a backup that matched nothing is normal`() {
+        val base = SampleScan.state()
+        val busy = "ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {\"error\":\"props_temporarily_busy\",\"detail\":\"The props board is being rebuilt\"}"
+        val s = base.copy(
+            status = base.status.copy(
+                errors = listOf(busy),
+                sources = base.status.sources + com.tjshea.vigilant.data.scanner.SourceReport("parlay_props", "ParlayAPI props", 2, 0, 3, busy) +
+                    com.tjshea.vigilant.data.scanner.SourceReport("oddsapi_props", "Sportsbook props", 3, 0, 0, null),
+            ),
+        )
+        val checks = HealthChecks.of(s, extras, now)
+        val props = checks.first { it.area == "Source ParlayAPI props" }
+        assertEquals(HealthChecks.Level.WARN, props.level)
+        assertEquals("ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (props_temporarily_busy)", props.evidence)
+        assertEquals(HealthChecks.Level.OK, checks.first { it.area == "Vigilant scan" }.level)
+        assertEquals(HealthChecks.Level.OK, checks.first { it.area == "Source Sportsbook props" }.level)
+        assertTrue(checks.none { it.level == HealthChecks.Level.FAIL })
+    }
+
+    @Test
+    fun `a spent key is fine while another carries on, and a few refusals in thousands of calls are the pacing working`() {
+        val base = SampleScan.state()
+        val month = com.tjshea.vigilant.data.keys.QuotaPolicy.ODDS_API.periodStart(now)
+        val usage = UsageBook(
+            mapOf(
+                "oddsapi" to ProviderUsage(
+                    keys = mapOf(
+                        "key-16a7" to KeyUsage(periodStart = month, used = 500, remaining = 0, depletedUntil = now + (2 * 60 + 25) * 60_000L),
+                        "key-71c4" to KeyUsage(periodStart = month, used = 195, remaining = 305),
+                    ),
+                    callsToday = 81,
+                ),
+                "novig" to ProviderUsage(callsToday = 8255, throttledToday = 9, lastThrottleMs = now - 7 * 3_600_000L),
+            ),
+        )
+        val checks = HealthChecks.of(base.copy(usage = usage), extras, now)
+        val key = checks.first { it.area == "API The Odds API" }
+        assertEquals(HealthChecks.Level.OK, key.level)
+        assertEquals("key …16a7 is spent until its reset in 2h 25m; the other key carries on", key.finding)
+        assertEquals(HealthChecks.Level.OK, checks.first { it.area == "API Novig" }.level)
+        // The last key spent is a warning; so is a refusal in the last hour.
+        val alone = UsageBook(mapOf("oddsapi" to ProviderUsage(keys = mapOf("key-16a7" to KeyUsage(periodStart = month, used = 500, remaining = 0, depletedUntil = now + 3_600_000L))), "novig" to ProviderUsage(callsToday = 8255, throttledToday = 9, lastThrottleMs = now - 60_000L)))
+        val two = HealthChecks.of(base.copy(usage = alone), extras, now)
+        assertEquals(HealthChecks.Level.WARN, two.first { it.area == "API The Odds API" }.level)
+        assertEquals(HealthChecks.Level.WARN, two.first { it.area == "API Novig" }.level)
+    }
+
+    @Test
+    fun `each scanner is judged on its own closes, and imported marks that can never close aren't counted against the capture`() {
+        val base = SampleScan.state()
+        val start = now - 2 * 3_600_000L
+        fun bet(id: String, source: String, closeRatio: Double, league: String = "NFL", outcome: String = "o$id") = com.tjshea.vigilant.data.tracker.TrackedBet(
+            id, start - 3_600_000L, league, "A @ B", start, "Total", "Over 8.5", "m$id", outcome, 0.5, 0.5, 0.515, 0.03, 1.0,
+            status = BetStatus.PENDING, source = source, closingFair = 0.5 * closeRatio, closingSeenAtMs = start - 5 * 60_000L,
+        )
+        val cno = (1..15).map { bet("c$it", com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO, 1.02) }
+        val vig = (1..15).map { bet("v$it", com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT, 0.985) }
+        val imported = (1..10).map { bet("i$it", com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO, 1.0, league = "", outcome = "").copy(closingFair = null, closingSeenAtMs = null) }
+        val checks = HealthChecks.of(base.copy(bets = cno + vig + imported), extras, now)
+        val v = checks.first { it.area == "Vigilant's edges (CLV)" }
+        assertEquals(HealthChecks.Level.FAIL, v.level)
+        assertEquals("CLV -1.5% on 15 bets, beat the close 0%, EV when bet +3.0%", v.evidence)
+        assertEquals(HealthChecks.Level.OK, checks.first { it.area == "CNO's edges (CLV)" }.level)
+        val closes = checks.first { it.area == "Closing lines" }
+        assertEquals(HealthChecks.Level.OK, closes.level)
+        assertTrue(closes.evidence!!, closes.evidence!!.startsWith("30 of 30") && closes.evidence!!.contains("10 imported ✓ marks left out"))
+    }
+
+    @Test
+    fun `the report lists Vigilant's bets against the close, and splits CLV by what made the fair odds`() {
+        val start = now - 2 * 3_600_000L
+        fun bet(id: String, basis: com.tjshea.vigilant.data.tracker.FairBasis?, close: Double) = com.tjshea.vigilant.data.tracker.TrackedBet(
+            id, start - 3_600_000L, "MLB", "A @ B", start, "Total", "Over 8.5", "m$id", "o$id", 0.5, 0.5, 0.515, 0.03, 1.0,
+            status = BetStatus.PENDING, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT, american = 100,
+            closingFair = close, closingSeenAtMs = start - 5 * 60_000L, fairBasis = basis,
+        )
+        val bets = listOf(
+            bet("a", com.tjshea.vigilant.data.tracker.FairBasis("BLEND", listOf("pinnacle", "kalshi"), 7), 0.51),
+            bet("b", com.tjshea.vigilant.data.tracker.FairBasis("SHARP", listOf("kalshi"), 1), 0.48),
+            bet("c", null, 0.49),
+        )
+        val rows = Diagnostics.closeRows(bets, now, TimeZone.getTimeZone("UTC"))
+        assertEquals(3, rows.size)
+        assertTrue(rows[0], rows.any { it.contains("MLB · Total: Over 8.5 · +100 · EV +3.0% · fair") && it.contains("CLV -4.0% (read before the start) · exchange sharp only (Kalshi), one book") })
+        val basis = Diagnostics.basisLines(bets, now)
+        assertTrue(basis.toString(), basis.any { it.startsWith("Pinnacle in the fair: 1 bets · EV when bet +3.0% · CLV +2.0% on 1, beat close 100%") })
+        assertTrue(basis.toString(), basis.any { it.startsWith("exchange sharp only (Kalshi), one book: 1 bets") })
+        assertEquals("(1 older bets: not recorded)", basis.last())
     }
 }
