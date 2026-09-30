@@ -995,6 +995,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         val scores = c.settler.run(force)
+        // Closing lines of games that started while Vigilant wasn't running (ESPN, Novig's trade history): for CLV.
+        c.backfillCloses()
         return if (api == null) scores else scores.copy(
             asked = scores.asked + api.asked, settled = scores.settled + api.settled, waiting = scores.waiting + api.waiting,
             manual = scores.manual + api.manual,

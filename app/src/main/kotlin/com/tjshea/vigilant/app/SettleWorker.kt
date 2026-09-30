@@ -23,6 +23,8 @@ class SettleWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         runCatching { app.container.apiSync?.run() }
         runCatching { app.container.apiSettler?.run() }
         val report = runCatching { app.container.settler.run() }.getOrNull()
+        // Closing lines for CLV of games that started while the phone was off or asleep (ESPN right after the start, Novig's trades next day).
+        app.container.backfillCloses()
         // A score feed out of reach: the next 3-hourly run tries again, no retry storm.
         return if (report == null) Result.failure() else Result.success()
     }

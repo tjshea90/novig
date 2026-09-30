@@ -217,6 +217,29 @@ class AppContainer(private val app: Application) {
     val settler = BetSettler(tracker, FreeScores(http, json), leaveApiBets = { trading != null })
 
     /**
+     * Closes found after the start (Tj, 2026-09-30: "My phone will not always be on"): ESPN's closing game lines, then Novig's trade history,
+     * for every started bet the capture before the start didn't read. Runs with the grading: app open, Grade now, Check odds now, and the
+     * 3-hourly background worker ([SettleWorker]).
+     */
+    val espnCloses = com.tjshea.vigilant.data.tracker.EspnCloses(http, json)
+    val novigCloses = com.tjshea.vigilant.data.tracker.NovigTradeCloses(http, json)
+    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(espnCloses, novigCloses))
+
+    /** The last back-fill's report (this process), for Diagnostics. */
+    @Volatile var lastBackfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null
+
+    /** Runs the back-fill, never throwing (a feed down is looked at again next time). */
+    suspend fun backfillCloses() {
+        try {
+            lastBackfill = closeBackfill.run()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Looked at again on the next pass.
+        }
+    }
+
+    /**
      * The Tracker's "Check odds now": every open bet's CNO game page re-read through [cno], [RECHECK_AT_ONCE] at a time at a brisk
      * pace (a page is two requests; one after another a hundred bets took five minutes), nothing while CNO asked for a pause,
      * judged against what the bet cost.
