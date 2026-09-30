@@ -1,7 +1,7 @@
 package com.tjshea.vigilant.data.tracker
 
 import com.tjshea.vigilant.data.Fixtures
-import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
+import com.tjshea.vigilant.data.keys.CreditsHeldBackException
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageBook
@@ -245,7 +245,7 @@ class ParlayClosesTest {
             val scans = TheOddsApiClient(OkHttpClient(), shared, json, baseUrl = url, minIntervalMs = 0, feed = OddsFeed.PARLAY)
             scans.fetch("americanfootball_nfl", listOf("pinnacle")) // the server says 290 left: under the 300 kept back
             val refused = runCatching { scans.fetch("americanfootball_nfl", listOf("pinnacle")) }.exceptionOrNull()
-            assertTrue(refused is AllKeysExhaustedException)
+            assertTrue(refused is CreditsHeldBackException)
             assertEquals("The last 300 credits on your ParlayAPI key are kept for closing lines.", refused!!.message)
             assertEquals(1, server.requestCount)
             // The closing lines still get them.
