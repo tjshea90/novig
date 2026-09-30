@@ -96,9 +96,11 @@ object ParlayCompare {
             ?.let { o -> Read(evAt(o.fairProbability!!, pick, now), o.fairProbability, o.fairAsOfMs, null) }
         val read = reads[pick.key]
         val asked = read?.fair?.let { Read(evAt(it, pick, now), it, read.atMs, null) }
-        val best = listOfNotNull(scanned, asked).maxByOrNull { it.atMs ?: 0L }
+        val fresh = asked?.takeIf { Freshness.fresh(it.atMs, now, pick.row.startsAtMs) }
+        val best = listOfNotNull(scanned, fresh).maxByOrNull { it.atMs ?: 0L }
         return best ?: when {
             reading -> Read.none("reading Vigilant's fair odds…")
+            asked?.atMs != null -> Read.none("Vigilant's read is ${(now - asked.atMs) / 60_000L} min old: tap Recheck")
             read?.why != null -> Read.none(read.why)
             else -> Read.none("not read yet: tap Recheck")
         }
