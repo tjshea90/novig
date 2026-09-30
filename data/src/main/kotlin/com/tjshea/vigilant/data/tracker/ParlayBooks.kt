@@ -121,6 +121,8 @@ class ParlayBooks(
             val game = snap.events.filter { startsTs == null || abs(it.commenceMs - startsTs) <= START_GAP_MS }
                 .map { e -> e to (TeamMatcher.similarity(m.home, e.home) + TeamMatcher.similarity(m.away, e.away)) }
                 .filter { (e, _) -> TeamMatcher.similarity(m.home, e.home) >= 0.5 && TeamMatcher.similarity(m.away, e.away) >= 0.5 }
+                // With no start to go by, the soonest of a series' games (the one a pick at Novig now is on).
+                .sortedBy { it.first.commenceMs }
                 .maxByOrNull { it.second }?.first ?: return null
             val prices = LinkedHashMap<String, CnoBookPrice>()
             for (mk in game.markets) {
