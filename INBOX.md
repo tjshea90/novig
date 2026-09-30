@@ -2718,3 +2718,8 @@ Make sure the app can read my parlayAPI usage credits remaining because right no
 ```
 Thoroughly research parlayapi docs to get endpoints and everything matched and all commands and usage correct
 ```
+
+## 2026-09-30T04:25:00Z
+```
+Nevermind it works now
+```
