@@ -76,6 +76,17 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `it says what the look for closes after the start found, and what it's still waiting for`() {
+        val base = SampleScan.state()
+        val bets = base.bets.map { if (it.id == "b1") it.copy(closeNote = "Novig publishes this day's trades the next morning", closeLookedAtMs = now - 3_600_000L) else it }
+        val x = extras.copy(backfill = com.tjshea.vigilant.data.tracker.CloseBackfill.Report(5, 3, mapOf("ESPN" to 2, "Novig's last trades" to 1)), novigTradeBytes = 2_048_000)
+        val text = Diagnostics.report(base.copy(bets = bets), x, now, TimeZone.getTimeZone("UTC"))
+        assertTrue(text, text.contains("Closes found after the start: last look 5 bets, found 3 (ESPN 2, Novig's last trades 1) · Novig trade data read 2000 KB"))
+        assertTrue(text, text.contains("×1: Novig publishes this day's trades the next morning"))
+        assertTrue(report(base).contains("Closes found after the start: none looked for since the app opened"))
+    }
+
+    @Test
     fun `it says whether the management key is saved, by its last four only`() {
         val base = SampleScan.state()
         assertTrue(report(base).contains("management key not saved"))
