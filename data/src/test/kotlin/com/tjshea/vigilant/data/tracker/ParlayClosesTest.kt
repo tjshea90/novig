@@ -371,7 +371,7 @@ class ParlayClosesTest {
     /** Tj's diagnostics 2026-09-30: "missing ×53: ParlayAPI has no key for this league" read as a key problem; they were early ✓ imports. */
     @Test
     fun `a bet with no league on record says it's an early import, not that a key is missing`() = runBlocking {
-        val closes = ParlayCloses(OkHttpClient(), pool("pk-1"), json, "http://127.0.0.1:9/v1", clock = { now })
+        val closes = ParlayCloses(OkHttpClient(), pool("pk-1"), json, "http://127.0.0.1:9/v1", clock = { start + 86_400_000L })
         val old = bet("imp", "Player Hits", "Isaac Paredes Over 1.5", league = "")
         assertEquals("No league on record (a ✓ mark imported before the Tracker)", (closes.closes(listOf(old)).getValue("imp") as CloseLookup.None).reason)
     }
