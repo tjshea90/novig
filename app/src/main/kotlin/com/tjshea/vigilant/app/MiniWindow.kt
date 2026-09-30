@@ -100,6 +100,8 @@ object MiniWindow {
         val bookRef: com.tjshea.vigilant.data.book.BookRef? = null,
         /** The bet's Kelly stake, for a bet slip opened with it ([ScanSettings.slipStakeFor]). */
         val kelly: Double? = null,
+        /** The player's injury report when he may not play (PARLAY_API.md §6.1): "OUT", "Q"… before the market. */
+        val injury: com.tjshea.vigilant.data.reference.Injury? = null,
     ) {
         /** The same bet at any line, in this game and market. */
         val family: String get() = Picks.familyKey(event, market, title)
@@ -150,6 +152,13 @@ object MiniWindow {
      * order), or both merged best EV first. [now] marks old prices.
      */
     fun items(state: UiState, now: Long): List<Item> {
+        val list = listed(state, now)
+        // Injury tags by the item's own key: a Vigilant bet's (merged ones too), or "cno:<row key>" (InjuryTags).
+        if (state.injuries.isEmpty()) return list
+        return list.map { i -> state.injuries[i.key]?.let { i.copy(injury = it) } ?: i }
+    }
+
+    private fun listed(state: UiState, now: Long): List<Item> {
         val s = state.settings
         // Only EVs whose other books' prices are still current (RESEARCH.md §24).
         val ours = if (showsVigilant(s)) state.feedAt(now).mapNotNull { it.miniItem(now) } else emptyList()

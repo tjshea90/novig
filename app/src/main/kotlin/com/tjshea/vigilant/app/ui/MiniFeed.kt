@@ -256,6 +256,7 @@ internal fun MiniRow(
                         val extras = listOfNotNull(
                             if (item.agrees) "books agree" else null,
                             item.team?.let { "team $it" },
+                            item.injury?.let { "injury: ${it.status}" },
                             item.alsoCnoEv?.let { "CNO lists it too at ${Format.evPercentShort(it)}" },
                         )
                         if (extras.isNotEmpty()) stateDescription = extras.joinToString(", ")
@@ -275,6 +276,11 @@ internal fun MiniRow(
                     buildAnnotatedString {
                         if (!oneLine) {
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)) { append(line) }
+                            append(" · ")
+                        }
+                        // The player may not play (PARLAY_API.md §6.1): first, so it's never cut off.
+                        item.injury?.shortTag?.let {
+                            withStyle(SpanStyle(color = injuryColor(item.injury.level), fontWeight = FontWeight.Bold)) { append(it) }
                             append(" · ")
                         }
                         item.placedOther?.let {
