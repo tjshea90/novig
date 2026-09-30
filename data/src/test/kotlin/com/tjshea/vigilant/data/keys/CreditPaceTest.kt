@@ -153,12 +153,21 @@ class CreditPaceTest {
     }
 
     @Test
-    fun `a key bought late in the month is paced from its first day, not the 1st`() = runBlocking<Unit> {
+    fun `a key bought late in the month spreads the month's credits over the days left in it`() = runBlocking<Unit> {
+        // Bought on the 30th (Tj's plan, 2026-09-30): ParlayAPI's credits reset at the end of the calendar month (/v1/usage's period_end),
+        // so that last day may spend them all, less the reserve (not a thirtieth of them, nor 29 days' worth "left unspent" before it).
         val m = meterAt { firstEvening }
         m.recordCall(QuotaPolicy.PARLAY, "k", 5, serverRemaining = 19_995, serverUsed = 5)
         val u = m.flow.value.providers.getValue("parlay").keys.getValue("k")
-        // Its first day: a whole day's share (not 29 days' worth "left unspent" before it existed, not an hour's).
-        val spendable = newYork.spendableToday(u, firstEvening)
-        assertTrue("$spendable", spendable in (19_700 / 31 - 10)..(19_700 / 30))
+        assertEquals(19_995 - 300, newYork.spendableToday(u, firstEvening))
+        // Bought on the 15th: the month's credits over the 16 days left, a day's share each (today's runs to midnight New York time).
+        val mid = Instant.parse("2026-09-15T16:00:00Z").toEpochMilli()
+        val m2 = meterAt { mid }
+        m2.recordCall(QuotaPolicy.PARLAY, "k", 5, serverRemaining = 19_995, serverUsed = 5)
+        val u2 = m2.flow.value.providers.getValue("parlay").keys.getValue("k")
+        val share = newYork.spendableToday(u2, mid)
+        assertTrue("$share", share in (19_700 / 16 - 10)..(19_700 / 15))
+        // A key seen since before the month began: the whole month, as before.
+        assertEquals(20_000 - 300, newYork.floor(u2.copy(firstSeenMs = sept1 - 1), Instant.parse("2026-09-30T23:00:00Z").toEpochMilli()) + (19_700L * 0).toInt() + 20_000 - 300 - (20_000 - 300))
     }
 }
