@@ -2949,3 +2949,9 @@ Tj's words, in order (each becomes a job below; the design notes come after read
 - [ ] J1 Find how the CNO section's X works (what it stores, how it keys a row, how it survives refreshes/rescans/restarts) and reuse the same mechanism for the +EV scan tab's rows (Vigilant scan feed).
 - [ ] J2 An X on each +EV bet card: tapping it removes that bet from the list and it stays gone across refreshes, rescans and app restarts (same key/lifetime rules as CNO's). Tests (a ViewModel/data test + a UI test that the X is there and hides the row).
 - [ ] J3 Ship it with the ParlayAPI work (v0.29.0); answer plainly.
+
+## Tj's request 2026-09-30 ~04:55Z: "When I just tried to get updated odds to see if my bets are EV using the check odds now button, it started and scanned a few then it said crazyninjaodds didn't answer. See if there is a fix to get cno to always respond, or if there is a good backup that does the same exact odds check, I think parlayapi can do this same odds check"
+
+- [ ] K1 Find why Check odds now's CNO reads stop ("CrazyNinjaOdds didn't answer"): which call, what error (timeout, 429/one-read-per-N-s gap, Cloudflare), and whether a retry/wait/longer timeout fixes it. Tests.
+- [ ] K2 A backup for the same check when CNO doesn't answer: re-price the bet from ParlayAPI (every book's price for that game/prop, devigged the same way; Pinnacle first) so each open bet still gets a current EV. Budget: credits per check. Tests on recorded shapes.
+- [ ] K3 Ship with v0.29.0; answer plainly (what failed, what the fix/backup does).
