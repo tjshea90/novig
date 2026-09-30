@@ -70,7 +70,7 @@ class ParlayMoversTest {
     }
 
     @Test
-    fun `only team bets get a note: CNO's moneylines and spreads and open Tracker bets, never totals or players`() {
+    fun `only team bets get a note, CNO's moneylines and spreads and open Tracker bets, never totals or players`() {
         val b = mapOf("americanfootball_nfl" to board())
         val start = Instant.parse("2026-10-02T00:15:00Z").toEpochMilli()
         val game = "Pittsburgh Steelers @ Cleveland Browns"
