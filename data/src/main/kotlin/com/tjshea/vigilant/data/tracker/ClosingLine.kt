@@ -63,7 +63,7 @@ object ClosingLine {
         source == SOURCE_CAPTURED -> "read before the start"
         source == SOURCE_AT_BET -> "bet in the last minutes"
         source.startsWith("ESPN") -> "ESPN"
-        source.startsWith("ParlayAPI") -> "Pinnacle (ParlayAPI)"
+        source.startsWith("ParlayAPI") -> "Pinnacle via ParlayAPI"
         source.startsWith("Novig") -> "Novig's trades"
         else -> source
     }

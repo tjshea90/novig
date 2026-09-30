@@ -234,6 +234,37 @@ class ClosingLineAppTest {
         compose.onNodeWithText("+10.00%").assertExists()
     }
 
+    /** v0.27.0 (Tj's ParlayAPI Starter plan): Pinnacle's close, found first when there's a key, is named plainly on the sheet and the card. */
+    @Test
+    fun `a Pinnacle close from ParlayAPI is named on the sheet and in the card's counts`() {
+        val pin = bet("pin", start, status = BetStatus.WON).copy(closeFair = 0.55, closeVia = "ParlayAPI · Pinnacle close", closeFinal = true)
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    androidx.compose.foundation.layout.Column {
+                        com.tjshea.vigilant.app.ui.BetSheetContent(
+                            pin, com.tjshea.vigilant.data.tracker.BetInsight.of(pin), SampleScan.NOW, SampleScan.settings,
+                            false, false, false, com.tjshea.vigilant.app.ui.BetActions(), {}, {}, {}, {},
+                        )
+                    }
+                }
+            }
+        }
+        compose.onNodeWithText("Close (Pinnacle via ParlayAPI)").assertExists()
+    }
+
+    @Test
+    fun `the card says where closes come from, Pinnacle's via ParlayAPI first`() {
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    ClosingLineCard(closed, SampleScan.NOW, ClvPeriod.ALL, {}, false, {})
+                }
+            }
+        }
+        compose.onNodeWithText("Pinnacle's closing lines from ParlayAPI first", substring = true).assertExists()
+    }
+
     @Test
     fun `a started bet with no close yet says it's still being looked for`() {
         val waiting = bet("w", start).copy(closeNote = "Novig publishes this day's trades the next morning", closeLookedAtMs = SampleScan.NOW - 60 * min)

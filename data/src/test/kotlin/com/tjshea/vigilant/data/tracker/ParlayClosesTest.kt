@@ -216,7 +216,7 @@ class ParlayClosesTest {
             CloseBackfill(t, listOf(withKey, espn), clock = { now }).run()
             assertEquals("ParlayAPI · Pinnacle close", t.all().single().closeVia)
             assertEquals(0, espn.asked)
-            assertEquals("Pinnacle (ParlayAPI)", ClosingLine.sourceLabel(t.all().single().closeVia!!))
+            assertEquals("Pinnacle via ParlayAPI", ClosingLine.sourceLabel(t.all().single().closeVia!!))
 
             // No key: never asked, and ESPN + Novig saying "never" is enough to stop looking.
             val t2 = tracker(bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5"))
