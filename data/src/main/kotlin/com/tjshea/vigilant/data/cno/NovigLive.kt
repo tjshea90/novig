@@ -26,6 +26,9 @@ data class LivePrice(
     val ev: Double?,
     /** When the book was read. */
     val atMs: Long,
+    /** The Novig market and outcome it is (ParlayAPI's picks are priced by Vigilant's own fair odds from them, TASKS.md P2). */
+    val marketId: String? = null,
+    val outcomeId: String? = null,
 )
 
 /**
@@ -189,6 +192,8 @@ class NovigLive(
                 available = top.contracts * cost * EvMath.CONTRACT_PAYOUT_DOLLARS,
                 ev = quote?.evPercent,
                 atMs = book.fetchedAtMs,
+                marketId = market.marketId,
+                outcomeId = outcomeId,
             )
         }
     }

@@ -165,7 +165,17 @@ class ParlayBestBets(
  * A ParlayAPI play at Novig's price now (PARLAY_API.md §6.5): its row at that price, Vigilant's EV there against ParlayAPI's fair price (Novig's
  * taker fee taken out on a live game), the dollars at it, when Novig's book was read; [found] false when Novig's catalog has no such bet.
  */
-data class ParlayPick(val play: ParlayPlay, val row: CnoRow, val ev: Double?, val available: Double?, val novigAtMs: Long?, val found: Boolean) {
+data class ParlayPick(
+    val play: ParlayPlay,
+    val row: CnoRow,
+    val ev: Double?,
+    val available: Double?,
+    val novigAtMs: Long?,
+    val found: Boolean,
+    /** Novig's market and outcome for it, once its catalog has found it: Vigilant's own fair odds are read for them (TASKS.md P2). */
+    val marketId: String? = null,
+    val outcomeId: String? = null,
+) {
     val key: String get() = play.key
 
     companion object {
@@ -174,7 +184,7 @@ data class ParlayPick(val play: ParlayPlay, val row: CnoRow, val ev: Double?, va
             plays.zip(rows).map { (p, r) ->
                 val l = live[r.key]
                 if (l == null) ParlayPick(p, r, null, null, null, found = false)
-                else ParlayPick(p, r.copy(odds = l.american, available = l.available, ev = l.ev ?: 0.0), l.ev, l.available, l.atMs, found = true)
+                else ParlayPick(p, r.copy(odds = l.american, available = l.available, ev = l.ev ?: 0.0), l.ev, l.available, l.atMs, found = true, l.marketId, l.outcomeId)
             }
     }
 }
