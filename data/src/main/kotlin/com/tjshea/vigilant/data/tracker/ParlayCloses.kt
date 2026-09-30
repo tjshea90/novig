@@ -49,8 +49,12 @@ class ParlayCloses(
 
     private val kept = HashMap<String, Kept>()
 
-    /** Asked only when Tj has a ParlayAPI key. */
-    override val active: Boolean get() = pool.keyCount() > 0
+    /** Settings' ParlayAPI switch: off, nothing is spent on closes either. */
+    @Volatile
+    var enabled: Boolean = true
+
+    /** Asked only when ParlayAPI is on and Tj has a key. */
+    override val active: Boolean get() = enabled && pool.keyCount() > 0
 
     override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> {
         if (!active) return emptyMap()

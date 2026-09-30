@@ -226,7 +226,7 @@ class AppContainer(private val app: Application) {
     /** Tj's ParlayAPI keys, one pool (and one meter) for its scans and its closing lines. */
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keyStore.current(ApiProvider.PARLAY) }, usage)
 
-    /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when Tj has a ParlayAPI key; nothing without one. */
+    /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json)
     val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(parlayCloses, espnCloses, novigCloses))
 
@@ -240,6 +240,7 @@ class AppContainer(private val app: Application) {
      */
     suspend fun backfillCloses() {
         try {
+            parlayCloses.enabled = currentSettings().useParlay
             lastBackfill = closeBackfill.run(heavyOk = true)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

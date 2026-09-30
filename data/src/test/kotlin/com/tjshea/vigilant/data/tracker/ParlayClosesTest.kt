@@ -222,6 +222,8 @@ class ParlayClosesTest {
             val t2 = tracker(bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5"))
             val keyless = ParlayCloses(OkHttpClient(), pool(), json, url, clock = { now })
             assertFalse(keyless.active)
+            // Switched off in Settings, a key doesn't make it asked.
+            assertFalse(ParlayCloses(OkHttpClient(), pool("k"), json, url).apply { enabled = false }.active)
             val none = Fake(CloseLookup.None("nope"))
             CloseBackfill(t2, listOf(keyless, none, Fake(CloseLookup.None("nor here"))), clock = { now }).run()
             assertEquals(0, keyless.requests)
