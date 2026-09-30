@@ -64,9 +64,11 @@ class LineMovesTest {
     fun `a team bet's note says which way Pinnacle went for its side, a prop or total gets none`() {
         val s = state()
         val ops = s.result!!.opportunities
-        val dal = ops.first { it.kind == LineKind.MONEYLINE && it.event.description == "Baltimore Ravens @ Dallas Cowboys" && it.selection.contains("Dallas") || it.kind == LineKind.MONEYLINE && it.selection == "DAL" }
+        val ml = ops.filter { it.kind == LineKind.MONEYLINE && it.event.description == "Baltimore Ravens @ Dallas Cowboys" }
+        assertEquals(2, ml.size)
+        val dal = ml.single { com.tjshea.vigilant.data.match.TeamMatcher.labelIsAway(it.selection, "Baltimore Ravens", "Dallas Cowboys") == false }
         assertEquals(true, s.lineMoves[dal.key]?.toward)
-        val bal = ops.first { it.kind == LineKind.MONEYLINE && it.event.eventId == dal.event.eventId && it.key != dal.key }
+        val bal = ml.single { it.key != dal.key }
         assertEquals(false, s.lineMoves[bal.key]?.toward)
         assertTrue(ops.filter { it.kind == LineKind.PLAYER_PROP || it.kind == LineKind.TOTAL }.none { it.key in s.lineMoves })
         assertEquals("Pinnacle moved toward it: -160 → -175 (+2.1 pts in 6 h)", moveText(s.lineMoves.getValue(dal.key)))
