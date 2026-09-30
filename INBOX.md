@@ -2679,3 +2679,8 @@ Closes found after the start: last look 0 bets, found 0 · Novig trade data read
     ×1: ESPN has no closing odds for WTA; Novig publishes this day's trades the next morning
 Results: 84-76 · profit +13.17 on 160.55 staked (+8.2%) · average EV when bet +2.5% · average CLV +0.5%
 ```
+
+## 2026-09-30T03:16:29Z
+```
+Let me know exactly what you need to make sure I'm using parlayapi to its fullest extent but also efficiently and not wasteful, whether that is diagnostics or the API key itself, which I don't mind sharing
+```
