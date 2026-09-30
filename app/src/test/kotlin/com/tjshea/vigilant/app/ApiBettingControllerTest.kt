@@ -182,9 +182,11 @@ class ApiBettingControllerTest {
     @Test
     fun `an amount changed while the first price read is running is always priced`() {
         val (o, book) = sample()
-        val state = startState()
-        val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        val novig = FakeNovig(AtomicInteger()) { _, _ -> null }
         repeat(40) { i ->
+            // A new controller each round: the placer is made on its first plan, where the two plans met.
+            val state = startState()
+            val api = controller(state, book, novig)
             api.bet(o)
             val stake = if (i % 2 == 0) 1.0 else 2.0
             api.setStake(stake)
