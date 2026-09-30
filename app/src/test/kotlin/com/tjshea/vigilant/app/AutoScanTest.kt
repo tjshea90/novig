@@ -227,15 +227,16 @@ class AutoScanTest {
     )
 
     @Test
-    fun `the alert stays after a tap and has a Placed button that says the amount it tracks`() {
+    fun `a tap removes the alert, and its Placed button says the amount it tracks`() {
         installNovig()
         shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         val nm = context.getSystemService(NotificationManager::class.java)
         val a = fullAlert()
         assertEquals(1, EvAlerts.post(context, listOf(a), now))
         val n = shadowOf(nm).allNotifications.single()
-        // Tapping opens Novig but doesn't take the alert down: the button is still there when the bet is in.
-        assertEquals(0, n.flags and android.app.Notification.FLAG_AUTO_CANCEL)
+        // Tapping opens Novig full screen and takes the alert down (Tj, 2026-09-30: "that notification should be removed").
+        assertEquals(android.app.Notification.FLAG_AUTO_CANCEL, n.flags and android.app.Notification.FLAG_AUTO_CANCEL)
+        assertTrue(n.contentIntent != null)
         val action = n.actions.single()
         assertEquals("✓ Placed $5", action.title.toString())
         val sent = shadowOf(action.actionIntent).savedIntent

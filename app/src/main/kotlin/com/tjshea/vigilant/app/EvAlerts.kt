@@ -157,8 +157,9 @@ object EvAlerts {
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                // Tapping opens Novig; the alert stays, with its ✓ Placed button, for when the bet is in.
-                .setAutoCancel(false)
+                // Tapping opens Novig's bet slip full screen and takes the alert down (Tj, 2026-09-30: "when I press a notification and the app
+                // opens full screen, that notification should be removed"); ✓ Placed works from the alert before that tap.
+                .setAutoCancel(true)
                 .addAction(0, placedLabel(a), broadcast(context, a, ACTION_PLACED))
                 .setTimeoutAfter(timeout)
                 .setWhen(now)
