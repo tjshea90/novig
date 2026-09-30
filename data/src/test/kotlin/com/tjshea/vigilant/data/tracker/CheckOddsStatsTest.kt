@@ -12,8 +12,11 @@ class CheckOddsStatsTest {
 
     private val start = 1_800_000_000_000L
 
-    private fun bet(id: String, ev: Double?, readAt: Long? = start + 1_000, status: BetStatus = BetStatus.PENDING) = TrackedBet(
-        id, start - 86_400_000L, "NBA", "A @ B", start + 3_600_000L, "Moneyline", "A", "m-$id", "o-$id", 0.5, 0.5, 0.52, 0.04, 5.0,
+    /** A few seconds into the check; every game below starts an hour after the check. */
+    private val now = start + 5_000
+
+    private fun bet(id: String, ev: Double?, readAt: Long? = start + 1_000, status: BetStatus = BetStatus.PENDING, startsTs: Long = start + 3_600_000L) = TrackedBet(
+        id, start - 86_400_000L, "NBA", "A @ B", startsTs, "Moneyline", "A", "m-$id", "o-$id", 0.5, 0.5, 0.52, 0.04, 5.0,
         status = status, nowEv = ev, nowAtMs = readAt,
     )
 
@@ -30,12 +33,12 @@ class CheckOddsStatsTest {
     @Test
     fun `a new check starts from zero, reads from before it began don't count`() {
         val bets = listOf(bet("old+", 0.02, readAt = start - 1), bet("old-", -0.02, readAt = start - 60_000), bet("never", null, readAt = null))
-        val s = CheckOddsStats.of(bets, start)
+        val s = CheckOddsStats.of(bets, start, now)
         assertEquals(CheckOddsStats.EMPTY, s)
         assertNull(s.positiveShare)
         assertNull(s.averageEv)
         // As this check's reads are saved, the count goes up.
-        val live = CheckOddsStats.of(bets + bet("new", 0.01, readAt = start), start)
+        val live = CheckOddsStats.of(bets + bet("new", 0.01, readAt = start), start, now)
         assertEquals(1, live.positive)
         assertEquals(1, live.priced)
     }
@@ -71,5 +74,29 @@ class CheckOddsStatsTest {
         assertEquals(1, even.positive)
         assertEquals(0.5, even.positiveShare!!, 1e-9)
         assertEquals(0.005, even.averageEv!!, 1e-12)
+    }
+
+    @Test
+    fun `a bet whose game has started is left out of every number, and counted apart`() {
+        // Tj, 2026-09-30: "does not count any bets in which the game or bet is currently live. The odds move rapidly when a game is live".
+        val underWay = bet("live", 0.30, startsTs = start - 60 * 60_000L)
+        val startsNow = bet("atStart", -0.20, startsTs = now)
+        val s = CheckOddsStats.of(listOf(bet("a", 0.02), bet("b", -0.01), underWay, startsNow), start, now)
+        assertEquals(1, s.positive)
+        assertEquals(1, s.negative)
+        assertEquals(2, s.priced)
+        assertEquals(0.5, s.positiveShare!!, 1e-9)
+        assertEquals(0.005, s.averageEv!!, 1e-12)
+        assertEquals(0, s.outliers)
+        assertEquals(2, s.live)
+        // Only live bets re-read: nothing to count, and it still says how many were left out.
+        val onlyLive = CheckOddsStats.of(listOf(underWay), start, now)
+        assertEquals(0, onlyLive.priced)
+        assertNull(onlyLive.averageEv)
+        assertEquals(1, onlyLive.live)
+        // A game that starts after the check drops out of the counter from then on.
+        val later = CheckOddsStats.of(listOf(bet("a", 0.02), bet("b", -0.01)), start, start + 3_600_000L)
+        assertEquals(0, later.priced)
+        assertEquals(2, later.live)
     }
 }
