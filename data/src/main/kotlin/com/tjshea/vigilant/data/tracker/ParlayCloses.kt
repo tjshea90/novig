@@ -8,6 +8,7 @@ import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigText
 import com.tjshea.vigilant.data.scanner.Leagues
+import com.tjshea.vigilant.data.reference.ParlayMarkets
 import com.tjshea.vigilant.data.scanner.PropStats
 import com.tjshea.vigilant.engine.Devig
 import com.tjshea.vigilant.engine.Odds
@@ -182,6 +183,9 @@ class ParlayCloses(
         /** The most days back `/sports/{sport}/closing-lines` takes. */
         const val MAX_DAYS = 30
 
+        /** A closes-file price taken longer than this before the start isn't the close. */
+        const val CLOSE_WITHIN_MS = 2 * 60 * 60_000L
+
         private val US_EAST = java.time.ZoneId.of("America/New_York")
 
         private fun JsonElement?.obj() = this as? JsonObject
@@ -212,24 +216,102 @@ class ParlayCloses(
         /** Rows of ParlayAPI's closing-lines file: the whole answer may be the list, or `{rows: [...]}`. */
         private fun rowsOf(root: JsonElement): List<JsonObject> = ((root.obj()?.get("rows") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }
 
-        /** [pick]'s Pinnacle close in a closing-lines file: its player, its market, its exact line, its game's start. */
-        fun parseProp(root: JsonElement, pick: BetGrader.Pick.Prop, markets: Collection<String>, startsTs: Long): CloseLookup {
+        /**
+         * A closes-file row's price is a close only when it was taken within [CLOSE_WITHIN_MS] of the start (Tj's key, 2026-09-30: MLB's
+         * file held Pinnacle props last seen 15 hours before first pitch, the board's spreads and totals 75 minutes before). Null: fine.
+         */
+        private fun tooEarly(r: JsonObject, startsTs: Long): String? {
+            val at = r.str("snapshot_time")?.let(::ms) ?: return null
+            val before = startsTs - at
+            return if (before > CLOSE_WITHIN_MS) "Pinnacle's last price was ${before / 3_600_000L}h before the start: not a close" else null
+        }
+
+        /** [pick]'s Pinnacle close in a closes file: its player, its stat (each book's name for it, [ParlayMarkets]), its exact line, its game's start. */
+        fun parseProp(root: JsonElement, pick: BetGrader.Pick.Prop, sportKey: String, startsTs: Long): CloseLookup {
             val rows = rowsOf(root).filter { r ->
-                r.str("market_key") in markets && (r.str("source") ?: r.str("bookmaker") ?: "pinnacle").equals("pinnacle", true) &&
+                (r.str("source") ?: r.str("bookmaker") ?: "pinnacle").equals("pinnacle", true) &&
                     PlayerNames.same(r.str("player_name") ?: r.str("player"), pick.player) &&
-                    (r.str("commence_time")?.let(::ms)?.let { abs(it - startsTs) <= START_GAP_MS } ?: true)
+                    (r.str("commence_time")?.let(::ms)?.let { abs(it - startsTs) <= START_GAP_MS } ?: true) &&
+                    ParlayMarkets.statOf(sportKey, r.str("market_key").orEmpty(), r.str("market_label") ?: r.str("market")) == pick.stat
             }
             if (rows.isEmpty()) return CloseLookup.None("Pinnacle's close for this prop isn't in ParlayAPI's file")
-            val exact = rows.firstOrNull { r -> r.num("line")?.let { abs(it - pick.line) < 1e-6 } == true }
+            val exact = rows.filter { r -> r.num("line")?.let { abs(it - pick.line) < 1e-6 } == true }.maxByOrNull { it.str("snapshot_time")?.let(::ms) ?: 0L }
                 ?: return CloseLookup.None("Pinnacle closed this prop at ${rows.mapNotNull { it.num("line") }.distinct().joinToString(" / ")}, not your ${pick.line}")
+            tooEarly(exact, startsTs)?.let { return CloseLookup.None(it) }
             val over = side(exact, "over_price", "over_implied_prob") ?: return CloseLookup.None("Pinnacle's close has no over price")
             val under = side(exact, "under_price", "under_implied_prob") ?: return CloseLookup.None("Pinnacle's close has no under price")
             return CloseLookup.Found(if (pick.over) fair(over, under) else fair(under, over), "ParlayAPI · Pinnacle close")
         }
 
-        /** [pick]'s Pinnacle close among ParlayAPI's closing-lines events (The Odds API's event shape). */
+        /**
+         * [pick]'s Pinnacle close from the day's closes file, whose game-line rows name a side each: a moneyline row per team (`player_name` the
+         * team, `over_price` its price), a spread row per team and number, a total row with both sides.
+         */
+        fun parseFileGameLine(root: JsonElement, b: TrackedBet, pick: BetGrader.Pick): CloseLookup {
+            val m = NovigText.parseMatchup(b.eventName) ?: return CloseLookup.None("Couldn't read the teams")
+            val rows = rowsOf(root).filter { r ->
+                (r.str("source") ?: "pinnacle").equals("pinnacle", true) &&
+                    (r.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false) &&
+                    TeamMatcher.similarity(m.home, r.str("home_team").orEmpty()) >= 0.5 && TeamMatcher.similarity(m.away, r.str("away_team").orEmpty()) >= 0.5
+            }
+            if (rows.isEmpty()) return CloseLookup.None("Not in ParlayAPI's closes file")
+            fun of(vararg keys: String) = rows.filter { it.str("market_key") in keys }
+            fun team(r: JsonObject, name: String) = TeamMatcher.similarity(name, r.str("player_name").orEmpty()) >= 0.5
+            fun latest(rs: List<JsonObject>) = rs.maxByOrNull { it.str("snapshot_time")?.let(::ms) ?: 0L }
+            fun pair(mine: JsonObject?, other: JsonObject?, what: String): CloseLookup {
+                if (mine == null || other == null) return CloseLookup.None("No Pinnacle $what close for this game")
+                tooEarly(mine, b.startsTs)?.let { return CloseLookup.None(it) }
+                val p = implied(mine.num("over_price")) ?: return CloseLookup.None("ParlayAPI's close has no price")
+                val q = implied(other.num("over_price")) ?: return CloseLookup.None("ParlayAPI's close has no price")
+                return CloseLookup.Found(fair(p, q), "ParlayAPI · Pinnacle close")
+            }
+            return when (pick) {
+                is BetGrader.Pick.Moneyline -> {
+                    val ml = of("moneyline", "h2h")
+                    val mine = latest(ml.filter { team(it, pick.team) })
+                    val other = latest(ml.filter { !team(it, pick.team) })
+                    pair(mine, other, "moneyline")
+                }
+                is BetGrader.Pick.Spread -> {
+                    val sp = of("spreads", "alternate_spreads")
+                    val mine = latest(sp.filter { team(it, pick.team) && it.num("line")?.let { l -> abs(l - pick.line) < 1e-6 } == true })
+                    val other = latest(sp.filter { !team(it, pick.team) && it.num("line")?.let { l -> abs(l + pick.line) < 1e-6 } == true })
+                    if (mine == null && sp.any { team(it, pick.team) }) return CloseLookup.None("Pinnacle didn't close your ${pick.line}")
+                    pair(mine, other, "spread")
+                }
+                is BetGrader.Pick.Total -> {
+                    val row = latest(of("totals", "alternate_totals").filter { it.num("line")?.let { l -> abs(l - pick.line) < 1e-6 } == true })
+                        ?: return CloseLookup.None("Pinnacle didn't close the total at your ${pick.line}")
+                    tooEarly(row, b.startsTs)?.let { return CloseLookup.None(it) }
+                    val over = implied(row.num("over_price")) ?: return CloseLookup.None("ParlayAPI's close has no price")
+                    val under = implied(row.num("under_price")) ?: return CloseLookup.None("ParlayAPI's close has no price")
+                    CloseLookup.Found(if (pick.over) fair(over, under) else fair(under, over), "ParlayAPI · Pinnacle close")
+                }
+                else -> CloseLookup.None("ParlayAPI keeps full-game lines and player props")
+            }
+        }
+
+        /**
+         * [pick]'s Pinnacle close from `closing-lines`: flat rows, one per game and market, `home_odds`/`away_odds` at the start (Tj's key,
+         * 2026-09-30: `{"home_team":…,"away_team":…,"market_key":"h2h","home_odds":-122,"away_odds":111,"last_update":<the start>}`), or,
+         * should it ever answer so, The Odds API's event shape.
+         */
         fun parseGameLine(root: JsonElement, b: TrackedBet, pick: BetGrader.Pick): CloseLookup {
             val m = NovigText.parseMatchup(b.eventName) ?: return CloseLookup.None("Couldn't read the teams")
+            val flat = ((root.obj()?.get("data") ?: root.obj()?.get("rows") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }.filter { it.containsKey("home_odds") }
+            if (flat.isNotEmpty()) {
+                if (pick !is BetGrader.Pick.Moneyline) return CloseLookup.None("ParlayAPI's closing lines carry moneylines")
+                val row = flat.filter { r ->
+                    r.str("market_key").let { it == null || it == "h2h" } &&
+                        (r.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false) &&
+                        TeamMatcher.similarity(m.home, r.str("home_team").orEmpty()) >= 0.5 && TeamMatcher.similarity(m.away, r.str("away_team").orEmpty()) >= 0.5
+                }.maxByOrNull { it.str("last_update")?.let(::ms) ?: 0L } ?: return CloseLookup.None("Not in ParlayAPI's closing lines")
+                val home = implied(row.num("home_odds")) ?: return CloseLookup.None("ParlayAPI's close has no price")
+                val away = implied(row.num("away_odds")) ?: return CloseLookup.None("ParlayAPI's close has no price")
+                if (row.num("draw_odds") != null) return CloseLookup.None("A three-way close (with a draw) isn't Novig's two-way line")
+                val homeSide = TeamMatcher.similarity(pick.team, m.home) >= TeamMatcher.similarity(pick.team, m.away)
+                return CloseLookup.Found(if (homeSide) fair(home, away) else fair(away, home), "ParlayAPI · Pinnacle close")
+            }
             val events = ((root.obj()?.get("data") ?: root.obj()?.get("events") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }
             val game = events.filter { e -> e.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false }
                 .maxByOrNull { e -> TeamMatcher.similarity(m.home, e.str("home_team").orEmpty()) + TeamMatcher.similarity(m.away, e.str("away_team").orEmpty()) }
