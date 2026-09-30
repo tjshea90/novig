@@ -308,6 +308,7 @@ internal fun sourceNames(state: UiState): String {
         if (s.usePolymarket) add("Polymarket")
         if (s.useKalshi) add("Kalshi")
         if (propLine) add("PropLine")
+        if (s.useParlay && state.parlayKeys.isNotEmpty()) add("ParlayAPI")
         if (oddsApi && !propLine) add("The Odds API")
     }.let { if (it.size <= 1) it.joinToString("") else it.dropLast(1).joinToString(", ") + " and " + it.last() } +
         if (oddsApi && propLine) " (The Odds API as backup)" else ""
