@@ -183,8 +183,10 @@ class ScreenshotTest {
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
         screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()
-        // Key 1 of each keyed provider (PinnWire, pinnapi, PropLine, The Odds API) is the one the next call uses.
-        compose.onAllNodesWithText("in use").assertCountEquals(4)
+        // Key 1 of each keyed provider (PinnWire, pinnapi, PropLine, ParlayAPI, The Odds API) is the one the next call uses.
+        compose.onAllNodesWithText("in use").assertCountEquals(5)
+        // ParlayAPI's scans are paced: what they can still spend today (Tj's Starter plan, 2026-09-30).
+        compose.onNodeWithText("Scans can spend", substring = true).assertIsDisplayed()
         compose.onNodeWithText("next").assertIsDisplayed()
         compose.onNodeWithText("142 requests today").assertIsDisplayed()
     }

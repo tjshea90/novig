@@ -148,6 +148,7 @@ object SampleScan {
             pinnapiKeys = listOf("trial-key-sample-0001"),
             pinnwireKeys = listOf("wire-key-sample-0001"),
             proplineKeys = listOf("propline-sample-0001"),
+            parlayKeys = listOf("parlay-sample-starter-0001"),
             usage = usage(),
             bets = bets,
             loaded = true,
@@ -169,6 +170,11 @@ object SampleScan {
                 "pinnacle" to ProviderUsage(
                     keys = mapOf("trial-key-sample-0001" to KeyUsage(periodStart = day, used = 37, calls = 37, lastCallMs = now - 60_000, lastCost = 1)),
                     dayStart = day, callsToday = 37,
+                ),
+                // ParlayAPI on the $5 Starter plan (Tj, 2026-09-30): the server's own figures, well under the month's pace.
+                "parlay" to ProviderUsage(
+                    keys = mapOf("parlay-sample-starter-0001" to KeyUsage(periodStart = month, used = 2_400, remaining = 17_600, limit = 20_000, calls = 300, lastCallMs = now - 60_000, lastCost = 5)),
+                    dayStart = day, callsToday = 40,
                 ),
                 "novig" to ProviderUsage(dayStart = day, callsToday = 142),
                 "polymarket" to ProviderUsage(dayStart = day, callsToday = 12),
