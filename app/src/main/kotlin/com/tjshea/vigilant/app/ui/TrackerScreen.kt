@@ -765,6 +765,7 @@ private fun CounterValue(value: String, label: String, color: androidx.compose.u
  * week), and an option to remove outliers (bets over 5% different than closing line value)"). Over every bet ever tracked ([ClvStats]), with
  * its own period chips (by when each bet was placed) and outlier switch; only true closes count ([ClosingLine]).
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ClosingLineCard(
     allBets: List<TrackedBet>,
@@ -777,7 +778,8 @@ fun ClosingLineCard(
     val s = remember(allBets, now / 60_000L, period, hideOutliers) { ClvStats.of(allBets, now, period, hideOutliers) }
     StatsCard(Modifier.testTag("clvCard")) {
         CardTitle("Closing line value")
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Wrapped, so all five periods are in sight.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             ClvPeriod.entries.forEach { p ->
                 FilterChip(selected = period == p, onClick = { onPeriod(p) }, label = { Text(p.label) }, modifier = Modifier.testTag("clvPeriod-${p.name}"))
             }
