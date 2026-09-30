@@ -178,6 +178,17 @@ unless the task says so, and only while `useParlay` is on with a key.
   range, odds cap (counted when over it) and start window. "Recheck" re-reads Novig only (free). Edge alerts have no fair price: one is
   taken from their `apparent_edge_pct` as probability points over the price's own. ✓ logs to the Tracker as source `parlay`
   (`BetTracker.SOURCE_PARLAY`, its own Tracker scanner filter). Not in the widget.
+- **Built (v0.32.0, TASKS.md P1/P2/P4, Tj 2026-09-30):** each pick card has the **Bet** button (Novig API betting, only when set up):
+  `ApiBettingController.bet(pick)` is CNO's own path (`betRow`: `NovigBetFinder` exact outcome, then the Bet sheet and planner) with
+  ParlayAPI's fair line, `fairAsOfMs` = when its board was read (so the planner refuses it past the freshness limit: "scan again"),
+  logged as source `parlay` under the pick's `parlay:` key (`ApiBetTargets.of(pick, …)`). Beside the EV badge: **CNO's and Vigilant's
+  EV at the same Novig price** (`data/.../reference/ParlayCompare.kt`): CNO's from its list row for the same bet (`PlacedIndex.identity`,
+  same-game start window, a Novig row first; its list must be fresh), Vigilant's from the last scan's same Novig outcome (the live
+  price now carries `marketId`/`outcomeId`) or a bets-only read made for the shown picks after each Scan/Recheck
+  (`OpenBetPricer.fairs`: the Tracker's pass, nothing written); "—" with the reason otherwise. **Tapping a pick** opens its sheet
+  (`ParlayPickDetail`): the three EVs plus "Books" (Vigilant's worst case), every book's odds for the bet and its other side with
+  CNO's verdict card and book table: CNO's game page when CNO lists the same bet, else (or when that page can't be read)
+  ParlayAPI's own books (`ParlayBooks.view(league, event, start, market, bet)`: its `/props` or game lines, shared 2 min).
 
 ### 6.6 Line-movement chart (M6) — `GET /v1/sports/{s}/line-movement?eventId=&market=&player=&hours=`, 2 credits
 - **Unreliable (2026-09-30):** props lookups answered 503 `LINE_MOVEMENT_TIMEOUT` three times (**charged 2 credits each**), a moneyline
