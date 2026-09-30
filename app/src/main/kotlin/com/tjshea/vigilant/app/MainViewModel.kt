@@ -143,6 +143,11 @@ data class UiState(
     val placed: List<PlacedBet> = emptyList(),
     /** The team of each player bet on CNO's list, by row key ("HOU"), when ESPN's rosters say. */
     val teams: Map<String, String> = emptyMap(),
+    /**
+     * Injury tags (Tj, 2026-09-30, PARLAY_API.md §6.1): the report of each listed or open prop bet's player who may not play, by the
+     * item's key ([com.tjshea.vigilant.data.reference.InjuryTags]: a +EV bet's own key, "cno:<row key>", "bet:<id>").
+     */
+    val injuries: Map<String, com.tjshea.vigilant.data.reference.Injury> = emptyMap(),
     /** CNO is being kept current right now: its tab or a widget is on screen. */
     val cnoLive: Boolean = false,
     /** CNO bets' Novig links by [com.tjshea.vigilant.data.cno.CnoFeed.linkKey] (a bet both scanners list is shown once). */
@@ -411,6 +416,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 rows?.mapNotNull { r -> PlayerTeams.playerOf(r)?.let { p -> cache.teamOf(r.league, r.event, p) }?.let { r.key to it } }?.toMap() ?: emptyMap()
             }.flowOn(Dispatchers.Default).collect { t -> _state.update { if (it.teams == t) it else it.copy(teams = t) } }
         }
+        viewModelScope.launch { keepInjuryTags() }
         // Nothing of CNO's is read before the settings say whether scanning is paused, or while it is
         // (Tj, 2026-09-28: "pause all scanning"). Before the watch below starts, so it starts held.
         viewModelScope.launch {
