@@ -241,13 +241,18 @@ class UsageMeter(
      */
     suspend fun recordBalance(
         policy: QuotaPolicy, key: String, remaining: Int?, limit: Int? = null, used: Int? = null, resetAtMs: Long? = null,
-        exhausted: Boolean = false, inactive: Boolean = false, note: String? = null,
+        exhausted: Boolean = false, inactive: Boolean = false, note: String? = null, periodStartMs: Long? = null,
     ) = edit(policy, key) { u, now ->
         var x = u.copy(firstSeenMs = u.firstSeenMs ?: now)
         if (resetAtMs != null && resetAtMs > now) {
-            val cycleStart = Instant.ofEpochMilli(resetAtMs).atZone(ZoneOffset.UTC).minusMonths(1).toInstant().toEpochMilli()
+            // The period's own start when the answer gave it (/v1/usage's period_start), else a month before its reset.
+            val cycleStart = periodStartMs?.takeIf { it in 1..now && it < resetAtMs }
+                ?: Instant.ofEpochMilli(resetAtMs).atZone(ZoneOffset.UTC).minusMonths(1).toInstant().toEpochMilli()
             x = x.copy(resetAtMs = resetAtMs, periodStart = if (policy.period == QuotaPeriod.MONTH_UTC && cycleStart <= now) cycleStart else x.periodStart)
         }
+        // An account read sent before a call whose answer is already kept (both in flight at once): the call's figures are newer.
+        val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
+        if (used != null && u.remaining != null && used < u.used && u.used - used <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) return@edit x
         val lim = limit ?: if (remaining != null && used != null) remaining + used else x.limit
         if (remaining != null) x = x.copy(remaining = remaining, used = used ?: lim?.let { (it - remaining).coerceAtLeast(0) } ?: x.used, limit = lim)
         else if (lim != null) x = x.copy(limit = lim)
