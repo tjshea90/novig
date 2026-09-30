@@ -1,13 +1,13 @@
-# CHECKPOINT 2148 — read me first, then TASKS.md
+# CHECKPOINT 2149 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T03:24:16Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `c42517bb` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T03:30:30Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `289eb940` (this checkpoint is the commit after it)
 
 ## Just done
-H1-C fixed: closes reopened when a new close source is active (CloseSource.id espn/novig/parlay, TrackedBet.closeAskedOf, CloseBackfill.reopened; ParlayClosesTest reopen test); H6 recorded
+H6 in: CreditHeaders (x-requests/x-credits/X-RateLimit-* monthly only, reset epoch, request id), KeyUsage.resetAtMs (meter/pace/runway/views follow the provider's reset), recordBalance; ParlayAccount (free /v1/meta/api-key-check, tolerant parse, refresh on scan start/usage tab/Diagnostics/key add); X-API-Key header for ParlayAPI, one retry on 502-504/IO, request id in errors; ParlayAccountTest 7 green
 
 ## Do this next
-H6: read parlay-api.com/docs/best-practices, follow it; exact credits in the meter from the key (api-key-check/meta usage, free); H1-D Runway; H5 maxAgeSec + commenceTimeTo
+H1-D Runway PinnWire+pinnapi; H5 maxAgeSec on /props + commenceTimeTo on /odds; source-quality guard (maybe); full floor; RESEARCH §44; ship; answer (what I need: a dedicated ParlayAPI key to verify shapes)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ H6: read parlay-api.com/docs/best-practices, follow it; exact credits in the met
 
 ## Last ten checkpoints
 ```
+  9a87d0a8 ckpt 2148: H1-C fixed: closes reopened when a new close source is active (CloseSource.i
   69e64611 ckpt 2147: H1-B fixed: CNO pause reason kept (CnoState.lastPause/At, pauseFor), Check o
   97657671 ckpt 2146: Pacing bugs fixed (stale out-of-order answers ignored, STALE_WINDOW/SLACK; f
   4901bda3 ckpt 2145: Recorded Tj's diagnostics-review request as H1-H3
@@ -25,8 +26,7 @@ H6: read parlay-api.com/docs/best-practices, follow it; exact credits in the met
   2e0a6863 ckpt 2141: Full test findings #2-#3 fixed: CLV card copy now names Pinnacle's ParlayAPI
   ebc4a263 ckpt 2140: Full test finding #1 fixed: background auto-scans could spend ParlayAPI's wh
   fda54162 ckpt 2139: RESEARCH.md §43 written (5 sources, ParlayAPI tested endpoints/costs, what 
-  bac95a85 ckpt 2138: ParlayAPI UI + switch: meter line (today's scan share / free = closes only),
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(8 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
