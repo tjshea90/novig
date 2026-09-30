@@ -152,6 +152,8 @@ data class UiState(
     val movers: Map<String, com.tjshea.vigilant.data.reference.MoversBoard> = emptyMap(),
     /** The listed and open team bets whose game moved at Pinnacle, by item key ([com.tjshea.vigilant.data.reference.LineMoves]). */
     val lineMoves: Map<String, com.tjshea.vigilant.data.reference.LineMove> = emptyMap(),
+    /** ParlayAPI's "Second opinion" on the bets Tj asked about, by item key (a +EV bet's key, "cno:<row key>", "bet:<id>"). */
+    val opinions: Map<String, com.tjshea.vigilant.app.ui.OpinionUi> = emptyMap(),
     /** ParlayAPI's own usage log, day by day, and where the credits went (Settings › API usage; PARLAY_API.md §6.2). */
     val parlayHistory: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null,
     /** CNO is being kept current right now: its tab or a widget is on screen. */
@@ -188,6 +190,9 @@ data class UiState(
         outcomeId = com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(cnoLinks[com.tjshea.vigilant.data.cno.CnoFeed.linkKey(row)]),
         event = row.event, market = row.market, selection = row.bet, startsTs = row.startsAtMs, league = row.league,
     )
+
+    /** ParlayAPI can be asked for a second opinion: it's on and has a key (5 credits a question, only on a tap). */
+    val canAskParlay: Boolean get() = settings.useParlay && parlayKeys.isNotEmpty()
 
     /** Tj's keys for [provider], in the order they're tried. */
     fun keysOf(provider: ApiProvider): List<String> = when (provider) {
@@ -468,6 +473,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun agreementRows(): Flow<List<CnoRow>> = state.map { s ->
         if (!s.cnoReadsBooks) emptyList()
         else s.cnoCandidates(System.currentTimeMillis()).map { it.row }
+    }
+
+    /**
+     * Asks ParlayAPI's /v1/verdict about one bet (Tj, 2026-09-30, PARLAY_API.md §6.4: "Second opinion", 5 credits), kept under [key] for the
+     * sheet to show. Only on a tap; a question already being asked isn't asked twice.
+     */
+    fun askOpinion(key: String, query: com.tjshea.vigilant.data.reference.VerdictQuery) {
+        if (_state.value.opinions[key]?.asking == true) return
+        _state.update { it.copy(opinions = it.opinions + (key to (it.opinions[key]?.copy(asking = true, error = null) ?: com.tjshea.vigilant.app.ui.OpinionUi(query, asking = true)))) }
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) { c.parlayVerdicts.ask(query) }
+            val ui = com.tjshea.vigilant.app.ui.OpinionUi.of(query, result, System.currentTimeMillis())
+            // A failed re-ask keeps the last answer, with why this one failed.
+            _state.update { s ->
+                val kept = s.opinions[key]?.verdict?.takeIf { ui.verdict == null }
+                s.copy(opinions = s.opinions + (key to ui.copy(verdict = ui.verdict ?: kept)))
+            }
+        }
     }
 
     /** The rows whose players' teams are wanted (all of the list's player bets). */
