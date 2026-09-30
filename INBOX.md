@@ -2820,3 +2820,155 @@ https://apify.com/mrdoe/bet-clv-tracker/api
 
 4) review the clv stats and positive EV stats for current open bets. Make it so this feature does not count any bets in which the game or bet is currently live. The odds move rapidly when a game is live and this should not skew the EV stats for open bets. Then make sure these sections accurately capture actual positive EV percentages and true line closing values
 ```
+
+## 2026-09-30T21:34:46Z
+```
+VIGILANT DIAGNOSTICS · Sep 30, 5:34:09 PM
+Version 0.35.0 (code 63) · motorola moto g - 2026 · Android 16 (API 36)
+For Claude: code at github.com/tjshea90/novig (modules engine/data/app; paths below are under data/src/main/kotlin/com/tjshea/vigilant/ or app's). Health checks come first, worst first, each with its evidence [in brackets] and the code that owns it (→); the blocks after are the numbers behind them. No keys are ever included.
+
+== Health checks (worst first) ==
+1 FAIL · 7 WARN · 15 OK
+FAIL Source ParlayAPI props: failed in the last scan [ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props boar] → data/reference/ (its client); keys in API usage
+WARN Vigilant scan: 1 error in the last scan [ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props boar] → data/scanner/Scanner.kt; Recent problems below
+WARN Game matching: 36% of Novig's games matched to a fair-odds source [30 of 83] → data/match/TeamMatcher.kt, the sources' leagues
+WARN Source Sportsbook props: answered 3 leagues but matched no Novig game → data/match/TeamMatcher.kt, PlayerNames.kt
+WARN API The Odds API: key …16a7 is spent until 2h ago from now → add a key, or wait for its reset
+WARN API Novig: 9 calls throttled or refused today [8255 calls today] → its pacing in data/keys/ (QuotaPolicy, KeyPool)
+WARN Closing lines: 58% of last week's started bets have a true close [103 of 178; missing ×53: ParlayAPI has no key for this league; ESPN keeps full-game moneylines, spreads and totals only; No N] → data/tracker/ClosingLine.kt (capture), HistoricalCloses.kt, ParlayCloses.kt
+WARN Vigilant wallet: holds $0.01: bets start at what's left → Settings › Betting › Add money
+OK   Scan budget: 93% of the Novig prices read were judged against a fair line [1378 of 1474]
+OK   Source Pinnacle: 12 games matched
+OK   Source Polymarket: 17 games matched
+OK   Source Kalshi: 28 games matched
+OK   Source ParlayAPI: 19 games matched
+OK   Source ParlayAPI 1st half: 5 games matched
+OK   Source PropLine: 19 games matched
+OK   Source PropLine props: 6 games matched
+OK   CrazyNinjaOdds: read 1m ago, 9 rows
+OK   Background auto-scan: running: last cycle 4m ago, found 0, alerts 0
+OK   Open bets' EV now: 47 of 164 upcoming bets have a current EV (no Check odds now in the last 30 min: tap it before copying) [11 never priced; most common reason ×1: No fair-odds source has a line for this bet]
+OK   Grading: no bet waiting over 6 h for its result
+OK   Tracker data: 65 bets have no EV on record (imported or synced): left out of expected vs actual
+OK   Tracker data: 9 outlier bets (over ±6% EV when bet) left out of the stats
+OK   Edge accuracy (CLV): bets beat the close: the edges hold up [average CLV +0.6%, EV when bet +2.5%, beat the close 60%, 103 bets]
+
+== Settings ==
+Scanner: Both · paused: no
+Background auto-scan: CNO every 5 min → actually runs: CNO only · service running
+Leagues: ATP, MLB, NCAAF, NFL, NHL, WNBA, WTA · days ahead 2 · starts within any time · live games off
+Edge shown: 1.0% to 25.0% · max odds +150 · fair odds BLEND / WORST_CASE, at least 2 books
+Scan size: no limit Novig prices · lines/game no limit · props/game no limit · fill the budget on · window 48 h
+Fair-odds sources on: kalshi, oddsapi, oddsapi_props, parlay, parlay_1h, parlay_props, pinnacle, polymarket, propline, propline_props · sportsbook props on (credits/scan no limit, PropLine games no limit)
+Keys saved: The Odds API 2 · Pinnacle (pinnapi) 1 · Pinnacle (PinnWire) 1 · PropLine 1 · ParlayAPI 1
+CrazyNinjaOdds: on · refresh 30 s · only bets the books agree on off · alerts ≥ 2.0%
+Betting through the API: on · wallet $0.01 · amount $1.00, most per bet $10.00, most per day $500.00, smallest edge 1.0%
+Novig key: [key redacted …cted] · management key saved on this phone (••••8db9)
+
+== Last Vigilant scan ==
+Finished 4m ago (Sep 30, 5:29:53 PM) · window 48 h
+Last scan took 105 s: board 0.8 s · fair odds 29 s (Kalshi 29 s, ParlayAPI props 22 s, ParlayAPI 17 s) · 1,474 Novig prices in 104 s (14.1 a second: 1474 through the key) · first bet at 19 s · Novig refused none · the key's limit is 16 a second
+Novig prices: 1474 read (1474 through the key, 0 pushed), 0 shown from the last scan
+Games 83 on Novig, 30 matched to fair odds · 1378 lines priced · 2346 sides with a fair price · 72 +EV · 143 games past days ahead
+Feed now: 19 bets
+  Pinnacle: 7 fetched, 0 re-used, 12 games matched
+  Polymarket: 5 fetched, 0 re-used, 17 games matched
+  Kalshi: 7 fetched, 0 re-used, 28 games matched
+  ParlayAPI: 5 fetched, 0 re-used, 19 games matched
+  ParlayAPI 1st half: 4 fetched, 0 re-used, 5 games matched
+  PropLine: 5 fetched, 0 re-used, 19 games matched
+  The Odds API: 0 fetched, 0 re-used, 5 standing by, 0 games matched
+  ParlayAPI props: 2 fetched, 0 re-used, 3 games matched · ERROR: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
+  PropLine props: 4 fetched, 0 re-used, 6 games matched
+  Sportsbook props: 3 fetched, 0 re-used, 0 games matched
+Error: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
+
+== API usage (each provider's own allowance) ==
+kalshi: 854 calls today, 0 refused/throttled
+novig: 8255 calls today, 9 refused/throttled, last throttle 7h ago
+oddsapi: 81 calls today, 0 refused/throttled
+    key …16a7: used 500, 0 left, spent until Sep 30, 8:00:00 PM
+    key …71c4: used 195, 305 left
+parlay: 201 calls today, 0 refused/throttled
+    key …15d0: used 42, 19958 left
+    key …10d2: used 600, 19400 left, resets Sep 30, 8:00:00 PM (the provider's time) · plan: starter
+      its own account: plan starter · 19400 left of 20000 · resets Sep 30, 8:00:00 PM · read from /v1/usage
+pinnacle: 1 calls today, 0 refused/throttled
+    key …wLaD: used 2
+pinnwire: 71 calls today, 0 refused/throttled
+    key …c6e5: used 72
+polymarket: 214 calls today, 0 refused/throttled
+propline: 190 calls today, 0 refused/throttled
+    key …0c2f: used 190, 810 left
+ParlayAPI extras since the app opened: injuries 4, movers 10, second opinions 0, picks 0 · injury reports kept 1379 · tagged now 0 · line moves 10 · picks listed 0 (0 found at Novig)
+
+== Runway (will each API's allowance last?) ==
+Pinnacle (PinnWire): 72 of 100 requests used today (1 key), 28 left · resets in 2h 25m · at this pace about 80 by the reset: OK
+    a scan costs 5 → 20 a day
+Pinnacle (pinnapi): 0 of 100 requests used today (1 key), 100 left · resets in 2h 25m · none used yet: OK
+PropLine: 190 of 1,000 requests used today (1 key), 810 left · resets in 2h 25m · at this pace about 211 by the reset: OK
+    a scan costs 16 → 62 a day
+ParlayAPI: 600 of 20,000 credits used this month (1 key), 19,400 left · resets in 2h 25m · at this pace about 602 by the reset: OK
+    a scan costs 600 → 33 a month
+The Odds API: 695 of 1,000 credits used this month (2 keys), 305 left · resets in 2h 25m · at this pace about 697 by the reset: OK
+    a scan costs 3 → 166 a month per key, 333 with 2 keys
+
+== Last rounds (what they cost each API) ==
+Scan: 4m ago · took 105 s
+    cost: Novig 1513, Kalshi 61, PropLine 15 (16 of its allowance), ParlayAPI 14 (600 of its allowance), The Odds API 12 (3 of its allowance), Polymarket 12, Pinnacle (PinnWire) 5
+Check odds now: none since the app opened.
+
+== CrazyNinjaOdds ==
+Last read: 1m ago · 9 rows · errors in a row 0
+Kept current now: no
+
+== Background auto-scan ==
+Now: idle · last started 4m ago · ended 4m ago · found 0, alerts sent 0
+
+== Tracker ==
+Bets: 343 (open 168: 164 upcoming, 4 started; settled 175)
+By scanner: Vigilant 74, CNO 265, ParlayAPI 4 · placed through the API 95
+Current EV: 47 of 164 upcoming bets have one read inside the fair odds' age limit; 106 have an old one; 11 none
+  not priced ×1: No book on CrazyNinjaOdds' page prices both sides of this bet now, and ParlayAPI's books don't price it at your line
+Check odds now counter (since Sep 30, 3:12:12 PM): 90 +EV · 42 −EV · 68% +EV · Avg +1.3% EV (30 over ±5% left out) (2 live games left out)
+Settled by: score feeds 170, Novig's ledger 3, you 2
+Started and still open: 4 (0 for over 6 hours, 0 need a tap)
+Closing line value (all time): Beat the close 60% (62 of 103) · avg vs close +0.6% · avg EV at bet +2.5% · 103 bets with a true close (73 Novig's trades, 12 read before the start, 12 bet in the last minutes, 3 ESPN, 3 Pinnacle via ParlayAPI) · 164 waiting for their close (game not started) · 75 started with no close found yet · 32 over ±5% included
+Next closing-line read: Sep 30, 6:54:00 PM · alarm Sep 30, 6:54:00 PM
+Closes found after the start: last look 0 bets, found 0 · Novig trade data read 0 KB
+  still looking for 2 closes:
+    ×2: Pinnacle's close for this prop isn't in ParlayAPI's file; ESPN keeps full-game moneylines, spreads and totals only; Novig publishes this day's trades the next morning
+Results: 89-85 · profit +10.25 on 174.53 staked (+5.9%) · average EV when bet +2.7% · average CLV +0.6%
+Expected +2.81 vs actual +3.93 over 110 settled bets with an EV: +0.1 standard deviations
+
+== Accuracy by scanner and by market (outliers aside) ==
+Scanner CNO: 264 bets (125 open) · 73-66 · ROI +9.4% · EV when bet +2.5% · CLV +1.3% · beat close 68% · expected +1.95 vs actual +9.90
+Scanner Vigilant: 68 bets (33 open) · 16-19 · ROI -7.8% · EV when bet +3.0% · CLV -1.2% · beat close 37% · expected +0.87 vs actual -5.96
+Scanner ParlayAPI: 2 bets (2 open) · EV when bet +5.9%
+Market Player props: 191 bets (55 open) · 70-66 · ROI +7.5% · EV when bet +3.0% · CLV +1.5% · beat close 72% · expected +2.24 vs actual +7.60
+Market Total: 54 bets (39 open) · 7-8 · ROI -1.9% · EV when bet +2.4% · CLV -2.6% · beat close 22% · expected +0.13 vs actual -2.86
+Market Spread: 61 bets (51 open) · 5-5 · ROI +1.9% · EV when bet +2.2% · CLV +0.5% · beat close 38% · expected +0.13 vs actual -0.93
+Market Team total: 8 bets (3 open) · 2-3 · ROI -26.7% · EV when bet +2.9% · CLV -1.4% · beat close 33% · expected +0.14 vs actual -1.43
+Market Moneyline: 9 bets (6 open) · 2-1 · ROI +23.6% · EV when bet +1.8% · CLV +0.5% · beat close 50% · expected +0.05 vs actual +0.71
+Market 1st half / inning / set total: 7 bets (4 open) · 1-2 · ROI -33.2% · EV when bet +2.9% · CLV -5.9% · beat close 0% · expected +0.07 vs actual -1.04
+Market Other: 3 bets (1 open) · 2-0 · ROI +94.1% · EV when bet +2.9% · CLV -2.8% · beat close 0% · expected +0.06 vs actual +1.88
+Market 1st half / set spread: 1 bets (1 open) · EV when bet +2.6%
+Edge No EV on record: 65 bets (1 open) · 34-30 · ROI +9.9% · CLV -2.4% · beat close 0%
+Edge 1–2%: 92 bets (47 open) · 21-24 · ROI -5.0% · EV when bet +1.6% · CLV +0.1% · beat close 58% · expected +0.73 vs actual -2.26
+Edge 2–3%: 89 bets (58 open) · 16-15 · ROI +4.0% · EV when bet +2.5% · CLV +1.0% · beat close 62% · expected +0.76 vs actual +1.25
+Edge 3–4%: 54 bets (31 open) · 11-12 · ROI +3.7% · EV when bet +3.5% · CLV +1.6% · beat close 61% · expected +0.79 vs actual +0.84
+Edge 4% and up: 34 bets (23 open) · 7-4 · ROI +37.3% · EV when bet +4.8% · CLV +2.0% · beat close 91% · expected +0.53 vs actual +4.10
+
+== Open bets: edge now vs when bet (pregame, current reads only) ==
+All: 47 bets · EV when bet +3.4% → now +0.8% · fair moved toward the bet on 11, away on 33 · still +EV 30
+CNO: 31 bets · EV when bet +2.6% → now +1.1% · fair moved toward the bet on 10, away on 21 · still +EV 19
+ParlayAPI: 1 bet · EV when bet +6.0% → now -16.9% · fair moved toward the bet on 0, away on 1 · still +EV 0
+Vigilant: 15 bets · EV when bet +4.8% → now +1.3% · fair moved toward the bet on 1, away on 11 · still +EV 11
+
+== Phone ==
+Notifications yes · exact alarms yes · battery unrestricted yes · draw over apps yes · Data Saver off · online yes (mobile)
+
+== Recent problems (saved across restarts, newest first) ==
+Sep 30, 5:31:38 PM · Fair odds: ParlayAPI props: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
+Sep 30, 5:31:38 PM · Vigilant scan: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
+```
