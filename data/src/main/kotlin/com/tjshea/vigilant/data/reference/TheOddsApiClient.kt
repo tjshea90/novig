@@ -173,6 +173,26 @@ class TheOddsApiClient(
         )
     }
 
+    /**
+     * ParlayAPI's player props for a whole league in one call (3 credits, whatever the markets and books): every book's over/under for
+     * every player, [offset] rows in ([ParlayProps.PAGE] rows a page). Only on [OddsFeed.PARLAY].
+     */
+    suspend fun bulkProps(sportKey: String, markets: List<String>, bookmakers: List<String>, offset: Int = 0): Answer<ParlayProps.Page> {
+        check(feed == OddsFeed.PARLAY) { "Only ParlayAPI serves a league's props in one call" }
+        return call(
+            path = "/sports/$sportKey/props",
+            params = listOf(
+                "markets" to markets.joinToString(","), "bookmakers" to bookmakers.filter { it != "novig" }.distinct().joinToString(","),
+                "oddsFormat" to "american", "limit" to ParlayProps.PAGE.toString(), "offset" to offset.toString(),
+            ),
+            cost = ParlayProps.COST,
+            what = "$sportKey props",
+            notFound = ParlayProps.Page(0, emptyList()),
+            parse = { ParlayProps.parse(it, json, sportKey, clock()) },
+            charged = { ParlayProps.COST },
+        )
+    }
+
     /** A call's result plus the key's credit headers. */
     class Answer<T>(val value: T, val remaining: Int?, val used: Int?)
 
