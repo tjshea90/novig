@@ -420,22 +420,22 @@ class ApiBettingController(
         if (c.trading == null) return
         scope.launch {
             val balance = readBalance() ?: return@launch
-            var replan = false
+            var planAgain = false
             state.update { s ->
-                replan = false
+                planAgain = false
                 val cur = s.betSheet
                 val next = if (cur == null || cur.placing || cur.result != null) cur else {
                     val stake = if (cur.stakeChosen) cur.stake else BetAmount.starting(settings().apiBetStake, settings().apiMaxStake, balance)
                     if (kotlin.math.abs(stake - cur.stake) < 1e-9) cur.copy(balance = balance)
                     else {
                         // A sheet still finding its bet plans with the new amount once it's found; one that has it plans again now.
-                        replan = cur.target != null && !cur.resolving
+                        planAgain = cur.target != null && !cur.resolving
                         cur.copy(stake = stake, balance = balance, plan = null, refusal = null)
                     }
                 }
                 s.copy(betting = s.betting.copy(balance = balance), betSheet = next)
             }
-            if (replan) {
+            if (planAgain) {
                 betJob?.cancel()
                 betJob = scope.launch { replan() }
             }
