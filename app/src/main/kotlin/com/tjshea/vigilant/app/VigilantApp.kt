@@ -223,7 +223,9 @@ class AppContainer(private val app: Application) {
      */
     val espnCloses = com.tjshea.vigilant.data.tracker.EspnCloses(http, json)
     val novigCloses = com.tjshea.vigilant.data.tracker.NovigTradeCloses(http, json)
-    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(espnCloses, novigCloses))
+    /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when Tj has a ParlayAPI key; nothing without one. */
+    val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, { keyStore.current(ApiProvider.PARLAY) }, json)
+    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(parlayCloses, espnCloses, novigCloses))
 
     /** The last back-fill's report (this process), for Diagnostics. */
     @Volatile var lastBackfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null
