@@ -506,6 +506,7 @@ class ApiBettingController(
         val amount = stake.coerceIn(0.0, settings().apiMaxStake)
         if (sheet.stakeChosen && kotlin.math.abs(amount - sheet.stake) < 1e-9 && (sheet.plan != null || sheet.refusal != null)) return
         state.update { it.copy(betSheet = sheet.copy(stake = amount, stakeChosen = true, plan = null, refusal = null)) }
+        System.out.println("DBG choose amount=$amount target=${sheet.target != null} resolving=${sheet.resolving}")
         if (sheet.target == null || sheet.resolving) return // planned once the bet is found
         betJob?.cancel()
         betJob = scope.launch {
@@ -534,6 +535,7 @@ class ApiBettingController(
 
     private suspend fun replan() {
         val sheet = state.value.betSheet ?: return
+        System.out.println("DBG replan start stake=${sheet.stake} t=${Thread.currentThread().name}")
         val target = sheet.target ?: return
         val placer = placer() ?: return
         val result = try {
@@ -543,8 +545,10 @@ class ApiBettingController(
         } catch (e: Exception) {
             PlanResult.Refused("Couldn't check the price: ${e.message ?: e.javaClass.simpleName}")
         }
+        System.out.println("DBG replan result stake=${sheet.stake} $result")
         state.update { s ->
             val cur = s.betSheet ?: return@update s
+            System.out.println("DBG replan update cur=${cur.stake} mine=${sheet.stake} sameTarget=${cur.target === target}")
             if (cur.stake != sheet.stake || cur.target !== target) s // The sheet moved on (a new stake, another bet): this answer is old.
             else s.copy(betSheet = when (result) {
                 is PlanResult.Ready -> cur.copy(plan = result.plan, refusal = null)
