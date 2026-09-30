@@ -143,6 +143,18 @@ fun BetSheetContent(
             )
             insight.evAtBet?.let { LabeledValue("EV when bet", Format.evPercent(it)) }
             insight.fairAtBet?.let { LabeledValue("Fair when bet", "${Format.american(it)} · ${Format.percent(it)}") }
+            // The game has started: its closing line and CLV, whichever way it was found (Tj, 2026-09-30).
+            if (!open || now >= bet.startsTs) {
+                val close = com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(bet, now)
+                if (close != null) {
+                    val clv = close.first / bet.cost - 1.0
+                    LabeledValue("CLV", Format.evPercent(clv), valueColor = moneyColor(clv))
+                    LabeledValue("Close (${com.tjshea.vigilant.data.tracker.ClosingLine.sourceLabel(close.second)})", "${Format.american(close.first)} · ${Format.percent(close.first)}")
+                }
+            }
+        }
+        if ((!open || now >= bet.startsTs) && com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(bet, now) == null) {
+            Caption(TrackerText.closeMissing(bet, now))
         }
 
         // ---- The fair price now against it ----

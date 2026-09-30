@@ -16,6 +16,17 @@ object TrackerText {
 
     // ---- closing line value (Tj, 2026-09-29) --------------------------------------------------------------------------
 
+    /** Why a started bet shows no close yet, and whether one is still being looked for (ESPN, Novig's trades; [CloseBackfill]). */
+    fun closeMissing(b: TrackedBet, now: Long): String {
+        val note = b.closeNote
+        return when {
+            b.createdAtMs >= b.startsTs -> "No closing line: bet after the start."
+            b.closeFinal -> "No closing line found" + (note?.let { ": $it" } ?: "") + "."
+            note != null -> "Closing line not found yet ($note): looked ${Format.age(b.closeLookedAtMs, now)}, looked again every few hours."
+            else -> "Closing line: looked for after the start (ESPN's closing odds, then Novig's trades the next morning)."
+        }
+    }
+
     /** The CLV card's numbers in one line (its accessibility text, and Diagnostics'). */
     fun clvLine(s: com.tjshea.vigilant.data.tracker.ClvStats): String =
         "Beat the close " + (s.beatShare?.let { "${Format.percent(it, 0)} (${s.beat} of ${s.closed})" } ?: "–") +
