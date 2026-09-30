@@ -775,6 +775,7 @@ class Scanner(
         var reused = 0
         var standingBy = 0
         var error: String? = null
+        var heldBack: String? = null
         val requestKey = requestKey(source, settings)
         // Never longer than a couple of minutes, whatever the feed or Settings say (RESEARCH.md §24).
         val reuseMs = minOf(source.reuseMs(settings), Freshness.MAX_REUSE_MS)
@@ -823,6 +824,11 @@ class Scanner(
                 val message = e.message ?: source.displayName
                 if (error == null) errors.addSync(message)
                 error = message
+            } catch (e: com.tjshea.vigilant.data.keys.CreditsHeldBackException) {
+                // Its credits are paced (ParlayAPI: a day's share, the last few kept for closing lines): the other feeds price this
+                // league; its last answer stays until it's too old to (Freshness), as with any feed between refreshes.
+                standingBy++
+                heldBack = e.message
             } catch (e: Exception) {
                 val message = when (e) {
                     is AllKeysExhaustedException, is ReferenceException -> e.message ?: source.displayName
@@ -838,7 +844,7 @@ class Scanner(
             }
             onCall(league)
         }
-        return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy)
+        return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy, heldBack)
     }
 
     /**
