@@ -76,6 +76,10 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.CheckOddsStats
+import androidx.compose.material3.Switch
+import com.tjshea.vigilant.data.tracker.ClvStats
+import com.tjshea.vigilant.data.tracker.ClvPeriod
+import com.tjshea.vigilant.data.tracker.ClosingLine
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerBreakdown
@@ -396,8 +400,8 @@ internal fun moneyColor(v: Double): Color = when {
 }
 
 @Composable
-private fun StatsCard(content: @Composable () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), shape = RoundedCornerShape(14.dp)) {
+private fun StatsCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), shape = RoundedCornerShape(14.dp), modifier = modifier) {
         Column(Modifier.padding(14.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) { content() }
     }
 }

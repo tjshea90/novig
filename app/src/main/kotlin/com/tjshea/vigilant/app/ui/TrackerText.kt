@@ -14,6 +14,26 @@ import kotlin.math.abs
 /** The Tracker's sentences, free of Compose so they're testable: what an open bet is waiting for, what a result means. */
 object TrackerText {
 
+    // ---- closing line value (Tj, 2026-09-29) --------------------------------------------------------------------------
+
+    /** The CLV card's numbers in one line (its accessibility text, and Diagnostics'). */
+    fun clvLine(s: com.tjshea.vigilant.data.tracker.ClvStats): String =
+        "Beat the close " + (s.beatShare?.let { "${Format.percent(it, 0)} (${s.beat} of ${s.closed})" } ?: "–") +
+            " · avg vs close " + (s.averageClv?.let(Format::evPercentShort) ?: "–") +
+            " · avg EV at bet " + (s.averageEvAtBet?.let(Format::evPercentShort) ?: "–")
+
+    /** What the CLV card counts and doesn't: bets with a close, waiting for one, started without one, outliers. */
+    fun clvCounts(s: com.tjshea.vigilant.data.tracker.ClvStats): String = listOfNotNull(
+        "${s.closed} bet${if (s.closed == 1) "" else "s"} with a true close",
+        "${s.waiting} waiting for their close (game not started)".takeIf { s.waiting > 0 },
+        "${s.missed} started with no close read".takeIf { s.missed > 0 },
+        when {
+            s.outliers == 0 -> null
+            s.outliersLeftOut -> "${s.outliers} over ±${Format.percent(com.tjshea.vigilant.data.tracker.ClosingLine.OUTLIER_CLV, 0)} left out"
+            else -> "${s.outliers} over ±${Format.percent(com.tjshea.vigilant.data.tracker.ClosingLine.OUTLIER_CLV, 0)} included"
+        },
+    ).joinToString(" · ")
+
     // ---- the "Check odds now" counter (Tj, 2026-09-29) -----------------------------------------------------------------
 
     /** "12 +EV · 5 −EV · 71% +EV": open bets re-priced in this check, by whether they're +EV at the price placed. */
