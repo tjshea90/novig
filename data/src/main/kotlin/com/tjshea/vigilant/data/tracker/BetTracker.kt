@@ -64,6 +64,8 @@ data class TrackedBet(
     val closeVia: String? = null,
     val closeNote: String? = null,
     val closeLookedAtMs: Long? = null,
+    /** Found, or every source said it never will have it: [CloseBackfill] looks no more. */
+    val closeFinal: Boolean = false,
     /** "vigilant" (a +EV card or a Vigilant bet's ✓) or "cno" (a CNO bet's ✓). */
     val source: String = BetTracker.SOURCE_VIGILANT,
     /** The widget/CNO-tab key of the ✓ that logged it ("cno:<row key>"): Undo removes the bet. */
