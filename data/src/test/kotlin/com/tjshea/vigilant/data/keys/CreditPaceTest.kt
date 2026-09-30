@@ -84,4 +84,19 @@ class CreditPaceTest {
         }
         assertEquals("ParlayAPI is on its free plan: its credits are kept for closing lines (scans use a paid plan's).", e.message)
     }
+
+    @Test
+    fun `the meter says what scans can still spend today, or that a free key is for closes`() {
+        val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
+        val book = ProviderUsage(keys = mapOf("a" to starter(5_000), "f" to KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000)))
+        val both = UsageViews.build(QuotaPolicy.PARLAY, listOf("a", "f"), book, now, pace)
+        assertEquals(15_000 - (300 + 19_700 * 20 / 30), both.scanShareToday)
+        assertEquals(false, both.scansFreeOnly)
+        val free = UsageViews.build(QuotaPolicy.PARLAY, listOf("f"), book, now, pace)
+        assertEquals(true, free.scansFreeOnly)
+        assertEquals(null, free.scanShareToday)
+        // Not heard from yet: no figure to show.
+        assertEquals(null, UsageViews.build(QuotaPolicy.PARLAY, listOf("new"), book, now, pace).scanShareToday)
+        assertEquals(null, UsageViews.build(QuotaPolicy.ODDS_API, listOf("a"), book, now).scanShareToday)
+    }
 }
