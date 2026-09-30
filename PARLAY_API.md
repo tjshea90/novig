@@ -205,6 +205,15 @@ unless the task says so, and only while `useParlay` is on with a key.
   **The Odds API** (10 US books, about 1 credit) only when neither found another book. One line per book (a current price first, then
   two-sided); prices past the freshness limit listed apart with their age, never counted; Novig's live price is the judged row. The scans'
   own readers are unchanged (they still need both sides for a fair line).
+- **Scans' props book list widened (v0.34.0, TASKS.md T2; measured 2026-09-30 ~15:40Z):** `GET /v1/bookmakers` lists 36 keys: pinnacle,
+  superbet, bookmaker_eu, betonline, draftkings, fanduel, betmgm, caesars, fanatics, bet365, betrivers, bovada, novig, prophetx, polymarket,
+  kalshi, robinhood, prizepicks, underdog, sleeper, fliff, parlayplay, betr, hardrock, parx, pick6, unibet(_be/_nl), pmu, betrivers_ca,
+  rushbet, betway(_mz), tenbet, sportsbet_au. **An unknown key in `bookmakers` refuses the whole call** (HTTP 400 `UNKNOWN_BOOKMAKER`, e.g.
+  `circasports`). `ParlayProps.BOOKS` is now pinnacle, draftkings, fanduel, betmgm, caesars, fanatics, bet365, betrivers, bovada, betonline,
+  prophetx, fliff, hardrock, parx: a whole MLB slate (14 markets, `maxAgeSec=600`) was 1,453 rows, one page, still 3 credits, with two-sided
+  lines from bet365 257, BetMGM 222, DraftKings 122, ProphetX 122, Fanatics 121, Caesars 49 (79 two-sided home-run lines). Live Check odds
+  now test (`LiveCheckOddsPropsTest`, 15 random real MLB prop bets): 6 refreshed before, 10 after (Vigilant's read + ParlayAPI's every-book
+  read); the other 5 were lines no book prices (Novig's alternate lines, a FanDuel-only "Yes").
 
 ### 6.6 Line-movement chart (M6) — `GET /v1/sports/{s}/line-movement?eventId=&market=&player=&hours=`, 2 credits
 - **Unreliable (2026-09-30):** props lookups answered 503 `LINE_MOVEMENT_TIMEOUT` three times (**charged 2 credits each**), a moneyline
