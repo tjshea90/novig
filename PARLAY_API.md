@@ -153,8 +153,9 @@ unless the task says so, and only while `useParlay` is on with a key.
   name or home/away"), so a game listed the other way round can't flip it. Prop keys: the spec's canonical list (`GET /v1/meta/markets`,
   public: `player_pass_attempts`, `batter_hits`, …) is what Vigilant stores, but the one real prop verdict used the board's
   `player_passing_attempts` and answered with a fair price, so the key a `/props` answer actually used for the stat is preferred
-  (`ParlayMarketKeys`, book-prefixed names like `prophetx_…` ignored), the canonical one otherwise. **Unverified:** whether the canonical
-  key answers too (probe once with a key).
+  (`ParlayMarketKeys`, book-prefixed names like `prophetx_…` ignored), the canonical one otherwise. **Verified 2026-09-30:** the canonical
+  key answers too (`player_rush_yds`, Aaron Rodgers Over 1.5 at −107: PASS, fair +113 from Novig itself, 6 books; sample
+  `parlay-verdict-prop-canonical.json`).
 - Also in the spec (2026-09-30): `GET /v1/try/verdict` — **free, no key**, 60/hour per IP, US books, no staking/movement. Not used (a demo
   endpoint; Tj asked for the 5-credit call). A cheaper second opinion if Tj ever wants one.
 
