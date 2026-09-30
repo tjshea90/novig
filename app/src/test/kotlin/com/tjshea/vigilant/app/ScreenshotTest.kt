@@ -187,11 +187,56 @@ class ScreenshotTest {
         )
         val rows = plays.map { it.row(startsAtMs = SampleScan.NOW + 5 * 3_600_000L) }
         val live = mapOf(rows[0].key to com.tjshea.vigilant.data.cno.LivePrice(950, 25.0, 0.045, SampleScan.NOW), rows[1].key to com.tjshea.vigilant.data.cno.LivePrice(900, 10.0, 0.06, SampleScan.NOW))
+        val picks = com.tjshea.vigilant.data.reference.ParlayPick.priced(plays, rows, live)
+        // CNO lists Kelly's bet (fair +800) and Vigilant has read it (TASKS.md P2); Happ is on neither.
+        val cnoRow = com.tjshea.vigilant.data.cno.CnoRow(
+            ev = 0.03, startsAtMs = rows[0].startsAtMs, sport = "Baseball", league = "MLB", event = rows[0].event, market = rows[0].market, bet = rows[0].bet,
+            odds = 950, available = 20.0, book = "Novig", fairOdds = 800, books = 5, gameUrl = "https://crazyninjaodds.com/game?side_id=9",
+        )
         val s = SampleScan.state(SampleScan.settings.copy(useParlay = true, maxOdds = 0)).copy(
             parlayKeys = listOf("pk-FAKE-0000"),
-            parlayPicks = com.tjshea.vigilant.app.ui.ParlayPicksUi(picks = com.tjshea.vigilant.data.reference.ParlayPick.priced(plays, rows, live), readAtMs = SampleScan.NOW - 60_000),
+            parlayPicks = com.tjshea.vigilant.app.ui.ParlayPicksUi(
+                picks = picks, readAtMs = SampleScan.NOW - 60_000,
+                vigilant = mapOf(picks[0].key to com.tjshea.vigilant.data.tracker.OpenBetPricer.FairRead(0.10, SampleScan.NOW - 20_000, null)),
+            ),
+            cno = com.tjshea.vigilant.data.cno.CnoState(snapshot = com.tjshea.vigilant.data.cno.CnoSnapshot("https://crazyninjaodds.com/view", listOf(cnoRow), SampleScan.NOW - 30_000)),
         ).indexed(SampleScan.NOW)
-        shoot("1g_feed_parlay_picks") { FeedScreen(s, {}, {}, {}, { _, _ -> }, parlay = com.tjshea.vigilant.app.ui.ParlayPickActions()) }
+        // Betting through Novig's API set up: each pick has its Bet button (TASKS.md P1).
+        shoot("1g_feed_parlay_picks") {
+            androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalApiBet provides com.tjshea.vigilant.app.ui.ApiBetActions(true, {}, {})) {
+                FeedScreen(s, {}, {}, {}, { _, _ -> }, parlay = com.tjshea.vigilant.app.ui.ParlayPickActions())
+            }
+        }
+    }
+
+    /** A tapped ParlayAPI pick's sheet (TASKS.md P4): the three EVs, every book's odds from ParlayAPI's books, Vigilant's verdict, Bet / Open. */
+    @Config(qualifiers = "w393dp-h1600dp-xxhdpi")
+    @Test fun parlayPickSheet() {
+        val play = com.tjshea.vigilant.data.reference.ParlayPlay("baseball_mlb", "MLB", "Carson Kelly", true, 0.5, "Home Runs", null, "Chicago Cubs", "San Diego Padres", "player_home_runs", 900, 2122, 5.5, "BET", 3)
+        val row = play.row(startsAtMs = SampleScan.NOW + 5 * 3_600_000L)
+        val p = com.tjshea.vigilant.data.reference.ParlayPick.priced(listOf(play), listOf(row), mapOf(row.key to com.tjshea.vigilant.data.cno.LivePrice(950, 25.0, 0.045, SampleScan.NOW))).single()
+        val view = com.tjshea.vigilant.data.cno.CnoBooksView(
+            bet = row.bet, otherBet = "Carson Kelly Under 0.5",
+            prices = listOf(
+                com.tjshea.vigilant.data.cno.CnoBookPrice("PN", 800, null, -1400, null), com.tjshea.vigilant.data.cno.CnoBookPrice("DK", 750, null, -1300, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("FD", 820, null, -1500, null), com.tjshea.vigilant.data.cno.CnoBookPrice("CZR", 700, null, -1200, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("NV", 900, 10.0, null, null),
+            ),
+            fetchedAtMs = SampleScan.NOW - 10_000,
+        )
+        val reads = com.tjshea.vigilant.app.ui.PickReads(
+            cno = com.tjshea.vigilant.data.reference.ParlayCompare.Read.none("not on CNO's +EV list"),
+            vigilant = com.tjshea.vigilant.data.reference.ParlayCompare.Read(0.05, 0.10, SampleScan.NOW - 20_000, null),
+        )
+        shoot("1h_parlay_pick_sheet") {
+            androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalApiBet provides com.tjshea.vigilant.app.ui.ApiBetActions(true, {}, {})) {
+                com.tjshea.vigilant.app.ui.ParlayPickDetail(
+                    p, SampleScan.settings, SampleScan.NOW, reads,
+                    com.tjshea.vigilant.app.ui.PickBooks(com.tjshea.vigilant.data.cno.CnoBooksState(view = view), fromCno = false),
+                    onPlaced = {},
+                )
+            }
+        }
     }
 
     /** ParlayAPI's credits a day under its meter (v0.30.0, PARLAY_API.md §6.2). */
