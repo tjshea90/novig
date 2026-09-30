@@ -348,7 +348,8 @@ class CreditPace(
 ) {
     /** Credits [u] must still hold after a call at [now]. */
     fun floor(u: KeyUsage, now: Long): Int {
-        val limit = u.allowance(policy) ?: return reserve
+        // Until the server has said what the key's plan is (its first answer's used + remaining), only the reserve: that first call tells.
+        val limit = u.limit ?: return reserve
         if (limit <= freeLimit) return FREE_ONLY
         val start = u.periodStart.takeIf { it > 0 } ?: policy.periodStart(now)
         val reset = policy.nextReset(start)
