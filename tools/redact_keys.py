@@ -4,7 +4,7 @@
 Why: capture_inbox.sh commits every message Tj sends to a PUBLIC repo, and tools/secretscan.sh only knows a few providers' key
 shapes (Anthropic, GitHub, Google, AWS, Slack). A ParlayAPI, Odds API, PropLine, PinnWire or Novig key pasted into chat would have
 been pushed as-is (found 2026-09-30, when Tj offered to share his ParlayAPI key). So: any word of 24+ key characters that mixes
-letters and digits (and isn't part of a URL path), and any value after key=/apiKey=/token=/secret=, is replaced by a marker that
+letters and digits in a stretch of 16+ (and isn't part of a URL path), and any value after key=/apiKey=/token=/secret=, is replaced by a marker that
 keeps its last 4 characters (the same ones Diagnostics shows), so the message still reads.
 
 Usage: python3 tools/redact_keys.py < text > text   (or import redact)
@@ -25,7 +25,8 @@ def redact(text: str) -> str:
 
     def word(m: "re.Match[str]") -> str:
         t = m.group(0)
-        if re.search(r"[0-9]", t) and re.search(r"[A-Za-z]", t):
+        # A key has a long stretch mixing letters and digits ("9f8e7d6c5b4a3928"); a sport key or a slug is words and a year.
+        if any(len(seg) >= 16 and re.search(r"[0-9]", seg) and re.search(r"[A-Za-z]", seg) for seg in re.split(r"[_-]", t)):
             return _mask(t)
         return t
 
