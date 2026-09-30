@@ -2713,3 +2713,8 @@ Make sure the app is making full use of parlayapi's features and speeds. Study t
 ```
 Make sure the app can read my parlayAPI usage credits remaining because right now in the app it says 20,000 credits left even though it used credits 
 ```
+
+## 2026-09-30T04:18:12Z
+```
+Thoroughly research parlayapi docs to get endpoints and everything matched and all commands and usage correct
+```
