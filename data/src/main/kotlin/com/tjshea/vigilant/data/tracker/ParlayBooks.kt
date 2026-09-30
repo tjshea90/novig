@@ -3,17 +3,18 @@ package com.tjshea.vigilant.data.tracker
 import com.tjshea.vigilant.data.cno.CnoBookPrice
 import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoBooksView
-import com.tjshea.vigilant.data.cno.NovigText
 import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.match.TeamMatcher
+import com.tjshea.vigilant.data.novig.NovigText
 import com.tjshea.vigilant.data.reference.LineKind
-import com.tjshea.vigilant.data.reference.ParlayProps
+import com.tjshea.vigilant.data.reference.ParlayPropsSource
 import com.tjshea.vigilant.data.reference.RefBookMarket
 import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.Leagues
+import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.Odds
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -33,6 +34,8 @@ class ParlayBooks(
 ) {
     private class Kept(val atMs: Long, val snap: RefSnapshot?)
 
+    private val props = ParlayPropsSource(client)
+
     private val kept = HashMap<String, Kept>()
     private val mutex = Mutex()
 
@@ -48,9 +51,10 @@ class ParlayBooks(
         val pick = BetGrader.pickOf(bet) ?: return null
         val sport = league.oddsApiSportKey
         val snap = when (pick) {
-            is BetGrader.Pick.Prop -> snapshot("props:$sport") { client.bulkProps(sport, com.tjshea.vigilant.data.scanner.PropStats.parlayMarkets(sport).map { it.first }.distinct(), ParlayProps.BOOKS).value.let { RefSnapshot(sport, it.events, clock()) } }
+            // Every page of the league's props, as a scan reads them.
+            is BetGrader.Pick.Prop -> snapshot("props:$sport") { props.odds(league, ScanSettings()) }
             is BetGrader.Pick.Moneyline, is BetGrader.Pick.Spread, is BetGrader.Pick.Total ->
-                snapshot("odds:$sport") { client.fetch(sport, client.booksFor(com.tjshea.vigilant.data.scanner.ScanSettings()), GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS) }
+                snapshot("odds:$sport") { client.fetch(sport, client.booksFor(ScanSettings()), GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS) }
             else -> null
         } ?: return null
         return viewOf(snap, bet, pick, clock())
