@@ -1,0 +1,110 @@
+[
+ {
+  "event_id": "02466c20070007c5fc3867453fa291ce",
+  "home_team": "Cleveland Browns",
+  "away_team": "Pittsburgh Steelers",
+  "matched_by": "team",
+  "source": "underdog",
+  "player": "Aaron Rodgers",
+  "market_key": "player_rush_yards",
+  "line": 0.5,
+  "snapshots": [
+   {
+    "timestamp_ms": 1790745898463,
+    "time": "2026-09-30T05:24:58.463000+00:00",
+    "over_price": -136,
+    "under_price": 111,
+    "line": 0.5
+   },
+   {
+    "timestamp_ms": 1790746142129,
+    "time": "2026-09-30T05:29:02.129000+00:00",
+    "over_price": -136,
+    "under_price": 111,
+    "line": 0.5
+   },
+   {
+    "timestamp_ms": 1790746403087,
+    "time": "2026-09-30T05:33:23.087000+00:00",
+    "over_price": -136,
+    "under_price": 111,
+    "line": 0.5
+   },
+   {
+    "timestamp_ms": 1790746645548,
+    "time": "2026-09-30T05:37:25.548000+00:00",
+    "over_price": -136,
+    "under_price": 111,
+    "line": 0.5
+   },
+   {
+    "timestamp_ms": 1790749314152,
+    "time": "2026-09-30T06:21:54.152000+00:00",
+    "over_price": -136,
+    "under_price": 111,
+    "line": 0.5
+   }
+  ],
+  "count": 15,
+  "opening_over": -136,
+  "current_over": -136,
+  "over_movement": 0,
+  "opening_under": 111,
+  "current_under": 111,
+  "hours_tracked": 0.95
+ },
+ {
+  "event_id": "02466c20070007c5fc3867453fa291ce",
+  "home_team": "Cleveland Browns",
+  "away_team": "Pittsburgh Steelers",
+  "matched_by": "team",
+  "source": "pick6",
+  "player": "Aaron Rodgers",
+  "market_key": "player_rush_yds",
+  "line": 1.5,
+  "snapshots": [
+   {
+    "timestamp_ms": 1790745944877,
+    "time": "2026-09-30T05:25:44.877000+00:00",
+    "over_price": null,
+    "under_price": null,
+    "line": 1.5
+   },
+   {
+    "timestamp_ms": 1790746042045,
+    "time": "2026-09-30T05:27:22.045000+00:00",
+    "over_price": null,
+    "under_price": null,
+    "line": 1.5
+   },
+   {
+    "timestamp_ms": 1790746139944,
+    "time": "2026-09-30T05:28:59.944000+00:00",
+    "over_price": null,
+    "under_price": null,
+    "line": 1.5
+   },
+   {
+    "timestamp_ms": 1790746241126,
+    "time": "2026-09-30T05:30:41.126000+00:00",
+    "over_price": null,
+    "under_price": null,
+    "line": 1.5
+   },
+   {
+    "timestamp_ms": 1790749400655,
+    "time": "2026-09-30T06:23:20.655000+00:00",
+    "over_price": null,
+    "under_price": null,
+    "line": 1.5
+   }
+  ],
+  "count": 36,
+  "opening_over": null,
+  "current_over": null,
+  "over_movement": null,
+  "opening_under": null,
+  "current_under": null,
+  "hours_tracked": 0.96
+ }
+]
