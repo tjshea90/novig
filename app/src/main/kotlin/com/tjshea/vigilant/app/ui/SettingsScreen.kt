@@ -469,10 +469,11 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
             "whole league's player props and alternate lines in one call each, and Pinnacle's closing lines for your CLV. Free key at " +
             "parlay-api.com (1,000 credits a month: closing lines only); \$5 a month (20,000) for scans too."
         else "Pinnacle and 9 more books (3 credits a league; 5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are " +
-            "off) and every book's player props (3 a league) " +
+            "off), every book's player props (3 a league) and 1st-half lines (2 a league, only where Novig lists them) " +
             "each scan, paced to a day's share of your plan (background auto-scans use half of it at most), plus Pinnacle's closing " +
-            "lines for your CLV (the last 300 credits are kept for them). A free key is kept for closing lines. Off, spent or gone: the " +
-            "other feeds carry on.",
+            "lines for your CLV (the last 300 credits are kept for them). Free with it: injury tags on prop bets (1 credit a league when a " +
+            "player isn't in its props), Pinnacle's line moves, the credits-a-day chart. Only on a tap: its own picks at Novig (+EV tab, " +
+            "10 a league) and a bet's second opinion (5). A free key is kept for closing lines. Off, spent or gone: the other feeds carry on.",
         s.useParlay,
     ) { v -> onUpdate { it.copy(useParlay = v) } }
     if (s.useParlay) {
