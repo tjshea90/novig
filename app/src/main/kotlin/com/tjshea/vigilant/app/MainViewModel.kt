@@ -424,6 +424,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch { keepInjuryTags() }
         viewModelScope.launch { keepMovers() }
+        viewModelScope.launch { c.parlayMovers.boards.collect { b -> _state.update { if (it.movers == b) it else it.copy(movers = b) } } }
         viewModelScope.launch { keepLineMoves() }
         viewModelScope.launch { c.parlayAccount.history.collect { h -> _state.update { it.copy(parlayHistory = h) } } }
         // Nothing of CNO's is read before the settings say whether scanning is paused, or while it is
@@ -477,7 +478,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * while Vigilant is on screen and ParlayAPI is on, and again at once when the leagues change.
      */
     private suspend fun keepMovers() {
-        launch { c.parlayMovers.boards.collect { b -> _state.update { if (it.movers == b) it else it.copy(movers = b) } } }
         state.map { s -> if (s.loaded && s.settings.useParlay) s.settings.leagues else null }.distinctUntilChanged().collectLatest { leagues ->
             val sports = leagues.orEmpty().mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it)?.takeIf { l -> l.oddsApiListed }?.oddsApiSportKey }.distinct()
             if (sports.isEmpty()) {
