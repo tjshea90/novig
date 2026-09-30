@@ -803,9 +803,11 @@ fun ClosingLineCard(
         Caption(TrackerText.clvCounts(s))
         Caption(
             "The close is the devigged fair line read in the last ${ClosingLine.TRUE_CLOSE_MS / 60_000} minutes before the start: Vigilant reads it about " +
-                "${ClosingLine.LEAD_MS / 60_000} minutes before each of your games, even when it's closed. \"Avg vs close\" is how much better your odds were " +
-                "than the closing odds, averaged over the bets. Beating the close is the best early sign your edges are real. This card has its own " +
-                "period; the one at the top doesn't change it.",
+                "${ClosingLine.LEAD_MS / 60_000} minutes before each of your games, even when it's closed. If the phone was off, it's found afterwards, " +
+                "hours or days later: ESPN's closing odds (moneylines, spreads, totals) right after the start, and Novig's own last trades before the " +
+                "start (every market, props too) the next morning on Wi-Fi. \"Avg vs close\" is how much better your odds were than the closing odds, " +
+                "averaged over the bets. Beating the close is the best early sign your edges are real. This card has its own period; the one at the " +
+                "top doesn't change it.",
         )
     }
 }

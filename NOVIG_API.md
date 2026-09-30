@@ -322,10 +322,16 @@ Vigilant's own rows use `novigapp://events/<outcomeId>` the same way. Not checke
 league, marketType, tradeType, legs, cost, qty, side`. `/<date>/markets.csv` has
 `date, marketId, reportTicker, openInterest, dailyVolume, open, high, low, close,
 status`. Each file covers one Eastern-time day and publishes around 5am ET the next day.
-Data runs from 2026-08-03 through the latest day checked (2026-09-23). The data is anonymized. Observed: in
+Data runs from 2026-08-03 through the latest day checked (2026-09-28, checked 2026-09-30). The data is anonymized. Observed: in
 `trades.csv`, `cost`/`qty` look like **dollars** (e.g. `qty 33.53`), not
 contract counts. Confirm before relying on it. Read the header row; Novig says
 columns may be added.
+
+**Verified 2026-09-30 and used for closing lines (RESEARCH.md §42, `NovigTradeCloses`):** a day's file is ~36 MB / ~240k rows, strictly
+sorted by `timestamp` (ISO, with or without milliseconds), served with `Accept-Ranges: bytes` (a `Range` request answers 206 with
+`Content-Range: bytes a-b/<size>`). A STRAIGHT (`legs` 1) trade is one TAKER row on the outcome bought at `cost/qty` (the price per $1 of
+payout) and MAKER rows on the other outcome at `1 − price`; parlays are `COMBO` rows keyed by a parlay id. `markets.csv`'s `close` is the
+day's last trade (in-play or settled), not the pregame close. Published ~09:00Z for the Eastern day before.
 
 ## 11. Throttles (signed routes, per key; `GET /v3/limits` returns live numbers)
 

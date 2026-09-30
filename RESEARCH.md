@@ -2841,3 +2841,29 @@ every bet, open ones included. Only the background auto-scan (off by default, CN
   the capture misses that close. Inexact alarms (if Android ever withdraws exact-alarm permission) can fire late enough to miss the window.
   Historical closing prices (to back-fill old bets) would need a source that keeps price history (Kalshi candlesticks, Polymarket's
   prices-history); not built.
+
+## 42. Closing lines after the start, when the phone was off (v0.26.0, 2026-09-30; Tj: "My phone will not always be on. The app has to be able to find clv from closing lines after the games started or even days later. Espn may have the closing lines information. Check for sources that the app can use for this and implement it")
+
+**Sources checked live from the dev container, 2026-09-30:**
+
+| Source | What it keeps after the start | Markets | Cost | Verdict |
+| :- | :- | :- | :- | :- |
+| **ESPN core odds** `sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/events/{id}/competitions/{id}/odds` | The provider's (DraftKings in 2026, ESPN BET in 2025) **open / close / current** moneyline, spread (line + price) and total (line + over/under prices), for finished games and past seasons (checked: NFL 2026-09-27, 2026-09-28 MNF, 2025-10-12; NCAAF, MLB, NBA Jan 2026, MLS with a 3-way draw price). A second "Live Odds" provider has no close. | Full-game ML / spread / total | 1 scoreboard + 1 odds request per game, free, no key | **Used** (`EspnCloses`): devigged across the two closing sides; a spread/total only when it closed at the bet's own line. |
+| ESPN site scoreboard / summary | `odds` is null for final games; summary `pickcenter` keeps only the current (= close) line without open/close | — | — | Not needed |
+| ESPN core `…/odds/{provider}/propBets` | 600+ player props per NFL game, with **lines only** (`open.target`, `current.target`), no prices | Props (lines) | — | Not usable for CLV (no odds) |
+| **Novig trade history** `data.novig.com/reporting/trade-data/<ET date>/trades.csv` (+ `index.json`, `markets.csv`) | Every trade on Novig, from 2026-08-03, one file per Eastern day published ~09:00Z the next day; ~240k rows / 36 MB a day, **sorted by time**, byte ranges served (HTTP 206). Columns `timestamp, outcomeId, marketId, contractSeries, league, marketType, tradeType, legs, cost, qty, side`: a STRAIGHT trade is a TAKER row on one outcome at `cost/qty` and MAKER rows on the other at `1 − that` | Every market, props and alternate lines included, keyed by the Tracker's own outcome ids | 0.5–4 MB per kickoff's half hour (MNF 2026-09-28: 3.8 MB, 2.6 s) | **Used** (`NovigTradeCloses`): volume-weighted price of the bet's outcome in the 30 minutes before the start (pregame trades carry no fee and both sides add to 1, so it's fair already); the window is found by halving byte ranges; **Wi-Fi only**. `markets.csv`'s daily close is end-of-day (in-play/settled), not the pregame close. |
+| Novig public `catalog/markets/{id}/trades` | Newest-first trades, but a finished game's markets 404 a few hours after it ends (NOVIG_API.md) | Every market | — | Not reliable days later |
+| Kalshi `series/{s}/markets/{ticker}/candlesticks` | Hourly/minute bid/ask/price candles for settled game-winner markets (checked KXNFLGAME-26SEP28PHICHI-PHI) | Game winners mainly | free | Possible extra source; not built (ESPN + Novig cover it) |
+| Polymarket `clob …/prices-history` | Needs the token id; a probe returned an empty history | Game winners | free | Not built |
+| The Odds API historical | Paid plans only (10 credits a call) | Everything | paid | No |
+
+**Cross-check (Eagles @ Bears, 2026-09-29 00:15Z, moneyline):** ESPN DraftKings close −185 / +154 devigged = PHI 0.6225; Novig's trades
+in the last 30 minutes = PHI 0.6337 (624 trades); Kalshi's hour before ~0.65. Within a point or so of each other.
+
+**What v0.26.0 does (`CloseBackfill`, run with the grading on app open / Grade now / Check odds now and in the 3-hourly background worker):**
+every started bet without a close read before the start ([§41]) is looked for 10 minutes after its start: ESPN first (game lines, right away),
+then Novig's trades (every market, from the next morning, on Wi-Fi); "not yet" retries every 3 hours; a bet no source will ever have is
+marked and left; 60 days at most. A close read before the start still wins; the back-filled one fills the gaps. The CLV card counts closes
+by source; the bet sheet shows each started bet's close, where it came from and its CLV, or why there's none yet; Diagnostics says what the
+last look found and how many KB of Novig data it cost. Checked end to end against the real ESPN and data.novig.com
+(`LiveClosesTest`, VIGILANT_LIVE=1).
