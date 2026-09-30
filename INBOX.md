@@ -2972,3 +2972,8 @@ Notifications yes · exact alarms yes · battery unrestricted yes · draw over a
 Sep 30, 5:31:38 PM · Fair odds: ParlayAPI props: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
 Sep 30, 5:31:38 PM · Vigilant scan: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
 ```
+
+## 2026-09-30T22:10:43Z
+```
+The app just crashed a couple times. Both times it was scanning vigilant and I tried to switch tabs, which got very laggy then crashed
+```
