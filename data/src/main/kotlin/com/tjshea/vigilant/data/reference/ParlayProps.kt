@@ -88,8 +88,17 @@ object ParlayProps {
     /** Pages read at most per league: a whole NFL Sunday fits in one with these books. */
     const val MAX_PAGES = 3
 
-    /** Real sportsbooks with real two-sided prices (the pick'em apps and Novig itself left out). Pinnacle is the sharp one. */
-    val BOOKS = listOf("pinnacle", "draftkings", "fanduel", "caesars", "bovada", "prophetx")
+    /**
+     * Every real sportsbook ParlayAPI carries for US props (its `/v1/bookmakers`, 2026-09-30; an unknown key refuses the whole call, HTTP 400):
+     * the pick'em apps, the exchanges read on their own (Kalshi, Polymarket) and Novig itself left out. Pinnacle is the sharp one. Widened
+     * 2026-09-30 (Tj: "every single open bet refreshed"): with only Pinnacle, DraftKings, FanDuel, Caesars, Bovada and ProphetX, most home-run,
+     * batter-strikeout and pitcher-outs lines had no two-sided price (those books list them "Over" only); bet365, BetMGM, Fanatics, Hard Rock,
+     * Fliff and betPARX price both sides (a whole MLB slate: 1,453 rows, one page, still 3 credits).
+     */
+    val BOOKS = listOf(
+        "pinnacle", "draftkings", "fanduel", "betmgm", "caesars", "fanatics", "bet365", "betrivers", "bovada", "betonline", "prophetx",
+        "fliff", "hardrock", "parx",
+    )
 
     /**
      * One page: [rows] rows came back (a full page means there may be more), grouped into games; each player's injury report once, and
