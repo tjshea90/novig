@@ -31,10 +31,12 @@ class ParlayBooks(
     private val client: TheOddsApiClient,
     private val active: suspend () -> Boolean,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Its props answers' injury reports go here too (free). */
+    injuries: com.tjshea.vigilant.data.reference.InjuryIndex? = null,
 ) {
     private class Kept(val atMs: Long, val snap: RefSnapshot?)
 
-    private val props = ParlayPropsSource(client)
+    private val props = ParlayPropsSource(client, injuries)
 
     private val kept = HashMap<String, Kept>()
     private val mutex = Mutex()
