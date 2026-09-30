@@ -30,7 +30,7 @@ data class ParlayPlay(
     val away: String,
     val home: String,
     val marketKey: String?,
-    /** ParlayAPI's fair price for this side (American); null on an edge alert, which gives none. */
+    /** ParlayAPI's fair price for this side (American); on an edge alert (which names none), the one its edge implies. */
     val fairAmerican: Int?,
     /** The Novig price ParlayAPI listed (American): often far off Novig's own book (§5), so re-read before it's shown. */
     val listedAmerican: Int,
@@ -132,17 +132,23 @@ class ParlayBestBets(
             val root = runCatching { json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return null
             val sport = league.oddsApiSportKey
             fun play(o: JsonObject, alert: Boolean): ParlayPlay? {
-                val (player, side, line, label, away, home) = parseBet(o.str("bet") ?: return null)?.let { Six(it) } ?: return null
+                val p = parseBet(o.str("bet") ?: return null) ?: return null
+                val label = p[3]
                 val book = (if (alert) o.str("book") else o.str("best_book")) ?: "novig"
                 if (!book.equals("novig", ignoreCase = true)) return null
                 val price = (if (alert) o.num("price") else o.num("best_price"))?.toInt() ?: return null
                 val key = o.str("market_key")
                 val stat = ParlayMarkets.statOf(sport, key ?: label.lowercase().replace(' ', '_'), label)
+                val edge = o.num("edge_pct") ?: o.num("apparent_edge_pct")
+                // An edge alert names no fair price; its edge is probability points over the price's own (§5), which gives one.
+                val fair = o.num("fair_price")?.toInt() ?: edge?.let { e ->
+                    (1.0 / Odds.americanToDecimal(price) + e / 100.0).takeIf { it in 0.001..0.999 }?.let(Odds::probabilityToAmerican)
+                }
                 return ParlayPlay(
-                    sportKey = sport, league = league.novigName, player = player, over = side.equals("over", true), line = line.toDoubleOrNull() ?: return null,
-                    statLabel = label, stat = stat, away = away, home = home, marketKey = key,
-                    fairAmerican = o.num("fair_price")?.toInt(), listedAmerican = price,
-                    edgePp = o.num("edge_pct") ?: o.num("apparent_edge_pct"), verdict = o.str("verdict"), booksCompared = o.num("books_compared")?.toInt(),
+                    sportKey = sport, league = league.novigName, player = p[0], over = p[1].equals("over", true), line = p[2].toDoubleOrNull() ?: return null,
+                    statLabel = label, stat = stat, away = p[4], home = p[5], marketKey = key,
+                    fairAmerican = fair, listedAmerican = price,
+                    edgePp = edge, verdict = o.str("verdict"), booksCompared = o.num("books_compared")?.toInt(),
                     alert = alert, caveat = o.str("caveat"),
                 )
             }
@@ -153,13 +159,5 @@ class ParlayBestBets(
             return ParlayBoard(sport, plays + alerts, root.str("summary"), now)
         }
 
-        private class Six(val v: List<String>) {
-            operator fun component1() = v[0]
-            operator fun component2() = v[1]
-            operator fun component3() = v[2]
-            operator fun component4() = v[3]
-            operator fun component5() = v[4]
-            operator fun component6() = v[5]
-        }
     }
 }
