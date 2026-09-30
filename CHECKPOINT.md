@@ -1,21 +1,23 @@
-# CHECKPOINT 2150 — read me first, then TASKS.md
+# CHECKPOINT 2151 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T03:34:03Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `3c72f0fb` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T03:36:28Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `ece925eb` (this checkpoint is the commit after it)
 
 ## Just done
-H1-D Runway counts pinnapi behind PinnWire (RunwayTest); H5 maxAgeSec=600 on /props, commenceTimeTo=window+24h on ParlayAPI /odds (requestKey incl. window); best-practice degraded-mode guard ParlaySourceQuality (free, stale/missing/breach-past-stale books left out); ParlayAccountTest 9
+pre-ship: v0.28.0: ParlayAPI fixes from Tj's diagnostics and its best practices: the key's own credit count in the meter (free check, exact reset time), scans no longer held back by a late reply, a new plan paced from its first day, key sent in a header, one retry on a blip, stale books left out, props and games trimmed to what can price; CNO's pause reason kept; closes re-looked for with ParlayAPI; PinnWire's runway counts pinnapi; a key pasted in chat is masked
 
 ## Do this next
-full floor; RESEARCH §44; version 0.28.0 code 56; ship; answer Tj (report findings, fixes, what I need: a dedicated second ParlayAPI key to verify shapes)
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  5cfff92b ckpt 2150: H1-D Runway counts pinnapi behind PinnWire (RunwayTest); H5 maxAgeSec=600 on
   323fcb36 ckpt 2149: H6 in: CreditHeaders (x-requests/x-credits/X-RateLimit-* monthly only, reset
   9a87d0a8 ckpt 2148: H1-C fixed: closes reopened when a new close source is active (CloseSource.i
   69e64611 ckpt 2147: H1-B fixed: CNO pause reason kept (CnoState.lastPause/At, pauseFor), Check o
@@ -25,8 +27,7 @@ full floor; RESEARCH §44; version 0.28.0 code 56; ship; answer Tj (report findi
   07ce7847 ckpt 2143: pre-release: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle'
   c5b40f47 ckpt 2142: pre-ship: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle's c
   2e0a6863 ckpt 2141: Full test findings #2-#3 fixed: CLV card copy now names Pinnacle's ParlayAPI
-  ebc4a263 ckpt 2140: Full test finding #1 fixed: background auto-scans could spend ParlayAPI's wh
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
