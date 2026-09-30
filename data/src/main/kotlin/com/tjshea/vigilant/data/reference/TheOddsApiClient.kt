@@ -222,6 +222,74 @@ class TheOddsApiClient(
     /** A call's result plus the key's credit headers. */
     class Answer<T>(val value: T, val remaining: Int?, val used: Int?)
 
+    /** One of ParlayAPI's other endpoints' raw reply ([parlayGet]): 2xx, 404 (nothing to find) or 503 ([busy]). */
+    class Reply(val code: Int, val body: String) {
+        /** ParlayAPI's "busy, retry shortly" (/verdict's `props_temporarily_busy`, /line-movement's `LINE_MOVEMENT_TIMEOUT`). */
+        val busy: Boolean get() = code == 503
+        val ok: Boolean get() = code in 200..299
+    }
+
+    /**
+     * One of ParlayAPI's other endpoints (injuries, verdict, best-bets, movers, line-movement, period markets; PARLAY_API.md §6) through
+     * the same key pool, pace and meter as a scan's calls. [cost] is what the call is charged; [busyCost] what a 503 "busy" answer is
+     * charged (/line-movement's are, 2 credits each: PARLAY_API.md §1). A 503 comes back to the caller ([Reply.busy]), never retried here:
+     * each endpoint says how long to wait. The credits left are read from the headers, else from the body's `credits.monthly_remaining`
+     * (/verdict and /best-bets send no credit headers). [background]: paced as auto-scan's calls are.
+     */
+    suspend fun parlayGet(path: String, params: List<Pair<String, String>>, cost: Int, what: String, busyCost: Int = 0): Answer<Reply> {
+        check(feed == OddsFeed.PARLAY) { "ParlayAPI only" }
+        spacing.withLock {
+            val wait = lastCallAt + minIntervalMs - System.currentTimeMillis()
+            if (wait > 0) delay(wait)
+            lastCallAt = System.currentTimeMillis()
+        }
+        return pool.execute(cost = cost, reserve = feed.reserve, pace = pace) { key ->
+            val url = "$baseUrl$path".toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
+            val request = Request.Builder().url(url).get().header("X-API-Key", key).build()
+            var attempt = 0
+            while (true) {
+                attempt++
+                val response = try {
+                    httpClient.newCall(request).await()
+                } catch (e: java.io.IOException) {
+                    if (attempt == 1) { delay(RETRY_AFTER_MS); continue }
+                    throw e
+                }
+                // A gateway blip is worth one retry; a 503 is the endpoint saying it's busy, which the caller waits out its own way.
+                if (attempt == 1 && (response.code == 502 || response.code == 504)) {
+                    response.close()
+                    delay(RETRY_AFTER_MS)
+                    continue
+                }
+                return@execute response.use { r ->
+                    val body = r.body?.string().orEmpty()
+                    val credits = CreditHeaders.read({ r.header(it) }, clock())
+                    val inBody = bodyCredits(body)
+                    val remaining = credits.remaining ?: inBody?.first
+                    val used = credits.used ?: inBody?.let { (left, limit) -> limit?.let { (it - left).coerceAtLeast(0) } }
+                    when (r.code) {
+                        429 -> KeyAttemptResult.RateLimited(r.header("Retry-After")?.toLongOrNull()?.times(1000) ?: 2_000, reason = "HTTP 429")
+                        401, 403 -> if (body.contains("credit_limit_exceeded") || body.contains("credit_exhausted") || body.contains("quota", true)) {
+                            KeyAttemptResult.Depleted("monthly credits used up")
+                        } else if (body.contains("HISTORICAL_LIMIT")) {
+                            throw TheOddsApiException("${feed.title} can't reach that far back on this plan ($what)")
+                        } else {
+                            KeyAttemptResult.Invalid(reason = "HTTP ${r.code}" + errorCode(body)?.let { " $it" }.orEmpty())
+                        }
+                        404 -> KeyAttemptResult.Success(Answer(Reply(404, body), remaining, used), cost = credits.cost ?: 0, remaining = remaining, used = used)
+                        503 -> KeyAttemptResult.Success(Answer(Reply(503, body), remaining, used), cost = credits.cost ?: busyCost, remaining = remaining, used = used)
+                        else -> {
+                            if (!r.isSuccessful) throw TheOddsApiException("${feed.title} failed for $what: HTTP ${r.code} ${body.take(200)}")
+                            KeyAttemptResult.Success(Answer(Reply(r.code, body), remaining, used), cost = credits.cost ?: cost, remaining = remaining, used = used, resetAtMs = credits.resetAtMs)
+                        }
+                    }
+                }
+            }
+            @Suppress("UNREACHABLE_CODE")
+            throw IllegalStateException("unreachable")
+        }
+    }
+
     private fun pickBooks(bookmakers: List<String>): List<String> =
         bookmakers.filter { it != "novig" }.distinct().take(MAX_BOOKMAKERS_ONE_REGION)
             .also { require(it.isNotEmpty()) { "Pick at least one reference sportsbook" } }
