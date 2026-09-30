@@ -386,6 +386,15 @@ class TheOddsApiClient(
         /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
         const val RETRY_AFTER_MS = 1_000L
 
+        private val MONTHLY_REMAINING = Regex("\"monthly_remaining\"\\s*:\\s*(\\d+)")
+        private val MONTHLY_LIMIT = Regex("\"monthly_limit\"\\s*:\\s*(\\d+)")
+
+        /** (credits left, the month's allowance) from an answer's `credits` object (/verdict, /best-bets), or null when it has none. */
+        fun bodyCredits(body: String): Pair<Int, Int?>? {
+            val left = MONTHLY_REMAINING.find(body)?.groupValues?.get(1)?.toIntOrNull() ?: return null
+            return left to MONTHLY_LIMIT.find(body)?.groupValues?.get(1)?.toIntOrNull()
+        }
+
         /** Past the scan's window, games still asked for: a feed's kickoff time can sit a while off Novig's. */
         const val WINDOW_SLACK_MS = 24 * 60 * 60_000L
 
