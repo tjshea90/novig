@@ -138,6 +138,12 @@ data class KeyUsage(
     val firstSeenMs: Long? = null,
     /** When the provider says this key's period resets ([CreditHeaders.resetAtMs], ParlayAPI's `X-RateLimit-Reset`): its plan's own cycle. */
     val resetAtMs: Long? = null,
+    /**
+     * Every unit this app's own calls were charged on this key, ever: never set from the provider's figures and never reset, so what a
+     * round cost is the change in it ([UsageDelta]). [used] follows the provider's count, which jumps when the app first learns it
+     * (Tj's diagnostics 2026-09-30: a new ParlayAPI key's 600 credits of the month showed as one scan's cost).
+     */
+    val charged: Long = 0,
 ) {
     /** When this key's period ends: the provider's own word when it gave one, else [policy]'s calendar. */
     fun nextReset(policy: QuotaPolicy): Long = resetAtMs ?: policy.nextReset(periodStart)
@@ -205,7 +211,7 @@ class UsageMeter(
     suspend fun recordCall(
         policy: QuotaPolicy, key: String, cost: Int, serverRemaining: Int? = null, serverUsed: Int? = null, resetAtMs: Long? = null,
     ) = edit(policy, key) { u, now ->
-        var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null, firstSeenMs = u.firstSeenMs ?: now)
+        var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null, firstSeenMs = u.firstSeenMs ?: now, charged = u.charged + cost)
         if (serverUsed != null && serverRemaining != null) {
             val drop = u.used - serverUsed
             val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE

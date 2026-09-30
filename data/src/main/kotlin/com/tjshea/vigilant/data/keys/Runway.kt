@@ -17,8 +17,13 @@ object UsageDelta {
         val calls = if (was != null && was.dayStart == now.dayStart) now.callsToday - was.callsToday else now.callsToday
         val units = now.keys.entries.sumOf { (key, u) ->
             val old = was?.keys?.get(key)
-            // A key whose period rolled (or that is new) started from nothing.
-            if (old == null || old.periodStart != u.periodStart || u.used < old.used) u.used else u.used - old.used
+            when {
+                // What this app's own calls were charged ([KeyUsage.charged]): the provider's count can jump when the app first reads it.
+                u.charged > 0 -> (u.charged - (old?.charged ?: 0L)).coerceAtLeast(0L).toInt()
+                // A ledger from before [KeyUsage.charged]: a key whose period rolled (or that is new) started from nothing.
+                old == null || old.periodStart != u.periodStart || u.used < old.used -> u.used
+                else -> u.used - old.used
+            }
         }
         if (calls <= 0 && units <= 0) null else ProviderCost(id, calls.coerceAtLeast(0), if (now.keys.isEmpty()) calls.coerceAtLeast(0) else units.coerceAtLeast(0))
     }.sortedByDescending { it.calls }
