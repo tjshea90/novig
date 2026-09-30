@@ -44,6 +44,9 @@ object Diagnostics {
         val parlayCloseRequests: Int = 0,
         /** What each ParlayAPI key said of itself (its free account check): plan, credits left, reset. */
         val parlayAccounts: Map<String, com.tjshea.vigilant.data.reference.ParlayAccount.Check> = emptyMap(),
+        /** Calls to ParlayAPI's other endpoints since the app opened, by name (injuries, movers, second opinions, picks), and players' reports kept. */
+        val parlayExtras: Map<String, Int> = emptyMap(),
+        val injuryReports: Int = 0,
     )
 
     fun report(s: UiState, x: Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
