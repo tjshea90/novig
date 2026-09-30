@@ -35,15 +35,34 @@ object ClosingLine {
 
     private const val EPS = 1e-9
 
-    /** [b]'s fair probability at the close, once its game has started ([now]) and only when it's a true close; else null. */
-    fun closeFair(b: TrackedBet, now: Long): Double? {
+    /**
+     * [b]'s fair probability at the close, once its game has started ([now]) and only when it's a true close; else null. In order: a read
+     * made in the last minutes before the start (the bet's own fair odds, [captured]); a close found afterwards in a source that keeps
+     * history ([TrackedBet.closeFair]: ESPN, Novig's trades; [CloseBackfill]); the line it was bet at, when that was in the last minutes.
+     */
+    fun closeFair(b: TrackedBet, now: Long): Double? = closeOf(b, now)?.first
+
+    /** [closeFair] and where it came from: [SOURCE_CAPTURED], [SOURCE_AT_BET], or the history source's [TrackedBet.closeVia]. */
+    fun closeOf(b: TrackedBet, now: Long): Pair<Double, String>? {
         if (now < b.startsTs || b.createdAtMs >= b.startsTs) return null
-        val seen = b.closingSeenAtMs
-        if (b.closingFair != null && seen != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS) return b.closingFair
+        captured(b)?.let { return it to SOURCE_CAPTURED }
+        if (b.closeFair != null) return b.closeFair to (b.closeVia ?: "history")
         // Bet in the last minutes before the start with nothing read since: the line it was bet at is the close.
-        if (b.fairAtBet != null && b.startsTs - b.createdAtMs <= TRUE_CLOSE_MS) return b.fairAtBet
+        if (b.fairAtBet != null && b.startsTs - b.createdAtMs <= TRUE_CLOSE_MS) return b.fairAtBet to SOURCE_AT_BET
         return null
     }
+
+    /** The fair line read in the last [TRUE_CLOSE_MS] before the start, if one was. */
+    fun captured(b: TrackedBet): Double? {
+        val seen = b.closingSeenAtMs ?: return null
+        return b.closingFair?.takeIf { seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS }
+    }
+
+    /** [closeOf]'s source for a close read before the start by Vigilant itself. */
+    const val SOURCE_CAPTURED = "captured"
+
+    /** …for a bet placed in the last minutes, closing at its own line. */
+    const val SOURCE_AT_BET = "at bet"
 
     /**
      * [b]'s closing line value: how much better its price was than the closing line, as the EV that price had at the closing fair odds

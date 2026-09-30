@@ -259,7 +259,8 @@ object BetGrader {
     private fun trim(v: Double): String = if (v == Math.floor(v)) v.toLong().toString() else v.toString()
 
     /** True: [team] is [game]'s away side; false: home; null: can't tell. */
-    private fun sideOf(team: String, game: GameScore): Boolean? = TeamMatcher.labelIsAway(team, game.away, game.home)
+    /** Whether [team] is [game]'s away side (true), home side (false), or can't be told (null). */
+    fun sideOf(team: String, game: GameScore): Boolean? = TeamMatcher.labelIsAway(team, game.away, game.home)
 
     /**
      * (home, away) points in [period]: the whole game (a tennis match's games), the first half (5 innings in

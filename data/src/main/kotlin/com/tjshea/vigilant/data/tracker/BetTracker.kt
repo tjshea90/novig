@@ -55,6 +55,15 @@ data class TrackedBet(
     val closingSeenAtMs: Long? = null,
     /** The last time the closing capture tried to read this bet just before its start ([ClosingLine]), so a failed read waits before the next. */
     val closeTriedAtMs: Long? = null,
+    /**
+     * The close found after the start from a source that keeps history ([CloseBackfill], Tj 2026-09-30: "My phone will not always be on"):
+     * the bet's side's fair probability at the start, where it came from ([CloseBackfill.VIA_ESPN] / [CloseBackfill.VIA_NOVIG] plus
+     * detail), why there's none yet ([closeNote]) and when it was last looked for.
+     */
+    val closeFair: Double? = null,
+    val closeVia: String? = null,
+    val closeNote: String? = null,
+    val closeLookedAtMs: Long? = null,
     /** "vigilant" (a +EV card or a Vigilant bet's ✓) or "cno" (a CNO bet's ✓). */
     val source: String = BetTracker.SOURCE_VIGILANT,
     /** The widget/CNO-tab key of the ✓ that logged it ("cno:<row key>"): Undo removes the bet. */
