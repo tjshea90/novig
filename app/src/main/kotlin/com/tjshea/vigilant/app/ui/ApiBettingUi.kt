@@ -409,10 +409,11 @@ fun ApiBetSheet(
     onRepeat: () -> Unit,
     onDismiss: () -> Unit,
     onAddMoney: () -> Unit = {},
+    onTypeStake: (Double) -> Unit = onStake,
 ) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = { if (!sheet.placing) onDismiss() }, sheetState = state) {
-        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney)
+        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake)
     }
 }
 
@@ -428,6 +429,8 @@ fun ApiBetSheetContent(
     onDismiss: () -> Unit,
     /** "Add money to the wallet": Settings' wallet, with what the bet is short by typed in. */
     onAddMoney: () -> Unit = {},
+    /** An amount typed in the Amount field (priced once typing pauses). */
+    onTypeStake: (Double) -> Unit = onStake,
 ) {
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp).navigationBarsPadding().testTag("apiBetSheet"),
@@ -453,7 +456,7 @@ fun ApiBetSheetContent(
         }
 
         if (!sheet.resolving && sheet.target != null) {
-            Text("Amount", style = MaterialTheme.typography.labelMedium)
+            StakeField(sheet, onTypeStake)
             val choices = (STAKE_CHOICES + sheet.stake).filter { it <= sheet.maxStake + 1e-9 && it > 0.0 }.distinct().sorted()
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 choices.forEach { c ->
@@ -518,6 +521,37 @@ fun ApiBetSheetContent(
         if (!sheet.placing) TextButton(onClick = onDismiss) { Text("Cancel") }
         Spacer(Modifier.height(4.dp))
     }
+}
+
+/**
+ * The sheet's Amount, typed (Tj, 2026-09-30: "I can type in a custom account for any bet manually"): dollars and cents up to the per-bet limit.
+ * It follows the amount when a chip or the wallet changes it, and never fights what's being typed.
+ */
+@Composable
+private fun StakeField(sheet: BetSheetUi, onTypeStake: (Double) -> Unit) {
+    var text by rememberSaveable { mutableStateOf(WalletAmount.text(sheet.stake)) }
+    // A chip, or the wallet holding less than the amount, set a new one: show it (what's typed and means the same stays as typed).
+    LaunchedEffect(sheet.stake) {
+        if (BetAmount.parse(text, sheet.maxStake)?.let { kotlin.math.abs(it - sheet.stake) < 1e-9 } != true) text = WalletAmount.text(sheet.stake)
+    }
+    val problem = BetAmount.problem(text, sheet.maxStake)
+    val walletNote = sheet.balance?.takeIf { !sheet.stakeChosen && it >= 0.01 && kotlin.math.abs(it - sheet.stake) < 0.01 }
+        ?.let { "All that's left in the wallet" }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { t ->
+            text = t.filter { it.isDigit() || it == '.' || it == ',' || it == '$' }.take(10)
+            BetAmount.parse(text, sheet.maxStake)?.let(onTypeStake)
+        },
+        label = { Text("Amount") },
+        prefix = { Text("$") },
+        singleLine = true,
+        enabled = !sheet.placing,
+        isError = problem != null,
+        supportingText = { Text(problem ?: walletNote ?: "Type any amount up to ${Format.money(sheet.maxStake)}, or pick one") },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth().testTag("betAmount"),
+    )
 }
 
 /** What an order refused for the wallet's balance says: Novig's 422 ([NovigApiException.advice]: "doesn't have enough money") or its own words. */
