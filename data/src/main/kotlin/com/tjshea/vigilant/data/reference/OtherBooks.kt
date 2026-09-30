@@ -229,7 +229,7 @@ class OtherBooks(
         }
 
         /** Names for books CNO's page has no column code for. */
-        private val TITLES = mapOf("parx" to "betPARX", "betparx" to "betPARX", "espnbet" to "ESPN BET", "ballybet" to "Bally Bet", "betway" to "Betway")
+        private val TITLES = mapOf("parx" to "betPARX", "betparx" to "betPARX", "espnbet" to "theScore Bet", "ballybet" to "Bally Bet", "betway" to "Betway")
 
         /** "Carson Kelly Over 0.5" → "Carson Kelly Under 0.5" (the other side's name, as the table heads it). */
         fun otherSide(selection: String): String? = when {
