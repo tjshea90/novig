@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.NonCancellable
+import com.tjshea.vigilant.app.ui.parlayShown
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -599,7 +600,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
             val had = _state.value.parlayPicks.books[p.key]
-            if (!force && had?.view != null && System.currentTimeMillis() - had.view.fetchedAtMs < com.tjshea.vigilant.data.tracker.ParlayBooks.KEEP_MS) return@launch
+            val keptAt = had?.view?.fetchedAtMs
+            if (!force && keptAt != null && System.currentTimeMillis() - keptAt < com.tjshea.vigilant.data.tracker.ParlayBooks.KEEP_MS) return@launch
             setPickBooks(p.key, (had ?: com.tjshea.vigilant.data.cno.CnoBooksState()).copy(loading = true, error = null))
             val view = try {
                 withContext(Dispatchers.IO) { c.parlayBooks.view(p.row.league, p.row.event, p.row.startsAtMs, p.row.market, p.row.bet) }
