@@ -126,7 +126,13 @@ fun ParlayPicksHeader(state: UiState, shown: Int, now: Long, actions: ParlayPick
                             ui.readAtMs == null -> "Its own +EV scan of player props, each checked at ${com.tjshea.vigilant.app.AppBook.name}'s price now."
                             else -> {
                                 val found = ui.picks.count { it.found }
+                                // +EV at Novig but longer than Tj's odds cap (home-run props often are): said, not silently dropped.
+                                val s = state.settings
+                                val capped = ui.picks.count { p ->
+                                    p.found && (p.ev ?: -1.0) >= s.minEvPercent && !s.withinMaxOdds(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(p.row.odds))
+                                }
                                 "${ui.picks.size} listed · $shown +EV at ${com.tjshea.vigilant.app.AppBook.name} now" +
+                                    (if (capped > 0) " · $capped over your +${s.maxOdds} odds cap" else "") +
                                     (if (ui.picks.size > found) " · ${ui.picks.size - found} not found there" else "") +
                                     " · read ${Format.age(ui.readAtMs, now)}"
                             }

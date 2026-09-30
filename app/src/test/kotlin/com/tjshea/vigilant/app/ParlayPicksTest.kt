@@ -67,7 +67,8 @@ class ParlayPicksTest {
         return ParlayPick.priced(plays, rows, live)
     }
 
-    private fun state(on: Boolean = true): UiState = SampleScan.state(SampleScan.settings.copy(useParlay = on)).copy(
+    /** [maxOdds] 0: no odds cap (the default +300 would hide these home-run props). */
+    private fun state(on: Boolean = true, maxOdds: Int = 0): UiState = SampleScan.state(SampleScan.settings.copy(useParlay = on, maxOdds = maxOdds)).copy(
         parlayKeys = listOf("pk-FAKE-0000"),
         parlayPicks = ParlayPicksUi(picks = picks(), readAtMs = now - 60_000, leagues = listOf("MLB")),
     ).indexed(now)
@@ -111,6 +112,14 @@ class ParlayPicksTest {
         assertTrue(placed!!.key.startsWith("parlay:"))
         assertEquals("Carson Kelly Over 0.5", placed!!.title)
         compose.onNodeWithText("Placed: Carson Kelly Over 0.5. Logged in the Tracker.").assertExists()
+    }
+
+    @Test
+    fun `plays over Tj's odds cap are left out and counted`() {
+        val s = state(maxOdds = 300)
+        assertTrue(s.parlayShown(now).isEmpty())
+        screen(s, ParlayPickActions())
+        compose.onNodeWithText("4 listed · 0 +EV at Novig now · 2 over your +300 odds cap · 1 not found there · read 1m ago").assertExists()
     }
 
     @Test
