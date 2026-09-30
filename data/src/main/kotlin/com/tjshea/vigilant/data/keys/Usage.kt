@@ -252,7 +252,7 @@ class UsageMeter(
         }
         // An account read sent before a call whose answer is already kept (both in flight at once): the call's figures are newer.
         val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
-        if (used != null && u.remaining != null && used < u.used && u.used - used <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) return@edit x
+        if (!exhausted && !inactive && used != null && u.remaining != null && used < u.used && u.used - used <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) return@edit x
         val lim = limit ?: if (remaining != null && used != null) remaining + used else x.limit
         if (remaining != null) x = x.copy(remaining = remaining, used = used ?: lim?.let { (it - remaining).coerceAtLeast(0) } ?: x.used, limit = lim)
         else if (lim != null) x = x.copy(limit = lim)
