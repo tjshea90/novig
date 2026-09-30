@@ -404,13 +404,20 @@ class AppContainer(private val app: Application) {
         baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY,
         quality = parlayQuality,
     )
+    /** Whether ParlayAPI is on and has a key: its extra calls (injuries, the Check odds now backup, …) are made only then. */
+    private fun parlayActive(): Boolean = keyStore.current(ApiProvider.PARLAY).isNotEmpty() && currentSettings().useParlay
+
+    /** Players' injury reports (Tj, 2026-09-30, PARLAY_API.md §6.1): free from every ParlayAPI props answer, and its /injuries list. */
+    val injuries = com.tjshea.vigilant.data.reference.InjuryIndex()
+
     /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
-    private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds)
+    private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds, injuries)
+
+    /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
+    val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
 
     /** Check odds now's backup for CNO (Tj, 2026-09-30): every book's price for a bet from ParlayAPI, while it's on with a key. */
-    val parlayBooks = com.tjshea.vigilant.data.tracker.ParlayBooks(
-        parlayOdds, active = { keyStore.current(ApiProvider.PARLAY).isNotEmpty() && currentSettings().useParlay },
-    )
+    val parlayBooks = com.tjshea.vigilant.data.tracker.ParlayBooks(parlayOdds, active = { parlayActive() }, injuries = injuries)
 
     /** The same for background auto-scans: they leave half of each day's ParlayAPI share for the scans Tj starts himself. */
     private val parlayOddsBackground = TheOddsApiClient(
@@ -418,7 +425,7 @@ class AppContainer(private val app: Application) {
         baseUrl = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.base, feed = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY, background = true,
         quality = parlayQuality,
     )
-    private val parlayPropsBackground = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOddsBackground)
+    private val parlayPropsBackground = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOddsBackground, injuries)
     /** Sportsbook player props: the same client, key pool and meter as the main lines. */
     private val bookProps = OddsApiPropsSource(oddsApi)
     /** Pinnacle: PinnWire's keys first (their free keys include player props), then pinnapi's. */
