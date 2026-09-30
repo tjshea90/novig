@@ -245,6 +245,8 @@ class AutoScanTest {
         assertEquals(EvAlerts.DONE_CHANNEL, n.channelId)
         assertEquals(NotificationManager.IMPORTANCE_LOW, nm.getNotificationChannel(EvAlerts.DONE_CHANNEL).importance)
         assertTrue(n.extras.getCharSequence(android.app.Notification.EXTRA_TITLE).toString().startsWith("Tracked ✓ Justin Jefferson"))
+        // Tapping the confirmation opens Vigilant too (it used to do nothing).
+        assertEquals(MainActivity::class.java.name, shadowOf(n.contentIntent).savedIntent.component!!.className)
         assertEquals("Undo", n.actions.single().title.toString())
         assertEquals(EvAlerts.ACTION_UNDO, shadowOf(n.actions.single().actionIntent).savedIntent.action)
         // Undo: the bet, the mark and the confirmation all go.
