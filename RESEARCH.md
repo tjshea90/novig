@@ -3041,3 +3041,39 @@ Checked live 2026-09-30 ~20:00Z (CNO's page once, ParlayAPI ~10 credits of Tj's 
   and a wider consensus where Pinnacle has no line. `MoreBooksTest`.
 - **What would help most next:** a second sharp book for game lines. Circa is on CNO's pages but no API Vigilant has carries it;
   BookMaker via ParlayAPI once it has lines (re-check `/odds?bookmakers=bookmaker_eu` now and then, 1 credit).
+
+## 47. Tj's first v0.35.0 Diagnostics, read end to end (v0.36.0, 2026-09-30 ~21:34Z; Tj pasted the report with no words beside it: V3's purpose, "Claude can run deep analysis on the app and know what is working or broken and how to improve")
+
+**Working:** scans (105 s, 1,474 Novig prices through the key at 14/s, none refused, 93% judged against a fair line), every fair-odds source,
+CNO reads, background auto-scan (CNO every 5 min, service up), grading (nothing waiting over 6 h), phone permissions (all allowed), the
+closing capture alarm, credits (ParlayAPI 19,400 of 20,000 left; The Odds API's first key spent to the reset with the second carrying on).
+
+**What the numbers say about accuracy (the headline):**
+- CNO's bets are real edges: 264 bets, CLV +1.3%, beat the close 68%, ROI +9.4%, results +9.90 vs +1.95 expected.
+- **Vigilant's own bets are not, so far:** 68 bets, CLV −1.2%, beat the close 37%, ROI −7.8%. Its open bets agree: EV when bet +4.8% →
+  now +1.3%, the fair line moved away on 11 of 12 that moved. Worst markets overall: totals (CLV −2.6%, beat 22%), 1st-half/inning
+  totals (−5.9%, 0%), team totals (−1.4%); player props (mostly CNO's) +1.5% / 72%.
+- Bigger edges are more real: 4%+ EV beat the close 91% (CLV +2.0%); 1-2% EV only 58% (CLV +0.1%, ROI −5%).
+- Overall CLV +0.6% with 60% beating the close; EV when bet averages +2.5%, so the EV shown runs ~1.9 points above what the close says.
+
+**Why Vigilant's edges might be overstated (not provable from this report: bets didn't record which books made their fair):** BLEND takes a
+lone sharp book as the whole fair line when fewer than "at least 2 books" price it (`FairValue.compute`: `sharp.isNotEmpty() -> avg(sharp)`),
+and Kalshi and Polymarket count as sharp when tight; a thin exchange's total that lags Pinnacle makes a "fair" line the market then moves
+away from. Also possible: soft books lagging inside the 30% average. v0.36.0 keeps each bet's `FairBasis` (method, sharp books, book count)
+and Diagnostics splits CLV by it ("Bets by what made their fair odds") and lists Vigilant's bets against the close one by one, so the
+next reports can say which. Until then the recommendation to Tj: lean on CNO's list; treat Vigilant's totals and 1st-half totals as
+unproven; prefer Vigilant edges of 4%+.
+
+**Diagnostics' own mistakes (fixed in v0.36.0):** a busy ParlayAPI props board (503 `props_temporarily_busy`, retried once already) was a
+FAIL; The Odds API's props backup matching nothing (it's only asked for what PropLine missed) was a WARN; "spent until 2h ago from now"
+(a future time worded as the past) and a WARN though the second key carried on; 9 Novig throttles in 8,255 calls (7 h ago) was a WARN;
+**"a scan costs 600 ParlayAPI credits → 33 a month"** was the key's month-to-date count landing in one round (a key new to the ledger, or
+the count re-synced to ParlayAPI's own figure): rounds now count what the app's own calls were charged (`KeyUsage.charged`); a scan is
+~40 credits. Closing-line coverage (58%) counted 53 ✓ marks imported before the Tracker kept bets (no league, no Novig ids: no source can
+ever close them) and their note blamed a missing ParlayAPI key; both fixed. CLV averages now say how many closes they rest on.
+
+**Game matching 36% (30 of 83):** 63 of Novig's games in the window were tennis (WTA 40, ATP 23) and 2 NFL futures; ParlayAPI and PropLine
+matched all 19 other games. Tennis is priced only by Kalshi and Pinnacle today. ParlayAPI has tour-wide keys (`tennis_atp`: 102 events,
+Pinnacle on 75, FanDuel 36, ProphetX 21; `tennis_wta`: 60; 3 credits a tour), **but its Pinnacle rows put SET lines (±1.5 sets, 2.5
+sets) in the match event and game lines in a separate "Name (Games)" event, while bet365/Caesars put game lines in the match event**:
+merged naively a sets spread −1.5 would price Novig's games spread −1.5, a fake edge. Worth building only with that split handled per book.
