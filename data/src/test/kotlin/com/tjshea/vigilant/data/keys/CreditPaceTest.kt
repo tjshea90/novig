@@ -114,4 +114,51 @@ class CreditPaceTest {
     }
 
     private fun assertEquals(expected: Int, actual: Int, tolerance: Int) = assertTrue("$expected vs $actual", kotlin.math.abs(expected - actual) <= tolerance)
+
+    // ---- Tj's diagnostics, 2026-09-30 03:06Z: "ParlayAPI has spent today's share" with 19,974 of 20,000 left ----------------------
+
+    /** Its first evening: 11 pm in New York on Sep 29 (03:00Z on the 30th), the key bought that day. */
+    private val firstEvening = Instant.parse("2026-09-30T03:00:00Z").toEpochMilli()
+    private val newYork = CreditPace(QuotaPolicy.PARLAY, reserve = 300, freeLimit = 1_000, zone = { ZoneId.of("America/New_York") })
+
+    private fun meterAt(clock: () -> Long) = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = clock)
+
+    @Test
+    fun `answers that arrive out of order (props and lines at once) never restart the key's month`() = runBlocking<Unit> {
+        var now = firstEvening
+        val m = meterAt { now }
+        suspend fun answer(used: Int, cost: Int) = m.recordCall(QuotaPolicy.PARLAY, "k", cost, serverRemaining = 20_000 - used, serverUsed = used)
+        // A props page (3 credits) was charged at used = 8 but its big reply lands after two game-line calls already recorded 18.
+        answer(5, 5)
+        now += 800; answer(13, 5)
+        now += 800; answer(18, 5)
+        now += 900; answer(8, 3)
+        val u = m.flow.value.providers.getValue("parlay").keys.getValue("k")
+        assertEquals(18, u.used)
+        assertEquals(Instant.parse("2026-09-01T00:00:00Z").toEpochMilli(), u.periodStart)
+        // And its scans may go on: a day's share at least.
+        assertTrue("${newYork.spendableToday(u, now)}", newYork.spendableToday(u, now) >= 19_700 / 30 - 18)
+    }
+
+    @Test
+    fun `a real new billing cycle is still followed`() = runBlocking<Unit> {
+        var now = Instant.parse("2026-10-15T12:00:00Z").toEpochMilli()
+        val m = meterAt { now }
+        m.recordCall(QuotaPolicy.PARLAY, "k", 5, serverRemaining = 4_000, serverUsed = 16_000)
+        now += 6 * 3_600_000L
+        m.recordCall(QuotaPolicy.PARLAY, "k", 5, serverRemaining = 19_995, serverUsed = 5)
+        val u = m.flow.value.providers.getValue("parlay").keys.getValue("k")
+        assertEquals(5, u.used)
+        assertEquals(now, u.periodStart)
+    }
+
+    @Test
+    fun `a key bought late in the month is paced from its first day, not the 1st`() = runBlocking<Unit> {
+        val m = meterAt { firstEvening }
+        m.recordCall(QuotaPolicy.PARLAY, "k", 5, serverRemaining = 19_995, serverUsed = 5)
+        val u = m.flow.value.providers.getValue("parlay").keys.getValue("k")
+        // Its first day: a whole day's share (not 29 days' worth "left unspent" before it existed, not an hour's).
+        val spendable = newYork.spendableToday(u, firstEvening)
+        assertTrue("$spendable", spendable in (19_700 / 31 - 10)..(19_700 / 30))
+    }
 }
