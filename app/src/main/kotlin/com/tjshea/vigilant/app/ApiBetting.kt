@@ -508,11 +508,14 @@ class ApiBettingController(
         state.update { it.copy(betSheet = sheet.copy(stake = amount, stakeChosen = true, plan = null, refusal = null)) }
         System.out.println("DBG choose amount=$amount target=${sheet.target != null} resolving=${sheet.resolving}")
         if (sheet.target == null || sheet.resolving) return // planned once the bet is found
+        System.out.println("DBG choose cancelling ${betJob}")
         betJob?.cancel()
         betJob = scope.launch {
             if (waitMs > 0) delay(waitMs)
             replan()
         }
+        System.out.println("DBG choose launched ${betJob}")
+        betJob!!.invokeOnCompletion { System.out.println("DBG J2 completed cause=$it") }
     }
 
     /** Looks at the bet again: a fresh book, the plan for the stake now, or why it can't be placed. */
@@ -541,6 +544,7 @@ class ApiBettingController(
         val result = try {
             placer.plan(target, sheet.stake, sheet.allowRepeat)
         } catch (e: CancellationException) {
+            System.out.println("DBG replan CANCELLED stake=${sheet.stake} ${e}")
             throw e
         } catch (e: Exception) {
             PlanResult.Refused("Couldn't check the price: ${e.message ?: e.javaClass.simpleName}")
