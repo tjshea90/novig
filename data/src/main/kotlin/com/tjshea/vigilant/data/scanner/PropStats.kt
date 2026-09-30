@@ -118,11 +118,37 @@ object PropStats {
         return picked.filter { novigTypes == null || it.second in novigTypes }.map { it.first }
     }
 
+    /**
+     * Player props only ParlayAPI's one-call league board brings (Tj's key, 2026-09-30: "make sure the app is making full use of
+     * parlayapi's features"): NHL's, which Novig lists (goals, points, assists, shots on goal, saves) and no other feed Vigilant reads
+     * prices. Kept apart from [SPORT_MARKETS] so The Odds API (one credit per prop type per game) never buys them.
+     */
+    private val PARLAY_ONLY_MARKETS: Map<String, List<Pair<String, String>>> = mapOf(
+        "icehockey_nhl" to listOf(
+            "player_points" to "POINTS",
+            "player_shots_on_goal" to "SHOTS_ON_GOAL",
+            "player_goals" to "PLAYER_GOALS",
+            "player_assists" to "ASSISTS",
+            "player_total_saves" to "SAVES",
+            "player_power_play_points" to "POWER_PLAY_POINTS",
+        ),
+    )
+
+    /** ParlayAPI's prop market keys for a sport, every one: its league call costs the same whatever is asked. */
+    fun parlayMarkets(sportKey: String): List<Pair<String, String>> = SPORT_MARKETS[sportKey].orEmpty() + PARLAY_ONLY_MARKETS[sportKey].orEmpty()
+
+    /** The Novig stats ParlayAPI's props can price in a sport. */
+    fun parlayStats(sportKey: String): Set<String> = parlayMarkets(sportKey).mapTo(HashSet()) { it.second }
+
+    /** Stats only ParlayAPI's props price (NHL's goals, shots, saves…): Novig's markets for them are fetched only while it's on. */
+    val PARLAY_ONLY_TYPES: Set<String> =
+        PARLAY_ONLY_MARKETS.values.flatten().map { it.second }.toSet() - ODDS_API_MARKETS.values.toSet() - KALSHI_SERIES.values.toSet()
+
     /** Novig market types fetched for the "Player props" family: every stat some source prices. */
-    val NOVIG_TYPES: List<String> = (KALSHI_SERIES.values + ODDS_API_MARKETS.values).distinct()
+    val NOVIG_TYPES: List<String> = (KALSHI_SERIES.values + ODDS_API_MARKETS.values + PARLAY_ONLY_TYPES).distinct()
 
     /** Stats only the sportsbooks price: not worth fetching from Novig unless book props are on. */
-    val BOOK_ONLY_TYPES: Set<String> = ODDS_API_MARKETS.values.toSet() - KALSHI_SERIES.values.toSet()
+    val BOOK_ONLY_TYPES: Set<String> = ODDS_API_MARKETS.values.toSet() - KALSHI_SERIES.values.toSet() + PARLAY_ONLY_TYPES
 
     fun displayName(novigType: String): String =
         novigType.lowercase().split('_').joinToString(" ") { w ->

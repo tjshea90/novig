@@ -38,7 +38,7 @@ class OddsApiPropsSource(
     override val displayName = "Sportsbook props"
     override val metered = true
     override val needsCatalog = true
-    override val extraPropTypes: Set<String> get() = PropStats.BOOK_ONLY_TYPES
+    override val extraPropTypes: Set<String> get() = PropStats.BOOK_ONLY_TYPES - PropStats.PARLAY_ONLY_TYPES
 
     override fun supports(league: League): Boolean =
         PropStats.oddsApiMarkets(league.oddsApiSportKey, BookPropSet.ALL).isNotEmpty()
