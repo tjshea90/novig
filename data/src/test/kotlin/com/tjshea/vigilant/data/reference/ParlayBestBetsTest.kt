@@ -97,7 +97,7 @@ class ParlayBestBetsTest {
     }
 
     @Test
-    fun `a play is shown only at Novig's own price: +2122 listed, +850 now, is under a +900 fair`() {
+    fun `a play is shown only at Novig's own price, +2122 listed but +850 now is under a +900 fair`() {
         val board = ParlayBestBets.parse(res("parlay-best-bets-mlb.json"), json, mlb, now)!!
         val plays = board.plays.take(2)
         val rows = plays.map { it.row(startsAtMs = now + 3_600_000L) }
