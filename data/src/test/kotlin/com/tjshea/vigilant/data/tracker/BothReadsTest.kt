@@ -163,4 +163,21 @@ class BothReadsTest {
         assertEquals(5, r.covered + r.unpriced)
         assertTrue(r.summary().contains("1 read by both CNO and Vigilant (their fair lines averaged)"))
     }
+
+    @Test
+    fun `Vigilant's read replaces a bet's old book list, but not one this check's CNO read just wrote`() = runTest {
+        val t = tracker()
+        val a = t.track(dal(scan()), stake = 10.0)!!
+        val b = t.track(dal(scan()), stake = 10.0)!!
+        val old = listOf(BookLine("Old Book", 150, -170))
+        t.edit(a.id) { it.copy(books = old, booksAtMs = now - 2 * 3_600_000L) }
+        t.edit(b.id) { it.copy(books = old, booksAtMs = now - 20_000L) }
+        t.applyPricing(scan(), listOf(a.id, b.id), alongside = true)
+        val by = t.all().associateBy { it.id }
+        // Two hours old: this read's books (Tj, 2026-09-30: "all the vigilant results show stale odds").
+        assertTrue(by.getValue(a.id).books != old)
+        assertEquals(now, by.getValue(a.id).booksAtMs)
+        // Written 20 s ago by this same check's page read: kept.
+        assertEquals(old, by.getValue(b.id).books)
+    }
 }

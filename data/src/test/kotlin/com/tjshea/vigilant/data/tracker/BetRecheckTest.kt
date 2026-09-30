@@ -432,4 +432,26 @@ class BetRecheckTest {
         now = start + 1
         assertEquals(emptySet<String>(), BetRecheck(t, books = { view(-125, 105) }, clock = { now }).captureClosing(listOf("a", "b")))
     }
+
+    @Test
+    fun `bets with no CNO page get every book's read too (ParlayAPI's), games under way included, four hours in not`() = runTest {
+        val t = tracker(
+            bet("vig", gameUrl = null), bet("vigLive", gameUrl = null, startsTs = now - 30 * 60_000L),
+            bet("vigOver", gameUrl = null, startsTs = now - 5 * 3_600_000L), bet("cno"),
+        )
+        val asked = ArrayList<String>()
+        val re = BetRecheck(t, books = { error("no CNO page is read here") }, clock = { now }, backup = { b -> asked += b.id; view(-125, 105) })
+        val read = re.readWithoutPage(listOf("vig", "vigLive", "vigOver", "cno"))
+        assertEquals(setOf("vig", "vigLive"), read)
+        assertEquals(listOf("vigLive", "vig"), asked)
+        val by = t.all().associateBy { it.id }
+        assertEquals(BetTracker.VIA_PARLAY, by.getValue("vig").nowVia)
+        assertEquals(now, by.getValue("vig").cnoAtMs)
+        assertNotNull(by.getValue("vigLive").nowEv)
+        // Under way: its odds now, never its close.
+        assertNull(by.getValue("vigLive").closingFair)
+        assertNull(by.getValue("vigOver").nowEv)
+        // Without a backup there's nothing to read them with.
+        assertTrue(BetRecheck(t, books = { null }, clock = { now }).readWithoutPage(listOf("vig")).isEmpty())
+    }
 }
