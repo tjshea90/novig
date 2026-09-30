@@ -129,6 +129,8 @@ class ParlayPropsTest {
         assertEquals(ParlayProps.BOOKS.joinToString(","), url.queryParameter("bookmakers"))
         assertTrue(url.queryParameter("markets")!!.split(",").containsAll(listOf("player_pass_yds", "player_receptions", "player_anytime_td")))
         assertEquals("american", url.queryParameter("oddsFormat"))
+        // ParlayAPI's own freshness filter: nothing older than a quote may be to price (10 minutes).
+        assertEquals("600", url.queryParameter("maxAgeSec"))
         assertEquals(1, server.requestCount) // a short page: no second one
         // Player props off: nothing asked.
         val off = source.odds(nfl, ScanSettings(families = setOf(MarketFamily.MONEYLINE)))

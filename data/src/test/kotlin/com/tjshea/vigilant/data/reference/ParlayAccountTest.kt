@@ -148,4 +148,14 @@ class ParlayAccountTest {
         assertEquals(1, server.requestCount)
         assertTrue(e?.message, e?.message?.contains("request req-77") == true)
     }
+
+    @Test
+    fun `a scan asks ParlayAPI only for the games in its window`() = runBlocking<Unit> {
+        server.enqueue(MockResponse().setBody("[]"))
+        parlay().odds(com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NFL")!!, com.tjshea.vigilant.data.scanner.ScanSettings(daysAhead = 2))
+        val until = Instant.parse(server.takeRequest().requestUrl!!.queryParameter("commenceTimeTo")!!).toEpochMilli()
+        assertEquals(now + (48 + 24) * 3_600_000L, until, 1_000.0)
+    }
+
+    private fun assertEquals(expected: Long, actual: Long, tolerance: Double) = assertTrue("$expected vs $actual", kotlin.math.abs(expected - actual) <= tolerance)
 }

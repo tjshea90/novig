@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.keys.CreditPace
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.match.PlayerNames
+import com.tjshea.vigilant.data.scanner.Freshness
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.Planner
@@ -118,18 +119,21 @@ class TheOddsApiClient(
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val markets = marketsFor(settings.families, feed)
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
-        return fetch(league.oddsApiSportKey, booksFor(settings), markets)
+        // ParlayAPI: only the games the scan can price (its window, plus a day for loose kickoff times), a smaller reply for the same credits.
+        val until = if (feed == OddsFeed.ODDS_API) null else Planner.horizon(settings, clock()) + WINDOW_SLACK_MS
+        return fetch(league.oddsApiSportKey, booksFor(settings), markets, startsBeforeMs = until)
     }
 
     private val spacing = Mutex()
     private var lastCallAt = 0L
 
     /** One sport's odds from the named [bookmakers]. Costs `markets.size` credits when anything comes back. */
-    suspend fun fetch(sportKey: String, bookmakers: List<String>, markets: List<String> = ALL_MARKETS): RefSnapshot {
+    suspend fun fetch(sportKey: String, bookmakers: List<String>, markets: List<String> = ALL_MARKETS, startsBeforeMs: Long? = null): RefSnapshot {
         val books = pickBooks(bookmakers)
         val answer = call(
             path = "/sports/$sportKey/odds",
-            params = listOf("bookmakers" to books.joinToString(","), "markets" to markets.joinToString(","), "oddsFormat" to "decimal"),
+            params = listOf("bookmakers" to books.joinToString(","), "markets" to markets.joinToString(","), "oddsFormat" to "decimal") +
+                listOfNotNull(startsBeforeMs?.let { "commenceTimeTo" to isoSeconds(it) }),
             // Cost = markets asked for x 1 region (<=10 named books), so the pool can skip a key
             // that can't afford it before asking.
             cost = markets.size,
@@ -188,6 +192,8 @@ class TheOddsApiClient(
             params = listOf(
                 "markets" to markets.joinToString(","), "bookmakers" to bookmakers.filter { it != "novig" }.distinct().joinToString(","),
                 "oddsFormat" to "american", "limit" to ParlayProps.PAGE.toString(), "offset" to offset.toString(),
+                // Rows older than the oldest a quote may be to price (RESEARCH.md §24) are left on the server: a smaller, faster reply.
+                "maxAgeSec" to (Freshness.FAR_OFF_AGE_MS / 1000).toString(),
             ),
             cost = ParlayProps.COST,
             what = "$sportKey props",
@@ -295,6 +301,9 @@ class TheOddsApiClient(
 
         /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
         const val RETRY_AFTER_MS = 1_000L
+
+        /** Past the scan's window, games still asked for: a feed's kickoff time can sit a while off Novig's. */
+        const val WINDOW_SLACK_MS = 24 * 60 * 60_000L
 
         /** What a PropLine board covers for a game ([RefBookMarket.coverage]): its full-game lines. */
         private val GAME_LINES = setOf("MONEYLINE:0", "SPREAD:0", "TOTAL:0")
