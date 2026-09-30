@@ -99,6 +99,26 @@ class SecondOpinionTest {
     }
 
     @Test
+    fun `an open Tracker bet is asked about at the price it was bet, a started one isn't offered`() {
+        val bet = com.tjshea.vigilant.data.tracker.TrackedBet(
+            "b1", now - 3_600_000L, "NFL", "Baltimore Ravens @ Dallas Cowboys", now + 50 * 3_600_000L, "Moneyline", "Dallas Cowboys", "m", "o",
+            0.62, 0.62, 0.64, 0.03, 10.0, american = -163,
+        )
+        val content: @Composable (com.tjshea.vigilant.data.tracker.TrackedBet) -> Unit = { b ->
+            com.tjshea.vigilant.app.ui.BetSheetContent(
+                b, com.tjshea.vigilant.data.tracker.BetInsight.of(b), now, state.settings, false, false, false,
+                com.tjshea.vigilant.app.ui.BetActions(), {}, {}, {}, {},
+            )
+        }
+        screen { content(bet) }
+        compose.onNodeWithText(opinionButtonText(false)).performScrollTo().performClick()
+        val (key, q) = asked.single()
+        assertEquals(InjuryTags.betKey(bet), key)
+        assertEquals("Dallas Cowboys", q.side)
+        assertEquals(-163, q.price)
+    }
+
+    @Test
     fun `a CNO prop bet is asked about by its player and stat at CNO's price`() {
         val row = state.cno.snapshot!!.rows.first { it.bet.startsWith("Justin Jefferson") }
         screen { CnoDetail(CnoPick(row, row.ev, false), state.cno.snapshot, state.settings, state.cnoUrl, null, now) }
