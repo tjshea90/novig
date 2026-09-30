@@ -2867,3 +2867,52 @@ marked and left; 60 days at most. A close read before the start still wins; the 
 by source; the bet sheet shows each started bet's close, where it came from and its CLV, or why there's none yet; Diagnostics says what the
 last look found and how many KB of Novig data it cost. Checked end to end against the real ESPN and data.novig.com
 (`LiveClosesTest`, VIGILANT_LIVE=1).
+
+## 43. Five sources checked, ParlayAPI adopted, and what's worth buying (v0.27.0, 2026-09-30; Tj: "Research these … sources and see if they can help improve anything in the app, whether it is speed or accuracy or grading or finding historical closing lines to calculate clv … implement … anything … Then research online if there is anything I can buy … My budget is around $40 per month"; then "I will buy the parlay-api $5 per month starter plan … take full advantage of the paid API … prioritize its use if it can do anything better … fall back if I don't have the paid parlay-api anymore, and consider if the free API is still worth using")
+
+**The five sources (checked live from the dev container, 2026-09-30):**
+
+| Source | What it is | Verdict for Vigilant |
+| :- | :- | :- |
+| The Odds API `apps-script/ClosingLinesAnyMarket.gs` | A Google Sheets script: finds each game's *final* start time from `/v4/historical/sports/{s}/events` (games get delayed), then reads `/v4/historical/.../events/{id}/odds` at that time. Historical endpoints are **paid plans only**, 10 credits per market per region per snapshot. | Tj's Odds API keys are free: unusable. Its one lesson (read the close at the game's real start, not the scheduled one) is already how ESPN's close and ParlayAPI's closing lines work: ParlayAPI enforces "priced before the listed start" itself. |
+| TheRundown (therundown.io/api) | Odds + scores + play-by-play. Free: 3 books (BetMGM, DK, FD), no props, no history, **5-minute delay**, 200k data points. Starter **$49**: 60-second delay, 7-day history, no closing lines. Opening and closing lines only on Pro **$149** (30-s delay); real time from Ultra $399. | Over budget and slower than what Vigilant has. No. |
+| r/ParlayAPI "The complete sports betting data stack for 2026" | Reddit blocks reads from this container (curl and fetch both get the bot wall); no copy found by search. It's ParlayAPI's own subreddit, so it was judged by testing ParlayAPI itself (below). | See ParlayAPI. |
+| DeliciousPipe1326/edge-scanner | A Python/Flask scanner over The Odds API: multiplicative devig of one sharp book (Pinnacle, then Betfair/Matchbook with commission), exact-point matching, quarter Kelly, arbitrage, middles with NFL key numbers. | Vigilant already does all of the +EV parts, with more (several devig methods, consensus of books, Kalshi/Polymarket, freshness gates). Arbitrage and middles need two books; Tj bets only Novig. Nothing to port. |
+| skills.rest `odds-api-historical` (brandonalfred/fortuna-app) | A Claude skill wrapping The Odds API's historical endpoint: snapshot at 10 am ET for a day's games, closing odds 30-60 minutes before each game's `commence_time`, 10 credits per market per region, paid plans only. | Same wall (paid Odds API). Its "the historical endpoint only returns games that haven't started at the snapshot time" is why a close must be read *before* the start: what Vigilant's capture and ParlayAPI's closing lines do. |
+
+**ParlayAPI (parlay-api.com), tested keylessly (`/v1/try`, `/v1/sandbox`, `/v1/meta/*`, `/v1/pinnacle-coverage`, its OpenAPI):** The Odds API's
+format at `/v1` (same params, `x-requests-*` headers per its docs), 15+ books including **Pinnacle** (live on NFL, NCAAF, NBA, NHL, MLB, WNBA,
+MLS: `/v1/pinnacle-coverage`), ProphetX, BetOnline, bet365, Bovada, the US books and Novig itself. Plans (`/pricing`, 2026-09-30): free
+1,000 credits a month, 48 h of history; **Starter $5: 20,000 credits, 7 days**; Pro $20: 100,000, 30 days; Business $40: 1,000,000, 90 days,
+WebSocket/SSE. What each call costs (`/v1/meta/credit-costs`): `/odds` markets × ⌈books/10⌉, and it serves `alternate_spreads` and
+`alternate_totals` for a whole league (The Odds API sells those per game); `/props` **3 credits for a whole league's player props, every book**
+(The Odds API format: 1 per prop type per game, ~60 for an NFL Sunday); `/sports/{s}/closing-lines` 5 (last pre-start price per book, h2h,
+spreads, totals, `daysFrom` ≤ 30); `/historical/closing-lines.json` 1 per 1,000 rows (player-prop closes, one UTC day a call, cached 6 h
+server-side); `/scores` 1-2; `/exchange/{s}/markets` 3 (Novig/ProphetX books); `/clv` max(5, 2 × bets). Streaming is Business-and-up only.
+Its pre-game period markets (1st half, F5) are live-only, and team totals come through `/props`, so those stay with the existing feeds.
+
+**What v0.27.0 does with it:**
+- **Closing lines (the best use, any plan):** `ParlayCloses`, asked first by `CloseBackfill`: Pinnacle's prop close from the daily file (the
+  bet's UTC date and US date), Pinnacle's game-line close from `closing-lines` (exact line only, devigged). A key past its plan's window gets
+  `403 HISTORICAL_LIMIT`, read as "nothing to find"; out of credits is "look later". Starter's 7 days cover a phone that was off for days.
+- **Scans (paid plans):** `TheOddsApiClient(feed = PARLAY)` for Pinnacle + 9 books with alternate spreads and totals (5 credits a league), and
+  `ParlayPropsSource` for every book's player props in one `/props` call per league (3 credits, 10,000 rows a page, pages joined). ParlayAPI's
+  book keys `caesars`/`betonline`/`hardrock` are read as The Odds API's `williamhill_us`/`betonlineag`/`hardrockbet`, so a book two feeds carry
+  counts once. Merge order puts ParlayAPI ahead of PropLine (its quotes carry their measured age; PropLine runs ~20 s behind).
+- **Pacing (`CreditPace`):** a scan may spend today's share of the month plus whatever earlier days left unspent, never tomorrow's; the last 300
+  credits are kept for the closes. Past today's share ParlayAPI stands by quietly (`CreditsHeldBackException`: no error banner; Diagnostics
+  says so) and the other feeds price, as they do between its refreshes anyway (quotes older than a couple of minutes never price, §24). Stateless:
+  read from the meter, so it survives restarts and follows the server's own figures. On 20,000 credits: ~650 a day ≈ 80 league refreshes.
+- **Free plan (1,000 credits):** worth keeping for the closes alone (Pinnacle's close for CLV, a few credits a league-day); not for scans (it
+  would be spent in a day). A key the server says has 1,000 or fewer is used for closes only; a key not yet heard from gets one scan call,
+  whose headers say its plan.
+- **Fallback:** no key, the switch off, a spent or refused key: ParlayAPI isn't asked (or its calls fail as any metered feed's do) and
+  PinnWire/pinnapi (Pinnacle), PropLine, The Odds API, Kalshi, Polymarket, ESPN and Novig's trades carry on unchanged.
+
+**What's worth buying (≈$40/month budget, "only if this money can be put to great use"):**
+- **ParlayAPI Starter, $5/month:** yes. Pinnacle's closes for CLV back 7 days, a league's props in one call, alternate lines, ~650 credits a day
+  for scans. Tj is buying it (2026-09-30).
+- Pro $20 (100,000, 30 days of closes): only if the meter shows the day's share running out on busy days.
+- Business $40: its extra is streaming; Vigilant's scans are on demand, so no.
+- Not worth it: TheRundown ($49 Starter: 60 s delay, no closes; $149 for closes), The Odds API paid ($30 for 20,000: 6× ParlayAPI's price),
+  SportsGameOdds ($99+), theoddsapi.com Business ($99), a Pinnacle-only feed ($299).
