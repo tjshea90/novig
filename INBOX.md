@@ -2755,3 +2755,8 @@ Here is the parlayapi key:
 
 [key redacted …15d0]
 ```
+
+## 2026-09-30T06:42:25Z
+```
+Schedule an automatic full tests protocol on this app 4 hours from now. It should start and finish the full tests automatically with no input from me. First, change the check odds now feature that shows me stats on the percent of my bets that are positive EV and beat clv In the tests to always scan relevant vigilant odds in addition to the cno scan. The goal is to always get full updates on all of my bets and an accurate stats reading. Make sure the apis are being used to their full potential, especially my paid parlayapi. Research API docs and make sure the app is well tuned to use the apis, especially parlayapi and novig API.  Make sure the app functions as designed, with efficient code and optimized for my moto g 2026 with unlimited fast mobile data. 
+```
