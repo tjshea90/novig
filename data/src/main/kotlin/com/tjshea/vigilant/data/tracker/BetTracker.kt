@@ -66,6 +66,11 @@ data class TrackedBet(
     val closeLookedAtMs: Long? = null,
     /** Found, or every source said it never will have it: [CloseBackfill] looks no more. */
     val closeFinal: Boolean = false,
+    /**
+     * The close sources ([CloseSource.id]) that all said "never" when [closeFinal] was set without a close: a source added later (ParlayAPI's
+     * Pinnacle closes, 2026-09-30) is asked once more. Null on bets finalised before this was kept: ESPN's and Novig's.
+     */
+    val closeAskedOf: List<String>? = null,
     /** "vigilant" (a +EV card or a Vigilant bet's ✓) or "cno" (a CNO bet's ✓). */
     val source: String = BetTracker.SOURCE_VIGILANT,
     /** The widget/CNO-tab key of the ✓ that logged it ("cno:<row key>"): Undo removes the bet. */

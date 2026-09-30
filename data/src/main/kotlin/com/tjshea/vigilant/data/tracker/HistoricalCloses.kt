@@ -46,6 +46,9 @@ interface CloseSource {
 
     /** False: not asked at all this look (no key for it), and not counted when deciding every source has said "never". */
     val active: Boolean get() = true
+
+    /** Which source this is, kept on a bet every source said "never" for ([TrackedBet.closeAskedOf]): a new one asks again. */
+    val id: String get() = javaClass.name
 }
 
 /**
@@ -406,12 +409,13 @@ class CloseBackfill(
     /** [heavyOk]: the sources that download megabytes ([CloseSource.heavy]) may run (Wi-Fi); otherwise their bets wait for the next look. */
     suspend fun run(heavyOk: Boolean = true): Report = mutex.withLock {
         val now = clock()
-        val todo = tracker.all().filter { due(it, now) }.sortedByDescending { it.startsTs }.take(MAX_PER_RUN)
+        val asked = sources.filter { it.active }
+        val askedIds = asked.map { it.id }
+        val todo = tracker.all().filter { due(it, now) || reopened(it, now, askedIds) }.sortedByDescending { it.startsTs }.take(MAX_PER_RUN)
         if (todo.isEmpty()) return@withLock Report(0, 0, emptyMap())
         val found = HashMap<String, CloseLookup.Found>()
         val notes = HashMap<String, MutableList<CloseLookup>>()
         var left = todo
-        val asked = sources.filter { it.active }
         for (source in asked) {
             if (left.isEmpty()) break
             if (source.heavy && !heavyOk) {
@@ -434,8 +438,9 @@ class CloseBackfill(
                     else -> cur.copy(
                         closeNote = tried.joinToString("; ") { (it as? CloseLookup.None)?.reason ?: (it as CloseLookup.Later).reason }.ifBlank { null },
                         closeLookedAtMs = now,
-                        // Every source said it never will: stop looking.
+                        // Every source said it never will: stop looking (until a source it didn't ask is added: [reopened]).
                         closeFinal = tried.isNotEmpty() && tried.size >= asked.size && tried.all { it is CloseLookup.None },
+                        closeAskedOf = askedIds,
                     )
                 }
             }
@@ -459,6 +464,18 @@ class CloseBackfill(
         const val MAX_PER_RUN = 120
 
         /** A started bet with no close yet (no capture, not bet in the last minutes) that a source may still have. */
+        /** Close sources a bet finalised before [TrackedBet.closeAskedOf] was kept had been asked of. */
+        val ASKED_BEFORE = listOf(EspnCloses.ID, NovigTradeCloses.ID)
+
+        /**
+         * A bet every source said "never" for, when one it wasn't asked of is now active (ParlayAPI added: Pinnacle's closes, props too):
+         * looked at once more, within the same 60 days.
+         */
+        fun reopened(b: TrackedBet, now: Long, activeIds: Collection<String>): Boolean =
+            b.closeFinal && b.closeFair == null && b.status != BetStatus.VOID && b.createdAtMs < b.startsTs &&
+                now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
+                activeIds.any { it !in (b.closeAskedOf ?: ASKED_BEFORE) }
+
         fun due(b: TrackedBet, now: Long): Boolean =
             b.status != BetStatus.VOID && !b.closeFinal && b.createdAtMs < b.startsTs && now >= b.startsTs + AFTER_START_MS &&
                 now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
