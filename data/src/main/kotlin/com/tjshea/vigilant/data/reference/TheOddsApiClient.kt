@@ -62,6 +62,10 @@ class TheOddsApiClient(
     /** ParlayAPI's scans spend a day's share of the month at most ([CreditPace]); The Odds API's aren't paced. */
     private val pace: CreditPace? = feed.pace(pool.policy, background)
 
+    /** ParlayAPI only: ask for alternate spreads and totals ([marketsFor]); the scan turns it off while a Pinnacle feed sends them. */
+    @Volatile
+    var alternates: Boolean = true
+
     override val id = feed.sourceId
     override val displayName = feed.title
     override val metered = true

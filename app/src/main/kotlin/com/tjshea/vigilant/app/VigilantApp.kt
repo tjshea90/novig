@@ -454,7 +454,11 @@ class AppContainer(private val app: Application) {
      * every call, so adding or removing a key takes effect on the next scan.
      */
     fun referenceSources(settings: ScanSettings, background: Boolean = false): List<ReferenceSource> = buildList {
-        if (settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())) add(pinnacle)
+        val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())
+        if (pinnacleOn) add(pinnacle)
+        // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).
+        parlayOdds.alternates = !pinnacleOn
+        parlayOddsBackground.alternates = !pinnacleOn
         if (settings.usePolymarket) add(polymarket)
         if (settings.useKalshi) add(kalshi)
         if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) {
