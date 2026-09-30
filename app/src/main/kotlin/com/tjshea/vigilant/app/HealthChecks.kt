@@ -56,14 +56,34 @@ object HealthChecks {
         if (age > 3 * HOUR) add(Check(Level.WARN, "Vigilant scan", "the last scan is ${Format.age(at, now)} old", look = "tap Scan, or check the background auto-scan below"))
         if (st.errors.isNotEmpty()) {
             val novig = st.errors.any { NOVIG_REFUSED.containsMatchIn(it) }
-            add(Check(if (novig) Level.FAIL else Level.WARN, "Vigilant scan", "${st.errors.size} error${plural(st.errors.size)} in the last scan", st.errors.first().take(160), "data/scanner/Scanner.kt; Recent problems below"))
+            val passing = st.errors.all(::transient)
+            add(
+                Check(
+                    when { novig -> Level.FAIL; passing -> Level.OK; else -> Level.WARN }, "Vigilant scan",
+                    if (passing) "${st.errors.size} passing error${plural(st.errors.size)} in the last scan (a source busy; it was retried once and is asked again next scan)"
+                    else "${st.errors.size} error${plural(st.errors.size)} in the last scan",
+                    shortError(st.errors.first()), if (passing) null else "data/scanner/Scanner.kt; Recent problems below",
+                ),
+            )
         }
         st.backoffSeconds?.let { add(Check(Level.WARN, "Novig", "Novig asked the app to wait $it s", look = "data/novig/RateGate.kt (the key's limits: NOVIG_API.md)")) }
         val stats = s.result?.stats
-        if (stats != null && stats.novigEvents >= 5) {
-            val share = stats.matchedEvents.toDouble() / stats.novigEvents
+        val byLeague = Diagnostics.matchingByLeague(s)
+        val games = byLeague.sumOf { it.games }
+        if (games >= 5) {
+            val matched = byLeague.sumOf { it.matched }
+            val share = matched.toDouble() / games
+            // The leagues that hold the unmatched games, worst first: which sources cover a league is what decides it.
+            val gaps = byLeague.filter { it.matched < it.games }.sortedByDescending { it.games - it.matched }
             val level = if (share < 0.5) Level.WARN else Level.OK
-            add(Check(level, "Game matching", "${pct0(share)} of Novig's games matched to a fair-odds source", "${stats.matchedEvents} of ${stats.novigEvents}", if (level == Level.WARN) "data/match/TeamMatcher.kt, the sources' leagues" else null))
+            add(
+                Check(
+                    level, "Game matching", "${pct0(share)} of Novig's games matched to a fair-odds source",
+                    "$matched of $games" + (gaps.takeIf { it.isNotEmpty() }?.joinToString(", ", "; unmatched: ") { "${it.league} ${it.games - it.matched} of ${it.games}" } ?: "") +
+                        (stats?.let { st2 -> (st2.novigEvents - games).takeIf { it > 0 }?.let { "; $it futures left out" } } ?: ""),
+                    if (level == Level.WARN) "the sources that carry those leagues (tennis: Kalshi and Pinnacle only today); data/match/TeamMatcher.kt" else null,
+                ),
+            )
         }
         if (stats != null && st.booksFetched >= 20) {
             val priced = stats.marketsPriced.toDouble() / st.booksFetched
@@ -80,8 +100,14 @@ object HealthChecks {
     private fun MutableList<Check>.sources(s: UiState) {
         if (!s.settings.vigilantOn || s.status.scannedAtMs == null) return
         for (r in s.status.sources) {
+            val backup = r.id in BACKUP_SOURCES
             when {
-                r.error != null -> add(Check(Level.FAIL, "Source ${r.name}", "failed in the last scan", r.error!!.take(160), "data/reference/ (its client); keys in API usage"))
+                // Busy for one league while it answered others: a passing miss, retried once already and asked again next scan.
+                r.error != null && (transient(r.error!!) || r.fetched + r.reused > 0) ->
+                    add(Check(Level.WARN, "Source ${r.name}", "missed a league in the last scan (answered ${r.fetched + r.reused})", shortError(r.error!!), "retried once in the scan; if it repeats, data/reference/ (its client)"))
+                r.error != null -> add(Check(Level.FAIL, "Source ${r.name}", "failed in the last scan", shortError(r.error!!), "data/reference/ (its client); keys in API usage"))
+                // The Odds API backs up PropLine: it reads its free game list and buys only what PropLine missed, so nothing matched is normal.
+                backup && r.matched == 0 -> add(Check(Level.OK, "Source ${r.name}", "backup: asked only for what PropLine missed, and nothing was"))
                 r.fetched > 0 && r.matched == 0 -> add(Check(Level.WARN, "Source ${r.name}", "answered ${r.fetched} league${plural(r.fetched)} but matched no Novig game", look = "data/match/TeamMatcher.kt, PlayerNames.kt"))
                 r.heldBack != null -> add(Check(Level.OK, "Source ${r.name}", "held back to save credits", r.heldBack!!.take(120)))
                 r.fetched + r.reused > 0 -> add(Check(Level.OK, "Source ${r.name}", "${r.matched} game${plural(r.matched)} matched"))
@@ -92,11 +118,34 @@ object HealthChecks {
     private fun MutableList<Check>.apis(s: UiState, x: Diagnostics.Extras, now: Long) {
         for ((id, p) in s.usage.providers) {
             val name = com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.firstOrNull { it.id == id }?.displayName ?: id
+            val policy = com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.firstOrNull { it.id == id }
+            fun spent(u: com.tjshea.vigilant.data.keys.KeyUsage) = u.depletedUntil?.let { it > now } == true
             p.keys.forEach { (key, u) ->
                 if (u.refused) add(Check(Level.FAIL, "API $name", "key …${key.takeLast(4)} was refused", u.lastNote?.take(120), "Settings › API keys: replace it"))
-                else u.depletedUntil?.takeIf { it > now }?.let { add(Check(Level.WARN, "API $name", "key …${key.takeLast(4)} is spent until ${Format.age(now, it)} from now", look = "add a key, or wait for its reset")) }
+                else u.depletedUntil?.takeIf { it > now }?.let { until ->
+                    // Another key with credits left carries on: a spent key is only worth a warning when it was the last one.
+                    val others = p.keys.filter { (k, o) -> k != key && !o.refused && !spent(o) && (policy?.let { pol -> o.left(pol) } ?: 1) > 0 }
+                    add(
+                        Check(
+                            if (others.isEmpty()) Level.WARN else Level.OK, "API $name",
+                            "key …${key.takeLast(4)} is spent until its reset in ${inTime(until - now)}" + if (others.isEmpty()) "" else "; ${if (others.size == 1) "the other key carries" else "the other keys carry"} on",
+                            look = if (others.isEmpty()) "add a key, or wait for its reset" else null,
+                        ),
+                    )
+                }
             }
-            if (p.throttledToday > 0) add(Check(Level.WARN, "API $name", "${p.throttledToday} call${plural(p.throttledToday)} throttled or refused today", "${p.callsToday} calls today", "its pacing in data/keys/ (QuotaPolicy, KeyPool)"))
+            if (p.throttledToday > 0) {
+                // A few refusals in thousands of calls is the pacing working; many, or one in the last hour, is worth a look.
+                val recent = p.lastThrottleMs?.let { now - it < HOUR } == true
+                val many = p.throttledToday * 100 > p.callsToday.coerceAtLeast(1)
+                add(
+                    Check(
+                        if (recent || many) Level.WARN else Level.OK, "API $name", "${p.throttledToday} call${plural(p.throttledToday)} throttled or refused today",
+                        "${p.callsToday} calls today" + (p.lastThrottleMs?.let { "; the last ${Format.age(it, now)}" } ?: ""),
+                        if (recent || many) "its pacing in data/keys/ (QuotaPolicy, KeyPool)" else null,
+                    ),
+                )
+            }
         }
         x.parlayAccounts.forEach { (key, a) ->
             if (a.valid == false) add(Check(Level.FAIL, "API ParlayAPI", "key …${key.takeLast(4)} is not valid" + (a.reason?.let { ": $it" } ?: ""), look = "parlay-api.com account; Settings › API keys"))
