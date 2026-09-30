@@ -21,7 +21,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -161,11 +165,13 @@ class ClosingLineAppTest {
     fun `the periods count by when each bet was placed`() {
         card()
         // Every sample bet was placed a day before its game: none today.
-        compose.onNodeWithTag("clvPeriod-TODAY").performClick()
+        compose.onNodeWithTag("clvPeriod-TODAY").performScrollTo().performClick()
         compose.onNodeWithContentDescription("Beat the close – · avg vs close – · avg EV at bet –").assertExists()
-        compose.onNodeWithTag("clvPeriod-WEEK").performClick()
+        compose.onNodeWithTag("clvPeriod-WEEK").performScrollTo().performClick()
         compose.onNodeWithContentDescription("Beat the close 75% (3 of 4) · avg vs close +4.0% · avg EV at bet +3.0%").assertExists()
     }
+
+    private fun pinned(text: String) = compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(com.tjshea.vigilant.app.ui.STICKY_BAR)))
 
     @Test
     fun `the card is in the Tracker's Stats, over every bet whatever period is picked at the top`() {
@@ -179,9 +185,9 @@ class ClosingLineAppTest {
             }
         }
         compose.onNodeWithTag("clvCard").assertExists()
-        compose.onNodeWithText("Today").performClick() // the pinned period: no bets placed today
+        pinned("Today").performClick() // the pinned period: no bets placed today
         compose.onNodeWithTag("clvCard").assertDoesNotExist()
-        compose.onNodeWithText("All").performClick()
+        pinned("All").performClick()
         compose.onNodeWithContentDescription("Beat the close 75% (3 of 4) · avg vs close +4.0% · avg EV at bet +3.0%").assertExists()
     }
 
