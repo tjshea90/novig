@@ -420,17 +420,22 @@ class ApiBettingController(
         if (c.trading == null) return
         scope.launch {
             val balance = readBalance() ?: return@launch
-            state.update { it.copy(betting = it.betting.copy(balance = balance)) }
-            val sheet = state.value.betSheet ?: return@launch
-            if (sheet.placing || sheet.result != null) return@launch
-            val stake = if (sheet.stakeChosen) sheet.stake else startingStake()
-            if (kotlin.math.abs(stake - sheet.stake) < 1e-9) {
-                state.update { s -> s.copy(betSheet = s.betSheet?.takeIf { it === sheet }?.copy(balance = balance) ?: s.betSheet) }
-                return@launch
+            var replan = false
+            state.update { s ->
+                replan = false
+                val cur = s.betSheet
+                val next = if (cur == null || cur.placing || cur.result != null) cur else {
+                    val stake = if (cur.stakeChosen) cur.stake else BetAmount.starting(settings().apiBetStake, settings().apiMaxStake, balance)
+                    if (kotlin.math.abs(stake - cur.stake) < 1e-9) cur.copy(balance = balance)
+                    else {
+                        // A sheet still finding its bet plans with the new amount once it's found; one that has it plans again now.
+                        replan = cur.target != null && !cur.resolving
+                        cur.copy(stake = stake, balance = balance, plan = null, refusal = null)
+                    }
+                }
+                s.copy(betting = s.betting.copy(balance = balance), betSheet = next)
             }
-            state.update { s -> s.copy(betSheet = s.betSheet?.takeIf { it === sheet }?.copy(stake = stake, balance = balance, plan = null, refusal = null) ?: s.betSheet) }
-            // A sheet still finding its bet plans with the new amount once it's found; one that has it plans again now.
-            if (state.value.betSheet?.let { it.stake == stake && it.target != null && !it.resolving } == true) {
+            if (replan) {
                 betJob?.cancel()
                 betJob = scope.launch { replan() }
             }
