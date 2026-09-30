@@ -1,21 +1,23 @@
-# CHECKPOINT 2164 — read me first, then TASKS.md
+# CHECKPOINT 2165 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T04:54:50Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `64fb7853` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T04:55:27Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `1c2128d8` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.29.0: ParlayAPI matched to its docs and Tj's real key: the meter reads /v1/usage (credits month, exact reset), a new plan paced over the days left in its month, alternates only when no Pinnacle feed, live games asked for, closing lines within the plan's history, props and closes parsed as ParlayAPI really sends them (NHL props added); Check odds now keeps going when CNO's pages don't list a bet, and ParlayAPI's books price what CNO can't with CNO's own check; an X on every +EV bet removes it for good, with Undo and Put back (versionCode 57, v0.29.0)
+v0.29.0 gated and pushed (1117 tests green); I1,I2,I4-I6 ticked
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.29.0), then run: bash tools/record-release.sh v0.29.0 57 "v0.29.0: ParlayAPI matched to its docs and Tj's real key: the meter reads /v1/usage (credits month, exact reset), a new plan paced over the days left in its month, alternates only when no Pinnacle feed, live games asked for, closing lines within the plan's history, props and closes parsed as ParlayAPI really sends them (NHL props added); Check odds now keeps going when CNO's pages don't list a bet, and ParlayAPI's books price what CNO can't with CNO's own check; an X on every +EV bet removes it for good, with Undo and Put back"
+When CI 36670999620 is green: trigger release.yml on main, confirm v0.29.0 Release, record-release.sh v0.29.0 57, tick I3/J3/K3, answer Tj (Release link plain text; key rotation reminder; features list)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  1c2128d8 ckpt 2164: pre-release: v0.29.0: ParlayAPI matched to its docs and Tj's real key: the m
   64fb7853 ckpt 2163: pre-ship: v0.29.0: ParlayAPI matched to its docs and Tj's real key: the mete
   8d5bb257 ckpt 2162: RESEARCH §45 written (real-key findings, docs pass, backup, features to off
   e877fe78 ckpt 2161: I5 docs pass fixes: include_live on ParlayAPI /odds when live is on, closing
@@ -25,5 +27,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   90340774 ckpt 2157: ParlayAPI alternates bought only when no Pinnacle feed is on (marketsFor alt
   1808bb5e ckpt 2156: I4: ParlayAccount reads /v1/usage (credits month, reset Oct 1) with api-key-
   4f81f856 ckpt 2155: Real-key probe findings coded (ParlayMarkets normalizer, NHL props, flat clo
-  36f64899 ckpt 2154: Recorded Tj's key-sharing request as I1-I3 (key kept in scratchpad only, mas
 ```
