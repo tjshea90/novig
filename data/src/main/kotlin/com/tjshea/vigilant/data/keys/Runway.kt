@@ -42,7 +42,36 @@ object Runway {
     /** Too early in a period for a pace to mean anything: a projection needs at least this much of it gone. */
     private fun minElapsed(policy: QuotaPolicy) = if (policy.period == QuotaPeriod.MONTH_UTC) 2 * DAY else 3 * HOUR
 
-    fun lines(views: List<ProviderView>, now: Long): List<RunwayLine> = views.mapNotNull { line(it, now) }
+    fun lines(views: List<ProviderView>, now: Long): List<RunwayLine> {
+        val lines = views.mapNotNull { line(it, now) }
+        // Pinnacle is PinnWire's keys first, then pinnapi's (the same source, one after the other): PinnWire running short is only
+        // short when pinnapi can't carry the rest of the day (Tj's diagnostics, 2026-09-30: "PinnWire … SHORT" beside "pinnapi … none used").
+        val wire = views.firstOrNull { it.policy.id == QuotaPolicy.PINNWIRE.id }
+        val api = views.firstOrNull { it.policy.id == QuotaPolicy.PINNAPI.id }
+        return lines.map { l ->
+            if (l.id != QuotaPolicy.PINNWIRE.id || l.level == RunwayLevel.OK || wire == null || api == null) l else backedUp(l, wire, api, now) ?: l
+        }
+    }
+
+    /** [l] (PinnWire's line) judged with pinnapi's allowance behind it: both used at the pace so far, over both allowances. Null: no help. */
+    private fun backedUp(l: RunwayLine, wire: ProviderView, api: ProviderView, now: Long): RunwayLine? {
+        if (api.keys.none { it.state == KeyState.ACTIVE || it.state == KeyState.STANDBY }) return null
+        val apiLeft = api.totalLeft ?: return null
+        val allowance = (wire.totalAllowance ?: return null) + (api.totalAllowance ?: return null)
+        val used = wire.keys.filter { it.state != KeyState.REFUSED }.sumOf { it.used } + api.keys.filter { it.state != KeyState.REFUSED }.sumOf { it.used }
+        val start = wire.periodStart ?: wire.policy.periodStart(now)
+        val reset = wire.nextReset ?: wire.policy.nextReset(start)
+        val elapsed = (now - start).coerceAtLeast(1L)
+        val projected = if (elapsed < minElapsed(wire.policy)) used.toLong() else Math.round(used.toDouble() * (reset - start) / elapsed)
+        val level = when {
+            projected > allowance -> RunwayLevel.SHORT
+            projected * 5 > allowance * 4 -> RunwayLevel.WATCH
+            else -> RunwayLevel.OK
+        }
+        if (level == RunwayLevel.SHORT) return RunwayLine(l.id, l.name, l.level, l.text + " · pinnapi's ${num(apiLeft)} behind it aren't enough either")
+        val head = l.text.substringBefore(" · at this pace").substringBefore(" · SPENT")
+        return RunwayLine(l.id, l.name, level, "$head · then pinnapi takes over (${num(apiLeft)} left): about ${num(projected.toInt())} of the two's ${num(allowance)} by the reset: ${level.name}")
+    }
 
     fun line(v: ProviderView, now: Long): RunwayLine? {
         val policy = v.policy
