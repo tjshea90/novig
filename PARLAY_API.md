@@ -220,6 +220,25 @@ unless the task says so, and only while `useParlay` is on with a key.
 Streaming odds (`/v1/sse/odds/{s}`, `/v1/odds-drop/{s}`, websocket) need the Business plan ($40). Prop-line alerts (`/v1/alerts/…`) and
 webhooks need a server to receive them.
 
+### 6.9 Tuning review, 2026-09-30 ~07:10Z (Tj: "make sure the apis are being used to their full potential, especially my paid parlayapi")
+- Re-read `/docs/best-practices`, the full endpoint list (214 paths in `openapi.json`) and the free cost catalogue `GET /v1/meta/credit-costs`
+  (public; "cache the response for the life of your client process"). Every cost Vigilant assumes matches it: `/odds` = markets ×
+  ⌈books/10⌉ (3, or 5 with alternates), `/props` 3, `/closing-lines` 5, the closes file 1 per 1,000 rows, period markets 2, injuries 1,
+  line-movement 2; `/verdict` 5 and `/best-bets` 10 per their own descriptions.
+- Fixed: a 503 with `Retry-After` is now waited out as the header says (capped at 20 s) before the one retry, and a busy /verdict waits the
+  time it names (header, else the body's `retry_after_seconds`), per "honor the header; don't poll faster" (`TheOddsApiClient.retryAfterMs`,
+  `Reply.retryAfterMs`; `ParlayRetryAfterTest`).
+- Already as the guide says: the key in `X-API-Key`, one retry on a 502/504 or a dropped connection, none on 4xx, `X-Request-ID` in errors,
+  degraded-mode books left out (`/v1/meta/source-quality`), the key's own figures read for free (`/v1/usage`), no ETag polling (live odds
+  endpoints don't send ETags).
+- Looked at and not used, with why: `/v1/exchange/{s}/markets` (3 cr: Novig's order book, which Vigilant reads free from Novig itself),
+  `/v1/prediction-markets/{s}` (1 cr: Kalshi and Polymarket, read free directly), `/ev`, `/consensus`, `/compare`, `/arbitrage`, `/middles`
+  (Vigilant computes its own fair lines against Novig's taker price), `POST /v1/clv` (5+ cr: Vigilant already gets closes from ParlayAPI's
+  closing lines, ESPN and Novig's trades), `/v1/sports/{s}/scores` (1–2 cr: ESPN and MLB grade for free; a possible backup if they fail),
+  `/live/api/sparkline` and `/moves.json` (free line history and moves; `/v1/meta/movers` already covers Pinnacle's moves).
+- Check odds now now prices every open bet from Vigilant's own sources too (ParlayAPI's game lines, props and 1st-half lines among them),
+  beside CNO's pages (TASKS.md O1): the pass is paced like a scan, so it spends from the day's share.
+
 ## 7. Still unverified
 - Whether the credits actually reset on the 1st (UTC) for a plan bought on the 30th (the /v1/usage period says so; check on Oct 1).
 - Settled 2026-09-30 with Tj's key (15 credits in all: 19,867 → 19,852): /line-movement's shape (§6.6, pick'em apps only), MLB `F5` / NHL `P1–P3`
