@@ -309,6 +309,7 @@ fun TrackerScreen(
                             onRegrade = { actions.onRegrade(bet.id) },
                             onStake = { editStake = bet },
                             onDelete = { confirmDelete = bet },
+                            injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
                         )
                     }
                 }
@@ -328,6 +329,7 @@ fun TrackerScreen(
             onPrice = { editPrice = bet },
             onDelete = { confirmDelete = bet },
             onDismiss = { openId = null },
+            injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
         )
     }
     confirmDelete?.let { bet ->
@@ -544,6 +546,8 @@ private fun BetCard(
     onRegrade: () -> Unit,
     onStake: () -> Unit,
     onDelete: () -> Unit,
+    /** An open prop bet's player may not play (PARLAY_API.md §6.1): a tag after the pick. */
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
 ) {
     val open = bet.status == BetStatus.PENDING
     val awaiting = TrackerText.awaiting(bet, now)
@@ -555,7 +559,10 @@ private fun BetCard(
         Column(Modifier.padding(start = 14.dp, end = 4.dp, top = 12.dp, bottom = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(bet.selection, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(bet.selection, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (open) injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
+                    }
                     Text(
                         listOf(bet.marketLabel, bet.league, if (open) TrackerText.startsIn(bet.startsTs, now) else Format.shortDate(bet.startsTs)).filter { it.isNotBlank() }.joinToString(" · "),
                         style = MaterialTheme.typography.labelSmall,

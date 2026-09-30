@@ -75,6 +75,8 @@ fun BetSheet(
     onPrice: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    /** The player's injury report when he may not play (PARLAY_API.md §6.1). */
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
 ) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     // Current odds, not last time's: the books are read once when the sheet opens on old ones.
@@ -84,7 +86,7 @@ fun BetSheet(
         if (bet.status == BetStatus.PENDING && bet.gameUrl != null && t - bet.startsTs < BetRecheck.STALE_AFTER_START_MS && old) actions.onReread(bet.id, true)
     }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
-        BetSheetContent(bet, remember(bet) { BetInsight.of(bet) }, now, settings, rereading, grading, replacing, actions, onSettle, onStake, onPrice, onDelete)
+        BetSheetContent(bet, remember(bet) { BetInsight.of(bet) }, now, settings, rereading, grading, replacing, actions, onSettle, onStake, onPrice, onDelete, injury = injury)
     }
 }
 
@@ -103,6 +105,7 @@ fun BetSheetContent(
     onStake: () -> Unit,
     onPrice: () -> Unit,
     onDelete: () -> Unit,
+    injury: com.tjshea.vigilant.data.reference.Injury? = null,
 ) {
     val open = bet.status == BetStatus.PENDING
     val started = now >= bet.startsTs
@@ -124,6 +127,7 @@ fun BetSheetContent(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (open) injury?.let { InjuryLine(it, Modifier.padding(top = 6.dp)) }
         }
 
         // ---- What happened / what it's waiting for ----
