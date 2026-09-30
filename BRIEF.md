@@ -326,6 +326,10 @@ robolectric.org/configuring/.
 
 ## Locked architecture decisions
 
+- **Accuracy and speed over mobile data and phone storage, always (Tj, 2026-09-30):** "My mobile data is fast and unlimited and my
+  phone storage is large. Choose accuracy and speed over mobile data or phone storage always." Never gate a read to Wi-Fi, shrink a
+  download or cache, or skip a source to save data or storage. (API credits and rate limits are a different budget: those still matter.)
+
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
   `com.tjshea.vigilant.betmgm` ("Vigilant MGM"), built by module `mgm` from `app`'s OWN sources and resources
   (never a copy) with `BuildConfig.BOOK = "betmgm"`; `app` sets `"novig"` and stays `com.tjshea.vigilant`.

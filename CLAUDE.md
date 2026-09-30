@@ -41,6 +41,12 @@ What that means in practice:
 - **To revive it** (only when Tj asks): build with `-Pmgm`, add `mgm` back to `release.yml`'s build and
   signature check, and re-read RESEARCH.md §25.
 
+## Mobile data and storage are not a constraint
+
+Tj, 2026-09-30: "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone
+storage always." Never trade accuracy or speed for data or storage (no Wi-Fi-only reads, no smaller downloads, no thinner caches). API
+credits and rate limits are still a real budget (BRIEF.md).
+
 ## FIRST ACTION OF EVERY SESSION — install the hooks, don't assume they exist
 
 This account runs several repos side by side under one Claude Code
