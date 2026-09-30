@@ -460,10 +460,19 @@ class TheOddsApiClient(
         const val MAX_BOOKMAKERS_ONE_REGION = 10
 
         /** Ten books = one region = 3 credits per sport refresh. Pinnacle is the sharp anchor. */
+        /**
+         * The books a scan asks for, sharp first (Tj, 2026-09-30: "can I add more sports books to scan … Would it make the app more
+         * accurate?"). PropLine reads every one of them at no extra cost; The Odds API, only PropLine's backup, asks the first
+         * [MAX_BOOKMAKERS_ONE_REGION] (one credit per market per league). Every book here prices its own line: LowVig (BetOnline's
+         * reduced-juice twin, the same line devigged) and betPARX/Unibet (BetRivers' Kambi line) would count one line twice (RESEARCH.md §44).
+         */
         val DEFAULT_BOOKMAKERS = listOf(
-            "pinnacle", "betonlineag", "lowvig", "draftkings", "fanduel",
-            "betmgm", "williamhill_us", "espnbet", "fanatics", "betrivers",
+            "pinnacle", "betonlineag", "draftkings", "fanduel", "betmgm", "betrivers",
+            "hardrockbet", "bovada", "fliff", "williamhill_us", "fanatics", "espnbet",
         )
+
+        /** Books added to the defaults in v0.35.0, for settings saved before ([ScanSettings.migrate]). */
+        val ADDED_V35 = listOf("hardrockbet", "bovada", "fliff")
 
         /** Every book the settings screen offers. The Odds API bookmaker keys. */
         val KNOWN_BOOKMAKERS: Map<String, String> = linkedMapOf(
@@ -476,10 +485,11 @@ class TheOddsApiClient(
             "fanduel" to "FanDuel",
             "betmgm" to "BetMGM",
             "williamhill_us" to "Caesars",
-            "espnbet" to "ESPN BET",
+            "espnbet" to "theScore Bet",
             "fanatics" to "Fanatics",
             "betrivers" to "BetRivers",
             "hardrockbet" to "Hard Rock Bet",
+            "fliff" to "Fliff",
             "ballybet" to "Bally Bet",
             "bovada" to "Bovada",
             "mybookieag" to "MyBookie.ag",

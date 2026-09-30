@@ -541,23 +541,24 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
             }
         }
 
-        SectionTitle("Sportsbooks for fair odds (${s.referenceBooks.size}/10)")
+        SectionTitle("Sportsbooks for fair odds (${s.referenceBooks.size})")
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TheOddsApiClient.KNOWN_BOOKMAKERS.forEach { (key, title) ->
                 val on = key in s.referenceBooks
                 FilterChip(
                     selected = on,
-                    enabled = on || s.referenceBooks.size < TheOddsApiClient.MAX_BOOKMAKERS_ONE_REGION,
                     onClick = { onUpdate { it.copy(referenceBooks = if (on) it.referenceBooks - key else it.referenceBooks + key) } },
                     label = { Text(title) },
                 )
             }
         }
         Hint(
-            "Read from PropLine first, and from The Odds API only for what PropLine couldn't give. On The Odds API, up to 10 " +
-                "books cost the same: one credit per market per league, and one per prop type per game for props. PropLine " +
-                "carries all of them except Caesars, ESPN BET, Betfair, Bally Bet and MyBookie, which count only when The Odds " +
-                "API is asked (a book of those picked as sharp above keeps it asked every scan).",
+            "Read from PropLine first, every book picked at no extra cost, and from The Odds API only for what PropLine couldn't give: " +
+                "there, the first 10 picked, one credit per market per league and one per prop type per game for props. PropLine " +
+                "carries all of them except Caesars, theScore Bet, Betfair, Bally Bet and MyBookie, which count only when The Odds " +
+                "API is asked (a book of those picked as sharp above keeps it asked every scan). ParlayAPI reads its own books: " +
+                "every sportsbook it has for props, and its sharp ones for game lines. LowVig is BetOnline's line with less juice: " +
+                "picking both counts that line twice.",
         )
     }
 }

@@ -334,6 +334,13 @@ data class ScanSettings(
         if (s.schema < 10) {
             s = s.copy(miniWindow = false, schema = 10)
         }
+        // v0.35.0 (Tj, 2026-09-30: "add sports books to each scanner"): Hard Rock, Bovada and Fliff join the books read (free on PropLine);
+        // LowVig, BetOnline's twin line, leaves a list that has BetOnline, so one line isn't counted twice in the consensus.
+        if (s.schema < 11) {
+            val books = s.referenceBooks.filterNot { it == "lowvig" && "betonlineag" in s.referenceBooks } +
+                com.tjshea.vigilant.data.reference.TheOddsApiClient.ADDED_V35.filterNot { it in s.referenceBooks }
+            s = s.copy(referenceBooks = books, schema = 11)
+        }
         return s
     }
 
