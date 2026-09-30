@@ -121,6 +121,8 @@ class DiagnosticsTest {
         val day = QuotaPolicy.PINNWIRE.periodStart(noon)
         val s = SampleScan.state().copy(
             pinnwireKeys = listOf("wire-key-0001"),
+            // No pinnapi key behind PinnWire here (with one, pinnapi's allowance counts too: RunwayTest).
+            pinnapiKeys = emptyList(),
             proplineKeys = listOf("prop-key-0002"),
             usage = UsageBook(
                 mapOf(
