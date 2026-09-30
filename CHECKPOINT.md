@@ -1,13 +1,13 @@
-# CHECKPOINT 2149 — read me first, then TASKS.md
+# CHECKPOINT 2150 — read me first, then TASKS.md
 
-**Written:** 2026-09-30T03:30:30Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `289eb940` (this checkpoint is the commit after it)
+**Written:** 2026-09-30T03:34:03Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-5babcffd-eylneu` · **builds on:** `3c72f0fb` (this checkpoint is the commit after it)
 
 ## Just done
-H6 in: CreditHeaders (x-requests/x-credits/X-RateLimit-* monthly only, reset epoch, request id), KeyUsage.resetAtMs (meter/pace/runway/views follow the provider's reset), recordBalance; ParlayAccount (free /v1/meta/api-key-check, tolerant parse, refresh on scan start/usage tab/Diagnostics/key add); X-API-Key header for ParlayAPI, one retry on 502-504/IO, request id in errors; ParlayAccountTest 7 green
+H1-D Runway counts pinnapi behind PinnWire (RunwayTest); H5 maxAgeSec=600 on /props, commenceTimeTo=window+24h on ParlayAPI /odds (requestKey incl. window); best-practice degraded-mode guard ParlaySourceQuality (free, stale/missing/breach-past-stale books left out); ParlayAccountTest 9
 
 ## Do this next
-H1-D Runway PinnWire+pinnapi; H5 maxAgeSec on /props + commenceTimeTo on /odds; source-quality guard (maybe); full floor; RESEARCH §44; ship; answer (what I need: a dedicated ParlayAPI key to verify shapes)
+full floor; RESEARCH §44; version 0.28.0 code 56; ship; answer Tj (report findings, fixes, what I need: a dedicated second ParlayAPI key to verify shapes)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ H1-D Runway PinnWire+pinnapi; H5 maxAgeSec on /props + commenceTimeTo on /odds; 
 
 ## Last ten checkpoints
 ```
+  323fcb36 ckpt 2149: H6 in: CreditHeaders (x-requests/x-credits/X-RateLimit-* monthly only, reset
   9a87d0a8 ckpt 2148: H1-C fixed: closes reopened when a new close source is active (CloseSource.i
   69e64611 ckpt 2147: H1-B fixed: CNO pause reason kept (CnoState.lastPause/At, pauseFor), Check o
   97657671 ckpt 2146: Pacing bugs fixed (stale out-of-order answers ignored, STALE_WINDOW/SLACK; f
@@ -25,8 +26,7 @@ H1-D Runway PinnWire+pinnapi; H5 maxAgeSec on /props + commenceTimeTo on /odds; 
   c5b40f47 ckpt 2142: pre-ship: v0.27.0: ParlayAPI fully used on its $5 Starter plan: Pinnacle's c
   2e0a6863 ckpt 2141: Full test findings #2-#3 fixed: CLV card copy now names Pinnacle's ParlayAPI
   ebc4a263 ckpt 2140: Full test finding #1 fixed: background auto-scans could spend ParlayAPI's wh
-  fda54162 ckpt 2139: RESEARCH.md §43 written (5 sources, ParlayAPI tested endpoints/costs, what 
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
