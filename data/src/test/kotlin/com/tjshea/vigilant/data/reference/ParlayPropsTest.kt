@@ -93,11 +93,13 @@ class ParlayPropsTest {
     }
 
     @Test
-    fun `ParlayAPI asks for alternate lines with its main lines, The Odds API doesn't`() {
+    fun `ParlayAPI asks for alternate lines with its main lines unless a Pinnacle feed sends them, The Odds API doesn't`() {
         val families = listOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL)
         assertEquals(listOf("h2h", "spreads", "totals"), TheOddsApiClient.marketsFor(families))
         assertEquals(listOf("alternate_spreads", "alternate_totals", "h2h", "spreads", "totals"), TheOddsApiClient.marketsFor(families, OddsFeed.PARLAY))
         assertEquals(listOf("h2h"), TheOddsApiClient.marketsFor(listOf(MarketFamily.MONEYLINE), OddsFeed.PARLAY))
+        // They're Pinnacle's alone: with PinnWire or pinnapi sending them, not bought again (3 credits a league, not 5).
+        assertEquals(listOf("h2h", "spreads", "totals"), TheOddsApiClient.marketsFor(families, OddsFeed.PARLAY, alternates = false))
     }
 
     @Test
