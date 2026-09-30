@@ -462,6 +462,20 @@ class AppContainer(private val app: Application) {
     private val propLineProps = PropLinePropsSource(propLine)
 
     /**
+     * Every other sportsbook's odds for a tapped ParlayAPI pick (Tj, 2026-09-30: "always see other sports books odds for any bet when I click on
+     * it"): ParlayAPI and PropLine side by side, The Odds API last, each only while it's on with a key, and none while Vigilant's scanner is
+     * asleep (CNO only). Display only: never a fair line.
+     */
+    val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = {
+        val s = currentSettings()
+        com.tjshea.vigilant.data.reference.OtherBooks.Sources(
+            parlay = s.vigilantOn && parlayActive(),
+            propLine = s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
+            oddsApi = s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
+        )
+    })
+
+    /**
      * Moves keys saved by v0.6.0 and earlier (encrypted with a Keystore key, which a backup
      * restored onto another phone can't decrypt) into the plain key file, once. Safe to call on
      * every launch: a provider that already has keys in the file is left alone.

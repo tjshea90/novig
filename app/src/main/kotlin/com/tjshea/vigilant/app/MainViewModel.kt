@@ -582,7 +582,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Every book's odds for a tapped ParlayAPI pick (TASKS.md P4, Tj 2026-09-30: "opens a screen that shows other sports books odds on the same
      * bet, exactly how other sections of this app such as cno scanner do it"): CNO's game page when CNO lists the same bet (at CNO's pace), else
-     * (or when that page can't be read) ParlayAPI's own books for it (its props or game lines, shared 2 minutes, judged by CNO's same check).
+     * (or when that page can't be read) every other sportsbook's from the odds sources (TASKS.md Q2, "always see other sports books odds":
+     * ParlayAPI and PropLine side by side, The Odds API last; one-sided books shown, older prices apart; [com.tjshea.vigilant.data.reference.OtherBooks]).
      */
     fun loadPickBooks(p: com.tjshea.vigilant.data.reference.ParlayPick, force: Boolean = false) {
         val s = _state.value
@@ -592,29 +593,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 runCatching { c.cno.loadBooks(cnoRow, force) }
                 if (c.cno.books.value[cnoRow.key]?.view != null) return@launch
             }
-            if (!_state.value.canAskParlay) {
-                if (cnoRow == null) setPickBooks(p.key, com.tjshea.vigilant.data.cno.CnoBooksState(error = "CNO doesn't list this bet and ParlayAPI is off, so no book list can be read"))
-                return@launch
-            }
             val had = _state.value.parlayPicks.books[p.key]
             val keptAt = had?.view?.fetchedAtMs
-            if (!force && keptAt != null && System.currentTimeMillis() - keptAt < com.tjshea.vigilant.data.tracker.ParlayBooks.KEEP_MS) return@launch
+            if (!force && keptAt != null && System.currentTimeMillis() - keptAt < com.tjshea.vigilant.data.reference.OtherBooks.KEEP_MS) return@launch
             setPickBooks(p.key, (had ?: com.tjshea.vigilant.data.cno.CnoBooksState()).copy(loading = true, error = null))
-            val view = try {
-                withContext(Dispatchers.IO) { c.parlayBooks.view(p.row.league, p.row.event, p.row.startsAtMs, p.row.market, p.row.bet) }
+            val read = try {
+                withContext(Dispatchers.IO) {
+                    c.otherBooks.view(p.row.league, p.row.event, p.row.startsAtMs, p.row.market, p.row.bet, marketKey = p.play.marketKey)
+                }
             } catch (e: CancellationException) {
                 setPickBooks(p.key, (had ?: com.tjshea.vigilant.data.cno.CnoBooksState()).copy(loading = false))
                 throw e
             } catch (e: Exception) {
                 null
             }
-            setPickBooks(
-                p.key,
-                com.tjshea.vigilant.data.cno.CnoBooksState(
-                    view = view ?: had?.view,
-                    error = if (view == null) "ParlayAPI has no other book pricing this exact bet right now" else null,
-                ),
-            )
+            _state.update {
+                val ui = it.parlayPicks
+                it.copy(
+                    parlayPicks = ui.copy(
+                        books = ui.books + (p.key to com.tjshea.vigilant.data.cno.CnoBooksState(
+                            view = read?.view ?: had?.view,
+                            error = read?.why ?: if (read == null) "The odds sources couldn't be read just now" else null,
+                        )),
+                        bookSources = ui.bookSources + (p.key to read?.sources.orEmpty()),
+                        olderBooks = ui.olderBooks + (p.key to read?.older.orEmpty()),
+                    ),
+                )
+            }
         }
     }
 

@@ -58,8 +58,12 @@ data class ParlayPicksUi(
     /** Vigilant's own fair line for each shown pick (by pick key) from a bets-only read after each scan and recheck (TASKS.md P2). */
     val vigilant: Map<String, com.tjshea.vigilant.data.tracker.OpenBetPricer.FairRead> = emptyMap(),
     val vigilantReading: Boolean = false,
-    /** ParlayAPI's own books for a tapped pick CNO doesn't list (by pick key; TASKS.md P4). */
+    /** Every other book's odds for a tapped pick CNO doesn't list (by pick key; TASKS.md P4, Q2), from [com.tjshea.vigilant.data.reference.OtherBooks]. */
     val books: Map<String, com.tjshea.vigilant.data.cno.CnoBooksState> = emptyMap(),
+    /** Who answered for each pick's books ("ParlayAPI", "PropLine", "The Odds API"). */
+    val bookSources: Map<String, List<String>> = emptyMap(),
+    /** Books whose last price is older than the freshness limit: shown apart, never counted. */
+    val olderBooks: Map<String, List<com.tjshea.vigilant.data.reference.OtherBooks.Line>> = emptyMap(),
 )
 
 /** What the +EV tab's ParlayAPI section does; the activity wires them. */
@@ -118,20 +122,38 @@ fun pickCnoRow(state: UiState, p: ParlayPick): CnoRow? =
     if (!state.settings.cnoOn) null
     else ParlayCompare.Index(state.cno.snapshot?.rows.orEmpty(), emptyList()).cnoRowFor(p)?.takeIf { it.gameUrl != null }
 
-/** A pick's books as its sheet shows them: CNO's game page once read, else ParlayAPI's; [fromCno] says which. */
-data class PickBooks(val books: com.tjshea.vigilant.data.cno.CnoBooksState?, val fromCno: Boolean)
+/**
+ * A pick's books as its sheet shows them: CNO's game page once read, else every other book's from the odds sources; [fromCno] says which,
+ * [sources] who answered, [older] the books whose last price is too old to count.
+ */
+data class PickBooks(
+    val books: com.tjshea.vigilant.data.cno.CnoBooksState?,
+    val fromCno: Boolean,
+    val sources: List<String> = emptyList(),
+    val older: List<com.tjshea.vigilant.data.reference.OtherBooks.Line> = emptyList(),
+) {
+    /** Where the books came from, for the sheet ("CNO's game page", "ParlayAPI + PropLine"). */
+    val sourceText: String
+        get() = if (fromCno) "CNO's game page" else sources.joinToString(" + ").ifEmpty { "the odds sources" }
+}
 
 fun UiState.pickBooks(p: ParlayPick): PickBooks {
     val cnoRow = pickCnoRow(this, p)
     val fromCno = cnoRow?.let { books[it.key] }
-    val parlay = parlayPicks.books[p.key]
+    val other = parlayPicks.books[p.key]
+    val sources = parlayPicks.bookSources[p.key].orEmpty()
+    val older = parlayPicks.olderBooks[p.key].orEmpty()
     return when {
         fromCno?.view != null -> PickBooks(fromCno, true)
-        parlay != null -> PickBooks(parlay, false)
+        other != null -> PickBooks(other, false, sources, older)
         fromCno != null -> PickBooks(fromCno, true)
         else -> PickBooks(null, cnoRow != null)
     }
 }
+
+/** [view] with Novig's price now as its judged row (CNO's page has one; the other sources' Novig prices are left out as older). */
+fun withNovigNow(view: com.tjshea.vigilant.data.cno.CnoBooksView, odds: Int, available: Double?): com.tjshea.vigilant.data.cno.CnoBooksView =
+    view.copy(prices = view.prices.filter { it.code != com.tjshea.vigilant.data.cno.CnoBooks.NOVIG } + com.tjshea.vigilant.data.cno.CnoBookPrice(com.tjshea.vigilant.data.cno.CnoBooks.NOVIG, odds, available, null, null))
 
 /** The test tag of the ParlayAPI section's header. */
 const val PARLAY_PICKS = "parlayPicks"
@@ -407,8 +429,9 @@ fun ParlayPickDetail(
     val play = p.play
     val live = row.startsAtMs?.let { it <= now } == true
     val state = books.books
-    val view = state?.view
-    val source = if (books.fromCno) "CNO's game page" else "ParlayAPI's books"
+    // Every book but CNO's page gets Novig's price now as its judged row, as CNO's page has one.
+    val view = state?.view?.let { if (books.fromCno) it else withNovigNow(it, row.odds, p.available) }
+    val source = books.sourceText
     val check = view?.let { com.tjshea.vigilant.data.cno.CnoBooks.check(it, row, live, preferListOdds = (p.novigAtMs ?: 0L) > it.fetchedAtMs) }
     Column(
         Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState()).testTag("parlayPickSheet"),
@@ -456,7 +479,7 @@ fun ParlayPickDetail(
             state == null || (state.loading && view == null) -> Row(verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.width(10.dp))
-                Text("Reading every book's odds from ${if (books.fromCno) "CNO" else "ParlayAPI"}…", style = MaterialTheme.typography.bodySmall)
+                Text("Reading every book's odds from ${if (books.fromCno) "CNO" else "the odds sources"}…", style = MaterialTheme.typography.bodySmall)
             }
             view == null -> Banner(state.error ?: "No book list is available for this bet.", action = "Retry", onAction = onReloadBooks)
             check != null -> VerdictCard(check, row, view.otherBet, lister = "ParlayAPI", page = source)
@@ -469,6 +492,7 @@ fun ParlayPickDetail(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        OlderBooks(books.older, now)
         Text(
             "ParlayAPI's EV is its fair price against ${com.tjshea.vigilant.app.AppBook.name}'s order book now" +
                 (p.novigAtMs?.let { " (read ${Format.age(it, now)})" } ?: "") +
@@ -494,5 +518,26 @@ fun ParlayPickDetail(
         if (view != null) TextButton(onClick = onReloadBooks, enabled = !state.loading) { Text(if (state.loading) "Reading…" else "Re-read books") }
         // ParlayAPI's call on this bet at the price shown, only on a tap (5 credits; PARLAY_API.md §6.4).
         SecondOpinionFor(p.key, androidx.compose.runtime.remember(row.key, row.odds) { com.tjshea.vigilant.data.reference.VerdictQueries.of(row) })
+    }
+}
+
+/**
+ * Books whose last price is older than the freshness limit (Tj, 2026-09-30: always see the other books): listed with their age, never counted
+ * in the check above, so an old price can't make a bet look +EV.
+ */
+@Composable
+fun OlderBooks(older: List<com.tjshea.vigilant.data.reference.OtherBooks.Line>, now: Long) {
+    if (older.isEmpty()) return
+    Column(Modifier.testTag("olderBooks"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text("Older prices (not counted)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        older.forEach { l ->
+            Text(
+                com.tjshea.vigilant.data.cno.CnoBooks.name(l.code) + "  " + (l.odds?.let { MiniWindow.american(it) } ?: "—") +
+                    (l.otherOdds?.let { " / " + MiniWindow.american(it) } ?: "") + (l.seenAtMs?.let { " · ${Format.age(it, now)}" } ?: "") + " · ${l.source}",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
