@@ -79,6 +79,17 @@
             android:name=".AlertActionReceiver"
             android:exported="false" />
 
+        <!-- The closing-line capture's alarm, a few minutes before each open bet's start (ClosingCapture.kt). -->
+        <receiver
+            android:name=".ClosingReceiver"
+            android:exported="false" />
+
+        <!-- WorkManager's expedited work runs as this service before Android 12 (the closing capture): its type, for Android 14+. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
         <receiver
             android:name=".AutoScanReceiver"
             android:exported="false">

@@ -123,7 +123,7 @@ class ClosingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val nm = applicationContext.getSystemService(NotificationManager::class.java)
         nm?.createNotificationChannel(NotificationChannel(CHANNEL, "Closing lines", NotificationManager.IMPORTANCE_MIN))
         val n = NotificationCompat.Builder(applicationContext, CHANNEL)
-            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setSmallIcon(R.drawable.ic_scan)
             .setContentTitle("Reading closing lines")
             .setOngoing(true)
             .build()

@@ -357,6 +357,8 @@ class AutoScanReceiver : BroadcastReceiver() {
                 val app = context.applicationContext as? VigilantApp ?: return pending.finish()
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
+                        // Alarms don't survive a reboot: the closing capture's is armed again (and after an update, for good measure).
+                        runCatching { ClosingAlarm.schedule(app, app.container.tracker.all()) }
                         if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
                     } finally {
                         pending.finish()

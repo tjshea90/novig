@@ -62,6 +62,11 @@ import com.tjshea.vigilant.data.vigilantHttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import com.tjshea.vigilant.data.tracker.ClosingLine
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -85,7 +90,7 @@ class VigilantApp : Application() {
  * any network on its own: only a scan the user asks for does, and CrazyNinjaOdds' list (with its
  * books and player teams) while the CNO scanner is on screen ([cno], [teams]).
  */
-class AppContainer(app: Application) {
+class AppContainer(private val app: Application) {
     private companion object {
         /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
         const val RECHECK_AT_ONCE = 3
@@ -109,6 +114,19 @@ class AppContainer(app: Application) {
 
     val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
     val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
+
+    init {
+        // The closing capture's alarm follows the open bets (Tj, 2026-09-29: true closing lines): armed for the next start, moved when a bet is
+        // added, settled or deleted, cancelled when none is left to close ([ClosingAlarm]). Whatever started this process: a screen, an alert's
+        // ✓, a worker.
+        appScope.launch {
+            runCatching { tracker.all() }
+            tracker.flow.filterNotNull()
+                .map { bets -> ClosingLine.nextAt(bets, System.currentTimeMillis()) }
+                .distinctUntilChanged()
+                .collect { at -> ClosingAlarm.set(app, at) }
+        }
+    }
 
     /** When the last Tracker "Check odds now" began: its +EV / −EV counter counts the bets re-read since ([CheckOddsStats]). */
     val lastCheck = JsonFileStore(File(app.filesDir, "last_check.json"), com.tjshea.vigilant.data.tracker.LastCheck.serializer(), { com.tjshea.vigilant.data.tracker.LastCheck() }, json)
