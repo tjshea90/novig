@@ -535,11 +535,89 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         ),
                     )
                 }
+                readVigilantFairs()
             } finally {
                 _state.update { if (it.parlayPicks.loading) it.copy(parlayPicks = it.parlayPicks.copy(loading = false)) else it }
             }
         }
     }
+
+    private var vigilantFairsJob: Job? = null
+
+    /**
+     * Vigilant's own fair line for the ParlayAPI picks shown (TASKS.md P2, Tj 2026-09-30: "put cno/vigilant's percentage so I can compare and
+     * see if it is truly positive EV on each bet"): the ones the last scan hasn't priced freshly get one bets-only read (the Tracker's
+     * [com.tjshea.vigilant.data.tracker.OpenBetPricer], the feed's sources and rules), after each ParlayAPI scan and recheck. Only on those taps.
+     */
+    private fun readVigilantFairs() {
+        val s = _state.value
+        val pricer = c.betPricer ?: return
+        val now = System.currentTimeMillis()
+        val opportunities = s.result?.opportunities.orEmpty()
+        val asks = s.parlayShown(now).filter { p ->
+            com.tjshea.vigilant.data.reference.ParlayCompare.opportunityFor(p, opportunities)
+                ?.takeIf { com.tjshea.vigilant.data.scanner.Freshness.fresh(it.fairAsOfMs, now, p.row.startsAtMs) } == null
+        }
+        if (asks.isEmpty()) return
+        vigilantFairsJob?.cancel()
+        _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilantReading = true)) }
+        vigilantFairsJob = viewModelScope.launch {
+            try {
+                val bets = asks.map { p ->
+                    TrackedBet(
+                        id = p.key, createdAtMs = now, league = p.row.league, eventName = p.row.event, startsTs = p.row.startsAtMs ?: 0L,
+                        marketLabel = p.row.market, selection = p.row.bet, marketId = p.marketId.orEmpty(), outcomeId = p.outcomeId.orEmpty(),
+                        price = 0.0, cost = 0.0, fairAtBet = null, evPercentAtBet = null, stake = 0.0,
+                    )
+                }
+                val reads = withContext(Dispatchers.IO) { pricer.fairs(_state.value.settings, bets) }
+                _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilant = it.parlayPicks.vigilant + reads)) }
+            } finally {
+                _state.update { it.copy(parlayPicks = it.parlayPicks.copy(vigilantReading = false)) }
+            }
+        }
+    }
+
+    /**
+     * Every book's odds for a tapped ParlayAPI pick (TASKS.md P4, Tj 2026-09-30: "opens a screen that shows other sports books odds on the same
+     * bet, exactly how other sections of this app such as cno scanner do it"): CNO's game page when CNO lists the same bet (at CNO's pace), else
+     * (or when that page can't be read) ParlayAPI's own books for it (its props or game lines, shared 2 minutes, judged by CNO's same check).
+     */
+    fun loadPickBooks(p: com.tjshea.vigilant.data.reference.ParlayPick, force: Boolean = false) {
+        val s = _state.value
+        val cnoRow = com.tjshea.vigilant.app.ui.pickCnoRow(s, p)
+        viewModelScope.launch {
+            if (cnoRow != null) {
+                runCatching { c.cno.loadBooks(cnoRow, force) }
+                if (c.cno.books.value[cnoRow.key]?.view != null) return@launch
+            }
+            if (!_state.value.canAskParlay) {
+                if (cnoRow == null) setPickBooks(p.key, com.tjshea.vigilant.data.cno.CnoBooksState(error = "CNO doesn't list this bet and ParlayAPI is off, so no book list can be read"))
+                return@launch
+            }
+            val had = _state.value.parlayPicks.books[p.key]
+            if (!force && had?.view != null && System.currentTimeMillis() - had.view.fetchedAtMs < com.tjshea.vigilant.data.tracker.ParlayBooks.KEEP_MS) return@launch
+            setPickBooks(p.key, (had ?: com.tjshea.vigilant.data.cno.CnoBooksState()).copy(loading = true, error = null))
+            val view = try {
+                withContext(Dispatchers.IO) { c.parlayBooks.view(p.row.league, p.row.event, p.row.startsAtMs, p.row.market, p.row.bet) }
+            } catch (e: CancellationException) {
+                setPickBooks(p.key, (had ?: com.tjshea.vigilant.data.cno.CnoBooksState()).copy(loading = false))
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            setPickBooks(
+                p.key,
+                com.tjshea.vigilant.data.cno.CnoBooksState(
+                    view = view ?: had?.view,
+                    error = if (view == null) "ParlayAPI has no other book pricing this exact bet right now" else null,
+                ),
+            )
+        }
+    }
+
+    private fun setPickBooks(key: String, books: com.tjshea.vigilant.data.cno.CnoBooksState) =
+        _state.update { it.copy(parlayPicks = it.parlayPicks.copy(books = it.parlayPicks.books + (key to books))) }
 
     /** ParlayAPI's picks at Novig's price now again: Novig's books only, no ParlayAPI credits. */
     fun recheckParlayPicks() {
@@ -550,6 +628,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val picks = withContext(Dispatchers.IO) { priceAtNovig(current.picks.map { it.play }) }
                 _state.update { it.copy(parlayPicks = it.parlayPicks.copy(picks = picks)) }
+                readVigilantFairs()
             } finally {
                 _state.update { it.copy(parlayPicks = it.parlayPicks.copy(rechecking = false)) }
             }

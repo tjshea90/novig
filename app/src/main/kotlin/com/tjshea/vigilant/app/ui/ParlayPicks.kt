@@ -51,6 +51,11 @@ data class ParlayPicksUi(
     val leagues: List<String> = emptyList(),
     val errors: List<String> = emptyList(),
     val summaries: List<String> = emptyList(),
+    /** Vigilant's own fair line for each shown pick (by pick key) from a bets-only read after each scan and recheck (TASKS.md P2). */
+    val vigilant: Map<String, com.tjshea.vigilant.data.tracker.OpenBetPricer.FairRead> = emptyMap(),
+    val vigilantReading: Boolean = false,
+    /** ParlayAPI's own books for a tapped pick CNO doesn't list (by pick key; TASKS.md P4). */
+    val books: Map<String, com.tjshea.vigilant.data.cno.CnoBooksState> = emptyMap(),
 )
 
 /** What the +EV tab's ParlayAPI section does; the activity wires them. */
