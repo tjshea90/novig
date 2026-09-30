@@ -2946,8 +2946,8 @@ Tj's words, in order (each becomes a job below; the design notes come after read
 
 ## Tj's request 2026-09-30 ~04:40Z: "For the +ev vigilant scan tab, give me the x option for each bet to remove the bet from the list permanently, even through refreshes and rescans, exactly like the cno section already does"
 
-- [ ] J1 Find how the CNO section's X works (what it stores, how it keys a row, how it survives refreshes/rescans/restarts) and reuse the same mechanism for the +EV scan tab's rows (Vigilant scan feed).
-- [ ] J2 An X on each +EV bet card: tapping it removes that bet from the list and it stays gone across refreshes, rescans and app restarts (same key/lifetime rules as CNO's). Tests (a ViewModel/data test + a UI test that the X is there and hides the row).
+- [x] J1 Find how the CNO section's X works (what it stores, how it keys a row, how it survives refreshes/rescans/restarts) and reuse the same mechanism for the +EV scan tab's rows (Vigilant scan feed).
+- [x] J2 An X on each +EV bet card: tapping it removes that bet from the list and it stays gone across refreshes, rescans and app restarts (same key/lifetime rules as CNO's). Tests (a ViewModel/data test + a UI test that the X is there and hides the row). DONE 2026-09-30: same placed.json record as CNO's ✕ (MainViewModel.hideOpportunity -> markHidden), Undo snackbar, "Show the N bets you removed" with Put back. Tests: FeedRemoveTest (3).
 - [ ] J3 Ship it with the ParlayAPI work (v0.29.0); answer plainly.
 
 ## Tj's request 2026-09-30 ~04:55Z: "When I just tried to get updated odds to see if my bets are EV using the check odds now button, it started and scanned a few then it said crazyninjaodds didn't answer. See if there is a fix to get cno to always respond, or if there is a good backup that does the same exact odds check, I think parlayapi can do this same odds check"
