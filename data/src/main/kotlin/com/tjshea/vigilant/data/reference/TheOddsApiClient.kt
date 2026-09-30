@@ -234,7 +234,7 @@ class TheOddsApiClient(
      * the same key pool, pace and meter as a scan's calls. [cost] is what the call is charged; [busyCost] what a 503 "busy" answer is
      * charged (/line-movement's are, 2 credits each: PARLAY_API.md §1). A 503 comes back to the caller ([Reply.busy]), never retried here:
      * each endpoint says how long to wait. The credits left are read from the headers, else from the body's `credits.monthly_remaining`
-     * (/verdict and /best-bets send no credit headers). [background]: paced as auto-scan's calls are.
+     * (/verdict and /best-bets send no credit headers).
      */
     suspend fun parlayGet(path: String, params: List<Pair<String, String>>, cost: Int, what: String, busyCost: Int = 0): Answer<Reply> {
         check(feed == OddsFeed.PARLAY) { "ParlayAPI only" }
