@@ -56,9 +56,13 @@ class LiveCheckOddsPropsTest {
         val bets = chosen.map { m ->
             val e = events.first { it.eventId == m.eventId }
             val o = m.outcomes.first { it.name.startsWith("Over", true) || it.name.equals("Yes", true) }
+            // Labelled as the Tracker labels a Vigilant bet ("Player Hits", "Isaac Paredes Over 1.5"), from Novig's "Isaac Paredes 1.5 HITS".
+            val parts = Regex("^(.+?) ([0-9]+(?:\\.[0-9]+)?) ([A-Z_]+)$").matchEntire(m.description)?.groupValues
+            val label = parts?.let { "Player " + com.tjshea.vigilant.data.scanner.PropStats.displayName(it[3]) } ?: m.description
+            val selection = parts?.let { "${it[1]} ${o.name.substringBefore(' ')} ${it[2]}" } ?: o.name
             TrackedBet(
                 id = "${m.marketId}/${o.outcomeId}", createdAtMs = old, league = "MLB", eventName = e.description, startsTs = m.startsTs,
-                marketLabel = m.description, selection = o.name, marketId = m.marketId, outcomeId = o.outcomeId, price = 0.5, cost = 0.5,
+                marketLabel = label, selection = selection, marketId = m.marketId, outcomeId = o.outcomeId, price = 0.5, cost = 0.5,
                 fairAtBet = 0.5, evPercentAtBet = 0.0, stake = 1.0, status = BetStatus.PENDING,
                 nowFair = 0.5, nowEv = 0.0, nowAtMs = old, nowVia = BetTracker.VIA_VIGILANT,
             )
