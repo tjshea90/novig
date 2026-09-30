@@ -119,7 +119,7 @@ class TheOddsApiClient(
     }
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        val markets = marketsFor(settings.families, feed)
+        val markets = marketsFor(settings.families, feed, alternates)
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
         // ParlayAPI: only the games the scan can price (its window, plus a day for loose kickoff times), a smaller reply for the same credits.
         val until = if (feed == OddsFeed.ODDS_API) null else Planner.horizon(settings, clock()) + WINDOW_SLACK_MS
@@ -315,12 +315,13 @@ class TheOddsApiClient(
 
         /**
          * The markets a sport refresh buys, one credit each: the main lines, and on ParlayAPI (which serves them for a whole league in one
-         * call, where The Odds API only sells them game by game) every alternate spread and total, so Novig's alternate lines are priced
-         * at their own numbers.
+         * call, where The Odds API only sells them game by game) every alternate spread and total when [alternates], so Novig's alternate
+         * lines are priced at their own numbers. ParlayAPI's alternates are Pinnacle's alone (Tj's key, 2026-09-30), which PinnWire and
+         * pinnapi already send: with either on they'd be 2 credits a league for nothing.
          */
-        fun marketsFor(families: Collection<MarketFamily>, feed: OddsFeed = OddsFeed.ODDS_API): List<String> {
+        fun marketsFor(families: Collection<MarketFamily>, feed: OddsFeed = OddsFeed.ODDS_API, alternates: Boolean = true): List<String> {
             val main = families.mapNotNull { FAMILY_MARKETS[it] }
-            val alt = if (feed == OddsFeed.ODDS_API) emptyList() else families.mapNotNull { ALT_MARKETS[it] }
+            val alt = if (feed == OddsFeed.ODDS_API || !alternates) emptyList() else families.mapNotNull { ALT_MARKETS[it] }
             return (main + alt).sorted()
         }
 
