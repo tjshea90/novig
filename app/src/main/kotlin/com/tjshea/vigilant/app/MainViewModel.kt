@@ -464,6 +464,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun teamRows(): Flow<List<CnoRow>> = state.map { it.cnoTeamRows }
 
     /**
+     * Injury tags for every listed and open prop bet (Tj, 2026-09-30, PARLAY_API.md §6.1), recomputed off the main thread when a list or
+     * the reports change. Players no ParlayAPI props answer covered are looked up in its /injuries list ([com.tjshea.vigilant.data.reference.ParlayInjuries]:
+     * 1 credit a league, 10 minutes apart at most, only while ParlayAPI is on with a key).
+     */
+    private suspend fun keepInjuryTags() {
+        class Lists(val feed: List<Opportunity>, val rows: List<CnoRow>, val teams: Map<String, String>, val bets: List<TrackedBet>)
+        val wants = state
+            .map { s -> Lists(s.feed, if (s.settings.cnoOn) s.cno.snapshot?.rows.orEmpty() else emptyList(), s.teams, s.bets) }
+            // The same lists (by reference) as last time: nothing to look up again.
+            .distinctUntilChanged { a, b -> a.feed === b.feed && a.rows === b.rows && a.teams === b.teams && a.bets === b.bets }
+            .map { l -> com.tjshea.vigilant.data.reference.InjuryTags.wants(l.feed, l.rows, l.teams, l.bets, System.currentTimeMillis()) }
+            .distinctUntilChanged()
+        combine(wants, c.injuries.book) { w, book ->
+            val now = System.currentTimeMillis()
+            com.tjshea.vigilant.data.reference.InjuryTags.tags(book, w, now) to com.tjshea.vigilant.data.reference.InjuryTags.uncovered(book, w, now)
+        }.flowOn(Dispatchers.Default).collect { (tags, uncovered) ->
+            _state.update { if (it.injuries == tags) it else it.copy(injuries = tags) }
+            // Each sport's read is gated in ParlayInjuries (10 minutes apart, ParlayAPI on with a key): asking again is free.
+            uncovered.forEach { (sport, players) -> viewModelScope.launch { c.parlayInjuries.fill(sport, players) } }
+        }
+    }
+
+    /**
      * Marks a widget or CNO-tab bet placed: hidden from then on, through refreshes and restarts,
      * and logged in the Tracker for good (Tj, 2026-09-27: "for every bet that I check on the cno
      * scanner, log it permanently"), $1 unless he changes it there.
