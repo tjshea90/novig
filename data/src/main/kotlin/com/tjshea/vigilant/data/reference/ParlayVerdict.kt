@@ -125,6 +125,12 @@ data class Verdict(
     val movementPp: Double?,
     val note: String?,
 ) {
+    /**
+     * Its fair line is Novig's own no-vig price (Tj's key, 2026-09-30: a prop Pinnacle didn't carry came back "from novig"): for a Novig bet
+     * that's no independent check, so the screens say so.
+     */
+    val fairFromNovig: Boolean get() = fairSource.equals("novig", ignoreCase = true)
+
     /** EV of a bet costing [cost] per $1 payout (Novig's price, fee included) against this fair line; null without one. */
     fun evAt(cost: Double): Double? = fairProbability?.takeIf { it in 0.0..1.0 && cost > 0 }?.let { it / cost - 1.0 }
 
