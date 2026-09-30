@@ -170,8 +170,10 @@ class ParlayAccountTest {
             {"source":"draftkings","sla":"breach","age_s":900.0,"thresholds_s":{"tight":10,"stale":120}},
             {"source":"fanduel","sla":"stale","age_s":2000}]}"""
         assertEquals(setOf("draftkings", "fanduel"), ParlaySourceQuality.parse(json.parseToJsonElement(quality)))
-        server.enqueue(MockResponse().setBody(quality))
-        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        server.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) =
+                if (request.path!!.contains("source-quality")) MockResponse().setBody(quality) else MockResponse().setBody(Fixtures.oddsApi)
+        }
         val client = TheOddsApiClient(
             OkHttpClient(), KeyPool(QuotaPolicy.PARLAY, { listOf("pk") }, meter), json,
             baseUrl = server.url("/v1").toString().trimEnd('/'), clock = { now }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
