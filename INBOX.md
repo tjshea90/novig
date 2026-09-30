@@ -2809,3 +2809,14 @@ Can this help the app
 
 https://apify.com/mrdoe/bet-clv-tracker/api
 ```
+
+## 2026-09-30T19:30:22Z
+```
+1) can I add more sports books to scan on vigilant either for cno scanner or vigilant scanner? Can parlayapi do it? Would it make the app more accurate? If so, add sports books to each scanner.
+
+2) change it so anywhere in the app where I use the vigilant wallet to place bets in the app, I can type in a custom account for any bet manually. And if I have less than one dollar in the wallet, it automatically enters whatever is left in the wallet as the bet amount
+
+3) make the diagnostics section in settings as smart as possible so that when I output it to Claude, Claude can run deep analysis on the app and know what is working or broken and how to improve the app either in code or ui or scanning or accuracy or function.
+
+4) review the clv stats and positive EV stats for current open bets. Make it so this feature does not count any bets in which the game or bet is currently live. The odds move rapidly when a game is live and this should not skew the EV stats for open bets. Then make sure these sections accurately capture actual positive EV percentages and true line closing values
+```
