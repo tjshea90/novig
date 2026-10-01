@@ -235,13 +235,12 @@ class ApiBettingController(
     private fun placer(): ApiBetPlacer? = synchronized(placerLock) {
         val t = c.trading ?: return null
         placerCache?.takeIf { it.first === t }?.second
-            ?: ApiBetPlacer(t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock)
+            ?: ApiBetPlacer(t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock)
                 .also { placerCache = t to it }
     }
 
     /** The market's book read from Novig just now (never one shown from the last scan). */
-    private suspend fun freshBook(marketId: String): NovigBook? =
-        withContext(Dispatchers.IO) { c.novig.books(listOf(marketId)).takeIf { it.failed == 0 && it.fromCache == 0 }?.books?.get(marketId) }
+    private suspend fun freshBook(marketId: String): NovigBook? = c.freshBook(marketId)
 
     /** Called when the connection changes or loads: whether the Bet buttons show. */
     fun refreshEnabled() {

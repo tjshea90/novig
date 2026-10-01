@@ -6,8 +6,11 @@ import com.tjshea.vigilant.app.data.KeystoreSecretBox
 import com.tjshea.vigilant.app.data.KeystoreSigningKey
 import com.tjshea.vigilant.app.data.KeystoreVault
 import com.tjshea.vigilant.app.data.NovigConnectionStore
+import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.signing.ManagementKeyStore
 import com.tjshea.vigilant.data.novig.signing.NovigBettingSetup
+import com.tjshea.vigilant.data.novig.trading.ApiBetPlacer
+import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.tracker.ApiBetSync
 import com.tjshea.vigilant.data.tracker.ApiSettler
@@ -22,6 +25,7 @@ import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.TapLink
 import com.tjshea.vigilant.data.alerts.AlertBook
 import com.tjshea.vigilant.data.alerts.AlertLog
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.FileApiKeyStore
@@ -67,6 +71,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import com.tjshea.vigilant.data.tracker.ClosingLine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -197,6 +202,35 @@ class AppContainer(private val app: Application) {
      */
     @Volatile var trading: NovigTradingClient? = null
         private set
+
+    /** The Vigilant subaccount's key id (its wallet's address) while [trading] is set; null otherwise. */
+    @Volatile var subaccountKeyId: String? = null
+        private set
+
+    /**
+     * One order at a time across the whole app (Tj, 2026-10-01): the Bet sheet's placer and the auto-bet's share it ([ApiBetPlacer]), so the
+     * same bet can never be placed by both at once.
+     */
+    val orderLock = Mutex()
+
+    private var autoPlacerCache: Pair<Any, ApiBetPlacer>? = null
+
+    /** The market's book read from Novig just now (never one shown from the last scan). */
+    suspend fun freshBook(marketId: String): NovigBook? =
+        withContext(Dispatchers.IO) { novig.books(listOf(marketId)).takeIf { it.failed == 0 && it.fromCache == 0 }?.books?.get(marketId) }
+
+    /** The placer the background auto-bet uses, for the trading client in use (null = betting isn't set up); limits from the saved settings. */
+    @Synchronized
+    fun autoBetPlacer(): ApiBetPlacer? {
+        val t = trading ?: return null
+        autoPlacerCache?.takeIf { it.first === t }?.let { return it.second }
+        val limits = {
+            val s = settingsStore.flow.value ?: ScanSettings()
+            BetLimits(s.apiMaxStake, s.apiMaxPerDay, s.apiMinEv)
+        }
+        return ApiBetPlacer(t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock)
+            .also { autoPlacerCache = t to it }
+    }
     @Volatile var apiSettler: ApiSettler? = null
         private set
     @Volatile var apiSync: ApiBetSync? = null
@@ -212,6 +246,7 @@ class AppContainer(private val app: Application) {
     /** Betting through a client the test built (a mock Novig), without a Keystore key. */
     internal fun installTradingForTest(client: NovigTradingClient, subaccountKeyId: String) {
         trading = client
+        this.subaccountKeyId = subaccountKeyId
         apiSettler = ApiSettler(tracker, client, subaccountKeyId, scoreGrade = { bet -> settler.scoreGradeOf(bet) })
         apiSync = ApiBetSync(tracker, client, novig)
     }
@@ -414,6 +449,7 @@ class AppContainer(private val app: Application) {
             null
         }
         trading = client
+        subaccountKeyId = connection?.subaccountKeyId?.takeIf { client != null }
         apiSettler = client?.let { ApiSettler(tracker, it, connection?.subaccountKeyId.orEmpty(), scoreGrade = { bet -> settler.scoreGradeOf(bet) }) }
         apiSync = client?.let { ApiBetSync(tracker, it, novig) }
     }
