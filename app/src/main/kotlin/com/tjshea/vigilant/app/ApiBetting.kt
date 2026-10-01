@@ -628,19 +628,8 @@ class ApiBettingController(
         }
     }
 
-    /** The bet leaves the +EV and CNO lists the way a ✓ makes it ([PlacedBets]): it's placed. */
-    private suspend fun hideFromLists(target: BetTarget, placed: PlaceResult.Placed) {
-        val key = target.placedKey ?: return
-        runCatching {
-            c.placed.mark(
-                PlacedBet(
-                    key = key, title = target.selection, detail = "${target.marketLabel} · ${target.eventName}", odds = MiniWindow.american(placed.bet.american ?: 0),
-                    placedAtMs = clock(), startsAtMs = target.startsTs, event = target.eventName, market = target.marketLabel,
-                    outcomeId = target.outcomeId, league = target.league,
-                ),
-            )
-        }
-    }
+    /** The bet leaves the +EV and CNO lists the way a ✓ makes it ([PlacedBets]): it's placed (shared with the auto-bet: [markPlaced]). */
+    private suspend fun hideFromLists(target: BetTarget, placed: PlaceResult.Placed) = markPlaced(c, target, placed, clock())
 
     // ---- "Add money" from the sheet -------------------------------------------------------------------------------
 
