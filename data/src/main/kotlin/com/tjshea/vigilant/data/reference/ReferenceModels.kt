@@ -72,6 +72,9 @@ data class RefBookMarket(
         /** Baseball's 1st inning (Novig's FIRST_INNING_TOTAL: "NRFI/YRFI", over/under 0.5 runs). */
         const val PERIOD_FIRST_INNING = 3
 
+        /** A tennis match counted in sets, not games (Novig's SET_SPREAD and TOTAL_SETS; ParlayAPI's Pinnacle lines, [ParlayTennis]). */
+        const val PERIOD_SETS = 4
+
         fun flipSide(s: String?): String? = when (s) {
             HOME -> AWAY
             AWAY -> HOME
