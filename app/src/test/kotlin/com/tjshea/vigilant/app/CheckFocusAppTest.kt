@@ -130,14 +130,14 @@ class CheckFocusAppTest {
             assertFalse(app.container.focus.active())
             assertFalse(cnoReadsHeld(vm.state.value))
             assertFalse(app.container.autoScan.status.value.pausedForCheck)
-            // Nothing is held back by it afterwards.
-            toasts.clear()
-            vm.refreshCno()
-            assertFalse(toasts.contains(CHECKING_TOAST))
             // The look for closes was the forced one, and the report says what it found.
             assertTrue("a Check odds now looks for every close, not the 3-hourly retry's few", app.container.lastBackfill!!.forced)
             waitFor("the report") { toasts.any { it.contains("Closing lines:") } }
             assertTrue(toasts.toString(), toasts.any { it.startsWith("No open bets to check") && it.contains("Closing lines: every started bet has one") })
+            // Nothing is held back by the check afterwards.
+            toasts.clear()
+            vm.refreshCno()
+            assertFalse(toasts.contains(CHECKING_TOAST))
         } finally {
             listen.cancel()
         }
