@@ -440,11 +440,7 @@ class ApiBettingController(
         if (sheet.placing || sheet.funding || state.value.betting.busy || !(amount > 0.0)) return
         state.update { it.copy(betSheet = sheet.copy(funding = true, fundMessage = null, fundError = null)) }
         scope.launch {
-            val applied = try {
-                transferNow("fund", amount, null)
-            } catch (e: CancellationException) {
-                throw e
-            }
+            val applied = transferNow("fund", amount, null)
             val b = state.value.betting
             state.update { it.copy(betSheet = it.betSheet?.copy(funding = false, fundMessage = b.message.takeIf { applied }, fundError = b.error.takeUnless { applied })) }
             if (applied) checkWallet()

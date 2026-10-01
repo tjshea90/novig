@@ -414,12 +414,14 @@ fun ApiBetSheet(
     onRefresh: () -> Unit,
     onRepeat: () -> Unit,
     onDismiss: () -> Unit,
-    onAddMoney: () -> Unit = {},
+    onAddMoney: (Double) -> Unit = {},
     onTypeStake: (Double) -> Unit = onStake,
+    onFundWallet: (Double) -> Unit = {},
+    keySaved: Boolean = false,
 ) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = { if (!sheet.placing) onDismiss() }, sheetState = state) {
-        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake)
+        ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake, onFundWallet, keySaved)
     }
 }
 
@@ -433,10 +435,13 @@ fun ApiBetSheetContent(
     onRefresh: () -> Unit,
     onRepeat: () -> Unit,
     onDismiss: () -> Unit,
-    /** "Add money to the wallet": Settings' wallet, with what the bet is short by typed in. */
-    onAddMoney: () -> Unit = {},
+    /** "Add money to the wallet" without a saved management key: Settings' wallet, with the amount typed in (the key is asked for there). */
+    onAddMoney: (Double) -> Unit = {},
     /** An amount typed in the Amount field (priced once typing pauses). */
     onTypeStake: (Double) -> Unit = onStake,
+    /** "Add money to the wallet" with a saved management key ([keySaved]): moves the amount from the cash wallet right here. */
+    onFundWallet: (Double) -> Unit = {},
+    keySaved: Boolean = false,
 ) {
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp).navigationBarsPadding().testTag("apiBetSheet"),
@@ -448,8 +453,10 @@ fun ApiBetSheetContent(
         val result = sheet.result
         if (result != null) {
             ResultBlock(result)
-            // Novig refused it for the wallet's balance (the sheet's own check read an older balance).
-            if (result is PlaceResult.Failed && WALLET_WORDS.containsMatchIn(result.message)) AddMoneyButton(onAddMoney)
+            // Novig refused it for the wallet's balance (the sheet's own check read an older balance): the money block is open.
+            if (result !is PlaceResult.Placed) {
+                AddMoneyBlock(sheet, keySaved, suggest = null, autoOpen = result is PlaceResult.Failed && WALLET_WORDS.containsMatchIn(result.message), onFund = onFundWallet, onSettings = onAddMoney)
+            }
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().testTag("betDone")) { Text("Done") }
             return@Column
         }
@@ -490,7 +497,6 @@ fun ApiBetSheetContent(
                     "The Vigilant wallet holds ${Format.money(sheet.balance)}, less than this bet's ${Format.money(plan.expectedCost)}: add money to it first.",
                     style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.testTag("walletShort"),
                 )
-                AddMoneyButton(onAddMoney)
             }
             Text(
                 "It's placed as one order that buys at ${Format.american(plan.limitPrice)} or better and never rests: if Novig's price moves against you first, " +
@@ -524,6 +530,10 @@ fun ApiBetSheetContent(
                 Text("  Reading Novig's price…", style = MaterialTheme.typography.bodyMedium)
             }
         }
+        // Add money to the wallet, in every bet slip whatever the wallet holds (Tj, 2026-10-01: "Right now if I have one cent, there is no option to add money
+        // in the bet slip"): open already, with what the bet is short by, when the wallet can't cover it.
+        val shortBy = sheet.plan?.let { p -> sheet.balance?.takeIf { it + 1e-9 < p.expectedCost }?.let { p.expectedCost - it } }
+        AddMoneyBlock(sheet, keySaved, suggest = shortBy, autoOpen = shortBy != null, onFund = onFundWallet, onSettings = onAddMoney)
         if (!sheet.placing) TextButton(onClick = onDismiss) { Text("Cancel") }
         Spacer(Modifier.height(4.dp))
     }
@@ -565,10 +575,72 @@ private fun StakeField(sheet: BetSheetUi, onTypeStake: (Double) -> Unit) {
 /** What an order refused for the wallet's balance says: Novig's 422 ([NovigApiException.advice]: "doesn't have enough money") or its own words. */
 private val WALLET_WORDS = Regex("(?i)enough money|balance|insufficient|funds")
 
-/** The sheet's way to the wallet (Tj, 2026-09-29): Settings › Betting, scrolled to "Add money", with the shortfall typed in. */
+/** The amounts the sheet's "Add money" offers (Tj, 2026-10-01: "$1, 2, 5, 10, 15, 20, or an amount I type in"). */
+val SHEET_MONEY_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 15.0, 20.0)
+
+/**
+ * The Bet sheet's way to put money in the Vigilant wallet, in every sheet (Tj, 2026-09-29: a way to Settings when the wallet is short; 2026-10-01: "a button
+ * in all the bet slips … in amounts of $1, 2, 5, 10, 15, 20, or an amount I type in", also when the wallet holds a cent): a button that opens the amounts and a
+ * typed field. With a management key saved on the phone ([keySaved]) the money moves from here ([onFund]); without one, Settings' wallet opens with the amount
+ * typed in ([onSettings]), where the key is entered once. [suggest]: what the bet is short by (rounded up to whole dollars, the amount to start from).
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AddMoneyButton(onAddMoney: () -> Unit) {
-    FilledTonalButton(onClick = onAddMoney, modifier = Modifier.fillMaxWidth().testTag("addMoney")) { Text("Add money to the wallet") }
+private fun AddMoneyBlock(sheet: BetSheetUi, keySaved: Boolean, suggest: Double?, autoOpen: Boolean, onFund: (Double) -> Unit, onSettings: (Double) -> Unit) {
+    var open by rememberSaveable(autoOpen) { mutableStateOf(autoOpen) }
+    var text by rememberSaveable { mutableStateOf(WalletAmount.text(suggest?.let(WalletAmount::suggest) ?: 5.0)) }
+    // A bet that is short suggests its shortfall, whenever that appears.
+    LaunchedEffect(suggest?.let(WalletAmount::suggest)) { suggest?.let { text = WalletAmount.text(WalletAmount.suggest(it)) } }
+    val amount = WalletAmount.parse(text)
+    val problem = WalletAmount.problem(text)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilledTonalButton(onClick = { open = !open }, enabled = !sheet.placing, modifier = Modifier.fillMaxWidth().testTag("addMoney")) {
+            Text(if (open) "Hide add money" else "Add money to the wallet" + (sheet.balance?.let { " · ${Format.money(it)} in it" }.orEmpty()))
+        }
+        if (open) {
+            Column(Modifier.testTag("addMoneyBlock"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    if (keySaved) "Moves money from your Novig cash wallet to the Vigilant wallet."
+                    else "Opens Settings with the amount filled in; your Novig management key is asked for there once, then saved.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SHEET_MONEY_CHOICES.forEach { c ->
+                        FilterChip(
+                            selected = amount != null && kotlin.math.abs(amount - c) < 1e-9, onClick = { text = WalletAmount.text(c) },
+                            enabled = !sheet.funding && !sheet.placing, label = { Text(Format.money(c)) },
+                            modifier = Modifier.testTag("sheetMoney-${WalletAmount.text(c)}"),
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { t -> text = t.filter { it.isDigit() || it == '.' || it == ',' || it == '$' }.take(12) },
+                    label = { Text("Or type an amount") },
+                    prefix = { Text("$") },
+                    singleLine = true,
+                    enabled = !sheet.funding && !sheet.placing,
+                    isError = problem != null,
+                    supportingText = problem?.let { { Text(it) } },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth().testTag("sheetMoneyAmount"),
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { amount?.let { if (keySaved) onFund(it) else onSettings(it) } },
+                        enabled = amount != null && !sheet.funding && !sheet.placing,
+                        modifier = Modifier.testTag("sheetFund"),
+                    ) { Text(amount?.let { "Add ${Format.money(it)} to the wallet" } ?: "Add to the wallet") }
+                    if (sheet.funding) {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Text("Adding…", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                sheet.fundMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.positive, modifier = Modifier.testTag("sheetFundMessage")) }
+                sheet.fundError?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.testTag("sheetFundError")) }
+            }
+        }
+    }
 }
 
 @Composable

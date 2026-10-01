@@ -722,11 +722,13 @@ private fun VigilantRoot(
             onRefresh = vm.api::refreshPlan,
             onRepeat = vm.api::allowRepeat,
             onDismiss = vm.api::dismiss,
-            onAddMoney = {
+            onAddMoney = { amount ->
                 betTab = tab.name
-                vm.api.requestTopUp()
+                vm.api.requestTopUp(amount)
                 tabName = Tab.SETTINGS.name
             },
+            onFundWallet = vm.api::fundFromSheet,
+            keySaved = state.novig.managementKey?.let { !it.unreadable } == true,
         )
     }
 
