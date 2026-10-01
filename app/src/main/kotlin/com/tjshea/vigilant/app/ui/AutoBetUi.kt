@@ -72,7 +72,7 @@ object AutoBetText {
     fun confirm(s: ScanSettings, balance: Double?): String =
         "Vigilant will place REAL bets from your Vigilant wallet" + (balance?.let { " (${Format.money(it)})" } ?: "") + " with nobody asking you, " +
             "each time CrazyNinjaOdds' background scan finds a bet with ${criteria(s)}. It never bets a game that has started, never more than " +
-            "${Format.money(s.apiMaxPerDay)} in a day across API bets, and stops when the wallet can't fund a $1 bet or if an order's answer is lost. " +
+            "${Format.money(s.apiMaxPerDay)} in a day across API bets, and stops when the wallet is empty (under a cent) or if an order's answer is lost. " +
             "Every bet is tracked like one you placed yourself, and you get a notification for each."
 
     /** Why auto-bet isn't running right now though it's on (or what turning it on needs), or null when it is running. */
@@ -98,7 +98,7 @@ object AutoBetText {
         val f = s.autoBetStake.kelly ?: return null
         return "Kelly sizing uses your bankroll (${Format.money(s.bankroll)}, set in Bankroll & Kelly above): bankroll × ${Format.kellyLabel(f).removeSuffix(" Kelly")} × " +
             "(fair chance − price) ÷ (1 − price), so it changes with each bet's odds and edge. It's held to your most per bet, to what Novig has for sale at +EV " +
-            "and to what's in the wallet; under ${Format.money(AutoBet.MIN_STAKE)} is skipped, never rounded up. At the same edge a longer price stakes less " +
+            "and to what's in the wallet, floored to the cent; under a cent is skipped, never rounded up (a Kelly stake under a dollar is placed as it is). At the same edge a longer price stakes less " +
             "(a +300 bet gets a third of a +100 bet's stake), but nothing caps the odds itself: that is the longest-odds limit above."
     }
 }
@@ -275,7 +275,7 @@ fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) ->
 
     // The wallet and what the last check did.
     Text(
-        "Vigilant wallet " + (balance?.let { Format.money(it) } ?: "not read yet") + ". It stops placing bets when the wallet can't fund a ${Format.money(AutoBet.MIN_STAKE)} bet, " +
+        "Vigilant wallet " + (balance?.let { Format.money(it) } ?: "not read yet") + ". It stops placing bets when the wallet is empty (under a cent), " +
             "and holds each bet to what's left. Held to your daily limit of ${Format.money(s.apiMaxPerDay)} for API bets (above), and your Novig location check " +
             "(open the Novig app at least every 3 days; no VPN).",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp).testTag("autoBetWallet"),
