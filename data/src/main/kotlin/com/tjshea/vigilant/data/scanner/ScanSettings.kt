@@ -301,7 +301,7 @@ data class ScanSettings(
     /**
      * Scans on a timer in the background, every [autoScanSeconds], with Vigilant closed or not
      * (Tj, 2026-09-28). A foreground service with its own notification keeps it going; each scan
-     * is woken by an alarm and holds the CPU only while it runs. Off by default.
+     * is woken by an alarm and holds the CPU only while it runs, unless [autoScanKeepAwake] holds it between scans. Off by default.
      */
     val autoScan: AutoScanMode = AutoScanMode.OFF,
     /**
@@ -313,8 +313,8 @@ data class ScanSettings(
     val autoScanMinutes: Int = 10,
     /**
      * Keep the phone's CPU awake (screen off) while background auto-scan runs more often than every 9 minutes (Tj, 2026-10-02: "keep it
-     * alive robustly … even if the phone is idle and the screen is turned off and locked"): without it Android's Doze lets an alarm-driven
-     * scan run about every 9 minutes while the phone sits still. See [KeepAwake]. On by default: costs battery, best plugged in.
+     * alive robustly … even if the phone is idle and the screen is turned off and locked"): without it Android's Doze holds an alarm-driven
+     * scan to its allowance for alarms (documented: about one every 9 minutes) while the phone sits still. See [KeepAwake]. On by default: costs battery, best plugged in.
      */
     val autoScanKeepAwake: Boolean = true,
     /**

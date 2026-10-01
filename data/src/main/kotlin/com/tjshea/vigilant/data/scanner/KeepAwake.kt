@@ -5,14 +5,16 @@ package com.tjshea.vigilant.data.scanner
  * robustly to keep auto bet on and scanning even if the phone is idle and the screen is turned off and locked … I still want the screen
  * turned off if possible").
  *
- * Why (RESEARCH.md §59): with the screen off and the phone still, Android enters Doze, and a scan that waits for an alarm is woken only about
- * once every 9 minutes ([ALARM_ONLY_BELOW_SECONDS]) whatever the interval says. A foreground service that holds a partial wake lock keeps the CPU
- * running and, being a foreground service, keeps its network too; the screen stays off. Pure: the service and the tests call it.
+ * Why (RESEARCH.md §59): with the screen off and the phone still, Android enters Doze, and a scan that waits for an alarm is held to Android's
+ * allowance for alarms in Doze: documented as about one every 9 minutes per app ([ALARM_ONLY_BELOW_SECONDS]); the AOSP source gives an app with the
+ * exact-alarm permission a larger quota (72 an hour), and which one a phone applies can't be seen from here, so 9 minutes is the safe line. Either way
+ * a 5 to 30 second schedule can't be kept by alarms. A foreground service that holds a partial wake lock keeps the CPU running and, being a foreground
+ * service, keeps its network too; the screen stays off. Pure: the service and the tests call it.
  */
 object KeepAwake {
 
     /**
-     * Intervals this long or longer don't need the CPU held: Android's own allowance for an exact alarm in Doze is one about every 9 minutes,
+     * Intervals this long or longer don't need the CPU held: Android's documented allowance for an alarm in Doze is one about every 9 minutes per app,
      * so an alarm is on time for them and holding the CPU awake for 10 to 40 minutes would only cost battery.
      */
     const val ALARM_ONLY_BELOW_SECONDS = 540

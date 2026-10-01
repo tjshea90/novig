@@ -53,8 +53,8 @@ import java.util.Locale
  *    off only if the loop stalls, and starts the cycles and the loop again.
  *  - **Alarm only** (the switch off, or cycles 9 minutes or more apart): no wake lock between scans. Each one is woken by an exact alarm
  *    ([AutoScanReceiver]), holds a partial wake lock only while [AutoScanner.cycle] runs (capped at [WAKE_LOCK_MAX_MS]), and arms the next alarm
- *    [ScanSettings.autoScanSeconds] after it started (and again when it ends, if it outlasted that). In Doze Android lets such an alarm go off
- *    about once every 9 minutes whatever the interval, which is why faster intervals use the first way.
+ *    [ScanSettings.autoScanSeconds] after it started (and again when it ends, if it outlasted that). In Doze Android holds such an alarm to its
+ *    allowance (documented: about one every 9 minutes per app), which is why faster intervals use the first way.
  */
 class AutoScanService : Service() {
 
