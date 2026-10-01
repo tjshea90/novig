@@ -399,6 +399,22 @@ class BiggerScansTest {
     }
 
     @Test
+    fun `a different plan is never priced from another plan's outcomes, even one of the same size`() = runTest {
+        val (_, books, board) = reusePlan(4)
+        val refs = listOf(Fair(board).odds(Leagues.byNovigName("MLB")!!, settings))
+        // Games 0-2 and games 1-3: the same number of markets, in the same places, but not the same markets.
+        val early = Planner.plan(board.events.take(3), board.markets.take(3), refs, settings, now)
+        val late = Planner.plan(board.events.drop(1), board.markets.drop(1), refs, settings, now)
+        assertEquals(early.markets.size, late.markets.size)
+        val memo = FairMemo()
+        Pricing.price(early, books, settings, now, memo)
+        assertEquals(Pricing.price(late, books, settings, now).digest(), Pricing.price(late, books, settings, now, memo).digest())
+        // And a bigger plan after a smaller one (more markets than the first plan had places for).
+        val all = Planner.plan(board.events, board.markets, refs, settings, now)
+        assertEquals(Pricing.price(all, books, settings, now).digest(), Pricing.price(all, books, settings, now, memo).digest())
+    }
+
+    @Test
     fun `without a memo nothing is kept or shared`() = runTest {
         val (plan, books, _) = reusePlan(2)
         val a = Pricing.price(plan, books, settings, now).opportunities
