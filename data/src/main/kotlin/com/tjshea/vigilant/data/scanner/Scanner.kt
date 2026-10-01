@@ -183,6 +183,7 @@ class Scanner(
         if (leagues.isEmpty()) return@withLock report(null, errors, null, null, emptyList())
 
         val ordered = sources.sortedBy { SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+        dropUnusedReferences(ordered, leagues)
         val progress = Progress(ordered.sumOf { s -> leagues.count { s.supports(it) } } + 1, onProgress)
         progress.emit()
         // "source|league" for every source that has answered (or failed, or stood by) for a league this scan.
@@ -986,6 +987,17 @@ class Scanner(
     )
 
     private fun MutableList<String>.addSync(s: String) = synchronized(this) { add(s) }
+
+    /**
+     * The parsed boards of a league or a source no longer picked are never priced or read again, yet each is thousands of lines held for the
+     * life of the process (Tj's Diagnostics, 2026-10-01: an OutOfMemoryError at 256 MB with seven leagues picked and more having been): a
+     * scan starts by letting them go.
+     */
+    private fun dropUnusedReferences(sources: List<ReferenceSource>, leagues: List<League>) {
+        val wanted = HashSet<String>()
+        for (source in sources) for (league in leagues) if (source.supports(league)) wanted += "${source.id}|${league.novigName}"
+        synchronized(references) { references.keys.retainAll(wanted) }
+    }
 
     /** What the scanner keeps between scans, for Diagnostics' memory block (counts, not bytes). */
     data class Holdings(val snapshots: Int, val events: Int, val bookMarkets: Int, val books: Int, val cachedBooks: Int)
