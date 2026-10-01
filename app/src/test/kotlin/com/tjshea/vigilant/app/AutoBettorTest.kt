@@ -387,6 +387,55 @@ class AutoBettorTest {
         assertTrue(bettor(novig3).run(settings(), state()).placed.single().stake in 0.9..1.0)
     }
 
+    // ---- Tj, 2026-10-01 ~17:5x: a push notification for every automatic bet, with the stake and the EV ----------
+
+    @Test
+    fun `every automatic bet gets its own pop-up notification with the stake, the EV, the odds and what's left in the wallet`() = runBlocking {
+        val novig = FakeNovig()
+        val r = bettor(novig, wallet = 25.0).run(settings(), state())
+        val bet = r.placed.single()
+        val note = notifications().single { it.extras.getString("android.title")!!.startsWith("Auto-bet") }
+        val title = note.extras.getString("android.title")!!
+        val text = note.extras.getString("android.text")!!
+        // The stake and the EV are in the title, so the collapsed notification already says what was bet.
+        assertTrue(title, title.contains(String.format(java.util.Locale.US, "\$%.2f", bet.stake)))
+        assertTrue(title, Regex("""[+-]\d+\.\d% EV""").containsMatchIn(title))
+        assertTrue(title, title.contains("Justin Jefferson Under 69.5"))
+        assertTrue(text, text.contains("+117"))
+        assertTrue(text, text.contains("3 of 3 books agree"))
+        assertTrue(text, text.contains("wallet \$24.") && text.endsWith("left"))
+        // On the channel that pops up (the old one was normal importance).
+        val channel = shadowOf(app.getSystemService(NotificationManager::class.java)).getNotificationChannel(AutoBetNotes.CHANNEL_BET)
+        assertEquals(NotificationManager.IMPORTANCE_HIGH, channel.importance)
+        assertEquals(AutoBetNotes.CHANNEL_BET, note.channelId)
+    }
+
+    @Test
+    fun `bets placed one after another each keep their own notification, none replaces another`() {
+        val bet = runBlocking { bettor(FakeNovig(), wallet = 25.0).run(settings(), state()).placed.single() }
+        val target = targetOf(jefferson)
+        val check = AlertPicks.cnoChecked(state(), 0.03, now).first().check
+        for (i in 1..5) AutoBetNotes.placed(app, target, bet.copy(id = "api-bet-$i", stake = i * 0.25), check, walletLeft = 10.0 - i)
+        val mine = notifications().filter { it.channelId == AutoBetNotes.CHANNEL_BET }
+        // The one the cycle posted plus five more, each its own.
+        assertEquals(6, mine.size)
+        val titles = mine.map { it.extras.getString("android.title")!! }
+        for (i in 1..5) assertTrue(titles.toString(), titles.any { it.startsWith(String.format(java.util.Locale.US, "Auto-bet \$%.2f", i * 0.25)) })
+    }
+
+    @Test
+    fun `a test notification is the same kind and says it's a test, and a blocked channel is named`() {
+        assertTrue(AutoBetNotes.sample(app))
+        val sample = notifications().single { it.extras.getString("android.title")!!.contains("Test bet") }
+        assertEquals(AutoBetNotes.CHANNEL_BET, sample.channelId)
+        assertTrue(sample.extras.getString("android.title")!!.contains("EV"))
+        assertNull("nothing blocks it on a phone that allows notifications", AutoBetNotes.blocked(app))
+        // Notifications switched off for the app: said, in words that say where to turn them on.
+        shadowOf(app.getSystemService(NotificationManager::class.java)).setNotificationsEnabled(false)
+        assertTrue(AutoBetNotes.blocked(app)!!.contains("switched off for Vigilant"))
+        shadowOf(app.getSystemService(NotificationManager::class.java)).setNotificationsEnabled(true)
+    }
+
     // ---- Tj, 2026-10-01 ~17:5x: the stake rules in his own sentences --------------------------------------------
 
     private fun spent(novig: FakeNovig) = novig.last!!.let { (_, price, qty) -> qty * price * 0.01 }
