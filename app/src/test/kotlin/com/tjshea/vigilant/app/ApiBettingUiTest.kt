@@ -10,6 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -64,8 +65,16 @@ class ApiBettingUiTest {
     }
 
     /** The sheet scrolls on its own: no scroll around it. */
-    private fun sheetScreen(content: @androidx.compose.runtime.Composable () -> Unit) = compose.setContent {
-        VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() } }
+    private fun sheetScreen(content: @androidx.compose.runtime.Composable () -> Unit) {
+        swapped = content
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    // Keyed by the swap count, so a swapped-in sheet starts with none of the last one's remembered state.
+                    androidx.compose.runtime.key(swaps) { swapped?.invoke() }
+                }
+            }
+        }
     }
 
     /**
@@ -73,9 +82,11 @@ class ApiBettingUiTest {
      * (A mutable holder the one [sheetScreen] reads.)
      */
     private var swapped by androidx.compose.runtime.mutableStateOf<(@androidx.compose.runtime.Composable () -> Unit)?>(null)
+    private var swaps by androidx.compose.runtime.mutableStateOf(0)
 
     private fun sheetScreenFresh(content: @androidx.compose.runtime.Composable () -> Unit) {
         if (swapped == null) throw IllegalStateException("call sheetScreen first")
+        swaps++
         swapped = content
         compose.waitForIdle()
     }
