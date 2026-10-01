@@ -50,6 +50,17 @@ class AutoBetDiagnosticsTest {
     }
 
     @Test
+    fun `auto-bet on with Android's notifications switched off is a WARN, naming where to turn them on`() {
+        val blocked = HealthChecks.of(state(), extras.copy(phone = Diagnostics.Phone(notifications = false)), now).filter { it.area == "Auto-bet notifications" }
+        assertEquals(listOf(HealthChecks.Level.WARN), blocked.map { it.level })
+        assertTrue(blocked.single().text(), blocked.single().text().contains("Android Settings › Apps › Vigilant › Notifications"))
+        // Allowed (or not readable), or auto-bet off: nothing to say.
+        assertTrue(HealthChecks.of(state(), extras.copy(phone = Diagnostics.Phone(notifications = true)), now).none { it.area == "Auto-bet notifications" })
+        assertTrue(HealthChecks.of(state(), extras, now).none { it.area == "Auto-bet notifications" })
+        assertTrue(HealthChecks.of(state { it.copy(autoBet = false) }, extras.copy(phone = Diagnostics.Phone(notifications = false)), now).none { it.area == "Auto-bet notifications" })
+    }
+
+    @Test
     fun `a lost order is a FAIL, a wallet that can't fund a bet or a setting that stops it is a WARN, and a healthy one is OK`() {
         val halted = checks(state { it.copy(autoBetHalted = "an order's answer was lost") }).single()
         assertEquals(HealthChecks.Level.FAIL, halted.level)
