@@ -9,6 +9,7 @@ import com.tjshea.vigilant.data.scanner.Agreement
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.tracker.ClosingLine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -98,6 +99,14 @@ object AutoScanClock {
     fun nextAtMs(lastStartMs: Long?, seconds: Int, now: Long): Long =
         lastStartMs?.let { maxOf(it + seconds.coerceAtLeast(1) * 1_000L, now + MIN_GAP_MS) } ?: now
 
+    /**
+     * How recent a read of a bet in its last [ClosingLine.TRUE_CLOSE_MS] must be to skip it this cycle, when cycles are faster than the usual
+     * 5 minutes ([com.tjshea.vigilant.data.tracker.BetRecheck.CLOSING_FRESH_MS]): the cycle's own gap, but never under a minute (one CNO page
+     * per bet per minute at most, however fast the cycle). Null at 5 minutes and slower: the usual rule is already as fast as the cycle.
+     */
+    fun closingFreshMs(seconds: Int): Long? =
+        if (seconds * 1_000L >= com.tjshea.vigilant.data.tracker.BetRecheck.CLOSING_FRESH_MS) null else maxOf(seconds, 60) * 1_000L
+
     /** Alarm jitter: a Vigilant scan counts as due this much before its gap has fully passed. */
     private const val JITTER_MS = 5_000L
 
@@ -174,7 +183,12 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                     runCatching { alerts += cnoCheck(settings) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
                     // The closing line of the open bets about to start, for the Tracker's CLV (Tj, 2026-09-29): the last read before the start.
                     _status.update { it.copy(step = "Open bets about to start") }
-                    runCatching { c.recheck.captureClosing() }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching {
+                        c.recheck.captureClosing()
+                        // Faster than every 5 minutes (Tj, 2026-10-01): bets in their last 15 minutes are re-read at this cycle's pace, so the last read
+                        // before the start (the close) is as near the start as the schedule is, not up to 5 minutes before it.
+                        AutoScanClock.closingFreshMs(settings.autoScanSeconds)?.let { c.recheck.captureClosing(withinMs = ClosingLine.TRUE_CLOSE_MS, freshMs = it) }
+                    }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock())) {
                     _status.update { it.copy(step = "Vigilant scan") }

@@ -816,7 +816,8 @@ fun ClosingLineCard(
         Caption(TrackerText.clvCounts(s))
         Caption(
             "The close is the devigged fair line read in the last ${ClosingLine.TRUE_CLOSE_MS / 60_000} minutes before the start: Vigilant reads it about " +
-                "${ClosingLine.LEAD_MS / 60_000} minutes before each of your games, even when it's closed. If the phone was off, it's found afterwards, " +
+                "${ClosingLine.LEAD_MS / 60_000} minutes before each of your games and again about 2 minutes before, even when it's closed (the later read wins). " +
+                "A bet is never \"closed\" at the price you bet it at, however late you placed it. If the phone was off, the real close is found afterwards, " +
                 "hours or days later: Pinnacle's closing lines from ParlayAPI first (with a key: game lines and props, the sharpest close), ESPN's " +
                 "closing odds (moneylines, spreads, totals) right after the start, and Novig's own last trades before the start (every market, props " +
                 "too) the next morning. \"Avg vs close\" is how much better your odds were than the closing odds, " +
