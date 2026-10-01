@@ -351,7 +351,7 @@ class AutoBettorTest {
             val sent = AtomicInteger()
             override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
                 sent.incrementAndGet()
-                throw com.tjshea.vigilant.data.novig.signing.NovigApiException(451, "GEOLOCATION_EXPIRED", "x", "Open the Novig app so it can check your location again.")
+                throw com.tjshea.vigilant.data.novig.signing.NovigApiException(451, "GEOLOCATION_EXPIRED", "x")
             }
         }
         val p = ApiBetPlacer(refusing, app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
