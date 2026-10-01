@@ -7,6 +7,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -81,8 +84,8 @@ class ApiBettingUiTest {
      * Another screen in the same test: the rule's content is set once, so this swaps what an already-set host shows.
      * (A mutable holder the one [sheetScreen] reads.)
      */
-    private var swapped by androidx.compose.runtime.mutableStateOf<(@androidx.compose.runtime.Composable () -> Unit)?>(null)
-    private var swaps by androidx.compose.runtime.mutableStateOf(0)
+    private var swapped by mutableStateOf<(@androidx.compose.runtime.Composable () -> Unit)?>(null)
+    private var swaps by mutableStateOf(0)
 
     private fun sheetScreenFresh(content: @androidx.compose.runtime.Composable () -> Unit) {
         if (swapped == null) throw IllegalStateException("call sheetScreen first")
