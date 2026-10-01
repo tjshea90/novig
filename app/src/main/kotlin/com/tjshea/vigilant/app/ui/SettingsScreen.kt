@@ -718,7 +718,12 @@ private fun ColumnScope.BettingTab(
         if (state.novig.connection != null) {
             NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
             // Auto-bet (Tj, 2026-10-01): off until turned on; places CNO's bets through the wallet above.
-            AutoBetSection(state, onUpdate)
+            val context = androidx.compose.ui.platform.LocalContext.current
+            AutoBetSection(
+                state, onUpdate,
+                notificationsBlocked = com.tjshea.vigilant.app.AutoBetNotes.blocked(context),
+                onTestNotification = { (context.applicationContext as? android.app.Application)?.let(com.tjshea.vigilant.app.AutoBetNotes::sample) ?: false },
+            )
         }
     }
 }

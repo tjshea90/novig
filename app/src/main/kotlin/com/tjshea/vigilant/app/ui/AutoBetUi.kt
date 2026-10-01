@@ -111,7 +111,14 @@ object AutoBetText {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+fun AutoBetSection(
+    state: UiState,
+    onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
+    /** Why a bet's notification wouldn't show on this phone (Android's permission or settings), or null ([AutoBetNotes.blocked]). */
+    notificationsBlocked: String? = null,
+    /** Posts a made-up auto-bet notification on the real channel; false when it couldn't be posted ([AutoBetNotes.sample]). */
+    onTestNotification: () -> Boolean = { true },
+) {
     val s = state.settings
     var confirming by remember { mutableStateOf(false) }
     val balance = state.betting.balance ?: state.autoBetStatus.balance
@@ -278,6 +285,30 @@ fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) ->
                 "addresses that read too much, so use it only if you want the fastest catch; CNO itself refreshes its odds about once a minute. Vigilant's own scan still " +
                 "starts at most every 4 minutes. In Doze (screen off and still) Android may delay the alarms.",
             style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetFastNote"),
+        )
+    }
+
+    // The notification every bet gets (Tj, 2026-10-01: "a push notification for every automatic bet, so I can see each bet placed and the stake and EV")
+    Text("Notifications", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Text(
+        "Every bet auto-bet places gets its own pop-up notification: the stake and the EV in the title, then the odds, how many books agree, the game and what's left " +
+            "in the wallet. Tap it to open Vigilant; every bet is also in the Tracker, marked Auto.",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    if (s.autoBet && notificationsBlocked != null) {
+        Text(
+            "Auto-bet is on but its notifications can't show: $notificationsBlocked.",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.padding(top = 4.dp).testTag("autoBetNotifBlocked"),
+        )
+    }
+    var tested by remember { mutableStateOf<Boolean?>(null) }
+    OutlinedButton(onClick = { tested = onTestNotification() }, modifier = Modifier.padding(top = 4.dp).testTag("autoBetTestNote")) { Text("Send a test notification") }
+    tested?.let { posted ->
+        Text(
+            if (posted) "Sent: a test bet should pop up now. If nothing appeared, open Android Settings › Apps › Vigilant › Notifications and turn on \"Auto-bet bets placed\"."
+            else "Couldn't send it: Android isn't allowing Vigilant to post notifications (Android Settings › Apps › Vigilant › Notifications).",
+            style = MaterialTheme.typography.bodySmall, color = if (posted) MaterialTheme.colorScheme.onSurfaceVariant else Edge.colors.negative,
+            modifier = Modifier.testTag("autoBetTestNoteResult"),
         )
     }
 
