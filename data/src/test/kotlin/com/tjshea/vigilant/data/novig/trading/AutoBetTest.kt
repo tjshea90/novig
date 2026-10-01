@@ -76,7 +76,7 @@ class AutoBetTest {
     }
 
     @Test
-    fun `the rules clamp what was typed: books 2-5, both sides 1-3, an edge never under 0_5 percent`() {
+    fun `the rules clamp what was typed, books 2-5, both sides 1-3, an edge never under 0_5 percent`() {
         val r = AutoBet.rules(ScanSettings(autoBetBooks = 9, autoBetTwoSided = 0, autoBetMinEv = 0.0001, autoBetCustomStake = -3.0, autoBetMaxStake = -1.0))
         assertEquals(5, r.minBooks)
         assertEquals(1, r.twoSided)
