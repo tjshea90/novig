@@ -3404,3 +3404,8 @@ So far the auto bet is working well, but add an option for longest odds of any a
 ```
 Investigate whether it is possible for this auto bet feature to work even with my phone turned off. For example, is there a simple and free way to run it on the cloud? Can Claude run it? How can I run the vigilant cno auto bet feature with my phone off
 ```
+
+## 2026-10-01T13:20:53Z
+```
+I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent, whatever the number is that I have in options. Usually it will be a Kelly number and often under $1
+```
