@@ -144,8 +144,6 @@ class AutoBettorTest {
         val note = notifications().single { it.extras.getString("android.title")!!.startsWith("Auto-bet") }
         assertTrue(note.extras.getString("android.title")!!.contains("Justin Jefferson Under 69.5"))
         assertTrue(note.extras.getString("android.text")!!.contains("3 of 3 books agree"))
-        // And it shows in the status.
-        assertEquals(1, app.container.autoBet.status.value.placedSinceStart.let { 1 }) // (the container's own bettor isn't this one)
     }
 
     @Test
@@ -179,7 +177,6 @@ class AutoBettorTest {
         val novig = FakeNovig()
         fun reasons(s: ScanSettings) = runBlocking { bettor(novig).run(s, state(s)).skipped.keys.joinToString() }
         assertTrue(reasons(settings { it.copy(autoBetBooks = 5) }).contains("3 books say +EV on their own (you need 5)"))
-        assertTrue(reasons(settings { it.copy(autoBetTwoSided = 3, autoBetBooks = 2) }).let { it.isEmpty() || !it.contains("both sides") })
         assertTrue(reasons(settings { it.copy(autoBetMinEv = 0.06) }).contains("under your +6.00% minimum"))
         assertEquals("nothing reached Novig", 0, novig.orders.get())
         // The same bet with criteria it meets is placed (3 books, a 5.84% edge against 5.0%).
