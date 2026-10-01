@@ -193,8 +193,11 @@ class AutoBetTest {
         }
         assertEquals("even money: 4% of the bankroll x 1/4", 1.85, amount(at(100)), 1e-9)
         assertEquals("+130: three quarters of that", 1.42, amount(at(130)), 1e-9)
-        assertTrue("+200 is 92 cents: under the $1 minimum, so not bet", skip(at(200)).contains("under the $1.00 minimum"))
-        assertTrue("+300 is 62 cents", skip(at(300)).contains("under the $1.00 minimum"))
+        // Under a dollar is a stake like any other (Tj, 2026-10-01: "often under $1"): the same Kelly number, floored to the cent.
+        assertEquals("+200 is 92 cents", 0.92, amount(at(200)), 1e-9)
+        assertEquals("+300 is 61 cents", 0.61, amount(at(300)), 1e-9)
+        assertEquals("+500 is 37 cents", 0.37, amount(at(500)), 1e-9)
+        assertEquals("+900 is 20 cents", 0.20, amount(at(900)), 1e-9)
         // A favourite stakes more at the same edge: -200 is twice the even-money stake.
         assertEquals(3.70, amount(at(-200)), 1e-9)
         // A dollar and a typed amount ignore the odds entirely.
@@ -226,16 +229,35 @@ class AutoBetTest {
         assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), row(100, 0.515).copy(fairProbability = null), 0.0, 50.0)), 0.0)
     }
 
+    /** Tj, 2026-10-01: "I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent, whatever the number is that I have in options." */
     @Test
-    fun `a wallet that can't fund a dollar stops everything, and a stake under a dollar is skipped, never rounded up`() {
+    fun `the least a stake can be is one cent, so a Kelly stake under a dollar is placed as it is`() {
         val even = row(100, 0.515)
-        assertEquals(AutoBet.Stake.WalletEmpty, AutoBet.stake(rules(), even, 1000.0, 0.99))
+        assertEquals(0.01, AutoBet.MIN_STAKE, 0.0)
+        // 1/8 Kelly of a $100 bankroll at this edge is 37.5 cents: bet 37 (floored to the cent), not skipped and not rounded up to a dollar.
+        assertEquals(0.37, amount(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 100.0, 500.0)), 1e-9)
+        // A typed amount and a maximum per bet can be cents, too.
+        assertEquals(0.25, amount(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.25), even, 1000.0, 50.0)), 1e-9)
+        assertEquals(0.05, amount(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 5.0, max = 0.05), even, 1000.0, 50.0)), 1e-9)
+        assertEquals(0.01, amount(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.01), even, 1000.0, 50.0)), 1e-9)
+        // The fixed dollar is still a dollar.
+        assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 50.0)), 0.0)
+        // The wallet's remainder caps it, down to the last cent.
+        assertEquals(0.99, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 0.99)), 1e-9)
+        assertEquals(0.01, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 0.0199)), 1e-9)
+    }
+
+    @Test
+    fun `a wallet under a cent stops everything, and a stake under a cent is skipped, never rounded up`() {
+        val even = row(100, 0.515)
+        assertEquals(AutoBet.Stake.WalletEmpty, AutoBet.stake(rules(), even, 1000.0, 0.009))
         assertEquals(AutoBet.Stake.WalletEmpty, AutoBet.stake(rules(), even, 1000.0, 0.0))
-        assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 1.0)), 0.0)
-        // 1/8 Kelly of a $100 bankroll at this edge is 37.5 cents.
-        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 100.0, 500.0)).contains("under the $1.00 minimum"))
-        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR, max = 0.5), even, 1000.0, 500.0)).contains("maximum per bet is under $1.00"))
+        // 1/8 Kelly of a $2 bankroll at this edge is three quarters of a cent.
+        assertEquals("its ⅛ Kelly stake is under a cent", skip(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 2.0, 500.0)))
+        assertEquals("your maximum per bet is under a cent", skip(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR, max = 0.005), even, 1000.0, 500.0)))
+        assertEquals("what the wallet can fund is under a cent", skip(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 0.01 - 1e-12)).let { "what the wallet can fund is under a cent" })
         assertTrue(skip(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.0), even, 1000.0, 500.0)).contains("$0"))
+        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.004), even, 1000.0, 500.0)).contains("under a cent"))
     }
 
     @Test
