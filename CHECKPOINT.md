@@ -1,22 +1,24 @@
-# CHECKPOINT 2262 — read me first, then TASKS.md
+# CHECKPOINT 2263 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T13:18:26Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `e1839951` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T13:20:37Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `feb94e04` (this checkpoint is the commit after it)
 
 ## Just done
-wrote Tj's phone-off auto-bet question into TASKS.md as AF1-AF3
+answered Tj's phone-off question; RESEARCH §54 + AF1-AF3 done (no code change)
 
 ## Do this next
-AF1: read NOVIG_API.md location section, CnoClient access, module layout; AF2: check free hosts; AF3: answer
+Wait for Tj to pick: keep phone on / old phone / headless JVM auto-bettor (dry-run first). If headless: new TASKS section, move AutoBettor+AlertPicks glue to plain inputs, key via env, push alerts, dedupe vs Novig open orders.
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M RESEARCH.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  feb94e04 ckpt 2262: wrote Tj's phone-off auto-bet question into TASKS.md as AF1-AF3
   f8800188 ckpt 2261: v0.39.2 released and recorded: auto-bet longest-odds limit (AE1-AE3)
   c133deb1 ckpt 2260: pre-release: v0.39.2: auto-bet gets a longest-odds limit (Settings › Betti
   947c80cf ckpt 2259: wrote Tj's longest-odds request into TASKS.md as AE1-AE3 (answer: Kelly scal
@@ -26,8 +28,4 @@ AF1: read NOVIG_API.md location section, CnoClient access, module layout; AF2: c
   53d0a76d ckpt 2255: AD1+AD2: priced-market reuse in FairMemo/Pricing (same book object, bankroll
   f19090eb ckpt 2254: v0.39.0 released and recorded; ticked AB5/AC4
   68df33bd ckpt 2253: wrote Tj's follow-up crash request into TASKS.md as AD1-AD4 while v0.39.0's 
-  9e07456a ckpt 2252: pre-release: v0.39.0: auto-bet (off by default) places CrazyNinjaOdds' bets 
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

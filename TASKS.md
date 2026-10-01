@@ -3138,6 +3138,7 @@ Answer first (from `AutoBet.kellyStake`): Kelly's stake at the same edge falls a
 
 A question, not a build: answer from what the code and docs say (what auto-bet needs to run: CNO access, Novig trading key, location check, the Android-only parts), plus what free hosts really allow today. Build nothing until Tj picks an option.
 
-- [ ] AF1 Read what auto-bet depends on: how CNO is fetched (login/IP limits), the Novig key and signing, the location check (NOVIG_API.md §14), and which of the cycle's code is Android-free (`engine`/`data`) and which lives in `app`.
-- [ ] AF2 Check the options against today's facts: a spare Android phone, a home computer/Raspberry Pi, GitHub Actions on a schedule, a free cloud VM, Claude Code routines ("can Claude run it"), serverless cron.
-- [ ] AF3 Answer plainly, with a recommendation, the risks (location check, secrets in a public repo, an LLM placing real bets) and what building the recommended one would take; offer it, don't start it.
+- [x] AF1 Read what auto-bet depends on: how CNO is fetched (login/IP limits), the Novig key and signing, the location check (NOVIG_API.md §14), and which of the cycle's code is Android-free (`engine`/`data`) and which lives in `app`.
+- [x] AF2 Check the options against today's facts: a spare Android phone, a home computer/Raspberry Pi, GitHub Actions on a schedule, a free cloud VM, Claude Code routines ("can Claude run it"), serverless cron.
+- [x] AF3 Answer plainly, with a recommendation, the risks (location check, secrets in a public repo, an LLM placing real bets) and what building the recommended one would take; offer it, don't start it.
+  DONE AF1-AF3: RESEARCH.md §54 (verdict, the 3-day Novig location rule, the Keystore key that can't leave the phone, which code is already plain JVM, the host comparison, the risks). Answered Tj; nothing built, waiting for which option he wants.
