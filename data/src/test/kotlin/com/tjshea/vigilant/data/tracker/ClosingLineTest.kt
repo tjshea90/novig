@@ -51,11 +51,23 @@ class ClosingLineTest {
         assertNull(ClosingLine.clv(bet(closingFair = null, seenBefore = null), start + min))
     }
 
+    /** Tj, 2026-10-01: "properly tracking clv based on real closing lines". The line a bet was placed at is not a closing line. */
     @Test
-    fun `a bet placed in the last minutes with nothing read since closes at its own line, and a live bet has no close`() {
+    fun `a bet placed in the last minutes with nothing read since has no close, never its own line, and a live bet has none either`() {
         val late = bet(closingFair = null, seenBefore = null, placed = start - 4 * min)
-        assertEquals(0.515 / 0.5 - 1, ClosingLine.clv(late, start)!!, 1e-12)
+        assertNull("its fair at bet (0.515) would make CLV equal its own EV at bet", ClosingLine.closeOf(late, start))
+        assertNull(ClosingLine.clv(late, start))
+        assertNull(ClosingLine.clv(late, start + 3 * 60 * min))
         assertNull(ClosingLine.clv(bet(placed = start + min), start + 2 * min))
+        // It counts as started without a close (the back-fill looks for the real one), not as one that beat it.
+        val s = ClvStats.of(listOf(late), now = start + min)
+        assertEquals(0, s.closed)
+        assertEquals(1, s.missed)
+        assertTrue("so the back-fill is asked for the real close", CloseBackfill.due(late, start + 11 * min))
+        // A history close (ParlayAPI's Pinnacle, ESPN, Novig's trades) is the close when one is found.
+        val found = late.copy(closeFair = 0.53, closeVia = "ESPN")
+        assertEquals(0.53 / 0.5 - 1, ClosingLine.clv(found, start + 11 * min)!!, 1e-12)
+        assertFalse(CloseBackfill.due(found, start + 11 * min))
     }
 
     @Test
@@ -86,7 +98,57 @@ class ClosingLineTest {
         assertTrue("a read 14 minutes out is a close, but a closer one is still taken", ClosingLine.needsClose(bet(seenBefore = 14 * min), now))
         assertFalse(ClosingLine.needsClose(bet(closingFair = null, seenBefore = null, status = BetStatus.VOID), now))
         assertFalse(ClosingLine.needsClose(bet(closingFair = null, seenBefore = null, placed = start + 1), start + 2))
-        assertNull(ClosingLine.nextAt(listOf(bet(seenBefore = 8 * min)), now))
+        // A read inside the last 3 minutes needs nothing more; one 8 minutes out is read once more near the start (below).
+        assertNull(ClosingLine.nextAt(listOf(bet(seenBefore = 2 * min)), now))
+        assertEquals(start - ClosingLine.FINAL_LEAD_MS, ClosingLine.nextAt(listOf(bet(seenBefore = 8 * min)), now))
+    }
+
+    /** A read 6 minutes out is a close, but not the real one: a second read about 2 minutes before the start replaces it. */
+    @Test
+    fun `a bet read 6 minutes before its start is read once more about 2 minutes before, and that read is the close`() {
+        val first = bet(seenBefore = 6 * min, closingFair = 0.52, tried = start - 6 * min)
+        assertTrue(ClosingLine.needsFinalRead(first, start - 5 * min))
+        assertFalse("not a first read", ClosingLine.needsClose(first, start - 5 * min))
+        assertEquals(start - ClosingLine.FINAL_LEAD_MS, ClosingLine.nextAt(listOf(first), start - 5 * min))
+        assertTrue("too early for the final read", ClosingLine.due(listOf(first), start - 5 * min).isEmpty())
+        assertTrue(ClosingLine.due(listOf(first), start - 4 * min).isEmpty())
+        assertEquals(listOf("b"), ClosingLine.due(listOf(first), start - ClosingLine.FINAL_LEAD_MS).map { it.id })
+        // The worker may start a little late: still due until the last minute, never in it.
+        assertEquals(listOf("b"), ClosingLine.due(listOf(first), start - 70_000L).map { it.id })
+        assertTrue(ClosingLine.due(listOf(first), start - 50_000L).isEmpty())
+        // Until then the 6 minute read is the close (a final read that fails changes nothing).
+        assertEquals(0.52 / 0.5 - 1, ClosingLine.clv(first, start)!!, 1e-12)
+        // Read at 100 s: the close is that one, and nothing more is read.
+        val final = first.copy(closingFair = 0.54, closingSeenAtMs = start - 100_000L, closeTriedAtMs = start - 105_000L)
+        assertFalse(ClosingLine.needsFinalRead(final, start - 90_000L))
+        assertNull(ClosingLine.nextAt(listOf(final), start - 90_000L))
+        assertEquals(0.54 / 0.5 - 1, ClosingLine.clv(final, start)!!, 1e-12)
+    }
+
+    @Test
+    fun `no final read for a bet read in the last 3 minutes, a settled or live one, or one with no read yet`() {
+        val now = start - 100_000L
+        assertFalse(ClosingLine.needsFinalRead(bet(seenBefore = 2 * min), now))
+        assertTrue(ClosingLine.needsFinalRead(bet(seenBefore = 3 * min + 1), now))
+        assertFalse(ClosingLine.needsFinalRead(bet(seenBefore = 8 * min, status = BetStatus.WON), now))
+        assertFalse(ClosingLine.needsFinalRead(bet(seenBefore = 8 * min, placed = start + 1), now))
+        assertFalse("a bet with no read at all is the first read's, retried until the last minute", ClosingLine.needsFinalRead(bet(closingFair = null, seenBefore = null), now))
+        assertFalse(ClosingLine.needsFinalRead(bet(seenBefore = 8 * min), start + 1))
+        // A read 14 minutes out (inside the 15) is read again near the start too.
+        assertTrue(ClosingLine.needsFinalRead(bet(seenBefore = 14 * min), now))
+        // A final read that was just tried (a failure) isn't tried again at once, and a retry would land in the last minute.
+        val tried = bet(seenBefore = 8 * min, tried = start - 100_000L)
+        assertTrue(ClosingLine.due(listOf(tried), start - 90_000L).isEmpty())
+        assertNull(ClosingLine.nextAt(listOf(tried), start - 90_000L))
+    }
+
+    @Test
+    fun `a read before the start replaces the close only when it is no older than the one held`() {
+        val held = bet(seenBefore = 4 * min, closingFair = 0.52)
+        assertTrue(ClosingLine.supersedes(held, start - 2 * min))
+        assertTrue(ClosingLine.supersedes(held, start - 4 * min))
+        assertFalse("a cached page from 9 minutes out arriving after a fresh read", ClosingLine.supersedes(held, start - 9 * min))
+        assertTrue(ClosingLine.supersedes(bet(closingFair = null, seenBefore = null), start - 9 * min))
     }
 
     @Test
