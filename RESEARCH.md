@@ -3203,6 +3203,17 @@ errors, instead of crashing the app); a big plan (400+ markets) publishes a part
 with a WARN over 75%, and a crash record now carries the heap (`heap=…/…MB`). Not changed: the parsed boards still stay between scans (a 2-minute re-use saves credits); if the next report shows
 them dominating, interning the repeated strings in `RefBookMarket` and dropping boards older than the freshness limit are the next steps.
 
+**The second layer (v0.39.1, 2026-10-01; Tj: "After finishing the release, Investigate and fix the app crashes in the diagnostic"):** v0.39.0's guard ends a scan before the heap is gone, but a
+scan that can't finish its pricing inside 256 MB is still a scan cut short, so the allocation itself went. (1) `Pricing.price` rebuilt an `Opportunity` (and its order-book ladder, quote and depth) for
+every outcome of the plan on every partial, though a batch of ~30 books changes ~30 markets. `FairMemo.pricedFor` now keeps the LAST plan's priced markets by their place in the plan and re-uses a
+market's outcomes while its Novig book is the same object (a re-read makes a new one), the bankroll and Kelly multiplier are the same (a stake is worked from both) and the plan and fair method are
+the same; the first partial prices everything, every later one the new books only. Measured on a synthetic 1,200-market scan with 40 partials (a test prints it): pricing allocates 212 MB without
+re-use, 23 MB with it (9x); a real no-limit scan has more markets and ~100 partials, so more. Only one plan's outcomes are held (a second held beside it would be the memory this saves). It also
+means the old and new partial share every unchanged outcome instead of each holding its own copy. A new plan (every minute, `planFor` keys on the minute, or whenever a fair source answers) prices in
+full once, as before. (2) A scan starts by dropping the parsed boards of leagues and sources no longer picked (`Scanner.dropUnusedReferences`): they were kept for the life of the process.
+Still reasoned, not measured: no heap dump exists, so the next Diagnostics' Memory block (heap, result size, boards and books held) is what says whether this was the cause. If it shows the
+boards dominating, interning the repeated strings in `RefBookMarket` is next.
+
 **What else the report says.** Vigilant's own bets still lose to the close (CLV −1.1% on 27 bets, 37% beat; totals −2.8% on 10 at 20% beat, team totals and 1st-half totals negative, props +0.3%)
 while CNO's beat it (+1.5% on 87, 66%); at these counts only the totals gap is more than noise, and it is the same on both scanners (CNO totals −1.7% on 6). 71% of the last week's started bets have a
 true close (79 of the 114 from Novig's trades, 21 read before the start: the phone's own capture is the minority); 105 started bets are still looking, most waiting for Novig's file (published the
