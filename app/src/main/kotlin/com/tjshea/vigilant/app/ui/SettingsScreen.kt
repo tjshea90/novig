@@ -63,6 +63,7 @@ import com.tjshea.vigilant.data.cno.CnoView
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.app.AutoScanClock
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.BookPropSet
 import com.tjshea.vigilant.data.scanner.MarketFamily
@@ -853,7 +854,8 @@ fun autoScanHint(s: ScanSettings): String {
     val vigilantEvery = ScanSettings.vigilantEverySeconds(s.autoScanSeconds)
     val vigilantPerDay = 86_400 / vigilantEvery
     val cnoPart = "CrazyNinjaOdds' list, then Novig's price now and every book's odds for its best bets (the green check's reads), and the books of your " +
-        "open bets starting within the hour (the Tracker's closing line, for CLV)"
+        "open bets starting within the hour (the Tracker's closing line, for CLV" +
+        (if (AutoScanClock.closingFreshMs(s.autoScanSeconds) != null) "; in their last 15 minutes, once a minute each at most" else "") + ")"
     val vigilantPart = "Vigilant's own scan exactly as the Scan button runs it (" +
         (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
         "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $vigilantPerDay scans a day at this setting" +
