@@ -60,7 +60,7 @@ class KeepAwakeServiceTest {
             if (cond()) return
             Thread.sleep(10)
         }
-        throw AssertionError("never happened: $what")
+        throw AssertionError("never happened: $what; status=$status held=${AutoScanService.keepAwakeHeld} alarms=${alarms().map { it.triggerAtTime }} running=${app.container.autoScan.running}")
     }
 
     private fun alarms() = shadowOf(app.getSystemService(AlarmManager::class.java)).scheduledAlarms
