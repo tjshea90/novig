@@ -3429,3 +3429,9 @@ For the auto bet feature, include an option in the settings where I can require 
 ```
 Research if this app stays awake and auto bets if the option is turned on even through screen lock and an idle android 16 moto g 2026. If not, research if there are ways to keep it alive robustly to keep auto bet on and scanning even if the phone is idle and the screen is turned off and locked. Maybe wake lock or a don't sleep or keep screen awake function (but I still want the screen turned off of possible)
 ```
+
+## 2026-10-01T23:59:19Z
+```
+Also, make it so anytime I close the app and reopen it, auto bet and background scan is turned off by default. Nothing should auto bet or background scan unless I specifically set it in the settings
+Research if there is a way to have a setting for the cno scanner and auto bet feature to require bets to be proven positive EV by a current, devigged sharp book such as Pinnacle, and then how to properly implement this function. For example, in addition to the other settings, this setting will require at least one sharp sports book (usually pinnacle) to show that the bet is positive EV by fresh (within the last few minutes) odds from the sharp book(s) devigged and compared to the current novig odds for the same exact bet. Does cno already have this information in its feed? If not, can pinnapi or any other Pinnacle api be used in addition to cno to compare the odds? If this is possible, implement it in the app in the most efficient and accurate way possible.
+```
