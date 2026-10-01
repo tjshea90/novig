@@ -183,10 +183,12 @@ object HealthChecks {
         }
         val a = x.autoScan
         if (!x.autoScanServiceRunning && !a.running) {
-            add(Check(Level.FAIL, "Background auto-scan", "on (${Diagnostics.runsText(set)} every ${set.autoScanMinutes} min) but its service isn't running", "last started ${a.lastStartMs?.let { Format.age(it, now) } ?: "never"}", "app/AutoScanService.kt, AutoScanAlarm.kt; battery and notification permissions below"))
+            add(Check(Level.FAIL, "Background auto-scan", "on (${Diagnostics.runsText(set)} every ${ScanSettings.intervalLabel(set.autoScanSeconds)}) but its service isn't running", "last started ${a.lastStartMs?.let { Format.age(it, now) } ?: "never"}", "app/AutoScanService.kt, AutoScanAlarm.kt; battery and notification permissions below"))
         }
-        val late = a.lastStartMs?.let { now - it > 3L * set.autoScanMinutes * 60_000L } ?: true
-        if (late && x.autoScanServiceRunning) add(Check(Level.WARN, "Background auto-scan", "no cycle in over ${3 * set.autoScanMinutes} min", "last started ${a.lastStartMs?.let { Format.age(it, now) } ?: "never"}", "AutoScanAlarm (exact alarms), battery restrictions"))
+        // Three intervals, but never under 3 minutes: a 15 s schedule's cycle can wait on a slow page, and Vigilant's own scan runs ~2 minutes.
+        val lateAfterSeconds = maxOf(3 * set.autoScanSeconds, 180)
+        val late = a.lastStartMs?.let { now - it > lateAfterSeconds * 1_000L } ?: true
+        if (late && x.autoScanServiceRunning) add(Check(Level.WARN, "Background auto-scan", "no cycle in over ${ScanSettings.intervalLabel(lateAfterSeconds)}", "last started ${a.lastStartMs?.let { Format.age(it, now) } ?: "never"}", "AutoScanAlarm (exact alarms), battery restrictions"))
         a.lastError?.let { add(Check(Level.WARN, "Background auto-scan", "the last cycle had an error", it.take(160), "app/AutoScan.kt")) }
         if (!late && a.lastError == null && x.autoScanServiceRunning) add(Check(Level.OK, "Background auto-scan", "running: last cycle ${a.lastStartMs?.let { Format.age(it, now) }}, found ${a.lastFound}, alerts ${a.lastAlerts}"))
     }

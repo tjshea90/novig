@@ -335,7 +335,7 @@ private fun ColumnScope.CnoTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     if (s.cnoOn) {
         Hint(
             "CNO is read only while its tab or a widget is on screen: closing the widget (✕), shrinking it to a bubble, locking the phone or closing Vigilant stops every read" +
-                if (s.autoScansCno) " (background auto-scan still reads it every ${s.autoScanMinutes} min)." else ".",
+                if (s.autoScansCno) " (background auto-scan still reads it every ${ScanSettings.intervalLabel(s.autoScanSeconds)})." else ".",
         )
     }
     // Any mode: the widget's switch can turn Vigilant's scan on from there.
@@ -800,7 +800,7 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
     ChoiceChips(AutoScanMode.entries, s.autoScan, { it.displayName }) { v -> onUpdate { it.copy(autoScan = v) } }
     if (s.autoScan != AutoScanMode.OFF) {
         Text("Every", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(ScanSettings.AUTO_SCAN_MINUTES_CHOICES, s.autoScanMinutes, { "$it min" }) { v -> onUpdate { it.copy(autoScanMinutes = v) } }
+        ChoiceChips(ScanSettings.AUTO_SCAN_SECONDS_CHOICES, s.autoScanSeconds, ScanSettings::intervalLabel) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
     }
     Hint(autoScanHint(s))
     Text("Push alerts", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
@@ -848,18 +848,23 @@ fun alertLabel(ev: Double): String = if (ev <= 0.0) "Off" else "${Math.round(ev 
 /** What background auto-scan does at these settings. */
 fun autoScanHint(s: ScanSettings): String {
     if (s.autoScan == AutoScanMode.OFF) return "Off: Vigilant scans only when you tap Scan, and CrazyNinjaOdds is read only while its tab or a widget is on screen."
-    val perDay = 60 / s.autoScanMinutes.coerceAtLeast(1) * 24
+    val every = ScanSettings.intervalLabel(s.autoScanSeconds)
+    val perDay = "%,d".format(java.util.Locale.US, 86_400 / s.autoScanSeconds.coerceAtLeast(1))
+    val vigilantEvery = ScanSettings.vigilantEverySeconds(s.autoScanSeconds)
+    val vigilantPerDay = 86_400 / vigilantEvery
     val cnoPart = "CrazyNinjaOdds' list, then Novig's price now and every book's odds for its best bets (the green check's reads), and the books of your " +
         "open bets starting within the hour (the Tracker's closing line, for CLV)"
     val vigilantPart = "Vigilant's own scan exactly as the Scan button runs it (" +
         (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
-        "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $perDay scans a day at this setting"
+        "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $vigilantPerDay scans a day at this setting" +
+        if (vigilantEvery != s.autoScanSeconds) " (it starts at most every ${ScanSettings.intervalLabel(vigilantEvery)}, however fast CNO is read)" else ""
+    val fast = if (s.autoScanSeconds < 60) " Under a minute apart is constant background work: more battery, and Android may space scans out while the phone sits idle." else ""
     val notification = " A quiet notification shows while it's on (Scan now, Stop)."
     return when {
-        s.autoScansCno && s.autoScansVigilant -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: $cnoPart, then $vigilantPart.$notification"
-        s.autoScansCno -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work." +
+        s.autoScansCno && s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $cnoPart, then $vigilantPart.$notification$fast"
+        s.autoScansCno -> "Every $every, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work.$fast" +
             if (s.autoScan.vigilant) " Vigilant's scan is skipped, because the scanner above is on CNO only: no API credits are spent in the background." else ""
-        s.autoScansVigilant -> "Every ${s.autoScanMinutes} min, with Vigilant open or closed: $vigilantPart.$notification CrazyNinjaOdds isn't read, because the scanner above is on Vigilant only."
+        s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $vigilantPart.$notification CrazyNinjaOdds isn't read, because the scanner above is on Vigilant only.$fast"
         s.paused -> "Paused with everything else: resume scanning (the ⏸ button) to run again."
         else -> "Nothing runs in the background: the scanner above is on ${s.scanner.displayName}, which leaves nothing for this choice to read. Pick a scanner that is on."
     }

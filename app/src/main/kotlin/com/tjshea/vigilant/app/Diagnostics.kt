@@ -93,7 +93,7 @@ object Diagnostics {
         o.appendLine("== Settings ==")
         o.appendLine("Scanner: ${set.scanner.displayName} · paused: ${if (set.paused) "YES" else "no"}")
         o.appendLine(
-            "Background auto-scan: ${set.autoScan.displayName}" + (if (set.autoScan != AutoScanMode.OFF) " every ${set.autoScanMinutes} min" else "") +
+            "Background auto-scan: ${set.autoScan.displayName}" + (if (set.autoScan != AutoScanMode.OFF) " every ${ScanSettings.intervalLabel(set.autoScanSeconds)}" else "") +
                 " → actually runs: ${runsText(set)} · service ${if (x.autoScanServiceRunning) "running" else "not running"}",
         )
         o.appendLine("Leagues: ${set.leagues.sorted().joinToString(", ").ifEmpty { "none" }} · days ahead ${set.daysAhead} · starts within ${if (set.startsWithinHours <= 0) "any time" else "${set.startsWithinHours} h"} · live games ${if (set.includeLive) "on" else "off"}")

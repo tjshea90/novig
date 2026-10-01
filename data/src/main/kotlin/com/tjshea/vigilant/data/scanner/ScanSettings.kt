@@ -497,6 +497,12 @@ data class ScanSettings(
         /** Vigilant's own scan (API credits) starts at most this often inside a background cycle, however fast the cycles are ([AutoScanner]). */
         const val AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240
 
+        /** How often a background cycle really runs Vigilant's own scan at [autoScanSeconds] (every cycle, or every few of them when cycles are faster than the gap above). */
+        fun vigilantEverySeconds(autoScanSeconds: Int): Int {
+            val every = autoScanSeconds.coerceAtLeast(1)
+            return if (every >= AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS) every else Math.ceil(AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS.toDouble() / every).toInt() * every
+        }
+
         /** [seconds] as the settings, the notification and Diagnostics say it: "15 sec", "30 sec", "1 min", "3 min", "90 sec". */
         fun intervalLabel(seconds: Int): String = when {
             seconds < 60 || seconds % 60 != 0 -> "$seconds sec"
