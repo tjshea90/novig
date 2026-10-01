@@ -57,13 +57,18 @@ class AutoBetUiTest {
     private var ui by mutableStateOf(SampleScan.state().copy(betting = BettingUi(enabled = true, balance = 25.0)))
     private val settings get() = ui.settings
 
-    private fun show(configure: (ScanSettings) -> ScanSettings = { it }, betting: BettingUi = BettingUi(enabled = true, balance = 25.0)) {
+    private fun show(
+        configure: (ScanSettings) -> ScanSettings = { it },
+        betting: BettingUi = BettingUi(enabled = true, balance = 25.0),
+        blocked: String? = null,
+        onTest: () -> Boolean = { true },
+    ) {
         ui = SampleScan.state().copy(betting = betting, settings = configure(ScanSettings(autoScan = AutoScanMode.CNO)))
         compose.setContent {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(Modifier.verticalScroll(rememberScrollState())) {
-                        AutoBetSection(ui) { t -> ui = ui.copy(settings = t(ui.settings)) }
+                        AutoBetSection(ui, notificationsBlocked = blocked, onTestNotification = onTest) { t -> ui = ui.copy(settings = t(ui.settings)) }
                     }
                 }
             }
@@ -229,6 +234,31 @@ class AutoBetUiTest {
         val note = AutoBetText.kellyNote(settings)!!
         assertTrue(note, note.contains("a longer price stakes less"))
         assertTrue(note, note.contains("nothing caps the odds itself"))
+    }
+
+    /** Tj, 2026-10-01: "Make a push notification for every automatic bet, so I can see each bet placed and the stake and EV." */
+    @Test
+    fun `the card says every bet gets a notification with the stake and EV, and a test sends one`() {
+        var sent = 0
+        show(onTest = { sent++; true })
+        compose.onNodeWithText("Every bet auto-bet places gets its own pop-up notification", substring = true).assertExists()
+        compose.onNodeWithText("the stake and the EV in the title", substring = true).assertExists()
+        compose.onNodeWithTag("autoBetTestNoteResult").assertDoesNotExist()
+        compose.onNodeWithTag("autoBetTestNote").performScrollTo().performClick()
+        assertEquals(1, sent)
+        compose.onNodeWithTag("autoBetTestNoteResult").assertExists()
+        compose.onNodeWithText("a test bet should pop up now", substring = true).assertExists()
+    }
+
+    @Test
+    fun `a notification Android won't show is said on the card while auto-bet is on, and a test that couldn't be sent says so`() {
+        show({ it.copy(autoBet = true) }, blocked = "Notifications are switched off for Vigilant (Android Settings › Apps › Vigilant › Notifications)", onTest = { false })
+        compose.onNodeWithTag("autoBetNotifBlocked").assertExists()
+        compose.onNodeWithText("its notifications can't show: Notifications are switched off for Vigilant", substring = true).assertExists()
+        compose.onNodeWithTag("autoBetTestNote").performScrollTo().performClick()
+        compose.onNodeWithText("Couldn't send it", substring = true).assertExists()
+        // Off, or nothing blocking: no warning.
+        show({ it.copy(autoBet = false) }, blocked = "x")
     }
 
     @Test
