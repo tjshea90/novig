@@ -235,4 +235,46 @@ class BothReadsTest {
         t.applyPricing(asOf(Fixtures.START_MS - 8 * 60_000L), listOf(a.id))
         assertEquals(dal(r).fairProbability!!, ClosingLine.captured(t.all().single())!!, 1e-12)
     }
+
+    /** Tj, 2026-10-01: "real closing lines": the close is the freshest pregame line, so an older read that arrives later can't replace it. */
+    @Test
+    fun `a read of older prices never replaces a fresher close, but still updates the odds now`() = runTest {
+        val t = tracker()
+        val a = t.track(dal(scan()), stake = 10.0)!!
+        val r = scan()
+        fun asOf(res: ScanResult, ms: Long) = res.copy(opportunities = res.opportunities.map { if (it.outcome.outcomeId == Fixtures.ML_DAL) it.copy(fairAsOfMs = ms) else it })
+        now = Fixtures.START_MS - 2 * 60_000L
+        t.applyPricing(asOf(r, Fixtures.START_MS - 2 * 60_000L), listOf(a.id))
+        val held = t.all().single()
+        assertEquals(dal(r).fairProbability!!, held.closingFair!!, 1e-12)
+        assertEquals(Fixtures.START_MS - 2 * 60_000L, held.closingSeenAtMs)
+        // A later pass whose oldest price is 9 minutes old (a cached book): the odds now follow it, the close stays.
+        now = Fixtures.START_MS - 60_000L
+        val later = scan(pinDal = 2.30)
+        t.applyPricing(asOf(later, Fixtures.START_MS - 9 * 60_000L), listOf(a.id))
+        val after = t.all().single()
+        assertEquals(dal(later).fairProbability!!, after.nowFair!!, 1e-12)
+        assertEquals(held.closingFair, after.closingFair)
+        assertEquals(held.closingSeenAtMs, after.closingSeenAtMs)
+        // A pass with prices as fresh as the held close (or fresher) does replace it.
+        t.applyPricing(asOf(later, Fixtures.START_MS - 90_000L), listOf(a.id))
+        assertEquals(dal(later).fairProbability!!, t.all().single().closingFair!!, 1e-12)
+        assertEquals(Fixtures.START_MS - 90_000L, t.all().single().closingSeenAtMs)
+    }
+
+    @Test
+    fun `two reads merged into one with an older price don't replace a fresher close either`() = runTest {
+        val t = tracker()
+        val a = t.track(dal(scan()), stake = 10.0)!!
+        val startMs = Fixtures.START_MS
+        t.edit(a.id) {
+            it.copy(cnoFair = 0.40, cnoAtMs = startMs - 9 * 60_000L, vigFair = 0.42, vigAtMs = startMs - 8 * 60_000L, closingFair = 0.50, closingSeenAtMs = startMs - 2 * 60_000L)
+        }
+        now = startMs - 60_000L
+        assertEquals(setOf(a.id), t.mergeReads(listOf(a.id), since = 0L, cnoSince = 0L).both)
+        val b = t.all().single()
+        assertEquals(0.41, b.nowFair!!, 1e-12)
+        assertEquals(0.50, b.closingFair!!, 0.0)
+        assertEquals(startMs - 2 * 60_000L, b.closingSeenAtMs)
+    }
 }
