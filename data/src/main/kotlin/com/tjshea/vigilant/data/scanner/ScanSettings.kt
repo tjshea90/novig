@@ -258,11 +258,17 @@ data class ScanSettings(
      */
     val startsWithinHours: Int = 0,
     /**
-     * Scans on a timer in the background, every [autoScanMinutes], with Vigilant closed or not
+     * Scans on a timer in the background, every [autoScanSeconds], with Vigilant closed or not
      * (Tj, 2026-09-28). A foreground service with its own notification keeps it going; each scan
      * is woken by an alarm and holds the CPU only while it runs. Off by default.
      */
     val autoScan: AutoScanMode = AutoScanMode.OFF,
+    /**
+     * The gap between background scans, in seconds ([AUTO_SCAN_SECONDS_CHOICES]: 15 s up to 40 min; Tj, 2026-10-01: "every 3 minutes, 1 minute,
+     * 30 seconds, and 15 seconds"). Before v0.38.0 this was whole minutes ([autoScanMinutes]); [migrate] moves a saved one over.
+     */
+    val autoScanSeconds: Int = 600,
+    /** The v0.19-v0.37 interval in whole minutes: read only by [migrate] (schema 12), which turns it into [autoScanSeconds]. */
     val autoScanMinutes: Int = 10,
     /**
      * A push notification for each new bet at or over this EV (0.03 = 3%) that several books agree
@@ -342,6 +348,10 @@ data class ScanSettings(
             val books = s.referenceBooks.filterNot { it == "lowvig" && "betonlineag" in s.referenceBooks } +
                 com.tjshea.vigilant.data.reference.TheOddsApiClient.ADDED_V35.filterNot { it in s.referenceBooks }
             s = s.copy(referenceBooks = books, schema = 11)
+        }
+        // v0.38.0 (Tj, 2026-10-01): the auto-scan interval is in seconds so 15 s, 30 s and 1 min fit; a saved file's minutes carry over.
+        if (s.schema < 12) {
+            s = s.copy(autoScanSeconds = s.autoScanMinutes.coerceAtLeast(1) * 60, schema = 12)
         }
         return s
     }
@@ -478,8 +488,20 @@ data class ScanSettings(
         /** [daysAhead]'s choices. */
         val DAYS_AHEAD_CHOICES = listOf(1, 2, 3, 5, 7, 10)
 
-        /** [autoScanMinutes]' choices (Tj, 2026-09-28: "every 5 10 20 30 or 40 minutes"). */
-        val AUTO_SCAN_MINUTES_CHOICES = listOf(5, 10, 20, 30, 40)
+        /**
+         * [autoScanSeconds]' choices (Tj, 2026-09-28: "every 5 10 20 30 or 40 minutes", then 2026-10-01: "every 3 minutes, 1 minute, 30 seconds, and
+         * 15 seconds"), fastest first.
+         */
+        val AUTO_SCAN_SECONDS_CHOICES = listOf(15, 30, 60, 180, 300, 600, 1200, 1800, 2400)
+
+        /** Vigilant's own scan (API credits) starts at most this often inside a background cycle, however fast the cycles are ([AutoScanner]). */
+        const val AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240
+
+        /** [seconds] as the settings, the notification and Diagnostics say it: "15 sec", "30 sec", "1 min", "3 min", "90 sec". */
+        fun intervalLabel(seconds: Int): String = when {
+            seconds < 60 || seconds % 60 != 0 -> "$seconds sec"
+            else -> "${seconds / 60} min"
+        }
 
         /** [alertMinEv]'s choices (0 = off; Tj, 2026-09-28: "a minimum of 2%, 3%, or 4%"). */
         val ALERT_MIN_EV_CHOICES = listOf(0.0, 0.02, 0.03, 0.04)
