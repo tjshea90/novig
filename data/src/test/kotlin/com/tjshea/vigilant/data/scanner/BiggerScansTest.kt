@@ -316,6 +316,113 @@ class BiggerScansTest {
         assertNotSame(Pricing.price(plan, books, settings, now).opportunities.first().fair, Pricing.price(plan, books, settings, now).opportunities.first().fair)
     }
 
+    // ---- lighter: a partial result prices only the books that changed (Tj's Diagnostics 2026-10-01: OutOfMemoryError) ----
+
+    private fun reusePlan(n: Int = 4): Triple<Plan, Map<String, NovigBook>, Board> {
+        val board = Board(n)
+        val refs = listOf(Fair(board).odds(Leagues.byNovigName("MLB")!!, settings))
+        val plan = Planner.plan(board.events, board.markets, refs, settings, now)
+        val books = (0 until n).associate { i ->
+            "m$i" to NovigBook("m$i", 1, mapOf("a$i" to listOf(BidLevel(480, 10)), "h$i" to listOf(BidLevel(480, 10))), now)
+        }
+        return Triple(plan, books, board)
+    }
+
+    /** The whole result as numbers, to tell a re-used market from a freshly priced one by its content as well as its identity. */
+    private fun ScanResult.digest() = opportunities.map { listOf(it.key, it.evPercent, it.suggestedStake, it.fairProbability, it.ladder, it.bookFetchedAtMs, it.novigWidth, it.bestBid) }
+
+    @Test
+    fun `a market whose book hasn't changed is re-used as the very same outcomes, and one that has is priced again`() {
+        val (plan, books, _) = reusePlan()
+        val memo = FairMemo()
+        val first = Pricing.price(plan, books, settings, now, memo)
+        assertEquals(8, first.opportunities.size)
+        assertEquals(4, memo.pricedCount())
+        // Only m1's book is read again (a new object, a better price): the other three markets' outcomes are the same objects.
+        val moved = books + ("m1" to NovigBook("m1", 2, mapOf("a1" to listOf(BidLevel(440, 10)), "h1" to listOf(BidLevel(550, 10))), now + 1_000))
+        val second = Pricing.price(plan, moved, settings, now + 1_000, memo)
+        for (o in second.opportunities) {
+            val before = first.opportunities.first { it.key == o.key }
+            if (o.market.marketId == "m1") assertNotSame("m1 was read again: ${o.key}", before, o) else assertSame("${o.key} didn't change", before, o)
+        }
+        assertTrue("the moved market's edge is the new price's", second.opportunities.first { it.key == "m1/a1" }.evPercent!! > first.opportunities.first { it.key == "m1/a1" }.evPercent!!)
+    }
+
+    @Test
+    fun `the result with re-use is exactly the result without it, however the books change between passes`() {
+        val (plan, books, _) = reusePlan(6)
+        val memo = FairMemo()
+        Pricing.price(plan, books, settings, now, memo) // warm
+        val steps = listOf(
+            books,
+            books + ("m2" to NovigBook("m2", 2, mapOf("a2" to listOf(BidLevel(430, 50)), "h2" to listOf(BidLevel(560, 50))), now + 5_000)),
+            books - "m0" - "m3", // books dropped
+            books + ("m4" to NovigBook("m4", 3, mapOf("a4" to listOf(BidLevel(450, 7))), now + 9_000)), // a book with only one side
+            emptyMap(),
+        )
+        for ((i, step) in steps.withIndex()) {
+            val with = Pricing.price(plan, step, settings, now + i, memo)
+            val without = Pricing.price(plan, step, settings, now + i)
+            assertEquals("step $i", without.digest(), with.digest())
+            assertEquals("step $i stats", without.stats, with.stats)
+            assertEquals("step $i games", without.games.map { g -> g.outcomes.map { it.key } }, with.games.map { g -> g.outcomes.map { it.key } })
+        }
+    }
+
+    @Test
+    fun `a new bankroll or Kelly multiplier re-works every stake, and a different fair method every line`() {
+        val (plan, _, _) = reusePlan(2)
+        val edge = mapOf("m0" to NovigBook("m0", 1, mapOf("a0" to listOf(BidLevel(440, 1000)), "h0" to listOf(BidLevel(550, 1000))), now))
+        val memo = FairMemo()
+        val base = Pricing.price(plan, edge, settings.copy(bankroll = 1000.0, kellyMultiplier = 0.25), now, memo).opportunities.first { it.key == "m0/a0" }
+        assertTrue("there is a stake to change", (base.suggestedStake ?: 0.0) > 0.0)
+        val richer = Pricing.price(plan, edge, settings.copy(bankroll = 2000.0, kellyMultiplier = 0.25), now, memo).opportunities.first { it.key == "m0/a0" }
+        assertTrue("a bigger bankroll stakes more, not the old stake", richer.suggestedStake!! > base.suggestedStake!!)
+        val bolder = Pricing.price(plan, edge, settings.copy(bankroll = 2000.0, kellyMultiplier = 0.5), now, memo).opportunities.first { it.key == "m0/a0" }
+        assertTrue("a bigger Kelly fraction stakes more", bolder.suggestedStake!! > richer.suggestedStake!!)
+        val shin = Pricing.price(plan, edge, settings.copy(devigMethod = DevigMethod.SHIN), now, memo).opportunities.first { it.key == "m0/a0" }
+        assertNotSame("another fair method is not served from the first's outcomes", base.fair, shin.fair)
+    }
+
+    @Test
+    fun `only the last plan's outcomes are kept, so a second plan never doubles the memory`() {
+        val (plan, books, board) = reusePlan(3)
+        val memo = FairMemo()
+        Pricing.price(plan, books, settings, now, memo)
+        assertEquals(3, memo.pricedCount())
+        val other = Planner.plan(board.events, board.markets, listOf(Fair(board).odds(Leagues.byNovigName("MLB")!!, settings)), settings, now)
+        val priced = Pricing.price(other, books, settings, now, memo)
+        assertEquals("the new plan's, not both", 3, memo.pricedCount())
+        // Back to the first plan: priced afresh (its outcomes were let go), and right.
+        assertEquals(priced.digest(), Pricing.price(plan, books, settings, now, memo).digest())
+    }
+
+    @Test
+    fun `without a memo nothing is kept or shared`() {
+        val (plan, books, _) = reusePlan(2)
+        val a = Pricing.price(plan, books, settings, now).opportunities
+        val b = Pricing.price(plan, books, settings, now).opportunities
+        assertEquals(a.size, b.size)
+        for (i in a.indices) assertNotSame(a[i], b[i])
+    }
+
+    @Test
+    fun `a scan's partial results share the outcomes of the markets a batch didn't touch`() = runTest {
+        val board = Board(90)
+        val novig = Novig(board)
+        val partials = ArrayList<ScanResult>()
+        val big = settings.copy(maxBooksPerScan = ScanSettings.NO_LIMIT, daysAhead = 60)
+        // Every partial: the scanner publishes at most every 2 s on a big plan, so ask for them all with a small plan threshold.
+        val scanner = Scanner(novig, clock = { now }, bigPlanMarkets = Int.MAX_VALUE)
+        scanner.scan(big, listOf(Fair(board)), onProgress = {}, onPartial = { partials += it })
+        assertTrue("a scan this size publishes several partials", partials.size >= 3)
+        val shared = partials.zipWithNext().sumOf { (a, b) ->
+            val earlier = a.opportunities.associateBy { it.key }
+            b.opportunities.count { earlier[it.key] === it }
+        }
+        assertTrue("later partials re-use the earlier ones' outcomes ($shared shared)", shared > 0)
+    }
+
     // ---- better: a long scan's first edges are read again at the end ---------------------------------
 
     @Test
