@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -257,8 +258,6 @@ class AutoBetUiTest {
         compose.onNodeWithText("its notifications can't show: Notifications are switched off for Vigilant", substring = true).assertExists()
         compose.onNodeWithTag("autoBetTestNote").performScrollTo().performClick()
         compose.onNodeWithText("Couldn't send it", substring = true).assertExists()
-        // Off, or nothing blocking: no warning.
-        show({ it.copy(autoBet = false) }, blocked = "x")
     }
 
     @Test
