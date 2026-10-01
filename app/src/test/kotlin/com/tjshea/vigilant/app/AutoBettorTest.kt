@@ -203,6 +203,16 @@ class AutoBettorTest {
         assertEquals(0, novig.orders.get())
     }
 
+    @Test
+    fun `a bet priced at another book is never placed through Novig`() = runBlocking {
+        val novig = FakeNovig()
+        val elsewhere = jefferson.copy(book = "DraftKings")
+        val st = state(row = elsewhere).let { it.copy(cno = it.cno.copy(snapshot = it.cno.snapshot!!.copy(rows = listOf(elsewhere)))).indexed(now) }
+        val r = bettor(novig).run(settings(), st)
+        assertEquals(0, novig.orders.get())
+        assertEquals(0, r.placed.size)
+    }
+
     // ---- the stake ----------------------------------------------------------------------------------------------
 
     @Test
