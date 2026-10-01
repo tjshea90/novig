@@ -381,8 +381,11 @@ class BiggerScansTest {
         assertTrue("a bigger bankroll stakes more, not the old stake", richer.suggestedStake!! > base.suggestedStake!!)
         val bolder = Pricing.price(plan, edge, settings.copy(bankroll = 2000.0, kellyMultiplier = 0.5), now, memo).opportunities.first { it.key == "m0/a0" }
         assertTrue("a bigger Kelly fraction stakes more", bolder.suggestedStake!! > richer.suggestedStake!!)
-        val shin = Pricing.price(plan, edge, settings.copy(devigMethod = DevigMethod.SHIN), now, memo).opportunities.first { it.key == "m0/a0" }
-        assertNotSame("another fair method is not served from the first's outcomes", base.fair, shin.fair)
+        // Same book, bankroll and Kelly as the pass before: only the fair method differs, and that alone must price it afresh.
+        val shinSettings = settings.copy(bankroll = 2000.0, kellyMultiplier = 0.5, devigMethod = DevigMethod.SHIN)
+        val shin = Pricing.price(plan, edge, shinSettings, now, memo).opportunities.first { it.key == "m0/a0" }
+        assertNotSame("another fair method is not served from the first's outcomes", bolder, shin)
+        assertNotSame(bolder.fair, shin.fair)
     }
 
     @Test
