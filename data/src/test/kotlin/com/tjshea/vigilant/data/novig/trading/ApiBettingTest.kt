@@ -429,7 +429,7 @@ class ApiBettingTest {
         // Fair 0.4685: the 0.46 level is +1.8%, the 0.465 level +0.7%: a 1.5% minimum buys only the first level.
         placer(tracker()).placeAuto(target(fair = 0.4685), 10.0, autoLimits.copy(minEv = 0.015), expectedPrice = 0.46)
         val body = orderBody()
-        assertEquals("0.46", body["price"]!!.jsonPrimitive.content)
+        assertEquals("0.460", body["price"]!!.jsonPrimitive.content)
         assertEquals("100", body["qty"]!!.jsonPrimitive.content)
     }
 
