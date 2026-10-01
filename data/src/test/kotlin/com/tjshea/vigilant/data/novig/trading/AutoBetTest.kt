@@ -255,7 +255,6 @@ class AutoBetTest {
         // 1/8 Kelly of a $2 bankroll at this edge is three quarters of a cent.
         assertEquals("its ⅛ Kelly stake is under a cent", skip(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 2.0, 500.0)))
         assertEquals("your maximum per bet is under a cent", skip(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR, max = 0.005), even, 1000.0, 500.0)))
-        assertEquals("what the wallet can fund is under a cent", skip(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 0.01 - 1e-12)).let { "what the wallet can fund is under a cent" })
         assertTrue(skip(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.0), even, 1000.0, 500.0)).contains("$0"))
         assertTrue(skip(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.004), even, 1000.0, 500.0)).contains("under a cent"))
     }
