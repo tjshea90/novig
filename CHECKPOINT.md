@@ -1,22 +1,22 @@
-# CHECKPOINT 2236 — read me first, then TASKS.md
+# CHECKPOINT 2237 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T03:52:24Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `38b53cf3` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T03:56:58Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `4e1db464` (this checkpoint is the commit after it)
 
 ## Just done
-AA: wrote Tj's auto-scan interval + CLV request into TASKS.md as AA1-AA5 with findings
+AA1+AA2 core: autoScanSeconds (15/30/60/180 s + 5-40 min, schema 12 migration), AutoScanClock 5 s gap + vigilantDue (4 min credits floor), service re-arms alarm when a cycle outlasts its interval, labels in notification/hints/health/diagnostics; AutoScanTest 25 green
 
 ## Do this next
-AA1: autoScanSeconds in ScanSettings (schema 12 migrate), choices, UI chips, labels
+AA2: closing reads of bets about to start at the cycle's pace; then AA3 CLV: drop at-bet close, second read ~100 s before start; tests; screenshot test
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  5a61e310 ckpt 2236: AA: wrote Tj's auto-scan interval + CLV request into TASKS.md as AA1-AA5 wit
   bfd74452 ckpt 2235: v0.37.0 (code 67) released and recorded: Z1-Z5 done (tennis through ParlayAP
   c94e2078 ckpt 2234: pre-release: v0.37.0: tennis through ParlayAPI (bet365, Caesars, DraftKings,
   11118acf ckpt 2233: pre-ship: v0.37.0: tennis through ParlayAPI (bet365, Caesars, DraftKings, Be
@@ -26,8 +26,7 @@ AA1: autoScanSeconds in ScanSettings (schema 12 migrate), choices, UI chips, lab
   46adcb27 ckpt 2229: Z2 core: ParlayTennis.normalize (doubles dropped, (Games) twin + other books
   18cce014 ckpt 2228: Z1: real ParlayAPI tennis read (10 credits): Pinnacle match event = set line
   b97184ba ckpt 2227: Logged Tj's 'Build tennis through parlayapi' as TASKS.md Z1-Z5 (W5 accepted)
-  e9dd8b66 ckpt 2226: v0.36.2 (code 66) released and recorded: Y1-Y5 done (Kelly in bet slips, Kel
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
