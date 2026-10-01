@@ -281,7 +281,28 @@ webhooks need a server to receive them.
 - Unfiltered `/props`: only books already in `ParlayProps.BOOKS`, plus DFS (pick6, prizepicks, underdog, sleeper). BetRivers ≈ betPARX (Kambi,
   94% identical NFL moneylines); bet365 ≈ Hard Rock on 75% of 28 NFL props.
 
+### 6.11 Tennis (`tennis_atp`, `tennis_wta`), read with Tj's key 2026-10-01 ~01:40Z (TASKS.md Z1; 10 credits)
+`GET /v1/sports/tennis_{atp,wta}/odds?bookmakers=<the 10>&markets=h2h,spreads,totals,alternate_spreads,alternate_totals` = 5 credits a tour (3
+without the alternates). One key per tour covers its Challengers too (events carry `sport_key` like `tennis_atp_challenger_jingshan`; ITF has
+keys of its own, not asked). Seen: ATP 93 events (Pinnacle 67, FanDuel 34, ProphetX 29, bet365/Caesars/DraftKings/BetMGM 13), WTA 64 (FanDuel 41,
+Pinnacle 36, ProphetX 12, bet365/Caesars/BetMGM 9). Samples: `parlay-tennis-atp.json`, `parlay-tennis-wta.json`. **The answer's traps:**
+- **Pinnacle's match event holds SET lines**: `spreads` ±1.5 sets, `totals` 2.5 sets (every one of 88 + 40 outcomes). Its **games** lines are a
+  separate event named `"<Player> (Games)"` on both sides (own id and `canonical_event_id`, the same start), spreads/totals only, Asian lines
+  included (−3.0, 23.0, ±2.0). A `(Games)` event can come with no match event beside it.
+- **Every other book's match event holds GAMES lines** (bet365, Caesars, DraftKings, BetMGM, ProphetX: totals 17.5–24.5, spreads ±0.5–±7.5).
+  **BetMGM and DraftKings use ±1.5 for games too** (BetMGM Molcan +1.5 at 1.98 while Pinnacle's +1.5 *sets* was 1.56), so the size of a spread
+  can't tell sets from games: it is per book (Pinnacle = sets in the match event), with any total under 6 marking that book's lines as sets.
+- **Pinnacle's tennis alternates are set lines only** (±1.5, 2.5): not worth the 2 credits.
+- **One match is often several events**: 28 of 157 split, with no shared id. FanDuel and ProphetX list the match under their own start time
+  (up to 3 h off Pinnacle's: Ruzic 12:00 vs 09:00), besides the `(Games)` twin. Merge by the two players within the tour's start gap.
+- **Doubles** ride along (`"Evan King / Brandon Nakashima"`, WTA `"Grant/Jones"`), 18 ATP and 12 WTA: must be dropped (a doubles pair can
+  name a singles player). No `team_totals` for tennis (0 credits, nothing back), so each player's games won isn't priced from here.
+- Novig's tennis markets (public catalog, the same hour): `SPREAD` (games) 182/298, `TOTAL` (games) 143/209, `PLAYER_GAMES_WON` 69/74, `MONEY`
+  23/41, `FIRST_SET_MONEYLINE` 23/41, **`SET_SPREAD` 27/44 (±1.5) and `TOTAL_SETS` 23/40 (2.5)**, `WINNER` (outrights). Pinnacle's set lines
+  price the last two, which no other source did.
+
 ## 7. Still unverified
-- Whether the credits actually reset on the 1st (UTC) for a plan bought on the 30th (the /v1/usage period says so; check on Oct 1).
+- ~~Whether the credits reset on the 1st (UTC)~~ **Verified 2026-10-01 ~01:35Z**: `/v1/usage` read `credits_used` 0, `credits_remaining` 20,000,
+  `period_start` 2026-10-01: the month's credits reset on the 1st, UTC.
 - Settled 2026-09-30 with Tj's key (15 credits in all: 19,867 → 19,852): /line-movement's shape (§6.6, pick'em apps only), MLB `F5` / NHL `P1–P3`
   (§6.7), /verdict answering the canonical prop key `player_rush_yds` (§6.4), `edge_pct` as probability points (§5).
