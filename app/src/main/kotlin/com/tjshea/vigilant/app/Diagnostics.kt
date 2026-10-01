@@ -98,6 +98,12 @@ object Diagnostics {
             "Background auto-scan: ${set.autoScan.displayName}" + (if (set.autoScan != AutoScanMode.OFF) " every ${ScanSettings.intervalLabel(set.autoScanSeconds)}" else "") +
                 " → actually runs: ${runsText(set)} · service ${if (x.autoScanServiceRunning) "running" else "not running"}",
         )
+        o.appendLine(
+            "Auto-bet (Tj, 2026-10-01): " + if (!set.autoBet) "off" else {
+                "ON · ${com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
+                    (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now)}"
+            },
+        )
         o.appendLine("Leagues: ${set.leagues.sorted().joinToString(", ").ifEmpty { "none" }} · days ahead ${set.daysAhead} · starts within ${if (set.startsWithinHours <= 0) "any time" else "${set.startsWithinHours} h"} · live games ${if (set.includeLive) "on" else "off"}")
         o.appendLine("Edge shown: ${pct(set.minEvPercent)} to ${pct(set.maxEvPercent)} · max odds +${set.maxOdds} · fair odds ${set.fairSource} / ${set.devigMethod}, at least ${set.minBooks} book${if (set.minBooks == 1) "" else "s"}")
         o.appendLine("Scan size: ${limit(set.maxBooksPerScan)} Novig prices · lines/game ${limit(set.linesPerGame)} · props/game ${limit(set.propsPerGame)} · fill the budget ${if (set.fillBudget) "on" else "off"} · window ${set.scanWindowHours} h")

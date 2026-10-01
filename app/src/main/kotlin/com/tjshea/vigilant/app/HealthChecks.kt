@@ -38,6 +38,7 @@ object HealthChecks {
         tracker(s, x, now)
         accuracy(s, now)
         betting(s)
+        autoBet(s, x, now)
     }.sortedBy { it.level.ordinal }
 
     private fun MutableList<Check>.scanning(s: UiState, now: Long) {
@@ -351,6 +352,30 @@ object HealthChecks {
         if (!s.betting.enabled) return
         val b = s.betting.balance ?: return
         if (b < 1.0) add(Check(Level.WARN, "Vigilant wallet", "holds ${String.format(Locale.US, "$%.2f", b)}: bets start at what's left", look = "Settings › Betting › Add money"))
+    }
+
+    /**
+     * The auto-bet (Tj, 2026-10-01), judged only when it's on: stopped after a lost order is a FAIL (it stays stopped until Tj resumes it), anything
+     * else that keeps it from running is a WARN with what to do; a wallet that can't fund a bet is a WARN.
+     */
+    private fun MutableList<Check>.autoBet(s: UiState, x: Diagnostics.Extras, now: Long) {
+        val set = s.settings
+        if (!set.autoBet) {
+            add(Check(Level.OK, "Auto-bet", "off", look = "Settings › Betting › Auto-bet"))
+            return
+        }
+        val st = x.autoBet
+        val line = AutoBettor.line(st, now)
+        val why = com.tjshea.vigilant.app.ui.AutoBetText.whyNotRunning(s)
+        when {
+            set.autoBetHalted != null -> add(Check(Level.FAIL, "Auto-bet", "stopped after a lost order, placing nothing until resumed", set.autoBetHalted.take(160), "Novig and the Tracker's Sync with Novig's fills, then Settings › Betting › Resume auto-bet"))
+            why != null -> add(Check(Level.WARN, "Auto-bet", "is on but can't run: $why", look = "Settings › Betting, Settings › Scan"))
+            st.last.walletEmpty -> add(Check(Level.WARN, "Auto-bet", "the Vigilant wallet can't fund a bet: nothing is placed", line, "Settings › Betting › Add money"))
+            st.blocker != null -> add(Check(Level.WARN, "Auto-bet", "can't place bets right now: ${st.blocker}", line, "app/AutoBettor.kt"))
+            st.lastRunMs == null -> add(Check(Level.WARN, "Auto-bet", "on, but no check has run since the app opened", look = "the background auto-scan below, Android's battery limits"))
+            else -> add(Check(Level.OK, "Auto-bet", "running: $line"))
+        }
+        if (st.last.stopped?.contains("daily limit") == true) add(Check(Level.WARN, "Auto-bet", "today's API bets reached the daily limit of ${Locale.US.let { String.format(it, "$%.0f", set.apiMaxPerDay) }}", look = "Settings › Betting › Most in a day"))
     }
 
     /** A bet no source can find a close for: an early ✓ import with no league and no Novig outcome id. */
