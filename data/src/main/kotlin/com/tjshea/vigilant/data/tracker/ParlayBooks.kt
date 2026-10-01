@@ -54,13 +54,16 @@ class ParlayBooks(
 
     private suspend fun view(leagueName: String, eventName: String, startsTs: Long?, selection: String, pick: BetGrader.Pick): CnoBooksView? {
         if (!active()) return null
-        val league = Leagues.byNovigName(leagueName)?.takeIf { it.oddsApiListed } ?: return null
+        // Tennis by its tour key (ParlayAPI's `tennis_atp`/`tennis_wta`, PARLAY_API.md §6.11): set and games lines told apart as a scan reads them.
+        val league = Leagues.byNovigName(leagueName)?.takeIf { it.oddsApiListed || it.tennis } ?: return null
         val sport = league.oddsApiSportKey
         val snap = when (pick) {
             // Every page of the league's props, as a scan reads them.
             is BetGrader.Pick.Prop -> snapshot("props:$sport") { props.odds(league, ScanSettings()) }
             is BetGrader.Pick.Moneyline, is BetGrader.Pick.Spread, is BetGrader.Pick.Total ->
-                snapshot("odds:$sport") { client.fetchCurrent(sport, client.booksFor(ScanSettings()), GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS) }
+                snapshot("odds:$sport") {
+                    client.fetchCurrent(sport, client.booksFor(ScanSettings()), if (league.tennis) TENNIS_MARKETS else GAME_MARKETS, startsBeforeMs = clock() + HORIZON_MS)
+                }
             else -> null
         } ?: return null
         return viewOf(snap, eventName, startsTs, selection, pick, clock())
@@ -92,6 +95,9 @@ class ParlayBooks(
 
         private val GAME_MARKETS = listOf("h2h", "spreads", "totals", "alternate_spreads", "alternate_totals")
 
+        /** Tennis' alternates are Pinnacle's set lines again: 3 credits a tour, not 5. */
+        private val TENNIS_MARKETS = listOf("h2h", "spreads", "totals")
+
         /** ParlayAPI's book keys to CNO's column codes (others keep their own key, upper-cased: [CnoBooks.name] shows it as is). */
         private val CODES = mapOf(
             "pinnacle" to "PN", "draftkings" to "DK", "fanduel" to "FD", "caesars" to "CZR", "williamhill_us" to "CZR", "betmgm" to "MGM",
@@ -116,8 +122,9 @@ class ParlayBooks(
                 .sortedBy { it.first.commenceMs }
                 .maxByOrNull { it.second }?.first ?: return null
             val prices = LinkedHashMap<String, CnoBookPrice>()
+            val period = periodOf(pick) ?: return null
             for (mk in game.markets) {
-                if (mk.period != 0) continue
+                if (mk.period != period) continue
                 val pair = pairFor(mk, game, pick) ?: continue
                 val code = codeOf(mk.bookKey)
                 if (code !in prices) prices[code] = CnoBookPrice(code, odds = pair.first, otherOdds = pair.second)
@@ -127,6 +134,19 @@ class ParlayBooks(
         }
 
         private fun american(d: Double?): Int? = d?.takeIf { it > 1.0 }?.let { Odds.decimalToAmerican(it) }
+
+        /** The [RefBookMarket.period] [pick]'s lines sit in: the full game, or a tennis match's sets ([RefBookMarket.PERIOD_SETS]); null for any other. */
+        private fun periodOf(pick: BetGrader.Pick): Int? = when (pick) {
+            is BetGrader.Pick.Spread -> unit(pick.period)
+            is BetGrader.Pick.Total -> unit(pick.period)
+            else -> 0
+        }
+
+        private fun unit(p: BetGrader.Period): Int? = when (p) {
+            BetGrader.Period.GAME -> 0
+            BetGrader.Period.SETS -> com.tjshea.vigilant.data.reference.RefBookMarket.PERIOD_SETS
+            else -> null
+        }
 
         private fun near(a: Double?, b: Double) = a != null && abs(a - b) < 1e-6
 
@@ -142,9 +162,9 @@ class ParlayBooks(
             return when (pick) {
                 is BetGrader.Pick.Moneyline -> if (mk.kind != LineKind.MONEYLINE) null
                 else if (homeSide(pick.team)) both(Side.HOME, Side.AWAY) else both(Side.AWAY, Side.HOME)
-                is BetGrader.Pick.Spread -> if (mk.kind != LineKind.SPREAD || pick.period != BetGrader.Period.GAME) null
+                is BetGrader.Pick.Spread -> if (mk.kind != LineKind.SPREAD) null
                 else if (homeSide(pick.team)) both(Side.HOME, Side.AWAY, pick.line, -pick.line) else both(Side.AWAY, Side.HOME, pick.line, -pick.line)
-                is BetGrader.Pick.Total -> if (mk.kind != LineKind.TOTAL || pick.period != BetGrader.Period.GAME) null
+                is BetGrader.Pick.Total -> if (mk.kind != LineKind.TOTAL) null
                 else if (pick.over) both(Side.OVER, Side.UNDER, pick.line, pick.line) else both(Side.UNDER, Side.OVER, pick.line, pick.line)
                 is BetGrader.Pick.Prop -> if (mk.kind != LineKind.PLAYER_PROP || mk.stat != pick.stat || !PlayerNames.same(mk.subject, pick.player)) null
                 else if (pick.over) both(Side.OVER, Side.UNDER, pick.line, pick.line) else both(Side.UNDER, Side.OVER, pick.line, pick.line)
