@@ -291,4 +291,66 @@ class HistoricalClosesTest {
         CloseBackfill(t, listOf(espn, heavy), clock = { now + CloseBackfill.RETRY_MS }).run(heavyOk = true)
         assertEquals(0.5, t.all().first { it.id == "prop" }.closeFair!!, 0.0)
     }
+
+    // ---- Check odds now's forced look (Tj, 2026-10-01: "make sure it gets all available closing line data") ---------------
+
+    @Test
+    fun `a forced look asks every started bet without a close at once, where the usual one waits 3 hours`() = runBlocking {
+        val start = billsStart
+        val t = tracker(bet("later", "Moneyline", "Buffalo Bills"), bet("fresh", "Moneyline", "Buffalo Bills"))
+        val answers = mutableMapOf("later" to false, "fresh" to false)
+        val espn = Fake { b -> if (answers[b.id] == true) CloseLookup.Found(0.7, "ESPN · DraftKings close") else CloseLookup.Later("ESPN didn't answer") }
+        // A first (usual) look 30 minutes after the start finds nothing: both wait 3 hours.
+        val t0 = start + 30 * 60_000L
+        CloseBackfill(t, listOf(espn), clock = { t0 }).run()
+        assertEquals(0, CloseBackfill(t, listOf(espn), clock = { t0 + 60 * 60_000L }).run().looked)
+        // An hour on, ESPN has it. The usual look still waits; a forced one asks both and finds both.
+        answers["later"] = true; answers["fresh"] = true
+        val r = CloseBackfill(t, listOf(espn), clock = { t0 + 60 * 60_000L }).run(force = true)
+        assertEquals(2, r.looked)
+        assertEquals(2, r.found)
+        assertTrue(r.forced)
+        assertEquals(0.7, t.all().first { it.id == "later" }.closeFair!!, 0.0)
+    }
+
+    @Test
+    fun `a forced look still leaves a bet looked at in the last 10 minutes, so two quick taps don't spend twice`() = runBlocking {
+        val t = tracker(bet("a", "Moneyline", "Buffalo Bills"))
+        val espn = Fake { CloseLookup.Later("ESPN didn't answer") }
+        val t0 = billsStart + 30 * 60_000L
+        CloseBackfill(t, listOf(espn), clock = { t0 }).run(force = true)
+        assertEquals(1, espn.asked)
+        assertEquals("a second tap 4 minutes later asks nothing", 0, CloseBackfill(t, listOf(espn), clock = { t0 + 4 * 60_000L }).run(force = true).looked)
+        assertEquals(1, espn.asked)
+        assertEquals("10 minutes on it does", 1, CloseBackfill(t, listOf(espn), clock = { t0 + CloseBackfill.FORCE_GAP_MS }).run(force = true).looked)
+        assertTrue(CloseBackfill.due(t.all().first(), t0 + CloseBackfill.FORCE_GAP_MS, force = true))
+        assertFalse(CloseBackfill.due(t.all().first(), t0 + CloseBackfill.FORCE_GAP_MS - 1, force = true))
+        assertFalse("the usual rule is unchanged", CloseBackfill.due(t.all().first(), t0 + CloseBackfill.FORCE_GAP_MS))
+    }
+
+    @Test
+    fun `the usual look takes the newest 120 bets, a forced one every bet`() = runBlocking {
+        val bets = (0 until 150).map { i -> bet("b$i", "Moneyline", "Buffalo Bills").copy(startsTs = billsStart - i * 60_000L) }
+        val t = tracker(*bets.toTypedArray())
+        val espn = Fake { CloseLookup.Later("ESPN didn't answer") }
+        val now = billsStart + 24 * 3_600_000L
+        assertEquals(CloseBackfill.MAX_PER_RUN, CloseBackfill(t, listOf(espn), clock = { now }).run().looked)
+        // 120 were looked at just now (so wait 10 minutes under a forced look too); the other 30 never were.
+        assertEquals(30, CloseBackfill(t, listOf(espn), clock = { now + 60_000L }).run(force = true).looked)
+        assertEquals(150, CloseBackfill(t, listOf(espn), clock = { now + 3 * 3_600_000L }).run(force = true).looked)
+    }
+
+    @Test
+    fun `what a look couldn't find is counted by the reason the sources gave`() = runBlocking {
+        val t = tracker(
+            bet("a", "Player Receptions", "Dalton Kincaid Over 3.5"), bet("b", "Player Receptions", "Another Player Over 2.5"),
+            bet("c", "Moneyline", "Buffalo Bills"),
+        )
+        val espn = Fake { b -> if (b.id == "c") CloseLookup.Found(0.7, "ESPN · DraftKings close") else CloseLookup.None("ESPN keeps full-game moneylines, spreads and totals only") }
+        val novigSrc = Fake { CloseLookup.Later("Novig publishes this day's trades the next morning") }
+        val r = CloseBackfill(t, listOf(espn, novigSrc), clock = { billsStart + 3_600_000L }).run(force = true)
+        assertEquals(1, r.found)
+        assertEquals(mapOf("ESPN keeps full-game moneylines, spreads and totals only" to 2), r.missing)
+        assertEquals(mapOf("ESPN" to 1), r.bySource)
+    }
 }
