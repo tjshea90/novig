@@ -89,8 +89,12 @@ class AutoScanTest {
     fun `a 5 second interval checks CNO every 5 seconds, a long cycle waits 5 seconds after it, and Vigilant's own scan still waits 4 minutes`() {
         assertEquals("5 sec", ScanSettings.intervalLabel(5))
         assertEquals(now + 5_000L, AutoScanClock.nextAtMs(now, 5, now + 2_000L))
-        // A cycle that took 9 s (a CNO page and a few books): the next starts 5 s after it ended, never already overdue.
-        assertEquals(now + 9_000L + AutoScanClock.MIN_GAP_MS, AutoScanClock.nextAtMs(now, 5, now + 9_000L))
+        // A 2 s cycle: the next is 5 s after the START (an every-5-seconds cadence, not a cycle plus 5 s).
+        assertEquals(now + 5_000L, AutoScanClock.nextAtMs(now, 5, now + 2_000L))
+        // A cycle that took 9 s (a CNO page and a few books): the next starts 1 s after it ended, never already overdue; slower intervals keep their 5 s.
+        assertEquals(now + 9_000L + 1_000L, AutoScanClock.nextAtMs(now, 5, now + 9_000L))
+        assertEquals(1_000L, AutoScanClock.minGapMs(5))
+        assertEquals(AutoScanClock.MIN_GAP_MS, AutoScanClock.minGapMs(15))
         // CNO's own floor between two reads is lower than the interval, so a 5 s cycle never asks for a read CNO's pace would refuse.
         assertTrue(com.tjshea.vigilant.data.cno.CnoFeed.MIN_GAP_MS < 5_000L)
         // Vigilant's scan spends API credits: not at 5 s, not at 3 min; due at 4 min.

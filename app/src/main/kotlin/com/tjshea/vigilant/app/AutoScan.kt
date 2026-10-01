@@ -105,12 +105,15 @@ object AlertPicks {
 
 /** When the next background scan is due. */
 object AutoScanClock {
-    /** Never two cycles closer than this, however long the last one took (the fastest interval is 5 s, so a cycle that runs long starts the next 5 s after it ends). */
+    /** Never two cycles closer than this, however long the last one took (at the 15 s interval and slower; see [minGapMs]). */
     const val MIN_GAP_MS = 5_000L
 
-    /** [seconds] after the last cycle started (no drift from long scans); [MIN_GAP_MS] after now when that has passed; now when none has run. */
+    /** The least wait after a cycle that ran long: [MIN_GAP_MS], but 1 s at the 5 s interval, whose cadence would otherwise be a cycle plus 5 s, never 5 s. */
+    fun minGapMs(seconds: Int): Long = if (seconds < 15) 1_000L else MIN_GAP_MS
+
+    /** [seconds] after the last cycle started (no drift from long scans); [minGapMs] after now when that has passed; now when none has run. */
     fun nextAtMs(lastStartMs: Long?, seconds: Int, now: Long): Long =
-        lastStartMs?.let { maxOf(it + seconds.coerceAtLeast(1) * 1_000L, now + MIN_GAP_MS) } ?: now
+        lastStartMs?.let { maxOf(it + seconds.coerceAtLeast(1) * 1_000L, now + minGapMs(seconds)) } ?: now
 
     /**
      * How recent a read of a bet in its last [ClosingLine.TRUE_CLOSE_MS] must be to skip it this cycle, when cycles are faster than the usual
