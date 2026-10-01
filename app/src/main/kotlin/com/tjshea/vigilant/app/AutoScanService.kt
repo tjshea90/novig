@@ -18,15 +18,19 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.tjshea.vigilant.data.scanner.AutoScanMode
+import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -38,12 +42,19 @@ import java.util.Locale
  * background and it will continue scanning … even if the app is not open on the screen").
  *
  * A foreground service, alive exactly as long as auto-scan is on, with one quiet notification that
- * says so ("Auto-scan every 10 min · next at 3:42 PM") and offers Scan now and Stop. It holds no
- * wake lock between scans: each one is woken by an exact alarm ([AutoScanReceiver]; Android keeps
- * those on time even in Doze), holds a partial wake lock only while [AutoScanner.cycle] runs (capped
- * at [WAKE_LOCK_MAX_MS]), and arms the next alarm [ScanSettings.autoScanSeconds] after it started (and again when it ends, if it outlasted that).
- * Type `specialUse`: a scan schedule the user sets has no fitting standard type, and `dataSync`
- * would be stopped after six hours a day on Android 15+.
+ * says so ("Auto-scan every 10 min · next at 3:42 PM") and offers Scan now and Stop. Type `specialUse`: a scan schedule the user sets
+ * has no fitting standard type, and `dataSync` would be stopped after six hours a day on Android 15+.
+ *
+ * Two ways to keep time (RESEARCH.md §59; Tj, 2026-10-02: "keep it alive robustly … even if the phone is idle and the screen is turned off and locked"):
+ *
+ *  - **Keep awake** ([KeepAwake.active]: the switch is on and cycles are under 9 minutes apart, the default): the service holds a partial wake lock
+ *    the whole time (the screen stays off), so the CPU runs and, the service being a foreground one, so does its network even in Doze; a loop in
+ *    the service starts each cycle ([loop]). The alarm is only a safety net a few intervals off ([armWatchdog]), moved on by every cycle: it goes
+ *    off only if the loop stalls, and starts the cycles and the loop again.
+ *  - **Alarm only** (the switch off, or cycles 9 minutes or more apart): no wake lock between scans. Each one is woken by an exact alarm
+ *    ([AutoScanReceiver]), holds a partial wake lock only while [AutoScanner.cycle] runs (capped at [WAKE_LOCK_MAX_MS]), and arms the next alarm
+ *    [ScanSettings.autoScanSeconds] after it started (and again when it ends, if it outlasted that). In Doze Android lets such an alarm go off
+ *    about once every 9 minutes whatever the interval, which is why faster intervals use the first way.
  */
 class AutoScanService : Service() {
 
@@ -53,6 +64,21 @@ class AutoScanService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var lastNotifiedMs = 0L
     private var settings: ScanSettings? = null
+
+    /** Keep awake: the loop that starts each cycle, the lock that keeps the CPU on between them, when that lock ends, and what the safety alarm is armed for. */
+    private var loopJob: Job? = null
+    private var keepAwakeLock: PowerManager.WakeLock? = null
+    private var keepAwakeUntilMs: Long? = null
+    private var watchdogAtMs: Long? = null
+
+    /** When the loop starts the next cycle, for the notification. */
+    @Volatile
+    private var loopNextAtMs: Long? = null
+
+    /** What [follow] last saw of the settings that decide how the schedule is kept. */
+    private var plan: Plan? = null
+
+    private data class Plan(val mode: AutoScanMode, val seconds: Int, val hold: Boolean)
 
     /** The service is going away (Stop, auto-scan off): a cycle ending now must not arm another alarm. */
     private var stopping = false
@@ -86,11 +112,24 @@ class AutoScanService : Service() {
                 stopNow()
             }
             ACTION_SCAN_NOW -> runCycle(forceVigilant = true)
-            ACTION_CYCLE -> runCycle()
+            ACTION_CYCLE -> scope.launch {
+                val s = container.currentSettings()
+                val last = container.autoScan.status.value.lastStartMs
+                val now = System.currentTimeMillis()
+                // The safety alarm of a loop that is running fine (a cycle moves it on, so this is rare, and after Vigilant is swiped out of
+                // the recent apps): nothing to do but arm it again. Any other alarm, or a stalled loop, runs a cycle (and the loop starts again).
+                if (KeepAwake.active(s) && loopJob?.isActive == true && last != null && now - last < KeepAwake.watchdogDelayMs(s.autoScanSeconds)) {
+                    AutoScanReceiver.releaseBridge()
+                    armWatchdog(s.autoScanSeconds, force = true)
+                } else {
+                    runCycle()
+                }
+            }
             // Started (auto-scan just switched on, Vigilant opened, the phone booted): scan now
-            // unless one ran recently, else keep the next alarm.
+            // unless one ran recently, else keep the next alarm. Keeping awake, the loop does this itself.
             else -> scope.launch {
                 val s = container.currentSettings()
+                if (KeepAwake.active(s)) return@launch
                 val next = AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, System.currentTimeMillis())
                 if (next <= System.currentTimeMillis()) runCycle() else AutoScanAlarm.set(this@AutoScanService, next)
             }
@@ -98,26 +137,110 @@ class AutoScanService : Service() {
         return START_STICKY
     }
 
-    /** Settings changes (off, paused, a new interval) and the cycle's progress, into the notification and the alarm. */
+    /** Settings changes (off, paused, a new interval, keep awake) and the cycle's progress, into the notification, the alarm and the loop. */
     private suspend fun follow() {
         combine(
-            container.settingsStore.flow.filterNotNull().map { it.activeAutoScan to it.autoScanSeconds }.distinctUntilChanged(),
+            container.settingsStore.flow.filterNotNull().map { Plan(it.activeAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }.distinctUntilChanged(),
             container.autoScan.status,
             container.runner.state.map { it.progress }.distinctUntilChanged(),
-        ) { (mode, seconds), status, _ -> Triple(mode, seconds, status) }
-            .collect { (mode, seconds, status) ->
-                if (mode == AutoScanMode.OFF) {
+        ) { next, status, _ -> next to status }
+            .collect { (next, status) ->
+                if (next.mode == AutoScanMode.OFF) {
                     stopNow()
                     return@collect
                 }
-                val s = container.settingsStore.flow.value
-                val changed = settings?.let { it.autoScanSeconds != seconds || it.activeAutoScan != mode } ?: false
-                settings = s
-                if (changed && !status.running) {
-                    AutoScanAlarm.set(this, AutoScanClock.nextAtMs(status.lastStartMs, seconds, System.currentTimeMillis()))
+                val before = plan
+                plan = next
+                settings = container.settingsStore.flow.value
+                // Keeping awake starts (or restarts at another interval) the loop; not keeping awake ends it and lets the CPU sleep between scans.
+                if (before?.hold != next.hold || before.seconds != next.seconds) {
+                    if (next.hold) {
+                        restartLoop()
+                    } else {
+                        stopLoop()
+                        releaseKeepAwake()
+                    }
+                }
+                if (before != null && before != next && !status.running) {
+                    armAlarm(next.hold, next.seconds, AutoScanClock.nextAtMs(status.lastStartMs, next.seconds, System.currentTimeMillis()))
                 }
                 updateOngoing(status)
             }
+    }
+
+    /**
+     * Keep awake: starts each cycle when its time comes. The CPU is held awake (renewed before its timeout), the safety alarm is moved on, a cycle that
+     * another trigger (Scan now, the alarm) started is waited for, and a failure here is written to Recent problems and tried again, never a crash.
+     */
+    private suspend fun loop() {
+        while (true) {
+            try {
+                if (!step()) return
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                runCatching { container.problems.add("Keep-awake loop", "${e.javaClass.simpleName}: ${e.message}") }
+                delay(LOOP_RETRY_MS)
+            }
+        }
+    }
+
+    /** One wait and one cycle of the [loop]; false when keeping awake is no longer wanted. */
+    private suspend fun step(): Boolean {
+        val s = container.currentSettings()
+        if (!KeepAwake.active(s)) return false
+        maintainKeepAwake(s.autoScanSeconds)
+        if (container.autoScan.running) {
+            container.autoScan.status.first { !it.running }
+            return true
+        }
+        val now = System.currentTimeMillis()
+        // Worked out once per wait: from a cycle just started it is always in the future ([AutoScanClock.minGapMs]).
+        val due = AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, now)
+        loopNextAtMs = due
+        while (true) {
+            val left = due - System.currentTimeMillis()
+            if (left <= 0) break
+            delay(minOf(left, LOOP_SLICE_MS))
+            maintainKeepAwake(s.autoScanSeconds)
+        }
+        runCycle()
+        cycleJob?.join()
+        return true
+    }
+
+    private fun restartLoop() {
+        loopJob?.cancel()
+        loopJob = scope.launch { loop() }
+    }
+
+    private fun stopLoop() {
+        loopJob?.cancel()
+        loopJob = null
+        loopNextAtMs = null
+    }
+
+    /** The CPU held awake and the safety alarm kept ahead of the loop. */
+    private fun maintainKeepAwake(seconds: Int) {
+        holdKeepAwake()
+        armWatchdog(seconds)
+    }
+
+    /**
+     * The alarm behind the schedule: keeping awake, a safety net a few intervals away that the loop keeps moving ([armWatchdog]); else the exact time of
+     * the next cycle.
+     */
+    private fun armAlarm(hold: Boolean, seconds: Int, nextCycleAtMs: Long) {
+        if (hold) armWatchdog(seconds, force = true) else AutoScanAlarm.set(this, nextCycleAtMs)
+    }
+
+    /** Not announced as the next scan in the notification ([AutoScanAlarm.set]): it is not one. */
+    private fun armWatchdog(seconds: Int, force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && !KeepAwake.rearmDue(watchdogAtMs, now, seconds)) return
+        val at = KeepAwake.watchdogAtMs(now, seconds)
+        AutoScanAlarm.set(this, at, announce = false)
+        watchdogAtMs = at
     }
 
     private fun runCycle(forceVigilant: Boolean = false) {
@@ -130,7 +253,7 @@ class AutoScanService : Service() {
         cycleJob = scope.launch {
             val s = container.currentSettings()
             // The next one is armed first: a cycle cut short (killed, stuck) can't stop the schedule.
-            AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds.coerceAtLeast(1) * 1_000L)
+            armAlarm(KeepAwake.active(s), s.autoScanSeconds, System.currentTimeMillis() + s.autoScanSeconds.coerceAtLeast(1) * 1_000L)
             try {
                 // Off the main thread: book parsing and pricing.
                 kotlinx.coroutines.withContext(Dispatchers.Default) { container.autoScan.cycle(forceVigilant) }
@@ -139,7 +262,10 @@ class AutoScanService : Service() {
                 // A cycle longer than its interval (a 15 s one with a slow CNO page, any one with Vigilant's scan) had its next alarm go off while
                 // it ran, and that one was dropped ([runCycle]'s guard): the next is armed from here, so the schedule never lapses.
                 // The interval as it is now: Tj may have picked another while the cycle ran.
-                if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, container.settingsStore.flow.value?.autoScanSeconds ?: s.autoScanSeconds, System.currentTimeMillis()))
+                if (!stopping) {
+                    val now = container.settingsStore.flow.value ?: s
+                    armAlarm(KeepAwake.active(now), now.autoScanSeconds, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, now.autoScanSeconds, System.currentTimeMillis()))
+                }
                 updateOngoing(container.autoScan.status.value, force = true)
             }
         }
@@ -148,8 +274,10 @@ class AutoScanService : Service() {
     private fun stopNow() {
         stopping = true
         AutoScanAlarm.cancel(this)
+        stopLoop()
         cycleJob?.cancel()
         releaseWakeLock()
+        releaseKeepAwake()
         AutoScanReceiver.releaseBridge()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -159,8 +287,20 @@ class AutoScanService : Service() {
         stopping = true
         running = false
         releaseWakeLock()
+        releaseKeepAwake()
         scope.cancel()
+        // A deliberate stop (Stop, auto-scan off): the hours before the next start are not a late cycle ([CycleLog]). A killed process never gets here.
+        container.appScope.launch(Dispatchers.IO) { runCatching { container.cycleLog.stopped() } }
         super.onDestroy()
+    }
+
+    /**
+     * Vigilant swiped out of the recent apps. The service goes on, but some phones then end the process: an alarm a moment from now starts it again
+     * if so (and is a no-op if not: [ACTION_CYCLE]).
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        if (!stopping && plan?.let { it.mode != AutoScanMode.OFF } == true) AutoScanAlarm.set(this, System.currentTimeMillis() + TASK_REMOVED_RESTART_MS, announce = false)
     }
 
     private fun acquireWakeLock() {
@@ -177,6 +317,24 @@ class AutoScanService : Service() {
         wakeLock = null
     }
 
+    /** Keep awake: the CPU stays on with the screen off. Held with a timeout and renewed ([KeepAwake.lockRenewDue]), so a dead service can't hold it for ever. */
+    private fun holdKeepAwake() {
+        val now = System.currentTimeMillis()
+        val lock = keepAwakeLock ?: (getSystemService(Context.POWER_SERVICE) as PowerManager)
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Vigilant:keepawake").apply { setReferenceCounted(false) }.also { keepAwakeLock = it }
+        if (lock.isHeld && !KeepAwake.lockRenewDue(keepAwakeUntilMs, now)) return
+        lock.acquire(KeepAwake.LOCK_TIMEOUT_MS)
+        keepAwakeUntilMs = now + KeepAwake.LOCK_TIMEOUT_MS
+        keepAwakeHeld = true
+    }
+
+    private fun releaseKeepAwake() {
+        keepAwakeLock?.let { if (it.isHeld) it.release() }
+        keepAwakeLock = null
+        keepAwakeUntilMs = null
+        keepAwakeHeld = false
+    }
+
     private fun updateOngoing(status: AutoScanner.Status, force: Boolean = false) {
         val now = System.currentTimeMillis()
         if (!force && now - lastNotifiedMs < 1_000) return
@@ -191,7 +349,7 @@ class AutoScanService : Service() {
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
             .setContentTitle(AutoScanText.title(s))
-            .setContentText(AutoScanText.status(status, s, AutoScanAlarm.nextAtMs, System.currentTimeMillis(), progress))
+            .setContentText(AutoScanText.status(status, s, if (loopJob?.isActive == true) loopNextAtMs else AutoScanAlarm.nextAtMs, System.currentTimeMillis(), progress))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
@@ -218,9 +376,23 @@ class AutoScanService : Service() {
          */
         const val WAKE_LOCK_MAX_MS = 20 * 60_000L
 
+        /** The loop's longest sleep: it wakes this often to renew the CPU lock and move the safety alarm on. */
+        private const val LOOP_SLICE_MS = 30_000L
+
+        /** After a failure in the loop. */
+        private const val LOOP_RETRY_MS = 10_000L
+
+        /** An alarm this long after Vigilant is swiped away ([onTaskRemoved]). */
+        private const val TASK_REMOVED_RESTART_MS = 3_000L
+
         /** True while the service exists in this process. */
         @Volatile
         var running = false
+            private set
+
+        /** True while the service holds the CPU awake between scans (Diagnostics). */
+        @Volatile
+        var keepAwakeHeld = false
             private set
 
         /**
@@ -317,7 +489,7 @@ object AutoScanText {
             status.lastFound == 0 -> "last found nothing to alert"
             else -> "last found ${status.lastFound} (${status.lastAlerts} new)"
         }
-        return listOfNotNull(next, last, alerts).joinToString(" · ")
+        return listOfNotNull(next, last, alerts, "stays awake".takeIf { KeepAwake.active(s) }).joinToString(" · ")
     }
 }
 
@@ -336,13 +508,14 @@ object AutoScanAlarm {
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
-    fun set(context: Context, atMs: Long) {
+    /** [announce]: it is the next scan (the notification says so); false for the keep-awake safety alarm and the restart after a swipe, which are not. */
+    fun set(context: Context, atMs: Long, announce: Boolean = true) {
         val am = context.getSystemService(AlarmManager::class.java) ?: return
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
         runCatching {
             if (exact) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, pending(context))
             else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, pending(context))
-            nextAtMs = atMs
+            nextAtMs = if (announce) atMs else null
         }
     }
 
