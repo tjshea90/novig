@@ -121,13 +121,17 @@ class AutoScanTest {
     @Test
     fun `a cycle that outlasts its interval arms the next alarm when it ends, unless the service is stopping`() {
         val service = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText()
-        val finallyBlock = service.substringAfter("container.autoScan.cycle() }").substringBefore("updateOngoing(container.autoScan.status.value, force = true)")
+        val finallyBlock = service.substringAfter("container.autoScan.cycle(forceVigilant) }").substringBefore("updateOngoing(container.autoScan.status.value, force = true)")
         assertTrue(finallyBlock, finallyBlock.contains("if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, container.settingsStore.flow.value?.autoScanSeconds ?: s.autoScanSeconds, System.currentTimeMillis()))"))
         // Stop and destroy set the flag first, so a cycle cancelled by them can't arm an alarm after the schedule was cancelled.
         assertTrue(service.contains("private fun stopNow() {\n        stopping = true\n        AutoScanAlarm.cancel(this)"))
         assertTrue(service.contains("override fun onDestroy() {\n        stopping = true"))
         // The first alarm is still armed when the cycle starts, so a cycle killed part-way can't end the schedule.
-        assertTrue(service.indexOf("AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds") < service.indexOf("container.autoScan.cycle() }"))
+        assertTrue(service.indexOf("AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds") < service.indexOf("container.autoScan.cycle(forceVigilant) }"))
+        // Scan now (the notification's button) runs Vigilant's scan whatever the credit gate says; the alarm's cycle obeys it.
+        assertTrue(service.contains("ACTION_SCAN_NOW -> runCycle(forceVigilant = true)"))
+        assertTrue(service.contains("ACTION_CYCLE -> runCycle()"))
+        assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText().contains("(forceVigilant || AutoScanClock.vigilantDue("))
     }
 
     @Test

@@ -164,8 +164,11 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
 
     val running: Boolean get() = mutex.isLocked
 
-    /** One background scan. False when one is already running (or auto-scan is off, or scanning paused). */
-    suspend fun cycle(): Boolean {
+    /**
+     * One background scan. False when one is already running (or auto-scan is off, or scanning paused). [forceVigilant]: Tj tapped Scan now, so
+     * Vigilant's own scan runs even if one started less than [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS] ago ([AutoScanClock.vigilantDue]).
+     */
+    suspend fun cycle(forceVigilant: Boolean = false): Boolean {
         if (!mutex.tryLock()) return false
         try {
             val settings = c.currentSettings()
@@ -190,7 +193,7 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                         AutoScanClock.closingFreshMs(settings.autoScanSeconds)?.let { c.recheck.captureClosing(withinMs = ClosingLine.TRUE_CLOSE_MS, freshMs = it) }
                     }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
-                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock())) {
+                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock()))) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
                     runCatching { alerts += vigilantScan(settings) }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }

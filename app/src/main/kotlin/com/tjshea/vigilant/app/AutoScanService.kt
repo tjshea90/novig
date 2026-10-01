@@ -85,7 +85,8 @@ class AutoScanService : Service() {
                 runCatching { container.settingsStore.update { it.copy(autoScan = AutoScanMode.OFF) } }
                 stopNow()
             }
-            ACTION_SCAN_NOW, ACTION_CYCLE -> runCycle()
+            ACTION_SCAN_NOW -> runCycle(forceVigilant = true)
+            ACTION_CYCLE -> runCycle()
             // Started (auto-scan just switched on, Vigilant opened, the phone booted): scan now
             // unless one ran recently, else keep the next alarm.
             else -> scope.launch {
@@ -119,7 +120,7 @@ class AutoScanService : Service() {
             }
     }
 
-    private fun runCycle() {
+    private fun runCycle(forceVigilant: Boolean = false) {
         if (cycleJob?.isActive == true || container.autoScan.running) {
             AutoScanReceiver.releaseBridge()
             return
@@ -132,7 +133,7 @@ class AutoScanService : Service() {
             AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds.coerceAtLeast(1) * 1_000L)
             try {
                 // Off the main thread: book parsing and pricing.
-                kotlinx.coroutines.withContext(Dispatchers.Default) { container.autoScan.cycle() }
+                kotlinx.coroutines.withContext(Dispatchers.Default) { container.autoScan.cycle(forceVigilant) }
             } finally {
                 releaseWakeLock()
                 // A cycle longer than its interval (a 15 s one with a slow CNO page, any one with Vigilant's scan) had its next alarm go off while
