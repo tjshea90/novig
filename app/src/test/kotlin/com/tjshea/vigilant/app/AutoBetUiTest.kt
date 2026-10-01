@@ -11,10 +11,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
@@ -71,6 +73,196 @@ class AutoBetUiTest {
     @Test
     fun `it is off by default, and turning it on asks first and says it places real bets`() {
         show()
-        compose.onNodeWithTag("autoBetSwitch").assertIsOn().let { }
+        assertFalse(settings.autoBet)
+        compose.onNodeWithTag("autoBetSwitch").assertIsOff()
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        // Nothing changed yet: the question is on screen with what it will do.
+        assertFalse(settings.autoBet)
+        compose.onNodeWithText("Turn on auto-bet?").assertExists()
+        compose.onNodeWithText("Vigilant will place REAL bets from your Vigilant wallet", substring = true).assertExists()
+        compose.onNodeWithText("never bets a game that has started", substring = true).assertExists()
+        compose.onNodeWithText("Cancel").performClick()
+        assertFalse(settings.autoBet)
+        compose.onNodeWithText("Turn on auto-bet?").assertDoesNotExist()
+        // Confirmed: on, and the background CNO scan it runs in is switched from Off to CNO.
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        compose.onNodeWithTag("autoBetConfirm").performClick()
+        assertTrue(settings.autoBet)
+        compose.onNodeWithTag("autoBetSwitch").assertIsOn()
+        // Off again at one tap, no question.
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        assertFalse(settings.autoBet)
+    }
+
+    @Test
+    fun `turning it on switches the background scan from Off to CNO, and leaves CNO + Vigilant as it is`() {
+        show({ it.copy(autoScan = AutoScanMode.OFF) })
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        compose.onNodeWithTag("autoBetConfirm").performClick()
+        assertEquals(AutoScanMode.CNO, settings.autoScan)
+        compose.onNodeWithTag("autoBetSwitch").performClick() // off
+        ui = ui.copy(settings = ui.settings.copy(autoScan = AutoScanMode.BOTH))
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        compose.onNodeWithTag("autoBetConfirm").performClick()
+        assertEquals(AutoScanMode.BOTH, settings.autoScan)
+    }
+
+    @Test
+    fun `the confirm lists the criteria Tj picked and the wallet`() {
+        show({ it.copy(autoBetBooks = 4, autoBetMinEv = 0.0325, autoBetTwoSided = 3, autoBetStake = AutoBetStake.QUARTER_KELLY, autoBetMaxStake = 8.0, apiMaxPerDay = 40.0) })
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        val text = AutoBetText.confirm(settings, 25.0)
+        assertTrue(text, text.contains("(\$25.00)"))
+        assertTrue(text, text.contains("at least 4 books agreeing it's +EV on their own, 3 pricing both sides"))
+        assertTrue(text, text.contains("an edge of +3.25% or more"))
+        assertTrue(text, text.contains("staking its ¼ Kelly stake (never over \$8.00)"))
+        assertTrue(text, text.contains("never more than \$40.00 in a day"))
+        compose.onNodeWithText("Vigilant will place REAL bets", substring = true).assertExists()
+    }
+
+    @Test
+    fun `betting must be set up first, so the switch is disabled and says so`() {
+        show(betting = BettingUi(enabled = false))
+        compose.onNodeWithTag("autoBetSwitch").assertIsNotEnabled()
+        compose.onNodeWithTag("autoBetRunning").assertExists()
+        assertTrue(AutoBetText.whyNotRunning(ui)!!.contains("isn't set up"))
+    }
+
+    // ---- the criteria -------------------------------------------------------------------------------------------
+
+    @Test
+    fun `books agreeing offers 2, 3, 4 and 5+, and books pricing both sides 1, 2 and 3`() {
+        show()
+        for ((label, n) in listOf("2" to 2, "3" to 3, "4" to 4, "5+" to 5)) {
+            compose.onNodeWithText(label).performClick()
+            assertEquals(n, settings.autoBetBooks)
+        }
+        compose.onNodeWithText("5+").assertIsSelected()
+        // Both-sides chips are 1, 2, 3 (the same digits as the first row's, so by tag-less order: the second group).
+        assertEquals(listOf(1, 2, 3), ScanSettings.AUTO_BET_TWO_SIDED_CHOICES)
+    }
+
+    @Test
+    fun `the smallest edge offers Tj's seven choices and a typed amount`() {
+        show()
+        for ((label, ev) in listOf("+2%" to 0.02, "+2.5%" to 0.025, "+3%" to 0.03, "+3.25%" to 0.0325, "+3.5%" to 0.035, "+3.75%" to 0.0375, "+4%" to 0.04)) {
+            compose.onNodeWithText(label).performClick()
+            assertEquals(label, ev, settings.autoBetMinEv, 1e-12)
+            compose.onNodeWithText(label).assertIsSelected()
+        }
+        // Typed: 3.1% is a value no chip has.
+        compose.onNodeWithTag("autoBetMinEvField").performTextClearance()
+        compose.onNodeWithTag("autoBetMinEvField").performTextInput("3.1")
+        assertEquals(0.031, settings.autoBetMinEv, 1e-12)
+        // Under the floor of 0.5% isn't taken (and the field says so).
+        compose.onNodeWithTag("autoBetMinEvField").performTextClearance()
+        compose.onNodeWithTag("autoBetMinEvField").performTextInput("0.2")
+        assertEquals(0.031, settings.autoBetMinEv, 1e-12)
+        compose.onNodeWithText("At least 0.5%").assertExists()
+    }
+
+    @Test
+    fun `the amount per bet offers an eighth, quarter and half Kelly, a dollar, and a typed amount`() {
+        show()
+        for ((label, stake) in listOf("⅛ Kelly" to AutoBetStake.EIGHTH_KELLY, "¼ Kelly" to AutoBetStake.QUARTER_KELLY, "½ Kelly" to AutoBetStake.HALF_KELLY, "$1" to AutoBetStake.ONE_DOLLAR)) {
+            compose.onNodeWithText(label).performClick()
+            assertEquals(stake, settings.autoBetStake)
+            compose.onNodeWithTag("autoBetCustomStake").assertDoesNotExist()
+        }
+        // Kelly says what it works from.
+        compose.onNodeWithText("½ Kelly").performClick()
+        compose.onNodeWithText("Kelly sizing uses your bankroll", substring = true).assertExists()
+        // My amount: a field for it.
+        compose.onNodeWithText("My amount").performClick()
+        assertEquals(AutoBetStake.CUSTOM, settings.autoBetStake)
+        compose.onNodeWithTag("autoBetCustomStake").performTextClearance()
+        compose.onNodeWithTag("autoBetCustomStake").performTextInput("7.25")
+        assertEquals(7.25, settings.autoBetCustomStake, 0.0)
+    }
+
+    @Test
+    fun `the most per bet is typed`() {
+        show()
+        compose.onNodeWithTag("autoBetMaxStake").performTextClearance()
+        compose.onNodeWithTag("autoBetMaxStake").performTextInput("12.5")
+        assertEquals(12.5, settings.autoBetMaxStake, 0.0)
+    }
+
+    @Test
+    fun `the check interval is the background CNO scan's own, 15 sec to 40 min`() {
+        show()
+        for ((label, seconds) in listOf("15 sec" to 15, "30 sec" to 30, "1 min" to 60, "3 min" to 180, "5 min" to 300, "40 min" to 2400)) {
+            compose.onNodeWithText(label).performClick()
+            assertEquals(label, seconds, settings.autoScanSeconds)
+        }
+        compose.onNodeWithText("The same choice as Settings › Scan › Background auto-scan", substring = true).assertExists()
+    }
+
+    // ---- what it says while it runs, and the stops --------------------------------------------------------------
+
+    @Test
+    fun `it says why it can't run, and what it does when it can`() {
+        show({ it.copy(autoBet = true) })
+        compose.onNodeWithTag("autoBetRunning").assertExists()
+        assertNull(AutoBetText.whyNotRunning(ui))
+        assertTrue(AutoBetText.running(settings).contains("every 10 min"))
+        // The scanner choice, the background scan and Pause each keep it from running.
+        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(scanner = ScannerMode.VIGILANT)))!!.contains("Vigilant only"))
+        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(autoScan = AutoScanMode.OFF)))!!.contains("Background auto-scan is off"))
+        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(paused = true)))!!.contains("paused"))
+    }
+
+    @Test
+    fun `after a lost order it stays stopped until Tj taps Resume`() {
+        show({ it.copy(autoBet = true, autoBetHalted = "Novig didn't answer, and its lists don't show the order") })
+        compose.onNodeWithTag("autoBetHalted").assertExists()
+        compose.onNodeWithText("Nothing is placed until you do.", substring = true).assertExists()
+        compose.onNodeWithTag("autoBetResume").performClick()
+        assertNull(settings.autoBetHalted)
+        compose.onNodeWithTag("autoBetHalted").assertDoesNotExist()
+        compose.onNodeWithTag("autoBetResume").assertDoesNotExist()
+        // Resuming doesn't switch it on or off.
+        assertTrue(settings.autoBet)
+    }
+
+    @Test
+    fun `the wallet and the last check are shown`() {
+        show({ it.copy(autoBet = true) })
+        ui = ui.copy(
+            autoBetStatus = AutoBettor.Status(
+                lastRunMs = System.currentTimeMillis() - 12_000, balance = 18.4, placedSinceStart = 3, stakedSinceStart = 12.0,
+                last = AutoBettor.Report(looked = 6, passed = 2, placed = listOf(placedBet()), skipped = mapOf("its edge +2.10% is under your +3.00% minimum" to 4)),
+            ),
+        )
+        compose.onNodeWithTag("autoBetWallet").assertExists()
+        compose.onNodeWithText("Vigilant wallet \$25.00", substring = true).assertExists()
+        compose.onNodeWithTag("autoBetStatus").assertExists()
+        compose.onNodeWithText("placed 1 (\$1.00)", substring = true).assertExists()
+        compose.onNodeWithText("Placed since Vigilant started: 3 bets, \$12.00", substring = true).assertExists()
+    }
+
+    private fun placedBet() = TrackedBet(
+        "id", 1L, "NFL", "A @ B", 2L, "Moneyline", "A", "m", "o", 0.5, 0.5, 0.52, 0.04, 1.0, orderId = "o1", auto = true,
+    )
+
+    // ---- screenshots --------------------------------------------------------------------------------------------
+
+    @Test
+    fun `screenshot - auto-bet on, with its criteria and the last check`() {
+        show({ it.copy(autoBet = true, autoBetBooks = 3, autoBetMinEv = 0.0325, autoBetStake = AutoBetStake.EIGHTH_KELLY, autoBetMaxStake = 10.0, autoScanSeconds = 15, autoScan = AutoScanMode.CNO) })
+        ui = ui.copy(
+            autoBetStatus = AutoBettor.Status(
+                lastRunMs = System.currentTimeMillis() - 12_000, balance = 25.0, placedSinceStart = 2, stakedSinceStart = 9.5,
+                last = AutoBettor.Report(looked = 6, passed = 2, placed = listOf(placedBet(), placedBet()), skipped = mapOf("its edge +2.10% is under your +3.25% minimum" to 3, "2 books say +EV on their own (you need 3)" to 1)),
+            ),
+        )
+        compose.onNodeWithTag("autoBetSwitch").assertIsOn()
+        compose.onRoot().captureRoboImage("screenshots/5k_settings_auto_bet.png")
+    }
+
+    @Test
+    fun `screenshot - auto-bet stopped after a lost order`() {
+        show({ it.copy(autoBet = true, autoBetHalted = "Novig didn't answer, and its lists don't show the order (connection reset). Nothing is assumed: open the Tracker and tap Sync with Novig in a minute, and check Novig before betting this again.") })
+        compose.onRoot().captureRoboImage("screenshots/5k2_settings_auto_bet_stopped.png")
     }
 }
