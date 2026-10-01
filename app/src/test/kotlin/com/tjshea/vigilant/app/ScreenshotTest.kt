@@ -144,6 +144,12 @@ class ScreenshotTest {
     @Test fun settingsTabUsage() = settingsTab(SettingsTab.USAGE)
     @Test fun settingsTabTools() = settingsTab(SettingsTab.TOOLS)
 
+    /** The Fair odds tab with ParlayAPI on and a key: what a league and a tennis tour cost (TASKS.md Z2, v0.37.0). */
+    @Config(qualifiers = "w393dp-h3200dp-xxhdpi")
+    @Test fun settingsFairParlayOn() = shoot("5h_settings_fair_parlay_on") {
+        SettingsScreen(SampleScan.state(SampleScan.settings.copy(useParlay = true)).copy(parlayKeys = listOf("pk-FAKE-0000")), {}, startTab = SettingsTab.FAIR)
+    }
+
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
         // No PropLine key: The Odds API buys props on its own.
         screen { SettingsScreen(SampleScan.state().copy(proplineKeys = emptyList()), {}) }
