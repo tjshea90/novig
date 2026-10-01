@@ -835,6 +835,51 @@ class ScreenshotTest {
         compose.onNodeWithText("Under a minute apart is constant background work", substring = true).assertExists()
     }
 
+    /**
+     * Tj, 2026-10-02: "keep it alive robustly … even if the phone is idle and the screen is turned off and locked … (but I still want the screen turned off
+     * if possible)": the Keep awake switch sits under the interval, on by default, says what it costs, and the battery setting's state shows under it.
+     */
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun settingsKeepAwakeSwitch() {
+        val base = SampleScan.state()
+        val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 5))
+        var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+        shoot("5d3_settings_keep_awake") { SettingsScreen(s, { t -> picked = t(s.settings) }) }
+        compose.onNodeWithText("Keep awake (screen stays off)").assertExists()
+        compose.onNodeWithText("On: the screen can stay off and locked, but the CPU stays awake", substring = true).assertExists()
+        compose.onNodeWithText("Uses more battery (best plugged in)", substring = true).assertExists()
+        compose.onNodeWithText("Keep awake (screen stays off)").performClick()
+        assert(picked?.autoScanKeepAwake == false) { "picked $picked" }
+        // The battery setting: Robolectric's phone isn't on the allow-list, so the prompt and the way to Android's own page show.
+        compose.onNodeWithText("Let Vigilant run in the background").assertExists()
+        compose.onNodeWithText("Open Vigilant's app settings").assertExists()
+        compose.onNodeWithText("Settings › Apps › Vigilant › App battery usage › Unrestricted", substring = true).assertExists()
+    }
+
+    /** Switched off, the hint says what Doze does to an alarm-driven scan; at 10 minutes, that keeping awake isn't needed; with auto-scan off there is no switch. */
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun keepAwakeSwitchFollowsTheSchedule() {
+        val base = SampleScan.state()
+        fun with(f: (com.tjshea.vigilant.data.scanner.ScanSettings) -> com.tjshea.vigilant.data.scanner.ScanSettings) = base.copy(settings = f(base.settings))
+        screen { SettingsScreen(with { it.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 15, autoScanKeepAwake = false) }, {}) }
+        compose.onNodeWithText("Off: with the screen off and the phone still, Android runs each alarm-driven scan only about every 9 minutes", substring = true).assertExists()
+        // The fast-interval note points at the switch while it's off.
+        compose.onNodeWithText("Keep awake, below, prevents that", substring = true).assertExists()
+    }
+
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun keepAwakeSwitchSaysItIsNotNeededAtTenMinutes() {
+        val base = SampleScan.state()
+        screen { SettingsScreen(base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 600)), {}) }
+        compose.onNodeWithText("On, but not needed at 10 min", substring = true).assertExists()
+    }
+
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun keepAwakeSwitchIsHiddenWhileAutoScanIsOff() {
+        screen { SettingsScreen(SampleScan.state(), {}) }
+        compose.onAllNodesWithText("Keep awake (screen stays off)").assertCountEquals(0)
+    }
+
     /** Off: no interval to pick, and the hint says nothing runs by itself. */
     @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun autoScanOffHidesTheInterval() {
