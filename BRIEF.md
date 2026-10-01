@@ -340,7 +340,9 @@ robolectric.org/configuring/.
   (under a cent = stop; the least a stake can be is one cent, Tj 2026-10-01, v0.39.3: a Kelly stake under a dollar is placed as it is; Novig refusing a small order, `ORDER_TOO_SMALL`, skips that bet and the size is remembered, it never stops auto-bet); an order whose answer is lost HALTS it until Tj resumes it and is never re-sent, and an order is marked in flight (saved) BEFORE it is sent so a
   process that dies mid-order leaves it halted; Novig refusing or the daily limit backs it off. Tj's longest-odds limit (`autoBetMaxOdds`, American; v0.39.2,
   default none) is checked twice, on the price the bet was judged at and again on the order book read just before the order (`BetLimits.maxOdds`, the
-  planner), so a price that drifts out past it is never bet; favorites always pass; a Bet-sheet bet is never held to it.
+  planner), so a price that drifts out past it is never bet; favorites always pass; a Bet-sheet bet is never held to it. Every bet placed gets its own
+  HIGH-importance notification with the stake and the EV (`AutoBetNotes`, channel `auto_bet_placed`). The check interval goes down to 5 s (a cycle's wait after a long
+  cycle is 1 s there, 5 s above 15 s). Every Bet sheet has "Add money" (chips $1-$20 and a typed amount; it sends the transfer itself with a saved management key).
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
 
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
