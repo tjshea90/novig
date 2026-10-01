@@ -66,7 +66,8 @@ class ParlayBooks(
                 }
             else -> null
         } ?: return null
-        return viewOf(snap, eventName, startsTs, selection, pick, clock())
+        // Tennis starts by order of play: the scan's own gap for the tour (a day), not a team sport's 3 hours.
+        return viewOf(snap, eventName, startsTs, selection, pick, clock(), if (league.tennis) league.maxStartGapHours * 3_600_000L else START_GAP_MS)
     }
 
     private suspend fun snapshot(key: String, read: suspend () -> RefSnapshot): RefSnapshot? = mutex.withLock {
@@ -112,10 +113,15 @@ class ParlayBooks(
         fun viewOf(snap: RefSnapshot, bet: TrackedBet, pick: BetGrader.Pick, now: Long): CnoBooksView? =
             viewOf(snap, bet.eventName, bet.startsTs, bet.selection, pick, now)
 
-        /** The same for a bet by its game ("Away @ Home"), start (null: any game of those two teams in [snap]) and wording. Pure. */
-        fun viewOf(snap: RefSnapshot, eventName: String, startsTs: Long?, selection: String, pick: BetGrader.Pick, now: Long): CnoBooksView? {
+        /**
+         * The same for a bet by its game ("Away @ Home"), start (null: any game of those two teams in [snap]; else within [gapMs] of it) and
+         * wording. Pure.
+         */
+        fun viewOf(
+            snap: RefSnapshot, eventName: String, startsTs: Long?, selection: String, pick: BetGrader.Pick, now: Long, gapMs: Long = START_GAP_MS,
+        ): CnoBooksView? {
             val m = NovigText.parseMatchup(eventName) ?: return null
-            val game = snap.events.filter { startsTs == null || abs(it.commenceMs - startsTs) <= START_GAP_MS }
+            val game = snap.events.filter { startsTs == null || abs(it.commenceMs - startsTs) <= gapMs }
                 .map { e -> e to (TeamMatcher.similarity(m.home, e.home) + TeamMatcher.similarity(m.away, e.away)) }
                 .filter { (e, _) -> TeamMatcher.similarity(m.home, e.home) >= 0.5 && TeamMatcher.similarity(m.away, e.away) >= 0.5 }
                 // With no start to go by, the soonest of a series' games (the one a pick at Novig now is on).
