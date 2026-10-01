@@ -276,19 +276,19 @@ class ParlayCloses(
             // 2.5, and `spreads_sets`/`totals_sets` copies); its games lines are rows of a "<Player> (Games)" match. A bet is closed only
             // from rows in its own unit: a games −1.5 must never take the sets −1.5's close.
             val tennis = sportKeyOf(b)?.startsWith(TENNIS) == true
-            fun name(r: JsonObject, key: String) = r.str(key).orEmpty().removeSuffix(ParlayTennis.GAMES_SUFFIX)
+            fun named(r: JsonObject, key: String) = r.str(key).orEmpty().removeSuffix(ParlayTennis.GAMES_SUFFIX)
             fun gamesRow(r: JsonObject) = r.str("home_team").orEmpty().endsWith(ParlayTennis.GAMES_SUFFIX)
             val inSets = (pick as? BetGrader.Pick.Spread)?.period == BetGrader.Period.SETS || (pick as? BetGrader.Pick.Total)?.period == BetGrader.Period.SETS
             val linePick = pick is BetGrader.Pick.Spread || pick is BetGrader.Pick.Total
             val rows = rowsOf(root).filter { r ->
                 (r.str("source") ?: "pinnacle").equals("pinnacle", true) &&
                     (r.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false) &&
-                    TeamMatcher.similarity(m.home, name(r, "home_team")) >= 0.5 && TeamMatcher.similarity(m.away, name(r, "away_team")) >= 0.5 &&
+                    TeamMatcher.similarity(m.home, named(r, "home_team")) >= 0.5 && TeamMatcher.similarity(m.away, named(r, "away_team")) >= 0.5 &&
                     (!tennis || gamesRow(r) == (linePick && !inSets))
             }
             if (rows.isEmpty()) return CloseLookup.None("Not in ParlayAPI's closes file")
             fun of(vararg keys: String) = rows.filter { it.str("market_key") in keys }
-            fun team(r: JsonObject, name: String) = TeamMatcher.similarity(name, name(r, "player_name")) >= 0.5
+            fun team(r: JsonObject, name: String) = TeamMatcher.similarity(name, named(r, "player_name")) >= 0.5
             fun latest(rs: List<JsonObject>) = rs.maxByOrNull { it.str("snapshot_time")?.let(::ms) ?: 0L }
             fun pair(mine: JsonObject?, other: JsonObject?, what: String): CloseLookup {
                 if (mine == null || other == null) return CloseLookup.None("No Pinnacle $what close for this game")
