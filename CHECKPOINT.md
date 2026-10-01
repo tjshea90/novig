@@ -1,13 +1,13 @@
-# CHECKPOINT 2274 — read me first, then TASKS.md
+# CHECKPOINT 2275 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T19:01:50Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `61e64e09` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T22:51:42Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `cf09149d` (this checkpoint is the commit after it)
 
 ## Just done
-v0.40.1 released and recorded: Check odds now gets every closing line and holds the focus (AI1-AI4)
+wrote Tj's all-books-agree request into TASKS.md as AJ1-AJ3
 
 ## Do this next
-Nothing open for this request. Ask Tj whether auto-bet should keep running during a check (it pauses today). Next Diagnostics: read 'Closes found after the start' (forced look, still without: reasons).
+AJ1: read CnoBooks.check (agreeing/twoSided), then AutoBet.judge + the card
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Nothing open for this request. Ask Tj whether auto-bet should keep running durin
 
 ## Last ten checkpoints
 ```
+  395bc7eb ckpt 2274: v0.40.1 released and recorded: Check odds now gets every closing line and ho
   ebea8af1 ckpt 2273: pre-release: v0.40.1: Check odds now looks for every closing line (every sta
   f45b3717 ckpt 2272: AI2-AI3 built: forced close backfill (CloseBackfill.run(force)), FocusGate h
   727b540c ckpt 2271: wrote Tj's Check-odds-now request into TASKS.md as AI1-AI4
@@ -26,5 +27,7 @@ Nothing open for this request. Ask Tj whether auto-bet should keep running durin
   b20b948d ckpt 2267: wrote Tj's four-part request (add-money in every bet slip, auto-bet stake ru
   e7b75633 ckpt 2266: v0.39.3 released and recorded: auto-bet one-cent floor (AG1-AG3)
   b2ad578c ckpt 2265: pre-release: v0.39.3: auto-bet has no $1 minimum: stakes down to one cent (K
-  20a42607 ckpt 2264: wrote Tj's no-$1-minimum request into TASKS.md as AG1-AG3
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

@@ -3179,3 +3179,12 @@ Two things. (1) "Check odds now" (the Tracker's button) must also collect every 
 - [x] AI4 Tests (mutation-checked), full floor with screenshots, ship v0.40.1, report incl. that auto-bet pauses for the check.
   DONE AI1-AI4 (RESEARCH.md §57): `CloseBackfill.run(force)` (every started bet without a close, up to 1,000, not one looked at in the last 10 minutes; the report now carries what is missing and why) called by every Check odds now through `gradeAll(forceCloses = true)`, with `CloseText` putting it in the toast; `FocusGate` held while a check runs: `AutoScanner.cycle` skips (auto-bet with it), the CNO watch (`cnoReadsHeld`), Scan/Recheck/Refresh, the widget's rescans, movers and injury look-ups wait, a running scan stops, everything resumes in the `finally` (and a skipped background cycle runs at once); Tracker banner and notification text. Tests: HistoricalClosesTest (+4), CheckFocusAppTest (6: gate and ceiling, the held loops, the cycle, release, the forced look, the close sentence, source pins), TrackerUiTest (+2); 14 mutants killed (foreground).
   SHIPPED: v0.40.1 (CI green on `ebea8af1`, release.yml run 36910624132 green, Release confirmed, APK checked: versionCode 74 and the new focus text present; recorded in BUILDLOG.md).
+
+
+## Tj, 2026-10-01 ~19:1xZ: "For the auto bet feature, include an option in the settings where I can require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)"
+
+Today the auto-bet needs at least N books (2, 3, 4, 5+) that each say +EV on their own, and at least 1-3 books pricing both sides; a bet with 3 of 5 agreeing passes a "3" setting. Tj wants a switch that makes it ALL of them: the books scanned for the bet (the ones that price both sides, "x of y books agree" in the notification) must every one say +EV.
+
+- [ ] AJ1 Read what "agree" and "scanned" count (`CnoBooks.Check.agreeing` / `twoSided`, which books are included, whether Novig counts, how a book pricing one side is treated).
+- [ ] AJ2 A setting `autoBetAllAgree` (off by default: what runs today doesn't change): when on, a bet passes only if every book that prices both sides says +EV on its own (agreeing == twoSided), on top of the other criteria; the skip reason says "3 of 5 books agree (all must)".
+- [ ] AJ3 The switch in the Auto-bet card with a plain sentence, the confirm text, Diagnostics line; tests (mutation-checked); full floor; ship v0.40.2; link with what "every book scanned" means.
