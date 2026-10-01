@@ -335,6 +335,11 @@ class AppContainer(private val app: Application) {
     /** The background auto-scan and its +EV alerts (Tj, 2026-09-28), run by [AutoScanService]. */
     val autoScan: AutoScanner by lazy { AutoScanner(app, this) }
 
+    /** When each background cycle started against its schedule, and whether the screen was off (files/cycles.json, Tj 2026-10-02): the evidence in Diagnostics that scanning goes on while the phone idles. */
+    val cycleLog = com.tjshea.vigilant.data.diag.CycleLog(
+        JsonFileStore(File(app.filesDir, "cycles.json"), com.tjshea.vigilant.data.diag.CycleBook.serializer(), { com.tjshea.vigilant.data.diag.CycleBook() }, json),
+    )
+
     /** The auto-bet (Tj, 2026-10-01): called by [autoScan]'s cycle. */
     val autoBet: AutoBettor by lazy { AutoBettor(app, this) }
 
