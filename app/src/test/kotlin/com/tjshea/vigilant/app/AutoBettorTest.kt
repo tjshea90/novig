@@ -219,8 +219,9 @@ class AutoBettorTest {
         val all = settings { it.copy(autoBetBooks = 2, autoBetAllAgree = true) }
         val placed = bettor(novig3).run(all, withBooks(SampleCno.jeffersonBooks(), all)).placed
         assertEquals(1, placed.size)
-        val text = notifications().single { it.extras.getString("android.title")!!.startsWith("Auto-bet") }.extras.getString("android.text")!!
-        assertTrue(text, text.contains("3 of 3 books agree"))
+        // The notification for it says what agreed (the first bet above, with 2 of 3, said that).
+        val texts = notifications().filter { it.extras.getString("android.title")!!.startsWith("Auto-bet") }.map { it.extras.getString("android.text")!! }
+        assertTrue(texts.toString(), texts.any { it.contains("3 of 3 books agree") } && texts.any { it.contains("2 of 3 books agree") })
     }
 
     @Test
