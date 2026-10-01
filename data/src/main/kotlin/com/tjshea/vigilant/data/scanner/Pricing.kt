@@ -242,7 +242,11 @@ object Pricing {
         for ((index, pm) in plan.markets.withIndex()) {
             val fee = pm.market.fee ?: continue
             val book = books[pm.market.marketId]
-            kept?.get(index, book, settings.bankroll, settings.kellyMultiplier)?.let { all += it; continue }
+            val reused = kept?.get(index, book, settings.bankroll, settings.kellyMultiplier)
+            if (reused != null) {
+                all += reused
+                continue
+            }
             val fair = pm.lineKey?.let(::fairFor)
             val live = pm.event.isLive
             val ladders = pm.outcomes.associate { it.outcome.outcomeId to (book?.takeLadder(pm.market, it.outcome.outcomeId).orEmpty()) }
