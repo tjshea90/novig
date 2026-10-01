@@ -3424,3 +3424,8 @@ Also make it so if I "check odds now", make sure it gets all available closing l
 ```
 For the auto bet feature, include an option in the settings where I can require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)
 ```
+
+## 2026-10-01T23:16:36Z
+```
+Research if this app stays awake and auto bets if the option is turned on even through screen lock and an idle android 16 moto g 2026. If not, research if there are ways to keep it alive robustly to keep auto bet on and scanning even if the phone is idle and the screen is turned off and locked. Maybe wake lock or a don't sleep or keep screen awake function (but I still want the screen turned off of possible)
+```
