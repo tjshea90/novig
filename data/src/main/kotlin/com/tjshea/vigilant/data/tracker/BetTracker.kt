@@ -647,7 +647,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         val closing = now < b.startsTs
         val asOf = minOf(now, o.fairAsOfMs ?: now)
         return b.copy(
-            closingFair = if (closing) fair else b.closingFair, closingSeenAtMs = if (closing) asOf else b.closingSeenAtMs,
+            closingFair = if (closing && ClosingLine.supersedes(b, asOf)) fair else b.closingFair,
+            closingSeenAtMs = if (closing && ClosingLine.supersedes(b, asOf)) asOf else b.closingSeenAtMs,
             nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
             books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
             nowBooks = twoSided ?: b.nowBooks,
@@ -687,8 +688,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 fun withFair(fair: Double, at: Long, via: String, books: Int?, seen: Long = at) = b.copy(
                     nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = at, nowVia = via, nowBooks = books ?: b.nowBooks,
                     nowNote = null, nowNoteAtMs = null,
-                    closingFair = if (at < b.startsTs) fair else b.closingFair,
-                    closingSeenAtMs = if (at < b.startsTs) seen else b.closingSeenAtMs,
+                    closingFair = if (at < b.startsTs && ClosingLine.supersedes(b, seen)) fair else b.closingFair,
+                    closingSeenAtMs = if (at < b.startsTs && ClosingLine.supersedes(b, seen)) seen else b.closingSeenAtMs,
                 )
                 when {
                     c != null && v != null -> {

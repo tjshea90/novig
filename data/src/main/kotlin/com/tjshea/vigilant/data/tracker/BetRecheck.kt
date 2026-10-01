@@ -457,9 +457,9 @@ class BetRecheck(
                     nowVia = via, nowNote = null, nowNoteAtMs = null,
                     // CNO's read on its own, for the check that also reads Vigilant's ([BetTracker.mergeReads]).
                     cnoFair = fair, cnoAtMs = now,
-                    closingFair = if (closing) fair else b.closingFair,
-                    // Dated by when the page was read, so a cached page can't pass for a close.
-                    closingSeenAtMs = if (closing) minOf(now, view.fetchedAtMs) else b.closingSeenAtMs,
+                    // Dated by when the page was read, so a cached page can't pass for a close, nor replace a fresher one.
+                    closingFair = if (closing && ClosingLine.supersedes(b, minOf(now, view.fetchedAtMs))) fair else b.closingFair,
+                    closingSeenAtMs = if (closing && ClosingLine.supersedes(b, minOf(now, view.fetchedAtMs))) minOf(now, view.fetchedAtMs) else b.closingSeenAtMs,
                     books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: b.nowAmerican,
                 )
             }

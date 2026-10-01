@@ -12,7 +12,12 @@ import kotlin.math.abs
  *
  * The capture: an exact alarm wakes Vigilant [LEAD_MS] before each open bet's start ([nextAt]) and re-reads every bet starting within [DUE_MS]
  * ([due]): CNO's game page for a CNO bet, Vigilant's own fair odds for the rest. A read that fails is tried again [RETRY_MS] later, until
- * [LAST_TRY_MS] before the start ([TrackedBet.closeTriedAtMs]).
+ * [LAST_TRY_MS] before the start ([TrackedBet.closeTriedAtMs]). A bet read that early gets one more look [FINAL_LEAD_MS] before the start
+ * ([needsFinalRead], Tj 2026-10-01: "real closing lines"), so the close is the line about two minutes from the start, not six; if that look
+ * fails, the earlier one stands.
+ *
+ * A bet with no read near its start has NO close here: never "closed at the line it was bet at" (that would be its own EV at bet, so every +EV bet
+ * would beat the close by construction). The back-fill ([CloseBackfill]) finds the real one afterwards.
  */
 object ClosingLine {
     /** A read this close to the start is the closing line. */
@@ -30,6 +35,15 @@ object ClosingLine {
     /** …but not in the last minute: the answer would come after the start. */
     const val LAST_TRY_MS = 60_000L
 
+    /** A bet whose read is older than this before the start gets a final read ([needsFinalRead])… */
+    const val FINAL_FRESH_MS = 3 * 60_000L
+
+    /** …when the start is this near (the alarm wakes [FINAL_LEAD_MS] before it, allowing for the worker's start-up)… */
+    const val FINAL_DUE_MS = 150_000L
+
+    /** …roughly two minutes before the start, still [LAST_TRY_MS] clear of it. */
+    const val FINAL_LEAD_MS = 110_000L
+
     /** Tj's outliers: a bet more than 5% from its close either way. */
     const val OUTLIER_CLV = 0.05
 
@@ -38,17 +52,16 @@ object ClosingLine {
     /**
      * [b]'s fair probability at the close, once its game has started ([now]) and only when it's a true close; else null. In order: a read
      * made in the last minutes before the start (the bet's own fair odds, [captured]); a close found afterwards in a source that keeps
-     * history ([TrackedBet.closeFair]: ESPN, Novig's trades; [CloseBackfill]); the line it was bet at, when that was in the last minutes.
+     * history ([TrackedBet.closeFair]: ParlayAPI's Pinnacle closes, ESPN, Novig's trades; [CloseBackfill]). Nothing else: a bet's own line at
+     * the time it was bet is not a closing line, however close to the start it was placed.
      */
     fun closeFair(b: TrackedBet, now: Long): Double? = closeOf(b, now)?.first
 
-    /** [closeFair] and where it came from: [SOURCE_CAPTURED], [SOURCE_AT_BET], or the history source's [TrackedBet.closeVia]. */
+    /** [closeFair] and where it came from: [SOURCE_CAPTURED] or the history source's [TrackedBet.closeVia]. */
     fun closeOf(b: TrackedBet, now: Long): Pair<Double, String>? {
         if (now < b.startsTs || b.createdAtMs >= b.startsTs) return null
         captured(b)?.let { return it to SOURCE_CAPTURED }
         if (b.closeFair != null) return b.closeFair to (b.closeVia ?: "history")
-        // Bet in the last minutes before the start with nothing read since: the line it was bet at is the close.
-        if (b.fairAtBet != null && b.startsTs - b.createdAtMs <= TRUE_CLOSE_MS) return b.fairAtBet to SOURCE_AT_BET
         return null
     }
 
@@ -61,7 +74,6 @@ object ClosingLine {
     /** A close's source in a word or two, for the card and Diagnostics. */
     fun sourceLabel(source: String): String = when {
         source == SOURCE_CAPTURED -> "read before the start"
-        source == SOURCE_AT_BET -> "bet in the last minutes"
         source.startsWith("ESPN") -> "ESPN"
         source.startsWith("ParlayAPI") -> "Pinnacle via ParlayAPI"
         source.startsWith("Novig") -> "Novig's trades"
@@ -70,9 +82,6 @@ object ClosingLine {
 
     /** [closeOf]'s source for a close read before the start by Vigilant itself. */
     const val SOURCE_CAPTURED = "captured"
-
-    /** …for a bet placed in the last minutes, closing at its own line. */
-    const val SOURCE_AT_BET = "at bet"
 
     /**
      * [b]'s closing line value: how much better its price was than the closing line, as the EV that price had at the closing fair odds
@@ -88,18 +97,39 @@ object ClosingLine {
         return !inWindow
     }
 
-    /** The bets a capture at [now] reads: starting within [DUE_MS], not tried in the last [RETRY_MS], not in their last minute. */
+    /**
+     * Open, bet before its game, still to start, and its close read is more than [FINAL_FRESH_MS] from the start: one more read nearer the start
+     * replaces it ([ClosingLine]). A bet with no read yet isn't this one (it [needsClose]).
+     */
+    fun needsFinalRead(b: TrackedBet, now: Long): Boolean {
+        if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs) return false
+        val seen = b.closingSeenAtMs ?: return false
+        return b.closingFair != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && b.startsTs - seen > FINAL_FRESH_MS
+    }
+
+    /** The bets a capture at [now] reads: starting within [DUE_MS] (or [FINAL_DUE_MS] for a final read), not tried in the last [RETRY_MS], not in their last minute. */
     fun due(bets: List<TrackedBet>, now: Long): List<TrackedBet> = bets.filter { b ->
-        needsClose(b, now) && b.startsTs - now <= DUE_MS && b.startsTs - now > LAST_TRY_MS &&
-            (b.closeTriedAtMs == null || now - b.closeTriedAtMs >= RETRY_MS - 5_000L)
+        val left = b.startsTs - now
+        left > LAST_TRY_MS && (b.closeTriedAtMs == null || now - b.closeTriedAtMs >= RETRY_MS - 5_000L) &&
+            ((needsClose(b, now) && left <= DUE_MS) || (needsFinalRead(b, now) && left <= FINAL_DUE_MS))
     }
 
     /** When the next capture should run for [bets] (never before [now]); null when no open bet needs one. */
     fun nextAt(bets: List<TrackedBet>, now: Long): Long? = bets.mapNotNull { b ->
-        if (!needsClose(b, now)) return@mapNotNull null
-        val at = maxOf(b.startsTs - LEAD_MS, (b.closeTriedAtMs ?: Long.MIN_VALUE / 2) + RETRY_MS, now)
+        val lead = when {
+            needsClose(b, now) -> LEAD_MS
+            needsFinalRead(b, now) -> FINAL_LEAD_MS
+            else -> return@mapNotNull null
+        }
+        val at = maxOf(b.startsTs - lead, (b.closeTriedAtMs ?: Long.MIN_VALUE / 2) + RETRY_MS, now)
         at.takeIf { b.startsTs - it > LAST_TRY_MS }
     }.minOrNull()
+
+    /**
+     * Whether a read made before the start, whose oldest price is from [seenAtMs], may replace [b]'s close: only when it's no older than the one
+     * held. The close is the freshest line, never an earlier one that arrived later (a cached page read after a fresher one).
+     */
+    fun supersedes(b: TrackedBet, seenAtMs: Long): Boolean = b.closingFair == null || b.closingSeenAtMs == null || seenAtMs >= b.closingSeenAtMs
 }
 
 /** The CLV section's time periods (Tj, 2026-09-29: "all time, today, yesterday, last 3 days, last week"), by when each bet was placed. */

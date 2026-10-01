@@ -471,7 +471,6 @@ class CloseBackfill(
 
         const val MAX_PER_RUN = 120
 
-        /** A started bet with no close yet (no capture, not bet in the last minutes) that a source may still have. */
         /** Close sources a bet finalised before [TrackedBet.closeAskedOf] was kept had been asked of. */
         val ASKED_BEFORE = listOf(EspnCloses.ID, NovigTradeCloses.ID)
 
