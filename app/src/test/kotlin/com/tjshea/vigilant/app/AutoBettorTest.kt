@@ -147,7 +147,7 @@ class AutoBettorTest {
     }
 
     @Test
-    fun `the same bet is never placed twice: once it is in the Tracker the next cycle leaves it alone`() = runBlocking {
+    fun `the same bet is never placed twice - once it is in the Tracker the next cycle leaves it alone`() = runBlocking {
         val novig = FakeNovig()
         val b = bettor(novig)
         assertEquals(1, b.run(settings(), state()).placed.size)
