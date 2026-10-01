@@ -50,4 +50,22 @@ class ScanMirrorTest {
         follower.cancel()
         assertEquals(listOf(0L to "idle", 5_000L to "scan done"), seen)
     }
+
+    /** Tj, 2026-10-01: "I used the check odds now function and the list of open bets got very laggy": the Tracker saves every 5 bets. */
+    @Test
+    fun `a Check odds now's saves reach the screen a few times a second, the last one always`() = runTest {
+        val saves = kotlinx.coroutines.flow.MutableSharedFlow<Int>(replay = 1)
+        val seen = ArrayList<Int>()
+        val follower = launch { followThrottled(saves, TRACKER_MIRROR_MS) { seen += it } }
+        // 168 open bets saved 5 at a time while pages are read three at a time: a save every ~150 ms for ~5 s, then the merge.
+        repeat(34) { i ->
+            delay(150)
+            saves.emit(i + 1)
+        }
+        delay(2 * TRACKER_MIRROR_MS)
+        follower.cancel()
+        assertEquals(34, seen.last())
+        assertTrue("${seen.size} of 34 saves shown", seen.size <= (34 * 150L) / TRACKER_MIRROR_MS + 2)
+        assertEquals(seen.sorted(), seen)
+    }
 }
