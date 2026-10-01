@@ -375,6 +375,7 @@ class BiggerScansTest {
         val edge = mapOf("m0" to NovigBook("m0", 1, mapOf("a0" to listOf(BidLevel(440, 1000)), "h0" to listOf(BidLevel(550, 1000))), now))
         val memo = FairMemo()
         val base = Pricing.price(plan, edge, settings.copy(bankroll = 1000.0, kellyMultiplier = 0.25), now, memo).opportunities.first { it.key == "m0/a0" }
+        println("DEBUG base=${base.suggestedStake} q=${base.quote} depth=${base.depth} ladder=${base.ladder}")
         assertTrue("there is a stake to change", (base.suggestedStake ?: 0.0) > 0.0)
         val richer = Pricing.price(plan, edge, settings.copy(bankroll = 2000.0, kellyMultiplier = 0.25), now, memo).opportunities.first { it.key == "m0/a0" }
         assertTrue("a bigger bankroll stakes more, not the old stake", richer.suggestedStake!! > base.suggestedStake!!)
