@@ -389,4 +389,24 @@ class DiagnosticsTest {
         // Only ordinary exits lately: OK.
         assertEquals(HealthChecks.Level.OK, HealthChecks.of(SampleScan.state(), extras.copy(exits = listOf(quit, old)), now).first { it.area == "App stability" }.level)
     }
+
+    /** Tj's v0.38.0 report, 2026-10-01: an OutOfMemoryError at the heap limit mid-scan. The next report says what filled it. */
+    @Test
+    fun `the report has a memory block and warns when the heap is nearly full`() {
+        val calm = extras.copy(memory = Diagnostics.Memory(140, 512, listOf("Scan result: 6321 priced sides in 120 games", "Kept between scans: 40 fair-odds boards (900 games, 41233 book lines) · 5100 Novig books + 3000 in the books cache")))
+        val text = report(x = calm)
+        assertTrue(text, text.contains("== Memory (the app's heap is fixed"))
+        assertTrue(text, text.contains("Heap 140 of 512 MB (27%)"))
+        assertTrue(text, text.contains("Scan result: 6321 priced sides in 120 games"))
+        assertTrue(text, text.contains("41233 book lines"))
+        assertEquals(HealthChecks.Level.OK, HealthChecks.of(SampleScan.state(), calm, now).single { it.area == "Memory" }.level)
+        // Over the guard's line (75%): a WARN that says where to cut a scan down.
+        val tight = extras.copy(memory = Diagnostics.Memory(400, 512, listOf("Scan result: 25000 priced sides in 300 games")))
+        val warn = HealthChecks.of(SampleScan.state(), tight, now).single { it.area == "Memory" }
+        assertEquals(HealthChecks.Level.WARN, warn.level)
+        assertTrue(warn.text(), warn.text().contains("heap is nearly full: heap 400 of 512 MB (78%)"))
+        assertTrue(warn.text(), warn.text().contains("Novig prices per scan"))
+        // No numbers read (a test, a very old caller): no line at all.
+        assertTrue(HealthChecks.of(SampleScan.state(), extras, now).none { it.area == "Memory" })
+    }
 }

@@ -12,11 +12,14 @@ class AppExitsTest {
     fun `a crash is kept with its time, thread and stack, and read back as one line`() {
         val error = IllegalStateException("boom", RuntimeException("underneath"))
         val text = AppExits.crashText("main", error, 1_790_000_000_000L)
-        assertTrue(text, text.startsWith("at=1790000000000 thread=main\njava.lang.IllegalStateException: boom"))
+        // The heap at the crash is in the first line (Tj's 2026-10-01 report: an OutOfMemoryError names its limit, not how full the heap was).
+        assertTrue(text, Regex("^at=1790000000000 thread=main heap=\\d+/\\d+MB\njava.lang.IllegalStateException: boom").containsMatchIn(text))
         assertTrue(text, text.contains("Caused by: java.lang.RuntimeException: underneath"))
         val (at, line) = AppExits.parseSaved(text)!!
         assertEquals(1_790_000_000_000L, at)
-        assertTrue(line, line.startsWith("on main: java.lang.IllegalStateException: boom | at com.tjshea.vigilant.app.AppExitsTest"))
+        assertTrue(line, Regex("^on main \\(heap \\d+ of \\d+ MB\\): java.lang.IllegalStateException: boom \\| at com.tjshea.vigilant.app.AppExitsTest").containsMatchIn(line))
+        // An older saved crash (no heap in it) still reads.
+        assertEquals("on main: x", AppExits.parseSaved("at=5 thread=main\nx")!!.second)
         assertNull(AppExits.parseSaved("not a saved crash"))
     }
 

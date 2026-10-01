@@ -65,4 +65,17 @@ class MemoryGuardTest {
         assertTrue(MemoryGuard.critical(nowMs = 10_010_001L))
         assertEquals(2, full.collections)
     }
+
+    /** The fallback result a scan keeps in case it fails is held softly: a whole priced scan beside the new one is what filled the heap. */
+    @Test
+    fun `the scan runner holds the last result softly while a new scan builds its own`() {
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanRunner.kt").readText()
+        assertTrue(src.contains("val before = java.lang.ref.SoftReference(_state.value.result?.takeIf { !it.partial })"))
+        assertTrue(src.contains("result = done?.result ?: before.get(),"))
+        // And a big scan's partials: every one prices the whole plan, so the scanner spaces them out (StreamingScanTest has the behaviour).
+        val scanner = java.io.File("src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt").readText()
+        assertTrue(scanner.contains("if (shown.markets.size >= bigPlanMarkets) {"))
+        assertEquals(400, com.tjshea.vigilant.data.scanner.Scanner.BIG_PLAN_MARKETS)
+        assertEquals(2_000L, com.tjshea.vigilant.data.scanner.Scanner.PUBLISH_MIN_MS)
+    }
 }
