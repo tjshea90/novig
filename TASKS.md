@@ -3063,3 +3063,18 @@ the match event: a sets spread must never price Novig's games spread.
 - [x] Z5 Ship, send Tj the link.
   DONE Z5: v0.37.0 (code 67) shipped: ship.sh gate green (1,291 tests: 1,268 passed, 23 live-only skipped), CI green on c94e2078, release.yml green, Release confirmed with vigilant-v0.37.0.apk. ParlayAPI credits spent building it: 18 (10 probe, 6 live check, 2 closes file).
 
+
+## Tj's request 2026-10-01 (raw text in INBOX.md): "For this app, for the cno scanner background auto-scan feature, add to the settings options for it to scan every 3 minutes, 1 minute, 30 seconds, and 15 seconds. Make sure the app is properly tracking clv based on real closing lines and the actual odds I placed the bet at."
+
+Findings before any code (2026-10-01): the interval is `ScanSettings.autoScanMinutes` (whole minutes, 5-40) behind `AutoScanClock` (30 s minimum gap) and an
+exact alarm armed when a cycle STARTS; an alarm that fires while a cycle is still running is dropped and nothing re-arms it, so a cycle longer than the
+interval (certain at 15 s) would end the schedule. "CNO + Vigilant" runs Vigilant's whole scan (~100 s, API credits) inside each cycle. CLV (`ClosingLine`):
+cost = price paid + fee ✓, ✓-marked bets log Novig's live price shown (correctable in the Tracker), API fills exact ✓, hand-placed Novig-app bets can't be
+read by the API (NOVIG_API.md §14.2); but a bet placed in the last 15 min with no read counts as closing at its own line (CLV = its EV at bet: not a real
+close), and the one pre-start read is taken ~6 min before the start.
+
+- [ ] AA1 Settings › Background auto-scan › Every: add 15 sec, 30 sec, 1 min, 3 min beside 5/10/20/30/40 min. The interval is kept in seconds (a saved file's minutes move over once, nothing lost) and every place that says it (notification, Settings hint, Diagnostics, health checks) reads it right. Tests.
+- [ ] AA2 Make the fast cycles safe: the schedule re-arms when a cycle outlasts its interval; the minimum gap drops under 15 s; Vigilant's own scan (API credits) never starts more than every 4 minutes inside a fast cycle; the Tracker's closing reads of bets about to start use the cycle's pace. Tests.
+- [ ] AA3 CLV audit, end to end, with worked numbers: the price used is the price paid (fills, ✓ at the live price shown, a correction in the Tracker, the fee), and a close is only ever a real pregame line: a bet with no read is no longer "closed at its own price"; the closing read nearest the start wins (a second read ~100 s before the start). Tests, RESEARCH.md §50.
+- [ ] AA4 Full app tests for what changed (light protocol + screenshot of the Settings row).
+- [ ] AA5 Ship, send Tj the link.

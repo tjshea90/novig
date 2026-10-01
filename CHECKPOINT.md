@@ -1,13 +1,13 @@
-# CHECKPOINT 2235 — read me first, then TASKS.md
+# CHECKPOINT 2236 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T02:06:52Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `809edd48` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T03:52:24Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `38b53cf3` (this checkpoint is the commit after it)
 
 ## Just done
-v0.37.0 (code 67) released and recorded: Z1-Z5 done (tennis through ParlayAPI)
+AA: wrote Tj's auto-scan interval + CLV request into TASKS.md as AA1-AA5 with findings
 
 ## Do this next
-Wait for Tj. Older items need his phone (L1161, L1164, P6, S2). Possible follow-ups noted in RESEARCH §49: tennis games won, 1st-set winners, movers for tennis
+AA1: autoScanSeconds in ScanSettings (schema 12 migrate), choices, UI chips, labels
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Wait for Tj. Older items need his phone (L1161, L1164, P6, S2). Possible follow-
 
 ## Last ten checkpoints
 ```
+  bfd74452 ckpt 2235: v0.37.0 (code 67) released and recorded: Z1-Z5 done (tennis through ParlayAP
   c94e2078 ckpt 2234: pre-release: v0.37.0: tennis through ParlayAPI (bet365, Caesars, DraftKings,
   11118acf ckpt 2233: pre-ship: v0.37.0: tennis through ParlayAPI (bet365, Caesars, DraftKings, Be
   da21ef82 ckpt 2232: light test (Z4): who-else check clean, screenshot 5h_settings_fair_parlay_on
@@ -26,5 +27,7 @@ Wait for Tj. Older items need his phone (L1161, L1164, P6, S2). Possible follow-
   18cce014 ckpt 2228: Z1: real ParlayAPI tennis read (10 credits): Pinnacle match event = set line
   b97184ba ckpt 2227: Logged Tj's 'Build tennis through parlayapi' as TASKS.md Z1-Z5 (W5 accepted)
   e9dd8b66 ckpt 2226: v0.36.2 (code 66) released and recorded: Y1-Y5 done (Kelly in bet slips, Kel
-  2c501b03 ckpt 2225: pre-release: v0.36.2: Kelly amount in every bet slip (in-app Bet sheet and N
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
