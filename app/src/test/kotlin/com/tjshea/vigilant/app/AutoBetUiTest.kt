@@ -191,6 +191,46 @@ class AutoBetUiTest {
         assertEquals(7.25, settings.autoBetCustomStake, 0.0)
     }
 
+    /** Tj, 2026-10-01: "add an option for longest odds of any auto bet. For example, I don't want it to bet anything that is more of a longshot than +130". */
+    @Test
+    fun `the longest odds is a preset or typed, has no limit until picked, and the confirm says it`() {
+        show()
+        assertEquals("no limit by default: what ran before doesn't change", 0, settings.autoBetMaxOdds)
+        assertFalse(AutoBetText.criteria(settings).contains("odds no longer than"))
+        compose.onNodeWithText("Longest odds to bet").assertExists()
+        for ((label, odds) in listOf("+100" to 100, "+110" to 110, "+120" to 120, "+130" to 130, "+150" to 150, "+200" to 200, "+300" to 300)) {
+            compose.onNodeWithText(label).performClick()
+            assertEquals(label, odds, settings.autoBetMaxOdds)
+        }
+        compose.onNodeWithText("+130").performClick()
+        assertTrue(AutoBetText.criteria(settings).contains(", odds no longer than +130, staking"))
+        compose.onNodeWithTag("autoBetSwitch").performClick()
+        compose.onNodeWithText("odds no longer than +130", substring = true).assertExists()
+        compose.onNodeWithText("Cancel").performClick()
+        // Typed.
+        compose.onNodeWithTag("autoBetMaxOddsField").performTextClearance()
+        compose.onNodeWithTag("autoBetMaxOddsField").performTextInput("175")
+        assertEquals(175, settings.autoBetMaxOdds)
+        // Under +100 isn't saved (the last good one stands), and the field says why.
+        compose.onNodeWithTag("autoBetMaxOddsField").performTextClearance()
+        compose.onNodeWithTag("autoBetMaxOddsField").performTextInput("50")
+        assertEquals(175, settings.autoBetMaxOdds)
+        compose.onNodeWithText("(even money) or more", substring = true).assertExists()
+        // No limit puts it back.
+        compose.onNodeWithText("No limit").performClick()
+        assertEquals(0, settings.autoBetMaxOdds)
+        // The card says what Kelly does with longshots and what the limit adds.
+        compose.onNodeWithTag("autoBetMaxOddsHint").assertExists()
+    }
+
+    @Test
+    fun `Kelly's note says a longer price stakes less but the odds aren't capped`() {
+        show({ it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY) })
+        val note = AutoBetText.kellyNote(settings)!!
+        assertTrue(note, note.contains("a longer price stakes less"))
+        assertTrue(note, note.contains("nothing caps the odds itself"))
+    }
+
     @Test
     fun `the most per bet is typed`() {
         show()
