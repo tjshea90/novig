@@ -21,6 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -412,6 +413,77 @@ class ApiBettingControllerTest {
         api.transfer("defund", 5.0, typed = null)
         waitFor("the second transfer") { state.value.betting.message?.startsWith("Took back \$5.00") == true }
         assertTrue(account.keyIds.isNotEmpty() && account.keyIds.all { it == "mgmt-key-12345678" })
+    }
+
+    // ---- "Add money" inside the Bet sheet (Tj, 2026-10-01) -----------------------------------------------------------
+
+    private fun openSheet(state: MutableStateFlow<UiState>, balance: Double = 0.01) {
+        state.update { it.copy(betting = it.betting.copy(balance = balance), betSheet = BetSheetUi("Team A", "Moneyline · B @ A", stake = 0.01, resolving = false, balance = balance)) }
+    }
+
+    @Test
+    fun `Add money from the Bet sheet sends the amount with the saved key, says what Novig answered, and leaves the sheet open`() {
+        val account = FakeAccount()
+        val (api, state) = accountController(account)
+        kotlinx.coroutines.runBlocking { app.container.managementKeys.save(ManagementKey("mgmt-key-12345678", freshPem())) }
+        openSheet(state)
+        api.fundFromSheet(5.0)
+        waitFor("the sheet's transfer") { state.value.betSheet?.fundMessage?.startsWith("Added \$5.00") == true }
+        assertTrue(account.bodies.any { it.contains("\"amount\":\"5.00000\"") })
+        assertTrue(account.keyIds.all { it == "mgmt-key-12345678" })
+        val sheet = state.value.betSheet!!
+        assertTrue("not still adding", !sheet.funding)
+        assertNull(sheet.fundError)
+        assertEquals("the wallet shows what Novig now holds", 37.34, state.value.betting.balance!!, 1e-9)
+        assertEquals("the bet is still open", "Team A", sheet.title)
+    }
+
+    @Test
+    fun `Add money from the sheet that Novig refuses says why in the sheet, and a second tap while one is under way does nothing`() {
+        val account = FakeAccount(status = 401)
+        val (api, state) = accountController(account)
+        kotlinx.coroutines.runBlocking { app.container.managementKeys.save(ManagementKey("mgmt-key-12345678", freshPem())) }
+        openSheet(state)
+        api.fundFromSheet(10.0)
+        api.fundFromSheet(10.0)
+        waitFor("the refusal") { state.value.betSheet?.fundError != null }
+        assertNull(state.value.betSheet!!.fundMessage)
+        assertTrue(state.value.betSheet!!.fundError!!.contains("doesn't know that key ID"))
+        assertTrue(!state.value.betSheet!!.funding)
+        assertEquals("one request, not two", 1, account.keyIds.size)
+    }
+
+    @Test
+    fun `Add money from a sheet that is placing, or with no sheet, or for nothing, sends nothing`() {
+        val account = FakeAccount()
+        val (api, state) = accountController(account)
+        kotlinx.coroutines.runBlocking { app.container.managementKeys.save(ManagementKey("mgmt-key-12345678", freshPem())) }
+        api.fundFromSheet(5.0) // no sheet
+        openSheet(state)
+        state.update { it.copy(betSheet = it.betSheet!!.copy(placing = true)) }
+        api.fundFromSheet(5.0) // placing
+        state.update { it.copy(betSheet = it.betSheet!!.copy(placing = false)) }
+        api.fundFromSheet(0.0) // nothing
+        Thread.sleep(200)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(account.keyIds.isEmpty())
+        assertTrue(!state.value.betSheet!!.funding)
+    }
+
+    @Test
+    fun `without a saved key the sheet's Add money goes to Settings with the amount typed in`() {
+        val (api, state) = accountController(FakeAccount())
+        openSheet(state)
+        api.requestTopUp(7.0)
+        val top = state.value.betting.topUp!!
+        assertEquals(7.0, top.amount, 0.0)
+        assertNull("the sheet closes, the bet is kept for Back to the bet", state.value.betSheet)
+        assertEquals("Team A", top.bet.title)
+        // Without an amount, as before: what the bet is short by, to whole dollars.
+        openSheet(state, balance = 0.01)
+        state.update { it.copy(betSheet = it.betSheet!!.copy(stake = 2.3)) }
+        api.requestTopUp()
+        assertEquals(3.0, state.value.betting.topUp!!.amount, 0.0)
     }
 
     @Test
