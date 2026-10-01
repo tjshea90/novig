@@ -347,6 +347,10 @@ robolectric.org/configuring/.
   Check odds now holds a focus (`FocusGate`, in memory, 15 minutes at most): the background cycle (so auto-bet), CNO's refresh, scans, the widget's rescans and
   the movers wait until it ends, and it looks for every closing line (`CloseBackfill.run(force = true)`).
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
+  **Keeping it alive with the screen off (Tj, 2026-10-02; v0.41.0, RESEARCH.md §59):** `ScanSettings.autoScanKeepAwake` (on by default) makes `AutoScanService` hold a
+  partial wake lock (CPU, never the screen) and run the cycles from its own loop while auto-scan runs faster than every 9 minutes (`KeepAwake.active`); the alarm is then only a safety net
+  (`KeepAwake.watchdogAtMs`, never announced as the next scan). Alarms alone are throttled in Doze, so a fast schedule can't be kept that way. Never use a screen or full wake lock for it.
+  Every cycle is written to the `CycleLog` (Diagnostics' Cycle record) with the screen and Doze state, so "does it keep its schedule overnight" is answered from the report, not guessed.
 
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
   `com.tjshea.vigilant.betmgm` ("Vigilant MGM"), built by module `mgm` from `app`'s OWN sources and resources
