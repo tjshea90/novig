@@ -5,6 +5,7 @@ import com.tjshea.vigilant.app.ui.TrackerText
 import com.tjshea.vigilant.data.keys.Runway
 import com.tjshea.vigilant.data.keys.RunwayLevel
 import com.tjshea.vigilant.data.scanner.AutoScanMode
+import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker

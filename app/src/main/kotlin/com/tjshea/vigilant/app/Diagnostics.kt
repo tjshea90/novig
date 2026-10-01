@@ -85,6 +85,17 @@ object Diagnostics {
         val network: String? = null,
     )
 
+    /** Android's App Standby bucket number as its name (UsageStatsManager.STANDBY_BUCKET_*). */
+    fun bucketName(bucket: Int): String = when {
+        bucket <= 5 -> "exempted"
+        bucket <= 10 -> "active"
+        bucket <= 20 -> "working set"
+        bucket <= 30 -> "frequent"
+        bucket <= 40 -> "rare"
+        bucket <= 45 -> "restricted"
+        else -> "never"
+    }
+
     /** A message shown on screen that says something failed (what goes in Recent problems), not a confirmation. */
     fun isProblem(text: String): Boolean = PROBLEM_WORDS.containsMatchIn(text)
 

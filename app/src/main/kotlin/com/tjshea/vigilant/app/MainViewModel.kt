@@ -1427,7 +1427,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun buildDiagnostics() {
         viewModelScope.launch {
             val problems = withContext(Dispatchers.IO) { runCatching { c.problems.recent() }.getOrDefault(emptyList()) }
-            buildDiagnostics(problems)
+            val cycles = withContext(Dispatchers.IO) { runCatching { c.cycleLog.summary() }.getOrDefault(com.tjshea.vigilant.data.diag.CycleBook()) }
+            buildDiagnostics(problems, cycles)
         }
     }
 
@@ -1450,12 +1451,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             batteryUnrestricted = runCatching { app.getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(app.packageName) }.getOrNull(),
             overlay = runCatching { android.provider.Settings.canDrawOverlays(app) }.getOrNull(),
             dataSaver = runCatching { cm?.restrictBackgroundStatus?.let { it == android.net.ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED } }.getOrNull(),
+            batterySaver = runCatching { app.getSystemService(android.os.PowerManager::class.java).isPowerSaveMode }.getOrNull(),
+            dozing = runCatching { app.getSystemService(android.os.PowerManager::class.java).isDeviceIdleMode }.getOrNull(),
+            standbyBucket = runCatching { Diagnostics.bucketName(app.getSystemService(android.app.usage.UsageStatsManager::class.java).appStandbyBucket) }.getOrNull(),
             online = caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?: (cm != null).takeIf { !it },
             network = network,
         )
     }
 
-    private fun buildDiagnostics(problems: List<com.tjshea.vigilant.data.diag.Problem>) {
+    private fun buildDiagnostics(problems: List<com.tjshea.vigilant.data.diag.Problem>, cycles: com.tjshea.vigilant.data.diag.CycleBook) {
         val app = getApplication<Application>()
         val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
         val extras = Diagnostics.Extras(
@@ -1466,6 +1470,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             autoBet = c.autoBet.status.value,
             memory = memoryNow(),
             autoScanServiceRunning = AutoScanService.running,
+            keepAwakeHeld = AutoScanService.keepAwakeHeld,
+            cycles = cycles,
             lastScan = c.lastScanCost,
             lastCheck = c.lastCheckCost,
             closingAlarmAtMs = ClosingAlarm.nextAtMs,
