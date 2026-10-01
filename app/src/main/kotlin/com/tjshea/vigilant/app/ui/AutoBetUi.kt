@@ -50,6 +50,9 @@ object AutoBetText {
 
     fun booksLabel(n: Int): String = if (n >= 5) "5+" else "$n"
 
+    /** A longest-odds choice: "+130", or "No limit". */
+    fun oddsLabel(maxOdds: Int): String = if (maxOdds <= 0) "No limit" else "+$maxOdds"
+
     /** What each stake choice means, for the confirm and the hint. */
     fun stakeText(s: ScanSettings): String = when (s.autoBetStake) {
         AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake of your ${Format.money(s.bankroll)} bankroll"
@@ -61,7 +64,8 @@ object AutoBetText {
     fun criteria(s: ScanSettings): String {
         val r = AutoBet.rules(s)
         return "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own, ${r.twoSided} pricing both sides, an edge of " +
-            "${evLabel(r.minEv)} or more at Novig's price now, staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
+            "${evLabel(r.minEv)} or more at Novig's price now" + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
+            ", staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
     }
 
     /** The confirm's whole text. */
@@ -94,7 +98,8 @@ object AutoBetText {
         val f = s.autoBetStake.kelly ?: return null
         return "Kelly sizing uses your bankroll (${Format.money(s.bankroll)}, set in Bankroll & Kelly above): bankroll × ${Format.kellyLabel(f).removeSuffix(" Kelly")} × " +
             "(fair chance − price) ÷ (1 − price), so it changes with each bet's odds and edge. It's held to your most per bet, to what Novig has for sale at +EV " +
-            "and to what's in the wallet; under ${Format.money(AutoBet.MIN_STAKE)} is skipped, never rounded up."
+            "and to what's in the wallet; under ${Format.money(AutoBet.MIN_STAKE)} is skipped, never rounded up. At the same edge a longer price stakes less " +
+            "(a +300 bet gets a third of a +100 bet's stake), but nothing caps the odds itself: that is the longest-odds limit above."
     }
 }
 
@@ -188,6 +193,32 @@ fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) ->
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth().testTag("autoBetMinEvField"),
+    )
+
+    // The longest odds, a preset or typed (Tj, 2026-10-01: "I don't want it to bet anything that is more of a longshot than +130")
+    Text("Longest odds to bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_MAX_ODDS_CHOICES, s.autoBetMaxOdds, AutoBetText::oddsLabel) { v -> onUpdate { it.copy(autoBetMaxOdds = v) } }
+    var oddsText by remember(s.autoBetMaxOdds) { mutableStateOf(if (s.autoBetMaxOdds > 0) "${s.autoBetMaxOdds}" else "") }
+    val oddsTyped = oddsText.toIntOrNull()
+    val oddsBad = oddsText.isNotEmpty() && (oddsTyped == null || oddsTyped < AutoBet.MIN_MAX_ODDS)
+    OutlinedTextField(
+        value = oddsText,
+        onValueChange = { t ->
+            oddsText = t.filter { it.isDigit() }.take(5)
+            oddsText.toIntOrNull()?.takeIf { it >= AutoBet.MIN_MAX_ODDS }?.let { v -> onUpdate { it.copy(autoBetMaxOdds = v) } }
+        },
+        label = { Text("Or type your own longest odds (+)") },
+        isError = oddsBad,
+        supportingText = { if (oddsBad) Text("+${AutoBet.MIN_MAX_ODDS} (even money) or more; pick No limit for none") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth().testTag("autoBetMaxOddsField"),
+    )
+    Text(
+        "Nothing longer than this is bet, whatever the amount; favorites (−110, −150 …) always pass. It is checked on the bet's price when it's found and " +
+            "again on Novig's order book just before the order, so a price that drifts out past it is skipped. Kelly stakes already shrink as odds grow, " +
+            "but a $1 or typed amount doesn't: this is what keeps those off longshots. The CrazyNinjaOdds page's own Max odds filter (Settings › CNO) also still applies.",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetMaxOddsHint"),
     )
 
     // 5) books offering both sides
