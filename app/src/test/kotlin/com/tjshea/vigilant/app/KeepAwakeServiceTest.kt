@@ -66,7 +66,9 @@ class KeepAwakeServiceTest {
     private fun alarms() = shadowOf(app.getSystemService(AlarmManager::class.java)).scheduledAlarms
 
     private fun start(intent: Intent = Intent(app, AutoScanService::class.java)) =
-        Robolectric.buildService(AutoScanService::class.java, intent).create().startCommand(0, 1)
+        Robolectric.buildService(AutoScanService::class.java, intent).create().startCommand(0, 1).also {
+            System.err.println("DEBUG stoppedBySelf=${shadowOf(it.get()).isStoppedBySelf} running=${AutoScanService.running} fg=${shadowOf(it.get()).isLastForegroundNotificationAttached} settings=${app.container.settingsStore.flow.value?.activeAutoScan}")
+        }
 
     private val status get() = app.container.autoScan.status.value
 
