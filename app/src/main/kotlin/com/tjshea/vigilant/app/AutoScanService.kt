@@ -191,6 +191,8 @@ class AutoScanService : Service() {
         if (!KeepAwake.active(s)) return false
         maintainKeepAwake(s.autoScanSeconds)
         if (container.autoScan.running) {
+            // Not a spin: a cycle that has the lock but hasn't yet said it is running (it reads the settings first).
+            delay(RUNNING_POLL_MS)
             container.autoScan.status.first { !it.running }
             return true
         }
@@ -378,6 +380,9 @@ class AutoScanService : Service() {
 
         /** The loop's longest sleep: it wakes this often to renew the CPU lock and move the safety alarm on. */
         private const val LOOP_SLICE_MS = 30_000L
+
+        /** A cycle running when the loop looks: it waits this, then for the cycle to end. */
+        private const val RUNNING_POLL_MS = 250L
 
         /** After a failure in the loop. */
         private const val LOOP_RETRY_MS = 10_000L
