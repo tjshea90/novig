@@ -100,6 +100,12 @@ class AutoBettor(
     /** Bets refused or not found recently, by CNO row key → when they may be tried again. */
     private val cooldown = HashMap<String, Long>()
 
+    /**
+     * The most Novig refused as too small this run (`ORDER_TOO_SMALL`; its threshold isn't published), 0 = none yet: a stake at or under it is
+     * skipped, not sent again. A fresh run asks again, in case Novig changed it.
+     */
+    private var tooSmallBelow = 0.0
+
     /** The wallet-empty note went out and the wallet hasn't refilled since. */
     private var walletEmptyNoted = false
 
@@ -172,10 +178,11 @@ class AutoBettor(
             if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
             val row = item.pick.row
             val stake = when (val s = AutoBet.stake(rules, item.shown.row, settings.bankroll, balance)) {
-                is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under the ${money(AutoBet.MIN_STAKE)} minimum"; break }
+                is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under a cent"; break }
                 is AutoBet.Stake.Skip -> { skip(s.reason); continue }
                 is AutoBet.Stake.Amount -> s.dollars
             }
+            if (stake <= tooSmallBelow + 1e-9) { skip("Novig refused an order of ${money(tooSmallBelow)} as too small, and this one is no bigger"); continue }
             val target = try {
                 resolve(row)
             } catch (e: CancellationException) {
@@ -222,6 +229,7 @@ class AutoBettor(
                 is PlaceResult.NotFilled -> { cooldown[row.key] = now + AutoBet.COOLDOWN_MS; skip("nobody was selling at that price") }
                 is PlaceResult.Refused -> {
                     cooldown[row.key] = now + AutoBet.COOLDOWN_MS
+                    if (result.tooSmall) tooSmallBelow = maxOf(tooSmallBelow, stake)
                     if (result.reason.contains("daily limit")) {
                         stopped = "your daily limit of ${money(settings.apiMaxPerDay)} for API bets is reached"
                         failure = "waiting: $stopped (checked again every ${failBackoffMs / 60_000L} minutes)"

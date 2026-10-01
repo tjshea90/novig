@@ -210,6 +210,9 @@ class ApiBetPlacer(
     private fun percentText(p: Double) = String.format(Locale.US, "%.1f%%", p * 100)
 
     companion object {
+        /** Novig's 400 for an order under its minimum size (docs.novig.com/api/errors; the threshold isn't published). */
+        const val TOO_SMALL_CODE = "ORDER_TOO_SMALL"
+
         const val ORDER_WAIT_MS = 12_000L
         const val POLL_MS = 400L
 
