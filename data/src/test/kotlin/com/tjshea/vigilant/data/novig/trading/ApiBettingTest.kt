@@ -460,13 +460,12 @@ class ApiBettingTest {
 
     @Test
     fun `the longest-odds limit is the planner's, so a bet by hand is never held to it`() {
-        val now = now
         val long = BetLimits(maxStake = 20.0, maxPerDay = 50.0, minEv = 0.0, maxOdds = 110)
         assertTrue(refused(ApiBetPlanner.plan(target(), book(), 5.0, now, long, 0.0)).contains("longer than your +110 limit"))
         // The same bet under the limits a manual bet has (no odds limit) is planned as before.
         assertEquals(0, limits.maxOdds)
         assertEquals(0.46, ready(ApiBetPlanner.plan(target(), book(), 5.0, now, limits, 0.0)).bestPrice, 1e-9)
-        // A favourite (the other side of this market, -117 at 0.54... any price over even money) passes a limit of +100.
+        // A favourite (A offered at 0.60, -150) passes even a limit of +100.
         val fav = NovigBook("mkt", 1, mapOf("B" to listOf(BidLevel(400, 500)), "A" to listOf(BidLevel(450, 50))), now)
         assertEquals(0.6, ready(ApiBetPlanner.plan(target(fair = 0.65), fav, 5.0, now, long.copy(maxOdds = 100), 0.0)).bestPrice, 1e-9)
     }
