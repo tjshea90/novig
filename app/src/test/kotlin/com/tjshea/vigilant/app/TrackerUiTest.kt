@@ -204,6 +204,20 @@ class TrackerUiTest {
         compose.onNodeWithText("Checking 12/61…").assertIsNotEnabled()
     }
 
+    /** Tj, 2026-10-01: Check odds now pauses the CNO scanner and the rest so it can focus: the Tracker says so while it runs, and not otherwise. */
+    @Test
+    fun `while Check odds now runs the Tracker says what is paused for it, and not when it isn't running`() {
+        screen { TrackerScreen(SampleScan.state().copy(checkingOdds = true, checkProgress = 12 to 61), { _, _ -> }, {}) }
+        compose.onNodeWithTag("checkFocusBanner").assertExists()
+        compose.onNodeWithText("The CNO scanner, background auto-scan (auto-bet with it), scans and the widget's refresh are paused until this finishes.", substring = true).assertExists()
+    }
+
+    @Test
+    fun `with no check running there is no pause banner`() {
+        screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
+        compose.onNodeWithTag("checkFocusBanner").assertDoesNotExist()
+    }
+
     @Test
     fun `the stats say whether the edges are real, what's open, and where it works`() {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
