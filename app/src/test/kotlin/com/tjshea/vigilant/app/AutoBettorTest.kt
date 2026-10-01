@@ -66,7 +66,7 @@ class AutoBettorTest {
 
     // ---- a fake Novig: fills at the plan's price, counts orders, can lose an answer ------------------------------
 
-    private class FakeNovig(val orders: AtomicInteger = AtomicInteger(), val loseAnswer: Boolean = false) :
+    private class FakeNovig(val orders: AtomicInteger = AtomicInteger(), val loseAnswer: Boolean = false, val minDollars: Double = 0.0, val tooSmall: AtomicInteger = AtomicInteger()) :
         NovigTradingClient(NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
             override val keyId = "kid"
             override val algorithm = NovigKeyAlgorithm.P256
@@ -74,6 +74,11 @@ class AutoBettorTest {
         }), Json { ignoreUnknownKeys = true }) {
         var last: Triple<String, Double, Long>? = null
         override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+            // Novig's ORDER_TOO_SMALL (its threshold isn't published): refused before it is an order.
+            if (qty * price * 0.01 < minDollars) {
+                tooSmall.incrementAndGet()
+                throw NovigApiException(400, "ORDER_TOO_SMALL", "order below the minimum")
+            }
             orders.incrementAndGet()
             last = Triple(outcomeId, price, qty)
             if (loseAnswer) throw java.io.IOException("connection reset")
@@ -260,20 +265,25 @@ class AutoBettorTest {
     // ---- the wallet ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the stake is held to what's left in the wallet, and under a dollar nothing is placed and Tj is told once`() = runBlocking {
+    fun `the stake is held to what's left in the wallet, down to the cent, and an empty wallet stops it and Tj is told once`() = runBlocking {
         val s = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 7.25) }
         val novig = FakeNovig()
         // $2.40 left: the bet is $2.40, not $7.25.
         bettor(novig, wallet = 2.40).run(s, state(s))
         assertTrue(novig.last!!.let { (_, price, qty) -> qty * price * 0.01 } in 2.2..2.40)
-        // 60 cents left: no bet, said so.
+        // 60 cents left (Tj, 2026-10-01: no $1 minimum): the bet is 60 cents, not skipped.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val novigCents = FakeNovig()
+        assertEquals(1, bettor(novigCents, wallet = 0.60).run(s, state(s)).placed.size)
+        assertTrue(novigCents.last!!.let { (_, price, qty) -> qty * price * 0.01 } in 0.55..0.60)
+        // Under a cent left: no bet, said so.
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val novig2 = FakeNovig()
-        val b = bettor(novig2, wallet = 0.60)
+        val b = bettor(novig2, wallet = 0.004)
         val r = b.run(s, state(s))
         assertTrue(r.walletEmpty)
         assertEquals(0, novig2.orders.get())
-        assertTrue(r.stopped!!, r.stopped!!.contains("under the \$1.00 minimum"))
+        assertTrue(r.stopped!!, r.stopped!!.contains("under a cent"))
         // Told once, however many cycles find it empty.
         b.run(s, state(s))
         b.run(s, state(s))
@@ -350,6 +360,53 @@ class AutoBettorTest {
         // Without the limit the same book is bet (so the refusal is the limit's, not something else's).
         val free = FakeNovig()
         assertEquals(1, bettor(free, placer = placer(free, book = book(bid = 560))).run(settings(), state()).placed.size)
+    }
+
+    /** Tj, 2026-10-01: "I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent … Usually it will be a Kelly number and often under $1". */
+    @Test
+    fun `a Kelly stake under a dollar is placed as it is, and so is one cent`() = runBlocking {
+        // Jefferson is +117 at a 5.84% edge: full Kelly about 5% of the bankroll, so 1/4 Kelly of $20 is about 25 cents.
+        val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 20.0) }
+        val novig = FakeNovig()
+        val r = bettor(novig).run(s, state(s))
+        assertEquals(r.skipped.toString(), 1, r.placed.size)
+        val bet = r.placed.single()
+        assertTrue("about 25 cents, not a dollar: ${bet.stake}", bet.stake in 0.2..0.26)
+        // One cent: one cent's worth of contracts (two at 46 cents).
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val penny = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 0.01) }
+        val novig2 = FakeNovig()
+        val r2 = bettor(novig2).run(penny, state(penny))
+        assertEquals(1, r2.placed.size)
+        assertTrue(novig2.last!!.let { (_, _, qty) -> qty in 1L..2L })
+        assertTrue(r2.placed.single().stake <= 0.01)
+        // A dollar is still a dollar.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val novig3 = FakeNovig()
+        assertTrue(bettor(novig3).run(settings(), state()).placed.single().stake in 0.9..1.0)
+    }
+
+    @Test
+    fun `Novig refusing a small order skips that bet and learns the size, and the other bets go on`() = runBlocking {
+        // Novig refuses anything under 50 cents. A 25-cent Kelly stake is refused: no stop, no halt, no backoff, the bet skipped and the size remembered.
+        val small = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 0.25) }
+        val novig = FakeNovig(minDollars = 0.50)
+        val b = bettor(novig)
+        val r = b.run(small, state(small))
+        assertEquals(1, novig.tooSmall.get())
+        assertEquals(0, novig.orders.get())
+        assertEquals(0, r.placed.size)
+        assertNull("not a stop: the other bets go on", r.stopped)
+        assertFalse(r.halted)
+        assertNull(app.container.settingsStore.load().autoBetHalted)
+        assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("too small") })
+        // The same or a smaller stake isn't sent again (it would be refused), a bigger one goes through.
+        val sameAgain = b.run(small, state(small))
+        assertEquals("not asked again: the bet is also on its cooldown", 1, novig.tooSmall.get())
+        assertEquals(0, sameAgain.placed.size)
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val big = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 1.0) }
+        assertEquals(1, bettor(novig).run(big, state(big)).placed.size)
     }
 
     @Test

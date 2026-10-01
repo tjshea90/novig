@@ -260,6 +260,30 @@ class ApiBettingTest {
         assertTrue(g.message, g.message.contains("open the Novig app"))
     }
 
+    /** Novig lists ORDER_TOO_SMALL (docs.novig.com/api/errors) without publishing its size: an order it refuses so is about that order, not the account. */
+    @Test
+    fun `an order Novig refuses as too small is a refusal of that bet, tagged so, with no bet and no money moved`() = runBlocking {
+        novig(Scenario(postResponse = MockResponse().setResponseCode(400).setBody("""{"code":"ORDER_TOO_SMALL","message":"order below the minimum"}""")))
+        val t = tracker()
+        val r = placer(t).placeAuto(target(), 0.05, autoLimits, expectedPrice = 0.46) as PlaceResult.Refused
+        assertTrue(r.tooSmall)
+        assertTrue(r.reason, r.reason.contains("too small"))
+        assertTrue(t.all().isEmpty())
+        // The same answer to a Bet-sheet bet reads the same (and a different 400 is still a failure, not "too small").
+        val manual = placer(t).place(target(), 0.05, confirmedLimit = 0.465) as PlaceResult.Refused
+        assertTrue(manual.tooSmall)
+        novig(Scenario(postResponse = MockResponse().setResponseCode(400).setBody("""{"code":"INVALID_PRICE","message":"off the grid"}""")))
+        assertTrue(placer(t).place(target(), 5.0, confirmedLimit = 0.465) is PlaceResult.Failed)
+    }
+
+    @Test
+    fun `a stake of a few cents is planned as the contracts it buys, down to one`() {
+        // A contract pays 1 cent and costs its price in cents: at 0.46 a cent buys 2, 37 cents buys 80, and a stake under one contract is refused with words.
+        assertEquals(2L, ready(ApiBetPlanner.plan(target(), book(), 0.01, now, autoLimits.copy(minEv = 0.0), 0.0)).contracts)
+        assertEquals(80L, ready(ApiBetPlanner.plan(target(), book(), 0.37, now, autoLimits.copy(minEv = 0.0), 0.0)).contracts)
+        assertTrue(refused(ApiBetPlanner.plan(target(), book(), 0.004, now, autoLimits.copy(minEv = 0.0), 0.0)).contains("less than one contract"))
+    }
+
     @Test
     fun `a lost answer is looked up by its clientId before anything is called failed`() = runBlocking {
         // The POST goes through and the connection drops: the order shows up as FILLED in the list, carrying the clientId sent.
