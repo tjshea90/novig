@@ -149,13 +149,20 @@ object AutoScanClock {
  *  3. Each bet that qualifies ([AlertPicks]) and hasn't alerted before ([com.tjshea.vigilant.data.alerts.AlertLog])
  *     gets a notification that opens it in Novig ([EvAlerts]).
  *
- * Nothing here runs on its own: no loop, no timer. The service's alarm calls [cycle].
+ * Nothing here runs on its own: no loop, no timer. [AutoScanService] calls [cycle], from its own loop while it holds the CPU awake
+ * ([KeepAwake]) and from its alarm otherwise.
  *
  * Fast intervals (Tj, 2026-10-01: 15 s, 30 s, 1 min, 3 min): the CNO half is cheap and runs every cycle; Vigilant's own scan, which spends API
  * credits and takes ~100 s, starts at most every [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS] ([AutoScanClock.vigilantDue]), and the cycle
  * after it reads CNO again at once.
  */
-class AutoScanner(private val app: Application, private val c: AppContainer, private val clock: () -> Long = System::currentTimeMillis) {
+class AutoScanner(
+    private val app: Application,
+    private val c: AppContainer,
+    private val clock: () -> Long = System::currentTimeMillis,
+    /** Whether the screen is off and Android's Doze is on, as a cycle starts ([CycleLog]'s evidence that scanning goes on while the phone idles). */
+    private val phone: () -> Pair<Boolean, Boolean> = { screenOffAndDozing(app) },
+) {
 
     data class Status(
         val running: Boolean = false,
@@ -201,6 +208,8 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                 return false
             }
             val start = clock()
+            val afterPause = _status.value.pausedForCheck
+            val (screenOff, dozing) = runCatching { phone() }.getOrDefault(false to false)
             _status.update { it.copy(running = true, step = "Starting", lastStartMs = start, lastError = null, pausedForCheck = false) }
             val alerts = ArrayList<EvAlert>()
             val errors = ArrayList<String>()
@@ -238,7 +247,10 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }
             } finally {
                 _status.update { it.copy(running = false, step = null, lastEndMs = clock(), lastError = errors.firstOrNull()) }
-                withContext(NonCancellable) { errors.forEach { e -> runCatching { c.problems.add("Background auto-scan", e) } } }
+                withContext(NonCancellable) {
+                    errors.forEach { e -> runCatching { c.problems.add("Background auto-scan", e) } }
+                    runCatching { c.cycleLog.record(start, clock(), settings.autoScanSeconds, screenOff, dozing, afterPause) }
+                }
             }
             return true
         } finally {
@@ -358,5 +370,11 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
 
         /** Most alerts one cycle posts (the best EVs); the rest show in the app. */
         const val MAX_ALERTS = 5
+
+        /** (screen off, Doze on) now. */
+        fun screenOffAndDozing(context: android.content.Context): Pair<Boolean, Boolean> {
+            val pm = context.getSystemService(android.os.PowerManager::class.java) ?: return false to false
+            return !pm.isInteractive to pm.isDeviceIdleMode
+        }
     }
 }
