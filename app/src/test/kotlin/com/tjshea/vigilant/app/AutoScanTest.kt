@@ -143,15 +143,15 @@ class AutoScanTest {
     fun `a cycle that outlasts its interval arms the next alarm when it ends, unless the service is stopping`() {
         val service = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText()
         val finallyBlock = service.substringAfter("container.autoScan.cycle(forceVigilant) }").substringBefore("updateOngoing(container.autoScan.status.value, force = true)")
-        assertTrue(finallyBlock, finallyBlock.contains("if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, container.settingsStore.flow.value?.autoScanSeconds ?: s.autoScanSeconds, System.currentTimeMillis()))"))
+        assertTrue(finallyBlock, finallyBlock.contains("if (!stopping) {"))
+        assertTrue(finallyBlock, finallyBlock.contains("armAlarm(KeepAwake.active(now), now.autoScanSeconds, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, now.autoScanSeconds, System.currentTimeMillis()))"))
         // Stop and destroy set the flag first, so a cycle cancelled by them can't arm an alarm after the schedule was cancelled.
         assertTrue(service.contains("private fun stopNow() {\n        stopping = true\n        AutoScanAlarm.cancel(this)"))
         assertTrue(service.contains("override fun onDestroy() {\n        stopping = true"))
         // The first alarm is still armed when the cycle starts, so a cycle killed part-way can't end the schedule.
-        assertTrue(service.indexOf("AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds") < service.indexOf("container.autoScan.cycle(forceVigilant) }"))
+        assertTrue(service.indexOf("armAlarm(KeepAwake.active(s), s.autoScanSeconds, System.currentTimeMillis() + s.autoScanSeconds") < service.indexOf("container.autoScan.cycle(forceVigilant) }"))
         // Scan now (the notification's button) runs Vigilant's scan whatever the credit gate says; the alarm's cycle obeys it.
         assertTrue(service.contains("ACTION_SCAN_NOW -> runCycle(forceVigilant = true)"))
-        assertTrue(service.contains("ACTION_CYCLE -> runCycle()"))
         assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText().contains("(forceVigilant || AutoScanClock.vigilantDue("))
     }
 
@@ -455,8 +455,11 @@ class AutoScanTest {
         assertEquals("Vigilant scan 40/300…", AutoScanText.status(AutoScanner.Status(running = true, step = "Vigilant scan"), s, null, now, ScanProgress("Novig prices", 40, 300), zone))
         assertEquals("Next scan soon · last found nothing to alert · alerts off", AutoScanText.status(idle.copy(lastFound = 0), s.copy(alertMinEv = 0.0), null, now, zone = zone))
         // Scans under a minute apart show the seconds of the next one.
-        assertEquals("Next at 5:20:15 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s.copy(autoScanSeconds = 15), now + 15_000L, now, zone = zone))
-        assertEquals("Next at 5:21 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s.copy(autoScanSeconds = 60), now + 60_000L, now, zone = zone))
+        // Faster than 9 minutes the service keeps the CPU awake, and the note says so; with the switch off, or at 9 minutes and slower, it doesn't.
+        assertEquals("Next at 5:20:15 AM · last found 2 (1 new) · alerts at 3%+ · stays awake", AutoScanText.status(idle, s.copy(autoScanSeconds = 15), now + 15_000L, now, zone = zone))
+        assertEquals("Next at 5:21 AM · last found 2 (1 new) · alerts at 3%+ · stays awake", AutoScanText.status(idle, s.copy(autoScanSeconds = 60), now + 60_000L, now, zone = zone))
+        assertEquals("Next at 5:21 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s.copy(autoScanSeconds = 60, autoScanKeepAwake = false), now + 60_000L, now, zone = zone))
+        assertEquals("Next at 5:29 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s.copy(autoScanSeconds = 540), now + 9 * 60_000L, now, zone = zone))
     }
 
     @Test

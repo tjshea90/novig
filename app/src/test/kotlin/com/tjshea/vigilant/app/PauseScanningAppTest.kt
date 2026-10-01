@@ -79,7 +79,7 @@ class PauseScanningAppTest {
         assertTrue(vm.contains("state.map(::cnoReadsHeld).distinctUntilChanged().collect { cnoWatch.hold(it) }"))
         assertTrue(vm.contains("internal fun cnoReadsHeld(s: UiState): Boolean = !s.loaded || s.settings.paused || s.checkingOdds"))
         val service = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText()
-        assertTrue(service.contains("container.settingsStore.flow.filterNotNull().map { it.activeAutoScan to it.autoScanSeconds }"))
+        assertTrue(service.contains("container.settingsStore.flow.filterNotNull().map { Plan(it.activeAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }"))
         assertTrue(service.contains("app.container.currentSettings().activeAutoScan != AutoScanMode.OFF"))
         val cycle = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
         assertTrue(cycle.contains("if (settings.activeAutoScan == AutoScanMode.OFF) return false"))
