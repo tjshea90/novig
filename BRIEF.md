@@ -343,6 +343,7 @@ robolectric.org/configuring/.
   planner), so a price that drifts out past it is never bet; favorites always pass; a Bet-sheet bet is never held to it. Every bet placed gets its own
   HIGH-importance notification with the stake and the EV (`AutoBetNotes`, channel `auto_bet_placed`). The check interval goes down to 5 s (a cycle's wait after a long
   cycle is 1 s there, 5 s above 15 s). Every Bet sheet has "Add money" (chips $1-$20 and a typed amount; it sends the transfer itself with a saved management key).
+  An optional "every book must agree" switch (`autoBetAllAgree`) makes every book that prices both sides say +EV on its own ("5 of 5"), on top of the other criteria.
   Check odds now holds a focus (`FocusGate`, in memory, 15 minutes at most): the background cycle (so auto-bet), CNO's refresh, scans, the widget's rescans and
   the movers wait until it ends, and it looks for every closing line (`CloseBackfill.run(force = true)`).
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
