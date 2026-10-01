@@ -68,6 +68,10 @@ data class BetSheetUi(
     val maxStake: Double = 10.0,
     /** Tj picked or typed the amount: the wallet's balance, read after the sheet opened, never changes it. */
     val stakeChosen: Boolean = false,
+    /** The amount the sheet chose before the wallet had its say (Settings' amount, or the bet's Kelly stake): [stake] when the wallet holds enough. */
+    val baseStake: Double = stake,
+    /** Where the amount came from, under the Amount field ("¼ Kelly of your $1,000 bankroll at these odds"); null = Settings' amount. */
+    val stakeNote: String? = null,
 )
 
 /**
@@ -87,6 +91,28 @@ object BetAmount {
             return if (v > max + 1e-9) "Over your ${String.format(Locale.US, "$%.2f", max)} limit per bet (Settings › Novig API › Betting)" else null
         }
         return WalletAmount.problem(text)
+    }
+
+    /**
+     * The amount a bet's sheet starts from before the wallet has its say, and why (Tj, 2026-10-01: "Make sure it enters the Kelley value if I
+     * select it"): with Kelly chosen for bet slips, the bet's own Kelly stake ([kelly], worked out for its odds and edge) to the cent within
+     * [ScanSettings.apiMaxStake]; with "My amount", that amount; otherwise Settings' Bet sheet amount ([ScanSettings.apiBetStake]).
+     */
+    fun base(settings: com.tjshea.vigilant.data.scanner.ScanSettings, kelly: Double?): Pair<Double, String?> {
+        val max = settings.apiMaxStake
+        fun money(v: Double) = String.format(Locale.US, "$%,.2f", v)
+        return when (settings.slipStake) {
+            com.tjshea.vigilant.data.novig.SlipStake.KELLY -> {
+                val k = kelly?.takeIf { it > 0 }?.let { kotlin.math.round(it * 100.0) / 100.0 }?.coerceAtLeast(0.01)
+                when {
+                    k == null -> settings.apiBetStake.coerceIn(0.01, max) to "No Kelly stake for this bet (no edge at this price): Settings' amount instead"
+                    k > max + 1e-9 -> max to "Kelly says ${money(k)}: held to your ${money(max)} limit per bet"
+                    else -> k to "${com.tjshea.vigilant.app.ui.Format.kellyLabel(settings.kellyMultiplier)} of your ${money(settings.bankroll)} bankroll at this bet's odds"
+                }
+            }
+            com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> settings.slipCustomStake.coerceIn(0.01, max) to "Your bet slip amount (Settings)"
+            else -> settings.apiBetStake.coerceIn(0.01, max) to null
+        }
     }
 
     /** What a sheet opens with: [setting] (within [max]), or [balance] rounded down to the cent when the wallet holds less but not nothing. */
@@ -420,7 +446,15 @@ class ApiBettingController(
 
     // ---- the Bet sheet --------------------------------------------------------------------------------------------
 
-    private fun startingStake(): Double = BetAmount.starting(settings().apiBetStake, settings().apiMaxStake, state.value.betting.balance)
+    /** A new sheet for a bet whose Kelly stake is [kelly]: its amount (the wallet's remainder when that's less) and where it came from. */
+    private fun newSheet(title: String, subtitle: String, target: BetTarget?, kelly: Double?, resolving: Boolean): BetSheetUi {
+        val (base, note) = BetAmount.base(settings(), kelly)
+        val balance = state.value.betting.balance
+        return BetSheetUi(
+            title, subtitle, target, BetAmount.starting(base, settings().apiMaxStake, balance), resolving = resolving,
+            maxStake = settings().apiMaxStake, balance = balance, baseStake = base, stakeNote = note,
+        )
+    }
 
     /**
      * Reads the wallet as a sheet opens (the balance on hand may be old), and when Tj hasn't picked an amount yet and the wallet holds less
@@ -435,7 +469,7 @@ class ApiBettingController(
                 planAgain = false
                 val cur = s.betSheet
                 val next = if (cur == null || cur.placing || cur.result != null) cur else {
-                    val stake = if (cur.stakeChosen) cur.stake else BetAmount.starting(settings().apiBetStake, settings().apiMaxStake, balance)
+                    val stake = if (cur.stakeChosen) cur.stake else BetAmount.starting(cur.baseStake, settings().apiMaxStake, balance)
                     if (kotlin.math.abs(stake - cur.stake) < 1e-9) cur.copy(balance = balance)
                     else {
                         // A sheet still finding its bet plans with the new amount once it's found; one that has it plans again now.
@@ -459,11 +493,15 @@ class ApiBettingController(
             toasts.tryEmit("This bet has no fair odds to check it against")
             return
         }
-        open(target, o.selection, "${o.marketLabel} · ${o.event.description}")
+        open(target, o.selection, "${o.marketLabel} · ${o.event.description}", kelly = o.suggestedStake)
     }
 
     /** A CNO card's bet: its Novig outcome is found first (the same match the Open button uses), then the sheet opens. */
     fun bet(row: CnoRow) = betRow(row, "CrazyNinjaOdds") { found, market -> ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs) }
+
+    /** A CNO-shaped row's Kelly stake (CNO's or ParlayAPI's fair odds against Novig's price, capped at what's available). */
+    private fun kellyOf(row: CnoRow): Double? =
+        com.tjshea.vigilant.app.ui.cnoStake(com.tjshea.vigilant.data.cno.CnoPick(row, row.ev, live = (row.startsAtMs ?: Long.MAX_VALUE) <= clock()), settings())
 
     /**
      * A ParlayAPI pick's bet (TASKS.md P1, Tj 2026-09-30: "a button where I can bet each bet inside the app using the same logic as … the cno
@@ -479,7 +517,7 @@ class ApiBettingController(
             toasts.tryEmit("Only bets priced at Novig can be placed through Novig's API")
             return
         }
-        state.update { it.copy(betSheet = BetSheetUi(row.bet, "${row.market} · ${row.event}", stake = startingStake(), maxStake = settings().apiMaxStake, balance = it.betting.balance)) }
+        state.update { it.copy(betSheet = newSheet(row.bet, "${row.market} · ${row.event}", null, kellyOf(row), resolving = true)) }
         checkWallet()
         betJob?.cancel()
         betJob = scope.launch {
@@ -495,10 +533,8 @@ class ApiBettingController(
         }
     }
 
-    private fun open(target: BetTarget, title: String, subtitle: String) {
-        state.update {
-            it.copy(betSheet = BetSheetUi(title, subtitle, target, startingStake(), resolving = false, maxStake = settings().apiMaxStake, balance = it.betting.balance))
-        }
+    private fun open(target: BetTarget, title: String, subtitle: String, kelly: Double?) {
+        state.update { it.copy(betSheet = newSheet(title, subtitle, target, kelly, resolving = false)) }
         betJob?.cancel()
         betJob = scope.launch { replan() }
         checkWallet()

@@ -540,8 +540,10 @@ private fun StakeField(sheet: BetSheetUi, onTypeStake: (Double) -> Unit) {
         if (BetAmount.parse(text, sheet.maxStake)?.let { kotlin.math.abs(it - sheet.stake) < 1e-9 } != true) text = WalletAmount.text(sheet.stake)
     }
     val problem = BetAmount.problem(text, sheet.maxStake)
-    val walletNote = sheet.balance?.takeIf { !sheet.stakeChosen && it >= 0.01 && kotlin.math.abs(it - sheet.stake) < 0.01 }
+    val walletNote = sheet.balance?.takeIf { !sheet.stakeChosen && it >= 0.01 && kotlin.math.abs(it - sheet.stake) < 0.01 && sheet.stake < sheet.baseStake - 1e-9 }
         ?.let { "All that's left in the wallet" }
+    // Where the amount came from (the bet's Kelly stake, Tj 2026-10-01), until Tj picks another.
+    val sourceNote = sheet.stakeNote?.takeIf { !sheet.stakeChosen && kotlin.math.abs(sheet.stake - sheet.baseStake) < 0.005 }
     OutlinedTextField(
         value = text,
         onValueChange = { t ->
@@ -553,7 +555,7 @@ private fun StakeField(sheet: BetSheetUi, onTypeStake: (Double) -> Unit) {
         singleLine = true,
         enabled = !sheet.placing,
         isError = problem != null,
-        supportingText = { Text(problem ?: walletNote ?: "Type any amount up to ${Format.money(sheet.maxStake)}, or pick one") },
+        supportingText = { Text(problem ?: walletNote ?: sourceNote ?: "Type any amount up to ${Format.money(sheet.maxStake)}, or pick one", modifier = Modifier.testTag("betAmountNote")) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth().testTag("betAmount"),
     )
