@@ -30,7 +30,10 @@ class AutoBetTest {
 
     private fun rules(
         stake: AutoBetStake = AutoBetStake.QUARTER_KELLY, custom: Double = 5.0, max: Double = 100.0, books: Int = 3, ev: Double = 0.03, twoSided: Int = 2,
-    ) = AutoBet.rules(ScanSettings(autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided))
+        maxOdds: Int = 0,
+    ) = AutoBet.rules(
+        ScanSettings(autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided, autoBetMaxOdds = maxOdds),
+    )
 
     /** [AutoBet.judge] at -110 (a price no limit on longest odds touches) unless the test says otherwise. */
     private fun judge(r: AutoBet.Rules, ev: Double, check: CnoBooks.Check, american: Int = -110) = AutoBet.judge(r, ev, check, american)
@@ -51,6 +54,8 @@ class AutoBetTest {
         assertEquals(AutoBetStake.ONE_DOLLAR, s.autoBetStake)
         assertEquals(5.0, s.autoBetCustomStake, 0.0)
         assertEquals(10.0, s.autoBetMaxStake, 0.0)
+        assertEquals("no limit on odds until Tj sets one: what ran before doesn't change", 0, s.autoBetMaxOdds)
+        assertEquals(listOf(100, 110, 120, 130, 150, 200, 300, 0), ScanSettings.AUTO_BET_MAX_ODDS_CHOICES)
         assertEquals(listOf(2, 3, 4, 5), ScanSettings.AUTO_BET_BOOKS_CHOICES)
         assertEquals(listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04), ScanSettings.AUTO_BET_MIN_EV_CHOICES)
         assertEquals(listOf(1, 2, 3), ScanSettings.AUTO_BET_TWO_SIDED_CHOICES)
@@ -59,10 +64,11 @@ class AutoBetTest {
         // A file saved before auto-bet existed reads with all of it off, and nothing else moves.
         val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"CNO","autoScanSeconds":30,"schema":12}""")
         assertFalse(old.autoBet)
+        assertEquals(0, old.autoBetMaxOdds)
         assertEquals(30, old.autoScanSeconds)
         assertEquals(AutoScanMode.CNO, old.autoScan)
         // What Tj picks survives a save and a load.
-        val picked = ScanSettings(autoBet = true, autoBetBooks = 5, autoBetMinEv = 0.0325, autoBetTwoSided = 3, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 7.25, autoBetMaxStake = 12.0)
+        val picked = ScanSettings(autoBet = true, autoBetBooks = 5, autoBetMinEv = 0.0325, autoBetTwoSided = 3, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 7.25, autoBetMaxStake = 12.0, autoBetMaxOdds = 130)
         assertEquals(picked, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)))
     }
 
@@ -113,6 +119,35 @@ class AutoBetTest {
     }
 
     @Test
+    fun `a longest-odds limit skips a longer price, never a favourite, and counts by reason`() {
+        val r = rules(maxOdds = 130)
+        assertEquals(130, r.maxOdds)
+        // At the limit and shorter pass, favourites always pass.
+        assertNull(judge(r, 0.04, check(), 130))
+        assertNull(judge(r, 0.04, check(), 100))
+        assertNull(judge(r, 0.04, check(), -110))
+        assertNull(judge(r, 0.04, check(), -1000))
+        // One point longer fails, and the words don't carry the price (the report counts bets by reason).
+        val long = judge(r, 0.04, check(), 131)
+        assertEquals("its odds are longer than your +130 limit", long)
+        assertEquals(long, judge(r, 0.04, check(), 900))
+        // No limit (the default): nothing is too long.
+        assertNull(judge(rules(), 0.04, check(), 5000))
+        assertEquals(0, rules().maxOdds)
+        // Every choice is honoured at its own edge.
+        for (limit in ScanSettings.AUTO_BET_MAX_ODDS_CHOICES.filter { it > 0 }) {
+            assertNull("+$limit at +$limit", judge(rules(maxOdds = limit), 0.04, check(), limit))
+            assertNotNull("+${limit + 1} over +$limit", judge(rules(maxOdds = limit), 0.04, check(), limit + 1))
+        }
+        // A typed limit under +100 is read as +100 (even money), and a negative one as none.
+        assertEquals(100, rules(maxOdds = 50).maxOdds)
+        assertEquals(0, rules(maxOdds = -5).maxOdds)
+        assertTrue(AutoBet.tooLong(100, 101))
+        assertFalse(AutoBet.tooLong(100, 100))
+        assertFalse(AutoBet.tooLong(0, 100_000))
+    }
+
+    @Test
     fun `every choice of books agreeing and books offering both sides is honoured`() {
         for (need in ScanSettings.AUTO_BET_BOOKS_CHOICES) for (agreeing in 0..6) {
             val ok = judge(rules(books = need), 0.05, check(twoSided = 6, agreeing = agreeing)) == null
@@ -146,6 +181,27 @@ class AutoBetTest {
         assertTrue(skip(AutoBet.stake(rules(), row(100, 0.49), 1000.0, 500.0)).contains("no Kelly stake"))
         assertTrue(skip(AutoBet.stake(rules(), even, 0.0, 500.0)).contains("no Kelly stake"))
         assertTrue(skip(AutoBet.stake(rules(), row(100, 0.5).copy(fairProbability = null), 1000.0, 500.0)).contains("no Kelly stake"))
+    }
+
+    /** Tj, 2026-10-01: "unless ¼ Kelly betting automatically puts a much lower stake on longshots. Does Kelly do this?" */
+    @Test
+    fun `Kelly stakes less on longer odds at the same edge, and a dollar or a typed amount doesn't`() {
+        // The same +4% edge at four prices (fair = price x 1.04), a $185 bankroll, 1/4 Kelly: stake = bankroll / 4 x edge x price / (1 - price).
+        fun at(american: Int, stake: AutoBetStake = AutoBetStake.QUARTER_KELLY): AutoBet.Stake {
+            val price = AutoBet.priceOf(row(american, 0.5))
+            return AutoBet.stake(rules(stake), row(american, price * 1.04), 185.0, 500.0)
+        }
+        assertEquals("even money: 4% of the bankroll x 1/4", 1.85, amount(at(100)), 1e-9)
+        assertEquals("+130: three quarters of that", 1.42, amount(at(130)), 1e-9)
+        assertTrue("+200 is 92 cents: under the $1 minimum, so not bet", skip(at(200)).contains("under the $1.00 minimum"))
+        assertTrue("+300 is 62 cents", skip(at(300)).contains("under the $1.00 minimum"))
+        // A favourite stakes more at the same edge: -200 is twice the even-money stake.
+        assertEquals(3.70, amount(at(-200)), 1e-9)
+        // A dollar and a typed amount ignore the odds entirely.
+        for (american in listOf(100, 130, 300, 900)) {
+            assertEquals(1.0, amount(at(american, AutoBetStake.ONE_DOLLAR)), 0.0)
+            assertEquals(5.0, amount(at(american, AutoBetStake.CUSTOM)), 0.0)
+        }
     }
 
     @Test
