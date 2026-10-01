@@ -324,7 +324,7 @@ class ScreenshotTest {
         // Its Kelly stake.
         settings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY)
         compose.onAllNodesWithTag("openBet").onFirst().performClick()
-        val kelly = com.tjshea.vigilant.data.novig.NovigLinks.amountText(maxOf(1.0, Math.round(first.suggestedStake!! * 100) / 100.0))
+        val kelly = com.tjshea.vigilant.data.novig.NovigLinks.amountText(maxOf(0.01, Math.round(first.suggestedStake!! * 100) / 100.0))
         assertEquals("novigapp://events/${first.outcome.outcomeId}/novig/$kelly", opened.last())
     }
 

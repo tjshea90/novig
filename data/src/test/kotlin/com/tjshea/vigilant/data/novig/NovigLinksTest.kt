@@ -29,11 +29,13 @@ class NovigLinksTest {
     }
 
     @Test
-    fun `the setting picks the amount - off, one dollar, the Kelly stake (never under a dollar), or a typed amount`() {
+    fun `the setting picks the amount - off, one dollar, the Kelly stake to the cent, or a typed amount`() {
         assertNull(NovigLinks.stake(SlipStake.OFF, 5.0, 12.0))
         assertEquals(1.0, NovigLinks.stake(SlipStake.ONE_DOLLAR, 5.0, 12.0)!!, 0.0)
         assertEquals(12.27, NovigLinks.stake(SlipStake.KELLY, 5.0, 12.2749)!!, 0.0)
-        assertEquals(1.0, NovigLinks.stake(SlipStake.KELLY, 5.0, 0.4)!!, 0.0)
+        // Tj, 2026-10-01: "it is still entering only $1 on every bet": a Kelly stake under $1 is entered as it is, not as $1.
+        assertEquals(0.4, NovigLinks.stake(SlipStake.KELLY, 5.0, 0.4)!!, 0.0)
+        assertEquals(0.01, NovigLinks.stake(SlipStake.KELLY, 5.0, 0.004)!!, 0.0)
         assertNull(NovigLinks.stake(SlipStake.KELLY, 5.0, null)) // no Kelly stake (no edge): Novig's default
         assertEquals(7.5, NovigLinks.stake(SlipStake.CUSTOM, 7.5, 12.0)!!, 0.0)
         assertEquals("12.2", NovigLinks.amountText(12.2))
