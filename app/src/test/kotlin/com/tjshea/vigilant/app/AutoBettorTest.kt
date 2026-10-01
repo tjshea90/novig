@@ -32,6 +32,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -400,13 +401,30 @@ class AutoBettorTest {
         assertFalse(r.halted)
         assertNull(app.container.settingsStore.load().autoBetHalted)
         assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("too small") })
-        // The same or a smaller stake isn't sent again (it would be refused), a bigger one goes through.
-        val sameAgain = b.run(small, state(small))
-        assertEquals("not asked again: the bet is also on its cooldown", 1, novig.tooSmall.get())
-        assertEquals(0, sameAgain.placed.size)
+        // A bigger stake goes through.
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val big = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 1.0) }
         assertEquals(1, bettor(novig).run(big, state(big)).placed.size)
+    }
+
+    @Test
+    fun `once Novig has refused a size, a stake no bigger is skipped without asking again`() = runBlocking {
+        var t = now
+        val small = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 0.25) }
+        val novig = FakeNovig(minDollars = 0.50)
+        val b = AutoBettor(app, app.container, clock = { t }, placer = { placer(novig) }, wallet = { 25.0 }, resolve = { targetOf(it) })
+        assertEquals(0, b.run(small, state(small)).placed.size)
+        assertEquals(1, novig.tooSmall.get())
+        // Past the bet's 2-minute cooldown, with a Novig price read just now: the same stake is skipped, and Novig isn't asked.
+        t = now + 150_000L
+        val later = state(small, live = LivePrice(117, 88.0, 0.0584, t - 5_000, "mkt", "out-jj")).indexed(t)
+        val again = b.run(small, later)
+        assertEquals(0, again.placed.size)
+        assertEquals("Novig wasn't asked again", 1, novig.tooSmall.get())
+        assertTrue(again.skipped.keys.toString(), again.skipped.keys.any { it.contains("is no bigger") })
+        // A bigger one goes through on the same bettor.
+        val big = small.copy(autoBetCustomStake = 1.0)
+        assertEquals(1, b.run(big, state(big, live = LivePrice(117, 88.0, 0.0584, t - 5_000, "mkt", "out-jj")).indexed(t)).placed.size)
     }
 
     @Test
