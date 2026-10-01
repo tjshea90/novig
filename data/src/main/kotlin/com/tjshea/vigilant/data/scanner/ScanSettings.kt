@@ -118,6 +118,12 @@ data class ScanSettings(
     val autoBetBooks: Int = 3,
     /** The smallest edge at Novig's price now: [AUTO_BET_MIN_EV_CHOICES], or what Tj typed (0.0325 = +3.25%). */
     val autoBetMinEv: Double = 0.03,
+    /**
+     * Every book scanned must agree (Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books
+     * agree positive EV)"): on top of [autoBetBooks], every book that prices both sides ([com.tjshea.vigilant.data.cno.CnoBooks.Check.twoSided]) must say
+     * +EV on its own ([com.tjshea.vigilant.data.cno.CnoBooks.Check.agreeing] equal to it). Off by default.
+     */
+    val autoBetAllAgree: Boolean = false,
     /** The fewest books that must price both sides of the bet ([com.tjshea.vigilant.data.cno.CnoBooks.Check.twoSided]): 1, 2 or 3. */
     val autoBetTwoSided: Int = 2,
     val autoBetStake: AutoBetStake = AutoBetStake.ONE_DOLLAR,

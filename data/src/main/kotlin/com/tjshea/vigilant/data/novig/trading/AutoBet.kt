@@ -63,6 +63,8 @@ object AutoBet {
         val maxStake: Double,
         /** The longest American odds to bet; 0 = no limit. */
         val maxOdds: Int = 0,
+        /** Every book that prices both sides must say +EV on its own ("5 of 5"), as well as [minBooks]. */
+        val allAgree: Boolean = false,
     )
 
     fun rules(s: ScanSettings) = Rules(
@@ -73,6 +75,7 @@ object AutoBet {
         customStake = s.autoBetCustomStake.coerceAtLeast(0.0),
         maxStake = s.autoBetMaxStake.coerceAtLeast(0.0),
         maxOdds = s.autoBetMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
+        allAgree = s.autoBetAllAgree,
     )
 
     /** Whether [american] odds are longer than the [maxOdds] limit (0 = no limit). A favorite's negative odds never are. */
@@ -90,6 +93,8 @@ object AutoBet {
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
         if (check.twoSided < rules.twoSided) return "${books(check.twoSided)} price${if (check.twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
         if (check.agreeing < rules.minBooks) return "${books(check.agreeing)} say${if (check.agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
+        // Every book scanned (those that price both sides) says +EV on its own: "5 of 5". Books that list only one side of the bet can't be judged and aren't counted.
+        if (rules.allAgree && check.agreeing < check.twoSided) return "only ${check.agreeing} of ${check.twoSided} books say +EV on their own (you need every one)"
         val ev = check.ev
         if (ev == null || ev <= 0.0) return "the books' own fair line says ${ev?.let(::percent) ?: "nothing"}, not +EV"
         return null

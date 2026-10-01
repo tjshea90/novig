@@ -64,7 +64,9 @@ object AutoBetText {
     /** The criteria in one sentence, as the confirm and the status say them. */
     fun criteria(s: ScanSettings): String {
         val r = AutoBet.rules(s)
-        return "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own, ${r.twoSided} pricing both sides, an edge of " +
+        val agreeing = if (r.allAgree) "every book that prices both sides agreeing it's +EV on their own (and at least ${r.minBooks} of them)"
+        else "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own"
+        return "$agreeing, ${r.twoSided} pricing both sides, an edge of " +
             "${evLabel(r.minEv)} or more at Novig's price now" + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
             ", staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
     }
