@@ -31,6 +31,8 @@ object Diagnostics {
         val versionCode: Int,
         val device: String,
         val autoScan: AutoScanner.Status = AutoScanner.Status(),
+        /** What the auto-bet did last (Tj, 2026-10-01). */
+        val autoBet: AutoBettor.Status = AutoBettor.Status(),
         val autoScanServiceRunning: Boolean = false,
         /** What the last scan and the last Check odds now cost each API (since the app opened), null before one ran. */
         val lastScan: RoundCost? = null,

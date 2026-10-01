@@ -109,6 +109,8 @@ data class UiState(
     val report: ReportUi? = null,
     /** Betting through Novig's API: set up or not, the balance; and the Bet sheet while one is open (Tj, 2026-09-29). */
     val betting: BettingUi = BettingUi(),
+    /** What the auto-bet did last cycle and the wallet it saw (Tj, 2026-10-01), for Settings › Betting. */
+    val autoBetStatus: AutoBettor.Status = AutoBettor.Status(),
     val betSheet: BetSheetUi? = null,
     val settings: ScanSettings = ScanSettings(),
     val result: ScanResult? = null,
@@ -364,6 +366,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Betting through Novig's API: setup, money, the Bet sheet ([ApiBettingController]). */
     val api = ApiBettingController(c, _state, viewModelScope, _toasts)
+
+    init {
+        // What the auto-bet did (a few times a minute at most: once per background cycle) for Settings › Betting.
+        viewModelScope.launch { c.autoBet.status.collect { st -> _state.update { it.copy(autoBetStatus = st) } } }
+    }
 
     init {
         // Every failure shown on screen goes in Diagnostics' "Recent problems" too (Tj, 2026-09-30).
@@ -1430,6 +1437,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             versionCode = info?.let { androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(it).toInt() } ?: 0,
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
+            autoBet = c.autoBet.status.value,
             autoScanServiceRunning = AutoScanService.running,
             lastScan = c.lastScanCost,
             lastCheck = c.lastCheckCost,
