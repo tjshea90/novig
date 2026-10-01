@@ -87,6 +87,8 @@ class ApiBettingUiTest {
     private var swapped by mutableStateOf<(@androidx.compose.runtime.Composable () -> Unit)?>(null)
     private var swaps by mutableStateOf(0)
 
+    private fun showSheet(content: @androidx.compose.runtime.Composable () -> Unit) = if (swapped == null) sheetScreen(content) else sheetScreenFresh(content)
+
     private fun sheetScreenFresh(content: @androidx.compose.runtime.Composable () -> Unit) {
         if (swapped == null) throw IllegalStateException("call sheetScreen first")
         swaps++
@@ -376,7 +378,7 @@ class ApiBettingUiTest {
     fun `every Bet sheet has an Add money button, whatever the wallet holds`() {
         // A wallet that covers the bet, a wallet of one cent, one of nothing, and one not read yet: the button is there each time, and says what's in it.
         for ((balance, said) in listOf(12.5 to "\$12.50 in it", 0.01 to "\$0.01 in it", 0.0 to "\$0.00 in it", null to "Add money to the wallet")) {
-            sheetScreenFresh { ApiBetSheetContent(sheet(balance = balance), {}, {}, {}, {}, {}) }
+            showSheet { ApiBetSheetContent(sheet(balance = balance), {}, {}, {}, {}, {}) }
             compose.onNodeWithTag("addMoney").performScrollTo().assertExists()
             compose.onNodeWithText(said, substring = true).assertExists()
         }
