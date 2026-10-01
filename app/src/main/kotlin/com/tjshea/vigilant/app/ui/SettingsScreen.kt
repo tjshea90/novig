@@ -451,7 +451,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         }
     }
     SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
-    SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC.", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
+    SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC, tennis (match winners).", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
     SwitchRow(
         "PropLine",
         if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
