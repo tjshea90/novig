@@ -3152,3 +3152,33 @@ on a phone: how tightly a 15 s schedule holds with the screen off for hours.
   Cost: a second bets-only Vigilant pass at the final read for bets with no CNO page (credits like the first), a CNO page per CNO bet.
 - Not changed: the close is the devigged fair line from the same sources as the bet's EV (CNO's books, Vigilant's fair odds, both averaged), not Novig's
   own closing price; history closes (ParlayAPI Pinnacle, ESPN, Novig's trades) still only fill bets with no read before the start.
+
+## 51. Auto-bet: placing CrazyNinjaOdds' bets with nobody confirming (v0.39.0, 2026-10-01; Tj: "Build the auto get feature, which would automatically bet each bet without me doing anything at all, including automatic bets in the background as the cno scanner is on in the background")
+
+**What it is.** Settings › Betting › Auto-bet (off by default; turning it on asks once, plainly). Inside each background CNO auto-scan cycle (`AutoScanner.cycle`),
+after the list, Novig's price now and the best bets' books are read, `AutoBettor.run` places every CNO bet that passes Tj's criteria through Novig's API from the Vigilant
+wallet: best edge first, one order at a time, at most 5 a cycle. Alerts are computed after it, so a placed bet doesn't also alert. The check interval IS the background CNO
+scan's (15 sec … 40 min): Tj's "use the same options for cno scanner refresh time intervals", read as one setting shown in both places, not a second timer.
+
+**Tj's seven choices → code.** (1) books agreeing 2/3/4/5+ = `CnoBooks.Check.agreeing` (two-sided books whose own worst-case fair alone makes the price +EV);
+(2) smallest edge +2/2.5/3/3.25/3.5/3.75/4% or typed (floor 0.5%) = the EV the CNO card shows at Novig's live price, re-checked by the planner at the real book price;
+(3) CNO only = `autoBetsNow` needs the CNO scanner running in the background; Vigilant's own bets and ParlayAPI's picks never reach it; (4) stake ⅛/¼/½ Kelly, $1 or typed =
+`AutoBet.stake` (Kelly = bankroll × fraction × (fair − price)/(1 − price), worked: +100 at fair 0.515 on $1,000 → $3.75 / $7.50 / $15.00; +150 at 0.42 → ¼ = $8.33; −300 at 0.77 → ⅛ = $10.00,
+so it changes with each bet's odds), held to the per-bet maximum, to Novig's available dollars and to the wallet, floored to the cent, under $1 skipped (never rounded up);
+(5) books pricing both sides 1/2/3 = `Check.twoSided`; (6) most per bet, typed; (7) above. Pregame only, the wallet read before every pass, tracked "just as if I were to manually bet it":
+`BetTracker.logApi` from the fills (stake = dollars + fee, real price, `orderId`), hidden from the lists like a ✓ (`markPlaced`, shared with the Bet sheet), flagged `TrackedBet.auto`.
+
+**Safety, beyond every `ApiBetPlanner` check** (pregame, market open, fair odds fresh with a known age, a book read ≤ 15 s, per-bet and per-day limits, edge still ≥ minimum level by level).
+Each was mutation-checked (removed → a test fails): Novig's price for the bet read in the last minute (no live price, no bet); the order book's best price must be within 3 points of the price
+it was judged at (`placeAuto`; guards a wrong-outcome match: the finder matches CNO's text to Novig's outcome and nothing shows Tj the match), and the outcome Novig's price came from
+(`LivePrice.outcomeId`) must equal the outcome the catalog found; one bet per Novig market while one is open (the other side of a line is never bet); a game starting within a minute is skipped;
+an edge over 15% is never bet unattended (a stale line or a mismatch, not an edge: Tj can place it by hand); one `orderLock` for the Bet sheet's placer and the auto-bet's, so the same bet
+can't be placed by both at once; a refused bet waits 2 min; Novig refusing an order (location, KYC, funds) or the day's limit backs it off 5 min; an order whose answer is lost HALTS auto-bet
+(`autoBetHalted`, saved; the order is never re-sent; Tj checks Novig and taps Resume); an order once sent is followed to the end and recorded under `NonCancellable`.
+The daily limit is the existing "Most in a day" API setting ($50 by default), shared with Bet-sheet bets.
+
+**Not verified on a real Novig (no key here; never test real money from a session):** every API order so far was mock-tested; Tj's first two real orders (2026-09-29) were refused for a `clientId`
+format and fixed in v0.21.2, and the notes show no successful live fill since. The first live auto-bet is also the first live check of: the order/fill shapes, the ledger grading of an API bet,
+the wallet read, Novig's 3-day location check keeping auto-bets alive (it stops with a refusal and a note when the check expires: open the Novig app), and Doze limiting a 15 s alarm schedule
+with the screen off. Try it with $5 in the wallet, $1 a bet, and watch the first few bets in the Tracker. What it does NOT do: size by game or correlation (several bets on one game can all pass), stop on a
+losing streak, or bet anything but pregame CNO bets at Novig. Possible next steps: a per-game cap, a daily-loss stop.
