@@ -3001,3 +3001,18 @@ For this app, for the cno scanner background auto-scan feature, add to the setti
 ```
 Is it possible to make the app automatically place bets for me without my input if a bet meets certain criteria
 ```
+
+## 2026-10-01T05:31:22Z
+```
+Build the auto get feature, which would automatically bet each bet without me doing anything at all, including automatic bets in the background as the cno scanner is on in the background. The option is off by default, but I can turn it on in the settings and choose the following criteria in the options: 
+
+1) number of books agreeing- 2, 3, 4, 5+
+2) minimum ev- +2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount
+3) cno scanner only
+4) option for automatically entering ⅛ Kelly stake ¼ Kelly stake, ½ Kelly stake, $1 stake , or a manual amount i type in 
+5) option to require at least one, two, or three books to offer both sides of a bet 
+6) maximum stake amount per bet that I can type in manually
+7) use the same options for cno scanner refresh time intervals 
+
+The feature must be aware of the amount of money I have left in the vigilant wallet and stop placing bets when there is no more money left. The feature should add all bets placed into the tracker system just as if I were to manually bet it. It should only bet on pre game odds, live betting is not available
+```
