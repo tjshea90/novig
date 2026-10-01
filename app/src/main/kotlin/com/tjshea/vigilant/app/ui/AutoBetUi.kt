@@ -272,6 +272,14 @@ fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) ->
             "Faster means a bet is placed sooner after CNO lists it.",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    if (s.autoScanSeconds < 15) {
+        Text(
+            "5 sec reads CrazyNinjaOdds about 12 times a minute (never two reads within 3 seconds; if CNO refuses, the scan waits 10 minutes). CNO's terms let it block " +
+                "addresses that read too much, so use it only if you want the fastest catch; CNO itself refreshes its odds about once a minute. Vigilant's own scan still " +
+                "starts at most every 4 minutes. In Doze (screen off and still) Android may delay the alarms.",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetFastNote"),
+        )
+    }
 
     // The wallet and what the last check did.
     Text(

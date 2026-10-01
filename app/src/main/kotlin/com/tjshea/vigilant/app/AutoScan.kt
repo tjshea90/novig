@@ -105,7 +105,7 @@ object AlertPicks {
 
 /** When the next background scan is due. */
 object AutoScanClock {
-    /** Never two cycles closer than this, however long the last one took (the fastest interval is 15 s). */
+    /** Never two cycles closer than this, however long the last one took (the fastest interval is 5 s, so a cycle that runs long starts the next 5 s after it ends). */
     const val MIN_GAP_MS = 5_000L
 
     /** [seconds] after the last cycle started (no drift from long scans); [MIN_GAP_MS] after now when that has passed; now when none has run. */

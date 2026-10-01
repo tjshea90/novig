@@ -299,7 +299,7 @@ data class ScanSettings(
      */
     val autoScan: AutoScanMode = AutoScanMode.OFF,
     /**
-     * The gap between background scans, in seconds ([AUTO_SCAN_SECONDS_CHOICES]: 15 s up to 40 min; Tj, 2026-10-01: "every 3 minutes, 1 minute,
+     * The gap between background scans, in seconds ([AUTO_SCAN_SECONDS_CHOICES]: 5 s up to 40 min; Tj, 2026-10-01: "every 3 minutes, 1 minute,
      * 30 seconds, and 15 seconds"). Before v0.38.0 this was whole minutes ([autoScanMinutes]); [migrate] moves a saved one over.
      */
     val autoScanSeconds: Int = 600,
@@ -531,9 +531,9 @@ data class ScanSettings(
 
         /**
          * [autoScanSeconds]' choices (Tj, 2026-09-28: "every 5 10 20 30 or 40 minutes", then 2026-10-01: "every 3 minutes, 1 minute, 30 seconds, and
-         * 15 seconds"), fastest first.
+         * 15 seconds", then "an option to scan cno every 5 seconds for the auto bet function"), fastest first.
          */
-        val AUTO_SCAN_SECONDS_CHOICES = listOf(15, 30, 60, 180, 300, 600, 1200, 1800, 2400)
+        val AUTO_SCAN_SECONDS_CHOICES = listOf(5, 15, 30, 60, 180, 300, 600, 1200, 1800, 2400)
 
         /** Vigilant's own scan (API credits) starts at most this often inside a background cycle, however fast the cycles are ([AutoScanner]). */
         const val AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240
