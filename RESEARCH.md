@@ -3115,3 +3115,40 @@ price: MONEY 63, SPREAD 50, TOTAL 60, SET_SPREAD 41, TOTAL_SETS 36. Novig's pric
 SPREAD 1.7%, TOTAL 1.9%, SET_SPREAD 3.4%, TOTAL_SETS 4.0% (a sets line pricing games would sit 20+ points off). Not done: each player's
 games won (ParlayAPI has no tennis team totals), 1st-set winners (not in /odds), ParlayAPI's movers board for tennis.
 
+
+## 50. Faster background scans, and CLV from real closing lines (v0.38.0, 2026-10-01; Tj: "for the cno scanner background auto-scan feature, add to the settings options for it to scan every 3 minutes, 1 minute, 30 seconds, and 15 seconds. Make sure the app is properly tracking clv based on real closing lines and the actual odds I placed the bet at")
+
+**The interval.** `ScanSettings.autoScanSeconds` (was `autoScanMinutes`; schema 12 moves a saved file's minutes over once, written back when the app opens)
+offers 15 s, 30 s, 1, 3, 5, 10, 20, 30 and 40 minutes (`AUTO_SCAN_SECONDS_CHOICES`, labels `intervalLabel`). Three things the old design would have
+got wrong at 15 seconds, all fixed and pinned in `AutoScanTest`:
+- *A dropped alarm ended the schedule.* The next alarm was armed when a cycle started; one that went off while the cycle was still running was
+  dropped (`runCycle`'s "already running" guard) and nothing re-armed it. At 15 s that is certain (a slow CNO page is enough); at 5-40 minutes with
+  CNO + Vigilant it needed a scan over the interval. The cycle's end now arms the next alarm from the live interval (`AutoScanClock.nextAtMs`), unless
+  the service is stopping. The start-of-cycle alarm stays, so a cycle that is killed can't end the schedule either.
+- *The 30 s minimum gap* (`MIN_GAP_MS`) is 5 s now.
+- *Vigilant's own scan* (API credits, ~100 s) ran inside every cycle. In CNO + Vigilant it now starts at most every 4 minutes
+  (`AutoScanClock.vigilantDue`; every cycle at 5 minutes and slower, as before; Scan now in the notification always runs it): 15, 30 and 60 s cycles
+  run it every 4 minutes, 3 minute cycles every 6. The Settings hint says so and counts the credits from that (360 scans a day at 15 s, not 5,760).
+  While it runs the cycle waits for it, so CNO isn't read for that ~100 s; CNO only never waits.
+
+What a CNO cycle costs: one CNO list read, Novig's price for the top 8 candidates and their game pages (re-used 4 minutes), and the open bets starting
+within the hour. At 15 s that is ~5,760 list reads a day to crazyninjaodds.com (`CnoFeed`'s 3 s gap and pause-on-429 still apply). Android may space
+exact alarms out while the phone is idle (Doze's allow-while-idle quota); "Unrestricted" battery use is the Settings hint's existing advice. Unverified
+on a phone: how tightly a 15 s schedule holds with the screen off for hours.
+
+**CLV audit** (`ClosingLine`, `ClvStats`, `ClvPlacedPriceTest`). CLV = closing fair probability / cost - 1, the same as the EV formula at the close.
+- *The price used is the price paid.* `cost` = price + taker fee (none pregame). A ✓ logs Novig's live price shown at the tap (`livePick`), a bet placed
+  through Novig's API logs the average of its fills plus their fee (`logApi`), and a price Tj corrects in the Tracker (`setPrice`) replaces the first.
+  Worked: +141 → cost 0.41494, close 0.45 → +8.45%; corrected to +150 → cost 0.40 → +12.5%; fills 100 @ 45¢ + 300 @ 47¢ → 46.5¢, close 0.50 → +7.5%.
+  What can't be exact: a bet placed by hand in the Novig app. Novig's API sees only the Vigilant subaccount's own wallet (NOVIG_API.md §14.2), so that
+  bet's price is the one shown at the ✓ unless Tj corrects it.
+- *A bet is never "closed" at its own price.* Before, a bet placed in the last 15 minutes with no read after it closed at the line it was bet at, so its
+  CLV equalled its own EV at bet and every +EV bet "beat the close". Now it has no close until a real one is found (the back-fill, which asks for these
+  bets: ParlayAPI's Pinnacle closes, ESPN, Novig's trades), and counts under "started with no close found yet".
+- *The close is the read nearest the start.* One read ~6 minutes out was the close. Now a bet read more than 3 minutes before its start is read once more
+  ~110 s before (`needsFinalRead`, `FINAL_LEAD_MS`; the alarm, retries and last-minute cut-off are the capture's own), and the later read wins. A read of
+  older prices never replaces a fresher close (`ClosingLine.supersedes`; a cached page arriving after a fresh read used to). With the auto-scan on at
+  under 5 minutes, bets in their last 15 minutes are re-read at the cycle's pace, once a minute each at most (`AutoScanClock.closingFreshMs`).
+  Cost: a second bets-only Vigilant pass at the final read for bets with no CNO page (credits like the first), a CNO page per CNO bet.
+- Not changed: the close is the devigged fair line from the same sources as the bet's EV (CNO's books, Vigilant's fair odds, both averaged), not Novig's
+  own closing price; history closes (ParlayAPI Pinnacle, ESPN, Novig's trades) still only fill bets with no read before the start.
