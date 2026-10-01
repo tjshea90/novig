@@ -595,7 +595,7 @@ private fun AddMoneyBlock(sheet: BetSheetUi, keySaved: Boolean, suggest: Double?
     val problem = WalletAmount.problem(text)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FilledTonalButton(onClick = { open = !open }, enabled = !sheet.placing, modifier = Modifier.fillMaxWidth().testTag("addMoney")) {
-            Text(if (open) "Hide add money" else "Add money to the wallet" + (sheet.balance?.let { " · ${Format.money(it)} in it" }.orEmpty()))
+            Text("Add money to the wallet" + (sheet.balance?.let { " · ${Format.money(it)} in it" }.orEmpty()) + if (open) "  ▴" else "  ▾")
         }
         if (open) {
             Column(Modifier.testTag("addMoneyBlock"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
