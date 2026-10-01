@@ -81,6 +81,7 @@ class KeepAwakeServiceTest {
         val service = controller.get()
         try {
             waitFor("the loop's first cycle") { status.pausedForCheck }
+            System.err.println("DEBUG held=${service.keepAwakeIsHeld} flag=${AutoScanService.keepAwakeHeld} interactive=${pm.isInteractive} idle=${pm.isDeviceIdleMode} alarms=${alarms().map { it.triggerAtTime - System.currentTimeMillis() }} next=${AutoScanAlarm.nextAtMs} settings=${app.container.settingsStore.flow.value}")
             // The CPU lock is held between scans.
             assertTrue(service.keepAwakeIsHeld)
             assertTrue(AutoScanService.keepAwakeHeld)
