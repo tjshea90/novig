@@ -42,7 +42,7 @@ class KeepAwakeServiceTest {
      * Check odds now holds the focus, so every cycle the service starts is the "paused" no-op ([AutoScanner.cycle]): the phone's state, the lock, the alarms
      * and the loop are all real, and no scan or network read runs. What a real cycle records is [CycleLogTest]'s and the source pins' below.
      */
-    private val on = ScanSettings(autoScan = AutoScanMode.BOTH, scanner = ScannerMode.VIGILANT, autoScanSeconds = 5).migrate()
+    private val on = ScanSettings(autoScan = AutoScanMode.BOTH, scanner = ScannerMode.VIGILANT, autoScanMinutes = 1).migrate().copy(autoScanSeconds = 5)
 
     @Before fun setUp() {
         runBlocking { app.container.settingsStore.update { on } }
