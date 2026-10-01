@@ -101,6 +101,10 @@ class AutoBetTest {
         assertTrue(AutoBet.judge(r, 0.0299, check())!!.contains("under your +3.00% minimum"))
         assertTrue(AutoBet.judge(r, 0.04, check(twoSided = 1, agreeing = 1))!!.contains("1 book prices both sides (you need 2)"))
         assertTrue(AutoBet.judge(r, 0.04, check(twoSided = 4, agreeing = 2))!!.contains("2 books say +EV on their own (you need 3)"))
+        // A bet that good is a stale or mismatched price: never bet unattended (15% is the ceiling, and it is allowed).
+        assertNull(AutoBet.judge(r, AutoBet.MAX_SANE_EV, check()))
+        assertTrue(AutoBet.judge(r, 0.1501, check())!!.contains("usually a stale or mismatched price"))
+        assertTrue(AutoBet.judge(r, 0.40, check())!!.contains("over +15.00%"))
         assertTrue(AutoBet.judge(r, 0.04, check(ev = -0.01))!!.contains("not +EV"))
         assertTrue(AutoBet.judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
     }

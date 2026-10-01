@@ -32,6 +32,13 @@ object AutoBet {
      */
     const val PRICE_TOLERANCE = 0.03
 
+    /**
+     * A bet this good is almost always a stale line, a mismatched bet or bad data, not an edge (CNO's best real ones are a few percent; the
+     * Tracker leaves anything over [com.tjshea.vigilant.data.tracker.BetTracker.OUTLIER_EV] out of its stats): unattended, it isn't bet, and
+     * the report says so. Tj can still place it by hand.
+     */
+    const val MAX_SANE_EV = 0.15
+
     /** At most this many bets per background cycle (the best edges first); the rest wait for the next. */
     const val MAX_PER_CYCLE = 5
 
@@ -62,6 +69,7 @@ object AutoBet {
      */
     fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check): String? {
         if (shownEv < rules.minEv - 1e-9) return "its edge ${percent(shownEv)} is under your ${percent(rules.minEv)} minimum"
+        if (shownEv > MAX_SANE_EV) return "its edge ${percent(shownEv)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
         if (check.twoSided < rules.twoSided) return "${books(check.twoSided)} price${if (check.twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
         if (check.agreeing < rules.minBooks) return "${books(check.agreeing)} say${if (check.agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
         val ev = check.ev

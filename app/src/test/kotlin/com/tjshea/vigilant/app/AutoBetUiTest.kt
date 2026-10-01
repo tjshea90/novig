@@ -117,7 +117,7 @@ class AutoBetUiTest {
         assertTrue(text, text.contains("(\$25.00)"))
         assertTrue(text, text.contains("at least 4 books agreeing it's +EV on their own, 3 pricing both sides"))
         assertTrue(text, text.contains("an edge of +3.25% or more"))
-        assertTrue(text, text.contains("staking its ¼ Kelly stake (never over \$8.00)"))
+        assertTrue(text, text.contains("staking its ¼ Kelly stake of your \$1,000.00 bankroll (never over \$8.00)"))
         assertTrue(text, text.contains("never more than \$40.00 in a day"))
         compose.onNodeWithText("Vigilant will place REAL bets", substring = true).assertExists()
     }

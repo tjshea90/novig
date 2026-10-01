@@ -106,7 +106,7 @@ class AutoBettor(
     /** The last stop note posted and when: the same one isn't posted again for [NOTE_REPEAT_MS]. */
     private var lastStopNote: Pair<String, Long>? = null
 
-    /** Novig refused an order (the location check, KYC, a wallet it won't take): nothing is sent again until [failedUntilMs], whatever the interval. */
+    /** Novig refused an order (the location check, KYC, a wallet it won't take) or the day's limit was reached: nothing is sent again until [failedUntilMs], whatever the interval. */
     private var failedUntilMs = 0L
     private var failure: String? = null
 
@@ -120,7 +120,7 @@ class AutoBettor(
         // Whoever calls, a halted or switched-off auto-bet places nothing.
         if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
         settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (Settings › Betting › Resume auto-bet)") }
-        failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = "waiting after Novig refused an order: $it") }
+        failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
         val placer = placer()
         if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting › Enable betting)")
         cooldown.entries.removeAll { it.value <= now }
@@ -213,12 +213,17 @@ class AutoBettor(
                 is PlaceResult.NotFilled -> { cooldown[row.key] = now + AutoBet.COOLDOWN_MS; skip("nobody was selling at that price") }
                 is PlaceResult.Refused -> {
                     cooldown[row.key] = now + AutoBet.COOLDOWN_MS
-                    if (result.reason.contains("daily limit")) { stopped = "your daily limit of ${money(settings.apiMaxPerDay)} for API bets is reached"; break }
+                    if (result.reason.contains("daily limit")) {
+                        stopped = "your daily limit of ${money(settings.apiMaxPerDay)} for API bets is reached"
+                        failure = "waiting: $stopped (checked again every ${failBackoffMs / 60_000L} minutes)"
+                        failedUntilMs = now + failBackoffMs
+                        break
+                    }
                     skip(result.reason.take(REASON_CHARS))
                 }
                 is PlaceResult.Failed -> {
                     stopped = "Novig refused: ${result.message}"
-                    failure = stopped
+                    failure = "waiting after Novig refused an order: ${result.message}"
                     failedUntilMs = now + failBackoffMs
                     break
                 }

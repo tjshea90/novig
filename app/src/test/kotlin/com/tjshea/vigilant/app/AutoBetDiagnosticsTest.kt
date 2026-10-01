@@ -42,7 +42,7 @@ class AutoBetDiagnosticsTest {
         val line = text.lines().single { it.startsWith("Auto-bet (Tj, 2026-10-01): ON") }
         assertTrue(line, line.contains("at least 4 books agreeing it's +EV on their own"))
         assertTrue(line, line.contains("+3.25% or more"))
-        assertTrue(line, line.contains("its ⅛ Kelly stake (never over \$8.00)"))
+        assertTrue(line, line.contains("its ⅛ Kelly stake of your \$500.00 bankroll (never over \$8.00)"))
         assertTrue(line, line.contains("most a day \$40"))
         assertTrue(line, line.contains("bankroll \$500"))
         assertTrue(line, line.contains("not halted"))

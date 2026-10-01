@@ -52,7 +52,7 @@ object AutoBetText {
 
     /** What each stake choice means, for the confirm and the hint. */
     fun stakeText(s: ScanSettings): String = when (s.autoBetStake) {
-        AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake"
+        AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake of your ${Format.money(s.bankroll)} bankroll"
         AutoBetStake.ONE_DOLLAR -> "$1"
         AutoBetStake.CUSTOM -> Format.money(s.autoBetCustomStake)
     }
@@ -196,7 +196,7 @@ fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) ->
 
     // 3) CNO only: fixed
     Text(
-        "Which scanner: CrazyNinjaOdds' only. Vigilant's own scan and ParlayAPI's picks are never bet automatically.",
+        "Which scanner: CrazyNinjaOdds' only. Vigilant's own scan and ParlayAPI's picks are never bet automatically, and neither is a bet whose edge is over ${Format.percent(AutoBet.MAX_SANE_EV, 0)} (that high is usually a stale or mismatched price: place it by hand if you trust it).",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
     )
 

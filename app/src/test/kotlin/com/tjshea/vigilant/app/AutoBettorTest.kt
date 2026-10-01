@@ -204,6 +204,15 @@ class AutoBettorTest {
     }
 
     @Test
+    fun `a bet whose edge is implausibly high is left for Tj to place by hand`() = runBlocking {
+        val novig = FakeNovig()
+        val st = state().let { it.copy(cno = it.cno.copy(snapshot = it.cno.snapshot!!.copy(rows = listOf(jefferson.copy(ev = 0.30, fairProbability = 0.62))))).indexed(now) }
+        val r = bettor(novig).run(settings(), st)
+        assertEquals(0, novig.orders.get())
+        assertEquals(0, r.placed.size)
+    }
+
+    @Test
     fun `a bet priced at another book is never placed through Novig`() = runBlocking {
         val novig = FakeNovig()
         val elsewhere = jefferson.copy(book = "DraftKings")
@@ -314,10 +323,15 @@ class AutoBettorTest {
     fun `the daily limit for API bets stops it, with a note`() = runBlocking {
         val s = settings { it.copy(apiMaxPerDay = 0.5) }
         val novig = FakeNovig()
-        val r = bettor(novig).run(s, state(s))
+        val b = bettor(novig)
+        val r = b.run(s, state(s))
         assertEquals(0, novig.orders.get())
         assertTrue(r.stopped!!, r.stopped!!.contains("daily limit"))
         assertTrue(notifications().any { it.extras.getString("android.title") == "Auto-bet paused" })
+        // And it isn't asked again every cycle: the next one finds it waiting (nothing read, nothing sent).
+        val again = b.run(s, state(s))
+        assertTrue(again.stopped!!, again.stopped!!.contains("daily limit"))
+        assertTrue(b.status.value.blocker!!, b.status.value.blocker!!.startsWith("waiting:"))
     }
 
     @Test
