@@ -873,7 +873,7 @@ fun keepAwakeHint(s: ScanSettings): String = when {
             "Uses more battery (best plugged in), and the notification stays up."
     s.autoScanKeepAwake -> "On, but not needed at ${ScanSettings.intervalLabel(s.autoScanSeconds)}: an alarm is on time at 9 minutes or slower, and the CPU sleeps between scans."
     s.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS ->
-        "Off: with the screen off and the phone still, Android runs each alarm-driven scan only about every 9 minutes, whatever the ${ScanSettings.intervalLabel(s.autoScanSeconds)} above says. Saves battery."
+        "Off: with the screen off and the phone still, Android may run each alarm-driven scan only about every 9 minutes, whatever the ${ScanSettings.intervalLabel(s.autoScanSeconds)} above says. Saves battery."
     else -> "Off: the CPU sleeps between scans, each woken by an alarm, which is on time at ${ScanSettings.intervalLabel(s.autoScanSeconds)}."
 }
 

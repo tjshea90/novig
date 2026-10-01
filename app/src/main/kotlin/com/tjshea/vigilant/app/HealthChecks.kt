@@ -203,7 +203,7 @@ object HealthChecks {
         if (!set.autoScanKeepAwake && set.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS) {
             add(
                 Check(
-                    Level.WARN, "Background auto-scan", "Keep awake is off: with the screen off and the phone still, Android runs alarm-driven scans about every 9 minutes, not every ${ScanSettings.intervalLabel(set.autoScanSeconds)}",
+                    Level.WARN, "Background auto-scan", "Keep awake is off: with the screen off and the phone still, Android may run alarm-driven scans only about every 9 minutes, not every ${ScanSettings.intervalLabel(set.autoScanSeconds)}",
                     look = "Settings › Background auto-scan › Keep awake",
                 ),
             )

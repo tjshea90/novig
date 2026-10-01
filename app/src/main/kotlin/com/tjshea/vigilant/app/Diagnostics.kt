@@ -129,7 +129,7 @@ object Diagnostics {
             "Keep awake (Tj, 2026-10-02): switch ${if (set.autoScanKeepAwake) "on" else "OFF"} · " + when {
                 set.activeAutoScan == AutoScanMode.OFF -> "auto-scan runs nothing, nothing to keep awake"
                 KeepAwake.active(set) -> "holding the CPU awake (screen off): ${if (x.keepAwakeHeld) "yes, the wake lock is held now" else "NO, the service isn't holding it"}"
-                !set.autoScanKeepAwake && set.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS -> "NOT holding it: scans between ${ScanSettings.intervalLabel(set.autoScanSeconds)} apart run on alarms, which Doze spaces about 9 minutes apart"
+                !set.autoScanKeepAwake && set.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS -> "NOT holding it: scans between ${ScanSettings.intervalLabel(set.autoScanSeconds)} apart run on alarms, which Doze may space about 9 minutes apart"
                 else -> "not needed at ${ScanSettings.intervalLabel(set.autoScanSeconds)}: an alarm is on time at 9 minutes or more"
             },
         )

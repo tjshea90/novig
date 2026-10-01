@@ -104,7 +104,7 @@ class KeepAwakeDiagnosticsTest {
         assertTrue(text, text.contains("9 min after schedule · Doze on"))
         assertTrue(text, text.contains("Battery Saver off · Doze now yes · standby bucket active"))
         // The other states of the line.
-        assertTrue(Diagnostics.report(state { it.copy(autoScanKeepAwake = false) }, x, now, zone).contains("switch OFF · NOT holding it: scans between 5 sec apart run on alarms, which Doze spaces about 9 minutes apart"))
+        assertTrue(Diagnostics.report(state { it.copy(autoScanKeepAwake = false) }, x, now, zone).contains("switch OFF · NOT holding it: scans between 5 sec apart run on alarms, which Doze may space about 9 minutes apart"))
         assertTrue(Diagnostics.report(state { it.copy(autoScanSeconds = 600) }, x, now, zone).contains("not needed at 10 min: an alarm is on time at 9 minutes or more"))
         assertTrue(Diagnostics.report(state(), x.copy(keepAwakeHeld = false), now, zone).contains("NO, the service isn't holding it"))
         assertTrue(Diagnostics.report(state { it.copy(autoScan = AutoScanMode.OFF) }, x, now, zone).contains("auto-scan runs nothing, nothing to keep awake"))
@@ -118,7 +118,7 @@ class KeepAwakeDiagnosticsTest {
         assertTrue(keepAwakeHint(s), keepAwakeHint(s).startsWith("On: the screen can stay off and locked, but the CPU stays awake"))
         assertTrue(keepAwakeHint(s), keepAwakeHint(s).contains("5 sec schedule") && keepAwakeHint(s).contains("best plugged in"))
         assertTrue(keepAwakeHint(s.copy(autoScanSeconds = 600)).startsWith("On, but not needed at 10 min"))
-        assertTrue(keepAwakeHint(s.copy(autoScanKeepAwake = false)).startsWith("Off: with the screen off and the phone still, Android runs each alarm-driven scan only about every 9 minutes"))
+        assertTrue(keepAwakeHint(s.copy(autoScanKeepAwake = false)).startsWith("Off: with the screen off and the phone still, Android may run each alarm-driven scan only about every 9 minutes"))
         assertTrue(keepAwakeHint(s.copy(autoScanKeepAwake = false, autoScanSeconds = 600)).startsWith("Off: the CPU sleeps between scans"))
         assertTrue(batteryHint(false).contains("Settings › Apps › Vigilant › App battery usage › Unrestricted"))
         assertTrue(batteryHint(true).startsWith("Battery: Unrestricted"))

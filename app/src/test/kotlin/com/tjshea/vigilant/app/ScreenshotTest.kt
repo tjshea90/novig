@@ -862,7 +862,7 @@ class ScreenshotTest {
         val base = SampleScan.state()
         fun with(f: (com.tjshea.vigilant.data.scanner.ScanSettings) -> com.tjshea.vigilant.data.scanner.ScanSettings) = base.copy(settings = f(base.settings))
         screen { SettingsScreen(with { it.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 15, autoScanKeepAwake = false) }, {}) }
-        compose.onNodeWithText("Off: with the screen off and the phone still, Android runs each alarm-driven scan only about every 9 minutes", substring = true).assertExists()
+        compose.onNodeWithText("Off: with the screen off and the phone still, Android may run each alarm-driven scan only about every 9 minutes", substring = true).assertExists()
         // The fast-interval note points at the switch while it's off.
         compose.onNodeWithText("Keep awake, below, prevents that", substring = true).assertExists()
     }
