@@ -424,6 +424,20 @@ class BiggerScansTest {
         assertTrue("later partials re-use the earlier ones' outcomes ($shared shared)", shared > 0)
     }
 
+    @Test
+    fun `a scan lets go of the boards of leagues no longer picked`() = runTest {
+        val board = Board(6)
+        val scanner = Scanner(Novig(board), clock = { now })
+        val two = settings.copy(leagues = setOf("MLB", "NHL"))
+        scanner.scan(two, listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals("a board per league", 2, scanner.holdings().snapshots)
+        scanner.scan(settings, listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals("NHL was turned off: its board is let go", 1, scanner.holdings().snapshots)
+        // Turned back on, it's read again, not served from a board of unknown age.
+        scanner.scan(two, listOf(Fair(board)), onProgress = {}, onPartial = {})
+        assertEquals(2, scanner.holdings().snapshots)
+    }
+
     // ---- better: a long scan's first edges are read again at the end ---------------------------------
 
     @Test
