@@ -16,6 +16,7 @@ import com.tjshea.vigilant.engine.FairValue
 import com.tjshea.vigilant.engine.MakerBid
 import com.tjshea.vigilant.engine.PositiveDepth
 import com.tjshea.vigilant.engine.TakeLevel
+import java.util.concurrent.atomic.AtomicReferenceArray
 
 /** One Novig outcome, priced. Every priced outcome is kept, +EV or not; the feed filters. */
 data class Opportunity(
@@ -150,9 +151,14 @@ data class ScanResult(
  * every line's books again (power devig: ~200 `pow` calls per book), though only Novig's books had
  * changed; with 1,200 prices a scan that was as slow as the reads themselves. A plan is re-made
  * whenever the fair odds behind it change, so a line is never priced from stale quotes.
+ *
+ * It also keeps the last plan's priced markets ([pricedFor]), so a partial result re-uses every market whose
+ * Novig book hasn't changed instead of building all of its outcomes again (v0.39.1, Tj's Diagnostics 2026-10-01: an
+ * OutOfMemoryError in a no-limit scan, where each partial built ~17,000 outcomes of which a batch changed a few hundred).
  */
 class FairMemo(private val keep: Int = 3) {
     private val entries = ArrayList<Triple<Plan, FairSettings, HashMap<LineKey, FairLine?>>>()
+    private var priced: PricedMarkets? = null
 
     @Synchronized
     fun linesFor(plan: Plan, settings: FairSettings): HashMap<LineKey, FairLine?> {
@@ -162,6 +168,43 @@ class FairMemo(private val keep: Int = 3) {
         while (entries.size > keep) entries.removeAt(entries.size - 1)
         return fresh
     }
+
+    /**
+     * The priced markets of [plan] (with [settings]' fair method). Only the one most recently asked for is kept: a second
+     * plan's outcomes held beside it would be the memory this exists to save.
+     */
+    @Synchronized
+    fun pricedFor(plan: Plan, settings: FairSettings): PricedMarkets {
+        priced?.takeIf { it.plan === plan && it.settings == settings }?.let { return it }
+        return PricedMarkets(plan, settings).also { priced = it }
+    }
+
+    /** How many markets' outcomes are held for re-use, for tests. */
+    @Synchronized
+    fun pricedCount(): Int = priced?.count() ?: 0
+}
+
+/**
+ * One plan's priced markets, by the market's place in [Plan.markets]. A slot is good only while what priced it is still what
+ * is asked for: the same Novig book (the very object: a re-read makes a new one), the same bankroll and Kelly multiplier
+ * (a stake is worked from both). The plan and fair method are fixed for the object's life, and everything else an outcome
+ * is made of (the market, its fee, whether it's live, the fair line) comes from them.
+ */
+class PricedMarkets internal constructor(internal val plan: Plan, internal val settings: FairSettings) {
+    private class Slot(val book: NovigBook?, val bankroll: Double, val kelly: Double, val outcomes: List<Opportunity>)
+
+    private val slots = AtomicReferenceArray<Slot?>(plan.markets.size)
+
+    internal fun get(index: Int, book: NovigBook?, bankroll: Double, kelly: Double): List<Opportunity>? {
+        val slot = slots.get(index) ?: return null
+        return slot.outcomes.takeIf { slot.book === book && slot.bankroll == bankroll && slot.kelly == kelly }
+    }
+
+    internal fun put(index: Int, book: NovigBook?, bankroll: Double, kelly: Double, outcomes: List<Opportunity>) {
+        slots.set(index, Slot(book, bankroll, kelly, outcomes))
+    }
+
+    internal fun count(): Int = (0 until slots.length()).count { slots.get(it) != null }
 }
 
 /**
@@ -194,16 +237,19 @@ object Pricing {
             FairValue.compute(bookPrices(ref, key), fairSettings)
         }
 
+        val kept = memo?.pricedFor(plan, fairSettings)
         val all = ArrayList<Opportunity>()
-        for (pm in plan.markets) {
+        for ((index, pm) in plan.markets.withIndex()) {
             val fee = pm.market.fee ?: continue
             val book = books[pm.market.marketId]
+            kept?.get(index, book, settings.bankroll, settings.kellyMultiplier)?.let { all += it; continue }
             val fair = pm.lineKey?.let(::fairFor)
             val live = pm.event.isLive
             val ladders = pm.outcomes.associate { it.outcome.outcomeId to (book?.takeLadder(pm.market, it.outcome.outcomeId).orEmpty()) }
             val bestTakes = ladders.values.mapNotNull { it.firstOrNull()?.price }
             val width = if (bestTakes.size == 2) bestTakes.sum() - 1.0 else null
 
+            val outcomes = ArrayList<Opportunity>(pm.outcomes.size)
             for (po in pm.outcomes) {
                 val ladder = ladders[po.outcome.outcomeId].orEmpty()
                 val p = fair?.let { probabilityFor(po.target, pm.lineKey, it) }
@@ -214,7 +260,7 @@ object Pricing {
                 } else {
                     null
                 }
-                all += Opportunity(
+                outcomes += Opportunity(
                     league = pm.league,
                     event = pm.event,
                     market = pm.market,
@@ -238,6 +284,8 @@ object Pricing {
                     target = po.target,
                 )
             }
+            kept?.put(index, book, settings.bankroll, settings.kellyMultiplier, outcomes)
+            all += outcomes
         }
 
         val games = all.groupBy { it.event.eventId }.map { (_, list) ->
