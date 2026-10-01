@@ -104,6 +104,10 @@ class AutoBettor(
     /** The last stop note posted and when: the same one isn't posted again for [NOTE_REPEAT_MS]. */
     private var lastStopNote: Pair<String, Long>? = null
 
+    /** Novig refused an order (the location check, KYC, a wallet it won't take): nothing is sent again until [failedUntilMs], whatever the interval. */
+    private var failedUntilMs = 0L
+    private var failure: String? = null
+
     /**
      * One pass for [settings] over [state] (the CNO list, live prices and books as the cycle just read them). Never throws for a bet's own
      * trouble: it ends up in the [Report]. Cancelled cleanly: a bet's order, once sent, is always followed to its end and recorded.
@@ -114,6 +118,7 @@ class AutoBettor(
         // Whoever calls, a halted or switched-off auto-bet places nothing.
         if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
         settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (Settings › Betting › Resume auto-bet)") }
+        failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = "waiting after Novig refused an order: $it") }
         val placer = placer()
         if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting › Enable betting)")
         cooldown.entries.removeAll { it.value <= now }
@@ -209,7 +214,12 @@ class AutoBettor(
                     if (result.reason.contains("daily limit")) { stopped = "your daily limit of ${money(settings.apiMaxPerDay)} for API bets is reached"; break }
                     skip(result.reason.take(REASON_CHARS))
                 }
-                is PlaceResult.Failed -> { stopped = "Novig refused: ${result.message}"; break }
+                is PlaceResult.Failed -> {
+                    stopped = "Novig refused: ${result.message}"
+                    failure = stopped
+                    failedUntilMs = now + FAIL_BACKOFF_MS
+                    break
+                }
                 is PlaceResult.Unconfirmed -> {
                     // Nothing says whether it filled: never again until Tj has looked (Novig, then Settings › Betting › Resume).
                     halted = true
@@ -260,6 +270,9 @@ class AutoBettor(
 
         /** A bet whose Novig outcome wasn't found isn't searched for again at once. */
         const val NOT_FOUND_COOLDOWN_MS = 5 * 60_000L
+
+        /** After Novig refuses an order, nothing is tried for this long. */
+        const val FAIL_BACKOFF_MS = 5 * 60_000L
 
         /** The same stop isn't announced again for this long. */
         const val NOTE_REPEAT_MS = 60 * 60_000L
