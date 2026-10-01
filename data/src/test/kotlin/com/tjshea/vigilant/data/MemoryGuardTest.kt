@@ -18,7 +18,7 @@ class MemoryGuardTest {
 
     private val mb = 1024L * 1024L
 
-    @After fun restore() { MemoryGuard.probe = MemoryGuard.probe.takeUnless { it is Fake } ?: runCatching { MemoryGuard::class.java.getDeclaredField("Real") }.let { MemoryGuard.probe } }
+    @After fun restore() = MemoryGuard.useRealProbe()
 
     @Test
     fun `the heap is a share of its limit, said in megabytes`() {

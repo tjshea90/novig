@@ -263,4 +263,68 @@ class StreamingScanTest {
         advanceUntilIdle()
         assertEquals(3, runner.state.value.finished)
     }
+
+    // ---- the app's memory (Tj's v0.38.0 Diagnostics, 2026-10-01: an OutOfMemoryError at the 256 MB heap limit mid-scan) ------------------------
+
+    /** The heap "fills" as soon as Novig's first batch of books has been read. */
+    private class FillsAfterFirstBatch(private val novig: () -> Int) : com.tjshea.vigilant.data.MemoryGuard.Probe {
+        override fun used() = if (novig() == 0) 50L else 95L
+        override fun max() = 100L
+        override fun collect() {}
+    }
+
+    @Test
+    fun `a scan whose app memory fills stops reading and says so, with what it has read, instead of crashing the app`() = runTest {
+        val novig = Novig(edgeOn = setOf(0))
+        com.tjshea.vigilant.data.MemoryGuard.probe = FillsAfterFirstBatch { novig.calls.size }
+        try {
+            val r = Scanner(novig, clock = { now }).scan(settings, listOf(Fair()), onProgress = { }, onPartial = { })
+            // Only the first batch was read; the rest is left for the next scan.
+            assertEquals(listOf(Scanner.CHUNK), novig.calls.map { it.size })
+            assertTrue(r.errors.toString(), r.errors.any { it.contains("memory was nearly full") && it.contains("Lower") })
+            // What was read is still a result (game 0's edge is in it).
+            assertNotNull(r.result)
+            assertEquals(setOf("m0"), ids(r.result!!))
+        } finally {
+            com.tjshea.vigilant.data.MemoryGuard.useRealProbe()
+        }
+    }
+
+    @Test
+    fun `with the heap fine, every market is read as before`() = runTest {
+        val novig = Novig(edgeOn = setOf(7))
+        com.tjshea.vigilant.data.MemoryGuard.probe = object : com.tjshea.vigilant.data.MemoryGuard.Probe {
+            override fun used() = 10L
+            override fun max() = 100L
+            override fun collect() {}
+        }
+        try {
+            val r = Scanner(novig, clock = { now }).scan(settings, listOf(Fair()), onProgress = { }, onPartial = { })
+            assertEquals(10, r.booksFetched)
+            assertTrue(r.errors.none { it.contains("memory") })
+        } finally {
+            com.tjshea.vigilant.data.MemoryGuard.useRealProbe()
+        }
+    }
+
+    @Test
+    fun `a big plan prices a partial result at most every 2 seconds instead of after every batch, and the final result is whole`() = runTest {
+        val novig = Novig(edgeOn = setOf(7))
+        val partials = ArrayList<ScanResult>()
+        // "Big" is 5 markets here, and the steady clock never moves: only the first batch publishes.
+        val r = Scanner(novig, clock = { now }, elapsed = { 5_000L }, bigPlanMarkets = 5, publishMinMs = 2_000L)
+            .scan(settings, listOf(Fair()), onProgress = { }, onPartial = { partials += it })
+        assertEquals(2, novig.calls.size)
+        assertEquals(1, partials.size)
+        // The skipped batch is in the final result, priced in full.
+        assertEquals(10, r.booksFetched)
+        assertEquals(setOf("m7"), ids(r.result!!))
+        assertFalse(r.result!!.partial)
+        // Two seconds on, the next batch publishes again.
+        var t = 0L
+        val partials2 = ArrayList<ScanResult>()
+        Scanner(Novig(edgeOn = setOf(7)), clock = { now }, elapsed = { t.also { t += 2_500L } }, bigPlanMarkets = 5, publishMinMs = 2_000L)
+            .scan(settings, listOf(Fair()), onProgress = { }, onPartial = { partials2 += it })
+        assertEquals(2, partials2.size)
+    }
 }

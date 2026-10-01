@@ -26,9 +26,13 @@ object MemoryGuard {
         override fun collect() = runtime.gc()
     }
 
-    /** Tests replace this. */
+    /** Tests replace this ([useRealProbe] puts the real heap back). */
     @Volatile
     var probe: Probe = Real
+
+    fun useRealProbe() {
+        probe = Real
+    }
 
     /** Above this share of the heap, caches that can be rebuilt are dropped. */
     const val TRIM_AT = 0.75
