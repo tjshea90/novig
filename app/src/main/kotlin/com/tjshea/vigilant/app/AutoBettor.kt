@@ -193,6 +193,11 @@ class AutoBettor(
             if (priced != null && priced != target.outcomeId) { cooldown[row.key] = now + NOT_FOUND_COOLDOWN_MS; skip("Novig's price and its bet slip name different outcomes"); continue }
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
 
+            // The order is marked in flight BEFORE it can be sent (saved, and auto-bet stays stopped until it's cleared): if the process dies after
+            // Novig takes the order and before the Tracker has it (Tj's v0.38.0 report: the app crashed, out of memory), the next cycle would find
+            // the same bet again with nothing on record and place it twice. The marker survives that; a restart finds auto-bet stopped, with why.
+            val marker = inFlightNote(target, stake)
+            withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = marker) } } }
             // Once an order may be on its way it is followed to its end and recorded, whatever happens to this coroutine.
             val result = try {
                 withContext(Dispatchers.IO + NonCancellable) { placer.placeAuto(target.copy(auto = true), stake, limits, AutoBet.priceOf(item.shown.row)) }
@@ -200,6 +205,10 @@ class AutoBettor(
                 throw e
             } catch (e: Exception) {
                 PlaceResult.Unconfirmed("Something went wrong while placing it (${e.message ?: e.javaClass.simpleName}).")
+            }
+            // A definitive answer (placed, nothing filled, refused, Novig said no) clears the marker; a lost answer replaces it below.
+            if (result !is PlaceResult.Unconfirmed) {
+                withContext(NonCancellable) { runCatching { c.settingsStore.update { if (it.autoBetHalted == marker) it.copy(autoBetHalted = null) else it } } }
             }
             when (result) {
                 is PlaceResult.Placed -> {
@@ -274,6 +283,11 @@ class AutoBettor(
     companion object {
         /** A game starting sooner than this isn't bet: Novig may be moving it to live, and the price is about to jump. */
         const val MIN_LEAD_MS = 60_000L
+
+        /** What the saved halt says while an order may be on its way ([run]): a restart that finds it knows what to check. */
+        fun inFlightNote(target: BetTarget, stake: Double): String =
+            "Vigilant stopped while an order for ${target.selection} (${String.format(Locale.US, "$%.2f", stake)}) was being placed, so nothing says whether Novig filled it. " +
+                "Check Novig and the Tracker's Sync with Novig's fills before resuming."
 
         /** A bet whose Novig outcome wasn't found isn't searched for again at once. */
         const val NOT_FOUND_COOLDOWN_MS = 5 * 60_000L

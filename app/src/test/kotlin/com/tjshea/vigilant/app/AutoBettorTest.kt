@@ -389,6 +389,58 @@ class AutoBettorTest {
         assertEquals(0, app.container.tracker.all().size)
     }
 
+    /** Tj's v0.38.0 report, 2026-10-01: the app crashed out of memory. A crash after Novig takes an order and before the Tracker has it must not become a second order. */
+    @Test
+    fun `an order in flight is saved before it is sent, so a process that dies mid-order leaves auto-bet stopped and the bet is never sent twice`() = runBlocking {
+        class ProcessDied : Error("the process died mid-order")
+        var savedWhenSent: String? = null
+        val dying = object : NovigTradingClient(
+            NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
+                override val keyId = "kid"
+                override val algorithm = NovigKeyAlgorithm.P256
+                override fun sign(message: ByteArray) = ByteArray(0)
+            }),
+            Json { ignoreUnknownKeys = true },
+        ) {
+            val sent = AtomicInteger()
+            override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+                sent.incrementAndGet()
+                // What is on disk at the moment the order goes to Novig.
+                savedWhenSent = app.container.settingsStore.read().autoBetHalted
+                throw ProcessDied()
+            }
+        }
+        val p = ApiBetPlacer(dying, app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
+        val b = AutoBettor(app, app.container, clock = { now }, placer = { p }, wallet = { 25.0 }, resolve = { targetOf(it) })
+        val died = runCatching { b.run(settings(), state()) }.exceptionOrNull()
+        assertTrue(died is ProcessDied)
+        // The marker was already saved when the order went out, and is still there: it names the bet and says what to check.
+        assertNotNull(savedWhenSent)
+        assertTrue(savedWhenSent!!, savedWhenSent!!.contains("Justin Jefferson Under 69.5") && savedWhenSent!!.contains("was being placed"))
+        val after = app.container.settingsStore.read()
+        assertEquals(savedWhenSent, after.autoBetHalted)
+        assertEquals(0, app.container.tracker.all().size)
+        // A fresh process (a new bettor) with the saved settings places nothing, and the order isn't sent again.
+        val restarted = AutoBettor(app, app.container, clock = { now }, placer = { p }, wallet = { 25.0 }, resolve = { targetOf(it) })
+        val r = restarted.run(settings { it.copy(autoBetHalted = after.autoBetHalted) }, state())
+        assertEquals(0, r.placed.size)
+        assertTrue(r.halted)
+        assertEquals("never sent again", 1, dying.sent.get())
+    }
+
+    @Test
+    fun `the in-flight marker is cleared once the order has a definitive answer, placed or refused`() = runBlocking {
+        val novig = FakeNovig()
+        assertEquals(1, bettor(novig).run(settings(), state()).placed.size)
+        assertNull("placed: nothing left to check", app.container.settingsStore.read().autoBetHalted)
+        // Refused before anything is sent (the book's price is nothing like the one judged): cleared too.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val novig2 = FakeNovig()
+        assertEquals(0, bettor(novig2, placer = placer(novig2, book = book(bid = 600))).run(settings(), state()).placed.size)
+        assertNull("refused: cleared", app.container.settingsStore.read().autoBetHalted)
+        // A marker that is a real halt (a lost answer's) is never cleared by a later bet's own: the lost-answer test above covers it.
+    }
+
     @Test
     fun `off, or betting not set up, places nothing`() = runBlocking {
         val novig = FakeNovig()
