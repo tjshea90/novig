@@ -143,7 +143,7 @@ class KeepAwakeServiceTest {
     }
 
     @Test
-    fun `at 10 minutes keep awake isn't needed: no CPU lock, an exact alarm for the next scan`() {
+    fun `at 10 minutes keep awake isn't needed, so no CPU lock and an exact alarm for the next scan`() {
         runBlocking { app.container.settingsStore.update { it.copy(autoScanSeconds = 600) } }
         assertFalse(KeepAwake.active(on.copy(autoScanSeconds = 600)))
         val controller = start()
