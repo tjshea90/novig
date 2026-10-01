@@ -206,10 +206,11 @@ class AutoBettorTest {
     @Test
     fun `a bet whose edge is implausibly high is left for Tj to place by hand`() = runBlocking {
         val novig = FakeNovig()
-        val st = state().let { it.copy(cno = it.cno.copy(snapshot = it.cno.snapshot!!.copy(rows = listOf(jefferson.copy(ev = 0.30, fairProbability = 0.62))))).indexed(now) }
-        val r = bettor(novig).run(settings(), st)
+        // Novig's price now says +30% against CNO's fair odds: everything else about it is in order (books, price match, wallet).
+        val r = bettor(novig).run(settings(), state(live = LivePrice(117, 88.0, 0.30, now - 5_000, "mkt", "out-jj")))
         assertEquals(0, novig.orders.get())
         assertEquals(0, r.placed.size)
+        assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("usually a stale or mismatched price") })
     }
 
     @Test
