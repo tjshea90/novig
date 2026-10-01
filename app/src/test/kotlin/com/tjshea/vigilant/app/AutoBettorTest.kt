@@ -207,10 +207,18 @@ class AutoBettorTest {
     fun `a bet priced at another book is never placed through Novig`() = runBlocking {
         val novig = FakeNovig()
         val elsewhere = jefferson.copy(book = "DraftKings")
-        val st = state(row = elsewhere).let { it.copy(cno = it.cno.copy(snapshot = it.cno.snapshot!!.copy(rows = listOf(elsewhere)))).indexed(now) }
+        // Everything else in order for it (books read, Novig's price read), so the book is the only thing standing in the way.
+        val st = state(row = elsewhere).let {
+            it.copy(
+                cno = it.cno.copy(snapshot = it.cno.snapshot!!.copy(rows = listOf(elsewhere))),
+                books = mapOf(elsewhere.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = SampleCno.jeffersonBooks())),
+            ).indexed(now)
+        }
+        assertTrue("the fixture reaches the judge", AlertPicks.cnoChecked(st, 0.03, now).isNotEmpty())
         val r = bettor(novig).run(settings(), st)
         assertEquals(0, novig.orders.get())
         assertEquals(0, r.placed.size)
+        assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("not priced at Novig") })
     }
 
     // ---- the stake ----------------------------------------------------------------------------------------------
