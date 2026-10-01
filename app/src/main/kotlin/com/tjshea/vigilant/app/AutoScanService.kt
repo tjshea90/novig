@@ -137,7 +137,8 @@ class AutoScanService : Service() {
                 releaseWakeLock()
                 // A cycle longer than its interval (a 15 s one with a slow CNO page, any one with Vigilant's scan) had its next alarm go off while
                 // it ran, and that one was dropped ([runCycle]'s guard): the next is armed from here, so the schedule never lapses.
-                if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, System.currentTimeMillis()))
+                // The interval as it is now: Tj may have picked another while the cycle ran.
+                if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, container.settingsStore.flow.value?.autoScanSeconds ?: s.autoScanSeconds, System.currentTimeMillis()))
                 updateOngoing(container.autoScan.status.value, force = true)
             }
         }

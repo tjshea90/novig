@@ -122,7 +122,7 @@ class AutoScanTest {
     fun `a cycle that outlasts its interval arms the next alarm when it ends, unless the service is stopping`() {
         val service = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText()
         val finallyBlock = service.substringAfter("container.autoScan.cycle() }").substringBefore("updateOngoing(container.autoScan.status.value, force = true)")
-        assertTrue(finallyBlock, finallyBlock.contains("if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, System.currentTimeMillis()))"))
+        assertTrue(finallyBlock, finallyBlock.contains("if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, container.settingsStore.flow.value?.autoScanSeconds ?: s.autoScanSeconds, System.currentTimeMillis()))"))
         // Stop and destroy set the flag first, so a cycle cancelled by them can't arm an alarm after the schedule was cancelled.
         assertTrue(service.contains("private fun stopNow() {\n        stopping = true\n        AutoScanAlarm.cancel(this)"))
         assertTrue(service.contains("override fun onDestroy() {\n        stopping = true"))
