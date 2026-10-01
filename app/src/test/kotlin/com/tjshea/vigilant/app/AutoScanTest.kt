@@ -47,12 +47,12 @@ class AutoScanTest {
     // ---- settings ----------------------------------------------------------------------------------
 
     @Test
-    fun `auto-scan is off by default, every 15 seconds to 40 minutes, alerts at 2, 3 or 4 percent (3 by default)`() {
+    fun `auto-scan is off by default, every 5 seconds to 40 minutes, alerts at 2, 3 or 4 percent (3 by default)`() {
         val s = ScanSettings()
         assertEquals(AutoScanMode.OFF, s.autoScan)
-        // Tj, 2026-10-01: 3 minutes, 1 minute, 30 seconds and 15 seconds beside the old 5-40 minutes.
-        assertEquals(listOf(15, 30, 60, 180, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES)
-        assertEquals(listOf("15 sec", "30 sec", "1 min", "3 min", "5 min", "10 min", "20 min", "30 min", "40 min"), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::intervalLabel))
+        // Tj, 2026-10-01: 3 minutes, 1 minute, 30 seconds and 15 seconds beside the old 5-40 minutes, then "every 5 seconds for the auto bet function".
+        assertEquals(listOf(5, 15, 30, 60, 180, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES)
+        assertEquals(listOf("5 sec", "15 sec", "30 sec", "1 min", "3 min", "5 min", "10 min", "20 min", "30 min", "40 min"), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::intervalLabel))
         assertEquals(600, s.autoScanSeconds)
         assertTrue(s.autoScanSeconds in ScanSettings.AUTO_SCAN_SECONDS_CHOICES)
         assertEquals(listOf(0.0, 0.02, 0.03, 0.04), ScanSettings.ALERT_MIN_EV_CHOICES)
@@ -101,14 +101,14 @@ class AutoScanTest {
         assertFalse(AutoScanClock.vigilantDue(now - 180_000L, 180, now))
         assertTrue(AutoScanClock.vigilantDue(now - 360_000L, 180, now))
         // What the Settings hint promises is what runs: every 4 min at 15 s, 30 s and 1 min, every 6 min at 3 min, else the interval.
-        assertEquals(listOf(240, 240, 240, 360, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::vigilantEverySeconds))
+        assertEquals(listOf(240, 240, 240, 240, 360, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::vigilantEverySeconds))
     }
 
     /** Faster cycles than the usual 5 minutes also re-read the bets in their last 15 minutes at the cycle's pace: a closer last read before the start is the close. */
     @Test
     fun `cycles faster than 5 minutes re-read bets about to start at their own pace, never faster than once a minute`() {
-        // 15 s and 30 s cycles: once a minute each at most; 1 min: every minute; 3 min: every 3 minutes; 5 minutes and slower: the usual 5 minute rule alone.
-        assertEquals(listOf(60_000L, 60_000L, 60_000L, 180_000L, null, null, null, null, null), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(AutoScanClock::closingFreshMs))
+        // 5 s, 15 s and 30 s cycles: once a minute each at most; 1 min: every minute; 3 min: every 3 minutes; 5 minutes and slower: the usual 5 minute rule alone.
+        assertEquals(listOf(60_000L, 60_000L, 60_000L, 60_000L, 180_000L, null, null, null, null, null), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(AutoScanClock::closingFreshMs))
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
         val closing = src.substringAfter("c.recheck.captureClosing()").substringBefore("}.onFailure")
         assertTrue(closing, closing.contains("AutoScanClock.closingFreshMs(settings.autoScanSeconds)?.let { c.recheck.captureClosing(withinMs = ClosingLine.TRUE_CLOSE_MS, freshMs = it) }"))
