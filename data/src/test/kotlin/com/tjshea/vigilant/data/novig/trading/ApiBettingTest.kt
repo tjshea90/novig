@@ -444,6 +444,33 @@ class ApiBettingTest {
         assertTrue(t.all().isEmpty())
     }
 
+    /** Tj, 2026-10-01: "I don't want it to bet anything that is more of a longshot than +130 odds". The book's price is +117 (0.46). */
+    @Test
+    fun `a longest-odds limit is checked on the book read just before the order, not only on the price it was judged at`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        // Judged at +105 (0.4878), within the 3-point match of the book's 0.46: the price match alone lets it through. The book is now at +117, over a +110 limit.
+        val drifted = placer(t).placeAuto(target(), 5.0, autoLimits.copy(maxOdds = 110), expectedPrice = 0.4878) as PlaceResult.Refused
+        assertEquals("Novig's best price is now +117, longer than your +110 limit.", drifted.reason)
+        assertTrue("nothing was sent", requests.none { it.method == "POST" })
+        assertTrue(t.all().isEmpty())
+        // At the limit it is bet; with no limit (the default) it is too.
+        assertTrue(placer(tracker()).placeAuto(target(), 5.0, autoLimits.copy(maxOdds = 117), expectedPrice = 0.46) is PlaceResult.Placed)
+    }
+
+    @Test
+    fun `the longest-odds limit is the planner's, so a bet by hand is never held to it`() {
+        val now = now
+        val long = BetLimits(maxStake = 20.0, maxPerDay = 50.0, minEv = 0.0, maxOdds = 110)
+        assertTrue(refused(ApiBetPlanner.plan(target(), book(), 5.0, now, long, 0.0)).contains("longer than your +110 limit"))
+        // The same bet under the limits a manual bet has (no odds limit) is planned as before.
+        assertEquals(0, limits.maxOdds)
+        assertEquals(0.46, ready(ApiBetPlanner.plan(target(), book(), 5.0, now, limits, 0.0)).bestPrice, 1e-9)
+        // A favourite (the other side of this market, -117 at 0.54... any price over even money) passes a limit of +100.
+        val fav = NovigBook("mkt", 1, mapOf("B" to listOf(BidLevel(400, 500)), "A" to listOf(BidLevel(450, 50))), now)
+        assertEquals(0.6, ready(ApiBetPlanner.plan(target(fair = 0.65), fav, 5.0, now, long.copy(maxOdds = 100), 0.0)).bestPrice, 1e-9)
+    }
+
     @Test
     fun `an auto-bet obeys its per-bet maximum, the daily limit, the pregame rule and the fresh fair odds like any API bet`() = runBlocking {
         novig(Scenario())
