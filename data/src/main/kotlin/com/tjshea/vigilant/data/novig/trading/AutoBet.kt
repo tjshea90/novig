@@ -39,6 +39,9 @@ object AutoBet {
      */
     const val MAX_SANE_EV = 0.15
 
+    /** The shortest a longest-odds limit can be: +100 is even money; under it would mean "favorites only", which isn't what the option is for. */
+    const val MIN_MAX_ODDS = 100
+
     /** At most this many bets per background cycle (the best edges first); the rest wait for the next. */
     const val MAX_PER_CYCLE = 5
 
@@ -52,6 +55,8 @@ object AutoBet {
         val stake: AutoBetStake,
         val customStake: Double,
         val maxStake: Double,
+        /** The longest American odds to bet; 0 = no limit. */
+        val maxOdds: Int = 0,
     )
 
     fun rules(s: ScanSettings) = Rules(
@@ -61,15 +66,22 @@ object AutoBet {
         stake = s.autoBetStake,
         customStake = s.autoBetCustomStake.coerceAtLeast(0.0),
         maxStake = s.autoBetMaxStake.coerceAtLeast(0.0),
+        maxOdds = s.autoBetMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
     )
+
+    /** Whether [american] odds are longer than the [maxOdds] limit (0 = no limit). A favorite's negative odds never are. */
+    fun tooLong(maxOdds: Int, american: Int): Boolean = maxOdds > 0 && american > maxOdds
 
     /**
      * Why a bet doesn't pass Tj's criteria, or null when it does. [shownEv]: the EV the CNO card shows (CNO's fair odds against Novig's price
-     * now). [check]: what the books on the bet's game page say ([CnoBooks.check], judged at that same price).
+     * now). [check]: what the books on the bet's game page say ([CnoBooks.check], judged at that same price). [american]: that price as
+     * American odds, for the longest-odds limit.
      */
-    fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check): String? {
+    fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int): String? {
         if (shownEv < rules.minEv - 1e-9) return "its edge ${percent(shownEv)} is under your ${percent(rules.minEv)} minimum"
         if (shownEv > MAX_SANE_EV) return "its edge ${percent(shownEv)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
+        // (No odds in the words: the report counts bets by reason, and each price would be a reason of its own.)
+        if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
         if (check.twoSided < rules.twoSided) return "${books(check.twoSided)} price${if (check.twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
         if (check.agreeing < rules.minBooks) return "${books(check.agreeing)} say${if (check.agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
         val ev = check.ev

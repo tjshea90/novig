@@ -126,6 +126,11 @@ data class ScanSettings(
     /** The most one auto-bet may stake, whatever the stake rule says. */
     val autoBetMaxStake: Double = 10.0,
     /**
+     * The longest odds an auto-bet may take, American (Tj, 2026-10-01: "I don't want it to bet anything that is more of a longshot than +130"):
+     * 130 = nothing over +130, favorites always pass; 0 = no limit (what it was before this existed). [AUTO_BET_MAX_ODDS_CHOICES], or typed.
+     */
+    val autoBetMaxOdds: Int = 0,
+    /**
      * Why auto-bet stopped itself and stays stopped until Tj resumes it (an order whose answer was lost, so nothing says whether it filled);
      * null = running. Not a setting he picks: [com.tjshea.vigilant.data.novig.trading.AutoBet] and the app set and clear it.
      */
@@ -550,6 +555,9 @@ data class ScanSettings(
 
         /** [autoBetBooks]' choices (the last is "5+"). */
         val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
+
+        /** [autoBetMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
+        val AUTO_BET_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 150, 200, 300, 0)
 
         /** [autoBetTwoSided]'s choices. */
         val AUTO_BET_TWO_SIDED_CHOICES = listOf(1, 2, 3)

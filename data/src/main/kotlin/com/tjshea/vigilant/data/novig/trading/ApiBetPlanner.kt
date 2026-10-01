@@ -35,8 +35,11 @@ data class BetTarget(
     val auto: Boolean = false,
 )
 
-/** The limits Tj sets in Settings, all in dollars except [minEv]. */
-data class BetLimits(val maxStake: Double, val maxPerDay: Double, val minEv: Double = 0.0)
+/**
+ * The limits Tj sets in Settings, all in dollars except [minEv] and [maxOdds] (the longest American odds the order book's best price may be,
+ * checked on the book read just before an order: only an auto-bet sets it, 0 = no limit).
+ */
+data class BetLimits(val maxStake: Double, val maxPerDay: Double, val minEv: Double = 0.0, val maxOdds: Int = 0)
 
 /** What a bet would do, worked out from a book read just now. */
 data class BetPlan(
@@ -103,6 +106,9 @@ object ApiBetPlanner {
         if (now - book.fetchedAtMs > MAX_BOOK_AGE_MS) return no("Novig's price is ${(now - book.fetchedAtMs) / 1000} seconds old: try again in a moment.")
         val levels = book.takeLadder(target.market, target.outcomeId).sortedBy { it.price }
         val best = levels.firstOrNull() ?: return no("Nobody is offering this side on Novig right now.")
+        if (AutoBet.tooLong(limits.maxOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
+            return no("Novig's best price is now ${american(best.price)}, longer than your ${Odds.formatAmerican(limits.maxOdds)} limit.")
+        }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = false)
         if (bestQuote.evPercent < limits.minEv - 1e-9) {
             return no(

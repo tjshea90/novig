@@ -140,7 +140,7 @@ class AutoBettor(
                 item.pick.live || startsAt == null || startsAt - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 item.live == null -> skip("no Novig price read in the last minute")
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
-                else -> AutoBet.judge(rules, item.shown.ev, item.check)?.let(::skip) ?: passing.add(item)
+                else -> AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds)?.let(::skip) ?: passing.add(item)
             }
         }
         if (passing.isEmpty()) {
@@ -161,7 +161,7 @@ class AutoBettor(
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
-        val limits = BetLimits(maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv)
+        val limits = BetLimits(maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds)
         val placed = ArrayList<TrackedBet>()
         var stopped: String? = null
         var walletEmpty = false
