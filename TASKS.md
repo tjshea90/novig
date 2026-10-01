@@ -3132,3 +3132,12 @@ Answer first (from `AutoBet.kellyStake`): Kelly's stake at the same edge falls a
 - [x] AE3 Tests, mutation-checked; the card says how Kelly treats longshots; full floor; ship v0.39.2; link to Tj with the Kelly answer in numbers.
   DONE AE1-AE3: `ScanSettings.autoBetMaxOdds` (0 = none, default) + `AUTO_BET_MAX_ODDS_CHOICES`; `AutoBet.Rules.maxOdds`, `tooLong`, `judge(..., american)`; `BetLimits.maxOdds` checked by `ApiBetPlanner` on the book read before the order; the Auto-bet card's "Longest odds to bet" chips + typed field + hint + Kelly note; Diagnostics/confirm sentence carries it when set (`AutoBetText.criteria`). Tests: AutoBetTest (+2: the limit, Kelly vs longshots in numbers), ApiBettingTest (+2), AutoBettorTest (+3: skip, every stake mode, drift on the order book), AutoBetUiTest (+2); 7 mutants killed (run in the foreground: a first background run let the autosave hook commit two mutated checkpoints to main, restored at once; no release was built from them). Floor 1,389 (1,366 passed, 23 live-only skipped) with screenshots. RESEARCH.md §53, BRIEF.md.
   SHIPPED: v0.39.2 (CI green on `c133deb1`, release.yml run 36867009531 green, Release confirmed, APK checked: versionCode 71 and the new option's string present; recorded in BUILDLOG.md).
+
+
+## Tj, 2026-10-01 ~13:2xZ: "Investigate whether it is possible for this auto bet feature to work even with my phone turned off. For example, is there a simple and free way to run it on the cloud? Can Claude run it? How can I run the vigilant cno auto bet feature with my phone off"
+
+A question, not a build: answer from what the code and docs say (what auto-bet needs to run: CNO access, Novig trading key, location check, the Android-only parts), plus what free hosts really allow today. Build nothing until Tj picks an option.
+
+- [ ] AF1 Read what auto-bet depends on: how CNO is fetched (login/IP limits), the Novig key and signing, the location check (NOVIG_API.md §14), and which of the cycle's code is Android-free (`engine`/`data`) and which lives in `app`.
+- [ ] AF2 Check the options against today's facts: a spare Android phone, a home computer/Raspberry Pi, GitHub Actions on a schedule, a free cloud VM, Claude Code routines ("can Claude run it"), serverless cron.
+- [ ] AF3 Answer plainly, with a recommendation, the risks (location check, secrets in a public repo, an LLM placing real bets) and what building the recommended one would take; offer it, don't start it.
