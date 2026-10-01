@@ -375,4 +375,57 @@ class ParlayClosesTest {
         val old = bet("imp", "Player Hits", "Isaac Paredes Over 1.5", league = "")
         assertEquals("No league on record (a ✓ mark imported before the Tracker)", (closes.closes(listOf(old)).getValue("imp") as CloseLookup.None).reason)
     }
+
+    // ---- tennis (PARLAY_API.md §6.11): Pinnacle's set lines in the match's own rows, its games lines in a "(Games)" match's -------------
+
+    private val tennisStart = Instant.parse("2026-09-30T00:00:00Z").toEpochMilli()
+
+    /** ParlayAPI's real file for that day, one match kept; its prices were taken ~4 h early, moved to ~40 min before so they count as closes. */
+    private val tennisFile by lazy {
+        javaClass.classLoader!!.getResource("parlay-closes-tennis.json")!!.readText().replace("2026-09-29T20:", "2026-09-29T23:")
+    }
+
+    private fun tennisBet(id: String, market: String, selection: String) = TrackedBet(
+        id, tennisStart - 86_400_000L, "ATP", "Matteo Berrettini @ Alejandro Davidovich Fokina", tennisStart, market, selection, "m", "", 0.5, 0.5, 0.52, 0.04, 10.0,
+    )
+
+    private fun tennisClose(market: String, selection: String) =
+        ParlayCloses.parseFileGameLine(json.parseToJsonElement(tennisFile), tennisBet("t", market, selection), pick(market, selection))
+
+    @Test
+    fun `a tennis games spread closes at Pinnacle's games line, never its sets line at the same number`() {
+        // Games -1.5: the "(Games)" rows, Fokina -117 / Berrettini +1.5 -101. The sets -1.5 (+152 / -179, ~38%) is the trap.
+        val games = tennisClose("Games Spread", "Alejandro Davidovich Fokina -1.5") as CloseLookup.Found
+        assertEquals(p(-117) / (p(-117) + p(-101)), games.fair, 1e-9)
+        val sets = tennisClose("Set Spread", "Alejandro Davidovich Fokina -1.5") as CloseLookup.Found
+        assertEquals(p(152) / (p(152) + p(-179)), sets.fair, 1e-9)
+        // Totals: 22.5 games from the Games match, 2.5 sets from the match's own rows; a games total at 2.5 isn't one.
+        val total = tennisClose("Total Games", "Over 22.5") as CloseLookup.Found
+        assertEquals(p(-113) / (p(-113) + p(-103)), total.fair, 1e-9)
+        val totalSets = tennisClose("Total Sets", "Under 2.5") as CloseLookup.Found
+        assertEquals(p(-187) / (p(-187) + p(159)), totalSets.fair, 1e-9)
+        assertTrue(tennisClose("Total Games", "Over 2.5") is CloseLookup.None)
+        // The winner, from the match's own rows.
+        val ml = tennisClose("Moneyline", "Matteo Berrettini") as CloseLookup.Found
+        assertEquals(p(124) / (p(124) + p(-143)), ml.fair, 1e-9)
+    }
+
+    @Test
+    fun `a tennis set bet is looked up in the closes file`() = runBlocking<Unit> {
+        val server = MockWebServer().apply {
+            dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse =
+                    if (request.requestUrl!!.encodedPath.endsWith("/historical/closing-lines.json")) MockResponse().setBody(tennisFile).setHeader("X-Export-Credits", "1")
+                    else MockResponse().setResponseCode(404)
+            }
+            start()
+        }
+        try {
+            val closes = ParlayCloses(OkHttpClient(), pool("pk-1"), json, server.url("/v1").toString().trimEnd('/'), clock = { tennisStart + 6 * 3_600_000L })
+            val found = closes.closes(listOf(tennisBet("ss", "Set Spread", "Matteo Berrettini +1.5"))).getValue("ss") as CloseLookup.Found
+            assertEquals(p(-179) / (p(-179) + p(152)), found.fair, 1e-9)
+        } finally {
+            server.shutdown()
+        }
+    }
 }
