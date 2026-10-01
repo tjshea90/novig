@@ -443,6 +443,32 @@ class BiggerScansTest {
         assertTrue("later partials re-use the earlier ones' outcomes ($shared shared)", shared > 0)
     }
 
+    /**
+     * The point of re-use, measured: a scan of 1,200 markets prices a partial after every batch of 30 books, so 40 partials. Bytes allocated
+     * by the pricing alone (this thread), with and without the memo's re-use.
+     */
+    @Test
+    fun `forty partials of a 1,200-market scan allocate a fraction of what pricing everything each time did`() = runTest {
+        val (plan, books, _) = reusePlan(1200)
+        val bean = java.lang.management.ManagementFactory.getThreadMXBean() as com.sun.management.ThreadMXBean
+        fun allocated(memo: FairMemo?): Long {
+            val read = HashMap<String, NovigBook>()
+            val before = bean.getThreadAllocatedBytes(Thread.currentThread().id)
+            var last: ScanResult? = null
+            for (batch in 0 until 40) {
+                for (i in batch * 30 until (batch + 1) * 30) read["m$i"] = books.getValue("m$i")
+                last = Pricing.price(plan, read, settings, now, memo)
+            }
+            check(last!!.opportunities.size == 2400)
+            return bean.getThreadAllocatedBytes(Thread.currentThread().id) - before
+        }
+        allocated(FairMemo()) // warm the JIT and the classes
+        val full = allocated(null)
+        val reused = allocated(FairMemo())
+        println("PRICING ALLOCATION: every partial in full ${full / 1_000_000} MB, with re-use ${reused / 1_000_000} MB")
+        assertTrue("re-use allocates under a third of pricing everything again ($reused vs $full bytes)", reused * 3 < full)
+    }
+
     @Test
     fun `a scan lets go of the boards of leagues no longer picked`() = runTest {
         val board = Board(6)
