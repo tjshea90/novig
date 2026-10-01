@@ -49,6 +49,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
@@ -401,7 +402,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch {
             // A bet tracked anywhere leaves every list at once (Tj, 2026-09-27).
-            c.tracker.flow.filterNotNull().collect { bets -> _state.update { it.copy(bets = bets).indexed() } }
+            // Taken at most every TRACKER_MIRROR_MS (a Check odds now saves every 5 bets), with the placed index and the feed rebuilt off the
+            // main thread (Tj, 2026-10-01: "I used the check odds now function and the list of open bets got very laggy").
+            followThrottled(c.tracker.flow.filterNotNull(), TRACKER_MIRROR_MS) { bets ->
+                val before = _state.value
+                val built = withContext(Dispatchers.Default) { before.copy(bets = bets).indexed() }
+                _state.update { s ->
+                    // The marks, the result or the settings changed while it was built: built again from what's current (rare).
+                    if (s.placed === before.placed && s.result === before.result && s.settings == before.settings) {
+                        s.copy(bets = bets, placedIndex = built.placedIndex, feed = built.feed)
+                    } else {
+                        s.copy(bets = bets).indexed()
+                    }
+                }
+            }
         }
         viewModelScope.launch {
             // Every API call is counted as it happens (a scan's 1,500 Novig reads each change the meter): the screen takes the newest count
@@ -1516,9 +1530,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val cnoDone = java.util.concurrent.atomic.AtomicInteger()
                 val ownDone = java.util.concurrent.atomic.AtomicInteger()
                 val booksDone = java.util.concurrent.atomic.AtomicInteger()
+                // "n of N read", at most every CHECK_PROGRESS_MS (each bet read used to redraw the whole app) and always when all are read.
+                val lastShown = java.util.concurrent.atomic.AtomicLong(0L)
                 fun publish() {
                     val total = cnoTotal + everyBet.size + noPage.size
-                    _state.update { it.copy(checkProgress = if (total > 0) (cnoDone.get() + ownDone.get() + booksDone.get()) to total else null) }
+                    val done = cnoDone.get() + ownDone.get() + booksDone.get()
+                    val now = System.currentTimeMillis()
+                    val last = lastShown.get()
+                    if (done < total && now - last < CHECK_PROGRESS_MS) return
+                    if (!lastShown.compareAndSet(last, now) && done < total) return
+                    _state.update { it.copy(checkProgress = if (total > 0) done to total else null) }
                 }
                 publish()
                 report = kotlinx.coroutines.coroutineScope {
@@ -1588,12 +1609,19 @@ internal const val USAGE_MIRROR_MS = 1_000L
  * Hands [runs]' newest value to [onRun] no more often than every [everyMs]. A StateFlow keeps only its latest value while the collector
  * waits, so whatever happened meanwhile arrives as one state and the last one (a scan's end) always gets through.
  */
-internal suspend fun <T> followThrottled(runs: StateFlow<T>, everyMs: Long, onRun: suspend (T) -> Unit) {
-    runs.collect { run ->
+internal suspend fun <T> followThrottled(runs: Flow<T>, everyMs: Long, onRun: suspend (T) -> Unit) {
+    // conflate(): only the newest value waits while [onRun] and the pause run (a StateFlow already works that way).
+    runs.conflate().collect { run ->
         onRun(run)
         kotlinx.coroutines.delay(everyMs)
     }
 }
+
+/** How often, at most, the Tracker's saved bets reach the screen: a Check odds now saves every few bets (Tj, 2026-10-01: "very laggy"). */
+internal const val TRACKER_MIRROR_MS = 300L
+
+/** How often, at most, a Check odds now's "n of N read" reaches the screen. */
+internal const val CHECK_PROGRESS_MS = 300L
 
 /**
  * [refresh] for the current [sports] at once and then every [everyMs] while Vigilant is [onScreen]; again at once when either changes (back on
