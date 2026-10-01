@@ -30,9 +30,12 @@ class AutoBetTest {
 
     private fun rules(
         stake: AutoBetStake = AutoBetStake.QUARTER_KELLY, custom: Double = 5.0, max: Double = 100.0, books: Int = 3, ev: Double = 0.03, twoSided: Int = 2,
-        maxOdds: Int = 0,
+        maxOdds: Int = 0, allAgree: Boolean = false,
     ) = AutoBet.rules(
-        ScanSettings(autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided, autoBetMaxOdds = maxOdds),
+        ScanSettings(
+            autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided, autoBetMaxOdds = maxOdds,
+            autoBetAllAgree = allAgree,
+        ),
     )
 
     /** [AutoBet.judge] at -110 (a price no limit on longest odds touches) unless the test says otherwise. */
@@ -56,6 +59,7 @@ class AutoBetTest {
         assertEquals(10.0, s.autoBetMaxStake, 0.0)
         assertEquals("no limit on odds until Tj sets one: what ran before doesn't change", 0, s.autoBetMaxOdds)
         assertEquals(listOf(100, 110, 120, 130, 150, 200, 300, 0), ScanSettings.AUTO_BET_MAX_ODDS_CHOICES)
+        assertFalse("every book must agree is off until Tj turns it on: what ran before doesn't change", s.autoBetAllAgree)
         assertEquals(listOf(2, 3, 4, 5), ScanSettings.AUTO_BET_BOOKS_CHOICES)
         assertEquals(listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04), ScanSettings.AUTO_BET_MIN_EV_CHOICES)
         assertEquals(listOf(1, 2, 3), ScanSettings.AUTO_BET_TWO_SIDED_CHOICES)
@@ -65,10 +69,11 @@ class AutoBetTest {
         val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"CNO","autoScanSeconds":30,"schema":12}""")
         assertFalse(old.autoBet)
         assertEquals(0, old.autoBetMaxOdds)
+        assertFalse(old.autoBetAllAgree)
         assertEquals(30, old.autoScanSeconds)
         assertEquals(AutoScanMode.CNO, old.autoScan)
         // What Tj picks survives a save and a load.
-        val picked = ScanSettings(autoBet = true, autoBetBooks = 5, autoBetMinEv = 0.0325, autoBetTwoSided = 3, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 7.25, autoBetMaxStake = 12.0, autoBetMaxOdds = 130)
+        val picked = ScanSettings(autoBet = true, autoBetBooks = 5, autoBetMinEv = 0.0325, autoBetTwoSided = 3, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 7.25, autoBetMaxStake = 12.0, autoBetMaxOdds = 130, autoBetAllAgree = true)
         assertEquals(picked, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)))
     }
 
@@ -116,6 +121,34 @@ class AutoBetTest {
         assertTrue(judge(r, 0.40, check())!!.contains("over +15.00%"))
         assertTrue(judge(r, 0.04, check(ev = -0.01))!!.contains("not +EV"))
         assertTrue(judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
+    }
+
+    /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
+    @Test
+    fun `with every book must agree on, a bet passes only when all the books that price both sides say +EV, and not otherwise`() {
+        val all = rules(books = 2, allAgree = true)
+        assertTrue(all.allAgree)
+        // 5 of 5, 2 of 2, 3 of 3: every book agrees.
+        assertNull(judge(all, 0.04, check(twoSided = 5, agreeing = 5)))
+        assertNull(judge(all, 0.04, check(twoSided = 2, agreeing = 2)))
+        assertNull(judge(all, 0.04, check(twoSided = 3, agreeing = 3)))
+        // 4 of 5, 3 of 4, 2 of 3: one disagrees, and the reason says how many.
+        assertEquals("only 4 of 5 books say +EV on their own (you need every one)", judge(all, 0.04, check(twoSided = 5, agreeing = 4)))
+        assertTrue(judge(all, 0.04, check(twoSided = 4, agreeing = 3))!!.contains("only 3 of 4 books"))
+        assertNotNull(judge(all, 0.04, check(twoSided = 3, agreeing = 2)))
+        // Off (the default): the same 4 of 5 passes a minimum of 3, as it did before.
+        assertNull(judge(rules(books = 3), 0.04, check(twoSided = 5, agreeing = 4)))
+        assertFalse(rules().allAgree)
+        // On top of the others, never instead of them: a 2 of 2 under a minimum of 5, the edge and the odds limit all still apply.
+        assertTrue(judge(rules(books = 5, allAgree = true), 0.04, check(twoSided = 2, agreeing = 2))!!.contains("(you need 5)"))
+        assertTrue(judge(rules(books = 2, ev = 0.03, allAgree = true), 0.02, check(twoSided = 4, agreeing = 4))!!.contains("under your"))
+        assertNotNull(judge(rules(books = 2, maxOdds = 120, allAgree = true), 0.04, check(twoSided = 4, agreeing = 4), 130))
+        assertTrue(judge(rules(books = 2, twoSided = 3, allAgree = true), 0.04, check(twoSided = 2, agreeing = 2))!!.contains("price both sides (you need 3)"))
+        // Every choice of the minimum, with "5 of 5" (Tj's example) for the top one.
+        for (need in ScanSettings.AUTO_BET_BOOKS_CHOICES) for (n in 1..7) {
+            val ok = judge(rules(books = need, allAgree = true), 0.05, check(twoSided = n, agreeing = n)) == null
+            assertEquals("need $need and all, with $n of $n", n >= need, ok)
+        }
     }
 
     @Test
