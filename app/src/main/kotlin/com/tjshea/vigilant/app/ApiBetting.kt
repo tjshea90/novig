@@ -72,6 +72,11 @@ data class BetSheetUi(
     val baseStake: Double = stake,
     /** Where the amount came from, under the Amount field ("¼ Kelly of your $1,000 bankroll at these odds"); null = Settings' amount. */
     val stakeNote: String? = null,
+    /** Money is being moved into the wallet from this sheet's "Add money" ([ApiBetting.fundFromSheet]). */
+    val funding: Boolean = false,
+    /** What Novig said of the last "Add money" from this sheet (applied), or why it wasn't. */
+    val fundMessage: String? = null,
+    val fundError: String? = null,
 )
 
 /**
@@ -392,30 +397,57 @@ class ApiBettingController(
      * [typed]: the management key Tj just entered, saved once Novig accepts it; null = the saved one.
      */
     fun transfer(direction: String, amount: Double, typed: ManagementKey? = null) {
-        val conn = state.value.novig.connection ?: return
+        if (state.value.novig.connection == null) return
         if (state.value.betting.busy || !(amount > 0.0)) return
+        scope.launch { transferNow(direction, amount, typed) }
+    }
+
+    /** The transfer itself, to its end: true when Novig applied it (its words are in [BettingUi.message]), false when it didn't (in [BettingUi.error]). */
+    private suspend fun transferNow(direction: String, amount: Double, typed: ManagementKey?): Boolean {
+        val conn = state.value.novig.connection ?: return false
+        state.update { it.copy(betting = it.betting.copy(busy = true, error = null, message = "Starting…")) }
+        val key = keyFor(typed) ?: return false
+        try {
+            val out = withContext(Dispatchers.IO) {
+                c.bettingSetup.transfer(conn, key.keyId, key.pem, direction, amount) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
+            }
+            // Novig answered the signed transfer (applied or rejected): the key is good.
+            keep(typed)
+            state.update {
+                it.copy(betting = it.betting.copy(busy = false, message = out.message.takeIf { out.applied }, error = out.message.takeUnless { out.applied }, balance = out.balance ?: it.betting.balance))
+            }
+            if (!out.applied) refreshBalance(quiet = true)
+            return out.applied
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: NovigApiException) {
+            fail(keyAdvice(e, usedSaved = typed == null))
+        } catch (e: IllegalArgumentException) {
+            fail(e.message ?: "That key file couldn't be read.")
+        } catch (e: Exception) {
+            fail("The transfer failed: ${e.message ?: e.javaClass.simpleName}")
+        }
+        return false
+    }
+
+    /**
+     * "Add money" inside a Bet sheet (Tj, 2026-10-01: "a button in all the bet slips … to add money to the vigilant wallet in amounts of $1, 2, 5, 10, 15,
+     * 20, or an amount I type in"): moves [amount] from the cash wallet to the Vigilant wallet with the management key saved on this phone, without leaving
+     * the sheet, then reads the wallet again so the bet's amount and plan follow it. The sheet says what Novig answered.
+     */
+    fun fundFromSheet(amount: Double) {
+        val sheet = state.value.betSheet ?: return
+        if (sheet.placing || sheet.funding || state.value.betting.busy || !(amount > 0.0)) return
+        state.update { it.copy(betSheet = sheet.copy(funding = true, fundMessage = null, fundError = null)) }
         scope.launch {
-            state.update { it.copy(betting = it.betting.copy(busy = true, error = null, message = "Starting…")) }
-            val key = keyFor(typed) ?: return@launch
-            try {
-                val out = withContext(Dispatchers.IO) {
-                    c.bettingSetup.transfer(conn, key.keyId, key.pem, direction, amount) { step -> state.update { it.copy(betting = it.betting.copy(message = step)) } }
-                }
-                // Novig answered the signed transfer (applied or rejected): the key is good.
-                keep(typed)
-                state.update {
-                    it.copy(betting = it.betting.copy(busy = false, message = out.message.takeIf { out.applied }, error = out.message.takeUnless { out.applied }, balance = out.balance ?: it.betting.balance))
-                }
-                if (!out.applied) refreshBalance(quiet = true)
+            val applied = try {
+                transferNow("fund", amount, null)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: NovigApiException) {
-                fail(keyAdvice(e, usedSaved = typed == null))
-            } catch (e: IllegalArgumentException) {
-                fail(e.message ?: "That key file couldn't be read.")
-            } catch (e: Exception) {
-                fail("The transfer failed: ${e.message ?: e.javaClass.simpleName}")
             }
+            val b = state.value.betting
+            state.update { it.copy(betSheet = it.betSheet?.copy(funding = false, fundMessage = b.message.takeIf { applied }, fundError = b.error.takeUnless { applied })) }
+            if (applied) checkWallet()
         }
     }
 
@@ -637,7 +669,7 @@ class ApiBettingController(
      * The sheet's "Add money to the wallet": closes the sheet and asks Settings to open on the wallet with what the bet is short by typed in
      * (the caller switches to Settings). The bet is kept for "Back to the bet".
      */
-    fun requestTopUp() {
+    fun requestTopUp(amount: Double? = null) {
         val sheet = state.value.betSheet ?: return
         // Also from a result Novig refused for the balance; never from a bet that's placed.
         if (sheet.placing || sheet.result is PlaceResult.Placed) return
@@ -647,7 +679,7 @@ class ApiBettingController(
         state.update {
             it.copy(
                 betSheet = null,
-                betting = it.betting.copy(topUp = TopUp(WalletAmount.suggest(needed), needed, cost, sheet.copy(plan = null, refusal = null, result = null)), message = null, error = null),
+                betting = it.betting.copy(topUp = TopUp(amount ?: WalletAmount.suggest(needed), needed, cost, sheet.copy(plan = null, refusal = null, result = null)), message = null, error = null),
             )
         }
     }
