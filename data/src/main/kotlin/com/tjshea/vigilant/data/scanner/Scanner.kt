@@ -107,6 +107,9 @@ class Scanner(
      * Kept as its own instance, so it can't touch the feed scanner's catalog, books or fair-odds snapshots.
      */
     private val betsOnly: Boolean = false,
+    /** A plan this big is priced for a partial result at most every [publishMinMs] (tests use small ones). */
+    private val bigPlanMarkets: Int = BIG_PLAN_MARKETS,
+    private val publishMinMs: Long = PUBLISH_MIN_MS,
 ) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
@@ -552,9 +555,9 @@ class Scanner(
             // Every partial prices the WHOLE plan again and builds a complete new result: with no limits that is thousands of markets after every
             // batch of ~30 books, the old result still alive beside it (Tj's Diagnostics, 2026-10-01: an OutOfMemoryError at 256 MB). A big plan
             // publishes at most every [PUBLISH_MIN_MS]; the books it skips are in the next one, and the final result is always priced in full.
-            if (shown.markets.size >= BIG_PLAN_MARKETS) {
+            if (shown.markets.size >= bigPlanMarkets) {
                 val t = elapsed()
-                if (t - lastPublishAt < PUBLISH_MIN_MS) return
+                if (t - lastPublishAt < publishMinMs) return
                 lastPublishAt = t
             }
             val merged = HashMap(books)
