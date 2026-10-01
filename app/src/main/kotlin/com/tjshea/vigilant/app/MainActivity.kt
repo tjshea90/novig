@@ -542,12 +542,19 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
 /** The tab's icon with its bet count. Its own clock, so only the badge ticks, not the whole screen. */
 @Composable
 private fun TabIconWithCount(t: Tab, state: UiState) {
+    // Counted again only when what they're counted from changes: the bar recomposes with every state the app gets (a scan's progress, a
+    // CNO read, a meter), and CNO's count re-screens its whole list and checks each pick's books (Tj, 2026-10-01: "well optimized").
     val count = when (t) {
-        Tab.EV -> state.feedAt(System.currentTimeMillis()).size
+        Tab.EV -> {
+            val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
+            androidx.compose.runtime.remember(state.feed, state.settings, now) { state.feedAt(now).size }
+        }
         Tab.CNO -> {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             // Placed and removed bets aren't counted (nor, with "only bets the books agree on", the rest): the tab doesn't list them.
-            state.cnoShown(now).size
+            androidx.compose.runtime.remember(state.cno.snapshot, state.settings, state.placed, state.placedIndex, state.cnoLinks, state.books, state.novigLive, now) {
+                state.cnoShown(now).size
+            }
         }
         else -> 0
     }
