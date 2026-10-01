@@ -47,11 +47,14 @@ class AutoScanTest {
     // ---- settings ----------------------------------------------------------------------------------
 
     @Test
-    fun `auto-scan is off by default, every 5 to 40 minutes, alerts at 2, 3 or 4 percent (3 by default)`() {
+    fun `auto-scan is off by default, every 15 seconds to 40 minutes, alerts at 2, 3 or 4 percent (3 by default)`() {
         val s = ScanSettings()
         assertEquals(AutoScanMode.OFF, s.autoScan)
-        assertEquals(listOf(5, 10, 20, 30, 40), ScanSettings.AUTO_SCAN_MINUTES_CHOICES)
-        assertTrue(s.autoScanMinutes in ScanSettings.AUTO_SCAN_MINUTES_CHOICES)
+        // Tj, 2026-10-01: 3 minutes, 1 minute, 30 seconds and 15 seconds beside the old 5-40 minutes.
+        assertEquals(listOf(15, 30, 60, 180, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES)
+        assertEquals(listOf("15 sec", "30 sec", "1 min", "3 min", "5 min", "10 min", "20 min", "30 min", "40 min"), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::intervalLabel))
+        assertEquals(600, s.autoScanSeconds)
+        assertTrue(s.autoScanSeconds in ScanSettings.AUTO_SCAN_SECONDS_CHOICES)
         assertEquals(listOf(0.0, 0.02, 0.03, 0.04), ScanSettings.ALERT_MIN_EV_CHOICES)
         assertEquals(0.03, s.alertMinEv, 0.0)
         assertEquals(listOf("Off", "CNO", "CNO + Vigilant"), AutoScanMode.entries.map { it.displayName })
@@ -62,11 +65,75 @@ class AutoScanTest {
     }
 
     @Test
-    fun `the next scan is due its interval after the last one started, never sooner than 30 s`() {
-        assertEquals(now, AutoScanClock.nextAtMs(null, 10, now))
-        assertEquals(now + 10 * 60_000L, AutoScanClock.nextAtMs(now, 10, now + 1_000))
+    fun `the next scan is due its interval after the last one started, never sooner than 5 s`() {
+        assertEquals(now, AutoScanClock.nextAtMs(null, 600, now))
+        assertEquals(now + 10 * 60_000L, AutoScanClock.nextAtMs(now, 600, now + 1_000))
         // A scan that ran past its interval: the next one waits a moment rather than running back to back.
-        assertEquals(now + 6 * 60_000L + AutoScanClock.MIN_GAP_MS, AutoScanClock.nextAtMs(now, 5, now + 6 * 60_000L))
+        assertEquals(now + 6 * 60_000L + AutoScanClock.MIN_GAP_MS, AutoScanClock.nextAtMs(now, 300, now + 6 * 60_000L))
+    }
+
+    /** Tj, 2026-10-01: "scan every 3 minutes, 1 minute, 30 seconds, and 15 seconds". */
+    @Test
+    fun `the fast intervals are due their seconds after the last start, and a slow cycle waits only a moment`() {
+        assertEquals(now + 15_000L, AutoScanClock.nextAtMs(now, 15, now + 2_000))
+        assertEquals(now + 30_000L, AutoScanClock.nextAtMs(now, 30, now + 2_000))
+        assertEquals(now + 60_000L, AutoScanClock.nextAtMs(now, 60, now + 2_000))
+        assertEquals(now + 180_000L, AutoScanClock.nextAtMs(now, 180, now + 2_000))
+        // A 15 s cycle that took 22 s (a slow page): the next one is 5 s after it ended, not already overdue and not a minute away.
+        assertEquals(now + 22_000L + AutoScanClock.MIN_GAP_MS, AutoScanClock.nextAtMs(now, 15, now + 22_000L))
+        assertTrue(AutoScanClock.MIN_GAP_MS < 15_000L)
+    }
+
+    @Test
+    fun `Vigilant's own scan, which spends API credits, runs at most every 4 minutes however fast the cycles are`() {
+        val fourMin = 4 * 60_000L
+        // None yet this run: it runs now, at any interval.
+        for (seconds in ScanSettings.AUTO_SCAN_SECONDS_CHOICES) assertTrue(AutoScanClock.vigilantDue(null, seconds, now))
+        // 5 minutes and slower: every cycle, as before.
+        for (seconds in listOf(300, 600, 1200, 1800, 2400)) assertTrue(AutoScanClock.vigilantDue(now - seconds * 1_000L + 400, seconds, now))
+        // 15 s: not 15 s, 3 min, or a cycle early; due at 4 min (the alarm may be a second or two off).
+        assertFalse(AutoScanClock.vigilantDue(now - 15_000L, 15, now))
+        assertFalse(AutoScanClock.vigilantDue(now - 180_000L, 15, now))
+        assertFalse(AutoScanClock.vigilantDue(now - (fourMin - 15_000L), 15, now))
+        assertTrue(AutoScanClock.vigilantDue(now - fourMin, 15, now))
+        assertTrue(AutoScanClock.vigilantDue(now - fourMin + 1_500L, 15, now))
+        // 3 min: the cycle after the one that ran it (3 min on) is too soon, the one after that (6 min on) runs.
+        assertFalse(AutoScanClock.vigilantDue(now - 180_000L, 180, now))
+        assertTrue(AutoScanClock.vigilantDue(now - 360_000L, 180, now))
+        // What the Settings hint promises is what runs: every 4 min at 15 s, 30 s and 1 min, every 6 min at 3 min, else the interval.
+        assertEquals(listOf(240, 240, 240, 360, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::vigilantEverySeconds))
+    }
+
+    /** The schedule's own survival: an alarm that goes off during a cycle is dropped, so the cycle's end must arm the next one. */
+    @Test
+    fun `a cycle that outlasts its interval arms the next alarm when it ends, unless the service is stopping`() {
+        val service = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText()
+        val finallyBlock = service.substringAfter("container.autoScan.cycle() }").substringBefore("updateOngoing(container.autoScan.status.value, force = true)")
+        assertTrue(finallyBlock, finallyBlock.contains("if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, System.currentTimeMillis()))"))
+        // Stop and destroy set the flag first, so a cycle cancelled by them can't arm an alarm after the schedule was cancelled.
+        assertTrue(service.contains("private fun stopNow() {\n        stopping = true\n        AutoScanAlarm.cancel(this)"))
+        assertTrue(service.contains("override fun onDestroy() {\n        stopping = true"))
+        // The first alarm is still armed when the cycle starts, so a cycle killed part-way can't end the schedule.
+        assertTrue(service.indexOf("AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds") < service.indexOf("container.autoScan.cycle() }"))
+    }
+
+    @Test
+    fun `a saved file's minutes become seconds once, and a later pick sticks`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        // v0.37.0's file: minutes, no seconds, schema 11.
+        val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"BOTH","autoScanMinutes":20,"schema":11}""")
+        val moved = old.migrate()
+        assertEquals(1200, moved.autoScanSeconds)
+        assertEquals(12, moved.schema)
+        assertEquals(AutoScanMode.BOTH, moved.autoScan)
+        // Saved at schema 12 with 15 s picked: loading and migrating again changes nothing.
+        val picked = moved.copy(autoScanSeconds = 15)
+        val again = json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)).migrate()
+        assertEquals(15, again.autoScanSeconds)
+        // A fresh install: the 10 minute default is 600 seconds.
+        assertEquals(600, ScanSettings().migrate().autoScanSeconds)
+        // Every minute choice of the old list lands on a choice of the new one.
+        for (minutes in listOf(5, 10, 20, 30, 40)) assertTrue(ScanSettings(autoScanMinutes = minutes).migrate().autoScanSeconds in ScanSettings.AUTO_SCAN_SECONDS_CHOICES)
     }
 
     // ---- which CNO bets alert ------------------------------------------------------------------------
@@ -286,7 +353,7 @@ class AutoScanTest {
     fun `a background cycle runs each scanner only when the scanner choice has it on`() {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
         // Both parts are gated on the scanner choice, not on the auto-scan mode alone (which is what let "Both" scan Vigilant on CNO only).
-        assertTrue(src.contains("if (settings.autoScansVigilant && settings.leagues.isNotEmpty())"))
+        assertTrue(src.contains("if (settings.autoScansVigilant && settings.leagues.isNotEmpty() &&"))
         assertTrue(!src.contains("settings.autoScan.vigilant"))
         assertTrue(!src.contains("settings.autoScan.cno"))
         // The scan itself is refused for CNO only at the runner, whoever starts it (CnoOnlyAsleepTest).
@@ -295,7 +362,7 @@ class AutoScanTest {
 
     @Test
     fun `the notification and the Settings hint say what really runs at each scanner choice`() {
-        fun s(scanner: com.tjshea.vigilant.data.scanner.ScannerMode) = ScanSettings(scanner = scanner, autoScan = AutoScanMode.BOTH, autoScanMinutes = 10)
+        fun s(scanner: com.tjshea.vigilant.data.scanner.ScannerMode) = ScanSettings(scanner = scanner, autoScan = AutoScanMode.BOTH, autoScanSeconds = 600)
         assertEquals("Auto-scan: CNO + Vigilant every 10 min", AutoScanText.title(s(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)))
         assertEquals("Auto-scan: CNO every 10 min", AutoScanText.title(s(com.tjshea.vigilant.data.scanner.ScannerMode.CNO)))
         assertEquals("Auto-scan: Vigilant every 10 min", AutoScanText.title(s(com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT)))
@@ -314,7 +381,7 @@ class AutoScanTest {
 
     @Test
     fun `the ongoing notification says what runs, when next, and what the last scan found`() {
-        val s = ScanSettings(autoScan = AutoScanMode.BOTH, autoScanMinutes = 10)
+        val s = ScanSettings(autoScan = AutoScanMode.BOTH, autoScanSeconds = 600)
         val zone = TimeZone.getTimeZone("UTC")
         assertEquals("Auto-scan: CNO + Vigilant every 10 min", AutoScanText.title(s))
         val idle = AutoScanner.Status(lastStartMs = now - 60_000, lastEndMs = now - 30_000, lastFound = 2, lastAlerts = 1)
