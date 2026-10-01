@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.AutoBettor
 import com.tjshea.vigilant.app.UiState
+import com.tjshea.vigilant.app.WalletAmount
 import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode

@@ -715,7 +715,11 @@ private fun ColumnScope.BettingTab(
         SectionTitle("Novig API key")
         NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status, onForgetKey = bettingActions.onForgetKey)
         // Betting through Novig's API: needs the connected key's subaccount (Tj, 2026-09-29).
-        if (state.novig.connection != null) NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
+        if (state.novig.connection != null) {
+            NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
+            // Auto-bet (Tj, 2026-10-01): off until turned on; places CNO's bets through the wallet above.
+            AutoBetSection(state, onUpdate)
+        }
     }
 }
 
@@ -861,7 +865,8 @@ fun autoScanHint(s: ScanSettings): String {
         "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $vigilantPerDay scans a day at this setting" +
         if (vigilantEvery != s.autoScanSeconds) " (it starts at most every ${ScanSettings.intervalLabel(vigilantEvery)}, however fast CNO is read)" else ""
     val fast = if (s.autoScanSeconds < 60) " Under a minute apart is constant background work: more battery, and Android may space scans out while the phone sits idle." else ""
-    val notification = " A quiet notification shows while it's on (Scan now, Stop)."
+    val notification = " A quiet notification shows while it's on (Scan now, Stop)." +
+        if (s.autoBetsNow) " Auto-bet is on: bets that pass your criteria are placed with each CNO check (Settings › Betting)." else ""
     return when {
         s.autoScansCno && s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $cnoPart, then $vigilantPart.$notification$fast"
         s.autoScansCno -> "Every $every, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work.$fast" +
