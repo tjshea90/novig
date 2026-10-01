@@ -3394,3 +3394,8 @@ Sep 30, 6:12:52 PM · Vigilant scan: ParlayAPI props NFL: ParlayAPI failed for a
 Sep 30, 5:31:38 PM · Fair odds: ParlayAPI props: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
 Sep 30, 5:31:38 PM · Vigilant scan: ParlayAPI props WNBA: ParlayAPI failed for basketball_wnba props: HTTP 503 (request 5845e57c3c6286e0) {"error":"props_temporarily_busy","detail":"The props board is being rebuilt un…
 ```
+
+## 2026-10-01T12:49:57Z
+```
+So far the auto bet is working well, but add an option for longest odds of any auto bet. For example, I don't want it to bet anything that is more of a longshot than +130 odds, unless ¼ Kelly betting automatically puts a much lower stake on longshots. Does Kelly do this? 
+```
