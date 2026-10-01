@@ -130,12 +130,14 @@ fun CnoScreen(
     val on = state.settings.cnoOn
     // A list read for another link (Tj just changed it) isn't shown as if it were this one's.
     val snap = cno.snapshot?.takeIf { it.url == state.cnoUrl }
-    val screened = state.cnoPicks(now)
+    // Screened once per change of what it's screened from, not on every recomposition (each state the app gets recomposes this tab).
+    val keys = arrayOf<Any?>(state.cno.snapshot, state.settings, state.placed, state.placedIndex, state.cnoLinks, state.books, state.novigLive, now)
+    val screened = remember(*keys) { state.cnoPicks(now) }
     // Bets Tj placed or removed are gone from the list (and the widget) until their game is over;
     // with "only bets the books agree on", so are the ones without the green check.
-    val candidates = state.cnoCandidates(now)
+    val candidates = remember(*keys) { state.cnoCandidates(now) }
     // Best EV first at the prices shown (Novig's price now re-orders them between CNO's reads, as in the widget).
-    val picks = state.cnoShown(now).sortedByDescending { state.livePick(it, now).ev }
+    val picks = remember(*keys) { state.cnoShown(now).sortedByDescending { state.livePick(it, now).ev } }
     val placedHere = state.placed.filter { it.key.startsWith("cno:") }
     val (removedHere, betHere) = placedHere.partition { it.hidden }
     var showPlaced by remember { mutableStateOf(false) }

@@ -274,7 +274,8 @@ fun NovigBettingSection(
     Text("Amount a bet starts at", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 12.dp))
     ChoiceChips(STAKE_CHOICES, settings.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
     Text(
-        "Each Bet sheet also takes any amount you type. When the wallet holds less than this, a bet starts at what's left in it.",
+        "Each Bet sheet also takes any amount you type. With Kelly (or My amount) chosen for Novig's bet slip, a bet starts at that bet's " +
+            "Kelly stake (or that amount) instead, within the most for one bet. When the wallet holds less, a bet starts at what's left in it.",
         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Text("Most for one bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
