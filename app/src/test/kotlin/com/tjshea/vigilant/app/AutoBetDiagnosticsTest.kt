@@ -18,7 +18,7 @@ import java.util.TimeZone
 class AutoBetDiagnosticsTest {
 
     private val now = SampleScan.NOW
-    private val extras = Diagnostics.Extras("0.39.1", 70, "Motorola moto g 2026 · Android 16 (API 36)")
+    private val extras = Diagnostics.Extras("0.39.2", 71, "Motorola moto g 2026 · Android 16 (API 36)")
 
     private fun state(betting: Boolean = true, f: (ScanSettings) -> ScanSettings = { it }) =
         SampleScan.state().let { it.copy(betting = BettingUi(enabled = betting, balance = 25.0), settings = f(ScanSettings(autoScan = AutoScanMode.CNO, autoBet = true))) }

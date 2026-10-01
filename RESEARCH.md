@@ -3218,3 +3218,20 @@ boards dominating, interning the repeated strings in `RefBookMarket` is next.
 while CNO's beat it (+1.5% on 87, 66%); at these counts only the totals gap is more than noise, and it is the same on both scanners (CNO totals −1.7% on 6). 71% of the last week's started bets have a
 true close (79 of the 114 from Novig's trades, 21 read before the start: the phone's own capture is the minority); 105 started bets are still looking, most waiting for Novig's file (published the
 next morning). Wallet $14.24 with $1 bets, bankroll $185, ¼ Kelly, most per day $500.
+
+
+## 53. Longest odds for the auto-bet, and what Kelly does with longshots (v0.39.2, 2026-10-01; Tj: "add an option for longest odds of any auto bet … I don't want it to bet anything that is more of a longshot than +130 odds, unless ¼ Kelly betting automatically puts a much lower stake on longshots. Does Kelly do this?")
+
+**Does Kelly stake less on longshots? Yes, in proportion, but it doesn't cap them.** For a contract at price c (what it costs; pays $1) with fair chance p, full Kelly is `(p − c) / (1 − c)`
+(`EvQuote.kellyFraction`). Write the edge as EV% `e = p/c − 1` and that is `e × c / (1 − c)` = `e ÷ b`, where b is the profit on a $1 bet (+100: b = 1, +130: 1.3, +300: 3). So at the SAME
+edge the stake falls as the odds lengthen. On a $185 bankroll at ¼ Kelly with a +4% edge (tests: `AutoBetTest`): +100 stakes $1.85, +130 $1.42, +200 92¢, +300 62¢, and −200 $3.70. Two caveats:
+(1) Under Vigilant's $1 minimum the stake is skipped, not rounded up, so on a small bankroll ¼ Kelly already skips most bets past about +150 on its own, but a bigger bankroll or ½ Kelly would not;
+and the $1 and typed amounts ignore the odds entirely. (2) Kelly only sizes a bet whose probability is right; the fair price of a longshot is the least reliable one (devigging is worst there, and
+the favorite-longshot bias: §8.1, §16), so a big edge on a longshot is more often a bad price than a real edge, and Kelly stakes it anyway. A cap on the odds is a different control from the stake size.
+It is also true that the CNO page's own Max odds filter (Settings › CNO, default +150) already limits which bets auto-bet sees; the new limit is Tj's own, in the auto-bet card.
+
+**What was built.** `ScanSettings.autoBetMaxOdds` (American; 0 = no limit, the default, so what ran before doesn't change; chips +100 … +300 and No limit, or a typed amount of +100 or more) held by
+every stake mode. Checked twice: `AutoBet.judge` on the price the bet was judged at (the reason has no price in it, so the report counts bets by reason), and the planner on the order book read
+just before the order (`BetLimits.maxOdds`, refusal "Novig's best price is now +141, longer than your +130 limit"): a bet judged at +125 whose market then drifts out to +141 is within the 3-point
+price match but is not bet. Favorites (negative odds) always pass; a Bet-sheet bet is not held to it. Seven mutants killed (never too long, boundary, judge ignoring it, the +100 floor on a typed
+value, planner ignoring it, the bettor not passing it on, the bettor judging the wrong odds).

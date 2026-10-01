@@ -338,7 +338,9 @@ robolectric.org/configuring/.
   in the last minute; the order book's price for the outcome must match the price judged (±3 points) and the outcome Novig's price came from must be
   the outcome found; one bet per Novig market; an edge over 15% is never bet unattended; the wallet is read before each pass and caps each stake
   (under $1 = stop); an order whose answer is lost HALTS it until Tj resumes it and is never re-sent, and an order is marked in flight (saved) BEFORE it is sent so a
-  process that dies mid-order leaves it halted; Novig refusing or the daily limit backs it off.
+  process that dies mid-order leaves it halted; Novig refusing or the daily limit backs it off. Tj's longest-odds limit (`autoBetMaxOdds`, American; v0.39.2,
+  default none) is checked twice, on the price the bet was judged at and again on the order book read just before the order (`BetLimits.maxOdds`, the
+  planner), so a price that drifts out past it is never bet; favorites always pass; a Bet-sheet bet is never held to it.
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
 
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
