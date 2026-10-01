@@ -27,11 +27,14 @@ object NovigLinks {
 
     private val EVENTS = Regex("^(novigapp://events/|https://(?:www\\.)?novig\\.com/events/)([^?#]*)(.*)$")
 
-    /** The dollars to pre-fill for [mode]: none, $1, the bet's Kelly stake (never under $1), or [custom]. */
+    /**
+     * The dollars to pre-fill for [mode]: none, $1, the bet's Kelly stake to the cent, or [custom]. Kelly was floored at $1 until v0.36.2,
+     * which put $1 in every slip whose Kelly stake was smaller (Tj, 2026-10-01: "it is still entering only $1 on every bet").
+     */
     fun stake(mode: SlipStake, custom: Double, kelly: Double?): Double? = when (mode) {
         SlipStake.OFF -> null
         SlipStake.ONE_DOLLAR -> 1.0
-        SlipStake.KELLY -> kelly?.takeIf { it > 0 }?.let { maxOf(1.0, cents(it)) }
+        SlipStake.KELLY -> kelly?.takeIf { it > 0 }?.let { cents(it).coerceAtLeast(0.01) }
         SlipStake.CUSTOM -> custom.takeIf { it > 0 }?.let { cents(it) }
     }
 

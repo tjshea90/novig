@@ -682,9 +682,13 @@ private fun ColumnScope.BettingTab(
             when (s.slipStake) {
                 com.tjshea.vigilant.data.novig.SlipStake.OFF -> "Tapping a bet opens Novig's bet slip with no amount: you type it in Novig."
                 com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR -> "Every bet you tap opens in Novig's bet slip with $1 entered."
-                com.tjshea.vigilant.data.novig.SlipStake.KELLY -> "Every bet you tap opens with its Kelly stake above entered (never under $1)."
+                com.tjshea.vigilant.data.novig.SlipStake.KELLY ->
+                    "Every bet opens with its own Kelly stake entered, to the cent: bankroll × the Kelly fraction above × (fair chance − price) ÷ (1 − price), " +
+                        "so it changes with each bet's odds and edge, held to what Novig has for sale at +EV."
                 com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> "Every bet you tap opens with this amount entered."
-            } + " From the +EV tab, the widget, the CNO tab and alerts. You still confirm the bet in Novig.",
+            } + " From the +EV tab, the widget, the CNO tab and alerts. You still confirm the bet in Novig." +
+                (if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY || s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.CUSTOM)
+                    " Vigilant's own Bet sheet (the wallet) opens with the same amount, within your per-bet limit." else ""),
         )
     }
     if (!AppBook.isNovig) {
