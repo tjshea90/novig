@@ -224,7 +224,7 @@ class AutoBettor(
                     openMarkets += target.market.marketId
                     balance -= bet.stake
                     withContext(NonCancellable) { markPlaced(c, target, result, clock()) }
-                    notes.placed(app, target, bet, item.check)
+                    notes.placed(app, target, bet, item.check, walletLeft = balance)
                 }
                 is PlaceResult.NotFilled -> { cooldown[row.key] = now + AutoBet.COOLDOWN_MS; skip("nobody was selling at that price") }
                 is PlaceResult.Refused -> {
@@ -347,42 +347,94 @@ internal suspend fun markPlaced(c: AppContainer, target: BetTarget, placed: Plac
     }
 }
 
-/** The auto-bet's notifications: one for each bet placed (it spent money while nobody looked) and one for each stop that needs Tj. */
+/**
+ * The auto-bet's notifications (Tj, 2026-10-01: "Make a push notification for every automatic bet, so I can see each bet placed and the stake and
+ * EV"): one of its own for each bet placed (it spent money while nobody looked), on a HIGH-importance channel so it pops up, with the stake and the
+ * EV in the title and the odds, books and what's left in the wallet under it; and one for each stop that needs Tj.
+ */
 object AutoBetNotes {
+    /** Stops (wallet empty, a lost order, Novig refusing): the v0.39.0 channel, left as it is on a phone that already has it. */
     const val CHANNEL = "auto_bet"
+
+    /**
+     * Each bet placed. A channel's importance can't be raised by the app once it exists, and v0.39.0's bets were posted on [CHANNEL] at normal
+     * importance (no pop-up): the bets get this new one.
+     */
+    const val CHANNEL_BET = "auto_bet_placed"
     private const val ID_PLACED = 5_000_000
     private const val ID_STOP = 4_999_999
+    private const val ID_SAMPLE = 4_999_998
 
     fun ensureChannel(context: android.content.Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Auto-bet", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "A note for every bet auto-bet placed with your wallet, and when it stops (wallet empty, a lost order, Novig refusing)."
+            NotificationChannel(CHANNEL, "Auto-bet stops", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "When auto-bet stops (wallet empty, a lost order, Novig refusing)."
+            },
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_BET, "Auto-bet bets placed", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "A pop-up for every bet auto-bet places with your wallet: the stake, the EV and the odds."
+                enableVibration(true)
             },
         )
     }
 
-    /** "Auto-bet $4.20 · Over 5.5" / "+120 · +3.4% EV · 4 of 5 books agree · Moneyline · A @ B". */
-    fun title(bet: TrackedBet, target: BetTarget): String = "Auto-bet ${String.format(Locale.US, "$%.2f", bet.stake)} · ${target.selection}"
-
-    fun text(bet: TrackedBet, target: BetTarget, check: CnoBooks.Check): String {
-        val odds = bet.american?.let { if (it > 0) "+$it" else "$it" } ?: "?"
+    /** "Auto-bet $4.20 · +3.4% EV · Over 5.5": the stake and the edge up front, so the collapsed notification already says what was bet. */
+    fun title(bet: TrackedBet, target: BetTarget): String {
         val ev = bet.evPercentAtBet?.let { String.format(Locale.US, " · %+.1f%% EV", it * 100) }.orEmpty()
-        return "$odds$ev · ${check.agreeing} of ${check.twoSided} books agree · ${target.marketLabel} · ${target.eventName}"
+        return "Auto-bet ${String.format(Locale.US, "$%.2f", bet.stake)}$ev · ${target.selection}"
     }
 
-    fun placed(app: Application, target: BetTarget, bet: TrackedBet, check: CnoBooks.Check) {
+    /** "+120 · 4 of 5 books agree · Moneyline · A @ B · wallet $2.10 left". */
+    fun text(bet: TrackedBet, target: BetTarget, check: CnoBooks.Check, walletLeft: Double? = null): String {
+        val odds = bet.american?.let { if (it > 0) "+$it" else "$it" } ?: "?"
+        val left = walletLeft?.let { " · wallet ${String.format(Locale.US, "$%.2f", it.coerceAtLeast(0.0))} left" }.orEmpty()
+        return "$odds · ${check.agreeing} of ${check.twoSided} books agree · ${target.marketLabel} · ${target.eventName}$left"
+    }
+
+    /** Why a bet's notification wouldn't show on this phone (Android's permission or settings), or null when it will. */
+    fun blocked(context: android.content.Context): String? {
+        if (!ScanService.canNotify(context)) return "Notifications are not allowed for Vigilant (Android Settings › Apps › Vigilant › Notifications)"
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return "Notifications are switched off for Vigilant (Android Settings › Apps › Vigilant › Notifications)"
+        val importance = context.getSystemService(NotificationManager::class.java)?.getNotificationChannel(CHANNEL_BET)?.importance
+        if (importance == NotificationManager.IMPORTANCE_NONE) return "The \"Auto-bet bets placed\" notification channel is switched off (Android Settings › Apps › Vigilant › Notifications)"
+        return null
+    }
+
+    fun placed(app: Application, target: BetTarget, bet: TrackedBet, check: CnoBooks.Check, walletLeft: Double? = null) {
         if (!ScanService.canNotify(app)) return
         ensureChannel(app)
-        val n = NotificationCompat.Builder(app, CHANNEL)
+        val text = text(bet, target, check, walletLeft)
+        val n = NotificationCompat.Builder(app, CHANNEL_BET)
             .setSmallIcon(R.drawable.ic_scan)
             .setContentTitle(title(bet, target))
-            .setContentText(text(bet, target, check))
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text(bet, target, check)))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setAutoCancel(true)
             .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
             .build()
-        runCatching { NotificationManagerCompat.from(app).notify(ID_PLACED + (kotlin.math.abs(bet.id.hashCode()) % 100_000), n) }
+        // Its own notification each (the bet's id is the tag): two bets in one cycle never replace one another.
+        runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
+    }
+
+    /** A made-up bet on the real channel ("Send a test notification"): what the next real one looks like, and whether it shows at all. */
+    fun sample(app: Application): Boolean {
+        if (!ScanService.canNotify(app)) return false
+        ensureChannel(app)
+        val n = NotificationCompat.Builder(app, CHANNEL_BET)
+            .setSmallIcon(R.drawable.ic_scan)
+            .setContentTitle("Auto-bet \$0.37 · +4.2% EV · Test bet")
+            .setContentText("+117 · 3 of 3 books agree · Moneyline · A @ B · wallet \$2.10 left")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("This is a test: it's what a real auto-bet notification looks like. +117 · 3 of 3 books agree · Moneyline · A @ B · wallet \$2.10 left"))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setContentIntent(EvAlerts.openVigilant(app, ID_SAMPLE))
+            .build()
+        return runCatching { NotificationManagerCompat.from(app).notify("auto-bet-test", ID_SAMPLE, n) }.isSuccess
     }
 
     fun stopped(app: Application, title: String, text: String) {
