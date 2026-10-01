@@ -2977,3 +2977,12 @@ Sep 30, 5:31:38 PM · Vigilant scan: ParlayAPI props WNBA: ParlayAPI failed for 
 ```
 The app just crashed a couple times. Both times it was scanning vigilant and I tried to switch tabs, which got very laggy then crashed
 ```
+
+## 2026-10-01T00:59:54Z
+```
+I set the settings to put the Kelly value in my bet slips within vigilant automatically, but it is still entering only $1 on every bet. Make sure it enters the Kelley value if I select it. Also make sure it is accurately calculating Kelly values when I input my total bankroll and select kelly. The math must be accurate. I think Kelly values change depending on the odds of the bet. Make sure it is all correct.
+
+Then see if the code is optional for when I scan odds, because I used the check odds now function and the list of open bets got very laggy. This is not a big problem if it is normal, but other apps don't do this, such as oddsjam. 
+
+Then run full test protocol to make sure the app functions well and is well optimized and coded.
+```
