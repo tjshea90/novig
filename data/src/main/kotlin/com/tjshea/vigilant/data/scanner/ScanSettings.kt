@@ -312,6 +312,12 @@ data class ScanSettings(
     /** The v0.19-v0.37 interval in whole minutes: read only by [migrate] (schema 12), which turns it into [autoScanSeconds]. */
     val autoScanMinutes: Int = 10,
     /**
+     * Keep the phone's CPU awake (screen off) while background auto-scan runs more often than every 9 minutes (Tj, 2026-10-02: "keep it
+     * alive robustly … even if the phone is idle and the screen is turned off and locked"): without it Android's Doze lets an alarm-driven
+     * scan run about every 9 minutes while the phone sits still. See [KeepAwake]. On by default: costs battery, best plugged in.
+     */
+    val autoScanKeepAwake: Boolean = true,
+    /**
      * A push notification for each new bet at or over this EV (0.03 = 3%) that several books agree
      * on, found while Vigilant isn't on screen; tapping it opens the bet in Novig (Tj, 2026-09-28).
      * 0 = no alerts.
