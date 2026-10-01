@@ -292,7 +292,8 @@ class AutoBettor(
         /** A line for Settings and Diagnostics: what the last run did. */
         fun line(s: Status, now: Long): String {
             val r = s.last
-            val at = s.lastRunMs?.let { "last check ${com.tjshea.vigilant.app.ui.Format.age(it, now)}" } ?: "no check yet"
+            if (s.lastRunMs == null) return "No check yet: it runs with the next background CNO scan."
+            val at = "Last check ${com.tjshea.vigilant.app.ui.Format.age(s.lastRunMs, now)}"
             s.blocker?.let { return "$at: $it" }
             val parts = listOfNotNull(
                 if (r.placed.isNotEmpty()) "placed ${r.placed.size} (${String.format(Locale.US, "$%.2f", r.staked)})" else null,
