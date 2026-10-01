@@ -81,7 +81,7 @@ object HealthChecks {
                     level, "Game matching", "${pct0(share)} of Novig's games matched to a fair-odds source",
                     "$matched of $games" + (gaps.takeIf { it.isNotEmpty() }?.joinToString(", ", "; unmatched: ") { "${it.league} ${it.games - it.matched} of ${it.games}" } ?: "") +
                         (stats?.let { st2 -> (st2.novigEvents - games).takeIf { it > 0 }?.let { "; $it futures left out" } } ?: ""),
-                    if (level == Level.WARN) "the sources that carry those leagues (tennis: Kalshi and Pinnacle only today); data/match/TeamMatcher.kt" else null,
+                    if (level == Level.WARN) "the sources that carry those leagues (tennis: Kalshi, Pinnacle, and ParlayAPI when it's on); data/match/TeamMatcher.kt" else null,
                 ),
             )
         }
