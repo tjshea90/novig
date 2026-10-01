@@ -168,6 +168,8 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
         /** Alerts sent last cycle (new bets only). */
         val lastAlerts: Int = 0,
         val lastError: String? = null,
+        /** Check odds now holds the focus: this cycle didn't run ([FocusGate]); one runs as soon as the check ends. */
+        val pausedForCheck: Boolean = false,
     )
 
     private val _status = MutableStateFlow(Status())
@@ -180,6 +182,9 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
 
     val running: Boolean get() = mutex.isLocked
 
+    /** The check that held the focus is over: the status stops saying so. */
+    fun resumed() = _status.update { if (it.pausedForCheck) it.copy(pausedForCheck = false) else it }
+
     /**
      * One background scan. False when one is already running (or auto-scan is off, or scanning paused). [forceVigilant]: Tj tapped Scan now, so
      * Vigilant's own scan runs even if one started less than [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS] ago ([AutoScanClock.vigilantDue]).
@@ -189,8 +194,14 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
         try {
             val settings = c.currentSettings()
             if (settings.activeAutoScan == AutoScanMode.OFF) return false
+            // Check odds now has CNO's pace, the APIs and the phone to itself (Tj, 2026-10-01): no CNO read, no auto-bet and no scan from this cycle, and
+            // the schedule goes on (the next one is armed as ever; the check's end starts one). Nothing is lost that the check doesn't read itself.
+            if (c.focus.active(clock())) {
+                _status.update { it.copy(pausedForCheck = true) }
+                return false
+            }
             val start = clock()
-            _status.update { it.copy(running = true, step = "Starting", lastStartMs = start, lastError = null) }
+            _status.update { it.copy(running = true, step = "Starting", lastStartMs = start, lastError = null, pausedForCheck = false) }
             val alerts = ArrayList<EvAlert>()
             val errors = ArrayList<String>()
             try {

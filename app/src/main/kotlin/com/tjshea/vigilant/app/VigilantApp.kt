@@ -273,15 +273,18 @@ class AppContainer(private val app: Application) {
     /** The last back-fill's report (this process), for Diagnostics. */
     @Volatile var lastBackfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null
 
+    /** Held while Check odds now runs: the loops that read on their own wait ([FocusGate]). */
+    val focus = FocusGate()
+
     /**
      * Runs the back-fill, never throwing (a feed down is looked at again next time). Novig's trade files (a few MB a kickoff) are read on any
      * network: Tj, 2026-09-30, "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data
      * or phone storage always."
      */
-    suspend fun backfillCloses() {
+    suspend fun backfillCloses(force: Boolean = false) {
         try {
             parlayCloses.enabled = currentSettings().useParlay
-            lastBackfill = closeBackfill.run(heavyOk = true)
+            lastBackfill = closeBackfill.run(heavyOk = true, force = force)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
