@@ -128,4 +128,52 @@ class ParlayBooksTest {
         assertNull(books().view(bet("x", "A @ B", "2026-10-04T17:00:00Z", "Moneyline", "A").copy(league = "Nowhere League")))
         assertTrue(asked.isEmpty())
     }
+
+    /** Tj, 2026-10-01: "Build tennis through parlayapi": a tennis bet's books from the tour's answer, in the bet's own unit (PARLAY_API.md §6.11). */
+    @Test
+    fun `a tennis bet's books come in its own unit, games or sets, from the tour's answer`() = runBlocking<Unit> {
+        val tennisNow = Instant.parse("2026-10-01T01:40:00Z").toEpochMilli()
+        val paths = ArrayList<okhttp3.HttpUrl>()
+        val tennis = MockWebServer().apply {
+            dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    paths += request.requestUrl!!
+                    return if (request.requestUrl!!.encodedPath == "/v1/sports/tennis_atp/odds") {
+                        MockResponse().setBody(javaClass.classLoader!!.getResource("parlay-tennis-atp.json")!!.readText()).setHeader("x-requests-last", "3")
+                    } else MockResponse().setResponseCode(404)
+                }
+            }
+            start()
+        }
+        try {
+            val b = ParlayBooks(
+                TheOddsApiClient(
+                    OkHttpClient(), KeyPool(QuotaPolicy.PARLAY, { listOf("pk") }, meter), json,
+                    baseUrl = tennis.url("/v1").toString().trimEnd('/'), clock = { tennisNow }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
+                ),
+                active = { true }, clock = { tennisNow },
+            )
+            fun bet(id: String, market: String, selection: String) = TrackedBet(
+                id, tennisNow - 3_600_000L, "ATP", "Arthur Rinderknech @ Alex Molcan Round of 32", Instant.parse("2026-10-01T03:05:00Z").toEpochMilli(),
+                market, selection, "m", "", 0.5, 0.5, 0.52, 0.04, 10.0,
+            )
+            // Molcan +1.5 GAMES: BetMGM's +1.5 games line, never Pinnacle's +1.5 sets.
+            val games = b.view(bet("g", "Games Spread", "Alex Molcan +1.5"))!!
+            assertEquals(listOf("MGM"), games.prices.map { it.code })
+            assertEquals(us(1.98) to us(1.714), games.prices.single().odds to games.prices.single().otherOdds)
+            // Molcan +1.5 SETS: Pinnacle's set line.
+            val sets = b.view(bet("s", "Set Spread", "Alex Molcan +1.5"))!!
+            assertEquals(listOf("PN"), sets.prices.map { it.code })
+            assertEquals(us(1.559) to us(2.55), sets.prices.single().odds to sets.prices.single().otherOdds)
+            val totalSets = b.view(bet("ts", "Total Sets", "Under 2.5"))!!
+            assertEquals(us(1.633) to us(2.37), totalSets.prices.single().odds to totalSets.prices.single().otherOdds)
+            // The winner: every book's, FanDuel's own listing included.
+            assertEquals(setOf("PN", "B365", "CZR", "DK", "FD", "PX"), b.view(bet("w", "Moneyline", "Arthur Rinderknech"))!!.prices.map { it.code }.toSet())
+            // One call for the tour (3 credits: no alternates), shared by every bet.
+            assertEquals(1, paths.size)
+            assertEquals("h2h,spreads,totals", paths.single().queryParameter("markets"))
+        } finally {
+            tennis.shutdown()
+        }
+    }
 }
