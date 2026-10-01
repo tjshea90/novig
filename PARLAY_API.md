@@ -60,7 +60,7 @@ from /line-movement is still charged** (2 credits each, seen 3 times).
 
 | Call | Cost | Where | Notes |
 | :- | -: | :- | :- |
-| `GET /v1/sports/{s}/odds?bookmakers=<10>&markets=h2h,spreads,totals&oddsFormat=decimal&commenceTimeTo=` | 3 (5 with `alternate_spreads,alternate_totals`) | `TheOddsApiClient` (`OddsFeed.PARLAY`) | markets × ⌈books/10⌉. Alternates are **Pinnacle's only**: asked only when PinnWire/pinnapi are off. Games under way are **left out unless `include_live=true`** (sent when Settings' live games are on). Three-way h2h (soccer, with a Draw) is dropped at parse. |
+| `GET /v1/sports/{s}/odds?bookmakers=<10>&markets=h2h,spreads,totals&oddsFormat=decimal&commenceTimeTo=` | 3 (5 with `alternate_spreads,alternate_totals`; tennis always 3) | `TheOddsApiClient` (`OddsFeed.PARLAY`); tennis tours through `ParlayTennis` (§6.11) | markets × ⌈books/10⌉. Alternates are **Pinnacle's only**: asked only when PinnWire/pinnapi are off. Games under way are **left out unless `include_live=true`** (sent when Settings' live games are on). Three-way h2h (soccer, with a Draw) is dropped at parse. |
 | `GET /v1/sports/{s}/props?markets=<Vigilant's>&bookmakers=pinnacle,draftkings,fanduel,caesars,bovada,prophetx&oddsFormat=american&limit=10000&offset=&maxAgeSec=600` | 3 | `ParlayPropsSource`, `ParlayProps.parse` | One row per book per prop: `event_id`, `home_team`, `away_team`, `commence_time` (ms), `bookmaker`, `player`, `market_key` (**each book's own name**, e.g. `player_passing_attempts`, `batter_total_bases`), `market` (label), `period` (`FULL`; others are 1Q/1H props, skipped), `line`, `over_price`, `under_price` (either may be null: one-sided markets), `last_update`, `age_seconds`, **`injury`** (see §6.1). `ParlayMarkets.statOf` maps key+label to Novig's stat. `x-result-truncated: true` means a book writes faster than one read: narrowing `markets=` is their fix (done). |
 | `GET /v1/sports/{s}/closing-lines?bookmakers=pinnacle&daysFrom=&oddsFormat=american` | 5 | `ParlayCloses.parseGameLine` | **Flat rows, moneyline only in practice** (15/15 NFL, 4/4 MLB rows `h2h`, though the docs promise spreads/totals): `home_odds`, `away_odds`, `draw_odds`, `commence_time`, `last_update` (= the start). `daysFrom` never past the plan's history. |
 | `GET /v1/historical/closing-lines.json?date=&sport_key=&source=pinnacle&limit=10000` | 1 per 1,000 rows | `ParlayCloses.parseProp`, `parseFileGameLine` | `{rows:[…]}`: props **and** Pinnacle's game lines (moneyline/spread rows name one team in `player_name` with its price in `over_price`; totals `player_name:"Total"` with both sides). `snapshot_time` is often **hours** before the start (MLB props 12–15 h): a price more than 2 h early isn't used as a close. |
@@ -300,6 +300,16 @@ Pinnacle 36, ProphetX 12, bet365/Caesars/BetMGM 9). Samples: `parlay-tennis-atp.
 - Novig's tennis markets (public catalog, the same hour): `SPREAD` (games) 182/298, `TOTAL` (games) 143/209, `PLAYER_GAMES_WON` 69/74, `MONEY`
   23/41, `FIRST_SET_MONEYLINE` 23/41, **`SET_SPREAD` 27/44 (±1.5) and `TOTAL_SETS` 23/40 (2.5)**, `WINNER` (outrights). Pinnacle's set lines
   price the last two, which no other source did.
+- **The closes file has the same split** (`/v1/historical/closing-lines.json?sport_key=tennis_atp`, 1,767 rows for Sep 30 = 2 credits): a match's
+  own rows are sets (`spreads` ±1.5, `totals` 2.5, plus `spreads_sets`/`totals_sets` copies and `alternate_*`), the games rows are a match
+  named `"<Player> (Games)"` (`player_name` too: spreads ±0.5–6.5, totals 17.5–25.5, Asian lines included). Before v0.37.0 a games −1.5 bet
+  took the later-stamped row, which was the sets one (38% instead of 52% on Davidovich Fokina −1.5). Sample: `parlay-closes-tennis.json`.
+- **Built (v0.37.0)**: `data/reference/ParlayTennis.kt` normalizes every ParlayAPI tennis `/odds` answer (doubles dropped, listings merged
+  by the two players within the tour's start gap, Pinnacle's match-event lines → `RefBookMarket.PERIOD_SETS`, any book whose total is under
+  6 → sets, impossible lines dropped); `TheOddsApiClient.supports` takes ATP/WTA on ParlayAPI only, 3 credits a tour; the Planner prices
+  `SET_SPREAD`/`TOTAL_SETS` from set lines only; `ParlayBooks` (Check odds now) reads a tennis bet in its own unit with the tour's one-day
+  start gap; `ParlayCloses.parseFileGameLine` closes a tennis bet from rows in its own unit, and set bets are looked up at all. Live
+  (`LiveParlayTennisTest`, 2026-10-01 ~02:00Z): 63 of 64 Novig matches paired, median |EV| per kind 1.7–4.0%.
 
 ## 7. Still unverified
 - ~~Whether the credits reset on the 1st (UTC)~~ **Verified 2026-10-01 ~01:35Z**: `/v1/usage` read `credits_used` 0, `credits_remaining` 20,000,

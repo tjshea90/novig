@@ -3098,3 +3098,20 @@ states instead of 1,500, the last one always.
 So the next one says why by itself: `AppExits` keeps a crash's stack as the process goes (files/last_crash.txt → Recent problems as "App
 crash"), and Diagnostics reads Android's own record of each exit (`ApplicationExitInfo`: crash, "not responding" with the main thread's
 stack from its dump, low memory…) into "How the app last ended", with an "App stability" health check.
+
+## 49. Tennis through ParlayAPI (v0.37.0, 2026-10-01; Tj: "Build tennis through parlayapi")
+
+The offer from §47: 63 of 83 Novig games in a scan window were tennis, priced only by Kalshi (winners) and Pinnacle direct. ParlayAPI's tour
+keys (`tennis_atp`, `tennis_wta`; Challengers included) add bet365, Caesars, DraftKings, BetMGM, ProphetX and FanDuel, plus Pinnacle's set
+lines, for 3 credits a tour. The answer's traps and how each is handled are in PARLAY_API.md §6.11: Pinnacle's match event holds SET lines and
+a "(Games)" twin holds its games lines, every other book's match event holds games lines (BetMGM and DraftKings at ±1.5 games, so size can't
+tell), one match is often several events, doubles ride along. Set lines get a period of their own (`RefBookMarket.PERIOD_SETS`) and price
+only Novig's `SET_SPREAD` and `TOTAL_SETS`, which nothing priced before (71 and 63 markets that day). The same split was found in the closes
+file, where it had already been feeding wrong CLV to tennis spread bets (a games −1.5 took the sets −1.5's close: 38% instead of 52%); fixed.
+
+Live check (`LiveParlayTennisTest`, 6 credits): Novig 64 matches; ParlayAPI 51 ATP and 42 WTA matches after merging (from 93 and 64
+events), 112 set lines; 63 of 64 Novig matches paired (the 64th, a WTA quarterfinal, wasn't in ParlayAPI's answer); lines with a fair
+price: MONEY 63, SPREAD 50, TOTAL 60, SET_SPREAD 41, TOTAL_SETS 36. Novig's price against the fair line, median |EV| per kind: MONEY 2.0%,
+SPREAD 1.7%, TOTAL 1.9%, SET_SPREAD 3.4%, TOTAL_SETS 4.0% (a sets line pricing games would sit 20+ points off). Not done: each player's
+games won (ParlayAPI has no tennis team totals), 1st-set winners (not in /odds), ParlayAPI's movers board for tennis.
+
