@@ -41,6 +41,10 @@ object Diagnostics {
         /** The app's heap and what is held in it (Tj's 2026-10-01 report: an OutOfMemoryError mid-scan). */
         val memory: Memory = Memory(),
         val autoScanServiceRunning: Boolean = false,
+        /** The service holds the CPU awake between scans right now ([com.tjshea.vigilant.data.scanner.KeepAwake]). */
+        val keepAwakeHeld: Boolean = false,
+        /** When each background cycle started against its schedule, and whether the screen was off or Doze on ([com.tjshea.vigilant.data.diag.CycleLog]); saved across restarts. */
+        val cycles: com.tjshea.vigilant.data.diag.CycleBook = com.tjshea.vigilant.data.diag.CycleBook(),
         /** What the last scan and the last Check odds now cost each API (since the app opened), null before one ran. */
         val lastScan: RoundCost? = null,
         val lastCheck: RoundCost? = null,
@@ -71,6 +75,10 @@ object Diagnostics {
         val batteryUnrestricted: Boolean? = null,
         val overlay: Boolean? = null,
         val dataSaver: Boolean? = null,
+        /** Android's Battery Saver, the Doze state now, and the App Standby bucket Android keeps Vigilant in ("active", "working set", "frequent", "rare", "restricted"). */
+        val batterySaver: Boolean? = null,
+        val dozing: Boolean? = null,
+        val standbyBucket: String? = null,
         val online: Boolean? = null,
         /** "Wi-Fi", "mobile", "VPN"… */
         val network: String? = null,
@@ -104,6 +112,14 @@ object Diagnostics {
         o.appendLine(
             "Background auto-scan: ${set.autoScan.displayName}" + (if (set.autoScan != AutoScanMode.OFF) " every ${ScanSettings.intervalLabel(set.autoScanSeconds)}" else "") +
                 " → actually runs: ${runsText(set)} · service ${if (x.autoScanServiceRunning) "running" else "not running"}",
+        )
+        o.appendLine(
+            "Keep awake (Tj, 2026-10-02): switch ${if (set.autoScanKeepAwake) "on" else "OFF"} · " + when {
+                set.activeAutoScan == AutoScanMode.OFF -> "auto-scan runs nothing, nothing to keep awake"
+                KeepAwake.active(set) -> "holding the CPU awake (screen off): ${if (x.keepAwakeHeld) "yes, the wake lock is held now" else "NO, the service isn't holding it"}"
+                !set.autoScanKeepAwake && set.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS -> "NOT holding it: scans between ${ScanSettings.intervalLabel(set.autoScanSeconds)} apart run on alarms, which Doze spaces about 9 minutes apart"
+                else -> "not needed at ${ScanSettings.intervalLabel(set.autoScanSeconds)}: an alarm is on time at 9 minutes or more"
+            },
         )
         o.appendLine(
             "Auto-bet (Tj, 2026-10-01): " + if (!set.autoBet) "off" else {
@@ -216,6 +232,10 @@ object Diagnostics {
         o.appendLine("== Background auto-scan ==")
         val a = x.autoScan
         o.appendLine("Now: ${if (a.running) "running (${a.step ?: "…"})" else "idle"} · last started ${ago(a.lastStartMs)} · ended ${ago(a.lastEndMs)} · found ${a.lastFound}, alerts sent ${a.lastAlerts}" + (a.lastError?.let { " · last error: $it" } ?: ""))
+        o.appendLine(com.tjshea.vigilant.data.diag.CycleLog.line(x.cycles, now, zone))
+        com.tjshea.vigilant.data.diag.CycleLog.lateWithin(x.cycles, now, 24 * 60 * 60_000L).takeLast(5).forEach { l ->
+            o.appendLine("  late: ${at(l.atMs)} · ${com.tjshea.vigilant.data.diag.CycleLog.span(l.lateMs)} after schedule" + (if (l.dozing) " · Doze on" else if (l.screenOff) " · screen off" else " · screen on"))
+        }
 
         o.appendLine()
         o.appendLine("== Tracker ==")
@@ -297,6 +317,7 @@ object Diagnostics {
         val p = x.phone
         fun yn(v: Boolean?) = when (v) { true -> "yes"; false -> "NO"; null -> "?" }
         o.appendLine("Notifications ${yn(p.notifications)} · exact alarms ${yn(p.exactAlarms)} · battery unrestricted ${yn(p.batteryUnrestricted)} · draw over apps ${yn(p.overlay)} · Data Saver ${when (p.dataSaver) { true -> "ON"; false -> "off"; null -> "?" }} · online ${yn(p.online)}" + (p.network?.let { " ($it)" } ?: ""))
+        o.appendLine("Battery Saver ${when (p.batterySaver) { true -> "ON"; false -> "off"; null -> "?" }} · Doze now ${when (p.dozing) { true -> "yes"; false -> "no"; null -> "?" }} · standby bucket ${p.standbyBucket ?: "?"}")
 
         o.appendLine()
         o.appendLine("== How the app last ended (Android's own record, newest first) ==")
