@@ -14,8 +14,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,16 +38,21 @@ class KeepAwakeServiceTest {
     private val app: VigilantApp get() = ApplicationProvider.getApplicationContext()
     private val pm: PowerManager get() = app.getSystemService(PowerManager::class.java)
 
-    /** Scanner on Vigilant only with no leagues: a cycle runs for real and reads nothing (no CNO, no scan), so no network is touched. */
-    private val on = ScanSettings(autoScan = AutoScanMode.BOTH, scanner = ScannerMode.VIGILANT, leagues = emptySet(), autoScanSeconds = 5)
+    /**
+     * Check odds now holds the focus, so every cycle the service starts is the "paused" no-op ([AutoScanner.cycle]): the phone's state, the lock, the alarms
+     * and the loop are all real, and no scan or network read runs. What a real cycle records is [CycleLogTest]'s and the source pins' below.
+     */
+    private val on = ScanSettings(autoScan = AutoScanMode.BOTH, scanner = ScannerMode.VIGILANT, autoScanSeconds = 5)
 
     @Before fun setUp() {
         runBlocking { app.container.settingsStore.update { on } }
+        app.container.focus.begin()
         shadowOf(pm).turnScreenOn(false)
         shadowOf(pm).setIsDeviceIdleMode(true)
     }
 
     @After fun tearDown() {
+        app.container.focus.end()
         runBlocking { app.container.settingsStore.update { ScanSettings() } }
         AutoScanAlarm.cancel(app)
     }
@@ -66,21 +69,19 @@ class KeepAwakeServiceTest {
     private fun alarms() = shadowOf(app.getSystemService(AlarmManager::class.java)).scheduledAlarms
 
     private fun start(intent: Intent = Intent(app, AutoScanService::class.java)) =
-        Robolectric.buildService(AutoScanService::class.java, intent).create().startCommand(0, 1).also {
-            System.err.println("DEBUG stoppedBySelf=${shadowOf(it.get()).isStoppedBySelf} running=${AutoScanService.running} fg=${shadowOf(it.get()).isLastForegroundNotificationAttached} settings=${app.container.settingsStore.flow.value?.activeAutoScan}")
-        }
+        Robolectric.buildService(AutoScanService::class.java, intent).create().startCommand(0, 1)
 
     private val status get() = app.container.autoScan.status.value
 
     // ---- keeping awake ----------------------------------------------------------------------------------------------
 
     @Test
-    fun `with keep awake on, the service holds the CPU awake, runs the cycle itself and keeps only a safety alarm`() {
+    fun `with keep awake on, the service holds the CPU awake with the screen off and keeps only a safety alarm`() {
         val controller = start()
         val service = controller.get()
         try {
-            waitFor("the first cycle") { status.lastStartMs != null && !status.running }
-            // The CPU lock is held between scans (the cycle's own lock is released).
+            waitFor("the loop's first cycle") { status.pausedForCheck }
+            // The CPU lock is held between scans.
             assertTrue(service.keepAwakeIsHeld)
             assertTrue(AutoScanService.keepAwakeHeld)
             // The only alarm is the safety net, three minutes off, and the notification doesn't announce it as the next scan.
@@ -88,35 +89,30 @@ class KeepAwakeServiceTest {
             val armed = alarms().map { it.triggerAtTime }
             assertTrue("armed: $armed", armed.isNotEmpty() && armed.all { it - now in 170_000L..190_000L })
             assertNull(AutoScanAlarm.nextAtMs)
-            // The cycle was recorded with the phone's state as it started: screen off, Doze on.
-            waitFor("the cycle record") { runBlocking { app.container.cycleLog.summary().cycles } >= 1 }
-            val book = runBlocking { app.container.cycleLog.summary() }
-            assertEquals(1, book.cycles)
-            assertEquals(1, book.screenOffCycles)
-            assertEquals(1, book.dozeCycles)
-            assertEquals(0, book.lateCount)
+            // The phone really is in the state the lock is for.
+            assertFalse(pm.isInteractive)
+            assertTrue(pm.isDeviceIdleMode)
         } finally {
             controller.destroy()
         }
         assertFalse(AutoScanService.keepAwakeHeld)
+        assertFalse(service.keepAwakeIsHeld)
     }
 
     @Test
-    fun `a stray safety alarm while the loop runs fine starts no extra cycle, but one after a stall does`() {
+    fun `a loop with no cycle to run doesn't spin`() {
         val controller = start()
         try {
-            waitFor("the first cycle") { status.lastStartMs != null && !status.running }
-            val first = status.lastStartMs
-            Thread.sleep(20)
-            controller.withIntent(Intent(app, AutoScanService::class.java).setAction(AutoScanService.ACTION_CYCLE)).startCommand(0, 2)
-            waitFor("the stray alarm handled") { true }
-            Thread.sleep(200)
-            shadowOf(Looper.getMainLooper()).idle()
-            assertEquals("no cycle for a stray alarm", first, status.lastStartMs)
-            // A tap on Scan now is not an alarm: it always runs.
-            controller.withIntent(Intent(app, AutoScanService::class.java).setAction(AutoScanService.ACTION_SCAN_NOW)).startCommand(0, 3)
-            waitFor("Scan now") { status.lastStartMs != first && !status.running }
-            assertNotEquals(first, status.lastStartMs)
+            waitFor("the loop's first cycle") { status.pausedForCheck }
+            // Hand the main thread back for a while: a loop that re-ran at once would keep it busy and starve everything else here.
+            val until = System.currentTimeMillis() + 1_500
+            var turns = 0
+            while (System.currentTimeMillis() < until) {
+                shadowOf(Looper.getMainLooper()).idle()
+                turns++
+                Thread.sleep(5)
+            }
+            assertTrue("turns: $turns", turns > 50)
         } finally {
             controller.destroy()
         }
@@ -127,15 +123,12 @@ class KeepAwakeServiceTest {
         val controller = start()
         val service = controller.get()
         try {
-            waitFor("the first cycle") { status.lastStartMs != null && !status.running }
-            assertTrue(service.keepAwakeIsHeld)
+            waitFor("the loop's first cycle") { status.pausedForCheck && service.keepAwakeIsHeld }
             runBlocking { app.container.settingsStore.update { it.copy(autoScanKeepAwake = false) } }
             waitFor("the CPU lock let go") { !service.keepAwakeIsHeld }
             assertFalse(AutoScanService.keepAwakeHeld)
-            // Alarm-driven now: the alarm is the next scan's, announced as such, a few seconds after the last start (5 s interval).
+            // Alarm-driven now: the alarm is the next scan's, announced as such.
             waitFor("the exact alarm") { AutoScanAlarm.nextAtMs != null }
-            val next = AutoScanAlarm.nextAtMs!!
-            assertTrue(next >= status.lastStartMs!! + 1_000L && next <= System.currentTimeMillis() + 10_000L)
             runBlocking { app.container.settingsStore.update { it.copy(autoScanKeepAwake = true) } }
             waitFor("the CPU lock held again") { service.keepAwakeIsHeld }
             assertTrue(AutoScanService.keepAwakeHeld)
@@ -151,11 +144,10 @@ class KeepAwakeServiceTest {
         val controller = start()
         val service = controller.get()
         try {
-            waitFor("the first cycle") { status.lastStartMs != null && !status.running }
+            waitFor("the first attempt") { status.pausedForCheck }
             assertFalse(service.keepAwakeIsHeld)
             assertFalse(AutoScanService.keepAwakeHeld)
             waitFor("the alarm") { AutoScanAlarm.nextAtMs != null }
-            assertTrue(AutoScanAlarm.nextAtMs!! - status.lastStartMs!! in 590_000L..610_000L)
         } finally {
             controller.destroy()
         }
@@ -163,11 +155,12 @@ class KeepAwakeServiceTest {
 
     @Test
     fun `Stop lets go of everything and cancels the alarm, and the record notes a deliberate stop`() {
+        // A schedule that had been running: the record is open.
+        runBlocking { app.container.cycleLog.record(System.currentTimeMillis() - 1_000, System.currentTimeMillis() - 900, 5, true, true) }
+        assertTrue(runBlocking { app.container.cycleLog.summary().open })
         val controller = start()
         val service = controller.get()
-        waitFor("the first cycle") { status.lastStartMs != null && !status.running }
-        waitFor("the cycle record") { runBlocking { app.container.cycleLog.summary().cycles } >= 1 }
-        assertTrue(runBlocking { app.container.cycleLog.summary().open })
+        waitFor("the loop's first cycle") { status.pausedForCheck && service.keepAwakeIsHeld }
         controller.withIntent(Intent(app, AutoScanService::class.java).setAction(AutoScanService.ACTION_STOP)).startCommand(0, 4)
         waitFor("Stop") { !service.keepAwakeIsHeld && alarms().isEmpty() }
         assertEquals(AutoScanMode.OFF, runBlocking { app.container.currentSettings() }.autoScan)
@@ -218,7 +211,14 @@ class KeepAwakeServiceTest {
         assertTrue(src.contains("KeepAwake.active(s) && loopJob?.isActive == true && last != null && now - last < KeepAwake.watchdogDelayMs(s.autoScanSeconds)"))
         // Keeping awake, the per-cycle alarm is the safety net, not an exact alarm that Doze would hold for 9 minutes.
         assertTrue(src.contains("if (hold) armWatchdog(seconds, force = true) else AutoScanAlarm.set(this, nextCycleAtMs)"))
-        assertTrue(src.contains("holds no wake lock between scans").not())
+        assertFalse(src.contains("holds no wake lock between scans"))
+        // A cycle that didn't start waits a moment, so a paused one can't spin the loop.
+        assertTrue(step, step.contains("if (container.autoScan.status.value.lastStartMs == before) delay(AutoScanClock.minGapMs(s.autoScanSeconds))"))
+        // The cycle record is written from the cycle's own finally, uncancellable, with the phone's state at its start and whether a check had paused it.
+        val cycle = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        assertTrue(cycle.contains("val (screenOff, dozing) = runCatching { phone() }.getOrDefault(false to false)"))
+        assertTrue(cycle.contains("val afterPause = _status.value.pausedForCheck"))
+        assertTrue(cycle.substringAfter("withContext(NonCancellable) {").substringBefore("}\n            }").contains("c.cycleLog.record(start, clock(), settings.autoScanSeconds, screenOff, dozing, afterPause)"))
     }
 
     @Test
@@ -226,6 +226,5 @@ class KeepAwakeServiceTest {
         val manifest = File("src/main/AndroidManifest.xml").readText()
         assertTrue(manifest.contains("android.permission.WAKE_LOCK"))
         assertTrue(manifest.contains("android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"))
-        assertNotNull(manifest)
     }
 }

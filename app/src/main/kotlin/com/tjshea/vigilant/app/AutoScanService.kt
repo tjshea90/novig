@@ -206,8 +206,11 @@ class AutoScanService : Service() {
             delay(minOf(left, LOOP_SLICE_MS))
             maintainKeepAwake(s.autoScanSeconds)
         }
+        val before = container.autoScan.status.value.lastStartMs
         runCycle()
         cycleJob?.join()
+        // No cycle started (Check odds now holds the focus, or another trigger got there first): not again this instant.
+        if (container.autoScan.status.value.lastStartMs == before) delay(AutoScanClock.minGapMs(s.autoScanSeconds))
         return true
     }
 
