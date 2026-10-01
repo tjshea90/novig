@@ -1,21 +1,24 @@
-# CHECKPOINT 2229 — read me first, then TASKS.md
+# CHECKPOINT 2230 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T01:45:29Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `f4aa7ea8` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T01:48:21Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `706027f0` (this checkpoint is the commit after it)
 
 ## Just done
-Z2 core: ParlayTennis.normalize (doubles dropped, (Games) twin + other books' listings merged by players, Pinnacle match-event lines -> PERIOD_SETS, others games), ParlayAPI supports ATP/WTA (h2h,spreads,totals = 3 credits a tour), Planner SET_SPREAD/TOTAL_SETS, families; ParlayTennisTest 7 green
+Z2 done + live-verified: 63/64 Novig tennis matches paired via ParlayAPI, SET_SPREAD 41 / TOTAL_SETS 36 lines newly priced, median |EV| per kind 1.7-4.0%; HealthChecks hint names ParlayAPI for tennis
 
 ## Do this next
-Z2: full data+app suites; then Z3 ParlayBooks tennis (sets picks), closes
+Z3: ParlayBooks (Check odds now) for tennis bets incl. sets picks; closes
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M data/src/test/kotlin/com/tjshea/vigilant/data/scanner/TennisTest.kt
 
 ## Last ten checkpoints
 ```
+  46adcb27 ckpt 2229: Z2 core: ParlayTennis.normalize (doubles dropped, (Games) twin + other books
   18cce014 ckpt 2228: Z1: real ParlayAPI tennis read (10 credits): Pinnacle match event = set line
   b97184ba ckpt 2227: Logged Tj's 'Build tennis through parlayapi' as TASKS.md Z1-Z5 (W5 accepted)
   e9dd8b66 ckpt 2226: v0.36.2 (code 66) released and recorded: Y1-Y5 done (Kelly in bet slips, Kel
@@ -25,8 +28,7 @@ Z2: full data+app suites; then Z3 ParlayBooks tennis (sets picks), closes
   6b8ef3ce ckpt 2222: Y1-Y2: Bet sheet follows the Kelly slip setting (per-bet Kelly to the cent, 
   42427dc5 ckpt 2221: Logged Tj's 2026-10-01 request as TASKS.md Y1-Y5 (Kelly in bet slips + math,
   be961a80 ckpt 2220: v0.36.1 (code 65) released and recorded: X1-X3 done (mid-scan lag/crash)
-  7a8e815a ckpt 2219: pre-release: v0.36.1: no more lag and crash switching tabs mid-scan (the scr
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

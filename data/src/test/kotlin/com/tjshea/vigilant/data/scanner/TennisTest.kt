@@ -60,7 +60,7 @@ class TennisTest {
         market("to", "TOTAL", "A. Rublev @ K. Jacquet t21.5", "to-o" to "Over 21.5", "to-u" to "Under 21.5"),
         market("gw", "PLAYER_GAMES_WON", "Andrey Rublev 12.5 PLAYER_GAMES_WON", "gw-o" to "Over 12.5", "gw-u" to "Under 12.5"),
         market("s1", "FIRST_SET_MONEYLINE", "K. Jacquet Set 1", "s1-j" to "K. Jacquet", "s1-r" to "A. Rublev"),
-        // Sets markets: no fair source here prices them, so they're never read.
+        // Sets markets: no source in this test prices them (Pinnacle direct drops its "(Sets)" rows), so they're never read.
         market("ss", "SET_SPREAD", "A. Rublev -1.5", "ss-r" to "A. Rublev -1.5", "ss-j" to "K. Jacquet +1.5"),
         market("ts", "TOTAL_SETS", "A. Rublev @ K. Jacquet t2.5", "ts-o" to "Over 2.5", "ts-u" to "Under 2.5"),
     )
