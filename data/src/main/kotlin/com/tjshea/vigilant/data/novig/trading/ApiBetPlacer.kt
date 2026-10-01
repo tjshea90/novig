@@ -22,8 +22,11 @@ sealed interface PlaceResult {
     /** Novig took the order and nothing filled at that price: no money moved. */
     data class NotFilled(val reason: String) : PlaceResult
 
-    /** A check said no before anything was sent. */
-    data class Refused(val reason: String) : PlaceResult
+    /**
+     * A check said no before anything was sent, or Novig refused the order as too small ([tooSmall]: `ORDER_TOO_SMALL`, no money moved; the
+     * auto-bet learns the stake it refused and skips the same or smaller ones instead of asking again).
+     */
+    data class Refused(val reason: String, val tooSmall: Boolean = false) : PlaceResult
 
     /** Novig refused the order or the call failed with an answer (a wallet that's too small, a location check): no money moved. */
     data class Failed(val message: String) : PlaceResult
@@ -118,6 +121,10 @@ class ApiBetPlacer(
         } catch (e: CancellationException) {
             throw e
         } catch (e: NovigApiException) {
+            // Too small is about this order, not about the account: say so (an auto-bet carries on with its other bets).
+            if (e.status == 400 && e.code == TOO_SMALL_CODE) {
+                return PlaceResult.Refused("Novig refused the order as too small ($TOO_SMALL_CODE). Try a bigger amount.", tooSmall = true)
+            }
             return PlaceResult.Failed(e.advice)
         } catch (e: Exception) {
             // No usable answer (a timeout, a dropped connection, a reply that couldn't be read): the order may have gone through, so look

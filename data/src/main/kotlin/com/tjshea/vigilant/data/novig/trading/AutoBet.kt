@@ -20,8 +20,14 @@ import java.util.Locale
  */
 object AutoBet {
 
-    /** The least an auto-bet stakes: a Kelly stake or a wallet remainder under this is a bet not worth placing, never rounded up. */
-    const val MIN_STAKE = 1.0
+    /**
+     * The least an auto-bet stakes: one cent (Tj, 2026-10-01: "I don't want a $1 minimum bet … It can bet as low as 1 cent … usually it will be a
+     * Kelly number and often under $1"). A stake or a wallet remainder under a cent is skipped, never rounded up. Novig's own minimum is one
+     * contract (a winning contract pays 1¢, so a cent buys at least one at any price: docs.novig.com `PlaceOrder.qty`, minimum 1); it also lists an
+     * `ORDER_TOO_SMALL` refusal without publishing its threshold, which [com.tjshea.vigilant.data.novig.trading.ApiBetPlacer] reports as a
+     * too-small refusal and `AutoBettor` learns from.
+     */
+    const val MIN_STAKE = 0.01
 
     /** The edge floor: a typed minimum under this is read as this (a 0.1% "edge" is noise, and 0 would bet everything). */
     const val MIN_EV_FLOOR = 0.005
@@ -96,7 +102,7 @@ object AutoBet {
         /** Not this bet: [reason] in words. */
         data class Skip(val reason: String) : Stake
 
-        /** The wallet can't fund a [MIN_STAKE] bet: no bet at all, and none after it either. */
+        /** The wallet can't fund a [MIN_STAKE] (one cent) bet: no bet at all, and none after it either. */
         object WalletEmpty : Stake
     }
 
@@ -118,9 +124,9 @@ object AutoBet {
         if (capped < MIN_STAKE - 1e-9) {
             return Stake.Skip(
                 when {
-                    rules.maxStake < MIN_STAKE -> "your maximum per bet is under ${money(MIN_STAKE)}"
-                    wanted < MIN_STAKE -> "its ${rules.stake.label} stake is ${money(wanted)}, under the ${money(MIN_STAKE)} minimum"
-                    else -> "${money(capped)} is under the ${money(MIN_STAKE)} minimum"
+                    rules.maxStake < MIN_STAKE -> "your maximum per bet is under a cent"
+                    wanted < MIN_STAKE -> "its ${rules.stake.label} stake is under a cent"
+                    else -> "what the wallet can fund is under a cent"
                 },
             )
         }
