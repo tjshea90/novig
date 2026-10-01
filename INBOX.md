@@ -3409,3 +3409,8 @@ Investigate whether it is possible for this auto bet feature to work even with m
 ```
 I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent, whatever the number is that I have in options. Usually it will be a Kelly number and often under $1
 ```
+
+## 2026-10-01T17:56:25Z
+```
+Make a button in all the bet slips for the vigilant app for an option to add money to the vigilant wallet in amounts of $1, 2, 5, 10, 15, 20, or an amount I type in. Right now if I have one cent, there is no option to add money in the bet slip. Also make it so the auto bet feature can bet stakes all the way down to 1 cent, even if there is only 1 cent left in the wallet. It is allowed to completely deplete the wallet. If a Kelly stake is more than the available balance in the wallet, bet the remainder of the wallet balance on that bet. If a kelly amount is more than the maximum allowed bet in the options, bet the maximum allowed. Add an option to scan cno every 5 seconds for the auto bet function. Make a push notification for every automatic bet, so I can see each bet placed and the stake and EV.
+```
