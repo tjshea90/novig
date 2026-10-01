@@ -313,7 +313,7 @@ class ApiBettingUiTest {
         val note = "¼ Kelly of your $1,000.00 bankroll at this bet's odds"
         sheetScreen { ApiBetSheetContent(sheet().copy(stake = 4.37, baseStake = 4.37, stakeNote = note), {}, {}, {}, {}, {}) }
         compose.onNodeWithText(note).assertExists()
-        compose.onNodeWithText("4.37", substring = true).assertExists()
+        compose.onNodeWithTag("betAmount").assert(hasText("4.37", substring = true))
     }
 
     @Test
