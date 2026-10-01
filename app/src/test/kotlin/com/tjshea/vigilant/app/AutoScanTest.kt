@@ -104,6 +104,19 @@ class AutoScanTest {
         assertEquals(listOf(240, 240, 240, 360, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::vigilantEverySeconds))
     }
 
+    /** Faster cycles than the usual 5 minutes also re-read the bets in their last 15 minutes at the cycle's pace: a closer last read before the start is the close. */
+    @Test
+    fun `cycles faster than 5 minutes re-read bets about to start at their own pace, never faster than once a minute`() {
+        // 15 s and 30 s cycles: once a minute each at most; 1 min: every minute; 3 min: every 3 minutes; 5 minutes and slower: the usual 5 minute rule alone.
+        assertEquals(listOf(60_000L, 60_000L, 60_000L, 180_000L, null, null, null, null, null), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(AutoScanClock::closingFreshMs))
+        val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        val closing = src.substringAfter("c.recheck.captureClosing()").substringBefore("}.onFailure")
+        assertTrue(closing, closing.contains("AutoScanClock.closingFreshMs(settings.autoScanSeconds)?.let { c.recheck.captureClosing(withinMs = ClosingLine.TRUE_CLOSE_MS, freshMs = it) }"))
+        // Both reads sit in the CNO branch, before Vigilant's scan: nothing reads CNO's pages with the scanner on Vigilant only.
+        assertTrue(src.indexOf("closingFreshMs(settings") < src.indexOf("if (settings.autoScansVigilant"))
+        assertTrue(src.indexOf("if (settings.autoScansCno) {") < src.indexOf("closingFreshMs(settings"))
+    }
+
     /** The schedule's own survival: an alarm that goes off during a cycle is dropped, so the cycle's end must arm the next one. */
     @Test
     fun `a cycle that outlasts its interval arms the next alarm when it ends, unless the service is stopping`() {
@@ -377,6 +390,33 @@ class AutoScanTest {
         assertTrue(nothing, nothing.startsWith("Nothing runs in the background"))
     }
 
+    /** Tj, 2026-10-01: the Settings hint and the notification say a fast interval in seconds, and what it costs. */
+    @Test
+    fun `the Settings hint and the notification name a fast interval in seconds and say what runs each cycle`() {
+        fun s(seconds: Int, scanner: com.tjshea.vigilant.data.scanner.ScannerMode = com.tjshea.vigilant.data.scanner.ScannerMode.CNO) =
+            ScanSettings(scanner = scanner, autoScan = AutoScanMode.CNO, autoScanSeconds = seconds)
+        assertEquals("Auto-scan: CNO every 15 sec", AutoScanText.title(s(15)))
+        assertEquals("Auto-scan: CNO every 30 sec", AutoScanText.title(s(30)))
+        assertEquals("Auto-scan: CNO every 1 min", AutoScanText.title(s(60)))
+        assertEquals("Auto-scan: CNO every 3 min", AutoScanText.title(s(180)))
+        val fifteen = com.tjshea.vigilant.app.ui.autoScanHint(s(15))
+        assertTrue(fifteen, fifteen.startsWith("Every 15 sec, with Vigilant open or closed:"))
+        assertTrue(fifteen, fifteen.contains("About 5,760 reads of CNO a day"))
+        assertTrue(fifteen, fifteen.contains("in their last 15 minutes, once a minute each at most"))
+        assertTrue(fifteen, fifteen.contains("Under a minute apart is constant background work"))
+        val three = com.tjshea.vigilant.app.ui.autoScanHint(s(180))
+        assertTrue(three, three.contains("About 480 reads of CNO a day") && !three.contains("Under a minute apart"))
+        val slow = com.tjshea.vigilant.app.ui.autoScanHint(s(600))
+        assertTrue(slow, slow.contains("About 144 reads of CNO a day") && !slow.contains("once a minute each at most"))
+        // With Vigilant's scan too: it says it starts at most every 4 minutes however fast CNO is read, and its credits follow that.
+        val both = com.tjshea.vigilant.app.ui.autoScanHint(s(15, com.tjshea.vigilant.data.scanner.ScannerMode.BOTH).copy(autoScan = AutoScanMode.BOTH))
+        assertTrue(both, both.contains("360 scans a day at this setting (it starts at most every 4 min, however fast CNO is read)"))
+        val bothThree = com.tjshea.vigilant.app.ui.autoScanHint(s(180, com.tjshea.vigilant.data.scanner.ScannerMode.BOTH).copy(autoScan = AutoScanMode.BOTH))
+        assertTrue(bothThree, bothThree.contains("240 scans a day at this setting (it starts at most every 6 min"))
+        val bothSlow = com.tjshea.vigilant.app.ui.autoScanHint(s(600, com.tjshea.vigilant.data.scanner.ScannerMode.BOTH).copy(autoScan = AutoScanMode.BOTH))
+        assertTrue(bothSlow, bothSlow.contains("144 scans a day at this setting.") && !bothSlow.contains("at most every"))
+    }
+
     // ---- the service's notification and alarm ------------------------------------------------------
 
     @Test
@@ -389,6 +429,9 @@ class AutoScanTest {
         assertEquals("Next at 5:29 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s, now + 9 * 60_000L, now, zone = zone))
         assertEquals("Vigilant scan 40/300…", AutoScanText.status(AutoScanner.Status(running = true, step = "Vigilant scan"), s, null, now, ScanProgress("Novig prices", 40, 300), zone))
         assertEquals("Next scan soon · last found nothing to alert · alerts off", AutoScanText.status(idle.copy(lastFound = 0), s.copy(alertMinEv = 0.0), null, now, zone = zone))
+        // Scans under a minute apart show the seconds of the next one.
+        assertEquals("Next at 5:20:15 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s.copy(autoScanSeconds = 15), now + 15_000L, now, zone = zone))
+        assertEquals("Next at 5:21 AM · last found 2 (1 new) · alerts at 3%+", AutoScanText.status(idle, s.copy(autoScanSeconds = 60), now + 60_000L, now, zone = zone))
     }
 
     @Test
