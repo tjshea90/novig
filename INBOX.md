@@ -2996,3 +2996,8 @@ Build tennis through parlayapi
 ```
 For this app, for the cno scanner background auto-scan feature, add to the settings options for it to scan every 3 minutes, 1 minute, 30 seconds, and 15 seconds. Make sure the app is properly tracking clv based on real closing lines and the actual odds I placed the bet at.
 ```
+
+## 2026-10-01T05:09:28Z
+```
+Is it possible to make the app automatically place bets for me without my input if a bet meets certain criteria
+```
