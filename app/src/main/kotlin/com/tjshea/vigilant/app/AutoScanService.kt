@@ -41,7 +41,7 @@ import java.util.Locale
  * says so ("Auto-scan every 10 min · next at 3:42 PM") and offers Scan now and Stop. It holds no
  * wake lock between scans: each one is woken by an exact alarm ([AutoScanReceiver]; Android keeps
  * those on time even in Doze), holds a partial wake lock only while [AutoScanner.cycle] runs (capped
- * at [WAKE_LOCK_MAX_MS]), and arms the next alarm [ScanSettings.autoScanMinutes] after it started.
+ * at [WAKE_LOCK_MAX_MS]), and arms the next alarm [ScanSettings.autoScanSeconds] after it started (and again when it ends, if it outlasted that).
  * Type `specialUse`: a scan schedule the user sets has no fitting standard type, and `dataSync`
  * would be stopped after six hours a day on Android 15+.
  */
@@ -53,6 +53,9 @@ class AutoScanService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private var lastNotifiedMs = 0L
     private var settings: ScanSettings? = null
+
+    /** The service is going away (Stop, auto-scan off): a cycle ending now must not arm another alarm. */
+    private var stopping = false
 
     private val container get() = (application as VigilantApp).container
 
@@ -87,7 +90,7 @@ class AutoScanService : Service() {
             // unless one ran recently, else keep the next alarm.
             else -> scope.launch {
                 val s = container.currentSettings()
-                val next = AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanMinutes, System.currentTimeMillis())
+                val next = AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, System.currentTimeMillis())
                 if (next <= System.currentTimeMillis()) runCycle() else AutoScanAlarm.set(this@AutoScanService, next)
             }
         }
@@ -97,20 +100,20 @@ class AutoScanService : Service() {
     /** Settings changes (off, paused, a new interval) and the cycle's progress, into the notification and the alarm. */
     private suspend fun follow() {
         combine(
-            container.settingsStore.flow.filterNotNull().map { it.activeAutoScan to it.autoScanMinutes }.distinctUntilChanged(),
+            container.settingsStore.flow.filterNotNull().map { it.activeAutoScan to it.autoScanSeconds }.distinctUntilChanged(),
             container.autoScan.status,
             container.runner.state.map { it.progress }.distinctUntilChanged(),
-        ) { (mode, minutes), status, _ -> Triple(mode, minutes, status) }
-            .collect { (mode, minutes, status) ->
+        ) { (mode, seconds), status, _ -> Triple(mode, seconds, status) }
+            .collect { (mode, seconds, status) ->
                 if (mode == AutoScanMode.OFF) {
                     stopNow()
                     return@collect
                 }
                 val s = container.settingsStore.flow.value
-                val changed = settings?.let { it.autoScanMinutes != minutes || it.activeAutoScan != mode } ?: false
+                val changed = settings?.let { it.autoScanSeconds != seconds || it.activeAutoScan != mode } ?: false
                 settings = s
                 if (changed && !status.running) {
-                    AutoScanAlarm.set(this, AutoScanClock.nextAtMs(status.lastStartMs, minutes, System.currentTimeMillis()))
+                    AutoScanAlarm.set(this, AutoScanClock.nextAtMs(status.lastStartMs, seconds, System.currentTimeMillis()))
                 }
                 updateOngoing(status)
             }
@@ -126,18 +129,22 @@ class AutoScanService : Service() {
         cycleJob = scope.launch {
             val s = container.currentSettings()
             // The next one is armed first: a cycle cut short (killed, stuck) can't stop the schedule.
-            AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanMinutes.coerceAtLeast(1) * 60_000L)
+            AutoScanAlarm.set(this@AutoScanService, System.currentTimeMillis() + s.autoScanSeconds.coerceAtLeast(1) * 1_000L)
             try {
                 // Off the main thread: book parsing and pricing.
                 kotlinx.coroutines.withContext(Dispatchers.Default) { container.autoScan.cycle() }
             } finally {
                 releaseWakeLock()
+                // A cycle longer than its interval (a 15 s one with a slow CNO page, any one with Vigilant's scan) had its next alarm go off while
+                // it ran, and that one was dropped ([runCycle]'s guard): the next is armed from here, so the schedule never lapses.
+                if (!stopping) AutoScanAlarm.set(this@AutoScanService, AutoScanClock.nextAtMs(container.autoScan.status.value.lastStartMs, s.autoScanSeconds, System.currentTimeMillis()))
                 updateOngoing(container.autoScan.status.value, force = true)
             }
         }
     }
 
     private fun stopNow() {
+        stopping = true
         AutoScanAlarm.cancel(this)
         cycleJob?.cancel()
         releaseWakeLock()
@@ -147,6 +154,7 @@ class AutoScanService : Service() {
     }
 
     override fun onDestroy() {
+        stopping = true
         running = false
         releaseWakeLock()
         scope.cancel()
@@ -281,7 +289,7 @@ object AutoScanText {
             s.autoScansCno -> "CNO"
             else -> s.autoScan.displayName
         }
-        return "Auto-scan: $what every ${s.autoScanMinutes} min"
+        return "Auto-scan: $what every ${ScanSettings.intervalLabel(s.autoScanSeconds)}"
     }
 
     fun status(
@@ -296,7 +304,8 @@ object AutoScanText {
             val p = progress?.takeIf { it.total > 0 }?.let { " ${it.done}/${it.total}" }.orEmpty()
             return "${status.step ?: "Scanning"}$p…"
         }
-        val clock = SimpleDateFormat("h:mm a", Locale.US).apply { timeZone = zone }
+        // Seconds only when scans are under a minute apart: "Next at 3:42:15 PM".
+        val clock = SimpleDateFormat(if (s.autoScanSeconds < 60) "h:mm:ss a" else "h:mm a", Locale.US).apply { timeZone = zone }
         val next = nextAtMs?.takeIf { it > now }?.let { "Next at ${clock.format(Date(it))}" } ?: "Next scan soon"
         val alerts = if (s.alertMinEv <= 0.0) "alerts off" else "alerts at ${Math.round(s.alertMinEv * 100)}%+"
         val last = when {

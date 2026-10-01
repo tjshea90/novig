@@ -91,12 +91,24 @@ object AlertPicks {
 
 /** When the next background scan is due. */
 object AutoScanClock {
-    /** Never two cycles closer than this, however long the last one took. */
-    const val MIN_GAP_MS = 30_000L
+    /** Never two cycles closer than this, however long the last one took (the fastest interval is 15 s). */
+    const val MIN_GAP_MS = 5_000L
 
-    /** [minutes] after the last cycle started (no drift from long scans); now when none has run. */
-    fun nextAtMs(lastStartMs: Long?, minutes: Int, now: Long): Long =
-        lastStartMs?.let { maxOf(it + minutes.coerceAtLeast(1) * 60_000L, now + MIN_GAP_MS) } ?: now
+    /** [seconds] after the last cycle started (no drift from long scans); [MIN_GAP_MS] after now when that has passed; now when none has run. */
+    fun nextAtMs(lastStartMs: Long?, seconds: Int, now: Long): Long =
+        lastStartMs?.let { maxOf(it + seconds.coerceAtLeast(1) * 1_000L, now + MIN_GAP_MS) } ?: now
+
+    /** Alarm jitter: a Vigilant scan counts as due this much before its gap has fully passed. */
+    private const val JITTER_MS = 5_000L
+
+    /**
+     * Whether a cycle at [seconds] runs Vigilant's own scan (Tj, 2026-10-01: CNO may be read every 15 s, but a Vigilant scan spends API credits
+     * and takes ~100 s): every cycle when they're [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS] or more apart, else only once that long
+     * has passed since the last one started ([lastVigilantStartMs]; null = none yet this run of the app).
+     */
+    fun vigilantDue(lastVigilantStartMs: Long?, seconds: Int, now: Long): Boolean =
+        seconds >= ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS || lastVigilantStartMs == null ||
+            now - lastVigilantStartMs + JITTER_MS >= ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS * 1_000L
 }
 
 /**
@@ -113,6 +125,10 @@ object AutoScanClock {
  *     gets a notification that opens it in Novig ([EvAlerts]).
  *
  * Nothing here runs on its own: no loop, no timer. The service's alarm calls [cycle].
+ *
+ * Fast intervals (Tj, 2026-10-01: 15 s, 30 s, 1 min, 3 min): the CNO half is cheap and runs every cycle; Vigilant's own scan, which spends API
+ * credits and takes ~100 s, starts at most every [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS] ([AutoScanClock.vigilantDue]), and the cycle
+ * after it reads CNO again at once.
  */
 class AutoScanner(private val app: Application, private val c: AppContainer, private val clock: () -> Long = System::currentTimeMillis) {
 
@@ -133,6 +149,9 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
     val status: StateFlow<Status> = _status.asStateFlow()
 
     private val mutex = Mutex()
+
+    /** When this run of the app last started a background Vigilant scan ([AutoScanClock.vigilantDue]). Only [cycle] touches it, under [mutex]. */
+    private var lastVigilantStartMs: Long? = null
 
     val running: Boolean get() = mutex.isLocked
 
@@ -157,8 +176,9 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                     _status.update { it.copy(step = "Open bets about to start") }
                     runCatching { c.recheck.captureClosing() }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
-                if (settings.autoScansVigilant && settings.leagues.isNotEmpty()) {
+                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock())) {
                     _status.update { it.copy(step = "Vigilant scan") }
+                    lastVigilantStartMs = clock()
                     runCatching { alerts += vigilantScan(settings) }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 val sent = send(alerts)
