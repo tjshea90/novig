@@ -39,8 +39,10 @@ enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 /** Which Novig market families to price. */
 enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
     MONEYLINE("Moneyline", listOf("MONEY")),
-    SPREAD("Spread", listOf("SPREAD")),
-    TOTAL("Total", listOf("TOTAL")),
+    /** In tennis, the games spread and the sets spread (SET_SPREAD, ±1.5 sets). */
+    SPREAD("Spread", listOf("SPREAD", "SET_SPREAD")),
+    /** In tennis, total games and total sets (TOTAL_SETS, 2.5 sets). */
+    TOTAL("Total", listOf("TOTAL", "TOTAL_SETS")),
 
     /**
      * 1st-half spreads and totals (the first 5 innings in baseball), baseball's 1st-inning total

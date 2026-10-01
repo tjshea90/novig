@@ -443,10 +443,13 @@ object Planner {
             // Tennis: "D. Medvedev Set 1", outcomes "D. Medvedev" / "R. Safiullin" (Pinnacle's period 1).
             "FIRST_SET_MONEYLINE" -> winner(1, "1st Set Winner")
 
-            // A tennis match's spread and total are in games (its set lines are other market types).
+            // A tennis match's spread and total are in games (its set lines are SET_SPREAD and TOTAL_SETS, below).
             "SPREAD" -> spread(0, if (m.league.tennis) "Games Spread" else "Spread")
             "SPREAD_1H" -> spread(1, "$halfLabel Spread")
             "TOTAL" -> overUnder(LineKind.TOTAL, 0, if (m.league.tennis) "Total Games" else "Total")
+            // Tennis in sets ("R. Safiullin -1.5", "N. Djokovic @ Y. Bu t2.5"): only lines a feed marked as sets price them (ParlayTennis).
+            "SET_SPREAD" -> spread(RefBookMarket.PERIOD_SETS, "Set Spread")
+            "TOTAL_SETS" -> overUnder(LineKind.TOTAL, RefBookMarket.PERIOD_SETS, "Total Sets")
             "TOTAL_1H" -> overUnder(LineKind.TOTAL, 1, "$halfLabel Total")
             // "PIT @ DET FIRST_INNING_TOTAL", Over/Under 0.5: NRFI/YRFI.
             "FIRST_INNING_TOTAL" -> overUnder(LineKind.TOTAL, RefBookMarket.PERIOD_FIRST_INNING, "1st Inning Total")

@@ -28,7 +28,7 @@ data class RefBookMarket(
     val kind: LineKind,
     val quotes: List<RefQuote>,
     val lastUpdateMs: Long?,
-    /** 0 = full game, 1 = 1st half (the first 5 innings in baseball), [PERIOD_FIRST_INNING]. */
+    /** 0 = full game, 1 = 1st half (the first 5 innings in baseball, a tennis match's 1st set), [PERIOD_FIRST_INNING], [PERIOD_SETS]. */
     val period: Int = 0,
     /** [LineKind.TEAM_TOTAL]: "HOME" or "AWAY". [LineKind.PLAYER_PROP]: the player's name. */
     val subject: String? = null,
