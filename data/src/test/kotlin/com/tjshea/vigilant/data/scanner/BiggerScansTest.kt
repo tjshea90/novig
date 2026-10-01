@@ -318,7 +318,7 @@ class BiggerScansTest {
 
     // ---- lighter: a partial result prices only the books that changed (Tj's Diagnostics 2026-10-01: OutOfMemoryError) ----
 
-    private fun reusePlan(n: Int = 4): Triple<Plan, Map<String, NovigBook>, Board> {
+    private suspend fun reusePlan(n: Int = 4): Triple<Plan, Map<String, NovigBook>, Board> {
         val board = Board(n)
         val refs = listOf(Fair(board).odds(Leagues.byNovigName("MLB")!!, settings))
         val plan = Planner.plan(board.events, board.markets, refs, settings, now)
@@ -332,7 +332,7 @@ class BiggerScansTest {
     private fun ScanResult.digest() = opportunities.map { listOf(it.key, it.evPercent, it.suggestedStake, it.fairProbability, it.ladder, it.bookFetchedAtMs, it.novigWidth, it.bestBid) }
 
     @Test
-    fun `a market whose book hasn't changed is re-used as the very same outcomes, and one that has is priced again`() {
+    fun `a market whose book hasn't changed is re-used as the very same outcomes, and one that has is priced again`() = runTest {
         val (plan, books, _) = reusePlan()
         val memo = FairMemo()
         val first = Pricing.price(plan, books, settings, now, memo)
@@ -349,7 +349,7 @@ class BiggerScansTest {
     }
 
     @Test
-    fun `the result with re-use is exactly the result without it, however the books change between passes`() {
+    fun `the result with re-use is exactly the result without it, however the books change between passes`() = runTest {
         val (plan, books, _) = reusePlan(6)
         val memo = FairMemo()
         Pricing.price(plan, books, settings, now, memo) // warm
@@ -370,7 +370,7 @@ class BiggerScansTest {
     }
 
     @Test
-    fun `a new bankroll or Kelly multiplier re-works every stake, and a different fair method every line`() {
+    fun `a new bankroll or Kelly multiplier re-works every stake, and a different fair method every line`() = runTest {
         val (plan, _, _) = reusePlan(2)
         val edge = mapOf("m0" to NovigBook("m0", 1, mapOf("a0" to listOf(BidLevel(440, 1000)), "h0" to listOf(BidLevel(550, 1000))), now))
         val memo = FairMemo()
@@ -385,7 +385,7 @@ class BiggerScansTest {
     }
 
     @Test
-    fun `only the last plan's outcomes are kept, so a second plan never doubles the memory`() {
+    fun `only the last plan's outcomes are kept, so a second plan never doubles the memory`() = runTest {
         val (plan, books, board) = reusePlan(3)
         val memo = FairMemo()
         Pricing.price(plan, books, settings, now, memo)
@@ -398,7 +398,7 @@ class BiggerScansTest {
     }
 
     @Test
-    fun `without a memo nothing is kept or shared`() {
+    fun `without a memo nothing is kept or shared`() = runTest {
         val (plan, books, _) = reusePlan(2)
         val a = Pricing.price(plan, books, settings, now).opportunities
         val b = Pricing.price(plan, books, settings, now).opportunities
