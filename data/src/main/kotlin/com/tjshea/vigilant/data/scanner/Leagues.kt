@@ -26,7 +26,8 @@ data class League(
     /**
      * Whether [oddsApiSportKey] is a real key on The Odds API (and PropLine, which takes its keys). Tennis
      * isn't: The Odds API lists it per tournament ("tennis_atp_china_open"), so its key here only groups
-     * the fair-odds feeds that do carry it (Kalshi, Pinnacle).
+     * the fair-odds feeds that do carry it (Kalshi, Pinnacle, and ParlayAPI, which keys a whole tour:
+     * `tennis_atp`, `tennis_wta`, PARLAY_API.md §6.11).
      */
     val oddsApiListed: Boolean = true,
 ) {

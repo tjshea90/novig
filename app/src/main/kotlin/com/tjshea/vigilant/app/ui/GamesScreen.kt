@@ -231,11 +231,13 @@ private fun GameDetail(g: PricedGame, state: UiState, now: Long, onBack: () -> U
     }
 }
 
-/** Game-detail order: main lines, then 1st half / F5 / 1st set, 1st inning, team totals, then player props. */
+/** Game-detail order: main lines (a tennis match's sets lines after its games lines), then 1st half / F5 / 1st set, 1st inning, team totals, then player props. */
 private fun order(type: String) = when (type) {
     "MONEY" -> 0
     "SPREAD" -> 1
     "TOTAL" -> 2
+    // Tennis in sets, after the games lines.
+    "SET_SPREAD", "TOTAL_SETS" -> 3
     "SPREAD_1H" -> 3
     "TOTAL_1H" -> 4
     "FIRST_SET_MONEYLINE" -> 4
