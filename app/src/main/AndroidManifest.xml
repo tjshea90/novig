@@ -42,7 +42,11 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.Vigilant"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:largeHeap="true">
+        <!-- largeHeap (Tj's Diagnostics, 2026-10-01: an OutOfMemoryError at the 256 MB default mid-scan, with no limit set on a scan across seven
+             leagues): a scan holds every source's boards and a whole priced result, which a data app like this needs room for. [MemoryGuard] ends a
+             scan early instead of crashing when even this fills. -->
 
         <!-- The mini window: picture-in-picture over Novig (MiniWindow.kt). configChanges keeps
              the activity alive through the resize instead of recreating it; resizeable also lets

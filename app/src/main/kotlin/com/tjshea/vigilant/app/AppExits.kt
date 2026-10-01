@@ -49,7 +49,9 @@ object AppExits {
     /** What's kept of a crash: when, the thread, and the stack (the causes too), at most [MAX_CRASH_CHARS]. */
     fun crashText(thread: String, error: Throwable, atMs: Long): String {
         val stack = StringWriter().also { error.printStackTrace(PrintWriter(it)) }.toString()
-        return "at=$atMs thread=$thread\n" + stack.take(MAX_CRASH_CHARS)
+        // The heap at the crash says whether it was memory (an OutOfMemoryError names its limit, but not how full the heap was).
+        val heap = runCatching { " heap=${com.tjshea.vigilant.data.MemoryGuard.usedMb()}/${com.tjshea.vigilant.data.MemoryGuard.maxMb()}MB" }.getOrDefault("")
+        return "at=$atMs thread=$thread$heap\n" + stack.take(MAX_CRASH_CHARS)
     }
 
     /** The crash saved by [install] since the last look, as (when, first lines), and the file removed; null when there's none. */
@@ -65,7 +67,8 @@ object AppExits {
     fun parseSaved(text: String): Pair<Long, String>? {
         val head = text.lineSequence().firstOrNull() ?: return null
         val at = Regex("at=(\\d+)").find(head)?.groupValues?.get(1)?.toLongOrNull() ?: return null
-        val thread = Regex("thread=(.*)").find(head)?.groupValues?.get(1).orEmpty()
+        // "thread=main heap=250/256MB": the heap is part of what's said, the thread's name is the rest.
+        val thread = Regex("thread=(.*)").find(head)?.groupValues?.get(1).orEmpty().replace(Regex(" heap=(\\d+)/(\\d+)MB"), " (heap $1 of $2 MB)")
         val stack = text.lineSequence().drop(1).filter { it.isNotBlank() }.take(STACK_LINES).joinToString(" | ") { it.trim() }
         return at to "on $thread: $stack"
     }
