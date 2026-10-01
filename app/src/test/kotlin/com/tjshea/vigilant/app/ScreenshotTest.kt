@@ -823,6 +823,18 @@ class ScreenshotTest {
         assert(picked?.alertMinEv == 0.02) { "picked $picked" }
     }
 
+    /** Tj, 2026-10-01: 15 seconds picked: the hint says the pace, what a cycle reads, and that Vigilant's own scan still starts at most every 4 minutes. */
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Test fun settingsAutoScanFifteenSeconds() {
+        val base = SampleScan.state()
+        val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 15))
+        shoot("5d2_settings_auto_scan_15_sec") { SettingsScreen(s, {}) }
+        compose.onNodeWithText("15 sec").assertIsSelected()
+        compose.onNodeWithText("Every 15 sec, with Vigilant open or closed", substring = true).assertExists()
+        compose.onNodeWithText("it starts at most every 4 min, however fast CNO is read", substring = true).assertExists()
+        compose.onNodeWithText("Under a minute apart is constant background work", substring = true).assertExists()
+    }
+
     /** Off: no interval to pick, and the hint says nothing runs by itself. */
     @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun autoScanOffHidesTheInterval() {
