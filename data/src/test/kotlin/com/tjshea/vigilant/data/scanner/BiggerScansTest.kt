@@ -321,7 +321,8 @@ class BiggerScansTest {
     private suspend fun reusePlan(n: Int = 4): Triple<Plan, Map<String, NovigBook>, Board> {
         val board = Board(n)
         val refs = listOf(Fair(board).odds(Leagues.byNovigName("MLB")!!, settings))
-        val plan = Planner.plan(board.events, board.markets, refs, settings, now)
+        val plan = Planner.plan(board.events, board.markets, refs, settings.copy(maxBooksPerScan = ScanSettings.NO_LIMIT), now)
+        check(plan.markets.size == n) { "the plan has ${plan.markets.size} markets, not $n" }
         val books = (0 until n).associate { i ->
             "m$i" to NovigBook("m$i", 1, mapOf("a$i" to listOf(BidLevel(480, 10)), "h$i" to listOf(BidLevel(480, 10))), now)
         }
