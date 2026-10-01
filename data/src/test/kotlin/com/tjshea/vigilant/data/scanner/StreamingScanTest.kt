@@ -76,6 +76,10 @@ class StreamingScanTest {
             return BookBatch(books, 0, books.size, 0)
         }
         override suspend fun market(marketId: String): NovigMarket? = null
+
+        /** Times the scan asked this source to drop what it keeps to save a request (the heap was filling). */
+        var trims = 0
+        override fun trimCaches() { trims++ }
     }
 
     /** A free exchange quoting every game at 50/50. [gate] holds its answer back until completed. */
@@ -285,6 +289,23 @@ class StreamingScanTest {
             // What was read is still a result (game 0's edge is in it).
             assertNotNull(r.result)
             assertEquals(setOf("m0"), ids(r.result!!))
+        } finally {
+            com.tjshea.vigilant.data.MemoryGuard.useRealProbe()
+        }
+    }
+
+    @Test
+    fun `when the heap passes 75 percent the scan drops what can be rebuilt, and keeps reading`() = runTest {
+        val novig = Novig(edgeOn = setOf(7))
+        com.tjshea.vigilant.data.MemoryGuard.probe = object : com.tjshea.vigilant.data.MemoryGuard.Probe {
+            override fun used() = 80L
+            override fun max() = 100L
+            override fun collect() {}
+        }
+        try {
+            val r = Scanner(novig, clock = { now }).scan(settings, listOf(Fair()), onProgress = { }, onPartial = { })
+            assertTrue("it trimmed", novig.trims >= 1)
+            assertEquals("and read everything: 80% is pressing, not critical", 10, r.booksFetched)
         } finally {
             com.tjshea.vigilant.data.MemoryGuard.useRealProbe()
         }
