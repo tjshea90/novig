@@ -58,7 +58,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.app.AutoScanClock
-import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoView
@@ -67,6 +66,7 @@ import com.tjshea.vigilant.data.keys.UsageViews
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.BookPropSet
+import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.cno.CnoDevig
@@ -901,7 +901,7 @@ fun autoScanHint(s: ScanSettings): String {
         (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
         "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $vigilantPerDay scans a day at this setting" +
         if (vigilantEvery != s.autoScanSeconds) " (it starts at most every ${ScanSettings.intervalLabel(vigilantEvery)}, however fast CNO is read)" else ""
-    val fast = if (s.autoScanSeconds < 60) " Under a minute apart is constant background work: more battery, and Android may space scans out while the phone sits idle." else ""
+    val fast = if (s.autoScanSeconds < 60) " Under a minute apart is constant background work: more battery." + (if (KeepAwake.active(s)) "" else " Android may space scans out while the phone sits idle (Keep awake, below, prevents that).") else ""
     val notification = " A quiet notification shows while it's on (Scan now, Stop)." +
         if (s.autoBetsNow) " Auto-bet is on: bets that pass your criteria are placed with each CNO check (Settings › Betting)." else ""
     return when {
