@@ -191,6 +191,38 @@ class AutoBettorTest {
         assertEquals(1, bettor(novig).run(settings { it.copy(autoBetMinEv = 0.05, autoBetBooks = 3, autoBetTwoSided = 3) }, state()).placed.size)
     }
 
+    /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
+    @Test
+    fun `with every book must agree on, a bet one book disagrees with is not placed, and one all of them agree with is`() = runBlocking {
+        // Jefferson's books: three price both sides and all say +EV at +117 (3 of 3). Make one of them (KI) price the Under at +140 against -160: its own fair
+        // line is under Novig's price, so it disagrees, while the others' consensus still says +EV (2 of 3).
+        val split = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 140, 106.0, -160, 13_662.0) else it }) }
+        fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
+            state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
+        val loose = settings { it.copy(autoBetBooks = 2) }
+        val check = AlertPicks.cnoChecked(withBooks(split, loose), 0.03, now).single().check
+        assertEquals("the fixture: 2 of 3 agree and the consensus is still +EV", 3 to 2, check.twoSided to check.agreeing)
+        assertTrue(check.ev!! > 0.0)
+        // Off: 2 of 3 passes a minimum of 2.
+        val novig = FakeNovig()
+        assertEquals(1, bettor(novig).run(loose, withBooks(split, loose)).placed.size)
+        // On: the same bet is skipped, with the count in the reason, and nothing reaches Novig.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val strict = loose.copy(autoBetAllAgree = true)
+        val novig2 = FakeNovig()
+        val r = bettor(novig2).run(strict, withBooks(split, strict))
+        assertEquals(0, r.placed.size)
+        assertEquals(0, novig2.orders.get())
+        assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("only 2 of 3 books say +EV on their own (you need every one)") })
+        // All three agree (the sample's own books): placed with the switch on.
+        val novig3 = FakeNovig()
+        val all = settings { it.copy(autoBetBooks = 2, autoBetAllAgree = true) }
+        val placed = bettor(novig3).run(all, withBooks(SampleCno.jeffersonBooks(), all)).placed
+        assertEquals(1, placed.size)
+        val text = notifications().single { it.extras.getString("android.title")!!.startsWith("Auto-bet") }.extras.getString("android.text")!!
+        assertTrue(text, text.contains("3 of 3 books agree"))
+    }
+
     @Test
     fun `only pregame bets at Novig, on a Novig price read in the last minute`() = runBlocking {
         val novig = FakeNovig()

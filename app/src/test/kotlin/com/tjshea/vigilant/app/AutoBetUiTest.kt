@@ -178,6 +178,32 @@ class AutoBetUiTest {
         compose.onNodeWithText("At least 0.5%").assertExists()
     }
 
+    /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
+    @Test
+    fun `a switch makes every book that prices both sides agree, off until turned on, and the criteria say it`() {
+        show()
+        assertFalse(settings.autoBetAllAgree)
+        compose.onNodeWithTag("autoBetAllAgree").assertIsOff()
+        compose.onNodeWithText("Off: the number above is the fewest books that must agree", substring = true).assertExists()
+        assertTrue(AutoBetText.criteria(settings).contains("at least 3 books agreeing it's +EV on their own"))
+        compose.onNodeWithTag("autoBetAllAgree").performScrollTo().performClick()
+        assertTrue(settings.autoBetAllAgree)
+        compose.onNodeWithTag("autoBetAllAgree").assertIsOn()
+        compose.onNodeWithText("On: a bet passes only if EVERY book that prices both sides of it says +EV on its own", substring = true).assertExists()
+        compose.onNodeWithText("A book that lists only one side", substring = true).assertExists()
+        val said = AutoBetText.criteria(settings)
+        assertTrue(said, said.contains("every book that prices both sides agreeing it's +EV on their own (and at least 3 of them)"))
+        // The confirm for turning auto-bet on says it, too.
+        assertTrue(AutoBetText.confirm(settings, 25.0).contains("every book that prices both sides agreeing"))
+        // It's independent of the minimum chips, and goes off again.
+        compose.onNodeWithText("5+").performClick()
+        assertEquals(5, settings.autoBetBooks)
+        assertTrue(settings.autoBetAllAgree)
+        assertTrue(AutoBetText.criteria(settings).contains("(and at least 5 of them)"))
+        compose.onNodeWithTag("autoBetAllAgree").performClick()
+        assertFalse(settings.autoBetAllAgree)
+    }
+
     @Test
     fun `the amount per bet offers an eighth, quarter and half Kelly, a dollar, and a typed amount`() {
         show()
