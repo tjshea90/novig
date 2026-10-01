@@ -103,6 +103,10 @@ object Diagnostics {
         o.appendLine("Keys saved: " + ApiProvider.entries.joinToString(" · ") { "${it.displayName} ${s.keysOf(it).size}" })
         o.appendLine("CrazyNinjaOdds: ${if (set.cnoOn) "on" else "off"} · refresh ${when { set.cnoRefreshSeconds == com.tjshea.vigilant.data.cno.CnoFeed.REALTIME -> "real time"; set.cnoRefreshSeconds <= 0 -> "taps only"; else -> "${set.cnoRefreshSeconds} s" }} · only bets the books agree on ${if (set.cnoOnlyAgreed) "on" else "off"} · alerts ≥ ${pct(set.alertMinEv)}")
         o.appendLine(
+            "Stakes: bankroll $${money(set.bankroll)} · ${com.tjshea.vigilant.app.ui.Format.kellyLabel(set.kellyMultiplier)} · bet slip amount ${set.slipStake.label}" +
+                (if (set.slipStake == com.tjshea.vigilant.data.novig.SlipStake.CUSTOM) " ($${money(set.slipCustomStake)})" else ""),
+        )
+        o.appendLine(
             "Betting through the API: ${if (s.betting.enabled) "on" else "off"}" + (s.betting.balance?.let { String.format(Locale.US, " · wallet $%.2f", it) } ?: "") +
                 " · amount $${money(set.apiBetStake)}, most per bet $${money(set.apiMaxStake)}, most per day $${money(set.apiMaxPerDay)}, smallest edge ${pct(set.apiMinEv)}",
         )
