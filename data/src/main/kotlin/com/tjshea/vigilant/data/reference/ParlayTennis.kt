@@ -53,7 +53,8 @@ object ParlayTennis {
                 }
             }
         }
-        return e.copy(home = player(e.home), away = player(e.away), markets = markets)
+        // Pinnacle's alternates repeat its main set line: one line once per book.
+        return e.copy(home = player(e.home), away = player(e.away), markets = markets.distinctBy(::identity))
     }
 
     /** Whether [book]'s spreads and totals in a match event are sets: its total says so when it has one, else the book's known habit. */
