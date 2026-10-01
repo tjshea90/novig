@@ -328,7 +328,7 @@ class AutoBettorTest {
     }
 
     @Test
-    fun `the limit holds whatever the stake: a dollar, a typed amount and Kelly all skip a longshot`() = runBlocking {
+    fun `the limit holds whatever the stake, a dollar, a typed amount and Kelly all skip a longshot`() = runBlocking {
         for (stake in listOf(AutoBetStake.ONE_DOLLAR, AutoBetStake.CUSTOM, AutoBetStake.QUARTER_KELLY)) {
             val novig = FakeNovig()
             val s = settings { it.copy(autoBetMaxOdds = 100, autoBetStake = stake, autoBetCustomStake = 5.0, bankroll = 1000.0) }
