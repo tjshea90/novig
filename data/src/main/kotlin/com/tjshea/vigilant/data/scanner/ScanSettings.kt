@@ -33,6 +33,14 @@ enum class AutoScanMode(val displayName: String) {
     val vigilant: Boolean get() = this == BOTH
 }
 
+/**
+ * What the auto-bet stakes on each bet (Tj, 2026-10-01: "⅛ Kelly stake ¼ Kelly stake, ½ Kelly stake, $1 stake, or a manual amount i type in"). The
+ * Kelly ones size the bet from his bankroll and the bet's own odds and edge ([com.tjshea.vigilant.data.novig.trading.AutoBet.stake]).
+ */
+enum class AutoBetStake(val label: String, val kelly: Double?) {
+    EIGHTH_KELLY("⅛ Kelly", 0.125), QUARTER_KELLY("¼ Kelly", 0.25), HALF_KELLY("½ Kelly", 0.5), ONE_DOLLAR("$1", null), CUSTOM("My amount", null)
+}
+
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
@@ -100,6 +108,28 @@ data class ScanSettings(
     val apiMaxStake: Double = 10.0,
     val apiMaxPerDay: Double = 50.0,
     val apiMinEv: Double = 0.01,
+    /**
+     * Auto-bet (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all, including … in the background as the cno scanner
+     * is on in the background"): off by default. A background CNO auto-scan cycle places each CrazyNinjaOdds bet that passes these through Novig's
+     * API from the Vigilant wallet, pregame only ([com.tjshea.vigilant.data.novig.trading.AutoBet], `app/AutoBettor`).
+     */
+    val autoBet: Boolean = false,
+    /** The fewest books that must each say +EV on their own ([com.tjshea.vigilant.data.cno.CnoBooks.Check.agreeing]): 2, 3, 4 or 5. */
+    val autoBetBooks: Int = 3,
+    /** The smallest edge at Novig's price now: [AUTO_BET_MIN_EV_CHOICES], or what Tj typed (0.0325 = +3.25%). */
+    val autoBetMinEv: Double = 0.03,
+    /** The fewest books that must price both sides of the bet ([com.tjshea.vigilant.data.cno.CnoBooks.Check.twoSided]): 1, 2 or 3. */
+    val autoBetTwoSided: Int = 2,
+    val autoBetStake: AutoBetStake = AutoBetStake.ONE_DOLLAR,
+    /** The amount [AutoBetStake.CUSTOM] stakes. */
+    val autoBetCustomStake: Double = 5.0,
+    /** The most one auto-bet may stake, whatever the stake rule says. */
+    val autoBetMaxStake: Double = 10.0,
+    /**
+     * Why auto-bet stopped itself and stays stopped until Tj resumes it (an order whose answer was lost, so nothing says whether it filled);
+     * null = running. Not a setting he picks: [com.tjshea.vigilant.data.novig.trading.AutoBet] and the app set and clear it.
+     */
+    val autoBetHalted: String? = null,
     /**
      * How long a feed's last answer is kept after a failed call, only to order reads: it never prices
      * past [Freshness.MAX_QUOTE_AGE_MS] (RESEARCH.md §24).
@@ -375,6 +405,12 @@ data class ScanSettings(
      */
     val autoScansCno: Boolean get() = !paused && autoScan.cno && cnoOn
 
+    /**
+     * A background cycle places bets: auto-bet is on, not halted, and the CNO scanner runs in the background ([autoScansCno]: CNO on, auto-scan on
+     * CNO or Both, not paused). Whether betting through the API is set up is the app's to know ([com.tjshea.vigilant.app.AutoBettor]).
+     */
+    val autoBetsNow: Boolean get() = autoBet && autoBetHalted == null && autoScansCno
+
     /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
     val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn
 
@@ -508,6 +544,15 @@ data class ScanSettings(
             seconds < 60 || seconds % 60 != 0 -> "$seconds sec"
             else -> "${seconds / 60} min"
         }
+
+        /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
+        val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
+
+        /** [autoBetBooks]' choices (the last is "5+"). */
+        val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
+
+        /** [autoBetTwoSided]'s choices. */
+        val AUTO_BET_TWO_SIDED_CHOICES = listOf(1, 2, 3)
 
         /** [alertMinEv]'s choices (0 = off; Tj, 2026-09-28: "a minimum of 2%, 3%, or 4%"). */
         val ALERT_MIN_EV_CHOICES = listOf(0.0, 0.02, 0.03, 0.04)
