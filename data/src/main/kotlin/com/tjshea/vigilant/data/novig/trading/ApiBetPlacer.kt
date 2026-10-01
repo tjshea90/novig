@@ -54,11 +54,12 @@ class ApiBetPlacer(
     /** Midnight (the device's) starting the day [now] is in: the daily limit's day. */
     private val dayStart: (Long) -> Long = { now -> localMidnight(now) },
     private val pause: suspend (Long) -> Unit = { delay(it) },
+    /** One order at a time across every placer of the app: the Bet sheet's and the auto-bet's share it, so the two can never bet the same outcome at once. */
+    private val lock: Mutex = Mutex(),
 ) {
-    private val lock = Mutex()
 
-    /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. */
-    suspend fun plan(target: BetTarget, stake: Double, allowRepeat: Boolean = false): PlanResult {
+    /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
+    suspend fun plan(target: BetTarget, stake: Double, allowRepeat: Boolean = false, limitsOverride: BetLimits? = null): PlanResult {
         if (paused()) return PlanResult.Refused("Scanning is paused (Settings): resume it before betting.")
         val all = tracker.all()
         if (!allowRepeat && all.any { it.status == BetStatus.PENDING && it.orderId != null && it.outcomeId == target.outcomeId }) {
@@ -71,17 +72,41 @@ class ApiBetPlacer(
         } catch (e: Exception) {
             null
         }
-        return ApiBetPlanner.plan(target, book, stake, clock(), limits(), spentToday(all))
+        return ApiBetPlanner.plan(target, book, stake, clock(), limitsOverride ?: limits(), spentToday(all))
     }
 
     /**
      * Places the bet the confirm sheet showed ([confirmedLimit]: its limit price). Everything is checked again on a new book read: a price that
      * has moved above [confirmedLimit] is refused ("the price moved: look again").
      */
-    suspend fun place(target: BetTarget, stake: Double, confirmedLimit: Double, allowRepeat: Boolean = false): PlaceResult = lock.withLock {
-        val plan = when (val p = plan(target, stake, allowRepeat)) {
+    suspend fun place(target: BetTarget, stake: Double, confirmedLimit: Double, allowRepeat: Boolean = false): PlaceResult =
+        placeLocked(target, stake, confirmedLimit, allowRepeat, limitsOverride = null, expectedPrice = null)
+
+    /**
+     * An auto-bet (Tj, 2026-10-01): nobody confirms, so the ceiling is the plan's own (the deepest level still at [limits]' minimum edge, on a
+     * book read just now) and every refusal of [plan] applies under [limits] (Tj's per-bet maximum and minimum edge for it). [expectedPrice]: the
+     * price the bet was judged at; the order book's best price must be within [AutoBet.PRICE_TOLERANCE] of it, or nothing is sent (the Novig
+     * outcome found may not be the bet that was shown, or the market just moved). Never a repeat of an open bet.
+     */
+    suspend fun placeAuto(target: BetTarget, stake: Double, limits: BetLimits, expectedPrice: Double): PlaceResult =
+        placeLocked(target, stake, confirmedLimit = 1.0, allowRepeat = false, limitsOverride = limits, expectedPrice = expectedPrice)
+
+    private suspend fun placeLocked(
+        target: BetTarget,
+        stake: Double,
+        confirmedLimit: Double,
+        allowRepeat: Boolean,
+        limitsOverride: BetLimits?,
+        expectedPrice: Double?,
+    ): PlaceResult = lock.withLock {
+        val plan = when (val p = plan(target, stake, allowRepeat, limitsOverride)) {
             is PlanResult.Refused -> return PlaceResult.Refused(p.reason)
             is PlanResult.Ready -> p.plan
+        }
+        if (expectedPrice != null && !AutoBet.priceMatches(expectedPrice, plan.bestPrice)) {
+            return PlaceResult.Refused(
+                "Novig's price for the bet found (${percentText(plan.bestPrice)}) isn't the price it was judged at (${percentText(expectedPrice)}): it may not be the same bet, or the market just moved. Not bet.",
+            )
         }
         if (plan.limitPrice > confirmedLimit + 1e-9) {
             return PlaceResult.Refused("The price moved while you were confirming (${percentText(confirmedLimit)} → ${percentText(plan.limitPrice)}): look at the new price and confirm again.")
