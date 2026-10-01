@@ -61,6 +61,16 @@ object AutoBetText {
         AutoBetStake.CUSTOM -> Format.money(s.autoBetCustomStake)
     }
 
+    /** What the "every book must agree" switch means at these settings. */
+    fun allAgreeNote(s: ScanSettings): String =
+        if (s.autoBetAllAgree) {
+            "On: a bet passes only if EVERY book that prices both sides of it says +EV on its own (\"5 of 5 books agree\" in the notification), and at least " +
+                "${AutoBet.rules(s).minBooks} of them. A book that lists only one side (some sportsbooks list only the Over) can't be judged and isn't counted. " +
+                "More books on a bet's page means a harder test, so fewer bets pass."
+        } else {
+            "Off: the number above is the fewest books that must agree, and the others may disagree (3 of 5 passes a 3)."
+        }
+
     /** The criteria in one sentence, as the confirm and the status say them. */
     fun criteria(s: ScanSettings): String {
         val r = AutoBet.rules(s)
@@ -185,6 +195,21 @@ fun AutoBetSection(
     // 1) books agreeing
     Text("Books that each say +EV on their own", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel) { v -> onUpdate { it.copy(autoBetBooks = v) } }
+    // Every book scanned must agree (Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)")
+    Row(
+        Modifier.fillMaxWidth().toggleable(
+            value = s.autoBetAllAgree, role = Role.Switch,
+            onValueChange = { on -> onUpdate { it.copy(autoBetAllAgree = on) } },
+        ).padding(top = 4.dp, bottom = 2.dp).testTag("autoBetAllAgree"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Every book scanned must agree (5 of 5, not 3 of 5)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+        Switch(checked = s.autoBetAllAgree, onCheckedChange = null)
+    }
+    Text(
+        AutoBetText.allAgreeNote(s),
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetAllAgreeNote"),
+    )
 
     // 2) the smallest edge, a preset or typed
     Text("Smallest edge at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
