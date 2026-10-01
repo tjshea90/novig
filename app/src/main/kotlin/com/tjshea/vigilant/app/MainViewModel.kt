@@ -470,7 +470,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // (Tj, 2026-09-28: "pause all scanning"). Before the watch below starts, so it starts held.
         viewModelScope.launch {
             // Also held while Check odds now runs (Tj, 2026-10-01: it pauses the CNO scanner so it can focus on refreshing the open bets).
-            state.map { !it.loaded || it.settings.paused || it.checkingOdds }.distinctUntilChanged().collect { cnoWatch.hold(it) }
+            state.map(::cnoReadsHeld).distinctUntilChanged().collect { cnoWatch.hold(it) }
         }
         // CNO, its books lane and its teams lane run together, only while someone is looking.
         viewModelScope.launch {
@@ -1650,6 +1650,9 @@ private const val GRADING_CHECK = "Grading check"
 
 /** What Scan, Recheck and Refresh say while scanning is paused ([ScanSettings.paused]). */
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
+
+/** CNO's own reads (the list, its books, its teams) wait: nothing is loaded yet, scanning is paused, or Check odds now holds the focus ([FocusGate]). */
+internal fun cnoReadsHeld(s: UiState): Boolean = !s.loaded || s.settings.paused || s.checkingOdds
 
 /** What Scan, Recheck and Refresh say while Check odds now holds the focus ([FocusGate]). */
 internal const val CHECKING_TOAST = "Check odds now is running: scanning goes on when it's done"
