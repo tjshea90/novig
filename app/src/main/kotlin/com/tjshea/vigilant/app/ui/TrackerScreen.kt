@@ -206,6 +206,21 @@ fun TrackerScreen(
             contentPadding = PaddingValues(12.dp, 0.dp, 12.dp, 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            // Check odds now holds the focus (Tj, 2026-10-01): what waits for it, said where Tj is looking.
+            if (state.checkingOdds) {
+                item(key = "checkFocus") {
+                    androidx.compose.material3.Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("checkFocusBanner"),
+                    ) {
+                        Text(
+                            "Checking your open bets' odds, EV and closing lines. The CNO scanner, background auto-scan (auto-bet with it), scans and the widget's refresh are paused until this finishes.",
+                            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp),
+                        )
+                    }
+                }
+            }
             // The tabs and filters stay pinned to the top while the bets scroll under them (Tj, 2026-09-29: "When I scroll down through the
             // long list of my active bets, I still want to have the filters at the top without having to scroll all the way back up").
             stickyHeader(key = "nav") {

@@ -245,7 +245,7 @@ object Diagnostics {
             " · alarm " + (x.closingAlarmAtMs?.let { at(it) } ?: "not set in this process"))
         // Closes found after the start (Tj, 2026-09-30: ESPN's closing odds, Novig's trade history, Pinnacle's via ParlayAPI).
         o.appendLine(
-            "Closes found after the start: " + (x.backfill?.let { r -> "last look ${r.looked} bet${if (r.looked == 1) "" else "s"}, found ${r.found}" + (r.bySource.takeIf { it.isNotEmpty() }?.entries?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: "") } ?: "none looked for since the app opened") +
+            "Closes found after the start: " + (x.backfill?.let { r -> (if (r.forced) "last look (Check odds now: every one) " else "last look ") + "${r.looked} bet${if (r.looked == 1) "" else "s"}, found ${r.found}" + (r.bySource.takeIf { it.isNotEmpty() }?.entries?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: "") + (r.missing.takeIf { it.isNotEmpty() }?.entries?.sortedByDescending { it.value }?.take(3)?.joinToString("; ", ", still without: ", "") { "${it.key.take(60)} (${it.value})" } ?: "") } ?: "none looked for since the app opened") +
                 " · Novig trade data read ${x.novigTradeBytes / 1024} KB" +
                 (if (x.parlayCloseRequests > 0) " · ParlayAPI close calls ${x.parlayCloseRequests}" else ""),
         )

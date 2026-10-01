@@ -1,22 +1,24 @@
-# CHECKPOINT 2271 — read me first, then TASKS.md
+# CHECKPOINT 2272 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T18:34:37Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `891450e7` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T18:39:36Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `4e7744dd` (this checkpoint is the commit after it)
 
 ## Just done
-wrote Tj's Check-odds-now request into TASKS.md as AI1-AI4
+AI2-AI3 built: forced close backfill (CloseBackfill.run(force)), FocusGate holding the auto-scan cycle/CNO watch/scans/widget rescans/movers during Check odds now, closes sentence in the report, Tracker banner
 
 ## Do this next
-AI1: read the recheck code, closing-line sources and the competing loops
+AI4: tests (CloseBackfill force; FocusGate; AutoScanner skips under focus and resumes; the VM check holds then releases; CloseText), mutation checks, docs, floor, ship v0.40.1
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt
+     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/TrackerScreen.kt
 
 ## Last ten checkpoints
 ```
+  727b540c ckpt 2271: wrote Tj's Check-odds-now request into TASKS.md as AI1-AI4
   a23d901f ckpt 2270: v0.40.0 released and recorded: add money in every Bet sheet, 5 s interval, a
   039249ed ckpt 2269: pre-release: v0.40.0: Add money in every Bet sheet ($1, 2, 5, 10, 15, 20 or 
   3d12391d ckpt 2268: AH3-AH5 built: 5 s interval (cadence fixed), stake sentences pinned by tests
@@ -26,8 +28,7 @@ AI1: read the recheck code, closing-line sources and the competing loops
   20a42607 ckpt 2264: wrote Tj's no-$1-minimum request into TASKS.md as AG1-AG3
   06e8ccbb ckpt 2263: answered Tj's phone-off question; RESEARCH §54 + AF1-AF3 done (no code chan
   feb94e04 ckpt 2262: wrote Tj's phone-off auto-bet question into TASKS.md as AF1-AF3
-  f8800188 ckpt 2261: v0.39.2 released and recorded: auto-bet longest-odds limit (AE1-AE3)
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
