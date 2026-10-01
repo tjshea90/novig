@@ -3142,3 +3142,12 @@ A question, not a build: answer from what the code and docs say (what auto-bet n
 - [x] AF2 Check the options against today's facts: a spare Android phone, a home computer/Raspberry Pi, GitHub Actions on a schedule, a free cloud VM, Claude Code routines ("can Claude run it"), serverless cron.
 - [x] AF3 Answer plainly, with a recommendation, the risks (location check, secrets in a public repo, an LLM placing real bets) and what building the recommended one would take; offer it, don't start it.
   DONE AF1-AF3: RESEARCH.md §54 (verdict, the 3-day Novig location rule, the Keystore key that can't leave the phone, which code is already plain JVM, the host comparison, the risks). Answered Tj; nothing built, waiting for which option he wants.
+
+
+## Tj, 2026-10-01 ~13:5xZ: "I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent, whatever the number is that I have in options. Usually it will be a Kelly number and often under $1"
+
+Find every place the auto-bet treats $1 as a floor (`AutoBet.MIN_STAKE`: the stake floor, the wallet-empty stop, the typed-amount and maximum rules, the card's and confirm's words, the Diagnostics lines, BRIEF.md's locked rule), first checking Novig's own minimum order (contracts pay 1¢ each, so a cent should buy a contract or two; verify against the docs, not assume).
+
+- [ ] AG1 Check Novig's minimum order size in NOVIG_API.md / docs.novig.com and the planner's one-contract check; what a 1¢ stake buys at long and short prices.
+- [ ] AG2 Make the floor one cent everywhere in auto-bet: Kelly/typed/maximum stakes, the wallet stop (empty = under a cent), the skip reasons, the card, confirm and Diagnostics text. Manual Bet-sheet bets unchanged.
+- [ ] AG3 Tests (mutation-checked) incl. sub-dollar Kelly stakes now placed, a 1¢ stake, the wallet remainder under $1, and the fixed $1 stake still $1; full floor; ship v0.39.3; link to Tj.
