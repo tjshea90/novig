@@ -405,7 +405,7 @@ class AutoBettorTest {
         assertTrue(text, text.contains("3 of 3 books agree"))
         assertTrue(text, text.contains("wallet \$24.") && text.endsWith("left"))
         // On the channel that pops up (the old one was normal importance).
-        val channel = shadowOf(app.getSystemService(NotificationManager::class.java)).getNotificationChannel(AutoBetNotes.CHANNEL_BET)
+        val channel = app.getSystemService(NotificationManager::class.java).getNotificationChannel(AutoBetNotes.CHANNEL_BET)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, channel.importance)
         assertEquals(AutoBetNotes.CHANNEL_BET, note.channelId)
     }

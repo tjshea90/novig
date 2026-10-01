@@ -720,9 +720,10 @@ private fun ColumnScope.BettingTab(
             // Auto-bet (Tj, 2026-10-01): off until turned on; places CNO's bets through the wallet above.
             val context = androidx.compose.ui.platform.LocalContext.current
             AutoBetSection(
-                state, onUpdate,
+                state,
                 notificationsBlocked = com.tjshea.vigilant.app.AutoBetNotes.blocked(context),
                 onTestNotification = { (context.applicationContext as? android.app.Application)?.let(com.tjshea.vigilant.app.AutoBetNotes::sample) ?: false },
+                onUpdate = onUpdate,
             )
         }
     }

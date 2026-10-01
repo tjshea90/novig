@@ -114,11 +114,11 @@ object AutoBetText {
 @Composable
 fun AutoBetSection(
     state: UiState,
-    onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
     /** Why a bet's notification wouldn't show on this phone (Android's permission or settings), or null ([AutoBetNotes.blocked]). */
     notificationsBlocked: String? = null,
     /** Posts a made-up auto-bet notification on the real channel; false when it couldn't be posted ([AutoBetNotes.sample]). */
     onTestNotification: () -> Boolean = { true },
+    onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
 ) {
     val s = state.settings
     var confirming by remember { mutableStateOf(false) }
