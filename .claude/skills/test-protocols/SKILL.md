@@ -83,7 +83,7 @@ unless Tj asks).
   CNO wording aliases in `NovigBetFinder.marketWords`; RESEARCH.md §35; `RealBoxGradingTest`, `LiveUngradedBetsTest`, `LiveCnoGradableTest`), and the +EV alert's "✓ Placed" (`app/EvAlerts.handle`,
   `AlertActionReceiver`, `data/alerts/AlertPlacement`)).
 - **Background auto-scan and +EV alerts (v0.18.0+, Vigilant only; RESEARCH.md §26):** `ScanSettings.autoScan`
-  (Off / CNO / CNO + Vigilant) every `autoScanMinutes` (5-40) with Vigilant closed: `app/AutoScanService` (specialUse
+  (Off / CNO / CNO + Vigilant) every `autoScanSeconds` (15 s, 30 s, 1, 3, 5-40 min; Vigilant's own scan at most every 4 min, `AutoScanClock.vigilantDue`; the alarm re-arms when a cycle ends) with Vigilant closed: `app/AutoScanService` (specialUse
   foreground service, ongoing note with Scan now/Stop), `AutoScanAlarm` (exact while idle), `AutoScanReceiver` (alarm,
   boot, update), `app/AutoScan.kt` (`AutoScanner.cycle`: CNO list + best bets' books + `NovigLive.readNow`, then
   `AppContainer.startVigilantScan`; `AlertPicks`), alerts `ScanSettings.alertMinEv` (Off/2/3/4%) via `app/EvAlerts`
