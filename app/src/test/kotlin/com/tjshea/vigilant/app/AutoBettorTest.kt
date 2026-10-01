@@ -387,6 +387,55 @@ class AutoBettorTest {
         assertTrue(bettor(novig3).run(settings(), state()).placed.single().stake in 0.9..1.0)
     }
 
+    // ---- Tj, 2026-10-01 ~17:5x: the stake rules in his own sentences --------------------------------------------
+
+    private fun spent(novig: FakeNovig) = novig.last!!.let { (_, price, qty) -> qty * price * 0.01 }
+
+    @Test
+    fun `with one cent left in the wallet it bets, may empty the wallet completely, and then stops`() = runBlocking {
+        // "bet stakes all the way down to 1 cent, even if there is only 1 cent left in the wallet. It is allowed to completely deplete the wallet."
+        val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 1000.0, autoBetMaxStake = 10.0) }
+        val novig = FakeNovig()
+        val r = bettor(novig, wallet = 0.01).run(s, state(s))
+        assertEquals(r.skipped.toString(), 1, r.placed.size)
+        assertEquals(1, novig.orders.get())
+        assertTrue("at most the cent that was there: ${spent(novig)}", spent(novig) in 0.001..0.0100001)
+        assertFalse("not an empty-wallet stop for a wallet that holds a cent", r.walletEmpty)
+        // What is left (under a cent) is an empty wallet: no more bets, said so.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val novig2 = FakeNovig()
+        val r2 = bettor(novig2, wallet = 0.01 - spent(novig)).run(s, state(s))
+        assertTrue(r2.walletEmpty)
+        assertEquals(0, novig2.orders.get())
+    }
+
+    @Test
+    fun `a Kelly stake bigger than the wallet bets the rest of the wallet`() = runBlocking {
+        // 1/4 Kelly of $1,000 at this edge is about $12.5; the wallet holds 37 cents: the bet is the 37 cents.
+        val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 1000.0, autoBetMaxStake = 100.0) }
+        val novig = FakeNovig()
+        assertEquals(1, bettor(novig, wallet = 0.37).run(s, state(s)).placed.size)
+        assertTrue("the remainder of the wallet, ${spent(novig)}", spent(novig) in 0.36..0.37)
+        // The same with a wallet of $3.10.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val novig2 = FakeNovig()
+        assertEquals(1, bettor(novig2, wallet = 3.10).run(s, state(s)).placed.size)
+        assertTrue("the remainder of the wallet, ${spent(novig2)}", spent(novig2) in 3.0..3.10)
+    }
+
+    @Test
+    fun `a Kelly stake bigger than the maximum in the options bets the maximum`() = runBlocking {
+        val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 1000.0, autoBetMaxStake = 0.50) }
+        val novig = FakeNovig()
+        assertEquals(1, bettor(novig, wallet = 25.0).run(s, state(s)).placed.size)
+        assertTrue("the maximum, ${spent(novig)}", spent(novig) in 0.49..0.50)
+        // A smaller wallet than the maximum wins over it: the wallet is what there is.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val novig2 = FakeNovig()
+        assertEquals(1, bettor(novig2, wallet = 0.20).run(s, state(s)).placed.size)
+        assertTrue("the wallet, ${spent(novig2)}", spent(novig2) in 0.19..0.20)
+    }
+
     @Test
     fun `Novig refusing a small order skips that bet and learns the size, and the other bets go on`() = runBlocking {
         // Novig refuses anything under 50 cents. A 25-cent Kelly stake is refused: no stop, no halt, no backoff, the bet skipped and the size remembered.
