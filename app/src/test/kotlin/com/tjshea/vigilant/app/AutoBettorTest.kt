@@ -196,7 +196,7 @@ class AutoBettorTest {
     fun `with every book must agree on, a bet one book disagrees with is not placed, and one all of them agree with is`() = runBlocking {
         // Jefferson's books: three price both sides and all say +EV at +117 (3 of 3). Make one of them (KI) price the Under at +140 against -160: its own fair
         // line is under Novig's price, so it disagrees, while the others' consensus still says +EV (2 of 3).
-        val split = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 140, 106.0, -160, 13_662.0) else it }) }
+        val split = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 105, 106.0, -135, 13_662.0) else it }) }
         fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
             state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
         val loose = settings { it.copy(autoBetBooks = 2) }
