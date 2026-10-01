@@ -39,6 +39,12 @@ interface NovigSource {
     /** One event by id (its league and "Away @ Home" description), or null when Novig no longer lists it. */
     suspend fun event(eventId: String): NovigEvent? = null
 
+    /** Drops what this source keeps only to save a request (the last books, for "not modified" answers): the heap is nearly full. */
+    fun trimCaches() {}
+
+    /** How many books this source keeps (Diagnostics' memory block). */
+    fun cachedBooks(): Int = 0
+
     /**
      * The markets a scan will price, most important first: a source that can have them pushed (the
      * connected key's websocket) starts on them now. Nothing by default.
