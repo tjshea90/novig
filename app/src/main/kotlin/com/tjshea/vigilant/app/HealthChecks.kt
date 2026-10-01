@@ -194,6 +194,40 @@ object HealthChecks {
         if (late && x.autoScanServiceRunning) add(Check(Level.WARN, "Background auto-scan", "no cycle in over ${ScanSettings.intervalLabel(lateAfterSeconds)}", "last started ${a.lastStartMs?.let { Format.age(it, now) } ?: "never"}", "AutoScanAlarm (exact alarms), battery restrictions"))
         a.lastError?.let { add(Check(Level.WARN, "Background auto-scan", "the last cycle had an error", it.take(160), "app/AutoScan.kt")) }
         if (!late && a.lastError == null && x.autoScanServiceRunning) add(Check(Level.OK, "Background auto-scan", "running: last cycle ${a.lastStartMs?.let { Format.age(it, now) }}, found ${a.lastFound}, alerts ${a.lastAlerts}"))
+        keepAwake(set, x, now)
+    }
+
+    /** Whether the schedule survives the phone idling with the screen off (Tj, 2026-10-02): the switch, the lock, and the record of late cycles. */
+    private fun MutableList<Check>.keepAwake(set: ScanSettings, x: Diagnostics.Extras, now: Long) {
+        if (!set.autoScanKeepAwake && set.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS) {
+            add(
+                Check(
+                    Level.WARN, "Background auto-scan", "Keep awake is off: with the screen off and the phone still, Android runs alarm-driven scans about every 9 minutes, not every ${ScanSettings.intervalLabel(set.autoScanSeconds)}",
+                    look = "Settings › Background auto-scan › Keep awake",
+                ),
+            )
+        }
+        if (KeepAwake.active(set) && x.autoScanServiceRunning && !x.keepAwakeHeld) {
+            add(Check(Level.WARN, "Background auto-scan", "Keep awake is on but the service isn't holding the CPU awake", look = "app/AutoScanService.kt (holdKeepAwake)"))
+        }
+        val late = com.tjshea.vigilant.data.diag.CycleLog.lateWithin(x.cycles, now, 24 * HOUR)
+        if (late.isNotEmpty()) {
+            val worst = late.maxByOrNull { it.lateMs }!!
+            add(
+                Check(
+                    Level.WARN, "Background auto-scan", "${late.size} cycle${plural(late.size)} started late in the last day (worst ${com.tjshea.vigilant.data.diag.CycleLog.span(worst.lateMs)}, ${Format.age(worst.atMs, now)})",
+                    "${if (worst.dozing) "Doze was on" else if (worst.screenOff) "the screen was off" else "the screen was on"} then; Cycle record in the Background auto-scan block lists them",
+                    "Keep awake switch, Android battery 'Unrestricted', How the app last ended (a killed process shows as a late cycle)",
+                ),
+            )
+        } else if (x.cycles.screenOffCycles > 0) {
+            add(
+                Check(
+                    Level.OK, "Background auto-scan",
+                    "kept its schedule with the screen off: ${x.cycles.screenOffCycles} cycle${plural(x.cycles.screenOffCycles)} (${x.cycles.dozeCycles} in Doze), none late",
+                ),
+            )
+        }
     }
 
     private fun MutableList<Check>.phone(s: UiState, x: Diagnostics.Extras, now: Long) {
@@ -218,6 +252,8 @@ object HealthChecks {
         }
         if (p.exactAlarms == false) add(Check(Level.WARN, "Phone", "exact alarms aren't allowed: the closing-line capture and auto-scan can run late", look = "Android Settings › Apps › Special access › Alarms & reminders"))
         if (p.batteryUnrestricted == false && set.autoScan != AutoScanMode.OFF) add(Check(Level.WARN, "Phone", "battery optimization is on for Vigilant: Android may stop background scans", look = "Android Settings › Apps › Vigilant › Battery › Unrestricted"))
+        if (p.batterySaver == true && p.batteryUnrestricted == false && set.autoScan != AutoScanMode.OFF) add(Check(Level.WARN, "Phone", "Battery Saver is on and Vigilant isn't unrestricted: Android holds back background work", look = "Android Settings › Battery › Battery Saver; Apps › Vigilant › Battery › Unrestricted"))
+        if ((p.standbyBucket == "restricted" || p.standbyBucket == "rare") && set.autoScan != AutoScanMode.OFF) add(Check(Level.WARN, "Phone", "Android has put Vigilant in its ${p.standbyBucket} standby bucket: background work and alarms are cut back", look = "Android Settings › Apps › Vigilant › Battery › Unrestricted; open Vigilant more often"))
         if (p.dataSaver == true) add(Check(Level.WARN, "Phone", "Data Saver is on: background reads can be blocked", look = "Android Settings › Network › Data Saver"))
         if (p.online == false) add(Check(Level.FAIL, "Phone", "no internet connection when this report was made"))
     }

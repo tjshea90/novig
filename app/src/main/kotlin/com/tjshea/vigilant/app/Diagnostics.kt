@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.RoundCost
 import com.tjshea.vigilant.data.keys.Runway
 import com.tjshea.vigilant.data.scanner.AutoScanMode
+import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScanTiming
 import com.tjshea.vigilant.data.tracker.BetSettler
