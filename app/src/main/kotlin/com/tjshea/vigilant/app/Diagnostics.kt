@@ -76,13 +76,13 @@ object Diagnostics {
         val batteryUnrestricted: Boolean? = null,
         val overlay: Boolean? = null,
         val dataSaver: Boolean? = null,
+        val online: Boolean? = null,
+        /** "Wi-Fi", "mobile", "VPN"… */
+        val network: String? = null,
         /** Android's Battery Saver, the Doze state now, and the App Standby bucket Android keeps Vigilant in ("active", "working set", "frequent", "rare", "restricted"). */
         val batterySaver: Boolean? = null,
         val dozing: Boolean? = null,
         val standbyBucket: String? = null,
-        val online: Boolean? = null,
-        /** "Wi-Fi", "mobile", "VPN"… */
-        val network: String? = null,
     )
 
     /** Android's App Standby bucket number as its name (UsageStatsManager.STANDBY_BUCKET_*). */
