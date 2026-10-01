@@ -155,8 +155,9 @@ fun AutoBetSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) ->
         Button(onClick = { onUpdate { it.copy(autoBetHalted = null) } }, modifier = Modifier.testTag("autoBetResume")) { Text("Resume auto-bet") }
     }
 
-    if (s.autoBet) {
-        val why = AutoBetText.whyNotRunning(state)
+    // Why it can't run (on or not): betting must be set up first, and the CNO scan must run in the background; else what it does.
+    val why = AutoBetText.whyNotRunning(state)
+    if (s.autoBet || (why != null && !state.betting.enabled)) {
         Text(
             why ?: AutoBetText.running(s),
             style = MaterialTheme.typography.bodySmall,
