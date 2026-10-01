@@ -13,6 +13,7 @@ import com.tjshea.vigilant.data.novig.BidLevel
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
+import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigKeyAlgorithm
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.signing.NovigSigningKey
@@ -32,7 +33,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
-import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
