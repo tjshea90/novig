@@ -58,6 +58,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.app.AutoScanClock
+import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoView
@@ -814,6 +815,9 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
         ChoiceChips(ScanSettings.AUTO_SCAN_SECONDS_CHOICES, s.autoScanSeconds, ScanSettings::intervalLabel) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
     }
     Hint(autoScanHint(s))
+    if (s.autoScan != AutoScanMode.OFF) {
+        SwitchRow("Keep awake (screen stays off)", keepAwakeHint(s), s.autoScanKeepAwake) { v -> onUpdate { it.copy(autoScanKeepAwake = v) } }
+    }
     Text("Push alerts", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.ALERT_MIN_EV_CHOICES, s.alertMinEv, ::alertLabel) { v -> onUpdate { it.copy(alertMinEv = v) } }
     Hint(alertHint(s))
@@ -839,7 +843,7 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
         }) { Text("Allow notifications") }
     }
     if (s.autoScan != AutoScanMode.OFF && !unrestricted) {
-        Hint("For scans on time while the phone sleeps, let Vigilant run in the background (Android's battery setting \"Unrestricted\").")
+        Hint(batteryHint(unrestricted = false))
         OutlinedButton(onClick = {
             runCatching {
                 context.startActivity(
@@ -848,8 +852,35 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
                 )
             }
         }) { Text("Let Vigilant run in the background") }
+        // The prompt above can be refused or ignored by a phone's own battery manager: the app's own page has "App battery usage".
+        OutlinedButton(onClick = {
+            runCatching {
+                context.startActivity(
+                    android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${context.packageName}"))
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }) { Text("Open Vigilant's app settings") }
+    } else if (s.autoScan != AutoScanMode.OFF) {
+        Hint(batteryHint(unrestricted = true))
     }
 }
+
+/** What the keep-awake switch does at these settings (pure, for tests). */
+fun keepAwakeHint(s: ScanSettings): String = when {
+    KeepAwake.active(s) ->
+        "On: the screen can stay off and locked, but the CPU stays awake, so scans and auto-bets keep to their ${ScanSettings.intervalLabel(s.autoScanSeconds)} schedule while the phone sits idle. " +
+            "Uses more battery (best plugged in), and the notification stays up."
+    s.autoScanKeepAwake -> "On, but not needed at ${ScanSettings.intervalLabel(s.autoScanSeconds)}: an alarm is on time at 9 minutes or slower, and the CPU sleeps between scans."
+    s.autoScanSeconds < KeepAwake.ALARM_ONLY_BELOW_SECONDS ->
+        "Off: with the screen off and the phone still, Android runs each alarm-driven scan only about every 9 minutes, whatever the ${ScanSettings.intervalLabel(s.autoScanSeconds)} above says. Saves battery."
+    else -> "Off: the CPU sleeps between scans, each woken by an alarm, which is on time at ${ScanSettings.intervalLabel(s.autoScanSeconds)}."
+}
+
+/** The battery line under the auto-scan switches (pure, for tests). */
+fun batteryHint(unrestricted: Boolean): String =
+    if (unrestricted) "Battery: Unrestricted for Vigilant, so Android's battery manager won't stop it in the background."
+    else "Android may stop Vigilant while the phone sleeps unless its battery setting is \"Unrestricted\" (on a Moto: Settings › Apps › Vigilant › App battery usage › Unrestricted)."
 
 private fun ignoresBatteryLimits(context: android.content.Context): Boolean =
     (context.getSystemService(android.content.Context.POWER_SERVICE) as? android.os.PowerManager)?.isIgnoringBatteryOptimizations(context.packageName) ?: true
