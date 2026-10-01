@@ -3419,3 +3419,8 @@ Make a button in all the bet slips for the vigilant app for an option to add mon
 ```
 Also make it so if I "check odds now", make sure it gets all available closing line data, and make it pause other parts of the app such as the cno scanner so that it focuses on refreshing the current odds and EV and stats 
 ```
+
+## 2026-10-01T22:51:10Z
+```
+For the auto bet feature, include an option in the settings where I can require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)
+```
