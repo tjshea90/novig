@@ -469,7 +469,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Nothing of CNO's is read before the settings say whether scanning is paused, or while it is
         // (Tj, 2026-09-28: "pause all scanning"). Before the watch below starts, so it starts held.
         viewModelScope.launch {
-            state.map { !it.loaded || it.settings.paused }.distinctUntilChanged().collect { cnoWatch.hold(it) }
+            // Also held while Check odds now runs (Tj, 2026-10-01: it pauses the CNO scanner so it can focus on refreshing the open bets).
+            state.map { !it.loaded || it.settings.paused || it.checkingOdds }.distinctUntilChanged().collect { cnoWatch.hold(it) }
         }
         // CNO, its books lane and its teams lane run together, only while someone is looking.
         viewModelScope.launch {
@@ -696,7 +697,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (!s.loaded || !s.settings.useParlay) emptyList()
             else s.settings.leagues.mapNotNull { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it)?.takeIf { l -> l.oddsApiListed }?.oddsApiSportKey }.distinct()
         },
-        c.screen,
+        // Not while Check odds now runs (Tj, 2026-10-01).
+        combine(c.screen, state.map { it.checkingOdds }.distinctUntilChanged()) { on, checking -> on && !checking },
         com.tjshea.vigilant.data.reference.ParlayMovers.EVERY_MS,
     ) { sports -> c.parlayMovers.refresh(sports) }
 
@@ -738,7 +740,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }.flowOn(Dispatchers.Default).collect { (tags, uncovered) ->
             _state.update { if (it.injuries == tags) it else it.copy(injuries = tags) }
             // Each sport's read is gated in ParlayInjuries (10 minutes apart, ParlayAPI on with a key): asking again is free.
-            uncovered.forEach { (sport, players) -> viewModelScope.launch { c.parlayInjuries.fill(sport, players) } }
+            if (!_state.value.checkingOdds) uncovered.forEach { (sport, players) -> viewModelScope.launch { c.parlayInjuries.fill(sport, players) } }
         }
     }
 
@@ -811,6 +813,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (!quiet) _toasts.tryEmit(PAUSED_TOAST)
             return
         }
+        if (current.checkingOdds) {
+            if (!quiet) _toasts.tryEmit(CHECKING_TOAST)
+            return
+        }
         viewModelScope.launch {
             val wait = c.cno.waitForGapMs()
             val read = c.cno.refresh(current.cnoUrl, current.settings.cnoFilters)
@@ -833,6 +839,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _toasts.tryEmit(PAUSED_TOAST)
             return
         }
+        if (current.checkingOdds) {
+            _toasts.tryEmit(CHECKING_TOAST)
+            return
+        }
         if (current.settings.leagues.isEmpty()) return
         // Open bets' lines are priced even past the per-game cap, so their closing value updates.
         val started = c.startVigilantScan(current.settings, current.bets)
@@ -849,6 +859,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
         if (current.settings.paused) {
             _toasts.tryEmit(PAUSED_TOAST)
+            return
+        }
+        if (current.checkingOdds) {
+            _toasts.tryEmit(CHECKING_TOAST)
             return
         }
         // A recheck re-reads Novig only. When the other books' prices it compares against are about to
@@ -1128,7 +1142,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         kotlinx.coroutines.delay(wait)
                         continue
                     }
-                    if (c.runner.running || s.status.rechecking || s.status.scanning) {
+                    if (c.runner.running || s.status.rechecking || s.status.scanning || s.checkingOdds) {
                         kotlinx.coroutines.delay(5_000)
                         continue
                     }
@@ -1302,7 +1316,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * One grading pass: the bets placed through Novig's API from Novig's own ledger ([ApiSettler], when betting is set up), then every other bet
      * from final scores ([BetSettler]). One report that adds both up.
      */
-    private suspend fun gradeAll(force: Boolean): com.tjshea.vigilant.data.tracker.BetSettler.Report {
+    private suspend fun gradeAll(force: Boolean, forceCloses: Boolean = false): com.tjshea.vigilant.data.tracker.BetSettler.Report {
         // Fills Novig has that the Tracker doesn't (an order placed just as the app closed): added before grading, so nothing waits for a tap.
         c.apiSync?.let { sync ->
             try {
@@ -1324,7 +1338,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         val scores = c.settler.run(force)
         // Closing lines of games that started while Vigilant wasn't running (ESPN, Novig's trade history): for CLV.
-        c.backfillCloses()
+        c.backfillCloses(force = forceCloses)
         return if (api == null) scores else scores.copy(
             asked = scores.asked + api.asked, settled = scores.settled + api.settled, waiting = scores.waiting + api.waiting,
             manual = scores.manual + api.manual,
@@ -1517,16 +1531,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val began = System.currentTimeMillis()
         // The counter starts again from 0: only bets re-read from here on count.
         _state.update { it.copy(checkingOdds = true, checkProgress = null, checkStartedAtMs = began) }
+        // The focus (Tj, 2026-10-01: "pause other parts of the app such as the cno scanner so that it focuses on refreshing the current odds and EV and
+        // stats"): the background cycle (auto-bet with it), the CNO list's refresh, scans, the widget's rescans and the movers wait until this ends.
+        c.focus.begin()
         val settings = start.settings
         val usageBefore = c.usage.flow.value
         viewModelScope.launch {
+            // A scan under way (Tj's, a background cycle's) stops, as the Pause switch stops it.
+            if (c.runner.running) {
+                c.runner.stop()
+                ScanService.cancelDone(getApplication())
+            }
             runCatching { c.lastCheck.update { com.tjshea.vigilant.data.tracker.LastCheck(began) } }
             var report: com.tjshea.vigilant.data.tracker.BetRecheck.Report? = null
             // The finished games' results are graded at the same time (the score feeds are ESPN and MLB, not CNO, so it costs no time):
             // one tap covers every open bet, the ones still to play and the ones already over.
             val grading = async(Dispatchers.IO) {
                 try {
-                    gradeAll(force = true)
+                    // Every closing line that exists is collected in the same tap (Tj, 2026-10-01: "make sure it gets all available closing line data").
+                    gradeAll(force = true, forceCloses = true)
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -1589,6 +1612,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 report = null
             } finally {
                 _state.update { it.copy(checkingOdds = false, checkProgress = null) }
+                // Everything that waited goes on: the CNO list refreshes again (the watch's hold follows checkingOdds), and a background cycle that was
+                // skipped runs now rather than a whole interval from now.
+                c.focus.end()
+                c.autoScan.resumed()
+                if (_state.value.settings.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) runCatching { AutoScanService.start(getApplication()) }
             }
             // What the round cost each API and how it went, for Settings › Diagnostics.
             report?.let { r ->
@@ -1597,7 +1625,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     note = r.roundNote(settings.vigilantOn, c.cno.state.value.lastPause?.takeIf { (c.cno.state.value.lastPauseAtMs ?: 0L) >= began }),
                 )
             }
-            _toasts.tryEmit(report?.summary(vigilantOff = !settings.vigilantOn, graded = grading.await()) ?: "Couldn't check the odds")
+            val graded = grading.await()
+            // The closes the same tap went looking for: what was found, and what is still missing and why.
+            val closes = graded?.let { CloseText.summary(c.lastBackfill?.takeIf { it.forced }, CloseText.missing(c.tracker.all(), System.currentTimeMillis())) }
+            _toasts.tryEmit((report?.summary(vigilantOff = !settings.vigilantOn, graded = graded) ?: "Couldn't check the odds") + (closes?.let { " · $it" } ?: ""))
         }
     }
 
@@ -1619,6 +1650,9 @@ private const val GRADING_CHECK = "Grading check"
 
 /** What Scan, Recheck and Refresh say while scanning is paused ([ScanSettings.paused]). */
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
+
+/** What Scan, Recheck and Refresh say while Check odds now holds the focus ([FocusGate]). */
+internal const val CHECKING_TOAST = "Check odds now is running: scanning goes on when it's done"
 
 /** How often, at most, a running scan's newest state reaches the screen ([followThrottled]). */
 internal const val SCAN_MIRROR_MS = 350L
