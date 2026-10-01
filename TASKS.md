@@ -3024,7 +3024,7 @@ Build free ones first; checkpoint after each box; ship as one release (v0.30.0) 
 - [x] W2 Fix what the report shows is wrong in the code or in Diagnostics itself (false alarms, wording, missing sample sizes, anything a check got wrong).
 - [x] W3 Find why Vigilant's own bets lose to the close (by market and by fair-odds source) and fix what's clearly a bug; bring Tj any strategy change (what Vigilant should stop betting) as a recommendation, not a silent change.
   DONE W1-W3 (RESEARCH.md §47): Diagnostics' false alarms fixed (busy source = WARN/OK, backup source matched nothing = OK, spent key with another = OK and worded right, Novig throttles judged by share and recency, imported ✓ marks out of close coverage and their note fixed); round cost from `KeyUsage.charged` (the "600 credits a scan" was the month's count landing in one round); per-scanner CLV health checks; CLV averages say their n; matching by league with unmatched names; each scanner by market; bets keep `FairBasis` (what made their fair odds) and Diagnostics splits CLV by it; Vigilant's bets against the close listed one by one. Why Vigilant loses to the close can't be proven from this report (bets didn't record their fair's books until now); recommendation to Tj in §47. Tests: DiagnosticsTest (4 new), RunwayTest (charged), BetTrackerTest (fair basis), ParlayClosesTest (import note).
-- [ ] W5 (offered, not built) Tennis from ParlayAPI's tour keys (`tennis_atp`/`tennis_wta`, 3 credits a tour): handle Pinnacle's set lines vs the books' game lines per book before it can price anything (RESEARCH.md §47).
+- [x] W5 (offered; Tj said build it 2026-10-01: TASKS.md Z1-Z5) Tennis from ParlayAPI's tour keys (`tennis_atp`/`tennis_wta`, 3 credits a tour): handle Pinnacle's set lines vs the books' game lines per book before it can price anything (RESEARCH.md §47).
 - [x] W4 Tests; ship; send Tj the link. DONE: v0.36.0 (code 64) released 2026-09-30 ~22:01Z, CI green, recorded.
 
 ## Tj's crash report 2026-09-30 ~22:10Z (raw text in INBOX.md): "The app just crashed a couple times. Both times it was scanning vigilant and I tried to switch tabs, which got very laggy then crashed"
@@ -3045,3 +3045,16 @@ Build free ones first; checkpoint after each box; ship as one release (v0.30.0) 
   DONE Y4: floor with screenshots green (1,279 tests: 1,257 passed, 22 live-only skipped, exit 0); all 91 screenshots looked at, no visual defects. Sweep found two optimisation gaps and one stale hint, all fixed: the tab bar's +EV and CNO badges re-filtered the feed and re-screened CNO's whole list (with each pick's books) on every state the app got, now remembered on their inputs (`TabIconWithCount`); the CNO tab screened its list three times per recomposition, now once per change of snapshot/settings/placed/index/links/books/live prices/clock (`CnoScreen`); the wallet's "Amount a bet starts at" hint now says Kelly or My amount wins when chosen. ParlayBooks already shares one answer per league per pass. Tests: RecompositionCostTest (source pins), ApiBettingUiTest (Kelly note shown, dropped once another amount is picked).
 - [x] Y5 Ship, send Tj the link.
   DONE Y5: v0.36.2 (code 66) shipped: ship.sh gate green (1,279 tests), CI green on 2c501b03, release.yml green, Release confirmed with vigilant-v0.36.2.apk.
+
+## Tj's request 2026-10-01 (raw text in INBOX.md): "Build tennis through parlayapi"
+
+The offer it answers (W5, RESEARCH.md §47): ParlayAPI's tour keys `tennis_atp`/`tennis_wta` price Novig's tennis, but its Pinnacle rows put
+SET lines (±1.5 sets, 2.5 sets) in the match event and GAME lines in a separate "Name (Games)" event, while bet365/Caesars put game lines in
+the match event: a sets spread must never price Novig's games spread.
+
+- [ ] Z1 Read real ParlayAPI tennis answers (both tours, every market it has); save trimmed keyless fixtures; write the shapes per book in PARLAY_API.md.
+- [ ] Z2 Data: ATP/WTA scanned through ParlayAPI's tour keys; each book's lines classed as sets or games (the "(Games)" events, line sizes) so only games lines price Novig's games markets and set lines price nothing they don't match; tests from the fixtures, incl. the fake-edge case.
+- [ ] Z3 The same tennis prices for Check odds now (`ParlayBooks`) and closing lines where ParlayAPI already closes other sports; credits counted; tests.
+- [ ] Z4 Full app tests for what changed (light protocol + screenshots of anything shown), Diagnostics' matching counts tennis.
+- [ ] Z5 Ship, send Tj the link.
+
