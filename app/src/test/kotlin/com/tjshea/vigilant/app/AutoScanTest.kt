@@ -84,6 +84,23 @@ class AutoScanTest {
         assertTrue(AutoScanClock.MIN_GAP_MS < 15_000L)
     }
 
+    /** Tj, 2026-10-01: "Add an option to scan cno every 5 seconds for the auto bet function." */
+    @Test
+    fun `a 5 second interval checks CNO every 5 seconds, a long cycle waits 5 seconds after it, and Vigilant's own scan still waits 4 minutes`() {
+        assertEquals("5 sec", ScanSettings.intervalLabel(5))
+        assertEquals(now + 5_000L, AutoScanClock.nextAtMs(now, 5, now + 2_000L))
+        // A cycle that took 9 s (a CNO page and a few books): the next starts 5 s after it ended, never already overdue.
+        assertEquals(now + 9_000L + AutoScanClock.MIN_GAP_MS, AutoScanClock.nextAtMs(now, 5, now + 9_000L))
+        // CNO's own floor between two reads is lower than the interval, so a 5 s cycle never asks for a read CNO's pace would refuse.
+        assertTrue(com.tjshea.vigilant.data.cno.CnoFeed.MIN_GAP_MS < 5_000L)
+        // Vigilant's scan spends API credits: not at 5 s, not at 3 min; due at 4 min.
+        assertFalse(AutoScanClock.vigilantDue(now - 5_000L, 5, now))
+        assertFalse(AutoScanClock.vigilantDue(now - 180_000L, 5, now))
+        assertTrue(AutoScanClock.vigilantDue(now - 240_000L, 5, now))
+        assertEquals(240, ScanSettings.vigilantEverySeconds(5))
+        assertEquals(60_000L, AutoScanClock.closingFreshMs(5))
+    }
+
     @Test
     fun `Vigilant's own scan, which spends API credits, runs at most every 4 minutes however fast the cycles are`() {
         val fourMin = 4 * 60_000L

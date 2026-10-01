@@ -240,13 +240,19 @@ class AutoBetUiTest {
     }
 
     @Test
-    fun `the check interval is the background CNO scan's own, 15 sec to 40 min`() {
+    fun `the check interval is the background CNO scan's own, 5 sec to 40 min, and 5 sec says what it costs`() {
         show()
-        for ((label, seconds) in listOf("15 sec" to 15, "30 sec" to 30, "1 min" to 60, "3 min" to 180, "5 min" to 300, "40 min" to 2400)) {
+        for ((label, seconds) in listOf("5 sec" to 5, "15 sec" to 15, "30 sec" to 30, "1 min" to 60, "3 min" to 180, "5 min" to 300, "40 min" to 2400)) {
             compose.onNodeWithText(label).performClick()
             assertEquals(label, seconds, settings.autoScanSeconds)
         }
         compose.onNodeWithText("The same choice as Settings › Scan › Background auto-scan", substring = true).assertExists()
+        // 5 sec: its cost is said (CNO reads ~12 a minute, may block addresses); 15 sec and slower: no warning.
+        compose.onNodeWithText("5 sec").performClick()
+        compose.onNodeWithTag("autoBetFastNote").assertExists()
+        compose.onNodeWithText("about 12 times a minute", substring = true).assertExists()
+        compose.onNodeWithText("15 sec").performClick()
+        compose.onNodeWithTag("autoBetFastNote").assertDoesNotExist()
     }
 
     // ---- what it says while it runs, and the stops --------------------------------------------------------------
