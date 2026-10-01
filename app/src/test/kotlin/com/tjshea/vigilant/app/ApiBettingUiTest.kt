@@ -68,6 +68,18 @@ class ApiBettingUiTest {
         VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() } }
     }
 
+    /**
+     * Another screen in the same test: the rule's content is set once, so this swaps what an already-set host shows.
+     * (A mutable holder the one [sheetScreen] reads.)
+     */
+    private var swapped by androidx.compose.runtime.mutableStateOf<(@androidx.compose.runtime.Composable () -> Unit)?>(null)
+
+    private fun sheetScreenFresh(content: @androidx.compose.runtime.Composable () -> Unit) {
+        if (swapped == null) throw IllegalStateException("call sheetScreen first")
+        swapped = content
+        compose.waitForIdle()
+    }
+
     private val market = NovigMarket("m", "e", "MONEY", "OPEN", "A vs B", 0, MarketFee.GAME, listOf(NovigOutcome("A", "Team A", "TBD"), NovigOutcome("B", "Team B", "TBD")))
     private val target = BetTarget(market, "A", "NFL", "Team B @ Team A", 0, "Moneyline", "Team A", 0.50, null, BetTracker.SOURCE_CNO)
     private val plan = BetPlan(limitPrice = 0.465, contracts = 400, expectedCost = 1.85, averagePrice = 0.4625, payout = 4.0, evPercent = 0.081, bestPrice = 0.46, note = null)
@@ -331,27 +343,111 @@ class ApiBettingUiTest {
     }
 
     @Test
-    fun `a wallet that's too small blocks the bet and offers a way straight to adding money`() {
-        var addMoney = 0
-        sheetScreen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
+    fun `a wallet that's too small blocks the bet and opens the Add money block with what the bet is short by`() {
+        val settings = mutableListOf<Double>()
+        sheetScreen { ApiBetSheetContent(sheet(balance = 1.0), {}, {}, {}, {}, {}, onAddMoney = { settings += it }) }
         compose.onNodeWithTag("confirmBet").assertIsNotEnabled()
         compose.onNodeWithTag("walletShort").assertExists()
-        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
-        assertEquals(1, addMoney)
+        // Open already, $0.85 short, so $1 is typed in.
+        compose.onNodeWithTag("addMoneyBlock").performScrollTo().assertExists()
+        compose.onNodeWithTag("sheetMoneyAmount").assertTextContains("1")
+        // No management key saved on this phone: the button goes to Settings with the amount, where the key is typed once.
+        compose.onNodeWithTag("sheetFund").performScrollTo().performClick()
+        assertEquals(listOf(1.0), settings)
+        compose.onNodeWithText("Opens Settings with the amount filled in", substring = true).assertExists()
+    }
+
+    /** Tj, 2026-10-01: "Right now if I have one cent, there is no option to add money in the bet slip." */
+    @Test
+    fun `every Bet sheet has an Add money button, whatever the wallet holds`() {
+        // A wallet that covers the bet, a wallet of one cent, one of nothing, and one not read yet: the button is there each time, and says what's in it.
+        for ((balance, said) in listOf(12.5 to "\$12.50 in it", 0.01 to "\$0.01 in it", 0.0 to "\$0.00 in it", null to "Add money to the wallet")) {
+            sheetScreenFresh { ApiBetSheetContent(sheet(balance = balance), {}, {}, {}, {}, {}) }
+            compose.onNodeWithTag("addMoney").performScrollTo().assertExists()
+            compose.onNodeWithText(said, substring = true).assertExists()
+        }
     }
 
     @Test
-    fun `a wallet that covers the bet shows no Add money button`() {
+    fun `the Add money button opens the amounts 1, 2, 5, 10, 15 and 20 and a typed amount`() {
         sheetScreen { ApiBetSheetContent(sheet(balance = 12.5), {}, {}, {}, {}, {}) }
-        compose.onNodeWithTag("addMoney").assertDoesNotExist()
+        compose.onNodeWithTag("addMoneyBlock").assertDoesNotExist()
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        compose.onNodeWithTag("addMoneyBlock").assertExists()
+        assertEquals(listOf(1.0, 2.0, 5.0, 10.0, 15.0, 20.0), com.tjshea.vigilant.app.ui.SHEET_MONEY_CHOICES)
+        for (c in listOf("1", "2", "5", "10", "15", "20")) compose.onNodeWithTag("sheetMoney-$c").performScrollTo().assertExists()
+        compose.onNodeWithTag("sheetMoneyAmount").assertExists()
+        // The button hides it again.
+        compose.onNodeWithTag("addMoney").performClick()
+        compose.onNodeWithTag("addMoneyBlock").assertDoesNotExist()
     }
 
     @Test
-    fun `Novig refusing the order for the balance also offers Add money`() {
-        var addMoney = 0
-        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Failed(com.tjshea.vigilant.data.novig.signing.NovigApiException(422, null, null).advice)), {}, {}, {}, {}, {}, onAddMoney = { addMoney++ }) }
-        compose.onNodeWithTag("addMoney").performClick()
-        assertEquals(1, addMoney)
+    fun `with a saved management key a chosen amount is added right there, one chip or one typed amount at a time`() {
+        val funded = mutableListOf<Double>()
+        val toSettings = mutableListOf<Double>()
+        sheetScreen { ApiBetSheetContent(sheet(balance = 12.5), {}, {}, {}, {}, {}, onAddMoney = { toSettings += it }, onFundWallet = { funded += it }, keySaved = true) }
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        compose.onNodeWithText("Moves money from your Novig cash wallet to the Vigilant wallet.").assertExists()
+        // Picking a chip only chooses the amount: money moves on the button.
+        compose.onNodeWithTag("sheetMoney-15").performScrollTo().performClick()
+        assertTrue(funded.isEmpty())
+        compose.onNodeWithText("Add \$15.00 to the wallet").assertExists()
+        compose.onNodeWithTag("sheetFund").performScrollTo().performClick()
+        assertEquals(listOf(15.0), funded)
+        // A typed amount, cents allowed.
+        compose.onNodeWithTag("sheetMoneyAmount").performTextClearance()
+        compose.onNodeWithTag("sheetMoneyAmount").performTextInput("7.50")
+        compose.onNodeWithText("Add \$7.50 to the wallet").assertExists()
+        compose.onNodeWithTag("sheetFund").performClick()
+        assertEquals(listOf(15.0, 7.5), funded)
+        assertTrue("Settings wasn't opened", toSettings.isEmpty())
+    }
+
+    @Test
+    fun `a typed amount that can't be sent can't be added, and says why`() {
+        val funded = mutableListOf<Double>()
+        sheetScreen { ApiBetSheetContent(sheet(balance = 12.5), {}, {}, {}, {}, {}, onFundWallet = { funded += it }, keySaved = true) }
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        compose.onNodeWithTag("sheetMoneyAmount").performTextClearance()
+        compose.onNodeWithTag("sheetMoneyAmount").performTextInput("0")
+        compose.onNodeWithTag("sheetFund").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag("sheetMoneyAmount").performTextClearance()
+        compose.onNodeWithTag("sheetMoneyAmount").performTextInput("50000")
+        compose.onNodeWithTag("sheetFund").assertIsNotEnabled()
+        assertTrue(funded.isEmpty())
+    }
+
+    @Test
+    fun `while money is being added the sheet says so, and then what Novig answered`() {
+        sheetScreen { ApiBetSheetContent(sheet(balance = 12.5).copy(funding = true), {}, {}, {}, {}, {}, keySaved = true) }
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        compose.onNodeWithText("Adding…").assertExists()
+        compose.onNodeWithTag("sheetFund").assertIsNotEnabled()
+        sheetScreenFresh { ApiBetSheetContent(sheet(balance = 17.5).copy(fundMessage = "Added \$5.00 to the Vigilant wallet."), {}, {}, {}, {}, {}, keySaved = true) }
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        compose.onNodeWithTag("sheetFundMessage").assertExists()
+        sheetScreenFresh { ApiBetSheetContent(sheet(balance = 12.5).copy(fundError = "Novig doesn't know that key ID."), {}, {}, {}, {}, {}, keySaved = true) }
+        compose.onNodeWithTag("addMoney").performScrollTo().performClick()
+        compose.onNodeWithTag("sheetFundError").assertExists()
+    }
+
+    @Test
+    fun `a bet that's placed shows no Add money, and one that couldn't be placed does`() {
+        val placed = TrackedBet("id", 1L, "NFL", "A @ B", 2L, "Moneyline", "A", "m", "o", 0.5, 0.5, 0.52, 0.04, 1.0, orderId = "o1")
+        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Placed(placed, 0)), {}, {}, {}, {}, {}) }
+        compose.onNodeWithTag("addMoney").assertDoesNotExist()
+        sheetScreenFresh { ApiBetSheetContent(sheet(result = PlaceResult.Refused("The edge is gone.")), {}, {}, {}, {}, {}) }
+        compose.onNodeWithTag("addMoney").assertExists()
+    }
+
+    @Test
+    fun `Novig refusing the order for the balance opens Add money`() {
+        val toSettings = mutableListOf<Double>()
+        sheetScreen { ApiBetSheetContent(sheet(result = PlaceResult.Failed(com.tjshea.vigilant.data.novig.signing.NovigApiException(422, null, null).advice)), {}, {}, {}, {}, {}, onAddMoney = { toSettings += it }) }
+        compose.onNodeWithTag("addMoneyBlock").assertExists()
+        compose.onNodeWithTag("sheetFund").performClick()
+        assertEquals(1, toSettings.size)
     }
 
     @Test
