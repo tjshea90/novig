@@ -339,7 +339,7 @@ class AutoBettorTest {
     }
 
     @Test
-    fun `when Novig refuses an order nothing is sent again for five minutes, however fast the cycles`() = runBlocking {
+    fun `when Novig refuses an order nothing is sent again until the wait is over, however fast the cycles`() = runBlocking {
         val refusing = object : NovigTradingClient(
             NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
                 override val keyId = "kid"
@@ -356,19 +356,19 @@ class AutoBettorTest {
         }
         val p = ApiBetPlacer(refusing, app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
         var t = now
-        val b = AutoBettor(app, app.container, clock = { t }, placer = { p }, wallet = { 25.0 }, resolve = { targetOf(it) })
+        // The real wait is 5 minutes; 30 seconds here keeps the sample data (a minute's freshness for Novig's price) in date.
+        assertEquals(5 * 60_000L, AutoBettor.FAIL_BACKOFF_MS)
+        val b = AutoBettor(app, app.container, clock = { t }, placer = { p }, wallet = { 25.0 }, resolve = { targetOf(it) }, failBackoffMs = 30_000L)
         val first = b.run(settings(), state())
         assertTrue(first.stopped!!, first.stopped!!.contains("Novig refused"))
         assertEquals(1, refusing.sent.get())
-        // 15 seconds later, and again at 4 minutes: nothing is sent.
+        // 15 seconds later (the fastest interval): nothing is sent.
         t = now + 15_000L
-        b.run(settings(), state())
-        t = now + 4 * 60_000L
         b.run(settings(), state())
         assertEquals(1, refusing.sent.get())
         assertTrue(b.status.value.blocker!!.contains("waiting after Novig refused"))
-        // Five minutes on, it tries again.
-        t = now + 5 * 60_000L + 1
+        // Once the wait is over, it tries again.
+        t = now + 30_001L
         b.run(settings(), state())
         assertEquals(2, refusing.sent.get())
         assertEquals(0, app.container.tracker.all().size)

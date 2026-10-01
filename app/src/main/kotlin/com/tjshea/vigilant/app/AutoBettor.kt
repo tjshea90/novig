@@ -61,6 +61,8 @@ class AutoBettor(
     /** [row]'s exact Novig bet as a target (market read, outcome found), or null when it can't be found for certain. */
     private val resolve: suspend (CnoRow) -> BetTarget? = { row -> resolveOnNovig(c, row) },
     private val notes: AutoBetNotes = AutoBetNotes,
+    /** How long nothing is sent after Novig refuses an order ([FAIL_BACKOFF_MS]). */
+    private val failBackoffMs: Long = FAIL_BACKOFF_MS,
 ) {
 
     /** What the last [run] did, for Settings, Diagnostics and the tests. */
@@ -217,7 +219,7 @@ class AutoBettor(
                 is PlaceResult.Failed -> {
                     stopped = "Novig refused: ${result.message}"
                     failure = stopped
-                    failedUntilMs = now + FAIL_BACKOFF_MS
+                    failedUntilMs = now + failBackoffMs
                     break
                 }
                 is PlaceResult.Unconfirmed -> {
