@@ -113,6 +113,12 @@ unless Tj asks).
   Novig's bet slip (`data/novig/NovigLinks`, `SlipStake`, `ScanSettings.slipStake`/`slipStakeFor`, `EvAlert.stake`,
   `MiniWindow.Item.kelly`); one-tap Open in Novig on +EV cards (`ui/OpportunitySheet.OpenBetButton`); any PinnWire failure
   falls to pinnapi (`PinnapiClient.boardFor`).
+- **Auto-bet (v0.39.0; RESEARCH.md §51, BRIEF.md "Auto-bet"; REAL MONEY with nobody confirming, so a sweep reads this diff adversarially every time):** `ScanSettings.autoBet*`
+  (off by default; `autoBetsNow`), `data/novig/trading/AutoBet.kt` (pure: `judge`, `stake`, `MAX_SANE_EV`, `priceMatches`), `ApiBetPlacer.placeAuto` (shared `orderLock`),
+  `app/AutoBettor.kt` (run inside `AutoScanner.cycle` after `cnoRead`, before `cnoAlerts`; `markPlaced`, `AutoBetNotes`), `AppContainer.autoBetPlacer/subaccountKeyId/orderLock`,
+  `AlertPicks.cnoChecked`, `ui/AutoBetUi.kt` (Settings › Betting card), `TrackedBet.auto`, Diagnostics line + `HealthChecks.autoBet`. Tests: AutoBetTest, ApiBettingTest (auto path),
+  AutoBettorTest (fake Novig; each safeguard was MUTATION-CHECKED: remove it and a test fails: re-do that when changing it), AutoBetUiTest, AutoBetDiagnosticsTest, screenshots 5k/5k2.
+  Never test against a real key with real money from a session.
 - **Pause all scanning and CNO's one-tap buttons (v0.19.5+):** `ScanSettings.paused` (saved; Settings › Scanner switch,
   the +EV/CNO tabs' `PauseButton` + `PausedBanner`, the widget's header ⏸/▶): a running scan stops (`ScanRunner.stop`),
   CNO's list and lanes are held (`CnoWatch.hold`, also until settings load), auto-scan off (`activeAutoScan`; service,

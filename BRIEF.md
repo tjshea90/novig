@@ -330,6 +330,16 @@ robolectric.org/configuring/.
   phone storage is large. Choose accuracy and speed over mobile data or phone storage always." Never gate a read to Wi-Fi, shrink a
   download or cache, or skip a source to save data or storage. (API credits and rate limits are a different budget: those still matter.)
 
+- **Auto-bet (Tj, 2026-10-01; v0.39.0, RESEARCH.md §51): the only thing in the app that spends money with nobody confirming, so its rules are fixed.**
+  Off by default, turned on only by Tj in Settings › Betting (after a plain confirm). It places CrazyNinjaOdds' bets only, through the betting API
+  from the Vigilant wallet only (never the cash wallet), inside the background CNO auto-scan cycle, pregame only (never a game that has started, or
+  starts within a minute). Every order goes through `ApiBetPlacer`/`ApiBetPlanner` (fresh fair odds, the edge still there at the real book price,
+  the per-bet and per-day limits, an IOC at a ceiling that is never chased) under ONE lock shared with the Bet sheet. On top: Novig's own price read
+  in the last minute; the order book's price for the outcome must match the price judged (±3 points) and the outcome Novig's price came from must be
+  the outcome found; one bet per Novig market; an edge over 15% is never bet unattended; the wallet is read before each pass and caps each stake
+  (under $1 = stop); an order whose answer is lost HALTS it until Tj resumes it and is never re-sent; Novig refusing or the daily limit backs it off.
+  Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
+
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
   `com.tjshea.vigilant.betmgm` ("Vigilant MGM"), built by module `mgm` from `app`'s OWN sources and resources
   (never a copy) with `BuildConfig.BOOK = "betmgm"`; `app` sets `"novig"` and stays `com.tjshea.vigilant`.
