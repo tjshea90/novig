@@ -1,0 +1,341 @@
+[
+ {
+  "id": "9d64faffe99416dac59c25adddb4e099",
+  "sport_key": "tennis_wta",
+  "sport_title": "WTA",
+  "commence_time": "2026-10-01T07:00:00Z",
+  "home_team": "Magda Linette",
+  "away_team": "Katerina Siniakova",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:32Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:21:34Z",
+      "outcomes": [
+       {
+        "name": "Magda Linette",
+        "price": 2.82
+       },
+       {
+        "name": "Katerina Siniakova",
+        "price": 1.483
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:51:21Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.71,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.505,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:21:34Z",
+      "outcomes": [
+       {
+        "name": "Magda Linette",
+        "price": 1.763,
+        "point": 1.5
+       },
+       {
+        "name": "Katerina Siniakova",
+        "price": 2.14,
+        "point": -1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818592453,
+    "stale_seconds": 40.82
+   },
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2026-10-01T01:37:10Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:36:09Z",
+      "outcomes": [
+       {
+        "name": "Magda Linette",
+        "price": 2.62
+       },
+       {
+        "name": "Katerina Siniakova",
+        "price": 1.51
+       }
+      ]
+     }
+    ],
+    "last_update_ms": 1790818630021,
+    "stale_seconds": 3.25
+   }
+  ],
+  "canonical_event_id": "d23f463dd2a59e70",
+  "commence_time_reported": true
+ },
+ {
+  "id": "505b62d36031fdc0c84784fe3dcf4cf2",
+  "sport_key": "tennis_wta",
+  "sport_title": "WTA",
+  "commence_time": "2026-10-01T07:00:00Z",
+  "home_team": "Magda Linette (Games)",
+  "away_team": "Katerina Siniakova (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:32Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:52:29Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.943,
+        "point": 21.0
+       },
+       {
+        "name": "Under",
+        "price": 1.926,
+        "point": 21.0
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:52:29Z",
+      "outcomes": [
+       {
+        "name": "Magda Linette (Games)",
+        "price": 1.99,
+        "point": 3.5
+       },
+       {
+        "name": "Katerina Siniakova (Games)",
+        "price": 1.885,
+        "point": -3.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818592453,
+    "stale_seconds": 40.82
+   }
+  ],
+  "canonical_event_id": "9daa7c3f519c19b4",
+  "commence_time_reported": true
+ },
+ {
+  "id": "14d5be183e8e76b0",
+  "sport_key": "tennis_wta",
+  "sport_title": "WTA",
+  "commence_time": "2026-10-02T12:00:00Z",
+  "home_team": "Antonia Ruzic",
+  "away_team": "Teodora Kostovic",
+  "bookmakers": [
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2026-10-01T01:37:10Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T00:54:08Z",
+      "outcomes": [
+       {
+        "name": "Antonia Ruzic",
+        "price": 1.781
+       },
+       {
+        "name": "Teodora Kostovic",
+        "price": 1.962
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818630021,
+    "stale_seconds": 3.25
+   }
+  ],
+  "canonical_event_id": "14d5be183e8e76b0",
+  "commence_time_reported": true
+ },
+ {
+  "id": "5e6257f73f90c23cce949fb74797f838",
+  "sport_key": "tennis_wta",
+  "sport_title": "WTA",
+  "commence_time": "2026-10-01T04:30:00Z",
+  "home_team": "Grant/Jones",
+  "away_team": "Brooks/Rajecki",
+  "bookmakers": [
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2026-10-01T01:37:10Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T00:59:08Z",
+      "outcomes": [
+       {
+        "name": "Grant/Jones",
+        "price": 2.2
+       },
+       {
+        "name": "Brooks/Rajecki",
+        "price": 1.625
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818630021,
+    "stale_seconds": 3.25
+   }
+  ],
+  "canonical_event_id": "6947c8a46195203d",
+  "commence_time_reported": true
+ },
+ {
+  "id": "d25c97c37390e119",
+  "sport_key": "tennis_wta_125k_adana",
+  "sport_title": "tennis_wta_125k_adana",
+  "commence_time": "2026-10-02T09:00:00Z",
+  "home_team": "Antonia Ruzic",
+  "away_team": "Teodora Kostovic",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:21Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:14:16Z",
+      "outcomes": [
+       {
+        "name": "Antonia Ruzic",
+        "price": 1.893
+       },
+       {
+        "name": "Teodora Kostovic",
+        "price": 1.926
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:59:17Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.44,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.568,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:59:17Z",
+      "outcomes": [
+       {
+        "name": "Antonia Ruzic",
+        "price": 2.99,
+        "point": -1.5
+       },
+       {
+        "name": "Teodora Kostovic",
+        "price": 1.403,
+        "point": 1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818581519,
+    "stale_seconds": 51.75
+   }
+  ],
+  "canonical_event_id": "d25c97c37390e119",
+  "commence_time_reported": true
+ },
+ {
+  "id": "466cfa29466fa4ff58a422999a9d5d5f",
+  "sport_key": "tennis_wta_125k_adana",
+  "sport_title": "tennis_wta_125k_adana",
+  "commence_time": "2026-10-02T09:00:00Z",
+  "home_team": "Antonia Ruzic (Games)",
+  "away_team": "Teodora Kostovic (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:35:54Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:59:17Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.901,
+        "point": 21.5
+       },
+       {
+        "name": "Under",
+        "price": 1.917,
+        "point": 21.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:59:17Z",
+      "outcomes": [
+       {
+        "name": "Antonia Ruzic (Games)",
+        "price": 1.952,
+        "point": -0.5
+       },
+       {
+        "name": "Teodora Kostovic (Games)",
+        "price": 1.87,
+        "point": 0.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818554891,
+    "stale_seconds": 78.38
+   }
+  ],
+  "canonical_event_id": "5b269d637cb9fbd1",
+  "commence_time_reported": true
+ }
+]

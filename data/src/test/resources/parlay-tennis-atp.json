@@ -1,0 +1,1410 @@
+[
+ {
+  "id": "1853337b47fc71799b32c0ed5a83c375",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T03:05:00Z",
+  "home_team": "Alex De Minaur (Games)",
+  "away_team": "Mariano Navone (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:37:07Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:15:14Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.952,
+        "point": 20.5
+       },
+       {
+        "name": "Under",
+        "price": 1.917,
+        "point": 20.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:15:14Z",
+      "outcomes": [
+       {
+        "name": "Alex De Minaur (Games)",
+        "price": 1.862,
+        "point": -4.5
+       },
+       {
+        "name": "Mariano Navone (Games)",
+        "price": 2.02,
+        "point": 4.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818627342,
+    "stale_seconds": 4.27
+   }
+  ],
+  "canonical_event_id": "1c72d8c4e1dee55a",
+  "commence_time_reported": true
+ },
+ {
+  "id": "132b112f85d1e28340d8c79a9a962009",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T03:05:00Z",
+  "home_team": "Alex Molcan",
+  "away_team": "Arthur Rinderknech",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:37:07Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:29:20Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 2.45
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.61
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:15:14Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.37,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.633,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:15:14Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 1.559,
+        "point": 1.5
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 2.55,
+        "point": -1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818627342,
+    "stale_seconds": 4.27
+   },
+   {
+    "key": "bet365",
+    "title": "bet365",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 2.3
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.613
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.8,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.909,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 1.8,
+        "point": 2.5
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.909,
+        "point": -2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   },
+   {
+    "key": "caesars",
+    "title": "Caesars",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 2.3
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.588
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:29:26Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.8,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.87,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 1.87,
+        "point": 2.5
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.8,
+        "point": -2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   },
+   {
+    "key": "draftkings",
+    "title": "DraftKings",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:12:28Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 2.41
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.578
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:37:32Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.87,
+        "point": 23.5
+       },
+       {
+        "name": "Under",
+        "price": 1.769,
+        "point": 23.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:37:32Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 1.8,
+        "point": 2.5
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.833,
+        "point": -2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   },
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2026-10-01T01:37:10Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 2.36
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.602
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818630021,
+    "stale_seconds": 1.59
+   },
+   {
+    "key": "prophetx",
+    "title": "ProphetX",
+    "last_update": "2026-10-01T01:36:54Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:33:24Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 2.48
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.641
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:14:09Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.87,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 2.09,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:12:58Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 1.909,
+        "point": 2.5
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 2.02,
+        "point": -2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818614188,
+    "stale_seconds": 17.42
+   },
+   {
+    "key": "betmgm",
+    "title": "BetMGM",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:14:34Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.741,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.909,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:12:28Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan",
+        "price": 1.98,
+        "point": 1.5
+       },
+       {
+        "name": "Arthur Rinderknech",
+        "price": 1.714,
+        "point": -1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   }
+  ],
+  "canonical_event_id": "11d666fe9fa995cc",
+  "commence_time_reported": true
+ },
+ {
+  "id": "42eec45624423854ffde86b87c4a925b",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T03:05:00Z",
+  "home_team": "Alex Molcan (Games)",
+  "away_team": "Arthur Rinderknech (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:37:07Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:15:14Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.971,
+        "point": 23.0
+       },
+       {
+        "name": "Under",
+        "price": 1.893,
+        "point": 23.0
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:15:14Z",
+      "outcomes": [
+       {
+        "name": "Alex Molcan (Games)",
+        "price": 1.901,
+        "point": 2.5
+       },
+       {
+        "name": "Arthur Rinderknech (Games)",
+        "price": 1.971,
+        "point": -2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818627342,
+    "stale_seconds": 4.27
+   }
+  ],
+  "canonical_event_id": "45c96f9f2d9e6af2",
+  "commence_time_reported": true
+ },
+ {
+  "id": "d32b782a44a9606a111a62159cd45506",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T02:00:00Z",
+  "home_team": "Brandon Nakashima",
+  "away_team": "Ugo Humbert",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:37:01Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:30:33Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.446
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 2.96
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:15:30Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.59,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.546,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:45:46Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 2.16,
+        "point": -1.5
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 1.752,
+        "point": 1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818621725,
+    "stale_seconds": 9.88
+   },
+   {
+    "key": "bet365",
+    "title": "bet365",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:04:37Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.444
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 2.75
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:49:20Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.833,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.833,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:49:20Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 2.0,
+        "point": -3.5
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 1.725,
+        "point": 3.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   },
+   {
+    "key": "caesars",
+    "title": "Caesars",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:04:37Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.455
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 2.65
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:04:37Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.8,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.87,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:04:37Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.741,
+        "point": -2.5
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 1.952,
+        "point": 2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   },
+   {
+    "key": "draftkings",
+    "title": "DraftKings",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:32:46Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.426
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 2.88
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:32:46Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.909,
+        "point": 23.5
+       },
+       {
+        "name": "Under",
+        "price": 1.741,
+        "point": 23.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:32:46Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.667,
+        "point": -2.5
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 2.0,
+        "point": 2.5
+       }
+      ]
+     }
+    ],
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   },
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2026-10-01T01:37:10Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:24:09Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.444
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 2.8
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818630021,
+    "stale_seconds": 1.59
+   },
+   {
+    "key": "prophetx",
+    "title": "ProphetX",
+    "last_update": "2026-10-01T01:36:54Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:25:48Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 1.476
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 3.0
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:35:08Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 2.2,
+        "point": -3.5
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 1.775,
+        "point": 3.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:37:58Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.28,
+        "point": 23.5
+       },
+       {
+        "name": "Under",
+        "price": 1.735,
+        "point": 23.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818614188,
+    "stale_seconds": 17.42
+   },
+   {
+    "key": "betmgm",
+    "title": "BetMGM",
+    "last_update": "2026-10-01T01:37:09Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:59:19Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.833,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.847,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:59:19Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima",
+        "price": 2.05,
+        "point": -3.5
+       },
+       {
+        "name": "Ugo Humbert",
+        "price": 1.645,
+        "point": 3.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818629697,
+    "stale_seconds": 1.91
+   }
+  ],
+  "canonical_event_id": "0063431160885bfc",
+  "commence_time_reported": true
+ },
+ {
+  "id": "0a0e5324c118da52831217ff6d47efe5",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T02:00:00Z",
+  "home_team": "Brandon Nakashima (Games)",
+  "away_team": "Ugo Humbert (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:37:01Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T00:45:46Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.935,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.935,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T00:45:46Z",
+      "outcomes": [
+       {
+        "name": "Brandon Nakashima (Games)",
+        "price": 1.917,
+        "point": -3.0
+       },
+       {
+        "name": "Ugo Humbert (Games)",
+        "price": 1.952,
+        "point": 3.0
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818621725,
+    "stale_seconds": 9.88
+   }
+  ],
+  "canonical_event_id": "97bf432471fbb35e",
+  "commence_time_reported": true
+ },
+ {
+  "id": "8429fec1c40a41c594b5c648aaf3744e",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T08:00:00Z",
+  "home_team": "Carlos Alcaraz",
+  "away_team": "Alex Michelsen",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:37:01Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:30:33Z",
+      "outcomes": [
+       {
+        "name": "Carlos Alcaraz",
+        "price": 1.187
+       },
+       {
+        "name": "Alex Michelsen",
+        "price": 5.38
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:30:33Z",
+      "outcomes": [
+       {
+        "name": "Carlos Alcaraz",
+        "price": 1.592,
+        "point": -1.5
+       },
+       {
+        "name": "Alex Michelsen",
+        "price": 2.46,
+        "point": 1.5
+       }
+      ]
+     },
+     {
+      "key": "alternate_spreads",
+      "last_update": "2026-10-01T01:30:33Z",
+      "outcomes": [
+       {
+        "name": "Alex Michelsen",
+        "price": 9.84,
+        "point": -1.5
+       },
+       {
+        "name": "Alex Michelsen",
+        "price": 2.46,
+        "point": 1.5
+       },
+       {
+        "name": "Carlos Alcaraz",
+        "price": 1.592,
+        "point": -1.5
+       },
+       {
+        "name": "Carlos Alcaraz",
+        "price": 1.079,
+        "point": 1.5
+       }
+      ]
+     },
+     {
+      "key": "alternate_totals",
+      "last_update": "2026-10-01T01:30:33Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 3.13,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.398,
+        "point": 2.5
+       }
+      ]
+     }
+    ],
+    "last_update_ms": 1790818621725,
+    "stale_seconds": 9.88
+   },
+   {
+    "key": "prophetx",
+    "title": "ProphetX",
+    "last_update": "2026-10-01T01:36:54Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:07:09Z",
+      "outcomes": [
+       {
+        "name": "Carlos Alcaraz",
+        "price": 1.202
+       },
+       {
+        "name": "Alex Michelsen",
+        "price": 5.6
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:36:54Z",
+      "outcomes": [
+       {
+        "name": "Carlos Alcaraz",
+        "price": 2.05,
+        "point": -4.5
+       },
+       {
+        "name": "Alex Michelsen",
+        "price": 1.901,
+        "point": 4.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:36:19Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.962,
+        "point": 20.5
+       },
+       {
+        "name": "Under",
+        "price": 1.98,
+        "point": 20.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818614188,
+    "stale_seconds": 17.42
+   }
+  ],
+  "canonical_event_id": "17b9fd9d38cfb839",
+  "commence_time_reported": true
+ },
+ {
+  "id": "38e3a4de3f7c896062af7667da3e7714",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T05:00:00Z",
+  "home_team": "Evan King / Brandon Nakashima",
+  "away_team": "Theo Arribage / Albano Olivetti",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:21Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:17:09Z",
+      "outcomes": [
+       {
+        "name": "Evan King / Brandon Nakashima",
+        "price": 2.83
+       },
+       {
+        "name": "Theo Arribage / Albano Olivetti",
+        "price": 1.441
+       }
+      ]
+     }
+    ],
+    "last_update_ms": 1790818581519,
+    "stale_seconds": 50.09
+   }
+  ],
+  "canonical_event_id": "2b9c91a2a5b740b9",
+  "commence_time_reported": true
+ },
+ {
+  "id": "85eb19189ce1d8bc",
+  "sport_key": "tennis_atp",
+  "sport_title": "ATP",
+  "commence_time": "2026-10-01T04:10:00Z",
+  "home_team": "Yuta Shimizu",
+  "away_team": "Bernard Tomic",
+  "bookmakers": [
+   {
+    "key": "prophetx",
+    "title": "ProphetX",
+    "last_update": "2026-10-01T01:36:54Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:29:53Z",
+      "outcomes": [
+       {
+        "name": "Yuta Shimizu",
+        "price": 2.5
+       },
+       {
+        "name": "Bernard Tomic",
+        "price": 1.61
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:31:38Z",
+      "outcomes": [
+       {
+        "name": "Yuta Shimizu",
+        "price": 1.935,
+        "point": 2.5
+       },
+       {
+        "name": "Bernard Tomic",
+        "price": 1.99,
+        "point": -2.5
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:31:38Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.22,
+        "point": 23.5
+       },
+       {
+        "name": "Under",
+        "price": 1.775,
+        "point": 23.5
+       }
+      ]
+     }
+    ],
+    "last_update_ms": 1790818614188,
+    "stale_seconds": 17.42
+   }
+  ],
+  "canonical_event_id": "85eb19189ce1d8bc",
+  "commence_time_reported": true
+ },
+ {
+  "id": "de95a76cc48c7e5e",
+  "sport_key": "tennis_atp_challenger_jingshan",
+  "sport_title": "tennis_atp_challenger_jingshan",
+  "commence_time": "2026-10-01T03:05:00Z",
+  "home_team": "Adam Walton",
+  "away_team": "Mattia Bellucci",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:41Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:25:13Z",
+      "outcomes": [
+       {
+        "name": "Adam Walton",
+        "price": 2.0
+       },
+       {
+        "name": "Mattia Bellucci",
+        "price": 1.87
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.38,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.617,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Adam Walton",
+        "price": 1.413,
+        "point": 1.5
+       },
+       {
+        "name": "Mattia Bellucci",
+        "price": 3.02,
+        "point": -1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818601946,
+    "stale_seconds": 29.66
+   }
+  ],
+  "canonical_event_id": "de95a76cc48c7e5e",
+  "commence_time_reported": true
+ },
+ {
+  "id": "015085f5378859107a01ac89227c0a8c",
+  "sport_key": "tennis_atp_challenger_jingshan",
+  "sport_title": "tennis_atp_challenger_jingshan",
+  "commence_time": "2026-10-01T03:05:00Z",
+  "home_team": "Adam Walton (Games)",
+  "away_team": "Mattia Bellucci (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:41Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.917,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.935,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Adam Walton (Games)",
+        "price": 1.901,
+        "point": 0.5
+       },
+       {
+        "name": "Mattia Bellucci (Games)",
+        "price": 1.952,
+        "point": -0.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818601946,
+    "stale_seconds": 29.66
+   }
+  ],
+  "canonical_event_id": "55c0e536a6cb9d90",
+  "commence_time_reported": true
+ },
+ {
+  "id": "0e1b1fe5a22de22e",
+  "sport_key": "tennis_atp_challenger_jingshan",
+  "sport_title": "tennis_atp_challenger_jingshan",
+  "commence_time": "2026-10-01T05:00:00Z",
+  "home_team": "Yuta Shimizu",
+  "away_team": "Bernard Tomic",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:41Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T01:25:13Z",
+      "outcomes": [
+       {
+        "name": "Yuta Shimizu",
+        "price": 2.45
+       },
+       {
+        "name": "Bernard Tomic",
+        "price": 1.588
+       }
+      ]
+     },
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 2.35,
+        "point": 2.5
+       },
+       {
+        "name": "Under",
+        "price": 1.621,
+        "point": 2.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Yuta Shimizu",
+        "price": 1.549,
+        "point": 1.5
+       },
+       {
+        "name": "Bernard Tomic",
+        "price": 2.52,
+        "point": -1.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818601946,
+    "stale_seconds": 29.66
+   }
+  ],
+  "canonical_event_id": "0e1b1fe5a22de22e",
+  "commence_time_reported": true
+ },
+ {
+  "id": "1303017884b54b8fde4feffa87b4c9c8",
+  "sport_key": "tennis_atp_challenger_jingshan",
+  "sport_title": "tennis_atp_challenger_jingshan",
+  "commence_time": "2026-10-01T05:00:00Z",
+  "home_team": "Yuta Shimizu (Games)",
+  "away_team": "Bernard Tomic (Games)",
+  "bookmakers": [
+   {
+    "key": "pinnacle",
+    "title": "Pinnacle",
+    "last_update": "2026-10-01T01:36:41Z",
+    "markets": [
+     {
+      "key": "totals",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Over",
+        "price": 1.901,
+        "point": 22.5
+       },
+       {
+        "name": "Under",
+        "price": 1.935,
+        "point": 22.5
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "last_update": "2026-10-01T01:11:05Z",
+      "outcomes": [
+       {
+        "name": "Yuta Shimizu (Games)",
+        "price": 1.893,
+        "point": 2.5
+       },
+       {
+        "name": "Bernard Tomic (Games)",
+        "price": 1.943,
+        "point": -2.5
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790818601946,
+    "stale_seconds": 29.66
+   }
+  ],
+  "canonical_event_id": "d34302ab5f83b412",
+  "commence_time_reported": true
+ },
+ {
+  "id": "e2180089fe784341",
+  "sport_key": "tennis_atp_challenger_jingshan_2026",
+  "sport_title": "tennis_atp_challenger_jingshan_2026",
+  "commence_time": "2026-10-01T02:00:00Z",
+  "home_team": "Adam Walton",
+  "away_team": "Mattia Bellucci",
+  "bookmakers": [
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2026-10-01T00:44:08Z",
+    "markets": [
+     {
+      "key": "h2h",
+      "last_update": "2026-10-01T00:44:08Z",
+      "outcomes": [
+       {
+        "name": "Adam Walton",
+        "price": 1.909
+       },
+       {
+        "name": "Mattia Bellucci",
+        "price": 1.82
+       }
+      ]
+     }
+    ],
+    "topped_up": true,
+    "last_update_ms": 1790815448219,
+    "stale_seconds": 3183.39
+   }
+  ],
+  "canonical_event_id": "e2180089fe784341",
+  "commence_time_reported": true
+ }
+]
