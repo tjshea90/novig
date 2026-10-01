@@ -320,12 +320,13 @@ class HistoricalClosesTest {
         val t0 = billsStart + 30 * 60_000L
         CloseBackfill(t, listOf(espn), clock = { t0 }).run(force = true)
         assertEquals(1, espn.asked)
+        val afterFirst = t.all().first()
+        assertTrue(CloseBackfill.due(afterFirst, t0 + CloseBackfill.FORCE_GAP_MS, force = true))
+        assertFalse(CloseBackfill.due(afterFirst, t0 + CloseBackfill.FORCE_GAP_MS - 1, force = true))
+        assertFalse("the usual rule is unchanged: 3 hours", CloseBackfill.due(afterFirst, t0 + CloseBackfill.FORCE_GAP_MS))
         assertEquals("a second tap 4 minutes later asks nothing", 0, CloseBackfill(t, listOf(espn), clock = { t0 + 4 * 60_000L }).run(force = true).looked)
         assertEquals(1, espn.asked)
         assertEquals("10 minutes on it does", 1, CloseBackfill(t, listOf(espn), clock = { t0 + CloseBackfill.FORCE_GAP_MS }).run(force = true).looked)
-        assertTrue(CloseBackfill.due(t.all().first(), t0 + CloseBackfill.FORCE_GAP_MS, force = true))
-        assertFalse(CloseBackfill.due(t.all().first(), t0 + CloseBackfill.FORCE_GAP_MS - 1, force = true))
-        assertFalse("the usual rule is unchanged", CloseBackfill.due(t.all().first(), t0 + CloseBackfill.FORCE_GAP_MS))
     }
 
     @Test
