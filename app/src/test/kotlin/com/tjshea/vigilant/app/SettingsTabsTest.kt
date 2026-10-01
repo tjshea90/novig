@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -159,7 +160,8 @@ class SettingsTabsTest {
         // No scrolling by hand: the wallet (far down the Betting page) is on screen.
         compose.onNodeWithTag("topUpBanner").assertIsDisplayed()
         compose.onNodeWithTag("walletAmount").assertIsDisplayed()
-        compose.onNodeWithText("1", useUnmergedTree = true).assertExists()
+        // The shortfall is typed into the wallet's own field (not anywhere on the page: the Auto-bet card below it has numbers too).
+        compose.onNodeWithTag("walletAmount").assertTextContains("1")
     }
 
     @Test
