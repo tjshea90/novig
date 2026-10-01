@@ -40,18 +40,31 @@ object AlertPicks {
         return state.cnoCandidates(now).filter { state.livePick(it, now).ev >= minEv }
     }
 
-    /** CNO bets to alert on: [cnoCandidates] whose books agree it's +EV at the price shown. Links not yet resolved. */
-    fun cno(state: UiState, minEv: Double, now: Long): List<EvAlert> {
+    /**
+     * A CNO bet at or over the minimum, with what its game page's books say about it ([CnoBooks.check]) judged at Novig's newest price: what an
+     * alert and the auto-bet both decide from, so the two can't disagree about a bet. [live]: Novig's own price for it read in the last minute,
+     * null when there isn't one (the auto-bet places nothing on a price it didn't just read).
+     */
+    data class CnoChecked(val pick: CnoPick, val shown: CnoPick, val check: CnoBooks.Check, val live: com.tjshea.vigilant.data.cno.LivePrice?, val link: String?)
+
+    /** [cnoCandidates] that have a books read (fresh enough to compare: [UiState.booksAt]), each with its [CnoChecked.check], best first as listed. */
+    fun cnoChecked(state: UiState, minEv: Double, now: Long): List<CnoChecked> {
         val snap = state.cno.snapshot ?: return emptyList()
         return cnoCandidates(state, minEv, now).mapNotNull { pick ->
             val view = state.booksAt(pick.row.key, now)?.view ?: return@mapNotNull null
             // Judged at the newest Novig price, as the green check is ([UiState.cnoAgrees]).
-            val live = state.livePrice(pick.row, now)?.takeIf { it.atMs > snap.fetchedAtMs }
+            val livePrice = state.livePrice(pick.row, now)
+            val live = livePrice?.takeIf { it.atMs > snap.fetchedAtMs }
             val judged = if (live != null) pick.row.copy(odds = live.american) else pick.row
             val check = CnoBooks.check(view, judged, pick.live, preferListOdds = (live?.atMs ?: snap.fetchedAtMs) > view.fetchedAtMs)
+            CnoChecked(pick, state.livePick(pick, now), check, livePrice, state.cnoLinks[CnoFeed.linkKey(pick.row)])
+        }
+    }
+
+    /** CNO bets to alert on: [cnoCandidates] whose books agree it's +EV at the price shown. Links not yet resolved. */
+    fun cno(state: UiState, minEv: Double, now: Long): List<EvAlert> =
+        cnoChecked(state, minEv, now).mapNotNull { (pick, shown, check, _, link) ->
             if (check.verdict != CnoBooks.Verdict.CONFIRMED) return@mapNotNull null
-            val shown = state.livePick(pick, now)
-            val link = state.cnoLinks[CnoFeed.linkKey(pick.row)]
             EvAlert(
                 scanner = SCANNER_CNO, key = MiniWindow.cnoKey(pick.row), outcomeId = CnoFeed.outcomeIdOf(link),
                 bet = pick.row.bet, market = pick.row.market, event = pick.row.event, american = shown.row.odds, ev = shown.ev,
@@ -61,7 +74,6 @@ object AlertPicks {
                 fair = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(pick.row), live = pick.live, book = pick.row.book,
             )
         }
-    }
 
     /** Vigilant's bets to alert on: the feed at [now] at or over [minEv], at a Novig price read in the last few minutes, that the books agree on. */
     fun vigilant(state: UiState, minEv: Double, now: Long): List<EvAlert> {
