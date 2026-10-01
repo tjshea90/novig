@@ -367,8 +367,9 @@ object HealthChecks {
         val st = x.autoBet
         val line = AutoBettor.line(st, now)
         val why = com.tjshea.vigilant.app.ui.AutoBetText.whyNotRunning(s)
+        val halted = set.autoBetHalted
         when {
-            set.autoBetHalted != null -> add(Check(Level.FAIL, "Auto-bet", "stopped after a lost order, placing nothing until resumed", set.autoBetHalted.take(160), "Novig and the Tracker's Sync with Novig's fills, then Settings › Betting › Resume auto-bet"))
+            halted != null -> add(Check(Level.FAIL, "Auto-bet", "stopped after a lost order, placing nothing until resumed", halted.take(160), "Novig and the Tracker's Sync with Novig's fills, then Settings › Betting › Resume auto-bet"))
             why != null -> add(Check(Level.WARN, "Auto-bet", "is on but can't run: $why", look = "Settings › Betting, Settings › Scan"))
             st.last.walletEmpty -> add(Check(Level.WARN, "Auto-bet", "the Vigilant wallet can't fund a bet: nothing is placed", line, "Settings › Betting › Add money"))
             st.blocker != null -> add(Check(Level.WARN, "Auto-bet", "can't place bets right now: ${st.blocker}", line, "app/AutoBettor.kt"))
