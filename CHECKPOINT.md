@@ -1,13 +1,13 @@
-# CHECKPOINT 2223 — read me first, then TASKS.md
+# CHECKPOINT 2224 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T01:08:14Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `d26e4f67` (this checkpoint is the commit after it)
+**Written:** 2026-10-01T01:16:30Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-01f0c1f9-xy73ag` · **builds on:** `7a58c4fd` (this checkpoint is the commit after it)
 
 ## Just done
-Y3: Check odds now progress and Tracker saves throttled into the screen (300 ms), placed index + feed rebuilt off main
+Y4 full tests done: floor green 1,279 (22 live skipped), 91 screenshots OK, badge/CNO screening memoized, wallet hint fixed
 
 ## Do this next
-Y4: full test protocol per .claude/skills/test-protocols
+Y5: bump to 0.36.2 (code 66), ship.sh, CI, release.yml, record, send link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ Y4: full test protocol per .claude/skills/test-protocols
 
 ## Last ten checkpoints
 ```
+  140c86fa ckpt 2223: Y3: Check odds now progress and Tracker saves throttled into the screen (300
   6b8ef3ce ckpt 2222: Y1-Y2: Bet sheet follows the Kelly slip setting (per-bet Kelly to the cent, 
   42427dc5 ckpt 2221: Logged Tj's 2026-10-01 request as TASKS.md Y1-Y5 (Kelly in bet slips + math,
   be961a80 ckpt 2220: v0.36.1 (code 65) released and recorded: X1-X3 done (mid-scan lag/crash)
@@ -26,8 +27,7 @@ Y4: full test protocol per .claude/skills/test-protocols
   45b6058b ckpt 2216: v0.36.0 (code 64) released and recorded: W1-W4 done
   af9b6d8a ckpt 2215: pre-release: v0.36.0: Diagnostics fixes from Tj's first report (no false ala
   bccf7b7e ckpt 2214: W2/W3: Diagnostics false alarms fixed (busy source, backup source, spent key
-  b50f4dbc ckpt 2213: Logged Tj's pasted v0.35.0 Diagnostics as TASKS.md W1-W4
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
