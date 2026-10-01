@@ -307,6 +307,21 @@ class ApiBettingUiTest {
         assertTrue(picked.isEmpty())
     }
 
+    /** Tj, 2026-10-01: "Make sure it enters the Kelley value if I select it": the sheet says where its amount came from. */
+    @Test
+    fun `a sheet opened at the bet's Kelly stake says so, until another amount is picked`() {
+        val note = "¼ Kelly of your $1,000.00 bankroll at this bet's odds"
+        sheetScreen { ApiBetSheetContent(sheet().copy(stake = 4.37, baseStake = 4.37, stakeNote = note), {}, {}, {}, {}, {}) }
+        compose.onNodeWithText(note).assertExists()
+        compose.onNodeWithText("4.37", substring = true).assertExists()
+    }
+
+    @Test
+    fun `a picked amount drops the Kelly note`() {
+        sheetScreen { ApiBetSheetContent(sheet().copy(stake = 2.0, baseStake = 4.37, stakeNote = "¼ Kelly of your $1,000.00 bankroll at this bet's odds", stakeChosen = true), {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("¼ Kelly", substring = true).assertDoesNotExist()
+    }
+
     @Test
     fun `a sheet opened at what's left in the wallet says so`() {
         sheetScreen { ApiBetSheetContent(sheet(balance = 0.63).copy(stake = 0.63), {}, {}, {}, {}, {}) }
