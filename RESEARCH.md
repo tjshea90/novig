@@ -3177,8 +3177,33 @@ can't be placed by both at once; a refused bet waits 2 min; Novig refusing an or
 (`autoBetHalted`, saved; the order is never re-sent; Tj checks Novig and taps Resume); an order once sent is followed to the end and recorded under `NonCancellable`.
 The daily limit is the existing "Most in a day" API setting ($50 by default), shared with Bet-sheet bets.
 
-**Not verified on a real Novig (no key here; never test real money from a session):** every API order so far was mock-tested; Tj's first two real orders (2026-09-29) were refused for a `clientId`
-format and fixed in v0.21.2, and the notes show no successful live fill since. The first live auto-bet is also the first live check of: the order/fill shapes, the ledger grading of an API bet,
-the wallet read, Novig's 3-day location check keeping auto-bets alive (it stops with a refusal and a note when the check expires: open the Novig app), and Doze limiting a 15 s alarm schedule
-with the screen off. Try it with $5 in the wallet, $1 a bet, and watch the first few bets in the Tracker. What it does NOT do: size by game or correlation (several bets on one game can all pass), stop on a
+**What is and isn't verified.** Tj's v0.38.0 Diagnostics (2026-10-01) shows 123 API bets in the Tracker, 21 graded by Novig's ledger, and a funded wallet ($14.24): order placing,
+fills and ledger grading HAVE worked live (an earlier version of this section, and an answer to Tj, said no live fill was on record: wrong; the Tracker's own numbers were the record to read).
+Still unverified for auto-bet itself: placing from the background cycle with the screen off, Novig's 3-day location check keeping it alive (it stops with a refusal and a note when the
+check expires: open the Novig app), and Doze limiting a 15 s alarm schedule. Try it with a few dollars in the wallet, $1 a bet, and watch the first bets in the Tracker.
+**A crash mid-order (found re-reading it against Tj's out-of-memory crash, §52):** the process can die after Novig takes an order and before the Tracker has it; the next cycle would find the same bet
+with nothing on record and place it again. So an order is marked in flight (`autoBetHalted`, saved) BEFORE it can be sent and cleared only on a definitive answer; a restart finds auto-bet
+stopped with the bet named, Tj checks Novig and the Tracker's Sync with Novig's fills, then taps Resume. What it does NOT do: size by game or correlation (several bets on one game can all pass), stop on a
 losing streak, or bet anything but pregame CNO bets at Novig. Possible next steps: a per-game cap, a daily-loss stop.
+
+## 52. The out-of-memory crash in Tj's v0.38.0 Diagnostics, and what the report says (v0.39.0, 2026-10-01; Tj pasted it with no words)
+
+**The crash.** `OutOfMemoryError: Failed to allocate a 32 byte allocation … target footprint 268435456` on the main thread, 1:40:41 AM, on screen, from the scan service's progress path. The
+stack is only the allocation that failed: the heap (256 MB, the default) was full. Settings at the time: no limit on Novig prices per scan, lines or props per game, "fill the budget", seven
+leagues (ATP, WTA, MLB, NCAAF, NFL, NHL, WNBA), ten fair-odds sources, 375 tracked bets. No heap dump exists, so this is reasoning from the code, not a measurement:
+- Every partial result (`BookPump.publish`) prices the WHOLE plan again and builds a complete new `ScanResult`, plus a copy of the books map, after every batch of ~30 Novig books: with no limits,
+  thousands of markets, ~100 times a scan, the previous partial still alive beside it (and the UI's mirror of it).
+- `ScanRunner` kept the last finished result (strongly) for the whole next scan as a fallback if the scan failed: a second full scan's priced lines, and through each `Opportunity.refEvent`
+  the previous scan's reference boards.
+- The scanner keeps every source's last parsed board per league between scans (`references`; a no-limit props board is tens of thousands of `RefBookMarket`s per sport per source), and
+  Novig's last 3,000 books (`bookCache`) for "not modified" answers.
+Changed: `android:largeHeap` (a bigger ceiling); `MemoryGuard` (trims the books cache at 75% of the heap; after a forced collection, at 90% a scan ENDS with what it has read and says why in its
+errors, instead of crashing the app); a big plan (400+ markets) publishes a partial at most every 2 s (the final result is always priced in full); the fallback result is a `SoftReference`
+(under pressure it goes, and a failed scan then shows no old result); Diagnostics gets a Memory block (heap, the scan result's size, the boards and books kept between scans, CNO pages, the Tracker)
+with a WARN over 75%, and a crash record now carries the heap (`heap=…/…MB`). Not changed: the parsed boards still stay between scans (a 2-minute re-use saves credits); if the next report shows
+them dominating, interning the repeated strings in `RefBookMarket` and dropping boards older than the freshness limit are the next steps.
+
+**What else the report says.** Vigilant's own bets still lose to the close (CLV −1.1% on 27 bets, 37% beat; totals −2.8% on 10 at 20% beat, team totals and 1st-half totals negative, props +0.3%)
+while CNO's beat it (+1.5% on 87, 66%); at these counts only the totals gap is more than noise, and it is the same on both scanners (CNO totals −1.7% on 6). 71% of the last week's started bets have a
+true close (79 of the 114 from Novig's trades, 21 read before the start: the phone's own capture is the minority); 105 started bets are still looking, most waiting for Novig's file (published the
+next morning). Wallet $14.24 with $1 bets, bankroll $185, ¼ Kelly, most per day $500.

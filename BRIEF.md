@@ -337,7 +337,8 @@ robolectric.org/configuring/.
   the per-bet and per-day limits, an IOC at a ceiling that is never chased) under ONE lock shared with the Bet sheet. On top: Novig's own price read
   in the last minute; the order book's price for the outcome must match the price judged (±3 points) and the outcome Novig's price came from must be
   the outcome found; one bet per Novig market; an edge over 15% is never bet unattended; the wallet is read before each pass and caps each stake
-  (under $1 = stop); an order whose answer is lost HALTS it until Tj resumes it and is never re-sent; Novig refusing or the daily limit backs it off.
+  (under $1 = stop); an order whose answer is lost HALTS it until Tj resumes it and is never re-sent, and an order is marked in flight (saved) BEFORE it is sent so a
+  process that dies mid-order leaves it halted; Novig refusing or the daily limit backs it off.
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
 
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
