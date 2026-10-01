@@ -70,7 +70,7 @@ object AutoBet {
     )
 
     /** Whether [american] odds are longer than the [maxOdds] limit (0 = no limit). A favorite's negative odds never are. */
-    fun tooLong(maxOdds: Int, american: Int): Boolean = false
+    fun tooLong(maxOdds: Int, american: Int): Boolean = maxOdds > 0 && american >= maxOdds
 
     /**
      * Why a bet doesn't pass Tj's criteria, or null when it does. [shownEv]: the EV the CNO card shows (CNO's fair odds against Novig's price
