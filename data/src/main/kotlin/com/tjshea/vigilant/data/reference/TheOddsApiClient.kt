@@ -73,8 +73,11 @@ class TheOddsApiClient(
     /** The books asked for: the feed's own list (ParlayAPI), else the reference books picked in Settings (their keys are The Odds API's). */
     fun booksFor(settings: ScanSettings): List<String> = feed.books ?: settings.referenceBooks
 
-    /** Tennis is keyed per tournament there, never by the league key the app groups it under. */
-    override fun supports(league: League) = league.oddsApiListed
+    /**
+     * Tennis is keyed per tournament on The Odds API, never by the league key the app groups it under; ParlayAPI keys a whole tour
+     * (`tennis_atp`, `tennis_wta`: PARLAY_API.md §6.11).
+     */
+    override fun supports(league: League) = league.oddsApiListed || (feed == OddsFeed.PARLAY && league.tennis)
 
     override fun reuseMs(settings: ScanSettings): Long = settings.oddsApiReuseMs
 
@@ -123,7 +126,8 @@ class TheOddsApiClient(
     }
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        val markets = marketsFor(settings.families, feed, alternates)
+        // Tennis' alternates are Pinnacle's set lines again (±1.5, 2.5): 2 credits a tour for nothing (PARLAY_API.md §6.11).
+        val markets = marketsFor(settings.families, feed, alternates && !league.tennis)
         if (markets.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = id)
         // ParlayAPI: only the games the scan can price (its window, plus a day for loose kickoff times), a smaller reply for the same credits.
         val until = if (feed == OddsFeed.ODDS_API) null else Planner.horizon(settings, clock()) + WINDOW_SLACK_MS
@@ -155,11 +159,19 @@ class TheOddsApiClient(
             cost = markets.size,
             what = sportKey,
             notFound = emptyList(),
-            parse = { parseEvents(it, json) },
+            parse = { parseOdds(it, sportKey) },
             // Their rule: no events returned = no charge.
             charged = { if (it.isEmpty()) 0 else markets.size },
         )
         return RefSnapshot(sportKey, answer.value, clock(), answer.remaining, answer.used, id)
+    }
+
+    /** An /odds answer: on ParlayAPI's tennis tours, one event per singles match with set and games lines told apart ([ParlayTennis]). */
+    private fun parseOdds(raw: String, sportKey: String): List<RefEvent> {
+        val events = parseEvents(raw, json)
+        if (feed != OddsFeed.PARLAY || !sportKey.startsWith(TENNIS_PREFIX)) return events
+        val gapHours = com.tjshea.vigilant.data.scanner.Leagues.ALL.firstOrNull { it.oddsApiSportKey == sportKey }?.maxStartGapHours ?: 24
+        return ParlayTennis.normalize(events, gapHours * 3_600_000L)
     }
 
     /**
@@ -409,6 +421,7 @@ class TheOddsApiClient(
 
     companion object {
         const val ID = "oddsapi"
+        private const val TENNIS_PREFIX = "tennis_"
         val ALL_MARKETS = listOf("h2h", "spreads", "totals")
 
         /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
