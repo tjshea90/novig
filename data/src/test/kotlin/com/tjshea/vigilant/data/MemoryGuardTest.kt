@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data
 
 import org.junit.After
+import org.junit.Before
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,6 +18,8 @@ class MemoryGuardTest {
     }
 
     private val mb = 1024L * 1024L
+
+    @Before fun fresh() = MemoryGuard.useRealProbe()
 
     @After fun restore() = MemoryGuard.useRealProbe()
 

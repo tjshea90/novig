@@ -32,6 +32,7 @@ object MemoryGuard {
 
     fun useRealProbe() {
         probe = Real
+        lastCollectMs = Long.MIN_VALUE / 2
     }
 
     /** Above this share of the heap, caches that can be rebuilt are dropped. */
