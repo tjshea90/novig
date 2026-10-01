@@ -16,6 +16,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
@@ -144,9 +145,9 @@ class AutoBetUiTest {
         compose.onNodeWithText("5+").assertIsSelected()
         compose.onNodeWithText("1").performClick()
         assertEquals(1, settings.autoBetTwoSided)
-        compose.onAllNodesWithText("2")[1].performClick()
+        compose.onAllNodesWithText("2").onLast().performClick()
         assertEquals(2, settings.autoBetTwoSided)
-        compose.onAllNodesWithText("3")[1].performClick()
+        compose.onAllNodesWithText("3").onLast().performClick()
         assertEquals(3, settings.autoBetTwoSided)
         // Neither row touched the other's setting.
         assertEquals(5, settings.autoBetBooks)
