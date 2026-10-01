@@ -439,6 +439,19 @@ class ApiBettingControllerTest {
     }
 
     @Test
+    fun `after money is added the sheet reads the wallet again, so its balance and the bet's amount follow`() {
+        val account = FakeAccount()
+        val (api, state) = accountController(account)
+        app.container.installTradingForTest(FakeNovig(AtomicInteger(), wallet = 25.0) { _, _ -> null }, "sub")
+        kotlinx.coroutines.runBlocking { app.container.managementKeys.save(ManagementKey("mgmt-key-12345678", freshPem())) }
+        // The sheet opened at the wallet's last cent, though the bet's own amount is $5.
+        state.update { it.copy(betting = it.betting.copy(balance = 0.01), betSheet = BetSheetUi("Team A", "Moneyline · B @ A", stake = 0.01, resolving = false, balance = 0.01, baseStake = 5.0)) }
+        api.fundFromSheet(20.0)
+        waitFor("the wallet read after the transfer") { state.value.betSheet?.balance == 25.0 }
+        assertEquals("the amount goes back to the bet's own now the wallet covers it", 5.0, state.value.betSheet!!.stake, 1e-9)
+    }
+
+    @Test
     fun `Add money from the sheet that Novig refuses says why in the sheet, and a second tap while one is under way does nothing`() {
         val account = FakeAccount(status = 401)
         val (api, state) = accountController(account)
