@@ -410,17 +410,28 @@ class CloseBackfill(
     private val sources: List<CloseSource>,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    data class Report(val looked: Int, val found: Int, val bySource: Map<String, Int>)
+    /**
+     * What a look did: [looked] bets asked about, [found] closes got ([bySource]: how many each source gave), and [missing]: for the bets still
+     * without one, the first reason a source gave (Novig's file for that day isn't out yet, ESPN keeps no line for props …), by count.
+     * [forced]: a Check odds now's look ([run]'s `force`).
+     */
+    data class Report(val looked: Int, val found: Int, val bySource: Map<String, Int>, val missing: Map<String, Int> = emptyMap(), val forced: Boolean = false)
 
     private val mutex = Mutex()
 
-    /** [heavyOk]: the sources that download megabytes ([CloseSource.heavy]) may run (Wi-Fi); otherwise their bets wait for the next look. */
-    suspend fun run(heavyOk: Boolean = true): Report = mutex.withLock {
+    /**
+     * [heavyOk]: the sources that download megabytes ([CloseSource.heavy]) may run (Wi-Fi); otherwise their bets wait for the next look.
+     * [force] (Tj, 2026-10-01, Check odds now: "make sure it gets all available closing line data"): every started bet still without a close is
+     * asked, not just the ones whose last look was [RETRY_MS] ago, and not only the newest [MAX_PER_RUN] of them; a look under [FORCE_GAP_MS] ago
+     * still waits (the feeds don't change that fast, and two quick taps would spend ParlayAPI's credits twice).
+     */
+    suspend fun run(heavyOk: Boolean = true, force: Boolean = false): Report = mutex.withLock {
         val now = clock()
         val asked = sources.filter { it.active }
         val askedIds = asked.map { it.id }
-        val todo = tracker.all().filter { due(it, now) || reopened(it, now, askedIds) }.sortedByDescending { it.startsTs }.take(MAX_PER_RUN)
-        if (todo.isEmpty()) return@withLock Report(0, 0, emptyMap())
+        val wanted = tracker.all().filter { due(it, now, force) || reopened(it, now, askedIds) }.sortedByDescending { it.startsTs }
+        val todo = if (force) wanted.take(MAX_FORCED) else wanted.take(MAX_PER_RUN)
+        if (todo.isEmpty()) return@withLock Report(0, 0, emptyMap(), forced = force)
         val found = HashMap<String, CloseLookup.Found>()
         val notes = HashMap<String, MutableList<CloseLookup>>()
         var left = todo
@@ -453,7 +464,10 @@ class CloseBackfill(
                 }
             }
         })
-        Report(todo.size, found.size, found.values.groupingBy { it.via.substringBefore(" ·").substringBefore(" (") }.eachCount())
+        val missing = todo.filter { it.id !in found }.groupingBy { b ->
+            notes[b.id]?.firstOrNull()?.let { (it as? CloseLookup.None)?.reason ?: (it as? CloseLookup.Later)?.reason } ?: "no source answered"
+        }.eachCount()
+        Report(todo.size, found.size, found.values.groupingBy { it.via.substringBefore(" ·").substringBefore(" (") }.eachCount(), missing, force)
     }
 
     companion object {
@@ -471,6 +485,12 @@ class CloseBackfill(
 
         const val MAX_PER_RUN = 120
 
+        /** A Check odds now's look covers every started bet without a close, up to this many. */
+        const val MAX_FORCED = 1_000
+
+        /** A forced look skips a bet looked at less than this long ago. */
+        const val FORCE_GAP_MS = 10 * 60_000L
+
         /** Close sources a bet finalised before [TrackedBet.closeAskedOf] was kept had been asked of. */
         val ASKED_BEFORE = listOf(EspnCloses.ID, NovigTradeCloses.ID)
 
@@ -483,9 +503,9 @@ class CloseBackfill(
                 now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
                 activeIds.any { it !in (b.closeAskedOf ?: ASKED_BEFORE) }
 
-        fun due(b: TrackedBet, now: Long): Boolean =
+        fun due(b: TrackedBet, now: Long, force: Boolean = false): Boolean =
             b.status != BetStatus.VOID && !b.closeFinal && b.createdAtMs < b.startsTs && now >= b.startsTs + AFTER_START_MS &&
                 now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
-                (b.closeLookedAtMs == null || now - b.closeLookedAtMs >= RETRY_MS)
+                (b.closeLookedAtMs == null || now - b.closeLookedAtMs >= (if (force) FORCE_GAP_MS else RETRY_MS))
     }
 }
