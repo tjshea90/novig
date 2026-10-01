@@ -51,7 +51,7 @@ class CycleLogTest {
         // 5 s schedule; the next one came 9 minutes later (Doze letting one alarm through): 8 min 55 s late, in Doze.
         b = apply(b, t0 + 9 * 60_000L, screenOff = true, dozing = true)
         assertEquals(1, b.lateCount)
-        assertEquals(9 * 60_000L - 5_000L - 400L + 400L, b.worst!!.lateMs)
+        assertEquals(9 * 60_000L - 5_000L, b.worst!!.lateMs)
         assertTrue(b.worst!!.dozing && b.worst!!.screenOff)
         assertEquals(listOf(b.worst), b.late)
         // A later, lesser one doesn't replace the worst but is counted and kept.
@@ -65,7 +65,7 @@ class CycleLogTest {
     fun `wander under 30 seconds, or under one interval, is not late`() {
         val seconds = 600
         var b = apply(CycleBook(), t0, seconds = seconds)
-        // An alarm 9 min 59 s late on a 10-minute schedule is within an interval: not late. 10 min + 31 s over the schedule is.
+        // 29 s late on a 10-minute schedule: not late. A whole interval and a second over the schedule is.
         b = apply(b, t0 + 600_000L + 29_000L, seconds = seconds)
         assertEquals(0, b.lateCount)
         b = apply(b, b.lastStartMs!! + 600_000L + 601_000L, seconds = seconds)
@@ -115,7 +115,7 @@ class CycleLogTest {
             // No stop (the process was killed in the night): the next cycle after the restart is late, and says so.
             log.record(t0 + 3_600_000L + 6 * 3_600_000L, t0 + 3_600_000L + 6 * 3_600_000L + 300L, 5, true, false)
             assertEquals(1, log.summary().lateCount)
-            assertEquals(6 * 3_600_000L - 5_000L - 300L + 300L, log.summary().worst!!.lateMs)
+            assertEquals(6 * 3_600_000L - 5_000L, log.summary().worst!!.lateMs)
         }
     }
 
