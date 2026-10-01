@@ -332,6 +332,9 @@ class AppContainer(private val app: Application) {
     /** The background auto-scan and its +EV alerts (Tj, 2026-09-28), run by [AutoScanService]. */
     val autoScan: AutoScanner by lazy { AutoScanner(app, this) }
 
+    /** The auto-bet (Tj, 2026-10-01): called by [autoScan]'s cycle. */
+    val autoBet: AutoBettor by lazy { AutoBettor(app, this) }
+
     /** Diagnostics' "Recent problems" (files/problems.json, Tj 2026-09-30): what went wrong, kept across restarts, never a key. */
     val problems = com.tjshea.vigilant.data.diag.ProblemLog(
         JsonFileStore(File(app.filesDir, "problems.json"), com.tjshea.vigilant.data.diag.ProblemBook.serializer(), { com.tjshea.vigilant.data.diag.ProblemBook() }, json),

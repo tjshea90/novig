@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.alerts.EvAlert
 import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoPick
+import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.scanner.Agreement
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanResult
@@ -195,7 +196,16 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
                 // background), Vigilant only does the same for CNO ([ScanSettings.autoScansVigilant], [ScanSettings.autoScansCno]).
                 if (settings.autoScansCno) {
                     _status.update { it.copy(step = "Reading CrazyNinjaOdds") }
-                    runCatching { alerts += cnoCheck(settings) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
+                    // Auto-bet places nothing on a price CNO listed a while ago: Novig's own price now is read whatever the live-price setting says.
+                    val s = if (settings.autoBetsNow) settings.copy(cnoLivePrices = true) else settings
+                    runCatching { cnoRead(s) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
+                    // Bets first (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all"), then the alerts: a bet just placed is
+                    // out of the candidates, so it doesn't also alert.
+                    if (s.autoBetsNow) {
+                        _status.update { it.copy(step = "Auto-bet") }
+                        runCatching { c.autoBet.run(s, snapshot(s)) }.onFailure { if (it is CancellationException) throw it; errors += "Auto-bet: ${it.message ?: it.javaClass.simpleName}" }
+                    }
+                    runCatching { alerts += cnoAlerts(s) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
                     // The closing line of the open bets about to start, for the Tracker's CLV (Tj, 2026-09-29): the last read before the start.
                     _status.update { it.copy(step = "Open bets about to start") }
                     runCatching {
@@ -245,17 +255,26 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
         result = c.runner.state.value.result,
     ).indexed(clock())
 
-    private suspend fun cnoCheck(settings: ScanSettings): List<EvAlert> {
-        // Only reached with the CNO scanner on ([ScanSettings.autoScansCno]).
-        val s = settings
+    /**
+     * The lowest edge a cycle reads books for: the alert minimum, and the auto-bet's when it's on (it may be lower). Null = nothing needs reading
+     * beyond CNO's list.
+     */
+    private fun readThreshold(s: ScanSettings): Double? =
+        listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).minEv.takeIf { s.autoBetsNow }).minOrNull()
+
+    /**
+     * CNO's list, then for its best bets Novig's price now and every book's odds on CNO's game page (the green check's reads), all of it for
+     * [AlertPicks] and [AutoBettor] to judge. Only reached with the CNO scanner on ([ScanSettings.autoScansCno]).
+     */
+    private suspend fun cnoRead(s: ScanSettings) {
         runCatching { c.cno.load() }
         val url = UiState(settings = s, loaded = true).cnoUrl
         // At most one read per 3 s: a read the widget just made is used as it is.
         c.cno.refresh(url, s.cnoFilters)
-        if (s.alertMinEv <= 0.0) return emptyList()
+        val minEv = readThreshold(s) ?: return
         var state = snapshot(s)
-        val wanted = AlertPicks.cnoCandidates(state, s.alertMinEv, clock()).take(CNO_CHECK_TOP)
-        if (wanted.isEmpty()) return emptyList()
+        val wanted = AlertPicks.cnoCandidates(state, minEv, clock()).take(if (s.autoBetsNow) AUTO_BET_CHECK_TOP else CNO_CHECK_TOP)
+        if (wanted.isEmpty()) return
         // Novig's price now: a bet CNO listed a while ago may be gone. Novig's own order books.
         if (AppBook.isNovig && s.cnoLivePrices) runCatching { c.live.readNow(wanted.map { it.row }) }
         // Each bet's books on CNO's game page, as the green check reads them: one every few seconds.
@@ -268,8 +287,12 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
             if (read++ > 0) delay(CnoFeed.AGREE_GAP_MS)
             runCatching { c.cno.loadBooks(pick.row, maxAgeMs = CnoFeed.AGREE_TTL_MS) }.onFailure { if (it is CancellationException) throw it }
         }
-        state = snapshot(s)
-        return AlertPicks.cno(state, s.alertMinEv, clock())
+    }
+
+    /** The alerts the cycle's reads support: [AlertPicks.cno] over the newest state. */
+    private suspend fun cnoAlerts(s: ScanSettings): List<EvAlert> {
+        if (s.alertMinEv <= 0.0) return emptyList()
+        return AlertPicks.cno(snapshot(s), s.alertMinEv, clock())
     }
 
     private suspend fun vigilantScan(settings: ScanSettings): List<EvAlert> {
@@ -315,6 +338,9 @@ class AutoScanner(private val app: Application, private val c: AppContainer, pri
     companion object {
         /** CNO bets at or over the alert minimum whose books and Novig price a cycle reads. */
         const val CNO_CHECK_TOP = 8
+
+        /** The same with auto-bet on: a few more, since each one may be bet (the books are kept 4 minutes, so a repeat costs nothing). */
+        const val AUTO_BET_CHECK_TOP = 10
 
         /** Most alerts one cycle posts (the best EVs); the rest show in the app. */
         const val MAX_ALERTS = 5
