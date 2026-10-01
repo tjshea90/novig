@@ -364,6 +364,12 @@ class Scanner(
         /** Prices Novig refused this scan (each pauses and slows the rest). */
         var refused = 0
 
+        /** The scan ended early because the app's heap was nearly full ([MemoryGuard.critical]). */
+        var memoryStopped = false
+
+        /** When [publish] last priced the whole plan, on [elapsed] (a big plan isn't priced again for every batch). */
+        private var lastPublishAt = Long.MIN_VALUE / 2
+
         /** Lines left unread because the scan ran past the time their other books' odds could still be shown. */
         val tooLate = HashSet<String>()
 
@@ -407,6 +413,17 @@ class Scanner(
             val cat = catalog ?: return
             val cap = settings.maxBooksPerScan.coerceAtLeast(1)
             while (requested.size < cap && retryAfter == null) {
+                // The app's heap is fixed (Tj's Diagnostics, 2026-10-01: an OutOfMemoryError at 256 MB mid-scan): drop what can be rebuilt as it
+                // fills, and when it is still nearly full after a collection, end the scan with what's read instead of crashing the app.
+                if (MemoryGuard.pressing()) {
+                    novig.trimCaches()
+                    previewCache = null
+                }
+                if (MemoryGuard.critical()) {
+                    lastError = "Stopped reading Novig prices early: the app's memory was nearly full (${MemoryGuard.text()}). Lower \"Novig prices per scan\" or pick fewer leagues in Settings."
+                    memoryStopped = true
+                    return
+                }
                 // Read before planning: a provider answering mid-plan still wakes the next pass.
                 val lastPass = fairDone
                 val plan = planFor(cat, settings, now)
@@ -531,6 +548,14 @@ class Scanner(
          */
         private fun publish(cat: Catalog) {
             val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
+            // Every partial prices the WHOLE plan again and builds a complete new result: with no limits that is thousands of markets after every
+            // batch of ~30 books, the old result still alive beside it (Tj's Diagnostics, 2026-10-01: an OutOfMemoryError at 256 MB). A big plan
+            // publishes at most every [PUBLISH_MIN_MS]; the books it skips are in the next one, and the final result is always priced in full.
+            if (shown.markets.size >= BIG_PLAN_MARKETS) {
+                val t = elapsed()
+                if (t - lastPublishAt < PUBLISH_MIN_MS) return
+                lastPublishAt = t
+            }
             val merged = HashMap(books)
             merged.putAll(fresh)
             val partial = Pricing.price(shown, merged, settings, now, fairMemo).copy(freshSinceMs = now, waitingFor = waiting())

@@ -171,6 +171,12 @@ class NovigPublicClient(
     /** Only while the key route itself is usable: a VPN or location refusal stops both. */
     private fun liveStream() = stream?.takeIf { keyed != null && clock() >= keyedDownUntil }
 
+    override fun trimCaches() {
+        bookCache.clear()
+    }
+
+    override fun cachedBooks(): Int = bookCache.size
+
     override fun watch(marketIds: Collection<String>) {
         liveStream()?.watch(marketIds)
     }
