@@ -399,7 +399,7 @@ class AutoBettorTest {
         assertEquals(0, r.placed.size)
         assertNull("not a stop: the other bets go on", r.stopped)
         assertFalse(r.halted)
-        assertNull(app.container.settingsStore.load().autoBetHalted)
+        assertNull(app.container.settingsStore.read().autoBetHalted)
         assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("too small") })
         // A bigger stake goes through.
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
