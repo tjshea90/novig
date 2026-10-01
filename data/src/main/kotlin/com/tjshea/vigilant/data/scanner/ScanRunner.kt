@@ -51,8 +51,10 @@ class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineS
         if (job?.isActive == true) return false
         // CNO only: Vigilant's scan and every API behind it are asleep, whoever asks (a tap, the widget, a background cycle: Tj, 2026-09-29).
         if (!settings.vigilantOn) return false
-        // Shown again if this scan ends without a result of its own (Novig's board failed).
-        val before = _state.value.result?.takeIf { !it.partial }
+        // Shown again if this scan ends without a result of its own (Novig's board failed). Held SOFTLY: it is a whole scan's priced lines
+        // and the reference boards behind them, kept alive beside the new scan's own, and the heap is a fixed 256-512 MB (Tj's Diagnostics,
+        // 2026-10-01: an OutOfMemoryError mid-scan). Under pressure Android lets it go, and a failed scan then shows no old result.
+        val before = java.lang.ref.SoftReference(_state.value.result?.takeIf { !it.partial })
         _state.update { it.copy(scanning = true, progress = ScanProgress("Starting"), settings = settings) }
         job = scope.launch {
             var report: ScanReport? = null
@@ -77,7 +79,7 @@ class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineS
                         scanning = false,
                         progress = null,
                         // A scan that failed leaves the last good result up, not a half-read one.
-                        result = done?.result ?: before,
+                        result = done?.result ?: before.get(),
                         report = done ?: s.report,
                         finished = s.finished + 1,
                     )

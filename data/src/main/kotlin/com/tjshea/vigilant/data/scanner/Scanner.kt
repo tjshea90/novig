@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data.scanner
 
 import com.tjshea.vigilant.data.keys.AllKeysExhaustedException
+import com.tjshea.vigilant.data.MemoryGuard
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
@@ -420,7 +421,7 @@ class Scanner(
                     previewCache = null
                 }
                 if (MemoryGuard.critical()) {
-                    lastError = "Stopped reading Novig prices early: the app's memory was nearly full (${MemoryGuard.text()}). Lower \"Novig prices per scan\" or pick fewer leagues in Settings."
+                    lastError = "stopped reading early because the app's memory was nearly full (${MemoryGuard.text()}). Lower \"Novig prices per scan\" or pick fewer leagues in Settings."
                     memoryStopped = true
                     return
                 }
@@ -983,7 +984,26 @@ class Scanner(
 
     private fun MutableList<String>.addSync(s: String) = synchronized(this) { add(s) }
 
+    /** What the scanner keeps between scans, for Diagnostics' memory block (counts, not bytes). */
+    data class Holdings(val snapshots: Int, val events: Int, val bookMarkets: Int, val books: Int, val cachedBooks: Int)
+
+    fun holdings(): Holdings {
+        val snaps = synchronized(references) { references.values.map { it.snapshot } }
+        return Holdings(
+            snapshots = snaps.size,
+            events = snaps.sumOf { it.events.size },
+            bookMarkets = snaps.sumOf { s -> s.events.sumOf { it.markets.size } },
+            books = books.size,
+            cachedBooks = novig.cachedBooks(),
+        )
+    }
+
     companion object {
+        /** A plan this big is priced for a partial result at most every [PUBLISH_MIN_MS]. */
+        const val BIG_PLAN_MARKETS = 400
+
+        const val PUBLISH_MIN_MS = 2_000L
+
         /**
          * Merge order: when two feeds carry the same book, the earlier one's quote is priced. ParlayAPI ahead of PropLine (Tj, 2026-09-30,
          * "prioritize its use if it can do anything better"): its books are polled every few seconds and each quote carries its measured
