@@ -330,6 +330,9 @@ class AutoScanService : Service() {
         keepAwakeHeld = true
     }
 
+    /** For tests: the keep-awake lock itself is held (not just the flag Diagnostics reads). */
+    internal val keepAwakeIsHeld: Boolean get() = keepAwakeLock?.isHeld == true
+
     private fun releaseKeepAwake() {
         keepAwakeLock?.let { if (it.isHeld) it.release() }
         keepAwakeLock = null
