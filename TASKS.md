@@ -3052,7 +3052,8 @@ The offer it answers (W5, RESEARCH.md §47): ParlayAPI's tour keys `tennis_atp`/
 SET lines (±1.5 sets, 2.5 sets) in the match event and GAME lines in a separate "Name (Games)" event, while bet365/Caesars put game lines in
 the match event: a sets spread must never price Novig's games spread.
 
-- [ ] Z1 Read real ParlayAPI tennis answers (both tours, every market it has); save trimmed keyless fixtures; write the shapes per book in PARLAY_API.md.
+- [x] Z1 Read real ParlayAPI tennis answers (both tours, every market it has); save trimmed keyless fixtures; write the shapes per book in PARLAY_API.md.
+  DONE Z1 (10 credits): PARLAY_API.md §6.11. Pinnacle's match event = SET lines, its "(Games)" twin = games lines; other books' match event = games (BetMGM/DK use ±1.5 for games, so it's per book); 28/157 matches split over events (FanDuel/ProphetX start times up to 3 h off); doubles mixed in; no tennis team totals; Pinnacle alternates are set lines only. Novig lists SET_SPREAD and TOTAL_SETS (unpriced until now). Fixtures `parlay-tennis-atp.json`, `parlay-tennis-wta.json`.
 - [ ] Z2 Data: ATP/WTA scanned through ParlayAPI's tour keys; each book's lines classed as sets or games (the "(Games)" events, line sizes) so only games lines price Novig's games markets and set lines price nothing they don't match; tests from the fixtures, incl. the fake-edge case.
 - [ ] Z3 The same tennis prices for Check odds now (`ParlayBooks`) and closing lines where ParlayAPI already closes other sports; credits counted; tests.
 - [ ] Z4 Full app tests for what changed (light protocol + screenshots of anything shown), Diagnostics' matching counts tennis.
