@@ -309,6 +309,49 @@ class AutoBettorTest {
         assertTrue(r3.skipped.keys.any { it.contains("couldn't be found") })
     }
 
+    /** Tj, 2026-10-01: "add an option for longest odds of any auto bet. For example, I don't want it to bet anything that is more of a longshot than +130 odds". */
+    @Test
+    fun `a bet longer than the longest odds Tj set is never placed, one at the limit is, and favorites always pass`() = runBlocking {
+        // Jefferson is +117.
+        val novig = FakeNovig()
+        val over = bettor(novig).run(settings { it.copy(autoBetMaxOdds = 110) }, state(settings { it.copy(autoBetMaxOdds = 110) }))
+        assertEquals(0, over.placed.size)
+        assertEquals("nothing reached Novig", 0, novig.orders.get())
+        assertEquals(listOf("its odds are longer than your +110 limit"), over.skipped.keys.toList())
+        // At the limit, and above it: placed.
+        for (limit in listOf(117, 130, 300, 0)) {
+            val n = FakeNovig()
+            app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+            val s = settings { it.copy(autoBetMaxOdds = limit) }
+            assertEquals("limit $limit", 1, bettor(n).run(s, state(s)).placed.size)
+        }
+    }
+
+    @Test
+    fun `the limit holds whatever the stake: a dollar, a typed amount and Kelly all skip a longshot`() = runBlocking {
+        for (stake in listOf(AutoBetStake.ONE_DOLLAR, AutoBetStake.CUSTOM, AutoBetStake.QUARTER_KELLY)) {
+            val novig = FakeNovig()
+            val s = settings { it.copy(autoBetMaxOdds = 100, autoBetStake = stake, autoBetCustomStake = 5.0, bankroll = 1000.0) }
+            val r = bettor(novig).run(s, state(s))
+            assertEquals(stake.name, 0, r.placed.size)
+            assertEquals(stake.name, 0, novig.orders.get())
+        }
+    }
+
+    @Test
+    fun `a price that drifts out past the limit between finding the bet and ordering it is refused on the order book`() = runBlocking {
+        // Judged at +117 (passes a +120 limit), within the 3-point price match of the book: but the book is now at 0.44 = +127, over the limit.
+        val novig = FakeNovig()
+        val s = settings { it.copy(autoBetMaxOdds = 120) }
+        val r = bettor(novig, placer = placer(novig, book = book(bid = 560))).run(s, state(s))
+        assertEquals(0, novig.orders.get())
+        assertEquals(0, r.placed.size)
+        assertTrue(r.skipped.keys.toString(), r.skipped.keys.any { it.contains("longer than your +120 limit") })
+        // Without the limit the same book is bet (so the refusal is the limit's, not something else's).
+        val free = FakeNovig()
+        assertEquals(1, bettor(free, placer = placer(free, book = book(bid = 560))).run(settings(), state()).placed.size)
+    }
+
     @Test
     fun `a bet that was refused isn't tried again at once`() = runBlocking {
         val novig = FakeNovig()
