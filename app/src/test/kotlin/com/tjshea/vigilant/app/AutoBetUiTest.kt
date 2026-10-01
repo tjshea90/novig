@@ -15,6 +15,7 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
@@ -133,13 +134,22 @@ class AutoBetUiTest {
     @Test
     fun `books agreeing offers 2, 3, 4 and 5+, and books pricing both sides 1, 2 and 3`() {
         show()
-        for ((label, n) in listOf("2" to 2, "3" to 3, "4" to 4, "5+" to 5)) {
-            compose.onNodeWithText(label).performClick()
+        // The first row of digits is books agreeing; the second is books pricing both sides.
+        for ((label, n) in listOf("2" to 2, "3" to 3, "4" to 4)) {
+            compose.onAllNodesWithText(label)[0].performClick()
             assertEquals(n, settings.autoBetBooks)
         }
+        compose.onNodeWithText("5+").performClick()
+        assertEquals(5, settings.autoBetBooks)
         compose.onNodeWithText("5+").assertIsSelected()
-        // Both-sides chips are 1, 2, 3 (the same digits as the first row's, so by tag-less order: the second group).
-        assertEquals(listOf(1, 2, 3), ScanSettings.AUTO_BET_TWO_SIDED_CHOICES)
+        compose.onNodeWithText("1").performClick()
+        assertEquals(1, settings.autoBetTwoSided)
+        compose.onAllNodesWithText("2")[1].performClick()
+        assertEquals(2, settings.autoBetTwoSided)
+        compose.onAllNodesWithText("3")[1].performClick()
+        assertEquals(3, settings.autoBetTwoSided)
+        // Neither row touched the other's setting.
+        assertEquals(5, settings.autoBetBooks)
     }
 
     @Test
