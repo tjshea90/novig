@@ -9,6 +9,7 @@ import com.tjshea.vigilant.data.novig.signing.PemSigningKey
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.engine.MarketFee
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -400,5 +401,87 @@ class ApiBettingTest {
         t.untrack("cno:row1")
         assertNotNull(t.all().singleOrNull { it.orderId == "o1" })
         assertEquals(BetStatus.PENDING, t.all().single().status)
+    }
+
+    // ---- the auto-bet's path (Tj, 2026-10-01) ------------------------------------------------------------------
+
+    private val autoLimits = BetLimits(maxStake = 10.0, maxPerDay = 50.0, minEv = 0.02)
+
+    @Test
+    fun `an auto-bet goes out with no confirm at the plan's own ceiling, under its own limits, and is tracked from the fills`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        // The placer's own limits are tighter than the auto-bet's (a $1 per-bet limit): the auto-bet's override is what applies.
+        val r = placer(t, l = BetLimits(1.0, 50.0, 0.5)).placeAuto(target(), 10.0, autoLimits, expectedPrice = 0.46) as PlaceResult.Placed
+        val body = orderBody()
+        assertEquals("0.465", body["price"]!!.jsonPrimitive.content)
+        assertEquals("400", body["qty"]!!.jsonPrimitive.content)
+        assertEquals("IOC", body["tif"]!!.jsonPrimitive.content)
+        assertEquals(BetTracker.SOURCE_CNO, r.bet.source)
+        assertEquals("cno:row1", r.bet.placedKey)
+        assertEquals(1.85, r.bet.stake, 1e-9)
+        assertEquals(listOf(r.bet), t.all())
+    }
+
+    @Test
+    fun `an auto-bet's own minimum edge decides how deep it buys`() = runBlocking {
+        novig(Scenario(fills = """{"items":[{"fillId":"f1","orderId":"o1","marketId":"mkt","outcomeId":"A","qty":100,"cost":"0.46000","taker":true,"ts":1}]}""", qty = 100))
+        // Fair 0.4685: the 0.46 level is +1.8%, the 0.465 level +0.7%: a 1.5% minimum buys only the first level.
+        placer(tracker()).placeAuto(target(fair = 0.4685), 10.0, autoLimits.copy(minEv = 0.015), expectedPrice = 0.46)
+        val body = orderBody()
+        assertEquals("0.46", body["price"]!!.jsonPrimitive.content)
+        assertEquals("100", body["qty"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `an auto-bet whose book price isn't the price it was judged at sends nothing`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        // The bet was judged at 0.60 but the outcome found is offered at 0.46: not the same bet (or the market moved). Never sent.
+        val r = placer(t).placeAuto(target(), 5.0, autoLimits, expectedPrice = 0.60) as PlaceResult.Refused
+        assertTrue(r.reason, r.reason.contains("isn't the price it was judged at"))
+        assertTrue(requests.none { it.method == "POST" })
+        assertTrue(t.all().isEmpty())
+    }
+
+    @Test
+    fun `an auto-bet obeys its per-bet maximum, the daily limit, the pregame rule and the fresh fair odds like any API bet`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        fun refused(target: BetTarget = target(), stake: Double = 5.0, l: BetLimits = autoLimits, price: Double = 0.46) =
+            (kotlinx.coroutines.runBlocking { placer(t).placeAuto(target, stake, l, price) } as PlaceResult.Refused).reason
+        assertTrue(refused(stake = 12.0).contains("over your $10.00 limit per bet"))
+        assertTrue(refused(l = autoLimits.copy(maxPerDay = 4.0)).contains("daily limit"))
+        assertTrue(refused(target = target(starts = now - 1)).contains("pregame only"))
+        assertTrue(refused(target = target(fairAsOf = now - 20 * 60_000L)).contains("scan again"))
+        assertTrue(refused(target = target(fair = 0.45)).contains("The edge is gone"))
+        assertTrue("nothing was sent", requests.none { it.method == "POST" })
+    }
+
+    @Test
+    fun `an auto-bet never repeats a bet that is still open`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        val p = placer(t)
+        assertTrue(p.placeAuto(target(), 10.0, autoLimits, 0.46) is PlaceResult.Placed)
+        val again = p.placeAuto(target(), 10.0, autoLimits, 0.46) as PlaceResult.Refused
+        assertTrue(again.reason, again.reason.contains("already bet this through the API"))
+        assertEquals(1, requests.count { it.method == "POST" })
+    }
+
+    @Test
+    fun `the Bet sheet's placer and the auto-bet's share one order lock, so the same bet is never placed twice at once`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        val shared = kotlinx.coroutines.sync.Mutex()
+        fun make() = ApiBetPlacer(tradingClient(), t, books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { now += it }, lock = shared)
+        val results = listOf(
+            kotlinx.coroutines.GlobalScope.async(kotlinx.coroutines.Dispatchers.Default) { make().place(target(), 10.0, confirmedLimit = 0.465) },
+            kotlinx.coroutines.GlobalScope.async(kotlinx.coroutines.Dispatchers.Default) { make().placeAuto(target(), 10.0, autoLimits, 0.46) },
+        ).map { it.await() }
+        assertEquals(1, results.count { it is PlaceResult.Placed })
+        assertEquals(1, results.count { it is PlaceResult.Refused })
+        assertEquals("exactly one order reached Novig", 1, requests.count { it.method == "POST" })
+        assertEquals(1, t.all().size)
     }
 }

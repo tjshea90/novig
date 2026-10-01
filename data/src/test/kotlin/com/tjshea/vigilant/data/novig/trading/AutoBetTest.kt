@@ -1,0 +1,187 @@
+package com.tjshea.vigilant.data.novig.trading
+
+import com.tjshea.vigilant.data.cno.CnoBooks
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.scanner.AutoBetStake
+import com.tjshea.vigilant.data.scanner.AutoScanMode
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.ScannerMode
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * The auto-bet's rules (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all"): the settings he picks (off by default),
+ * which bets pass them, and the stake with worked Kelly numbers: it changes with each bet's odds, and is held to his per-bet maximum, to what
+ * Novig has for sale and to what's left in the wallet.
+ */
+class AutoBetTest {
+
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    private fun row(odds: Int, fair: Double, available: Double? = null) = CnoRow(
+        ev = 0.03, startsAtMs = 2_000_000L, league = "NFL", event = "A @ B", market = "Moneyline", bet = "A", odds = odds, available = available,
+        book = "Novig", fairProbability = fair, books = 6,
+    )
+
+    private fun rules(
+        stake: AutoBetStake = AutoBetStake.QUARTER_KELLY, custom: Double = 5.0, max: Double = 100.0, books: Int = 3, ev: Double = 0.03, twoSided: Int = 2,
+    ) = AutoBet.rules(ScanSettings(autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided))
+
+    private fun amount(s: AutoBet.Stake) = (s as AutoBet.Stake.Amount).dollars
+    private fun skip(s: AutoBet.Stake) = (s as AutoBet.Stake.Skip).reason
+
+    // ---- the settings -------------------------------------------------------------------------------------------
+
+    @Test
+    fun `auto-bet is off by default with careful criteria, and its choices are the ones Tj listed`() {
+        val s = ScanSettings()
+        assertFalse(s.autoBet)
+        assertNull(s.autoBetHalted)
+        assertEquals(3, s.autoBetBooks)
+        assertEquals(0.03, s.autoBetMinEv, 0.0)
+        assertEquals(2, s.autoBetTwoSided)
+        assertEquals(AutoBetStake.ONE_DOLLAR, s.autoBetStake)
+        assertEquals(5.0, s.autoBetCustomStake, 0.0)
+        assertEquals(10.0, s.autoBetMaxStake, 0.0)
+        assertEquals(listOf(2, 3, 4, 5), ScanSettings.AUTO_BET_BOOKS_CHOICES)
+        assertEquals(listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04), ScanSettings.AUTO_BET_MIN_EV_CHOICES)
+        assertEquals(listOf(1, 2, 3), ScanSettings.AUTO_BET_TWO_SIDED_CHOICES)
+        assertEquals(listOf("⅛ Kelly", "¼ Kelly", "½ Kelly", "$1", "My amount"), AutoBetStake.entries.map { it.label })
+        assertEquals(listOf(0.125, 0.25, 0.5, null, null), AutoBetStake.entries.map { it.kelly })
+        // A file saved before auto-bet existed reads with all of it off, and nothing else moves.
+        val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"CNO","autoScanSeconds":30,"schema":12}""")
+        assertFalse(old.autoBet)
+        assertEquals(30, old.autoScanSeconds)
+        assertEquals(AutoScanMode.CNO, old.autoScan)
+        // What Tj picks survives a save and a load.
+        val picked = ScanSettings(autoBet = true, autoBetBooks = 5, autoBetMinEv = 0.0325, autoBetTwoSided = 3, autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 7.25, autoBetMaxStake = 12.0)
+        assertEquals(picked, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)))
+    }
+
+    @Test
+    fun `auto-bet runs only while the CNO scanner runs in the background, not paused and not halted`() {
+        val on = ScanSettings(autoBet = true, autoScan = AutoScanMode.CNO, scanner = ScannerMode.BOTH)
+        assertTrue(on.autoBetsNow)
+        assertTrue(on.copy(autoScan = AutoScanMode.BOTH).autoBetsNow)
+        assertFalse("the background scan is off", on.copy(autoScan = AutoScanMode.OFF).autoBetsNow)
+        assertFalse("the scanner is Vigilant only: CNO is asleep", on.copy(scanner = ScannerMode.VIGILANT).autoBetsNow)
+        assertFalse("paused", on.copy(paused = true).autoBetsNow)
+        assertFalse("halted until Tj resumes it", on.copy(autoBetHalted = "an order's answer was lost").autoBetsNow)
+        assertFalse("switched off", on.copy(autoBet = false).autoBetsNow)
+    }
+
+    @Test
+    fun `the rules clamp what was typed: books 2-5, both sides 1-3, an edge never under 0_5 percent`() {
+        val r = AutoBet.rules(ScanSettings(autoBetBooks = 9, autoBetTwoSided = 0, autoBetMinEv = 0.0001, autoBetCustomStake = -3.0, autoBetMaxStake = -1.0))
+        assertEquals(5, r.minBooks)
+        assertEquals(1, r.twoSided)
+        assertEquals(AutoBet.MIN_EV_FLOOR, r.minEv, 0.0)
+        assertEquals(0.0, r.customStake, 0.0)
+        assertEquals(0.0, r.maxStake, 0.0)
+        assertEquals(2, AutoBet.rules(ScanSettings(autoBetBooks = 0)).minBooks)
+    }
+
+    // ---- which bets pass ----------------------------------------------------------------------------------------
+
+    private fun check(twoSided: Int = 4, agreeing: Int = 3, ev: Double? = 0.02) =
+        CnoBooks.Check(twoSided, 0, 0.51, agreeing, 100, ev, CnoBooks.Verdict.CONFIRMED)
+
+    @Test
+    fun `a bet passes when its edge, its agreeing books and its two-sided books all meet the criteria`() {
+        val r = rules(books = 3, ev = 0.03, twoSided = 2)
+        assertNull(AutoBet.judge(r, 0.035, check(twoSided = 4, agreeing = 3)))
+        // Exactly at each limit passes.
+        assertNull(AutoBet.judge(r, 0.03, check(twoSided = 2, agreeing = 3)))
+        // One short of each fails, and says which.
+        assertTrue(AutoBet.judge(r, 0.0299, check())!!.contains("under your +3.00% minimum"))
+        assertTrue(AutoBet.judge(r, 0.04, check(twoSided = 1, agreeing = 1))!!.contains("1 book prices both sides (you need 2)"))
+        assertTrue(AutoBet.judge(r, 0.04, check(twoSided = 4, agreeing = 2))!!.contains("2 books say +EV on their own (you need 3)"))
+        assertTrue(AutoBet.judge(r, 0.04, check(ev = -0.01))!!.contains("not +EV"))
+        assertTrue(AutoBet.judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
+    }
+
+    @Test
+    fun `every choice of books agreeing and books offering both sides is honoured`() {
+        for (need in ScanSettings.AUTO_BET_BOOKS_CHOICES) for (agreeing in 0..6) {
+            val ok = AutoBet.judge(rules(books = need), 0.05, check(twoSided = 6, agreeing = agreeing)) == null
+            assertEquals("need $need, have $agreeing", agreeing >= need, ok)
+        }
+        for (need in ScanSettings.AUTO_BET_TWO_SIDED_CHOICES) for (two in 0..5) {
+            val ok = AutoBet.judge(rules(twoSided = need, books = 2), 0.05, check(twoSided = two, agreeing = 2)) == null
+            assertEquals("need $need both sides, have $two", two >= need, ok)
+        }
+        for (ev in ScanSettings.AUTO_BET_MIN_EV_CHOICES) {
+            assertNull(AutoBet.judge(rules(ev = ev), ev, check()))
+            assertNotNull(AutoBet.judge(rules(ev = ev), ev - 0.0005, check()))
+        }
+    }
+
+    // ---- the stake ----------------------------------------------------------------------------------------------
+
+    @Test
+    fun `Kelly stakes are worked from each bet's own odds and edge`() {
+        // Full Kelly = (fair - price) / (1 - price). +100 (price 0.5), fair 0.515: 0.03. On $1,000: 1/8 = $3.75, 1/4 = $7.50, 1/2 = $15.00.
+        val even = row(100, 0.515)
+        assertEquals(3.75, amount(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 1000.0, 500.0)), 1e-9)
+        assertEquals(7.50, amount(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), even, 1000.0, 500.0)), 1e-9)
+        assertEquals(15.00, amount(AutoBet.stake(rules(AutoBetStake.HALF_KELLY), even, 1000.0, 500.0)), 1e-9)
+        // +150 (price 0.4), fair 0.42: (0.42 - 0.4) / 0.6 = 0.03333; 1/4 of $1,000 = $8.333, floored to the cent.
+        assertEquals(8.33, amount(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), row(150, 0.42), 1000.0, 500.0)), 1e-9)
+        // -300 (price 0.75), fair 0.77: 0.02 / 0.25 = 0.08; 1/8 of $1,000 = $10.00. The same edge on a favourite stakes more than on an underdog.
+        assertEquals(10.00, amount(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), row(-300, 0.77), 1000.0, 500.0)), 1e-9)
+        // A bigger bankroll scales it; no edge (fair under the price) or no bankroll is no stake at all.
+        assertEquals(37.5, amount(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 10_000.0, 500.0)), 1e-9)
+        assertTrue(skip(AutoBet.stake(rules(), row(100, 0.49), 1000.0, 500.0)).contains("no Kelly stake"))
+        assertTrue(skip(AutoBet.stake(rules(), even, 0.0, 500.0)).contains("no Kelly stake"))
+        assertTrue(skip(AutoBet.stake(rules(), row(100, 0.5).copy(fairProbability = null), 1000.0, 500.0)).contains("no Kelly stake"))
+    }
+
+    @Test
+    fun `a stake is held to what Novig has for sale, to the per-bet maximum, and to the wallet`() {
+        val even = row(100, 0.515)
+        // Half Kelly of $1,000 is $15: a $10 maximum holds it; $4 available at that price holds it; so does a wallet of $2.50.
+        assertEquals(10.0, amount(AutoBet.stake(rules(AutoBetStake.HALF_KELLY, max = 10.0), even, 1000.0, 500.0)), 1e-9)
+        assertEquals(4.0, amount(AutoBet.stake(rules(AutoBetStake.HALF_KELLY), row(100, 0.515, available = 4.0), 1000.0, 500.0)), 1e-9)
+        assertEquals(2.5, amount(AutoBet.stake(rules(AutoBetStake.HALF_KELLY), even, 1000.0, 2.5)), 1e-9)
+        // The wallet's remainder is floored to the cent, never rounded up past what's there.
+        assertEquals(2.49, amount(AutoBet.stake(rules(AutoBetStake.HALF_KELLY), even, 1000.0, 2.499)), 1e-9)
+    }
+
+    @Test
+    fun `a dollar, or the amount Tj typed, is the stake, under the same caps`() {
+        val even = row(100, 0.515)
+        assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 50.0)), 0.0)
+        assertEquals(7.25, amount(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 7.25), even, 1000.0, 50.0)), 0.0)
+        assertEquals("held to the maximum", 5.0, amount(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 7.25, max = 5.0), even, 1000.0, 50.0)), 0.0)
+        assertEquals("held to the wallet", 3.0, amount(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 7.25), even, 1000.0, 3.0)), 0.0)
+        // Kelly isn't asked for: a $1 or typed stake doesn't need a bankroll or an edge figure.
+        assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), row(100, 0.515).copy(fairProbability = null), 0.0, 50.0)), 0.0)
+    }
+
+    @Test
+    fun `a wallet that can't fund a dollar stops everything, and a stake under a dollar is skipped, never rounded up`() {
+        val even = row(100, 0.515)
+        assertEquals(AutoBet.Stake.WalletEmpty, AutoBet.stake(rules(), even, 1000.0, 0.99))
+        assertEquals(AutoBet.Stake.WalletEmpty, AutoBet.stake(rules(), even, 1000.0, 0.0))
+        assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 1.0)), 0.0)
+        // 1/8 Kelly of a $100 bankroll at this edge is 37.5 cents.
+        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.EIGHTH_KELLY), even, 100.0, 500.0)).contains("under the $1.00 minimum"))
+        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR, max = 0.5), even, 1000.0, 500.0)).contains("maximum per bet is under $1.00"))
+        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.CUSTOM, custom = 0.0), even, 1000.0, 500.0)).contains("$0"))
+    }
+
+    @Test
+    fun `the price the order book shows must be the price the bet was judged at`() {
+        assertTrue(AutoBet.priceMatches(0.46, 0.46))
+        assertTrue(AutoBet.priceMatches(0.46, 0.49))
+        assertFalse(AutoBet.priceMatches(0.46, 0.4901))
+        assertFalse("the other side of the market", AutoBet.priceMatches(0.40, 0.60))
+        assertEquals(0.5, AutoBet.priceOf(row(100, 0.5)), 1e-12)
+        assertEquals(0.4, AutoBet.priceOf(row(150, 0.5)), 1e-12)
+    }
+}
