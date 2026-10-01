@@ -392,6 +392,8 @@ object HealthChecks {
             st.lastRunMs == null -> add(Check(Level.WARN, "Auto-bet", "on, but no check has run since the app opened", look = "the background auto-scan below, Android's battery limits"))
             else -> add(Check(Level.OK, "Auto-bet", "running: $line"))
         }
+        // Tj, 2026-10-01: every bet gets a push notification; one Android won't show means bets placed that he never sees.
+        if (x.phone.notifications == false) add(Check(Level.WARN, "Auto-bet notifications", "Android has notifications switched off for Vigilant: bets are placed with no pop-up", look = "Android Settings › Apps › Vigilant › Notifications, then Settings › Betting › Send a test notification"))
         if (st.last.stopped?.contains("daily limit") == true) add(Check(Level.WARN, "Auto-bet", "today's API bets reached the daily limit of ${Locale.US.let { String.format(it, "$%.0f", set.apiMaxPerDay) }}", look = "Settings › Betting › Most in a day"))
     }
 
