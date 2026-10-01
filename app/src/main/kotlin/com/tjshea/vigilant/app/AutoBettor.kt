@@ -111,6 +111,9 @@ class AutoBettor(
     suspend fun run(settings: ScanSettings, state: UiState): Report {
         val now = clock()
         val rules = AutoBet.rules(settings)
+        // Whoever calls, a halted or switched-off auto-bet places nothing.
+        if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
+        settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (Settings › Betting › Resume auto-bet)") }
         val placer = placer()
         if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting › Enable betting)")
         cooldown.entries.removeAll { it.value <= now }
@@ -178,6 +181,9 @@ class AutoBettor(
                 skip("its exact bet couldn't be found on Novig")
                 continue
             }
+            // Novig's price for this bet was read from one outcome's book, and its bet slip was found by the catalog: they must be the same outcome.
+            val priced = item.live?.outcomeId
+            if (priced != null && priced != target.outcomeId) { cooldown[row.key] = now + NOT_FOUND_COOLDOWN_MS; skip("Novig's price and its bet slip name different outcomes"); continue }
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
 
             // Once an order may be on its way it is followed to its end and recorded, whatever happens to this coroutine.
