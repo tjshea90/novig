@@ -25,6 +25,11 @@ import java.util.TimeZone
  */
 object Diagnostics {
 
+    /** The heap now ([usedMb] of [maxMb]) and what's held in it, one line each ([lines]). */
+    data class Memory(val usedMb: Long = 0, val maxMb: Long = 0, val lines: List<String> = emptyList()) {
+        val fraction: Double get() = if (maxMb > 0) usedMb.toDouble() / maxMb else 0.0
+    }
+
     /** What isn't in [UiState]: the build, the phone, and the background scan's own status. */
     data class Extras(
         val versionName: String,
@@ -33,6 +38,8 @@ object Diagnostics {
         val autoScan: AutoScanner.Status = AutoScanner.Status(),
         /** What the auto-bet did last (Tj, 2026-10-01). */
         val autoBet: AutoBettor.Status = AutoBettor.Status(),
+        /** The app's heap and what is held in it (Tj's 2026-10-01 report: an OutOfMemoryError mid-scan). */
+        val memory: Memory = Memory(),
         val autoScanServiceRunning: Boolean = false,
         /** What the last scan and the last Check odds now cost each API (since the app opened), null before one ran. */
         val lastScan: RoundCost? = null,
@@ -279,6 +286,11 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== Open bets: edge now vs when bet (pregame, current reads only) ==")
         edgeNowLines(bets, now).forEach { o.appendLine(it) }
+
+        o.appendLine()
+        o.appendLine("== Memory (the app's heap is fixed: Android ends the app when a request can't fit) ==")
+        o.appendLine("Heap ${x.memory.usedMb} of ${x.memory.maxMb} MB (${Math.round(x.memory.fraction * 100)}%)")
+        x.memory.lines.forEach { o.appendLine(it) }
 
         o.appendLine()
         o.appendLine("== Phone ==")

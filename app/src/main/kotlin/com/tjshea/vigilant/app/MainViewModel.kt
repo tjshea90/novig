@@ -1388,6 +1388,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
 
     /** Settings › Diagnostics: one page of settings, the last scan, API usage, the background scan and the Tracker, to copy (Tj, 2026-09-29). */
+    /** The heap and what the app holds in it, for Diagnostics (counts, not bytes: a scan result, the boards kept between scans, the books pages). */
+    private fun memoryNow(): Diagnostics.Memory {
+        val r = _state.value.result
+        val held = (c.scanner as? com.tjshea.vigilant.data.scanner.Scanner)?.holdings()
+        val lines = listOfNotNull(
+            "Scan result: ${r?.opportunities?.size ?: 0} priced sides in ${r?.games?.size ?: 0} games" + if (r?.partial == true) " (partial: a scan is running)" else "",
+            held?.let { "Kept between scans: ${it.snapshots} fair-odds boards (${it.events} games, ${it.bookMarkets} book lines) · ${it.books} Novig books + ${it.cachedBooks} in the books cache" },
+            "CrazyNinjaOdds: ${_state.value.books.size} game pages with every book's odds · Tracker: ${_state.value.bets.size} bets, ${_state.value.bets.sumOf { it.books.size }} book lines",
+        )
+        return Diagnostics.Memory(com.tjshea.vigilant.data.MemoryGuard.usedMb(), com.tjshea.vigilant.data.MemoryGuard.maxMb(), lines)
+    }
+
     fun showDiagnostics() {
         buildDiagnostics()
         // ParlayAPI's own figures (free) and the report again with them, while it's still open.
@@ -1438,6 +1450,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
             autoBet = c.autoBet.status.value,
+            memory = memoryNow(),
             autoScanServiceRunning = AutoScanService.running,
             lastScan = c.lastScanCost,
             lastCheck = c.lastCheckCost,

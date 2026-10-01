@@ -39,6 +39,7 @@ object HealthChecks {
         accuracy(s, now)
         betting(s)
         autoBet(s, x, now)
+        memory(x)
     }.sortedBy { it.level.ordinal }
 
     private fun MutableList<Check>.scanning(s: UiState, now: Long) {
@@ -352,6 +353,21 @@ object HealthChecks {
         if (!s.betting.enabled) return
         val b = s.betting.balance ?: return
         if (b < 1.0) add(Check(Level.WARN, "Vigilant wallet", "holds ${String.format(Locale.US, "$%.2f", b)}: bets start at what's left", look = "Settings › Betting › Add money"))
+    }
+
+    /**
+     * The heap (Tj's v0.38.0 report, 2026-10-01: an OutOfMemoryError mid-scan with no limit on anything): over the guard's trim line is a WARN
+     * with where to cut a scan down; a scan the guard ended early says so in its own errors.
+     */
+    private fun MutableList<Check>.memory(x: Diagnostics.Extras) {
+        val m = x.memory
+        if (m.maxMb <= 0) return
+        val text = "heap ${m.usedMb} of ${m.maxMb} MB (${Math.round(m.fraction * 100)}%)"
+        if (m.fraction >= com.tjshea.vigilant.data.MemoryGuard.TRIM_AT) {
+            add(Check(Level.WARN, "Memory", "the app's heap is nearly full: $text", m.lines.firstOrNull(), "Settings › +EV feed › scan size (Novig prices per scan, lines and props per game), fewer leagues; data/MemoryGuard.kt"))
+        } else {
+            add(Check(Level.OK, "Memory", text))
+        }
     }
 
     /**
