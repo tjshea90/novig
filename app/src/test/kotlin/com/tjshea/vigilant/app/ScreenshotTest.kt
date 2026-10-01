@@ -798,11 +798,11 @@ class ScreenshotTest {
         compose.onAllNodesWithText("+150").assertCountEquals(1)
     }
 
-    /** Tj, 2026-09-28: background auto-scan (CNO, or CNO + Vigilant, every 5-40 min) and alerts at 2/3/4%+. */
+    /** Tj, 2026-09-28: background auto-scan (CNO, or CNO + Vigilant, every 5-40 min) and alerts at 2/3/4%+; 2026-10-01: also every 3 min, 1 min, 30 s, 15 s. */
     @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun settingsOfferBackgroundAutoScanAndAlerts() {
         val base = SampleScan.state()
-        val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanMinutes = 10))
+        val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 600))
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         shoot("5d_settings_auto_scan") { SettingsScreen(s, { t -> picked = t(s.settings) }) }
         compose.onNodeWithText("Background auto-scan", ignoreCase = true).assertExists()
@@ -811,7 +811,12 @@ class ScreenshotTest {
         compose.onNodeWithText("Push alerts").assertExists()
         compose.onNodeWithText("3%+").assertIsSelected()
         compose.onNodeWithText("40 min").performClick()
-        assert(picked?.autoScanMinutes == 40) { "picked $picked" }
+        assert(picked?.autoScanSeconds == 2400) { "picked $picked" }
+        // The four new intervals (Tj, 2026-10-01) are chips, and each picks its seconds.
+        for ((label, seconds) in listOf("15 sec" to 15, "30 sec" to 30, "1 min" to 60, "3 min" to 180)) {
+            compose.onNodeWithText(label).performClick()
+            assert(picked?.autoScanSeconds == seconds) { "picked $picked for $label" }
+        }
         compose.onNodeWithText("4%+").performClick()
         assert(picked?.alertMinEv == 0.04) { "picked $picked" }
         compose.onNodeWithText("2%+").performClick()
