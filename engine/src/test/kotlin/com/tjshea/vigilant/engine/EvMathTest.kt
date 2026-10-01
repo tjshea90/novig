@@ -83,4 +83,36 @@ class EvMathTest {
         assertEquals(0.039, EvMath.makerBid(0.041, 0.03)!!.price, 1e-12)
         assertEquals(null, EvMath.makerBid(1.0, 0.02))
     }
+
+    /**
+     * Tj, 2026-10-01: "make sure it is accurately calculating Kelly values when I input my total bankroll and select kelly. The math must be
+     * accurate. I think Kelly values change depending on the odds of the bet." Worked by hand: full Kelly = (b·p − q) / b with b the net
+     * odds of the price paid; the stake is bankroll × fraction × that.
+     */
+    @Test
+    fun `kelly stakes worked by hand change with the odds, the edge and the fee`() {
+        // Even money (+100, price 0.50), fair 55%: b = 1, f = (1×0.55 − 0.45)/1 = 10%; ¼ Kelly of $1,000 = $25.00.
+        val even = EvQuote(fairProbability = 0.55, price = 0.50, fee = 0.0)
+        assertEquals(0.10, even.kellyFraction, 1e-12)
+        assertEquals(25.00, EvMath.suggestedStake(even, 1_000.0, 0.25, null), 1e-9)
+        // The same 5-point edge at +233 (price 0.30), fair 35%: b = 0.7/0.3 = 2.333…, f = (2.333×0.35 − 0.65)/2.333 = 7.142857%; ¼ Kelly = $17.86.
+        val long = EvQuote(0.35, 0.30, 0.0)
+        assertEquals(0.05 / 0.70, long.kellyFraction, 1e-12)
+        assertEquals(17.857142857, EvMath.suggestedStake(long, 1_000.0, 0.25, null), 1e-6)
+        // A favorite at −300 (price 0.75), fair 80%: b = 0.333…, f = (0.333×0.8 − 0.2)/0.333 = 20%; ¼ Kelly = $50.00.
+        val fav = EvQuote(0.80, 0.75, 0.0)
+        assertEquals(0.20, fav.kellyFraction, 1e-12)
+        assertEquals(50.00, EvMath.suggestedStake(fav, 1_000.0, 0.25, null), 1e-9)
+        // A 1¢ fee (a live game) makes the price 0.51: b = 0.49/0.51, f = (0.55 − 0.51)/0.49 = 8.163%; ¼ Kelly = $20.41.
+        val fee = EvQuote(0.55, 0.50, 0.01)
+        assertEquals(0.04 / 0.49, fee.kellyFraction, 1e-12)
+        assertEquals(20.408163265, EvMath.suggestedStake(fee, 1_000.0, 0.25, null), 1e-6)
+        // Half the bankroll, half the stake; full Kelly 4× the quarter; never more than Novig has for sale at +EV.
+        assertEquals(12.50, EvMath.suggestedStake(even, 500.0, 0.25, null), 1e-9)
+        assertEquals(100.00, EvMath.suggestedStake(even, 1_000.0, 1.0, null), 1e-9)
+        assertEquals(8.40, EvMath.suggestedStake(even, 1_000.0, 0.25, maxFillable = 8.40), 1e-9)
+        // No edge (fair 50% at 0.50), or a negative one: nothing.
+        assertEquals(0.0, EvMath.suggestedStake(EvQuote(0.50, 0.50, 0.0), 1_000.0, 0.25, null), 0.0)
+        assertEquals(0.0, EvMath.suggestedStake(EvQuote(0.45, 0.50, 0.0), 1_000.0, 0.25, null), 0.0)
+    }
 }

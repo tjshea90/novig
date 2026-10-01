@@ -198,6 +198,27 @@ class ApiBettingControllerTest {
         }
     }
 
+    /** Tj, 2026-10-01: "Make sure it enters the Kelley value if I select it". */
+    @Test
+    fun `with Kelly chosen for bet slips the sheet opens at the bet's Kelly stake, and the wallet still has its say`() {
+        val (o, book) = sample()
+        val kellySettings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY, apiMaxStake = 100.0, apiBetStake = 1.0)
+        val state = MutableStateFlow(SampleScan.state(kellySettings).copy(betting = BettingUi(enabled = true, balance = 500.0)))
+        val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        val kelly = o.suggestedStake!!
+        assertTrue("the sample bet has a Kelly stake over a dollar", kelly > 1.0)
+        api.bet(o)
+        val sheet = state.value.betSheet!!
+        assertEquals(Math.round(kelly * 100) / 100.0, sheet.stake, 1e-9)
+        assertTrue(sheet.stakeNote!!, sheet.stakeNote!!.contains("Kelly"))
+        waitFor("a plan for the Kelly stake") { state.value.betSheet?.plan != null }
+        api.dismiss()
+        // A wallet holding less than the Kelly stake starts at what's left.
+        state.value = state.value.copy(betting = state.value.betting.copy(balance = 0.75))
+        api.bet(o)
+        assertEquals(0.75, state.value.betSheet!!.stake, 1e-9)
+    }
+
     @Test
     fun `the confirm places one order, tracks the real fill, and hides the bet from the lists`() {
         val (o, book) = sample()

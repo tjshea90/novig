@@ -43,4 +43,27 @@ class BetAmountTest {
         // The set amount is held to the limit first.
         assertEquals(10.0, BetAmount.starting(20.0, max = 10.0, balance = 50.0), 0.0)
     }
+
+    /** Tj, 2026-10-01: "I set the settings to put the Kelly value in my bet slips within vigilant automatically, but it is still entering only $1". */
+    @Test
+    fun `with Kelly chosen the sheet starts at the bet's own Kelly stake, to the cent, within the per-bet limit`() {
+        val s = com.tjshea.vigilant.data.scanner.ScanSettings(
+            bankroll = 1_000.0, kellyMultiplier = 0.25, slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY, apiBetStake = 1.0, apiMaxStake = 10.0,
+        )
+        val (amount, note) = BetAmount.base(s, kelly = 4.3719)
+        assertEquals(4.37, amount, 0.0)
+        assertEquals("¼ Kelly of your $1,000.00 bankroll at this bet's odds", note)
+        // Under a dollar stays under a dollar.
+        assertEquals(0.43, BetAmount.base(s, 0.4299).first, 0.0)
+        // Over the limit: held to it, and it says so.
+        val (held, why) = BetAmount.base(s, 25.0)
+        assertEquals(10.0, held, 0.0)
+        assertEquals("Kelly says $25.00: held to your $10.00 limit per bet", why)
+        // No edge at this price: Settings' amount, said.
+        assertEquals(1.0 to "No Kelly stake for this bet (no edge at this price): Settings' amount instead", BetAmount.base(s, null))
+        // "My amount" for bet slips; "$1" or Off: the Bet sheet's own amount, no note.
+        assertEquals(7.5, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.CUSTOM, slipCustomStake = 7.5), 4.37).first, 0.0)
+        assertEquals(1.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR, apiBetStake = 1.0), 4.37))
+        assertEquals(2.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.OFF, apiBetStake = 2.0), 4.37))
+    }
 }
