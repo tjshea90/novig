@@ -138,6 +138,8 @@ data class TrackedBet(
     val fillIds: List<String> = emptyList(),
     /** How the fair odds behind [fairAtBet] were made ([FairBasis]); null for a bet logged before v0.36.0. */
     val fairBasis: FairBasis? = null,
+    /** Placed by the auto-bet with nobody confirming it (Tj, 2026-10-01); otherwise exactly like a bet placed from the Bet sheet. */
+    val auto: Boolean = false,
 ) {
     /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
     val viaApi: Boolean get() = orderId != null
@@ -516,7 +518,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             fee = fee,
             fillIds = fills.map { it.fillId },
             fairBasis = target.basis.takeUnless { imported },
-            gradeNote = "Placed through Novig's API: ${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
+            auto = target.auto && !imported,
+            gradeNote = (if (target.auto && !imported) "Auto-bet through Novig's API: " else "Placed through Novig's API: ") +
+                "${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
         )
         var logged: TrackedBet = bet
         store.update { list ->

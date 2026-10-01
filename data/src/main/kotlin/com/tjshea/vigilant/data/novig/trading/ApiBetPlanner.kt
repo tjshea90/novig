@@ -31,6 +31,8 @@ data class BetTarget(
     val betUrl: String? = null,
     /** How [fair] was made, kept on the bet when it's placed ([com.tjshea.vigilant.data.tracker.FairBasis]). */
     val basis: com.tjshea.vigilant.data.tracker.FairBasis? = null,
+    /** Placed by the auto-bet, nobody confirming (Tj, 2026-10-01): kept on the bet ([com.tjshea.vigilant.data.tracker.TrackedBet.auto]). */
+    val auto: Boolean = false,
 )
 
 /** The limits Tj sets in Settings, all in dollars except [minEv]. */
