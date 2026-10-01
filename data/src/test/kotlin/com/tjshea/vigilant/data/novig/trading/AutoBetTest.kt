@@ -32,6 +32,9 @@ class AutoBetTest {
         stake: AutoBetStake = AutoBetStake.QUARTER_KELLY, custom: Double = 5.0, max: Double = 100.0, books: Int = 3, ev: Double = 0.03, twoSided: Int = 2,
     ) = AutoBet.rules(ScanSettings(autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided))
 
+    /** [AutoBet.judge] at -110 (a price no limit on longest odds touches) unless the test says otherwise. */
+    private fun judge(r: AutoBet.Rules, ev: Double, check: CnoBooks.Check, american: Int = -110) = AutoBet.judge(r, ev, check, american)
+
     private fun amount(s: AutoBet.Stake) = (s as AutoBet.Stake.Amount).dollars
     private fun skip(s: AutoBet.Stake) = (s as AutoBet.Stake.Skip).reason
 
@@ -94,34 +97,34 @@ class AutoBetTest {
     @Test
     fun `a bet passes when its edge, its agreeing books and its two-sided books all meet the criteria`() {
         val r = rules(books = 3, ev = 0.03, twoSided = 2)
-        assertNull(AutoBet.judge(r, 0.035, check(twoSided = 4, agreeing = 3)))
+        assertNull(judge(r, 0.035, check(twoSided = 4, agreeing = 3)))
         // Exactly at each limit passes.
-        assertNull(AutoBet.judge(r, 0.03, check(twoSided = 2, agreeing = 3)))
+        assertNull(judge(r, 0.03, check(twoSided = 2, agreeing = 3)))
         // One short of each fails, and says which.
-        assertTrue(AutoBet.judge(r, 0.0299, check())!!.contains("under your +3.00% minimum"))
-        assertTrue(AutoBet.judge(r, 0.04, check(twoSided = 1, agreeing = 1))!!.contains("1 book prices both sides (you need 2)"))
-        assertTrue(AutoBet.judge(r, 0.04, check(twoSided = 4, agreeing = 2))!!.contains("2 books say +EV on their own (you need 3)"))
+        assertTrue(judge(r, 0.0299, check())!!.contains("under your +3.00% minimum"))
+        assertTrue(judge(r, 0.04, check(twoSided = 1, agreeing = 1))!!.contains("1 book prices both sides (you need 2)"))
+        assertTrue(judge(r, 0.04, check(twoSided = 4, agreeing = 2))!!.contains("2 books say +EV on their own (you need 3)"))
         // A bet that good is a stale or mismatched price: never bet unattended (15% is the ceiling, and it is allowed).
-        assertNull(AutoBet.judge(r, AutoBet.MAX_SANE_EV, check()))
-        assertTrue(AutoBet.judge(r, 0.1501, check())!!.contains("usually a stale or mismatched price"))
-        assertTrue(AutoBet.judge(r, 0.40, check())!!.contains("over +15.00%"))
-        assertTrue(AutoBet.judge(r, 0.04, check(ev = -0.01))!!.contains("not +EV"))
-        assertTrue(AutoBet.judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
+        assertNull(judge(r, AutoBet.MAX_SANE_EV, check()))
+        assertTrue(judge(r, 0.1501, check())!!.contains("usually a stale or mismatched price"))
+        assertTrue(judge(r, 0.40, check())!!.contains("over +15.00%"))
+        assertTrue(judge(r, 0.04, check(ev = -0.01))!!.contains("not +EV"))
+        assertTrue(judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
     }
 
     @Test
     fun `every choice of books agreeing and books offering both sides is honoured`() {
         for (need in ScanSettings.AUTO_BET_BOOKS_CHOICES) for (agreeing in 0..6) {
-            val ok = AutoBet.judge(rules(books = need), 0.05, check(twoSided = 6, agreeing = agreeing)) == null
+            val ok = judge(rules(books = need), 0.05, check(twoSided = 6, agreeing = agreeing)) == null
             assertEquals("need $need, have $agreeing", agreeing >= need, ok)
         }
         for (need in ScanSettings.AUTO_BET_TWO_SIDED_CHOICES) for (two in 0..5) {
-            val ok = AutoBet.judge(rules(twoSided = need, books = 2), 0.05, check(twoSided = two, agreeing = 2)) == null
+            val ok = judge(rules(twoSided = need, books = 2), 0.05, check(twoSided = two, agreeing = 2)) == null
             assertEquals("need $need both sides, have $two", two >= need, ok)
         }
         for (ev in ScanSettings.AUTO_BET_MIN_EV_CHOICES) {
-            assertNull(AutoBet.judge(rules(ev = ev), ev, check()))
-            assertNotNull(AutoBet.judge(rules(ev = ev), ev - 0.0005, check()))
+            assertNull(judge(rules(ev = ev), ev, check()))
+            assertNotNull(judge(rules(ev = ev), ev - 0.0005, check()))
         }
     }
 
