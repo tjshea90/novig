@@ -138,8 +138,7 @@ class AutoBettorTest {
         assertEquals("out-jj", bet.outcomeId)
         assertTrue(bet.gradeNote!!.startsWith("Auto-bet through Novig's API"))
         assertTrue("a \$1 stake buys about \$1 of contracts", bet.stake in 0.9..1.0)
-        // Placed like a ✓: out of the lists.
-        assertTrue(app.container.placed.load().bets.any { it.key == MiniWindow.cnoKey(jefferson) })
+        // Placed like a ✓: the Tracker's bet carries the list key, so the next cycle's lists hide it (the next test); the mark itself is the one after.
         // A notification for the bet.
         val note = notifications().single { it.extras.getString("android.title")!!.startsWith("Auto-bet") }
         assertTrue(note.extras.getString("android.title")!!.contains("Justin Jefferson Under 69.5"))
@@ -177,7 +176,10 @@ class AutoBettorTest {
         val novig = FakeNovig()
         fun reasons(s: ScanSettings) = runBlocking { bettor(novig).run(s, state(s)).skipped.keys.joinToString() }
         assertTrue(reasons(settings { it.copy(autoBetBooks = 5) }).contains("3 books say +EV on their own (you need 5)"))
-        assertTrue(reasons(settings { it.copy(autoBetMinEv = 0.06) }).contains("under your +6.00% minimum"))
+        // 5.84% is under a 6% minimum: it never becomes a candidate (nothing is read or judged for it).
+        val under = runBlocking { settings { it.copy(autoBetMinEv = 0.06) }.let { s -> bettor(novig).run(s, state(s)) } }
+        assertEquals(0, under.looked)
+        assertEquals(0, under.placed.size)
         assertEquals("nothing reached Novig", 0, novig.orders.get())
         // The same bet with criteria it meets is placed (3 books, a 5.84% edge against 5.0%).
         assertEquals(1, bettor(novig).run(settings { it.copy(autoBetMinEv = 0.05, autoBetBooks = 3, autoBetTwoSided = 3) }, state()).placed.size)
@@ -259,12 +261,19 @@ class AutoBettorTest {
         val r1 = bettor(novig, resolve = { targetOf(it).copy(outcomeId = "out-other") }).run(settings(), state())
         assertEquals(0, r1.placed.size)
         assertTrue(r1.skipped.keys.toString(), r1.skipped.keys.any { it.contains("different outcomes") })
-        // The book offers the outcome at 0.60, nothing like the +117 (0.461) it was judged at: the placer refuses to send.
+        // The book offers the outcome at 0.40 (a bid of 0.60 on the other side), nothing like the +117 (0.461) it was judged at, though the edge
+        // looks even better: the placer refuses to send, because it may not be the same bet.
         val novig2 = FakeNovig()
-        val r2 = bettor(novig2, placer = placer(novig2, book = book(bid = 400))).run(settings(), state())
+        val r2 = bettor(novig2, placer = placer(novig2, book = book(bid = 600))).run(settings(), state())
         assertEquals(0, r2.placed.size)
         assertEquals(0, novig2.orders.get())
         assertTrue(r2.skipped.keys.toString(), r2.skipped.keys.any { it.contains("isn't the price it was judged at") })
+        // And a price that moved against it (0.60, the edge gone) is refused too.
+        val novig4 = FakeNovig()
+        val r4 = bettor(novig4, placer = placer(novig4, book = book(bid = 400))).run(settings(), state())
+        assertEquals(0, novig4.orders.get())
+        assertEquals(0, r4.placed.size)
+        assertTrue(r4.skipped.keys.toString(), r4.skipped.keys.any { it.contains("edge is gone") })
         // A bet that can't be found on Novig for certain isn't bet either.
         val novig3 = FakeNovig()
         val r3 = bettor(novig3, resolve = { null }).run(settings(), state())
@@ -327,6 +336,19 @@ class AutoBettorTest {
         val placed = state().copy(placed = listOf(com.tjshea.vigilant.data.tracker.PlacedBet(MiniWindow.cnoKey(jefferson), jefferson.bet, placedAtMs = now - 60_000, startsAtMs = jefferson.startsAtMs))).indexed(now)
         assertEquals(0, bettor(novig).run(settings(), placed).placed.size)
         assertEquals(0, novig.orders.get())
+    }
+
+    @Test
+    fun `a bet placed by the auto-bet is marked placed in the lists, like a check mark`() = runBlocking {
+        // The sample game is long past by the clock the marks expire by; a game a day away is what a real bet has.
+        val realNow = System.currentTimeMillis()
+        val target = targetOf(jefferson).copy(startsTs = realNow + 86_400_000L)
+        val bet = app.container.tracker.logApi(target, "o1", listOf(NovigFill("f1", "o1", null, "mkt", "out-jj", 400, 1.85, true, 0.0, realNow)))!!
+        markPlaced(app.container, target, com.tjshea.vigilant.data.novig.trading.PlaceResult.Placed(bet, 0), realNow)
+        val mark = app.container.placed.load().bets.single()
+        assertEquals(MiniWindow.cnoKey(jefferson), mark.key)
+        assertEquals("out-jj", mark.outcomeId)
+        assertFalse(mark.hidden)
     }
 
     // ---- the wiring ---------------------------------------------------------------------------------------------
