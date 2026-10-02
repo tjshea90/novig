@@ -43,8 +43,8 @@ class CycleRecorderTest {
         assertTrue(app.container.autoScan.cycle())
         assertEquals(before + 1, perf.summary("cycle.ms").count)
         assertEquals(runs + 1, app.container.eventLog.counters()["cycle.runs"])
-        assertEquals(0, perf.summary("cycle.step.cno").count)
-        assertEquals(0, perf.summary("cycle.step.vigilant").count)
+        assertEquals(perf.summaries().toString(), 0, perf.summary("cycle.step.cno").count)
+        assertEquals(perf.summaries().toString(), 0, perf.summary("cycle.step.vigilant").count)
     }
 
     /** Each part of the cycle is timed under its own name (a real cycle's CNO read needs the network, so the steps are pinned in the source). */
