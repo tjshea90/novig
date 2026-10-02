@@ -214,7 +214,8 @@ private fun ColumnScope.ScanTab(s: ScanSettings, onUpdate: SettingsUpdate) {
             ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read."
             ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (${if (AppBook.isNovig) "Novig, " else "PropLine, "}Pinnacle, Polymarket, " +
                 "Kalshi, The Odds API) are asleep, in the background auto-scan too: nothing of theirs loads or spends credits, and their tabs and settings are hidden. " +
-                "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on)."
+                "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on). " +
+                (if (AppBook.isNovig) "The Tracker's Check odds now (and a bet's Price now) still reads them, for your open bets only, so every bet gets its EV now." else "")
         },
     )
     if (AppBook.isNovig) {
