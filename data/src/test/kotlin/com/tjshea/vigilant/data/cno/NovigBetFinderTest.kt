@@ -205,6 +205,28 @@ class NovigBetFinderTest {
     }
 
     @Test
+    fun `a tracked bet logged without Novig's ids is located - by its side when known, else by its words - or says why it isn't there`() = runBlocking {
+        val f = finder()
+        // The side on record (CNO's Novig link) names the market, whatever the words say.
+        assertEquals(NovigBetFinder.Located.Bet("m9", "tot-u"), f.locate(row("Under 32.5", "Total Points"), "tot-u"))
+        assertEquals(NovigBetFinder.Located.Bet("m2", "arroyo-u45"), f.locate(row("Elijah Arroyo Under 4.5", "Player Receiving Yards")))
+        // A side on record that isn't in the game's markets any more: the words decide.
+        assertEquals(NovigBetFinder.Located.Bet("m6", "ml-sea"), f.locate(row("Seattle Seahawks", "Moneyline"), "gone"))
+        assertEquals(2, f.requests)
+        // Not offered now: the line moved off the board, or the game isn't listed.
+        val line = f.locate(row("Elijah Arroyo Over 9.5", "Player Receiving Yards")) as NovigBetFinder.Located.Missing
+        assertTrue(line.why, line.why.contains("not this exact bet"))
+        assertFalse(line.retry)
+        val game = f.locate(row("Over 32.5", "Total Points").copy(event = "Dallas Cowboys @ New York Giants")) as NovigBetFinder.Located.Missing
+        assertTrue(game.why, game.why.contains("doesn't list this game"))
+        val noLeague = f.locate(row("Over 32.5", "Total Points").copy(league = "")) as NovigBetFinder.Located.Missing
+        assertTrue(noLeague.why, noLeague.why.contains("no league"))
+        // Novig not answering is said as such, and worth another look.
+        down = true
+        assertEquals(NovigBetFinder.Located.Missing(NovigBetFinder.BUSY, retry = true), finder().locate(row("Under 32.5", "Total Points")))
+    }
+
+    @Test
     fun `an exact find carries its market as read, fee included, for pricing it from Novig's book`() {
         val withFee = NovigBetFinder.parseMarkets(Json.parseToJsonElement("""{"items":[
           {"marketId":"m1","eventId":"E1","marketType":"RECEIVING_YARDS","status":"OPEN","strike":"4.5","description":"Elijah Arroyo 4.5 RECEIVING_YARDS",
