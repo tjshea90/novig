@@ -37,6 +37,9 @@ import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.scanner.SharpVeto
+import com.tjshea.vigilant.data.scanner.SharpMode
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.scanner.SharpBookChoice
 import java.util.Locale
@@ -355,7 +358,7 @@ fun AutoBetSection(
         val now = remember(status) { System.currentTimeMillis() }
         Text(AutoBettor.line(status, now), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
         // What the sharp-book check said, bet by bet (Tj, 2026-10-02 16:05Z: "Is it getting sharp book pricing?").
-        if (s.sharpConfirmAutoBet) {
+        if (s.sharpAutoBet != SharpMode.OFF) {
             AutoBettor.sharpLine(status, s.sharpConfirmBooks.displayName)?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetSharpTally"))
             }
@@ -421,16 +424,30 @@ object SharpConfirmText {
             "Off: only a Pinnacle feed, with the quote's own time, confirms. CNO's page can still veto: a fresh Pinnacle column there that says the bet isn't +EV skips it without a feed call."
         }
 
+    /**
+     * The veto in words (Tj, 2026-10-02 17:01Z: "Only skip a bet if the sharpest book for that market says it is not +ev. This must separate types of bets by
+     * which books are sharpest for those bet types"): which books decide for each kind of bet ([SharpVeto.ranking]).
+     */
+    fun vetoNote(): String =
+        "Veto: a bet is skipped only when the sharpest book for its kind of bet, among those pricing both sides on its book page, says it isn't +EV at " +
+            "Novig's price (its own two prices, devigged worst case). None of them on the page: no veto. Sharpest first: player props " +
+            names(SharpVeto.ranking(BetKind.PROP, SharpVeto.Sport.FOOTBALL)) + " (MLB props " + names(SharpVeto.ranking(BetKind.PROP, SharpVeto.Sport.BASEBALL)) +
+            "); moneylines, spreads, totals and period lines " + names(SharpVeto.ranking(BetKind.SPREAD, SharpVeto.Sport.FOOTBALL)) + " (college " +
+            names(SharpVeto.ranking(BetKind.SPREAD, SharpVeto.Sport.COLLEGE_FOOTBALL)) + "; soccer and tennis " +
+            names(SharpVeto.ranking(BetKind.SPREAD, SharpVeto.Sport.SOCCER)) + "). Free: no feed is called."
+
+    private fun names(codes: List<String>) = codes.joinToString(", ") { com.tjshea.vigilant.data.cno.CnoBooks.name(it) }
+
     fun confirmNote(s: ScanSettings): String? {
-        val where = listOfNotNull("the auto-bet".takeIf { s.sharpConfirmAutoBet }, "CNO's push alerts".takeIf { s.sharpConfirmAlerts }).joinToString(" and ")
+        val where = listOfNotNull("the auto-bet".takeIf { s.sharpAutoBet == SharpMode.CONFIRM }, "CNO's push alerts".takeIf { s.sharpAlerts == SharpMode.CONFIRM }).joinToString(" and ")
         if (where.isEmpty()) return null
         return "For $where: ${s.sharpConfirmBooks.displayName}'s own price, at most ${ageLabel(s.sharpConfirmMaxAgeSeconds)} old, must show ${edgeInWords(s.sharpConfirmMinEv)} at Novig's price now."
     }
 }
 
 /**
- * Settings › Betting › Sharp-book confirmation (Tj, 2026-10-02: "require bets to be proven positive EV by a current, devigged sharp book such as Pinnacle … for the cno
- * scanner and auto bet feature"). One switch for the auto-bet, one for CNO's push alerts, and the shared criteria. Both off by default.
+ * Settings › Betting › Sharp books (Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement"): for the auto-bet and for CNO's push alerts, Off, Veto (the
+ * default: [SharpVeto]) or Require a confirmation ([SharpConfirm], with its criteria shown only then).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -438,21 +455,14 @@ fun SharpConfirmSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSetting
     val s = state.settings
     val feeds = SharpConfirmText.feedsOn(s) { state.keysOf(it).size }
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
-    SectionTitle("Sharp-book confirmation")
-    Text(SharpConfirmText.intro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
-    for ((tag, title, on, set) in listOf(
-        Quad("sharpConfirmAutoBet", "Auto-bet: require a sharp book to confirm +EV", s.sharpConfirmAutoBet) { v: Boolean -> onUpdate { it.copy(sharpConfirmAutoBet = v) } },
-        Quad("sharpConfirmAlerts", "CNO push alerts: require a sharp book to confirm +EV", s.sharpConfirmAlerts) { v: Boolean -> onUpdate { it.copy(sharpConfirmAlerts = v) } },
-    )) {
-        Row(
-            Modifier.fillMaxWidth().toggleable(value = on, role = Role.Switch, onValueChange = set).padding(vertical = 6.dp).testTag(tag),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
-            Switch(checked = on, onCheckedChange = null)
-        }
-    }
-    if (s.sharpConfirmAutoBet || s.sharpConfirmAlerts) {
+    SectionTitle("Sharp books")
+    Text(SharpConfirmText.vetoNote(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("sharpVetoNote"))
+    Text("Auto-bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(SharpMode.entries.toList(), s.sharpAutoBet, { it.displayName }) { v -> onUpdate { it.copy(sharpAutoBet = v) } }
+    Text("CNO push alerts", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(SharpMode.entries.toList(), s.sharpAlerts, { it.displayName }) { v -> onUpdate { it.copy(sharpAlerts = v) } }
+    if (s.sharpAutoBet == SharpMode.CONFIRM || s.sharpAlerts == SharpMode.CONFIRM) {
+        Text(SharpConfirmText.intro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
         Text("Sharp books", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
         Chips(SharpBookChoice.entries.toList(), s.sharpConfirmBooks, { it.displayName }) { v -> onUpdate { it.copy(sharpConfirmBooks = v) } }
         Text("Newest quote allowed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
