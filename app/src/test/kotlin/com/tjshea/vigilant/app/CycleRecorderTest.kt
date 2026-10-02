@@ -5,6 +5,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -46,6 +48,26 @@ class CycleRecorderTest {
         assertTrue(fin, fin.contains("c.eventLog.warn(\"CYCLE\""))
         // And a cycle that is skipped (a check holds the focus, auto-scan is off, one already runs) records nothing.
         assertTrue(cycle.indexOf("return false") < cycle.indexOf("c.perf.add(\"cycle.ms\""))
+    }
+
+    @Test
+    fun `a cycle is slow past three intervals and half a minute, whichever is longer`() {
+        // Every 5 s: half a minute is the floor.
+        assertFalse(AutoScanner.slowCycle(30_000L, 5))
+        assertTrue(AutoScanner.slowCycle(30_001L, 5))
+        // Every 20 minutes: three intervals (an hour) is the limit.
+        assertFalse(AutoScanner.slowCycle(3_600_000L, 1200))
+        assertTrue(AutoScanner.slowCycle(3_600_001L, 1200))
+        assertFalse(AutoScanner.slowCycle(100_000L, 1200))
+    }
+
+    @Test
+    fun `the cold start is the first one noted, and only for a process this screen started`() {
+        assertEquals(1_400L, MainActivity.coldStartOf(1_400L, null))
+        assertEquals(1_400L, MainActivity.coldStartOf(9_000L, 1_400L))
+        assertEquals(null, MainActivity.coldStartOf(MainActivity.COLD_START_WINDOW_MS, null))
+        assertEquals(MainActivity.COLD_START_WINDOW_MS - 1, MainActivity.coldStartOf(MainActivity.COLD_START_WINDOW_MS - 1, null))
+        assertEquals(null, MainActivity.coldStartOf(3_600_000L, null))
     }
 
     /** Each part of the cycle is timed under its own name (a real cycle's CNO read needs the network, so the steps are pinned in the source). */

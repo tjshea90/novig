@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
             val sinceStartMs = android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()
             // Only a process this screen started: one a service or an alarm started long ago isn't a cold start.
             val perf = (application as VigilantApp).container.perf
-            if (sinceStartMs < COLD_START_WINDOW_MS && perf.coldStartMs == null) perf.coldStartMs = sinceStartMs
+            perf.coldStartMs = coldStartOf(sinceStartMs, perf.coldStartMs)
         }
     }
 
@@ -544,6 +544,9 @@ class MainActivity : ComponentActivity() {
     private companion object {
         /** A process this old at its first screen is a cold start; older, a screen opened in a process the service had kept. */
         const val COLD_START_WINDOW_MS = 20_000L
+
+        /** The cold start to keep: the first one, and only when the process began for this screen (not started long ago by a service or alarm). */
+        fun coldStartOf(sinceStartMs: Long, already: Long?): Long? = if (already == null && sinceStartMs < COLD_START_WINDOW_MS) sinceStartMs else already
 
         const val ASKED_NOTIFICATIONS = "asked_notifications"
         const val ASKED_NOTIFICATIONS_AUTO = "asked_notifications_auto"

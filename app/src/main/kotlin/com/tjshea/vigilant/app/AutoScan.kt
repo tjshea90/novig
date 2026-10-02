@@ -257,7 +257,7 @@ class AutoScanner(
                     c.perf.add("cycle.ms", tookMs.toDouble())
                     c.eventLog.count("cycle.runs")
                     if (errors.isNotEmpty()) c.eventLog.count("cycle.errors")
-                    if (tookMs > maxOf(30_000L, 3L * settings.autoScanSeconds * 1_000L)) {
+                    if (slowCycle(tookMs, settings.autoScanSeconds)) {
                         c.eventLog.warn("CYCLE", "a background cycle took ${tookMs / 1_000} s (its interval is ${ScanSettings.intervalLabel(settings.autoScanSeconds)})", tookMs)
                     }
                 }
@@ -398,6 +398,9 @@ class AutoScanner(
     }
 
     companion object {
+        /** A cycle that took more than three intervals (and over half a minute) is worth a line in the timeline: the schedule couldn't be kept. */
+        fun slowCycle(tookMs: Long, autoScanSeconds: Int): Boolean = tookMs > maxOf(30_000L, 3L * autoScanSeconds * 1_000L)
+
         /** CNO bets at or over the alert minimum whose books and Novig price a cycle reads. */
         const val CNO_CHECK_TOP = 8
 
