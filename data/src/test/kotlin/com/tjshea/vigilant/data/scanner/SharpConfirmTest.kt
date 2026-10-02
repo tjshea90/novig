@@ -112,7 +112,9 @@ class SharpConfirmTest {
         assertEquals(Verdict.NOT_CONFIRMED, short.verdict)
         assertEquals("Pinnacle's own devigged price shows less than your 4.0% minimum edge", short.reason)
         // A price with no vig at all and no edge is not "any +EV".
-        assertEquals(Verdict.NOT_CONFIRMED, SharpConfirm.judge(listOf(pinnacle(100, -100)), 100, false, rules, now).verdict)
+        val flat = SharpConfirm.judge(listOf(pinnacle(100, -100)), 100, false, rules, now)
+        assertEquals(Verdict.NOT_CONFIRMED, flat.verdict)
+        assertEquals("Pinnacle's own devigged price doesn't show it +EV at Novig's price", flat.reason)
     }
 
     @Test

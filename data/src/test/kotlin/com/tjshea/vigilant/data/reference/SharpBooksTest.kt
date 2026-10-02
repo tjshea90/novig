@@ -157,6 +157,11 @@ class SharpBooksTest {
         assertEquals("PinnWire didn't answer (connection reset)", a2.unavailable)
         val a3 = sharp(held).quotes(bet(), rules)
         assertEquals("ParlayAPI's credits are held back for today", a3.unavailable)
+        // One feed down and another that answered without this bet: "no price", not "couldn't ask".
+        val thin = Feed("propline", "PropLine", { snapshot(game(total())) })
+        val a4 = sharp(down, thin).quotes(bet(), rules)
+        assertTrue(a4.quotes.isEmpty())
+        assertNull(a4.unavailable)
         // A failure is kept too: the same feed isn't hammered again inside the minute.
         val callsBefore = down.calls
         b2.quotes(bet(), rules)
