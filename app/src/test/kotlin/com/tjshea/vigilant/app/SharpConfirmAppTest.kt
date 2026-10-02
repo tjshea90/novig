@@ -167,6 +167,29 @@ class SharpConfirmAppTest {
     }
 
     @Test
+    fun `Settings counts what the sharp check said about each bet, so no volume says why`() = runBlocking {
+        // Tj, 2026-10-02 16:05Z: "I'm getting no volume so far on auto bet with the option for each bet to be verified positive EV by a sharp book. Is this
+        // working correctly? Is it getting sharp book pricing?" The tally is each bet's latest verdict since the app started.
+        val b = bettor(FakeNovig(), ArrayList()) { SharpConfirm.Result(SharpConfirm.Verdict.NO_QUOTE, reason = "no Pinnacle price for both sides of this exact bet") }
+        assertNull(AutoBettor.sharpLine(b.status.value, "Pinnacle"))
+        b.run(settings(), state())
+        assertEquals(mapOf(SharpConfirm.Verdict.NO_QUOTE to 1), b.status.value.sharp)
+        assertEquals(
+            "Sharp check since Vigilant started: 1 bet asked about, 0 confirmed, 1 with no Pinnacle price for that exact line.",
+            AutoBettor.sharpLine(b.status.value, "Pinnacle"),
+        )
+        // The same bet asked again counts once, at its newest verdict.
+        b.run(settings(), state())
+        assertEquals(mapOf(SharpConfirm.Verdict.NO_QUOTE to 1), b.status.value.sharp)
+        val all = AutoBettor.Status(sharp = SharpConfirm.Verdict.entries.associateWith { 2 })
+        assertEquals(
+            "Sharp check since Vigilant started: 10 bets asked about, 2 confirmed, 2 with no Pinnacle price for that exact line, 2 that Pinnacle's own price " +
+                "doesn't show +EV (enough), 2 with Pinnacle's price too old, 2 when no feed could be asked.",
+            AutoBettor.sharpLine(all, "Pinnacle"),
+        )
+    }
+
+    @Test
     fun `a check that throws is a skip, never a bet`() = runBlocking {
         val novig = FakeNovig()
         val report = bettor(novig, ArrayList()) { error("feed exploded") }.run(settings(), state())
