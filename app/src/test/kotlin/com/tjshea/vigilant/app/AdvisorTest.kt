@@ -279,7 +279,7 @@ class AdvisorTest {
     }
 
     @Test
-    fun `the app's log: one dropped-frame line is not a finding, a warning is not an error, and a crash's own tag is left to the crash`() {
+    fun `in the app's log one dropped-frame line is not a finding, a warning is not an error, and a crash's own tag is left to the crash`() {
         fun line(level: Char, tag: String, text: String) = LogcatTail.Line("10-02 01:00:00.000", level, tag, text)
         assertFalse("logcat:jank" in keys(base.copy(logcat = listOf(line('W', "Choreographer", "Skipped 47 frames!")))))
         assertTrue("logcat:jank" in keys(base.copy(logcat = listOf(line('W', "Choreographer", "Skipped 47 frames!"), line('W', "OpenGLRenderer", "Davey! duration=900ms")))))
