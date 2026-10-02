@@ -184,6 +184,9 @@ class NovigBetFinder(
         /** The least time between two of its reads. */
         const val MIN_GAP_MS = 350L
 
+        /** [Located.Missing] when Novig's catalog didn't answer. */
+        const val BUSY = "Novig's catalog didn't answer just now"
+
         private val LENIENT = Json { ignoreUnknownKeys = true; isLenient = true; coerceInputValues = true }
 
         /** A game found by its teams must start within this of CNO's start time. */
