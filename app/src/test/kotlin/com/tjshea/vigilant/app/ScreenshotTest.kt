@@ -147,6 +147,23 @@ class ScreenshotTest {
     @Test fun settingsTabBetting() = settingsTab(SettingsPage.BETTING)
     @Test fun settingsTabUsage() = settingsTab(SettingsPage.USAGE)
     @Test fun settingsTabTools() = settingsTab(SettingsPage.HELP)
+    @Test fun settingsTabAlerts() = settingsTab(SettingsPage.ALERTS)
+    @Test fun settingsTabWidget() = settingsTab(SettingsPage.WIDGET)
+
+    /** The Auto-bet tab (v0.46.0: its own tab, out of Settings › Betting), set up and on, with the presets under its switch. */
+    @Config(qualifiers = "w393dp-h7000dp-xxhdpi")
+    @Test fun autoBetTab() {
+        val base = SampleScan.state()
+        val s = base.copy(
+            settings = base.settings.copy(autoBet = true, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 30),
+            novig = NovigUi(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("read-1", "a", "sub-1", false, tradingKeyId = "t", tradingAlias = "a2")),
+            betting = BettingUi(enabled = true, balance = 42.0),
+        )
+        shoot("5m_auto_bet_tab") { com.tjshea.vigilant.app.ui.AutoBetScreen(s, {}) }
+        compose.onNodeWithTag("autoBetSwitch").assertIsOn()
+        compose.onNodeWithText("Running with the background CNO scan", substring = true).assertExists()
+        for (section in listOf("PRESETS", "WHAT IT BETS", "SHARP-BOOK VETO", "HOW MUCH", "HOW OFTEN", "NOTIFICATIONS")) compose.onNodeWithText(section).assertExists()
+    }
 
     /** The Fair odds tab with ParlayAPI on and a key: what a league and a tennis tour cost (TASKS.md Z2, v0.37.0). */
     @Config(qualifiers = "w393dp-h3200dp-xxhdpi")
@@ -927,7 +944,7 @@ class ScreenshotTest {
         openSettingsTab(SettingsPage.USAGE)
         compose.onNodeWithText("API usage", ignoreCase = true).assertExists()
         openSettingsTab(SettingsPage.CNO)
-        compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
+        compose.onNodeWithText("What the list shows", ignoreCase = true).assertExists()
     }
 
     @Config(qualifiers = "w240dp-h160dp-xxhdpi")
