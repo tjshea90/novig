@@ -416,78 +416,96 @@ private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
     }
 }
 
-/** CNO & widget: the CNO scanner's filters and refresh, and the widget / mini window. */
+/** CrazyNinjaOdds list: what it shows, each bet's book check, refresh. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ColumnScope.CnoTab(s: ScanSettings, onUpdate: SettingsUpdate) {
-    // ---- The CNO scanner ----------------------------------------------------------------
-    if (s.cnoOn) {
-        val f = s.cnoFilters
-        val onCno: ((CnoFilters) -> CnoFilters) -> Unit = { t -> onUpdate { it.copy(cnoFilters = t(it.cnoFilters)) } }
-        SectionTitle("CNO scanner")
-        Text("Devig (all worst case)", style = MaterialTheme.typography.bodyMedium)
-        ChoiceChips(CnoDevig.entries, f.devig, { it.displayName }) { v -> onCno { it.copy(devig = v) } }
-        Hint(
+private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
+    val f = s.cnoFilters
+    val onCno: ((CnoFilters) -> CnoFilters) -> Unit = { t -> onUpdate { it.copy(cnoFilters = t(it.cnoFilters)) } }
+    Intro(
+        "CrazyNinjaOdds (CNO) is a website that compares ${AppBook.name}'s odds with many sportsbooks' and lists the bets priced better than their true odds " +
+            "(+EV). These choices decide what that list shows. A preset (Auto-bet tab) can set the first four at once.",
+    )
+    SectionTitle("What the list shows")
+    Text("How the true odds are worked out", style = MaterialTheme.typography.bodyMedium)
+    ChoiceChips(CnoDevig.entries, f.devig, { it.displayName }) { v -> onCno { it.copy(devig = v) } }
+    Hint(
+        "Sportsbooks build their profit (the \"vig\") into their odds; removing it (\"devigging\") gives each side's true chance. " +
             when (f.devig) {
-                CnoDevig.CONSERVATIVE -> "The worse of CNO's two worst cases: its most cautious setting. It hides some real edges; what's left is the safest."
-                CnoDevig.LIQUIDITY_WEIGHTED -> "Books weighted by liquidity and limits (CNO's default)."
-                CnoDevig.MARKET_CONSENSUS -> "Every book counts the same."
-            } + " Worst case = the longest fair odds of multiplicative, additive/Shin and power.",
-        )
-        Text("Longest odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "No cap" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
-        Hint(if (f.maxOdds > 0) "Favorites and underdogs up to +${f.maxOdds} only: no longshots." else "Any odds, longshots included.")
-        Text("Fewest books behind the fair price", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "$it+" }) { v -> onCno { it.copy(minBooks = v) } }
-        Hint("A fair price from one or two books can be a small market's mistake. Tap any bet to see which books price both sides and Vigilant's own check.")
-        Text("Minimum EV", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(ScanSettings.CNO_MIN_EV_CHOICES, f.minEv, { Format.percent(it, 0) }) { v -> onCno { it.copy(minEv = v) } }
-        SwitchRow(
-            "Require a complete sportsbook",
-            "At least one book prices every side of the market (CNO's own filter).",
-            f.completeBook,
-        ) { v -> onCno { it.copy(completeBook = v) } }
-        Hint("Always left out: EV over 20% (almost always a stale line), rows CNO devigged from one side only (⚠️), and rows whose EV doesn't follow from their fair odds.")
+                CnoDevig.CONSERVATIVE -> "Conservative: the most cautious of CNO's estimates. It hides some real edges; what's left is the safest. Recommended."
+                CnoDevig.LIQUIDITY_WEIGHTED -> "Liquidity weighted: books that take bigger bets count more (CNO's own default)."
+                CnoDevig.MARKET_CONSENSUS -> "Market consensus: every book counts the same."
+            },
+    )
+    Text("Longest odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "No cap" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
+    Hint(
+        if (f.maxOdds > 0) "Favorites and underdogs up to +${f.maxOdds} only. Long shots are where fake edges hide (a small pricing error looks like a big edge)."
+        else "Any odds, long shots included. Long shots are where fake edges hide.",
+    )
+    Text("Fewest books behind the true odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "$it+" }) { v -> onCno { it.copy(minBooks = v) } }
+    Hint("How many sportsbooks' prices the true odds are built from. One or two books can be one book's mistake; more books, more trustworthy.")
+    Text("Smallest edge (EV) listed", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.CNO_MIN_EV_CHOICES, f.minEv, { Format.percent(it, 0) }) { v -> onCno { it.copy(minEv = v) } }
+    Hint("EV (expected value): how much a bet should return over time, per dollar, above break-even. 3% means about 3¢ per \$1 bet in the long run.")
+    SwitchRow(
+        "Require a complete sportsbook",
+        "Only markets where at least one book prices every side, so the true odds aren't guessed from half a market (CNO's own filter).",
+        f.completeBook,
+    ) { v -> onCno { it.copy(completeBook = v) } }
+    Hint("Always left out: an edge over 20% (almost always a stale line), rows CNO worked out from one side only (⚠️), and rows whose edge doesn't follow from their odds.")
 
-        Text("Refresh", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, ::secondsLabel) { v -> onUpdate { it.copy(cnoRefreshSeconds = v) } }
-        Hint(refreshHint(s))
-        Text("Rows per read", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "$it" }) { v -> onCno { it.copy(rows = v) } }
-        Hint("CNO sends its best-EV rows first; fewer rows is less data per read.")
+    SectionTitle("Checking each bet")
+    // One switch with its stricter option under it (2026-10-02 ~18:10Z: "Only bets the books agree on" read the books with the ✓ switch shown off).
+    val checking = s.cnoCheckBooks || s.cnoOnlyAgreed
+    SwitchRow(
+        "Green ✓ when books agree",
+        "Vigilant reads the ${CnoFeed.AGREE_TOP} best bets' sportsbook prices from CNO in the background (one every few seconds) and marks a bet ✓ when " +
+            "${CnoBooks.MIN_TWO_SIDED}+ books price both sides and ${CnoBooks.MIN_AGREEING}+ of them each say it's +EV on their own: the edge isn't one book's opinion.",
+        checking,
+        tag = "cnoCheckBooks",
+    ) { v -> onUpdate { it.copy(cnoCheckBooks = v, cnoOnlyAgreed = if (v) it.cnoOnlyAgreed else false) } }
+    if (checking) {
         SwitchRow(
-            "Green ✓ when books agree",
-            "Reads the ${CnoFeed.AGREE_TOP} best bets' books from CNO in the background (one bet every few seconds, " +
-                "each again after ${CnoFeed.AGREE_TTL_MS / 60_000} minutes), after the list, so the list is never slower. " +
-                "✓ = ${CnoBooks.MIN_TWO_SIDED}+ books price both sides and at least ${CnoBooks.MIN_AGREEING} of them each say it's +EV.",
-            s.cnoCheckBooks,
-        ) { v -> onUpdate { it.copy(cnoCheckBooks = v) } }
-        SwitchRow(
-            "Only bets the books agree on",
-            "The list, its count and the widget show only ✓ bets: ${CnoBooks.MIN_TWO_SIDED}+ other books price both sides " +
-                "and ${CnoBooks.MIN_AGREEING}+ of them each say it's +EV, so the fair price isn't one book's. The " +
-                "${CnoFeed.AGREE_TOP_ONLY_AGREED} best bets' books are read (one every few seconds); a bet shows once its " +
-                "books are in. Fewer bets, more reliable ones.",
+            "  Only show ✓ bets",
+            "The list, its count and the widget show only bets the books agree on (a bet shows once its books are in). Fewer bets, more reliable ones.",
             s.cnoOnlyAgreed,
-        ) { v -> onUpdate { it.copy(cnoOnlyAgreed = v) } }
-        // Novig's own order books: Vigilant MGM has no such public feed for BetMGM.
-        if (AppBook.isNovig) SwitchRow(
-            "Novig's price now",
-            "The ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_TOP} best CNO bets on Novig show Novig's current price, read from Novig's own " +
-                "order book every ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_EVERY_MS / 1000} s while the list is on screen, and the EV " +
-                "at it against CNO's fair odds: up to date even when CNO is slow or out of reach. \"was +117\" means it moved " +
-                "since CNO listed it; an orange EV, that it's now under your minimum.",
-            s.cnoLivePrices,
-        ) { v -> onUpdate { it.copy(cnoLivePrices = v) } }
-        SwitchRow(
-            "Player teams",
-            "Player bets show the team, like D. Schultz (HOU), from ESPN's rosters: two small reads per new game, kept for a day.",
-            s.cnoPlayerTeams,
-        ) { v -> onUpdate { it.copy(cnoPlayerTeams = v) } }
-        CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
+            tag = "cnoOnlyAgreed",
+        ) { v -> onUpdate { it.copy(cnoOnlyAgreed = v, cnoCheckBooks = true) } }
     }
+    // Novig's own order books: Vigilant MGM has no such public feed for BetMGM.
+    if (AppBook.isNovig) SwitchRow(
+        "Novig's price now",
+        "CNO's list can be a minute old. The ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_TOP} best bets show Novig's current price instead, read from Novig " +
+            "every ${com.tjshea.vigilant.data.cno.NovigLive.LIVE_EVERY_MS / 1000} s while the list is on screen, with the edge at that price. \"was +117\" means " +
+            "it moved since CNO listed it; an orange edge, that it's now under your minimum.",
+        s.cnoLivePrices,
+    ) { v -> onUpdate { it.copy(cnoLivePrices = v) } }
+    SwitchRow(
+        "Player teams",
+        "Player bets show the team, like D. Schultz (HOU), from ESPN's rosters.",
+        s.cnoPlayerTeams,
+    ) { v -> onUpdate { it.copy(cnoPlayerTeams = v) } }
 
-    // ---- Mini window --------------------------------------------------------------------
+    SectionTitle("Refresh")
+    Text("Read the list every", style = MaterialTheme.typography.bodyMedium)
+    ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, ::secondsLabel) { v -> onUpdate { it.copy(cnoRefreshSeconds = v) } }
+    Hint(refreshHint(s))
+    Text("Rows per read", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "$it" }) { v -> onCno { it.copy(rows = v) } }
+    Hint("CNO sends its best bets first; more rows means more candidates for the book checks and auto-bet.")
+
+    SectionTitle("Advanced")
+    CnoViewEditor(s.cnoViewUrl) { link -> onUpdate { it.copy(cnoViewUrl = link) } }
+}
+
+/** Widget & mini window: the floating widget, picture-in-picture, and Vigilant's rescans while it's open. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
+    Intro("A small window with your best bets that stays on screen over other apps (like ${AppBook.name}), so you can bet without switching back and forth.")
+----------------------------------------------------------------
     SectionTitle("Mini window")
     Hint("The widget opens only when you press its button at the top of the list.")
     SwitchRow(
