@@ -513,7 +513,9 @@ class ApiBettingController(
         }
     }
 
-    override fun betPick(p: com.tjshea.vigilant.data.reference.ParlayPick) = bet(p)
+    override fun betPick(p: com.tjshea.vigilant.data.reference.ParlayPick) {
+        bet(p)
+    }
 
     override fun bet(o: Opportunity) {
         if (c.trading == null) return
