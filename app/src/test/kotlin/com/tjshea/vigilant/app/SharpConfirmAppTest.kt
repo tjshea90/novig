@@ -42,6 +42,7 @@ import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import com.tjshea.vigilant.data.diag.Level
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -346,5 +347,35 @@ class SharpConfirmAppTest {
         // An unavailable check is a warning event too.
         bettor(FakeNovig(), ArrayList()) { SharpConfirm.Result(SharpConfirm.Verdict.UNAVAILABLE, reason = "couldn't get a fresh Pinnacle price (credits held back)") }.run(settings(), state())
         assertTrue(log.events().any { it.cat == "SHARP" && it.msg.contains("credits held back") })
+    }
+
+    @Test
+    fun `what a run counts, and what it says when it stopped or couldn't start`() = runBlocking {
+        val log = app.container.eventLog
+        val b = bettor(FakeNovig(), ArrayList()) { yes }
+        val before = log.counters()
+        val eventsBefore = log.events().size
+        fun delta(k: String) = (log.counters()[k] ?: 0L) - (before[k] ?: 0L)
+        // A run that looked at nothing is not a run in the funnel (a cycle every 5 s would swamp the numbers), and "off" is not news.
+        b.record(AutoBettor.Report(), "Auto-bet is off")
+        b.record(AutoBettor.Report(), null)
+        assertEquals(0L, delta("autobet.runs"))
+        assertEquals(eventsBefore, log.events().size)
+        // A run that looked: counted, with each skip reason by how many it skipped for it.
+        b.record(AutoBettor.Report(looked = 5, passed = 2, skipped = mapOf("its edge is under your minimum" to 3, "tried a moment ago" to 1)), null)
+        assertEquals(1L, delta("autobet.runs"))
+        assertEquals(5L, delta("autobet.looked"))
+        assertEquals(2L, delta("autobet.passed"))
+        assertEquals(3L, delta("autobet.skip.its edge is under your minimum"))
+        assertEquals(1L, delta("autobet.skip.tried a moment ago"))
+        // A stop is a warning with its reason, but "placed ..." is how a good run ends and isn't one.
+        b.record(AutoBettor.Report(looked = 1, stopped = "Novig refused the bet (HTTP 429)"), null)
+        b.record(AutoBettor.Report(looked = 1, stopped = "placed 3 bets"), null)
+        val warns = log.events().drop(eventsBefore).filter { it.cat == "AUTOBET" }
+        assertEquals(warns.toString(), listOf("stopped: Novig refused the bet (HTTP 429)"), warns.map { it.msg })
+        assertEquals(Level.WARN, warns.single().level)
+        // A reason it can't place bets at all is a warning, too.
+        b.record(AutoBettor.Report(halted = true), "stopped: a bet failed (Settings › Betting › Resume auto-bet)")
+        assertTrue(log.events().last().msg, log.events().last().msg == "can't place bets: stopped: a bet failed (Settings › Betting › Resume auto-bet)")
     }
 }

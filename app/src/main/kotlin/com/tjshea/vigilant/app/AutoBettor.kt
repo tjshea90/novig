@@ -313,7 +313,7 @@ class AutoBettor(
     }
 
     /** The flight recorder's view of a run (Tj, 2026-10-02): the funnel in counters (looked → passed → placed, and why not), each bet placed and each stop as an event. */
-    private fun record(report: Report, blocker: String?) {
+    internal fun record(report: Report, blocker: String?) {
         val log = c.eventLog
         if (report.looked > 0) {
             log.count("autobet.runs")
