@@ -583,4 +583,14 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   lock is the test. Bets placed in the Novig app (cash wallet) can't be locked: the API can't see them (§14.2).
 - **Novig's own price for a side** (the Tracker's "Novig only" filter, `NovigNow`): the middle of its best bid and its offer (`1 − best bid on the other
   outcome`, §7). Read from the same book reads the scanner already makes (public or keyed, with the websocket and ETag cache), never another book's API.
+  A one-sided book (bids on the bet's own side only, common on props) is priced at that bid; an empty book has no price (2026-10-02 20:06Z).
+- **Tracked bets without Novig's ids** (2026-10-02 20:06Z, Tj: "many open bets are not finding the current novig odds"): a CNO/ParlayAPI ✓, an alert ✓
+  or an imported mark keeps the bet's words, not always its market/outcome ids, and a bet with no market id can't be read. `NovigIds` looks each one up
+  again in Novig's public catalog (`/v3/public/catalog/events?league=…` then `/markets?event=…`, cached 5 min, 350 ms apart: `NovigBetFinder.locate`;
+  the outcome id from CNO's Novig link names its market directly) before every Novig-only read and Check odds now, 10 min between misses. What's
+  truly not offered says why on the bet (`TrackedBet.novigWhy`): game not listed, exact line not offered, market no longer listed (§ "settled markets
+  leave the catalog"), nothing bid or offered, or Novig didn't answer.
+- **Locked markets in the Tracker** (`LockedBets`): API bets holding both outcomes with equal contracts (from the bets' own fills, settled ones too) are
+  "locked": hidden from the Tracker's lists and stats while "Hide locked bets" is on (default), counted on their own card (bets locked and their
+  share, profit locked = contracts × $0.01 − everything spent on both sides, its % of that).
 
