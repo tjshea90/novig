@@ -1,21 +1,23 @@
-# CHECKPOINT 2339 — read me first, then TASKS.md
+# CHECKPOINT 2340 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T16:34:29Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `99fa19d1` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T16:39:25Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `c1ffe624` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.44.3: only a phone restart turns auto-bet off (not a swipe away, an update, a crash or a return); CNO's book table shows sister sites (BetMGM (ON), Hard Rock's states) as one vote; Settings › Betting counts what the sharp check said about each bet (versionCode 82, v0.44.3)
+AU4: v0.44.3 released, APK verified, recorded; release.yml's description fixed
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.44.3), then run: bash tools/record-release.sh v0.44.3 82 "v0.44.3: only a phone restart turns auto-bet off (not a swipe away, an update, a crash or a return); CNO's book table shows sister sites (BetMGM (ON), Hard Rock's states) as one vote; Settings › Betting counts what the sharp check said about each bet"
+answer Tj (findings + Release link); then wait for his next Diagnostics/the sharp tally from his phone
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  02f379ba ckpt 2339: pre-release: v0.44.3: only a phone restart turns auto-bet off (not a swipe a
   99fa19d1 ckpt 2338: floor: 1,641 passed, 1 stale pin fixed (DiagnosticsFileTest); SharpRealBoard
   9bcdd15a ckpt 2337: AU1-AU3 ticked (8 mutants killed); BRIEF.md rule + RESEARCH.md §64
   d6a0e073 ckpt 2336: AU1-AU3 code+tests: restart-only reset; CNO sheet shows sister sites as one 
@@ -25,5 +27,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   d5b560e9 ckpt 2332: v0.44.2 released, verified and recorded; AQ5/AR3/AS5 ticked
   583f0780 ckpt 2331: CI flake fixed: BackgroundTrimTest counted the scanner's own memory-pressure
   7825365d ckpt 2330: pre-release: v0.44.2: manual bets have no minimum edge (auto-bet keeps its r
-  8439d8c3 ckpt 2329: floor fixes: CycleRecorderTest pin follows AS2's event line; AutoResumeAppTe
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
