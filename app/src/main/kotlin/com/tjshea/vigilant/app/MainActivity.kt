@@ -73,6 +73,20 @@ class MainActivity : ComponentActivity() {
     /** The system's "allow notifications?" prompt; the answer only affects the scan notifications. */
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
+    /** The first time the window has focus in this process: how long the screen took to appear after the process started (Diagnostics' performance block). */
+    private var firstFocusNoted = false
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && !firstFocusNoted) {
+            firstFocusNoted = true
+            val sinceStartMs = android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()
+            // Only a process this screen started: one a service or an alarm started long ago isn't a cold start.
+            val perf = (application as VigilantApp).container.perf
+            if (sinceStartMs < COLD_START_WINDOW_MS && perf.coldStartMs == null) perf.coldStartMs = sinceStartMs
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Closed and opened again (no saved state): auto-bet and background auto-scan start off (Tj, 2026-10-02), saved before anything reads the settings.
         val switchedOff = if (savedInstanceState == null) LaunchReset.onFreshLaunch(application as VigilantApp) else null
@@ -522,6 +536,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
+        /** A process this old at its first screen is a cold start; older, a screen opened in a process the service had kept. */
+        const val COLD_START_WINDOW_MS = 20_000L
+
         const val ASKED_NOTIFICATIONS = "asked_notifications"
         const val ASKED_NOTIFICATIONS_AUTO = "asked_notifications_auto"
     }
