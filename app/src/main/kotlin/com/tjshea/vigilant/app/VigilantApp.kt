@@ -89,6 +89,22 @@ class VigilantApp : Application() {
         // "it says the best bet is Milwaukee, but this bet isn't even shown in the widget").
         ScanService.cancelDone(this)
     }
+
+    /**
+     * Vigilant is off screen (or memory is short): the scanners let go of what can't price again (RESEARCH.md §63; Tj's 2026-10-02 Diagnostics: Android
+     * ended it 3 times for memory in the background while it held 46 fair-odds boards). Not while a scan, the scan service or background auto-scan runs:
+     * they're using it.
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level < android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) return
+        val c = container
+        if (c.runner.state.value.scanning || AutoScanService.running) return
+        c.appScope.launch {
+            val dropped = c.scanner.trimForBackground() + (c.betScanner?.trimForBackground() ?: 0)
+            c.eventLog.info("APP", "off screen: memory trimmed ($dropped old fair-odds boards let go, heap ${com.tjshea.vigilant.data.MemoryGuard.usedMb()} of ${com.tjshea.vigilant.data.MemoryGuard.maxMb()} MB)")
+        }
+    }
 }
 
 /**
@@ -331,7 +347,9 @@ class AppContainer(private val app: Application) {
      * open bet, including bets added from vigilant scanner"): a bets-only [Scanner] of its own (never the feed's catalog, books or fair-odds
      * snapshots) prices exactly those bets' games from the same fair-odds sources and rules as the feed. Null for Vigilant MGM.
      */
-    val betPricer: OpenBetPricer? = if (AppBook.isNovig) OpenBetPricer(tracker, Scanner(novig, betsOnly = true), ::referenceSources) else null
+    /** Check odds now's own scanner (bets only), kept here so it's trimmed with the feed scanner when Vigilant leaves the screen. */
+    val betScanner: Scanner? = if (AppBook.isNovig) Scanner(novig, betsOnly = true) else null
+    val betPricer: OpenBetPricer? = betScanner?.let { OpenBetPricer(tracker, it, ::referenceSources) }
 
     /** Novig's price now for CNO's listed bets, from Novig's order books (only while CNO's list is on screen). */
     val live = NovigLive(novig, { row -> betFinder.find(row) })

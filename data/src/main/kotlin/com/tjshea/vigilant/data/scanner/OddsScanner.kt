@@ -30,4 +30,11 @@ interface OddsScanner {
 
     /** Leagues selected now that the last scan didn't load. */
     suspend fun unscannedLeagues(settings: ScanSettings): Set<String>
+
+    /**
+     * Vigilant left the screen: let go of what can never price again (fair-odds boards past the freshness limit) and what is cheap to make
+     * again, so Android, which ends the biggest cached apps first, keeps this one (RESEARCH.md §63). Nothing when a scan holds the scanner.
+     * Returns how many boards were dropped.
+     */
+    fun trimForBackground(): Int = 0
 }

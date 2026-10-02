@@ -1025,6 +1025,27 @@ class Scanner(
         synchronized(references) { references.keys.retainAll(wanted) }
     }
 
+    override fun trimForBackground(): Int {
+        // A scan or a re-price holds the lock: they're using all of it, and a scan running means Vigilant isn't idle.
+        if (!mutex.tryLock()) return 0
+        try {
+            val now = clock()
+            // Older than any game's freshness limit: never priced again (re-pricing and scans take only younger boards), only re-fetched.
+            val dropped = synchronized(references) {
+                val old = references.filterValues { now - it.snapshot.fetchedAtMs > Freshness.FAR_OFF_AGE_MS }.keys
+                references.keys.removeAll(old)
+                old.size
+            }
+            previewCache = null
+            plans.clear()
+            fairMemo.clear()
+            novig.trimCaches()
+            return dropped
+        } finally {
+            mutex.unlock()
+        }
+    }
+
     /** What the scanner keeps between scans, for Diagnostics' memory block (counts, not bytes). */
     data class Holdings(val snapshots: Int, val events: Int, val bookMarkets: Int, val books: Int, val cachedBooks: Int)
 

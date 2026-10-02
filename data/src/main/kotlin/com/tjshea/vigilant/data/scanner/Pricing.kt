@@ -179,6 +179,13 @@ class FairMemo(private val keep: Int = 3) {
         return PricedMarkets(plan, settings).also { priced = it }
     }
 
+    /** Lets go of every plan's fair lines and priced markets (they're made again on the next pricing). */
+    @Synchronized
+    fun clear() {
+        entries.clear()
+        priced = null
+    }
+
     /** How many markets' outcomes are held for re-use, for tests. */
     @Synchronized
     fun pricedCount(): Int = priced?.count() ?: 0
