@@ -1426,9 +1426,63 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun buildDiagnostics() {
         viewModelScope.launch {
-            val problems = withContext(Dispatchers.IO) { runCatching { c.problems.recent() }.getOrDefault(emptyList()) }
-            val cycles = withContext(Dispatchers.IO) { runCatching { c.cycleLog.summary() }.getOrDefault(com.tjshea.vigilant.data.diag.CycleBook()) }
-            buildDiagnostics(problems, cycles)
+            val inputs = gatherDiag()
+            // The meter as it stands this moment (a balance just read may not have reached the state yet).
+            val text = withContext(Dispatchers.Default) { DiagnosticsFile.build(_state.value.copy(usage = c.usage.flow.value), diagnosticsExtras(inputs), System.currentTimeMillis()) }
+            _state.update { it.copy(report = ReportUi("Diagnostics", text)) }
+        }
+    }
+
+    /** What a diagnostics file needs that isn't state in memory: files and the system log, read off the main thread. */
+    private class DiagInputs(
+        val problems: List<com.tjshea.vigilant.data.diag.Problem>,
+        val cycles: com.tjshea.vigilant.data.diag.CycleBook,
+        val logcat: List<com.tjshea.vigilant.data.diag.LogcatTail.Line>,
+        val storage: List<Pair<String, Long>>,
+        val previous: com.tjshea.vigilant.data.diag.Snap?,
+    )
+
+    private suspend fun gatherDiag(): DiagInputs = withContext(Dispatchers.IO) {
+        DiagInputs(
+            problems = runCatching { c.problems.recent() }.getOrDefault(emptyList()),
+            cycles = runCatching { c.cycleLog.summary() }.getOrDefault(com.tjshea.vigilant.data.diag.CycleBook()),
+            logcat = com.tjshea.vigilant.data.diag.LogcatTail.read(android.os.Process.myPid()),
+            storage = runCatching { DiagnosticsShare.storage(getApplication()) }.getOrDefault(emptyList()),
+            previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),
+        )
+    }
+
+    /** One-shot hand-offs to the activity that must start something (the share sheet): buffered, so one made while the screen is away isn't lost. */
+    private val shares = kotlinx.coroutines.channels.Channel<android.content.Intent>(kotlinx.coroutines.channels.Channel.BUFFERED)
+    val shareRequests: kotlinx.coroutines.flow.Flow<android.content.Intent> = shares.receiveAsFlow()
+
+    /**
+     * Settings › Tools › Share diagnostics with Claude (Tj, 2026-10-02): makes the file ([DiagnosticsFile.build]), keeps this report's numbers so the next one can be compared
+     * with it, and hands Android's share sheet to the screen. Never throws: a failure is a toast.
+     */
+    fun shareDiagnostics() {
+        viewModelScope.launch {
+            _toasts.tryEmit("Making the diagnostics file…")
+            val intent = try {
+                withContext(Dispatchers.IO) {
+                    val inputs = gatherDiag()
+                    val now = System.currentTimeMillis()
+                    val extras = diagnosticsExtras(inputs)
+                    val st = _state.value.copy(usage = c.usage.flow.value)
+                    val text = DiagnosticsFile.build(st, extras, now)
+                    val file = DiagnosticsShare.write(getApplication(), text, DiagnosticsFile.fileName(extras.versionName, now))
+                    c.diagHistory.add(Advisor.snap(st, extras, now, Advisor.findings(st, extras, now)))
+                    c.eventLog.info("DIAG", "diagnostics file made (${file.length() / 1024} KB)")
+                    c.eventLog.flush(force = true)
+                    DiagnosticsShare.intent(getApplication(), file, extras.versionName)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                c.eventLog.error("DIAG", "couldn't make the diagnostics file", e)
+                null
+            }
+            if (intent == null) _toasts.tryEmit("Couldn't make the diagnostics file") else shares.send(intent)
         }
     }
 
@@ -1456,13 +1510,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             standbyBucket = runCatching { Diagnostics.bucketName(app.getSystemService(android.app.usage.UsageStatsManager::class.java).appStandbyBucket) }.getOrNull(),
             online = caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?: (cm != null).takeIf { !it },
             network = network,
+            batteryPct = runCatching { app.getSystemService(android.os.BatteryManager::class.java).getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY).takeIf { it in 0..100 } }.getOrNull(),
+            charging = runCatching { app.getSystemService(android.os.BatteryManager::class.java).isCharging }.getOrNull(),
+            thermal = runCatching { thermalName(app.getSystemService(android.os.PowerManager::class.java).currentThermalStatus) }.getOrNull(),
         )
     }
 
-    private fun buildDiagnostics(problems: List<com.tjshea.vigilant.data.diag.Problem>, cycles: com.tjshea.vigilant.data.diag.CycleBook) {
+    private fun thermalName(status: Int): String = when (status) {
+        0 -> "none"; 1 -> "light"; 2 -> "moderate"; 3 -> "severe"; 4 -> "critical"; 5 -> "emergency"; 6 -> "shutdown"; else -> "?"
+    }
+
+    private fun diagnosticsExtras(g: DiagInputs): Diagnostics.Extras {
         val app = getApplication<Application>()
         val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
-        val extras = Diagnostics.Extras(
+        return Diagnostics.Extras(
             versionName = info?.versionName ?: "?",
             versionCode = info?.let { androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(it).toInt() } ?: 0,
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
@@ -1475,7 +1536,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             sharpCalls = c.sharp.calls,
             sharpFailures = c.sharp.failures,
             sharpAnswers = c.sharp.answeredBy,
-            cycles = cycles,
+            cycles = g.cycles,
+            net = c.netStats.snapshot(),
+            events = c.eventLog.events(),
+            counters = c.eventLog.counters(),
+            eventsSinceMs = c.eventLog.sinceMs(),
+            perf = c.perf.summaries(),
+            coldStartMs = c.perf.coldStartMs,
+            logcat = g.logcat,
+            storage = g.storage,
+            previous = g.previous,
             lastScan = c.lastScanCost,
             lastCheck = c.lastCheckCost,
             closingAlarmAtMs = ClosingAlarm.nextAtMs,
@@ -1489,11 +1559,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             ),
             injuryReports = c.injuries.book.value.size,
             phone = phoneNow(app),
-            problems = problems,
+            problems = g.problems,
             exits = runCatching { AppExits.recent(app) }.getOrDefault(emptyList()),
         )
-        // The meter as it stands this moment (a balance just read may not have reached the state yet).
-        _state.update { it.copy(report = ReportUi("Diagnostics", Diagnostics.report(it.copy(usage = c.usage.flow.value), extras, System.currentTimeMillis()))) }
     }
 
     /** Settings › Betting › Grading check: what Novig's ledger and positions say about each API bet, beside what the Tracker did (Tj, 2026-09-29). */
