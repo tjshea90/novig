@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data.novig.trading
 
 import com.tjshea.vigilant.data.novig.NovigBook
+import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
@@ -142,6 +143,74 @@ class ApiBetPlacer(
         withContext(NonCancellable) { finish(target, orderId) }
     }
 
+    /**
+     * Locks in [holding]'s profit (Tj, 2026-10-02 ~18:50Z: "take the other side of the bet later on and guarantee a profit no matter which side of the bet
+     * wins … It must guarantee profit because I will put real money on it"; RESEARCH.md §67). Under the same one-order lock as every bet: [market] must
+     * be the holding's and have exactly two outcomes; the book is read again (no older than [ApiBetPlanner.MAX_BOOK_AGE_MS]) and [LockIn.plan] worked
+     * out on it with [minProfit]; Novig's own positions must hold exactly what the Tracker says ([LockPositions.mismatch]), else nothing is sent; then
+     * one fill-or-kill order buys the side held less of at the plan's limit: it fills whole at that price or better, or nothing moves. The fills are
+     * logged as a lock ([TrackedBet.lockFor]). Not held to the per-bet or daily limits (it can only lower the risk), nor to pregame (an in-game fee is
+     * in the plan's worst case); [auto] locks wait while scanning is paused.
+     */
+    suspend fun placeLock(holding: MarketHolding, market: NovigMarket, minProfit: Double, pushable: Boolean, auto: Boolean): PlaceResult = lock.withLock {
+        if (auto && paused()) return PlaceResult.Refused("Scanning is paused: auto-lock waits for it.")
+        if (market.marketId != holding.marketId) return PlaceResult.Refused("That isn't this bet's market.")
+        if (market.status != "OPEN") return PlaceResult.Refused("Novig has closed this market, so it can't be locked now.")
+        val pair = holding.pair(market.outcomes.map { it.outcomeId })
+            ?: return PlaceResult.Refused("This market doesn't have exactly two sides on Novig, so a lock can't be exact.")
+        val book = try {
+            books(market.marketId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } ?: return PlaceResult.Refused("Novig's order book couldn't be read just now: try again in a moment.")
+        val now = clock()
+        if (now - book.fetchedAtMs > ApiBetPlanner.MAX_BOOK_AGE_MS) return PlaceResult.Refused("Novig's price is ${(now - book.fetchedAtMs) / 1000} seconds old: try again in a moment.")
+        val (held, short) = pair
+        val live = now >= holding.first.startsTs - LIVE_MARGIN_MS
+        val plan = when (val r = LockIn.plan(held, short, book.takeLadder(market, short.outcomeId), market.fee, live, pushable, minProfit)) {
+            is LockResult.None -> return PlaceResult.Refused(r.reason)
+            is LockResult.Ready -> r.plan
+        }
+        // Only from holdings Novig confirms: a lock worked out from a wrong count could lose on one side.
+        val positions = try {
+            trading.positions(market.marketId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return PlaceResult.Refused("Novig's positions couldn't be read (${e.message ?: e.javaClass.simpleName}): no lock without them.")
+        }
+        LockPositions.mismatch(holding, positions)?.let { return PlaceResult.Refused(it) }
+        val first = holding.first
+        val buy = market.outcomes.first { it.outcomeId == plan.buyOutcomeId }
+        val ask = book.takeLadder(market, buy.outcomeId).minOfOrNull { it.price } ?: plan.limitPrice
+        val target = BetTarget(
+            market = market, outcomeId = buy.outcomeId, league = first.league, eventName = first.eventName, startsTs = first.startsTs,
+            marketLabel = first.marketLabel,
+            selection = if (buy.outcomeId == first.outcomeId) first.selection else first.otherSide ?: buy.name,
+            // What Novig's own book says that side is worth (the middle of its bid and offer): a lock isn't a +EV pick.
+            fair = book.bestBid(buy.outcomeId)?.price?.let { (it + ask) / 2.0 } ?: ask,
+            fairAsOfMs = now, source = first.source, gameUrl = first.gameUrl, betUrl = null, auto = auto, lockFor = first.id,
+        )
+        val clientId = NovigTradingClient.newClientId()
+        val orderId: String = try {
+            trading.placeOrder(plan.buyOutcomeId, plan.limitPrice, plan.contracts, "FOK", clientId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: NovigApiException) {
+            if (e.status == 400 && e.code == TOO_SMALL_CODE) return PlaceResult.Refused("Novig refused the lock as too small ($TOO_SMALL_CODE).", tooSmall = true)
+            if (e.betLocked) return PlaceResult.Refused(e.advice)
+            return PlaceResult.Failed(e.advice)
+        } catch (e: Exception) {
+            withContext(NonCancellable) { findByClientId(clientId, plan.buyOutcomeId) } ?: return PlaceResult.Unconfirmed(
+                "Novig didn't answer, and its lists don't show the lock's order (${e.message ?: "no connection"}). Nothing is assumed: tap Sync with Novig " +
+                    "in the Tracker in a minute before locking again.",
+            )
+        }
+        withContext(NonCancellable) { finish(target, orderId) }
+    }
+
     /** Waits for the order to end, reads its fills, and logs the bet. */
     private suspend fun finish(target: BetTarget, orderId: String): PlaceResult {
         var order: NovigOrder? = null
@@ -208,7 +277,8 @@ class ApiBetPlacer(
     /** Dollars staked on API bets since local midnight, orders that filled only. */
     private fun spentToday(all: List<TrackedBet>): Double {
         val from = dayStart(clock())
-        return all.filter { it.orderId != null && it.createdAtMs >= from }.sumOf { it.stake }
+        // A lock only lowers the risk: it doesn't use up the day's limit.
+        return all.filter { it.orderId != null && !it.isLock && it.createdAtMs >= from }.sumOf { it.stake }
     }
 
     private fun percentText(p: Double) = String.format(Locale.US, "%.1f%%", p * 100)
@@ -218,6 +288,9 @@ class ApiBetPlacer(
         const val TOO_SMALL_CODE = "ORDER_TOO_SMALL"
 
         const val ORDER_WAIT_MS = 12_000L
+
+        /** A lock this close to the start is worked out as if in-game (the fee is charged by the time it fills: NOVIG_API.md §8). */
+        const val LIVE_MARGIN_MS = 2 * 60_000L
         const val POLL_MS = 400L
 
         fun localMidnight(now: Long): Long {
