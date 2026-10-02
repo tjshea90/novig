@@ -69,7 +69,7 @@ class LockPlacerTest {
 
     /** An API bet on A: 1,000 contracts for $4.00 (0.40). */
     private suspend fun placedA(t: BetTracker): TrackedBet {
-        val target = BetTarget(market, "A", "NBA", "B @ A", startsTs, "Moneyline", "Team A", fair = 0.45, fairAsOfMs = now, source = BetTracker.SOURCE_CNO)
+        val target = BetTarget(market, "A", "NBA", "B @ A", startsTs, "Moneyline", "Team A", fair = 0.42, fairAsOfMs = now, source = BetTracker.SOURCE_CNO)
         return t.logApi(target, "o-first", listOf(NovigFill("f0", "o-first", null, "mkt", "A", 1_000, 4.0, true, 0.0, now - 60_000)))!!.copy()
     }
 
