@@ -55,6 +55,8 @@ class LiveFeedPlanTest {
         val watched = ArrayList<List<String>>()
         var opened = 0
         var held: Set<String> = emptySet()
+        /** Requests made before the first [watch]. */
+        var callsBeforeWatch = -1
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = events
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = markets
         override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch {
@@ -68,6 +70,7 @@ class LiveFeedPlanTest {
         override suspend fun market(marketId: String): NovigMarket? = null
         override fun openFeed() { opened++ }
         override fun watch(marketIds: Collection<String>) {
+            if (watched.isEmpty()) callsBeforeWatch = calls.size
             watched += marketIds.toList()
             held = marketIds.take(room).toSet()
             onWatch(marketIds.toList())
@@ -135,7 +138,7 @@ class LiveFeedPlanTest {
         val novig = Keyed(room = 5, onWatch = { slow.complete(Unit) })
         scanner(novig, room = 5).scan(settings, listOf(Fair("polymarket", 0, 10), Fair("kalshi", 10, 60, slow)), onProgress = {}, onPartial = {})
         // Before any request: the planned lines (Polymarket's 10 first), more than its 5.
-        assertEquals(0, novig.calls.size.coerceAtMost(0))
+        assertEquals(0, novig.callsBeforeWatch)
         assertEquals((0 until 10).map { "m$it" }, novig.watched.first().take(10))
         assertEquals(5, novig.calls.flatten().count { it in (0 until 10).map { i -> "m$i" } })
     }
