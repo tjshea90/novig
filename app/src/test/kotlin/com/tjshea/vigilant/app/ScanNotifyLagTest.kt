@@ -28,9 +28,10 @@ class ScanNotifyLagTest {
         repeat(20) { i -> assertEquals(n, found.of(run.copy(progress = ScanProgress("Novig prices", i, 4588)))) }
         assertEquals("20 ticks with the same result: one count", 1, counted)
         // A new partial result, or new settings: counted again.
-        found.of(run.copy(result = result.copy(computedAtMs = result.computedAtMs + 1)))
+        val next = result.copy(computedAtMs = result.computedAtMs + 1)
+        found.of(run.copy(result = next))
         assertEquals(2, counted)
-        found.of(run.copy(result = result.copy(computedAtMs = result.computedAtMs + 1), settings = settings.copy(minEvPercent = 0.02)))
+        found.of(run.copy(result = next, settings = settings.copy(minEvPercent = 0.02)))
         assertEquals(3, counted)
         // No result yet: nothing to count.
         assertEquals(0, found.of(ScanRun(scanning = true)))
