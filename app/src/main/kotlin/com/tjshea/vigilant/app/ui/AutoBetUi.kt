@@ -281,6 +281,12 @@ fun AutoBetSection(
             )
         }
     }
+    if (s.autoBetKinds.isEmpty()) {
+        Text(
+            "No kind of bet picked: the auto-bet places nothing until you pick one (or apply a preset).",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("autoBetNoKinds"),
+        )
+    }
 
     // 5) books offering both sides
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
