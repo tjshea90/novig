@@ -581,9 +581,13 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   `reject`") at a limit worked out as the worst case (`LockIn.plan`, fee included when live), only after `GET /v3/portfolio/positions?market=` matches
   the Tracker's contracts exactly on both outcomes. Not yet seen live: the FOK path and positions' shape are the documented ones (§15); the first real
   lock is the test. Bets placed in the Novig app (cash wallet) can't be locked: the API can't see them (§14.2).
-- **Novig's own price for a side** (the Tracker's "Novig only" filter, `NovigNow`): the middle of its best bid and its offer (`1 − best bid on the other
-  outcome`, §7). Read from the same book reads the scanner already makes (public or keyed, with the websocket and ETag cache), never another book's API.
-  A one-sided book (bids on the bet's own side only, common on props) is priced at that bid; an empty book has no price (2026-10-02 20:06Z).
+- **Novig's own price for a side** (the Tracker's "Novig only" filter, `NovigNow`; changed 2026-10-02 ~21:35Z, Tj: "compare only the novig current odds
+  to the novig odds I placed the bets at … no data from any other sports book"): its **odds on Novig now**, the offer (`1 − best bid on the other
+  outcome`, §7), what Novig shows and what buying it costs; none when nothing is offered. Not the bid/offer middle: on a thin prop (+122 offered, −223
+  the other side) the middle was +163 and read as −15.6% EV with no move at all. The same American odds as bet = 0% EV (`NovigNow.asBet`: +122 logged
+  from American odds is 0.4505, Novig's grid +122 is 0.450). In the filter the fair when bet is the price paid (EV at bet 0) and no other book's line,
+  fair, close or second opinion is used. Read from the same book reads the scanner already makes (public or keyed, with the websocket and ETag
+  cache), never another book's API. The Lock card's "worth at Novig's middle price" is separate and unchanged.
 - **Tracked bets without Novig's ids** (2026-10-02 20:06Z, Tj: "many open bets are not finding the current novig odds"): a CNO/ParlayAPI ✓, an alert ✓
   or an imported mark keeps the bet's words, not always its market/outcome ids, and a bet with no market id can't be read. `NovigIds` looks each one up
   again in Novig's public catalog (`/v3/public/catalog/events?league=…` then `/markets?event=…`, cached 5 min, 350 ms apart: `NovigBetFinder.locate`;
