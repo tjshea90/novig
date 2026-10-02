@@ -1,23 +1,23 @@
-# CHECKPOINT 2366 — read me first, then TASKS.md
+# CHECKPOINT 2367 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T18:51:48Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `004e33fc` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T18:54:58Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `1f792fa0` (this checkpoint is the commit after it)
 
 ## Just done
-AY1 done: RESEARCH.md §67 (lock-in plausible and exact on Novig: FOK, same market, positions check, fees, FMV/push)
+AY2 done: LockIn math + LockInTest (property test over 20k cases), mutants 3/3
 
 ## Do this next
-AY2: data/novig/trading/LockIn.kt pure math + LockInTest (property tests); then TrackedBet.lockFor, placer placeLock (FOK), LockScanner, UI, auto-lock
+AY3/AY4: TrackedBet.lockFor; ApiBetPlacer.placeLock (FOK, positions check, same mutex, finish→logApi as a lock); LockScanner over open API bets (books, one read per market); UI on the bet sheet
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  a3e8603c ckpt 2366: AY1 done: RESEARCH.md §67 (lock-in plausible and exact on Novig: FOK, same 
   004e33fc ckpt 2365: AY: Tj's 18:50Z request (lock-in arbitrage on own Novig bets + auto-lock; Tr
   9781e664 ckpt 2364: AX done: v0.46.0 released, verified and recorded (settings reorganization, A
   ef6301c3 ckpt 2363: pre-release: v0.46.0: Settings reorganized (a home list with search and plai
@@ -27,5 +27,7 @@ AY2: data/novig/trading/LockIn.kt pure math + LockInTest (property tests); then 
   02e24ceb ckpt 2359: AX3/AX4 code in progress: SettingsPage home+pages+search (SettingsIndex), Au
   268658fe ckpt 2358: AW6 done: v0.45.0 released and verified (APK versionCode 83, cert AB:22:07:A
   5060403e ckpt 2357: AX1 inventory + AX2 design written into TASKS.md (contradictions a-g, apiMin
-  6696ee82 ckpt 2356: AX: Tj's 17:55Z settings reorganization request written into TASKS.md (AX1-A
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
