@@ -80,9 +80,10 @@ object TrackerText {
         val note = b.closeNote
         return when {
             b.createdAtMs >= b.startsTs -> "No closing line: bet after the start."
+            b.isLock -> "No closing line: a lock buys the other side of a bet you hold, so it isn't a pick and has no CLV."
             b.closeFinal -> "No closing line found" + (note?.let { ": $it" } ?: "") + "."
             note != null -> "Closing line not found yet ($note): looked ${Format.age(b.closeLookedAtMs, now)}, looked again every few hours."
-            else -> "Closing line: looked for after the start (ESPN's closing odds, then Novig's trades the next morning)."
+            else -> "Closing line: looked for after the start (Pinnacle's close via ParlayAPI, ESPN's closing odds, then Novig's trades the next morning)."
         }
     }
 

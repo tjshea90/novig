@@ -186,6 +186,13 @@ class TrackerTextTest {
     }
 
     @Test
+    fun `a started lock says it has no closing line because it isn't a pick, and the rest name every close source in order`() {
+        val started = bet(startsTs = now - hour)
+        assertEquals("No closing line: a lock buys the other side of a bet you hold, so it isn't a pick and has no CLV.", TrackerText.closeMissing(started.copy(lockFor = "p"), now))
+        assertTrue(TrackerText.closeMissing(started, now).contains("Pinnacle's close via ParlayAPI, ESPN's closing odds, then Novig's trades"))
+    }
+
+    @Test
     fun `typed odds are American, with either minus sign, and nothing inside ±100`() {
         assertEquals(150, parseAmerican("+150"))
         assertEquals(150, parseAmerican(" 150 "))
