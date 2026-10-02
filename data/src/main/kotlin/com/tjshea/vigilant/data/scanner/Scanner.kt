@@ -514,7 +514,7 @@ class Scanner(
          * the requests already read. What it already holds for this plan goes first (dropping it costs tokens and a still-current book),
          * then the unread lines in reading order.
          */
-        private fun feedStream(plan: Plan, pending: List<PlannedMarket>, preview: Map<LineKey, NovigPreview>, lastPass: Boolean, cap: Int) {
+        private fun feedStream(plan: Plan, pending: List<PlannedMarket>, preview: Map<String, Double>, lastPass: Boolean, cap: Int) {
             if (streamAt != null) return
             novig.openFeed()
             val waited = elapsed() - startedAt
