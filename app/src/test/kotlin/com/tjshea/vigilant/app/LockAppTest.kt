@@ -123,7 +123,7 @@ class LockAppTest {
         assertEquals("Team A", v.heldName)
         assertEquals("Team B", v.otherName)
         assertEquals("🔓 Lock +$0.50", LockText.badge(v))
-        assertTrue(LockText.headline(v), LockText.headline(v).startsWith("Lock in at least +$0.50 whichever side wins: buy 1,000 contracts of Team B at +122"))
+        assertTrue(LockText.headline(v), LockText.headline(v).startsWith("Lock in at least +$0.50 whichever side wins: buy 1,000 contracts of Team B at -122"))
         // Letting it ride: +$6.00 if A wins, −$4.00 if not; worth about +$0.90 at Novig's middle price (A's bid 0.45, offer 0.47: 0.46 × $10 − $4).
         assertEquals(6.0 to -4.0, LockText.rideRange(v))
         assertEquals(0.60, v.holdValue!!, 1e-9)
