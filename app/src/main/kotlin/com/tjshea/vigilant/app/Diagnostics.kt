@@ -327,6 +327,14 @@ object Diagnostics {
         }
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
         stats.luck?.let { o.appendLine(String.format(Locale.US, "Expected %+.2f vs actual %+.2f over %d settled bets with an EV: %+.1f standard deviations", stats.expectedProfit, stats.profitWithEv, stats.settledWithEv, it)) }
+        // Locks (Tj, 2026-10-02 20:06Z): the numbers above count every bet; the Tracker hides locked ones when its switch is on.
+        val locks = com.tjshea.vigilant.data.tracker.LockedBets.stats(bets)
+        o.appendLine("Locked in: ${TrackerText.lockCaption(locks, s.settings.trackerHideLocked)}" + String.format(Locale.US, " (profit %% %s)", locks.roi?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "–"))
+        // Why open Novig bets have no Novig price now (the Novig-only filter; Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds").
+        val novigOpen = com.tjshea.vigilant.data.tracker.NovigNow.open(bets, now)
+        o.appendLine("Novig's own price: ${novigOpen.count { com.tjshea.vigilant.data.tracker.NovigNow.note(it) == null }} of ${novigOpen.size} open Novig bets · ${novigOpen.count { it.marketId.isBlank() || it.outcomeId.isBlank() }} without Novig's ids on record")
+        novigOpen.mapNotNull { com.tjshea.vigilant.data.tracker.NovigNow.note(it) }.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(6)
+            .forEach { o.appendLine("  no Novig price ×${it.value}: ${it.key}") }
 
         // Where the edge is real (Tj, 2026-09-30: "know … how to improve the app … accuracy"): the same numbers split, then open bets' edge now.
         o.appendLine()
