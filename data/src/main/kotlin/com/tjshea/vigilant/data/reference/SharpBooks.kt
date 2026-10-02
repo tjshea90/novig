@@ -126,6 +126,10 @@ class SharpBooks(
             return if (prop) source.propsOnly || source.id == PinnapiClient.ID else !source.propsOnly
         }
 
+        /** The feeds among [sources] that can confirm a bet, in the order they are asked (their titles): for Settings and Diagnostics. */
+        fun feedsAmong(sources: List<ReferenceSource>): List<String> =
+            sources.filter { it.id !in NOT_PINNACLE }.sortedBy { priority(it) }.map { it.displayName }.distinct()
+
         /** Cheapest and freshest first: PinnWire / pinnapi, PropLine, ParlayAPI, The Odds API. */
         private fun priority(source: ReferenceSource): Int = when {
             source.id == PinnapiClient.ID -> 0

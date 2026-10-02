@@ -44,6 +44,11 @@ object Diagnostics {
         val autoScanServiceRunning: Boolean = false,
         /** The service holds the CPU awake between scans right now ([com.tjshea.vigilant.data.scanner.KeepAwake]). */
         val keepAwakeHeld: Boolean = false,
+        /** Sharp-book confirmation (Tj, 2026-10-02): the feeds that could confirm a bet now (in the order asked), calls made and failed since the app opened, and answers by feed. */
+        val sharpFeeds: List<String> = emptyList(),
+        val sharpCalls: Int = 0,
+        val sharpFailures: Int = 0,
+        val sharpAnswers: Map<String, Int> = emptyMap(),
         /** When each background cycle started against its schedule, and whether the screen was off or Doze on ([com.tjshea.vigilant.data.diag.CycleLog]); saved across restarts. */
         val cycles: com.tjshea.vigilant.data.diag.CycleBook = com.tjshea.vigilant.data.diag.CycleBook(),
         /** What the last scan and the last Check odds now cost each API (since the app opened), null before one ran. */
@@ -138,6 +143,14 @@ object Diagnostics {
                 "ON · ${com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
                     (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now)}"
             },
+        )
+        o.appendLine(
+            "Sharp-book confirmation (Tj, 2026-10-02): auto-bet ${if (set.sharpConfirmAutoBet) "ON" else "off"} · alerts ${if (set.sharpConfirmAlerts) "ON" else "off"}" +
+                if (!set.sharpConfirmAutoBet && !set.sharpConfirmAlerts) "" else {
+                    " · ${set.sharpConfirmBooks.displayName}, quote at most ${ScanSettings.intervalLabel(set.sharpConfirmMaxAgeSeconds)} old, edge ${if (set.sharpConfirmMinEv <= 0.0) "any +EV" else "at least ${pct(set.sharpConfirmMinEv)}"}, " +
+                        "CNO's page ${if (set.sharpConfirmViaCno) "may confirm" else "only vetoes"} · feeds: ${x.sharpFeeds.joinToString(", ").ifEmpty { "none on with a key" }} · " +
+                        "feed calls since the app opened ${x.sharpCalls} (${x.sharpFailures} failed)" + (x.sharpAnswers.takeIf { it.isNotEmpty() }?.let { m -> ", answers: " + m.entries.joinToString(", ") { "${it.key} ${it.value}" } } ?: "")
+                },
         )
         o.appendLine("Leagues: ${set.leagues.sorted().joinToString(", ").ifEmpty { "none" }} · days ahead ${set.daysAhead} · starts within ${if (set.startsWithinHours <= 0) "any time" else "${set.startsWithinHours} h"} · live games ${if (set.includeLive) "on" else "off"}")
         o.appendLine("Edge shown: ${pct(set.minEvPercent)} to ${pct(set.maxEvPercent)} · max odds +${set.maxOdds} · fair odds ${set.fairSource} / ${set.devigMethod}, at least ${set.minBooks} book${if (set.minBooks == 1) "" else "s"}")

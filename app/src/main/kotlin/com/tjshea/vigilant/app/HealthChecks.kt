@@ -40,6 +40,7 @@ object HealthChecks {
         accuracy(s, now)
         betting(s)
         autoBet(s, x, now)
+        sharp(s, x)
         memory(x)
     }.sortedBy { it.level.ordinal }
 
@@ -432,6 +433,30 @@ object HealthChecks {
         // Tj, 2026-10-01: every bet gets a push notification; one Android won't show means bets placed that he never sees.
         if (x.phone.notifications == false) add(Check(Level.WARN, "Auto-bet notifications", "Android has notifications switched off for Vigilant: bets are placed with no pop-up", look = "Android Settings › Apps › Vigilant › Notifications, then Settings › Betting › Send a test notification"))
         if (st.last.stopped?.contains("daily limit") == true) add(Check(Level.WARN, "Auto-bet", "today's API bets reached the daily limit of ${Locale.US.let { String.format(it, "$%.0f", set.apiMaxPerDay) }}", look = "Settings › Betting › Most in a day"))
+    }
+
+    /**
+     * Sharp-book confirmation (Tj, 2026-10-02): switched on with nothing that can ask is a bet-stopper (the auto-bet skips every bet it can't prove), and
+     * is said so; with a feed, it says which and how it has been going.
+     */
+    private fun MutableList<Check>.sharp(s: UiState, x: Diagnostics.Extras) {
+        val set = s.settings
+        if (!set.sharpConfirmAutoBet && !set.sharpConfirmAlerts) return
+        val where = listOfNotNull("auto-bet".takeIf { set.sharpConfirmAutoBet }, "alerts".takeIf { set.sharpConfirmAlerts }).joinToString(" and ")
+        if (x.sharpFeeds.isEmpty() && !set.sharpConfirmViaCno) {
+            add(
+                Check(
+                    Level.WARN, "Sharp-book confirmation", "is on for $where but no Pinnacle feed is on with a key: nothing can be confirmed, so ${if (set.sharpConfirmAutoBet) "the auto-bet skips every bet" else "no CNO alert is sent"}",
+                    look = "Settings › Fair-odds sources (PinnWire or pinnapi, ParlayAPI, PropLine), or switch on \"Also take Pinnacle's price from CNO's page\"",
+                ),
+            )
+            return
+        }
+        if (x.sharpCalls > 0 && x.sharpFailures * 2 > x.sharpCalls) {
+            add(Check(Level.WARN, "Sharp-book confirmation", "${x.sharpFailures} of ${x.sharpCalls} feed calls failed (a key's allowance, credits held back or no answer)", look = "the API usage meters in Settings"))
+            return
+        }
+        add(Check(Level.OK, "Sharp-book confirmation", "on for $where via ${x.sharpFeeds.joinToString(", ").ifEmpty { "CNO's page" }} (${x.sharpCalls} feed calls since the app opened)"))
     }
 
     /** A bet no source can find a close for: an early ✓ import with no league and no Novig outcome id. */
