@@ -57,13 +57,15 @@ class TrackerNovigOnlyTest {
         var checks = 0
         var odds = 0
         compose.setContent {
-            VigilantTheme(darkTheme = true) {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val state = SampleScan.state().let { it.copy(bets = listOf(bet), settings = it.settings.copy(trackerNovigOnly = on)) }
-                    TrackerScreen(
-                        state, onSettle = { _, _ -> }, onDelete = {}, onCheckOdds = { odds++ }, initialView = TrackerView.BETS,
-                        onNovigOnly = { switched += it; on = it }, onCheckNovig = { checks++ },
-                    )
+            androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalClock provides { now }) {
+                VigilantTheme(darkTheme = true) {
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        val state = SampleScan.state().let { it.copy(bets = listOf(bet), settings = it.settings.copy(trackerNovigOnly = on)) }
+                        TrackerScreen(
+                            state, onSettle = { _, _ -> }, onDelete = {}, onCheckOdds = { odds++ }, initialView = TrackerView.BETS,
+                            onNovigOnly = { switched += it; on = it }, onCheckNovig = { checks++ },
+                        )
+                    }
                 }
             }
         }
