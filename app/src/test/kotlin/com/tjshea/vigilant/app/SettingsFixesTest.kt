@@ -73,7 +73,7 @@ class SettingsFixesTest {
             assertTrue("$scanner", BackgroundScan.on(on))
             assertFalse("$scanner", BackgroundScan.on(BackgroundScan.set(on, false)))
         }
-        // Both scanners: CNO alone (free) unless Vigilant's own scan is asked for, and that choice survives switching off and on? No: on keeps BOTH.
+        // Both scanners: on is CNO alone (free) unless Vigilant's own scan was already asked for.
         assertEquals(AutoScanMode.CNO, BackgroundScan.set(base.copy(scanner = ScannerMode.BOTH), true).autoScan)
         assertEquals(AutoScanMode.BOTH, BackgroundScan.set(base.copy(scanner = ScannerMode.BOTH, autoScan = AutoScanMode.BOTH), true).autoScan)
         // Vigilant only: on is its scan (stored as BOTH, which is what runs it).
@@ -97,7 +97,6 @@ class SettingsFixesTest {
         compose.onNodeWithTag("backgroundScan").performClick()
         assertTrue(s.autoScansVigilant)
         compose.onNodeWithTag("backgroundScan").assertIsOn()
-        assertNull(androidx.compose.ui.test.SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.TestTag).let { null })
         compose.onNodeWithTag("backgroundAlsoVigilant").assertDoesNotExist()
         s = s.copy(scanner = ScannerMode.BOTH, autoScan = AutoScanMode.CNO)
         compose.onNodeWithTag("backgroundAlsoVigilant").assertIsOff().performClick()
