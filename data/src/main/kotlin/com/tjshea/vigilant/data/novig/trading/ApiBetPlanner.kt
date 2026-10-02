@@ -45,8 +45,20 @@ data class BetLimits(
     val minEv: Double = 0.0,
     val maxOdds: Int = 0,
     /** Where [minEv] is set, for a refusal that names it. */
-    val minEvWhere: String = "Settings › Betting › Smallest edge a bet is still placed at",
-)
+    val minEvWhere: String = "Auto-bet's smallest edge (Settings › Betting › Auto-bet)",
+    /**
+     * A bet Tj places by hand from a Bet sheet (Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to
+     * bet on whatever I want manually. Only keep the hard restrictions on the auto bet function"): no minimum edge, the stake filled at the best
+     * prices Novig offers whatever their EV, and old or unknown fair odds said beside the EV instead of refusing. The per-bet and per-day dollar
+     * limits, pregame only and the price he confirmed still apply. Auto-bet never sets it.
+     */
+    val manual: Boolean = false,
+) {
+    companion object {
+        /** A hand-placed bet's limits: only Tj's own dollar limits. */
+        fun manual(maxStake: Double, maxPerDay: Double) = BetLimits(maxStake, maxPerDay, minEv = 0.0, manual = true)
+    }
+}
 
 /** What a bet would do, worked out from a book read just now. */
 data class BetPlan(
@@ -103,11 +115,20 @@ object ApiBetPlanner {
         if (target.startsTs <= now) return no("This game has started: bets through the API are pregame only.")
         if (target.market.status != "OPEN") return no("Novig has closed this market.")
         val fee = target.market.fee ?: return no("Novig's fee for this market couldn't be read, so its cost can't be worked out.")
-        // Money is at stake: an unknown age isn't taken as fresh (the app's lists do, to show a bet; a bet placed needs the age).
-        if (target.fairAsOfMs == null) return no("How old the fair odds behind this bet are isn't known: scan again first.")
-        if (!Freshness.fresh(target.fairAsOfMs, now, target.startsTs)) {
-            val minutes = target.fairAsOfMs?.let { (now - it) / 60_000L }
-            return no("The fair odds behind this bet are ${minutes?.let { "$it minutes" } ?: "too"} old (${Freshness.LIMIT_TEXT}): scan again first.")
+        // Money is at stake: an unknown age isn't taken as fresh (the app's lists do, to show a bet; a bet placed needs the age). By hand, Tj
+        // decides: the age is said beside the EV.
+        val fairNote = when {
+            limits.manual && target.fairAsOfMs == null -> "How old the fair odds behind this EV are isn't known."
+            limits.manual && !Freshness.fresh(target.fairAsOfMs, now, target.startsTs) ->
+                "The fair odds behind this EV are ${(now - target.fairAsOfMs!!) / 60_000L} minutes old: the EV may have moved since."
+            else -> null
+        }
+        if (!limits.manual) {
+            if (target.fairAsOfMs == null) return no("How old the fair odds behind this bet are isn't known: scan again first.")
+            if (!Freshness.fresh(target.fairAsOfMs, now, target.startsTs)) {
+                val minutes = target.fairAsOfMs.let { (now - it) / 60_000L }
+                return no("The fair odds behind this bet are $minutes minutes old (${Freshness.LIMIT_TEXT}): scan again first.")
+            }
         }
         if (book == null) return no("Novig's order book couldn't be read just now: try again in a moment.")
         if (now - book.fetchedAtMs > MAX_BOOK_AGE_MS) return no("Novig's price is ${(now - book.fetchedAtMs) / 1000} seconds old: try again in a moment.")
@@ -117,7 +138,7 @@ object ApiBetPlanner {
             return no("Novig's best price is now ${american(best.price)}, longer than your ${Odds.formatAmerican(limits.maxOdds)} limit.")
         }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = false)
-        if (bestQuote.evPercent < limits.minEv - 1e-9) {
+        if (!limits.manual && bestQuote.evPercent < limits.minEv - 1e-9) {
             // Still +EV, only under Tj's own minimum: say that, and where it's set (Tj, 2026-10-02: "Why is this saying the edge is gone? It's
             // the same odds, and they are positive ev": +2.4% under his +3% read as "The edge is gone").
             return no(
@@ -131,14 +152,15 @@ object ApiBetPlanner {
             )
         }
 
-        // Walk the ladder cheapest first, spending the stake while each level keeps the edge at or above the minimum.
+        // Walk the ladder cheapest first, spending the stake while each level keeps the edge at or above the minimum (by hand: every level, as
+        // Novig's own bet slip would).
         var dollarsLeft = stake
         var contracts = 0L
         var cost = 0.0
         var limit = best.price
         for (level in levels) {
             val q = EvMath.quote(target.fair, level.price, fee, eventLive = false)
-            if (q.evPercent < limits.minEv - 1e-9) break
+            if (!limits.manual && q.evPercent < limits.minEv - 1e-9) break
             val perContract = q.cost * EvMath.CONTRACT_PAYOUT_DOLLARS
             val take = minOf(level.contracts, Math.floor(dollarsLeft / perContract + 1e-9).toLong())
             if (take <= 0L) break
@@ -151,12 +173,16 @@ object ApiBetPlanner {
         if (contracts <= 0L) return no("${money(stake)} is less than one contract at Novig's price (${american(best.price)}): bet more.")
         val average = averagePrice(levels, contracts)
         val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = false)
-        val note = if (stake - cost > stake * 0.05 + 0.01) {
-            "Only ${money(cost)} of the ${money(stake)} is offered at " +
-                (if (limits.minEv > 1e-9) "your ${percent(limits.minEv)} minimum edge or better" else "a positive edge") + " right now: this bets ${money(cost)}."
+        val shortNote = if (stake - cost > stake * 0.05 + 0.01) {
+            "Only ${money(cost)} of the ${money(stake)} is offered " + when {
+                limits.manual -> "on Novig's book"
+                limits.minEv > 1e-9 -> "at your ${percent(limits.minEv)} minimum edge or better"
+                else -> "at a positive edge"
+            } + " right now: this bets ${money(cost)}."
         } else {
             null
         }
+        val note = listOfNotNull(shortNote, fairNote).joinToString(" ").ifEmpty { null }
         return PlanResult.Ready(
             BetPlan(
                 limitPrice = limit,

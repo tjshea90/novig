@@ -413,7 +413,7 @@ class NovigStream(
                 403 -> "This key can't open Novig's live feed (403)."
                 // Novig's code says whether it judged the network's address or the phone's location check.
                 451 -> com.tjshea.vigilant.data.novig.signing.NovigApiException(451, refusalCode(response), null).brief
-                423 -> "Novig says the account is locked (423)."
+                423 -> com.tjshea.vigilant.data.novig.signing.NovigApiException(423, refusalCode(response), null).advice
                 else -> "Novig's live feed dropped (${t.message ?: t.javaClass.simpleName})."
             },
         )

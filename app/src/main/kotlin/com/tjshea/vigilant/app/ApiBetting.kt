@@ -230,7 +230,8 @@ class ApiBettingController(
     private val placerLock = Any()
 
     private fun settings() = state.value.settings
-    private fun limits() = settings().let { BetLimits(it.apiMaxStake, it.apiMaxPerDay, it.apiMinEv) }
+    /** A Bet sheet's bet is placed by hand: only Tj's own dollar limits, no minimum edge ([BetLimits.manual]). */
+    private fun limits() = settings().let { BetLimits.manual(it.apiMaxStake, it.apiMaxPerDay) }
 
     /**
      * Plans run on the default dispatcher's threads, and two can start together (a typed amount right after the sheet opened): made and

@@ -63,7 +63,9 @@ class ApiBetPlacer(
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
     suspend fun plan(target: BetTarget, stake: Double, allowRepeat: Boolean = false, limitsOverride: BetLimits? = null): PlanResult {
-        if (paused()) return PlanResult.Refused("Scanning is paused (Settings): resume it before betting.")
+        val limits = limitsOverride ?: limits()
+        // Pause holds what runs by itself (auto-bet); a bet Tj places by hand is his call (Tj, 2026-10-02: "I should be able to bet on whatever I want manually").
+        if (!limits.manual && paused()) return PlanResult.Refused("Scanning is paused (Settings): resume it before betting.")
         val all = tracker.all()
         if (!allowRepeat && all.any { it.status == BetStatus.PENDING && it.orderId != null && it.outcomeId == target.outcomeId }) {
             return PlanResult.Refused("You've already bet this through the API and it's still open (Tracker). Bet it again from the Tracker's bet if you mean to.")
@@ -75,7 +77,7 @@ class ApiBetPlacer(
         } catch (e: Exception) {
             null
         }
-        return ApiBetPlanner.plan(target, book, stake, clock(), limitsOverride ?: limits(), spentToday(all))
+        return ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all))
     }
 
     /**
@@ -125,6 +127,8 @@ class ApiBetPlacer(
             if (e.status == 400 && e.code == TOO_SMALL_CODE) {
                 return PlaceResult.Refused("Novig refused the order as too small ($TOO_SMALL_CODE). Try a bigger amount.", tooSmall = true)
             }
+            // A lock on this one market, game, league or player (423 MARKET_LOCKED …) is about this bet too: the account can still bet the rest.
+            if (e.betLocked) return PlaceResult.Refused(e.advice)
             return PlaceResult.Failed(e.advice)
         } catch (e: Exception) {
             // No usable answer (a timeout, a dropped connection, a reply that couldn't be read): the order may have gone through, so look

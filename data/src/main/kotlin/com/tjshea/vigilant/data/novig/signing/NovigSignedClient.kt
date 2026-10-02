@@ -48,7 +48,14 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             status == 451 && code == "RESTRICTED_GEOLOCATION_REGION" -> "Novig says your last location check is in a restricted state (Novig code $code)."
             status == 451 -> "Novig needs its location check: open the Novig app for a moment so it can geolocate, then try again" + (code?.let { " (Novig code $it)." } ?: ".")
             status == 503 && code == "GEOLOCATION_SCREENING_UNAVAILABLE" -> "Novig's location screening is down for the moment. Try again in a few minutes."
-            status == 423 -> "Novig reports the account is locked, self-excluded, or trading is halted. Contact Novig support."
+            // docs.novig.com/api/errors (read 2026-10-02): "A 423 doesn't clear on its own. Contact support." Four codes lock one bet's market, game,
+            // league or player; the rest the account or the whole exchange.
+            status == 423 && code in BET_LOCK_CODES ->
+                "Novig has locked this ${BET_LOCK_WHAT.getValue(code!!)} (Novig code $code): this bet can't be placed now; others still can."
+            status == 423 && code == "SYSTEM_LOCKED" -> "Novig has halted trading on the whole exchange (Novig code $code). Nothing can be bet until it reopens; Novig support can say when."
+            status == 423 && code == "SELF_EXCLUDED" -> "Novig says this account is self-excluded (Novig code $code): it can't bet until Novig support lifts it."
+            status == 423 && code != null -> "Novig has locked the account for betting (Novig code $code). It doesn't clear on its own: contact Novig support and quote $code."
+            status == 423 -> "Novig reports the account is locked, self-excluded, or trading is halted (no code given). Contact Novig support."
             status == 401 && serverMessage?.contains("timestamp") == true -> "The phone's clock is off by more than 30 seconds. Turn on automatic date & time."
             status == 401 && serverMessage?.contains("not found") == true -> "Novig doesn't know that key ID. Check it was copied exactly, and that the key is a production (not QA) key."
             status == 401 && serverMessage?.contains("revoked") == true -> "That key was revoked. Create a new one on novig.com → Profile → Settings → Novig API."
@@ -65,9 +72,16 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             else -> serverMessage ?: "Novig returned HTTP $status."
         }
 
+    /** A 423 that locks this one bet's market, game, league or player, not the account ([BET_LOCK_CODES]). */
+    val betLocked: Boolean get() = status == 423 && code in BET_LOCK_CODES
+
     companion object {
         /** The 451 codes about the request's network rather than the key holder's device. */
         val NETWORK_CODES = setOf("ANONYMIZED_NETWORK", "RESTRICTED_NETWORK_REGION")
+
+        /** The 423 codes that lock one bet's market, game (event), league or competitor (docs.novig.com/api/errors). */
+        val BET_LOCK_WHAT = mapOf("MARKET_LOCKED" to "market", "EVENT_LOCKED" to "game", "LEAGUE_LOCKED" to "league", "COMPETITOR_LOCKED" to "player or team")
+        val BET_LOCK_CODES = BET_LOCK_WHAT.keys
     }
 }
 
