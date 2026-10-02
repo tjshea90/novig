@@ -667,7 +667,10 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * [b] with [o]'s fair line as its fair now: EV at the price it was bet at, the books behind it, Novig's price now, and the closing line so far.
      * [alongside]: Vigilant's read only ([TrackedBet.vigFair]), the rest left to [mergeReads].
      */
-    private fun applyFair(b: TrackedBet, o: Opportunity, now: Long, via: String, alongside: Boolean = false): TrackedBet {
+    private fun applyFair(b0: TrackedBet, o: Opportunity, now: Long, via: String, alongside: Boolean = false): TrackedBet {
+        // Novig's own price from the same book read (its bid and offer for this side): the "Novig only" filter reuses it instead of reading again.
+        val novigMid = o.quote?.price?.let { ask -> o.bestBid?.let { bid -> ((bid + ask) / 2.0).coerceIn(0.001, 0.999) } ?: ask }
+        val b = if (novigMid != null && o.bookFetchedAtMs != null) NovigNow.apply(b0, novigMid, o.bookFetchedAtMs) else b0
         val fair = o.fairProbability ?: return b
         val lines = booksOf(o)
         val twoSided = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() }
