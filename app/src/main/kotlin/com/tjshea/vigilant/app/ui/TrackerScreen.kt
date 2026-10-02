@@ -190,8 +190,17 @@ fun TrackerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Bet tracker", fontWeight = FontWeight.Bold) },
+                title = { Text("Tracker", fontWeight = FontWeight.Bold, maxLines = 1) },
                 actions = {
+                    // "Novig only" up here, not in the pinned bar: that stays two chip rows tall (StickyHeadersTest).
+                    if (AppBook.isNovig) {
+                        FilterChip(
+                            selected = novigOnly,
+                            onClick = { onNovigOnly(!novigOnly) },
+                            label = { Text("Novig only", maxLines = 1) },
+                            modifier = Modifier.testTag("novigOnlyChip"),
+                        )
+                    }
                     if (novigOnly) {
                         TextButton(onClick = onCheckNovig, enabled = !state.readingNovig, modifier = Modifier.testTag("checkNovig")) {
                             Text(if (state.readingNovig) "Reading Novig…" else "Check Novig now")
@@ -217,6 +226,16 @@ fun TrackerScreen(
             contentPadding = PaddingValues(12.dp, 0.dp, 12.dp, 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            // What the "Novig only" filter is showing, at the top of the list (not pinned).
+            if (novigOnly) {
+                item(key = "novigOnlyNote") {
+                    Text(
+                        TrackerText.novigOnlyNote(state.bets, now),
+                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp).testTag("novigOnlyNote"),
+                    )
+                }
+            }
             // Check odds now holds the focus (Tj, 2026-10-01): what waits for it, said where Tj is looking.
             if (state.checkingOdds) {
                 item(key = "checkFocus") {
@@ -247,23 +266,6 @@ fun TrackerScreen(
                     }
                     // One row, so the pinned bar stays compact; what it counts is said just below, in the list.
                     if (checkStats != null) CheckOddsCounter(checkStats)
-                    if (AppBook.isNovig) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(
-                                selected = novigOnly,
-                                onClick = { onNovigOnly(!novigOnly) },
-                                label = { Text("Novig only") },
-                                modifier = Modifier.testTag("novigOnlyChip"),
-                            )
-                            if (novigOnly) {
-                                Text(
-                                    TrackerText.novigOnlyNote(state.bets, now),
-                                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.weight(1f).testTag("novigOnlyNote"),
-                                )
-                            }
-                        }
-                    }
                     when (view) {
                         TrackerView.STATS -> Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TrackerPeriod.entries.forEach { p ->
