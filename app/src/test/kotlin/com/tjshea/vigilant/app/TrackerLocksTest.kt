@@ -89,7 +89,8 @@ class TrackerLocksTest {
         compose.onNodeWithTag("lockStats").assertExists()
         // 1 of 2 picks (the lock isn't a pick); $0.50 on $9.50 staked on both sides.
         compose.onNodeWithText("1 (50%)").assertExists()
-        compose.onNodeWithText("+\$0.50", substring = true).assertExists()
+        compose.onNodeWithText("+\$0.50").assertExists()
+        compose.onNodeWithText("+\$0.50 on \$9.50 staked on both sides", substring = true).assertExists()
         compose.onNodeWithText("+5.26%", substring = true).assertExists()
         compose.onNodeWithText("Hidden from the other numbers", substring = true).assertExists()
         compose.onRoot().captureRoboImage("screenshots/4l_tracker_locked_in.png")
