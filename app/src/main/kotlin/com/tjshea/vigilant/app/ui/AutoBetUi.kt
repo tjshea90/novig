@@ -32,11 +32,13 @@ import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.AutoBettor
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.app.WalletAmount
+import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
+import com.tjshea.vigilant.data.scanner.SharpBookChoice
 import java.util.Locale
 import kotlin.math.abs
 
@@ -367,3 +369,101 @@ private fun <T> Chips(options: List<T>, selected: T, label: (T) -> String, equal
         options.forEach { o -> FilterChip(selected = equal(o, selected), onClick = { onPick(o) }, label = { Text(label(o)) }) }
     }
 }
+
+/** The sharp-book confirmation's sentences, free of Compose so they're testable. */
+object SharpConfirmText {
+
+    /** "1 min", "3 min": the quote age choices. */
+    fun ageLabel(seconds: Int): String = ScanSettings.intervalLabel(seconds)
+
+    /** The edge choice: "Any +EV", "+1%". */
+    fun edgeLabel(minEv: Double): String = if (minEv <= 0.0) "Any +EV" else AutoBetText.evLabel(minEv)
+
+    /**
+     * The Pinnacle feeds Tj has switched on with a key, in the order they're asked (the same conditions as `referenceSources`); empty when none.
+     * [keys]: how many keys he has saved for a provider.
+     */
+    fun feedsOn(s: ScanSettings, keys: (ApiProvider) -> Int): List<String> = buildList {
+        if (s.usePinnacle && (keys(ApiProvider.PINNWIRE) > 0 || keys(ApiProvider.PINNAPI) > 0)) add("PinnWire / pinnapi")
+        if (s.usePropLine && keys(ApiProvider.PROPLINE) > 0) add("PropLine")
+        if (s.useParlay && keys(ApiProvider.PARLAY) > 0) add("ParlayAPI")
+        if (s.useOddsApi && keys(ApiProvider.THE_ODDS_API) > 0) add("The Odds API")
+    }
+
+    fun intro(): String =
+        "On top of every other criterion: a sharp book (Pinnacle) must show the bet is +EV on its own price. Its two sides for the exact same game, market, line and " +
+            "side are devigged (worst case of four methods) and compared with Novig's price now; the quote must be newer than the limit below, and a sharp book that says " +
+            "it isn't +EV vetoes the bet. Each switch is off until you turn it on."
+
+    fun feedsNote(s: ScanSettings, feeds: List<String>): String = when {
+        feeds.isEmpty() && !s.sharpConfirmViaCno ->
+            "No Pinnacle feed is on with a key (Settings › Usage & keys: PinnWire or pinnapi, PropLine, ParlayAPI), so with a switch on nothing can be confirmed: " +
+                "the auto-bet skips every bet and no CNO alert is sent. Or switch on \"Also take Pinnacle's price from CNO's page\" below."
+        feeds.isEmpty() -> "No Pinnacle feed is on with a key: only CNO's page can confirm."
+        else -> "Asked in this order, and the first that has the bet answers: ${feeds.joinToString(", ")}. Only a bet that already passed every other criterion is looked up " +
+            "(a league's board is kept a minute), so a quiet cycle costs nothing; each feed spends its own allowance as a scan does."
+    }
+
+    fun viaCnoNote(s: ScanSettings): String =
+        if (s.sharpConfirmViaCno) {
+            "On: Pinnacle's column on CNO's game page can confirm a bet too (free, already read). CNO dates the whole page, not each book's quote, so this is a weaker proof than a feed's own time."
+        } else {
+            "Off: only a Pinnacle feed, with the quote's own time, confirms. CNO's page can still veto: a fresh Pinnacle column there that says the bet isn't +EV skips it without a feed call."
+        }
+
+    fun confirmNote(s: ScanSettings): String? {
+        val where = listOfNotNull("the auto-bet".takeIf { s.sharpConfirmAutoBet }, "CNO's push alerts".takeIf { s.sharpConfirmAlerts }).joinToString(" and ")
+        if (where.isEmpty()) return null
+        return "For $where: ${s.sharpConfirmBooks.displayName}'s own price, at most ${ageLabel(s.sharpConfirmMaxAgeSeconds)} old, must show ${edgeLabel(s.sharpConfirmMinEv).lowercase()} at Novig's price now."
+    }
+}
+
+/**
+ * Settings › Betting › Sharp-book confirmation (Tj, 2026-10-02: "require bets to be proven positive EV by a current, devigged sharp book such as Pinnacle … for the cno
+ * scanner and auto bet feature"). One switch for the auto-bet, one for CNO's push alerts, and the shared criteria. Both off by default.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SharpConfirmSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    val feeds = SharpConfirmText.feedsOn(s) { state.keysOf(it).size }
+    val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+    SectionTitle("Sharp-book confirmation")
+    Text(SharpConfirmText.intro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
+    for ((tag, title, on, set) in listOf(
+        Quad("sharpConfirmAutoBet", "Auto-bet: require a sharp book to confirm +EV", s.sharpConfirmAutoBet) { v: Boolean -> onUpdate { it.copy(sharpConfirmAutoBet = v) } },
+        Quad("sharpConfirmAlerts", "CNO push alerts: require a sharp book to confirm +EV", s.sharpConfirmAlerts) { v: Boolean -> onUpdate { it.copy(sharpConfirmAlerts = v) } },
+    )) {
+        Row(
+            Modifier.fillMaxWidth().toggleable(value = on, role = Role.Switch, onValueChange = set).padding(vertical = 6.dp).testTag(tag),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+            Switch(checked = on, onCheckedChange = null)
+        }
+    }
+    if (s.sharpConfirmAutoBet || s.sharpConfirmAlerts) {
+        Text("Sharp books", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        Chips(SharpBookChoice.entries.toList(), s.sharpConfirmBooks, { it.displayName }) { v -> onUpdate { it.copy(sharpConfirmBooks = v) } }
+        Text("Newest quote allowed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        Chips(ScanSettings.SHARP_MAX_AGE_CHOICES, s.sharpConfirmMaxAgeSeconds, SharpConfirmText::ageLabel) { v -> onUpdate { it.copy(sharpConfirmMaxAgeSeconds = v) } }
+        Text("Edge the sharp book must show at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        Chips(ScanSettings.SHARP_MIN_EV_CHOICES, s.sharpConfirmMinEv, SharpConfirmText::edgeLabel) { v -> onUpdate { it.copy(sharpConfirmMinEv = v) } }
+        Row(
+            Modifier.fillMaxWidth().toggleable(value = s.sharpConfirmViaCno, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(sharpConfirmViaCno = v) } })
+                .padding(top = 8.dp, bottom = 2.dp).testTag("sharpConfirmViaCno"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Also take Pinnacle's price from CNO's page", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+            Switch(checked = s.sharpConfirmViaCno, onCheckedChange = null)
+        }
+        Text(SharpConfirmText.viaCnoNote(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("sharpConfirmViaCnoNote"))
+        SharpConfirmText.confirmNote(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag("sharpConfirmNote")) }
+        Text(
+            SharpConfirmText.feedsNote(s, feeds), style = MaterialTheme.typography.bodySmall,
+            color = if (feeds.isEmpty() && !s.sharpConfirmViaCno) Edge.colors.warning else subtle, modifier = Modifier.padding(top = 4.dp).testTag("sharpConfirmFeeds"),
+        )
+    }
+}
+
+private data class Quad(val tag: String, val title: String, val on: Boolean, val set: (Boolean) -> Unit)

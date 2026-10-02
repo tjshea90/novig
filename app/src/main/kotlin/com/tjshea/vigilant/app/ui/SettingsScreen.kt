@@ -727,6 +727,8 @@ private fun ColumnScope.BettingTab(
                 onUpdate = onUpdate,
             )
         }
+        // Sharp-book confirmation (Tj, 2026-10-02): for the auto-bet and for CNO's push alerts, so it doesn't need the betting key.
+        SharpConfirmSection(state, onUpdate)
     }
 }
 
