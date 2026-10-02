@@ -176,6 +176,15 @@ data class ScanSettings(
     val autoBetMinOdds: Int = 0,
     /** The kinds of bet the auto-bet places ([BetKind]); every kind by default. A preset narrows it (Tj's game totals lose to the close: RESEARCH.md §65). */
     val autoBetKinds: Set<BetKind> = BetKind.entries.toSet(),
+    /**
+     * Auto-lock (Tj, 2026-10-02 ~18:50Z: "include an option to auto bet these bets in addition to whatever the auto bet system already does"): with the
+     * background scan, lock in a bet's profit by buying the other side of its Novig market once the lock pays at least [autoLockMinPercent] of what's
+     * staked in that market whichever side wins ([com.tjshea.vigilant.data.novig.trading.LockIn], RESEARCH.md §67). Off by default. API bets only.
+     * [autoLockLive]: also once the game is under way (the in-game fee is in the worst case; a line that can push isn't locked then).
+     */
+    val autoLock: Boolean = false,
+    val autoLockMinPercent: Double = 0.02,
+    val autoLockLive: Boolean = true,
     /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */
     val presets: List<SavedPreset> = emptyList(),
     /** The preset applied last (a built-in's or one of [presets]' names), null = none; recorded on each bet ([com.tjshea.vigilant.data.tracker.AtBet]). */
@@ -472,6 +481,9 @@ data class ScanSettings(
      */
     val autoBetsNow: Boolean get() = autoBet && autoBetHalted == null && autoScansCno
 
+    /** A background cycle locks profits ([autoLock]): on, with the background scan running (any scanner) and not paused. */
+    val autoLocksNow: Boolean get() = autoLock && !paused && autoScan != AutoScanMode.OFF
+
     /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
     val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn
 
@@ -617,6 +629,9 @@ data class ScanSettings(
 
         /** [autoBetBooks]' choices (the last is "5+"). */
         val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
+
+        /** [autoLockMinPercent]'s choices: the least a lock must pay, as a share of what's staked in the market. */
+        val AUTO_LOCK_MIN_CHOICES = listOf(0.005, 0.01, 0.02, 0.03, 0.05, 0.10)
 
         /** [autoBetMinOdds]' choices (0 = no limit). */
         val AUTO_BET_MIN_ODDS_CHOICES = listOf(0, -150, -200, -250, -300)
