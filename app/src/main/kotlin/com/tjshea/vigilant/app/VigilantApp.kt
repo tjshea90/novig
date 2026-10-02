@@ -99,6 +99,9 @@ class VigilantApp : Application() {
  */
 class AppContainer(private val app: Application) {
     private companion object {
+        /** How often the flight recorder is written to its files. */
+        const val FLUSH_EVERY_MS = 30_000L
+
         /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
         const val RECHECK_AT_ONCE = 3
 
@@ -108,7 +111,23 @@ class AppContainer(private val app: Application) {
 
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    val http: OkHttpClient = vigilantHttpClient()
+    /**
+     * The flight recorder (Tj, 2026-10-02: a diagnostics file Claude can diagnose and improve the app from): notable events with where in the code they came from,
+     * every call's host, status, time and size by host, the app's own timings, and what earlier files said ([com.tjshea.vigilant.data.diag.DiagHistory]). All of it
+     * kept across restarts, bounded, never a key ([com.tjshea.vigilant.data.diag.ProblemLog.clean], [com.tjshea.vigilant.data.diag.NetShape]).
+     */
+    val eventLog = com.tjshea.vigilant.data.diag.EventLog(
+        JsonFileStore(File(app.filesDir, "events.json"), com.tjshea.vigilant.data.diag.EventBook.serializer(), { com.tjshea.vigilant.data.diag.EventBook() }, json),
+    )
+    val netStats = com.tjshea.vigilant.data.diag.NetStats(
+        JsonFileStore(File(app.filesDir, "netstats.json"), com.tjshea.vigilant.data.diag.NetBook.serializer(), { com.tjshea.vigilant.data.diag.NetBook() }, json),
+    )
+    val perf = com.tjshea.vigilant.data.diag.PerfStats()
+    val diagHistory = com.tjshea.vigilant.data.diag.DiagHistory(
+        JsonFileStore(File(app.filesDir, "diag_history.json"), com.tjshea.vigilant.data.diag.DiagBook.serializer(), { com.tjshea.vigilant.data.diag.DiagBook() }, json),
+    )
+
+    val http: OkHttpClient = vigilantHttpClient(listOf(com.tjshea.vigilant.data.diag.NetInterceptor(netStats, eventLog, network = { NetKind.of(app) })))
 
     /** Tj's keys as plain JSON in app storage: survives updates and restores from backup. */
     val keyStore = FileApiKeyStore(File(app.filesDir, "api_keys.json"), json)
@@ -354,9 +373,58 @@ class AppContainer(private val app: Application) {
     /** Diagnostics' "Recent problems" (files/problems.json, Tj 2026-09-30): what went wrong, kept across restarts, never a key. */
     val problems = com.tjshea.vigilant.data.diag.ProblemLog(
         JsonFileStore(File(app.filesDir, "problems.json"), com.tjshea.vigilant.data.diag.ProblemBook.serializer(), { com.tjshea.vigilant.data.diag.ProblemBook() }, json),
+        onAdd = { area, text -> eventLog.record("PROBLEM", com.tjshea.vigilant.data.diag.Level.ERROR, "$area: $text") },
     )
 
     init {
+        // The flight recorder: what earlier runs kept comes back first, then both are written out every half minute (and at once after an error).
+        appScope.launch(Dispatchers.IO) {
+            eventLog.load()
+            netStats.load()
+            eventLog.info("APP", "process started: ${AppBook.name} ${runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull() ?: "?"}")
+            while (true) {
+                delay(FLUSH_EVERY_MS)
+                eventLog.flush()
+                netStats.flush()
+            }
+        }
+        // What happened to the Vigilant scan, in one line each: its length, what it read, what failed.
+        appScope.launch {
+            runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run ->
+                val r = run.report ?: return@collect
+                val ms = r.timing?.totalMs
+                ms?.let { perf.add("scan.ms", it.toDouble()) }
+                val line = "Vigilant scan finished" + (ms?.let { " in ${it / 1000} s" } ?: "") + ": ${r.booksFetched} Novig prices (${r.booksViaKey} through the key), ${r.errors.size} error${if (r.errors.size == 1) "" else "s"}" +
+                    (r.timing?.refused?.takeIf { it > 0 }?.let { ", Novig refused $it" } ?: "")
+                if (r.errors.isEmpty()) eventLog.info("SCAN", line, ms) else eventLog.warn("SCAN", line, ms)
+            }
+        }
+        // CNO asked the app to wait (its 403/429 backoff): when, and a count.
+        appScope.launch {
+            cno.state.map { it.pausedUntilMs?.takeIf { p -> p > System.currentTimeMillis() } }.distinctUntilChanged().filterNotNull().collect { until ->
+                eventLog.warn("CNO", "CrazyNinjaOdds asked the app to wait ${((until - System.currentTimeMillis()) / 1000).coerceAtLeast(0)} s")
+                eventLog.count("cno.pauses")
+            }
+        }
+        // The switches that decide what runs by itself, as Tj turns them: the timeline says what was on when something happened.
+        appScope.launch {
+            var before: ScanSettings? = null
+            settingsStore.flow.filterNotNull().collect { s ->
+                val b = before
+                before = s
+                if (b == null) return@collect
+                fun flip(name: String, was: Any?, now: Any?) { if (was != now) eventLog.info("SETTINGS", "$name: $was → $now") }
+                flip("auto-bet", b.autoBet, s.autoBet)
+                flip("background auto-scan", b.autoScan, s.autoScan)
+                flip("auto-scan every (s)", b.autoScanSeconds, s.autoScanSeconds)
+                flip("keep awake", b.autoScanKeepAwake, s.autoScanKeepAwake)
+                flip("sharp check for auto-bet", b.sharpConfirmAutoBet, s.sharpConfirmAutoBet)
+                flip("sharp check for alerts", b.sharpConfirmAlerts, s.sharpConfirmAlerts)
+                flip("paused", b.paused, s.paused)
+                flip("scanner", b.scanner, s.scanner)
+                flip("auto-bet halted", b.autoBetHalted != null, s.autoBetHalted != null)
+            }
+        }
         // Written down as it happens, whatever screen is open: a finished scan's errors and failed fair-odds sources, and CNO's errors
         // (the background scan's own are added where it ends: [AutoScanner]).
         appScope.launch {
