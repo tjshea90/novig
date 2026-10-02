@@ -9,7 +9,7 @@ import kotlin.math.roundToLong
  * or an amount I can type into the settings"). Novig still asks you to confirm the bet.
  */
 enum class SlipStake(val label: String) {
-    OFF("Off"),
+    OFF("I type it"),
     ONE_DOLLAR("$1"),
     KELLY("Kelly"),
     CUSTOM("My amount"),
