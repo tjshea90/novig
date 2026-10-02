@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -64,6 +65,15 @@ class DiagnosticsUiTest {
         assertEquals(1, shared)
         compose.onNodeWithText("Copy").performClick()
         assertEquals(1, copied)
+    }
+
+    @Test
+    fun `while the report is still being made, Share and Copy wait`() {
+        var shared = 0
+        compose.setContent { VigilantTheme(darkTheme = true) { ReportDialog(ReportUi("Diagnostics", "", busy = true), ReportActions(onShare = { shared++ })) } }
+        compose.onNodeWithTag("reportShare").assertIsNotEnabled()
+        compose.onNodeWithText("Copy").assertIsNotEnabled()
+        assertEquals(0, shared)
     }
 
     @Test
