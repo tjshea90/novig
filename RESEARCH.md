@@ -3368,3 +3368,97 @@ Before: `Diagnostics.report` (the pasted report of v0.38.0: settings, scans, API
 
 - **Verified by tests** (each mutation-checked): the recorder's merging, masking, eviction and persistence; the interceptor's recorded kinds, limits and timing on a MockWebServer (including a body read to the end, a cancelled call, a 429 and a 500); the advisor's thresholds and ranking; the file's section order, masking of key-shaped text, JSON; the share intent's action, type, stream URI, grant flag and the FileProvider serving the file's bytes; the buttons.
 - **Not verified:** that the Claude app on Tj's phone appears in the share sheet and accepts a `text/plain` stream (Android shows only apps that declare `ACTION_SEND` for text; if Claude isn't listed there, the fallback is the Diagnostics dialog's Copy button, as before); that `logcat --pid` returns anything on the Moto G under Android 16's restrictions (the file says when it is empty); real-world sizes and speeds. **First real upload:** read the file's CONNECTIONS and PERFORMANCE against what the phone did; the thresholds above are first guesses and are meant to be tuned from real files.
+
+## 62. "Large liquidity on Novig = syndicates or sharps": tested on Novig's own trades, not built (2026-10-02; Tj: "I read somewhere that sharp bets can be found on novig by analyzing liquidity on certain bets, and if large liquidity is offered on certain bets that it is probably betting syndicates or sharps. Investigate whether this is true or not. If it is true and a good betting strategy, implement in vigilant a way to scan for this liquidity and follow the sharp bets … Only make this if you discover that it has merit and is a good strategy")
+
+**Verdict: no. Nothing was built.** Novig publishes every trade it has matched (NOVIG_API.md §10), so the claim was measured
+directly rather than argued: 59 days (2026-08-03 to 09-30), 9.5M straight-trade rows, 10,225 two-outcome markets with a
+pregame close. Re-run it any time with `python3 tools/research/novig_size_study.py` (about 80 s once the files are cached;
+`pip install pandas numpy`). The big resting liquidity loses to the close, and copying it loses about 1% per bet. The biggest
+*takers* beat the close by about half a cent. That edge is not significant, is zero on the NFL, comes about 9 times a day, and
+what it catches is the gap between Novig and Pinnacle, which Vigilant already prices directly.
+
+### 62.1 Where the claim comes from
+
+- **SmartStake's "Smart Money"** (smartstake.app/learn/how-to-use-smartstake-smart-money, read 2026-10-02) reads the resting
+  orders on Novig, ProphetX and Kalshi and takes the maker to want the opposite side. Its worked example is a $11,995 offer on
+  Spurs −329, read as "a maker holding Kings +329". It then lists **sportsbook** prices (DraftKings, FanDuel…) that match or
+  beat that maker. The bet is placed at a sportsbook, never on the exchange. It does not tell market makers apart from sharps.
+- **+EV Bettors on X** says "Novig is a VERY sharp book, especially when liquidity is high." That claim is about the price
+  (deep markets are efficient), not about the size marking one side as sharp.
+- **Betfair traders' "weight of money"** (the same idea, decades older): "somewhat discredited with the prevalence of bots
+  and spoofing"; "most profitable traders now lean more on traded volume, market flow and how quickly bets are taken rather
+  than how much money is sitting there" (caanberry.com/understanding-weight-of-money-on-betfair; forum.betangel.com).
+- **Mechanics** (NOVIG_API.md §7): every order is a buy, so a resting bid on A at P is liquidity for B at 1 − P. Taking a big
+  resting order means betting **against** whoever posted it. To bet with them you must buy A at 1 − (best bid on B), which
+  costs at least one tick more than the maker paid. So "follow the liquidity" on Novig always pays more than the liquidity did.
+
+### 62.2 Who posts the big resting orders (live books, 2026-10-02 ~03:10Z, 57 pregame moneylines, public route)
+
+The size is symmetric and identical across games, which is a quoting algorithm, not a side being backed:
+- **NFL:** the biggest order on *both* sides of nearly every moneyline is the same $10,500 (some $11–14k), 0–3.5¢ back from
+  the best bid. Depth is $25–100k a side.
+- **MLB:** about $4.8k on both sides of each game.
+- **FCS college football:** one order a side, sized for equal payout on each side (ILST $1,503 at 0.455 / $1,521 at 0.505),
+  quoted 4–12¢ wide.
+
+Novig recruits professional liquidity providers (a Liquidity Provider Program and Market Maker Agreements; its funding rounds
+name onboarding institutional LPs as their aim: support.novig.com "Maker Credit Program"). Those LPs quote off the sharp
+books. Their size says how sure they are of the price. It says nothing about which side wins.
+
+### 62.3 What the trades say (`novig_size_study.py`, 95% intervals bootstrapped over markets)
+
+CLV = Novig's later price for the outcome bought minus the price paid, in cents of probability (+ = beat it). Test A takes
+the price 1–2 h before the start (the trades carry no start time, so it is placed safely before the latest possible start).
+Test B takes the true close, 10 min before kickoff (NFL kickoff slots).
+
+| Stake of the trade | Taker (hit the book), A: all leagues | Maker (the resting liquidity that was hit), A | Taker, B: NFL true close | Maker, B |
+|---|---|---|---|---|
+| < $100 | −0.33¢ [−0.36, −0.29] n=979k | +0.32¢ [+0.30, +0.35] | −0.30¢ | +0.30¢ |
+| $100–1,000 | −0.26¢ | +0.19¢ | −0.29¢ | +0.24¢ |
+| $1,000–5,000 | −0.12¢ [−0.19, −0.03] | +0.01¢ [−0.15, +0.11] | −0.27¢ | +0.16¢ |
+| $5,000+ | +0.16¢ [−0.04, +0.42] n=2,631 | **−0.78¢** [−2.31, +0.03] n=1,319 | −0.13¢ [−0.28, +0.03] | +0.12¢ |
+| $10,000+ | +0.61¢ [−0.02, +1.56] n=605 | **−1.81¢** [−4.89, −0.02] n=245 | **−0.24¢** [−0.45, −0.06] n=375 | +0.01¢ |
+
+**Following** (C: buy the same outcome at the next taker price, which on average came 37–84 s later; EV is measured at the
+1–2 h close):
+- **The big liquidity** (makers filled for $2k+): the follower paid +0.46¢ more than the maker did, and ends at **−0.57¢**
+  [−0.84, −0.37], **−1.05% EV**, n=5,922 in 1,623 markets. That is Tj's strategy as stated. It loses.
+- **Big takers, $2k+:** −0.04¢ [−0.18, +0.15], +0.01% EV, n=9,139: nothing.
+- **Big takers, $10k+:** +0.55¢ [−0.11, +1.61], +1.31% EV, n=562 in 316 markets over 59 days (about 9 a day, all sports).
+  By league: NFL −0.09¢ [−0.29, +0.16] (−0.24¢ at the true close); MLB +0.75¢ [+0.06, +1.94]; NCAAF +2.8¢ [−0.2, +8.6]
+  (58 markets). By month: Aug +1.84¢ (n=76), Sep +0.43¢ [−0.11, +1.39]. The positive part sits in a few college football
+  games and MLB. It only appeared after slicing by league, it shrank in the later month, and in the smaller sample with
+  results the same trades' return at settlement was −7% flat (SE ±3.9%). It is not a strategy.
+
+What the table does show: on Novig, small and mid-size **takers lose about 0.3¢ to the close and makers earn about 0.3¢**,
+which is the spread. The largest resting orders are the ones that get picked off. Big money that *takes* is, at best, slightly
+informed, and in the NFL it is not.
+
+### 62.4 Why nothing was built, and what Vigilant already does instead
+
+- Tj's bar was "only make this if … it has merit and is a good strategy". Following resting liquidity fails it (negative EV
+  with a tight interval). Following whale takers is an interval that includes zero, about +1% at best, with no NFL edge. A
+  scanner for either would add alerts with no edge, and the auto-bet would lose money on them.
+- **Sharp action is already followed, at its source.** Pinnacle's and Circa's lines are where sharp money moves a price
+  (they take big limits and move on it). Vigilant devigs them and bets Novig's taker price only when it is below that fair
+  price. Since v0.42.0 it can also require a fresh (≤ 3 min) devigged Pinnacle price to confirm each alert or auto-bet
+  (§60, `SharpConfirm`). A big Novig taker who knew something was, by these numbers, mostly picking off a Novig price that
+  lagged the sharp books, and Vigilant's scan catches that lag itself, before the whale and without him.
+- **Big depth at a price Vigilant already found +EV is good news**, because Tj is the taker against it. The bet sheet already
+  shows "$X fillable at +EV" from the whole ladder (§16.1, `Opportunity` depth).
+- **SmartStake's use** (Novig's resting orders as a fair price, bet at DraftKings or FanDuel when they beat it) is an
+  exchange-as-reference strategy for sportsbook bettors. Vigilant bets on Novig only (BRIEF.md), so it doesn't apply.
+- **Makers earn the spread.** That supports the maker-bid line Vigilant already shows (§16.4), not a liquidity scanner.
+
+### 62.5 What is not verified
+
+- **Unfilled resting orders** are not in the published data (no book history). §62.2 is one live snapshot. The filled-order
+  numbers are the evidence about big resting orders, and an order that never fills is, by selection, one no informed trader
+  wanted to take.
+- **Accounts are anonymized:** no way to follow one bettor's record. A "sharp account" tracker is not possible from this data.
+- **Season mix:** August to September 2026 is mostly MLB, NFL (preseason, then weeks 1–4), NCAAF and WNBA. NBA and NHL
+  are not in it. Re-run the script once a basketball or hockey month is published if the question comes back. The script
+  reads every published day by default.
+- Test A's close is 1–2 h before the start, so late steam is not in A. Test B (the true NFL close) gives the same answer
+  for big money.
