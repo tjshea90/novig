@@ -168,7 +168,7 @@ class TheOddsApiClient(
 
     /** An /odds answer: on ParlayAPI's tennis tours, one event per singles match with set and games lines told apart ([ParlayTennis]). */
     private fun parseOdds(raw: String, sportKey: String): List<RefEvent> {
-        val events = parseEvents(raw, json)
+        val events = parseEvents(raw, json, seenByBook = feed == OddsFeed.PARLAY)
         if (feed != OddsFeed.PARLAY || !sportKey.startsWith(TENNIS_PREFIX)) return events
         val gapHours = com.tjshea.vigilant.data.scanner.Leagues.ALL.firstOrNull { it.oddsApiSportKey == sportKey }?.maxStartGapHours ?: 24
         return ParlayTennis.normalize(events, gapHours * 3_600_000L)
@@ -203,7 +203,7 @@ class TheOddsApiClient(
             cost = markets.size,
             what = "$sportKey event $eventId",
             notFound = null,
-            parse = { parseEvent(it, json) },
+            parse = { parseEvent(it, json, seenByBook = feed == OddsFeed.PARLAY) },
             // Only a fallback: the x-requests-last header is the real charge.
             charged = { e -> e?.markets?.mapNotNull { it.stat }?.distinct()?.size ?: 0 },
         )
@@ -526,12 +526,19 @@ class TheOddsApiClient(
 
         private val PARLAY_BOOK_KEYS = mapOf("caesars" to "williamhill_us", "betonline" to "betonlineag", "hardrock" to "hardrockbet")
 
-        fun parseEvents(rawJson: String, json: Json): List<RefEvent> =
-            json.decodeFromString(ListSerializer(EventDto.serializer()), rawJson).map { it.toDomain() }
+        /**
+         * [seenByBook]: date each quote by when the feed last saw its BOOK, not by its market's own `last_update`. ParlayAPI's market stamp is
+         * when the price last moved (a steady Pinnacle total read 4 s ago carried a stamp 22 minutes old), and its bookmaker `last_update` is
+         * "the freshest of (price-change, no-change verification heartbeat)" (its /odds docs; `verified_at` is per bookmaker too). Read the
+         * market's stamp instead, a steady line aged out of the fair price minutes after it was last confirmed (Tj, 2026-10-02: "most odds say 9
+         * minutes old", RESEARCH.md §63). The Odds API's market `last_update` is already "the last time our system saw odds for that market".
+         */
+        fun parseEvents(rawJson: String, json: Json, seenByBook: Boolean = false): List<RefEvent> =
+            json.decodeFromString(ListSerializer(EventDto.serializer()), rawJson).map { it.toDomain(seenByBook) }
 
         /** One game from the per-event odds endpoint (an object, not a list). */
-        fun parseEvent(rawJson: String, json: Json): RefEvent =
-            json.decodeFromString(EventDto.serializer(), rawJson).toDomain()
+        fun parseEvent(rawJson: String, json: Json, seenByBook: Boolean = false): RefEvent =
+            json.decodeFromString(EventDto.serializer(), rawJson).toDomain(seenByBook)
 
         private fun isoSeconds(ms: Long): String = Instant.ofEpochMilli(ms).truncatedTo(ChronoUnit.SECONDS).toString()
 
@@ -550,10 +557,10 @@ private data class EventDto(
     val away_team: String,
     val bookmakers: List<BookmakerDto> = emptyList(),
 ) {
-    fun toDomain(): RefEvent {
+    fun toDomain(seenByBook: Boolean = false): RefEvent {
         val markets = bookmakers.flatMap { b ->
             val book = b.copy(key = TheOddsApiClient.canonicalBook(b.key), title = TheOddsApiClient.bookTitle(TheOddsApiClient.canonicalBook(b.key)).takeIf { it != b.key } ?: b.title)
-            book.markets.flatMap { m -> m.toDomain(book, home_team, away_team) }
+            book.markets.flatMap { m -> m.toDomain(book, home_team, away_team, m.seenMs(book, seenByBook)) }
         }
         return RefEvent(
             id = id,
@@ -571,8 +578,13 @@ private data class BookmakerDto(
     val key: String,
     val title: String,
     val last_update: String? = null,
+    /** ParlayAPI: [last_update] in milliseconds. */
+    val last_update_ms: Long? = null,
     val markets: List<MarketDto> = emptyList(),
-)
+) {
+    /** When the feed last saw this book on this game (ParlayAPI: a price change or a poll that found the same price). */
+    val seenMs: Long? get() = last_update_ms ?: TheOddsApiClient.parseIsoMs(last_update)
+}
 
 @Serializable
 private data class MarketDto(
@@ -580,9 +592,19 @@ private data class MarketDto(
     val last_update: String? = null,
     val outcomes: List<OutcomeDto> = emptyList(),
 ) {
-    fun toDomain(book: BookmakerDto, home: String, away: String): List<RefBookMarket> {
-        PropStats.ODDS_API_MARKETS[key]?.let { stat -> return props(book, stat) }
-        if (key == "alternate_spreads" || key == "alternate_totals") return alternates(book, home, away)
+    /**
+     * When the feed last saw this market's prices ([TheOddsApiClient.parseEvents]' `seenByBook`): its book's stamp, never older than the
+     * market's own; else the market's own `last_update`, the book's when it has none.
+     */
+    fun seenMs(book: BookmakerDto, seenByBook: Boolean): Long? {
+        val own = TheOddsApiClient.parseIsoMs(last_update)
+        if (!seenByBook) return own ?: book.seenMs
+        return listOfNotNull(own, book.seenMs).maxOrNull()
+    }
+
+    fun toDomain(book: BookmakerDto, home: String, away: String, updated: Long?): List<RefBookMarket> {
+        PropStats.ODDS_API_MARKETS[key]?.let { stat -> return props(book, stat, updated) }
+        if (key == "alternate_spreads" || key == "alternate_totals") return alternates(book, home, away, updated)
         val kind = when (key) {
             "h2h" -> LineKind.MONEYLINE
             "spreads" -> LineKind.SPREAD
@@ -606,7 +628,7 @@ private data class MarketDto(
                 bookTitle = book.title,
                 kind = kind,
                 quotes = quotes,
-                lastUpdateMs = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update),
+                lastUpdateMs = updated,
             ),
         )
     }
@@ -615,9 +637,8 @@ private data class MarketDto(
      * An alternate-lines market lists every number in one flat outcome list: a spread's home side at -6.5 pairs with the away side at
      * +6.5, a total's Over 44.5 with its Under 44.5. A number priced on one side only can't be devigged and is dropped.
      */
-    private fun alternates(book: BookmakerDto, home: String, away: String): List<RefBookMarket> {
+    private fun alternates(book: BookmakerDto, home: String, away: String, updated: Long?): List<RefBookMarket> {
         val spread = key == "alternate_spreads"
-        val updated = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update)
         val sided = outcomes.mapNotNull { o ->
             val point = o.point ?: return@mapNotNull null
             if (o.price <= 1.0 || !o.price.isFinite()) return@mapNotNull null
@@ -645,7 +666,7 @@ private data class MarketDto(
      * number becomes one over/under line; a player the book prices on one side only (or twice on
      * one side) can't be devigged and is dropped. Yes/No markets are Over/Under 0.5.
      */
-    private fun props(book: BookmakerDto, stat: String): List<RefBookMarket> {
+    private fun props(book: BookmakerDto, stat: String, updated: Long?): List<RefBookMarket> {
         val yesNo = key in PropStats.YES_NO
         data class Leg(val player: String, val point: Double, val over: Boolean, val price: Double)
         val legs = outcomes.mapNotNull { o ->
@@ -658,7 +679,6 @@ private data class MarketDto(
             val point = if (yesNo) 0.5 else o.point ?: return@mapNotNull null
             if (o.price <= 1.0 || !o.price.isFinite()) null else Leg(player, point, over, o.price)
         }
-        val updated = TheOddsApiClient.parseIsoMs(last_update ?: book.last_update)
         return legs.groupBy { PlayerNames.key(it.player) to it.point }.values.mapNotNull { group ->
             val over = group.singleOrNull { it.over } ?: return@mapNotNull null
             val under = group.singleOrNull { !it.over } ?: return@mapNotNull null
