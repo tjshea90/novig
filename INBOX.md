@@ -3584,3 +3584,8 @@ Small change after you complete the full tests: always include my vigilant walle
 ```
 When vigilant wallet runs out of money, it already tells me in the notifications, but make it also stop scanning and put the app to sleep once the wallet runs out of money.
 ```
+
+## 2026-10-02T22:14:26Z
+```
+Research whether https://api-sports.io/ or therundown apis are better than the apis I currently use or if they would add value to the app in any way
+```
