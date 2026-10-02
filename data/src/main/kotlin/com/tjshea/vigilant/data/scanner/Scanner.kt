@@ -270,9 +270,10 @@ class Scanner(
             books = merged
         }
         // Refused in this scan, or earlier (a scan starting while the key is set aside never tries it, and was only slow with no word why).
-        (pump.keyProblem ?: novig.keyDown(now))?.let { errors += "Novig key: $it $PUBLIC_PRICES" }
+        val keyProblem = pump.keyProblem ?: novig.keyDown(now)
+        keyProblem?.let { errors += "Novig key: $it $PUBLIC_PRICES" }
         // The key's live feed failing only costs speed: its REST route read the rest.
-        if (pump.keyProblem == null) novig.pushProblem(now)?.let { errors += "Novig live feed: $it Prices were read one by one instead." }
+        if (keyProblem == null) novig.pushProblem(now)?.let { errors += "Novig live feed: $it Prices were read one by one instead." }
         if (pump.failed > 0 && pump.lastError != null) {
             errors += "Novig prices: ${pump.lastError}" + if (pump.fromCache > 0) " (${pump.fromCache} shown from the last scan)" else ""
         } else if (pump.lastError != null) {
@@ -1064,6 +1065,9 @@ class Scanner(
     companion object {
         /** A plan this big is priced for a partial result at most every [PUBLISH_MIN_MS]. */
         const val BIG_PLAN_MARKETS = 400
+
+        /** What a scan read without the key costs (NovigPublicClient: the public routes' 4-6 a second against the key's 14, and no live feed). */
+        const val PUBLIC_PRICES = "This scan read Novig's public prices instead: up to 6 a second against the key's 14, and no live feed, so it was slower. The key is tried again every 10 minutes."
 
         const val PUBLISH_MIN_MS = 2_000L
 
