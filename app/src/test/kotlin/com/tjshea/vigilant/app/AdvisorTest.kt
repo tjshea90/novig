@@ -158,6 +158,11 @@ class AdvisorTest {
         assertEquals("OPTIMIZE", all.getValue("perf:cycle").kind)
         assertTrue(all.getValue("perf:cycle").title, all.getValue("perf:cycle").title.contains("typical 4 s, 1 in 20 over 25 s"))
         assertTrue(all.getValue("perf:cycle").code.contains("AutoScan.kt"))
+        // Which step to look at: the one with the worst 1-in-20, with its typical time; none yet when the steps are too few.
+        assertTrue(all.getValue("perf:cycle").evidence, all.getValue("perf:cycle").evidence.contains("per-step timings: none yet"))
+        val steps = perf + mapOf("cycle.step.cno" to SampleSummary(50, 800.0, 2_000.0, 3_000.0, 900.0), "cycle.step.autobet" to SampleSummary(50, 900.0, 21_000.0, 30_000.0, 4_000.0), "cycle.step.alerts" to SampleSummary(3, 1.0, 99_000.0, 99_000.0, 1.0))
+        val ev = byKey(x.copy(perf = steps)).getValue("perf:cycle").evidence
+        assertTrue(ev, ev.contains("slowest step: autobet (1 in 20 over 21000 ms; typical 900 ms)"))
         assertTrue(all.getValue("perf:scan").title.contains("250 s"))
         assertTrue(all.getValue("perf:coldstart").title.contains("3100 ms"))
         assertTrue(all.getValue("perf:heap").title.contains("82%"))
