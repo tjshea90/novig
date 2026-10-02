@@ -67,9 +67,23 @@ class DiagnosticsShareTest {
         assertTrue(kept.toString(), "vigilant-diagnostics-v0.43.0-2026-10-02-0960.txt" in kept)
         assertEquals("report 5", File(DiagnosticsShare.dir(app), "vigilant-diagnostics-v0.43.0-2026-10-02-0960.txt").readText())
         // Another file in the folder (not ours) is left alone.
-        File(DiagnosticsShare.dir(app), "other.txt").writeText("x")
+        // (made the oldest of all: only the rule that the pruning is for our own files saves it).
+        File(DiagnosticsShare.dir(app), "other.txt").apply { writeText("x"); setLastModified(1_000L) }
         DiagnosticsShare.write(app, "again", "vigilant-diagnostics-v0.43.0-2026-10-02-0970.txt")
         assertTrue(File(DiagnosticsShare.dir(app), "other.txt").exists())
+    }
+
+    @Test
+    fun `the report lists the app's own files, biggest first, and no folders`() {
+        val made = listOf("zz-small.json" to 10, "zz-big.json" to 5_000, "zz-mid.json" to 600).map { (n, size) -> File(app.filesDir, n).apply { writeBytes(ByteArray(size)) } }
+        File(app.filesDir, "zz-folder").mkdirs()
+        try {
+            val mine = DiagnosticsShare.storage(app).filter { it.first.startsWith("zz-") }
+            assertEquals(listOf("zz-big.json" to 5_000L, "zz-mid.json" to 600L, "zz-small.json" to 10L), mine)
+        } finally {
+            made.forEach { it.delete() }
+            File(app.filesDir, "zz-folder").delete()
+        }
     }
 
     @Test

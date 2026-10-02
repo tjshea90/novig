@@ -158,9 +158,101 @@ class DiagnosticsFileTest {
         assertTrue(shown.takeLast(DiagnosticsFile.MAX_RECENT).map { it.msg } == (341..400).map { "event $it" })
         // Errors of the last day (the 50th, 100th … that fall within 24 h = 1,440 min: all 8 do).
         assertEquals(8, shown.count { it.level == Level.ERROR })
-        // Old warnings (a week ago) are not "of the last day".
+        // The newest sixty and the eight errors, two of which are among the sixty: 66 lines, not all 400.
+        assertEquals(66, shown.size)
+        // An error from a week ago is not "of the last day": left out when it is also not among the newest.
         val old = listOf(Event(now - 7 * 86_400_000L, "X", Level.ERROR, "ancient", lastMs = now - 7 * 86_400_000L))
-        assertTrue(DiagnosticsFile.timelineEvents(old + events.take(5), now).none { it.msg == "ancient" } || DiagnosticsFile.timelineEvents(old, now).size == 1)
+        assertTrue(DiagnosticsFile.timelineEvents(old + events, now).none { it.msg == "ancient" })
+        // A repeating warning counts by its last time, not its first: it began a week ago and happened a minute ago, so it is of the last day.
+        val repeating = listOf(Event(now - 7 * 86_400_000L, "X", Level.WARN, "still going", n = 9000, lastMs = now - 60_000L))
+        assertTrue(DiagnosticsFile.timelineEvents(repeating + events, now).any { it.msg == "still going" })
+    }
+
+    @Test
+    fun `only the newest hundred and twenty warnings of the day are listed when there are more`() {
+        val warnings = (1..300).map { Event(now - (400 - it) * 60_000L, "W", Level.WARN, "warning $it") }
+        val infos = (1..100).map { Event(now - (100 - it) * 1_000L, "I", Level.INFO, "info $it") }
+        val shown = DiagnosticsFile.timelineEvents(warnings + infos, now)
+        assertEquals(DiagnosticsFile.MAX_IMPORTANT + DiagnosticsFile.MAX_RECENT, shown.size)
+        assertEquals("warning 181", shown.first().msg)
+        assertEquals("info 100", shown.last().msg)
+    }
+
+    @Test
+    fun `more findings than fit are cut to the top twenty-five and the file says how many were left out`() {
+        val hosts = (1..30).associate { "bad$it.example.com" to host(200, 60) }
+        val text = file(extras().copy(net = NetBook(hosts, now - 86_400_000L)))
+        val listed = text.lines().count { Regex("^\\[[A-Z]+] #\\d+ ").containsMatchIn(it) }
+        assertEquals(DiagnosticsFile.MAX_FINDINGS, listed)
+        val total = Regex("\\((\\d+) in all; the top 25 are listed\\)").find(text)!!.groupValues[1].toInt()
+        assertTrue(total > 25)
+        assertTrue(text, text.contains("… and ${total - 25} more"))
+        // The JSON block has every one of them, with the evidence cut to 300 characters.
+        val obj = Json.parseToJsonElement(text.substringAfter("<<<JSON\n").substringBefore("\n>>>")).jsonObject
+        assertEquals(total, obj["findings"]!!.jsonArray.size)
+    }
+
+    @Test
+    fun `the evidence in the JSON block is cut at three hundred characters`() {
+        val longMsg = "x".repeat(10).let { "a failure with a long explanation of what went wrong ".repeat(4) }
+        val frames = (1..3).joinToString(" < ") { "com.tjshea.vigilant.app.SomeVeryLongClassNameNumber$it.someVeryLongFunctionName$it(SomeVeryLongFile$it.kt:$it)" }
+        val x = extras(listOf(Event(now - 60_000L, "CYCLE", Level.ERROR, longMsg, frames)))
+        val full = Advisor.findings(state(), x, now).first { it.key.startsWith("bug:error:") }
+        assertTrue(full.evidence.length > 300)
+        val obj = Json.parseToJsonElement(file(x).substringAfter("<<<JSON\n").substringBefore("\n>>>")).jsonObject
+        val shown = obj["findings"]!!.jsonArray.map { it.jsonObject }.first { it["key"]!!.jsonPrimitive.content.startsWith("bug:error:") }["evidence"]!!.jsonPrimitive.content
+        assertEquals(300, shown.length)
+    }
+
+    @Test
+    fun `connections list the busiest host first, five endpoints each, six hours, and the files cut to fourteen`() {
+        val paths = (1..8).associate { "/p$it" to PathStat(100L - it, 0, 4_000, 200) }
+        val hours = (1..10).associate { ((now / 3_600_000L) - it).toString() to com.tjshea.vigilant.data.diag.HourStat(5, 0, 100, 100) }
+        val busy = host(500, 0).copy(paths = paths, hours = hours)
+        val x = extras().copy(
+            net = NetBook(mapOf("quiet.example.com" to host(20, 0).copy(limits = 0, lastLimit = null, lastLimitAtMs = null), "busy.example.com" to busy), now - 86_400_000L),
+            storage = (1..20).map { "f$it.json" to (21_000L - it * 1_000L) },
+        )
+        val text = file(x)
+        val conn = text.substringAfter("== CONNECTIONS").substringBefore("== API ISSUES")
+        assertTrue(conn.indexOf("busy.example.com") < conn.indexOf("quiet.example.com"))
+        val busyBlock = conn.substringAfter("busy.example.com ·").substringBefore("quiet.example.com ·")
+        assertEquals(busyBlock, 5, busyBlock.lines().count { it.trim().startsWith("/p") })
+        assertTrue(busyBlock, busyBlock.contains("/p1 ·") && !busyBlock.contains("/p6 ·"))
+        assertEquals(busyBlock, 6, Regex("\\d\\d-\\d\\d \\d\\dh 5/0").findAll(busyBlock.lines().first { it.contains("last hours") }).count())
+        // A host that was never rate limited has no line in the API issues.
+        val issues = text.substringAfter("== API ISSUES").substringBefore("== PERFORMANCE")
+        assertFalse(issues, issues.contains("quiet.example.com"))
+        assertTrue(issues, issues.contains("busy.example.com: 2 rate-limit answers"))
+        // Storage: fourteen files, the biggest first.
+        val storage = text.substringAfter("== STORAGE").substringBefore("== CODE MAP")
+        assertTrue(storage, storage.contains("f1.json") && storage.contains("f14.json") && !storage.contains("f15.json"))
+        assertTrue(storage, storage.contains("Total 210 KB") || storage.contains("Total 2"))
+    }
+
+    @Test
+    fun `failures are counted by the hour of the day they happened, in UTC`() {
+        val hour = HostStat(calls = 10, errors = 5, hours = mapOf("37" to com.tjshea.vigilant.data.diag.HourStat(10, 5, 100, 100)))
+        val issues = file(extras().copy(net = NetBook(mapOf("h.example.com" to hour), now - 86_400_000L))).substringAfter("== API ISSUES").substringBefore("== PERFORMANCE")
+        assertTrue(issues, issues.contains("Failures by hour of day (UTC): 13h:5"))
+    }
+
+    @Test
+    fun `the counters list shows the fifteen most common skip reasons`() {
+        val skips = (1..20).associate { "autobet.skip.reason $it" to (100L - it) }
+        val text = file(extras().copy(counters = skips + mapOf("autobet.looked" to 500L)))
+        val block = text.substringAfter("Why auto-bet skipped bets (reason: count):").substringBefore("== EVENT TIMELINE")
+        assertEquals(15, Regex("reason \\d+: ").findAll(block).count())
+        assertTrue(block, block.contains("reason 1: 99") && block.contains("reason 15: 85") && !block.contains("reason 16: "))
+    }
+
+    @Test
+    fun `a key in a rate-limit answer, a log line or a stack frame is masked in the file`() {
+        val limited = host(50, 5).copy(lastLimit = "Retry-After: 30 $fakeToken")
+        val x = extras(listOf(Event(now - 60_000L, "CYCLE", Level.ERROR, "boom", "com.tjshea.vigilant.app.A.b($fakeToken.kt:1)")))
+            .copy(net = NetBook(mapOf("h.example.com" to limited), now - 86_400_000L), logcat = listOf(LogcatTail.Line("10-02 01:00:00.000", 'E', "Tag", "bad key $fakeToken")))
+        val text = file(x)
+        assertFalse(text.lines().filter { it.contains("TOKENTOKENTOKEN") }.joinToString(" // "), text.contains("TOKENTOKENTOKEN"))
     }
 
     @Test
