@@ -15,6 +15,8 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -75,10 +77,13 @@ class SharpConfirmUiTest {
         assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, settings.sharpAlerts)
         compose.onAllNodesWithText("Veto")[0].assertIsSelected()
         compose.onAllNodesWithText("Veto")[1].assertIsSelected()
-        compose.onNodeWithTag("sharpVetoNote").assertExists()
-        compose.onNodeWithText("player props Kalshi, ProphetX, FanDuel, Caesars (MLB props Kalshi, ProphetX, DraftKings, FanDuel)", substring = true).assertExists()
-        compose.onNodeWithText("moneylines, spreads, totals and period lines Pinnacle, Circa (college Circa, Pinnacle; soccer and tennis Pinnacle)", substring = true).assertExists()
-        compose.onAllNodesWithText("Newest quote allowed").assertCountEquals(0)
+        // Each section says which books are sharpest while it's on Veto, and what its mode means in plain words.
+        compose.onAllNodesWithTag("sharpVetoNote").assertCountEquals(2)
+        compose.onNodeWithTag("sharpAutoBetNote").assertTextContains("Veto (recommended)", substring = true)
+        compose.onNodeWithTag("sharpAlertsNote").assertTextContains("Veto (recommended)", substring = true)
+        compose.onAllNodesWithText("player props Kalshi, ProphetX, FanDuel, Caesars (MLB props Kalshi, ProphetX, DraftKings, FanDuel)", substring = true)[0].assertExists()
+        compose.onAllNodesWithText("moneylines, spreads, totals and period lines Pinnacle, Circa (college Circa, Pinnacle; soccer and tennis Pinnacle)", substring = true)[0].assertExists()
+        compose.onAllNodesWithText("Oldest quote allowed").assertCountEquals(0)
     }
 
     @Test
@@ -96,7 +101,9 @@ class SharpConfirmUiTest {
         // The alerts' own.
         compose.onAllNodesWithText("Require a confirmation")[1].performClick()
         assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, settings.sharpAlerts)
-        compose.onNodeWithText("For the auto-bet and CNO's push alerts: Pinnacle's own price", substring = true).assertExists()
+        // Both require it now: each shows the shared criteria, and they say they're for both.
+        compose.onAllNodesWithText("Oldest quote allowed").assertCountEquals(2)
+        compose.onAllNodesWithText("For the auto-bet and CNO's push alerts: Pinnacle's own price", substring = true)[0].assertExists()
         compose.onRoot().captureRoboImage("screenshots/5m_settings_sharp_confirm.png")
         // Off for the auto-bet: nothing the sharp books say stops a bet.
         compose.onAllNodesWithText("Off")[0].performClick()
