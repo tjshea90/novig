@@ -3259,3 +3259,10 @@ The screenshot: +EV feed while "Scanning" (Novig prices 1883/4588), three NCAAF 
   Done (RESEARCH.md §63.4): the OOM crash was v0.38.0's (fixed in v0.39.x) → crashes/exits before the running version's install are a WATCH/WARN (`AdvisorTest`, `DiagnosticsTest`), a crash records its version (`AppExitsTest`); the 3 "low memory" exits → cached reclaims aren't failures (`Exit.reclaimed`, importance), and Vigilant trims off screen (`onTrimMemory` → `Scanner.trimForBackground`, `BackgroundTrimTest`); readable release stacks (R8 keeps app names + file/line) and `mapping.txt` on each Release; scan 322 s → AO3's live feed fix. All mutation-checked.
 - [x] AO6 Full floor, ship, answer Tj with the findings on each point and the Release link.
   SHIPPED: v0.44.0 (code 79). CI green on d8695cbe, ship.sh gate 1,604 passed / 23 skipped, release.yml run 36966331376 green on 07ce6e1a, Release confirmed (APK + mapping.txt.gz), APK checked (aapt2: versionCode 79 / 0.44.0; apksigner: BRIEF.md's certificate; dex keeps `com/tjshea/vigilant/app/ScanService`; the new live-feed text present). Recorded in BUILDLOG.md.
+
+
+## Tj, 2026-10-02 ~05:1xZ: "Why is this saying the edge is gone? It's the same odds, and they are positive ev"
+
+His screenshot: CNO tab, Bet sheet for Under 47.5 (BYU @ TCU, NCAAF), $0.97 (¼ Kelly), red text "The edge is gone: Novig's best price is now +108, and the fair odds +103 make that +2.4% EV." Cause: `ApiBetPlanner.plan` refuses any bet under `BetLimits.minEv` (Settings › Betting › "Smallest edge a bet is still placed at", Tj's is +3%) and always words it as "the edge is gone", even at +2.4%.
+
+- [ ] AP1 Say the real reason: positive EV under the minimum names the minimum and where to change it; "the edge is gone" only when the EV at Novig's price is zero or less. The ladder note ("Only $X … at a positive edge") names the minimum too when it is above zero. Tests (mutation-checked), floor, ship, answer Tj.
