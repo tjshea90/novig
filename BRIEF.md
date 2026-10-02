@@ -352,6 +352,11 @@ robolectric.org/configuring/.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.
+  **Diagnostics is a file for Claude (Tj, 2026-10-02; v0.43.0, RESEARCH.md §61):** Settings › Tools › "Share diagnostics with Claude" (and the report dialog's button) writes one text file
+  (`DiagnosticsFile`: a read-me for Claude, the ranked findings from `Advisor`, what changed since the previous report, the recorder's sections, a JSON block) to the app's cache and opens Android's
+  share sheet (`DiagnosticsShare`, FileProvider). The flight recorder under it (`EventLog`, `NetStats` + `NetInterceptor` on the shared client, `PerfStats`, `LogcatTail`, `DiagHistory`) records
+  without a switch. **Keep it improving:** a new feature or a new failure mode gets its own `eventLog` event/counter (and an `Advisor` rule when it has a threshold worth acting on) in the same
+  change; a rule never advises saving data or storage (Tj's rule above); free text from outside is masked (`ProblemLog.mask`) and a test asserts a key-shaped string never reaches the file.
   **Keeping it alive with the screen off (Tj, 2026-10-02; v0.41.0, RESEARCH.md §59):** `ScanSettings.autoScanKeepAwake` (on by default) makes `AutoScanService` hold a
   partial wake lock (CPU, never the screen) and run the cycles from its own loop while auto-scan runs faster than every 9 minutes (`KeepAwake.active`); the alarm is then only a safety net
   (`KeepAwake.watchdogAtMs`, never announced as the next scan). Alarms alone are throttled in Doze, so a fast schedule can't be kept that way. Never use a screen or full wake lock for it.
