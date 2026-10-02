@@ -130,6 +130,10 @@ class PresetsTest {
         assertEquals(0, old.autoBetMinOdds)
         assertTrue(old.presets.isEmpty())
         assertNull(old.presetName)
+        // A file from v0.45.0 or before, with settings since removed (apiMinEv, v0.46.0) or renamed: it reads, the rest kept.
+        val older = json.decodeFromString(ScanSettings.serializer(), """{"apiMinEv":0.02,"sharpConfirmAutoBet":true,"bankroll":750.0,"apiMaxStake":20.0}""")
+        assertEquals(750.0, older.bankroll, 0.0)
+        assertEquals(20.0, older.apiMaxStake, 0.0)
     }
 
     @Test
