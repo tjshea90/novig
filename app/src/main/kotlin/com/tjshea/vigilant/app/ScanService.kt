@@ -82,6 +82,8 @@ class ScanService : Service() {
                     .first { !it.scanning }
                 watch = null
                 val onScreen = container.onScreen
+                // The wallet's balance as of now on the result's notification (Tj, 2026-10-02 21:51Z): one read unless the last is under 30 s old.
+                runCatching { container.wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                 val done = withContext(Dispatchers.Default) { doneNotificationFor(ended, onScreen) }
                 finish(ended, done)
             }
