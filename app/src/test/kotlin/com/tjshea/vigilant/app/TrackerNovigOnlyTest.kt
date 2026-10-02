@@ -96,7 +96,7 @@ class TrackerNovigOnlyTest {
     fun `Tj's bet sheet with Novig only - Novig's odds now the same as bet at is 0% EV, and nothing from another book is shown`() {
         // Tyson Bagent Over 0.5 at +122, Novig still +122 (its other side -223): before, the bid/offer middle (+163) read as -15.56% EV.
         val placed = bet.copy(
-            selection = "Tyson Bagent Over 0.5", marketLabel = "Player Passing Interceptions", eventName = "New York Jets @ Chicago Bears",
+            selection = "Tyson Bagent Over 0.5", marketLabel = "Player Passing Interceptions", eventName = "New York Jets @ Chicago Bears", league = "NFL",
             american = 122, price = 1.0 / 2.22, cost = 1.0 / 2.22, stake = 1.15, fairAtBet = 0.461, evPercentAtBet = 0.0234,
             novigFair = 0.450, novigAtMs = now - 40_000, nowFair = 0.38, nowEv = -0.1556, nowBooks = 1, gameUrl = "https://crazyninjaodds.com/x",
         )
