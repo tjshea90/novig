@@ -156,6 +156,36 @@ class TrackerTextTest {
     }
 
     @Test
+    fun `the Novig-only line counts every open Novig bet - priced, with no Novig price now, not read - ids on record or not`() {
+        val priced = bet("p").copy(novigFair = 0.5, novigAtMs = now - 3 * 60_000L)
+        val gone = bet("g").copy(novigWhy = "not offered", novigWhyAtMs = now - 60_000L)
+        val noIds = bet("n").copy(marketId = "", outcomeId = "")
+        val elsewhere = bet("e").copy(book = "BetMGM")
+        assertEquals(
+            "EV and CLV from Novig's own prices only: 1 of 3 open bets priced (oldest 3m ago) · 1 with no Novig price now (why on each bet) · 1 not read yet.",
+            TrackerText.novigOnlyNote(listOf(priced, gone, noIds, elsewhere), now),
+        )
+        // The reason shows on the bet's card, with when it was looked; no "tried never" for a bet not looked at yet.
+        val shown = com.tjshea.vigilant.data.tracker.NovigNow.view(listOf(gone, noIds)).associateBy { it.id }
+        assertEquals("Not priced: not offered (tried 1m ago)", TrackerText.oddsNote(shown.getValue("g"), now))
+        assertEquals("Not priced: Novig's exact bet hasn't been looked up yet (tap Check Novig now)", TrackerText.oddsNote(shown.getValue("n"), now))
+    }
+
+    @Test
+    fun `a Novig-only read's toast says what was read, found by name, and not on Novig now - and nothing when it had nothing to do`() {
+        val read = com.tjshea.vigilant.data.tracker.NovigNow.Read(mapOf("a" to 0.5, "b" to 0.4), due = 3, all = 5, marketsAsked = listOf("m"), why = mapOf("c" to "x"))
+        val looked = com.tjshea.vigilant.data.tracker.NovigIds.Found(mapOf("d" to ("m" to "o")), mapOf("e" to "y", "f" to "z"))
+        assertEquals(
+            "Novig's prices read for 2 of 3 open bets (Novig only: no other book asked); 2 already fresh; 1 found on Novig by name; 3 with no Novig price now (why on each bet).",
+            TrackerText.novigReadToast(looked, read, force = false),
+        )
+        val nothing = com.tjshea.vigilant.data.tracker.NovigNow.Read(emptyMap(), 0, 4, emptyList())
+        assertNull(TrackerText.novigReadToast(null, nothing, force = false))
+        assertEquals("No open bet to price on Novig.", TrackerText.novigReadToast(null, nothing, force = true))
+        assertEquals("1 with no Novig price now (why on each bet).", TrackerText.novigReadToast(com.tjshea.vigilant.data.tracker.NovigIds.Found(emptyMap(), mapOf("e" to "y")), nothing, force = false))
+    }
+
+    @Test
     fun `typed odds are American, with either minus sign, and nothing inside ±100`() {
         assertEquals(150, parseAmerican("+150"))
         assertEquals(150, parseAmerican(" 150 "))
