@@ -1116,7 +1116,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setPaused(paused: Boolean) {
         viewModelScope.launch {
             applySettings { it.copy(paused = paused) }
-            _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else "Scanning resumed")
+            _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else RESUMED_TOAST)
         }
     }
 
