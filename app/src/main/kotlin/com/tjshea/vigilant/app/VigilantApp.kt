@@ -144,7 +144,7 @@ class AppContainer(private val app: Application) {
     val perf = com.tjshea.vigilant.data.diag.PerfStats()
 
     /** Whether the phone restarted since Vigilant last looked, the only time the app switches auto-bet off ([LaunchGate]). */
-    val launches = LaunchGate(app.getSharedPreferences(LaunchGate.PREFS, Context.MODE_PRIVATE))
+    val launches = LaunchGate(app.getSharedPreferences(LaunchGate.PREFS, android.content.Context.MODE_PRIVATE))
 
     /** The screen's frames, by what the app was doing (Diagnostics' frame meter; [FrameMeter]). */
     val frames = com.tjshea.vigilant.data.diag.FrameStats()
