@@ -63,7 +63,7 @@ class AutoBettor(
     private val wallet: suspend () -> Double? = {
         val t = c.trading
         val address = c.subaccountKeyId
-        if (t == null || address == null) null else withContext(Dispatchers.IO) { t.balance(address) }
+        if (t == null || address == null) null else withContext(Dispatchers.IO) { t.balance(address) }.also { c.wallet.record(it) }
     },
     /** [row]'s exact Novig bet as a target (market read, outcome found), or null when it can't be found for certain. */
     private val resolve: suspend (CnoRow) -> BetTarget? = { row -> resolveOnNovig(c, row) },

@@ -383,7 +383,7 @@ class ApiBettingController(
         val trading = c.trading ?: return null
         val address = state.value.novig.connection?.subaccountKeyId ?: return null
         return try {
-            withContext(Dispatchers.IO) { trading.balance(address) }
+            withContext(Dispatchers.IO) { trading.balance(address) }.also { c.wallet.record(it) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: NovigApiException) {

@@ -215,6 +215,8 @@ class AutoScanner(
             val errors = ArrayList<String>()
             try {
                 c.ensureLoaded()
+                // The wallet's balance for this cycle's notifications (Tj, 2026-10-02 21:51Z): read again only when the last is over 30 s old.
+                runCatching { c.wallet.fresh() }.onFailure { if (it is CancellationException) throw it }
                 // The scanner choice is the master switch: CNO only puts Vigilant's scan to sleep here too (no API credits spent in the
                 // background), Vigilant only does the same for CNO ([ScanSettings.autoScansVigilant], [ScanSettings.autoScansCno]).
                 if (settings.autoScansCno) {

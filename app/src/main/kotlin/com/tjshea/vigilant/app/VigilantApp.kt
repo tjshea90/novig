@@ -252,6 +252,17 @@ class AppContainer(private val app: Application) {
     @Volatile var subaccountKeyId: String? = null
         private set
 
+    /** The Vigilant wallet's balance, shown on every notification ([withWallet]; Tj, 2026-10-02 21:51Z). */
+    val wallet = WalletBalance(
+        read = {
+            val t = trading
+            val address = subaccountKeyId
+            if (t == null || address == null) null else withContext(Dispatchers.IO) { t.balance(address) }
+        },
+        setUp = { trading != null && subaccountKeyId != null },
+        prefs = app.getSharedPreferences(WalletBalance.PREFS, android.content.Context.MODE_PRIVATE),
+    )
+
     /**
      * One order at a time across the whole app (Tj, 2026-10-01): the Bet sheet's placer and the auto-bet's share it ([ApiBetPlacer]), so the
      * same bet can never be placed by both at once.
