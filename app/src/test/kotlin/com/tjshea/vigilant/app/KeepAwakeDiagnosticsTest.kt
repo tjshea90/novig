@@ -43,7 +43,7 @@ class KeepAwakeDiagnosticsTest {
         val warn = checks(state { it.copy(autoScanKeepAwake = false) }).single { it.text().contains("Keep awake is off") }
         assertEquals(HealthChecks.Level.WARN, warn.level)
         assertTrue(warn.text(), warn.text().contains("about every 9 minutes, not every 5 sec"))
-        assertTrue(warn.text(), warn.text().contains("Settings › Background auto-scan › Keep awake"))
+        assertTrue(warn.text(), warn.text().contains("Settings › Scanning › Keep awake"))
         // At 10 minutes an alarm is on time: nothing to warn about; and with the switch on there's nothing either.
         assertTrue(checks(state { it.copy(autoScanKeepAwake = false, autoScanSeconds = 600) }).none { it.text().contains("Keep awake is off") })
         assertTrue(checks(state()).none { it.text().contains("Keep awake is off") })

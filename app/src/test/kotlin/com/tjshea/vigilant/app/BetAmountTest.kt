@@ -25,7 +25,7 @@ class BetAmountTest {
     fun `what's wrong with an amount is said, and nothing while it's blank or fine`() {
         assertNull(BetAmount.problem("", max = 10.0))
         assertNull(BetAmount.problem("4", max = 10.0))
-        assertEquals("Over your $10.00 limit per bet (Settings › Novig API › Betting)", BetAmount.problem("25", max = 10.0))
+        assertEquals("Over your $10.00 limit per bet (Settings › Betting & Novig account)", BetAmount.problem("25", max = 10.0))
         assertEquals("Dollars and cents only (two decimal places)", BetAmount.problem("1.234", max = 10.0))
         assertEquals("More than \$0, please", BetAmount.problem("0", max = 10.0))
     }

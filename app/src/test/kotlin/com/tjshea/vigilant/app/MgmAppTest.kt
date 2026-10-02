@@ -101,9 +101,11 @@ class MgmAppTest {
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
         compose.onNodeWithText("NJ").performScrollTo().performClick()
         assertEquals("nj", saved?.bookState)
-        compose.onNodeWithTag("settingsTab-FEED").performScrollTo().performClick()
+        compose.onNodeWithTag("settingsBack").performClick()
+        compose.onNodeWithTag("settingsRow-FEED").performScrollTo().performClick()
         compose.onAllNodesWithText("Most Novig prices per scan", substring = true).assertCountEquals(0)
-        compose.onNodeWithTag("settingsTab-CNO").performScrollTo().performClick()
+        compose.onNodeWithTag("settingsBack").performClick()
+        compose.onNodeWithTag("settingsRow-CNO").performScrollTo().performClick()
         compose.onAllNodesWithText("Novig's price now").assertCountEquals(0)
     }
 

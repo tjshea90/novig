@@ -283,7 +283,7 @@ fun AutoBetSection(
     Shadowed.autoBetEdge(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetEdgeShadowed")) }
 
     Text("Books that each say +EV on their own", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel) { v -> onUpdate { it.copy(autoBetBooks = v) } }
+    Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel, modifier = Modifier.testTag("autoBetBooksChips")) { v -> onUpdate { it.copy(autoBetBooks = v) } }
     Text(
         "Each sportsbook on the bet's page, with its own profit taken out, must say Novig's price beats the true odds. More books agreeing means the edge " +
             "isn't one book's mistake.",
@@ -306,9 +306,9 @@ fun AutoBetSection(
     )
 
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
+    Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }, modifier = Modifier.testTag("autoBetTwoSidedChips")) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
     Text(
-        "A book that lists only one side of a bet can't be checked (its profit can't be taken out), so only books with both sides count.",
+        "Only books that price both sides count: with just one side, a book's profit can't be taken out to check the bet.",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
 

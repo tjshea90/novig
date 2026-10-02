@@ -141,19 +141,20 @@ class AutoBetUiTest {
     @Test
     fun `books agreeing offers 2, 3, 4 and 5+, and books pricing both sides 1, 2 and 3`() {
         show()
-        // The first row of digits is books agreeing; the second is books pricing both sides.
+        // Each row of digits has its own tag: books agreeing, then books pricing both sides.
+        fun chip(row: String, label: String) = compose.onNode(androidx.compose.ui.test.hasText(label) and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag(row)))
         for ((label, n) in listOf("2" to 2, "3" to 3, "4" to 4)) {
-            compose.onAllNodesWithText(label)[0].performClick()
+            chip("autoBetBooksChips", label).performScrollTo().performClick()
             assertEquals(n, settings.autoBetBooks)
         }
         compose.onNodeWithText("5+").performClick()
         assertEquals(5, settings.autoBetBooks)
         compose.onNodeWithText("5+").assertIsSelected()
-        compose.onNodeWithText("1").performClick()
+        chip("autoBetTwoSidedChips", "1").performScrollTo().performClick()
         assertEquals(1, settings.autoBetTwoSided)
-        compose.onAllNodesWithText("2").onLast().performClick()
+        chip("autoBetTwoSidedChips", "2").performClick()
         assertEquals(2, settings.autoBetTwoSided)
-        compose.onAllNodesWithText("3").onLast().performClick()
+        chip("autoBetTwoSidedChips", "3").performClick()
         assertEquals(3, settings.autoBetTwoSided)
         // Neither row touched the other's setting.
         assertEquals(5, settings.autoBetBooks)
@@ -301,7 +302,7 @@ class AutoBetUiTest {
             compose.onNodeWithText(label).performClick()
             assertEquals(label, seconds, settings.autoScanSeconds)
         }
-        compose.onNodeWithText("The same choice as Settings › Scan › Background auto-scan", substring = true).assertExists()
+        compose.onNodeWithText("the same setting as Settings › Scanning › Background scan: one choice, two places", substring = true).assertExists()
         // 5 sec: its cost is said (CNO reads ~12 a minute, may block addresses); 15 sec and slower: no warning.
         compose.onNodeWithText("5 sec").performClick()
         compose.onNodeWithTag("autoBetFastNote").assertExists()
@@ -320,7 +321,7 @@ class AutoBetUiTest {
         assertTrue(AutoBetText.running(settings).contains("every 10 min"))
         // The scanner choice, the background scan and Pause each keep it from running.
         assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(scanner = ScannerMode.VIGILANT)))!!.contains("Vigilant only"))
-        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(autoScan = AutoScanMode.OFF)))!!.contains("Background auto-scan is off"))
+        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(autoScan = AutoScanMode.OFF)))!!.contains("The background scan is off"))
         assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(paused = true)))!!.contains("paused"))
     }
 

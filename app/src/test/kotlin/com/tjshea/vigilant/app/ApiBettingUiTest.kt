@@ -339,7 +339,7 @@ class ApiBettingUiTest {
         compose.onNodeWithTag("betAmount").performTextClearance()
         compose.onNodeWithTag("betAmount").performTextInput("25")
         assertEquals(before, typed.size)
-        compose.onNodeWithText("Over your $10.00 limit per bet (Settings › Novig API › Betting)").assertExists()
+        compose.onNodeWithText("Over your $10.00 limit per bet (Settings › Betting & Novig account)").assertExists()
         assertTrue(picked.isEmpty())
     }
 
