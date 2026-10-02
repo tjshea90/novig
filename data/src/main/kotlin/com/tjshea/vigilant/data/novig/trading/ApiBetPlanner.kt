@@ -35,6 +35,8 @@ data class BetTarget(
     val auto: Boolean = false,
     /** The bet as decided ([com.tjshea.vigilant.data.tracker.AtBet]), kept on the bet once it fills. */
     val atBet: com.tjshea.vigilant.data.tracker.AtBet? = null,
+    /** A lock's: the bet whose other side it buys ([com.tjshea.vigilant.data.tracker.TrackedBet.lockFor]). */
+    val lockFor: String? = null,
 )
 
 /**

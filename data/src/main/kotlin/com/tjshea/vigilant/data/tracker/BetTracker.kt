@@ -142,7 +142,16 @@ data class TrackedBet(
     val auto: Boolean = false,
     /** Everything about the bet as it was placed ([AtBet], Tj 2026-10-02 17:01Z): never changed by a re-check. Null before v0.45.0. */
     val atBet: AtBet? = null,
+    /**
+     * A lock (Tj, 2026-10-02 ~18:50Z: "take the other side of the bet later on and guarantee a profit no matter which side of the bet wins"): the id of
+     * the bet whose other side this bought ([com.tjshea.vigilant.data.novig.trading.LockIn]). Its profit counts in the Tracker's money; it isn't a +EV
+     * pick, so the EV and closing-line stats leave it out ([isLock]).
+     */
+    val lockFor: String? = null,
 ) {
+    /** Bought to lock in another bet's profit ([lockFor]). */
+    val isLock: Boolean get() = lockFor != null
+
     /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
     val viaApi: Boolean get() = orderId != null
 
@@ -527,7 +536,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             auto = target.auto && !imported,
             // As decided, with what the order really cost (the record's price is the one judged; the bet's own fields hold the fill).
             atBet = target.atBet?.takeUnless { imported }?.copy(stake = stake),
-            gradeNote = (if (target.auto && !imported) "Auto-bet through Novig's API: " else "Placed through Novig's API: ") +
+            lockFor = target.lockFor,
+            gradeNote = (if (target.lockFor != null) (if (target.auto) "Auto-lock through Novig's API: " else "Lock through Novig's API: ")
+                else if (target.auto && !imported) "Auto-bet through Novig's API: " else "Placed through Novig's API: ") +
                 "${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
         )
         var logged: TrackedBet = bet
