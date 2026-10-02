@@ -500,7 +500,6 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
 @Composable
 private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     Intro("A small window with your best bets that stays on screen over other apps (like ${AppBook.name}), so you can bet without switching back and forth.")
-----------------------------------------------------------------
     SectionTitle("Mini window")
     Hint("The widget opens only when you press its button at the top of the list.")
     SwitchRow(
