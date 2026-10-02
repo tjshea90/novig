@@ -63,7 +63,11 @@ object TrackerText {
         if (s.markets > 0) {
             "${s.lockedBets} of ${s.bets} bet${if (s.bets == 1) "" else "s"} locked in across ${s.markets} market${if (s.markets == 1) "" else "s"} (both sides held " +
                 "equally, so each pays the same whichever side wins): ${Format.signedMoney(s.profit)} on ${Format.money(s.staked)} staked on both sides, fees included" +
-                (if (s.paid != 0.0 || s.profit == s.paid) "; ${Format.signedMoney(s.paid)} of it already graded." else "; none of it graded yet.")
+                when (s.graded) {
+                    s.markets -> ", all graded."
+                    0 -> ", paid once the games are graded."
+                    else -> "; ${Format.signedMoney(s.paid)} of it graded (${s.graded} market${if (s.graded == 1) "" else "s"}), the rest paid once graded."
+                }
         } else "No market fully locked in yet.",
         "${s.partly} more market${if (s.partly == 1) " is" else "s are"} partly locked (one side held more: still riding).".takeIf { s.partly > 0 },
         if (hidden) "Hidden from the other numbers and the Bets list (Hide locked bets is on)." else "Also counted in the other numbers and listed under Bets.",

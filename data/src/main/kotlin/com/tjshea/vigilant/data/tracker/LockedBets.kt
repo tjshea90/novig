@@ -71,6 +71,7 @@ object LockedBets {
             staked = inShown.sumOf { it.spent },
             profit = inShown.sumOf { it.profit },
             paid = inShown.filter { it.settled }.sumOf { it.profit },
+            graded = inShown.count { it.settled },
             hiddenBets = shown.count { it.id in hidden },
             partly = partly(all.filter { it.marketId in shownMarkets }),
         )
@@ -79,7 +80,7 @@ object LockedBets {
 
 /**
  * The Tracker's lock numbers ([LockedBets.stats]): [lockedBets] of [bets] picks locked in, across [markets] markets; [profit] made on [staked] in those
- * markets (both sides, fees included), [paid] of it already graded; [hiddenBets] bets (picks and locks) a "hide locked" leaves out; [partly] markets
+ * markets (both sides, fees included), [paid] of it in the [graded] markets already graded; [hiddenBets] bets (picks and locks) a "hide locked" leaves out; [partly] markets
  * with both sides held unequally (still riding).
  */
 data class LockStats(
@@ -89,6 +90,7 @@ data class LockStats(
     val staked: Double,
     val profit: Double,
     val paid: Double,
+    val graded: Int,
     val hiddenBets: Int,
     val partly: Int,
 ) {
