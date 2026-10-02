@@ -74,4 +74,31 @@ class CycleRecorderTest {
         val helper = src.substringAfter("private inline fun <T> timed(").substringBefore("suspend fun afterScan")
         assertTrue(helper, helper.contains("finally") && helper.contains("c.perf.add(\"cycle.step.\$name\""))
     }
+
+    /**
+     * The places in the app that write to the flight recorder, pinned in the source (each runs inside a service, a cycle or an activity that a unit test can't drive
+     * whole): the file Claude reads is only as good as these lines, so removing one must fail a test.
+     */
+    @Test
+    fun `the cycle, the alerts, the service and the screen each tell the recorder what they did`() {
+        val dir = "src/main/kotlin/com/tjshea/vigilant/app/"
+        val scan = File(dir + "AutoScan.kt").readText()
+        // A slow cycle is a WARN with its time, only past the rule.
+        assertTrue(scan.contains("if (slowCycle(tookMs, settings.autoScanSeconds)) {\n                        c.eventLog.warn(\"CYCLE\", \"a background cycle took \${tookMs / 1_000} s"))
+        // The alerts: each sharp verdict counted, each batch sent an event and a count.
+        assertTrue(scan.contains(").also { c.eventLog.count(\"sharp.alert.\${it.verdict}\") }"))
+        assertTrue(scan.contains("c.eventLog.info(\"ALERT\", \"sent \$posted +EV alert"))
+        assertTrue(scan.contains("c.eventLog.count(\"alerts.sent\", posted.toLong())"))
+        // The service: it started, was refused, was stopped, destroyed or swiped away.
+        val service = File(dir + "AutoScanService.kt").readText()
+        for (event in listOf("auto-scan service started", "Android refused to start auto-scan in the foreground", "auto-scan service stopping", "auto-scan service destroyed", "Vigilant swiped out of the recent apps")) {
+            assertTrue(event, service.contains("container.eventLog.") && service.contains("\"SERVICE\", \"$event"))
+        }
+        // The screen: opened (fresh or restored), the cold start, the share sheet it starts and the button that asks for it.
+        val activity = File(dir + "MainActivity.kt").readText()
+        assertTrue(activity.contains("container.eventLog.info(\"APP\", \"screen opened (\${if (savedInstanceState == null) \"fresh launch\" else \"restored\"})\""))
+        assertTrue(activity.contains("perf.noteColdStart(sinceStartMs, COLD_START_WINDOW_MS)"))
+        assertTrue(activity.contains("vm.shareRequests.collect { intent -> runCatching { startActivity(intent) }"))
+        assertTrue(activity.contains("onShare = vm::shareDiagnostics,"))
+    }
 }

@@ -134,6 +134,11 @@ class DiagnosticsShareTest {
         val sheets = java.util.concurrent.CopyOnWriteArrayList<Intent>()
         val collector = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch { vm.shareRequests.collect { sheets += it } }
         try {
+            // What the recorder holds goes into the file: a counter, a timing, the cold start and a call.
+            app.container.eventLog.count("autobet.looked", 3)
+            app.container.perf.add("cycle.ms", 1_234.0)
+            app.container.perf.coldStartMs = 1_500L
+            app.container.netStats.record("recorded.example.com", "/v1/odds", 200, null, 120, 180, 20_000, "Wi-Fi")
             vm.shareDiagnostics()
             waitFor("the share sheet") { sheets.isNotEmpty() }
             assertEquals(Intent.ACTION_CHOOSER, sheets.first().action)
@@ -142,6 +147,9 @@ class DiagnosticsShareTest {
             val text = files.single().readText()
             assertTrue(text.take(120), text.startsWith("VIGILANT DIAGNOSTICS FILE · version "))
             assertTrue(text.contains("== READ ME FIRST (for Claude) ==") && text.contains("== EVENT TIMELINE") && text.contains("This is the first report saved on this phone"))
+            for (needed in listOf("autobet.looked: 3", "cycle.ms: 1 samples", "Screen appeared 1500 ms after the process started", "recorded.example.com · 1 · 0 (0.0%)")) assertTrue(needed, text.contains(needed))
+            // The events reached their file at once (the file is the memory of the next run), including the line about this very file.
+            assertTrue(File(app.filesDir, "events.json").readText().contains("diagnostics file made"))
             // The numbers of that file are kept; the next one is compared with them.
             assertEquals(1, runBlocking { app.container.diagHistory.all().size })
             assertTrue(app.container.eventLog.events().any { it.cat == "DIAG" && it.msg.startsWith("diagnostics file made") })
