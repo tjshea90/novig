@@ -746,6 +746,7 @@ private fun VigilantRoot(
                         onRegrade = vm::regradeBet,
                         onPrice = vm::setPrice,
                         onSync = { vm.api.sync() },
+                        onLock = vm::lockIn,
                     ),
                 )
                 Tab.AUTOBET -> {

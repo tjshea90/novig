@@ -330,7 +330,7 @@ fun TrackerScreen(
                             onDelete = { confirmDelete = bet },
                             injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
                             move = state.lineMoves[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
-                            lock = if (bet.viaApi && open(bet)) state.locks[bet.marketId] else null,
+                            lock = if (bet.viaApi && bet.status == BetStatus.PENDING) state.locks[bet.marketId] else null,
                         )
                     }
                 }

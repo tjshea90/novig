@@ -77,6 +77,9 @@ fun BetSheet(
     onDismiss: () -> Unit,
     /** The player's injury report when he may not play (PARLAY_API.md §6.1). */
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
+    /** The lock on this bet's market, for a bet placed through the API (RESEARCH.md §67), and whether one is being placed now. */
+    lock: com.tjshea.vigilant.app.LockView? = null,
+    locking: Boolean = false,
 ) {
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     // Current odds, not last time's: the books are read once when the sheet opens on old ones.
@@ -86,7 +89,7 @@ fun BetSheet(
         if (bet.status == BetStatus.PENDING && bet.gameUrl != null && t - bet.startsTs < BetRecheck.STALE_AFTER_START_MS && old) actions.onReread(bet.id, true)
     }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
-        BetSheetContent(bet, remember(bet) { BetInsight.of(bet) }, now, settings, rereading, grading, replacing, actions, onSettle, onStake, onPrice, onDelete, injury = injury)
+        BetSheetContent(bet, remember(bet) { BetInsight.of(bet) }, now, settings, rereading, grading, replacing, actions, onSettle, onStake, onPrice, onDelete, injury = injury, lock = lock, locking = locking)
     }
 }
 
@@ -106,6 +109,8 @@ fun BetSheetContent(
     onPrice: () -> Unit,
     onDelete: () -> Unit,
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
+    lock: com.tjshea.vigilant.app.LockView? = null,
+    locking: Boolean = false,
 ) {
     val open = bet.status == BetStatus.PENDING
     val started = now >= bet.startsTs
@@ -168,6 +173,15 @@ fun BetSheetContent(
 
         // ---- The fair price now against it ----
         if (open) NowCard(bet, insight, now, rereading)
+
+        // ---- Lock in a profit (RESEARCH.md §67): bets placed through the API only ----
+        if (open && lock != null) {
+            LockCard(lock, locking, actions.onLock)
+        } else if (open && bet.isLock) {
+            Caption("This is a lock: it bought the other side of an earlier bet in this market so both pay the same. Its money counts; the record, EV and CLV leave it out.")
+        } else if (open && !bet.viaApi && AppBook.isNovig) {
+            Caption("Locking in a profit works on bets placed through Vigilant (the Bet sheet or auto-bet): a bet placed in the Novig app can't be confirmed through Novig's API.")
+        }
 
         // ---- Every book ----
         if (insight.books.isNotEmpty()) {
