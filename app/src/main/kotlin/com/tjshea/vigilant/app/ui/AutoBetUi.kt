@@ -424,6 +424,50 @@ fun AutoBetSection(
     }
 
 
+    // ---- Auto-lock (Tj, 2026-10-02 ~18:50Z: "include an option to auto bet these bets in addition to whatever the auto bet system already does") ----
+    SectionTitle("Lock in profits")
+    Text(
+        "When the odds move your way after a bet, buying the other side of the same Novig market can guarantee a profit whichever side wins (a lock). " +
+            "Vigilant checks your open bets placed through the API at every background scan, using only Novig's own prices. Each lock is one fill-or-kill " +
+            "order: it fills completely at a price that keeps the profit, or nothing is bought, and Novig's own record of what you hold is checked first. A lock " +
+            "trades a little expected value for certainty (it cashes in the move you already got), so it's off until you turn it on; each bet's sheet in the " +
+            "Tracker also offers it by hand.",
+        style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp),
+    )
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = s.autoLock, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(autoLock = v) } })
+            .padding(vertical = 6.dp).testTag("autoLockSwitch"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Lock in profits automatically", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+        Switch(checked = s.autoLock, onCheckedChange = null)
+    }
+    Text("Smallest profit to lock, as a share of what's staked on the bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_LOCK_MIN_CHOICES, s.autoLockMinPercent, { "${AutoBetText.trim(it * 100)}%" }, equal = { a, b -> abs(a - b) < 1e-9 }, modifier = Modifier.testTag("autoLockMinChips")) { v ->
+        onUpdate { it.copy(autoLockMinPercent = v) }
+    }
+    Text(
+        "2% on a \$10 bet: it locks once at least \$0.20 profit is guaranteed whichever side wins. Lower locks sooner and more often for less; higher waits " +
+            "for a bigger move, which may never come.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = s.autoLockLive, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(autoLockLive = v) } })
+            .padding(vertical = 6.dp).testTag("autoLockLive"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Also during the game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+        Switch(checked = s.autoLockLive, onCheckedChange = null)
+    }
+    Text(
+        "In-game, prices swing the most, so locks are bigger; Novig's in-game fee is counted in, and a line that could push (a whole number) isn't locked then.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+    if (s.autoLock && s.autoScan == AutoScanMode.OFF) {
+        Text("The background scan is off, so auto-lock can't run.", style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoLockNoBackground"))
+        OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }) { Text("Turn on the background scan") }
+    }
+
     // The notification every bet gets (Tj, 2026-10-01: "a push notification for every automatic bet, so I can see each bet placed and the stake and EV")
     SectionTitle("Notifications")
     Text(

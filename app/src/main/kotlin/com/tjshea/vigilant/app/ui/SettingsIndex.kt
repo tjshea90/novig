@@ -89,6 +89,7 @@ object SettingsIndex {
         Entry("Sharp-book veto", null, "Skip a bet the sharpest book disagrees with", "auto-bet sharp veto confirm pinnacle kalshi", autoBetTab),
         Entry("Amount per bet", null, "Auto-bet's stake: Kelly, \$1 or your amount", "auto-bet stake kelly amount", autoBetTab),
         Entry("Check every", null, "How often auto-bet looks for bets", "auto-bet interval often", autoBetTab),
+        Entry("Lock in profits automatically", null, "Buy the other side once a bet's odds moved your way, for a sure profit", "lock hedge arbitrage arb guarantee green", autoBetTab),
     )
 
     /** The entries matching every word of [query] (in the title, the line or the extra words), for these settings. */
