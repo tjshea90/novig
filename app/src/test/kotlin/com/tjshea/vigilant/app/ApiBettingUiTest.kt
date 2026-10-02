@@ -20,6 +20,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
@@ -156,8 +158,12 @@ class ApiBettingUiTest {
         compose.onNodeWithText("Turn betting off").performScrollTo().performClick()
         assertTrue(synced && off)
         // A limit chip changes the setting.
-        compose.onNodeWithText("Any +EV").performScrollTo().performClick()
-        assertEquals(0.0, settings.apiMinEv, 1e-9)
+        compose.onNodeWithText("$100.00").performScrollTo().performClick()
+        assertTrue(settings.apiMaxStake == 100.0 || settings.apiMaxPerDay == 100.0)
+        // No minimum edge for a bet placed by hand (Tj, 2026-10-02): the chips are gone and the section says so.
+        compose.onAllNodesWithText("Smallest edge a bet is still placed at").assertCountEquals(0)
+        compose.onAllNodesWithText("Any +EV").assertCountEquals(0)
+        compose.onNodeWithText("Bets you place yourself from a Bet sheet have no minimum edge", substring = true).assertExists()
     }
 
     @Test
