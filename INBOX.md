@@ -3552,3 +3552,8 @@ Research and see if it is possible to arbitrage bet my own bets in novig based o
 
 Then make a filter option for the stats and bet tracker where I can select novig only. What this will do is find the current novig odds for each of my open bets and show the percent EV compared only from novig odds, filtering out other sports books. For example, if I placed a bet two days ago, it will find that same exact bet odds currently on novig and do the already in place stats and ev calculations that this section already does, but only for novig. Make sure it is smart and doesn't waste any api usage on other sports books if not needed when I select this filter, and also if I already just scanned without using this filter and there is still fresh novig odds for all my bets, it doesn't need to rescan. It can just filter
 ```
+
+## 2026-10-02T20:06:10Z
+```
+Add options to remove arbitraged locked bets out of stats and bet trackers. It makes no sense for me to track a bet that is already cashed out. Maybe maybe a stat tracker for amount and percentage of bets locked in and the total profit and percentage of profit for those bets. Also many open bets are not finding the current novig odds for the same exact bet. This may be because it is not currently offered, but make sure the feature is coded properly.
+```
