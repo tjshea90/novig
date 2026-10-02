@@ -1,22 +1,24 @@
-# CHECKPOINT 2341 — read me first, then TASKS.md
+# CHECKPOINT 2342 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T16:40:19Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `49772138` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T16:44:49Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `5d888b5b` (this checkpoint is the commit after it)
 
 ## Just done
-AV: Tj's 16:45Z settings/CLV question written into TASKS.md
+AV1-AV2: research written (RESEARCH.md §65), answer ready
 
 ## Do this next
-AV1: read RESEARCH.md on CLV/agreement/thresholds, then outside sources
+answer Tj; build (a) sharp veto, (b) market filter, (c) agreement-at-bet CLV split if he says so
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M RESEARCH.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  5d888b5b ckpt 2341: AV: Tj's 16:45Z settings/CLV question written into TASKS.md
   f7dc79c6 ckpt 2340: AU4: v0.44.3 released, APK verified, recorded; release.yml's description fix
   02f379ba ckpt 2339: pre-release: v0.44.3: only a phone restart turns auto-bet off (not a swipe a
   99fa19d1 ckpt 2338: floor: 1,641 passed, 1 stale pin fixed (DiagnosticsFileTest); SharpRealBoard
@@ -26,8 +28,4 @@ AV1: read RESEARCH.md on CLV/agreement/thresholds, then outside sources
   8947b194 ckpt 2334: AU: Tj's 16:05Z request written into TASKS.md
   42953e58 ckpt 2333: AT1: audit of every request in this chat: all done and shipped (v0.44.0-v0.4
   d5b560e9 ckpt 2332: v0.44.2 released, verified and recorded; AQ5/AR3/AS5 ticked
-  583f0780 ckpt 2331: CI flake fixed: BackgroundTrimTest counted the scanner's own memory-pressure
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

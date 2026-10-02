@@ -3605,3 +3605,60 @@ about, X confirmed, Y with no Pinnacle price for that exact line, Z that Pinnacl
 `AutoBettor.sharpLine`, `SharpConfirmAppTest`, 2 mutants killed). The Diagnostics file has the same as counters (`sharp.autobet.*`) and the feed calls.
 Ways to more volume, Tj's call (not built): "Pinnacle or Circa" (already a choice), "Also take Pinnacle's price from CNO's page" (already a switch), a lower
 minimum edge for the check, or not requiring the check for game lines vs props.
+
+## 65. Auto-bet settings for volume with the best chance of beating the close (2026-10-02 ~16:45Z; Tj: "Do research and tell me the best settings to get volume but also a good chance at beating clv. For example, if 7 of 9 books agree that it is positive EV, is this good enough or is it a red flag because 2 books say no? Is it good enough to find positive EV through multiple non sharp books or should I require a sharp book? What is the lowest percent positive EV I should look for per bet to safely beat clv? What other settings or changes should I have to get some volume but also the best chance at beating clv")
+
+**Tj's own record** (his Diagnostics pasted 2026-10-01 06:31Z, INBOX.md; outliers aside; CLV on the bets with a true close, mostly Novig's own trades):
+| Group | Bets with a close | CLV | Beat the close |
+| :- | -: | -: | -: |
+| CNO scanner, all | 87 | +1.5% | 66% |
+| CNO player props | 70 | +2.0% | 71% |
+| Game totals (both scanners) | 10 | −2.8% | 20% |
+| Team totals / 1st-half totals | 3 / 3 | −2.0% / −5.9% | 33% / 0% |
+| EV when bet 1–2% | 45 | +0.5% | 58% |
+| 2–3% | 33 | +1.3% | 58% |
+| 3–4% | 19 | +1.6% | 63% |
+| 4% and up | 12 | +1.4% | 83% |
+Average EV when bet +2.5% vs CLV +0.9%: the shown EV runs ~1.5–2 points above what the close says (§47 said 1.9). Small samples: one band's CLV
+has a standard error near 0.5–1 point, so 2–3% vs 3–4% is not a real difference; 1–2% is not distinguishable from zero. Results (ROI) are −0.4
+standard deviations from expected: far too few bets to judge by wins. The bets don't record their book agreement at the time of the bet
+(`TrackedBet.books` is refreshed by every re-check), so his record can't yet say whether "7 of 9" does better or worse than "9 of 9".
+
+**Outside evidence:**
+- A consensus of many ordinary books is a good fair price: Kaunitz, Zhong & Kreiner (arXiv 1710.02824) took the average of ~30 bookmakers'
+  odds as the truth, bet whichever book was far above it (5 points of implied probability, their best α), and the accuracy matched the consensus'
+  prediction (45.9% expected, 44.4% actual); +3.5% over 10 years of closing odds, +9.9% on minute-by-minute odds, +6.2% over 672 real bets, then the
+  books limited them. Buchdahl's "wisdom of the crowd" (football-data.co.uk) is the same idea.
+- Pinnacle alone is the best single fair price for main markets (Data Golf: betting other books against Pinnacle's no-vig odds gives about a
+  1-to-1 expected-to-actual ROI; Buchdahl: Pinnacle pre-closing odds against soft books, 31,000 bets, 3.8% expected, 3.6% actual).
+- **But not for props:** a 600-million-line-move study of MLB props (SmartStake, a vendor: treat as one source) ranks Kalshi and ProphetX the
+  sharpest, Novig next, DraftKings/FanDuel middle, and **Pinnacle and Bookmaker the softest** (tiny prop limits, little modeling). Pinnacle also
+  lists few props (§64.3). Requiring Pinnacle on props both cuts volume and anchors on a soft prop price.
+- Estimated edges shrink when realized: Data Golf's model realized about half its estimated EV (0% threshold −0.9% ROI, 5% → +1.5%, 8% → +4.4%);
+  Tj's record shows the same shrink (~1.5–2 points).
+- Commonly recommended minimums: main markets 0.5–2% when the fair is sharp-anchored; props 3–5% (less liquid, wider vig, copied lines)
+  (betsharpmoney.com filter guide; wizardofodds.com prop articles). Unabated: prop closing lines are less efficient (low limits keep sharps out),
+  so CLV on props is a weaker yardstick than on NFL sides: a reason to also watch results over hundreds of bets.
+
+**Answers:**
+1. *7 of 9:* not a red flag by itself. The consensus EV already includes the two that say no (the app's own check takes the lower of the
+   mean and median of every two-sided company, worst-case devig). What matters is **who** dissents and **by how much**: the sharpest book for that
+   market saying clearly "not +EV" (Kalshi/ProphetX on props; Pinnacle/Circa on sides and totals) is a red flag; two soft books a hair under is
+   noise. "Every book must agree" removes exactly the bets with the most books behind them (more books, more chance one is off) and cuts volume
+   hard with no evidence it raises CLV: keep it off. Many US books share one feed or copy each other, so 7 books can be 3–4 opinions (sister
+   sites are already one vote, §AS4).
+2. *Soft-book consensus vs a sharp book:* consensus is good enough, and Tj's CNO props (+2.0% CLV, 71% beat) prove it on his own bets. Don't
+   require a sharp book to confirm: on props it's the wrong book (Pinnacle is soft and absent) and kills volume (§64.3). Use sharp books as a
+   veto when they are on the page instead (not a setting yet: proposed below).
+3. *Lowest EV:* his record supports **2%** as the floor (2–3% bets: +1.3% CLV) and nothing below (1–2%: +0.5%, not distinguishable from zero).
+   **2.5%** is the recommended balance (a buffer for the ~1.5-point shrink, roughly 1.5× the volume of 3%); 3% for extra safety. Props sit on the
+   higher side of the outside guidance, but his CNO props already clear it.
+4. *Other settings:* books pricing both sides ≥ 3 (the most the app offers), agreeing ≥ 3, every-book-must-agree off, longest odds +130 to +150,
+   ¼ Kelly (½ is too swingy for edge estimates this noisy), CNO devig Conservative (default), background auto-scan every 30–60 s (edges that last
+   a minute are caught before they close), sharp-book confirmation off. And stop auto-betting game totals, team totals and 1st-half totals until
+   they show a positive CLV (−2.8%, −2.0%, −5.9%; small samples, but the same sign on both scanners): no setting does this yet.
+
+**Proposed changes (not built; Tj's call):** (a) a "sharp veto" mode in place of "sharp must confirm": skip only when the market's sharpest
+book on CNO's page (Kalshi/ProphetX for props, Pinnacle/Circa for game lines) says not +EV; (b) an auto-bet market filter (props only, or skip
+totals/team totals/1st-half totals); (c) record each bet's agreement at the time of the bet (x of y, which books dissented, a sharp book present
+or not) and split CLV by it in Diagnostics, so "7 of 9" is answered from his own bets in a few weeks.
