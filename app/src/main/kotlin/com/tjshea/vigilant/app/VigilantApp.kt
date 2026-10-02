@@ -399,6 +399,10 @@ class AppContainer(private val app: Application) {
     /** The auto-bet (Tj, 2026-10-01): called by [autoScan]'s cycle. */
     val autoBet: AutoBettor by lazy { AutoBettor(app, this) }
 
+    /** Locks on Tj's open API bets (RESEARCH.md §67): what's on offer ([LockScanner]) and the background's auto-lock ([AutoLocker]). */
+    val locks: LockScanner by lazy { LockScanner(this) }
+    val autoLock: AutoLocker by lazy { AutoLocker(app, this) }
+
     /** Diagnostics' "Recent problems" (files/problems.json, Tj 2026-09-30): what went wrong, kept across restarts, never a key. */
     val problems = com.tjshea.vigilant.data.diag.ProblemLog(
         JsonFileStore(File(app.filesDir, "problems.json"), com.tjshea.vigilant.data.diag.ProblemBook.serializer(), { com.tjshea.vigilant.data.diag.ProblemBook() }, json),

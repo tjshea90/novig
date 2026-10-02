@@ -563,6 +563,26 @@ object AutoBetNotes {
         runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
     }
 
+    /** A lock auto-lock placed (RESEARCH.md §67): the profit whichever side wins, the side bought, the game. */
+    fun locked(app: Application, bet: TrackedBet, view: LockView, guaranteed: Double) {
+        if (!ScanService.canNotify(app)) return
+        ensureChannel(app)
+        val title = "Auto-lock " + String.format(java.util.Locale.US, "+$%.2f", guaranteed) + " · ${view.heldName}"
+        val text = "Bought ${bet.contracts} contracts of ${view.otherName} at ${bet.american?.let { com.tjshea.vigilant.engine.Odds.formatAmerican(it) } ?: "?"}: " +
+            "at least ${String.format(java.util.Locale.US, "$%.2f", guaranteed)} profit whichever side wins · ${bet.marketLabel} · ${bet.eventName}"
+        val n = NotificationCompat.Builder(app, CHANNEL_BET)
+            .setSmallIcon(R.drawable.ic_scan)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
+            .build()
+        runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
+    }
+
     /** A made-up bet on the real channel ("Send a test notification"): what the next real one looks like, and whether it shows at all. */
     fun sample(app: Application): Boolean {
         if (!ScanService.canNotify(app)) return false

@@ -240,6 +240,11 @@ class AutoScanner(
                         }
                     }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
+                // Locks on the bets already placed (Tj, 2026-10-02 ~18:50Z), whatever the scanner: only Novig's books for the markets the subaccount holds.
+                if (settings.autoLocksNow) {
+                    _status.update { it.copy(step = "Auto-lock") }
+                    runCatching { timed("autolock") { c.autoLock.run(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Auto-lock: ${it.message ?: it.javaClass.simpleName}" }
+                }
                 if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock()))) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
