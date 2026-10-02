@@ -93,6 +93,18 @@ class EventLogTest {
         // A throwable with no frames of the app's: the first frames at all.
         val foreign = Throwable("x").apply { stackTrace = arrayOf(StackTraceElement("okhttp3.Foo", "bar", "Foo.kt", 7)) }
         assertEquals("okhttp3.Foo.bar(Foo.kt:7)", EventLog.whereOf(foreign))
+        // Many of the app's own frames: the first three, in order, with the library frames between them left out.
+        val deep = Throwable("x").apply {
+            stackTrace = arrayOf(
+                StackTraceElement("kotlinx.coroutines.X", "run", "X.kt", 1), StackTraceElement("com.tjshea.vigilant.app.A", "a", "A.kt", 10),
+                StackTraceElement("okhttp3.Y", "z", "Y.kt", 2), StackTraceElement("com.tjshea.vigilant.app.B", "b", "B.kt", 20),
+                StackTraceElement("com.tjshea.vigilant.data.C", "c", "C.kt", 30), StackTraceElement("com.tjshea.vigilant.data.D", "d", "D.kt", 40),
+            )
+        }
+        assertEquals("com.tjshea.vigilant.app.A.a(A.kt:10) < com.tjshea.vigilant.app.B.b(B.kt:20) < com.tjshea.vigilant.data.C.c(C.kt:30)", EventLog.whereOf(deep))
+        // The cause's frames count too (a wrapped exception hides where it began).
+        val wrapped = RuntimeException("wrapper").apply { stackTrace = arrayOf(StackTraceElement("java.lang.Thread", "run", "Thread.java", 1)); initCause(deep) }
+        assertTrue(EventLog.whereOf(wrapped).startsWith("com.tjshea.vigilant.app.A.a(A.kt:10)"))
         val l = log()
         l.error("CYCLE", "CNO read failed", t)
         assertTrue(l.events().single().msg.contains("(RuntimeException: outer)"))

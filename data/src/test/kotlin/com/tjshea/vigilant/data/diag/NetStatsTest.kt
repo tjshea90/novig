@@ -212,6 +212,34 @@ class NetInterceptorTest {
     }
 
     @Test
+    fun `a call whose body takes eight seconds is a slow-call event with its time, and a quick one is not`() {
+        // A clock that moves 5 s every time it is read: the call is 0 at the start, 5 s to the headers, 10 s at the end of the body.
+        var t = -5_000L
+        val slow = OkHttpClient.Builder().addInterceptor(NetInterceptor(stats, events, clock = { t += 5_000L; t })).build()
+        server.enqueue(MockResponse().setBody("z".repeat(40_000)))
+        slow.newCall(Request.Builder().url(server.url("/big")).build()).execute().use { it.body!!.string() }
+        val e = events.events().single()
+        assertEquals(Level.WARN, e.level)
+        assertTrue(e.msg, e.msg.contains("/big slow: 10000 ms for 39 KB"))
+        assertEquals(10_000L, e.ms)
+        server.enqueue(MockResponse().setBody("quick"))
+        get("/quick").use { it.body!!.string() }
+        assertEquals(1, events.events().size)
+    }
+
+    @Test
+    fun `a call cancelled with a socket error that does not say cancelled is still not reported`() {
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+        val quiet = OkHttpClient.Builder()
+            .addInterceptor(NetInterceptor(stats, events))
+            .addInterceptor { chain -> chain.call().cancel(); throw java.io.IOException("Socket closed") }
+            .build()
+        try { quiet.newCall(Request.Builder().url(server.url("/x")).build()).execute() } catch (e: java.io.IOException) { }
+        assertEquals(mapOf("cancelled" to 1L), stats.snapshot().hosts.getValue(host).kinds)
+        assertTrue(events.events().toString(), events.events().isEmpty())
+    }
+
+    @Test
     fun `no URL query, header or body text reaches the stats or the events`() {
         server.enqueue(MockResponse().setResponseCode(500).setBody("{\"error\":\"key sk-LIVEKEYLIVEKEYLIVEKEY1234 is invalid\"}"))
         get("/p?apiKey=sk-LIVEKEYLIVEKEYLIVEKEY1234").use { it.body!!.string() }
