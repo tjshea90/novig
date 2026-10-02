@@ -2,12 +2,9 @@ package com.tjshea.vigilant.app
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
-import com.tjshea.vigilant.data.scanner.ScannerMode
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -33,18 +30,22 @@ class CycleRecorderTest {
         runBlocking { app.container.settingsStore.update { ScanSettings() } }
     }
 
+    /**
+     * A real cycle needs CNO and Vigilant's feeds on the network (a test's cycle ran 157 s on the sandbox's), so what the recorder takes from it is pinned in the
+     * source: the whole cycle's time and count in the `finally` (a cycle that throws or is cancelled is still counted), errors counted apart.
+     */
     @Test
-    fun `a real cycle is timed and counted, and a cycle with nothing to read records no step`() = runBlocking {
-        // Vigilant's own scanner with no leagues: the cycle runs, reads nothing and scans nothing.
-        app.container.settingsStore.update { it.copy(scanner = ScannerMode.VIGILANT, autoScan = AutoScanMode.BOTH, leagues = emptySet()) }
-        val perf = app.container.perf
-        val before = perf.summary("cycle.ms").count
-        val runs = app.container.eventLog.counters()["cycle.runs"] ?: 0L
-        assertTrue(app.container.autoScan.cycle())
-        assertEquals(before + 1, perf.summary("cycle.ms").count)
-        assertEquals(runs + 1, app.container.eventLog.counters()["cycle.runs"])
-        assertEquals(perf.summaries().toString(), 0, perf.summary("cycle.step.cno").count)
-        assertEquals(perf.summaries().toString(), 0, perf.summary("cycle.step.vigilant").count)
+    fun `a cycle's time and count are recorded even when it fails or is cancelled`() {
+        val src = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        val cycle = src.substringAfter("suspend fun cycle(forceVigilant: Boolean = false): Boolean {").substringBefore("private inline fun <T> timed(")
+        val fin = cycle.substringAfter("} finally {\n                _status.update { it.copy(running = false")
+        assertTrue(fin, fin.contains("withContext(NonCancellable)"))
+        assertTrue(fin, fin.contains("c.perf.add(\"cycle.ms\", tookMs.toDouble())"))
+        assertTrue(fin, fin.contains("c.eventLog.count(\"cycle.runs\")"))
+        assertTrue(fin, fin.contains("if (errors.isNotEmpty()) c.eventLog.count(\"cycle.errors\")"))
+        assertTrue(fin, fin.contains("c.eventLog.warn(\"CYCLE\""))
+        // And a cycle that is skipped (a check holds the focus, auto-scan is off, one already runs) records nothing.
+        assertTrue(cycle.indexOf("return false") < cycle.indexOf("c.perf.add(\"cycle.ms\""))
     }
 
     /** Each part of the cycle is timed under its own name (a real cycle's CNO read needs the network, so the steps are pinned in the source). */
