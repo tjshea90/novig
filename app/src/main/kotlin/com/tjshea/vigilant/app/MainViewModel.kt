@@ -1379,7 +1379,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     if (bet?.gameUrl != null && c.recheck.checkOne(id)) {
                         true
                     } else {
-                        val priced = c.betPricer?.takeIf { settings.vigilantOn }?.run(settings, listOf(id))?.priced == 1
+                        // Tj's tap: priced whatever the scanner choice, as Check odds now is (Tj, 2026-10-02).
+                        val priced = c.betPricer?.run(settings, listOf(id), anyScanner = true)?.priced == 1
                         if (!priced) why = c.tracker.all().firstOrNull { it.id == id }?.nowNote
                         priced
                     }
@@ -1633,8 +1634,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             try {
-                // Vigilant's own pricing is off when its scanner is (CNO only) or isn't Novig's (Vigilant MGM).
-                val pricer = c.betPricer?.takeIf { settings.vigilantOn }
+                // Vigilant's own pricing runs whatever the scanner choice (Tj, 2026-10-02: "I want the check odds now to refresh the current odds and EV
+                // for every single open bet regardless of scanner"); only Vigilant MGM has none (not Novig's).
+                val pricer = c.betPricer
                 val plan = c.recheck.preview()
                 val cnoTotal = plan.todo.size
                 val ownBets = plan.vigilantBets.map { it.id }
@@ -1664,7 +1666,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 publish()
                 report = kotlinx.coroutines.coroutineScope {
                     val own = if (pricer != null && everyBet.isNotEmpty()) async(Dispatchers.IO) {
-                        pricer.run(settings, everyBet, alongside = true).also { ownDone.set(everyBet.size); publish() }
+                        pricer.run(settings, everyBet, alongside = true, anyScanner = true).also { ownDone.set(everyBet.size); publish() }
                     } else null
                     val books = if (noPage.isNotEmpty()) async(Dispatchers.IO) {
                         c.recheck.readWithoutPage(noPage) { done, _ -> booksDone.set(done); publish() }.also { booksDone.set(noPage.size); publish() }
@@ -1698,13 +1700,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             report?.let { r ->
                 c.lastCheckCost = RoundCost(
                     began, System.currentTimeMillis() - began, UsageDelta.between(usageBefore, c.usage.flow.value),
-                    note = r.roundNote(settings.vigilantOn, c.cno.state.value.lastPause?.takeIf { (c.cno.state.value.lastPauseAtMs ?: 0L) >= began }),
+                    note = r.roundNote(c.betPricer != null, c.cno.state.value.lastPause?.takeIf { (c.cno.state.value.lastPauseAtMs ?: 0L) >= began }),
                 )
             }
             val graded = grading.await()
             // The closes the same tap went looking for: what was found, and what is still missing and why.
             val closes = graded?.let { CloseText.summary(c.lastBackfill?.takeIf { it.forced }, CloseText.missing(c.tracker.all(), System.currentTimeMillis())) }
-            _toasts.tryEmit((report?.summary(vigilantOff = !settings.vigilantOn, graded = graded) ?: "Couldn't check the odds") + (closes?.let { " · $it" } ?: ""))
+            _toasts.tryEmit((report?.summary(graded = graded) ?: "Couldn't check the odds") + (closes?.let { " · $it" } ?: ""))
         }
     }
 
