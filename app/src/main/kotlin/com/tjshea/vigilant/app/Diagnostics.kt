@@ -167,7 +167,8 @@ object Diagnostics {
         o.appendLine(
             "Auto-lock (RESEARCH.md §67): ${if (set.autoLock) "ON" else "off"} · min ${pct(set.autoLockMinPercent)} of the stake · in-game ${if (set.autoLockLive) "yes" else "no"}" +
                 " · locks on offer now ${s.locks.values.count { it.result is com.tjshea.vigilant.data.novig.trading.LockResult.Ready }} of ${s.locks.size} API markets" +
-                " · Tracker Novig-only filter ${if (set.trackerNovigOnly) "on" else "off"}",
+                " · Tracker Novig-only filter ${if (set.trackerNovigOnly) "on" else "off"}" +
+                " · hide locked bets ${if (set.trackerHideLocked) "on" else "off"}",
         )
         o.appendLine(
             "Sharp books (Tj, 2026-10-02: veto by default): auto-bet ${set.sharpAutoBet} · alerts ${set.sharpAlerts}" +

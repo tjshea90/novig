@@ -463,6 +463,19 @@ fun AutoBetSection(
         "In-game, prices swing the most, so locks are bigger; Novig's in-game fee is counted in, and a line that could push (a whole number) isn't locked then.",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = s.trackerHideLocked, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(trackerHideLocked = v) } })
+            .padding(vertical = 6.dp).testTag("hideLockedSwitch"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Hide locked bets in the Tracker", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+        Switch(checked = s.trackerHideLocked, onCheckedChange = null)
+    }
+    Text(
+        "A locked market is cashed out (it pays the same whichever side wins), so its bets leave the Tracker's lists and stats; the Tracker's Locked in card " +
+            "still counts them, with the profit they locked.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
     if (s.autoLock && s.autoScan == AutoScanMode.OFF) {
         Text("The background scan is off, so auto-lock can't run.", style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoLockNoBackground"))
         OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }) { Text("Turn on the background scan") }
