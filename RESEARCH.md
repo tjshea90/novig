@@ -3741,3 +3741,48 @@ Not set by a preset: bankroll, wallet, most per bet, most per day, keys, and whe
 score: Player Interceptions, Sacks, Field Goals, Singles, Pitcher Outs, Blocked Shots and Shots on Target came out "Other", so the Volume preset never
 auto-bet them and the veto judged them by Pinnacle/Circa instead of the prop books. It now falls back to the market's words (player/batter/pitcher/
 anytime → prop; quarter/period/half/inning → period line), and a tennis set spread or total sets counts as the whole match. `SharpVetoTest`.
+
+## 67. Locking in a profit on your own Novig bets by taking the other side later (2026-10-02 ~19:00Z; Tj: "Research and see if it is possible to arbitrage bet my own bets in novig based on timing … It must guarantee profit because I will put real money on it … include an option to auto bet these bets")
+
+### 67.1 Verdict: plausible, and on Novig it can be made exact
+On an exchange this is "greening up" / hedging: after the price moves your way, buy the other side of the **same market** so whichever side wins
+pays the same ([Wikipedia: Betting exchange](https://en.wikipedia.org/wiki/Betting_exchange); [sharpbetting.co.uk green-up calculator](https://sharpbetting.co.uk/calculator/green-up-trading-calculator)).
+Novig's own rules make it exact (NOVIG_API.md §7, §8, §14.3, §15):
+- Every order is a buy, and one contract pays $0.01 whichever outcome it's on. Holding N contracts of A and N of B pays exactly N × $0.01 at
+  settlement **whichever side wins**. Bought A at p and B at q (each per contract): profit = N × (1 − p − q) / 100 − fees.
+- A **fair-market-value void** pays each outcome its FMV price, and those prices sum to 1.000 (§14.2): N of each still pays N × $0.01, the same.
+  A **push** gives every outcome's collateral back: the bets are refunded; only a fee already paid is lost (pregame fills pay none).
+- **`FOK` (fill or kill)** orders exist: the whole quantity fills at the limit price or better, or nothing fills and no money moves. So the hedge can
+  never half-fill into a position where one outcome loses, and never fills at a worse price than the one the profit was worked out at.
+- Pregame taker fills in game markets are fee-free (`WHEN_LIVE`); in-game, the fee is `coefficient × p × (1 − p)` per $1 of payout, known before the
+  order, so it goes into the worst case.
+- `GET /v3/portfolio/positions` returns what the subaccount actually holds per outcome (contracts, cost): the app checks it before any lock.
+
+So a lock is a guaranteed profit when: (a) it's the other outcome of the **same Novig market** (a different line is a middle, not a lock; a 3-way soccer
+"No" is that market's own other outcome, which is exact); (b) the quantity makes both outcomes pay more than everything spent (both bets, all fees),
+worked out at the **limit price** (the worst a FOK can fill at); (c) the order is FOK; (d) Novig's positions agree with the Tracker's fills. A push
+returns the money (break-even, or minus an in-game fee): so in-game locks skip markets that can push (spreads and totals on a whole number).
+
+### 67.2 What it costs and when it pays
+- A lock doesn't create profit: it **cashes in the line move you already got** (your CLV). If Novig's middle price now is the true chance, holding
+  the bet is worth N × (mid − p) and locking pays N × (mid − p − half the spread − fee): the price of certainty is half Novig's spread (often half a
+  cent) plus any in-game fee. Sportsbook hedges cost ~2–3% of EV because of the vig ([oddsshopper](https://www.oddsshopper.com/articles/betting-101/how-to-hedge-a-bet);
+  [therundown hedge calculator](https://therundown.io/betting-calculators/hedge-bet-calculator)); on Novig's tight books it's far less.
+- So: locking turns a +EV bet whose price has moved your way into a smaller **certain** profit with no variance. Letting it ride keeps slightly more
+  expected profit with the risk. Both are shown on each lock so Tj chooses (the auto-lock's minimum profit sets the rule).
+- How often: a lock exists once the other side's price falls below 1 − (what you paid): the line must move your way by more than the spread. Tj's
+  bets beat the close on average (+2% CLV on CNO props, §65), so many will offer a small lock by game time; in-game swings offer large ones.
+- Only **bets placed through Vigilant's API** (the Vigilant subaccount) can be locked with a guarantee: their real fills are known and Novig's
+  positions confirm them. Bets placed in the Novig app (the cash wallet) are invisible to the API (§14.2), so their contracts can't be confirmed.
+
+### 67.3 How Vigilant scans for them (cheap)
+Only Tj's open API bets, grouped by market; one Novig order-book read per market (the websocket's when it's on, else the public/keyed REST read with
+its ETag cache: free, no other book's API), on every background cycle while auto-lock is on, when the Tracker opens, and on Check odds now. For each,
+the math below on the other outcome's ladder; positions are read (one signed read per market) only when a lock is about to be placed.
+
+### 67.4 The math (LockIn.kt)
+Market position: A held `qA` contracts having spent `SA` dollars (fills + fees), B held `qB`, `SB`; S = SA + SB. Buy `x` of B at the limit `q`
+(Novig grid), worst-case fee F = x/100 × c × q × (1 − q) (c = the market's coefficient when charged, else 0):
+- A wins: qA/100 − S − x·q/100 − F; B wins: (qB + x)/100 − S − x·q/100 − F; FMV: between those two. A lock needs both ≥ the minimum profit.
+- Equal profit: x = qA − qB. The limit q is the highest grid price keeping both ≥ the minimum; the ladder must hold x contracts at ≤ q.
+- The guaranteed profit shown is the worst case at the limit; a FOK filling at better prices only adds to it.
