@@ -107,7 +107,7 @@ class SettingsTabsTest {
     fun `CNO only leaves the pages Vigilant's scanner doesn't need, and calls the CNO page the widget's when CNO is off`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsTab.SCAN, SettingsTab.CNO, SettingsTab.BETTING, SettingsTab.TOOLS),
+            listOf(SettingsTab.SCAN, SettingsTab.PRESETS, SettingsTab.CNO, SettingsTab.BETTING, SettingsTab.TOOLS),
             SettingsTab.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
         assertEquals(SettingsTab.entries.toList(), SettingsTab.shown(base.settings.copy(scanner = ScannerMode.BOTH)))

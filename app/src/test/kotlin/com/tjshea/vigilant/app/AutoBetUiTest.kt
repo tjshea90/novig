@@ -235,7 +235,7 @@ class AutoBetUiTest {
             assertEquals(label, odds, settings.autoBetMaxOdds)
         }
         compose.onNodeWithText("+130").performClick()
-        assertTrue(AutoBetText.criteria(settings).contains(", odds no longer than +130, staking"))
+        assertTrue(AutoBetText.criteria(settings), AutoBetText.criteria(settings).contains(", odds no longer than +130, unless the sharpest book for it says it isn't +EV, staking"))
         compose.onNodeWithTag("autoBetSwitch").performClick()
         compose.onNodeWithText("odds no longer than +130", substring = true).assertExists()
         compose.onNodeWithText("Cancel").performClick()
@@ -248,8 +248,8 @@ class AutoBetUiTest {
         compose.onNodeWithTag("autoBetMaxOddsField").performTextInput("50")
         assertEquals(175, settings.autoBetMaxOdds)
         compose.onNodeWithText("(even money) or more", substring = true).assertExists()
-        // No limit puts it back.
-        compose.onNodeWithText("No limit").performClick()
+        // No limit puts it back (the longest odds' chips come before the shortest odds' own "No limit").
+        compose.onAllNodesWithText("No limit")[0].performClick()
         assertEquals(0, settings.autoBetMaxOdds)
         // The card says what Kelly does with longshots and what the limit adds.
         compose.onNodeWithTag("autoBetMaxOddsHint").assertExists()
