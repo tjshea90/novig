@@ -1287,8 +1287,11 @@ class ScreenshotTest {
     @Test fun settingsHasTheOnlyAgreedSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.CNO) }
-        compose.onNodeWithText("Only bets the books agree on").performClick()
-        assert(picked?.cnoOnlyAgreed == true) { "picked $picked" }
+        // v0.46.0: under the ✓ switch it belongs to (it read the books with ✓ shown off), and turning it on keeps ✓ on.
+        compose.onNodeWithTag("cnoOnlyAgreed").performClick()
+        assert(picked?.cnoOnlyAgreed == true && picked?.cnoCheckBooks == true) { "picked $picked" }
+        compose.onNodeWithTag("cnoCheckBooks").performClick()
+        assert(picked?.cnoCheckBooks == false && picked?.cnoOnlyAgreed == false) { "picked $picked" }
     }
 
     @Test fun theWidgetTellsDnsFailuresFromTimeouts() {
@@ -1410,7 +1413,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsOfferVigilantsScanAgainWhileTheWidgetIsOpen() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.CNO) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.WIDGET) }
         compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
         compose.onNodeWithText("10 min").performClick()
         assertEquals(10, picked?.widgetRescanMinutes)
@@ -1430,10 +1433,11 @@ class ScreenshotTest {
     @Test fun settingsOfferTheFloatingWidgetOnVigilantsScanAlone() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, floatingWidget = false))
-        screen { SettingsScreen(s, { t -> picked = t(s.settings) }, page = SettingsPage.CNO) }
+        screen { SettingsScreen(s, { t -> picked = t(s.settings) }, page = SettingsPage.WIDGET) }
         compose.onNodeWithText("Floating widget you can touch").assertExists().performClick()
         assertEquals(true, picked?.floatingWidget)
-        compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
+        // Rescans only matter with both scanners (the widget lists Vigilant's bets beside CNO's): with Vigilant alone it's gone (v0.46.0).
+        compose.onAllNodesWithText("Vigilant's scan again while the widget is open").assertCountEquals(0)
         compose.onAllNodesWithText("CNO is read only", substring = true).assertCountEquals(0)
     }
 
@@ -1496,7 +1500,7 @@ class ScreenshotTest {
 
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsDescribeTheWidgetAsItIsNow() {
-        screen { SettingsScreen(SampleCno.state(), { }, page = SettingsPage.CNO) }
+        screen { SettingsScreen(SampleCno.state(), { }, page = SettingsPage.WIDGET) }
         compose.onNodeWithText("✕ to remove it without betting", substring = true).assertExists()
         compose.onNodeWithText("switch picks CNO only, Both or Vigilant only", substring = true).assertExists()
     }
@@ -1679,7 +1683,7 @@ class ScreenshotTest {
 
     @Test fun settingsOfferPauseAllScanning() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
+        screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.SCANNING) }
         compose.onNodeWithText("Pause all scanning").performClick()
         assertEquals(true, picked?.paused)
     }
