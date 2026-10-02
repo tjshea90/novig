@@ -3483,3 +3483,12 @@ Why is this saying the edge is gone? It's the same odds, and they are positive e
 ```
 Review the screenshot. When I press check odds now, it doesn't refresh vigilant odds. I want the check odds now to refresh the current odds and EV for every single open bet  regardless of scanner
 ```
+
+## 2026-10-02T06:14:29Z
+```
+If I press check odds now, or pull to refresh, and the scanner is paused, automatically resume the scanner. If I switch from vigilant to another app then back to vigilant, do not turn off auto bet. Auto bet should only be off by default on a fresh app launch or restart, not just switching apps 
+On the last scan  the novig scanning was going very slow, make sure it is set up correctly
+In the scanners, especially cno scanner, it is counting identical odds from sister sports books (for example, multiple hard rock sports books just in different states). Investigate if this is smart to do, and if not, don't let vigilant double count odds from the same company sports books
+URGENT: Claude usage will run out very soon. Continue to work in small pieces and checkpoint and save all progress so that if Claude is interrupted by usage it can continue without losing data. Automatically resume and finish this session in two hours, including all the prompts I sent since the last version. Resume this full session in two hours automatically with no input from me
+URGENT: Claude usage will run out very soon. Continue to work in small pieces and checkpoint and save all progress so that if Claude is interrupted by usage it can continue without losing data. Automatically resume and finish this session in two hours, including all the prompts I sent since the last version. Resume this full session in two hours automatically with no input from me
+```
