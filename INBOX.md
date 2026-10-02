@@ -3521,3 +3521,12 @@ And I'm getting no volume so far on auto bet with the option for each bet to be 
 ```
 Do research and tell me the best settings to get volume but also a good chance at beating clv. For example, if 7 of 9 books agree that it is positive EV, is this good enough or is it a red flag because 2 books say no? Is it good enough to find positive EV through multiple non sharp books or should I require a sharp book? What is the lowest percent positive EV I should look for per bet to safely beat clv? What other settings or changes should I have to get some volume but also the best chance at beating clv
 ```
+
+## 2026-10-02T17:01:23Z
+```
+Use the research you just found, double check and make sure it is accurate. Do more deep research on clv and best settings for finding clv. Then adjust the app settings accordingly. Maybe make a preset section in the settings that sets all the settings to ideal settings for volume but safe clv scanning. Do deep research on the best settings for profit and clv, and make this a preset in the app. Also make it so I can make my own settings presets. The auto bet feature must abide the preset rules. Include at least the following: 
+
+1) sharp veto instead of requirement. Only skip a meet if the sharpest book for that market says it is not +ev. This must separate types of bets by which books are sharpest for those bet types. 
+
+2) record all types of information on the bet as placed, such as odds, books in agreement, time before game start, percent EV, and more. The  more information logged the better. Then include this information for all bets in the diagnosis feature. The diagnosis file can be as large and comprehensive as needed for Claude to properly diagnose and fine tune the app. Remember the goal is profit and positive EV and clv. Log and save as much information for the diagnosis feature as needed to fine tune the app for this goal. Also, in addition to the share with feature, make sure the diagnosis prompt file for Claude is saved to my android downloads folder
+```
