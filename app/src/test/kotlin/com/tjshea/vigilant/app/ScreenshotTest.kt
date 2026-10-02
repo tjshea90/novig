@@ -450,8 +450,9 @@ class ScreenshotTest {
         for (gone in listOf("Any", "+500", "+1000", "+2000")) compose.onAllNodesWithText(gone).assertCountEquals(0)
         compose.onNodeWithText("+120").performClick()
         assert(picked?.maxOdds == 120) { "picked $picked" }
-        // v0.19.0: the per-scan budget's leftovers go to every other quoted line; the key's live feed is named.
-        compose.onNodeWithText("arrives by live feed about 8 seconds in", substring = true).assertExists()
+        // v0.19.0: the per-scan budget's leftovers go to every other quoted line; the key's live feed is named (v0.44.0: handed the
+        // unread lines once the other books' odds are in, RESEARCH.md §63.3).
+        compose.onNodeWithText("arrive by live feed once the other books' odds are in (30 seconds at most)", substring = true).assertExists()
         compose.onNodeWithText("Fill the scan with every quoted line").performClick()
         assert(picked?.fillBudget == false) { "picked $picked" }
         // The Fair odds tab: the outlier guard, props credits' 24 and PropLine games per scan's 24 (v0.19.6).

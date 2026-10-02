@@ -782,7 +782,7 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions) {
     Hint(
         (if (AppBook.isNovig) "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com"
         else "Vigilant MGM ${BuildConfig.VERSION_NAME} · ${AppBook.name} prices: PropLine, The Odds API") + " · Fair odds: Pinnacle (PinnWire, pinnapi), " +
-            "Polymarket, Kalshi, PropLine, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
+            "Polymarket, Kalshi, ParlayAPI, PropLine, The Odds API · CNO scanner: crazyninjaodds.com (player teams: ESPN). Vigilant's scan " +
             "fetches only when you tap Scan or pull to refresh; CrazyNinjaOdds' list only while its tab or a widget is on " +
             "screen (and the screen is on). Nothing runs in the background unless background auto-scan is on.",
     )
@@ -1062,12 +1062,14 @@ fun scanSizeHint(books: Int): String {
     if (books >= ScanSettings.NO_LIMIT) {
         return "No limit: every line another book also prices, for the games in your time window (Days ahead, or Starts within " +
             "when shorter), each read once; then the scan stops. Most +EV lines are read first, so bets still show within seconds. " +
-            "With a Novig key, the first 2,000 arrive by live feed about 8 seconds in and the rest by request (about 14 a second); on " +
+            "With a Novig key, up to 2,000 arrive by live feed once the other books' odds are in (30 seconds at most) and the rest by " +
+            "request (about 16 a second); on " +
             "Novig's public prices about 300 a minute. Other books' odds are read as the scan starts and last 5 minutes (10 for games " +
             "over 3 hours off), so a scan never runs past about 8 minutes: lines it can't reach by then are read first next scan."
     }
-    return "$books is ${scanTime(books)} on Novig's public prices; with a Novig key connected, the whole scan (up to 2,000, what its " +
-        "live feed watches at once) arrives by live feed about 8 seconds in. A scan that runs long leaves lines whose other books' odds " +
+    return "$books is ${scanTime(books)} on Novig's public prices; with a Novig key connected, the lines not yet read (up to 2,000, what " +
+        "its live feed watches at once) arrive by live feed once the other books' odds are in (30 seconds at most), the rest by request. " +
+        "A scan that runs long leaves lines whose other books' odds " +
         "would already be too old for the next scan. Results appear as " +
         "they're priced, likeliest +EV first (last scan's edges, then props and period lines). Past the limit, main lines and " +
         "the soonest games come first. Only lines another book also prices are read, so a scan can finish below the limit."

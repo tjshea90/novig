@@ -48,9 +48,9 @@ fun NovigKeySection(
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            "Scans open Novig's live feed with this key: about 8 seconds in, every line the scan prices (up to " +
-                "2,000) arrives at once and then updates itself, with no request per price. Until then, and for " +
-                "anything the feed doesn't cover, prices are read through the key's own rate limit (16 a second) " +
+            "Scans open Novig's live feed with this key: once the other books' odds are in (30 seconds at most), up to " +
+                "2,000 lines the scan hasn't read yet arrive at once and then update themselves, with no request per price. " +
+                "Until then, and for anything the feed doesn't cover, prices are read through the key's own rate limit (16 a second) " +
                 "instead of the public one your phone's network shares. If Novig refuses the key (its network screen " +
                 "flags the connection's address, or a location check is due), the scan falls back to public prices and says why.",
             style = MaterialTheme.typography.bodySmall,
