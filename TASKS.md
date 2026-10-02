@@ -3418,3 +3418,8 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 - [x] BB2 Novig only uses nothing from another book: EV/fair when bet = Novig's price paid (so EV at bet 0), the bet sheet and cards say "Novig now" / "Novig when bet", no "books behind it" or devig copy, no ParlayAPI second opinion; stats from those numbers. Tests (data + UI with Tj's two bets: +122 → +122 = 0%, +115 → +115 = 0%).
   Done: NovigNow.view: fair/EV when bet = price paid, nowBooks/books/cnoFair/vigFair gone, nowAmerican = Novig's odds now; bet sheet with Novig only: no EV/fair when bet, "Novig now" (once), Novig wording for the edge and move sentences, no break-even line, caption says no other book is used, no books table, no Re-read books/Price now, no ParlayAPI second opinion, no CNO page read on open; card line "Novig now"; summary line reworded. Tests: TrackerNovigOnlyTest (Tj's +122 bet sheet, screenshot 4o), TrackerTextTest; mutants 7/7.
 - [ ] BB3 Docs (NOVIG_API.md §16), full floor, ship, answer Tj with the link.
+
+## Tj, 2026-10-02 21:51Z: "Small change after you complete the full tests: always include my vigilant wallet current balance in all vigilant notifications whether push or silent, so I can always quickly see how much is in the wallet"
+
+- [ ] BC1 Every notification Vigilant posts (auto-bet placed, auto-lock, +EV alerts, scan done, background auto-scan's ongoing note, closing-line capture, settle worker, any other) shows the Vigilant wallet's current balance; read cheaply (the wallet already read each cycle / a short-lived cache, never a read per notification storm), and says when it isn't known (betting not set up, never read).
+- [ ] BC2 Tests (every notification builder carries it), full floor, ship, answer Tj.
