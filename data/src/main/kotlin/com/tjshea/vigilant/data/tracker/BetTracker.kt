@@ -157,6 +157,13 @@ data class TrackedBet(
     val novigAtMs: Long? = null,
     val novigClose: Double? = null,
     val novigCloseAtMs: Long? = null,
+    /**
+     * Why the last look for Novig's price found none (Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds for the same exact
+     * bet"): its exact bet isn't in Novig's catalog now, the market left it, nothing is bid or offered on it, or Novig didn't answer ([NovigNow.Read.why],
+     * [NovigIds]); and when ([novigWhyAtMs]). A price read later is newer than it.
+     */
+    val novigWhy: String? = null,
+    val novigWhyAtMs: Long? = null,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
