@@ -23,6 +23,9 @@ data class ScanTiming(
     val leftTooLate: Int = 0,
     /** When each fair-odds source finished, from the scan's start (a source that answered nothing is left out). */
     val sourceMs: List<Pair<String, Long>> = emptyList(),
+    /** When the key's live feed was handed this scan's markets, and how many (it holds up to 2,000): null = it wasn't (no key, or nothing to read). */
+    val liveFeedAtMs: Long? = null,
+    val liveFeedAsked: Int = 0,
 ) {
     val novigMs: Long get() = if (novigFromMs != null && novigToMs != null) (novigToMs - novigFromMs).coerceAtLeast(0) else 0
 
@@ -50,6 +53,10 @@ data class ScanTiming(
                     "$public public".takeIf { public > 0 },
                 ).joinToString(", ").takeIf { it.isNotEmpty() }
                 listOfNotNull(pace, ways).takeIf { it.isNotEmpty() }?.let { append(" (").append(it.joinToString(": ")).append(")") }
+            }
+            // Whether the one bulk subscribe went out, and when: the next report says whether it carried the scan (RESEARCH.md §63).
+            t.liveFeedAtMs?.takeIf { t.liveFeedAsked > 0 && viaKey + viaPush > 0 }?.let {
+                append(" · live feed asked for ").append(String.format(Locale.US, "%,d", t.liveFeedAsked)).append(" at ").append(seconds(it))
             }
             append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
             append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")

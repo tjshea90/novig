@@ -310,6 +310,8 @@ class Scanner(
                 refused = pump.refused,
                 leftTooLate = pump.tooLate.size,
                 sourceMs = synchronized(sourceMs) { sourceMs.toList() },
+                liveFeedAtMs = pump.streamAt,
+                liveFeedAsked = pump.streamAsked,
             ),
         )
     }
