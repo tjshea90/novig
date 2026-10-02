@@ -45,6 +45,9 @@ interface PushedBooks {
      */
     fun watch(marketIds: Collection<String>)
 
+    /** Connects (if it isn't already) without changing what is watched. */
+    fun open() {}
+
     /** The books held current right now among [marketIds]: only those already pushed. */
     fun live(marketIds: Collection<String>): Map<String, NovigBook>
 
@@ -158,6 +161,14 @@ class NovigStream(
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
     }
 
+    override fun open() {
+        val start = synchronized(this) {
+            lastUsedMs = clock()
+            socket == null && failedAtMs.let { it == null || clock() - it >= retryAfterFailureMs }
+        }
+        if (start) connect()
+    }
+
     override fun live(marketIds: Collection<String>): Map<String, NovigBook> {
         synchronized(this) { lastUsedMs = clock() }
         if (_state.value !is StreamState.Live) return emptyMap()
@@ -243,15 +254,17 @@ class NovigStream(
                 drop to want.filter { it !in subscribed }.take(room.coerceAtLeast(0))
             }
             if (drop.isNotEmpty()) {
-                // 1 token a subject: cheap, but a refused unsubscribe would leave them pushing.
-                waitFor(drop.size.toDouble())
+                // 1 token a subject, never more than the bucket (like any request): uncapped, a big drop waited minutes and left the
+                // bucket deep in debt, holding back every subscribe after it.
+                val dropCost = minOf(drop.size.toDouble(), capacity)
+                waitFor(dropCost)
                 send(buildJsonObject {
                     put("nonce", nonce.incrementAndGet())
                     putJsonArray("unsubscribe") { drop.forEach { add(JsonPrimitive("market:$it")) } }
                 })
                 synchronized(this) { subscribed.removeAll(drop.toSet()) }
                 books.forget(drop)
-                spend(drop.size.toDouble())
+                spend(dropCost)
             }
             if (add.isEmpty()) break
             // Charged weight × subjects, never over the bucket; a request at the cap needs it full.

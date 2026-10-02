@@ -51,6 +51,9 @@ interface NovigSource {
      */
     fun watch(marketIds: Collection<String>) {}
 
+    /** Opens the live feed (if this source has one) without changing what it watches: its throttle refills while a scan's plan fills in. */
+    fun openFeed() {}
+
     /** Books among [marketIds] this source holds current right now, with no request. None by default. */
     fun pushed(marketIds: Collection<String>): Map<String, NovigBook> = emptyMap()
 
@@ -179,6 +182,10 @@ class NovigPublicClient(
 
     override fun watch(marketIds: Collection<String>) {
         liveStream()?.watch(marketIds)
+    }
+
+    override fun openFeed() {
+        liveStream()?.open()
     }
 
     override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> =
