@@ -18,11 +18,18 @@ object NovigNow {
     /** How old Novig's price for a bet may be and still be shown without reading again. */
     const val FRESH_MS = 2 * 60_000L
 
-    /** Novig's middle price for [outcomeId]: its best bid and the price to buy it now; the offer alone when nobody bids. Null when nothing is offered. */
+    /**
+     * Novig's middle price for [outcomeId]: its best bid and the price to buy it now; the one side there is when the book has only one (a thin prop often
+     * has bids on one side only: the offer alone when nobody bids, the bid alone when nothing is offered). Null when the book is empty.
+     */
     fun mid(book: NovigBook, market: NovigMarket, outcomeId: String): Double? {
-        val ask = book.takeLadder(market, outcomeId).minOfOrNull { it.price } ?: return null
-        val bid = book.bestBid(outcomeId)?.price ?: return ask
-        return ((bid + ask) / 2.0).coerceIn(0.001, 0.999)
+        val ask = book.takeLadder(market, outcomeId).minOfOrNull { it.price }
+        val bid = book.bestBid(outcomeId)?.price
+        val p = when {
+            ask != null && bid != null -> (bid + ask) / 2.0
+            else -> ask ?: bid ?: return null
+        }
+        return p.coerceIn(0.001, 0.999)
     }
 
     /** [b] with Novig's price [fair] read at [at]: the latest, and the closing line when it's the latest read before the start. */
@@ -39,9 +46,16 @@ object NovigNow {
     /** The open bets the filter prices: those whose odds can still be read, with their Novig market and side ([BetsScope.priceable]). */
     fun priceable(bets: List<TrackedBet>, now: Long): List<TrackedBet> = BetsScope.priceable(bets, now)
 
-    /** The ones whose Novig price is missing or older than [FRESH_MS]: all a read needs to ask for. */
+    /** The ones whose Novig price is missing or older than [FRESH_MS] (a look that found none counts as a read): all a read needs to ask for. */
     fun stale(bets: List<TrackedBet>, now: Long): List<TrackedBet> =
-        priceable(bets, now).filter { b -> b.novigAtMs == null || now - b.novigAtMs > FRESH_MS }
+        priceable(bets, now).filter { b ->
+            val last = maxOf(b.novigAtMs ?: Long.MIN_VALUE, b.novigWhyAtMs ?: Long.MIN_VALUE)
+            last == Long.MIN_VALUE || now - last > FRESH_MS
+        }
+
+    /** Every open bet at Novig whose odds can still be read, with Novig's ids on record or not: what the filter owes a price or a reason. */
+    fun open(bets: List<TrackedBet>, now: Long): List<TrackedBet> =
+        bets.filter { it.status == BetStatus.PENDING && BetsScope.readable(it, now) && NovigIds.atNovig(it) }
 
     /**
      * [bets] as the "Novig only" filter shows and counts them: an open bet's fair now and EV now from Novig's price alone (none when Novig's hasn't been
@@ -57,7 +71,8 @@ object NovigNow {
             nowAtMs = if (open) b.novigAtMs else b.nowAtMs,
             nowBooks = if (open && fair != null) 1 else if (open) null else b.nowBooks,
             nowVia = if (open && fair != null) VIA else b.nowVia,
-            nowNote = if (open && fair == null) "Novig's price for this bet hasn't been read yet (tap Check Novig now)." else if (open) null else b.nowNote,
+            nowNote = if (open) note(b) else b.nowNote,
+            nowNoteAtMs = if (open) note(b)?.let { b.novigWhyAtMs } else b.nowNoteAtMs,
             cnoFair = null, vigFair = if (open) fair else b.vigFair,
             books = b.books.filter { it.name.equals(b.book.ifBlank { "Novig" }, ignoreCase = true) },
             // Novig's own close, judged as every close is: read in the last minutes before the start.
@@ -65,10 +80,37 @@ object NovigNow {
         )
     }
 
+    /**
+     * Why an open bet shows no Novig price now: the last look's reason while it's newer than the last price ([TrackedBet.novigWhy]), else that it hasn't
+     * been read (or its exact Novig bet looked up) yet. Null when its price is the latest word.
+     */
+    fun note(b: TrackedBet): String? {
+        val why = b.novigWhy
+        if (why != null && (b.novigWhyAtMs ?: 0L) >= (b.novigAtMs ?: Long.MIN_VALUE)) return why
+        if (b.novigFair != null) return null
+        return if (b.marketId.isBlank() || b.outcomeId.isBlank()) "Novig's exact bet hasn't been looked up yet (tap Check Novig now)"
+        else "Novig's price for this bet hasn't been read yet (tap Check Novig now)"
+    }
+
     const val VIA = "novig"
 
-    /** What a read found: bet id → Novig's middle price, how many bets were due, and the markets asked for. */
-    data class Read(val prices: Map<String, Double>, val due: Int, val all: Int, val marketsAsked: List<String>)
+    /** [Read.why] when Novig's order book for the market couldn't be read. */
+    const val BOOK_UNREAD = "Novig's order book for this market couldn't be read just now"
+
+    /** [Read.why] when the market has left Novig's catalog. */
+    const val NOT_LISTED = "Novig no longer lists this market (closed, or taken down)"
+
+    /** [Read.why] when the book is empty. */
+    const val NOTHING_OFFERED = "nobody is bidding on or offering this bet on Novig right now (not offered at the moment)"
+
+    /** [Read.why] when the side on record isn't one of the market's. */
+    const val NOT_A_SIDE = "the side on record isn't one of this Novig market's sides"
+
+    /**
+     * What a read found: bet id → Novig's middle price, how many bets were due, the markets asked for, and bet id → why a due bet got no price
+     * ([BOOK_UNREAD], [NOT_LISTED], [NOT_A_SIDE], [NOTHING_OFFERED]).
+     */
+    data class Read(val prices: Map<String, Double>, val due: Int, val all: Int, val marketsAsked: List<String>, val why: Map<String, String> = emptyMap())
 
     /**
      * Novig's prices for the open [bets] that need them: the stale ones ([stale]), or all of them when [force]. Only [books] (Novig's order books,
@@ -87,11 +129,17 @@ object NovigNow {
         val ids = due.map { it.marketId }.distinct()
         val read = books(ids)
         val prices = HashMap<String, Double>()
+        val why = HashMap<String, String>()
         for (b in due) {
-            val book = read[b.marketId] ?: continue
-            val m = market(b.marketId) ?: continue
-            mid(book, m, b.outcomeId)?.let { prices[b.id] = it }
+            val book = read[b.marketId] ?: run { why[b.id] = BOOK_UNREAD; null } ?: continue
+            val m = market(b.marketId) ?: run { why[b.id] = NOT_LISTED; null } ?: continue
+            if (m.outcomes.isNotEmpty() && m.outcomes.none { it.outcomeId == b.outcomeId }) {
+                why[b.id] = NOT_A_SIDE
+                continue
+            }
+            val p = mid(book, m, b.outcomeId)
+            if (p != null) prices[b.id] = p else why[b.id] = NOTHING_OFFERED
         }
-        return Read(prices, due.size, all.size, ids)
+        return Read(prices, due.size, all.size, ids, why)
     }
 }
