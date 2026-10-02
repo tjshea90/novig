@@ -219,6 +219,20 @@ class OpenBetPricerTest {
     }
 
     @Test
+    fun `Tj's own tap prices with the scanner on CNO only too`() = runTest {
+        // Tj, 2026-10-02: "I want the check odds now to refresh the current odds and EV for every single open bet regardless of scanner".
+        val fair = FakeOddsApi()
+        val novig = FakeNovig()
+        val t = tracker(bet("a"))
+        val cnoOnly = settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO)
+        val report = pricer(t, novig, fair).run(cnoOnly, listOf("a"), anyScanner = true)
+        assertEquals(OpenBetPricer.Report(1, 1, 0), report.copy(reasons = emptyMap()))
+        assertEquals(1, fair.calls)
+        assertTrue(novig.bookIds.isNotEmpty())
+        assertNotNull(t.all().single().nowEv)
+    }
+
+    @Test
     fun `nothing to ask about is no pass at all`() = runTest {
         val fair = FakeOddsApi()
         val novig = FakeNovig()
