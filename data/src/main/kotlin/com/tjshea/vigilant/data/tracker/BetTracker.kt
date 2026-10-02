@@ -227,6 +227,8 @@ data class TrackerStats(
     val expectedSd: Double = 0.0,
     /** Settled profit with the outliers counted too: what the bankroll really did. */
     val profitAll: Double = 0.0,
+    /** Locks ([TrackedBet.isLock]): in the stakes and profit above, not in the record, EV or closing line. */
+    val locks: Int = 0,
 ) {
     /** Wins out of decided bets (Tj: "percentage of actual bet wins and losses"); null before any. */
     val winRate: Double? get() = (won + lost).takeIf { it > 0 }?.let { won.toDouble() / it }
