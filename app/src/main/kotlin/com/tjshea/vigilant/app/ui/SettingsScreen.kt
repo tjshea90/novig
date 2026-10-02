@@ -960,7 +960,7 @@ object StakeText {
 }
 
 /** The Bet sheet's starting amounts. */
-val STAKE_AMOUNT_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
+val STAKE_AMOUNT_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
 
 /** Usage & keys: each API's usage meter and the keys backup. */
 @OptIn(ExperimentalLayoutApi::class)

@@ -237,7 +237,6 @@ fun ManagementKeyBlock(saved: ManagementKeyHint?, key: ManagementKeyState, busy:
 
 // ---- Settings section --------------------------------------------------------------------------------------------
 
-private val STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
 private val MAX_STAKE_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 private val DAY_CHOICES = listOf(20.0, 50.0, 100.0, 250.0, 500.0)
 private val MONEY_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
@@ -290,21 +289,15 @@ fun NovigBettingSection(
 
     WalletBlock(betting, savedKey, key, actions)
 
-    Text("Amount a bet starts at", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 12.dp))
-    ChoiceChips(STAKE_CHOICES, settings.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
-    Text(
-        "Each Bet sheet also takes any amount you type. With Kelly (or My amount) chosen for Novig's bet slip, a bet starts at that bet's " +
-            "Kelly stake (or that amount) instead, within the most for one bet. When the wallet holds less, a bet starts at what's left in it.",
-        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Text("Most for one bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Text("Limits", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp))
+    Text("Most for one bet you place", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
     ChoiceChips(MAX_STAKE_CHOICES, settings.apiMaxStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
-    Text("Most in a day", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Text("Most in a day (your bets and auto-bets together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(DAY_CHOICES, settings.apiMaxPerDay, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerDay = v) } }
     // No minimum edge for a bet placed by hand (Tj, 2026-10-02: "I should be able to bet on whatever I want manually"): auto-bet has its own.
     Text(
         "Bets you place yourself from a Bet sheet have no minimum edge: the sheet shows the EV at Novig's price now (red when it's negative) and " +
-            "you decide. Only the two limits above apply, and the price you confirm. Auto-bet keeps its own rules (Auto-bet, below).",
+            "you decide. Only the two limits above apply, and the price you confirm. Auto-bet keeps its own rules and its own most per bet (Auto-bet tab).",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
     )
     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
