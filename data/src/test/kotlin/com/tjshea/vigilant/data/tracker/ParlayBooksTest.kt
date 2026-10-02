@@ -186,7 +186,8 @@ class ParlayBooksTest {
         assertEquals(Instant.parse("2026-09-30T04:07:34Z").toEpochMilli(), ml.getValue("PN").atMs)
         assertEquals(Instant.parse("2026-09-30T04:07:43Z").toEpochMilli(), ml.getValue("FD").atMs)
         val allen = b.view(bet("p", "New England Patriots @ Buffalo Bills", "2026-10-04T17:00:00Z", "Passing Attempts", "Josh Allen Under 29.5"))!!.prices.associateBy { it.code }
-        assertEquals(Instant.parse("2026-09-30T04:06:27Z").toEpochMilli(), allen.getValue("CZR").atMs)
-        assertEquals(Instant.parse("2026-09-30T04:00:35Z").toEpochMilli(), allen.getValue("DK").atMs)
+        // A props row is dated by its own `age_seconds` before the read (ParlayProps' rule: how long ago the feed saw the price).
+        assertEquals(now - 129_600L, allen.getValue("CZR").atMs)
+        assertEquals(now - 481_600L, allen.getValue("DK").atMs)
     }
 }
