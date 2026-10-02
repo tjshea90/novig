@@ -3468,3 +3468,8 @@ I'm about to send a diagnostics file from the app, review that too
 ```
 What is the txt.gz file in the repo
 ```
+
+## 2026-10-02T05:04:25Z
+```
+Why is this saying the edge is gone? It's the same odds, and they are positive ev
+```
