@@ -148,8 +148,9 @@ class AutoLocker(
                     AutoBetNotes.locked(app, r.bet, v, plan.guaranteed)
                 }
                 is PlaceResult.Unconfirmed -> {
-                    // An answer lost mid-order: nothing more on this market until a Sync shows what happened.
-                    waitUntil[v.marketId] = Long.MAX_VALUE
+                    // An answer lost mid-order: a while before this market is tried again (if it did fill, Novig's positions won't match the Tracker
+                    // until a Sync, and the next try is refused for that).
+                    waitUntil[v.marketId] = now + UNCONFIRMED_WAIT_MS
                     c.eventLog.warn("LOCK", "auto-lock order unconfirmed: ${r.message}")
                     c.eventLog.count("lock.auto.unconfirmed")
                 }
@@ -166,5 +167,6 @@ class AutoLocker(
 
     companion object {
         const val RETRY_MS = 60_000L
+        const val UNCONFIRMED_WAIT_MS = 10 * 60_000L
     }
 }
