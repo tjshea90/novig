@@ -14,3 +14,10 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+
+# Readable crash stacks (Tj sends Diagnostics files to Claude; 2026-10-02 the file's only crash read "at n5.l.E0(…0c73:6) | at y4.f1.j(…)",
+# which no one can map to code): the app's own classes and methods keep their names, and every frame its file and line. Shrinking and
+# optimizing still run; only the renaming of Vigilant's own code is off. Each Release also carries the build's mapping.txt for exact lines
+# (R8 may inline): `retrace mapping.txt stack.txt`.
+-keepattributes SourceFile,LineNumberTable
+-keepnames class com.tjshea.vigilant.** { *; }
