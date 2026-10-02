@@ -520,7 +520,7 @@ class Scanner(
             if (streamAt != null) return
             novig.openFeed()
             val waited = elapsed() - startedAt
-            if (!lastPass && pending.size < streamRoom && waited < streamHoldMs) return
+            if (!lastPass && pending.size < streamRoom && waited < streamHoldMs && waiting().isNotEmpty()) return
             val held = novig.pushed(plan.marketIds).keys
             val unread = fetchOrder(pending, settings, preview).take((cap - requested.size).coerceAtLeast(0)).map { it.market.marketId }.filter { it !in held }
             val ids = plan.markets.map { it.market.marketId }.filter { it in held } + unread
