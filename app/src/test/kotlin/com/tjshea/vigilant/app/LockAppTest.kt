@@ -113,7 +113,7 @@ class LockAppTest {
     fun `the scanner finds the lock on an API bet from Novig's book alone, and words it`() = runBlocking {
         betA()
         // A bet marked by hand (✓) is never a lock candidate: its contracts can't be confirmed.
-        app.container.tracker.logCno(SampleCno.rows[1], 0.05, false)
+        app.container.tracker.logCno(SampleCno.rows[1], 0.05, false, placedKey = "cno:x")
         var asked = listOf<String>()
         val views = LockScanner(clock = { now }, readMarket = { market() }, readBooks = { ids -> asked = ids; mapOf("mkt" to book()) }).scan(app.container.tracker.all())
         assertEquals(listOf("mkt"), asked)
@@ -134,7 +134,7 @@ class LockAppTest {
     }
 
     @Test
-    fun `auto-lock places a lock that clears its minimum, once, and says so; one under the minimum waits`() = runBlocking {
+    fun `auto-lock places a lock that clears its minimum, once, and says so`() = runBlocking {
         betA()
         val trading = FakeTrading(listOf(NovigPosition("mkt", "A", 1_000, 4.0)))
         val placer = ApiBetPlacer(trading, app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0) }, clock = { now }, pause = { }, lock = app.container.orderLock)
