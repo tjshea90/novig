@@ -51,7 +51,10 @@ class SharpConfirmUiTest {
     private val settings get() = ui.settings
 
     private fun show(configure: (ScanSettings) -> ScanSettings = { it }, keys: List<String> = emptyList()) {
-        ui = SampleScan.state().copy(settings = configure(ScanSettings()), pinnwireKeys = keys)
+        // No other key: SampleScan's own keys would make feeds of their own.
+        ui = SampleScan.state().copy(
+            settings = configure(ScanSettings()), oddsApiKeys = emptyList(), pinnapiKeys = emptyList(), pinnwireKeys = keys, proplineKeys = emptyList(), parlayKeys = emptyList(),
+        )
         compose.setContent {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
