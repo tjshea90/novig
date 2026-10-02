@@ -148,7 +148,7 @@ object SettingsSummary {
                 "${f.devig.displayName} · ${f.minBooks}+ books · ${if (f.maxOdds > 0) "up to +${f.maxOdds}" else "any odds"} · ${Format.percent(f.minEv, 0)}+ · every ${secondsLabel(s.cnoRefreshSeconds)}"
             }
             SettingsPage.WIDGET -> (if (s.floatingWidget) "Floating widget" else "Picture-in-picture") + if (s.miniWindow) " · opens when you leave Vigilant" else ""
-            SettingsPage.FEED -> "${Format.percent(s.minEvPercent, 1)}+ · ${maxOddsLabel(s.maxOdds).let { if (it == "Any") "any odds" else "up to $it" }} · ${s.families.size} market types · ${s.daysAhead} days ahead"
+            SettingsPage.FEED -> "${pctShort(s.minEvPercent)}+ · ${maxOddsLabel(s.maxOdds).let { if (it == "Any") "any odds" else "up to $it" }} · ${s.families.size} market types · ${s.daysAhead} days ahead"
             SettingsPage.FAIR -> {
                 val on = listOf(s.usePinnacle, s.usePolymarket, s.useKalshi, s.usePropLine, s.useParlay, s.useOddsApi).count { it }
                 "${s.fairSource.shortName} · $on of 6 feeds on"
@@ -163,10 +163,16 @@ object SettingsSummary {
                 "bankroll ${Format.money(s.bankroll)}",
                 Format.kellyLabel(s.kellyMultiplier),
             ).joinToString(" · ")
-            SettingsPage.USAGE -> "Credits left on each feed · keys backup"
+            SettingsPage.USAGE -> {
+                val keys = state.pinnwireKeys.size + state.pinnapiKeys.size + state.proplineKeys.size + state.parlayKeys.size + state.oddsApiKeys.size
+                if (keys == 0) "No feed keys saved" else "$keys feed key${if (keys == 1) "" else "s"} saved"
+            }
             SettingsPage.HELP -> "Share with Claude · Vigilant ${BuildConfig.VERSION_NAME}"
         }
     }
+
+    /** "1%", "2.5%": a percent with a decimal only when it has one. */
+    private fun pctShort(v: Double): String = Math.round(v * 1000).let { t -> if (t % 10 == 0L) "${t / 10}%" else String.format(Locale.US, "%.1f%%", t / 10.0) }
 
     /** The Auto-bet row on the home list (it opens the Auto-bet tab). */
     fun autoBet(s: ScanSettings): String = when {

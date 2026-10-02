@@ -33,7 +33,8 @@ object PresetsText {
         "A preset sets every rule the auto-bet, the sharp veto, the alerts and the CrazyNinjaOdds scanner use, at once: the smallest edge, the books that " +
             "must price both sides and agree, the odds range, the kinds of bet, the stake rule, CNO's filters and the background scan's interval. The " +
             "auto-bet bets only what those rules let through. Your bankroll, wallet, most per bet and per day, keys, and whether auto-bet and auto-scan " +
-            "are on stay as they are."
+            "are on stay as they are. CLV (closing line value): getting a better price than the final odds just before the game; beating the close " +
+            "over many bets is the best sign an edge is real."
 
     /** What a built-in preset is for; null for Tj's own. */
     fun why(p: SavedPreset): String? = when (p.name) {
