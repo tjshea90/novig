@@ -46,7 +46,10 @@ class LiveFeedPlanTest {
         return NovigBook(id, 1, mapOf("a$i" to listOf(BidLevel(480, 1000)), "h$i" to listOf(BidLevel(480, 1000))), now)
     }
 
-    /** Novig with a key: requests read 8 at a time; the live feed holds what it was last handed (up to [room]) and pushes it at once. */
+    /**
+     * Novig with a key: requests read 8 at a time; the live feed holds what it was last handed (up to [room]) and pushes it at once. The plan also
+     * holds the moneyline of up to 20 games no fair source quotes yet (Novig's own price, shown unpriced), read last.
+     */
     private inner class Keyed(val room: Int = 2_000, val onBooks: (Int) -> Unit = {}, val onWatch: (List<String>) -> Unit = {}) : NovigSource {
         val calls = ArrayList<List<String>>()
         val watched = ArrayList<List<String>>()
@@ -57,6 +60,8 @@ class LiveFeedPlanTest {
         override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch {
             calls += marketIds.toList()
             onBooks(calls.size)
+            // A request takes time: the other sources answer meanwhile.
+            kotlinx.coroutines.yield()
             val b = marketIds.associateWith { book(it) }
             return BookBatch(b, 0, b.size, 0, viaKey = b.size)
         }
@@ -98,7 +103,6 @@ class LiveFeedPlanTest {
         val novig = Keyed(onBooks = { if (it == 1) slow.complete(Unit) })
         val r = scanner(novig).scan(settings, listOf(Fair("polymarket", 0, 10), Fair("kalshi", 10, 60, slow)), onProgress = {}, onPartial = {})
 
-        println("DBG opened=${novig.opened} watched=${novig.watched} calls=${novig.calls} push=${r.booksViaPush} fetched=${r.booksFetched}")
         assertTrue("opened before it was handed anything", novig.opened >= 1)
         assertEquals("one bulk subscribe a scan", 1, novig.watched.size)
         val asked = novig.watched.single()
@@ -116,12 +120,13 @@ class LiveFeedPlanTest {
         // The first request takes 40 s of the scan; Kalshi answers only once the feed has been handed something.
         val novig = Keyed(onBooks = { t += 40_000L }, onWatch = { slow.complete(Unit) })
         val r = scanner(novig, holdMs = 30_000L).scan(settings, listOf(Fair("polymarket", 0, 10), Fair("kalshi", 10, 60, slow)), onProgress = {}, onPartial = {})
-        // At 40 s (past the 30 s hold) it went with what was planned and unread: Polymarket's last 2.
-        assertEquals(listOf("m8", "m9"), novig.watched.first())
+        // At 40 s (past the 30 s hold) it went with what was planned and unread: Polymarket's last 2, and the moneylines of the 20 games
+        // nothing quoted yet.
+        assertEquals((8 until 30).map { "m$it" }, novig.watched.first())
         assertEquals(40_000L, r.timing!!.liveFeedAtMs)
         assertEquals(1, novig.watched.size)
-        // Kalshi's lines, planned after the one subscribe, were read by request.
-        assertEquals((10 until 60).map { "m$it" }.toSet(), novig.calls.drop(1).flatten().toSet())
+        // Kalshi's other lines, planned after the one subscribe, were read by request.
+        assertEquals((30 until 60).map { "m$it" }.toSet(), novig.calls.drop(1).flatten().toSet())
     }
 
     @Test
@@ -129,8 +134,9 @@ class LiveFeedPlanTest {
         val slow = CompletableDeferred<Unit>()
         val novig = Keyed(room = 5, onWatch = { slow.complete(Unit) })
         scanner(novig, room = 5).scan(settings, listOf(Fair("polymarket", 0, 10), Fair("kalshi", 10, 60, slow)), onProgress = {}, onPartial = {})
-        // Before any request: the 10 planned lines, more than its 5.
-        assertEquals((0 until 10).map { "m$it" }, novig.watched.first())
+        // Before any request: the planned lines (Polymarket's 10 first), more than its 5.
+        assertEquals(0, novig.calls.size.coerceAtMost(0))
+        assertEquals((0 until 10).map { "m$it" }, novig.watched.first().take(10))
         assertEquals(5, novig.calls.flatten().count { it in (0 until 10).map { i -> "m$i" } })
     }
 
