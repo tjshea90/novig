@@ -362,6 +362,7 @@ class AutoScanService : Service() {
         val progress = container.runner.state.value.progress.takeIf { status.running && status.step == "Vigilant scan" }
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(this)
             .setContentTitle(AutoScanText.title(s))
             .setContentText(AutoScanText.status(status, s, if (loopJob?.isActive == true) loopNextAtMs else AutoScanAlarm.nextAtMs, System.currentTimeMillis(), progress))
             .setOngoing(true)
@@ -460,6 +461,7 @@ class AutoScanService : Service() {
             ensureChannel(context)
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(context)
                 .setContentTitle("Auto-scan paused")
                 .setContentText("Android stopped it in the background. Open Vigilant to start it again.")
                 .setAutoCancel(true)

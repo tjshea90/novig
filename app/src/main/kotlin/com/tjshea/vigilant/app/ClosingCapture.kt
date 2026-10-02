@@ -137,6 +137,7 @@ class ClosingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         nm?.createNotificationChannel(NotificationChannel(CHANNEL, "Closing lines", NotificationManager.IMPORTANCE_MIN))
         val n = NotificationCompat.Builder(applicationContext, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(applicationContext)
             .setContentTitle("Reading closing lines")
             .setOngoing(true)
             .build()

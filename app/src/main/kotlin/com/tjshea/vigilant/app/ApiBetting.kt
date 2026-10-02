@@ -416,6 +416,7 @@ class ApiBettingController(
             }
             // Novig answered the signed transfer (applied or rejected): the key is good.
             keep(typed)
+            out.balance?.let { c.wallet.record(it) }
             state.update {
                 it.copy(betting = it.betting.copy(busy = false, message = out.message.takeIf { out.applied }, error = out.message.takeUnless { out.applied }, balance = out.balance ?: it.betting.balance))
             }

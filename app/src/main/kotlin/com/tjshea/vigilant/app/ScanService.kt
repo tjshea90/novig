@@ -167,6 +167,7 @@ class ScanService : Service() {
         val p = run.progress
         return NotificationCompat.Builder(this, CHANNEL_SCAN)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .withWallet(this)
             .setContentTitle("Scanning ${AppBook.name}")
             .setContentText(ScanText.progress(p, found))
             .setProgress(p?.total ?: 0, p?.done ?: 0, p == null || p.total <= 0)
@@ -201,6 +202,7 @@ class ScanService : Service() {
         val (title, text) = ScanText.done(feed, settings?.minEvPercent ?: 0.0, run.report?.errors.orEmpty())
         return NotificationCompat.Builder(this, CHANNEL_RESULTS)
             .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
+            .withWallet(this)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
