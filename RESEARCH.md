@@ -3625,19 +3625,22 @@ standard deviations from expected: far too few bets to judge by wins. The bets d
 (`TrackedBet.books` is refreshed by every re-check), so his record can't yet say whether "7 of 9" does better or worse than "9 of 9".
 
 **Outside evidence:**
-- A consensus of many ordinary books is a good fair price: Kaunitz, Zhong & Kreiner (arXiv 1710.02824) took the average of ~30 bookmakers'
+- A consensus of many ordinary books is a good fair price: Kaunitz, Zhong & Kreiner (arXiv 1710.02824) took the average of 32 bookmakers'
   odds as the truth, bet whichever book was far above it (5 points of implied probability, their best α), and the accuracy matched the consensus'
   prediction (45.9% expected, 44.4% actual); +3.5% over 10 years of closing odds, +9.9% on minute-by-minute odds, +6.2% over 672 real bets, then the
   books limited them. Buchdahl's "wisdom of the crowd" (football-data.co.uk) is the same idea.
 - Pinnacle alone is the best single fair price for main markets (Data Golf: betting other books against Pinnacle's no-vig odds gives about a
-  1-to-1 expected-to-actual ROI; Buchdahl: Pinnacle pre-closing odds against soft books, 31,000 bets, 3.8% expected, 3.6% actual).
+  1-to-1 expected-to-actual ROI; Buchdahl, football-data.co.uk "wisdom of crowd … closing odds": 26,960 European football 1X2 bets with a 2%
+  minimum EV against Pinnacle's odds at the time, expected 4.13% (2.88% against the closing odds), actual 4.90%). *(Corrected 2026-10-02 17:10Z:
+  the first version said "31,000 bets, 3.8% expected, 3.6% actual", from a search summary, not his page.)*
 - **But not for props:** a 600-million-line-move study of MLB props (SmartStake, a vendor: treat as one source) ranks Kalshi and ProphetX the
   sharpest, Novig next, DraftKings/FanDuel middle, and **Pinnacle and Bookmaker the softest** (tiny prop limits, little modeling). Pinnacle also
   lists few props (§64.3). Requiring Pinnacle on props both cuts volume and anchors on a soft prop price.
 - Estimated edges shrink when realized: Data Golf's model realized about half its estimated EV (0% threshold −0.9% ROI, 5% → +1.5%, 8% → +4.4%);
   Tj's record shows the same shrink (~1.5–2 points).
-- Commonly recommended minimums: main markets 0.5–2% when the fair is sharp-anchored; props 3–5% (less liquid, wider vig, copied lines)
-  (betsharpmoney.com filter guide; wizardofodds.com prop articles). Unabated: prop closing lines are less efficient (low limits keep sharps out),
+- Commonly recommended minimums: main markets 0.5% when the fair is Pinnacle-anchored, props 3–5%, less liquid sports 2–5%, odds +150 to −200
+  (betsharpmoney.com filter guide, read 2026-10-02); Wizard of Odds: props "+3% or better" (its context: a bettor's own model). *(Corrected:
+  the first version attributed a 5% prop floor to wizardofodds.com; it says 3%.)* Unabated: prop closing lines are less efficient (low limits keep sharps out),
   so CLV on props is a weaker yardstick than on NFL sides: a reason to also watch results over hundreds of bets.
 
 **Answers:**
@@ -3662,3 +3665,57 @@ standard deviations from expected: far too few bets to judge by wins. The bets d
 book on CNO's page (Kalshi/ProphetX for props, Pinnacle/Circa for game lines) says not +EV; (b) an auto-bet market filter (props only, or skip
 totals/team totals/1st-half totals); (c) record each bet's agreement at the time of the bet (x of y, which books dissented, a sharp book present
 or not) and split CLV by it in Diagnostics, so "7 of 9" is answered from his own bets in a few weeks.
+
+## 66. Re-checked research, deeper CLV research, the sharpest book per bet type, and the presets (v0.45.0, 2026-10-02 ~17:01Z; Tj: "Use the research you just found, double check and make sure it is accurate. Do more deep research on clv and best settings for finding clv … make a preset section … make it so I can make my own settings presets. The auto bet feature must abide the preset rules … 1) sharp veto instead of requirement … separate types of bets by which books are sharpest for those bet types. 2) record all types of information on the bet as placed … include this information for all bets in the diagnosis feature … saved to my android downloads folder")
+
+### 66.1 §65 re-checked, source by source (2026-10-02 ~17:05–17:15Z)
+- **Kaunitz, Zhong & Kreiner** (arXiv 1710.02824, full PDF read): consensus = the mean of **32** bookmakers' odds; bet when the best odds beat
+  `1/(p_cons − 0.05)` (α = 0.05 chosen from 0.01–0.1; 0.06 was as profitable); 10 years of closing odds: 44.4% accuracy (45.9% expected), +3.5%;
+  minute-by-minute odds: 6,994 bets, +9.9%; real money and paper trading: 672 bets, +6.2% (paper 407 bets +5.5%, real 265 bets +8.5%), 30% of the
+  prices they saw had already moved at the book. Correct in §65 (the "~30" is now "32").
+- **Buchdahl** (football-data.co.uk, his own page): 26,960 bets at ≥ 2% EV against Pinnacle's odds at the time: 4.13% expected, 4.90% actual
+  (2.88% expected against the closes). §65's "31,000 / 3.8% / 3.6%" was a search summary's: corrected.
+- **Data Golf** ("How sharp are bookmakers?", read): Pinnacle's no-vig odds give ~1:1 expected vs actual ROI against other books; its own golf model
+  at 0% / 5% / 8% EV thresholds: −0.92% / +1.45% / +4.43% realized: estimated edges realize at roughly half. Correct.
+- **SmartStake MLB props study** (read): >600 million MLB prop line moves; crossed-market test; sharpest Kalshi and ProphetX, then Novig, DraftKings
+  and FanDuel middle, Pinnacle and Bookmaker softest; FanDuel weaker on MLB than its NBA/NFL reputation; closing-line (Brier) accuracy couldn't
+  separate books (all converge by the close). Vendor study, methodology summarized, not published in full: one source.
+- **betsharpmoney.com filter guide** (read): main markets 0.5%, props 3–5%, less liquid sports 2–5%, odds +150 to −200; Circa often sharper than
+  Pinnacle in college; Pinnacle alone for soccer and tennis; Circa and Bookmaker beside Pinnacle for NBA/NFL. §65's "props 3–5%" is right; its
+  wizardofodds attribution of 5% was wrong (Wizard of Odds says "+3% or better"): corrected.
+- **Unabated** ("Getting precise about CLV", read): measure CLV against a no-vig close; props and other low-limit markets have weak closes ("CLV
+  doesn't mean anything in props" is its strongest wording): judge props by results too. Correct.
+- **Tj's record** (INBOX.md 2026-10-01T06:31Z, re-read line by line): every number in §65's table matches the file.
+
+### 66.2 Deeper: what predicts CLV and profit
+- **Which book is sharpest depends on the bet type.** Sides and totals: Pinnacle first (Data Golf, Buchdahl, betsharpmoney), Circa beside it and
+  ahead of it in college (betsharpmoney). Player props: the sides-and-totals sharps post few props late at low limits (establishtherun.com "current
+  ecosystem of NFL player props": Pinnacle and Circa "don't prioritize props"; among US books Caesars, which takes $500 even on openers, and FanDuel,
+  which originates its own numbers, are the efficient ones); on MLB props the exchanges Kalshi and ProphetX lead and Pinnacle trails (SmartStake).
+- **Bigger estimated edges are more real, with shrinkage.** Tj's 4%+ bets beat the close 83%; his 1–2% only 58%; estimated edges realize at
+  roughly half to two-thirds (Data Golf; his shown EV runs ~1.6 points above the close).
+- **Odds range.** Long shots carry the favorite–longshot bias and thin books (§8.1, §16.2); +150 to −200 is the common range (betsharpmoney).
+- **Sample size.** CLV needs ~200–500 bets per group before a split means anything (pikkit.com, bet-analytix.com guides); his groups are 10–90.
+  So the presets lean on outside evidence where his own groups are small, and the new per-bet record (66.4) makes his own data decide later.
+- **Timing.** The close is the sharpest price; an edge found earlier has more time to be proven right or wrong. No source measured CLV by time to
+  start for props; his record can't split it yet. Recorded from now on (66.4) rather than guessed into a rule.
+
+### 66.3 What was built
+- **Sharp veto** (`SharpVeto`, data): skips a bet only when the **sharpest book for that kind of bet** that prices both sides on the bet's book page
+  says it isn't +EV at Novig's price (its own two prices, devigged worst case, like the book check). The ranking by kind (`SharpVeto.ranking`):
+  player props: Kalshi, ProphetX, FanDuel, Caesars (MLB props: Kalshi, ProphetX, DraftKings, FanDuel); sides, totals, team totals and period lines:
+  Pinnacle, Circa (college football and basketball: Circa, Pinnacle); soccer and tennis: Pinnacle. When none of them prices both sides, there is no
+  veto (the bet goes on its other criteria). The "require a sharp book to confirm" mode stays as an option (`SharpMode.CONFIRM`), off.
+- **Presets** (`Presets`): a built-in "Volume + safe CLV" (recommended) and "Strict CLV" set every rule the auto-bet and the scanners use at once;
+  Tj saves his own (Settings › Presets: save current, apply, delete). The auto-bet reads exactly those settings, and the new rules (bet types,
+  shortest odds) are enforced in `AutoBet.judge`. Values in 66.5.
+- **The bet as placed** (`AtBet`, kept on the bet, never overwritten by re-checks) and Diagnostics' per-bet record and splits (66.4), and the
+  Diagnostics file saved to Downloads/Vigilant as well as shared.
+
+### 66.4 What each bet records as placed
+See `AtBet` (data/tracker): when, app version, scanner, by hand or auto, preset and rules in force, league, kind of bet, minutes to the start,
+American odds and price, the other side's price, dollars available at that price, Novig's quote age, CNO's EV, fair, book count and one-way flag,
+the book check (fair, EV, books pricing both sides, one-sided, agreeing, verdict, page age), every book on the page (both prices, its own fair, its
+EV at Novig's price, agrees or not), the sharpest book and what it said, the stake rule, Kelly fraction, full-Kelly share, stake, bankroll and
+wallet. Diagnostics lists every bet with it (JSON lines) and splits CLV by agreement, dissent, the sharpest book's verdict, minutes to the start,
+the check's EV band, kind and preset.
