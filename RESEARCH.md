@@ -3786,3 +3786,47 @@ Market position: A held `qA` contracts having spent `SA` dollars (fills + fees),
 - A wins: qA/100 − S − x·q/100 − F; B wins: (qB + x)/100 − S − x·q/100 − F; FMV: between those two. A lock needs both ≥ the minimum profit.
 - Equal profit: x = qA − qB. The limit q is the highest grid price keeping both ≥ the minimum; the ladder must hold x contracts at ≤ q.
 - The guaranteed profit shown is the worst case at the limit; a FOK filling at better prices only adds to it.
+
+## 68. API-Sports (api-sports.io) and TheRundown, against what Vigilant uses (2026-10-02 ~22:25Z; Tj: "Research whether https://api-sports.io/ or therundown apis are better than the apis I currently use or if they would add value to the app in any way")
+
+**What Vigilant needs from a feed, and what it has now.** Fair odds: two-sided prices from many books, sharp ones above all, no older than 5 minutes
+(§24, `Freshness`), for game lines AND player props (most of Tj's bets are props). Closing lines: the price just before the start, for CLV (§41-§42).
+Grading: final scores and box scores. Injuries: who's out (voids). Today: Novig's own API (books, catalog, trades), CrazyNinjaOdds (every book's
+page, free), ParlayAPI Starter $5 (Pinnacle, ProphetX, BetOnline + US books, a league's props in one call, Pinnacle's closes 7 days back, injuries),
+PinnWire/pinnapi (Pinnacle with player props), PropLine (30 books' props), The Odds API (free), Kalshi and Polymarket (exchanges), ESPN and MLB
+(scores, box scores, closing odds), Novig's daily trade files (closes). Budget ~$40/month (§43).
+
+**TheRundown (therundown.io/api, /pricing/api, read 2026-10-02).** Books on paid plans: Pinnacle, Circa, BetCRIS, BookMaker, Heritage, Bet105, LowVig,
+BetOnline, Matchbook, the US books; prediction markets (Novig, Kalshi, Polymarket, ProphetX) are listed but not on Free-Ultra.
+
+| Plan | $/month | Books | Delay | Props | Closing lines | History |
+| :- | :- | :- | :- | :- | :- | :- |
+| Free | 0 | BetMGM, DraftKings, FanDuel | 5 min | no | no | none |
+| Starter | 49 | all | 60 s | no | no | 7 days |
+| Pro | 149 | all | 30 s | yes | yes | 30 days |
+| Ultra | 399 | all + websocket | real time | yes | yes | 90 days |
+
+- Free: three soft books five minutes late. Vigilant never prices from a quote over 5 minutes old, so everything it served would already be too old. No use.
+- Starter $49 is the only plan near the budget, and it's over it. Its one real addition is sharp game-line books Vigilant doesn't read itself
+  (Circa, BetCRIS, BookMaker; CNO's pages already show Circa, which the sharp veto uses). No props, no closes, a minute late: it can't touch the
+  props that are most of Tj's bets, and it can't replace ParlayAPI's closes. Not worth $49 on top of what's here.
+- Props and closes cost $149 (Pro): three to four times the budget for what ParlayAPI ($5) + PinnWire + PropLine + CNO already give.
+- Novig's own odds through it: only on top tiers; Vigilant reads Novig directly, free and real time.
+Verdict: no (same as §36 and §43; its book list grew, its prices didn't).
+
+**API-Sports (api-sports.io; one account, a separate API and plan per sport: API-Football (soccer), API-American-Football (NFL, NCAA), API-NBA,
+API-Basketball, API-Baseball, API-Hockey, MMA, F1, …).** Its site and docs refuse automated reads (HTTP 403 from here; the API answers
+"Missing application key" without one), so this is from its published plan figures and API-Football's documented odds rules:
+- Plans, per sport API: free 100 requests a day; Pro $19 (7,500 a day), Ultra $29 (75,000), Mega $39 (150,000). Each sport is its own subscription.
+- Odds: bookmaker pre-match odds that are **refreshed every 3 hours** (API-Football's /odds: "updated every 3 hours", 1-14 days before the game,
+  7 days of history); in-play odds for soccer only. The books are mostly European (Bet365, 1xBet, Pinnacle, bwin, Unibet, Marathonbet …); no
+  Novig, no exchanges, and no US player props found in any of its sports.
+- Data: fixtures, live scores (about every 15 s), standings, players, injuries (soccer and American football), team and player game statistics.
+- Fair odds: a price up to 3 hours old can never price a bet here (5-minute rule), and there are no props. No use.
+- Closing lines: 3-hourly snapshots aren't a close. No use.
+- Grading: ESPN's free box scores and MLB's feed already grade every sport Vigilant bets; API-Sports adds no sport and no stat Vigilant lacks.
+- Injuries: ParlayAPI (§6.1) and ESPN rosters already cover the US leagues Tj bets.
+Verdict: no. It's a stats-and-scores API with slow bookmaker odds, built for soccer sites, not for +EV betting on Novig.
+
+**What would actually add value, if anything is ever bought:** ParlayAPI Pro ($20: 100,000 credits, 30 days of closes) only when its meter runs
+short on busy days (§43). Nothing else in this price range beats what Vigilant reads now.
