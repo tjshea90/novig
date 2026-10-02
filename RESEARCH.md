@@ -3033,6 +3033,9 @@ Checked live 2026-09-30 ~20:00Z (CNO's page once, ParlayAPI ~10 credits of Tj's 
 - **Some books are one line under two names.** BetRivers and betPARX (both Kambi) posted **94% identical NFL moneylines** (15 of 16);
   bet365 and Hard Rock 75% identical on 28 NFL props (small sample: watch it). LowVig is BetOnline's reduced-juice site: the same line,
   devigged. Counting both halves of such a pair gives one line two votes in the consensus: less accurate, not more.
+  **Since v0.44.2 (Tj, 2026-10-02: "it is counting identical odds from sister sports books ... multiple hard rock sports books just in
+  different states"):** CNO's own book check follows the same rule: its state columns (HR-IN/FL/IL/OH, ST-NJ/CO/IA/AZ/VA, MGM-ON, FDYW)
+  are one company each (`CnoBooks.company`), their devigged fairs averaged into one vote; counts and "agreeing" are by company.
 - **The Odds API free keys don't get Caesars or Fanatics** (its docs: "paid subscriptions only"); `espnbet` is theScore Bet now.
 - **What was changed (free, no extra credits):** the reference books (PropLine reads every one at no extra cost; The Odds API, its backup,
   asks the first 10) are now Pinnacle, BetOnline, DraftKings, FanDuel, BetMGM, BetRivers, **Hard Rock, Bovada, Fliff**, Caesars, Fanatics,
