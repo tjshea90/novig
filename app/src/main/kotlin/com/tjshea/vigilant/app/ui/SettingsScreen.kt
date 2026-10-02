@@ -1,5 +1,11 @@
 package com.tjshea.vigilant.app.ui
 
+import com.tjshea.vigilant.data.scanner.Presets
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Column
@@ -25,13 +31,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -136,7 +140,7 @@ object SettingsSummary {
         return when (page) {
             SettingsPage.SCANNING -> listOfNotNull(
                 if (s.paused) "Paused" else s.scanner.displayName,
-                if (AppBook.isNovig) "games within ${startsWithinLabel(s.startsWithinHours).lowercase(Locale.US)}" else null,
+                if (!AppBook.isNovig) null else if (s.startsWithinHours <= 0) "any start time" else "games within ${s.startsWithinHours}h",
                 if (!AppBook.isNovig) null else if (BackgroundScan.on(s)) "background every ${ScanSettings.intervalLabel(s.autoScanSeconds)}" else "background off",
             ).joinToString(" · ")
             SettingsPage.ALERTS -> if (s.alertMinEv <= 0.0) "Off" else "${alertLabel(s.alertMinEv)} · sharp books: ${s.sharpAlerts.displayName.lowercase(Locale.US)}"
@@ -200,7 +204,12 @@ object BackgroundScan {
 
 private typealias SettingsUpdate = ((ScanSettings) -> ScanSettings) -> Unit
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+/**
+ * Settings: a home list ([SettingsHome]: search, then every page with what it's set to now) and the page picked ([SettingsPage]), with a back arrow and
+ * Android's back gesture returning to the list. [page]/[onPage] hoist which page is open (the app keeps it, so the Auto-bet tab can open Betting); left
+ * null, the screen keeps it itself, starting at [page]. [onOpenAutoBet] opens the Auto-bet tab (its row on the home list, and search results for it).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     state: UiState,
@@ -211,69 +220,125 @@ fun SettingsScreen(
     onNovigDisconnect: () -> Unit = {},
     bettingActions: BettingActions = BettingActions(),
     reportActions: ReportActions = ReportActions(),
-    /** The tab open first (kept across rotation and process death once Tj has picked one). */
-    startTab: SettingsTab = SettingsTab.SCAN,
+    page: SettingsPage? = null,
+    onPage: ((SettingsPage?) -> Unit)? = null,
+    onOpenAutoBet: (() -> Unit)? = null,
 ) {
     val s = state.settings
     state.report?.let { ReportDialog(it, reportActions) }
-    val tabs = SettingsTab.shown(s)
-    // A Bet sheet's "Add money" (Tj, 2026-09-29) opens on the Betting tab, where the wallet is.
-    var picked by rememberSaveable { mutableStateOf((if (state.betting.topUp != null) SettingsTab.BETTING else startTab).name) }
-    // A tab that has gone (CNO only hides the fair-odds pages) falls back to the first one.
-    val active = tabs.firstOrNull { it.name == picked } ?: tabs.first()
-    val scroll = rememberScrollState()
-    // Each tab opens at its top; the first composition (and one restored after a rotation) keeps its place.
-    var shownTab by remember { mutableStateOf<SettingsTab?>(null) }
-    LaunchedEffect(active) {
-        if (shownTab != null && shownTab != active) scroll.scrollTo(0)
-        shownTab = active
-    }
+    // A Bet sheet's "Add money" (Tj, 2026-09-29) opens on Betting, where the wallet is.
+    var own by rememberSaveable { mutableStateOf((if (state.betting.topUp != null) SettingsPage.BETTING else page)?.name) }
+    val go: (SettingsPage?) -> Unit = onPage ?: { own = it?.name }
+    val wanted = if (onPage != null) page else SettingsPage.named(own)
+    // A page that has gone (its scanner switched off) falls back to the list.
+    val current = wanted?.takeIf { it.shownIn(s) }
+    val topUp = state.betting.topUp != null
+    LaunchedEffect(topUp) { if (topUp && current != SettingsPage.BETTING) go(SettingsPage.BETTING) }
+    androidx.activity.compose.BackHandler(enabled = current != null) { go(null) }
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-                )
-                // Outside the scrolling page, so it stays put however far a tab is scrolled.
-                ScrollableTabRow(
-                    selectedTabIndex = tabs.indexOf(active),
-                    edgePadding = 8.dp,
-                    containerColor = MaterialTheme.colorScheme.background,
-                    modifier = Modifier.testTag("settingsTabs"),
-                ) {
-                    tabs.forEach { t ->
-                        Tab(
-                            selected = t == active,
-                            onClick = { picked = t.name },
-                            text = { Text(t.labelFor(s), maxLines = 1) },
-                            modifier = Modifier.testTag("settingsTab-${t.name}"),
-                        )
+            TopAppBar(
+                title = { Text(current?.title ?: "Settings", fontWeight = FontWeight.Bold, maxLines = 1) },
+                navigationIcon = {
+                    if (current != null) {
+                        IconButton(onClick = { go(null) }, modifier = Modifier.testTag("settingsBack")) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Settings")
+                        }
                     }
-                }
-            }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            )
         },
     ) { padding ->
+        // Each page (and the list) has its own scroll, so a page always opens at its top and the list keeps its place.
+        val scroll = androidx.compose.runtime.key(current) { rememberScrollState() }
         Column(
             Modifier
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(scroll)
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp)
+                .testTag("settingsPage-${current?.name ?: "HOME"}"),
         ) {
-            when (active) {
-                SettingsTab.SCAN -> ScanTab(s, onUpdate)
-                SettingsTab.PRESETS -> PresetsTab(s, onUpdate)
-                SettingsTab.CNO -> CnoTab(s, onUpdate)
-                SettingsTab.FAIR -> FairOddsTab(state, keys, onUpdate)
-                SettingsTab.FEED -> FeedTab(s, onUpdate)
-                SettingsTab.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions)
-                SettingsTab.USAGE -> UsageTab(state, keys)
-                SettingsTab.TOOLS -> ToolsTab(state, reportActions)
+            when (current) {
+                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet)
+                SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
+                SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
+                SettingsPage.CNO -> CnoPage(s, onUpdate)
+                SettingsPage.WIDGET -> WidgetPage(s, onUpdate)
+                SettingsPage.FEED -> FeedTab(s, onUpdate)
+                SettingsPage.FAIR -> FairOddsTab(state, keys, onUpdate)
+                SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
+                SettingsPage.USAGE -> UsageTab(state, keys)
+                SettingsPage.HELP -> ToolsTab(state, reportActions)
             }
         }
     }
+}
+
+/** The Settings home: a search box, the Auto-bet row (it opens its tab), then every page with what it's set to now. */
+@Composable
+private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?) {
+    val s = state.settings
+    var query by rememberSaveable { mutableStateOf("") }
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it.take(40) },
+        label = { Text("Search settings") },
+        placeholder = { Text("e.g. Kelly, alerts, odds, key") },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Clear, contentDescription = "Clear search") }
+        },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("settingsSearch"),
+    )
+    if (query.isNotBlank()) {
+        val hits = SettingsIndex.search(query, s)
+        if (hits.isEmpty()) Hint("Nothing matches \"${query.trim()}\". Try another word, like edge, books, stake or widget.")
+        hits.forEach { e ->
+            val where = e.page?.title ?: "Auto-bet tab"
+            SettingsRow(
+                title = e.title,
+                summary = "$where · ${e.help}",
+                tag = "settingsHit-${e.title}",
+                onClick = { if (e.page != null) onOpen(e.page) else onOpenAutoBet?.invoke() },
+            )
+        }
+        return
+    }
+    if (AppBook.isNovig && s.cnoOn && onOpenAutoBet != null) {
+        SettingsRow(
+            title = "Auto-bet & presets",
+            summary = "Its own tab now · ${SettingsSummary.autoBet(s)}",
+            tag = "settingsRow-AUTOBET",
+            onClick = onOpenAutoBet,
+        )
+    }
+    SettingsPage.shown(s).forEach { p ->
+        SettingsRow(title = p.title, summary = "${p.about}\n${SettingsSummary.of(p, state)}", tag = "settingsRow-${p.name}", onClick = { onOpen(p) })
+    }
+}
+
+/** One row of the Settings home: its title, what it holds and what it's set to, and an arrow. The whole row is the button. */
+@Composable
+private fun SettingsRow(title: String, summary: String, tag: String, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 12.dp)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 8.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    androidx.compose.material3.HorizontalDivider()
 }
 
 /** Scan: pause, which scanner, the start window, background auto-scan and alerts. */
