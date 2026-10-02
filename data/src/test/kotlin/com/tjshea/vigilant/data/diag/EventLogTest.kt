@@ -92,11 +92,26 @@ class EventLogTest {
         assertTrue("at most three frames: $where", where.split(" < ").size <= 3)
         // A throwable with no frames of the app's: the first frames at all.
         val foreign = Throwable("x").apply { stackTrace = arrayOf(StackTraceElement("okhttp3.Foo", "bar", "Foo.kt", 7)) }
-        assertEquals("Foo.bar(Foo.kt:7)", EventLog.whereOf(foreign))
+        assertEquals("okhttp3.Foo.bar(Foo.kt:7)", EventLog.whereOf(foreign))
         val l = log()
         l.error("CYCLE", "CNO read failed", t)
         assertTrue(l.events().single().msg.contains("(RuntimeException: outer)"))
         assertTrue(l.events().single().where!!.contains("EventLogTest"))
+    }
+
+    @Test
+    fun `a frame is shortened for reading and mapped to the repo file it names`() {
+        val frames = "com.tjshea.vigilant.app.AutoScanner.cycle(AutoScan.kt:231) < com.tjshea.vigilant.data.diag.EventLog.error(EventLog.kt:74)"
+        assertEquals("AutoScanner.cycle(AutoScan.kt:231)", EventLog.short(frames))
+        assertEquals("app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt", EventLog.pathOf(frames))
+        // The first frame decides, and a lambda's or companion's generated class still names its file.
+        val inner = "com.tjshea.vigilant.data.diag.EventLog\$Companion.whereOf(EventLog.kt:135)"
+        assertEquals("EventLog.whereOf(EventLog.kt:135)", EventLog.short(inner))
+        assertEquals("data/src/main/kotlin/com/tjshea/vigilant/data/diag/EventLog.kt", EventLog.pathOf(inner))
+        // Not the app's own code, or no file: no path to point Claude at.
+        assertEquals(null, EventLog.pathOf("okhttp3.Foo.bar(Foo.kt:7)"))
+        assertEquals(null, EventLog.pathOf("com.tjshea.vigilant.app.X.y(Unknown Source)"))
+        assertEquals("Foo.bar(Foo.kt:7)", EventLog.short("okhttp3.Foo.bar(Foo.kt:7)"))
     }
 
     @Test
