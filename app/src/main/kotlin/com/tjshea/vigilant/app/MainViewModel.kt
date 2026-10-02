@@ -806,10 +806,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Re-reads CNO now (Refresh, pull down, the mini window's button), if 3 s have passed. */
-    fun refreshCno(quiet: Boolean = false) {
+    /**
+     * Re-reads CNO now (Refresh, pull down, the mini window's button), if 3 s have passed. [resume]: Tj's own pull or Refresh on the CNO tab
+     * resumes a paused scanner first ([resumeThen]).
+     */
+    fun refreshCno(quiet: Boolean = false, resume: Boolean = false) {
         val current = _state.value
-        if (!current.loaded || !current.settings.cnoOn) return
+        if (!current.loaded) return
+        if (current.settings.paused && resume) {
+            resumeThen { refreshCno(quiet) }
+            return
+        }
+        if (!current.settings.cnoOn) return
         if (current.settings.paused) {
             if (!quiet) _toasts.tryEmit(PAUSED_TOAST)
             return
@@ -832,8 +840,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * One scan: Novig's board and prices plus fair odds from every enabled source. It runs in the
      * app's runner under a foreground service, so it keeps going if Tj switches apps.
      */
-    fun scan() {
+    fun scan(resume: Boolean = false) {
         val current = _state.value
+        // A pull to refresh while paused resumes the scanner, then scans ([resumeThen]).
+        if (resume && current.loaded && current.settings.paused) {
+            resumeThen { scan() }
+            return
+        }
         // CNO only: Vigilant's scanner and every API behind it stay asleep.
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking) return
         if (current.settings.paused) {
@@ -1104,6 +1117,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             applySettings { it.copy(paused = paused) }
             _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else "Scanning resumed")
+        }
+    }
+
+    /**
+     * Resumes a paused scanner, as ▶ Resume does, then does what Tj asked ([then]) (Tj, 2026-10-02: "If I press check odds now, or pull to refresh,
+     * and the scanner is paused, automatically resume the scanner"). [then] runs after the setting is saved, so it sees the scanner on.
+     */
+    private fun resumeThen(then: () -> Unit) {
+        viewModelScope.launch {
+            applySettings { it.copy(paused = false) }
+            _toasts.tryEmit(RESUMED_TOAST)
+            then()
         }
     }
 
@@ -1599,12 +1624,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * the button covers both; the toast counts every open bet ([BetRecheck.Report.summary]), and a bet that couldn't be priced
      * says why on its own card. Finished games' results are graded in the same tap.
      */
-    fun checkOdds() {
+    fun checkOdds(resume: Boolean = true) {
         val start = _state.value
         if (start.checkingOdds) return
-        // Reading every bet's CNO page is CNO reading: held while scanning is paused (the switch's promise).
+        // Reading every bet's CNO page is CNO reading, so a pause can't hold it back: Tj's tap resumes the scanner first ([resumeThen]).
         if (start.settings.paused) {
-            _toasts.tryEmit(PAUSED_TOAST)
+            if (resume) resumeThen { checkOdds(resume = false) } else _toasts.tryEmit(PAUSED_TOAST)
             return
         }
         val began = System.currentTimeMillis()
@@ -1730,6 +1755,8 @@ private const val GRADING_CHECK = "Grading check"
 
 /** What Scan, Recheck and Refresh say while scanning is paused ([ScanSettings.paused]). */
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
+
+internal const val RESUMED_TOAST = "Scanning resumed"
 
 /** CNO's own reads (the list, its books, its teams) wait: nothing is loaded yet, scanning is paused, or Check odds now holds the focus ([FocusGate]). */
 internal fun cnoReadsHeld(s: UiState): Boolean = !s.loaded || s.settings.paused || s.checkingOdds
