@@ -591,10 +591,37 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         }
     }
 
-    /** Novig's own price now for these bets ([NovigNow.apply]): bet id → the middle of Novig's bid and offer for its side, read at [at]. */
-    suspend fun recordNovig(prices: Map<String, Double>, at: Long) {
-        if (prices.isEmpty()) return
-        store.update { list -> list.map { b -> prices[b.id]?.let { NovigNow.apply(b, it, at) } ?: b } }
+    /**
+     * Novig's own price now for these bets ([NovigNow.apply]): bet id → the middle of Novig's bid and offer for its side, read at [at]; and bet id → why a
+     * bet looked at got none ([TrackedBet.novigWhy]; its last price is kept, older than the reason).
+     */
+    suspend fun recordNovig(prices: Map<String, Double>, at: Long, why: Map<String, String> = emptyMap()) {
+        if (prices.isEmpty() && why.isEmpty()) return
+        store.update { list ->
+            list.map { b ->
+                prices[b.id]?.let { NovigNow.apply(b, it, at).copy(novigWhy = null, novigWhyAtMs = null) }
+                    ?: why[b.id]?.let { b.copy(novigWhy = it, novigWhyAtMs = at) }
+                    ?: b
+            }
+        }
+    }
+
+    /**
+     * What a look in Novig's catalog found for bets logged without Novig's ids ([NovigIds]): bet id → (market id, outcome id), written only where the bet
+     * still lacks them; and bet id → why it isn't on Novig now, at [at].
+     */
+    suspend fun recordIds(ids: Map<String, Pair<String, String>>, why: Map<String, String>, at: Long) {
+        if (ids.isEmpty() && why.isEmpty()) return
+        store.update { list ->
+            list.map { b ->
+                val found = ids[b.id]?.takeIf { b.marketId.isBlank() || b.outcomeId.isBlank() }
+                when {
+                    found != null -> b.copy(marketId = found.first, outcomeId = found.second, novigWhy = null, novigWhyAtMs = null)
+                    why[b.id] != null && (b.marketId.isBlank() || b.outcomeId.isBlank()) -> b.copy(novigWhy = why.getValue(b.id), novigWhyAtMs = at)
+                    else -> b
+                }
+            }
+        }
     }
 
     suspend fun delete(id: String) {

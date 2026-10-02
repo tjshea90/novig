@@ -187,7 +187,7 @@ object TrackerText {
     fun oddsNote(b: TrackedBet, now: Long): String? {
         if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
         val note = b.nowNote
-        if (note != null && (b.nowNoteAtMs ?: 0L) >= (b.nowAtMs ?: 0L)) return "Not priced: $note (tried ${Format.age(b.nowNoteAtMs, now)})"
+        if (note != null && (b.nowNoteAtMs ?: 0L) >= (b.nowAtMs ?: 0L)) return "Not priced: $note" + (b.nowNoteAtMs?.let { " (tried ${Format.age(it, now)})" } ?: "")
         if (b.nowEv != null) return null
         return if (b.gameUrl == null) "Not priced yet: tap Check odds now (Vigilant's own fair odds price this bet)" else "Odds not read yet: tap Check odds now"
     }
