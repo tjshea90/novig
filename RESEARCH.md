@@ -3594,7 +3594,7 @@ receptions (PN +106/−134: −4.4% at +110, not confirmed), Aaron Rodgers Over 
 Pinnacle's two sides at the exact line, dated by the board's read (0 s old), devigged worst case. CNO's market names map to the same stats as
 Pinnacle's props for football (passing/rushing/receiving yards, receptions, passing TDs, anytime TD), baseball (strikeouts, total bases, home runs) and
 basketball (points, rebounds, assists, threes). ParlayAPI's `/props` `age_seconds` is the age of the book's latest observation (its docs), so a quiet
-Pinnacle line isn't wrongly "too old". So it gets Pinnacle's prices when a feed has the bet.
+Pinnacle line isn't wrongly "too old". So it gets Pinnacle's prices when a feed has the bet (`SharpRealBoardTest` keeps this checked on that real answer).
 
 Why the volume is near zero: (1) Pinnacle prices far fewer props than CNO's ~20 books, only main lines, and the check needs the exact line: Tj's own
 screenshot (Juwan Johnson Under 39.5) has no Pinnacle column on CNO's page at all; Pinnacle's hockey props aren't read from PinnWire (no stat map: ParlayAPI
