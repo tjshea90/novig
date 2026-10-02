@@ -191,7 +191,6 @@ class AutoBettorTest {
         assertEquals(1, bettor(novig).run(settings { it.copy(autoBetMinEv = 0.05, autoBetBooks = 3, autoBetTwoSided = 3) }, state()).placed.size)
     }
 
-    /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
     @Test
     fun `the sharp veto skips a bet only when the sharpest book for its kind says no, and the bet keeps its record as placed`() = runBlocking {
         // Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement. Only skip a bet if the sharpest book for that market says it is not +ev." Jefferson's
@@ -226,6 +225,7 @@ class AutoBettorTest {
         assertEquals(placed.stake, rec.stake!!, 1e-9)
     }
 
+    /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
     @Test
     fun `with every book must agree on, a bet one book disagrees with is not placed, and one all of them agree with is`() = runBlocking {
         // Jefferson's books: three price both sides and all say +EV at +117 (3 of 3). Make one of them (KI) price the Under at +140 against -160: its own fair
