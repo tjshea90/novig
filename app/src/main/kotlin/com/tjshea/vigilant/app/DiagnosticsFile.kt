@@ -57,7 +57,7 @@ object DiagnosticsFile {
         "API keys, usage meters, credit pacing" to "data/src/main/kotlin/com/tjshea/vigilant/data/keys/",
         "Tracker, grading, closing lines (CLV)" to "data/src/main/kotlin/com/tjshea/vigilant/data/tracker/",
         "Alerts and notifications" to "app/src/main/kotlin/com/tjshea/vigilant/app/EvAlerts.kt, data/src/main/kotlin/com/tjshea/vigilant/data/alerts/",
-        "Screens and settings" to "app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt, MainActivity.kt; app/src/main/kotlin/com/tjshea/vigilant/app/ui/ (SettingsScreen.kt, AutoBetUi.kt, ReportDialog.kt)",
+        "Screens and settings" to "app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt, MainActivity.kt; app/src/main/kotlin/com/tjshea/vigilant/app/ui/ (SettingsScreen.kt: the home list and pages; SettingsIndex.kt: search; AutoBetScreen.kt + AutoBetUi.kt: the Auto-bet tab; ReportDialog.kt)",
         "This report (diagnostics)" to "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt, HealthChecks.kt, Advisor.kt, DiagnosticsFile.kt; data/src/main/kotlin/com/tjshea/vigilant/data/diag/ (the recorder)",
         "Settings (every switch and default)" to "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt",
         "Project rules and history" to "CLAUDE.md, BRIEF.md, TASKS.md, RESEARCH.md, NOVIG_API.md, PARLAY_API.md, BUILDLOG.md (repo root)",
