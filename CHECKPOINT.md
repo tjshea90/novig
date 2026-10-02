@@ -1,21 +1,23 @@
-# CHECKPOINT 2360 — read me first, then TASKS.md
+# CHECKPOINT 2361 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T18:21:37Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `f749bcde` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T18:28:43Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `9620f1ec` (this checkpoint is the commit after it)
 
 ## Just done
-AX3-AX5 code + existing tests moved: Settings home/pages/search, Auto-bet tab, contradictions a-g fixed, apiMinEv removed; app suite 680/680 green (SettingsPagesTest replaces SettingsTabsTest)
+AX polish: home summaries (keys count, 1%+), CLV explained in presets intro, Feed/CNO Settings buttons open their page, test-protocols map + Diagnostics code map + release.yml text updated; SettingsFixesTest (9) + mutants 6/6 killed
 
 ## Do this next
-new unit/UI tests: SettingsFixesTest (BackgroundScan, StakeText + ApiBetting.base $1, Shadowed, AutoBetText.fixFor, AutoBetScreen fix buttons, SettingsSummary); mutation-check; look at screenshots; full floor; sweep; ship
+full floor; then AX6: sweep (light review of the diff), version 0.46.0 code 84, ship, release, answer Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M app/src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt
 
 ## Last ten checkpoints
 ```
+  38b97032 ckpt 2360: AX3-AX5 code + existing tests moved: Settings home/pages/search, Auto-bet ta
   02e24ceb ckpt 2359: AX3/AX4 code in progress: SettingsPage home+pages+search (SettingsIndex), Au
   268658fe ckpt 2358: AW6 done: v0.45.0 released and verified (APK versionCode 83, cert AB:22:07:A
   5060403e ckpt 2357: AX1 inventory + AX2 design written into TASKS.md (contradictions a-g, apiMin
@@ -25,8 +27,7 @@ new unit/UI tests: SettingsFixesTest (BackgroundScan, StakeText + ApiBetting.bas
   9429058e ckpt 2353: AW7 done (BetKind fallback by words + whole-match sets, page-less dissent, p
   e52f5a9b ckpt 2352: floor green (1,693: 1,670 passed, 23 skipped); sweep found AW7 (BetKind OTHE
   a5733e96 ckpt 2351: app tests green (40): PresetsUiTest, Downloads save (DiagnosticsShareTest), 
-  9b214aef ckpt 2350: tests: SharpVetoTest, PresetsTest, AtBetTest, BetLedgerTest green (33); reco
 ```
 
-(12 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

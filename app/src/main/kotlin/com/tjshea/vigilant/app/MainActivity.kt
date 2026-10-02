@@ -708,7 +708,8 @@ private fun VigilantRoot(
                     onScan = onScan,
                     onPull = onPull,
                     onToggleLeague = vm::toggleLeague,
-                    onOpenSettings = { tabName = Tab.SETTINGS.name },
+                    // Its Settings buttons are about fair-odds sources and keys: that page.
+                    onOpenSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.FAIR.name; tabName = Tab.SETTINGS.name },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
@@ -723,7 +724,11 @@ private fun VigilantRoot(
                     state, vm,
                     onRefresh = { vm.refreshCno() },
                     onPull = { vm.refreshCno(resume = true) },
-                    onOpenSettings = { tabName = Tab.SETTINGS.name },
+                    // "Filters" opens CNO's page; with CNO off ("CrazyNinjaOdds is off"), Scanning, where the scanner is picked.
+                    onOpenSettings = {
+                        settingsPage = (if (state.settings.cnoOn) com.tjshea.vigilant.app.ui.SettingsPage.CNO else com.tjshea.vigilant.app.ui.SettingsPage.SCANNING).name
+                        tabName = Tab.SETTINGS.name
+                    },
                     onMiniWindow = onMiniWindow,
                     onLoadBooks = vm::loadBooks,
                     onOpenInNovig = onOpenInNovig,
