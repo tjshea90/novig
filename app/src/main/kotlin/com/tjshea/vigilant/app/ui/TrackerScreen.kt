@@ -59,8 +59,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import com.tjshea.vigilant.data.tracker.LockStats
-import com.tjshea.vigilant.data.tracker.LockedBets
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -83,6 +81,8 @@ import androidx.compose.material3.Switch
 import com.tjshea.vigilant.data.tracker.ClvStats
 import com.tjshea.vigilant.data.tracker.ClvPeriod
 import com.tjshea.vigilant.data.tracker.ClosingLine
+import com.tjshea.vigilant.data.tracker.LockStats
+import com.tjshea.vigilant.data.tracker.LockedBets
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.data.tracker.TrackerBreakdown

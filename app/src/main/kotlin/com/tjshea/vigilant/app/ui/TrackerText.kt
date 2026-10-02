@@ -50,6 +50,25 @@ object TrackerText {
         ).joinToString("; ") + "."
     }
 
+    // ---- locks (Tj, 2026-10-02 20:06Z: "remove arbitraged locked bets out of stats and bet trackers") ------------------------------------------
+
+    /** Beside the "Hide locked bets" chip: how many bets it hides (or would). */
+    fun hiddenLocked(count: Int, hidden: Boolean): String {
+        val bets = "$count locked bet${if (count == 1) "" else "s"}"
+        return if (hidden) "$bets hidden from the lists and stats (cashed out: paid whatever happens)." else "$bets shown and counted."
+    }
+
+    /** Under the lock card's numbers: what they count, what's paid, what's still riding, and whether the rest of the Tracker counts them. */
+    fun lockCaption(s: com.tjshea.vigilant.data.tracker.LockStats, hidden: Boolean): String = listOfNotNull(
+        if (s.markets > 0) {
+            "${s.lockedBets} of ${s.bets} bet${if (s.bets == 1) "" else "s"} locked in across ${s.markets} market${if (s.markets == 1) "" else "s"} (both sides held " +
+                "equally, so each pays the same whichever side wins): ${Format.signedMoney(s.profit)} on ${Format.money(s.staked)} staked on both sides, fees included" +
+                (if (s.paid != 0.0 || s.profit == s.paid) "; ${Format.signedMoney(s.paid)} of it already graded." else "; none of it graded yet.")
+        } else "No market fully locked in yet.",
+        "${s.partly} more market${if (s.partly == 1) " is" else "s are"} partly locked (one side held more: still riding).".takeIf { s.partly > 0 },
+        if (hidden) "Hidden from the other numbers and the Bets list (Hide locked bets is on)." else "Also counted in the other numbers and listed under Bets.",
+    ).joinToString(" ")
+
     // ---- closing line value (Tj, 2026-09-29) --------------------------------------------------------------------------
 
     /** Why a started bet shows no close yet, and whether one is still being looked for (ESPN, Novig's trades; [CloseBackfill]). */
