@@ -3295,7 +3295,8 @@ His screenshot: a Vigilant bet (Under 52.5, Stanford @ Wake Forest) reads "−1.
 
 (Picked up 2026-10-02 ~14:41Z when Tj asked to resume; the two-hour auto-resume had not fired.)
 
-- [ ] AS1 Check odds now, or pull to refresh, while the scanner is paused: resume the scanner automatically.
+- [x] AS1 Check odds now, or pull to refresh, while the scanner is paused: resume the scanner automatically.
+  Done: `MainViewModel.resumeThen` (saves paused = false, toasts "Scanning resumed", then does the tap): `checkOdds()` (default `resume = true`), `scan(resume = true)` from the +EV and Games pulls, `refreshCno(resume = true)` from CNO's pull. The plain Scan/Refresh buttons and the widget keep the pause. Settings' Pause hint says so. Started by the accidental second session (14:45Z), reviewed and finished here. Tests: `AutoResumeAppTest` (4, 4 mutants killed), `PauseScanningAppTest` still green.
 - [ ] AS2 Auto-bet survives switching to another app and back: off by default only on a fresh launch / process restart (not on Activity recreation, backgrounding, or returning).
 - [ ] AS3 "Novig scanning was going very slow" on the last scan: check the Novig price read (live feed / REST fallback, batching, rate limit, the plan handed to the feed) is set up correctly; fix what isn't, with a test or a measurement.
 - [ ] AS4 Sister sportsbooks (one company, several state skins, e.g. Hard Rock NJ/IN/…): find where CNO and Vigilant count books (fair price, book counts, consensus); decide whether counting them separately is right (they copy one trading desk, so no); if not, count one company once, with a test.

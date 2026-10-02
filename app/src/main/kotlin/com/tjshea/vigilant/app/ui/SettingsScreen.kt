@@ -204,7 +204,7 @@ private fun ColumnScope.ScanTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     SwitchRow(
         "Pause all scanning",
         "Stops a scan running now; nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) " +
-            "until you switch it off. Also the pause button on the +EV and CNO tabs and the widget. Opening bets and grading tracked ones from final scores still work; the Tracker's Check odds now waits.",
+            "until you switch it off. Also the pause button on the +EV and CNO tabs and the widget. Opening bets and grading tracked ones from final scores still work. A pull to refresh, or the Tracker's Check odds now, resumes scanning.",
         s.paused,
     ) { v -> onUpdate { it.copy(paused = v) } }
     ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
