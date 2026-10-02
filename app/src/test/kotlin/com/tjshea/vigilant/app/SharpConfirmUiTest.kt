@@ -67,36 +67,39 @@ class SharpConfirmUiTest {
     }
 
     @Test
-    fun `both switches are off by default and nothing else shows until one is on`() {
+    fun `the veto is the default for both, its books are named, and the confirmation's criteria show only when one requires it`() {
+        // Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement".
         show()
-        assertFalse(settings.sharpConfirmAutoBet || settings.sharpConfirmAlerts)
-        compose.onNodeWithTag("sharpConfirmAutoBet").assertIsOff()
-        compose.onNodeWithTag("sharpConfirmAlerts").assertIsOff()
-        compose.onNodeWithText("Sharp-book confirmation", ignoreCase = true).assertExists()
-        compose.onNodeWithText("On top of every other criterion: a sharp book (Pinnacle) must show the bet is +EV on its own price.", substring = true).assertExists()
-        compose.onAllNodesWithText("Sharp books").assertCountEquals(0)
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, settings.sharpAutoBet)
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, settings.sharpAlerts)
+        compose.onAllNodesWithText("Veto")[0].assertIsSelected()
+        compose.onAllNodesWithText("Veto")[1].assertIsSelected()
+        compose.onNodeWithTag("sharpVetoNote").assertExists()
+        compose.onNodeWithText("player props Kalshi, ProphetX, FanDuel, Caesars (MLB props Kalshi, ProphetX, DraftKings, FanDuel)", substring = true).assertExists()
+        compose.onNodeWithText("moneylines, spreads, totals and period lines Pinnacle, Circa (college Circa, Pinnacle; soccer and tennis Pinnacle)", substring = true).assertExists()
         compose.onAllNodesWithText("Newest quote allowed").assertCountEquals(0)
     }
 
     @Test
-    fun `each switch is its own, and turning one on shows the criteria with their defaults`() {
+    fun `each is its own, and requiring a confirmation shows the criteria with their defaults`() {
         show(keys = listOf("pw-FAKE-0000"))
-        compose.onNodeWithTag("sharpConfirmAutoBet").performClick()
-        assertTrue(settings.sharpConfirmAutoBet)
-        assertFalse(settings.sharpConfirmAlerts)
-        compose.onNodeWithTag("sharpConfirmAutoBet").assertIsOn()
-        compose.onNodeWithTag("sharpConfirmAlerts").assertIsOff()
+        compose.onAllNodesWithText("Require a confirmation")[0].performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, settings.sharpAutoBet)
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, settings.sharpAlerts)
         // The defaults, selected: Pinnacle, 3 minutes, any +EV; CNO's page off.
         compose.onNodeWithText("Pinnacle").assertIsSelected()
         compose.onNodeWithText("3 min").assertIsSelected()
         compose.onNodeWithText("Any +EV").assertIsSelected()
         compose.onNodeWithTag("sharpConfirmViaCno").assertIsOff()
         compose.onNodeWithTag("sharpConfirmNote").assertExists()
-        // The alerts' switch.
-        compose.onNodeWithTag("sharpConfirmAlerts").performClick()
-        assertTrue(settings.sharpConfirmAlerts)
+        // The alerts' own.
+        compose.onAllNodesWithText("Require a confirmation")[1].performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, settings.sharpAlerts)
         compose.onNodeWithText("For the auto-bet and CNO's push alerts: Pinnacle's own price", substring = true).assertExists()
         compose.onRoot().captureRoboImage("screenshots/5m_settings_sharp_confirm.png")
+        // Off for the auto-bet: nothing the sharp books say stops a bet.
+        compose.onAllNodesWithText("Off")[0].performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.OFF, settings.sharpAutoBet)
     }
 
     @Test
