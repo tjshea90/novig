@@ -82,7 +82,7 @@ class DiagnosticsFileTest {
         val order = listOf(
             "VIGILANT DIAGNOSTICS FILE · version 0.43.0", "== READ ME FIRST (for Claude) ==", "== WHAT TO DO (ranked findings) ==", "== SINCE THE PREVIOUS REPORT ==",
             "VIGILANT DIAGNOSTICS ·", "== Health checks (worst first) ==", "== Settings ==", "== Phone ==", "== Recent problems",
-            "== CONNECTIONS", "== API ISSUES", "== PERFORMANCE", "== COUNTERS", "== EVENT TIMELINE", "== APP LOG", "== STORAGE", "== CODE MAP ==", "== MACHINE-READABLE", "== END OF FILE ==",
+            "== CONNECTIONS", "== API ISSUES", "== PERFORMANCE", "== COUNTERS", "== EVENT TIMELINE", "== APP LOG", "== STORAGE", "== EVERY BET", "== CODE MAP ==", "== MACHINE-READABLE", "== END OF FILE ==",
         )
         var at = -1
         for (h in order) {
@@ -90,6 +90,31 @@ class DiagnosticsFileTest {
             assertTrue("missing or out of order: $h", i > at)
             at = i
         }
+    }
+
+    @Test
+    fun `every bet is in the file with its record as placed, and the close is split by that record`() {
+        // Tj, 2026-10-02 17:01Z: "record all types of information on the bet as placed … Then include this information for all bets in the diagnosis feature."
+        val at = com.tjshea.vigilant.data.tracker.AtBet(
+            atMs = now - 7_200_000L, version = "0.45.0", how = com.tjshea.vigilant.data.tracker.AtBet.HOW_AUTO, scanner = "CNO", preset = "Volume + safe CLV",
+            league = "NFL", sport = "FOOTBALL", kind = "PROP", minutesToStart = 95, american = 117, ev = 0.033, checkEv = 0.031, twoSided = 3, agreeing = 3,
+            dissent = emptyList(), sharpVerdict = "PASSED", sharpBook = "Kalshi", books = listOf(com.tjshea.vigilant.data.tracker.AtBetBook("Kalshi", -103, -126, 0.49, 0.06)),
+        )
+        val base = state()
+        val bets = base.bets.mapIndexed { i, b -> if (i == 0) b.copy(atBet = at) else b }
+        val text = DiagnosticsFile.build(base.copy(bets = bets), extras(), now, zone)
+        val section = text.substringAfter("== EVERY BET (JSON lines").substringBefore(">>>")
+        val lines = section.lines().drop(2).filter { it.isNotBlank() }
+        assertEquals(bets.size, lines.size)
+        lines.forEach { kotlinx.serialization.json.Json.parseToJsonElement(it) }
+        assertTrue(section, lines.any { it.contains("\"atBet\":{") && it.contains("\"sharpBook\":\"Kalshi\"") && it.contains("\"minutesToStart\":95") })
+        // The splits by the record, with the bets from before it counted apart.
+        val splits = text.substringAfter("== The bet as placed: close and results split by it (1 of ").substringBefore("== Recent problems")
+        for (needed in listOf("Books agreeing every one (3 of 3)", "Sharp veto PASSED", "Sharpest book on the page Kalshi agreed", "Time to the start 30 min-2 h", "Kind of bet Player props", "Preset Volume + safe CLV", "Books agreeing not recorded")) {
+            assertTrue(needed, splits.contains(needed))
+        }
+        // The read-me points Claude at them, and at the goal.
+        assertTrue(text.contains("THE GOAL IS PROFIT: positive EV that the close confirms (CLV) and wins over time."))
     }
 
     @Test
