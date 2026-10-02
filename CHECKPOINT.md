@@ -1,23 +1,23 @@
-# CHECKPOINT 2384 — read me first, then TASKS.md
+# CHECKPOINT 2385 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T20:43:34Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `7bf0ce5c` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T20:45:56Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `4d2c5867` (this checkpoint is the commit after it)
 
 ## Just done
-AZ2+AZ3 done (TASKS ticked): TrackerLocksTest + LockedBetsTest green, mutants 8/8 killed; NOVIG_API.md §16 updated
+pre-ship: v0.48.0: locked markets hidden from the Tracker's lists and stats (switch, on by default) with their own Locked in card (bets locked and %, profit locked and %); open bets missing Novig's odds fixed (missing Novig ids looked up again, one-sided books priced, each miss says why)
 
 ## Do this next
-AZ4: full floor (bash tools/test.sh), light sweep of Tracker screenshots, bump to v0.48.0 (code 86), ship.sh, CI, release.yml, record-release, answer Tj
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M NOVIG_API.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  4d2c5867 ckpt 2384: AZ2+AZ3 done (TASKS ticked): TrackerLocksTest + LockedBetsTest green, mutant
   25465506 ckpt 2383: AZ2/AZ3 code: LockedBets (markets/partly/ids/hide/stats) + LockStats, ScanSe
   cec190b2 ckpt 2382: AZ1 done (TASKS ticked): misses were missing Novig ids never retried, Replac
   bc1dbe75 ckpt 2381: AZ1 code + data tests: NovigBetFinder.locate, NovigIds (re-look up missing i
@@ -27,8 +27,4 @@ AZ4: full floor (bash tools/test.sh), light sweep of Tracker screenshots, bump t
   4061e276 ckpt 2377: AY done: v0.47.0 released, verified, recorded (locks + auto-lock + Novig-onl
   bbd3d8b0 ckpt 2376: pre-release: v0.47.0: lock in a profit on bets placed through Vigilant once 
   1738e581 ckpt 2375: floor green on v0.47.0 (1,736: 1,713 passed, 23 skipped)
-  971f4c34 ckpt 2374: floor had 2 StickyHeadersTest fails (Novig-only row made the pinned bar too 
 ```
-
-(5 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
