@@ -21,6 +21,7 @@ import com.tjshea.vigilant.data.scanner.SharpConfirm
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.SharpMode
 import com.tjshea.vigilant.data.scanner.SharpVeto
+import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
@@ -226,7 +227,7 @@ class AutoBettor(
             withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = marker) } } }
             // Once an order may be on its way it is followed to its end and recorded, whatever happens to this coroutine.
             val result = try {
-                withContext(Dispatchers.IO + NonCancellable) { placer.placeAuto(target.copy(auto = true), stake, limits, AutoBet.priceOf(item.shown.row)) }
+                withContext(Dispatchers.IO + NonCancellable) { placer.placeAuto(target.copy(auto = true, atBet = recordOf(item, state, settings, stake, now)), stake, limits, AutoBet.priceOf(item.shown.row)) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -328,6 +329,14 @@ class AutoBettor(
     private val vetoSaid = object : LinkedHashMap<String, SharpVeto.Result>() {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SharpVeto.Result>?) = size > SHARP_SAID_KEEP
     }
+
+    /** The bet as the auto-bet decided it ([AtBet]): the check, the veto or confirmation it passed, the stake and the wallet. Never stops a bet. */
+    private fun recordOf(item: AlertPicks.CnoChecked, state: UiState, settings: ScanSettings, stake: Double, now: Long): AtBet? = runCatching {
+        BetRecord.cno(
+            state.copy(settings = settings), item.shown.row, item.pick.live, AtBet.HOW_AUTO, com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO, now,
+            stake = stake, check = item.check, veto = vetoSaid[item.pick.row.key], sharpConfirm = sharpSaid[item.pick.row.key]?.detail,
+        )
+    }.getOrNull()
 
     /** One bet's newest sharp verdict ("veto.PASSED", "confirm.NO_QUOTE") into Settings' tally. */
     private fun tally(key: String, verdict: String) {
