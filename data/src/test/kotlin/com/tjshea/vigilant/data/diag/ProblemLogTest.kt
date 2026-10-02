@@ -57,6 +57,18 @@ class ProblemLogTest {
         assertEquals(ProblemLog.CRASH_LENGTH, p.message.length)
     }
 
+    /** [ProblemLog.mask] keeps a stack's line breaks and only shortens what looks like a key; [ProblemLog.clean] is the one-line form. */
+    @Test
+    fun `mask keeps the line breaks and shortens a key, clean puts the same text on one line`() {
+        val key = "FAKEabcdefghijklmnopqrstuvwxyz0123456789"
+        val text = "at=1 thread=main\n\tat com.tjshea.vigilant.app.Foo.bar(Foo.kt:12)\nkey $key"
+        val masked = ProblemLog.mask(text)
+        assertEquals(2, masked.count { it == '\n' })
+        assertTrue(masked, masked.endsWith("key …6789") && !masked.contains(key))
+        assertEquals(false, ProblemLog.clean(text).contains('\n'))
+        assertEquals("at=1 thread=main at com.tjshea.vigilant.app.Foo.bar(Foo.kt:12) key …6789", ProblemLog.clean(text))
+    }
+
     /** The event log is told of every problem as it is added (Tj, 2026-10-02), masked, and a listener that throws can't stop a problem being kept. */
     @Test
     fun `every problem is also told to the listener, masked, and a failing listener changes nothing`() = kotlinx.coroutines.runBlocking {

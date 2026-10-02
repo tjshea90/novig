@@ -89,6 +89,17 @@ class LogcatAndTrendTest {
     }
 
     @Test
+    fun `no more than twelve moved numbers are listed, the biggest change first`() {
+        val prev = snap(0L, metrics = (1..20).associate { "m$it" to 10.0 })
+        val now = snap(1_000L, metrics = (1..20).associate { "m$it" to 10.0 + it * 2 })
+        val line = Trend.lines(prev, now, ago).first { it.startsWith("Numbers that moved") }
+        val listed = line.removePrefix("Numbers that moved: ").split("; ")
+        assertEquals(12, listed.size)
+        assertEquals("m20 10 → 50", listed.first())
+        assertTrue(line, listed.none { it.startsWith("m1 ") || it.startsWith("m2 ") })
+    }
+
+    @Test
     fun `nothing changed says so, and the same version doesn't claim an update`() {
         val a = snap(0L, metrics = mapOf("x" to 5.0), findings = mapOf("k" to "WATCH"))
         val text = Trend.lines(a, a.copy(atMs = 10_000_000L), ago).joinToString("\n")
