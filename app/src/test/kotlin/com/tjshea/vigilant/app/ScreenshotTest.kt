@@ -896,7 +896,7 @@ class ScreenshotTest {
         shoot("5c_settings_cno_only") { SettingsScreen(s, {}) }
         // Vigilant's pages go with its scanner: no fair odds, feed or API usage tab. The Novig key stays on the Betting one: CNO's cards bet
         // through Novig's API too, and a Bet sheet's "Add money" lands on its wallet (Tj, 2026-09-29).
-        for (gone in listOf(SettingsPage.FAIR, SettingsPage.FEED, SettingsPage.USAGE)) compose.onAllNodesWithTag("settingsTab-${gone.name}").assertCountEquals(0)
+        for (gone in listOf(SettingsPage.FAIR, SettingsPage.FEED, SettingsPage.USAGE)) compose.onAllNodesWithTag("settingsRow-${gone.name}").assertCountEquals(0)
         compose.onAllNodesWithText("Fair odds method", ignoreCase = true).assertCountEquals(0)
         openSettingsTab(SettingsPage.CNO)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
