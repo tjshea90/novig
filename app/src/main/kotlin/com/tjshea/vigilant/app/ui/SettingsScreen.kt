@@ -543,16 +543,17 @@ private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
                 if (s.autoScansCno) " (background auto-scan still reads it every ${ScanSettings.intervalLabel(s.autoScanSeconds)})." else ".",
         )
     }
-    // Any mode: the widget's switch can turn Vigilant's scan on from there.
-    Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-    ChoiceChips(ScanSettings.WIDGET_RESCAN_CHOICES, s.widgetRescanMinutes, { if (it <= 0) "Off" else "$it min" }) { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
-    Hint(
-        "With Both (the widget's top-bar switch, or Scanner above), the widget lists Vigilant's bets and CNO's together, best EV first; " +
-            "a bet both list shows once, tagged with CNO's EV. " +
-            (if (s.widgetRescanMinutes > 0) "Vigilant scans again every ${s.widgetRescanMinutes} min while the widget${if (s.cnoOn) " or CNO's tab" else ""} is on screen. Each scan spends API credits (Pinnacle / The Odds API keys)."
-            else "Off: Vigilant scans only when you tap Scan (no API credits spent on its own).") +
-            " Its bets leave the widget once the odds behind them are too old (${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT}): older odds aren't compared.",
-    )
+    // Only with both scanners on: the widget then lists Vigilant's bets beside CNO's, and these rescans keep them fresh.
+    if (s.scanner == ScannerMode.BOTH) {
+        Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+        ChoiceChips(ScanSettings.WIDGET_RESCAN_CHOICES, s.widgetRescanMinutes, { if (it <= 0) "Off" else "$it min" }) { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
+        Hint(
+            "The widget lists Vigilant's bets and CNO's together, best edge first; a bet both list shows once. " +
+                (if (s.widgetRescanMinutes > 0) "Vigilant scans again every ${s.widgetRescanMinutes} min while the widget or CNO's tab is on screen. Each scan spends API credits (Pinnacle / The Odds API keys)."
+                else "Off: Vigilant scans only when you tap Scan (no API credits spent on its own).") +
+                " Its bets leave the widget once the odds behind them are too old (${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT}).",
+        )
+    }
     if (!s.floatingWidget) {
         Hint(
             when (s.scanner) {
