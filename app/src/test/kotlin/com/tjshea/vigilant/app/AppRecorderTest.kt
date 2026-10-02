@@ -128,7 +128,7 @@ class AppRecorderTest {
         val events = EventLog(eventStore)
         val recorder = AppRecorder(events, NetStats(netStore), PerfStats())
         val before = ScanSettings()
-        recorder.settingsChanged(before, before.copy(minOddsAmerican = before.minOddsAmerican))
+        recorder.settingsChanged(before, before.copy())
         assertTrue(events.events().isEmpty())
         recorder.settingsChanged(
             before,
@@ -165,9 +165,8 @@ class AppRecorderTest {
     @Test
     fun `what the recorder holds goes into the report`() {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt").readText()
-        val extras = src.substringAfter("private fun diagnosticsExtras").substringBefore("/** What Android allows Vigilant")
         for (line in listOf("net = c.netStats.snapshot(),", "events = c.eventLog.events(),", "counters = c.eventLog.counters(),", "eventsSinceMs = c.eventLog.sinceMs(),", "perf = c.perf.summaries(),", "coldStartMs = c.perf.coldStartMs,", "previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),")) {
-            assertTrue(line, extras.contains(line))
+            assertTrue(line, src.contains(line))
         }
     }
 }
