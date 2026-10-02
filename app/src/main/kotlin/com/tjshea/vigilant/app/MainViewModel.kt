@@ -1503,6 +1503,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val st = _state.value.copy(usage = c.usage.flow.value)
                     val text = DiagnosticsFile.build(st, extras, now)
                     val file = DiagnosticsShare.write(getApplication(), text, DiagnosticsFile.fileName(extras.versionName, now))
+                    // A copy in Downloads/Vigilant too (Tj, 2026-10-02 17:01Z), whatever happens to the share.
+                    runCatching { DiagnosticsShare.saveToDownloads(getApplication<Application>().contentResolver, file) }
+                        .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}"); c.eventLog.info("DIAG", "diagnostics file saved to ${DiagnosticsShare.DOWNLOADS_DIR}") }
+                        .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})"); c.eventLog.warn("DIAG", "couldn't save the diagnostics file to Downloads: ${e.message}") }
                     c.diagHistory.add(Advisor.snap(st, extras, now, Advisor.findings(st, extras, now)))
                     c.eventLog.info("DIAG", "diagnostics file made (${file.length() / 1024} KB)")
                     c.eventLog.flush(force = true)

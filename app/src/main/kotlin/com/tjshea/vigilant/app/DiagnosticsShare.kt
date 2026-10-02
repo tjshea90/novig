@@ -1,8 +1,13 @@
 package com.tjshea.vigilant.app
 
 import android.content.ClipData
+import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
 
@@ -27,6 +32,32 @@ object DiagnosticsShare {
         file.writeText(text)
         dir.listFiles { f -> f.isFile && f.name.startsWith("vigilant-diagnostics-") }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
         return file
+    }
+
+    /** Where [saveToDownloads] puts the file, as Tj's Files app shows it. */
+    val DOWNLOADS_DIR = Environment.DIRECTORY_DOWNLOADS + "/Vigilant"
+
+    /**
+     * A copy of [file] in the phone's Downloads/Vigilant folder (Tj, 2026-10-02 17:01Z: "in addition to the share with feature, make sure the diagnosis prompt file
+     * for Claude is saved to my android downloads folder"), through Android's MediaStore (Android 10+: no storage permission for the app's own files). Every
+     * file is kept (storage isn't a constraint). Returns its content Uri; throws when Android refuses (nothing half-written is left behind).
+     */
+    fun saveToDownloads(resolver: ContentResolver, file: File): Uri {
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, file.name)
+            put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+            put(MediaStore.Downloads.RELATIVE_PATH, DOWNLOADS_DIR)
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: error("Android didn't make the file in Downloads")
+        try {
+            (resolver.openOutputStream(uri) ?: error("Android didn't open the file in Downloads")).use { out -> file.inputStream().use { it.copyTo(out) } }
+            resolver.update(uri, ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }, null, null)
+        } catch (e: Exception) {
+            runCatching { resolver.delete(uri, null, null) }
+            throw e
+        }
+        return uri
     }
 
     /** The share sheet for [file]: plain text with the file attached, the prompt as the message, read permission for that file only. */
