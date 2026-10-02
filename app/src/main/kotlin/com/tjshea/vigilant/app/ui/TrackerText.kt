@@ -14,6 +14,20 @@ import kotlin.math.abs
 /** The Tracker's sentences, free of Compose so they're testable: what an open bet is waiting for, what a result means. */
 object TrackerText {
 
+    /**
+     * What the "Novig only" filter is showing: EV and closing lines from Novig's own prices, and how fresh they are (Tj, 2026-10-02 ~18:50Z: "show the
+     * percent EV compared only from novig odds, filtering out other sports books").
+     */
+    fun novigOnlyNote(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String {
+        val open = com.tjshea.vigilant.data.tracker.NovigNow.priceable(bets, now)
+        if (open.isEmpty()) return "EV and CLV from Novig's own prices only."
+        val priced = open.count { it.novigFair != null }
+        val oldest = open.mapNotNull { it.novigAtMs }.minOrNull()
+        return "EV and CLV from Novig's own prices only: $priced of ${open.size} open bets priced" +
+            (oldest?.let { " · oldest ${Format.age(it, now)}" } ?: "") + "."
+    }
+
+
     // ---- closing line value (Tj, 2026-09-29) --------------------------------------------------------------------------
 
     /** Why a started bet shows no close yet, and whether one is still being looked for (ESPN, Novig's trades; [CloseBackfill]). */

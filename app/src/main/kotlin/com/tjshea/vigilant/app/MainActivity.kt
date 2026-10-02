@@ -738,7 +738,9 @@ private fun VigilantRoot(
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan, onPull = onPull)
                 Tab.TRACKER -> TrackerScreen(
                     state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
-                    onCheckOdds = vm::checkOdds, onShown = { vm.settleBets(); vm.scanLocks() },
+                    onCheckOdds = vm::checkOdds, onShown = { vm.settleBets(); vm.scanLocks(); if (state.settings.trackerNovigOnly) vm.refreshNovigOnly() },
+                    onNovigOnly = { on -> vm.updateSettings { it.copy(trackerNovigOnly = on) }; if (on) vm.refreshNovigOnly() },
+                    onCheckNovig = { vm.refreshNovigOnly(force = true) },
                     actions = com.tjshea.vigilant.app.ui.BetActions(
                         onReplace = onReplaceBet,
                         onReread = vm::rereadBooks,

@@ -136,6 +136,9 @@ fun TrackerScreen(
     onShown: () -> Unit = {},
     initialView: TrackerView = TrackerView.STATS,
     actions: BetActions = BetActions(),
+    /** The "Novig only" filter switched (Tj, 2026-10-02 ~18:50Z), and its own read of Novig's prices (no other book). */
+    onNovigOnly: (Boolean) -> Unit = {},
+    onCheckNovig: () -> Unit = {},
 ) {
     val now = rememberNow(60_000)
     var view by rememberSaveable { mutableStateOf(initialView) }
@@ -157,7 +160,9 @@ fun TrackerScreen(
     // Results of finished games from their final scores, each time the tab is opened (no network when nothing is due).
     LaunchedEffect(Unit) { onShown() }
 
-    val bets = state.bets
+    // "Novig only": every open bet's EV and every closing line from Novig's own prices ([NovigNow.view]); the rest of the screen is unchanged.
+    val novigOnly = state.settings.trackerNovigOnly
+    val bets = remember(state.bets, novigOnly) { if (novigOnly) com.tjshea.vigilant.data.tracker.NovigNow.view(state.bets) else state.bets }
     val minute = now / 60_000L
     val scoped = remember(bets, scanner) { TrackerSort.inScanner(bets, scanner) }
     val counts = remember(scoped) { BetFilter.entries.associateWith { f -> filtered(scoped, f).size } }
@@ -187,7 +192,11 @@ fun TrackerScreen(
             TopAppBar(
                 title = { Text("Bet tracker", fontWeight = FontWeight.Bold) },
                 actions = {
-                    TextButton(onClick = onCheckOdds, enabled = !state.checkingOdds) {
+                    if (novigOnly) {
+                        TextButton(onClick = onCheckNovig, enabled = !state.readingNovig, modifier = Modifier.testTag("checkNovig")) {
+                            Text(if (state.readingNovig) "Reading Novig…" else "Check Novig now")
+                        }
+                    } else TextButton(onClick = onCheckOdds, enabled = !state.checkingOdds) {
                         val progress = state.checkProgress
                         Text(
                             when {
@@ -238,6 +247,23 @@ fun TrackerScreen(
                     }
                     // One row, so the pinned bar stays compact; what it counts is said just below, in the list.
                     if (checkStats != null) CheckOddsCounter(checkStats)
+                    if (AppBook.isNovig) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(
+                                selected = novigOnly,
+                                onClick = { onNovigOnly(!novigOnly) },
+                                label = { Text("Novig only") },
+                                modifier = Modifier.testTag("novigOnlyChip"),
+                            )
+                            if (novigOnly) {
+                                Text(
+                                    TrackerText.novigOnlyNote(state.bets, now),
+                                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f).testTag("novigOnlyNote"),
+                                )
+                            }
+                        }
+                    }
                     when (view) {
                         TrackerView.STATS -> Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TrackerPeriod.entries.forEach { p ->
