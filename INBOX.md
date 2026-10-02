@@ -3564,3 +3564,8 @@ A Claude code session was just interrupted by usage on the following prompt. See
 
 Add options to remove arbitraged locked bets out of stats and bet trackers. It makes no sense for me to track a bet that is already cashed out. Maybe maybe a stat tracker for amount and percentage of bets locked in and the total profit and percentage of profit for those bets. Also many open bets are not finding the current novig odds for the same exact bet. This may be because it is not currently offered, but make sure the feature is coded properly.
 ```
+
+## 2026-10-02T21:13:59Z
+```
+Run full tests on this app, make sure all the math is right and that the stats and closing lines are gathered correctly and reflect accurate data
+```
