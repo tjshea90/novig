@@ -860,7 +860,8 @@ internal fun BookTable(prices: List<CnoBookPrice>, otherBet: String?, judged: St
             Text(if (otherBet != null) "Other side" else "Other", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Fair", Modifier.weight(0.7f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        prices.forEach { p ->
+        val fair = BookTableText.fairCells(prices, judged)
+        prices.forEachIndexed { i, p ->
             val novig = p.code == judged
             val counted = CnoBooks.usableForFair(p.code, judged) && p.twoSided
             val dim = if (counted || novig) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -874,7 +875,7 @@ internal fun BookTable(prices: List<CnoBookPrice>, otherBet: String?, judged: St
                 Text(priceText(p.odds, p.available), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = dim, maxLines = 1)
                 Text(priceText(p.otherOdds, p.otherAvailable), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = dim, maxLines = 1)
                 Text(
-                    if (counted) CnoBooks.fairFor(p.odds!!, p.otherOdds!!)?.let { Format.percent(it) } ?: "" else if (novig) "judged" else "—",
+                    fair[i],
                     Modifier.weight(0.7f),
                     style = MaterialTheme.typography.bodySmall,
                     color = dim,
@@ -883,10 +884,43 @@ internal fun BookTable(prices: List<CnoBookPrice>, otherBet: String?, judged: St
             }
         }
         Text(
-            "Fair = that book's odds devigged worst case. Only books pricing both sides count; ${CnoBooks.name(judged)} is the price being judged.",
+            BookTableText.footnote(prices, judged),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * The book table's Fair column and footnote, free of Compose so they're testable. One company's sites (BetMGM and BetMGM (ON), Hard Rock's
+ * states, Sporttrade's) are one vote in the check ([CnoBooks.company], [CnoBooks.check]), and the table says so (Tj, 2026-10-02 16:05Z: "notice
+ * betmgm and betmgm (on). Is the app still double counting these?"): the first of them shows the company's fair (its sites' average, the number
+ * the check uses), the others "same co.".
+ */
+internal object BookTableText {
+
+    /** One Fair cell per row of [prices]: a counted book's devigged fair, "same co." for a sister site after its company's first, "judged", or "—". */
+    fun fairCells(prices: List<CnoBookPrice>, judged: String): List<String> {
+        val counted = prices.filter { CnoBooks.usableForFair(it.code, judged) && it.twoSided }
+        val byCompany = counted.groupBy { CnoBooks.company(it.code) }
+        val shown = HashSet<String>()
+        return prices.map { p ->
+            when {
+                p.code == judged -> "judged"
+                p !in counted -> "—"
+                !shown.add(CnoBooks.company(p.code)) -> "same co."
+                else -> byCompany.getValue(CnoBooks.company(p.code)).mapNotNull { CnoBooks.fairFor(it.odds!!, it.otherOdds!!) }
+                    .takeIf { it.isNotEmpty() }?.average()?.let { Format.percent(it) } ?: ""
+            }
+        }
+    }
+
+    /** What the column means, and which sister sites count as one when the table has any. */
+    fun footnote(prices: List<CnoBookPrice>, judged: String): String {
+        val sisters = prices.filter { CnoBooks.usableForFair(it.code, judged) && it.twoSided }.groupBy { CnoBooks.company(it.code) }.values.filter { it.size > 1 }
+        val once = sisters.joinToString("; ") { g -> g.joinToString(" and ") { it.name } }
+        return "Fair = that book's odds devigged worst case. Only books pricing both sides count; ${CnoBooks.name(judged)} is the price being judged." +
+            (if (once.isEmpty()) "" else " One company's sites count once, at their average: $once.")
     }
 }
 
