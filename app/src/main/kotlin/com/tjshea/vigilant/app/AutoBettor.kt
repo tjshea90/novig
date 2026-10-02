@@ -396,7 +396,7 @@ class AutoBettor(
         private const val SHARP_TALLY_KEEP = 2_000
 
         /**
-         * The sharp check's tally for Settings › Betting & Novig account (Tj, 2026-10-02 16:05Z: "I'm getting no volume so far on auto bet with the option for each bet
+         * The sharp check's tally for the Auto-bet tab (Tj, 2026-10-02 16:05Z: "I'm getting no volume so far on auto bet with the option for each bet
          * to be verified positive EV by a sharp book. Is this working correctly? Is it getting sharp book pricing?"): how many bets it was asked about and
          * what it said, so the reason nothing is placed is on screen. [label]: the sharp books ("Pinnacle"). Null before it asked about any bet.
          */

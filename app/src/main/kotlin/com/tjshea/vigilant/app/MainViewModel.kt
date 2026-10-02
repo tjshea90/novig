@@ -110,7 +110,7 @@ data class UiState(
     val report: ReportUi? = null,
     /** Betting through Novig's API: set up or not, the balance; and the Bet sheet while one is open (Tj, 2026-09-29). */
     val betting: BettingUi = BettingUi(),
-    /** What the auto-bet did last cycle and the wallet it saw (Tj, 2026-10-01), for Settings › Betting & Novig account. */
+    /** What the auto-bet did last cycle and the wallet it saw (Tj, 2026-10-01), for the Auto-bet tab. */
     val autoBetStatus: AutoBettor.Status = AutoBettor.Status(),
     val betSheet: BetSheetUi? = null,
     val settings: ScanSettings = ScanSettings(),
@@ -369,7 +369,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val api = ApiBettingController(c, _state, viewModelScope, _toasts)
 
     init {
-        // What the auto-bet did (a few times a minute at most: once per background cycle) for Settings › Betting & Novig account.
+        // What the auto-bet did (a few times a minute at most: once per background cycle) for the Auto-bet tab.
         viewModelScope.launch { c.autoBet.status.collect { st -> _state.update { it.copy(autoBetStatus = st) } } }
     }
 

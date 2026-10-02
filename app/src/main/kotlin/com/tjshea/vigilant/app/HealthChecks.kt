@@ -432,7 +432,7 @@ object HealthChecks {
         val halted = set.autoBetHalted
         when {
             halted != null -> add(Check(Level.FAIL, "Auto-bet", "stopped after a lost order, placing nothing until resumed", halted.take(160), "Novig and the Tracker's Sync with Novig's fills, then the Auto-bet tab › Resume auto-bet"))
-            why != null -> add(Check(Level.WARN, "Auto-bet", "is on but can't run: $why", look = "Settings › Betting & Novig account, Settings › Scanning"))
+            why != null -> add(Check(Level.WARN, "Auto-bet", "is on but can't run: $why", look = "the Auto-bet tab (its one-tap fix), Settings › Betting & Novig account, Settings › Scanning"))
             st.last.walletEmpty -> add(Check(Level.WARN, "Auto-bet", "the Vigilant wallet can't fund a bet: nothing is placed", line, "Settings › Betting & Novig account › Add money"))
             st.blocker != null -> add(Check(Level.WARN, "Auto-bet", "can't place bets right now: ${st.blocker}", line, "app/AutoBettor.kt"))
             st.lastRunMs == null -> add(Check(Level.WARN, "Auto-bet", "on, but no check has run since the app opened", look = "the background auto-scan below, Android's battery limits"))
