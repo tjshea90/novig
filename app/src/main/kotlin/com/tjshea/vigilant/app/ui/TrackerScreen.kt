@@ -59,6 +59,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import com.tjshea.vigilant.data.tracker.LockStats
+import com.tjshea.vigilant.data.tracker.LockedBets
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -139,6 +141,8 @@ fun TrackerScreen(
     /** The "Novig only" filter switched (Tj, 2026-10-02 ~18:50Z), and its own read of Novig's prices (no other book). */
     onNovigOnly: (Boolean) -> Unit = {},
     onCheckNovig: () -> Unit = {},
+    /** "Hide locked bets" switched (Tj, 2026-10-02 20:06Z): markets locked in leave the lists and stats ([LockedBets]). */
+    onHideLocked: (Boolean) -> Unit = {},
 ) {
     val now = rememberNow(60_000)
     var view by rememberSaveable { mutableStateOf(initialView) }
@@ -162,7 +166,12 @@ fun TrackerScreen(
 
     // "Novig only": every open bet's EV and every closing line from Novig's own prices ([NovigNow.view]); the rest of the screen is unchanged.
     val novigOnly = state.settings.trackerNovigOnly
-    val bets = remember(state.bets, novigOnly) { if (novigOnly) com.tjshea.vigilant.data.tracker.NovigNow.view(state.bets) else state.bets }
+    val priced = remember(state.bets, novigOnly) { if (novigOnly) com.tjshea.vigilant.data.tracker.NovigNow.view(state.bets) else state.bets }
+    // "Hide locked bets" (Tj, 2026-10-02 20:06Z: "It makes no sense for me to track a bet that is already cashed out"): a market locked in (both sides
+    // held equally, paid whatever happens) leaves every list and stat below; the lock card still says what the locks made.
+    val hideLocked = state.settings.trackerHideLocked
+    val lockedIds = remember(priced) { LockedBets.ids(priced) }
+    val bets = remember(priced, hideLocked, lockedIds) { if (hideLocked && lockedIds.isNotEmpty()) priced.filterNot { it.id in lockedIds } else priced }
     val minute = now / 60_000L
     val scoped = remember(bets, scanner) { TrackerSort.inScanner(bets, scanner) }
     val counts = remember(scoped) { BetFilter.entries.associateWith { f -> filtered(scoped, f).size } }
@@ -171,11 +180,13 @@ fun TrackerScreen(
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
     val periodBets = remember(bets, period, minute) { inPeriod(bets, period, now) }
+    val lockStats = remember(priced, period, minute) { LockedBets.stats(inPeriod(priced, period, now), priced) }
     // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved; a game
     // that starts drops out within the minute.
     val checkStart = state.checkStartedAtMs
     val checkStats = remember(bets, checkStart, minute) { checkStart?.let { CheckOddsStats.of(bets, it, now) } }
-    val openBet = openId?.let { id -> bets.firstOrNull { it.id == id } }
+    // From every bet, hidden or not: a bet locked from its own sheet leaves the list, not the sheet Tj is looking at.
+    val openBet = openId?.let { id -> priced.firstOrNull { it.id == id } }
     LaunchedEffect(openId, openBet == null) { if (openId != null && openBet == null) openId = null }
     // A different list (tab, filter, sort, scanner, period) starts at its top, with the pinned tabs and filters just above it; the first
     // composition, and one restored after a rotation, keep their place.
@@ -234,6 +245,24 @@ fun TrackerScreen(
                         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp).testTag("novigOnlyNote"),
                     )
+                }
+            }
+            // The "Hide locked bets" switch, at the top of the list (not pinned: the bar stays two chip rows tall), once anything is locked in.
+            if (lockedIds.isNotEmpty()) {
+                item(key = "hideLocked") {
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = hideLocked,
+                            onClick = { onHideLocked(!hideLocked) },
+                            label = { Text("Hide locked bets", maxLines = 1) },
+                            modifier = Modifier.testTag("hideLockedChip"),
+                        )
+                        Text(
+                            TrackerText.hiddenLocked(lockedIds.size, hideLocked),
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f).testTag("hideLockedNote"),
+                        )
+                    }
                 }
             }
             // Check odds now holds the focus (Tj, 2026-10-01): what waits for it, said where Tj is looking.
@@ -314,10 +343,13 @@ fun TrackerScreen(
             }
             when (view) {
                 TrackerView.STATS -> {
-                    if (periodBets.isEmpty()) {
+                    if (periodBets.isEmpty() && !lockStats.any) {
                         item(key = "empty") { EmptyState("No bets ${if (period == TrackerPeriod.ALL) "tracked yet" else "in this period"}", EMPTY_HINT) }
                     } else {
-                        item(key = "stats") {
+                        // The locks' own numbers (Tj, 2026-10-02 20:06Z: "a stat tracker for amount and percentage of bets locked in and the total profit and
+                        // percentage of profit for those bets"), shown whether or not they're hidden from the rest.
+                        if (lockStats.any) item(key = "locks") { LockStatsCard(lockStats, hideLocked) }
+                        if (periodBets.isNotEmpty()) item(key = "stats") {
                             StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
                                 ClosingLineCard(bets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
@@ -467,6 +499,20 @@ private fun CardTitle(text: String) {
 @Composable
 internal fun Caption(text: String) {
     Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** The locks' numbers ([LockStats]): bets locked in and their share, the profit locked and its share of what was staked in those markets. */
+@Composable
+private fun LockStatsCard(stats: LockStats, hidden: Boolean) {
+    StatsCard(Modifier.testTag("lockStats")) {
+        CardTitle("Locked in")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            LabeledValue("Bets locked", "${stats.lockedBets}" + (stats.share?.let { " (${Format.percent(it, 0)})" } ?: ""))
+            LabeledValue("Profit locked", Format.signedMoney(stats.profit), valueColor = moneyColor(stats.profit))
+            LabeledValue("Profit %", stats.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(stats.roi ?: 0.0))
+        }
+        Caption(TrackerText.lockCaption(stats, hidden))
+    }
 }
 
 @Composable
