@@ -178,7 +178,10 @@ class AutoBettor(
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
-        val limits = BetLimits(maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds)
+        val limits = BetLimits(
+            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds,
+            minEvWhere = "Settings › Betting › Auto-bet › Smallest edge at Novig's price now",
+        )
         val placed = ArrayList<TrackedBet>()
         var stopped: String? = null
         var walletEmpty = false

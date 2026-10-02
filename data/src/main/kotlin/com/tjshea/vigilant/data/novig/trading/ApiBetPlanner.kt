@@ -39,7 +39,14 @@ data class BetTarget(
  * The limits Tj sets in Settings, all in dollars except [minEv] and [maxOdds] (the longest American odds the order book's best price may be,
  * checked on the book read just before an order: only an auto-bet sets it, 0 = no limit).
  */
-data class BetLimits(val maxStake: Double, val maxPerDay: Double, val minEv: Double = 0.0, val maxOdds: Int = 0)
+data class BetLimits(
+    val maxStake: Double,
+    val maxPerDay: Double,
+    val minEv: Double = 0.0,
+    val maxOdds: Int = 0,
+    /** Where [minEv] is set, for a refusal that names it. */
+    val minEvWhere: String = "Settings › Betting › Smallest edge a bet is still placed at",
+)
 
 /** What a bet would do, worked out from a book read just now. */
 data class BetPlan(
@@ -111,9 +118,16 @@ object ApiBetPlanner {
         }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = false)
         if (bestQuote.evPercent < limits.minEv - 1e-9) {
+            // Still +EV, only under Tj's own minimum: say that, and where it's set (Tj, 2026-10-02: "Why is this saying the edge is gone? It's
+            // the same odds, and they are positive ev": +2.4% under his +3% read as "The edge is gone").
             return no(
-                "The edge is gone: Novig's best price is now ${american(best.price)}, and the fair odds ${american(target.fair)} make that " +
-                    "${percent(bestQuote.evPercent)} EV.",
+                if (bestQuote.evPercent > 0.0) {
+                    "${percent(bestQuote.evPercent)} EV at Novig's best price now (${american(best.price)}, fair ${american(target.fair)}) is under your " +
+                        "${percent(limits.minEv)} minimum (${limits.minEvWhere}). Lower it there to bet this one."
+                } else {
+                    "The edge is gone: Novig's best price is now ${american(best.price)}, and the fair odds ${american(target.fair)} make that " +
+                        "${percent(bestQuote.evPercent)} EV."
+                },
             )
         }
 
@@ -138,7 +152,8 @@ object ApiBetPlanner {
         val average = averagePrice(levels, contracts)
         val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = false)
         val note = if (stake - cost > stake * 0.05 + 0.01) {
-            "Only ${money(cost)} of the ${money(stake)} is offered at a positive edge right now: this bets ${money(cost)}."
+            "Only ${money(cost)} of the ${money(stake)} is offered at " +
+                (if (limits.minEv > 1e-9) "your ${percent(limits.minEv)} minimum edge or better" else "a positive edge") + " right now: this bets ${money(cost)}."
         } else {
             null
         }

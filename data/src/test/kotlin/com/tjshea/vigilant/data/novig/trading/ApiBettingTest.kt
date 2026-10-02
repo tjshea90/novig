@@ -25,6 +25,7 @@ import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
 import org.bouncycastle.crypto.util.PrivateKeyInfoFactory
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -123,6 +124,37 @@ class ApiBettingTest {
         // Fair 0.45 against a 0.46 price: the edge is gone.
         assertTrue(refused(plan(t = target(fair = 0.45))).contains("The edge is gone"))
         assertTrue(refused(plan(stake = 0.004)).contains("less than one contract"))
+    }
+
+    /**
+     * Tj, 2026-10-02: "Why is this saying the edge is gone? It's the same odds, and they are positive ev". His sheet: Novig +108 against a fair
+     * +103 is +2.4% EV, under his +3% minimum, and it read "The edge is gone". A positive edge under the minimum says so and where it's set.
+     */
+    @Test
+    fun `a positive edge under the minimum says it's under the minimum, not that the edge is gone`() {
+        // Fair 0.4685 against the 0.46 price: +1.8% EV. A 3% minimum refuses it.
+        val under = refused(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, limits.copy(minEv = 0.03), 0.0))
+        assertFalse(under, under.contains("edge is gone"))
+        assertTrue(under, under.startsWith("+1.8% EV at Novig's best price now"))
+        assertTrue(under, under.contains("is under your +3.0% minimum (Settings › Betting › Smallest edge a bet is still placed at)"))
+        // Auto-bet's limits name auto-bet's setting.
+        val auto = refused(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, limits.copy(minEv = 0.03, minEvWhere = "Auto-bet's minimum"), 0.0))
+        assertTrue(auto, auto.contains("(Auto-bet's minimum)"))
+        // Zero or less at Novig's price now: the edge really is gone, whatever the minimum.
+        assertTrue(refused(ApiBetPlanner.plan(target(fair = 0.46), book(), 5.0, now, limits.copy(minEv = 0.03), 0.0)).startsWith("The edge is gone"))
+        assertTrue(refused(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, limits.copy(minEv = 0.03), 0.0)).startsWith("The edge is gone"))
+        // At the minimum or over it, the bet is planned.
+        ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 0.46, now, limits.copy(minEv = 0.018), 0.0))
+    }
+
+    @Test
+    fun `a stake cut short by the minimum names the minimum`() {
+        // Fair 0.4685: the 0.46 level is +1.8%, the 0.465 level +0.7%: with a 1% minimum only the first is taken, and the note says why.
+        val p = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 10.0, now, limits.copy(minEv = 0.01), 0.0))
+        assertTrue(p.note, p.note!!.contains("offered at your +1.0% minimum edge or better right now"))
+        // No minimum: a positive edge.
+        val any = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 10.0, now, limits, 0.0))
+        assertTrue(any.note, any.note == null || any.note!!.contains("at a positive edge right now"))
     }
 
     @Test
