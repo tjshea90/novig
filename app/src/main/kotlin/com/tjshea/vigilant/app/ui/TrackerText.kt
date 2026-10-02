@@ -43,8 +43,8 @@ object TrackerText {
         if (read.due == 0 && found == 0 && notFound == 0) return if (force) "No open bet to price on Novig." else null
         val s = { n: Int -> if (n == 1) "" else "s" }
         return listOfNotNull(
-            "Novig's prices read for ${read.prices.size} of ${read.due} open bet${s(read.due)} (Novig only: no other book asked)",
-            "${read.all - read.due} already fresh".takeIf { !force && read.due < read.all },
+            "Novig's prices read for ${read.prices.size} of ${read.due} open bet${s(read.due)} (Novig only: no other book asked)".takeIf { read.due > 0 },
+            "${read.all - read.due} already fresh".takeIf { !force && read.due in 1 until read.all },
             "$found found on Novig by name".takeIf { found > 0 },
             (notFound + read.why.size).takeIf { it > 0 }?.let { "$it with no Novig price now (why on each bet)" },
         ).joinToString("; ") + "."
