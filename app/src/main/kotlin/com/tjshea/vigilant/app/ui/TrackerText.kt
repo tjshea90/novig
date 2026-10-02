@@ -19,12 +19,17 @@ object TrackerText {
      * percent EV compared only from novig odds, filtering out other sports books").
      */
     fun novigOnlyNote(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String {
-        val open = com.tjshea.vigilant.data.tracker.NovigNow.priceable(bets, now)
+        // Every open bet at Novig counts, Novig's ids on record or not (Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds").
+        val open = com.tjshea.vigilant.data.tracker.NovigNow.open(bets, now)
         if (open.isEmpty()) return "EV and CLV from Novig's own prices only."
-        val priced = open.count { it.novigFair != null }
-        val oldest = open.mapNotNull { it.novigAtMs }.minOrNull()
-        return "EV and CLV from Novig's own prices only: $priced of ${open.size} open bets priced" +
-            (oldest?.let { " · oldest ${Format.age(it, now)}" } ?: "") + "."
+        val priced = open.filter { com.tjshea.vigilant.data.tracker.NovigNow.note(it) == null }
+        val notOnNovig = open.count { it.novigWhy != null && com.tjshea.vigilant.data.tracker.NovigNow.note(it) == it.novigWhy }
+        val unread = open.size - priced.size - notOnNovig
+        val oldest = priced.mapNotNull { it.novigAtMs }.minOrNull()
+        return "EV and CLV from Novig's own prices only: ${priced.size} of ${open.size} open bets priced" +
+            (oldest?.let { " (oldest ${Format.age(it, now)})" } ?: "") +
+            (if (notOnNovig > 0) " · $notOnNovig with no Novig price now (why on each bet)" else "") +
+            (if (unread > 0) " · $unread not read yet" else "") + "."
     }
 
 
