@@ -128,10 +128,10 @@ object AutoBetText {
 }
 
 /**
- * Settings › Betting › Auto-bet (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all, including … in the background as the
- * cno scanner is on in the background"). Off by default; turning it on asks once, plainly. The criteria are Tj's seven choices: books agreeing,
- * the smallest edge (a preset or typed), CNO only (fixed), the stake (⅛/¼/½ Kelly, $1 or typed), books pricing both sides, the most per bet
- * (typed), and the check interval (the background CNO scan's own choices). [onUpdate] edits the saved settings.
+ * The Auto-bet tab's content (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all, including … in the background as the cno scanner
+ * is on in the background"; 2026-10-02 ~17:55Z: "maybe make the auto bet feature its own section instead of buried in the settings"). Top to bottom: the
+ * switch and what it's doing (with a one-tap fix when something stops it), [presets], what it bets, the sharp-book veto, how much, how often, and its
+ * notifications. Off by default; turning it on asks once, plainly. [onOpenSettings] opens a Settings page (Betting, to set up the wallet).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -141,17 +141,18 @@ fun AutoBetSection(
     notificationsBlocked: String? = null,
     /** Posts a made-up auto-bet notification on the real channel; false when it couldn't be posted ([AutoBetNotes.sample]). */
     onTestNotification: () -> Boolean = { true },
+    onOpenSettings: (SettingsPage) -> Unit = {},
+    presets: @Composable () -> Unit = {},
     onUpdate: ((ScanSettings) -> ScanSettings) -> Unit,
 ) {
     val s = state.settings
     var confirming by remember { mutableStateOf(false) }
     val balance = state.betting.balance ?: state.autoBetStatus.balance
-    SectionTitle("Auto-bet (CrazyNinjaOdds)")
+    val subtle = MaterialTheme.colorScheme.onSurfaceVariant
     Text(
-        "Places each CrazyNinjaOdds bet that passes your criteria for you, through Novig's API from the Vigilant wallet, with nobody confirming: " +
-            "in the background as the CNO scan runs, with Vigilant open or closed. Pregame only. Off until you turn it on; then it stays on until you turn it off " +
-            "(only a phone restart turns it off by itself).",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 4.dp),
+        "Places each CrazyNinjaOdds bet that passes your rules for you, through Novig's API from your Vigilant wallet, with nobody confirming: in the " +
+            "background, with Vigilant open or closed. Pregame only. Once on, it stays on until you turn it off (only a phone restart turns it off by itself).",
+        style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp),
     )
     Row(
         Modifier.fillMaxWidth().toggleable(
@@ -182,6 +183,25 @@ fun AutoBetSection(
         )
     }
 
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text("Turn on auto-bet?") },
+            text = { Text(AutoBetText.confirm(s, balance)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        confirming = false
+                        // The background scan is what runs it: off becomes on, anything else stays.
+                        onUpdate { it.copy(autoBet = true, autoScan = if (it.autoScan == AutoScanMode.OFF) AutoScanMode.CNO else it.autoScan) }
+                    },
+                    modifier = Modifier.testTag("autoBetConfirm"),
+                ) { Text("Turn on") }
+            },
+            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
+        )
+    }
+
     // Halted: a lost order. Never silently resumed.
     s.autoBetHalted?.let { why ->
         Text("Auto-bet is stopped: $why", style = MaterialTheme.typography.bodyMedium, color = Edge.colors.negative, modifier = Modifier.padding(vertical = 4.dp).testTag("autoBetHalted"))
@@ -192,21 +212,86 @@ fun AutoBetSection(
         Button(onClick = { onUpdate { it.copy(autoBetHalted = null) } }, modifier = Modifier.testTag("autoBetResume")) { Text("Resume auto-bet") }
     }
 
-    // Why it can't run (on or not): betting must be set up first, and the CNO scan must run in the background; else what it does.
+    // Why it can't run (on or not), with the one tap that fixes it; else what it does.
     val why = AutoBetText.whyNotRunning(state)
     // (A halt has its own red block and Resume above: not said twice.)
     if (s.autoBetHalted == null && (s.autoBet || (why != null && !state.betting.enabled))) {
         Text(
             why ?: AutoBetText.running(s),
             style = MaterialTheme.typography.bodySmall,
-            color = if (why != null && s.autoBetHalted == null) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (why != null) Edge.colors.warning else subtle,
             modifier = Modifier.padding(vertical = 4.dp).testTag("autoBetRunning"),
         )
+        when (AutoBetText.fixFor(state)) {
+            AutoBetText.Fix.SET_UP_BETTING -> OutlinedButton(onClick = { onOpenSettings(SettingsPage.BETTING) }, modifier = Modifier.testTag("autoBetFixBetting")) { Text("Set up betting") }
+            AutoBetText.Fix.BACKGROUND_SCAN -> OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }, modifier = Modifier.testTag("autoBetFixBackground")) { Text("Turn on the background scan") }
+            AutoBetText.Fix.RESUME_SCANNING -> OutlinedButton(onClick = { onUpdate { it.copy(paused = false) } }, modifier = Modifier.testTag("autoBetFixPause")) { Text("Resume scanning") }
+            AutoBetText.Fix.SCANNER -> OutlinedButton(onClick = { onUpdate { it.copy(scanner = ScannerMode.BOTH) } }, modifier = Modifier.testTag("autoBetFixScanner")) { Text("Turn CrazyNinjaOdds back on") }
+            null -> Unit
+        }
     }
 
-    // 1) books agreeing
+    // What it has done: the wallet, the last check, the sharp tally, bets since the app started.
+    Text(
+        "Vigilant wallet " + (balance?.let { Format.money(it) } ?: "not read yet") + ". It stops placing bets when the wallet is empty (under a cent), " +
+            "and holds each bet to what's left, to your daily limit of ${Format.money(s.apiMaxPerDay)} (Settings › Betting & Novig account), and to your Novig " +
+            "location check (open the Novig app at least every 3 days; no VPN).",
+        style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag("autoBetWallet"),
+    )
+    val status = state.autoBetStatus
+    if (s.autoBet || status.lastRunMs != null) {
+        val now = remember(status) { System.currentTimeMillis() }
+        Text(AutoBettor.line(status, now), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
+        // What the sharp-book check said, bet by bet (Tj, 2026-10-02 16:05Z: "Is it getting sharp book pricing?").
+        if (s.sharpAutoBet != SharpMode.OFF) {
+            AutoBettor.sharpLine(status, s.sharpConfirmBooks.displayName)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetSharpTally"))
+            }
+        }
+        if (status.placedSinceStart > 0) {
+            Text(
+                "Placed since Vigilant started: ${status.placedSinceStart} bet${if (status.placedSinceStart == 1) "" else "s"}, ${Format.money(status.stakedSinceStart)}. Every one is in the Tracker, marked Auto.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+
+    presets()
+
+    // ---- What it bets --------------------------------------------------------------------------------
+    SectionTitle("What it bets")
+    Text("Smallest edge (EV) at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_MIN_EV_CHOICES, s.autoBetMinEv, AutoBetText::evLabel, equal = { a, b -> abs(a - b) < 1e-9 }) { v -> onUpdate { it.copy(autoBetMinEv = v) } }
+    var evText by remember(s.autoBetMinEv) { mutableStateOf(AutoBetText.trim(s.autoBetMinEv * 100)) }
+    val evTyped = evText.toDoubleOrNull()
+    OutlinedTextField(
+        value = evText,
+        onValueChange = { t ->
+            evText = t.filter { it.isDigit() || it == '.' }.take(6)
+            evText.toDoubleOrNull()?.takeIf { it >= AutoBet.MIN_EV_FLOOR * 100 && it <= 50.0 }?.let { v -> onUpdate { it.copy(autoBetMinEv = v / 100.0) } }
+        },
+        label = { Text("Or type your own minimum EV %") },
+        isError = evTyped != null && evTyped < AutoBet.MIN_EV_FLOOR * 100,
+        supportingText = { if (evTyped != null && evTyped < AutoBet.MIN_EV_FLOOR * 100) Text("At least ${AutoBetText.trim(AutoBet.MIN_EV_FLOOR * 100)}%") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth().testTag("autoBetMinEvField"),
+    )
+
+    Text(
+        "EV (expected value) is how much a bet should return over time above break-even: 3% is about 3¢ per \$1 bet in the long run. Estimated edges run " +
+            "high, so a little room above the edge you want keeps the real one positive.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+    Shadowed.autoBetEdge(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetEdgeShadowed")) }
+
     Text("Books that each say +EV on their own", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel) { v -> onUpdate { it.copy(autoBetBooks = v) } }
+    Text(
+        "Each sportsbook on the bet's page, with its own profit taken out, must say Novig's price beats the true odds. More books agreeing means the edge " +
+            "isn't one book's mistake.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
     // Every book scanned must agree (Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)")
     Row(
         Modifier.fillMaxWidth().toggleable(
@@ -223,23 +308,11 @@ fun AutoBetSection(
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetAllAgreeNote"),
     )
 
-    // 2) the smallest edge, a preset or typed
-    Text("Smallest edge at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(ScanSettings.AUTO_BET_MIN_EV_CHOICES, s.autoBetMinEv, AutoBetText::evLabel, equal = { a, b -> abs(a - b) < 1e-9 }) { v -> onUpdate { it.copy(autoBetMinEv = v) } }
-    var evText by remember(s.autoBetMinEv) { mutableStateOf(AutoBetText.trim(s.autoBetMinEv * 100)) }
-    val evTyped = evText.toDoubleOrNull()
-    OutlinedTextField(
-        value = evText,
-        onValueChange = { t ->
-            evText = t.filter { it.isDigit() || it == '.' }.take(6)
-            evText.toDoubleOrNull()?.takeIf { it >= AutoBet.MIN_EV_FLOOR * 100 && it <= 50.0 }?.let { v -> onUpdate { it.copy(autoBetMinEv = v / 100.0) } }
-        },
-        label = { Text("Or type your own minimum EV %") },
-        isError = evTyped != null && evTyped < AutoBet.MIN_EV_FLOOR * 100,
-        supportingText = { if (evTyped != null && evTyped < AutoBet.MIN_EV_FLOOR * 100) Text("At least ${AutoBetText.trim(AutoBet.MIN_EV_FLOOR * 100)}%") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth().testTag("autoBetMinEvField"),
+    Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
+    Text(
+        "A book that lists only one side of a bet can't be checked (its profit can't be taken out), so only books with both sides count.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
     )
 
     // The longest odds, a preset or typed (Tj, 2026-10-01: "I don't want it to bet anything that is more of a longshot than +130")
@@ -262,15 +335,16 @@ fun AutoBetSection(
         modifier = Modifier.fillMaxWidth().testTag("autoBetMaxOddsField"),
     )
     Text(
-        "Nothing longer than this is bet, whatever the amount; favorites (−110, −150 …) always pass. It is checked on the bet's price when it's found and " +
-            "again on Novig's order book just before the order, so a price that drifts out past it is skipped. Kelly stakes already shrink as odds grow, " +
-            "but a $1 or typed amount doesn't: this is what keeps those off longshots. The CrazyNinjaOdds page's own Max odds filter (Settings › CNO) also still applies.",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetMaxOddsHint"),
+        "Nothing longer than this is bet; favorites (−110, −150 …) always pass. Long shots are where fake edges hide. It's checked when the bet is found and " +
+            "again on Novig's order book just before the order. Kelly stakes already shrink as odds grow, but a \$1 or typed amount doesn't: this keeps those off long shots.",
+        style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("autoBetMaxOddsHint"),
     )
-
-    // The shortest odds and the kinds of bet (RESEARCH.md §66: a preset sets them; Tj can change them here).
+    Shadowed.autoBetOdds(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetOddsShadowed")) }
     Text("Shortest odds to bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_MIN_ODDS_CHOICES, s.autoBetMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(autoBetMinOdds = v) } }
+    Text("Heavy favorites (−250 and shorter) risk a lot to win a little; one bad price wipes out many small wins.", style = MaterialTheme.typography.bodySmall, color = subtle)
+
+    // The kinds of bet (RESEARCH.md §66: a preset sets them; Tj can change them here).
     Text("Kinds of bet to place", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("autoBetKinds")) {
         BetKind.entries.forEach { k ->
@@ -288,17 +362,16 @@ fun AutoBetSection(
         )
     }
 
-    // 5) books offering both sides
-    Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
-
-    // 3) CNO only: fixed
     Text(
         "Which scanner: CrazyNinjaOdds' only. Vigilant's own scan and ParlayAPI's picks are never bet automatically, and neither is a bet whose edge is over ${Format.percent(AutoBet.MAX_SANE_EV, 0)} (that high is usually a stale or mismatched price: place it by hand if you trust it).",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
+        style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 8.dp),
     )
 
-    // 4) the stake
+    // ---- The sharp books' say ---------------------------------------------------------------------------
+    SharpVetoSection(state, forAlerts = false, onUpdate = onUpdate)
+
+    // ---- How much -----------------------------------------------------------------------------------
+    SectionTitle("How much")
     Text("Amount per bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(AutoBetStake.entries.toList(), s.autoBetStake, { it.label }) { v -> onUpdate { it.copy(autoBetStake = v) } }
     if (s.autoBetStake == AutoBetStake.CUSTOM) {
@@ -315,9 +388,7 @@ fun AutoBetSection(
             modifier = Modifier.fillMaxWidth().testTag("autoBetCustomStake"),
         )
     }
-    AutoBetText.kellyNote(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-
-    // 6) the most per bet, typed
+    AutoBetText.kellyNote(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = subtle) }
     var max by remember(s.autoBetMaxStake) { mutableStateOf(WalletAmount.text(s.autoBetMaxStake)) }
     OutlinedTextField(
         value = max,
@@ -331,13 +402,20 @@ fun AutoBetSection(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("autoBetMaxStake"),
     )
 
-    // 7) the check interval: the background CNO scan's own choices
+    Text(
+        "The most one auto-bet can stake (bets you place yourself have their own most per bet, in Settings › Betting & Novig account). The daily limit there " +
+            "(${Format.money(s.apiMaxPerDay)}) covers auto-bets and yours together.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+
+    // ---- How often ----------------------------------------------------------------------------------
+    SectionTitle("How often")
     Text("Check every", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_SCAN_SECONDS_CHOICES, s.autoScanSeconds, ScanSettings::intervalLabel) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
     Text(
-        "The same choice as Settings › Scan › Background auto-scan: auto-bet runs inside each background CNO scan, so it checks as often as that scans. " +
-            "Faster means a bet is placed sooner after CNO lists it.",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        "Auto-bet runs inside the background scan, so this is the same setting as Settings › Scanning › Background scan: one choice, two places. Faster " +
+            "means a bet is placed sooner after CrazyNinjaOdds lists it, before the price moves.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
     )
     if (s.autoScanSeconds < 15) {
         Text(
@@ -348,12 +426,13 @@ fun AutoBetSection(
         )
     }
 
+
     // The notification every bet gets (Tj, 2026-10-01: "a push notification for every automatic bet, so I can see each bet placed and the stake and EV")
-    Text("Notifications", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    SectionTitle("Notifications")
     Text(
         "Every bet auto-bet places gets its own pop-up notification: the stake and the EV in the title, then the odds, how many books agree, the game and what's left " +
             "in the wallet. Tap it to open Vigilant; every bet is also in the Tracker, marked Auto.",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodySmall, color = subtle,
     )
     if (s.autoBet && notificationsBlocked != null) {
         Text(
@@ -372,30 +451,6 @@ fun AutoBetSection(
         )
     }
 
-    // The wallet and what the last check did.
-    Text(
-        "Vigilant wallet " + (balance?.let { Format.money(it) } ?: "not read yet") + ". It stops placing bets when the wallet is empty (under a cent), " +
-            "and holds each bet to what's left. Held to your daily limit of ${Format.money(s.apiMaxPerDay)} for API bets (above), and your Novig location check " +
-            "(open the Novig app at least every 3 days; no VPN).",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp).testTag("autoBetWallet"),
-    )
-    val status = state.autoBetStatus
-    if (s.autoBet || status.lastRunMs != null) {
-        val now = remember(status) { System.currentTimeMillis() }
-        Text(AutoBettor.line(status, now), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
-        // What the sharp-book check said, bet by bet (Tj, 2026-10-02 16:05Z: "Is it getting sharp book pricing?").
-        if (s.sharpAutoBet != SharpMode.OFF) {
-            AutoBettor.sharpLine(status, s.sharpConfirmBooks.displayName)?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetSharpTally"))
-            }
-        }
-        if (status.placedSinceStart > 0) {
-            Text(
-                "Placed since Vigilant started: ${status.placedSinceStart} bet${if (status.placedSinceStart == 1) "" else "s"}, ${Format.money(status.stakedSinceStart)}. Every one is in the Tracker, marked Auto.",
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
