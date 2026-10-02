@@ -173,15 +173,15 @@ class SharpConfirmAppTest {
         val b = bettor(FakeNovig(), ArrayList()) { SharpConfirm.Result(SharpConfirm.Verdict.NO_QUOTE, reason = "no Pinnacle price for both sides of this exact bet") }
         assertNull(AutoBettor.sharpLine(b.status.value, "Pinnacle"))
         b.run(settings(), state())
-        assertEquals(mapOf(SharpConfirm.Verdict.NO_QUOTE to 1), b.status.value.sharp)
+        assertEquals(mapOf("confirm.NO_QUOTE" to 1), b.status.value.sharp)
         assertEquals(
             "Sharp check since Vigilant started: 1 bet asked about, 0 confirmed, 1 with no Pinnacle price for that exact line.",
             AutoBettor.sharpLine(b.status.value, "Pinnacle"),
         )
         // The same bet asked again counts once, at its newest verdict.
         b.run(settings(), state())
-        assertEquals(mapOf(SharpConfirm.Verdict.NO_QUOTE to 1), b.status.value.sharp)
-        val all = AutoBettor.Status(sharp = SharpConfirm.Verdict.entries.associateWith { 2 })
+        assertEquals(mapOf("confirm.NO_QUOTE" to 1), b.status.value.sharp)
+        val all = AutoBettor.Status(sharp = SharpConfirm.Verdict.entries.associate { "confirm.${it.name}" to 2 })
         assertEquals(
             "Sharp check since Vigilant started: 10 bets asked about, 2 confirmed, 2 with no Pinnacle price for that exact line, 2 that Pinnacle's own price " +
                 "doesn't show +EV (enough), 2 with Pinnacle's price too old, 2 when no feed could be asked.",
