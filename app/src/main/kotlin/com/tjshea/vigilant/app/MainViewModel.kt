@@ -1790,6 +1790,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // The closes the same tap went looking for: what was found, and what is still missing and why.
             val closes = graded?.let { CloseText.summary(c.lastBackfill?.takeIf { it.forced }, CloseText.missing(c.tracker.all(), System.currentTimeMillis())) }
             _toasts.tryEmit((report?.summary(graded = graded) ?: "Couldn't check the odds") + (closes?.let { " · $it" } ?: ""))
+            // And the locks on the API bets, from Novig's books now.
+            scanLocks()
         }
     }
 
