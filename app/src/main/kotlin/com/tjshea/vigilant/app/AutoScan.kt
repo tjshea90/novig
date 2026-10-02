@@ -221,27 +221,29 @@ class AutoScanner(
                     _status.update { it.copy(step = "Reading CrazyNinjaOdds") }
                     // Auto-bet places nothing on a price CNO listed a while ago: Novig's own price now is read whatever the live-price setting says.
                     val s = if (settings.autoBetsNow) settings.copy(cnoLivePrices = true) else settings
-                    runCatching { cnoRead(s) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching { timed("cno") { cnoRead(s) } }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
                     // Bets first (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all"), then the alerts: a bet just placed is
                     // out of the candidates, so it doesn't also alert.
                     if (s.autoBetsNow) {
                         _status.update { it.copy(step = "Auto-bet") }
-                        runCatching { c.autoBet.run(s, snapshot(s)) }.onFailure { if (it is CancellationException) throw it; errors += "Auto-bet: ${it.message ?: it.javaClass.simpleName}" }
+                        runCatching { timed("autobet") { c.autoBet.run(s, snapshot(s)) } }.onFailure { if (it is CancellationException) throw it; errors += "Auto-bet: ${it.message ?: it.javaClass.simpleName}" }
                     }
-                    runCatching { alerts += cnoAlerts(s) }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching { timed("alerts") { alerts += cnoAlerts(s) } }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
                     // The closing line of the open bets about to start, for the Tracker's CLV (Tj, 2026-09-29): the last read before the start.
                     _status.update { it.copy(step = "Open bets about to start") }
                     runCatching {
-                        c.recheck.captureClosing()
-                        // Faster than every 5 minutes (Tj, 2026-10-01): bets in their last 15 minutes are re-read at this cycle's pace, so the last read
-                        // before the start (the close) is as near the start as the schedule is, not up to 5 minutes before it.
-                        AutoScanClock.closingFreshMs(settings.autoScanSeconds)?.let { c.recheck.captureClosing(withinMs = ClosingLine.TRUE_CLOSE_MS, freshMs = it) }
+                        timed("closing") {
+                            c.recheck.captureClosing()
+                            // Faster than every 5 minutes (Tj, 2026-10-01): bets in their last 15 minutes are re-read at this cycle's pace, so the last read
+                            // before the start (the close) is as near the start as the schedule is, not up to 5 minutes before it.
+                            AutoScanClock.closingFreshMs(settings.autoScanSeconds)?.let { c.recheck.captureClosing(withinMs = ClosingLine.TRUE_CLOSE_MS, freshMs = it) }
+                        }
                     }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock()))) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
-                    runCatching { alerts += vigilantScan(settings) }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching { timed("vigilant") { alerts += vigilantScan(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 val sent = send(alerts)
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }
@@ -263,6 +265,16 @@ class AutoScanner(
             return true
         } finally {
             mutex.unlock()
+        }
+    }
+
+    /** Runs [block] and records how long it took as the flight recorder's `cycle.step.<name>` (Diagnostics says which step is the slow one). */
+    private inline fun <T> timed(name: String, block: () -> T): T {
+        val t = clock()
+        try {
+            return block()
+        } finally {
+            c.perf.add("cycle.step.$name", (clock() - t).toDouble())
         }
     }
 
