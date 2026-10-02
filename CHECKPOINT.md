@@ -1,13 +1,13 @@
-# CHECKPOINT 2336 — read me first, then TASKS.md
+# CHECKPOINT 2337 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T16:22:11Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `98206e37` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T16:24:45Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `c350b537` (this checkpoint is the commit after it)
 
 ## Just done
-AU1-AU3 code+tests: restart-only reset; CNO sheet shows sister sites as one vote; sharp-check tally in Settings › Betting; 102 related tests green
+AU1-AU3 ticked (8 mutants killed); BRIEF.md rule + RESEARCH.md §64
 
 ## Do this next
-mutation-check AU1-AU3, then full floor, RESEARCH/BRIEF notes, ship
+AU4: full floor (bash tools/test.sh), bump version 0.44.3 code 82, ship.sh, release.yml, record, answer Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ mutation-check AU1-AU3, then full floor, RESEARCH/BRIEF notes, ship
 
 ## Last ten checkpoints
 ```
+  d6a0e073 ckpt 2336: AU1-AU3 code+tests: restart-only reset; CNO sheet shows sister sites as one 
   e6e9fb59 ckpt 2335: AU1 code+tests: LaunchGate keyed on Android's boot count; only a phone resta
   8947b194 ckpt 2334: AU: Tj's 16:05Z request written into TASKS.md
   42953e58 ckpt 2333: AT1: audit of every request in this chat: all done and shipped (v0.44.0-v0.4
@@ -25,8 +26,7 @@ mutation-check AU1-AU3, then full floor, RESEARCH/BRIEF notes, ship
   8439d8c3 ckpt 2329: floor fixes: CycleRecorderTest pin follows AS2's event line; AutoResumeAppTe
   62a03929 ckpt 2328: AS4 ticked (5 mutants killed), RESEARCH §46 note
   245f416f ckpt 2327: AS4 code+tests: CNO's book check counts one vote a company (state sites aver
-  71fb5827 ckpt 2326: AS3 ticked; NOVIG_API.md records the live 423 account lock (signed routes on
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
