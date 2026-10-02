@@ -49,18 +49,21 @@ class ScanLagTest {
         Text("a bet")
     }
 
+    @Composable
+    private fun Root(progress: Int, api: ApiBettingController, runs: IntArray) {
+        ProvideApiBet(enabled = true, api = api) {
+            Text("Novig prices $progress/4588")
+            Card(runs)
+        }
+    }
+
     @Test
     fun `a scan tick no longer redraws every card under the Bet button's actions`() {
         val api = ApiBettingController(app.container, MutableStateFlow(UiState()), CoroutineScope(SupervisorJob() + Dispatchers.Default), MutableSharedFlow(), readBook = { null })
         var tick by mutableIntStateOf(0)
         val runs = IntArray(1)
-        compose.setContent {
-            val t = tick // a scan's progress: the root recomposes with it
-            ProvideApiBet(enabled = true, api = api) {
-                Text("Novig prices $t/4588")
-                Card(runs)
-            }
-        }
+        // Shaped like the app's root: it takes the whole state (here a scan's progress) and recomposes with every one.
+        compose.setContent { Root(tick, api, runs) }
         compose.waitForIdle()
         repeat(5) {
             tick++
