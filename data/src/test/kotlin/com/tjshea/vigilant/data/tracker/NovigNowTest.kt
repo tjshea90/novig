@@ -39,11 +39,34 @@ class NovigNowTest {
     )
 
     @Test
-    fun `Novig's price is the middle of its bid and offer, the offer alone when nobody bids, and none when nothing is offered`() {
+    fun `Novig's price is the middle of its bid and offer, the one side there is in a one-sided book, and none in an empty one`() {
         // A bid 0.45; B bid 0.53, so A is offered at 0.47: the middle is 0.46.
         assertEquals(0.46, NovigNow.mid(book("m1", 450, 530), market("m1"), "m1-A")!!, 1e-12)
         assertEquals(0.47, NovigNow.mid(book("m1", null, 530), market("m1"), "m1-A")!!, 1e-12)
-        assertNull(NovigNow.mid(book("m1", 450, null), market("m1"), "m1-A"))
+        // Bids on A only (a thin prop): A's bid is Novig's price for it, not "nothing" (Tj, 2026-10-02 20:06Z: open bets missing Novig's odds).
+        assertEquals(0.45, NovigNow.mid(book("m1", 450, null), market("m1"), "m1-A")!!, 1e-12)
+        assertNull(NovigNow.mid(book("m1", null, null), market("m1"), "m1-A"))
+    }
+
+    @Test
+    fun `a bet a read can't price says why - book unread, market gone, side not the market's, nothing offered - and counts as read for a while`() = runBlocking {
+        val bets = listOf(bet("noBook", "m1"), bet("gone", "m2"), bet("wrongSide", "m3").copy(outcomeId = "x"), bet("empty", "m4"), bet("ok", "m5"))
+        val books = mapOf("m2" to book("m2", 450, 530), "m3" to book("m3", 450, 530), "m4" to book("m4", null, null), "m5" to book("m5", 450, 530))
+        val r = NovigNow.read(bets, now, force = false, books = { books }, market = { id -> if (id == "m2") null else market(id) })
+        assertEquals(mapOf("noBook" to NovigNow.BOOK_UNREAD, "gone" to NovigNow.NOT_LISTED, "wrongSide" to NovigNow.NOT_A_SIDE, "empty" to NovigNow.NOTHING_OFFERED), r.why)
+        assertEquals(setOf("ok"), r.prices.keys)
+        // Shown on the bet in place of "not read yet", and not asked again until it's stale like a price.
+        val looked = bets.first().copy(novigWhy = NovigNow.NOTHING_OFFERED, novigWhyAtMs = now - 30_000)
+        assertEquals(NovigNow.NOTHING_OFFERED, NovigNow.view(listOf(looked)).single().nowNote)
+        assertTrue(NovigNow.stale(listOf(looked), now).isEmpty())
+        assertEquals(1, NovigNow.stale(listOf(looked), now + NovigNow.FRESH_MS).size)
+        // A price read after the reason is the latest word; an older price under a newer reason keeps its number and shows the reason.
+        val repriced = looked.copy(novigFair = 0.5, novigAtMs = now)
+        assertNull(NovigNow.note(repriced))
+        assertEquals(NovigNow.NOTHING_OFFERED, NovigNow.note(repriced.copy(novigAtMs = now - 60_000)))
+        // Not looked at yet: a bet with no Novig ids says it hasn't been looked up, one with them that it hasn't been read.
+        assertTrue(NovigNow.note(bet("x").copy(marketId = ""))!!.contains("looked up"))
+        assertTrue(NovigNow.note(bet("x"))!!.contains("hasn't been read"))
     }
 
     @Test
