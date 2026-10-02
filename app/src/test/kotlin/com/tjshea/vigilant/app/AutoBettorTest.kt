@@ -356,7 +356,50 @@ class AutoBettorTest {
         // Told once, however many cycles find it empty.
         b.run(s, state(s))
         b.run(s, state(s))
-        assertEquals(1, notifications().count { it.extras.getString("android.title") == "Wallet empty" })
+        assertEquals(1, notifications().count { it.extras.getString("android.title") == "Wallet empty: Vigilant is asleep" })
+    }
+
+    @Test
+    fun `an empty wallet puts Vigilant to sleep - every scan paused - once per emptying, and Tj's Resume is left alone until it refills and runs out again`() = runBlocking {
+        // Tj, 2026-10-02 ~22:10Z: "make it also stop scanning and put the app to sleep once the wallet runs out of money".
+        app.container.settingsStore.update { settings() }
+        val s = settings()
+        var wallet: Double? = 0.004
+        val b = AutoBettor(app, app.container, clock = { now }, placer = { placer(FakeNovig()) }, wallet = { wallet }, resolve = { targetOf(it) })
+        assertTrue(b.run(s, state(s)).walletEmpty)
+        assertTrue("scanning paused", app.container.settingsStore.flow.value!!.paused)
+        assertEquals(com.tjshea.vigilant.data.scanner.AutoScanMode.OFF, app.container.settingsStore.flow.value!!.activeAutoScan)
+        val note = notifications().single { it.extras.getString("android.title") == "Wallet empty: Vigilant is asleep" }
+        assertTrue(note.extras.getCharSequence("android.text")!!.contains("scanning is paused"))
+        // Tj resumes with the wallet still empty: he's left alone.
+        app.container.settingsStore.update { it.copy(paused = false) }
+        b.run(s, state(s))
+        assertFalse(app.container.settingsStore.flow.value!!.paused)
+        // It refills, bets, then runs out again: asleep again.
+        wallet = 5.0
+        b.run(s, state(s))
+        assertFalse(app.container.settingsStore.flow.value!!.paused)
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        wallet = 0.0
+        b.run(s, state(s))
+        assertTrue(app.container.settingsStore.flow.value!!.paused)
+    }
+
+    @Test
+    fun `a wallet the cycle just read as empty puts Vigilant to sleep even with no bet on offer`() = runBlocking {
+        app.container.settingsStore.update { settings() }
+        app.container.installTradingForTest(trading(), "sub")
+        val s = settings()
+        val nothing = state(s).copy(cno = state(s).cno.copy(rows = emptyList()))
+        app.container.wallet.record(0.0, at = now - 5_000)
+        AutoBettor(app, app.container, clock = { now }, placer = { placer(FakeNovig()) }, wallet = { 0.0 }, resolve = { targetOf(it) }).run(s, nothing)
+        assertTrue(app.container.settingsStore.flow.value!!.paused)
+        // An old reading (not this cycle's) isn't enough to put it to sleep.
+        app.container.settingsStore.update { it.copy(paused = false) }
+        app.container.wallet.record(0.0, at = now - 5_000)
+        val later = AutoBettor(app, app.container, clock = { now + WalletBalance.FRESH_MS + 5_000 }, placer = { placer(FakeNovig()) }, wallet = { 0.0 }, resolve = { targetOf(it) })
+        later.run(s, nothing)
+        assertFalse(app.container.settingsStore.flow.value!!.paused)
     }
 
     // ---- never the wrong bet ------------------------------------------------------------------------------------
