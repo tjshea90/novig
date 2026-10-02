@@ -11,6 +11,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
@@ -569,7 +571,7 @@ class ScreenshotTest {
     @Test fun settingsOfferTheMiniWindowSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
-        openSettingsTab(SettingsPage.CNO)
+        openSettingsTab(SettingsPage.WIDGET)
         // Off by default (Tj, 2026-09-29: the widget opens only from its button); the switch turns the auto-open on.
         compose.onNodeWithText("The widget opens only when you press its button at the top of the list.").assertExists()
         compose.onNodeWithText("Also open it when I leave Vigilant").assertExists()
@@ -776,10 +778,12 @@ class ScreenshotTest {
         openSettingsTab(SettingsPage.CNO)
         compose.onNodeWithText("Shared View link").assertExists()
         compose.onNodeWithText("Longest odds").assertExists()
+        // v0.46.0: each choice says what it means in plain words.
+        compose.onNodeWithText("Sportsbooks build their profit (the \"vig\") into their odds", substring = true).assertExists()
         // CNO's +150 here; Vigilant's own odds cap's (since v0.18.0) is on the +EV feed tab.
         compose.onAllNodesWithText("+150").assertCountEquals(1)
         compose.onAllNodesWithText("+150")[0].assertIsSelected()
-        compose.onNodeWithText("Fewest books behind the fair price").assertExists()
+        compose.onNodeWithText("Fewest books behind the true odds").assertExists()
         // The chips read as numbers (a first draft printed "${'$'}it+" on every one): 1+ to 4+ since v0.19.3 (Tj: "add
         // options for 1 and 2 books. Remove any option over 4 books"), 4+ picked by default.
         compose.onNodeWithText("1+").assertExists()
@@ -807,12 +811,12 @@ class ScreenshotTest {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 600))
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        shoot("5d_settings_auto_scan") { SettingsScreen(s, { t -> picked = t(s.settings) }) }
-        compose.onNodeWithText("Background auto-scan", ignoreCase = true).assertExists()
-        compose.onNodeWithText("CNO + Vigilant").assertIsSelected()
+        shoot("5d_settings_auto_scan") { SettingsScreen(s, { t -> picked = t(s.settings) }, page = SettingsPage.SCANNING) }
+        compose.onNodeWithText("Background scan", ignoreCase = true).assertExists()
+        // v0.46.0: one switch, and Vigilant's own scan joins it only when asked (it was a three-way choice that could contradict the scanner).
+        compose.onNodeWithTag("backgroundScan").assertIsOn()
+        compose.onNodeWithTag("backgroundAlsoVigilant").assertIsOn()
         compose.onNodeWithText("Every 10 min, with Vigilant open or closed", substring = true).assertExists()
-        compose.onNodeWithText("Push alerts").assertExists()
-        compose.onNodeWithText("3%+").assertIsSelected()
         compose.onNodeWithText("40 min").performClick()
         assert(picked?.autoScanSeconds == 2400) { "picked $picked" }
         // The four new intervals (Tj, 2026-10-01) are chips, and each picks its seconds.
@@ -820,6 +824,13 @@ class ScreenshotTest {
             compose.onNodeWithText(label).performClick()
             assert(picked?.autoScanSeconds == seconds) { "picked $picked for $label" }
         }
+        compose.onNodeWithTag("backgroundAlsoVigilant").performClick()
+        assert(picked?.autoScan == com.tjshea.vigilant.data.scanner.AutoScanMode.CNO) { "picked $picked" }
+        compose.onNodeWithTag("backgroundScan").performClick()
+        assert(picked?.autoScan == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) { "picked $picked" }
+        // The alerts have their own page now.
+        openSettingsTab(SettingsPage.ALERTS)
+        compose.onNodeWithText("3%+").assertIsSelected()
         compose.onNodeWithText("4%+").performClick()
         assert(picked?.alertMinEv == 0.04) { "picked $picked" }
         compose.onNodeWithText("2%+").performClick()
@@ -831,7 +842,7 @@ class ScreenshotTest {
     @Test fun settingsAutoScanFifteenSeconds() {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 15))
-        shoot("5d2_settings_auto_scan_15_sec") { SettingsScreen(s, {}) }
+        shoot("5d2_settings_auto_scan_15_sec") { SettingsScreen(s, {}, page = SettingsPage.SCANNING) }
         compose.onNodeWithText("15 sec").assertIsSelected()
         compose.onNodeWithText("Every 15 sec, with Vigilant open or closed", substring = true).assertExists()
         compose.onNodeWithText("it starts at most every 4 min, however fast CNO is read", substring = true).assertExists()
@@ -847,7 +858,7 @@ class ScreenshotTest {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 5))
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        shoot("5d3_settings_keep_awake") { SettingsScreen(s, { t -> picked = t(s.settings) }) }
+        shoot("5d3_settings_keep_awake") { SettingsScreen(s, { t -> picked = t(s.settings) }, page = SettingsPage.SCANNING) }
         compose.onNodeWithText("Keep awake (screen stays off)").assertExists()
         compose.onNodeWithText("On: the screen can stay off and locked, but the CPU stays awake", substring = true).assertExists()
         compose.onNodeWithText("Uses more battery (best plugged in)", substring = true).assertExists()
@@ -864,7 +875,7 @@ class ScreenshotTest {
     @Test fun keepAwakeSwitchFollowsTheSchedule() {
         val base = SampleScan.state()
         fun with(f: (com.tjshea.vigilant.data.scanner.ScanSettings) -> com.tjshea.vigilant.data.scanner.ScanSettings) = base.copy(settings = f(base.settings))
-        screen { SettingsScreen(with { it.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 15, autoScanKeepAwake = false) }, {}) }
+        screen { SettingsScreen(with { it.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 15, autoScanKeepAwake = false) }, {}, page = SettingsPage.SCANNING) }
         compose.onNodeWithText("Off: with the screen off and the phone still, Android may run each alarm-driven scan only about every 9 minutes", substring = true).assertExists()
         // The fast-interval note points at the switch while it's off.
         compose.onNodeWithText("Keep awake, below, prevents that", substring = true).assertExists()
@@ -873,20 +884,20 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun keepAwakeSwitchSaysItIsNotNeededAtTenMinutes() {
         val base = SampleScan.state()
-        screen { SettingsScreen(base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 600)), {}) }
+        screen { SettingsScreen(base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 600)), {}, page = SettingsPage.SCANNING) }
         compose.onNodeWithText("On, but not needed at 10 min", substring = true).assertExists()
     }
 
     @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun keepAwakeSwitchIsHiddenWhileAutoScanIsOff() {
-        screen { SettingsScreen(SampleScan.state(), {}) }
+        screen { SettingsScreen(SampleScan.state(), {}, page = SettingsPage.SCANNING) }
         compose.onAllNodesWithText("Keep awake (screen stays off)").assertCountEquals(0)
     }
 
     /** Off: no interval to pick, and the hint says nothing runs by itself. */
     @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun autoScanOffHidesTheInterval() {
-        screen { SettingsScreen(SampleScan.state(), {}) }
+        screen { SettingsScreen(SampleScan.state(), {}, page = SettingsPage.SCANNING) }
         compose.onAllNodesWithText("40 min").assertCountEquals(0)
         compose.onNodeWithText("Off: Vigilant scans only when you tap Scan, and CrazyNinjaOdds", substring = true).assertExists()
     }
@@ -901,9 +912,9 @@ class ScreenshotTest {
         for (gone in listOf(SettingsPage.FAIR, SettingsPage.FEED, SettingsPage.USAGE)) compose.onAllNodesWithTag("settingsRow-${gone.name}").assertCountEquals(0)
         compose.onAllNodesWithText("Fair odds method", ignoreCase = true).assertCountEquals(0)
         openSettingsTab(SettingsPage.CNO)
-        compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
+        compose.onNodeWithText("What the list shows", ignoreCase = true).assertExists()
         openSettingsTab(SettingsPage.BETTING)
-        compose.onNodeWithText("Bankroll & Kelly", ignoreCase = true).assertExists()
+        compose.onNodeWithText("Bet amounts", ignoreCase = true).assertExists()
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(1)
     }
 
