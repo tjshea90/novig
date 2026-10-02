@@ -42,6 +42,11 @@ object BetLedger {
         val nowAtMs: Long?,
         val outlier: Boolean,
         val atBet: AtBet?,
+        /** A lock's: the bet it locks in (RESEARCH.md §67). */
+        val lockFor: String? = null,
+        /** Novig's own price now and its close ([NovigNow]). */
+        val novigFair: Double? = null,
+        val novigClose: Double? = null,
     )
 
     private val json = Json { encodeDefaults = false; explicitNulls = false }
@@ -52,6 +57,7 @@ object BetLedger {
         evAtBet = b.evPercentAtBet, fairAtBet = b.fairAtBet, status = b.status.name, settledAtMs = b.settledAtMs, profit = b.profit,
         clv = ClosingLine.clv(b, now), closeFair = ClosingLine.closeFair(b, now), closeVia = b.closeVia, closeFinal = b.closeFinal,
         nowEv = b.nowEv, nowAtMs = b.nowAtMs, outlier = b.isOutlier, atBet = b.atBet,
+        lockFor = b.lockFor?.take(8), novigFair = b.novigFair, novigClose = b.novigClose,
     )
 
     /** [b] as one JSON line. */
