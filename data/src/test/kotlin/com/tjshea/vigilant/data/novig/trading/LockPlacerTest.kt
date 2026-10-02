@@ -104,6 +104,24 @@ class LockPlacerTest {
     }
 
     @Test
+    fun `once settled, a locked pair's money is the locked profit, and the record, EV and CLV count only the pick`() = runBlocking {
+        val t = tracker()
+        val first = placedA(t)
+        val lock = (placer(t, FakeNovig()).placeLock(holding(t), market, 0.01, pushable = false, auto = false) as PlaceResult.Placed).bet
+        t.settle(first.id, com.tjshea.vigilant.data.tracker.BetStatus.WON)
+        t.settle(lock.id, com.tjshea.vigilant.data.tracker.BetStatus.LOST)
+        val stats = BetTracker.stats(t.all(), now)
+        // $6.00 won on A, $5.50 lost on the lock: $0.50, what the lock promised.
+        assertEquals(0.50, stats.profit, 1e-9)
+        assertEquals(9.50, stats.staked, 1e-9)
+        assertEquals(1, stats.won)
+        assertEquals(0, stats.lost)
+        assertEquals(1, stats.bets)
+        assertEquals(1, stats.locks)
+        assertEquals(first.evPercentAtBet!!, stats.averageEv!!, 1e-9)
+    }
+
+    @Test
     fun `nothing is sent when Novig's positions don't match the Tracker, or can't be read`() = runBlocking {
         val t = tracker()
         placedA(t)
