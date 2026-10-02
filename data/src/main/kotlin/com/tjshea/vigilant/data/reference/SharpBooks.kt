@@ -64,7 +64,7 @@ class SharpBooks(
         // The scan's own family choices don't limit this: Tj's auto-bet may bet a prop even while the scan's feed leaves props out.
         val s = settings().let { it.copy(families = MarketFamily.entries.toSet()) }
         val usable = sources(s).filter { usable(it, league, prop) }.sortedBy { priority(it) }
-        if (usable.isEmpty()) return Answer(emptyList(), "no Pinnacle feed is on with a key (Settings › Fair-odds sources)")
+        if (usable.isEmpty()) return Answer(emptyList(), "no Pinnacle feed is on with a key (Settings › Fair odds & sources)")
         var answered = false
         var firstError: String? = null
         for (source in usable) {

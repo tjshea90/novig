@@ -207,7 +207,7 @@ fun BetSheetContent(
             }
             Caption(
                 "Replace opens ${AppBook.name}'s bet slip on this exact bet" +
-                    (stake?.let { " with $${NovigLinks.amountText(it)} filled in (Settings › bet slip amount)" } ?: " (Settings › bet slip amount can fill in an amount)") + ".",
+                    (stake?.let { " with $${NovigLinks.amountText(it)} filled in (Settings › Betting & Novig account › Amount a bet starts at)" } ?: " (Settings › Betting & Novig account › Amount a bet starts at can fill in an amount)") + ".",
             )
         }
 
@@ -317,7 +317,7 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                 bet.nowAtMs?.let {
                     Caption(
                         if (bet.nowVia == BetTracker.VIA_VIGILANT) {
-                            "Fair price worked out ${Format.age(it, now)} by Vigilant: the reference books' current odds, each devigged, then blended the way Settings › Fair odds says."
+                            "Fair price worked out ${Format.age(it, now)} by Vigilant: the reference books' current odds, each devigged, then blended the way Settings › Fair odds & sources says."
                         } else if (bet.nowVia == BetTracker.VIA_BOTH) {
                             "Fair price worked out ${Format.age(it, now)} two ways and averaged: CNO's books devigged worst case" +
                                 (bet.cnoFair?.let { " (${Format.american(it)})" } ?: "") + ", and Vigilant's own fair odds" +

@@ -13,7 +13,7 @@ import okhttp3.OkHttpClient
 import kotlin.coroutines.resume
 
 /**
- * The phone's connections, for Settings › Novig API › Test key (Tj, 2026-09-28: "The app is telling me I have a proxy
+ * The phone's connections, for Settings › Betting & Novig account › Test key (Tj, 2026-09-28: "The app is telling me I have a proxy
  * or vpn when I test the novig key, but I don't"). Novig judges the internet address a request comes from, so the
  * test says which connection it went out on, whether an app really has a VPN up, and can try the other connection.
  */

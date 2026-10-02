@@ -49,7 +49,7 @@ data class PresetRules(
     }.joinToString(" · ")
 
     companion object {
-        /** The rules [s] has now (Settings › Presets › Save current settings). */
+        /** The rules [s] has now (the Auto-bet tab › Presets › Save current settings). */
         fun of(s: ScanSettings): PresetRules = PresetRules(
             s.autoBetMinEv, s.autoBetBooks, s.autoBetTwoSided, s.autoBetAllAgree, s.autoBetMaxOdds, s.autoBetMinOdds, s.autoBetKinds, s.autoBetStake,
             s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds,

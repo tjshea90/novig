@@ -47,7 +47,7 @@ data class BetLimits(
     val minEv: Double = 0.0,
     val maxOdds: Int = 0,
     /** Where [minEv] is set, for a refusal that names it. */
-    val minEvWhere: String = "Settings › Betting › Auto-bet › Smallest edge at Novig's price now",
+    val minEvWhere: String = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
     /**
      * A bet Tj places by hand from a Bet sheet (Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to
      * bet on whatever I want manually. Only keep the hard restrictions on the auto bet function"): no minimum edge, the stake filled at the best
@@ -109,7 +109,7 @@ object ApiBetPlanner {
     ): PlanResult {
         fun no(reason: String) = PlanResult.Refused(reason)
         if (!(stake > 0.0)) return no("Pick an amount to bet.")
-        if (stake > limits.maxStake + 1e-9) return no("That's over your ${money(limits.maxStake)} limit per bet (Settings › Novig API › Betting).")
+        if (stake > limits.maxStake + 1e-9) return no("That's over your ${money(limits.maxStake)} limit per bet (Settings › Betting & Novig account).")
         if (spentToday + stake > limits.maxPerDay + 1e-9) {
             return no("That would take today's API bets to ${money(spentToday + stake)}, over your ${money(limits.maxPerDay)} daily limit (${money(spentToday)} so far).")
         }

@@ -58,7 +58,7 @@ object PresetsText {
 }
 
 /**
- * Settings › Presets (Tj, 2026-10-02 17:01Z: "make a preset section in the settings that sets all the settings to ideal settings for volume but safe clv
+ * the Auto-bet tab › Presets (Tj, 2026-10-02 17:01Z: "make a preset section in the settings that sets all the settings to ideal settings for volume but safe clv
  * scanning … make it so I can make my own settings presets"): the built-in presets, Tj's own, and saving the current settings as one.
  */
 @Composable

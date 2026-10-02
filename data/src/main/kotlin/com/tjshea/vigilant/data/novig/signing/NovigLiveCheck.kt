@@ -14,7 +14,7 @@ import okhttp3.Request
 import java.util.Locale
 
 /**
- * What Settings › Novig API › Test key measures beyond "the signature is accepted" (Tj, 2026-09-29: "Right now the novig scan is slow,
+ * What Settings › Betting & Novig account › Test key measures beyond "the signature is accepted" (Tj, 2026-09-29: "Right now the novig scan is slow,
  * even though I tested my key and it says it works"). The signed REST route and the live feed (the websocket) were only ever checked
  * against mocks; this runs each once against the real API, from the phone, and says in numbers what the key gets:
  *

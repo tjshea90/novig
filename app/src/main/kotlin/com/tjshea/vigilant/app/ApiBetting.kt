@@ -93,7 +93,7 @@ object BetAmount {
     fun problem(text: String, max: Double): String? {
         if (text.isBlank()) return null
         WalletAmount.parse(text)?.let { v ->
-            return if (v > max + 1e-9) "Over your ${String.format(Locale.US, "$%.2f", max)} limit per bet (Settings › Novig API › Betting)" else null
+            return if (v > max + 1e-9) "Over your ${String.format(Locale.US, "$%.2f", max)} limit per bet (Settings › Betting & Novig account)" else null
         }
         return WalletAmount.problem(text)
     }

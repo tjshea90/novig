@@ -140,10 +140,10 @@ class AutoBettor(
         val rules = AutoBet.rules(settings)
         // Whoever calls, a halted or switched-off auto-bet places nothing.
         if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
-        settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (Settings › Betting › Resume auto-bet)") }
+        settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
         failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
         val placer = placer()
-        if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting › Enable betting)")
+        if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
         cooldown.entries.removeAll { it.value <= now }
 
         val skipped = LinkedHashMap<String, Int>()
@@ -178,7 +178,7 @@ class AutoBettor(
             return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.advice}")
         } catch (e: Exception) {
             return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.message ?: e.javaClass.simpleName}")
-        } ?: return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting › Enable betting)")
+        } ?: return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
         var balance = balance0
         if (balance >= AutoBet.MIN_STAKE) walletEmptyNoted = false
 
@@ -186,7 +186,7 @@ class AutoBettor(
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
         val limits = BetLimits(
             maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds,
-            minEvWhere = "Settings › Betting › Auto-bet › Smallest edge at Novig's price now",
+            minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
         )
         val placed = ArrayList<TrackedBet>()
         var stopped: String? = null
@@ -265,7 +265,7 @@ class AutoBettor(
                     break
                 }
                 is PlaceResult.Unconfirmed -> {
-                    // Nothing says whether it filled: never again until Tj has looked (Novig, then Settings › Betting › Resume).
+                    // Nothing says whether it filled: never again until Tj has looked (Novig, then the Auto-bet tab › Resume).
                     halted = true
                     stopped = "an order's answer was lost, so auto-bet is stopped: ${result.message}"
                     withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = result.message) } } }
@@ -275,7 +275,7 @@ class AutoBettor(
         }
         if (walletEmpty && !walletEmptyNoted) {
             walletEmptyNoted = true
-            notes.stopped(app, "Wallet empty", "Auto-bet is waiting: the Vigilant wallet has ${money(balance)}. Add money in Settings › Betting.")
+            notes.stopped(app, "Wallet empty", "Auto-bet is waiting: the Vigilant wallet has ${money(balance)}. Add money in Settings › Betting & Novig account.")
         }
         val report = Report(looked = all.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
         if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
@@ -396,7 +396,7 @@ class AutoBettor(
         private const val SHARP_TALLY_KEEP = 2_000
 
         /**
-         * The sharp check's tally for Settings › Betting (Tj, 2026-10-02 16:05Z: "I'm getting no volume so far on auto bet with the option for each bet
+         * The sharp check's tally for Settings › Betting & Novig account (Tj, 2026-10-02 16:05Z: "I'm getting no volume so far on auto bet with the option for each bet
          * to be verified positive EV by a sharp book. Is this working correctly? Is it getting sharp book pricing?"): how many bets it was asked about and
          * what it said, so the reason nothing is placed is on screen. [label]: the sharp books ("Pinnacle"). Null before it asked about any bet.
          */

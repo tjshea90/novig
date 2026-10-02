@@ -22,7 +22,7 @@ import java.time.Instant
  * used, left and total for the credits month, and that month's `period_start`/`period_end` (the 1st, UTC: checked with Tj's key; the
  * key check's `subscription.period_end_iso` is Stripe's billing date, not when the credits reset). When that can't be read,
  * `GET /v1/meta/api-key-check` (also free): the same counts plus `valid` and `reason` (`credit_exhausted`, `key_inactive`). What it says goes
- * straight into the meter ([UsageMeter.recordBalance]). Read when a scan starts, when Settings › API usage or Diagnostics opens, and when a
+ * straight into the meter ([UsageMeter.recordBalance]). Read when a scan starts, when Settings › API usage & keys or Diagnostics opens, and when a
  * key is added; at most every [REFRESH_MS] a key unless asked.
  */
 class ParlayAccount(
@@ -100,7 +100,7 @@ class ParlayAccount(
     private val historyAt = HashMap<String, Long>()
 
     /**
-     * Reads every key's usage log (free), at most every [REFRESH_MS] a key unless [force]d: when Settings › API usage opens. Returns how many
+     * Reads every key's usage log (free), at most every [REFRESH_MS] a key unless [force]d: when Settings › API usage & keys opens. Returns how many
      * answered; never throws.
      */
     suspend fun refreshHistory(force: Boolean = false): Int {

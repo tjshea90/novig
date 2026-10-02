@@ -1,7 +1,7 @@
 package com.tjshea.vigilant.data.novig.signing
 
 /**
- * What Settings › Novig API › Test key says (Tj, 2026-09-28: "The app is telling me I have a proxy or vpn when I test
+ * What Settings › Betting & Novig account › Test key says (Tj, 2026-09-28: "The app is telling me I have a proxy or vpn when I test
  * the novig key, but I don't"). Novig's `ANONYMIZED_NETWORK` and `RESTRICTED_NETWORK_REGION` judge the internet
  * address a request comes from, not the phone (docs.novig.com/api/errors), so the test says which connection it used,
  * whether this phone really has a VPN up, and, when Novig blamed the address, what it says over the other connection.

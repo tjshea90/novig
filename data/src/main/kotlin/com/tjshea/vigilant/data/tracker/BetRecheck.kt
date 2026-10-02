@@ -163,7 +163,7 @@ class BetRecheck(
             }
             if (vigilantOnly > 0) {
                 val n = "$vigilantOnly Vigilant bet${if (vigilantOnly == 1) "" else "s"}"
-                parts += if (vigilantOff) "$n not updated: the Vigilant scanner is off (Settings › Scanner)" else "$n update with each Vigilant scan"
+                parts += if (vigilantOff) "$n not updated: the Vigilant scanner is off (Settings › Scanning)" else "$n update with each Vigilant scan"
             }
             val text = parts.joinToString(" · ")
             return when {

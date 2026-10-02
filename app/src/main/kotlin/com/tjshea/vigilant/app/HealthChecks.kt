@@ -46,7 +46,7 @@ object HealthChecks {
 
     private fun MutableList<Check>.scanning(s: UiState, now: Long) {
         val set = s.settings
-        if (set.paused) add(Check(Level.WARN, "Scanning", "all scanning is paused", look = "Settings › Scanner › Pause (ScanSettings.paused)"))
+        if (set.paused) add(Check(Level.WARN, "Scanning", "all scanning is paused", look = "Settings › Scanning › Pause (ScanSettings.paused)"))
         if (!set.vigilantOn) {
             add(Check(Level.OK, "Vigilant scanner", "asleep: the scanner is on CNO only", look = "ScanSettings.scanner"))
             return
@@ -126,7 +126,7 @@ object HealthChecks {
             val policy = com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.firstOrNull { it.id == id }
             fun spent(u: com.tjshea.vigilant.data.keys.KeyUsage) = u.depletedUntil?.let { it > now } == true
             p.keys.forEach { (key, u) ->
-                if (u.refused) add(Check(Level.FAIL, "API $name", "key …${key.takeLast(4)} was refused", u.lastNote?.take(120), "Settings › API keys: replace it"))
+                if (u.refused) add(Check(Level.FAIL, "API $name", "key …${key.takeLast(4)} was refused", u.lastNote?.take(120), "Settings › Fair odds & sources: replace it"))
                 else u.depletedUntil?.takeIf { it > now }?.let { until ->
                     // Another key with credits left carries on: a spent key is only worth a warning when it was the last one.
                     val others = p.keys.filter { (k, o) -> k != key && !o.refused && !spent(o) && (policy?.let { pol -> o.left(pol) } ?: 1) > 0 }
@@ -153,7 +153,7 @@ object HealthChecks {
             }
         }
         x.parlayAccounts.forEach { (key, a) ->
-            if (a.valid == false) add(Check(Level.FAIL, "API ParlayAPI", "key …${key.takeLast(4)} is not valid" + (a.reason?.let { ": $it" } ?: ""), look = "parlay-api.com account; Settings › API keys"))
+            if (a.valid == false) add(Check(Level.FAIL, "API ParlayAPI", "key …${key.takeLast(4)} is not valid" + (a.reason?.let { ": $it" } ?: ""), look = "parlay-api.com account; Settings › Fair odds & sources"))
         }
         val views = com.tjshea.vigilant.app.ui.meterViews(s, now).filter { it.policy.keyed }
         for (line in Runway.lines(views, now)) {
@@ -179,7 +179,7 @@ object HealthChecks {
     private fun MutableList<Check>.background(s: UiState, x: Diagnostics.Extras, now: Long) {
         val set = s.settings
         if (set.autoScan == AutoScanMode.OFF) {
-            add(Check(Level.OK, "Background auto-scan", "off", look = "Settings › Auto-scan (no +EV alerts while Vigilant is closed)"))
+            add(Check(Level.OK, "Background auto-scan", "off", look = "Settings › Scanning › Background scan (no +EV alerts while Vigilant is closed)"))
             return
         }
         if (set.activeAutoScan == AutoScanMode.OFF) {
@@ -205,7 +205,7 @@ object HealthChecks {
             add(
                 Check(
                     Level.WARN, "Background auto-scan", "Keep awake is off: with the screen off and the phone still, Android may run alarm-driven scans only about every 9 minutes, not every ${ScanSettings.intervalLabel(set.autoScanSeconds)}",
-                    look = "Settings › Background auto-scan › Keep awake",
+                    look = "Settings › Scanning › Keep awake",
                 ),
             )
         }
@@ -398,7 +398,7 @@ object HealthChecks {
     private fun MutableList<Check>.betting(s: UiState) {
         if (!s.betting.enabled) return
         val b = s.betting.balance ?: return
-        if (b < 1.0) add(Check(Level.WARN, "Vigilant wallet", "holds ${String.format(Locale.US, "$%.2f", b)}: bets start at what's left", look = "Settings › Betting › Add money"))
+        if (b < 1.0) add(Check(Level.WARN, "Vigilant wallet", "holds ${String.format(Locale.US, "$%.2f", b)}: bets start at what's left", look = "Settings › Betting & Novig account › Add money"))
     }
 
     /**
@@ -410,7 +410,7 @@ object HealthChecks {
         if (m.maxMb <= 0) return
         val text = "heap ${m.usedMb} of ${m.maxMb} MB (${Math.round(m.fraction * 100)}%)"
         if (m.fraction >= com.tjshea.vigilant.data.MemoryGuard.TRIM_AT) {
-            add(Check(Level.WARN, "Memory", "the app's heap is nearly full: $text", m.lines.firstOrNull(), "Settings › +EV feed › scan size (Novig prices per scan, lines and props per game), fewer leagues; data/MemoryGuard.kt"))
+            add(Check(Level.WARN, "Memory", "the app's heap is nearly full: $text", m.lines.firstOrNull(), "Settings › +EV feed & scan size (Novig prices per scan, lines and props per game), fewer leagues; data/MemoryGuard.kt"))
         } else {
             add(Check(Level.OK, "Memory", text))
         }
@@ -423,7 +423,7 @@ object HealthChecks {
     private fun MutableList<Check>.autoBet(s: UiState, x: Diagnostics.Extras, now: Long) {
         val set = s.settings
         if (!set.autoBet) {
-            add(Check(Level.OK, "Auto-bet", "off", look = "Settings › Betting › Auto-bet"))
+            add(Check(Level.OK, "Auto-bet", "off", look = "the Auto-bet tab"))
             return
         }
         val st = x.autoBet
@@ -431,16 +431,16 @@ object HealthChecks {
         val why = com.tjshea.vigilant.app.ui.AutoBetText.whyNotRunning(s)
         val halted = set.autoBetHalted
         when {
-            halted != null -> add(Check(Level.FAIL, "Auto-bet", "stopped after a lost order, placing nothing until resumed", halted.take(160), "Novig and the Tracker's Sync with Novig's fills, then Settings › Betting › Resume auto-bet"))
-            why != null -> add(Check(Level.WARN, "Auto-bet", "is on but can't run: $why", look = "Settings › Betting, Settings › Scan"))
-            st.last.walletEmpty -> add(Check(Level.WARN, "Auto-bet", "the Vigilant wallet can't fund a bet: nothing is placed", line, "Settings › Betting › Add money"))
+            halted != null -> add(Check(Level.FAIL, "Auto-bet", "stopped after a lost order, placing nothing until resumed", halted.take(160), "Novig and the Tracker's Sync with Novig's fills, then the Auto-bet tab › Resume auto-bet"))
+            why != null -> add(Check(Level.WARN, "Auto-bet", "is on but can't run: $why", look = "Settings › Betting & Novig account, Settings › Scanning"))
+            st.last.walletEmpty -> add(Check(Level.WARN, "Auto-bet", "the Vigilant wallet can't fund a bet: nothing is placed", line, "Settings › Betting & Novig account › Add money"))
             st.blocker != null -> add(Check(Level.WARN, "Auto-bet", "can't place bets right now: ${st.blocker}", line, "app/AutoBettor.kt"))
             st.lastRunMs == null -> add(Check(Level.WARN, "Auto-bet", "on, but no check has run since the app opened", look = "the background auto-scan below, Android's battery limits"))
             else -> add(Check(Level.OK, "Auto-bet", "running: $line"))
         }
         // Tj, 2026-10-01: every bet gets a push notification; one Android won't show means bets placed that he never sees.
-        if (x.phone.notifications == false) add(Check(Level.WARN, "Auto-bet notifications", "Android has notifications switched off for Vigilant: bets are placed with no pop-up", look = "Android Settings › Apps › Vigilant › Notifications, then Settings › Betting › Send a test notification"))
-        if (st.last.stopped?.contains("daily limit") == true) add(Check(Level.WARN, "Auto-bet", "today's API bets reached the daily limit of ${Locale.US.let { String.format(it, "$%.0f", set.apiMaxPerDay) }}", look = "Settings › Betting › Most in a day"))
+        if (x.phone.notifications == false) add(Check(Level.WARN, "Auto-bet notifications", "Android has notifications switched off for Vigilant: bets are placed with no pop-up", look = "Android Settings › Apps › Vigilant › Notifications, then Settings › Betting & Novig account › Send a test notification"))
+        if (st.last.stopped?.contains("daily limit") == true) add(Check(Level.WARN, "Auto-bet", "today's API bets reached the daily limit of ${Locale.US.let { String.format(it, "$%.0f", set.apiMaxPerDay) }}", look = "Settings › Betting & Novig account › Most in a day"))
     }
 
     /**
@@ -457,7 +457,7 @@ object HealthChecks {
             add(
                 Check(
                     Level.WARN, "Sharp-book confirmation", "is on for $where but no Pinnacle feed is on with a key: nothing can be confirmed, so ${if (confirmBet) "the auto-bet skips every bet" else "no CNO alert is sent"}",
-                    look = "Settings › Fair-odds sources (PinnWire or pinnapi, ParlayAPI, PropLine), or switch on \"Also take Pinnacle's price from CNO's page\"",
+                    look = "Settings › Fair odds & sources (PinnWire or pinnapi, ParlayAPI, PropLine), or switch on \"Also take Pinnacle's price from CNO's page\"",
                 ),
             )
             return

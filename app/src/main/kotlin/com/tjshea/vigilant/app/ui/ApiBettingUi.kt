@@ -242,7 +242,7 @@ private val MAX_STAKE_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 private val DAY_CHOICES = listOf(20.0, 50.0, 100.0, 250.0, 500.0)
 private val MONEY_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 
-/** Settings › Betting › Betting through the API. Shown once a key is connected. [savedKey]: the management key saved on this phone. */
+/** Settings › Betting & Novig account › Betting through the API. Shown once a key is connected. [savedKey]: the management key saved on this phone. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NovigBettingSection(
@@ -259,7 +259,7 @@ fun NovigBettingSection(
             "It is not the cash wallet your Novig app bets use: you add money to it here, and only bets placed from Vigilant use it. " +
             "Every bet shows exactly what it will buy and asks you to confirm; nothing is sent before that, and it never bets a game that has started. " +
             "Novig only lets an order through from a network it doesn't list as a VPN or proxy, and when you've opened the Novig app in the last 3 days. " +
-            "Setting up and moving money need your management key (Novig › Profile › Settings › Novig API); you enter it once and it's saved on this phone.",
+            "Setting up and moving money need your management key (Novig › Profile › Settings › Betting & Novig account › Novig API key); you enter it once and it's saved on this phone.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(vertical = 4.dp),

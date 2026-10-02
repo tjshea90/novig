@@ -4,7 +4,7 @@ import java.util.Locale
 
 /**
  * Where a scan's time went, in milliseconds from its start (Tj, 2026-09-28: "now it is reading the API very slow"):
- * shown under Settings › Novig API, so the next "slow" comes with numbers from the phone itself.
+ * shown under Settings › Betting & Novig account › Novig API key, so the next "slow" comes with numbers from the phone itself.
  */
 data class ScanTiming(
     /** Novig's board in (read, or re-used from the last few minutes). */

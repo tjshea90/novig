@@ -62,7 +62,7 @@ data class ScanReport(
     val booksReread: Int = 0,
     /** Books the connected key's websocket pushed (no request each; RESEARCH.md §27). Part of [booksFetched]. */
     val booksViaPush: Int = 0,
-    /** Where the scan's time went (Settings › Novig API). Null for a scan that did nothing. */
+    /** Where the scan's time went (Settings › Betting & Novig account › Novig API key). Null for a scan that did nothing. */
     val timing: ScanTiming? = null,
     /** Planned lines not read because the scan ran long enough that their other books' odds would be too old to show. */
     val booksTooLate: Int = 0,

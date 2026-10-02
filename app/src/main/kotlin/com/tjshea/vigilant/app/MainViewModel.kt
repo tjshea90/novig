@@ -78,7 +78,7 @@ data class ScanStatus(
     val booksViaKey: Int = 0,
     /** Of [booksFetched], the ones Novig's websocket pushed through the connected key (no request each). */
     val booksViaPush: Int = 0,
-    /** Where the last scan's time went (Settings › Novig API). */
+    /** Where the last scan's time went (Settings › Betting & Novig account › Novig API key). */
     val timing: ScanTiming? = null,
     /** The connected key's `read` limit, per second, as Novig reported it (`GET /v3/limits`). */
     val keyReadPerSec: Double? = null,
@@ -102,7 +102,7 @@ data class NovigUi(
     val managementKey: ManagementKeyHint? = null,
 )
 
-/** A report Tj can read, copy and paste (Settings › Diagnostics, Grading check): [busy] while it's being put together. */
+/** A report Tj can read, copy and paste (Settings › Diagnostics & about, Grading check): [busy] while it's being put together. */
 data class ReportUi(val title: String, val text: String, val busy: Boolean = false)
 
 data class UiState(
@@ -110,7 +110,7 @@ data class UiState(
     val report: ReportUi? = null,
     /** Betting through Novig's API: set up or not, the balance; and the Bet sheet while one is open (Tj, 2026-09-29). */
     val betting: BettingUi = BettingUi(),
-    /** What the auto-bet did last cycle and the wallet it saw (Tj, 2026-10-01), for Settings › Betting. */
+    /** What the auto-bet did last cycle and the wallet it saw (Tj, 2026-10-01), for Settings › Betting & Novig account. */
     val autoBetStatus: AutoBettor.Status = AutoBettor.Status(),
     val betSheet: BetSheetUi? = null,
     val settings: ScanSettings = ScanSettings(),
@@ -162,7 +162,7 @@ data class UiState(
     val parlayPicks: com.tjshea.vigilant.app.ui.ParlayPicksUi = com.tjshea.vigilant.app.ui.ParlayPicksUi(),
     /** ParlayAPI's "Second opinion" on the bets Tj asked about, by item key (a +EV bet's key, "cno:<row key>", "bet:<id>"). */
     val opinions: Map<String, com.tjshea.vigilant.app.ui.OpinionUi> = emptyMap(),
-    /** ParlayAPI's own usage log, day by day, and where the credits went (Settings › API usage; PARLAY_API.md §6.2). */
+    /** ParlayAPI's own usage log, day by day, and where the credits went (Settings › API usage & keys; PARLAY_API.md §6.2). */
     val parlayHistory: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null,
     /** CNO is being kept current right now: its tab or a widget is on screen. */
     val cnoLive: Boolean = false,
@@ -369,7 +369,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val api = ApiBettingController(c, _state, viewModelScope, _toasts)
 
     init {
-        // What the auto-bet did (a few times a minute at most: once per background cycle) for Settings › Betting.
+        // What the auto-bet did (a few times a minute at most: once per background cycle) for Settings › Betting & Novig account.
         viewModelScope.launch { c.autoBet.status.collect { st -> _state.update { it.copy(autoBetStatus = st) } } }
     }
 
@@ -1226,7 +1226,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * ParlayAPI's keys asked what they have left (free), so the meters show the provider's own figures (Tj, 2026-09-30); with [history]
-     * (Settings › API usage on screen) its day-by-day usage log too, for the chart under its meter (free, at most once a minute).
+     * (Settings › API usage & keys on screen) its day-by-day usage log too, for the chart under its meter (free, at most once a minute).
      */
     fun refreshBalances(force: Boolean = false, history: Boolean = false) {
         if (keysFor(ApiProvider.PARLAY).isEmpty()) return
@@ -1433,7 +1433,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
 
-    /** Settings › Diagnostics: one page of settings, the last scan, API usage, the background scan and the Tracker, to copy (Tj, 2026-09-29). */
+    /** Settings › Diagnostics & about: one page of settings, the last scan, API usage, the background scan and the Tracker, to copy (Tj, 2026-09-29). */
     /** The heap and what the app holds in it, for Diagnostics (counts, not bytes: a scan result, the boards kept between scans, the books pages). */
     private fun memoryNow(): Diagnostics.Memory {
         val r = _state.value.result
@@ -1489,7 +1489,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val shareRequests: kotlinx.coroutines.flow.Flow<android.content.Intent> = shares.receiveAsFlow()
 
     /**
-     * Settings › Tools › Share diagnostics with Claude (Tj, 2026-10-02): makes the file ([DiagnosticsFile.build]), keeps this report's numbers so the next one can be compared
+     * Settings › Diagnostics & about › Share with Claude (Tj, 2026-10-02): makes the file ([DiagnosticsFile.build]), keeps this report's numbers so the next one can be compared
      * with it, and hands Android's share sheet to the screen. Never throws: a failure is a toast.
      */
     fun shareDiagnostics() {
@@ -1598,7 +1598,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    /** Settings › Betting › Grading check: what Novig's ledger and positions say about each API bet, beside what the Tracker did (Tj, 2026-09-29). */
+    /** Settings › Diagnostics & about › Grading check: what Novig's ledger and positions say about each API bet, beside what the Tracker did (Tj, 2026-09-29). */
     fun showGradingCheck() {
         val connection = _state.value.novig.connection ?: return
         val trading = c.trading
@@ -1732,7 +1732,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 c.autoScan.resumed()
                 if (_state.value.settings.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF) runCatching { AutoScanService.start(getApplication()) }
             }
-            // What the round cost each API and how it went, for Settings › Diagnostics.
+            // What the round cost each API and how it went, for Settings › Diagnostics & about.
             report?.let { r ->
                 c.lastCheckCost = RoundCost(
                     began, System.currentTimeMillis() - began, UsageDelta.between(usageBefore, c.usage.flow.value),
