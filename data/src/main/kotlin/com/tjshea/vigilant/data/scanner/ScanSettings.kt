@@ -21,7 +21,14 @@ enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
 enum class ScannerMode(val displayName: String) { BOTH("Both"), VIGILANT("Vigilant only"), CNO("CNO only") }
 
 /**
- * Which sharp books can confirm a bet's +EV ([ScanSettings.sharpConfirmAutoBet], [ScanSettings.sharpConfirmAlerts]; Tj, 2026-10-02: "at least one sharp
+ * What the sharp books do to a bet (Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement. Only skip a bet if the sharpest book for that market says it is
+ * not +ev"): nothing, veto it when the sharpest book for its kind says it isn't +EV ([SharpVeto], the default), or require a fresh sharp quote that confirms
+ * it ([SharpConfirm]: stricter, few bets: RESEARCH.md §64.3).
+ */
+enum class SharpMode(val displayName: String) { OFF("Off"), VETO("Veto"), CONFIRM("Require a confirmation") }
+
+/**
+ * Which sharp books can confirm a bet's +EV in [SharpMode.CONFIRM] ([ScanSettings.sharpAutoBet], [ScanSettings.sharpAlerts]; Tj, 2026-10-02: "at least one sharp
  * sports book (usually pinnacle)"). [codes] are CrazyNinjaOdds' column codes ([com.tjshea.vigilant.data.cno.CnoBooks]): PN = Pinnacle, CS = Circa.
  */
 enum class SharpBookChoice(val displayName: String, val codes: Set<String>) {
@@ -138,11 +145,12 @@ data class ScanSettings(
      * Sharp-book confirmation (Tj, 2026-10-02: "require bets to be proven positive EV by a current, devigged sharp book such as Pinnacle … fresh (within
      * the last few minutes) odds from the sharp book(s) devigged and compared to the current novig odds for the same exact bet"): on top of every other
      * criterion, the bet must be +EV against Novig's price now on a sharp book's own devigged two-sided price for the exact same line and side, no older
-     * than [sharpConfirmMaxAgeSeconds]. One switch for the auto-bet, one for CNO's push alerts; both off by default. See
-     * [SharpConfirm] and `data/reference/SharpBooks` (RESEARCH.md §60).
+     * than [sharpConfirmMaxAgeSeconds]. That is [SharpMode.CONFIRM]; since 2026-10-02 17:01Z (Tj: "sharp veto instead of requirement") both default to
+     * [SharpMode.VETO]: skip only when the sharpest book for the bet's kind says it isn't +EV ([SharpVeto], RESEARCH.md §66). One for the auto-bet, one for
+     * CNO's push alerts. See [SharpConfirm] and `data/reference/SharpBooks` (RESEARCH.md §60).
      */
-    val sharpConfirmAutoBet: Boolean = false,
-    val sharpConfirmAlerts: Boolean = false,
+    val sharpAutoBet: SharpMode = SharpMode.VETO,
+    val sharpAlerts: SharpMode = SharpMode.VETO,
     val sharpConfirmBooks: SharpBookChoice = SharpBookChoice.PINNACLE,
     /** How old a sharp book's quote may be ([SHARP_MAX_AGE_CHOICES]; never over the app's 5-minute limit, [Freshness.MAX_QUOTE_AGE_MS]). */
     val sharpConfirmMaxAgeSeconds: Int = 180,
@@ -165,6 +173,14 @@ data class ScanSettings(
      * 130 = nothing over +130, favorites always pass; 0 = no limit (what it was before this existed). [AUTO_BET_MAX_ODDS_CHOICES], or typed.
      */
     val autoBetMaxOdds: Int = 0,
+    /** The shortest odds an auto-bet may take, American (−200 = nothing shorter than −200; 0 = no limit): [AUTO_BET_MIN_ODDS_CHOICES]. RESEARCH.md §66. */
+    val autoBetMinOdds: Int = 0,
+    /** The kinds of bet the auto-bet places ([BetKind]); every kind by default. A preset narrows it (Tj's game totals lose to the close: RESEARCH.md §65). */
+    val autoBetKinds: Set<BetKind> = BetKind.entries.toSet(),
+    /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */
+    val presets: List<SavedPreset> = emptyList(),
+    /** The preset applied last (a built-in's or one of [presets]' names), null = none; recorded on each bet ([com.tjshea.vigilant.data.tracker.AtBet]). */
+    val presetName: String? = null,
     /**
      * Why auto-bet stopped itself and stays stopped until Tj resumes it (an order whose answer was lost, so nothing says whether it filled);
      * null = running. Not a setting he picks: [com.tjshea.vigilant.data.novig.trading.AutoBet] and the app set and clear it.
@@ -604,6 +620,8 @@ data class ScanSettings(
         val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
 
         /** [autoBetMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
+        val AUTO_BET_MIN_ODDS_CHOICES = listOf(0, -150, -200, -250, -300)
+
         val AUTO_BET_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 150, 200, 300, 0)
 
         /** [autoBetTwoSided]'s choices. */

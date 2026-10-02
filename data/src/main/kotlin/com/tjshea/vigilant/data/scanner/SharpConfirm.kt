@@ -33,9 +33,9 @@ object SharpConfirm {
         val viaCno: Boolean,
     )
 
-    /** The rules for the auto-bet ([autoBet]) or the alerts, from [s]; null when that switch is off. */
+    /** The rules for the auto-bet ([autoBet]) or the alerts, from [s]; null unless that one is set to [SharpMode.CONFIRM]. */
     fun rules(s: ScanSettings, autoBet: Boolean): Rules? {
-        if (!(if (autoBet) s.sharpConfirmAutoBet else s.sharpConfirmAlerts)) return null
+        if ((if (autoBet) s.sharpAutoBet else s.sharpAlerts) != SharpMode.CONFIRM) return null
         return Rules(
             codes = s.sharpConfirmBooks.codes,
             label = s.sharpConfirmBooks.displayName,
