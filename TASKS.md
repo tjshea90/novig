@@ -3267,3 +3267,12 @@ His screenshot: CNO tab, Bet sheet for Under 47.5 (BYU @ TCU, NCAAF), $0.97 (¼ 
 
 - [x] AP1 Say the real reason: positive EV under the minimum names the minimum and where to change it; "the edge is gone" only when the EV at Novig's price is zero or less. The ladder note ("Only $X … at a positive edge") names the minimum too when it is above zero. Tests (mutation-checked), floor, ship, answer Tj.
   Done: `ApiBetPlanner.plan` ("+2.4% EV at Novig's best price now (+108, fair +103) is under your +3.0% minimum (Settings › Betting › Smallest edge a bet is still placed at)"), `BetLimits.minEvWhere` (auto-bet names its own setting), the ladder note. `ApiBettingTest` (+2 tests, 3 mutants killed); floor 1,606 passed / 23 skipped. v0.44.1 (code 80).
+
+
+## Tj, 2026-10-02 ~05:4xZ (with the v0.44.1 diagnostics file): "When I scan with vigilant scanner, the entire app becomes laggy still. Remove the restriction of minimum bet EV on bet slips in the app, I should be able to bet on whatever I want manually. Only keep the hard restrictions on the auto bet function based on whatever settings I set. There was an error and it wouldn't let me auto bet. See if this is fixable."
+
+- [ ] AQ1 Read the v0.44.1 diagnostics file end to end: the lag evidence (cycle/scan timings, main-thread signs, memory), the auto-bet error, anything else it flags.
+- [ ] AQ2 Lag during a Vigilant scan, still: find what is left (measure, don't guess), fix it, with a test or a measurement.
+- [ ] AQ3 Manual bet slips (the Bet sheet, betting through the API by hand) have no minimum-EV rule: Tj can bet whatever he wants manually. Auto-bet keeps every hard rule it has, from his auto-bet settings. Remove or repurpose the "Smallest edge a bet is still placed at" setting for manual bets; say on the sheet what the EV is without refusing.
+- [ ] AQ4 The auto-bet error: find it in the file, fix the cause if it is fixable.
+- [ ] AQ5 Tests (mutation-checked), floor, ship, answer Tj.
