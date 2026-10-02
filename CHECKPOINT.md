@@ -1,13 +1,13 @@
-# CHECKPOINT 2340 — read me first, then TASKS.md
+# CHECKPOINT 2341 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T16:39:25Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `c1ffe624` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T16:40:19Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `49772138` (this checkpoint is the commit after it)
 
 ## Just done
-AU4: v0.44.3 released, APK verified, recorded; release.yml's description fixed
+AV: Tj's 16:45Z settings/CLV question written into TASKS.md
 
 ## Do this next
-answer Tj (findings + Release link); then wait for his next Diagnostics/the sharp tally from his phone
+AV1: read RESEARCH.md on CLV/agreement/thresholds, then outside sources
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ answer Tj (findings + Release link); then wait for his next Diagnostics/the shar
 
 ## Last ten checkpoints
 ```
+  f7dc79c6 ckpt 2340: AU4: v0.44.3 released, APK verified, recorded; release.yml's description fix
   02f379ba ckpt 2339: pre-release: v0.44.3: only a phone restart turns auto-bet off (not a swipe a
   99fa19d1 ckpt 2338: floor: 1,641 passed, 1 stale pin fixed (DiagnosticsFileTest); SharpRealBoard
   9bcdd15a ckpt 2337: AU1-AU3 ticked (8 mutants killed); BRIEF.md rule + RESEARCH.md §64
@@ -26,7 +27,6 @@ answer Tj (findings + Release link); then wait for his next Diagnostics/the shar
   42953e58 ckpt 2333: AT1: audit of every request in this chat: all done and shipped (v0.44.0-v0.4
   d5b560e9 ckpt 2332: v0.44.2 released, verified and recorded; AQ5/AR3/AS5 ticked
   583f0780 ckpt 2331: CI flake fixed: BackgroundTrimTest counted the scanner's own memory-pressure
-  7825365d ckpt 2330: pre-release: v0.44.2: manual bets have no minimum edge (auto-bet keeps its r
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
