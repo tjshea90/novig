@@ -230,10 +230,12 @@ class SharpConfirmAppTest {
         val noView = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") CnoBookPrice("PN", 140, null, -170, null) else it }) }
         val vetoState = state().let { st -> st.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = noView))).indexed(now) }
         calls = 0
-        val veto = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 30_000L)).run(settings(), vetoState)
+        // (Two books still agree without Pinnacle, so the bet reaches the sharp check: the minimum is 2 for this run.)
+        val vetoSettings = settings { it.copy(autoBetBooks = 2) }
+        val veto = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 30_000L)).run(vetoSettings, vetoState.copy(settings = vetoSettings.copy(cnoLivePrices = true)).indexed(now))
         assertEquals(0, veto.placed.size)
         assertEquals("a CNO veto costs no feed call", 0, calls)
-        assertEquals(1, veto.skipped["Pinnacle's own devigged price doesn't show it +EV at Novig's price"])
+        assertEquals(veto.skipped.toString(), 1, veto.skipped["Pinnacle's own devigged price doesn't show it +EV at Novig's price"])
     }
 
     // ---- the alerts ---------------------------------------------------------------------------------------------------
