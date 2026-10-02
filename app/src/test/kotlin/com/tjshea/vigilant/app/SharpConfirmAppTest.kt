@@ -189,6 +189,7 @@ class SharpConfirmAppTest {
         }
         assertTrue("never asked for a bet that already failed: $asked", asked.isEmpty())
         // The alerts' switch is another switch: it doesn't make the auto-bet ask.
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
         val alertsOnly = settings { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true) }
         val alertsReport = bettor(FakeNovig(), asked) { error("must not be asked") }.run(alertsOnly, state(alertsOnly))
         assertEquals(alertsReport.skipped.toString(), 1, alertsReport.placed.size)
@@ -223,7 +224,7 @@ class SharpConfirmAppTest {
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
         val stale = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 240_000L)).run(settings(), state())
         assertEquals(0, stale.placed.size)
-        assertEquals(1, stale.skipped["Pinnacle's price for it is older than 3 min (or has no time)"])
+        assertEquals(stale.skipped.toString(), 1, stale.skipped["Pinnacle's price for it is older than 3 min (or has no time)"])
         // CNO's own page has Pinnacle at +100/−122 (fair about 47.6%): a +EV yes there. Make CNO's Pinnacle say no (Under +140, Over −170: fair about 40%):
         // the bet is vetoed before any feed is asked.
         val noView = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") CnoBookPrice("PN", 140, null, -170, null) else it }) }
