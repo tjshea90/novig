@@ -1,21 +1,23 @@
-# CHECKPOINT 2309 — read me first, then TASKS.md
+# CHECKPOINT 2310 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T04:50:40Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `d8695cbe` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T04:56:52Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `1d870145` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.44.0: smoother +EV list during scans, ParlayAPI quotes dated by their last sighting (most were discarded as old), live feed carries up to 2,000 prices per scan, Vigilant trims memory off screen, smarter diagnostics (old-version crashes, cached reclaims, readable stacks) (versionCode 79, v0.44.0)
+v0.44.0 released and recorded (AO1-AO6 done): lag fix, ParlayAPI freshness, live feed, memory trim, smarter diagnostics
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.44.0), then run: bash tools/record-release.sh v0.44.0 79 "v0.44.0: smoother +EV list during scans, ParlayAPI quotes dated by their last sighting (most were discarded as old), live feed carries up to 2,000 prices per scan, Vigilant trims memory off screen, smarter diagnostics (old-version crashes, cached reclaims, readable stacks)"
+answer Tj with findings and the Release link; next diagnostics file checks: live feed count, 'odds N min old', CLV of Vigilant bets, background exits
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  07ce6e1a ckpt 2309: pre-release: v0.44.0: smoother +EV list during scans, ParlayAPI quotes dated
   d8695cbe ckpt 2308: AO1 full tests done: floor 1604/23/0 with screenshots, 97 PNGs looked at, 3 
   df8ee1b3 ckpt 2307: RESEARCH §63, PARLAY_API/NOVIG_API notes, TASKS AO2-AO5 ticked, KeyActions 
   2128b83f ckpt 2306: Diagnostics review fixes: onTrimMemory drops boards past the freshness limit
@@ -25,5 +27,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   5e414948 ckpt 2302: wrote Tj's full-tests + lag + 9-min odds + APIs request into TASKS.md as AO1
   07644e98 ckpt 2301: AN1-AN3: liquidity-follows-sharps tested on Novig's own trades (RESEARCH.md 
   411ea776 ckpt 2300: wrote Tj's sharp-liquidity scanner request into TASKS.md as AN1-AN3
-  efc3c122 ckpt 2299: v0.43.0 released and recorded: diagnostics file for Claude with flight recor
 ```
