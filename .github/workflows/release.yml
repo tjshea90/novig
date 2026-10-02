@@ -119,7 +119,7 @@ jobs:
           cp "$APK" "release-out/vigilant-${{ steps.version.outputs.tag }}.apk"
           # R8's map from this build's code to the source, for retracing a crash stack from a Diagnostics file (RESEARCH.md §63).
           MAP=app/build/outputs/mapping/release/mapping.txt
-          if [ -f "$MAP" ]; then cp "$MAP" "release-out/vigilant-${{ steps.version.outputs.tag }}-mapping.txt"; else echo "::warning::No R8 mapping.txt found"; fi
+          if [ -f "$MAP" ]; then gzip -9 -c "$MAP" > "release-out/vigilant-${{ steps.version.outputs.tag }}-mapping.txt.gz"; else echo "::warning::No R8 mapping.txt found"; fi
           echo "Signing certificate verified against BRIEF.md's recorded fingerprint."
 
       - name: Create the release tag (server-side — this account's containers get HTTP 403 pushing refs/tags/*)
@@ -136,7 +136,7 @@ jobs:
           name: "Vigilant ${{ steps.version.outputs.tag }}"
           files: |
             release-out/*.apk
-            release-out/*-mapping.txt
+            release-out/*-mapping.txt.gz
           body: |
             Signed release build of Vigilant for Novig (`com.tjshea.vigilant`, versionCode ${{ steps.version.outputs.code }}).
 

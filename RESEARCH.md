@@ -3530,8 +3530,8 @@ informed, and in the NFL it is not.
   splits crashes and exits by the install time of the running version (`PackageInfo.lastUpdateTime` → `Extras.installedAtMs`): older ones are a WATCH,
   "before this version was installed". A saved crash now records its version (`crashText(version)`). Its stack read `at n5.l.E0(…0c73:6)`: R8
   renamed everything and the masker shortened R8's source-file map id. Release builds now keep Vigilant's own class and method names with file and
-  line (`-keepnames class com.tjshea.vigilant.**`, `-keepattributes SourceFile,LineNumberTable`), and each Release carries the build's
-  `mapping.txt` for exact lines.
+  line (`-keepnames class com.tjshea.vigilant.**`, `-keepattributes SourceFile,LineNumberTable`; the APK goes from 6.9 to 7.9 MB, and phone storage
+  isn't a constraint), and each Release carries the build's `mapping.txt.gz` for exact lines (R8 inlines).
 - **"BUG/FAILURE: Android ended the app 3 times: low memory, in the background":** `ApplicationExitInfo.importance` now says where it was. A kill
   while CACHED (nothing on screen, no widget, no service) is Android freeing memory for the apps in use, as for any background app: reported, not a
   failure (`Exit.reclaimed`). A kill while the widget, mini window or a scan's service ran is still a BUG, with what it used. And Vigilant now gets
