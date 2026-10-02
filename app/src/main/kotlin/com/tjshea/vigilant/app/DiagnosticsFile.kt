@@ -101,7 +101,7 @@ object DiagnosticsFile {
             o.appendLine("No findings: nothing the rules look for was wrong in this data. If Tj reported a problem, it is not in what the recorder keeps: say what data would show it and add that to the recorder.")
         } else {
             o.appendLine(Trend.KINDS.joinToString(" · ") { k -> "${findings.count { it.kind == k }} $k" } + " (${findings.size} in all; the top $MAX_FINDINGS are listed)")
-            findings.take(MAX_FINDINGS).forEachIndexed { i, f -> o.appendLine(f.text(i + 1)) }
+            findings.take(MAX_FINDINGS).forEachIndexed { i, f -> o.appendLine(mask(f.text(i + 1))) }
             if (findings.size > MAX_FINDINGS) o.appendLine("… and ${findings.size - MAX_FINDINGS} more, all WATCH or IMPROVE, in the JSON block's findings list.")
         }
 
@@ -264,8 +264,8 @@ object DiagnosticsFile {
                 findings.map { f ->
                     JsonObject(
                         mapOf(
-                            "key" to JsonPrimitive(f.key), "kind" to JsonPrimitive(f.kind), "title" to JsonPrimitive(f.title),
-                            "evidence" to JsonPrimitive(f.evidence.take(300)), "code" to JsonPrimitive(f.code), "do" to JsonPrimitive(f.action.take(300)),
+                            "key" to JsonPrimitive(mask(f.key)), "kind" to JsonPrimitive(f.kind), "title" to JsonPrimitive(mask(f.title)),
+                            "evidence" to JsonPrimitive(mask(f.evidence).take(300)), "code" to JsonPrimitive(mask(f.code)), "do" to JsonPrimitive(mask(f.action).take(300)),
                         ),
                     )
                 },
@@ -277,6 +277,9 @@ object DiagnosticsFile {
 
     /** Every free-text field goes through the same masking as a problem (a key, token or long id becomes its last four characters), whatever stored it. */
     private fun clean(s: String) = com.tjshea.vigilant.data.diag.ProblemLog.clean(s)
+
+    /** The same masking that keeps a stack's line breaks: for a finding's text, which the advisor built from stored words (a frame, a message, a host's answer). */
+    private fun mask(s: String) = com.tjshea.vigilant.data.diag.ProblemLog.mask(s)
 
     private fun pctOf(v: Double) = String.format(Locale.US, "%.1f%%", v * 100)
 
