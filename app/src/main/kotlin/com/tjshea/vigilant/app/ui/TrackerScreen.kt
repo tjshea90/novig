@@ -561,7 +561,7 @@ private fun StatsCards(
                     LabeledValue("Profit if all win", Format.money(stats.openToWin))
                     LabeledValue("Expected", Format.signedMoney(stats.openExpected), valueColor = moneyColor(stats.openExpected))
                 }
-                Caption("The ${stats.pending} open bet${if (stats.pending == 1) "" else "s"}: money on them, what they'd pay, and what their edges say they're worth (not in Profit yet).")
+                Caption("The ${stats.pending} open bet${if (stats.pending == 1) "" else "s"}: money on them, what they'd make if they all win, and what their edges say they're worth (not in Profit yet).")
             }
         }
         StatsCard {
