@@ -25,10 +25,37 @@ object AppExits {
         /** Memory the process used (proportional set size, MB), when Android kept it. */
         val pssMb: Long?,
         val trace: List<String> = emptyList(),
+        /** How important Android held the process when it ended (ActivityManager.RunningAppProcessInfo.IMPORTANCE_*); null = not known. */
+        val importance: Int? = null,
     ) {
-        /** A crash, a freeze or a kill for memory: something that went wrong, not Tj closing the app or an update. */
-        val bad: Boolean get() = reason in BAD
+        /**
+         * Ended for memory while it was a CACHED app: nothing on screen, no widget over Novig, no scan or service running. That is Android making room
+         * for the apps in use, as it does for any app sitting in the background; it costs a cold start, not a feature (Tj's 2026-10-02 Diagnostics
+         * counted three as failures).
+         */
+        val reclaimed: Boolean get() = reason == "low memory" && importance != null && importance >= CACHED
+
+        /** A crash, a freeze or a kill for memory while it was doing something: something that went wrong, not Tj closing the app or an update. */
+        val bad: Boolean get() = reason in BAD && !reclaimed
+
+        /** Where it was, in words: "on screen", "a visible window", "background service", "cached in the background"… */
+        val where: String get() = when {
+            foreground && (importance == null || importance <= FOREGROUND) -> "on screen"
+            importance == null -> "in the background"
+            importance <= FOREGROUND_SERVICE -> "running a foreground service (a scan or auto-scan)"
+            importance <= VISIBLE -> "in a visible window (the widget or the mini window)"
+            importance <= PERCEPTIBLE -> "perceptible (the widget over another app)"
+            importance < CACHED -> "in the background with work running"
+            else -> "cached in the background (nothing running)"
+        }
     }
+
+    // ActivityManager.RunningAppProcessInfo's importance levels, named here so the tests can use them without Android.
+    const val FOREGROUND = 100
+    const val FOREGROUND_SERVICE = 125
+    const val VISIBLE = 200
+    const val PERCEPTIBLE = 230
+    const val CACHED = 400
 
     private const val FILE = "last_crash.txt"
     private val BAD = setOf("crash", "native crash", "not responding", "low memory", "excessive resource use", "initialization failure")
@@ -85,6 +112,7 @@ object AppExits {
                 description = info.description,
                 foreground = info.importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE,
                 pssMb = info.pss.takeIf { it > 0 }?.let { it / 1024 },
+                importance = info.importance,
                 trace = if (info.reason == ApplicationExitInfo.REASON_ANR) runCatching { mainThread(info.traceInputStream?.bufferedReader()?.use { it.readText() }) }.getOrDefault(emptyList()) else emptyList(),
             )
         }
