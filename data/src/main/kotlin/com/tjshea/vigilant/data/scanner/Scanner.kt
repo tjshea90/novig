@@ -110,6 +110,10 @@ class Scanner(
     /** A plan this big is priced for a partial result at most every [publishMinMs] (tests use small ones). */
     private val bigPlanMarkets: Int = BIG_PLAN_MARKETS,
     private val publishMinMs: Long = PUBLISH_MIN_MS,
+    /** The live feed is handed its markets once the plan is in, or this long into a scan ([BookPump.feedStream]). */
+    private val streamHoldMs: Long = STREAM_HOLD_MS,
+    /** How many markets the live feed holds at once: more unread than this and there's no reason to wait. */
+    private val streamRoom: Int = com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS,
 ) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
@@ -392,8 +396,12 @@ class Scanner(
         var viaKey = 0
         /** Books the key's websocket pushed: read with no request. */
         var viaPush = 0
-        /** The plan last handed to [NovigSource.watch]. */
-        private var watchedPlan: Plan? = null
+        /**
+         * When this scan handed the live feed its markets ([feedStream]), on [elapsed] from [startedAt], and how many; null until it did.
+         * The feed takes ONE big subscribe per ~2 minutes (its 512-token bucket refills at 4 a second), so it goes once per scan.
+         */
+        var streamAt: Long? = null
+        var streamAsked = 0
         var failed = 0
         var retryAfter: Int? = null
         var lastError: String? = null
@@ -433,18 +441,13 @@ class Scanner(
                 val lastPass = fairDone
                 val plan = planFor(cat, settings, now)
                 val preview = preview(plan, settings, now)
-                // The whole plan, likeliest first, to the key's websocket (if any): it subscribes in bulk
-                // as its throttle allows, and keeps what it holds current (RESEARCH.md §27). Once per plan.
-                if (plan !== watchedPlan) {
-                    watchedPlan = plan
-                    // A bets-only pass would replace the feed scanner's subscription with a few dozen markets.
-                    if (!betsOnly) novig.watch(fetchOrder(plan.markets, settings, preview).take(cap).map { it.market.marketId })
-                }
                 // A line whose other books' odds (read as the scan began) couldn't stay listed a couple of minutes once
                 // priced is left for the next scan: a long scan (a big budget, public routes) never shows a bet already
                 // on its way out (Tj, 2026-09-28: "consider if increasing this number could be beneficial or dangerous").
                 val pending = plan.markets.filter { it.market.marketId !in requested && it.market.marketId !in tooLate }
                     .filter { pm -> canStillShow(pm).also { ok -> if (!ok) tooLate += pm.market.marketId } }
+                // A bets-only pass would replace the feed scanner's subscription with a few dozen markets.
+                if (!betsOnly) feedStream(plan, pending, preview, lastPass, cap)
                 if (pending.isEmpty()) {
                     if (lastPass) return
                     signal.receive()
@@ -501,6 +504,27 @@ class Scanner(
                 progress.booksDone = base + ids.size
                 publish(cat)
             }
+        }
+
+        /**
+         * The key's live feed (RESEARCH.md §27, §63): opened at the first plan so its bucket refills while the fair odds come in, then handed
+         * its markets ONCE, when the plan has filled in (every fair source answered, or more unread lines than it can hold, or
+         * [STREAM_HOLD_MS] gone). Its one bulk subscribe is worth up to 2,000 books with no request, and the next takes ~2 minutes, so it
+         * isn't spent on the first source's few hundred lines (Tj's 2026-10-02 Diagnostics: 113 of 4,588 prices by live feed) nor on lines
+         * the requests already read. What it already holds for this plan goes first (dropping it costs tokens and a still-current book),
+         * then the unread lines in reading order.
+         */
+        private fun feedStream(plan: Plan, pending: List<PlannedMarket>, preview: Map<LineKey, NovigPreview>, lastPass: Boolean, cap: Int) {
+            if (streamAt != null) return
+            novig.openFeed()
+            val waited = elapsed() - startedAt
+            if (!lastPass && pending.size < streamRoom && waited < streamHoldMs) return
+            val held = novig.pushed(plan.marketIds).keys
+            val unread = fetchOrder(pending, settings, preview).take((cap - requested.size).coerceAtLeast(0)).map { it.market.marketId }.filter { it !in held }
+            val ids = plan.markets.map { it.market.marketId }.filter { it in held } + unread
+            streamAt = waited
+            streamAsked = minOf(ids.size, streamRoom)
+            if (ids.isNotEmpty()) novig.watch(ids)
         }
 
         /**
@@ -1018,6 +1042,12 @@ class Scanner(
         const val BIG_PLAN_MARKETS = 400
 
         const val PUBLISH_MIN_MS = 2_000L
+
+        /**
+         * The longest a scan holds the live feed's one bulk subscribe for its plan to fill in: past the ~8 s the feed's bucket needs after
+         * connecting, and about when the slowest free fair source answers (Kalshi ~27 s, NOVIG_API.md §14.5).
+         */
+        const val STREAM_HOLD_MS = 30_000L
 
         /**
          * Merge order: when two feeds carry the same book, the earlier one's quote is priced. ParlayAPI ahead of PropLine (Tj, 2026-09-30,
