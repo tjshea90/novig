@@ -577,6 +577,8 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
     EV("+EV", Icons.Filled.Star),
     CNO("CNO", drawable = R.drawable.ic_cno),
     GAMES("Games", Icons.Filled.DateRange),
+    /** Its own tab since 2026-10-02 (Tj: "maybe make the auto bet feature its own section instead of buried in the settings"). */
+    AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet),
     TRACKER("Tracker", Icons.AutoMirrored.Filled.List),
     SETTINGS("Settings", Icons.Filled.Settings),
     ;
@@ -585,6 +587,8 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
     fun shownIn(mode: ScannerMode): Boolean = when (this) {
         EV, GAMES -> mode != ScannerMode.CNO
         CNO -> mode != ScannerMode.VIGILANT
+        // Auto-bet bets CrazyNinjaOdds' list through Novig's API.
+        AUTOBET -> AppBook.isNovig && mode != ScannerMode.VIGILANT
         TRACKER, SETTINGS -> true
     }
 }
@@ -607,6 +611,16 @@ private fun TabIconWithCount(t: Tab, state: UiState) {
             }
         }
         else -> 0
+    }
+    // Auto-bet: a dot while it's placing bets, "!" when it stopped itself and needs Tj.
+    if (t == Tab.AUTOBET) {
+        val halted = state.settings.autoBetHalted != null
+        when {
+            halted -> BadgedBox(badge = { Badge { Text("!") } }) { TabIcon(t) }
+            state.settings.autoBetsNow -> BadgedBox(badge = { Badge() }) { TabIcon(t) }
+            else -> TabIcon(t)
+        }
+        return
     }
     if (count > 0) {
         BadgedBox(badge = { Badge { Text(if (count > 99) "99+" else count.toString()) } }) { TabIcon(t) }
@@ -639,6 +653,8 @@ private fun VigilantRoot(
     val mode = state.settings.scanner
     val tabs = Tab.entries.filter { it.shownIn(mode) }
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
+    // The Settings page open (null = its home list): kept here so the Auto-bet tab can open Betting.
+    var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
     val tab = tabs.firstOrNull { it.name == tabName } ?: if (mode == ScannerMode.CNO) Tab.CNO else tabs.first()
     // The tab a Bet sheet's "Add money" left, for "Back to the bet" (Tj, 2026-09-29).
@@ -725,9 +741,22 @@ private fun VigilantRoot(
                         onSync = { vm.api.sync() },
                     ),
                 )
+                Tab.AUTOBET -> {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    com.tjshea.vigilant.app.ui.AutoBetScreen(
+                        state,
+                        onUpdate = vm::updateSettings,
+                        onOpenSettings = { p -> settingsPage = p.name; tabName = Tab.SETTINGS.name },
+                        notificationsBlocked = AutoBetNotes.blocked(context),
+                        onTestNotification = { (context.applicationContext as? android.app.Application)?.let(AutoBetNotes::sample) ?: false },
+                    )
+                }
                 Tab.SETTINGS -> SettingsScreen(
                     state,
                     onUpdate = vm::updateSettings,
+                    page = com.tjshea.vigilant.app.ui.SettingsPage.named(settingsPage),
+                    onPage = { p -> settingsPage = p?.name },
+                    onOpenAutoBet = { tabName = Tab.AUTOBET.name },
                     keys = com.tjshea.vigilant.app.ui.KeyActions(
                         add = vm::addKey,
                         remove = vm::removeKey,
