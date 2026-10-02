@@ -99,10 +99,11 @@ class NetInterceptor(
                 if (done.compareAndSet(false, true)) finish(host, shape, status, ttfb, clock() - t0, bytes, net, limit)
             }
         }
+        val buffered = counting.buffer()
         val wrapped = object : ResponseBody() {
             override fun contentType(): MediaType? = body.contentType()
             override fun contentLength(): Long = body.contentLength()
-            override fun source(): BufferedSource = counting.buffer()
+            override fun source(): BufferedSource = buffered
         }
         return response.newBuilder().body(wrapped).build()
     }
