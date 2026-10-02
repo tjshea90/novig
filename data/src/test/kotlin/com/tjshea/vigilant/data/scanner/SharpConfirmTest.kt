@@ -184,4 +184,21 @@ class SharpConfirmTest {
         // Nothing on the page: nothing to say.
         assertNull(SharpConfirm.preVeto(emptyList(), 100, false, rules, now))
     }
+
+    @Test
+    fun `the settings are saved and read back, and a file from before them reads with the defaults`() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val old = json.decodeFromString(ScanSettings.serializer(), "{}")
+        assertFalse(old.sharpConfirmAutoBet || old.sharpConfirmAlerts || old.sharpConfirmViaCno)
+        assertEquals(SharpBookChoice.PINNACLE, old.sharpConfirmBooks)
+        assertEquals(180, old.sharpConfirmMaxAgeSeconds)
+        assertEquals(0.0, old.sharpConfirmMinEv, 0.0)
+        val saved = ScanSettings(
+            sharpConfirmAutoBet = true, sharpConfirmAlerts = true, sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 60,
+            sharpConfirmMinEv = 0.02, sharpConfirmViaCno = true,
+        )
+        assertEquals(saved, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), saved)))
+        assertEquals(listOf("Pinnacle", "Pinnacle or Circa"), SharpBookChoice.entries.map { it.displayName })
+        assertEquals(listOf(0.0, 0.01, 0.02, 0.03), ScanSettings.SHARP_MIN_EV_CHOICES)
+    }
 }
