@@ -397,7 +397,8 @@ class TrackerUiTest {
         val bets = base.bets.map { b ->
             val i = open.indexOf(b.id)
             when {
-                i in evs.indices -> b.copy(nowEv = evs[i], nowAtMs = now - secondsAgo * 1000)
+                // The fair now that gives that EV at the bet's cost, as every read writes the two together (EV = fair / cost − 1).
+                i in evs.indices -> b.copy(nowEv = evs[i], nowFair = (1 + evs[i]) * b.cost, nowAtMs = now - secondsAgo * 1000)
                 b.id == "b1" -> b.copy(nowEv = 0.03, nowAtMs = now - secondsAgo * 1000) // settled: never counted
                 else -> b
             }
