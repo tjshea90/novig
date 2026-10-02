@@ -102,7 +102,9 @@ class TrackerNovigOnlyTest {
         )
         val shown = com.tjshea.vigilant.data.tracker.NovigNow.view(listOf(placed)).single()
         compose.setContent {
-            androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalClock provides { now }) {
+            // ParlayAPI's second opinion is set up (its button would show on any other sheet).
+            val opinions = com.tjshea.vigilant.app.ui.OpinionActions(true, emptyMap()) { _, _ -> }
+            androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalClock provides { now }, com.tjshea.vigilant.app.ui.LocalOpinions provides opinions) {
                 VigilantTheme(darkTheme = true) {
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         val settings = SampleScan.state().settings.copy(trackerNovigOnly = true)
