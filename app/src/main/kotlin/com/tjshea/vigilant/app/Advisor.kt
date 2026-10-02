@@ -65,6 +65,8 @@ object Advisor {
         x.perf["cycle.ms"]?.takeIf { it.count >= 5 }?.let { put("perf.cycle.p95ms", it.p95) }
         x.perf["scan.ms"]?.takeIf { it.count >= 1 }?.let { put("perf.scan.p95ms", it.p95) }
         x.coldStartMs?.let { put("perf.coldStartMs", it.toDouble()) }
+        // The frame meter: the share of slow frames by what was running, so the next report shows whether a scan still makes the screen stutter.
+        for ((what, b) in x.frames) if (b.frames >= MIN_FRAMES) put("frames.${FRAME_KEYS[what] ?: what}.slowPct", Math.round(b.slowShare * 1000) / 10.0)
         put("heap.pct", Math.round(x.memory.fraction * 1000) / 10.0)
         put("autobet.placed", (x.counters["autobet.placed"] ?: 0L).toDouble())
         put("autobet.looked", (x.counters["autobet.looked"] ?: 0L).toDouble())
@@ -272,6 +274,7 @@ object Advisor {
                 ),
             )
         }
+        frameFinding(x.frames)?.let(::add)
         x.coldStartMs?.takeIf { it > COLD_START_SLOW_MS }?.let {
             add(Finding("perf:coldstart", "OPTIMIZE", "The screen took $it ms to appear after the process started", "this run only", "app/MainActivity.kt, VigilantApp.kt (AppContainer's eager work)", "Move whatever runs before the first frame (store loads, receivers) off the main thread or after the first frame.", weight = it / 1000.0))
         }
@@ -361,6 +364,34 @@ object Advisor {
     private const val MIN_SAMPLES = 20
     private const val SLOW_P95_MS = 3_000.0
     private const val SLOW_BPS = 60.0 * 1024
+    /**
+     * The screen stutters while something runs (Tj, 2026-10-02: "When I scan with vigilant scanner, the entire app becomes laggy still"): enough
+     * of its frames slow ([SLOW_FRAMES_SHARE]) and clearly more than with nothing running, from enough frames to say ([MIN_FRAMES]).
+     */
+    internal fun frameFinding(frames: Map<String, com.tjshea.vigilant.data.diag.FrameStats.Bucket>): Finding? {
+        val quiet = frames[com.tjshea.vigilant.data.diag.FrameStats.QUIET]?.takeIf { it.frames >= MIN_FRAMES }
+        val worst = frames.filterKeys { it != com.tjshea.vigilant.data.diag.FrameStats.QUIET }.entries
+            .filter { (_, b) -> b.frames >= MIN_FRAMES && b.slowShare >= SLOW_FRAMES_SHARE && (quiet == null || b.slowShare >= quiet.slowShare * 2) }
+            .maxByOrNull { it.value.slowShare } ?: return null
+        val (what, b) = worst
+        val pct = { s: Double -> "${Math.round(s * 1000) / 10.0}%" }
+        return Finding(
+            "perf:frames:${FRAME_KEYS[what] ?: what}", "OPTIMIZE",
+            "The screen stutters with $what: ${pct(b.slowShare)} of its frames are slow" + (quiet?.let { ", ${pct(it.slowShare)} with nothing running" } ?: ""),
+            "${b.frames} frames, ${b.slow} slow, ${b.frozen} frozen, p95 ${b.durations.p95.toLong()} ms, worst ${b.durations.max.toLong()} ms (Performance block)",
+            "what that work does on the main thread or per state it publishes: app/MainViewModel.kt (follow, the mirrors), ScanService.kt, the screen it was on",
+            "Find what runs on the main thread, or recomposes, each time that work publishes; move it off or publish less often. Never drop data to do it.",
+            weight = b.slowShare * 20,
+        )
+    }
+
+    private val FRAME_KEYS = mapOf(
+        com.tjshea.vigilant.data.diag.FrameStats.SCAN to "scan", com.tjshea.vigilant.data.diag.FrameStats.CHECK to "check",
+        com.tjshea.vigilant.data.diag.FrameStats.CNO to "cno", com.tjshea.vigilant.data.diag.FrameStats.QUIET to "quiet",
+    )
+    private const val MIN_FRAMES = 300L
+    private const val SLOW_FRAMES_SHARE = 0.05
+
     private const val SLOW_SCAN_MS = 180_000.0
     private const val COLD_START_SLOW_MS = 2_500L
     private const val REPEATS = 20

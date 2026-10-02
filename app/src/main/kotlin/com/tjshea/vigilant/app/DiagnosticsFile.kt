@@ -2,6 +2,7 @@ package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.app.ui.Format
 import com.tjshea.vigilant.data.diag.Event
+import com.tjshea.vigilant.data.diag.FrameStats
 import com.tjshea.vigilant.data.diag.HostStat
 import com.tjshea.vigilant.data.diag.Level
 import com.tjshea.vigilant.data.diag.Snap
