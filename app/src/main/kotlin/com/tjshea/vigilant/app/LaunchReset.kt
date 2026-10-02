@@ -1,23 +1,26 @@
 package com.tjshea.vigilant.app
 
-import android.app.ActivityManager
-import android.app.ApplicationExitInfo
 import android.content.Context
+import android.content.SharedPreferences
+import android.os.SystemClock
+import android.provider.Settings
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.runBlocking
+import kotlin.math.abs
 
 /**
- * Auto-bet and background auto-scan start OFF every time Vigilant is closed and opened again (Tj, 2026-10-02: "anytime I close the app and
- * reopen it, auto bet and background scan is turned off by default. Nothing should auto bet or background scan unless I specifically set it in
- * the settings"). Whatever he switched on last time is not carried into this one: he switches it on in Settings when he wants it.
+ * Auto-bet and background auto-scan are switched off by Vigilant itself only once, after the phone restarted (Tj, 2026-10-02 16:05Z: "I want the
+ * app never to turn off auto bet unless I turn it off. The default is auto bet off but only when opening the app after a restart or after I already
+ * turned off auto bet manually"). Background auto-scan goes with it: auto-bet bets from its cycles ([ScanSettings.autoBetsNow]).
  *
- * "Opened again" is a fresh launch of the activity (no saved state: [MainActivity.onCreate]'s `savedInstanceState == null`): the app opened from
- * the launcher, from a notification or from Recents after it was closed. Not a rotation, not a return from Home or from another app (the activity
- * is still there), not Android restoring the app after it ended the process for memory (that comes with saved state), and not a reboot (the boot
- * receiver restarts what was on, until the app is opened).
+ * Nothing else switches them off: not closing Vigilant (a swipe out of the recent apps, a force stop), an update, a crash, Android ending the process
+ * for memory, the mini window closing, or a return from another app. Whatever Tj switched on stays on until he switches it off (it was turned off
+ * on every reopening before 2026-10-02 16:05Z, his earlier rule).
  *
- * The reset is saved at once, before the screen reads the settings (the service stops on the saved setting, so a background cycle can't bet after it).
+ * The restart is handled at boot by the boot receiver (nothing can bet before Tj opens Vigilant) and, for a boot it never heard (Android doesn't
+ * tell an app that was force-stopped), by the first screen after it ([LaunchGate.restarted]). The reset is saved before the screen reads the
+ * settings, and before the restart is marked handled: a process that dies in between does it again.
  */
 object LaunchReset {
 
@@ -29,98 +32,93 @@ object LaunchReset {
         val bet = s.autoBet
         val scan = s.autoScan != AutoScanMode.OFF
         return when {
-            bet && scan -> "Auto-bet and background auto-scan are off again after reopening Vigilant. Switch them on in Settings when you want them."
-            bet -> "Auto-bet is off again after reopening Vigilant. Switch it on in Settings when you want it."
-            scan -> "Background auto-scan is off again after reopening Vigilant. Switch it on in Settings when you want it."
+            bet && scan -> "Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them."
+            bet -> "Auto-bet is off after the phone restarted. Switch it on in Settings when you want it."
+            scan -> "Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it."
             else -> null
         }
     }
 
     /**
-     * The fresh launch: saves [apply] and returns the note (null when nothing was on). Blocks for the one small file: the settings are read and
-     * written here before anything else in the app reads them.
+     * A phone restart Vigilant hasn't handled yet: saves [apply], keeps the note for the next screen, then marks [boot] handled. True when it
+     * handled one. The boot receiver's, and each screen's as it opens ([onOpen]).
      */
-    fun onFreshLaunch(app: VigilantApp): String? = runBlocking {
-        val before = runCatching { app.container.settingsStore.read() }.getOrNull() ?: return@runBlocking null
-        val note = note(before) ?: return@runBlocking null
-        runCatching { app.container.settingsStore.update { apply(it) } }.onFailure { return@runBlocking null }
-        note
+    suspend fun afterRestart(app: VigilantApp, boot: Boot): Boolean {
+        val gate = app.container.launches
+        if (!gate.restarted(boot)) return false
+        // Unreadable or unwritten: the restart stays unhandled, so the next look tries again.
+        val before = runCatching { app.container.settingsStore.read() }.getOrNull() ?: return false
+        note(before)?.let { note ->
+            runCatching { app.container.settingsStore.update { apply(it) } }.onFailure { return false }
+            gate.keepNote(note)
+        }
+        gate.handled(boot)
+        return true
+    }
+
+    /**
+     * A screen opening: [afterRestart], then the note it left (once, whether this screen or the boot receiver made it), or null: whatever was on
+     * stays on. Blocks for the small files: the settings are read and written here before anything else in the app reads them.
+     */
+    fun onOpen(app: VigilantApp, boot: Boot): String? = runBlocking {
+        runCatching { afterRestart(app, boot) }
+        app.container.launches.takeNote()
     }
 }
 
-/** How the app's previous process ended, as Android recorded it ([ApplicationExitInfo]). */
-data class LastExit(val reason: Int, val atMs: Long, val description: String? = null) {
+/** Which run of the phone this is: Android's boot count, and when it started by the wall clock (for a phone that doesn't give the count). */
+data class Boot(val count: Int?, val atMs: Long) {
     companion object {
-        /** The newest record, or null when there is none. */
-        fun read(context: Context): LastExit? = runCatching {
-            context.getSystemService(ActivityManager::class.java)?.getHistoricalProcessExitReasons(null, 0, 1)?.firstOrNull()
-                ?.let { LastExit(it.reason, it.timestamp, it.description) }
-        }.getOrNull()
+        fun now(context: Context): Boot = Boot(
+            runCatching { Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1) }.getOrDefault(-1).takeIf { it >= 0 },
+            System.currentTimeMillis() - SystemClock.elapsedRealtime(),
+        )
     }
 }
 
 /**
- * Whether a screen being made is a fresh launch, the only time [LaunchReset] switches auto-bet off (Tj, 2026-10-02: "If I switch from vigilant to
- * another app then back to vigilant, do not turn off auto bet. Auto bet should only be off by default on a fresh app launch or restart, not just
- * switching apps"). One per process ([AppContainer.launches]).
- *
- * A screen Android restored (saved state) is never one. Another screen in a process that already had one (the mini window closed, then Vigilant
- * opened again) is one only when Tj swiped Vigilant out of the recent apps while a service kept the process ([taskRemoved]). The first screen of a
- * new process is one when the last process ended by Tj's hand (swiped away, force-stopped), an update, a crash or a phone restart, and is not when
- * Android ended it to free memory while he was in another app.
+ * Whether the phone restarted since Vigilant last looked, the only time [LaunchReset] switches auto-bet off (Tj, 2026-10-02 16:05Z). The boot it
+ * handled last is saved in [prefs], so a process ending for any other reason changes nothing.
  */
-class LaunchGate {
-    private var screenSeen = false
-    private var swipedAway = false
+class LaunchGate(private val prefs: SharedPreferences) {
 
-    /** The screen is the mini window now ([IN_IT]), was closed from it at this time, or null: it's full screen. */
-    private var miniWindowAtMs: Long? = null
-
-    /** The picture-in-picture window opened ([inIt]), went back to full screen ([expanded]), or was closed (neither). */
+    /**
+     * Whether [boot] is a restart not handled yet. The very first look (a new install, or the update that brought this rule) is not one: it is
+     * marked handled, and whatever Tj had on stays on.
+     */
     @Synchronized
-    fun miniWindow(inIt: Boolean, expanded: Boolean, now: Long) {
-        miniWindowAtMs = when {
-            inIt -> IN_IT
-            expanded -> null
-            else -> now
+    fun restarted(boot: Boot): Boolean {
+        if (!prefs.contains(AT)) {
+            handled(boot)
+            return false
         }
+        val count = prefs.getInt(COUNT, -1)
+        return if (boot.count != null && count >= 0) boot.count != count else abs(boot.atMs - prefs.getLong(AT, 0L)) > BOOT_SLACK_MS
     }
 
-    /** Vigilant's task left the recent apps (a running service's onTaskRemoved): Tj closing it, unless it was the mini window being closed. */
+    /** [boot]'s restart is handled: nothing is switched off again until the next one. */
     @Synchronized
-    fun taskRemoved(now: Long) {
-        val m = miniWindowAtMs
-        if (m == null || (m != IN_IT && now - m > MINI_WINDOW_GRACE_MS)) swipedAway = true
+    fun handled(boot: Boot) {
+        prefs.edit().putInt(COUNT, boot.count ?: -1).putLong(AT, boot.atMs).commit()
     }
 
-    /** A screen is being made: whether it's a fresh launch. [lastExit]: the previous process's end; [bootAtMs]: when the phone started. */
+    /** The reset's note, for the next screen (the boot receiver has none to show it on). */
     @Synchronized
-    fun opening(savedState: Boolean, lastExit: LastExit?, bootAtMs: Long): Boolean {
-        val fresh = when {
-            savedState -> false
-            screenSeen -> swipedAway
-            else -> lastExit == null || lastExit.atMs < bootAtMs || !androidsOwn(lastExit)
-        }
-        screenSeen = true
-        swipedAway = false
-        miniWindowAtMs = null
-        return fresh
+    fun keepNote(note: String) {
+        prefs.edit().putString(NOTE, note).commit()
     }
+
+    /** The kept note, once. */
+    @Synchronized
+    fun takeNote(): String? = prefs.getString(NOTE, null)?.also { prefs.edit().remove(NOTE).commit() }
 
     companion object {
-        private const val IN_IT = Long.MAX_VALUE
+        const val PREFS = "launch"
+        private const val COUNT = "bootCount"
+        private const val AT = "bootAtMs"
+        private const val NOTE = "note"
 
-        /** Closing the mini window can tell a running service its task went: that close is within this of the window's. */
-        const val MINI_WINDOW_GRACE_MS = 10_000L
-
-        /** Android freeing memory or resources while Vigilant was in the background (an update's "installPackage" stop aside). */
-        fun androidsOwn(e: LastExit): Boolean = when (e.reason) {
-            ApplicationExitInfo.REASON_LOW_MEMORY, ApplicationExitInfo.REASON_SIGNALED, ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE, REASON_FREEZER -> true
-            ApplicationExitInfo.REASON_OTHER -> e.description?.contains("install", ignoreCase = true) != true
-            else -> false
-        }
-
-        /** [ApplicationExitInfo.REASON_FREEZER] (Android 14). */
-        private const val REASON_FREEZER = 14
+        /** Without a boot count, two looks are the same run of the phone when its start differs by less than this (the wall clock being set). */
+        const val BOOT_SLACK_MS = 10 * 60_000L
     }
 }
