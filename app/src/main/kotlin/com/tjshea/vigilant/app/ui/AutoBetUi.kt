@@ -486,4 +486,3 @@ fun SharpConfirmSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSetting
     }
 }
 
-private data class Quad(val tag: String, val title: String, val on: Boolean, val set: (Boolean) -> Unit)
