@@ -157,8 +157,7 @@ class LockPlacerTest {
         val p = ApiBetPlacer(novig, t, books = { book2 }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { })
         val other = BetTarget(market2, "C", "NBA", "D @ C", startsTs, "Moneyline", "Team C", fair = 0.60, fairAsOfMs = now, source = BetTracker.SOURCE_CNO)
         val r = p.plan(other, 6.0, limitsOverride = limits)
+        // $4 + $6 = the $10 limit exactly (with the lock counted it would be $15.50, refused).
         assertTrue(r.toString(), r is PlanResult.Ready)
-        // Without the lock's exemption the day would already be at $9.50: $6 more would be refused.
-        assertTrue(p.plan(other, 6.01, limitsOverride = limits) is PlanResult.Ready)
     }
 }
