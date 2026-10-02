@@ -237,6 +237,7 @@ fun ManagementKeyBlock(saved: ManagementKeyHint?, key: ManagementKeyState, busy:
 
 // ---- Settings section --------------------------------------------------------------------------------------------
 
+private val STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
 private val MAX_STAKE_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 private val DAY_CHOICES = listOf(20.0, 50.0, 100.0, 250.0, 500.0)
 private val MONEY_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
