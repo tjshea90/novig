@@ -1341,11 +1341,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _state.update { it.copy(readingNovig = false) }
             }
-            val priced = read.prices.size
-            val all = List(read.all) { 0 }
             _toasts.tryEmit(
-                "Novig's prices read for $priced of ${due.size} open bet${if (due.size == 1) "" else "s"} (Novig only: no other book asked)" +
-                    (if (!force && due.size < all.size) "; ${all.size - due.size} were already fresh" else "") + ".",
+                "Novig's prices read for ${read.prices.size} of ${due.size} open bet${if (due.size == 1) "" else "s"} (Novig only: no other book asked)" +
+                    (if (!force && due.size < read.all) "; ${read.all - due.size} were already fresh" else "") + ".",
             )
         }
     }
