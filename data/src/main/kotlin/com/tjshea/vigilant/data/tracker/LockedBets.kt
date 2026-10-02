@@ -62,6 +62,8 @@ object LockedBets {
         val picks = shown.filterNot { it.isLock || it.status == BetStatus.VOID }
         val lockedPicks = picks.filter { it.marketId in markets && it.orderId != null }
         val inShown = lockedPicks.mapTo(LinkedHashSet()) { it.marketId }.map { markets.getValue(it) }
+        val hidden = markets.values.flatMapTo(HashSet()) { m -> m.bets.map { it.id } }
+        val shownMarkets = shown.mapNotNullTo(HashSet()) { it.marketId.takeIf(String::isNotBlank) }
         return LockStats(
             lockedBets = lockedPicks.size,
             bets = picks.size,
@@ -69,8 +71,8 @@ object LockedBets {
             staked = inShown.sumOf { it.spent },
             profit = inShown.sumOf { it.profit },
             paid = inShown.filter { it.settled }.sumOf { it.profit },
-            hiddenBets = shown.count { b -> markets[b.marketId]?.bets?.any { it.id == b.id } == true },
-            partly = partly(all.filter { b -> shown.any { it.marketId == b.marketId } }),
+            hiddenBets = shown.count { it.id in hidden },
+            partly = partly(all.filter { it.marketId in shownMarkets }),
         )
     }
 }
