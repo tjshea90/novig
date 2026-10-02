@@ -137,9 +137,14 @@ class OpenBetPricer(
         onProgress: (ScanProgress) -> Unit = {},
         /** Beside CNO's reads of the same bets ([BetTracker.applyPricing] `alongside`): only Vigilant's own read is written. */
         alongside: Boolean = false,
+        /**
+         * Tj tapped for it (Check odds now, a bet's Price now): priced whatever the scanner choice (Tj, 2026-10-02: "I want the check odds now to
+         * refresh the current odds and EV for every single open bet regardless of scanner").
+         */
+        anyScanner: Boolean = false,
     ): Report = mutex.withLock {
-        // CNO only: Vigilant's APIs are asleep, so nothing is asked of them, whoever calls (Tj, 2026-09-29).
-        if (!settings.vigilantOn) return@withLock Report(0, 0, 0)
+        // CNO only: Vigilant's APIs are asleep, so nothing is asked of them on their own (Tj, 2026-09-29), only when Tj taps for it.
+        if (!settings.vigilantOn && !anyScanner) return@withLock Report(0, 0, 0)
         val now = clock()
         val wanted = ids.toHashSet()
         val open = tracker.all().filter { it.id in wanted && it.status == BetStatus.PENDING && BetsScope.readable(it, now) }
