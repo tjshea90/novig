@@ -301,6 +301,28 @@ class SharpConfirmAppTest {
         assertTrue(SharpGate.confirmedAlerts(alerts, unseen = alerts, items = emptyList()) { yes }.isEmpty())
     }
 
+    @Test
+    fun `the veto drops an alert only when the sharpest book for its kind says no`() = runBlocking {
+        // Tj, 2026-10-02 17:01Z: the veto, for CNO's push alerts too (their default).
+        val s = settings { it.copy(sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.VETO, alertMinEv = 0.03) }
+        val st = state(s)
+        val items = AlertPicks.cnoChecked(st, s.alertMinEv, now)
+        val alerts = AlertPicks.cno(st, s.alertMinEv, now)
+        assertTrue(alerts.isNotEmpty())
+        val verdicts = ArrayList<com.tjshea.vigilant.data.scanner.SharpVeto.Verdict>()
+        // The sample's books: Kalshi (the sharpest for props) says +EV: every alert stays.
+        assertEquals(alerts.map { it.key }, SharpGate.unvetoedAlerts(alerts, items, { st.booksAt(it.pick.row.key, now)?.view }) { verdicts += it.verdict }.map { it.key })
+        assertTrue(verdicts.toString(), verdicts.isNotEmpty() && verdicts.all { it == com.tjshea.vigilant.data.scanner.SharpVeto.Verdict.PASSED })
+        // Kalshi says no: that alert goes; Pinnacle saying no wouldn't (not a prop sharp).
+        val kalshiNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 105, 106.0, -135, 13_662.0) else it }) }
+        val jj = MiniWindow.cnoKey(jefferson)
+        assertFalse(SharpGate.unvetoedAlerts(alerts, items, { if (MiniWindow.cnoKey(it.pick.row) == jj) kalshiNo else st.booksAt(it.pick.row.key, now)?.view }).any { it.key == jj })
+        val pinnacleNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") com.tjshea.vigilant.data.cno.CnoBookPrice("PN", 105, null, -135, null) else it }) }
+        assertTrue(SharpGate.unvetoedAlerts(alerts, items, { if (MiniWindow.cnoKey(it.pick.row) == jj) pinnacleNo else st.booksAt(it.pick.row.key, now)?.view }).any { it.key == jj })
+        // No page, no veto.
+        assertEquals(alerts.size, SharpGate.unvetoedAlerts(alerts, items, { null }).size)
+    }
+
     // ---- Settings words ------------------------------------------------------------------------------------------------
 
     @Test
@@ -334,6 +356,9 @@ class SharpConfirmAppTest {
         val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
         val alerts = src.substringAfter("private suspend fun cnoAlerts(s: ScanSettings): List<EvAlert> {").substringBefore("private suspend fun vigilantScan")
         assertTrue(alerts, alerts.contains("val rules = com.tjshea.vigilant.data.scanner.SharpConfirm.rules(s, autoBet = false) ?: return alerts"))
+        // The veto (the default) runs first and returns: a confirmation is only asked in that mode.
+        assertTrue(alerts, alerts.contains("if (s.sharpAlerts == com.tjshea.vigilant.data.scanner.SharpMode.VETO) {\n            return SharpGate.unvetoedAlerts("))
+        assertTrue(alerts.indexOf("SharpGate.unvetoedAlerts(") < alerts.indexOf("SharpConfirm.rules"))
         assertTrue(alerts, alerts.contains("return SharpGate.confirmedAlerts(alerts, c.alertLog.unseen(alerts), AlertPicks.cnoChecked(state, s.alertMinEv, now))"))
         // Judged by the books first, then by the sharp one: the sharp check only sees alerts the books already confirmed.
         assertTrue(alerts.indexOf("AlertPicks.cno(state") < alerts.indexOf("SharpConfirm.rules"))
