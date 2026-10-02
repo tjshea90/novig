@@ -116,6 +116,7 @@ data class ScanSettings(
     val apiBetStake: Double = 5.0,
     val apiMaxStake: Double = 10.0,
     val apiMaxPerDay: Double = 50.0,
+    /** Unused since v0.44.2 (kept so older settings files read): a bet placed by hand has no minimum edge (Tj, 2026-10-02); auto-bet has [autoBetMinEv]. */
     val apiMinEv: Double = 0.01,
     /**
      * Auto-bet (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all, including … in the background as the cno scanner
