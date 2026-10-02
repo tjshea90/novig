@@ -183,6 +183,45 @@ class ApiSettlerTest {
     }
 
     @Test
+    fun `a locked market (both sides held equally) is graded from the score feeds, its push from the cost paid back, and a feed that disagrees with Novig is left to a tap`() = runBlocking {
+        // 400 contracts of A for $1.85 and the lock: 400 of B for $2.00. Novig pays $4.00 for the market whichever side won (Tj, 2026-10-02: full tests).
+        val lockTarget = target("b").copy(outcomeId = "B", selection = "Team B", lockFor = "pick")
+        fun locked(t: BetTracker) = runBlocking {
+            t.logApi(target("a"), "o1", listOf(fill("o1")))
+            t.logApi(lockTarget, "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 400, 2.0, true, 0.0, start - hour)))
+        }
+        val t = tracker(); locked(t)
+        novig(ledger = listOf("mkt" to "4.00000"))
+        // The feeds grade the pick (Team A) a loss: B won.
+        val r = settler(t) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.LOST, "Final: Team B 24, Team A 17") else null }.run()
+        assertEquals(ApiSettler.Report(2, 2, 0, 0), r)
+        assertEquals(BetStatus.LOST, t.all().single { it.orderId == "o1" }.status)
+        assertEquals(BetStatus.WON, t.all().single { it.orderId == "o2" }.status)
+        assertTrue(t.all().single { it.orderId == "o2" }.gradeNote!!.contains("Final: Team B 24, Team A 17"))
+        // The money is what Novig paid: $4.00 back on $3.85.
+        assertEquals(0.15, t.all().sumOf { it.profit!! }, 1e-9)
+
+        // Every side's cost paid back: a push, both of them.
+        val t2 = tracker(); locked(t2)
+        novig(ledger = listOf("mkt" to "3.85000"))
+        settler(t2).run()
+        assertTrue(t2.all().all { it.status == BetStatus.PUSH })
+
+        // No feed to say which side won: left to a tap, as before (the money is the same either way).
+        val t3 = tracker(); locked(t3)
+        novig(ledger = listOf("mkt" to "4.00000"))
+        assertEquals(2, settler(t3).run().manual)
+        assertTrue(t3.all().all { it.status == BetStatus.PENDING && it.gradeManual })
+
+        // A payout that isn't the winner's win (a fair-value void of unequal holdings) isn't forced into a win.
+        val t4 = tracker()
+        t4.logApi(target("a"), "o1", listOf(fill("o1")))
+        t4.logApi(lockTarget, "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 500, 2.5, true, 0.0, start - hour)))
+        novig(ledger = listOf("mkt" to "4.70000"))
+        assertEquals(2, settler(t4) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.WON, "Final") else null }.run().manual)
+    }
+
+    @Test
     fun `a market Novig hasn't paid and still holds is waiting, and a day later it's flagged`() = runBlocking {
         novig(held = true)
         val t = tracker(); bet(t)

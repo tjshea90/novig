@@ -164,6 +164,11 @@ data class TrackedBet(
      */
     val novigWhy: String? = null,
     val novigWhyAtMs: Long? = null,
+    /**
+     * How old Vigilant's own read ([vigFair]) really is: its oldest book price ([com.tjshea.vigilant.data.scanner.Opportunity.fairAsOfMs]), while [vigAtMs]
+     * is when it was saved. A close merged from it ([BetTracker.mergeReads]) is dated by this, as a scan's is ([ClosingLine]).
+     */
+    val vigAsOfMs: Long? = null,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null

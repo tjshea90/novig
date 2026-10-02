@@ -223,7 +223,9 @@ class TrackerUiTest {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
         compose.onNodeWithText("Are the edges real?").assertExists()
         compose.onNodeWithText("At risk").assertExists()
-        compose.onNodeWithText("Pays if all win").assertExists()
+        // What they'd make if all win (profit), said as profit: "pays" read as the payout, stake included (full test, 2026-10-02).
+        compose.onNodeWithText("Profit if all win").assertExists()
+        compose.onNodeWithText("Pays if all win").assertDoesNotExist()
         compose.onNodeWithText("Where it's working").assertExists()
         // The split can be switched between scanner, league, market, edge and price.
         compose.onNodeWithText("Market").performScrollTo().performClick()

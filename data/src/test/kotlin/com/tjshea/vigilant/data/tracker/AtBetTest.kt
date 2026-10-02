@@ -98,6 +98,15 @@ class AtBetTest {
     }
 
     @Test
+    fun `a live bet's full Kelly is worked out at its cost with Novig's live fee, as its EV is`() {
+        val live = AtBets.cno(row, true, view, null, LivePrice(113, 173.0, 0.0251, now - 8_000L), now - 30_000L, settings, now, AtBet.HOW_AUTO, BetTracker.SOURCE_CNO, "0.48.1")
+        val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(113)
+        val cost = price + com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
+        val fair = live.checkFair ?: live.fair!!
+        assertEquals(((fair - cost) / (1.0 - cost)).coerceAtLeast(0.0), live.fullKelly!!, 1e-12)
+    }
+
+    @Test
     fun `the books that say no are named, at the price taken`() {
         // At -110 instead of +113 every book's own fair says no.
         val r = record(live = LivePrice(-110, 50.0, -0.08, now))
