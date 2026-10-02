@@ -89,13 +89,13 @@ object Advisor {
             val head = ps.first().message.lineSequence().firstOrNull { it.contains("Exception") || it.contains("Error") }?.take(140) ?: ps.first().message.take(140)
             Finding(
                 "bug:crash:$frame", "BUG", "The app crashed ${ps.sumOf { it.count }} time${if (ps.sumOf { it.count } == 1) "" else "s"} at $frame",
-                "$head; last ${Format.age(ps.maxOf { it.lastAtMs }, now)} ago. The stack is in 'Recent problems' below.", frame.substringAfterLast('(').substringBefore(':').let { "the file $it (line in the title)" },
+                "$head; last ${Format.age(ps.maxOf { it.lastAtMs }, now)}. The stack is in 'Recent problems' below.", frame.substringAfterLast('(').substringBefore(':').let { "the file $it (line in the title)" },
                 "Reproduce it with a test that makes the same input, fix the cause (not a blanket catch), and keep the test.", weight = 100.0 + ps.sumOf { it.count },
             )
         } + bad.filter { e -> crashes.none { kotlin.math.abs(it.lastAtMs - e.atMs) < 120_000L } }.groupBy { it.reason }.map { (reason, es) ->
             Finding(
                 "bug:exit:$reason", "BUG", "Android ended the app ${es.size} time${if (es.size == 1) "" else "s"}: $reason",
-                "last ${Format.age(es.maxOf { it.atMs }, now)} ago, ${if (es.first().foreground) "on screen" else "in the background"}" + (es.first().description?.let { ": ${it.take(100)}" } ?: "") +
+                "last ${Format.age(es.maxOf { it.atMs }, now)}, ${if (es.first().foreground) "on screen" else "in the background"}" + (es.first().description?.let { ": ${it.take(100)}" } ?: "") +
                     (es.first().trace.firstOrNull { it.contains("vigilant") }?.let { "; main thread at $it" } ?: ""),
                 "'How the app last ended' below (a freeze's main-thread stack)", "A 'not responding' is work on the main thread: find the frame in the stack and move it off (Dispatchers.Default/IO). A memory kill: see the Memory block.", weight = 90.0 + es.size,
             )
@@ -109,7 +109,7 @@ object Advisor {
             val n = es.sumOf { it.n }
             Finding(
                 "bug:error:$where", "BUG", "$n caught error${if (n == 1) "" else "s"} at $where",
-                "${es.last().cat}: ${es.last().msg}; last ${Format.age(es.maxOf { it.lastMs }, now)} ago (${es.last().where})",
+                "${es.last().cat}: ${es.last().msg}; last ${Format.age(es.maxOf { it.lastMs }, now)} (${es.last().where})",
                 where.substringAfter('(').substringBefore(':').let { "the file $it, around the line in the title" },
                 "Find why it throws here (the message says what), handle that case on purpose, and add a test for it; an error that is caught and logged still means a feature didn't finish.", weight = 70.0 + n,
             )
@@ -121,7 +121,7 @@ object Advisor {
         x.events.filter { it.n >= REPEATS && it.level != Level.INFO && now - it.lastMs < DAY_MS && it.cat != "NET" && it.where == null }.map { e ->
             Finding(
                 "repeat:${e.cat}:${e.msg.take(48)}", "FAILURE", "Repeating ${e.level.name.lowercase()}: ${e.cat} '${e.msg.take(90)}' ×${e.n}",
-                "first ${Format.age(e.atMs, now)} ago, last ${Format.age(e.lastMs, now)} ago", "the area's code (see the code map for ${e.cat})",
+                "first ${Format.age(e.atMs, now)}, last ${Format.age(e.lastMs, now)}", "the area's code (see the code map for ${e.cat})",
                 "Something is retrying a failing step without changing anything: find what each retry could change (a backoff, a different source, a stop) and make the cause visible instead of repeating it.",
                 weight = e.n.toDouble(),
             )
@@ -161,7 +161,7 @@ object Advisor {
                 add(
                     Finding(
                         "net:$host:errors", "FAILURE", "$host: ${pct(h.errorRate)} of calls failed (${h.errors} of ${h.calls})",
-                        "$kinds" + (worstPath?.let { "; worst endpoint ${it.key} (${it.value.errors}/${it.value.calls})" } ?: "") + (h.lastError?.let { "; last: $it ${h.lastErrorAtMs?.let { t -> Format.age(t, now) + " ago" } ?: ""}" } ?: ""),
+                        "$kinds" + (worstPath?.let { "; worst endpoint ${it.key} (${it.value.errors}/${it.value.calls})" } ?: "") + (h.lastError?.let { "; last: $it ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}" } ?: ""),
                         code,
                         when {
                             h.kinds["timeout"].let { it != null && it * 3 >= h.errors } -> "Mostly timeouts: check the call's timeout and how many run at once (HttpSupport.MAX_PER_HOST), and whether the caller retries or backs off; speed matters more than data here."
@@ -187,7 +187,7 @@ object Advisor {
             if (h.limits >= 3) {
                 add(
                     Finding(
-                        "net:$host:limits", "OPTIMIZE", "$host asked the app to slow down ${h.limits} times", "${h.lastLimit ?: "429"}; last ${h.lastLimitAtMs?.let { Format.age(it, now) + " ago" } ?: "?"}",
+                        "net:$host:limits", "OPTIMIZE", "$host asked the app to slow down ${h.limits} times", "${h.lastLimit ?: "429"}; last ${h.lastLimitAtMs?.let { Format.age(it, now) } ?: "?"}",
                         code, "Pace the caller to what the host allows (its Retry-After says how long to wait) and combine requests that ask for the same thing.", weight = h.limits.toDouble(),
                     ),
                 )
@@ -273,7 +273,7 @@ object Advisor {
                 add(
                     Finding(
                         "funnel:autobet:top-skip", "IMPROVE", "Auto-bet: ${Math.round(n * 100.0 / skipTotal)}% of the bets it skipped were skipped for one reason: $reason",
-                        "$skipTotal skips, $looked bets looked at, $passed passed every criterion, $placed placed (counted since ${x.eventsSinceMs?.let { Format.age(it, System.currentTimeMillis()) + " ago" } ?: "the file started"})",
+                        "$skipTotal skips, $looked bets looked at, $passed passed every criterion, $placed placed (counted since ${x.eventsSinceMs?.let { Format.age(it, System.currentTimeMillis()) } ?: "the file started"})",
                         where, "Decide whether this reason is the criteria working (leave it) or the app failing to see a bet it should (fix the read or the match). Never loosen a safety limit to raise the count.", weight = n.toDouble(),
                     ),
                 )
