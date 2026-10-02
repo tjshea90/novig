@@ -118,13 +118,12 @@ data class ScanSettings(
     val slipCustomStake: Double = 5.0,
     /**
      * Betting through Novig's API (Tj, 2026-09-29): the amount the Bet sheet starts with, the most one bet may be, the most a day's API bets
-     * may add up to (the device's day), and the smallest edge a bet is still placed at when the price has moved since the card was drawn.
+     * may add up to (the device's day). A bet placed by hand has no minimum edge (Tj, 2026-10-02); `apiMinEv`, which once set one, was removed in v0.46.0
+     * (an old settings file that still has it reads fine: unknown keys are ignored).
      */
     val apiBetStake: Double = 5.0,
     val apiMaxStake: Double = 10.0,
     val apiMaxPerDay: Double = 50.0,
-    /** Unused since v0.44.2 (kept so older settings files read): a bet placed by hand has no minimum edge (Tj, 2026-10-02); auto-bet has [autoBetMinEv]. */
-    val apiMinEv: Double = 0.01,
     /**
      * Auto-bet (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all, including … in the background as the cno scanner
      * is on in the background"): off by default. A background CNO auto-scan cycle places each CrazyNinjaOdds bet that passes these through Novig's
