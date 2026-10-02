@@ -167,6 +167,10 @@ class AutoBettor(
             }
         }
         if (passing.isEmpty()) {
+            // Nothing to bet this cycle, but the wallet this cycle read may already be empty (Tj, 2026-10-02 ~22:10Z): asleep until he adds money.
+            c.wallet.last?.takeIf { c.wallet.isSetUp && now - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
+                if (w.dollars < AutoBet.MIN_STAKE) { if (!walletEmptyNoted) walletRanOut(w.dollars) } else walletEmptyNoted = false
+            }
             return finish(now, Report(looked = all.size, skipped = skipped))
         }
 
@@ -273,13 +277,29 @@ class AutoBettor(
                 }
             }
         }
-        if (walletEmpty && !walletEmptyNoted) {
-            walletEmptyNoted = true
-            notes.stopped(app, "Wallet empty", "Auto-bet is waiting: the Vigilant wallet has ${money(balance)}. Add money in Settings › Betting & Novig account.")
-        }
+        if (walletEmpty && !walletEmptyNoted) walletRanOut(balance)
         val report = Report(looked = all.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
         if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
         return finish(now, report, balance = balance)
+    }
+
+    /**
+     * The wallet ran out (Tj, 2026-10-02 ~22:10Z: "make it also stop scanning and put the app to sleep once the wallet runs out of money"): every scan
+     * is paused, as the Pause button pauses it ([ScanSettings.paused]: a scan under way stops, CNO's list is held, background auto-scan and its service
+     * stop), and the wallet-empty note says so. Once per emptying: Tj resuming with the wallet still empty isn't paused again until it has refilled
+     * and run out again ([walletEmptyNoted]).
+     */
+    private suspend fun walletRanOut(balance: Double) {
+        walletEmptyNoted = true
+        withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(paused = true) } } }
+        if (c.runner.running) runCatching { c.runner.stop() }
+        runCatching { ScanService.cancelDone(app) }
+        runCatching { c.eventLog.info("AUTOBET", "wallet empty (${money(balance)}): scanning paused") }
+        notes.stopped(
+            app, "Wallet empty: Vigilant is asleep",
+            "The Vigilant wallet has ${money(balance)}, so auto-bet can't place anything: scanning is paused (nothing is read, nothing is bet). " +
+                "Add money in Settings › Betting & Novig account, then tap Resume.",
+        )
     }
 
     /** What the sharp book said about each bet that passed (CNO row key → the numbers), for the bet's pop-up and Diagnostics. */

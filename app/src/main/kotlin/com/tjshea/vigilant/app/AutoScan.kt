@@ -229,6 +229,8 @@ class AutoScanner(
                     if (s.autoBetsNow) {
                         _status.update { it.copy(step = "Auto-bet") }
                         runCatching { timed("autobet") { c.autoBet.run(s, snapshot(s)) } }.onFailure { if (it is CancellationException) throw it; errors += "Auto-bet: ${it.message ?: it.javaClass.simpleName}" }
+                        // The wallet ran out and auto-bet put Vigilant to sleep (Tj, 2026-10-02 ~22:10Z): the rest of this cycle doesn't run either.
+                        if (c.currentSettings().paused) return true
                     }
                     runCatching { timed("alerts") { alerts += cnoAlerts(s) } }.onFailure { if (it is CancellationException) throw it; errors += "CNO: ${it.message ?: it.javaClass.simpleName}" }
                     // The closing line of the open bets about to start, for the Tracker's CLV (Tj, 2026-09-29): the last read before the start.
