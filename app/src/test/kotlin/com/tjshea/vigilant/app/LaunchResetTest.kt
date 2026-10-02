@@ -139,33 +139,29 @@ class LaunchResetTest {
     @Test
     fun `the boot receiver switches them off at a restart before anything can bet, and an update keeps them`() {
         open().destroy()
+        assertTrue(runBlocking { app.container.currentSettings() }.activeAutoScan != AutoScanMode.OFF)
         // An update: the receiver starts what was on, nothing is switched off.
-        receive(Intent.ACTION_MY_PACKAGE_REPLACED)
+        receive(Intent.ACTION_MY_PACKAGE_REPLACED) { shadowOf(app).peekNextStartedService() != null }
+        assertEquals(AutoScanService::class.java.name, shadowOf(app).nextStartedService.component?.className)
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
-        // A phone restart: off at boot (the service isn't started), and the first screen says why.
+        // A phone restart: off at boot, the service not started, and the first screen says why.
         bootCount(8)
-        receive(Intent.ACTION_BOOT_COMPLETED)
+        receive(Intent.ACTION_BOOT_COMPLETED) { !saved().autoBet }
+        Thread.sleep(300)
         assertFalse(saved().autoBet)
         assertEquals(AutoScanMode.OFF, saved().autoScan)
-        assertTrue(app.container.launches.restarted(Boot(8, 0L)).not())
+        assertNull(shadowOf(app).peekNextStartedService())
         open().destroy()
         assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
     }
 
-    /** The boot receiver's broadcast, waited for (it works on a background thread). */
-    private fun receive(action: String) {
-        val r = AutoScanReceiver()
-        app.registerReceiver(r, android.content.IntentFilter(action), android.content.Context.RECEIVER_NOT_EXPORTED)
+    /** The boot receiver's broadcast: its work runs on a background thread, waited for until [done] (or 5 s). */
+    private fun receive(action: String, done: () -> Boolean) {
         app.sendBroadcast(Intent(action).setPackage(app.packageName))
         shadowOf(android.os.Looper.getMainLooper()).idle()
-        val pending = org.robolectric.shadows.ShadowApplication.getInstance().registeredReceivers
-        app.unregisterReceiver(r)
-        // goAsync's work: the settings file settles within a moment.
         val until = System.currentTimeMillis() + 5_000L
-        while (System.currentTimeMillis() < until && runBlocking { app.container.launches.restarted(Boot.now(app)) }) Thread.sleep(20)
-        Thread.sleep(200)
-        check(pending.isEmpty() || true)
+        while (!done() && System.currentTimeMillis() < until) Thread.sleep(20)
     }
 
     @Test
