@@ -1,13 +1,13 @@
-# CHECKPOINT 2354 — read me first, then TASKS.md
+# CHECKPOINT 2355 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T17:47:09Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `a9e4b342` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T17:53:57Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `12628f3a` (this checkpoint is the commit after it)
 
 ## Just done
-full floor green on v0.45.0 (1,695: 1,672 passed, 23 skipped)
+pre-release: v0.45.0: presets (Volume + safe CLV, Strict CLV, your own), sharp veto by kind of bet (Kalshi/ProphetX for props, Pinnacle/Circa for game lines), every bet's record as placed in Diagnostics with CLV splits, Diagnostics file saved to Downloads/Vigilant (versionCode 83, v0.45.0)
 
 ## Do this next
-CI green on this commit, then bash ship.sh, trigger release.yml, confirm Release v0.45.0, record-release, answer Tj with link
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.45.0), then run: bash tools/record-release.sh v0.45.0 83 "v0.45.0: presets (Volume + safe CLV, Strict CLV, your own), sharp veto by kind of bet (Kalshi/ProphetX for props, Pinnacle/Circa for game lines), every bet's record as placed in Diagnostics with CLV splits, Diagnostics file saved to Downloads/Vigilant"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ CI green on this commit, then bash ship.sh, trigger release.yml, confirm Release
 
 ## Last ten checkpoints
 ```
+  95b9097d ckpt 2354: full floor green on v0.45.0 (1,695: 1,672 passed, 23 skipped)
   9429058e ckpt 2353: AW7 done (BetKind fallback by words + whole-match sets, page-less dissent, p
   e52f5a9b ckpt 2352: floor green (1,693: 1,670 passed, 23 skipped); sweep found AW7 (BetKind OTHE
   a5733e96 ckpt 2351: app tests green (40): PresetsUiTest, Downloads save (DiagnosticsShareTest), 
@@ -25,7 +26,6 @@ CI green on this commit, then bash ship.sh, trigger release.yml, confirm Release
   a9c8bd2a ckpt 2347: AW4 code: AtBet (as placed) on TrackedBet + BetTarget; recorded by auto-bet,
   040f47d7 ckpt 2346: AW3 UI: Presets tab (built-ins Volume + safe CLV / Strict CLV, save/apply/de
   9529aaa4 ckpt 2345: AW2 code: SharpVeto (ranking by bet kind and sport), SharpMode OFF/VETO/CONF
-  2f450dde ckpt 2344: AW1: §65 re-checked (2 corrections: Buchdahl numbers, Wizard 3%), §66 rese
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
