@@ -49,7 +49,14 @@ import com.tjshea.vigilant.data.scanner.PricedGame
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (String) -> Unit, onScan: () -> Unit = {}) {
+fun GamesScreen(
+    state: UiState,
+    onOpen: (Opportunity) -> Unit,
+    onToggleLeague: (String) -> Unit,
+    onScan: () -> Unit = {},
+    /** Pull to refresh: a scan that also resumes a paused scanner (Tj, 2026-10-02). */
+    onPull: () -> Unit = onScan,
+) {
     var openEventId by rememberSaveable { mutableStateOf<String?>(null) }
     // Fair prices and EVs show only while the other books' prices are current (RESEARCH.md §24).
     val now = rememberNow(15_000)
@@ -83,7 +90,7 @@ fun GamesScreen(state: UiState, onOpen: (Opportunity) -> Unit, onToggleLeague: (
         VigilantPullToRefresh(
             // The progress bar under the top bar shows the scan; the pull's arrow lets go once it starts.
             busy = state.status.scanning,
-            onRefresh = onScan,
+            onRefresh = onPull,
             modifier = Modifier.padding(padding).fillMaxSize(),
             holdWhileBusy = false,
         ) {

@@ -83,6 +83,8 @@ fun FeedScreen(
     onUnhide: (String) -> Unit = {},
     /** ParlayAPI's own picks at Novig (PARLAY_API.md §6.5): shown while ParlayAPI is on with a key. Null: no section. */
     parlay: ParlayPickActions? = null,
+    /** Pull to refresh: a scan that also resumes a paused scanner (Tj, 2026-10-02). */
+    onPull: () -> Unit = onScan,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
     // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
@@ -150,7 +152,7 @@ fun FeedScreen(
         VigilantPullToRefresh(
             // The progress bar under the top bar shows the scan; the pull's arrow lets go once it starts.
             busy = state.status.scanning,
-            onRefresh = onScan,
+            onRefresh = onPull,
             modifier = Modifier.padding(padding).fillMaxSize(),
             holdWhileBusy = false,
         ) {
