@@ -18,11 +18,12 @@ import kotlin.coroutines.resumeWithException
  * reading Novig at the time (the CNO list's live prices, the board) took from the same 4 (Tj, 2026-09-28: "now it is
  * reading the API very slow"). [MAX_PER_HOST] leaves room for all of them; each client still paces its own host.
  */
-fun vigilantHttpClient(): OkHttpClient = OkHttpClient.Builder()
+fun vigilantHttpClient(interceptors: List<okhttp3.Interceptor> = emptyList()): OkHttpClient = OkHttpClient.Builder()
     .dispatcher(Dispatcher().apply { maxRequestsPerHost = MAX_PER_HOST })
     .connectTimeout(10, TimeUnit.SECONDS)
     .readTimeout(20, TimeUnit.SECONDS)
     .callTimeout(30, TimeUnit.SECONDS)
+    .apply { interceptors.forEach { addInterceptor(it) } }
     .build()
 
 /** Requests at once to one host: the key's 10 book reads, its websocket, and room for the rest of the app. */

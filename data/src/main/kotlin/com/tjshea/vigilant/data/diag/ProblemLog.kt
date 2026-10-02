@@ -17,12 +17,18 @@ data class ProblemBook(val items: List<Problem> = emptyList())
  * failure message shown on screen. The same problem again within [MERGE_MS] adds to its count instead of a new line; the newest [KEEP] stay.
  * Never a key: messages are the app's own words, and anything shaped like a key is masked ([clean]).
  */
-class ProblemLog(private val store: JsonFileStore<ProblemBook>, private val clock: () -> Long = System::currentTimeMillis) {
+class ProblemLog(
+    private val store: JsonFileStore<ProblemBook>,
+    private val clock: () -> Long = System::currentTimeMillis,
+    /** Told of every problem as it is added (the event log's feed: Tj, 2026-10-02): the area and the masked text. */
+    private val onAdd: ((String, String) -> Unit)? = null,
+) {
 
     /** [atMs]: when it happened, when that was before now (a crash saved as the app went down). [maxLength]: a crash's stack keeps more. */
     suspend fun add(area: String, message: String, atMs: Long? = null, maxLength: Int = MAX_LENGTH) {
         val text = clean(message).take(maxLength)
         if (text.isBlank()) return
+        runCatching { onAdd?.invoke(area, text) }
         val now = atMs ?: clock()
         store.update { book ->
             val items = book.items.toMutableList()
