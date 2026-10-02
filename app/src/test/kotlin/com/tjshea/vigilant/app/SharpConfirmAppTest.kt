@@ -179,7 +179,8 @@ class SharpConfirmAppTest {
         val novig = FakeNovig()
         val asked = ArrayList<Asked>()
         val off = settings { it.copy(sharpConfirmAutoBet = false) }
-        assertEquals(1, bettor(novig, asked) { error("must not be asked") }.run(off, state(off)).placed.size)
+        val offReport = bettor(novig, asked) { error("must not be asked") }.run(off, state(off))
+        assertEquals(offReport.skipped.toString(), 1, offReport.placed.size)
         assertTrue(asked.isEmpty())
         // Books agreeing 5 (the bet has 3), longest odds under +117: each fails first, so the sharp check is never reached.
         for (strict in listOf(settings { it.copy(autoBetBooks = 5) }, settings { it.copy(autoBetMaxOdds = 110) })) {
@@ -189,7 +190,8 @@ class SharpConfirmAppTest {
         assertTrue("never asked for a bet that already failed: $asked", asked.isEmpty())
         // The alerts' switch is another switch: it doesn't make the auto-bet ask.
         val alertsOnly = settings { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true) }
-        assertEquals(1, bettor(FakeNovig(), asked) { error("must not be asked") }.run(alertsOnly, state(alertsOnly)).placed.size)
+        val alertsReport = bettor(FakeNovig(), asked) { error("must not be asked") }.run(alertsOnly, state(alertsOnly))
+        assertEquals(alertsReport.skipped.toString(), 1, alertsReport.placed.size)
     }
 
     @Test
@@ -213,21 +215,21 @@ class SharpConfirmAppTest {
             return AutoBettor(app, app.container, clock = { now }, placer = { placer }, wallet = { 25.0 }, resolve = { targetOf(it) },
                 sharp = { rules, bet, view, odds, live, at -> SharpGate.check(sharp, rules, bet, view, odds, live, at) })
         }
-        // Pinnacle: Under 2.10 / Over 1.77: fair about 48%: +EV at Novig's +117 (a fresh quote).
-        val ok = bettorWith(feed(over = 1.77, under = 2.10, ageMs = 30_000L)).run(settings { it.copy(sharpConfirmViaCno = false) }, state())
+        // Pinnacle: Under 2.10 / Over 1.90: fair about 47.5%, +3% at Novig's +117 (a fresh quote).
+        val ok = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 30_000L)).run(settings { it.copy(sharpConfirmViaCno = false) }, state())
         assertEquals(ok.skipped.toString(), 1, ok.placed.size)
         assertEquals(1, calls)
         // The same quote 4 minutes old: past the 3-minute limit, so not bet.
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
-        val stale = bettorWith(feed(over = 1.77, under = 2.10, ageMs = 240_000L)).run(settings(), state())
+        val stale = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 240_000L)).run(settings(), state())
         assertEquals(0, stale.placed.size)
         assertEquals(1, stale.skipped["Pinnacle's price for it is older than 3 min (or has no time)"])
-        // CNO's own page has Pinnacle at +100/−122 (fair about 47.6%): a +EV yes there. Make CNO's Pinnacle say no (a long price against Novig's +117):
+        // CNO's own page has Pinnacle at +100/−122 (fair about 47.6%): a +EV yes there. Make CNO's Pinnacle say no (Under +140, Over −170: fair about 40%):
         // the bet is vetoed before any feed is asked.
-        val noView = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") CnoBookPrice("PN", -130, null, 110, null) else it }) }
+        val noView = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") CnoBookPrice("PN", 140, null, -170, null) else it }) }
         val vetoState = state().let { st -> st.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = noView))).indexed(now) }
         calls = 0
-        val veto = bettorWith(feed(over = 1.77, under = 2.10, ageMs = 30_000L)).run(settings(), vetoState)
+        val veto = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 30_000L)).run(settings(), vetoState)
         assertEquals(0, veto.placed.size)
         assertEquals("a CNO veto costs no feed call", 0, calls)
         assertEquals(1, veto.skipped["Pinnacle's own devigged price doesn't show it +EV at Novig's price"])
