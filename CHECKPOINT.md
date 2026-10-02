@@ -1,13 +1,13 @@
-# CHECKPOINT 2282 — read me first, then TASKS.md
+# CHECKPOINT 2283 — read me first, then TASKS.md
 
-**Written:** 2026-10-01T23:59:07Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `74d29547` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T00:00:15Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `bb698387` (this checkpoint is the commit after it)
 
 ## Just done
-v0.41.0 released and recorded: Keep awake for auto-scan/auto-bet with the screen off (AK1-AK4)
+wrote Tj's reopen-resets and sharp-book confirmation request into TASKS.md as AL1-AL5
 
 ## Do this next
-wait for Tj's overnight Diagnostics (Cycle record) before changing the keep-awake design; optional: ask whether auto-bet should keep running during Check odds now
+AL1: find MainActivity's launch path and settings reset; AL2: read RESEARCH on CNO books and Pinnacle sources
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ wait for Tj's overnight Diagnostics (Cycle record) before changing the keep-awak
 
 ## Last ten checkpoints
 ```
+  6aa592f3 ckpt 2282: v0.41.0 released and recorded: Keep awake for auto-scan/auto-bet with the sc
   ce28edc3 ckpt 2281: pre-release: v0.41.0: Keep awake keeps background auto-scan and auto-bet on 
   737304b0 ckpt 2280: AK3 built and mutation-checked: KeepAwake rules, CycleLog meter, service loo
   6a8935c1 ckpt 2279: AK3 in progress: KeepAwake rules, CycleLog, AutoScanService loop + watchdog,
@@ -26,5 +27,7 @@ wait for Tj's overnight Diagnostics (Cycle record) before changing the keep-awak
   22997e5d ckpt 2275: wrote Tj's all-books-agree request into TASKS.md as AJ1-AJ3
   395bc7eb ckpt 2274: v0.40.1 released and recorded: Check odds now gets every closing line and ho
   ebea8af1 ckpt 2273: pre-release: v0.40.1: Check odds now looks for every closing line (every sta
-  f45b3717 ckpt 2272: AI2-AI3 built: forced close backfill (CloseBackfill.run(force)), FocusGate h
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
