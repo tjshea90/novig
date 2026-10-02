@@ -3445,3 +3445,16 @@ For the diagnostics feature, make it output a file that I can send directly to C
 ```
 I read somewhere that sharp bets can be found on novig by analyzing liquidity on certain bets, and if large liquidity is offered on certain bets that it is probably betting syndicates or sharps. Investigate whether this is true or not. If it is true and a good betting strategy, implement in vigilant a way to scan for this liquidity and follow the sharp bets. Basically a scanner for sharp action. Only make this if you discover that it has merit and is a good strategy. Then find the most effective and efficient way to incorporate it in vigilant using the best sources and keep in mind the apis I already have
 ```
+
+## 2026-10-02T03:50:12Z
+```
+Run full tests on this app, look for ways to improve the app and scanners. Look into these issues: 
+
+1) when I start the vigilant scanner the list of bets gets laggy. This is ok if it's supposed to but not ok if it's a sign of bad code. 
+
+2) look at the screenshot, most odds say 9 minutes old. Is there a way to get fresh odds during a scan? Is 9 minute old odds still good data? 
+
+3) consider ways to use free apis such as ESPN apis and also my paid parlayapi to their full extent and get as much benefit as possible from the apis. Research API features and docs if needed. Search for free apis that can improve this app. Look at their docs.
+
+I'm about to send a diagnostics file from the app, review that too
+```
