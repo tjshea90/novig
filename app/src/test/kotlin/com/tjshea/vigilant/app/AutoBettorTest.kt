@@ -730,7 +730,7 @@ class AutoBettorTest {
         // Novig's own price now whatever the live-price setting says, only when auto-bet will run.
         assertTrue(cycle.contains("val s = if (settings.autoBetsNow) settings.copy(cnoLivePrices = true) else settings"))
         // Reads, then bets, then alerts: a bet just placed doesn't also alert.
-        val read = cycle.indexOf("runCatching { cnoRead(s) }")
+        val read = cycle.indexOf("runCatching { timed(\"cno\") { cnoRead(s) } }")
         val bet = cycle.indexOf("c.autoBet.run(s, snapshot(s))")
         val alert = cycle.indexOf("alerts += cnoAlerts(s)")
         assertTrue("$read $bet $alert", read in 0 until bet && bet < alert)
