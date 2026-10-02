@@ -16,12 +16,32 @@ enum class BetKind(val label: String) {
         fun of(market: String, bet: String): BetKind = when (val pick = BetGrader.pickOf(market, bet)) {
             is BetGrader.Pick.Prop -> PROP
             is BetGrader.Pick.Moneyline -> MONEYLINE
-            is BetGrader.Pick.Spread -> if (pick.period == BetGrader.Period.GAME) SPREAD else PERIOD
-            is BetGrader.Pick.Total -> if (pick.period == BetGrader.Period.GAME) TOTAL else PERIOD
+            is BetGrader.Pick.Spread -> if (pick.period.wholeGame()) SPREAD else PERIOD
+            is BetGrader.Pick.Total -> if (pick.period.wholeGame()) TOTAL else PERIOD
             is BetGrader.Pick.TeamTotal -> TEAM_TOTAL
             is BetGrader.Pick.FirstSet -> PERIOD
-            null -> OTHER
+            // The grader gives up on whatever it can't grade from a score (sacks, pitcher outs, quarters): told by the market's words instead.
+            null -> byWords(market.lowercase(Locale.US))
         }
+
+        /** A set spread or total sets covers the whole match. */
+        private fun BetGrader.Period.wholeGame() = this == BetGrader.Period.GAME || this == BetGrader.Period.SETS
+
+        private fun byWords(m: String): BetKind = when {
+            THREE_WAY.containsMatchIn(m) -> OTHER
+            PERIOD_WORDS.containsMatchIn(m) -> PERIOD
+            m.contains("team total") -> TEAM_TOTAL
+            PLAYER_WORDS.containsMatchIn(m) -> PROP
+            m.contains("moneyline") || m == "money" -> MONEYLINE
+            SPREAD_WORDS.containsMatchIn(m) -> SPREAD
+            m.contains("total") -> TOTAL
+            else -> OTHER
+        }
+
+        private val THREE_WAY = Regex("3-way|3 way|1x2|\\bdraw\\b")
+        private val PERIOD_WORDS = Regex("quarter|\\bq[1-4]\\b|period|half|\\b[12]h\\b|inning|\\bf5\\b|first 5|1st 5|1st set|first set|\\bset [1-5]\\b")
+        private val PLAYER_WORDS = Regex("player|batter|pitcher|goalie|goalscorer|anytime|to score|to record|touchdown")
+        private val SPREAD_WORDS = Regex("spread|run line|puck line|handicap")
     }
 }
 
