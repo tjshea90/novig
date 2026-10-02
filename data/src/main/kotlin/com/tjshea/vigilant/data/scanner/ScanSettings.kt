@@ -183,6 +183,8 @@ data class ScanSettings(
      * [autoLockLive]: also once the game is under way (the in-game fee is in the worst case; a line that can push isn't locked then).
      */
     val autoLock: Boolean = false,
+    /** The Tracker's "Novig only" filter is on ([com.tjshea.vigilant.data.tracker.NovigNow]): kept, so the Tracker opens the way Tj left it. */
+    val trackerNovigOnly: Boolean = false,
     val autoLockMinPercent: Double = 0.02,
     val autoLockLive: Boolean = true,
     /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */

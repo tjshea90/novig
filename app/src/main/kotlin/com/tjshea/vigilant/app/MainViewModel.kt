@@ -115,6 +115,8 @@ data class UiState(
     /** Locks on the open API bets, by Novig market (RESEARCH.md §67), and the market one is being placed on now. */
     val locks: Map<String, LockView> = emptyMap(),
     val locking: String? = null,
+    /** The "Novig only" filter's own read of Novig's prices is under way. */
+    val readingNovig: Boolean = false,
     val betSheet: BetSheetUi? = null,
     val settings: ScanSettings = ScanSettings(),
     val result: ScanResult? = null,
@@ -1308,6 +1310,49 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * looks at every open bet again and [announce]s what came of it (Tj, 2026-09-29: some bets stayed open
      * after the game was final): graded, not over yet, and the ones that need a tap, each with its reason on the bet.
      */
+    /**
+     * Novig's own prices for the open bets, for the Tracker's "Novig only" filter (Tj, 2026-10-02 ~18:50Z: "Make sure it is smart and doesn't waste any api
+     * usage on other sports books … if I already just scanned without using this filter and there is still fresh novig odds for all my bets, it doesn't
+     * need to rescan"): reads only Novig's books, only for the bets whose Novig price is missing or older than [NovigNow.FRESH_MS] (all of them when
+     * [force]: Check Novig now), one book per market. With every price fresh, nothing is read.
+     */
+    fun refreshNovigOnly(force: Boolean = false) {
+        if (!AppBook.isNovig || _state.value.readingNovig) return
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val bets = runCatching { c.tracker.all() }.getOrNull() ?: return@launch
+            val all = com.tjshea.vigilant.data.tracker.NovigNow.priceable(bets, now)
+            val due = if (force) all else com.tjshea.vigilant.data.tracker.NovigNow.stale(bets, now)
+            if (due.isEmpty()) {
+                if (force) _toasts.tryEmit("No open bet to price on Novig.")
+                return@launch
+            }
+            _state.update { it.copy(readingNovig = true) }
+            val priced = try {
+                withContext(Dispatchers.IO + NonCancellable) {
+                    val ids = due.map { it.marketId }.distinct()
+                    val books = runCatching { c.novig.books(ids).books }.getOrDefault(emptyMap())
+                    val at = System.currentTimeMillis()
+                    val prices = HashMap<String, Double>()
+                    for (b in due) {
+                        val book = books[b.marketId] ?: continue
+                        val market = c.locks.market(b.marketId) ?: continue
+                        com.tjshea.vigilant.data.tracker.NovigNow.mid(book, market, b.outcomeId)?.let { prices[b.id] = it }
+                    }
+                    c.tracker.recordNovig(prices, at)
+                    c.eventLog.count("novigOnly.read")
+                    prices.size
+                }
+            } finally {
+                _state.update { it.copy(readingNovig = false) }
+            }
+            _toasts.tryEmit(
+                "Novig's prices read for $priced of ${due.size} open bet${if (due.size == 1) "" else "s"} (Novig only: no other book asked)" +
+                    (if (!force && due.size < all.size) "; ${all.size - due.size} were already fresh" else "") + ".",
+            )
+        }
+    }
+
     /**
      * The locks on offer on Tj's open API bets (Tj, 2026-10-02 ~18:50Z: "it finds proper arbitrage opportunities based on the bets I already placed"): one
      * Novig book per market the subaccount holds, nothing else. When the Tracker opens, after Check odds now, and after a lock.
