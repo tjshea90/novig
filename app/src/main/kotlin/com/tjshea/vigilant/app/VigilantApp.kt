@@ -142,6 +142,9 @@ class AppContainer(private val app: Application) {
         JsonFileStore(File(app.filesDir, "netstats.json"), com.tjshea.vigilant.data.diag.NetBook.serializer(), { com.tjshea.vigilant.data.diag.NetBook() }, json),
     )
     val perf = com.tjshea.vigilant.data.diag.PerfStats()
+
+    /** The screen's frames, by what the app was doing (Diagnostics' frame meter; [FrameMeter]). */
+    val frames = com.tjshea.vigilant.data.diag.FrameStats()
     val recorder = AppRecorder(eventLog, netStats, perf)
     val diagHistory = com.tjshea.vigilant.data.diag.DiagHistory(
         JsonFileStore(File(app.filesDir, "diag_history.json"), com.tjshea.vigilant.data.diag.DiagBook.serializer(), { com.tjshea.vigilant.data.diag.DiagBook() }, json),

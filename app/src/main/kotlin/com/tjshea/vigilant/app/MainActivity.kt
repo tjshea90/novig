@@ -513,6 +513,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Diagnostics' frame meter, while the screen is in front. */
+    private val frameMeter by lazy { FrameMeter(this, (application as VigilantApp).container) }
+
+    override fun onResume() {
+        super.onResume()
+        frameMeter.start()
+    }
+
+    override fun onPause() {
+        frameMeter.stop()
+        super.onPause()
+    }
+
     override fun onStart() {
         super.onStart()
         (application as VigilantApp).container.onScreen = true
