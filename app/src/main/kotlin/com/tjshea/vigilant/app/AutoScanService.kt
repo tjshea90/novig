@@ -90,6 +90,7 @@ class AutoScanService : Service() {
     override fun onCreate() {
         super.onCreate()
         running = true
+        runCatching { container.eventLog.info("SERVICE", "auto-scan service started") }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -101,6 +102,7 @@ class AutoScanService : Service() {
             // Tj gets a note to reopen Vigilant, which starts it again.
             AutoScanReceiver.releaseBridge()
             notifyPaused(this)
+            runCatching { container.eventLog.warn("SERVICE", "Android refused to start auto-scan in the foreground (${e.javaClass.simpleName}): the app must be reopened") }
             stopSelf()
             return START_NOT_STICKY
         }
@@ -278,6 +280,7 @@ class AutoScanService : Service() {
 
     private fun stopNow() {
         stopping = true
+        runCatching { container.eventLog.info("SERVICE", "auto-scan service stopping (auto-scan off, paused or Stop)") }
         AutoScanAlarm.cancel(this)
         stopLoop()
         cycleJob?.cancel()
@@ -291,6 +294,7 @@ class AutoScanService : Service() {
     override fun onDestroy() {
         stopping = true
         running = false
+        runCatching { container.eventLog.info("SERVICE", "auto-scan service destroyed") }
         releaseWakeLock()
         releaseKeepAwake()
         scope.cancel()
@@ -305,6 +309,7 @@ class AutoScanService : Service() {
      */
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+        runCatching { container.eventLog.info("SERVICE", "Vigilant swiped out of the recent apps; restart alarm armed") }
         if (!stopping && plan?.let { it.mode != AutoScanMode.OFF } == true) AutoScanAlarm.set(this, System.currentTimeMillis() + TASK_REMOVED_RESTART_MS, announce = false)
     }
 

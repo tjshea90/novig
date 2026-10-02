@@ -250,6 +250,14 @@ class AutoScanner(
                 withContext(NonCancellable) {
                     errors.forEach { e -> runCatching { c.problems.add("Background auto-scan", e) } }
                     runCatching { c.cycleLog.record(start, clock(), settings.autoScanSeconds, screenOff, dozing, afterPause) }
+                    // The flight recorder: how long the cycle took (Diagnostics' performance block), and a line when it ran long.
+                    val tookMs = clock() - start
+                    c.perf.add("cycle.ms", tookMs.toDouble())
+                    c.eventLog.count("cycle.runs")
+                    if (errors.isNotEmpty()) c.eventLog.count("cycle.errors")
+                    if (tookMs > maxOf(30_000L, 3L * settings.autoScanSeconds * 1_000L)) {
+                        c.eventLog.warn("CYCLE", "a background cycle took ${tookMs / 1_000} s (its interval is ${ScanSettings.intervalLabel(settings.autoScanSeconds)})", tookMs)
+                    }
                 }
             }
             return true
@@ -329,7 +337,7 @@ class AutoScanner(
             SharpGate.check(
                 c.sharp, rules, com.tjshea.vigilant.data.reference.SharpBooks.Bet(row.league, row.event, row.startsAtMs, row.market, row.bet),
                 state.booksAt(item.pick.row.key, now)?.view, row.odds, item.pick.live, now,
-            )
+            ).also { c.eventLog.count("sharp.alert.${it.verdict}") }
         }
     }
 
@@ -357,7 +365,11 @@ class AutoScanner(
         fresh = c.alertLog.unseen(fresh).take(MAX_ALERTS)
         if (fresh.isEmpty()) return@withLock 0
         val posted = EvAlerts.post(app, fresh)
-        if (posted > 0) runCatching { c.alertLog.record(fresh) }
+        if (posted > 0) {
+            runCatching { c.alertLog.record(fresh) }
+            c.eventLog.info("ALERT", "sent $posted +EV alert${if (posted == 1) "" else "s"}: " + fresh.take(posted).joinToString("; ") { "${it.bet} (${it.scanner}, ${"%+.1f".format(java.util.Locale.US, it.ev * 100)}%)" }.take(160))
+            c.eventLog.count("alerts.sent", posted.toLong())
+        }
         posted
     }
 

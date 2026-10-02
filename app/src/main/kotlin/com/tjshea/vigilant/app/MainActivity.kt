@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Closed and opened again (no saved state): auto-bet and background auto-scan start off (Tj, 2026-10-02), saved before anything reads the settings.
         val switchedOff = if (savedInstanceState == null) LaunchReset.onFreshLaunch(application as VigilantApp) else null
+        (application as VigilantApp).container.eventLog.info("APP", "screen opened (${if (savedInstanceState == null) "fresh launch" else "restored"})" + (switchedOff?.let { ": $it" } ?: ""))
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         switchedOff?.let { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show() }

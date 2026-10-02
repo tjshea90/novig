@@ -293,6 +293,8 @@ class AutoBettor(
         }
         if (sharpSaid.size > SHARP_SAID_KEEP) sharpSaid.clear()
         sharpSaid[item.pick.row.key] = result
+        c.eventLog.count("sharp.autobet.${result.verdict}")
+        if (result.verdict == SharpConfirm.Verdict.UNAVAILABLE) c.eventLog.warn("SHARP", result.reason ?: "the sharp check couldn't ask")
         return result.reason
     }
 
@@ -310,7 +312,25 @@ class AutoBettor(
         return finish(now, report.copy(stopped = why))
     }
 
+    /** The flight recorder's view of a run (Tj, 2026-10-02): the funnel in counters (looked → passed → placed, and why not), each bet placed and each stop as an event. */
+    private fun record(report: Report, blocker: String?) {
+        val log = c.eventLog
+        if (report.looked > 0) {
+            log.count("autobet.runs")
+            log.count("autobet.looked", report.looked.toLong())
+            log.count("autobet.passed", report.passed.toLong())
+        }
+        report.skipped.forEach { (reason, n) -> log.count("autobet.skip.$reason", n.toLong()) }
+        report.placed.forEach { b ->
+            log.count("autobet.placed")
+            log.info("AUTOBET", "placed ${b.selection} ${money(b.stake)}${b.american?.let { " at ${if (it > 0) "+$it" else "$it"}" } ?: ""}" + (b.evPercentAtBet?.let { String.format(Locale.US, " (%+.1f%% EV)", it * 100) } ?: ""))
+        }
+        report.stopped?.takeIf { !it.startsWith("placed ") }?.let { log.warn("AUTOBET", "stopped: $it") }
+        blocker?.takeIf { it != "Auto-bet is off" }?.let { log.warn("AUTOBET", "can't place bets: $it") }
+    }
+
     private fun finish(now: Long, report: Report, blocker: String? = null, balance: Double? = null): Report {
+        runCatching { record(report, blocker) }
         _status.update {
             it.copy(
                 lastRunMs = now, last = report, blocker = blocker, balance = balance ?: it.balance,
