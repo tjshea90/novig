@@ -38,7 +38,15 @@ data class LockView(
  * websocket's when it's on, else the public or keyed read with its "not modified" cache: no other book's API), and each market's details kept
  * [MARKET_TTL_MS] (its two outcomes, fee and line don't change). Nothing is placed here: [AutoLocker] and the Tracker's Lock button do that.
  */
-class LockScanner(private val c: AppContainer, private val clock: () -> Long = System::currentTimeMillis) {
+class LockScanner(
+    private val clock: () -> Long = System::currentTimeMillis,
+    /** A market's details from Novig (null when it doesn't list it). */
+    private val readMarket: suspend (String) -> NovigMarket?,
+    /** The books of these markets from Novig, by market id (the websocket's, or a read). */
+    private val readBooks: suspend (List<String>) -> Map<String, com.tjshea.vigilant.data.novig.NovigBook>,
+) {
+    constructor(c: AppContainer) : this(readMarket = { c.novig.market(it) }, readBooks = { c.novig.books(it).books })
+
 
     private val markets = ConcurrentHashMap<String, Pair<NovigMarket, Long>>()
 
@@ -47,7 +55,7 @@ class LockScanner(private val c: AppContainer, private val clock: () -> Long = S
         val now = clock()
         markets[marketId]?.takeIf { now - it.second < MARKET_TTL_MS }?.let { return it.first }
         val m = try {
-            c.novig.market(marketId)
+            readMarket(marketId)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -63,7 +71,7 @@ class LockScanner(private val c: AppContainer, private val clock: () -> Long = S
         val holdings = LockPositions.of(bets, now)
         if (holdings.isEmpty()) return emptyMap()
         val books = try {
-            c.novig.books(holdings.map { it.marketId }).books
+            readBooks(holdings.map { it.marketId })
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -122,6 +130,7 @@ class AutoLocker(
     private val c: AppContainer,
     private val clock: () -> Long = System::currentTimeMillis,
     private val placer: () -> ApiBetPlacer? = { c.autoBetPlacer() },
+    private val scanner: () -> LockScanner = { c.locks },
 ) {
     private val waitUntil = ConcurrentHashMap<String, Long>()
 
@@ -133,7 +142,7 @@ class AutoLocker(
         if (!s.autoLocksNow || !AppBook.isNovig) return emptyList()
         val p = placer() ?: return emptyList()
         val now = clock()
-        val views = c.locks.scan(c.tracker.all()) { minProfit(s, it) }
+        val views = scanner().scan(c.tracker.all()) { minProfit(s, it) }
         val placed = ArrayList<TrackedBet>()
         for (v in views.values) {
             val plan = (v.result as? LockResult.Ready)?.plan ?: continue
