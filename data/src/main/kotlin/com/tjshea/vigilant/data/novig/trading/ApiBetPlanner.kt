@@ -33,6 +33,8 @@ data class BetTarget(
     val basis: com.tjshea.vigilant.data.tracker.FairBasis? = null,
     /** Placed by the auto-bet, nobody confirming (Tj, 2026-10-01): kept on the bet ([com.tjshea.vigilant.data.tracker.TrackedBet.auto]). */
     val auto: Boolean = false,
+    /** The bet as decided ([com.tjshea.vigilant.data.tracker.AtBet]), kept on the bet once it fills. */
+    val atBet: com.tjshea.vigilant.data.tracker.AtBet? = null,
 )
 
 /**

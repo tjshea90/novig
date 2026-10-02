@@ -140,6 +140,8 @@ data class TrackedBet(
     val fairBasis: FairBasis? = null,
     /** Placed by the auto-bet with nobody confirming it (Tj, 2026-10-01); otherwise exactly like a bet placed from the Bet sheet. */
     val auto: Boolean = false,
+    /** Everything about the bet as it was placed ([AtBet], Tj 2026-10-02 17:01Z): never changed by a re-check. Null before v0.45.0. */
+    val atBet: AtBet? = null,
 ) {
     /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
     val viaApi: Boolean get() = orderId != null
@@ -263,6 +265,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         outcomeId: String = "",
         /** Whose list it came from: CNO's ([SOURCE_CNO]) or ParlayAPI's ([SOURCE_PARLAY]), both CNO-shaped rows. */
         source: String = SOURCE_CNO,
+        atBet: AtBet? = null,
     ): TrackedBet {
         val decimal = com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
         val price = 1.0 / decimal
@@ -293,6 +296,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             gameUrl = row.gameUrl,
             betUrl = row.betUrl,
             fairBasis = FairBasis(if (source == SOURCE_PARLAY) FairBasis.SOURCE_PARLAY else FairBasis.SOURCE_CNO, books = row.books ?: 0),
+            atBet = atBet,
         )
         store.update { list -> list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null } + bet }
         return bet
@@ -304,7 +308,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * price he got in the Tracker). [placedKey] is the alert's own key, the one the lists hide it by, so Undo
      * ([untrack]) finds it. Marking the same alert again replaces the open bet, never duplicates it.
      */
-    suspend fun logAlert(a: com.tjshea.vigilant.data.alerts.EvAlert, stake: Double = DEFAULT_STAKE): TrackedBet {
+    suspend fun logAlert(a: com.tjshea.vigilant.data.alerts.EvAlert, stake: Double = DEFAULT_STAKE, atBet: AtBet? = AtBets.alert(a, clock())): TrackedBet {
         val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(a.american)
         val fee = if (a.live && price > 0.0 && price < 1.0) {
             com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
@@ -334,6 +338,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             book = a.book,
             gameUrl = a.gameUrl,
             betUrl = a.betUrl,
+            atBet = atBet?.copy(stake = stake),
         )
         store.update { list -> list.filterNot { it.placedKey == a.key && it.status == BetStatus.PENDING && it.orderId == null } + bet }
         return bet
@@ -443,7 +448,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         return added
     }
 
-    suspend fun track(o: Opportunity, stake: Double, placedKey: String? = null): TrackedBet? {
+    suspend fun track(o: Opportunity, stake: Double, placedKey: String? = null, atBet: AtBet? = null): TrackedBet? {
         val q = o.quote ?: return null
         val fair = o.fairProbability ?: return null
         val bet = TrackedBet(
@@ -465,6 +470,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
             book = ownBook,
             fairBasis = FairBasis.of(o),
+            atBet = atBet,
         )
         store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet }
         return bet
@@ -519,6 +525,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             fillIds = fills.map { it.fillId },
             fairBasis = target.basis.takeUnless { imported },
             auto = target.auto && !imported,
+            // As decided, with what the order really cost (the record's price is the one judged; the bet's own fields hold the fill).
+            atBet = target.atBet?.takeUnless { imported }?.copy(stake = stake),
             gradeNote = (if (target.auto && !imported) "Auto-bet through Novig's API: " else "Placed through Novig's API: ") +
                 "${contracts} contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid",
         )
