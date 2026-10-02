@@ -23,6 +23,7 @@ import okhttp3.mockwebserver.SocketPolicy
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
 import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters
 import org.bouncycastle.crypto.util.PrivateKeyInfoFactory
+import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -155,6 +156,91 @@ class ApiBettingTest {
         // No minimum: a positive edge.
         val any = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 10.0, now, limits, 0.0))
         assertTrue(any.note, any.note == null || any.note!!.contains("at a positive edge right now"))
+    }
+
+    // ---- a bet placed by hand (Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to bet on whatever I
+    // want manually. Only keep the hard restrictions on the auto bet function based on whatever settings I set") --------------------------------
+
+    private val manual = BetLimits.manual(maxStake = 20.0, maxPerDay = 50.0)
+
+    @Test
+    fun `by hand, any edge is planned, negative included, and the EV is said`() {
+        // Fair 0.45 against the 0.46 price: -2.2% EV. The auto-bet's rules refuse it; by hand it is Tj's call.
+        assertTrue(refused(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, limits, 0.0)).startsWith("The edge is gone"))
+        val p = ready(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, manual, 0.0))
+        assertTrue(p.evPercent < 0)
+        assertEquals(0.46, p.bestPrice, 1e-9)
+        // And whatever the minimum would have been: a +1.8% bet with a 3% floor set (the old Settings value) is planned.
+        ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, manual.copy(minEv = 0.03), 0.0))
+    }
+
+    @Test
+    fun `by hand, the stake fills at the best prices offered whatever each level's EV, like Novig's own bet slip`() {
+        // Fair 0.4685: the 0.465 level is +0.7%. A 1% minimum stops at the first level; by hand both levels are bought.
+        val auto = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 10.0, now, limits.copy(minEv = 0.01), 0.0))
+        assertEquals(100L, auto.contracts)
+        val hand = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 10.0, now, manual, 0.0))
+        assertEquals(400L, hand.contracts)
+        assertEquals(0.465, hand.limitPrice, 1e-9)
+        assertTrue(hand.note!!, hand.note!!.contains("is offered on Novig's book right now"))
+    }
+
+    @Test
+    fun `by hand, old or unknown fair odds are said beside the EV instead of refusing`() {
+        assertTrue(refused(ApiBetPlanner.plan(target(fairAsOf = now - 20 * 60_000L), book(), 0.46, now, limits, 0.0)).contains("scan again"))
+        val old = ready(ApiBetPlanner.plan(target(fairAsOf = now - 20 * 60_000L), book(), 0.46, now, manual, 0.0))
+        assertEquals("The fair odds behind this EV are 20 minutes old: the EV may have moved since.", old.note)
+        val unknown = ready(ApiBetPlanner.plan(target(fairAsOf = null), book(), 0.46, now, manual, 0.0))
+        assertEquals("How old the fair odds behind this EV are isn't known.", unknown.note)
+        assertNull(ready(ApiBetPlanner.plan(target(), book(), 0.46, now, manual, 0.0)).note)
+    }
+
+    @Test
+    fun `by hand, Tj's own dollar limits, pregame only and what Novig can sell still apply`() {
+        assertTrue(refused(ApiBetPlanner.plan(target(), book(), 25.0, now, manual, 0.0)).contains("over your $20.00 limit per bet"))
+        assertTrue(refused(ApiBetPlanner.plan(target(), book(), 5.0, now, manual, 48.0)).contains("daily limit"))
+        assertTrue(refused(ApiBetPlanner.plan(target(starts = now - 1), book(), 5.0, now, manual, 0.0)).contains("pregame only"))
+        assertTrue(refused(ApiBetPlanner.plan(target(), book(bidsB = emptyList()), 5.0, now, manual, 0.0)).contains("Nobody is offering"))
+        assertTrue(refused(ApiBetPlanner.plan(target(), null, 5.0, now, manual, 0.0)).contains("couldn't be read"))
+    }
+
+    @Test
+    fun `a pause holds the auto-bet, never a bet placed by hand`() = runBlocking {
+        val hand = placer(tracker(), paused = true, l = manual).plan(target(fair = 0.45), 5.0)
+        assertTrue(hand is PlanResult.Ready)
+        val auto = placer(tracker(), paused = true, l = manual).plan(target(), 5.0, limitsOverride = autoLimits)
+        assertTrue(refused(auto).contains("Scanning is paused"))
+    }
+
+    // ---- Novig's 423 codes (docs.novig.com/api/errors; Tj's v0.44.1 file: every signed call answered 423 from 01:33) --------------------------
+
+    @Test
+    fun `a 423 names Novig's code, and only a lock on the bet's own market, game, league or player is about that bet`() {
+        for ((code, what) in listOf("MARKET_LOCKED" to "market", "EVENT_LOCKED" to "game", "LEAGUE_LOCKED" to "league", "COMPETITOR_LOCKED" to "player or team")) {
+            val e = NovigApiException(423, code, null)
+            assertTrue(code, e.betLocked)
+            assertEquals("Novig has locked this $what (Novig code $code): this bet can't be placed now; others still can.", e.advice)
+        }
+        for (code in listOf("ACCOUNT_LOCKED", "ACCOUNT_EXCLUDED", "EMPLOYEE_ACCOUNT")) {
+            val e = NovigApiException(423, code, null)
+            assertFalse(code, e.betLocked)
+            assertTrue(e.advice, e.advice.contains("locked the account") && e.advice.contains("quote $code"))
+        }
+        assertTrue(NovigApiException(423, "SYSTEM_LOCKED", null).advice.contains("halted trading on the whole exchange"))
+        assertTrue(NovigApiException(423, "SELF_EXCLUDED", null).advice.contains("self-excluded"))
+        assertTrue(NovigApiException(423, null, null).advice.contains("no code given"))
+        assertFalse(NovigApiException(423, null, null).betLocked)
+    }
+
+    @Test
+    fun `a locked market skips that one bet, while a locked account stops the auto-bet`() = runBlocking {
+        novig(Scenario(postResponse = MockResponse().setResponseCode(423).setBody("""{"code":"MARKET_LOCKED","message":"market locked"}""")))
+        val skipped = placer(tracker()).placeAuto(target(), 5.0, autoLimits, expectedPrice = 0.46)
+        assertTrue(skipped.toString(), skipped is PlaceResult.Refused && skipped.reason.contains("MARKET_LOCKED"))
+        requests.clear()
+        novig(Scenario(postResponse = MockResponse().setResponseCode(423).setBody("""{"code":"ACCOUNT_LOCKED","message":"account locked"}""")))
+        val stopped = placer(tracker()).placeAuto(target(), 5.0, autoLimits, expectedPrice = 0.46)
+        assertTrue(stopped.toString(), stopped is PlaceResult.Failed && stopped.message.contains("ACCOUNT_LOCKED"))
     }
 
     @Test
