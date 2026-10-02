@@ -1513,12 +1513,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             network = network,
             batteryPct = runCatching { app.getSystemService(android.os.BatteryManager::class.java).getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY).takeIf { it in 0..100 } }.getOrNull(),
             charging = runCatching { app.getSystemService(android.os.BatteryManager::class.java).isCharging }.getOrNull(),
-            thermal = runCatching { thermalName(app.getSystemService(android.os.PowerManager::class.java).currentThermalStatus) }.getOrNull(),
+            thermal = runCatching { Diagnostics.thermalName(app.getSystemService(android.os.PowerManager::class.java).currentThermalStatus) }.getOrNull(),
         )
-    }
-
-    private fun thermalName(status: Int): String = when (status) {
-        0 -> "none"; 1 -> "light"; 2 -> "moderate"; 3 -> "severe"; 4 -> "critical"; 5 -> "emergency"; 6 -> "shutdown"; else -> "?"
     }
 
     private fun diagnosticsExtras(g: DiagInputs): Diagnostics.Extras {

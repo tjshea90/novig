@@ -399,6 +399,11 @@ object Diagnostics {
     /** One Novig league's games in the last scan (futures aside), how many matched a fair-odds source, and a few that didn't. */
     data class LeagueMatch(val league: String, val games: Int, val matched: Int, val unmatched: List<String>)
 
+    /** Android's thermal status (`PowerManager.currentThermalStatus`) in words: a hot phone throttles the CPU, which is what makes a cycle slow. */
+    fun thermalName(status: Int): String = when (status) {
+        0 -> "none"; 1 -> "light"; 2 -> "moderate"; 3 -> "severe"; 4 -> "critical"; 5 -> "emergency"; 6 -> "shutdown"; else -> "?"
+    }
+
     /**
      * The last scan's games by league: matched = a source's game was found for it. Futures ("Super Bowl Winner": no "@" or "vs") can't
      * match a game and are left out. Leagues with the most games first.
