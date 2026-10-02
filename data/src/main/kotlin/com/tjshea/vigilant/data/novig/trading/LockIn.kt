@@ -95,7 +95,7 @@ object LockIn {
         val best = levels.firstOrNull() ?: return LockResult.None("Nobody is offering the other side on Novig right now.", ceiling)
         if (best.price > ceiling + 1e-9) {
             return LockResult.None(
-                "The other side costs ${pct(best.price)} on Novig now; a lock needs ${pct(ceiling)} or less.",
+                "The other side is ${pct(best.price)} on Novig now; a lock needs ${pct(ceiling)} or longer.",
                 ceiling,
             )
         }
@@ -112,7 +112,7 @@ object LockIn {
             left -= take
         }
         if (left > 0L) {
-            return LockResult.None("Novig has only ${x - left} of the $x contracts needed at a locking price (${pct(ceiling)} or less).", ceiling)
+            return LockResult.None("Novig has only ${x - left} of the $x contracts needed at a locking price (${pct(ceiling)} or longer).", ceiling)
         }
         val worstCost = worst(limit)
         val ifHeld = payout - spent - worstCost
@@ -147,5 +147,6 @@ object LockIn {
     /** The least a lock is worth placing for: a cent. */
     const val MIN_PROFIT = 0.01
 
-    private fun pct(p: Double) = String.format(Locale.US, "%.1f¢", p * 100)
+    /** A price as American odds ("+120"), as Tj reads them. */
+    private fun pct(p: Double) = com.tjshea.vigilant.engine.Odds.formatAmerican(com.tjshea.vigilant.engine.Odds.probabilityToAmerican(p.coerceIn(0.001, 0.999)))
 }
