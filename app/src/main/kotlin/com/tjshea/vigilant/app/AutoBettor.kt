@@ -61,6 +61,12 @@ class AutoBettor(
     /** [row]'s exact Novig bet as a target (market read, outcome found), or null when it can't be found for certain. */
     private val resolve: suspend (CnoRow) -> BetTarget? = { row -> resolveOnNovig(c, row) },
     private val notes: AutoBetNotes = AutoBetNotes,
+    /**
+     * The sharp-book check for one candidate (Tj, 2026-10-02): rules, the bet, CNO's game page for it, Novig's price now, live?, now. Only asked when
+     * Settings switch it on and the bet passed everything else.
+     */
+    private val sharp: suspend (SharpConfirm.Rules, SharpBooks.Bet, CnoBooksView?, Int, Boolean, Long) -> SharpConfirm.Result =
+        { rules, bet, view, odds, live, at -> SharpGate.check(c.sharp, rules, bet, view, odds, live, at) },
     /** How long nothing is sent after Novig refuses an order ([FAIL_BACKOFF_MS]). */
     private val failBackoffMs: Long = FAIL_BACKOFF_MS,
 ) {
@@ -146,7 +152,9 @@ class AutoBettor(
                 item.pick.live || startsAt == null || startsAt - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 item.live == null -> skip("no Novig price read in the last minute")
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
-                else -> AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds)?.let(::skip) ?: passing.add(item)
+                else -> AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds)?.let(::skip)
+                    ?: sharpReason(item, settings, state, now)?.let(::skip)
+                    ?: passing.add(item)
             }
         }
         if (passing.isEmpty()) {
@@ -224,7 +232,7 @@ class AutoBettor(
                     openMarkets += target.market.marketId
                     balance -= bet.stake
                     withContext(NonCancellable) { markPlaced(c, target, result, clock()) }
-                    notes.placed(app, target, bet, item.check, walletLeft = balance)
+                    notes.placed(app, target, bet, item.check, walletLeft = balance, sharp = sharpSaid[row.key]?.takeIf { it.confirmed }?.detail)
                 }
                 is PlaceResult.NotFilled -> { cooldown[row.key] = now + AutoBet.COOLDOWN_MS; skip("nobody was selling at that price") }
                 is PlaceResult.Refused -> {
@@ -260,6 +268,28 @@ class AutoBettor(
         val report = Report(looked = all.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
         if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
         return finish(now, report, balance = balance)
+    }
+
+    /** What the sharp book said about each bet that passed (CNO row key → the numbers), for the bet's pop-up and Diagnostics. */
+    private val sharpSaid = HashMap<String, SharpConfirm.Result>()
+
+    /**
+     * Why the sharp-book check (Settings › Betting, off by default) doesn't let [item] through, or null: it is off, or a fresh sharp book's own devigged
+     * price makes the bet +EV at Novig's price now ([SharpConfirm]). Asked last, after every other criterion: only a bet about to be placed costs a feed call.
+     */
+    private suspend fun sharpReason(item: AlertPicks.CnoChecked, settings: ScanSettings, state: UiState, now: Long): String? {
+        val rules = SharpConfirm.rules(settings, autoBet = true) ?: return null
+        val row = item.shown.row
+        val bet = SharpBooks.Bet(row.league, row.event, row.startsAtMs, row.market, row.bet)
+        val result = try {
+            sharp(rules, bet, state.booksAt(item.pick.row.key, now)?.view, row.odds, item.pick.live, now)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            SharpConfirm.Result(SharpConfirm.Verdict.UNAVAILABLE, reason = "couldn't get a fresh ${rules.label} price (${e.message ?: e.javaClass.simpleName})".take(REASON_CHARS))
+        }
+        sharpSaid[item.pick.row.key] = result
+        return result.reason
     }
 
     private fun postStop(now: Long, why: String, halted: Boolean) {
@@ -402,10 +432,11 @@ object AutoBetNotes {
         return null
     }
 
-    fun placed(app: Application, target: BetTarget, bet: TrackedBet, check: CnoBooks.Check, walletLeft: Double? = null) {
+    fun placed(app: Application, target: BetTarget, bet: TrackedBet, check: CnoBooks.Check, walletLeft: Double? = null, sharp: String? = null) {
         if (!ScanService.canNotify(app)) return
         ensureChannel(app)
-        val text = text(bet, target, check, walletLeft)
+        // The sharp book that confirmed it (Tj, 2026-10-02), when the check is on: "Pinnacle +2.1% (devigged, 45 sec old, via PinnWire)".
+        val text = text(bet, target, check, walletLeft) + (sharp?.let { " · sharp: $it" } ?: "")
         val n = NotificationCompat.Builder(app, CHANNEL_BET)
             .setSmallIcon(R.drawable.ic_scan)
             .setContentTitle(title(bet, target))

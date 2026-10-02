@@ -340,6 +340,14 @@ class AppContainer(private val app: Application) {
         JsonFileStore(File(app.filesDir, "cycles.json"), com.tjshea.vigilant.data.diag.CycleBook.serializer(), { com.tjshea.vigilant.data.diag.CycleBook() }, json),
     )
 
+    /**
+     * The sharp books' prices for an exact bet (Tj, 2026-10-02: sharp-book confirmation, RESEARCH.md §60): the Pinnacle feeds Vigilant already has, asked
+     * only for a bet that passed every other criterion, a league's board kept a minute. Background, so the paced feeds keep Tj's own scans their share.
+     */
+    val sharp: com.tjshea.vigilant.data.reference.SharpBooks by lazy {
+        com.tjshea.vigilant.data.reference.SharpBooks(sources = { s -> referenceSources(s, background = true) }, settings = { currentSettings() })
+    }
+
     /** The auto-bet (Tj, 2026-10-01): called by [autoScan]'s cycle. */
     val autoBet: AutoBettor by lazy { AutoBettor(app, this) }
 
