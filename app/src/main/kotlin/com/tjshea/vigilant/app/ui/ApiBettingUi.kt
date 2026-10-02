@@ -240,7 +240,6 @@ fun ManagementKeyBlock(saved: ManagementKeyHint?, key: ManagementKeyState, busy:
 private val STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
 private val MAX_STAKE_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 private val DAY_CHOICES = listOf(20.0, 50.0, 100.0, 250.0, 500.0)
-private val MIN_EV_CHOICES = listOf(0.0, 0.005, 0.01, 0.02, 0.03)
 private val MONEY_CHOICES = listOf(5.0, 10.0, 20.0, 50.0, 100.0)
 
 /** Settings › Betting › Betting through the API. Shown once a key is connected. [savedKey]: the management key saved on this phone. */
@@ -302,11 +301,11 @@ fun NovigBettingSection(
     ChoiceChips(MAX_STAKE_CHOICES, settings.apiMaxStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
     Text("Most in a day", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(DAY_CHOICES, settings.apiMaxPerDay, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerDay = v) } }
-    Text("Smallest edge a bet is still placed at", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    ChoiceChips(MIN_EV_CHOICES, settings.apiMinEv, { if (it == 0.0) "Any +EV" else "+" + Format.percent(it, if (it * 1000 % 10 == 0.0) 0 else 1) }) { v -> onUpdate { it.copy(apiMinEv = v) } }
+    // No minimum edge for a bet placed by hand (Tj, 2026-10-02: "I should be able to bet on whatever I want manually"): auto-bet has its own.
     Text(
-        "If Novig's price moves so the edge is below this, the bet is refused, not placed.",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        "Bets you place yourself from a Bet sheet have no minimum edge: the sheet shows the EV at Novig's price now (red when it's negative) and " +
+            "you decide. Only the two limits above apply, and the price you confirm. Auto-bet keeps its own rules (Auto-bet, below).",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
     )
     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton(onClick = actions.onSync, enabled = !betting.busy) { Text("Sync Tracker with Novig's fills") }

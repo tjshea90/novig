@@ -265,7 +265,8 @@ class AppContainer(private val app: Application) {
         autoPlacerCache?.takeIf { it.first === t }?.let { return it.second }
         val limits = {
             val s = settingsStore.flow.value ?: ScanSettings()
-            BetLimits(s.apiMaxStake, s.apiMaxPerDay, s.apiMinEv)
+            // Every auto-bet passes its own limits; this fallback is the strict kind (a positive edge at least), never the hand-placed one.
+            BetLimits(s.apiMaxStake, s.apiMaxPerDay)
         }
         return ApiBetPlacer(t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock)
             .also { autoPlacerCache = t to it }
