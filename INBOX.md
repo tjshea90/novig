@@ -3507,3 +3507,12 @@ Resume where you left off, but be careful and check because I accidentally start
 ```
 Make sure to finish all tasks that I sent in this chat history, but ignore the two messages that begin with the word urgent 
 ```
+
+## 2026-10-02T16:05:31Z
+```
+I had auto bet running in the notifications in the background and when I opened vigilant it again turned off auto bet. I want the app never to turn off auto bet unless I turn it off. The default is auto bet off but only when opening the app after a restart or after I already turned off auto bet manually.
+
+Review the screenshot, notice betmgm and betmgm (on). Is the app still double counting these? 
+
+And I'm getting no volume so far on auto bet with the option for each bet to be verified positive EV by a sharp book. Is this working correctly? Is it getting sharp book pricing?
+```
