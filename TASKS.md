@@ -3394,3 +3394,13 @@ His screenshot: a Vigilant bet (Under 52.5, Stanford @ Wake Forest) reads "−1.
   Done: Tracker Stats "Locked in" card (above the rest, per period, whether hidden or not): bets locked (picks, locks aside) and their % of the period's picks, profit locked (graded markets: what the results paid; open: contracts × $0.01 − both sides' spend), its % of what both sides staked, how much is graded, partly locked markets, and whether the rest of the Tracker counts them. Diagnostics: the same line plus why open Novig bets have no Novig price. Tests: LockedBetsTest (stats, period, graded, void), TrackerLocksTest (card numbers); mutants 8/8 killed across AZ1-AZ3.
 - [x] AZ4 Tests (data + UI), mutants, full floor, sweep, ship v0.48.0, answer Tj with the link and what the Novig-odds misses were.
   Done: v0.48.0 (code 86). Floor 1,748 (1,725 passed, 23 skipped); mutants 8/8 killed; CI green on 511ed2bf; release.yml run 37063401416 green; Release confirmed (APK + mapping, cert AB:22:07:A8…). Sweep: Tracker Stats screenshot with the Locked in card checked (4l_tracker_locked_in.png).
+
+## Tj, 2026-10-02 ~21:15Z: "Run full tests on this app, make sure all the math is right and that the stats and closing lines are gathered correctly and reflect accurate data"
+
+Full tests (.claude/skills/test-protocols "Full tests"), with Tj's emphasis on math, stats and closing lines.
+- [ ] BA1 Floor: `bash tools/test.sh` (exit code AND output), `-Pscreenshots` and look at every Tracker/stats PNG.
+- [ ] BA2 Math audit vs BRIEF.md locked decisions + NOVIG_API.md: engine Odds/Devig/FairValue/Fees/EvMath; a bet's price, cost (live taker fee), EV at bet, EV now, profit if won, FMV, Kelly; API fills (paid/fee/contracts → price, cost, stake); lock math (LockIn, LockedBets).
+- [ ] BA3 Stats audit: BetTracker.stats (profit, ROI, record, expected vs actual, luck SD, open money, outliers, voids, locks), TrackerBreakdown, CheckOddsStats, LockStats, period filters, Novig-only view; each number checked by hand against a fixture.
+- [ ] BA4 Closing lines audit: when a close is read (ClosingLine due/window/final), what counts as a true close, CLV math, ClvStats (periods, outliers, by source), CloseBackfill (ParlayAPI Pinnacle, ESPN, Novig trades), observe()/applyPricing/mergeReads writing closingFair, Novig's own close (NovigNow), bets placed after the start.
+- [ ] BA5 Wider sweep (best effort): the rest of the test-protocols surface, stale copy, races that lose data.
+- [ ] BA6 Fix everything found with a failing-first test each, full regression, ship, answer Tj with the link and what was found.
