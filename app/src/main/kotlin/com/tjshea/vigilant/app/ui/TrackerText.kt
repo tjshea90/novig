@@ -18,15 +18,17 @@ object TrackerText {
      * What the "Novig only" filter is showing: EV and closing lines from Novig's own prices, and how fresh they are (Tj, 2026-10-02 ~18:50Z: "show the
      * percent EV compared only from novig odds, filtering out other sports books").
      */
-    fun novigOnlyNote(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String {
+    fun novigOnlyNote(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String = novigOnlyCounts(bets, now)
+
+    private fun novigOnlyCounts(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String {
         // Every open bet at Novig counts, Novig's ids on record or not (Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds").
         val open = com.tjshea.vigilant.data.tracker.NovigNow.open(bets, now)
-        if (open.isEmpty()) return "EV and CLV from Novig's own prices only."
+        if (open.isEmpty()) return "Novig's odds only: EV is Novig's odds now against the odds you bet at, CLV against Novig's closing odds."
         val priced = open.filter { com.tjshea.vigilant.data.tracker.NovigNow.note(it) == null }
         val notOnNovig = open.count { it.novigWhy != null && com.tjshea.vigilant.data.tracker.NovigNow.note(it) == it.novigWhy }
         val unread = open.size - priced.size - notOnNovig
         val oldest = priced.mapNotNull { it.novigAtMs }.minOrNull()
-        return "EV and CLV from Novig's own prices only: ${priced.size} of ${open.size} open bets priced" +
+        return "Novig's odds only (EV: Novig's odds now against the odds you bet at): ${priced.size} of ${open.size} open bets priced" +
             (oldest?.let { " (oldest ${Format.age(it, now)})" } ?: "") +
             (if (notOnNovig > 0) " · $notOnNovig with no Novig price now (why on each bet)" else "") +
             (if (unread > 0) " · $unread not read yet" else "") + "."
@@ -206,7 +208,7 @@ object TrackerText {
         val placed = b.american?.let { " at your ${Odds.formatAmerican(it)}" }.orEmpty()
         val headline = (if (inPlay) "live " else "") + (if (fresh) "now " else "") + Format.evPercentShort(ev) + " EV" + placed
         val detail = listOfNotNull(
-            b.nowFair?.let { "fair ${if (fresh) "now" else "then"} ${Format.american(it)}" },
+            b.nowFair?.let { (if (b.nowVia == com.tjshea.vigilant.data.tracker.NovigNow.VIA) "Novig" else "fair") + " ${if (fresh) "now" else "then"} ${Format.american(it)}" },
             when (b.nowVia) {
                 BetTracker.VIA_CNO -> "CNO's books"
                 BetTracker.VIA_VIGILANT -> "Vigilant's fair odds"
@@ -258,6 +260,17 @@ object TrackerText {
     /** "You bet +150 (40.0% implied). Fair now +127 (44.0%): 4.0 points better than fair, +10.0% EV." */
     fun edgeSentence(i: BetInsight, current: Boolean = true): String {
         val bet = "You bet ${Odds.formatAmerican(i.betOdds)} (${Format.percent(i.betImplied)} implied${if (i.cost - i.betImplied > 0.0005) ", ${Format.percent(i.cost)} with Novig's fee" else ""})."
+        if (i.novig) {
+            // Novig only (Tj, 2026-10-02 ~21:35Z): Novig's odds now against the odds bet at, nothing else.
+            val odds = i.fairNow ?: return "$bet Novig's odds for it haven't been read yet: tap Check Novig now."
+            val p = i.edgePoints ?: 0.0
+            val where = when {
+                p > 0.0005 -> "${String.format(java.util.Locale.US, "%.1f", p * 100)} points shorter than you bet (your odds beat Novig's now)"
+                p < -0.0005 -> "${String.format(java.util.Locale.US, "%.1f", -p * 100)} points longer than you bet (Novig's odds now beat yours)"
+                else -> "the same odds you bet at"
+            }
+            return "$bet Novig ${if (current) "now" else "when last read"} ${Format.american(odds)} (${Format.percent(odds)}): $where, ${Format.evPercentShort(i.evNow ?: 0.0)} EV."
+        }
         val fair = i.fairNow ?: return "$bet No fair price read yet: tap Re-read books."
         val pts = i.edgePoints ?: 0.0
         val where = when {
@@ -272,6 +285,11 @@ object TrackerText {
     fun moveSentence(i: BetInsight): String? {
         val move = i.fairMove ?: return null
         val pts = String.format(java.util.Locale.US, "%.1f", abs(move) * 100)
+        if (i.novig) return when {
+            abs(move) < 0.0005 -> "Novig's odds haven't moved since you placed it."
+            move > 0 -> "Novig's odds have moved $pts points toward your bet since you placed it."
+            else -> "Novig's odds have moved $pts points against your bet since you placed it."
+        }
         return when {
             abs(move) < 0.0005 -> "The fair price hasn't moved since you placed it."
             move > 0 -> "The market has moved $pts points toward your bet since you placed it."
@@ -281,6 +299,8 @@ object TrackerText {
 
     /** Whether the price bet at still beats the price that breaks even against fair now ("Break-even … is +127: your +150 still clears it"). */
     fun breakEvenSentence(i: BetInsight): String? {
+        // Novig only: Novig's odds now are the break-even, already said ([edgeSentence]).
+        if (i.novig) return null
         val be = i.breakEvenOdds ?: return null
         val clears = i.betOdds != 0 && Odds.americanToDecimal(i.betOdds) >= Odds.americanToDecimal(be) - 1e-9
         return "Break-even against today's fair price is ${Odds.formatAmerican(be)}: ${if (clears) "your ${Odds.formatAmerican(i.betOdds)} still clears it" else "your ${Odds.formatAmerican(i.betOdds)} no longer clears it"}."

@@ -36,6 +36,8 @@ data class BetInsight(
     val books: List<BookRow>,
     /** When the books were last read. */
     val booksAtMs: Long?,
+    /** The "Novig only" filter's view ([NovigNow.view]): every fair price here is Novig's own odds, no other book's. */
+    val novig: Boolean = false,
 ) {
     /**
      * One book's price for the bet and its other side. [fair] is that book's own devigged probability for
@@ -73,6 +75,7 @@ data class BetInsight(
                 clv = b.clvPercent,
                 books = rows.sortedWith(compareByDescending<BookRow> { it.isOwn }.thenByDescending { it.counted }.thenBy { it.name }),
                 booksAtMs = b.booksAtMs,
+                novig = b.nowVia == NovigNow.VIA,
             )
         }
     }
