@@ -84,7 +84,7 @@ class SharpVetoTest {
         assertFalse(r.vetoed)
         assertNull(r.reason)
         assertEquals(SharpVeto.Verdict.NO_SHARP, SharpVeto.judge(null, BetKind.SPREAD, SharpVeto.Sport.FOOTBALL, 113, false).verdict)
-        // The same Pinnacle prices decide a spread: -150/+120 says the side is ~58%, so Novig's +113 (47%) is a veto.
+        // The same Pinnacle prices decide a spread: -150/+120 makes this side ~58%, so Novig's +113 passes; the other way round (+120/-150, ~43%) is a veto.
         val spread = SharpVeto.judge(pinnacleOnly, BetKind.SPREAD, SharpVeto.Sport.FOOTBALL, 113, false)
         assertEquals(SharpVeto.Verdict.PASSED, spread.verdict)
         val against = SharpVeto.judge(view(CnoBookPrice("PN", odds = 120, otherOdds = -150)), BetKind.SPREAD, SharpVeto.Sport.FOOTBALL, 113, false)
@@ -103,7 +103,7 @@ class SharpVetoTest {
 
     @Test
     fun `a live game's taker fee comes off the sharp book's edge`() {
-        // Kalshi -105/-115: 50% fair (worst case a hair under). +101 pregame is +EV; the same price live, with Novig's taker fee, isn't.
+        // Kalshi -105/-105: 50% fair. +103 pregame is +EV; the same price live, with Novig's taker fee, isn't.
         val page = view(CnoBookPrice("KI", odds = -105, otherOdds = -105))
         assertEquals(SharpVeto.Verdict.PASSED, SharpVeto.judge(page, BetKind.PROP, SharpVeto.Sport.FOOTBALL, 103, live = false).verdict)
         assertEquals(SharpVeto.Verdict.VETOED, SharpVeto.judge(page, BetKind.PROP, SharpVeto.Sport.FOOTBALL, 103, live = true).verdict)
