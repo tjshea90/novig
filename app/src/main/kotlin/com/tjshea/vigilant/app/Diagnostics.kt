@@ -165,8 +165,8 @@ object Diagnostics {
             },
         )
         o.appendLine(
-            "Sharp-book confirmation (Tj, 2026-10-02): auto-bet ${if (set.sharpConfirmAutoBet) "ON" else "off"} · alerts ${if (set.sharpConfirmAlerts) "ON" else "off"}" +
-                if (!set.sharpConfirmAutoBet && !set.sharpConfirmAlerts) "" else {
+            "Sharp books (Tj, 2026-10-02: veto by default): auto-bet ${set.sharpAutoBet} · alerts ${set.sharpAlerts}" +
+                if (set.sharpAutoBet != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM && set.sharpAlerts != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) "" else {
                     " · ${set.sharpConfirmBooks.displayName}, quote at most ${ScanSettings.intervalLabel(set.sharpConfirmMaxAgeSeconds)} old, edge ${if (set.sharpConfirmMinEv <= 0.0) "any +EV" else "at least ${pct(set.sharpConfirmMinEv)}"}, " +
                         "CNO's page ${if (set.sharpConfirmViaCno) "may confirm" else "only vetoes"} · feeds: ${x.sharpFeeds.joinToString(", ").ifEmpty { "none on with a key" }} · " +
                         "feed calls since the app opened ${x.sharpCalls} (${x.sharpFailures} failed)" + (x.sharpAnswers.takeIf { it.isNotEmpty() }?.let { m -> ", answers: " + m.entries.joinToString(", ") { "${it.key} ${it.value}" } } ?: "")

@@ -449,12 +449,14 @@ object HealthChecks {
      */
     private fun MutableList<Check>.sharp(s: UiState, x: Diagnostics.Extras) {
         val set = s.settings
-        if (!set.sharpConfirmAutoBet && !set.sharpConfirmAlerts) return
-        val where = listOfNotNull("auto-bet".takeIf { set.sharpConfirmAutoBet }, "alerts".takeIf { set.sharpConfirmAlerts }).joinToString(" and ")
+        val confirmBet = set.sharpAutoBet == com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM
+        val confirmAlerts = set.sharpAlerts == com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM
+        if (!confirmBet && !confirmAlerts) return
+        val where = listOfNotNull("auto-bet".takeIf { confirmBet }, "alerts".takeIf { confirmAlerts }).joinToString(" and ")
         if (x.sharpFeeds.isEmpty() && !set.sharpConfirmViaCno) {
             add(
                 Check(
-                    Level.WARN, "Sharp-book confirmation", "is on for $where but no Pinnacle feed is on with a key: nothing can be confirmed, so ${if (set.sharpConfirmAutoBet) "the auto-bet skips every bet" else "no CNO alert is sent"}",
+                    Level.WARN, "Sharp-book confirmation", "is on for $where but no Pinnacle feed is on with a key: nothing can be confirmed, so ${if (confirmBet) "the auto-bet skips every bet" else "no CNO alert is sent"}",
                     look = "Settings › Fair-odds sources (PinnWire or pinnapi, ParlayAPI, PropLine), or switch on \"Also take Pinnacle's price from CNO's page\"",
                 ),
             )
