@@ -139,5 +139,9 @@ class PresetsTest {
                 "CNO: conservative devig, 4+ books, 100 rows · alerts ≥ 2.5% · auto-scan every 30 sec",
             Presets.VOLUME.rules.summary(),
         )
+        // Whole percents read whole: 0.03 × 100 is 3.0000000000000004 in floating point and once read "3.0%".
+        val mine = Presets.VOLUME.rules.copy(autoBetMinEv = 0.03, alertMinEv = 0.07).summary()
+        assertTrue(mine, mine.startsWith("edge ≥ 3% ·") && mine.contains("alerts ≥ 7% ·"))
+        assertTrue(Presets.STRICT.rules.summary().startsWith("edge ≥ 4% ·"))
     }
 }
