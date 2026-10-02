@@ -3485,6 +3485,9 @@ informed, and in the NFL it is not.
 - **Fixed:** ParlayAPI quotes are dated by their book's stamp (`last_update_ms`, else `last_update`), never older than the market's own
   (`TheOddsApiClient.parseEvents(seenByBook)`; `ParlayFreshnessTest`, 5 tests, 4 mutants killed). `/props` rows carry `age_seconds` ("the real age
   of that write") and, for some books, `last_observed` = the same instant in the sample: left as they are.
+- **Not verified:** whether ParlayAPI keeps serving a market its book has PULLED while the book itself is still verified (no stamp can tell that
+  apart from a line that sits still; The Odds API drops a pulled market after ~15 minutes). Every scan prices from several books and the sharp
+  confirmation re-reads Novig's own price, so one stale book moves a fair line less than one book's share.
 - **Is 9-minute-old data good?** It depends on what the age means. A quote ParlayAPI *confirmed* seconds ago whose price last moved 9 minutes ago is
   current: that was most of the screenshot. A quote nobody has *seen* for 9 minutes is not safe near the start: §30.2's measurement (Kalshi, 2,471
   markets) had 2.7% of fair lines move a point or more in 10 minutes (more near kickoff, in NFL moneylines and MLB totals), and a point is ~2 EV
