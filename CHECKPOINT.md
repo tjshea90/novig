@@ -1,13 +1,13 @@
-# CHECKPOINT 2305 — read me first, then TASKS.md
+# CHECKPOINT 2306 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T04:17:19Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `40834cd1` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T04:24:22Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `14f476bf` (this checkpoint is the commit after it)
 
 ## Just done
-AO2 lag found and fixed: root built a new ApiBetActions for the STATIC LocalApiBet on every state (3/s mid-scan) -> whole tree recomposed with skipping off; now ProvideApiBet (remembered), plus remembered FloatingActions, ParlayPickActions (root+feed), LocalOpenNovig (ScanLagTest: control shows 6 draws vs 1)
+Diagnostics review fixes: onTrimMemory drops boards past the freshness limit + memo + books cache (BackgroundTrimTest); exits classified by importance (cached reclaim not a failure), crashes/exits before this version installed are WATCH/WARN (installedAtMs), crash text carries version; R8 keeps app class/method names + file/line, Release carries mapping.txt
 
 ## Do this next
-Diagnostics review fixes: crash version attribution (installed-since), background low-memory classified by importance, onTrimMemory drops stale caches; then mid-scan fair refresh decision, API research, RESEARCH §63, docs
+AO4 API research: ESPN endpoints (odds/props/injuries/probabilities), ParlayAPI unused endpoints, other free APIs; RESEARCH §63; then docs, full floor, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Diagnostics review fixes: crash version attribution (installed-since), backgroun
 
 ## Last ten checkpoints
 ```
+  c9ed0bd8 ckpt 2305: AO2 lag found and fixed: root built a new ApiBetActions for the STATIC Local
   354f4eb9 ckpt 2304: Live feed: opened at the first plan, ONE bulk subscribe of the unread lines 
   d3062e41 ckpt 2303: AO3 part: ParlayAPI quotes dated by the book's verified-at last_update, not 
   5e414948 ckpt 2302: wrote Tj's full-tests + lag + 9-min odds + APIs request into TASKS.md as AO1
@@ -25,8 +26,7 @@ Diagnostics review fixes: crash version attribution (installed-since), backgroun
   6de668d6 ckpt 2298: pre-release: v0.43.0: Diagnostics is a file for Claude: always-on flight rec
   47980f55 ckpt 2297: pre-ship: v0.43.0: Diagnostics is a file for Claude: always-on flight record
   ece86098 ckpt 2296: AM1-AM6 ticked; version 0.43.0 code 78; full floor 1582 passed with screensh
-  96717928 ckpt 2295: AM mutation checks: data layer, advisor, file, share, wiring (AppRecorder ex
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(10 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
