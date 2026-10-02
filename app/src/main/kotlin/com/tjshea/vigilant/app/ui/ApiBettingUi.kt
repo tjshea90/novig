@@ -97,6 +97,19 @@ class ApiBetActions(
 
 val LocalApiBet = staticCompositionLocalOf<ApiBetActions?> { null }
 
+/**
+ * [LocalApiBet] for everything in [content], one [ApiBetActions] for as long as [enabled] and [api] stay the same. It is a STATIC local: a new
+ * value redraws the whole tree under it with nothing skipped, and the app's root made a new one with every state it got, 3 a second while a
+ * scan runs (Tj, 2026-10-02: "when I start the vigilant scanner the list of bets gets laggy", RESEARCH.md §63).
+ */
+@Composable
+fun ProvideApiBet(enabled: Boolean, api: com.tjshea.vigilant.app.ApiBettingController, content: @Composable () -> Unit) {
+    val actions = remember(enabled, api) {
+        ApiBetActions(enabled = enabled, betOpportunity = { o -> api.bet(o) }, betCno = { row -> api.bet(row) }, betParlay = { p -> api.bet(p) })
+    }
+    androidx.compose.runtime.CompositionLocalProvider(LocalApiBet provides actions, content = content)
+}
+
 /** The Bet button beside "Open in Novig" on a card: only when betting through the API is set up. */
 @Composable
 fun ApiBetButton(modifier: Modifier = Modifier, onClick: (ApiBetActions) -> Unit) {

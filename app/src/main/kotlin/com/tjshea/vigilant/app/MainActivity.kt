@@ -620,13 +620,20 @@ private fun VigilantRoot(
     var betTab by rememberSaveable { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
 
+    // ParlayAPI's picks' buttons, made once per bet being opened (a new holder each state would redraw the section with every scan tick).
+    val parlayActions = remember(vm, onOpenInNovig, openingBet) {
+        com.tjshea.vigilant.app.ui.ParlayPickActions(
+            onScan = vm::scanParlayPicks,
+            onRecheck = vm::recheckParlayPicks,
+            onPlaced = vm::markPlaced,
+            onHide = vm::markHidden,
+            onOpen = onOpenInNovig,
+            opening = openingBet,
+            onLoadBooks = vm::loadPickBooks,
+        )
+    }
+    com.tjshea.vigilant.app.ui.ProvideApiBet(state.betting.enabled, vm.api) {
     androidx.compose.runtime.CompositionLocalProvider(
-        com.tjshea.vigilant.app.ui.LocalApiBet provides com.tjshea.vigilant.app.ui.ApiBetActions(
-            enabled = state.betting.enabled,
-            betOpportunity = { o -> vm.api.bet(o) },
-            betCno = { row -> vm.api.bet(row) },
-            betParlay = { p -> vm.api.bet(p) },
-        ),
         // ParlayAPI's second opinion in every bet sheet (PARLAY_API.md §6.4).
         com.tjshea.vigilant.app.ui.LocalOpinions provides remember(state.canAskParlay, state.opinions) {
             com.tjshea.vigilant.app.ui.OpinionActions(state.canAskParlay, state.opinions, vm::askOpinion)
@@ -666,15 +673,7 @@ private fun VigilantRoot(
                     onPause = vm::setPaused,
                     onHide = vm::hideOpportunity,
                     onUnhide = vm::unmarkPlaced,
-                    parlay = com.tjshea.vigilant.app.ui.ParlayPickActions(
-                        onScan = vm::scanParlayPicks,
-                        onRecheck = vm::recheckParlayPicks,
-                        onPlaced = vm::markPlaced,
-                        onHide = vm::markHidden,
-                        onOpen = onOpenInNovig,
-                        opening = openingBet,
-                        onLoadBooks = vm::loadPickBooks,
-                    ),
+                    parlay = parlayActions,
                 )
                 Tab.CNO -> CnoTab(
                     state, vm,
