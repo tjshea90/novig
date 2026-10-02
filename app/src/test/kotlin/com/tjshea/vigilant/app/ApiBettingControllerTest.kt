@@ -128,6 +128,20 @@ class ApiBettingControllerTest {
         assertNull(state.value.betSheet)
     }
 
+    @Test
+    fun `a bet placed by hand has no minimum edge and no pause: only Tj's dollar limits`() {
+        // Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to bet on whatever I want manually.
+        // Only keep the hard restrictions on the auto bet function". The old setting at +50% and scanning paused: the sheet still plans.
+        val (o, book) = sample()
+        val state = startState().also { st -> st.update { it.copy(settings = it.settings.copy(apiMinEv = 0.5, paused = true)) } }
+        val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        api.bet(o)
+        waitFor("a plan or a refusal") { state.value.betSheet?.let { it.plan != null || it.refusal != null } == true }
+        assertNull(state.value.betSheet!!.refusal)
+        assertTrue(state.value.betSheet!!.plan!!.contracts > 0)
+        api.dismiss()
+    }
+
     /** A state whose Novig connection has a subaccount, so the sheet reads the wallet as it opens; [balance] is the one on hand (maybe old). */
     private fun walletState(balance: Double?) = MutableStateFlow(
         SampleScan.state().let { st ->
