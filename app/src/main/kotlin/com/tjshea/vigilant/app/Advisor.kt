@@ -107,12 +107,13 @@ object Advisor {
     /** Errors the code reported with where they came from ([com.tjshea.vigilant.data.diag.EventLog.error]): the first app frame is the place to open. */
     private fun errorEvents(x: Diagnostics.Extras, now: Long): List<Finding> {
         val errors = x.events.filter { it.level == Level.ERROR && it.where != null && now - it.atMs < 3 * DAY_MS }
-        return errors.groupBy { EventLog.short(it.where!!) }.map { (where, es) ->
+        // The frames are class and file names, never text a person typed; masked anyway, since the title, key and trend lines are built from them.
+        return errors.groupBy { ProblemLog.clean(EventLog.short(it.where!!)) }.map { (where, es) ->
             val n = es.sumOf { it.n }
             Finding(
                 "bug:error:$where", "BUG", "$n caught error${if (n == 1) "" else "s"} at $where",
-                "${es.last().cat}: ${ProblemLog.clean(es.last().msg)}; last ${Format.age(es.maxOf { it.lastMs }, now)} (${es.last().where!!.split(" < ").joinToString(" < ") { EventLog.short(it) }})",
-                (EventLog.pathOf(es.last().where!!) ?: where.substringAfter('(').substringBefore(':')).let { "$it, around the line in the title" },
+                "${es.last().cat}: ${ProblemLog.clean(es.last().msg)}; last ${Format.age(es.maxOf { it.lastMs }, now)} (${ProblemLog.clean(es.last().where!!.split(" < ").joinToString(" < ") { EventLog.short(it) })})",
+                (EventLog.pathOf(es.last().where!!) ?: where.substringAfter('(').substringBefore(':')).let { "${ProblemLog.clean(it)}, around the line in the title" },
                 "Find why it throws here (the message says what), handle that case on purpose, and add a test for it; an error that is caught and logged still means a feature didn't finish.", weight = 70.0 + n,
             )
         }
