@@ -103,12 +103,41 @@ class LaunchResetTest {
     }
 
     @Test
+    fun `back from another app in the same process keeps auto-bet on, swiped out of the recent apps resets it`() {
+        // Tj, 2026-10-02: "If I switch from vigilant to another app then back to vigilant, do not turn off auto bet."
+        val first = Robolectric.buildActivity(MainActivity::class.java).create()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertFalse("the process's first screen is a fresh launch", saved().autoBet)
+        first.destroy()
+        // He switches auto-bet on, leaves (the mini window closed: the screen ended, the process lives), and comes back.
+        runBlocking { app.container.settingsStore.update { on } }
+        val back = Robolectric.buildActivity(MainActivity::class.java).create()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertTrue(saved().autoBet)
+        assertEquals(AutoScanMode.BOTH, saved().autoScan)
+        assertTrue(app.container.eventLog.events().any { it.text.contains("screen opened (back from another app: auto-bet and auto-scan kept)") })
+        back.destroy()
+        // Swiped out of the recent apps (a service saw it) and opened again: a fresh launch.
+        app.container.launches.taskRemoved(System.currentTimeMillis())
+        val reopened = Robolectric.buildActivity(MainActivity::class.java).create()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertFalse(saved().autoBet)
+        assertEquals(AutoScanMode.OFF, saved().autoScan)
+        reopened.destroy()
+    }
+
+    @Test
     fun `the activity resets first thing, only without saved state, and the boot receiver is left alone`() {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
         val create = src.substringAfter("override fun onCreate(savedInstanceState: Bundle?) {").substringBefore("// No refresh loop")
-        assertTrue(create, create.contains("if (savedInstanceState == null) LaunchReset.onFreshLaunch(application as VigilantApp) else null"))
+        assertTrue(create, create.contains("val fresh = app.container.launches.opening(savedInstanceState != null, LastExit.read(this), bootAtMs = now - android.os.SystemClock.elapsedRealtime())"))
+        assertTrue(create, create.contains("val switchedOff = if (fresh) LaunchReset.onFreshLaunch(app) else null"))
         // Before anything else in onCreate can read the settings.
         assertTrue(create.indexOf("LaunchReset.onFreshLaunch") < create.indexOf("super.onCreate(savedInstanceState)"))
+        // The mini window and both services tell the gate what happened (LaunchGate).
+        assertTrue(src.contains("container.launches.miniWindow(\n                info.isInPictureInPictureMode, expanded = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED), System.currentTimeMillis(),"))
+        assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText().contains("container.launches.taskRemoved(System.currentTimeMillis())"))
+        assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/ScanService.kt").readText().contains("container.launches.taskRemoved(System.currentTimeMillis())"))
         // A reboot restarts what was on, until the app is opened (the receiver's rule is unchanged).
         assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText().contains("if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)"))
     }
