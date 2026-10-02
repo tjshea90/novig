@@ -1,13 +1,13 @@
-# CHECKPOINT 2353 — read me first, then TASKS.md
+# CHECKPOINT 2354 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T17:45:22Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `7abedece` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T17:47:09Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `a9e4b342` (this checkpoint is the commit after it)
 
 ## Just done
-AW7 done (BetKind fallback by words + whole-match sets, page-less dissent, percent rounding, no-kinds warning; RESEARCH §66.5 written; AW1-AW5+AW7 ticked); v0.45.0 code 83; release.yml text: presets, sharp veto, Downloads
+full floor green on v0.45.0 (1,695: 1,672 passed, 23 skipped)
 
 ## Do this next
-full floor, then bash ship.sh, CI green, trigger release.yml, confirm Release, record-release, answer Tj with link (AW6)
+CI green on this commit, then bash ship.sh, trigger release.yml, confirm Release v0.45.0, record-release, answer Tj with link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ full floor, then bash ship.sh, CI green, trigger release.yml, confirm Release, r
 
 ## Last ten checkpoints
 ```
+  9429058e ckpt 2353: AW7 done (BetKind fallback by words + whole-match sets, page-less dissent, p
   e52f5a9b ckpt 2352: floor green (1,693: 1,670 passed, 23 skipped); sweep found AW7 (BetKind OTHE
   a5733e96 ckpt 2351: app tests green (40): PresetsUiTest, Downloads save (DiagnosticsShareTest), 
   9b214aef ckpt 2350: tests: SharpVetoTest, PresetsTest, AtBetTest, BetLedgerTest green (33); reco
@@ -25,8 +26,7 @@ full floor, then bash ship.sh, CI green, trigger release.yml, confirm Release, r
   040f47d7 ckpt 2346: AW3 UI: Presets tab (built-ins Volume + safe CLV / Strict CLV, save/apply/de
   9529aaa4 ckpt 2345: AW2 code: SharpVeto (ranking by bet kind and sport), SharpMode OFF/VETO/CONF
   2f450dde ckpt 2344: AW1: §65 re-checked (2 corrections: Buchdahl numbers, Wizard 3%), §66 rese
-  87cf4489 ckpt 2343: AW: Tj's 17:01Z request (presets, sharp veto, bet records, Diagnostics to Do
 ```
 
-(11 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
