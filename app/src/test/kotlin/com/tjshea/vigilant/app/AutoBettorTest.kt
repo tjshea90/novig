@@ -193,13 +193,48 @@ class AutoBettorTest {
 
     /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
     @Test
+    fun `the sharp veto skips a bet only when the sharpest book for its kind says no, and the bet keeps its record as placed`() = runBlocking {
+        // Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement. Only skip a bet if the sharpest book for that market says it is not +ev." Jefferson's
+        // Under is a prop: Kalshi, then ProphetX decide; Pinnacle doesn't.
+        fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
+            state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
+        val veto = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
+        // Kalshi says no (+105/-135 under Novig's +117): vetoed, nothing reaches Novig, and the report says who.
+        val kalshiNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 105, 106.0, -135, 13_662.0) else it }) }
+        val novig = FakeNovig()
+        val b = bettor(novig)
+        val r = b.run(veto, withBooks(kalshiNo, veto))
+        assertEquals(0, r.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertEquals(r.skipped.toString(), 1, r.skipped["Kalshi, the sharpest book for player props, says it isn't +EV at Novig's price"])
+        assertEquals(mapOf("veto.VETOED" to 1), b.status.value.sharp)
+        // Pinnacle saying no doesn't veto a prop (it isn't a prop sharp); Kalshi agreeing lets it through, and the bet records it all.
+        val pinnacleNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") com.tjshea.vigilant.data.cno.CnoBookPrice("PN", 105, null, -135, null) else it }) }
+        val novig2 = FakeNovig()
+        val placed = bettor(novig2).run(veto, withBooks(pinnacleNo, veto)).placed.single()
+        val rec = placed.atBet!!
+        assertEquals(com.tjshea.vigilant.data.tracker.AtBet.HOW_AUTO, rec.how)
+        assertEquals("PASSED", rec.sharpVerdict)
+        assertEquals("Kalshi", rec.sharpBook)
+        assertEquals("PROP", rec.kind)
+        assertEquals(listOf("Pinnacle"), rec.dissent)
+        assertEquals(3, rec.twoSided)
+        assertEquals(2, rec.agreeing)
+        assertEquals(117, rec.american)
+        assertEquals((jefferson.startsAtMs!! - now) / 60_000L, rec.minutesToStart)
+        assertTrue(rec.books.any { it.book == "Kalshi" && it.fair != null && it.ev!! > 0.0 })
+        assertEquals(placed.stake, rec.stake!!, 1e-9)
+    }
+
+    @Test
     fun `with every book must agree on, a bet one book disagrees with is not placed, and one all of them agree with is`() = runBlocking {
         // Jefferson's books: three price both sides and all say +EV at +117 (3 of 3). Make one of them (KI) price the Under at +140 against -160: its own fair
         // line is under Novig's price, so it disagrees, while the others' consensus still says +EV (2 of 3).
         val split = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 105, 106.0, -135, 13_662.0) else it }) }
         fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
             state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
-        val loose = settings { it.copy(autoBetBooks = 2) }
+        // The sharp veto off: the one book saying no is Kalshi, the sharpest for props, which would veto it (the next test's subject).
+        val loose = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val check = AlertPicks.cnoChecked(withBooks(split, loose), 0.03, now).single().check
         assertEquals("the fixture: 2 of 3 agree and the consensus is still +EV", 3 to 2, check.twoSided to check.agreeing)
         assertTrue(check.ev!! > 0.0)
