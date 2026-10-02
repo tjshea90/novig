@@ -559,12 +559,7 @@ class AutoScanReceiver : BroadcastReceiver() {
                 val app = context.applicationContext as? VigilantApp ?: return pending.finish()
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        // Alarms don't survive a reboot: the closing capture's is armed again (and after an update, for good measure).
-                        runCatching { ClosingAlarm.schedule(app, app.container.tracker.all()) }
-                        // A phone restart switches auto-bet and background auto-scan off before anything can bet (Tj, 2026-10-02 16:05Z); an update
-                        // keeps them, and starts what was on ([LaunchReset]).
-                        runCatching { LaunchReset.afterRestart(app, Boot.now(app)) }
-                        if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
+                        afterBootOrUpdate(app)
                     } finally {
                         pending.finish()
                     }
@@ -574,6 +569,16 @@ class AutoScanReceiver : BroadcastReceiver() {
     }
 
     companion object {
+        /** After a phone restart or an update of Vigilant, with no screen. */
+        suspend fun afterBootOrUpdate(app: VigilantApp) {
+            // Alarms don't survive a reboot: the closing capture's is armed again (and after an update, for good measure).
+            runCatching { ClosingAlarm.schedule(app, app.container.tracker.all()) }
+            // A phone restart switches auto-bet and background auto-scan off before anything can bet (Tj, 2026-10-02 16:05Z); an update
+            // keeps them, and starts what was on ([LaunchReset]).
+            runCatching { LaunchReset.afterRestart(app, Boot.now(app)) }
+            if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
+        }
+
         private var bridge: PowerManager.WakeLock? = null
 
         @Synchronized

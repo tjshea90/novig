@@ -1,6 +1,5 @@
 package com.tjshea.vigilant.app
 
-import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
@@ -141,27 +140,18 @@ class LaunchResetTest {
         open().destroy()
         assertTrue(runBlocking { app.container.currentSettings() }.activeAutoScan != AutoScanMode.OFF)
         // An update: the receiver starts what was on, nothing is switched off.
-        receive(Intent.ACTION_MY_PACKAGE_REPLACED) { shadowOf(app).peekNextStartedService() != null }
+        runBlocking { AutoScanReceiver.afterBootOrUpdate(app) }
         assertEquals(AutoScanService::class.java.name, shadowOf(app).nextStartedService.component?.className)
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
         // A phone restart: off at boot, the service not started, and the first screen says why.
         bootCount(8)
-        receive(Intent.ACTION_BOOT_COMPLETED) { !saved().autoBet }
-        Thread.sleep(300)
+        runBlocking { AutoScanReceiver.afterBootOrUpdate(app) }
         assertFalse(saved().autoBet)
         assertEquals(AutoScanMode.OFF, saved().autoScan)
         assertNull(shadowOf(app).peekNextStartedService())
         open().destroy()
         assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
-    }
-
-    /** The boot receiver's broadcast: its work runs on a background thread, waited for until [done] (or 5 s). */
-    private fun receive(action: String, done: () -> Boolean) {
-        app.sendBroadcast(Intent(action).setPackage(app.packageName))
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-        val until = System.currentTimeMillis() + 5_000L
-        while (!done() && System.currentTimeMillis() < until) Thread.sleep(20)
     }
 
     @Test
@@ -176,7 +166,9 @@ class LaunchResetTest {
             val text = File("src/main/kotlin/com/tjshea/vigilant/app/$f").readText()
             assertFalse(f, text.contains("LaunchReset.apply") || text.contains("taskRemoved(") || text.contains("autoBet = false"))
         }
+        // The boot receiver hands both a restart and an update to the one function the test above runs.
         val receiver = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText().substringAfter("class AutoScanReceiver")
-        assertTrue(receiver.indexOf("LaunchReset.afterRestart(app, Boot.now(app))") in 0 until receiver.indexOf("AutoScanService.start(app)"))
+        assertTrue(receiver.contains("Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {"))
+        assertTrue(receiver.substringAfter("Intent.ACTION_BOOT_COMPLETED").substringBefore("companion object").contains("afterBootOrUpdate(app)"))
     }
 }
