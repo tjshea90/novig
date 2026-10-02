@@ -18,6 +18,9 @@ import com.tjshea.vigilant.data.novig.trading.PlaceResult
 import com.tjshea.vigilant.data.reference.SharpBooks
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.SharpConfirm
+import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.scanner.SharpMode
+import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
@@ -101,8 +104,8 @@ class AutoBettor(
         /** Bets placed and dollars staked since the app process started. */
         val placedSinceStart: Int = 0,
         val stakedSinceStart: Double = 0.0,
-        /** The sharp check since the app process started: each bet's latest verdict, counted ([sharpLine]). */
-        val sharp: Map<SharpConfirm.Verdict, Int> = emptyMap(),
+        /** The sharp check since the app process started: each bet's latest verdict ("veto.VETOED", "confirm.CONFIRMED"), counted ([sharpLine]). */
+        val sharp: Map<String, Int> = emptyMap(),
     )
 
     private val _status = MutableStateFlow(Status())
@@ -157,7 +160,7 @@ class AutoBettor(
                 item.pick.live || startsAt == null || startsAt - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 item.live == null -> skip("no Novig price read in the last minute")
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
-                else -> AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds)?.let(::skip)
+                else -> AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
                     ?: sharpReason(item, settings, state, now)?.let(::skip)
                     ?: passing.add(item)
             }
@@ -281,18 +284,30 @@ class AutoBettor(
     /** What the sharp book said about each bet that passed (CNO row key → the numbers), for the bet's pop-up and Diagnostics. */
     private val sharpSaid = HashMap<String, SharpConfirm.Result>()
 
-    /** Each bet's latest sharp verdict since the app started (CNO row key → verdict), the oldest dropped past [SHARP_TALLY_KEEP]: Settings' tally. */
-    private val sharpVerdicts = object : LinkedHashMap<String, SharpConfirm.Verdict>() {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SharpConfirm.Verdict>?) = size > SHARP_TALLY_KEEP
+    /** Each bet's latest sharp verdict since the app started (CNO row key → "veto.VETOED" or "confirm.NO_QUOTE"), the oldest dropped past [SHARP_TALLY_KEEP]. */
+    private val sharpVerdicts = object : LinkedHashMap<String, String>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?) = size > SHARP_TALLY_KEEP
     }
 
     /**
-     * Why the sharp-book check (Settings › Betting, off by default) doesn't let [item] through, or null: it is off, or a fresh sharp book's own devigged
-     * price makes the bet +EV at Novig's price now ([SharpConfirm]). Asked last, after every other criterion: only a bet about to be placed costs a feed call.
+     * Why the sharp books don't let [item] through, or null. [SharpMode.VETO] (the default, Tj 2026-10-02 17:01Z: "Only skip a bet if the sharpest book for that
+     * market says it is not +ev"): the sharpest book for the bet's kind on its book page says it isn't +EV at Novig's price ([SharpVeto]; free, no feed call).
+     * [SharpMode.CONFIRM]: a fresh sharp book's own devigged price must make it +EV ([SharpConfirm]; asked last, only a bet about to be placed costs a feed call).
      */
     private suspend fun sharpReason(item: AlertPicks.CnoChecked, settings: ScanSettings, state: UiState, now: Long): String? {
-        val rules = SharpConfirm.rules(settings, autoBet = true) ?: return null
         val row = item.shown.row
+        when (settings.sharpAutoBet) {
+            SharpMode.OFF -> return null
+            SharpMode.VETO -> {
+                val veto = SharpVeto.judge(state.booksAt(item.pick.row.key, now)?.view, row.league, row.market, row.bet, row.odds, item.pick.live)
+                vetoSaid[item.pick.row.key] = veto
+                tally(item.pick.row.key, "veto.${veto.verdict}")
+                c.eventLog.count("sharp.veto.${veto.verdict}")
+                return veto.reason
+            }
+            SharpMode.CONFIRM -> Unit
+        }
+        val rules = SharpConfirm.rules(settings, autoBet = true) ?: return null
         val bet = SharpBooks.Bet(row.league, row.event, row.startsAtMs, row.market, row.bet)
         val result = try {
             sharp(rules, bet, state.booksAt(item.pick.row.key, now)?.view, row.odds, item.pick.live, now)
@@ -303,11 +318,21 @@ class AutoBettor(
         }
         if (sharpSaid.size > SHARP_SAID_KEEP) sharpSaid.clear()
         sharpSaid[item.pick.row.key] = result
-        sharpVerdicts[item.pick.row.key] = result.verdict
-        _status.update { it.copy(sharp = sharpVerdicts.values.groupingBy { v -> v }.eachCount()) }
+        tally(item.pick.row.key, "confirm.${result.verdict}")
         c.eventLog.count("sharp.autobet.${result.verdict}")
         if (result.verdict == SharpConfirm.Verdict.UNAVAILABLE) c.eventLog.warn("SHARP", result.reason ?: "the sharp check couldn't ask")
         return result.reason
+    }
+
+    /** What the sharp veto said about each bet it judged (CNO row key → verdict), for the bet's record ([AtBet]). */
+    private val vetoSaid = object : LinkedHashMap<String, SharpVeto.Result>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SharpVeto.Result>?) = size > SHARP_SAID_KEEP
+    }
+
+    /** One bet's newest sharp verdict ("veto.PASSED", "confirm.NO_QUOTE") into Settings' tally. */
+    private fun tally(key: String, verdict: String) {
+        sharpVerdicts[key] = verdict
+        _status.update { it.copy(sharp = sharpVerdicts.values.groupingBy { v -> v }.eachCount()) }
     }
 
     private fun postStop(now: Long, why: String, halted: Boolean) {
@@ -367,14 +392,32 @@ class AutoBettor(
          * what it said, so the reason nothing is placed is on screen. [label]: the sharp books ("Pinnacle"). Null before it asked about any bet.
          */
         fun sharpLine(s: Status, label: String): String? {
-            val asked = s.sharp.values.sum().takeIf { it > 0 } ?: return null
-            fun n(v: SharpConfirm.Verdict) = s.sharp[v] ?: 0
+            val veto = s.sharp.filterKeys { it.startsWith("veto.") }.mapKeys { it.key.removePrefix("veto.") }
+            val confirm = s.sharp.filterKeys { it.startsWith("confirm.") }.mapKeys { it.key.removePrefix("confirm.") }
+            val lines = listOfNotNull(vetoLine(veto), confirmLine(confirm, label))
+            return lines.joinToString(" ").takeIf { it.isNotEmpty() }
+        }
+
+        private fun vetoLine(n: Map<String, Int>): String? {
+            val asked = n.values.sum().takeIf { it > 0 } ?: return null
+            fun c(v: SharpVeto.Verdict) = n[v.name] ?: 0
             val parts = listOfNotNull(
-                "${n(SharpConfirm.Verdict.CONFIRMED)} confirmed",
-                n(SharpConfirm.Verdict.NO_QUOTE).takeIf { it > 0 }?.let { "$it with no $label price for that exact line" },
-                n(SharpConfirm.Verdict.NOT_CONFIRMED).takeIf { it > 0 }?.let { "$it that $label's own price doesn't show +EV (enough)" },
-                n(SharpConfirm.Verdict.STALE).takeIf { it > 0 }?.let { "$it with $label's price too old" },
-                n(SharpConfirm.Verdict.UNAVAILABLE).takeIf { it > 0 }?.let { "$it when no feed could be asked" },
+                "${c(SharpVeto.Verdict.PASSED)} the sharpest book agreed",
+                c(SharpVeto.Verdict.VETOED).takeIf { it > 0 }?.let { "$it vetoed (the sharpest book said not +EV)" },
+                c(SharpVeto.Verdict.NO_SHARP).takeIf { it > 0 }?.let { "$it with no sharp book on the page (not vetoed)" },
+            )
+            return "Sharp veto since Vigilant started: $asked bet${if (asked == 1) "" else "s"} judged, " + parts.joinToString(", ") + "."
+        }
+
+        private fun confirmLine(n: Map<String, Int>, label: String): String? {
+            val asked = n.values.sum().takeIf { it > 0 } ?: return null
+            fun c(v: SharpConfirm.Verdict) = n[v.name] ?: 0
+            val parts = listOfNotNull(
+                "${c(SharpConfirm.Verdict.CONFIRMED)} confirmed",
+                c(SharpConfirm.Verdict.NO_QUOTE).takeIf { it > 0 }?.let { "$it with no $label price for that exact line" },
+                c(SharpConfirm.Verdict.NOT_CONFIRMED).takeIf { it > 0 }?.let { "$it that $label's own price doesn't show +EV (enough)" },
+                c(SharpConfirm.Verdict.STALE).takeIf { it > 0 }?.let { "$it with $label's price too old" },
+                c(SharpConfirm.Verdict.UNAVAILABLE).takeIf { it > 0 }?.let { "$it when no feed could be asked" },
             )
             return "Sharp check since Vigilant started: $asked bet${if (asked == 1) "" else "s"} asked about, " + parts.joinToString(", ") + "."
         }
