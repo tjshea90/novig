@@ -61,6 +61,12 @@ interface NovigSource {
     fun pushProblem(sinceMs: Long): String? = null
 
     /**
+     * Why the connected key isn't reading Novig's prices right now ([at]), when an earlier refusal put this source on the public routes for a
+     * while: a scan that starts then never tries the key, so it says why itself (Tj, 2026-10-02: "the novig scanning was going very slow").
+     */
+    fun keyDown(at: Long): String? = null
+
+    /**
      * How many books a scan asks for at a time, between re-plans: enough that every request slot stays busy
      * ([DEFAULT_BATCH] on the public routes; more with a key, which has more in flight).
      */
@@ -203,6 +209,13 @@ class NovigPublicClient(
     @Volatile
     private var keyedDownUntil = 0L
 
+    /** What the key's last refusal said ([keyDown]). */
+    @Volatile
+    private var keyDownWhy: String? = null
+
+    override fun keyDown(at: Long): String? =
+        keyDownWhy?.takeIf { keyed != null && (at < keyedDownUntil || at < keyedCatalogDownUntil) }
+
     private data class CachedBook(val etag: String?, val book: NovigBook)
 
     /** Bounded LRU of the last books seen, keyed by market ID. */
@@ -280,6 +293,7 @@ class NovigPublicClient(
                 throw e
             } catch (e: Exception) {
                 keyedCatalogDownUntil = clock() + keyedRetryMs
+                keyDownWhy = (e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName
             }
         }
         return paged(publicPath, params, parse)
@@ -351,6 +365,7 @@ class NovigPublicClient(
                                 }
                                 if (useKey.getAndSet(null) != null) {
                                     keyedDownUntil = clock() + keyedRetryMs
+                                    keyDownWhy = e.brief
                                     keyProblem.compareAndSet(null, e.brief)
                                 }
                                 continue
