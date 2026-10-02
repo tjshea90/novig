@@ -353,7 +353,10 @@ be inferred from its trades. Accounts are anonymized, so one bettor's record can
 `/v3/keys` and `/v3/account` are limited to 600 per 60s per key, method, and route. Transfers are limited to 5/s and 60/min.
 A `429` carries `Retry-After` in seconds. Separately, the **edge throttles per IP**, and an
 edge refusal is a **`403` with an HTML body** (no `code`) that never reaches Novig's
-servers. Treat an HTML 403 as "slow down", not "bad key". `423` means locked,
+servers. Treat an HTML 403 as "slow down", not "bad key". **Seen live 2026-10-02 (Tj's v0.44.1 Diagnostics):** from 01:33 every SIGNED
+route answered `423` (`/v3/limits`, `/v3/catalog/markets`, book reads, orders) while the public routes answered normally: an account-level lock
+(the app reads Novig's `code` and names it; "A 423 doesn't clear on its own. Contact support."). Scans then fall back to the public routes and
+are about a third as fast. `423` means locked,
 self-excluded, or trading halted, and it doesn't clear on its own.
 
 ### 451 codes (docs.novig.com/api/errors, read 2026-09-28)
