@@ -1,22 +1,22 @@
-# CHECKPOINT 2382 — read me first, then TASKS.md
+# CHECKPOINT 2383 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T20:32:44Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `4cfa3f89` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T20:38:00Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `a8a2af6f` (this checkpoint is the commit after it)
 
 ## Just done
-AZ1 done (TASKS ticked): misses were missing Novig ids never retried, Replace kept side only, one-sided books, no per-bet reason; all fixed + tests
+AZ2/AZ3 code: LockedBets (markets/partly/ids/hide/stats) + LockStats, ScanSettings.trackerHideLocked (default on), Tracker: hide chip + filtered lists/stats + Locked in card, Auto-bet tab switch, Diagnostics lock + Novig-price lines; LockedBetsTest green
 
 ## Do this next
-AZ2: data LockedMarkets (API bets, equal contracts on two outcomes, any status) + ScanSettings.trackerHideLocked + Tracker chip/filter + stats exclusion; AZ3 lock stats card
+UI test for Tracker hide/lock card (TrackerLocksTest, Robolectric like TrackerNovigOnlyTest), TrackerText lock caption test, then mutants, full floor, ship v0.48.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  cec190b2 ckpt 2382: AZ1 done (TASKS ticked): misses were missing Novig ids never retried, Replac
   bc1dbe75 ckpt 2381: AZ1 code + data tests: NovigBetFinder.locate, NovigIds (re-look up missing i
   97845a81 ckpt 2380: AZ1 investigation redone (workflow results lost with the old container): mis
   4179f52b ckpt 2379: AZ1 investigation workflow running (ids, read path, pricer, lock/stats map);
@@ -26,8 +26,7 @@ AZ2: data LockedMarkets (API bets, equal contracts on two outcomes, any status) 
   1738e581 ckpt 2375: floor green on v0.47.0 (1,736: 1,713 passed, 23 skipped)
   971f4c34 ckpt 2374: floor had 2 StickyHeadersTest fails (Novig-only row made the pinned bar too 
   3a659c13 ckpt 2373: AY6 done + docs: NovigNow, Tracker Novig-only chip, diagnostics fields, NOVI
-  cb1d3514 ckpt 2372: AY6 code: TrackedBet novigFair/novigAtMs/novigClose(+At), NovigNow (mid, app
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(9 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
