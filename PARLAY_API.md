@@ -92,6 +92,11 @@ Pinnacle feed is on). Settings switch: `ScanSettings.useParlay`; keys: `ApiProvi
   "−2.6% EV" though the real EV is about −5%). Show Vigilant's own EV (fair ÷ price − 1) next to it, never edge_pct as if it were EV.
 - /verdict's "fair" can be **Novig's own no-vig price** (`fair.source: "novig"`) when no sharper book lists the bet, even with
   `sharpBook=pinnacle`: for a Novig bet that's circular. The second-opinion card says so (`Verdict.fairFromNovig`).
+- **A `/odds` quote's age is its BOOK's `last_update` (or `last_update_ms`), not its market's** (2026-10-02, RESEARCH.md §63.1). The docs: "every
+  bookmaker's `last_update` is the freshest of (price-change, no-change verification heartbeat)"; `include=verification` adds `verified_at`,
+  `line_changed_at`, `is_current` per bookmaker. The market's own `last_update` is when its price last moved (median 7–37 minutes behind the book's in
+  the tennis samples). Read the market's stamp and 90% of quotes fail a 5-minute freshness check; read the book's and 1% do
+  (`TheOddsApiClient.parseEvents(seenByBook = true)` for this feed only; `ParlayFreshnessTest`).
 - Period-market rows carry two ages: `age_seconds` (since the price last **changed**) and `observed_age_seconds` / `last_observed_ms`
   (since ParlayAPI last **saw** it). A line unchanged for hours is still current: freshness uses the observed age. (The `/props` rows in
   `parlay-props-with-injury.json` have only `age_seconds` and `last_update`.)

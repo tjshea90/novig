@@ -374,6 +374,12 @@ A refused key sends every scan to the public routes for 10 minutes at a time (mu
 
 ## 11.1 How Vigilant uses the signed API
 
+**v0.44.0 (current, RESEARCH.md §63.3):** the websocket is OPENED at a scan's first plan (its bucket refills while the fair odds load) and
+HANDED its markets once per scan, when the plan has filled in (every source answered, more unread lines than it holds, or 30 s): what it already
+holds first, then the unread lines. Tj's v0.43.0 file showed why: "113 by live feed, 4475 through the key" in a 318 s, 4,588-price scan, the one
+bulk subscribe having gone at ~8 s with the first source's lines. Unsubscribes are charged at most the bucket; a fresh connection forgets the last
+scan's list. The scan's timing line says "live feed asked for N at X s".
+
 **v0.19.3 (current):** the key's REST reads run 10 at a time in 30-price batches through an OkHttp client that allows
 16 requests per host (OkHttp's default is 5, and an open websocket holds one: the key had 4 lanes; RESEARCH.md §29).
 Refusals that arrive together (a whole wave in flight answered 429) slow the pace once, not once each. Pacing still

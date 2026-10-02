@@ -3464,3 +3464,91 @@ informed, and in the NFL it is not.
   reads every published day by default.
 - Test A's close is 1–2 h before the start, so late steam is not in A. Test B (the true NFL close) gives the same answer
   for big money.
+
+
+## 63. Full tests, the laggy list, "odds 9 min old", the APIs at full use, and Tj's v0.43.0 Diagnostics file (v0.44.0, 2026-10-02; Tj: "Run full tests on this app, look for ways to improve the app and scanners … 1) when I start the vigilant scanner the list of bets gets laggy … 2) most odds say 9 minutes old. Is there a way to get fresh odds during a scan? Is 9 minute old odds still good data? 3) consider ways to use free apis such as ESPN apis and also my paid parlayapi to their full extent … I'm about to send a diagnostics file from the app, review that too")
+
+### 63.1 "odds 9 min old" was mostly a measuring error, and it was throwing away most of ParlayAPI
+- A card's "odds N min old" is the age of the OLDEST quote behind its fair price (`FairLine.usedUpdates`), as each feed dates it. The cards in
+  Tj's screenshot (NCAAF, books "Polymarket, Kalshi, BetOnline.ag +7", "Pinnacle, BetMGM, Bovada +4", "Kalshi, FanDuel, Fliff") all used ParlayAPI's books.
+- ParlayAPI's `/odds` carries two stamps. Its docs (`/v1/sports/{s}/odds`, read 2026-10-02): "**every bookmaker's `last_update` is the freshest of
+  (price-change, no-change verification heartbeat)**. On hot-cycle sources (Pinnacle, FanDuel) that means a maximum age around the 2-second poll
+  interval, even if the price hasn't moved"; `?include=verification` adds `verified_at`/`line_changed_at`/`is_current` **per bookmaker**. Each
+  MARKET's own `last_update` is when its price last moved. Vigilant read the market's stamp first (`last_update ?: book.last_update`, right for
+  The Odds API, whose market stamp is "the last time our system saw odds for that market").
+- Measured on ParlayAPI's own answers (`parlay-tennis-atp.json`/`-wta.json`, 77 quotes): market stamps sat a median 7–37 minutes behind their
+  book's, books seen 2–50 s before the answer. **Under the old stamp 10% of the quotes passed a 5-minute check (23% at 10 minutes); under the
+  book's, 99%.** Scans price only quotes inside the limit minus 2 minutes (`planFor(youngFairOnly, headroomMs)`), so most of Tj's paid ParlayAPI game
+  lines never priced, and the few that did were the ones that had just moved: they showed "N min old" and left the feed a minute or two later.
+  The same parser feeds Check odds now's ParlayAPI backup (`ParlayBooks`) and the sharp-book confirmation's ParlayAPI Pinnacle feed (§60), both
+  of which demand a fresh quote.
+- **Fixed:** ParlayAPI quotes are dated by their book's stamp (`last_update_ms`, else `last_update`), never older than the market's own
+  (`TheOddsApiClient.parseEvents(seenByBook)`; `ParlayFreshnessTest`, 5 tests, 4 mutants killed). `/props` rows carry `age_seconds` ("the real age
+  of that write") and, for some books, `last_observed` = the same instant in the sample: left as they are.
+- **Is 9-minute-old data good?** It depends on what the age means. A quote ParlayAPI *confirmed* seconds ago whose price last moved 9 minutes ago is
+  current: that was most of the screenshot. A quote nobody has *seen* for 9 minutes is not safe near the start: §30.2's measurement (Kalshi, 2,471
+  markets) had 2.7% of fair lines move a point or more in 10 minutes (more near kickoff, in NFL moneylines and MLB totals), and a point is ~2 EV
+  points at even odds. The rule stays as §30.2 set it: 10 minutes for games 3+ hours off, 5 inside 3 hours, now measured from the right stamp.
+- **Fresh odds during a scan:** with the stamp fixed and the live feed used (§63.3), a 4,588-price scan should take ~2.5–3 minutes instead of 5½,
+  inside the 3-minute window a near game's odds may be read in and far inside the 8-minute one for later games, so a mid-scan re-read of every fair
+  source (doubling ParlayAPI's 39 credits a scan and PinnWire's 5 of 100 a day) isn't worth it yet. If the next file still shows "left for the next
+  scan" lines, that is the case for it.
+
+### 63.2 The laggy list: bad code, found and fixed
+- `VigilantRoot` provided `LocalApiBet` (a **static** composition local) with `ApiBetActions(...)` built inline: a new object on every state the app
+  got. A new value for a static local recomposes everything under it with skipping off. A running scan hands the screen a new state every 350 ms
+  (§48's throttle), plus the meters each second and every CNO read: so every card on screen, the bars, the chips and the badges were rebuilt 3+ times a
+  second while Tj scrolled. `ScanLagTest` reproduces it (a card with unchanged inputs drew 6 times in 5 ticks; with the fix, once).
+- Fixed: `ProvideApiBet` (remembered on `enabled` and the controller); `LocalOpenNovig`'s lambda remembered; the floating widget's `FloatingActions`
+  remembered per window (every widget row redrew each tick); `ParlayPickActions` remembered at the root and in `FeedScreen`; `KeyActions` made a data
+  class like `BetActions`/`BettingActions`/`ReportActions`. Checked and fine: the cards' own lambdas are memoized (bytecode), `OpportunityCard` is
+  skippable with stable inputs (`-PcomposeReports`), unchanged markets keep the same `Opportunity` objects between partials (`FairMemo.pricedFor`),
+  the badges and CNO screening are remembered (`RecompositionCostTest`). Not changed: cards slide (`animateItem`) when a partial result re-sorts the
+  feed every 2 s; that's intended.
+
+### 63.3 The scan's speed: the live feed was barely used
+- Tj's file: "4,588 Novig prices in 318 s (14.4 a second: 113 by live feed, 4475 through the key) · the key's limit is 16 a second". REST is capped
+  at 16 a second; the websocket can load up to 2,000 books in ONE subscribe, but the next takes ~2 minutes (512-token bucket at 4/s, §6). The scan
+  handed the feed its whole plan at the first plan; the feed's first subscribe went at ~8 s (its bucket after the upgrade), when the plan held only
+  the first source's few hundred lines (a plan has only lines a fair source quotes; fair odds took 29 s). Every later subscribe needed a full bucket and
+  favoured lines the requests had already read. No error: the feed worked, it just carried 113 books.
+- Fixed (`Scanner.BookPump.feedStream`): the feed is OPENED at the first plan (`NovigSource.openFeed`, `NovigStream.open`: connects without changing
+  what it watches, so its bucket refills meanwhile) and HANDED its markets once per scan, when the plan has filled in (every source answered for every
+  league, or more unread lines than it holds, or `STREAM_HOLD_MS` = 30 s): what it already holds for this plan first (dropping it costs tokens and a
+  current book), then the unread lines in reading order. Also: an unsubscribe is charged at most the bucket (it was 1 a subject uncapped: a big drop
+  waited minutes and left the bucket in debt), and a fresh connection forgets the last scan's list (after an idle close it would have spent the one
+  bulk subscribe on lines that scan had read). `ScanTiming` says "live feed asked for N at X s". Tests: `LiveFeedPlanTest` (5, mutation-checked),
+  `NovigStreamTest` (+2). **Not verified on the real feed** (the key stays on the phone): the next file's timing line is the check.
+- ParlayAPI is the slowest host (NFL `/props`: 13–17 s to the first byte for 3.5 MB). That is its server building the board; the call already runs in
+  parallel with the others. `grouped=true` would send fewer bytes but changes the row shape (no sample yet): not done.
+
+### 63.4 What the v0.43.0 Diagnostics file said, and what changed
+- **"BUG: The app crashed 1 time … OutOfMemoryError" (22 h old):** 05:40 UTC Oct 1, on v0.38.0, before v0.39.0/0.39.1's fixes (§52). The Advisor now
+  splits crashes and exits by the install time of the running version (`PackageInfo.lastUpdateTime` → `Extras.installedAtMs`): older ones are a WATCH,
+  "before this version was installed". A saved crash now records its version (`crashText(version)`). Its stack read `at n5.l.E0(…0c73:6)`: R8
+  renamed everything and the masker shortened R8's source-file map id. Release builds now keep Vigilant's own class and method names with file and
+  line (`-keepnames class com.tjshea.vigilant.**`, `-keepattributes SourceFile,LineNumberTable`), and each Release carries the build's
+  `mapping.txt` for exact lines.
+- **"BUG/FAILURE: Android ended the app 3 times: low memory, in the background":** `ApplicationExitInfo.importance` now says where it was. A kill
+  while CACHED (nothing on screen, no widget, no service) is Android freeing memory for the apps in use, as for any background app: reported, not a
+  failure (`Exit.reclaimed`). A kill while the widget, mini window or a scan's service ran is still a BUG, with what it used. And Vigilant now gets
+  smaller when it leaves the screen (`VigilantApp.onTrimMemory` ≥ UI_HIDDEN, not while scanning): fair-odds boards past every freshness limit (they
+  can never price again), the priced-lines memo, the plans and Novig's 3,000-book cache go (`Scanner.trimForBackground`; `BackgroundTrimTest`).
+  Android ends the biggest cached apps first.
+- **"FAILURE: Vigilant's edges (CLV) −0.3% on 36 bets":** 36 bets; its spread of outcomes includes zero. §63.1 is the likely cause of part of it: the
+  fair prices behind Vigilant's bets were built mostly without ParlayAPI's books (only the ones that had just moved got in). Next file: compare.
+- **"OPTIMIZE: scan 322 s"** → §63.3. **"parlay-api.com slow"** → §63.3 (server-side).
+- **"WATCH: 59 of 155 open bets have a current EV":** the Check odds now just before had priced 97; the rest were older. Unchanged.
+
+### 63.5 The APIs at their full use, and free ones (checked 2026-10-02)
+- **ParlayAPI** (every one of its 194 GET paths listed from `openapi.json`, costs from `/v1/meta/credit-costs`; PARLAY_API.md §6.9 covers the rest): the
+  biggest gain was §63.1, its quotes now count. Unused and why: `/ev`, `/consensus`, `/compare`, `/arbitrage`, `/middles` (Vigilant prices its own
+  lines against Novig's taker price), `/exchange/{s}/markets` (Novig is read free directly), SSE (Business plan), `probable-pitchers`/`news`
+  (1 credit, information Vigilant can't price), `include=verification` (the bookmaker stamp already is the verified time).
+- **ESPN (free, probed live):** core API odds are **DraftKings only** (`providers/100`: open and current spread/total/moneyline), already in
+  ParlayAPI and PropLine; `…/odds/100/propBets` lists 1,232 DraftKings prop LINES for an NFL game with **no prices** (can't be devigged); the
+  league injury report (`site.api.espn.com/…/injuries`, 8.7 MB for the NFL) could replace ParlayAPI's 1-credit injury calls (3 credits since the app
+  opened: not worth the code); `predictor` is ESPN's FPI model, not a market. Vigilant already uses ESPN for scores, box scores, closing lines and rosters.
+- **Other free odds APIs:** SportsGameOdds' free tier updates every **10 minutes** with 9 US books and no Pinnacle (fails the freshness rule);
+  MoneyLine free = 1,000 requests a month (~33 a day); OddsPapi free = 250 a month, per game. None beats Pinnacle (PinnWire/pinnapi), Kalshi,
+  Polymarket, PropLine and ParlayAPI, all already in the scan.
