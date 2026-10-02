@@ -295,7 +295,7 @@ class SharpConfirmAppTest {
         assertTrue(SharpConfirmText.feedsNote(s, listOf("PinnWire / pinnapi", "ParlayAPI")).startsWith("Asked in this order, and the first that has the bet answers: PinnWire / pinnapi, ParlayAPI."))
         assertNull(SharpConfirmText.confirmNote(ScanSettings()))
         assertEquals(
-            "For the auto-bet and CNO's push alerts: Pinnacle's own price, at most 3 min old, must show any +ev at Novig's price now.",
+            "For the auto-bet and CNO's push alerts: Pinnacle's own price, at most 3 min old, must show any +EV at Novig's price now.",
             SharpConfirmText.confirmNote(ScanSettings(sharpConfirmAutoBet = true, sharpConfirmAlerts = true)),
         )
         assertEquals("For the auto-bet: Pinnacle or Circa's own price, at most 1 min old, must show +2% at Novig's price now.",

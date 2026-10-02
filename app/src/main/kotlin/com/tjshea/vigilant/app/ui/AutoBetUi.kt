@@ -379,6 +379,9 @@ object SharpConfirmText {
     /** The edge choice: "Any +EV", "+1%". */
     fun edgeLabel(minEv: Double): String = if (minEv <= 0.0) "Any +EV" else AutoBetText.evLabel(minEv)
 
+    /** The edge in a sentence: "any +EV", "+2%". */
+    private fun edgeInWords(minEv: Double): String = if (minEv <= 0.0) "any +EV" else AutoBetText.evLabel(minEv)
+
     /**
      * The Pinnacle feeds Tj has switched on with a key, in the order they're asked (the same conditions as `referenceSources`); empty when none.
      * [keys]: how many keys he has saved for a provider.
@@ -414,7 +417,7 @@ object SharpConfirmText {
     fun confirmNote(s: ScanSettings): String? {
         val where = listOfNotNull("the auto-bet".takeIf { s.sharpConfirmAutoBet }, "CNO's push alerts".takeIf { s.sharpConfirmAlerts }).joinToString(" and ")
         if (where.isEmpty()) return null
-        return "For $where: ${s.sharpConfirmBooks.displayName}'s own price, at most ${ageLabel(s.sharpConfirmMaxAgeSeconds)} old, must show ${edgeLabel(s.sharpConfirmMinEv).lowercase()} at Novig's price now."
+        return "For $where: ${s.sharpConfirmBooks.displayName}'s own price, at most ${ageLabel(s.sharpConfirmMaxAgeSeconds)} old, must show ${edgeInWords(s.sharpConfirmMinEv)} at Novig's price now."
     }
 }
 
