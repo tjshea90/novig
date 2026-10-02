@@ -1039,24 +1039,40 @@ fun refreshHint(s: ScanSettings): String {
  * Background auto-scan and +EV alerts (Tj, 2026-09-28: "auto scan either cno or both cno and vigilant
  * every 5 10 20 30 or 40 minutes in the background" and alerts "for a minimum of 2%, 3%, or 4%").
  */
+/**
+ * The background scan (Scanning page): one switch ([BackgroundScan]: it runs whatever scanner is on), Vigilant's own scan joining it only when asked (both
+ * scanners on), how often, keep awake, and what Android needs for it (notifications, unrestricted battery).
+ */
 @Composable
-private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+private fun ColumnScope.BackgroundScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    SectionTitle("Background auto-scan")
-    ChoiceChips(AutoScanMode.entries, s.autoScan, { it.displayName }) { v -> onUpdate { it.copy(autoScan = v) } }
-    if (s.autoScan != AutoScanMode.OFF) {
+    val on = BackgroundScan.on(s)
+    SectionTitle("Background scan")
+    SwitchRow(
+        "Keep scanning in the background",
+        "Keeps reading for new bets every few seconds or minutes with Vigilant closed or the phone locked: that's what sends alerts and runs auto-bet.",
+        on,
+        tag = "backgroundScan",
+    ) { v -> onUpdate { BackgroundScan.set(it, v) } }
+    if (!on && s.autoBet && s.cnoOn) Warn("Auto-bet is on and runs inside the background scan: while this is off, auto-bet places nothing.", "backgroundAutoBetOff")
+    if (on && s.scanner == ScannerMode.BOTH) {
+        SwitchRow(
+            "  Also run Vigilant's own scan",
+            "Off: only CrazyNinjaOdds' list is read in the background (free). On: Vigilant's own scan runs too, spending API credits like a tap on Scan.",
+            BackgroundScan.alsoVigilant(s),
+            tag = "backgroundAlsoVigilant",
+        ) { v -> onUpdate { BackgroundScan.setAlsoVigilant(it, v) } }
+    }
+    if (on) {
         Text("Every", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.AUTO_SCAN_SECONDS_CHOICES, s.autoScanSeconds, ScanSettings::intervalLabel) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
     }
     Hint(autoScanHint(s))
-    if (s.autoScan != AutoScanMode.OFF) {
+    if (on) {
         SwitchRow("Keep awake (screen stays off)", keepAwakeHint(s), s.autoScanKeepAwake) { v -> onUpdate { it.copy(autoScanKeepAwake = v) } }
     }
-    Text("Push alerts", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-    ChoiceChips(ScanSettings.ALERT_MIN_EV_CHOICES, s.alertMinEv, ::alertLabel) { v -> onUpdate { it.copy(alertMinEv = v) } }
-    Hint(alertHint(s))
-    // What Android needs from Tj for any of it: notifications (alerts, the ongoing note) and, so the
-    // phone's battery saver can't hold scans back while it sleeps, unrestricted background use.
+    // What Android needs from Tj for it: notifications (the ongoing note) and, so the phone's battery saver can't hold scans back while it sleeps,
+    // unrestricted background use.
     var notify by remember { mutableStateOf(com.tjshea.vigilant.app.ScanService.canNotify(context)) }
     var unrestricted by remember { mutableStateOf(ignoresBatteryLimits(context)) }
     androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
@@ -1064,19 +1080,11 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
         unrestricted = ignoresBatteryLimits(context)
         onPauseOrDispose { }
     }
-    if ((s.autoScan != AutoScanMode.OFF || s.alertMinEv > 0.0) && !notify) {
-        Hint("Notifications are off for Vigilant, so no alert can show.")
-        OutlinedButton(onClick = {
-            runCatching {
-                context.startActivity(
-                    android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            }
-        }) { Text("Allow notifications") }
+    if (on && !notify) {
+        Hint("Notifications are off for Vigilant, so no alert or auto-bet notice can show.")
+        OutlinedButton(onClick = { openNotificationSettings(context) }) { Text("Allow notifications") }
     }
-    if (s.autoScan != AutoScanMode.OFF && !unrestricted) {
+    if (on && !unrestricted) {
         Hint(batteryHint(unrestricted = false))
         OutlinedButton(onClick = {
             runCatching {
@@ -1095,9 +1103,53 @@ private fun AutoScanSection(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSe
                 )
             }
         }) { Text("Open Vigilant's app settings") }
-    } else if (s.autoScan != AutoScanMode.OFF) {
+    } else if (on) {
         Hint(batteryHint(unrestricted = true))
     }
+}
+
+/** Android's notification settings for Vigilant. */
+fun openNotificationSettings(context: android.content.Context) {
+    runCatching {
+        context.startActivity(
+            android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}
+
+/**
+ * Settings that another one makes moot, said where they're set (2026-10-02 ~18:10Z: "look for settings that contradict each other and fix them"). Each
+ * returns the sentence, or null when nothing shadows it. Pure, for tests.
+ */
+object Shadowed {
+    /** The alerts' edge under CNO's own smallest edge: CNO never lists those bets. */
+    fun alertEdge(s: ScanSettings): String? =
+        if (s.cnoOn && s.alertMinEv > 0.0 && s.alertMinEv < s.cnoFilters.minEv - 1e-9)
+            "CrazyNinjaOdds' list (its page) already stops at ${Format.percent(s.cnoFilters.minEv, 0)}, so alerts start there, not at ${alertLabel(s.alertMinEv)}."
+        else null
+
+    /** The auto-bet's smallest edge under CNO's: those bets never reach it. */
+    fun autoBetEdge(s: ScanSettings): String? =
+        if (s.cnoOn && s.autoBetMinEv < s.cnoFilters.minEv - 1e-9)
+            "CrazyNinjaOdds' list (Settings › CrazyNinjaOdds list) already stops at ${Format.percent(s.cnoFilters.minEv, 0)}, so auto-bet never sees a smaller edge than that."
+        else null
+
+    /** The auto-bet's longest odds past CNO's: CNO never lists them. */
+    fun autoBetOdds(s: ScanSettings): String? {
+        val cno = s.cnoFilters.maxOdds
+        if (!s.cnoOn || cno <= 0) return null
+        return if (s.autoBetMaxOdds <= 0 || s.autoBetMaxOdds > cno)
+            "CrazyNinjaOdds' list (Settings › CrazyNinjaOdds list) stops at +$cno, so auto-bet never sees longer odds than that."
+        else null
+    }
+
+    /** Days ahead past the start window: the window decides. */
+    fun daysAhead(s: ScanSettings): String? =
+        if (AppBook.isNovig && s.startsWithinHours > 0 && s.startsWithinHours < s.daysAhead * 24)
+            "Right now \"Games starting within ${s.startsWithinHours}h\" (Scanning) is shorter, so that's how far the scan reads."
+        else null
 }
 
 /** What the keep-awake switch does at these settings (pure, for tests). */
@@ -1198,10 +1250,11 @@ private fun Hint(text: String) {
 }
 
 @Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: String? = null, onChange: (Boolean) -> Unit) {
     // The whole row toggles (a bigger target than the switch alone, and one control for TalkBack).
     Row(
-        Modifier.fillMaxWidth().toggleable(value = checked, role = Role.Switch, onValueChange = onChange).padding(vertical = 6.dp),
+        Modifier.fillMaxWidth().toggleable(value = checked, role = Role.Switch, onValueChange = onChange).padding(vertical = 6.dp)
+            .let { if (tag != null) it.testTag(tag) else it },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f).padding(end = 12.dp)) {
@@ -1210,6 +1263,18 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChang
         }
         Switch(checked = checked, onCheckedChange = null)
     }
+}
+
+/** A page's opening line: what the page is for, in plain words. */
+@Composable
+private fun Intro(text: String) {
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+}
+
+/** A setting another one makes moot, or a setup gap: in the warning color. */
+@Composable
+private fun Warn(text: String, tag: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(vertical = 4.dp).testTag(tag))
 }
 
 @OptIn(ExperimentalLayoutApi::class)
