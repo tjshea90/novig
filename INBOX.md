@@ -3545,3 +3545,10 @@ send me the release link when it's done
 ```
 the settings menu in this app is getting very large and confusing. organize the settings menu intuitively. make it so everything is clear and easy to find. make any advanced setting have a plain English explanation, so even a beginner can understand the setting. look for and fix or remove superfluous settings or settings no longer needed. look for settings that contradict each other and fix them. maybe make the auto bet feature its own section instead of buried in the settings. consider and implement the best intuitive organization and modifications for the settings and features of the app
 ```
+
+## 2026-10-02T18:46:00Z
+```
+Research and see if it is possible to arbitrage bet my own bets in novig based on timing. For example, if I place a bet early and it significantly shifts a certain way, I could take the other side of the bet later on and guarantee a profit no matter which side of the bet wins. See if this is plausible in vigilant app, how it would efficiently scan for these opportunities, and if it is plausible, build the system. It must guarantee profit because I will put real money on it. Make sure it takes full advantage of the apis I have and it finds proper arbitrage opportunities based on the bets I already placed. If it is plausible and you build it, include an option to auto bet these bets in addition to whatever the auto bet system already does.
+
+Then make a filter option for the stats and bet tracker where I can select novig only. What this will do is find the current novig odds for each of my open bets and show the percent EV compared only from novig odds, filtering out other sports books. For example, if I placed a bet two days ago, it will find that same exact bet odds currently on novig and do the already in place stats and ev calculations that this section already does, but only for novig. Make sure it is smart and doesn't waste any api usage on other sports books if not needed when I select this filter, and also if I already just scanned without using this filter and there is still fresh novig odds for all my bets, it doesn't need to rescan. It can just filter
+```
