@@ -972,6 +972,7 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     // Opening the tab asks ParlayAPI's keys what they have left (free, at most every few minutes): the meter shows the provider's figures.
     val onShown by androidx.compose.runtime.rememberUpdatedState(keys.onUsageShown)
     androidx.compose.runtime.LaunchedEffect(Unit) { onShown() }
+    Intro("The odds feeds Vigilant's own scan reads (Pinnacle, ParlayAPI, PropLine, The Odds API) each allow so many requests a day or month. This shows what's left on each key.")
     SectionTitle("API usage")
     UsageSection(state)
 
@@ -991,6 +992,7 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions) {
+    Intro("When something looks wrong, Share with Claude makes one file with everything the app recorded, for Claude to diagnose and fix.")
     // ---- Diagnostics ---------------------------------------------------------------------
     SectionTitle("Diagnostics")
     Hint(
