@@ -114,7 +114,7 @@ class AtBetTest {
         val marked = tracker.logCno(row, row.ev, false, placedKey = "k1", atBet = record(how = AtBet.HOW_MARKED))
         assertEquals(AtBet.HOW_MARKED, tracker.all().single { it.id == marked.id }.atBet?.how)
         // An order through the API: the record rides on the target, with the dollars the order really cost.
-        val market = NovigMarket("mkt", "ev", "PROP", "OPEN", "Juwan Johnson Receiving Yards", start, MarketFee.GAME, outcomes = listOf(NovigOutcome("A", "Under 39.5"), NovigOutcome("B", "Over 39.5")))
+        val market = NovigMarket("mkt", "ev", "PROP", "OPEN", "Juwan Johnson Receiving Yards", start, MarketFee.GAME, outcomes = listOf(NovigOutcome("A", "Under 39.5", "TBD"), NovigOutcome("B", "Over 39.5", "TBD")))
         val target = BetTarget(market, "A", "NFL", row.event, start, row.market, row.bet, fair = 0.489, fairAsOfMs = now, source = BetTracker.SOURCE_CNO, placedKey = "k2", auto = true, atBet = record())
         val bet = tracker.logApi(target, "o1", listOf(NovigFill("f1", "o1", null, "mkt", "A", 100, 0.47, true, 0.0, now)))!!
         assertEquals(AtBet.HOW_AUTO, bet.atBet?.how)
