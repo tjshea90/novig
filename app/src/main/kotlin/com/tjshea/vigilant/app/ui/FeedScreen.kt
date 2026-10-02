@@ -110,8 +110,8 @@ fun FeedScreen(
         onHide(o)
         undoable("Removed: ${o.selection}. Hidden here and in the widget.", o.key)
     }
-    // ParlayAPI's ✓ and ✕ offer Undo the way CNO's do.
-    val parlayActions = parlay?.let { a ->
+    // ParlayAPI's ✓ and ✕ offer Undo the way CNO's do. Made again only when the activity's actions are (each scan tick would redraw the section).
+    val parlayActions = remember(parlay, scope, snackbar) { parlay?.let { a ->
         ParlayPickActions(
             onScan = a.onScan, onRecheck = a.onRecheck, onOpen = a.onOpen, opening = a.opening,
             onPlaced = { item -> a.onPlaced(item); undoable("Placed: ${item.title}. Logged in the Tracker.", item.key) },
@@ -119,7 +119,7 @@ fun FeedScreen(
             onSelect = { p -> parlaySelected = p.key },
             onLoadBooks = a.onLoadBooks,
         )
-    }
+    } }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },

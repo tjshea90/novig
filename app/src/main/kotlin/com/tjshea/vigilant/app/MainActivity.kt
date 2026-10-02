@@ -179,7 +179,9 @@ class MainActivity : ComponentActivity() {
                         onPage = { miniPage = it },
                     )
                 } else {
-                    CompositionLocalProvider(LocalOpenNovig provides { link -> openNovig(link) }) {
+                    // Remembered: LocalOpenNovig is a static local, and a new value redraws everything under it.
+                    val openNovigLocal: (String?) -> Unit = remember { { link -> openNovig(link) } }
+                    CompositionLocalProvider(LocalOpenNovig provides openNovigLocal) {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },
@@ -226,8 +228,8 @@ class MainActivity : ComponentActivity() {
     private fun FloatingContent(w: FloatingWidget) {
         VigilantTheme {
             val state by vm.state.collectAsStateWithLifecycle()
-            FloatingWindow(
-                state,
+            // Made once for this window: a new holder with every state (3 a second mid-scan) redrew the whole widget, rows and all.
+            val actions = remember(w) {
                 FloatingActions(
                     onClose = { w.hide() },
                     onMinimize = { w.minimize() },
@@ -247,7 +249,11 @@ class MainActivity : ComponentActivity() {
                     onScanner = { mode -> vm.setScanner(mode) },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
                     onPause = vm::setPaused,
-                ),
+                )
+            }
+            FloatingWindow(
+                state,
+                actions,
                 minimized = w.minimized,
                 opening = w.opening,
             )
