@@ -309,8 +309,7 @@ class AutoScanService : Service() {
      */
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        // The next opening is a fresh launch (auto-bet off), unless this was the mini window closing ([LaunchGate]).
-        container.launches.taskRemoved(System.currentTimeMillis())
+        // Auto-bet and auto-scan stay as Tj left them: only a phone restart switches them off ([LaunchReset]).
         runCatching { container.eventLog.info("SERVICE", "Vigilant swiped out of the recent apps; restart alarm armed") }
         if (!stopping && plan?.let { it.mode != AutoScanMode.OFF } == true) AutoScanAlarm.set(this, System.currentTimeMillis() + TASK_REMOVED_RESTART_MS, announce = false)
     }
@@ -562,6 +561,9 @@ class AutoScanReceiver : BroadcastReceiver() {
                     try {
                         // Alarms don't survive a reboot: the closing capture's is armed again (and after an update, for good measure).
                         runCatching { ClosingAlarm.schedule(app, app.container.tracker.all()) }
+                        // A phone restart switches auto-bet and background auto-scan off before anything can bet (Tj, 2026-10-02 16:05Z); an update
+                        // keeps them, and starts what was on ([LaunchReset]).
+                        runCatching { LaunchReset.afterRestart(app, Boot.now(app)) }
                         if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)
                     } finally {
                         pending.finish()

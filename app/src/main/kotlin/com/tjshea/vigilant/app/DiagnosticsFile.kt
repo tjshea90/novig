@@ -78,7 +78,7 @@ object DiagnosticsFile {
             "- Every task is for Vigilant (Novig) only; the Vigilant MGM module is frozen.",
             "- Mobile data and phone storage are NOT constraints (Tj: choose accuracy and speed always). Do not 'optimize' them. API credits and rate limits ARE a budget.",
             "- Auto-bet places REAL money bets. Never loosen a safety limit (daily limit, price tolerance, pregame only, halt on a lost order, the sharp check) because a finding suggests more bets.",
-            "- Auto-bet and background auto-scan start OFF every time the app is reopened (LaunchReset); do not remove that.",
+            "- Auto-bet and background auto-scan are switched off by the app only after a phone restart (LaunchReset, LaunchGate; Tj 2026-10-02: never otherwise); do not add another reset.",
             "- The repo is public: never commit a key, token or account id. This file contains none.",
             "- Evidence here is from one phone (a Moto G, Android 16) over the period each section names; percentiles are over the last 100-200 samples, so say 'the data suggests', and ask Tj when a fix needs a decision.",
             "",

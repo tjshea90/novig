@@ -90,12 +90,6 @@ class ScanService : Service() {
         return START_NOT_STICKY
     }
 
-    /** Vigilant swiped out of the recent apps mid-scan: the next opening is a fresh launch, unless it was the mini window closing ([LaunchGate]). */
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-        (application as VigilantApp).container.launches.taskRemoved(System.currentTimeMillis())
-    }
-
     /** Android 15+: a `dataSync` service past its daily allowance must stop. */
     override fun onTimeout(startId: Int, fgsType: Int) {
         stopNow()
