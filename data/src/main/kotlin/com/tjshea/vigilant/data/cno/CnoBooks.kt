@@ -46,6 +46,24 @@ object CnoBooks {
 
     fun name(code: String): String = names[code] ?: code
 
+    /**
+     * The company behind a CNO book column (Tj, 2026-10-02: "it is counting identical odds from sister sports books (for example, multiple hard
+     * rock sports books just in different states) ... don't let vigilant double count odds from the same company sports books"): a state's site
+     * is its company's ("HR-FL" → "HR", "ST-NJ" → "ST", "MGM-ON" → "MGM"), and FanDuel YourWay is FanDuel. One company prices from one trading
+     * desk, so its sites are one opinion, not several (RESEARCH.md §46: one line counted twice is less accurate, not more).
+     */
+    fun company(code: String): String = SAME_DESK[code] ?: code.substringBefore('-')
+
+    /** Book columns of one company that don't share a "XX-" prefix. */
+    private val SAME_DESK = mapOf("FDYW" to "FD")
+
+    /** A book's company from the name the Tracker keeps ("Hard Rock (FL)"), via its CNO column; an unknown name is its own company. */
+    fun companyOfName(name: String): String = codeFor(name)?.let(::company) ?: name.lowercase()
+
+    /** One fair probability per company: the average of its sites' ([byBook]: book code or name to that book's fair). */
+    fun <K> perCompany(byBook: List<Pair<K, Double>>, companyOf: (K) -> String): List<Double> =
+        byBook.groupBy({ companyOf(it.first) }, { it.second }).values.map { it.average() }
+
     /** CNO's column code for a book as its +EV list names it ("Novig" → NV, "ProphetX" → PX). */
     fun codeFor(book: String): String? =
         names.entries.firstOrNull { it.value.equals(book, true) }?.key
@@ -145,15 +163,15 @@ object CnoBooks {
     private fun available(cell: String): Double? =
         Regex("""\(\$([\d,]+(?:\.\d+)?)\)""").find(cell)?.groupValues?.get(1)?.replace(",", "")?.toDoubleOrNull()
 
-    /** Vigilant's verdict on a CNO bet, from the books that price both sides. */
+    /** Vigilant's verdict on a CNO bet, from the books that price both sides, one vote a company ([company]). */
     data class Check(
-        /** Books (Novig and pick'em apps aside) pricing both sides. */
+        /** Companies (Novig and pick'em apps aside) with a book pricing both sides. */
         val twoSided: Int,
-        /** Books pricing only one of the two sides (can't be devigged honestly). */
+        /** Companies whose books price only one of the two sides (can't be devigged honestly). */
         val oneSided: Int,
         /** Worst case of mean and median of each two-sided book's worst-case devig. */
         val fairProbability: Double?,
-        /** Two-sided books whose own worst-case fair value alone makes the price +EV. */
+        /** Two-sided companies whose own worst-case fair value alone makes the price +EV. */
         val agreeing: Int = 0,
         /** The price judged (Novig's, nearly always): the game page's, else the list's. */
         val novigOdds: Int,
@@ -180,7 +198,10 @@ object CnoBooks {
     fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false, judged: String = NOVIG, preferListOdds: Boolean = false): Check {
         val usable = view.prices.filter { usableForFair(it.code, judged) }
         val pairs = usable.filter { it.twoSided }
-        val fairs = pairs.mapNotNull { fairFor(it.odds!!, it.otherOdds!!) }
+        // One vote a company: Hard Rock's four state sites, Sporttrade's five or BetMGM's two are one desk's line, averaged into one (Tj, 2026-10-02).
+        val fairs = perCompany(pairs.mapNotNull { p -> fairFor(p.odds!!, p.otherOdds!!)?.let { p.code to it } }, ::company)
+        val twoSidedCompanies = pairs.mapTo(HashSet()) { company(it.code) }
+        val oneSided = usable.filter { !it.twoSided }.mapTo(HashSet()) { company(it.code) }.count { it !in twoSidedCompanies }
         val fair = consensus(fairs)
         val novig = (if (preferListOdds) null else view.prices.firstOrNull { it.code == judged }?.odds) ?: listOdds
         val fee = live && judged == NOVIG
@@ -193,7 +214,7 @@ object CnoBooks {
             agreeing >= MIN_AGREEING -> Verdict.CONFIRMED
             else -> Verdict.SPLIT
         }
-        return Check(fairs.size, usable.count { !it.twoSided }, fair, agreeing, novig, ev, verdict)
+        return Check(fairs.size, oneSided, fair, agreeing, novig, ev, verdict)
     }
 
     /**

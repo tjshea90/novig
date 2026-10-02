@@ -55,8 +55,8 @@ data class BetInsight(
                 BookRow(l.name, l.odds, l.other, fair, fair?.let { it / b.cost - 1.0 }, counts(l), isOwn(l.name))
             }
             val counted = rows.filter { it.counted }
-            // The fair line now: the last read's (recheck or scan), else what the books on hand make of it.
-            val fairNow = b.nowFair ?: CnoBooks.consensus(counted.mapNotNull { it.fair })
+            // The fair line now: the last read's (recheck or scan), else what the books on hand make of it, one vote a company ([CnoBooks.company]).
+            val fairNow = b.nowFair ?: CnoBooks.consensus(CnoBooks.perCompany(counted.mapNotNull { r -> r.fair?.let { r.name to it } }, CnoBooks::companyOfName))
             return BetInsight(
                 betOdds = betOdds,
                 betImplied = b.price,
@@ -65,7 +65,7 @@ data class BetInsight(
                 evAtBet = b.evPercentAtBet,
                 fairNow = fairNow,
                 evNow = fairNow?.let { it / b.cost - 1.0 },
-                booksBehind = (b.nowBooks ?: counted.size).takeIf { fairNow != null && it > 0 },
+                booksBehind = (b.nowBooks ?: counted.mapTo(HashSet()) { CnoBooks.companyOfName(it.name) }.size).takeIf { fairNow != null && it > 0 },
                 fairMove = if (fairNow != null && b.fairAtBet != null) fairNow - b.fairAtBet else null,
                 edgePoints = fairNow?.let { it - b.cost },
                 breakEvenOdds = fairNow?.takeIf { it in 0.01..0.99 }?.let { Odds.probabilityToAmerican(it) },
