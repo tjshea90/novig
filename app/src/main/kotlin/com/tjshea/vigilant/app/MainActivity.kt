@@ -738,7 +738,7 @@ private fun VigilantRoot(
                 Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan, onPull = onPull)
                 Tab.TRACKER -> TrackerScreen(
                     state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
-                    onCheckOdds = vm::checkOdds, onShown = { vm.settleBets() },
+                    onCheckOdds = vm::checkOdds, onShown = { vm.settleBets(); vm.scanLocks() },
                     actions = com.tjshea.vigilant.app.ui.BetActions(
                         onReplace = onReplaceBet,
                         onReread = vm::rereadBooks,

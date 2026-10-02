@@ -112,6 +112,9 @@ data class UiState(
     val betting: BettingUi = BettingUi(),
     /** What the auto-bet did last cycle and the wallet it saw (Tj, 2026-10-01), for the Auto-bet tab. */
     val autoBetStatus: AutoBettor.Status = AutoBettor.Status(),
+    /** Locks on the open API bets, by Novig market (RESEARCH.md §67), and the market one is being placed on now. */
+    val locks: Map<String, LockView> = emptyMap(),
+    val locking: String? = null,
     val betSheet: BetSheetUi? = null,
     val settings: ScanSettings = ScanSettings(),
     val result: ScanResult? = null,
@@ -1305,6 +1308,50 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * looks at every open bet again and [announce]s what came of it (Tj, 2026-09-29: some bets stayed open
      * after the game was final): graded, not over yet, and the ones that need a tap, each with its reason on the bet.
      */
+    /**
+     * The locks on offer on Tj's open API bets (Tj, 2026-10-02 ~18:50Z: "it finds proper arbitrage opportunities based on the bets I already placed"): one
+     * Novig book per market the subaccount holds, nothing else. When the Tracker opens, after Check odds now, and after a lock.
+     */
+    fun scanLocks() {
+        if (!AppBook.isNovig) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val views = runCatching { c.locks.scan(c.tracker.all()) }.getOrNull() ?: return@launch
+            _state.update { it.copy(locks = views) }
+        }
+    }
+
+    /**
+     * Locks in [marketId]'s profit (the Tracker's Lock button, after Tj confirmed [confirmed] dollars): placed only if it still pays at least that
+     * (a price that moved against him is refused with "look again"), through [ApiBetPlacer.placeLock].
+     */
+    fun lockIn(marketId: String, confirmed: Double) {
+        val view = _state.value.locks[marketId] ?: return
+        val market = view.market ?: return
+        if (_state.value.locking != null) return
+        val placer = c.autoBetPlacer() ?: run { _toasts.tryEmit("Betting through Novig's API isn't set up (Settings › Betting & Novig account)."); return }
+        _state.update { it.copy(locking = marketId) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO + NonCancellable) {
+                runCatching {
+                    placer.placeLock(view.holding, market, maxOf(com.tjshea.vigilant.data.novig.trading.LockIn.MIN_PROFIT, confirmed - 0.005), view.pushable, auto = false)
+                }.getOrElse { com.tjshea.vigilant.data.novig.trading.PlaceResult.Failed(it.message ?: it.javaClass.simpleName) }
+            }
+            _state.update { it.copy(locking = null) }
+            _toasts.tryEmit(
+                when (r) {
+                    is com.tjshea.vigilant.data.novig.trading.PlaceResult.Placed -> "Locked: ${r.bet.contracts} contracts of ${view.otherName} bought at ${r.bet.american?.let { com.tjshea.vigilant.engine.Odds.formatAmerican(it) } ?: "?"}"
+                    is com.tjshea.vigilant.data.novig.trading.PlaceResult.NotFilled -> "Not locked: the price moved before it could fill. Nothing was bought."
+                    is com.tjshea.vigilant.data.novig.trading.PlaceResult.Refused ->
+                        if (r.reason.contains("a lock needs") || r.reason.contains("minimum profit")) "Not locked: the price moved. Look again." else "Not locked: ${r.reason}"
+                    is com.tjshea.vigilant.data.novig.trading.PlaceResult.Failed -> "Not locked: ${r.message}"
+                    is com.tjshea.vigilant.data.novig.trading.PlaceResult.Unconfirmed -> r.message
+                },
+            )
+            c.eventLog.info("LOCK", "lock by hand: ${r.javaClass.simpleName}")
+            scanLocks()
+        }
+    }
+
     fun settleBets(force: Boolean = false, announce: Boolean = false) {
         if (announce) {
             if (_state.value.gradingBets) return
