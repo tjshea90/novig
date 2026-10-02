@@ -133,12 +133,12 @@ class AppRecorderTest {
         recorder.settingsChanged(
             before,
             before.copy(
-                autoBet = !before.autoBet, autoScan = AutoScanMode.BOTH, autoScanSeconds = 5, autoScanKeepAwake = !before.autoScanKeepAwake, sharpConfirmAutoBet = !before.sharpConfirmAutoBet,
-                sharpConfirmAlerts = !before.sharpConfirmAlerts, paused = !before.paused, scanner = ScannerMode.CNO, autoBetHalted = "a bet failed",
+                autoBet = !before.autoBet, autoScan = AutoScanMode.BOTH, autoScanSeconds = 5, autoScanKeepAwake = !before.autoScanKeepAwake, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM,
+                sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.OFF, presetName = "Mine", paused = !before.paused, scanner = ScannerMode.CNO, autoBetHalted = "a bet failed",
             ),
         )
         val msgs = events.events().map { it.msg }
-        for (name in listOf("auto-bet", "background auto-scan", "auto-scan every (s)", "keep awake", "sharp check for auto-bet", "sharp check for alerts", "paused", "scanner", "auto-bet halted")) {
+        for (name in listOf("auto-bet", "background auto-scan", "auto-scan every (s)", "keep awake", "sharp books for auto-bet", "sharp books for alerts", "preset", "paused", "scanner", "auto-bet halted")) {
             assertEquals(msgs.toString(), 1, msgs.count { it.startsWith("$name: ") })
         }
         assertTrue(msgs.toString(), msgs.contains("auto-bet halted: false → true"))

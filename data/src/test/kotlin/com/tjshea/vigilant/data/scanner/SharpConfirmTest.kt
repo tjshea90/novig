@@ -27,12 +27,13 @@ class SharpConfirmTest {
         Quote(code, odds, other, ageMs?.let { now - it }, via)
 
     @Test
-    fun `the switches are off by default, and each makes its own rules`() {
+    fun `the confirmation is off by default (the veto is the default since 2026-10-02 17:01Z), and each makes its own rules`() {
         val off = ScanSettings()
-        assertFalse(off.sharpConfirmAutoBet)
-        assertFalse(off.sharpConfirmAlerts)
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, off.sharpAutoBet)
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, off.sharpAlerts)
         assertNull(SharpConfirm.rules(off, autoBet = true))
         assertNull(SharpConfirm.rules(off, autoBet = false))
+        assertNull(SharpConfirm.rules(off.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF), autoBet = true))
         val onlyBet = ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)
         assertTrue(SharpConfirm.rules(onlyBet, autoBet = true) != null)
         assertNull(SharpConfirm.rules(onlyBet, autoBet = false))
@@ -191,7 +192,10 @@ class SharpConfirmTest {
     fun `the settings are saved and read back, and a file from before them reads with the defaults`() {
         val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
         val old = json.decodeFromString(ScanSettings.serializer(), "{}")
-        assertFalse(old.sharpConfirmAutoBet || old.sharpConfirmAlerts || old.sharpConfirmViaCno)
+        // A file from before the modes (it had sharpConfirmAutoBet/-Alerts) reads as the veto, Tj's choice (2026-10-02 17:01Z), and no confirmation.
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, old.sharpAutoBet)
+        assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, json.decodeFromString(ScanSettings.serializer(), """{"sharpConfirmAutoBet":true,"sharpConfirmAlerts":true}""").sharpAlerts)
+        assertFalse(old.sharpConfirmViaCno)
         assertEquals(SharpBookChoice.PINNACLE, old.sharpConfirmBooks)
         assertEquals(180, old.sharpConfirmMaxAgeSeconds)
         assertEquals(0.0, old.sharpConfirmMinEv, 0.0)
