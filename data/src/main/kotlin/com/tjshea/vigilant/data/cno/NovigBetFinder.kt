@@ -97,6 +97,30 @@ class NovigBetFinder(
         return Found.Bet(outcome.id, event.id, market?.id, market?.novig)
     }
 
+    /** Where a tracked bet is in Novig's catalog ([locate]): its market and side, or why it isn't there now. */
+    sealed class Located {
+        data class Bet(val marketId: String, val outcomeId: String) : Located()
+
+        /** [retry]: Novig didn't answer (busy, offline), so a later look may find it; otherwise it isn't offered now. */
+        data class Missing(val why: String, val retry: Boolean = false) : Located()
+    }
+
+    /**
+     * [row]'s exact Novig market and side, for a tracked bet logged without them (Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig
+     * odds for the same exact bet"): the market holding [outcomeId] when the side is already known (from CNO's Novig link), else the one outcome
+     * [find] would open. The same strict match and the same two cached public reads as a tap; never a guess.
+     */
+    suspend fun locate(row: CnoRow, outcomeId: String? = null): Located {
+        val league = novigLeague(row.league) ?: return Located.Missing("the bet has no league on record to look it up by")
+        val events = eventsOf(league) ?: return Located.Missing(BUSY, retry = true)
+        val event = matchEvent(row, events) ?: return Located.Missing("Novig doesn't list this game now (not offered, or already over)")
+        val list = marketsOf(event.id) ?: return Located.Missing(BUSY, retry = true)
+        outcomeId?.takeIf { it.isNotBlank() }?.let { id -> list.firstOrNull { m -> m.outcomes.any { it.id == id } }?.let { return Located.Bet(it.id, id) } }
+        val outcome = matchOutcome(row, event, list) ?: return Located.Missing("Novig lists the game but not this exact bet now (that line isn't offered)")
+        val market = list.first { m -> m.outcomes.any { it.id == outcome.id } }
+        return Located.Bet(market.id, outcome.id)
+    }
+
     /** [row]'s game in Novig's catalog (its start, for a bet that came without one: ParlayAPI's plays), or null. */
     suspend fun event(row: CnoRow): Event? {
         val league = novigLeague(row.league) ?: return null
