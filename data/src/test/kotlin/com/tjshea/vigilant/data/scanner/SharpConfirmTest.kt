@@ -130,8 +130,8 @@ class SharpConfirmTest {
     @Test
     fun `a second sharp book that disagrees vetoes, and one that agrees adds nothing needed`() {
         val both = SharpConfirm.rules(on.copy(sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA), true)!!
-        // Pinnacle says +EV at +117; Circa's own price says it isn't (its fair chance is lower).
-        val circaNo = pinnacle(code = "CS", odds = -105, other = -115, via = "CNO's page")
+        // Pinnacle says +EV at +117; Circa's own price (Under +105, Over −125: fair about 45%) says it isn't.
+        val circaNo = pinnacle(code = "CS", odds = 105, other = -125, via = "CNO's page")
         val split = SharpConfirm.judge(listOf(pinnacle(), circaNo), 117, false, both, now)
         assertEquals(Verdict.NOT_CONFIRMED, split.verdict)
         assertEquals("the sharp books disagree about it (one says +EV, another doesn't)", split.reason)
