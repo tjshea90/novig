@@ -102,7 +102,7 @@ object DiagnosticsFile {
         } else {
             o.appendLine(Trend.KINDS.joinToString(" · ") { k -> "${findings.count { it.kind == k }} $k" } + " (${findings.size} in all; the top $MAX_FINDINGS are listed)")
             findings.take(MAX_FINDINGS).forEachIndexed { i, f -> o.appendLine(mask(f.text(i + 1))) }
-            if (findings.size > MAX_FINDINGS) o.appendLine("… and ${findings.size - MAX_FINDINGS} more, all WATCH or IMPROVE, in the JSON block's findings list.")
+            if (findings.size > MAX_FINDINGS) o.appendLine("… and ${findings.size - MAX_FINDINGS} more, the lowest ranked, in the JSON block's findings list.")
         }
 
         o.appendLine()
