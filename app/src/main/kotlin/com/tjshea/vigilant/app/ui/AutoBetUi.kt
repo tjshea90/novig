@@ -353,6 +353,12 @@ fun AutoBetSection(
     if (s.autoBet || status.lastRunMs != null) {
         val now = remember(status) { System.currentTimeMillis() }
         Text(AutoBettor.line(status, now), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
+        // What the sharp-book check said, bet by bet (Tj, 2026-10-02 16:05Z: "Is it getting sharp book pricing?").
+        if (s.sharpConfirmAutoBet) {
+            AutoBettor.sharpLine(status, s.sharpConfirmBooks.displayName)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetSharpTally"))
+            }
+        }
         if (status.placedSinceStart > 0) {
             Text(
                 "Placed since Vigilant started: ${status.placedSinceStart} bet${if (status.placedSinceStart == 1) "" else "s"}, ${Format.money(status.stakedSinceStart)}. Every one is in the Tracker, marked Auto.",

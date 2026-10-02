@@ -101,6 +101,8 @@ class AutoBettor(
         /** Bets placed and dollars staked since the app process started. */
         val placedSinceStart: Int = 0,
         val stakedSinceStart: Double = 0.0,
+        /** The sharp check since the app process started: each bet's latest verdict, counted ([sharpLine]). */
+        val sharp: Map<SharpConfirm.Verdict, Int> = emptyMap(),
     )
 
     private val _status = MutableStateFlow(Status())
@@ -279,6 +281,11 @@ class AutoBettor(
     /** What the sharp book said about each bet that passed (CNO row key → the numbers), for the bet's pop-up and Diagnostics. */
     private val sharpSaid = HashMap<String, SharpConfirm.Result>()
 
+    /** Each bet's latest sharp verdict since the app started (CNO row key → verdict), the oldest dropped past [SHARP_TALLY_KEEP]: Settings' tally. */
+    private val sharpVerdicts = object : LinkedHashMap<String, SharpConfirm.Verdict>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SharpConfirm.Verdict>?) = size > SHARP_TALLY_KEEP
+    }
+
     /**
      * Why the sharp-book check (Settings › Betting, off by default) doesn't let [item] through, or null: it is off, or a fresh sharp book's own devigged
      * price makes the bet +EV at Novig's price now ([SharpConfirm]). Asked last, after every other criterion: only a bet about to be placed costs a feed call.
@@ -296,6 +303,8 @@ class AutoBettor(
         }
         if (sharpSaid.size > SHARP_SAID_KEEP) sharpSaid.clear()
         sharpSaid[item.pick.row.key] = result
+        sharpVerdicts[item.pick.row.key] = result.verdict
+        _status.update { it.copy(sharp = sharpVerdicts.values.groupingBy { v -> v }.eachCount()) }
         c.eventLog.count("sharp.autobet.${result.verdict}")
         if (result.verdict == SharpConfirm.Verdict.UNAVAILABLE) c.eventLog.warn("SHARP", result.reason ?: "the sharp check couldn't ask")
         return result.reason
@@ -348,6 +357,27 @@ class AutoBettor(
     companion object {
         /** How many sharp-check answers are kept for the pop-ups before they're dropped (a run's bets are a handful). */
         private const val SHARP_SAID_KEEP = 200
+
+        /** How many bets' sharp verdicts Settings' tally counts at most (the newest). */
+        private const val SHARP_TALLY_KEEP = 2_000
+
+        /**
+         * The sharp check's tally for Settings › Betting (Tj, 2026-10-02 16:05Z: "I'm getting no volume so far on auto bet with the option for each bet
+         * to be verified positive EV by a sharp book. Is this working correctly? Is it getting sharp book pricing?"): how many bets it was asked about and
+         * what it said, so the reason nothing is placed is on screen. [label]: the sharp books ("Pinnacle"). Null before it asked about any bet.
+         */
+        fun sharpLine(s: Status, label: String): String? {
+            val asked = s.sharp.values.sum().takeIf { it > 0 } ?: return null
+            fun n(v: SharpConfirm.Verdict) = s.sharp[v] ?: 0
+            val parts = listOfNotNull(
+                "${n(SharpConfirm.Verdict.CONFIRMED)} confirmed",
+                n(SharpConfirm.Verdict.NO_QUOTE).takeIf { it > 0 }?.let { "$it with no $label price for that exact line" },
+                n(SharpConfirm.Verdict.NOT_CONFIRMED).takeIf { it > 0 }?.let { "$it that $label's own price doesn't show +EV (enough)" },
+                n(SharpConfirm.Verdict.STALE).takeIf { it > 0 }?.let { "$it with $label's price too old" },
+                n(SharpConfirm.Verdict.UNAVAILABLE).takeIf { it > 0 }?.let { "$it when no feed could be asked" },
+            )
+            return "Sharp check since Vigilant started: $asked bet${if (asked == 1) "" else "s"} asked about, " + parts.joinToString(", ") + "."
+        }
 
         /** A game starting sooner than this isn't bet: Novig may be moving it to live, and the price is about to jump. */
         const val MIN_LEAD_MS = 60_000L
