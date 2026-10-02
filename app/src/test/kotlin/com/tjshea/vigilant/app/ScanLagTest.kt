@@ -71,7 +71,7 @@ class ScanLagTest {
     }
 
     @Test
-    fun `what it was: a new value for the static local every tick redraws the card every tick`() {
+    fun `what it was, a new value for the static local every tick, redraws the card every tick`() {
         var tick by mutableIntStateOf(0)
         val runs = IntArray(1)
         compose.setContent {
