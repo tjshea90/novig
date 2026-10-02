@@ -341,41 +341,79 @@ private fun SettingsRow(title: String, summary: String, tag: String, onClick: ()
     androidx.compose.material3.HorizontalDivider()
 }
 
-/** Scan: pause, which scanner, the start window, background auto-scan and alerts. */
+/** Scanning: pause, which scanner, which games, the background scan. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ColumnScope.ScanTab(s: ScanSettings, onUpdate: SettingsUpdate) {
+private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) {
+    Intro("What Vigilant reads, for which games, and whether it keeps checking while you're in another app or the phone is locked.")
     SectionTitle("Scanner")
     // Tj, 2026-09-28: "Make an option in the app to pause all scanning".
     SwitchRow(
         "Pause all scanning",
-        "Stops a scan running now; nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) " +
-            "until you switch it off. Also the pause button on the +EV and CNO tabs and the widget. Opening bets and grading tracked ones from final scores still work. A pull to refresh, or the Tracker's Check odds now, resumes scanning.",
+        "Stops every read (Vigilant's scans, CrazyNinjaOdds' list, the background scan and auto-bet) until you switch it off. Also the ⏸ button on the " +
+            "+EV and CNO tabs and the widget. Opening bets and grading tracked ones still work. A pull to refresh, or the Tracker's Check odds now, resumes.",
         s.paused,
+        tag = "pauseSwitch",
     ) { v -> onUpdate { it.copy(paused = v) } }
+    Text("Which scanner", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
     Hint(
         when (s.scanner) {
-            ScannerMode.BOTH -> "Vigilant's own scan (tap Scan) and CrazyNinjaOdds' list (kept current while on screen), both in the mini window."
-            ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read."
-            ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's scan and every API behind it (${if (AppBook.isNovig) "Novig, " else "PropLine, "}Pinnacle, Polymarket, " +
-                "Kalshi, The Odds API) are asleep, in the background auto-scan too: nothing of theirs loads or spends credits, and their tabs and settings are hidden. " +
-                "The CNO scanner reads only crazyninjaodds.com (and ESPN's rosters for player teams, if on). " +
-                (if (AppBook.isNovig) "The Tracker's Check odds now (and a bet's Price now) still reads them, for your open bets only, so every bet gets its EV now." else "")
+            ScannerMode.BOTH -> "Two sources of +EV bets: Vigilant's own scan (it works out fair odds itself, when you tap Scan) and CrazyNinjaOdds' list (a website that " +
+                "does the same, kept current while on screen). Both show in the widget."
+            ScannerMode.VIGILANT -> "Only Vigilant's own scan. CrazyNinjaOdds is never read, so its tab, auto-bet and its alerts are off."
+            ScannerMode.CNO -> "Only CrazyNinjaOdds' list. Vigilant's own scan and every feed behind it (${if (AppBook.isNovig) "Novig, " else "PropLine, "}Pinnacle, Polymarket, " +
+                "Kalshi, The Odds API) are asleep, in the background too: nothing of theirs loads or spends credits, and their tabs and settings are hidden. " +
+                (if (AppBook.isNovig) "The Tracker's Check odds now still reads them for your open bets, so every bet gets its EV now." else "")
         },
     )
     if (AppBook.isNovig) {
         Text("Games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.STARTS_WITHIN_CHOICES, s.startsWithinHours, ::startsWithinLabel) { v -> onUpdate { it.copy(startsWithinHours = v) } }
         Hint(
-            "Every list (+EV, CNO, Games and the widgets) shows only games starting within this window, and Vigilant's scan reads " +
-                "only these games when it's shorter than Days ahead, then stops (widen it and scan again for more). Games already " +
-                "under way still show when live games are on.",
+            "Every list (+EV, CNO, Games and the widgets) shows only games starting within this window, and Vigilant's scan reads only these games. " +
+                "Games already under way still show when live games are on.",
         )
     }
 
-    // ---- Background auto-scan and alerts (Vigilant for Novig) ------------------------------
-    if (AppBook.isNovig) AutoScanSection(s, onUpdate)
+    // ---- Background scan (Vigilant for Novig) ------------------------------
+    if (AppBook.isNovig) BackgroundScanSection(s, onUpdate)
+}
+
+/** Alerts: the push alerts' edge, the sharp books' say over them, and Android's permission for them. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
+    val s = state.settings
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Intro(
+        "A notification on your phone for each new bet at least this good, from CrazyNinjaOdds' list (checked by the background scan, or while a list is " +
+            "open). Each bet alerts once. Tap it to open Vigilant, or ✓ Placed to track it without opening the app.",
+    )
+    SectionTitle("When to alert")
+    Text("Smallest edge (EV) to alert on", style = MaterialTheme.typography.bodyMedium)
+    ChoiceChips(ScanSettings.ALERT_MIN_EV_CHOICES, s.alertMinEv, ::alertLabel) { v -> onUpdate { it.copy(alertMinEv = v) } }
+    Hint(alertHint(s))
+    Shadowed.alertEdge(s)?.let { Warn(it, "alertShadowed") }
+    if (s.alertMinEv > 0.0 && !BackgroundScan.on(s)) {
+        Warn("The background scan is off (Scanning), so alerts only come while a list or the widget is open on screen.", "alertNoBackground")
+        OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }, modifier = Modifier.testTag("alertTurnOnBackground")) { Text("Turn on the background scan") }
+    }
+    if (s.cnoOn) {
+        SectionTitle("Sharp-book veto for alerts")
+        SharpModeChoice(s.sharpAlerts, tag = "sharpAlerts") { v -> onUpdate { it.copy(sharpAlerts = v) } }
+        Hint(SharpConfirmText.modeNote(s.sharpAlerts))
+        if (s.sharpAlerts == SharpMode.CONFIRM) SharpConfirmCriteria(state, onUpdate)
+    }
+    var notify by remember { mutableStateOf(com.tjshea.vigilant.app.ScanService.canNotify(context)) }
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        notify = com.tjshea.vigilant.app.ScanService.canNotify(context)
+        onPauseOrDispose { }
+    }
+    if (s.alertMinEv > 0.0 && !notify) {
+        Warn("Notifications are off for Vigilant, so no alert can show.", "alertNotifyOff")
+        OutlinedButton(onClick = { openNotificationSettings(context) }) { Text("Allow notifications") }
+    }
 }
 
 /** CNO & widget: the CNO scanner's filters and refresh, and the widget / mini window. */
