@@ -164,7 +164,11 @@ class NovigStream(
     override fun open() {
         val start = synchronized(this) {
             lastUsedMs = clock()
-            socket == null && failedAtMs.let { it == null || clock() - it >= retryAfterFailureMs }
+            (socket == null && failedAtMs.let { it == null || clock() - it >= retryAfterFailureMs }).also { fresh ->
+                // A new connection wants nothing until a scan hands it its markets: the last scan's list (kept after an idle close) would
+                // spend the one bulk subscribe the bucket allows on lines that scan already read.
+                if (fresh) wanted = emptyList()
+            }
         }
         if (start) connect()
     }
