@@ -162,7 +162,7 @@ class TrackerTextTest {
         val noIds = bet("n").copy(marketId = "", outcomeId = "")
         val elsewhere = bet("e").copy(book = "BetMGM")
         assertEquals(
-            "EV and CLV from Novig's own prices only: 1 of 3 open bets priced (oldest 3m ago) · 1 with no Novig price now (why on each bet) · 1 not read yet.",
+            "Novig's odds only (EV: Novig's odds now against the odds you bet at): 1 of 3 open bets priced (oldest 3m ago) · 1 with no Novig price now (why on each bet) · 1 not read yet.",
             TrackerText.novigOnlyNote(listOf(priced, gone, noIds, elsewhere), now),
         )
         // The reason shows on the bet's card, with when it was looked; no "tried never" for a bet not looked at yet.
