@@ -389,8 +389,32 @@ class NovigPublicClientTest {
         assertTrue(batch.keyProblem!!.contains("VPN"))
         // The next scan doesn't keep knocking on the key route.
         val before = server.requestCount
-        c.books(listOf("m4"))
+        val next = c.books(listOf("m4"))
         assertEquals(before + 1, server.requestCount)
+        // ...and, never having tried the key, it still has the reason to give (Tj, 2026-10-02: "the novig scanning was going very slow").
+        assertNull(next.keyProblem)
+        assertTrue(c.keyDown(System.currentTimeMillis())!!.contains("VPN"))
+    }
+
+    @Test
+    fun `Novig's account lock on the key is said by every scan it slows, until the key is tried again`() = runBlocking {
+        // Tj's v0.44.1 Diagnostics: 423 on every signed route from 01:33, the public routes answering.
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.requestUrl!!.encodedPath.startsWith("/v3/public/")) bookFor(request)
+                else MockResponse().setResponseCode(423).setBody("""{"code":"ACCOUNT_LOCKED","message":"locked"}""")
+        }
+        var now = 1_000_000L
+        val c = keyed(client(clock = { now }))
+        assertNull(c.keyDown(now))
+        c.books(listOf("m1"))
+        val why = c.keyDown(now)!!
+        assertTrue(why, why.contains("ACCOUNT_LOCKED"))
+        // Ten minutes on, the key is tried again: nothing to say until it is refused again.
+        now += 10 * 60_000L
+        assertNull(c.keyDown(now))
+        // No key at all: never a key problem.
+        assertNull(client().keyDown(now))
     }
 
     /** The key's websocket, faked: it holds m1 and m2 (Tj, 2026-09-28: "taking full advantage of the novig API key"). */
