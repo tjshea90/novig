@@ -1318,34 +1318,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refreshNovigOnly(force: Boolean = false) {
         if (!AppBook.isNovig || _state.value.readingNovig) return
+        _state.update { it.copy(readingNovig = true) }
         viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            val bets = runCatching { c.tracker.all() }.getOrNull() ?: return@launch
-            val due = if (force) com.tjshea.vigilant.data.tracker.NovigNow.priceable(bets, now) else com.tjshea.vigilant.data.tracker.NovigNow.stale(bets, now)
-            if (due.isEmpty()) {
-                if (force) _toasts.tryEmit("No open bet to price on Novig.")
-                return@launch
-            }
-            _state.update { it.copy(readingNovig = true) }
-            val read = try {
+            val done = try {
                 withContext(Dispatchers.IO + NonCancellable) {
+                    // Bets logged without Novig's ids are looked up in Novig's own catalog first, so they're read too (NovigIds; Tj, 2026-10-02 20:06Z).
+                    val looked = lookUpNovigIds(force)
+                    val now = System.currentTimeMillis()
                     val r = com.tjshea.vigilant.data.tracker.NovigNow.read(
-                        bets, now, force,
+                        c.tracker.all(), now, force,
                         books = { ids -> runCatching { c.novig.books(ids).books }.getOrDefault(emptyMap()) },
                         market = { id -> c.locks.market(id) },
                     )
-                    c.tracker.recordNovig(r.prices, System.currentTimeMillis())
-                    c.eventLog.count("novigOnly.read")
-                    r
+                    c.tracker.recordNovig(r.prices, System.currentTimeMillis(), r.why)
+                    if (r.due > 0) c.eventLog.count("novigOnly.read")
+                    looked to r
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
             } finally {
                 _state.update { it.copy(readingNovig = false) }
             }
-            _toasts.tryEmit(
-                "Novig's prices read for ${read.prices.size} of ${due.size} open bet${if (due.size == 1) "" else "s"} (Novig only: no other book asked)" +
-                    (if (!force && due.size < read.all) "; ${read.all - due.size} were already fresh" else "") + ".",
-            )
+            val (looked, read) = done ?: run { if (force) _toasts.tryEmit("Couldn't read Novig's prices just now."); return@launch }
+            NovigOnlyToast.of(looked, read, force)?.let { _toasts.tryEmit(it) }
         }
+    }
+
+    /**
+     * Novig's market and side for open bets logged without them ([com.tjshea.vigilant.data.tracker.NovigIds]: a CNO or ParlayAPI ✓ whose one lookup when
+     * logged failed), from Novig's own catalog and nothing else; [force] looks again at every one, else only those not looked at lately. Written on the bets.
+     */
+    private suspend fun lookUpNovigIds(force: Boolean): com.tjshea.vigilant.data.tracker.NovigIds.Found? {
+        if (!AppBook.isNovig) return null
+        val missing = com.tjshea.vigilant.data.tracker.NovigIds.missing(c.tracker.all(), System.currentTimeMillis(), force)
+        if (missing.isEmpty()) return null
+        val found = com.tjshea.vigilant.data.tracker.NovigIds.find(missing) { row, outcome -> c.betFinder.locate(row, outcome) }
+        c.tracker.recordIds(found.ids, found.why, System.currentTimeMillis())
+        c.eventLog.info("NOVIG", "Novig ids looked up for ${missing.size} open bets: ${found.ids.size} found, ${found.why.size} not on Novig now")
+        return found
     }
 
     /**
@@ -1515,7 +1527,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Remembers the Novig outcome a bet's link turned out to be (Replace found it), so the next tap needs no lookup. */
     fun rememberOutcome(id: String, outcomeId: String) {
-        viewModelScope.launch { runCatching { c.tracker.edit(id) { if (it.outcomeId.isBlank()) it.copy(outcomeId = outcomeId) else it } } }
+        viewModelScope.launch {
+            runCatching { c.tracker.edit(id) { if (it.outcomeId.isBlank()) it.copy(outcomeId = outcomeId) else it } }
+            // Its market too (the side alone left the bet out of every Novig price read: Tj, 2026-10-02 20:06Z).
+            val bet = runCatching { c.tracker.all().firstOrNull { it.id == id } }.getOrNull() ?: return@launch
+            if (!AppBook.isNovig || bet.marketId.isNotBlank()) return@launch
+            val found = runCatching { withContext(Dispatchers.IO) { com.tjshea.vigilant.data.tracker.NovigIds.find(listOf(bet)) { row, o -> c.betFinder.locate(row, o) } } }.getOrNull() ?: return@launch
+            runCatching { c.tracker.recordIds(found.ids, found.why, System.currentTimeMillis()) }
+        }
     }
 
     fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
@@ -1789,6 +1808,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 publish()
                 report = kotlinx.coroutines.coroutineScope {
                     val own = if (pricer != null && everyBet.isNotEmpty()) async(Dispatchers.IO) {
+                        // Bets logged without Novig's ids are looked up in Novig's catalog first, so this pass (and Novig's own price) covers them too.
+                        runCatching { lookUpNovigIds(force = true) }
                         pricer.run(settings, everyBet, alongside = true, anyScanner = true).also { ownDone.set(everyBet.size); publish() }
                     } else null
                     val books = if (noPage.isNotEmpty()) async(Dispatchers.IO) {
