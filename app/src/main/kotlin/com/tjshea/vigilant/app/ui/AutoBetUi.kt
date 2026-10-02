@@ -140,7 +140,8 @@ fun AutoBetSection(
     SectionTitle("Auto-bet (CrazyNinjaOdds)")
     Text(
         "Places each CrazyNinjaOdds bet that passes your criteria for you, through Novig's API from the Vigilant wallet, with nobody confirming: " +
-            "in the background as the CNO scan runs, with Vigilant open or closed. Pregame only. Off until you turn it on.",
+            "in the background as the CNO scan runs, with Vigilant open or closed. Pregame only. Off until you turn it on; then it stays on until you turn it off " +
+            "(only a phone restart turns it off by itself).",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 4.dp),
     )
     Row(
