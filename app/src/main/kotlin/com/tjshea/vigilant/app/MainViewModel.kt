@@ -1321,31 +1321,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val bets = runCatching { c.tracker.all() }.getOrNull() ?: return@launch
-            val all = com.tjshea.vigilant.data.tracker.NovigNow.priceable(bets, now)
-            val due = if (force) all else com.tjshea.vigilant.data.tracker.NovigNow.stale(bets, now)
+            val due = if (force) com.tjshea.vigilant.data.tracker.NovigNow.priceable(bets, now) else com.tjshea.vigilant.data.tracker.NovigNow.stale(bets, now)
             if (due.isEmpty()) {
                 if (force) _toasts.tryEmit("No open bet to price on Novig.")
                 return@launch
             }
             _state.update { it.copy(readingNovig = true) }
-            val priced = try {
+            val read = try {
                 withContext(Dispatchers.IO + NonCancellable) {
-                    val ids = due.map { it.marketId }.distinct()
-                    val books = runCatching { c.novig.books(ids).books }.getOrDefault(emptyMap())
-                    val at = System.currentTimeMillis()
-                    val prices = HashMap<String, Double>()
-                    for (b in due) {
-                        val book = books[b.marketId] ?: continue
-                        val market = c.locks.market(b.marketId) ?: continue
-                        com.tjshea.vigilant.data.tracker.NovigNow.mid(book, market, b.outcomeId)?.let { prices[b.id] = it }
-                    }
-                    c.tracker.recordNovig(prices, at)
+                    val r = com.tjshea.vigilant.data.tracker.NovigNow.read(
+                        bets, now, force,
+                        books = { ids -> runCatching { c.novig.books(ids).books }.getOrDefault(emptyMap()) },
+                        market = { id -> c.locks.market(id) },
+                    )
+                    c.tracker.recordNovig(r.prices, System.currentTimeMillis())
                     c.eventLog.count("novigOnly.read")
-                    prices.size
+                    r
                 }
             } finally {
                 _state.update { it.copy(readingNovig = false) }
             }
+            val priced = read.prices.size
+            val all = List(read.all) { 0 }
             _toasts.tryEmit(
                 "Novig's prices read for $priced of ${due.size} open bet${if (due.size == 1) "" else "s"} (Novig only: no other book asked)" +
                     (if (!force && due.size < all.size) "; ${all.size - due.size} were already fresh" else "") + ".",

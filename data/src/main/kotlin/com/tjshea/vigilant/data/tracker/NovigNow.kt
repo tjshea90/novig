@@ -66,4 +66,32 @@ object NovigNow {
     }
 
     const val VIA = "novig"
+
+    /** What a read found: bet id → Novig's middle price, how many bets were due, and the markets asked for. */
+    data class Read(val prices: Map<String, Double>, val due: Int, val all: Int, val marketsAsked: List<String>)
+
+    /**
+     * Novig's prices for the open [bets] that need them: the stale ones ([stale]), or all of them when [force]. Only [books] (Novig's order books,
+     * one per market) and [market] (a market's two sides) are asked: no other book. Nothing is asked when no bet is due.
+     */
+    suspend fun read(
+        bets: List<TrackedBet>,
+        now: Long,
+        force: Boolean,
+        books: suspend (List<String>) -> Map<String, NovigBook>,
+        market: suspend (String) -> NovigMarket?,
+    ): Read {
+        val all = priceable(bets, now)
+        val due = if (force) all else stale(bets, now)
+        if (due.isEmpty()) return Read(emptyMap(), 0, all.size, emptyList())
+        val ids = due.map { it.marketId }.distinct()
+        val read = books(ids)
+        val prices = HashMap<String, Double>()
+        for (b in due) {
+            val book = read[b.marketId] ?: continue
+            val m = market(b.marketId) ?: continue
+            mid(book, m, b.outcomeId)?.let { prices[b.id] = it }
+        }
+        return Read(prices, due.size, all.size, ids)
+    }
 }
