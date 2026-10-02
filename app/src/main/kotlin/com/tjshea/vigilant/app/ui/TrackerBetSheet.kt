@@ -86,7 +86,9 @@ fun BetSheet(
     LaunchedEffect(bet.id) {
         val t = System.currentTimeMillis()
         val old = bet.booksAtMs == null || t - bet.booksAtMs!! > REREAD_AFTER_MS
-        if (bet.status == BetStatus.PENDING && bet.gameUrl != null && t - bet.startsTs < BetRecheck.STALE_AFTER_START_MS && old) actions.onReread(bet.id, true)
+        // Novig only reads nothing but Novig (Tj, 2026-10-02 ~21:35Z: "no data from any other sports book should be used"): no CNO page.
+        val novigOnly = settings.trackerNovigOnly && AppBook.isNovig
+        if (!novigOnly && bet.status == BetStatus.PENDING && bet.gameUrl != null && t - bet.startsTs < BetRecheck.STALE_AFTER_START_MS && old) actions.onReread(bet.id, true)
     }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet) {
         BetSheetContent(bet, remember(bet) { BetInsight.of(bet) }, now, settings, rereading, grading, replacing, actions, onSettle, onStake, onPrice, onDelete, injury = injury, lock = lock, locking = locking)
@@ -114,6 +116,8 @@ fun BetSheetContent(
 ) {
     val open = bet.status == BetStatus.PENDING
     val started = now >= bet.startsTs
+    // "Novig only" (Tj, 2026-10-02 ~21:35Z): Novig's odds now against the odds bet at, and nothing from any other book on this sheet.
+    val novigOnly = settings.trackerNovigOnly && AppBook.isNovig
     Column(
         Modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp).verticalScroll(rememberScrollState()).testTag("betSheet"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -139,7 +143,7 @@ fun BetSheetContent(
         StatusCard(bet, now)
 
         // ParlayAPI's call on this open bet at the price bet, only on a tap (5 credits; PARLAY_API.md §6.4).
-        if (open && !started) {
+        if (open && !started && !novigOnly) {
             SecondOpinionFor(com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet), remember(bet.id, bet.american, bet.cost) { com.tjshea.vigilant.data.reference.VerdictQueries.of(bet) })
         }
 
@@ -155,8 +159,9 @@ fun BetSheetContent(
                 bet.profit?.let { Format.signedMoney(it) } ?: Format.money(bet.profitIfWon),
                 valueColor = bet.profit?.let { moneyColor(it) } ?: Color.Unspecified,
             )
-            insight.evAtBet?.let { LabeledValue("EV when bet", Format.evPercent(it)) }
-            insight.fairAtBet?.let { LabeledValue("Fair when bet", "${Format.american(it)} · ${Format.percent(it)}") }
+            // Novig only: the fair when bet is Novig's own odds, the ones bet at, so there's no EV-when-bet to show (it's 0 by definition).
+            if (!novigOnly) insight.evAtBet?.let { LabeledValue("EV when bet", Format.evPercent(it)) }
+            if (!novigOnly) insight.fairAtBet?.let { LabeledValue("Fair when bet", "${Format.american(it)} · ${Format.percent(it)}") }
             // The game has started: its closing line and CLV, whichever way it was found (Tj, 2026-09-30).
             if (!open || now >= bet.startsTs) {
                 val close = com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(bet, now)
@@ -172,7 +177,7 @@ fun BetSheetContent(
         }
 
         // ---- The fair price now against it ----
-        if (open) NowCard(bet, insight, now, rereading)
+        if (open) NowCard(bet, insight, now, rereading, novigOnly)
 
         // ---- Lock in a profit (RESEARCH.md §67): bets placed through the API only ----
         if (open && lock != null) {
@@ -183,8 +188,10 @@ fun BetSheetContent(
             Caption("Locking in a profit works on bets placed through Vigilant (the Bet sheet or auto-bet): a bet placed in the Novig app can't be confirmed through Novig's API.")
         }
 
-        // ---- Every book ----
-        if (insight.books.isNotEmpty()) {
+        // ---- Every book (not with Novig only: no other book) ----
+        if (novigOnly) {
+            // Nothing: Novig's odds are on the card above.
+        } else if (insight.books.isNotEmpty()) {
             InsightBooks(insight, bet.otherSide, bet.book.ifBlank { AppBook.name })
             Text(
                 "Read ${Format.age(insight.booksAtMs, now)}" + if (rereading) " · reading again…" else "",
@@ -281,7 +288,7 @@ private fun StatusCard(bet: TrackedBet, now: Long) {
 /** The price bet at against the fair price now: the gap in points, the EV, how far the market moved. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolean) {
+private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolean, novigOnly: Boolean = false) {
     val ev = i.evNow
     // "Now" only while the read is young; an older one says when it was read (the fair odds behind an EV go stale in minutes).
     val current = TrackerText.currentEv(bet, now)
@@ -294,14 +301,14 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 when {
-                    ev == null -> "Fair price now"
+                    ev == null -> if (novigOnly) "Novig's odds now" else "Fair price now"
                     current -> "Now ${Format.evPercent(ev)} EV at your price"
                     else -> "${Format.evPercent(ev)} EV at your price, as of ${Format.age(bet.nowAtMs, now)}"
                 },
                 color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall,
             )
             TrackerText.oddsNote(bet, now)?.let { Caption(it) }
-            if (ev == null && rereading) {
+            if (ev == null && rereading && !novigOnly) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(10.dp))
@@ -313,8 +320,13 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
             } else {
                 Text(TrackerText.edgeSentence(i, current), style = MaterialTheme.typography.bodySmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    i.fairNow?.let { LabeledValue(if (current) "Fair now" else "Fair then", "${Format.american(it)} · ${Format.percent(it)}") }
-                    i.priceNow?.let { LabeledValue("${bet.book.ifBlank { AppBook.name }} now", Odds.formatAmerican(it)) }
+                    if (novigOnly) {
+                        // Novig's odds are the fair price here: once, as Novig shows them.
+                        i.priceNow?.let { LabeledValue(if (current) "Novig now" else "Novig then", Odds.formatAmerican(it)) }
+                    } else {
+                        i.fairNow?.let { LabeledValue(if (current) "Fair now" else "Fair then", "${Format.american(it)} · ${Format.percent(it)}") }
+                        i.priceNow?.let { LabeledValue("${bet.book.ifBlank { AppBook.name }} now", Odds.formatAmerican(it)) }
+                    }
                     // The true CLV once the game started with a close read just before it (ClosingLine); before that, against the last read;
                     // a started game with no true close says its number is only against the last pregame read, which isn't a close.
                     (com.tjshea.vigilant.data.tracker.ClosingLine.clv(bet, now)?.let { "CLV" to it }
@@ -324,13 +336,15 @@ private fun NowCard(bet: TrackedBet, i: BetInsight, now: Long, rereading: Boolea
                     com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(bet, now)?.let { (fair, via) ->
                         LabeledValue("Close", "${Format.american(fair)} · ${com.tjshea.vigilant.data.tracker.ClosingLine.sourceLabel(via)}")
                     }
-                    i.booksBehind?.let { LabeledValue("Books behind it", "$it") }
+                    if (!novigOnly) i.booksBehind?.let { LabeledValue("Books behind it", "$it") }
                 }
                 TrackerText.moveSentence(i)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 TrackerText.breakEvenSentence(i)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 bet.nowAtMs?.let {
                     Caption(
-                        if (bet.nowVia == BetTracker.VIA_VIGILANT) {
+                        if (bet.nowVia == com.tjshea.vigilant.data.tracker.NovigNow.VIA) {
+                            "Novig's own odds for this bet, read ${Format.age(it, now)}. Novig only is on: EV is Novig's odds now against the odds you bet at, and no other book is used."
+                        } else if (bet.nowVia == BetTracker.VIA_VIGILANT) {
                             "Fair price worked out ${Format.age(it, now)} by Vigilant: the reference books' current odds, each devigged, then blended the way Settings › Fair odds & sources says."
                         } else if (bet.nowVia == BetTracker.VIA_BOTH) {
                             "Fair price worked out ${Format.age(it, now)} two ways and averaged: CNO's books devigged worst case" +
