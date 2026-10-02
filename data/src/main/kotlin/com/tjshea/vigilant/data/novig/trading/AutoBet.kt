@@ -4,6 +4,7 @@ import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoChecks
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.scanner.AutoBetStake
+import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.EvQuote
@@ -65,6 +66,10 @@ object AutoBet {
         val maxOdds: Int = 0,
         /** Every book that prices both sides must say +EV on its own ("5 of 5"), as well as [minBooks]. */
         val allAgree: Boolean = false,
+        /** The shortest American odds to bet (−200); 0 = no limit. */
+        val minOdds: Int = 0,
+        /** The kinds of bet it places (a preset's, RESEARCH.md §66); every kind = no limit. */
+        val kinds: Set<BetKind> = BetKind.entries.toSet(),
     )
 
     fun rules(s: ScanSettings) = Rules(
@@ -76,7 +81,15 @@ object AutoBet {
         maxStake = s.autoBetMaxStake.coerceAtLeast(0.0),
         maxOdds = s.autoBetMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
         allAgree = s.autoBetAllAgree,
+        minOdds = s.autoBetMinOdds.let { if (it >= 0) 0 else it.coerceAtMost(MAX_MIN_ODDS) },
+        kinds = s.autoBetKinds,
     )
+
+    /** The longest a shortest-odds limit can be: −100 is even money; past it would be "underdogs only". */
+    const val MAX_MIN_ODDS = -100
+
+    /** Whether [american] odds are shorter than the [minOdds] limit (0 = no limit): −250 is shorter than −200; an underdog never is. */
+    fun tooShort(minOdds: Int, american: Int): Boolean = minOdds < 0 && american < 0 && american < minOdds
 
     /** Whether [american] odds are longer than the [maxOdds] limit (0 = no limit). A favorite's negative odds never are. */
     fun tooLong(maxOdds: Int, american: Int): Boolean = maxOdds > 0 && american > maxOdds
@@ -86,11 +99,13 @@ object AutoBet {
      * now). [check]: what the books on the bet's game page say ([CnoBooks.check], judged at that same price). [american]: that price as
      * American odds, for the longest-odds limit.
      */
-    fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int): String? {
+    fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int, kind: BetKind? = null): String? {
+        if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
         if (shownEv < rules.minEv - 1e-9) return "its edge ${percent(shownEv)} is under your ${percent(rules.minEv)} minimum"
         if (shownEv > MAX_SANE_EV) return "its edge ${percent(shownEv)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
         // (No odds in the words: the report counts bets by reason, and each price would be a reason of its own.)
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
+        if (tooShort(rules.minOdds, american)) return "its odds are shorter than your ${Odds.formatAmerican(rules.minOdds)} limit"
         if (check.twoSided < rules.twoSided) return "${books(check.twoSided)} price${if (check.twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
         if (check.agreeing < rules.minBooks) return "${books(check.agreeing)} say${if (check.agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
         // Every book scanned (those that price both sides) says +EV on its own: "5 of 5". Books that list only one side of the bet can't be judged and aren't counted.
