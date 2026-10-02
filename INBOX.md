@@ -3569,3 +3569,8 @@ Add options to remove arbitraged locked bets out of stats and bet trackers. It m
 ```
 Run full tests on this app, make sure all the math is right and that the stats and closing lines are gathered correctly and reflect accurate data
 ```
+
+## 2026-10-02T21:36:24Z
+```
+Look at the screenshots: I want to compare only the novig current odds to the novig odds I placed the bets at. Both odds in the screenshot were the same when I placed the bet and currently, so the EV should be 0. No change. Yet they show negative EV based on "fair odds". I'm not sure where the fair odds came from. When I select the novig only filter, I want it to ONLY compare novig odds currently scanned to the odds I placed each bet at. The current odds at novig only should be considered the "fair odds" to base the EV calculation for my already placed bet. When this novig only filter is on, no data from any other sports book should be used.
+```
