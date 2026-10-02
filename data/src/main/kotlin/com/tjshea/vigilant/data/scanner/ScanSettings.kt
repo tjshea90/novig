@@ -185,6 +185,11 @@ data class ScanSettings(
     val autoLock: Boolean = false,
     /** The Tracker's "Novig only" filter is on ([com.tjshea.vigilant.data.tracker.NovigNow]): kept, so the Tracker opens the way Tj left it. */
     val trackerNovigOnly: Boolean = false,
+    /**
+     * The Tracker leaves markets locked in out of its lists and stats ([com.tjshea.vigilant.data.tracker.LockedBets]; Tj, 2026-10-02 20:06Z: "It makes no
+     * sense for me to track a bet that is already cashed out"). On unless he turns it off; the lock numbers still show what they made.
+     */
+    val trackerHideLocked: Boolean = true,
     val autoLockMinPercent: Double = 0.02,
     val autoLockLive: Boolean = true,
     /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */
