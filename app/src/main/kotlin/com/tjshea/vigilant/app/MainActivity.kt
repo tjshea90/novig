@@ -739,6 +739,7 @@ private fun VigilantRoot(
         }
     }
     }
+    }
 
     state.betSheet?.let { sheet ->
         com.tjshea.vigilant.app.ui.ApiBetSheet(
