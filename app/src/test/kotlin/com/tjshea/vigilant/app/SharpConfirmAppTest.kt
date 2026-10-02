@@ -175,7 +175,7 @@ class SharpConfirmAppTest {
     }
 
     @Test
-    fun `switched off, the check is never asked, and it is asked last: a bet that fails another criterion costs no feed call`() = runBlocking {
+    fun `switched off, the check is never asked, and it is asked last so a bet that fails another criterion costs no feed call`() = runBlocking {
         val novig = FakeNovig()
         val asked = ArrayList<Asked>()
         val off = settings { it.copy(sharpConfirmAutoBet = false) }
@@ -193,7 +193,7 @@ class SharpConfirmAppTest {
     }
 
     @Test
-    fun `the real check: a Pinnacle quote that shows +EV places the bet, an old one or a no doesn't, and CNO's page vetoes for free`() = runBlocking {
+    fun `the real check with a Pinnacle quote that shows +EV places the bet, an old one or a no doesn't, and CNO's page vetoes for free`() = runBlocking {
         val pick = com.tjshea.vigilant.data.tracker.BetGrader.pickOf("Player Receiving Yards", "Justin Jefferson Under 69.5") as com.tjshea.vigilant.data.tracker.BetGrader.Pick.Prop
         var calls = 0
         fun feed(over: Double, under: Double, ageMs: Long) = object : ReferenceSource {
