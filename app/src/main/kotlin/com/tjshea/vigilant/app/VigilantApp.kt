@@ -143,6 +143,9 @@ class AppContainer(private val app: Application) {
     )
     val perf = com.tjshea.vigilant.data.diag.PerfStats()
 
+    /** Whether a screen opening is a fresh launch (auto-bet off) or Tj coming back from another app ([LaunchGate]): one per process. */
+    val launches = LaunchGate()
+
     /** The screen's frames, by what the app was doing (Diagnostics' frame meter; [FrameMeter]). */
     val frames = com.tjshea.vigilant.data.diag.FrameStats()
     val recorder = AppRecorder(eventLog, netStats, perf)

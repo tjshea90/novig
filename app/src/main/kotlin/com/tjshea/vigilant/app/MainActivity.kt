@@ -88,9 +88,18 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Closed and opened again (no saved state): auto-bet and background auto-scan start off (Tj, 2026-10-02), saved before anything reads the settings.
-        val switchedOff = if (savedInstanceState == null) LaunchReset.onFreshLaunch(application as VigilantApp) else null
-        (application as VigilantApp).container.eventLog.info("APP", "screen opened (${if (savedInstanceState == null) "fresh launch" else "restored"})" + (switchedOff?.let { ": $it" } ?: ""))
+        // Closed and opened again: auto-bet and background auto-scan start off (Tj, 2026-10-02), saved before anything reads the settings. Only a
+        // fresh launch or restart, not a return from another app (Tj, 2026-10-02: "do not turn off auto bet ... not just switching apps"): [LaunchGate].
+        val app = application as VigilantApp
+        val now = System.currentTimeMillis()
+        val fresh = app.container.launches.opening(savedInstanceState != null, LastExit.read(this), bootAtMs = now - android.os.SystemClock.elapsedRealtime())
+        val switchedOff = if (fresh) LaunchReset.onFreshLaunch(app) else null
+        val how = when {
+            savedInstanceState != null -> "restored"
+            fresh -> "fresh launch"
+            else -> "back from another app: auto-bet and auto-scan kept"
+        }
+        app.container.eventLog.info("APP", "screen opened ($how)" + (switchedOff?.let { ": $it" } ?: ""))
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         switchedOff?.let { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show() }
@@ -119,6 +128,10 @@ class MainActivity : ComponentActivity() {
         inMiniWindow = isInPictureInPictureMode
         addOnPictureInPictureModeChangedListener { info ->
             inMiniWindow = info.isInPictureInPictureMode
+            // Opened, back to full screen (the screen is started), or closed (stopped): closing it isn't closing Vigilant ([LaunchGate]).
+            (application as VigilantApp).container.launches.miniWindow(
+                info.isInPictureInPictureMode, expanded = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED), System.currentTimeMillis(),
+            )
             if (!inMiniWindow) {
                 miniPage = 0
                 miniBooks = false

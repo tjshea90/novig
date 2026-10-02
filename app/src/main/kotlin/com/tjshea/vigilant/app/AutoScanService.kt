@@ -309,6 +309,8 @@ class AutoScanService : Service() {
      */
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
+        // The next opening is a fresh launch (auto-bet off), unless this was the mini window closing ([LaunchGate]).
+        container.launches.taskRemoved(System.currentTimeMillis())
         runCatching { container.eventLog.info("SERVICE", "Vigilant swiped out of the recent apps; restart alarm armed") }
         if (!stopping && plan?.let { it.mode != AutoScanMode.OFF } == true) AutoScanAlarm.set(this, System.currentTimeMillis() + TASK_REMOVED_RESTART_MS, announce = false)
     }
