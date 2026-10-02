@@ -1593,7 +1593,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * "Check odds now" (Tj, 2026-09-27; every open bet since 2026-09-29): each open bet's EV now, against the price it was bet at.
      * CNO's bets have their CNO game page read again (a page every half second, three at once); Vigilant's own bets (no CNO page)
-     * are priced from Vigilant's own fair odds by [OpenBetPricer] at the same time, and so is any bet CNO couldn't read. The count on
+     * are priced from Vigilant's own fair odds by [OpenBetPricer] at the same time, and so is any bet CNO couldn't read, whatever the scanner
+     * choice (Tj, 2026-10-02: a Vigilant bet stayed "as of 2h ago" after a check with the scanner on CNO only). The count on
      * the button covers both; the toast counts every open bet ([BetRecheck.Report.summary]), and a bet that couldn't be priced
      * says why on its own card. Finished games' results are graded in the same tap.
      */
