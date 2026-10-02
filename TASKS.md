@@ -3276,3 +3276,11 @@ His screenshot: CNO tab, Bet sheet for Under 47.5 (BYU @ TCU, NCAAF), $0.97 (¼ 
 - [ ] AQ3 Manual bet slips (the Bet sheet, betting through the API by hand) have no minimum-EV rule: Tj can bet whatever he wants manually. Auto-bet keeps every hard rule it has, from his auto-bet settings. Remove or repurpose the "Smallest edge a bet is still placed at" setting for manual bets; say on the sheet what the EV is without refusing.
 - [ ] AQ4 The auto-bet error: find it in the file, fix the cause if it is fixable.
 - [ ] AQ5 Tests (mutation-checked), floor, ship, answer Tj.
+
+## Tj, 2026-10-02 ~05:55Z (mid-AQ, screenshot of Tracker › Bets, Open (160), Scanner: All): "Review the screenshot. When I press check odds now, it doesn't refresh vigilant odds. I want the check odds now to refresh the current odds and EV for every single open bet regardless of scanner"
+
+His screenshot: a Vigilant bet (Under 52.5, Stanford @ Wake Forest) reads "−1.1% EV at your +115 · fair then +117 · Vigilant's fair odds · 7 books · as of 2h ago · tap Check odds now" after he tapped Check odds now; a CNO bet below it reads "now +2.2% EV … read 3m ago".
+
+- [ ] AR1 Find what Check odds now does today per scanner (CNO vs Vigilant vs ParlayAPI vs manual) and why a Vigilant bet stays "as of 2h ago".
+- [ ] AR2 Check odds now refreshes Novig's current price AND fresh fair odds/EV for every open bet, whatever scanner placed it, within the API budget (BRIEF.md: credits are a budget; free sources first).
+- [ ] AR3 Tests (mutation-checked), ship with AQ, answer Tj.
