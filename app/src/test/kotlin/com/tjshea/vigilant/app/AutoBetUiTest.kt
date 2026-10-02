@@ -373,6 +373,18 @@ class AutoBetUiTest {
     }
 
     @Test
+    fun `unticking every kind of bet says the auto-bet places nothing, and ticking one back clears it`() {
+        show()
+        compose.onNodeWithTag("autoBetNoKinds").assertDoesNotExist()
+        com.tjshea.vigilant.data.scanner.BetKind.entries.forEach { k -> compose.onNodeWithText(k.label).performScrollTo().performClick() }
+        assertTrue(settings.autoBetKinds.isEmpty())
+        compose.onNodeWithTag("autoBetNoKinds").performScrollTo().assertExists()
+        compose.onNodeWithText(com.tjshea.vigilant.data.scanner.BetKind.PROP.label).performScrollTo().performClick()
+        assertEquals(setOf(com.tjshea.vigilant.data.scanner.BetKind.PROP), settings.autoBetKinds)
+        compose.onNodeWithTag("autoBetNoKinds").assertDoesNotExist()
+    }
+
+    @Test
     fun `screenshot - auto-bet stopped after a lost order`() {
         show({ it.copy(autoBet = true, autoBetHalted = "Novig didn't answer, and its lists don't show the order (connection reset). Nothing is assumed: open the Tracker and tap Sync with Novig in a minute, and check Novig before betting this again.") })
         compose.onRoot().captureRoboImage("screenshots/5k2_settings_auto_bet_stopped.png")
