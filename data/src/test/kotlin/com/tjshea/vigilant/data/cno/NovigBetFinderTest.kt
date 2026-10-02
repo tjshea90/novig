@@ -209,6 +209,9 @@ class NovigBetFinderTest {
         val f = finder()
         // The side on record (CNO's Novig link) names the market, whatever the words say.
         assertEquals(NovigBetFinder.Located.Bet("m9", "tot-u"), f.locate(row("Under 32.5", "Total Points"), "tot-u"))
+        // Even where the words alone wouldn't find it (a market name the matcher doesn't know).
+        assertEquals(NovigBetFinder.Located.Bet("m9", "tot-u"), f.locate(row("Under 32.5", "Combined Score Thing"), "tot-u"))
+        assertTrue(f.locate(row("Under 32.5", "Combined Score Thing")) is NovigBetFinder.Located.Missing)
         assertEquals(NovigBetFinder.Located.Bet("m2", "arroyo-u45"), f.locate(row("Elijah Arroyo Under 4.5", "Player Receiving Yards")))
         // A side on record that isn't in the game's markets any more: the words decide.
         assertEquals(NovigBetFinder.Located.Bet("m6", "ml-sea"), f.locate(row("Seattle Seahawks", "Moneyline"), "gone"))
