@@ -61,9 +61,10 @@ class BetAmountTest {
         assertEquals("Kelly says $25.00: held to your $10.00 limit per bet", why)
         // No edge at this price: Settings' amount, said.
         assertEquals(1.0 to "No Kelly stake for this bet (no edge at this price): Settings' amount instead", BetAmount.base(s, null))
-        // "My amount" for bet slips; "$1" or Off: the Bet sheet's own amount, no note.
+        // "My amount" for bet slips: that amount. "$1": $1 in the Bet sheet too, whatever its own amount says (v0.46.0: it used to start the sheet at
+        // its own amount while the slip said $1). Off ("I type it"): the Bet sheet's own amount, no note.
         assertEquals(7.5, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.CUSTOM, slipCustomStake = 7.5), 4.37).first, 0.0)
-        assertEquals(1.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR, apiBetStake = 1.0), 4.37))
+        assertEquals(1.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR, apiBetStake = 5.0), 4.37))
         assertEquals(2.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.OFF, apiBetStake = 2.0), 4.37))
     }
 }
