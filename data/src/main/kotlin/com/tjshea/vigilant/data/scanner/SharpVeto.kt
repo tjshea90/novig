@@ -1,0 +1,114 @@
+package com.tjshea.vigilant.data.scanner
+
+import com.tjshea.vigilant.data.cno.CnoBooks
+import com.tjshea.vigilant.data.cno.CnoBooksView
+import com.tjshea.vigilant.data.cno.NovigBetFinder
+import com.tjshea.vigilant.data.tracker.BetGrader
+import java.util.Locale
+
+/** What kind of bet a line is: which books are sharpest for it ([SharpVeto]), which kinds the auto-bet takes ([ScanSettings.autoBetKinds]), and Diagnostics' splits. */
+enum class BetKind(val label: String) {
+    PROP("Player props"), MONEYLINE("Moneylines"), SPREAD("Spreads"), TOTAL("Game totals"), TEAM_TOTAL("Team totals"),
+    PERIOD("1st half / inning / set lines"), OTHER("Other");
+
+    companion object {
+        /** [market] ("Player Receiving Yards", "Total Points") and [bet] ("Juwan Johnson Under 39.5") as CNO or Novig name them. */
+        fun of(market: String, bet: String): BetKind = when (val pick = BetGrader.pickOf(market, bet)) {
+            is BetGrader.Pick.Prop -> PROP
+            is BetGrader.Pick.Moneyline -> MONEYLINE
+            is BetGrader.Pick.Spread -> if (pick.period == BetGrader.Period.GAME) SPREAD else PERIOD
+            is BetGrader.Pick.Total -> if (pick.period == BetGrader.Period.GAME) TOTAL else PERIOD
+            is BetGrader.Pick.TeamTotal -> TEAM_TOTAL
+            is BetGrader.Pick.FirstSet -> PERIOD
+            null -> OTHER
+        }
+    }
+}
+
+/**
+ * The sharp veto (Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement. Only skip a bet if the sharpest book for that market says it is not +ev.
+ * This must separate types of bets by which books are sharpest for those bet types"), pure. RESEARCH.md §66.
+ *
+ * For each kind of bet and sport, the books whose price is the sharpest, best first ([ranking]). The first of them that prices both sides on the bet's
+ * book page (CNO's game page: free, already read for the book check) decides: its own two prices devigged worst case ([CnoBooks.fairFor], as the book
+ * check does) and judged at Novig's price; zero or less is a veto. When none of them prices both sides there is no veto: the bet goes on its other
+ * criteria. A sister site counts as its company ("FDYW" for FanDuel).
+ */
+object SharpVeto {
+
+    enum class Sport { FOOTBALL, COLLEGE_FOOTBALL, BASKETBALL, COLLEGE_BASKETBALL, BASEBALL, HOCKEY, SOCCER, TENNIS, OTHER }
+
+    /** The sport of a league as CNO or Novig names it ("NFL", "NCAAF", "MLB", "EPL", "ATP"). */
+    fun sportOf(league: String): Sport {
+        val key = Leagues.byNovigName(NovigBetFinder.novigLeague(league) ?: league.trim())?.oddsApiSportKey.orEmpty()
+        val name = league.uppercase(Locale.US)
+        return when {
+            key.endsWith("_ncaaf") || name.contains("NCAAF") || name.contains("CFB") -> Sport.COLLEGE_FOOTBALL
+            key.startsWith("americanfootball") || name.contains("NFL") -> Sport.FOOTBALL
+            key.endsWith("_ncaab") || name.contains("NCAAB") || name.contains("CBB") -> Sport.COLLEGE_BASKETBALL
+            key.startsWith("basketball") || name.contains("NBA") -> Sport.BASKETBALL
+            key.startsWith("baseball") || name.contains("MLB") -> Sport.BASEBALL
+            key.startsWith("icehockey") || name.contains("NHL") -> Sport.HOCKEY
+            key.startsWith("soccer") || SOCCER_WORDS.any { name.contains(it) } -> Sport.SOCCER
+            key.startsWith("tennis") || name.contains("ATP") || name.contains("WTA") || name.contains("TENNIS") -> Sport.TENNIS
+            else -> Sport.OTHER
+        }
+    }
+
+    private val SOCCER_WORDS = listOf("EPL", "MLS", "LIGA", "SERIE A", "BUNDESLIGA", "LIGUE 1", "UEFA", "CHAMPIONS", "PREMIER", "SOCCER", "FIFA")
+
+    /**
+     * The books, sharpest first, for [kind] in [sport] (CNO column codes). RESEARCH.md §66.2: player props: the exchanges Kalshi and ProphetX lead
+     * (SmartStake's 600-million-move MLB props study), then the US books that originate prop numbers (FanDuel, Caesars on football and basketball;
+     * DraftKings ahead of FanDuel on MLB props); Pinnacle and Circa post few props at low limits and aren't asked. Sides, totals, team totals and
+     * period lines: Pinnacle, then Circa (Circa first in college); soccer and tennis: Pinnacle only.
+     */
+    fun ranking(kind: BetKind, sport: Sport): List<String> = when {
+        kind == BetKind.PROP && sport == Sport.BASEBALL -> listOf("KI", "PX", "DK", "FD")
+        kind == BetKind.PROP -> listOf("KI", "PX", "FD", "CZR")
+        sport == Sport.SOCCER || sport == Sport.TENNIS -> listOf("PN")
+        sport == Sport.COLLEGE_FOOTBALL || sport == Sport.COLLEGE_BASKETBALL -> listOf("CS", "PN")
+        else -> listOf("PN", "CS")
+    }
+
+    enum class Verdict {
+        /** The sharpest book on the page says +EV: no veto. */
+        PASSED,
+
+        /** The sharpest book on the page says it isn't +EV: skipped. */
+        VETOED,
+
+        /** None of the kind's sharp books prices both sides on the page: no veto. */
+        NO_SHARP,
+    }
+
+    /** What the veto found: [book] (its code), its own fair chance and the EV it gives Novig's price. */
+    data class Result(val verdict: Verdict, val kind: BetKind, val book: String? = null, val fair: Double? = null, val ev: Double? = null) {
+        val vetoed: Boolean get() = verdict == Verdict.VETOED
+
+        /** One general sentence with no numbers (the auto-bet's skip report counts bets by reason), null unless vetoed. */
+        val reason: String?
+            get() = if (!vetoed) null else "${CnoBooks.name(book!!)}, the sharpest book for ${kind.label.lowercase(Locale.US)}, says it isn't +EV at Novig's price"
+
+        /** The numbers: "ProphetX −2.1% (devigged)", for the bet's record and Diagnostics. */
+        val detail: String
+            get() = if (book == null) "no sharp book for ${kind.label.lowercase(Locale.US)} prices both sides" else
+                "${CnoBooks.name(book)} ${SharpConfirm.percent(ev ?: 0.0)} (devigged, fair ${String.format(Locale.US, "%.1f%%", (fair ?: 0.0) * 100)})"
+    }
+
+    /** [view]: the bet's book page; [novigOdds]: Novig's price now (American); [live]: Novig's taker fee applies; [judged]: the book being bet. */
+    fun judge(view: CnoBooksView?, kind: BetKind, sport: Sport, novigOdds: Int, live: Boolean, judged: String = CnoBooks.NOVIG): Result {
+        val prices = view?.prices.orEmpty().filter { it.twoSided && it.code != judged }
+        for (code in ranking(kind, sport)) {
+            val p = prices.firstOrNull { CnoBooks.company(it.code) == code } ?: continue
+            val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!) ?: continue
+            val ev = CnoBooks.evAt(fair, novigOdds, live)
+            return Result(if (ev > 0.0) Verdict.PASSED else Verdict.VETOED, kind, code, fair, ev)
+        }
+        return Result(Verdict.NO_SHARP, kind)
+    }
+
+    /** [judge] for a bet as CNO names it ([league], [market], [bet]). */
+    fun judge(view: CnoBooksView?, league: String, market: String, bet: String, novigOdds: Int, live: Boolean, judged: String = CnoBooks.NOVIG): Result =
+        judge(view, BetKind.of(market, bet), sportOf(league), novigOdds, live, judged)
+}
