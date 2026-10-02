@@ -72,6 +72,18 @@ object Diagnostics {
         val problems: List<com.tjshea.vigilant.data.diag.Problem> = emptyList(),
         /** Android's record of how the app's process last ended, newest first ([AppExits.recent]). */
         val exits: List<AppExits.Exit> = emptyList(),
+        /** The flight recorder (Tj, 2026-10-02): every host's calls, the notable events and counters, the app's own timings, its log lines, its files. */
+        val net: com.tjshea.vigilant.data.diag.NetBook = com.tjshea.vigilant.data.diag.NetBook(),
+        val events: List<com.tjshea.vigilant.data.diag.Event> = emptyList(),
+        val counters: Map<String, Long> = emptyMap(),
+        val eventsSinceMs: Long? = null,
+        val perf: Map<String, com.tjshea.vigilant.data.diag.SampleSummary> = emptyMap(),
+        val coldStartMs: Long? = null,
+        val logcat: List<com.tjshea.vigilant.data.diag.LogcatTail.Line> = emptyList(),
+        /** The app's files and their sizes in bytes, largest first. */
+        val storage: List<Pair<String, Long>> = emptyList(),
+        /** The snapshot of the report before this one ([com.tjshea.vigilant.data.diag.DiagHistory]): what [com.tjshea.vigilant.data.diag.Trend] compares with. */
+        val previous: com.tjshea.vigilant.data.diag.Snap? = null,
     )
 
     /** The phone's side of it: permissions and settings that decide whether background scans, alerts and the closing capture run. */
@@ -88,6 +100,10 @@ object Diagnostics {
         val batterySaver: Boolean? = null,
         val dozing: Boolean? = null,
         val standbyBucket: String? = null,
+        /** The battery's charge (percent), whether it's charging, and Android's thermal state ("none", "light", "moderate", "severe"…). */
+        val batteryPct: Int? = null,
+        val charging: Boolean? = null,
+        val thermal: String? = null,
     )
 
     /** Android's App Standby bucket number as its name (UsageStatsManager.STANDBY_BUCKET_*). */
