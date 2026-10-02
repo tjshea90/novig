@@ -27,7 +27,7 @@ class SharpConfirmTest {
         Quote(code, odds, other, ageMs?.let { now - it }, via)
 
     @Test
-    fun `the confirmation is off by default (the veto is the default since 2026-10-02 17:01Z), and each makes its own rules`() {
+    fun `the confirmation is off by default (the veto is the default since 2026-10-02), and each makes its own rules`() {
         val off = ScanSettings()
         assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, off.sharpAutoBet)
         assertEquals(com.tjshea.vigilant.data.scanner.SharpMode.VETO, off.sharpAlerts)
