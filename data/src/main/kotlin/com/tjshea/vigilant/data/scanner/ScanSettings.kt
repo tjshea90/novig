@@ -619,9 +619,10 @@ data class ScanSettings(
         /** [autoBetBooks]' choices (the last is "5+"). */
         val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
 
-        /** [autoBetMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
+        /** [autoBetMinOdds]' choices (0 = no limit). */
         val AUTO_BET_MIN_ODDS_CHOICES = listOf(0, -150, -200, -250, -300)
 
+        /** [autoBetMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
         val AUTO_BET_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 150, 200, 300, 0)
 
         /** [autoBetTwoSided]'s choices. */
