@@ -4,7 +4,7 @@ import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
-import com.tjshea.vigilant.data.JsonFileStore
+import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.SharpConfirm
 import kotlinx.coroutines.runBlocking
