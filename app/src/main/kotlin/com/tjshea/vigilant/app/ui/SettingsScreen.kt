@@ -1101,8 +1101,11 @@ fun propLineGamesHint(s: ScanSettings): String =
         "Up to ${s.propLineGamesPerScan} games a scan, soonest first, one request each (a game's props are re-used for 2 minutes)."
     }
 
-/** Key list callbacks from the view model; the file pickers live in [SettingsScreen]. */
-class KeyActions(
+/**
+ * Key list callbacks from the view model; the file pickers live in [SettingsScreen]. A data class, so a new copy of the same callbacks (the root makes
+ * one with every state, 3 a second mid-scan) is equal and the sections skip their redraw, like [BetActions] and [BettingActions].
+ */
+data class KeyActions(
     val add: (ApiProvider, String) -> Unit = { _, _ -> },
     val remove: (ApiProvider, String) -> Unit = { _, _ -> },
     val moveUp: (ApiProvider, String) -> Unit = { _, _ -> },

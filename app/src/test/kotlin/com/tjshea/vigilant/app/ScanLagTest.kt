@@ -115,6 +115,11 @@ class ScanLagTest {
         assertTrue(main.contains("val parlayActions = remember(vm, onOpenInNovig, openingBet) {"))
         assertTrue(main.contains("parlay = parlayActions,"))
         assertTrue(source("ui/FeedScreen.kt").contains("val parlayActions = remember(parlay, scope, snackbar, onUnhide) {"))
+        // Holders the root makes inline compare equal when their callbacks are the same (data classes), so screens under them can skip.
+        assertTrue(source("ui/SettingsScreen.kt").contains("data class KeyActions("))
+        assertTrue(source("ui/TrackerScreen.kt").contains("data class BetActions("))
+        assertTrue(source("ui/ApiBettingUi.kt").contains("data class BettingActions("))
+        assertTrue(source("ui/ReportDialog.kt").contains("data class ReportActions("))
         val provide = source("ui/ApiBettingUi.kt").substringAfter("fun ProvideApiBet").substringBefore("\n}\n")
         assertTrue(provide, provide.contains("remember(enabled, api)"))
     }
