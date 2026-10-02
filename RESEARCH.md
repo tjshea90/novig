@@ -3384,7 +3384,8 @@ what it catches is the gap between Novig and Pinnacle, which Vigilant already pr
   orders on Novig, ProphetX and Kalshi and takes the maker to want the opposite side. Its worked example is a $11,995 offer on
   Spurs −329, read as "a maker holding Kings +329". It then lists **sportsbook** prices (DraftKings, FanDuel…) that match or
   beat that maker. The bet is placed at a sportsbook, never on the exchange. It does not tell market makers apart from sharps.
-- **+EV Bettors on X** says "Novig is a VERY sharp book, especially when liquidity is high." That claim is about the price
+- **+EV Bettors on X** says "Novig is a VERY sharp book, especially when liquidity is high" (from a search snippet; x.com
+  answered 402 to a direct read). That claim is about the price
   (deep markets are efficient), not about the size marking one side as sharp.
 - **Betfair traders' "weight of money"** (the same idea, decades older): "somewhat discredited with the prevalence of bots
   and spoofing"; "most profitable traders now lean more on traded volume, market flow and how quickly bets are taken rather
@@ -3402,8 +3403,9 @@ The size is symmetric and identical across games, which is a quoting algorithm, 
 - **FCS college football:** one order a side, sized for equal payout on each side (ILST $1,503 at 0.455 / $1,521 at 0.505),
   quoted 4–12¢ wide.
 
-Novig recruits professional liquidity providers (a Liquidity Provider Program and Market Maker Agreements; its funding rounds
-name onboarding institutional LPs as their aim: support.novig.com "Maker Credit Program"). Those LPs quote off the sharp
+Novig recruits professional liquidity providers. Its "Maker Credit Program" page (support.novig.com) excludes members with a
+Market Maker Agreement, and press on its $75M Series B (hellorookie.com, nextpredict.io) says the money goes to onboarding
+institutional liquidity providers. Those LPs quote off the sharp
 books. Their size says how sure they are of the price. It says nothing about which side wins.
 
 ### 62.3 What the trades say (`novig_size_study.py`, 95% intervals bootstrapped over markets)
