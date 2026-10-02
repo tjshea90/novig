@@ -76,6 +76,38 @@ class AdvisorTest {
         assertTrue(findings(base.copy(exits = listOf(freeze.copy(atMs = now - 8 * 86_400_000L)))).none { it.key.startsWith("bug:exit") })
     }
 
+    /**
+     * Tj's 2026-10-02 file (v0.43.0): its top BUG was the v0.38.0 out-of-memory crash from 22 hours before, fixed in v0.39.0-0.39.1, and its FAILURE "the app ended
+     * badly 3 times (3 low memory)" was Android freeing a cached Vigilant in the background. Neither is something wrong with the version running now.
+     */
+    @Test
+    fun `a crash from before this version was installed is a WATCH, not a BUG, and the same crash after it is a BUG`() {
+        val installed = now - 3_600_000L
+        val oom = Problem("App crash", "at=1 thread=main\njava.lang.OutOfMemoryError: Failed to allocate a 32 byte allocation", now - 22 * 3_600_000L, now - 22 * 3_600_000L)
+        val before = byKey(base.copy(installedAtMs = installed, problems = listOf(oom)))
+        assertFalse(before.keys.any { it.startsWith("bug:crash") })
+        val watch = before.values.single { it.key.startsWith("watch:oldcrash:") }
+        assertEquals("WATCH", watch.kind)
+        assertTrue(watch.title, watch.title.contains("before this version was installed"))
+        // The same crash after the install: this version did it.
+        val after = byKey(base.copy(installedAtMs = installed, problems = listOf(oom.copy(firstAtMs = now - 600_000L, lastAtMs = now - 600_000L))))
+        assertTrue(after.keys.any { it.startsWith("bug:crash:java.lang.OutOfMemoryError") })
+        // An exit before the install isn't this version's either; one after it is.
+        val freeze = AppExits.Exit(now - 2 * 3_600_000L, "not responding", null, foreground = true, pssMb = 200, importance = AppExits.FOREGROUND)
+        assertFalse(byKey(base.copy(installedAtMs = installed, exits = listOf(freeze))).containsKey("bug:exit:not responding"))
+        assertTrue(byKey(base.copy(installedAtMs = installed, exits = listOf(freeze.copy(atMs = now - 60_000L)))).containsKey("bug:exit:not responding"))
+    }
+
+    @Test
+    fun `Android freeing a cached Vigilant isn't a bug, but a memory kill while the widget or a scan ran is`() {
+        val cached = AppExits.Exit(now - 3_600_000L, "low memory", null, foreground = false, pssMb = 180, importance = AppExits.CACHED)
+        assertFalse(byKey(base.copy(exits = listOf(cached, cached.copy(atMs = now - 7_200_000L)))).containsKey("bug:exit:low memory"))
+        val widget = cached.copy(importance = AppExits.PERCEPTIBLE)
+        val f = byKey(base.copy(exits = listOf(widget))).getValue("bug:exit:low memory")
+        assertTrue(f.evidence, f.evidence.contains("the widget over another app"))
+        assertTrue(f.evidence, f.evidence.contains("using 180 MB"))
+    }
+
     @Test
     fun `an error the code reported with its place is a BUG at that place, and a repeating warning is a FAILURE`() {
         val where = "AutoBettor.sharpReason(AutoBettor.kt:212) < AutoBettor.run(AutoBettor.kt:150)"

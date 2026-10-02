@@ -54,4 +54,31 @@ class AppExitsTest {
         assertTrue(AppExits.Exit(0, "low memory", null, false, null).bad)
         assertTrue(!AppExits.Exit(0, "closed by you", null, false, null).bad)
     }
+
+    @Test
+    fun `a kill for memory counts as bad only when Vigilant was doing something`() {
+        fun lowMemory(importance: Int?) = AppExits.Exit(0, "low memory", null, false, null, importance = importance)
+        assertTrue(lowMemory(AppExits.CACHED).reclaimed)
+        assertFalse(lowMemory(AppExits.CACHED).bad)
+        assertEquals("cached in the background (nothing running)", lowMemory(AppExits.CACHED).where)
+        // The widget over Novig, the mini window, a scan's service: those were in use.
+        assertTrue(lowMemory(AppExits.PERCEPTIBLE).bad)
+        assertEquals("perceptible (the widget over another app)", lowMemory(AppExits.PERCEPTIBLE).where)
+        assertTrue(lowMemory(AppExits.VISIBLE).bad)
+        assertTrue(lowMemory(AppExits.FOREGROUND_SERVICE).bad)
+        assertEquals("running a foreground service (a scan or auto-scan)", AppExits.Exit(0, "low memory", null, true, null, importance = AppExits.FOREGROUND_SERVICE).where)
+        // Not known (an older record): bad, as before.
+        assertTrue(lowMemory(null).bad)
+        // A crash is bad wherever it was.
+        assertTrue(AppExits.Exit(0, "crash", null, false, null, importance = AppExits.CACHED).bad)
+    }
+
+    @Test
+    fun `a saved crash says which version crashed`() {
+        val text = AppExits.crashText("main", IllegalStateException("x"), 1_790_000_000_000L, "0.43.0")
+        assertTrue(text.lineSequence().first().endsWith("version=0.43.0"))
+        val (_, line) = AppExits.parseSaved(text)!!
+        assertTrue(line, line.startsWith("on main"))
+        assertTrue(line, line.contains("on v0.43.0"))
+    }
 }
