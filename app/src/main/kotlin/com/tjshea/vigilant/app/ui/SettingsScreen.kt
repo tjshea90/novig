@@ -764,10 +764,12 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions) {
     // ---- Diagnostics ---------------------------------------------------------------------
     SectionTitle("Diagnostics")
     Hint(
-        "Something slow, odd or not grading? Tap Show report, then Copy, and paste it to Claude: your settings, the last scan's timing and errors, " +
-            "each API's usage, the background scan and the Tracker's numbers, in one page. It never has a key in it.",
+        "Tap Share with Claude: it makes one file with everything the app has recorded (errors with the code that threw them, every call's speed and failures by host, API usage, " +
+            "scan and cycle timings, what auto-bet and the sharp check decided, the app's own log) and a ranked list of what to fix and speed up, then opens Android's Share sheet: " +
+            "pick Claude. The next file is compared with this one, so each upload shows whether the last change worked. It never has a key in it.",
     )
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.material3.Button(onClick = reportActions.onShare, modifier = Modifier.testTag("shareDiagnostics")) { Text("Share with Claude") }
         OutlinedButton(onClick = reportActions.onDiagnostics) { Text("Show report") }
         // The ledger check needs the betting key: Novig's own record of each API bet against what the Tracker did with it.
         if (AppBook.isNovig && state.betting.enabled) OutlinedButton(onClick = reportActions.onGradingCheck) { Text("Grading check") }

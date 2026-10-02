@@ -95,6 +95,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         switchedOff?.let { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show() }
 
+        // The diagnostics file's share sheet (Tj, 2026-10-02): handed over by the view model whenever the file is ready, started from here (a visible screen).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vm.shareRequests.collect { intent -> runCatching { startActivity(intent) }.onFailure { android.widget.Toast.makeText(this@MainActivity, "Couldn't open the Share sheet", android.widget.Toast.LENGTH_SHORT).show() } }
+            }
+        }
         // No refresh loop for Novig or the odds providers: nothing is fetched until Tj taps Scan
         // or pulls to refresh (his rule, 2026-09-25). A scan he starts keeps running if he
         // switches apps (ScanService), then everything stops.
@@ -709,6 +715,7 @@ private fun VigilantRoot(
                         onGradingCheck = vm::showGradingCheck,
                         onDismiss = vm::dismissReport,
                         onCopied = vm::reportCopied,
+                        onShare = vm::shareDiagnostics,
                     ),
                     onNovigConnect = { typed -> vm.connectNovig(typed) },
                     onNovigTest = vm::testNovig,

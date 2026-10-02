@@ -31,6 +31,8 @@ data class ReportActions(
     val onGradingCheck: () -> Unit = {},
     val onDismiss: () -> Unit = {},
     val onCopied: () -> Unit = {},
+    /** Make the diagnostics file and open Android's share sheet (Tj, 2026-10-02): "Share diagnostics with Claude". */
+    val onShare: () -> Unit = {},
 )
 
 /** A report in a dialog: the text to select or copy, and Copy / Close. */
@@ -42,7 +44,11 @@ fun ReportDialog(report: ReportUi, actions: ReportActions) {
         title = { Text(report.title) },
         text = { ReportContent(report) },
         confirmButton = {
-            TextButton(onClick = { clipboard.setText(AnnotatedString(report.text)); actions.onCopied() }, enabled = !report.busy) { Text("Copy") }
+            Row {
+                // Only the Diagnostics report is the file Claude works from.
+                if (report.title == "Diagnostics") TextButton(onClick = actions.onShare, enabled = !report.busy, modifier = Modifier.testTag("reportShare")) { Text("Share with Claude") }
+                TextButton(onClick = { clipboard.setText(AnnotatedString(report.text)); actions.onCopied() }, enabled = !report.busy) { Text("Copy") }
+            }
         },
         dismissButton = { TextButton(onClick = actions.onDismiss) { Text("Close") } },
     )
