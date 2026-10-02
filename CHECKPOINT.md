@@ -1,7 +1,7 @@
-# CHECKPOINT 2291 — read me first, then TASKS.md
+# CHECKPOINT 2292 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T01:02:39Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `cc2c18b7` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T01:02:56Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-650fc40f-rtt4er` · **builds on:** `e4313423` (this checkpoint is the commit after it)
 
 ## Just done
 AM: recorder, advisor, file, share built and tested; FQN where/pathOf/short edits applied but not yet compiled; per-step cycle timing not yet added
@@ -13,26 +13,6 @@ compile, fix EventLog/Advisor/DiagnosticsFile tests for FQN where, add cycle.ste
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
-     M app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt
-     M app/src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt
-     M app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt
-     M app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt
-     M app/src/test/kotlin/com/tjshea/vigilant/app/KeepAwakeServiceTest.kt
-     M app/src/test/kotlin/com/tjshea/vigilant/app/SharpConfirmAppTest.kt
-     M data/src/main/kotlin/com/tjshea/vigilant/data/diag/DiagHistory.kt
-     M data/src/main/kotlin/com/tjshea/vigilant/data/diag/EventLog.kt
-     M data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt
-     M data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt
-     M data/src/main/kotlin/com/tjshea/vigilant/data/diag/ProblemLog.kt
-     M data/src/test/kotlin/com/tjshea/vigilant/data/diag/ProblemLogTest.kt
-    ?? app/src/test/kotlin/com/tjshea/vigilant/app/AdvisorTest.kt
-    ?? app/src/test/kotlin/com/tjshea/vigilant/app/DiagnosticsFileTest.kt
-    ?? app/src/test/kotlin/com/tjshea/vigilant/app/DiagnosticsShareTest.kt
-    ?? app/src/test/kotlin/com/tjshea/vigilant/app/DiagnosticsUiTest.kt
-    ?? data/src/test/kotlin/com/tjshea/vigilant/data/diag/EventLogTest.kt
-    ?? data/src/test/kotlin/com/tjshea/vigilant/data/diag/LogcatAndTrendTest.kt
-    ?? data/src/test/kotlin/com/tjshea/vigilant/data/diag/NetStatsTest.kt
 
 ## Last ten checkpoints
 ```
@@ -47,3 +27,6 @@ compile, fix EventLog/Advisor/DiagnosticsFile tests for FQN where, add cycle.ste
   6aa592f3 ckpt 2282: v0.41.0 released and recorded: Keep awake for auto-scan/auto-bet with the sc
   ce28edc3 ckpt 2281: pre-release: v0.41.0: Keep awake keeps background auto-scan and auto-bet on 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
