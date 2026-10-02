@@ -1,0 +1,288 @@
+package com.tjshea.vigilant.app
+
+import android.Manifest
+import android.app.NotificationManager
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.tjshea.vigilant.app.ui.SharpConfirmText
+import com.tjshea.vigilant.data.cno.CnoBookPrice
+import com.tjshea.vigilant.data.cno.CnoBooksView
+import com.tjshea.vigilant.data.cno.CnoChecks
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.cno.LivePrice
+import com.tjshea.vigilant.data.keys.ApiProvider
+import com.tjshea.vigilant.data.novig.BidLevel
+import com.tjshea.vigilant.data.novig.NovigBook
+import com.tjshea.vigilant.data.novig.NovigMarket
+import com.tjshea.vigilant.data.novig.NovigOutcome
+import com.tjshea.vigilant.data.novig.signing.NovigKeyAlgorithm
+import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
+import com.tjshea.vigilant.data.novig.signing.NovigSigningKey
+import com.tjshea.vigilant.data.novig.trading.ApiBetPlacer
+import com.tjshea.vigilant.data.novig.trading.BetLimits
+import com.tjshea.vigilant.data.novig.trading.BetTarget
+import com.tjshea.vigilant.data.novig.trading.NovigFill
+import com.tjshea.vigilant.data.novig.trading.NovigOrder
+import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
+import com.tjshea.vigilant.data.reference.RefBookMarket
+import com.tjshea.vigilant.data.reference.RefEvent
+import com.tjshea.vigilant.data.reference.RefQuote
+import com.tjshea.vigilant.data.reference.RefSnapshot
+import com.tjshea.vigilant.data.reference.ReferenceSource
+import com.tjshea.vigilant.data.reference.SharpBooks
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.Side
+import com.tjshea.vigilant.data.scanner.AutoBetStake
+import com.tjshea.vigilant.data.scanner.AutoScanMode
+import com.tjshea.vigilant.data.scanner.League
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.SharpConfirm
+import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.engine.MarketFee
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * Tj, 2026-10-02: "require bets to be proven positive EV by a current, devigged sharp book such as Pinnacle … for the cno scanner and auto bet feature". The
+ * auto-bet and the alerts on a real container with a fake Novig and fake Pinnacle feeds: what the check is asked, when, and what a no does.
+ */
+@RunWith(AndroidJUnit4::class)
+@Config(sdk = [35])
+class SharpConfirmAppTest {
+
+    private val app: VigilantApp get() = ApplicationProvider.getApplicationContext()
+    private val now = SampleScan.NOW
+    private val jefferson = SampleCno.rows[1]
+
+    @Before fun setUp() {
+        shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        runBlocking {
+            app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+            app.container.settingsStore.update { ScanSettings() }
+        }
+    }
+
+    // ---- the same fake Novig as AutoBettorTest: fills at the plan's price ---------------------------------------------
+
+    private class FakeNovig(val orders: AtomicInteger = AtomicInteger()) :
+        NovigTradingClient(NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
+            override val keyId = "kid"
+            override val algorithm = NovigKeyAlgorithm.P256
+            override fun sign(message: ByteArray) = ByteArray(0)
+        }), Json { ignoreUnknownKeys = true }) {
+        var last: Triple<String, Double, Long>? = null
+        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+            orders.incrementAndGet()
+            last = Triple(outcomeId, price, qty)
+            return "order-${orders.get()}"
+        }
+        override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", "FILLED", 1)
+        override suspend fun fills(orderId: String?, limit: Int) = last?.let { (outcome, price, qty) ->
+            listOf(NovigFill("f-$orderId", orderId ?: "o", null, "mkt", outcome, qty, qty * price * 0.01, true, 0.0, 1_790_400_000_000L))
+        }.orEmpty()
+        override suspend fun orders(status: String, limit: Int, outcomeId: String?) = emptyList<NovigOrder>()
+    }
+
+    private val market = NovigMarket("mkt", "ev", "TOTAL", "OPEN", "Player Receiving Yards", now + 86_400_000L, MarketFee.GAME, listOf(NovigOutcome("out-jj", "Under 69.5", "TBD"), NovigOutcome("out-other", "Over 69.5", "TBD")))
+    private fun book() = NovigBook("mkt", 1, mapOf("out-other" to listOf(BidLevel(539, 5_000)), "out-jj" to listOf(BidLevel(400, 50))), now)
+    private fun targetOf(row: CnoRow) = BetTarget(
+        market = market, outcomeId = "out-jj", league = row.league, eventName = row.event, startsTs = row.startsAtMs!!, marketLabel = row.market, selection = row.bet,
+        fair = CnoChecks.fairProbability(row)!!, fairAsOfMs = now - 20_000L, source = BetTracker.SOURCE_CNO, placedKey = MiniWindow.cnoKey(row), book = row.book, gameUrl = row.gameUrl, betUrl = row.betUrl,
+    )
+
+    private class Asked(val rules: SharpConfirm.Rules, val bet: SharpBooks.Bet, val view: CnoBooksView?, val odds: Int, val live: Boolean)
+
+    private fun bettor(novig: FakeNovig, asked: MutableList<Asked>, answer: (Asked) -> SharpConfirm.Result): AutoBettor {
+        val placer = ApiBetPlacer(novig, app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
+        return AutoBettor(
+            app, app.container, clock = { now }, placer = { placer }, wallet = { 25.0 }, resolve = { targetOf(it) },
+            sharp = { rules, bet, view, odds, live, _ -> Asked(rules, bet, view, odds, live).also { asked += it }.let(answer) },
+        )
+    }
+
+    private fun settings(f: (ScanSettings) -> ScanSettings = { it }) = f(
+        ScanSettings(
+            autoBet = true, autoScan = AutoScanMode.CNO, autoBetBooks = 3, autoBetMinEv = 0.03, autoBetTwoSided = 2, autoBetStake = AutoBetStake.ONE_DOLLAR, autoBetMaxStake = 10.0,
+            apiMaxPerDay = 50.0, sharpConfirmAutoBet = true,
+        ),
+    )
+
+    private fun state(s: ScanSettings = settings()): UiState {
+        val base = SampleCno.withBooks(SampleCno.state(SampleScan.state().copy(settings = s.copy(cnoLivePrices = true))))
+        return base.copy(novigLive = mapOf(jefferson.key to LivePrice(117, 88.0, 0.0584, now - 5_000, "mkt", "out-jj"))).indexed(now)
+    }
+
+    private val yes = SharpConfirm.Result(SharpConfirm.Verdict.CONFIRMED, detail = "Pinnacle +3.3% (devigged, 40 sec old, via PinnWire)")
+    private fun no(reason: String = "Pinnacle's own devigged price doesn't show it +EV at Novig's price") = SharpConfirm.Result(SharpConfirm.Verdict.NOT_CONFIRMED, reason = reason, detail = "Pinnacle -1.0%")
+
+    private fun notifications() = shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications
+
+    // ---- the auto-bet ------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `a bet the sharp book confirms is placed, and its pop-up names the sharp book`() = runBlocking {
+        val novig = FakeNovig()
+        val asked = ArrayList<Asked>()
+        val report = bettor(novig, asked) { yes }.run(settings(), state())
+        assertEquals(1, report.placed.size)
+        assertEquals(1, novig.orders.get())
+        // Asked once, with the bet as CNO names it, Novig's price now, pregame, and CNO's game page for it (its free first look).
+        val q = asked.single()
+        assertEquals(SharpBooks.Bet("NFL", "Minnesota Vikings @ Tampa Bay Buccaneers", jefferson.startsAtMs, "Player Receiving Yards", "Justin Jefferson Under 69.5"), q.bet)
+        assertEquals(117, q.odds)
+        assertFalse(q.live)
+        assertEquals(setOf("PN"), q.rules.codes)
+        assertTrue(q.view!!.prices.any { it.code == "PN" })
+        val text = notifications().single { it.extras.getString("android.title")!!.startsWith("Auto-bet") }.extras.getString("android.text")!!
+        assertTrue(text, text.contains("3 of 3 books agree") && text.contains(" · sharp: Pinnacle +3.3% (devigged, 40 sec old, via PinnWire)"))
+    }
+
+    @Test
+    fun `a bet the sharp book doesn't confirm is not placed, and the report says why in one general sentence`() = runBlocking {
+        val novig = FakeNovig()
+        val asked = ArrayList<Asked>()
+        val report = bettor(novig, asked) { no() }.run(settings(), state())
+        assertEquals(0, report.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertEquals(1, report.skipped["Pinnacle's own devigged price doesn't show it +EV at Novig's price"])
+        // Every verdict that isn't a yes skips: no price, stale, nothing to ask.
+        for (v in listOf(SharpConfirm.Verdict.STALE, SharpConfirm.Verdict.NO_QUOTE, SharpConfirm.Verdict.UNAVAILABLE)) {
+            val r = bettor(novig, ArrayList()) { SharpConfirm.Result(v, reason = "because $v") }.run(settings(), state())
+            assertEquals(v.name, mapOf("because $v" to 1), r.skipped.filterKeys { it.startsWith("because") })
+            assertEquals(0, r.placed.size)
+        }
+        assertEquals(0, novig.orders.get())
+    }
+
+    @Test
+    fun `a check that throws is a skip, never a bet`() = runBlocking {
+        val novig = FakeNovig()
+        val report = bettor(novig, ArrayList()) { error("feed exploded") }.run(settings(), state())
+        assertEquals(0, report.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertTrue(report.skipped.keys.toString(), report.skipped.keys.any { it.startsWith("couldn't get a fresh Pinnacle price (feed exploded)") })
+    }
+
+    @Test
+    fun `switched off, the check is never asked, and it is asked last: a bet that fails another criterion costs no feed call`() = runBlocking {
+        val novig = FakeNovig()
+        val asked = ArrayList<Asked>()
+        val off = settings { it.copy(sharpConfirmAutoBet = false) }
+        assertEquals(1, bettor(novig, asked) { error("must not be asked") }.run(off, state(off)).placed.size)
+        assertTrue(asked.isEmpty())
+        // Books agreeing 5 (the bet has 3), longest odds under +117: each fails first, so the sharp check is never reached.
+        for (strict in listOf(settings { it.copy(autoBetBooks = 5) }, settings { it.copy(autoBetMaxOdds = 110) })) {
+            val r = bettor(FakeNovig(), asked) { yes }.run(strict, state(strict))
+            assertEquals(0, r.placed.size)
+        }
+        assertTrue("never asked for a bet that already failed: $asked", asked.isEmpty())
+        // The alerts' switch is another switch: it doesn't make the auto-bet ask.
+        val alertsOnly = settings { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true) }
+        assertEquals(1, bettor(FakeNovig(), asked) { error("must not be asked") }.run(alertsOnly, state(alertsOnly)).placed.size)
+    }
+
+    @Test
+    fun `the real check: a Pinnacle quote that shows +EV places the bet, an old one or a no doesn't, and CNO's page vetoes for free`() = runBlocking {
+        val pick = com.tjshea.vigilant.data.tracker.BetGrader.pickOf("Player Receiving Yards", "Justin Jefferson Under 69.5") as com.tjshea.vigilant.data.tracker.BetGrader.Pick.Prop
+        var calls = 0
+        fun feed(over: Double, under: Double, ageMs: Long) = object : ReferenceSource {
+            override val id = "pinnacle"
+            override val displayName = "PinnWire"
+            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+                calls++
+                val market = RefBookMarket(
+                    "pinnacle", "Pinnacle", LineKind.PLAYER_PROP, listOf(RefQuote(Side.OVER, over, 69.5), RefQuote(Side.UNDER, under, 69.5)), now - ageMs, subject = "Justin Jefferson", stat = pick.stat,
+                )
+                return RefSnapshot("americanfootball_nfl", listOf(RefEvent("g", "americanfootball_nfl", jefferson.startsAtMs!!, "Tampa Bay Buccaneers", "Minnesota Vikings", listOf(market))), now - 1_000L, provider = id)
+            }
+        }
+        fun bettorWith(feed: ReferenceSource): AutoBettor {
+            val sharp = SharpBooks(sources = { listOf(feed) }, settings = { ScanSettings() }, clock = { now })
+            val placer = ApiBetPlacer(FakeNovig(), app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
+            return AutoBettor(app, app.container, clock = { now }, placer = { placer }, wallet = { 25.0 }, resolve = { targetOf(it) },
+                sharp = { rules, bet, view, odds, live, at -> SharpGate.check(sharp, rules, bet, view, odds, live, at) })
+        }
+        // Pinnacle: Under 2.10 / Over 1.77: fair about 48%: +EV at Novig's +117 (a fresh quote).
+        val ok = bettorWith(feed(over = 1.77, under = 2.10, ageMs = 30_000L)).run(settings { it.copy(sharpConfirmViaCno = false) }, state())
+        assertEquals(ok.skipped.toString(), 1, ok.placed.size)
+        assertEquals(1, calls)
+        // The same quote 4 minutes old: past the 3-minute limit, so not bet.
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        val stale = bettorWith(feed(over = 1.77, under = 2.10, ageMs = 240_000L)).run(settings(), state())
+        assertEquals(0, stale.placed.size)
+        assertEquals(1, stale.skipped["Pinnacle's price for it is older than 3 min (or has no time)"])
+        // CNO's own page has Pinnacle at +100/−122 (fair about 47.6%): a +EV yes there. Make CNO's Pinnacle say no (a long price against Novig's +117):
+        // the bet is vetoed before any feed is asked.
+        val noView = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") CnoBookPrice("PN", -130, null, 110, null) else it }) }
+        val vetoState = state().let { st -> st.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = noView))).indexed(now) }
+        calls = 0
+        val veto = bettorWith(feed(over = 1.77, under = 2.10, ageMs = 30_000L)).run(settings(), vetoState)
+        assertEquals(0, veto.placed.size)
+        assertEquals("a CNO veto costs no feed call", 0, calls)
+        assertEquals(1, veto.skipped["Pinnacle's own devigged price doesn't show it +EV at Novig's price"])
+    }
+
+    // ---- the alerts ---------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `an alert is sent only if its bet is confirmed, one already sent isn't asked again, and a bet with no verdict or a failed check is dropped`() = runBlocking {
+        val s = settings { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true, alertMinEv = 0.03) }
+        val st = state(s)
+        val items = AlertPicks.cnoChecked(st, s.alertMinEv, now)
+        val alerts = AlertPicks.cno(st, s.alertMinEv, now)
+        assertTrue(alerts.isNotEmpty())
+        val asked = ArrayList<String>()
+        // Everything confirmed: all stay.
+        val kept = SharpGate.confirmedAlerts(alerts, unseen = alerts, items = items) { asked += it.pick.row.bet; yes }
+        assertEquals(alerts.map { it.key }, kept.map { it.key })
+        // None confirmed: none stay.
+        assertTrue(SharpGate.confirmedAlerts(alerts, unseen = alerts, items = items) { no() }.isEmpty())
+        // Already sent (not in unseen): kept without asking.
+        asked.clear()
+        assertEquals(alerts.size, SharpGate.confirmedAlerts(alerts, unseen = emptyList(), items = items) { asked += it.pick.row.bet; no() }.size)
+        assertTrue(asked.isEmpty())
+        // A check that throws drops that alert only; an alert with no candidate behind it is dropped.
+        val first = alerts.first().key
+        val some = SharpGate.confirmedAlerts(alerts, unseen = alerts, items = items) { if (MiniWindow.cnoKey(it.pick.row) == first) error("boom") else yes }
+        assertEquals(alerts.map { it.key }.filter { it != first }, some.map { it.key })
+        assertTrue(SharpGate.confirmedAlerts(alerts, unseen = alerts, items = emptyList()) { yes }.isEmpty())
+    }
+
+    // ---- Settings words ------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `Settings names the feeds that can confirm, and says plainly when none is on`() {
+        val s = ScanSettings(sharpConfirmAutoBet = true)
+        fun keys(vararg on: ApiProvider) = { p: ApiProvider -> if (p in on) 1 else 0 }
+        assertEquals(emptyList<String>(), SharpConfirmText.feedsOn(s, keys()))
+        assertEquals(listOf("PinnWire / pinnapi", "ParlayAPI"), SharpConfirmText.feedsOn(s, keys(ApiProvider.PINNWIRE, ApiProvider.PARLAY)))
+        assertEquals(listOf("PinnWire / pinnapi"), SharpConfirmText.feedsOn(s, keys(ApiProvider.PINNAPI)))
+        // Switched off in Settings: the key alone doesn't make it a feed.
+        assertEquals(emptyList<String>(), SharpConfirmText.feedsOn(s.copy(usePinnacle = false), keys(ApiProvider.PINNWIRE)))
+        assertEquals(listOf("PropLine", "The Odds API"), SharpConfirmText.feedsOn(s.copy(usePropLine = true, useOddsApi = true), keys(ApiProvider.PROPLINE, ApiProvider.THE_ODDS_API)))
+        assertTrue(SharpConfirmText.feedsNote(s, emptyList()).startsWith("No Pinnacle feed is on with a key"))
+        assertTrue(SharpConfirmText.feedsNote(s, emptyList()).contains("the auto-bet skips every bet and no CNO alert is sent"))
+        assertEquals("No Pinnacle feed is on with a key: only CNO's page can confirm.", SharpConfirmText.feedsNote(s.copy(sharpConfirmViaCno = true), emptyList()))
+        assertTrue(SharpConfirmText.feedsNote(s, listOf("PinnWire / pinnapi", "ParlayAPI")).startsWith("Asked in this order, and the first that has the bet answers: PinnWire / pinnapi, ParlayAPI."))
+        assertNull(SharpConfirmText.confirmNote(ScanSettings()))
+        assertEquals(
+            "For the auto-bet and CNO's push alerts: Pinnacle's own price, at most 3 min old, must show any +ev at Novig's price now.",
+            SharpConfirmText.confirmNote(ScanSettings(sharpConfirmAutoBet = true, sharpConfirmAlerts = true)),
+        )
+        assertEquals("For the auto-bet: Pinnacle or Circa's own price, at most 1 min old, must show +2% at Novig's price now.",
+            SharpConfirmText.confirmNote(ScanSettings(sharpConfirmAutoBet = true, sharpConfirmBooks = com.tjshea.vigilant.data.scanner.SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 60, sharpConfirmMinEv = 0.02)))
+        assertTrue(SharpConfirmText.viaCnoNote(ScanSettings()).startsWith("Off: only a Pinnacle feed"))
+        assertTrue(SharpConfirmText.viaCnoNote(ScanSettings(sharpConfirmViaCno = true)).startsWith("On: Pinnacle's column on CNO's game page can confirm a bet too"))
+    }
+}
