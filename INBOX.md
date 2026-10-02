@@ -3574,3 +3574,8 @@ Run full tests on this app, make sure all the math is right and that the stats a
 ```
 Look at the screenshots: I want to compare only the novig current odds to the novig odds I placed the bets at. Both odds in the screenshot were the same when I placed the bet and currently, so the EV should be 0. No change. Yet they show negative EV based on "fair odds". I'm not sure where the fair odds came from. When I select the novig only filter, I want it to ONLY compare novig odds currently scanned to the odds I placed each bet at. The current odds at novig only should be considered the "fair odds" to base the EV calculation for my already placed bet. When this novig only filter is on, no data from any other sports book should be used.
 ```
+
+## 2026-10-02T21:51:23Z
+```
+Small change after you complete the full tests: always include my vigilant wallet current balance in all vigilant notifications whether push or silent, so I can always quickly see how much is in the wallet
+```
