@@ -525,7 +525,8 @@ class ApiBettingController(
             toasts.tryEmit("This bet has no fair odds to check it against")
             return
         }
-        open(target, o.selection, "${o.marketLabel} · ${o.event.description}", kelly = o.suggestedStake)
+        val record = runCatching { BetRecord.opportunity(state.value, o, com.tjshea.vigilant.data.tracker.AtBet.HOW_SHEET, clock()) }.getOrNull()
+        open(target.copy(atBet = record), o.selection, "${o.marketLabel} · ${o.event.description}", kelly = o.suggestedStake)
     }
 
     /** A CNO card's bet: its Novig outcome is found first (the same match the Open button uses), then the sheet opens. */
@@ -555,7 +556,11 @@ class ApiBettingController(
         betJob = scope.launch {
             val found = withContext(Dispatchers.IO) { runCatching { c.betFinder.find(row) }.getOrNull() } as? NovigBetFinder.Found.Bet
             val market = found?.let { f -> f.market ?: f.marketId?.let { id -> withContext(Dispatchers.IO) { runCatching { c.novig.market(id) }.getOrNull() } } }
-            val t = if (found != null && market != null) target(found, market) else null
+            val t = (if (found != null && market != null) target(found, market) else null)?.let { t ->
+                // The bet as found (its book page, Novig's price, CNO's numbers): kept on the bet once it fills ([BetRecord]).
+                val live = (row.startsAtMs ?: Long.MAX_VALUE) <= clock()
+                t.copy(atBet = runCatching { BetRecord.cno(state.value, row, live, com.tjshea.vigilant.data.tracker.AtBet.HOW_SHEET, t.source, clock()) }.getOrNull())
+            }
             if (t == null) {
                 state.update { it.copy(betSheet = it.betSheet?.copy(resolving = false, refusal = "Novig's exact bet couldn't be found for this one (its market or line isn't listed the way $lister names it): use Open in Novig instead.")) }
                 return@launch
@@ -644,7 +649,10 @@ class ApiBettingController(
             // Once the order may be on its way it is always followed to its end (and recorded) even if the sheet is closed: a cancelled call
             // would drop the answer to an order Novig has already taken.
             val result = try {
-                withContext(Dispatchers.IO + NonCancellable) { placer.place(target, sheet.stake, plan.limitPrice, sheet.allowRepeat) }
+                // The record's time and stake are the order's: the sheet may have been open a while.
+                val now = clock()
+                val placing = target.copy(atBet = target.atBet?.copy(atMs = now, minutesToStart = (target.startsTs - now) / 60_000L, stake = sheet.stake))
+                withContext(Dispatchers.IO + NonCancellable) { placer.place(placing, sheet.stake, plan.limitPrice, sheet.allowRepeat) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

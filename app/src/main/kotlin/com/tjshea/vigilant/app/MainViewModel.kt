@@ -765,14 +765,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun logBet(item: MiniWindow.Item) {
         val own = item.outcomeId?.let { _state.value.result?.opportunities?.firstOrNull { o -> o.key == item.key } }
         if (own != null) {
-            c.tracker.track(own, com.tjshea.vigilant.data.tracker.BetTracker.DEFAULT_STAKE, placedKey = item.key)
+            val record = runCatching { BetRecord.opportunity(_state.value, own, com.tjshea.vigilant.data.tracker.AtBet.HOW_MARKED, System.currentTimeMillis(), stake = com.tjshea.vigilant.data.tracker.BetTracker.DEFAULT_STAKE) }.getOrNull()
+            c.tracker.track(own, com.tjshea.vigilant.data.tracker.BetTracker.DEFAULT_STAKE, placedKey = item.key, atBet = record)
             return
         }
         val pick = item.cno ?: return
         // ParlayAPI's picks are CNO-shaped rows too, logged as ParlayAPI's.
         val source = if (item.key.startsWith(com.tjshea.vigilant.data.reference.ParlayPlay.KEY_PREFIX)) com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_PARLAY
         else com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO
-        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key, outcomeId = outcomeOf(item).orEmpty(), source = source)
+        val record = runCatching {
+            BetRecord.cno(_state.value, pick.row, pick.live, com.tjshea.vigilant.data.tracker.AtBet.HOW_MARKED, source, System.currentTimeMillis(), stake = com.tjshea.vigilant.data.tracker.BetTracker.DEFAULT_STAKE)
+        }.getOrNull()
+        val bet = c.tracker.logCno(pick.row, pick.ev, pick.live, placedKey = item.key, outcomeId = outcomeOf(item).orEmpty(), source = source, atBet = record)
         // Novig's outcome, so Vigilant's own scans can follow its line to the close (best effort).
         if (!AppBook.isNovig) return
         viewModelScope.launch {
@@ -1289,7 +1293,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun trackBet(o: Opportunity, stake: Double) {
         viewModelScope.launch {
-            val ok = runCatching { c.tracker.track(o, stake) }.getOrNull() != null
+            val record = runCatching { BetRecord.opportunity(_state.value, o, com.tjshea.vigilant.data.tracker.AtBet.HOW_MARKED, System.currentTimeMillis(), stake = stake) }.getOrNull()
+            val ok = runCatching { c.tracker.track(o, stake, atBet = record) }.getOrNull() != null
             _toasts.tryEmit(if (ok) "Tracked ${o.selection} · ${com.tjshea.vigilant.app.ui.Format.money(stake)}" else "Couldn't save the bet")
         }
     }
