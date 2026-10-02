@@ -56,6 +56,9 @@ class BetLedgerTest {
         assertEquals("2 of 9 not agreeing", BetLedger.keyOf(bet("a", at(7, 9, listOf("DraftKings", "Caesars"))), BetLedger.Split.AGREEMENT))
         assertEquals("2", BetLedger.keyOf(bet("a", at(7, 9, listOf("DraftKings", "Caesars"))), BetLedger.Split.DISSENT))
         assertEquals("none", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.DISSENT))
+        // A ✓ on a notification: no page, so no names, but its counts say 2 of 5 disagreed (it used to read "none").
+        assertEquals("2", BetLedger.keyOf(bet("a", at(3, 5).copy(books = emptyList())), BetLedger.Split.DISSENT))
+        assertEquals("none", BetLedger.keyOf(bet("a", at(5, 5).copy(books = emptyList())), BetLedger.Split.DISSENT))
         assertEquals("PASSED", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.SHARP))
         assertEquals("Kalshi agreed", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.SHARP_BOOK))
         assertEquals("none on the page", BetLedger.keyOf(bet("a", at(4, 4, veto = "NO_SHARP", book = null)), BetLedger.Split.SHARP_BOOK))
