@@ -29,7 +29,7 @@ class SharpVetoTest {
 
     @Test
     fun `a prop the grader can't grade is still a prop, a quarter is a period line, and a set spread is the whole match`() {
-        // Found 2026-10-02 ~19:45Z: these came out OTHER, so the Volume preset (props, moneylines, spreads) never auto-bet them and the veto asked Pinnacle.
+        // Found 2026-10-02 ~17:40Z: these came out OTHER, so the Volume preset (props, moneylines, spreads) never auto-bet them and the veto asked Pinnacle.
         for ((market, bet) in listOf(
             "Player Interceptions" to "Patrick Mahomes Over 0.5", "Player Sacks" to "Micah Parsons Over 0.5", "Player Field Goals" to "Harrison Butker Over 1.5",
             "Player Singles" to "Luis Arraez Over 0.5", "Player Outs" to "Gerrit Cole Over 17.5", "Player Blocked Shots" to "Adam Fox Over 1.5",

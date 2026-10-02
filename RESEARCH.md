@@ -3720,7 +3720,7 @@ EV at Novig's price, agrees or not), the sharpest book and what it said, the sta
 wallet. Diagnostics lists every bet with it (JSON lines) and splits CLV by agreement, dissent, the sharpest book's verdict, minutes to the start,
 the check's EV band, kind and preset.
 
-### 66.5 The presets' values, and what Apply changes (written 2026-10-02 ~19:50Z; the values are `Presets.kt`'s)
+### 66.5 The presets' values, and what Apply changes (written 2026-10-02 ~17:45Z; the values are `Presets.kt`'s)
 | Rule | App default | **Volume + safe CLV** (recommended) | Strict CLV | Why (sections above) |
 | :- | :- | :- | :- | :- |
 | Smallest edge (auto-bet) | 3% | **2.5%** | 4% | Tj's 1–2% bets weren't distinguishable from zero CLV, 2–3% beat the close by +1.3%, 4%+ beat it 83% of the time; shown edges shrink ~1.5 points (65, 66.2) |
