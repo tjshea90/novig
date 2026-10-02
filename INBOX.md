@@ -3516,3 +3516,8 @@ Review the screenshot, notice betmgm and betmgm (on). Is the app still double co
 
 And I'm getting no volume so far on auto bet with the option for each bet to be verified positive EV by a sharp book. Is this working correctly? Is it getting sharp book pricing?
 ```
+
+## 2026-10-02T16:39:48Z
+```
+Do research and tell me the best settings to get volume but also a good chance at beating clv. For example, if 7 of 9 books agree that it is positive EV, is this good enough or is it a red flag because 2 books say no? Is it good enough to find positive EV through multiple non sharp books or should I require a sharp book? What is the lowest percent positive EV I should look for per bet to safely beat clv? What other settings or changes should I have to get some volume but also the best chance at beating clv
+```
