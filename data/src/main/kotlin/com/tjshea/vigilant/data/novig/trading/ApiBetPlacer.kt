@@ -168,7 +168,8 @@ class ApiBetPlacer(
         val now = clock()
         if (now - book.fetchedAtMs > ApiBetPlanner.MAX_BOOK_AGE_MS) return PlaceResult.Refused("Novig's price is ${(now - book.fetchedAtMs) / 1000} seconds old: try again in a moment.")
         val (held, short) = pair
-        val live = now >= holding.first.startsTs - LIVE_MARGIN_MS
+        // In-game (the fee charged) from the earlier of Novig's own start and the Tracker's: a start time that moved never makes a live fill look fee-free.
+        val live = now >= minOf(market.startsTs, holding.first.startsTs) - LIVE_MARGIN_MS
         val plan = when (val r = LockIn.plan(held, short, book.takeLadder(market, short.outcomeId), market.fee, live, pushable, minProfit)) {
             is LockResult.None -> return PlaceResult.Refused(r.reason)
             is LockResult.Ready -> r.plan

@@ -83,7 +83,7 @@ class LockScanner(
             val first = h.first
             val pair = market?.let { h.pair(it.outcomes.map { o -> o.outcomeId }) }
             val pushable = market?.let { LockIn.pushable(it.marketType, it.strike, first.league) } ?: true
-            val live = now >= first.startsTs - ApiBetPlacer.LIVE_MARGIN_MS
+            val live = now >= minOf(market?.startsTs ?: first.startsTs, first.startsTs) - ApiBetPlacer.LIVE_MARGIN_MS
             val book = books[h.marketId]
             fun nameOf(outcomeId: String) = when {
                 outcomeId == first.outcomeId -> first.selection

@@ -152,6 +152,17 @@ class LockPlacerTest {
     }
 
     @Test
+    fun `when Novig's own start is sooner than the Tracker's, the lock is worked out with the in-game fee`() = runBlocking {
+        val t = tracker()
+        placedA(t)
+        // Novig says the game starts in a minute (the Tracker says 3 hours): in-game fee included, so the guaranteed profit is $0.50 − $0.07425.
+        val soon = market.copy(startsTs = now + 60_000L)
+        val r = placer(t, FakeNovig()).placeLock(holding(t), soon, minProfit = 0.45, pushable = false, auto = false)
+        assertTrue("with the fee it pays $0.42575, under the $0.45 asked: $r", r is PlaceResult.Refused)
+        assertTrue(placer(t, FakeNovig()).placeLock(holding(t), soon, minProfit = 0.42, pushable = false, auto = false) is PlaceResult.Placed)
+    }
+
+    @Test
     fun `a fill-or-kill that Novig ends unfilled moved no money and logs nothing`() = runBlocking {
         val t = tracker()
         placedA(t)
