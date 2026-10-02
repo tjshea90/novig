@@ -218,7 +218,10 @@ fun BetSheetContent(
                         Text("Replace bet" + (stake?.let { " · $" + NovigLinks.amountText(it) } ?: ""))
                     }
                 }
-                if (bet.gameUrl != null) {
+                // Novig only: both re-read other books (CNO's page, Vigilant's fair odds); Novig's own odds are read with Check Novig now.
+                if (novigOnly) {
+                    // Nothing.
+                } else if (bet.gameUrl != null) {
                     OutlinedButton(onClick = { actions.onReread(bet.id, false) }, enabled = !rereading) { Text(if (rereading) "Reading…" else "Re-read books") }
                 } else if (settings.vigilantOn) {
                     OutlinedButton(onClick = { actions.onReread(bet.id, false) }, enabled = !rereading) { Text(if (rereading) "Pricing…" else "Price now") }

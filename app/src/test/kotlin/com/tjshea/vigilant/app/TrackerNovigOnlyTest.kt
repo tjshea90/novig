@@ -121,7 +121,7 @@ class TrackerNovigOnlyTest {
         compose.onNodeWithText("Novig's odds haven't moved since you placed it.").assertExists()
         compose.onNodeWithText("no other book is used", substring = true).assertExists()
         // Nothing from any other book: no fair from the books, no books behind it, no book table, no other-book EV at bet, no ParlayAPI.
-        for (gone in listOf("Fair now", "Books behind it", "Every book", "EV when bet", "Fair when bet", "devigged")) {
+        for (gone in listOf("Fair now", "Books behind it", "Every book", "EV when bet", "Fair when bet", "devigged", "Re-read books", "Price now")) {
             assertEquals(gone, 0, compose.onAllNodesWithText(gone, substring = true).fetchSemanticsNodes().size)
         }
         assertEquals(0, compose.onAllNodesWithText("Second opinion", substring = true).fetchSemanticsNodes().size)
