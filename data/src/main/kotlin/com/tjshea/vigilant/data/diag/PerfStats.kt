@@ -13,6 +13,11 @@ class PerfStats {
     @Volatile
     var coldStartMs: Long? = null
 
+    /** The first screen's time since the process started, kept once, and only for a process the screen itself started ([windowMs]): one a service or an alarm began long ago is not a cold start. */
+    fun noteColdStart(sinceStartMs: Long, windowMs: Long) {
+        if (coldStartMs == null && sinceStartMs < windowMs) coldStartMs = sinceStartMs
+    }
+
     fun add(name: String, value: Double) {
         series.getOrPut(name) { RollingSamples(CAP) }.add(value)
     }

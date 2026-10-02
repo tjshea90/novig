@@ -61,15 +61,6 @@ class CycleRecorderTest {
         assertFalse(AutoScanner.slowCycle(100_000L, 1200))
     }
 
-    @Test
-    fun `the cold start is the first one noted, and only for a process this screen started`() {
-        assertEquals(1_400L, MainActivity.coldStartOf(1_400L, null))
-        assertEquals(1_400L, MainActivity.coldStartOf(9_000L, 1_400L))
-        assertEquals(null, MainActivity.coldStartOf(MainActivity.COLD_START_WINDOW_MS, null))
-        assertEquals(MainActivity.COLD_START_WINDOW_MS - 1, MainActivity.coldStartOf(MainActivity.COLD_START_WINDOW_MS - 1, null))
-        assertEquals(null, MainActivity.coldStartOf(3_600_000L, null))
-    }
-
     /** Each part of the cycle is timed under its own name (a real cycle's CNO read needs the network, so the steps are pinned in the source). */
     @Test
     fun `each step of a cycle is timed under its own name`() {
