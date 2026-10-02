@@ -45,9 +45,14 @@ class LockInTest {
 
     @Test
     fun `it takes the cheapest levels first, the limit is the deepest level needed, and the worst case is at the limit`() {
-        val ladder = listOf(TakeLevel(0.52, 600), TakeLevel(0.50, 300), TakeLevel(0.60, 10_000))
+        // 300 at 0.50 and 600 at 0.52 make 900; the last 100 come from 0.58 (0.60 is never reached).
+        val ladder = listOf(TakeLevel(0.52, 600), TakeLevel(0.50, 300), TakeLevel(0.60, 10_000), TakeLevel(0.58, 5_000))
         val p = ready(LockIn.plan(Held("A", 1_000, 4.00), Held("B", 0, 0.0), ladder, game, live = false, pushable = false, minProfit = 0.01))
-        assertEquals(0.52, p.limitPrice, 1e-9) // 300 at 0.50, 600 at 0.52, 100 more at... 0.60 > needed? no: 300+600 = 900 < 1000
+        assertEquals(0.58, p.limitPrice, 1e-9)
+        // Worst case: all 1,000 at 0.58 = $5.80: $10 − $4 − $5.80 = $0.20 sure. As the book reads: $1.50 + $3.12 + $0.58 = $5.20: $0.80.
+        assertEquals(0.20, p.guaranteed, 1e-9)
+        assertEquals(5.20, p.expectedCost, 1e-9)
+        assertEquals(0.80, p.expected, 1e-9)
     }
 
     @Test
