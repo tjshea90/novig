@@ -84,6 +84,9 @@ enum class SettingsTab(val label: String) {
     /** Pause, scanner choice, start window, background auto-scan and alerts. */
     SCAN("Scan"),
 
+    /** Built-in and Tj's own presets: every auto-bet, veto, alert and CNO rule at once (Tj, 2026-10-02 17:01Z). */
+    PRESETS("Presets"),
+
     /** The CNO scanner's filters and refresh, and the widget / mini window. */
     CNO("CNO & widget"),
 
@@ -184,6 +187,7 @@ fun SettingsScreen(
         ) {
             when (active) {
                 SettingsTab.SCAN -> ScanTab(s, onUpdate)
+                SettingsTab.PRESETS -> PresetsTab(s, onUpdate)
                 SettingsTab.CNO -> CnoTab(s, onUpdate)
                 SettingsTab.FAIR -> FairOddsTab(state, keys, onUpdate)
                 SettingsTab.FEED -> FeedTab(s, onUpdate)
