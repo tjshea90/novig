@@ -103,12 +103,15 @@ class CnoClient(
 
     private suspend fun booksHere(row: CnoRow, paceWith: CnoPace): CnoBooksView? {
         val url = row.gameUrl ?: return null
-        val grid = try {
-            postback(open(url, paceWith), useTimer = true, paceWith).grid()
+        val records = try {
+            postback(open(url, paceWith), useTimer = true, paceWith)
         } catch (e: IOException) {
             throw unreachable(e)
         }
-        return CnoBooks.parse(grid, row.sideId, row.bet, clock())
+        val grid = records.grid()
+        // The game page's own "Last Updated", when it carries one (a sharp-book confirmation judges CNO's Pinnacle column by it).
+        val age = records.firstOrNull { it.type == "updatePanel" && it.id.endsWith("UpdatePanelServerInfo") }?.let { CnoPage.lastUpdatedSeconds(it.content) }
+        return CnoBooks.parse(grid, row.sideId, row.bet, clock())?.copy(cnoAgeSeconds = age)
     }
 
     override suspend fun novigLink(row: CnoRow): String? = withContext(work) { novigLinkHere(row) }

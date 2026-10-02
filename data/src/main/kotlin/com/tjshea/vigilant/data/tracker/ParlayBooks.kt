@@ -133,7 +133,8 @@ class ParlayBooks(
                 if (mk.period != period) continue
                 val pair = pairFor(mk, game, pick) ?: continue
                 val code = codeOf(mk.bookKey)
-                if (code !in prices) prices[code] = CnoBookPrice(code, odds = pair.first, otherOdds = pair.second)
+                // The quote's own time (the feed's per-market `last_update`, or when it was read): what a sharp-book confirmation judges freshness by.
+                if (code !in prices) prices[code] = CnoBookPrice(code, odds = pair.first, otherOdds = pair.second, atMs = mk.lastUpdateMs)
             }
             if (prices.isEmpty()) return null
             return CnoBooksView(bet = selection, prices = prices.values.toList(), fetchedAtMs = snap.fetchedAtMs.takeIf { it > 0 } ?: now)

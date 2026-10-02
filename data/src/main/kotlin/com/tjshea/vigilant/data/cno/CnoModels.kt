@@ -105,6 +105,11 @@ data class CnoBookPrice(
     val available: Double? = null,
     val otherOdds: Int? = null,
     val otherAvailable: Double? = null,
+    /**
+     * When the book's own quote was made, when the source says (a feed's per-market time; ParlayAPI's `last_update`); null where it doesn't
+     * (CNO's game page: only the whole page has a "Last Updated"). What a sharp-book confirmation judges freshness by ([com.tjshea.vigilant.data.scanner.SharpConfirm]).
+     */
+    val atMs: Long? = null,
 ) {
     val name: String get() = CnoBooks.name(code)
     val twoSided: Boolean get() = odds != null && otherOdds != null
@@ -120,7 +125,12 @@ data class CnoBooksView(
     val cnoFairOneWay: Boolean = false,
     val prices: List<CnoBookPrice>,
     val fetchedAtMs: Long,
-)
+    /** CNO's own "Last Updated: 27 seconds ago" on the game page at the read, when the page said ([dataAtMs]); null otherwise. */
+    val cnoAgeSeconds: Int? = null,
+) {
+    /** When CNO's odds on this page were last updated on CNO's side (the read's time when the page didn't say). */
+    val dataAtMs: Long get() = fetchedAtMs - (cnoAgeSeconds ?: 0) * 1000L
+}
 
 /** What's kept on disk between launches, so the last list shows before the first re-read. */
 @Serializable
