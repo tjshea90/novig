@@ -1,21 +1,24 @@
-# CHECKPOINT 2306 — read me first, then TASKS.md
+# CHECKPOINT 2307 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T04:24:22Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `14f476bf` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T04:28:16Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `4c940d15` (this checkpoint is the commit after it)
 
 ## Just done
-Diagnostics review fixes: onTrimMemory drops boards past the freshness limit + memo + books cache (BackgroundTrimTest); exits classified by importance (cached reclaim not a failure), crashes/exits before this version installed are WATCH/WARN (installedAtMs), crash text carries version; R8 keeps app class/method names + file/line, Release carries mapping.txt
+RESEARCH §63, PARLAY_API/NOVIG_API notes, TASKS AO2-AO5 ticked, KeyActions data class, version 0.44.0 code 79
 
 ## Do this next
-AO4 API research: ESPN endpoints (odds/props/injuries/probabilities), ParlayAPI unused endpoints, other free APIs; RESEARCH §63; then docs, full floor, ship
+full floor with screenshots + look at PNGs; release build check (R8 names); ship v0.44.0; answer Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  2128b83f ckpt 2306: Diagnostics review fixes: onTrimMemory drops boards past the freshness limit
   c9ed0bd8 ckpt 2305: AO2 lag found and fixed: root built a new ApiBetActions for the STATIC Local
   354f4eb9 ckpt 2304: Live feed: opened at the first plan, ONE bulk subscribe of the unread lines 
   d3062e41 ckpt 2303: AO3 part: ParlayAPI quotes dated by the book's verified-at last_update, not 
@@ -25,8 +28,7 @@ AO4 API research: ESPN endpoints (odds/props/injuries/probabilities), ParlayAPI 
   efc3c122 ckpt 2299: v0.43.0 released and recorded: diagnostics file for Claude with flight recor
   6de668d6 ckpt 2298: pre-release: v0.43.0: Diagnostics is a file for Claude: always-on flight rec
   47980f55 ckpt 2297: pre-ship: v0.43.0: Diagnostics is a file for Claude: always-on flight record
-  ece86098 ckpt 2296: AM1-AM6 ticked; version 0.43.0 code 78; full floor 1582 passed with screensh
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
