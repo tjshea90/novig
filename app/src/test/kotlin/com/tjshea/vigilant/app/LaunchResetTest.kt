@@ -115,7 +115,7 @@ class LaunchResetTest {
         shadowOf(android.os.Looper.getMainLooper()).idle()
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
-        assertTrue(app.container.eventLog.events().any { it.text.contains("screen opened (back from another app: auto-bet and auto-scan kept)") })
+        assertTrue(app.container.eventLog.events().any { it.msg.contains("screen opened (back from another app: auto-bet and auto-scan kept)") })
         back.destroy()
         // Swiped out of the recent apps (a service saw it) and opened again: a fresh launch.
         app.container.launches.taskRemoved(System.currentTimeMillis())
