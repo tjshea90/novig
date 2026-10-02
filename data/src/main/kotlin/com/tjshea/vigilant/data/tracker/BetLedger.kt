@@ -108,10 +108,10 @@ object BetLedger {
         else -> "24 h or more"
     }
 
-    /** [bets] grouped by [split], the most-settled groups first ([TrackerBreakdown.of]'s order). */
-    fun of(bets: List<TrackedBet>, split: Split): List<TrackerBreakdown.Row> = bets
+    /** [bets] grouped by [split], the most-settled groups first ([TrackerBreakdown.of]'s order); closes as of [now]. */
+    fun of(bets: List<TrackedBet>, split: Split, now: Long = System.currentTimeMillis()): List<TrackerBreakdown.Row> = bets
         .groupBy { keyOf(it, split) }
-        .map { (label, group) -> TrackerBreakdown.Row(label, BetTracker.stats(group)) }
+        .map { (label, group) -> TrackerBreakdown.Row(label, BetTracker.stats(group, now)) }
         .filter { it.stats.bets > 0 }
         .sortedWith(compareByDescending<TrackerBreakdown.Row> { it.stats.settled }.thenByDescending { it.stats.bets }.thenBy { it.label })
 

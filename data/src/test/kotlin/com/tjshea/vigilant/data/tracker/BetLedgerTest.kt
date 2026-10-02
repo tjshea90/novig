@@ -75,7 +75,7 @@ class BetLedgerTest {
     @Test
     fun `a split's rows carry each group's close and results`() {
         val bets = listOf(bet("a", at(4, 4)), bet("b", at(4, 4), BetStatus.LOST, 0.48), bet("c", at(7, 9, listOf("DraftKings", "Caesars"))), bet("d", null))
-        val rows = BetLedger.of(bets, BetLedger.Split.DISSENT).associateBy { it.label }
+        val rows = BetLedger.of(bets, BetLedger.Split.DISSENT, now).associateBy { it.label }
         assertEquals(setOf("none", "2", BetLedger.NOT_RECORDED), rows.keys)
         val none = rows.getValue("none").stats
         assertEquals(2, none.bets)

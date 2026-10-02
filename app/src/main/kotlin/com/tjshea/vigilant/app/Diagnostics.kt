@@ -349,7 +349,7 @@ object Diagnostics {
         val recorded = kept.count { it.atBet != null }
         o.appendLine("== The bet as placed: close and results split by it ($recorded of ${kept.size} bets recorded, from v0.45.0; outliers aside) ==")
         for (split in com.tjshea.vigilant.data.tracker.BetLedger.Split.entries) {
-            com.tjshea.vigilant.data.tracker.BetLedger.of(kept, split).forEach { row ->
+            com.tjshea.vigilant.data.tracker.BetLedger.of(kept, split, now).forEach { row ->
                 val group = kept.filter { com.tjshea.vigilant.data.tracker.BetLedger.keyOf(it, split) == row.label }
                 o.appendLine("${split.label} ${row.label}: ${breakdownText(row.stats, closedCount(group, now))}")
             }
