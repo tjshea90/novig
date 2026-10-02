@@ -14,6 +14,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.TrackerView
@@ -76,6 +78,7 @@ class TrackerNovigOnlyTest {
         compose.onNodeWithTag("novigOnlyChip").performClick()
         assertEquals(listOf(true), switched)
         compose.onNodeWithTag("novigOnlyChip").assertIsSelected()
+        compose.onRoot().captureRoboImage("screenshots/4n_tracker_novig_only.png")
         // Novig only: +15.0% (0.46 against 0.40), and nothing of every book's +50%.
         assertTrue(compose.onAllNodesWithText("+15.0%", substring = true).fetchSemanticsNodes().isNotEmpty())
         assertEquals(0, compose.onAllNodesWithText("+50.0%", substring = true).fetchSemanticsNodes().size)
