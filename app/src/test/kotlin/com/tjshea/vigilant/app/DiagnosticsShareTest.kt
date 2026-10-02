@@ -127,6 +127,31 @@ class DiagnosticsShareTest {
     }
 
     @Test
+    fun `the file is also saved whole to Downloads, Vigilant folder, and a refused save leaves nothing half-written`() {
+        // Tj, 2026-10-02 17:01Z: "in addition to the share with feature, make sure the diagnosis prompt file for Claude is saved to my android downloads folder".
+        val file = DiagnosticsShare.write(app, "the whole report\n".repeat(2_000), "vigilant-diagnostics-v0.45.0-2026-10-02-1730.txt")
+        val resolver = shadowOf(app.contentResolver)
+        resolver.setNextDatabaseIdForInserts(7)
+        val expected = android.content.ContentUris.withAppendedId(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, 7)
+        val out = java.io.ByteArrayOutputStream()
+        resolver.registerOutputStream(expected, out)
+        val uri = DiagnosticsShare.saveToDownloads(app.contentResolver, file)
+        assertEquals(expected, uri)
+        assertEquals(file.readText(), out.toString(Charsets.UTF_8.name()))
+        val values = resolver.insertStatements.single().contentValues
+        assertEquals(file.name, values.getAsString(android.provider.MediaStore.Downloads.DISPLAY_NAME))
+        assertEquals("Download/Vigilant", values.getAsString(android.provider.MediaStore.Downloads.RELATIVE_PATH))
+        assertEquals("text/plain", values.getAsString(android.provider.MediaStore.Downloads.MIME_TYPE))
+        assertEquals(1, values.getAsInteger(android.provider.MediaStore.Downloads.IS_PENDING))
+        // Shown to other apps only once it's written whole.
+        assertEquals(0, resolver.updateStatements.single().contentValues.getAsInteger(android.provider.MediaStore.Downloads.IS_PENDING))
+        // The view model saves every file it makes there, and says where (or why not).
+        val vm = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt").readText().substringAfter("fun shareDiagnostics()").substringBefore("fun phoneNow")
+        assertTrue(vm, vm.indexOf("DiagnosticsShare.saveToDownloads(getApplication<Application>().contentResolver, file)") in vm.indexOf("DiagnosticsShare.write(") until vm.indexOf("DiagnosticsShare.intent("))
+        assertTrue(vm, vm.contains("Saved to ${'$'}{DiagnosticsShare.DOWNLOADS_DIR}/${'$'}{file.name}") && vm.contains("Couldn't save it to Downloads"))
+    }
+
+    @Test
     fun `from the view model, sharing makes the file, hands over the sheet, remembers the numbers, and the next file compares with them`() {
         val vm = MainViewModel(app)
         waitFor("settings loaded") { vm.state.value.loaded }
