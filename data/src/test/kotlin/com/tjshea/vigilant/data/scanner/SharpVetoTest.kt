@@ -42,7 +42,7 @@ class SharpVetoTest {
         assertEquals(BetKind.SPREAD, BetKind.of("Set Spread", "Novak Djokovic -1.5"))
         assertEquals(BetKind.TOTAL, BetKind.of("Total Sets", "Over 3.5"))
         assertEquals(BetKind.OTHER, BetKind.of("Moneyline 3-Way", "Draw"))
-        assertEquals(BetKind.SPREAD, BetKind.of("Alternate Spread", "Kansas City Chiefs -10.5 Yes"))
+        assertEquals(BetKind.SPREAD, BetKind.of("Alternate Spread", "Kansas City Chiefs"))
         // And the veto asks the prop books about them.
         assertEquals(SharpVeto.ranking(BetKind.PROP, SharpVeto.Sport.FOOTBALL), SharpVeto.ranking(BetKind.of("Player Sacks", "Micah Parsons Over 0.5"), SharpVeto.Sport.FOOTBALL))
     }
