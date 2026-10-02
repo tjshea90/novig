@@ -1,13 +1,13 @@
-# CHECKPOINT 2347 — read me first, then TASKS.md
+# CHECKPOINT 2348 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T17:17:33Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `0743489f` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T17:19:57Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-d5e55a28-kw91fe` · **builds on:** `b6b73aae` (this checkpoint is the commit after it)
 
 ## Just done
-AW4 code: AtBet (as placed) on TrackedBet + BetTarget; recorded by auto-bet, Bet sheet (at order time), ✓ marks, Vigilant cards, alerts
+AW5 code: BetLedger (JSON line per bet + 13 splits), Diagnostics splits + EVERY BET section, file saved to Downloads/Vigilant via MediaStore
 
 ## Do this next
-AW5: Diagnostics per-bet JSON lines + splits; save file to Downloads/Vigilant via MediaStore
+tests: fix compile of old tests (sharpConfirm* renamed), then SharpVeto/Presets/AtBet/BetLedger/Downloads tests
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ AW5: Diagnostics per-bet JSON lines + splits; save file to Downloads/Vigilant vi
 
 ## Last ten checkpoints
 ```
+  a9c8bd2a ckpt 2347: AW4 code: AtBet (as placed) on TrackedBet + BetTarget; recorded by auto-bet,
   040f47d7 ckpt 2346: AW3 UI: Presets tab (built-ins Volume + safe CLV / Strict CLV, save/apply/de
   9529aaa4 ckpt 2345: AW2 code: SharpVeto (ranking by bet kind and sport), SharpMode OFF/VETO/CONF
   2f450dde ckpt 2344: AW1: §65 re-checked (2 corrections: Buchdahl numbers, Wizard 3%), §66 rese
@@ -25,7 +26,6 @@ AW5: Diagnostics per-bet JSON lines + splits; save file to Downloads/Vigilant vi
   f7dc79c6 ckpt 2340: AU4: v0.44.3 released, APK verified, recorded; release.yml's description fix
   02f379ba ckpt 2339: pre-release: v0.44.3: only a phone restart turns auto-bet off (not a swipe a
   99fa19d1 ckpt 2338: floor: 1,641 passed, 1 stale pin fixed (DiagnosticsFileTest); SharpRealBoard
-  9bcdd15a ckpt 2337: AU1-AU3 ticked (8 mutants killed); BRIEF.md rule + RESEARCH.md §64
 ```
 
 (4 automatic checkpoint(s) since the last deliberate one — the
