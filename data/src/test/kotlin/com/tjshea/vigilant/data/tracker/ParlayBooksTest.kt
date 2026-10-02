@@ -176,4 +176,17 @@ class ParlayBooksTest {
             tennis.shutdown()
         }
     }
+
+    /** Tj, 2026-10-02: a sharp-book confirmation judges a quote by its own time, so each book's price carries the feed's `last_update`. */
+    @Test
+    fun `each book's price carries its own last_update, the time a sharp-book check judges freshness by`() = runBlocking<Unit> {
+        val b = books()
+        val game = "Pittsburgh Steelers @ Cleveland Browns"
+        val ml = b.view(bet("ml", game, "2026-10-02T00:15:00Z", "Moneyline", "Cleveland Browns"))!!.prices.associateBy { it.code }
+        assertEquals(Instant.parse("2026-09-30T04:07:34Z").toEpochMilli(), ml.getValue("PN").atMs)
+        assertEquals(Instant.parse("2026-09-30T04:07:43Z").toEpochMilli(), ml.getValue("FD").atMs)
+        val allen = b.view(bet("p", "New England Patriots @ Buffalo Bills", "2026-10-04T17:00:00Z", "Passing Attempts", "Josh Allen Under 29.5"))!!.prices.associateBy { it.code }
+        assertEquals(Instant.parse("2026-09-30T04:06:27Z").toEpochMilli(), allen.getValue("CZR").atMs)
+        assertEquals(Instant.parse("2026-09-30T04:00:35Z").toEpochMilli(), allen.getValue("DK").atMs)
+    }
 }
