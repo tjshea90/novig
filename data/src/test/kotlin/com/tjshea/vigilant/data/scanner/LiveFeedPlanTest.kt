@@ -98,6 +98,7 @@ class LiveFeedPlanTest {
         val novig = Keyed(onBooks = { if (it == 1) slow.complete(Unit) })
         val r = scanner(novig).scan(settings, listOf(Fair("polymarket", 0, 10), Fair("kalshi", 10, 60, slow)), onProgress = {}, onPartial = {})
 
+        println("DBG opened=${novig.opened} watched=${novig.watched} calls=${novig.calls} push=${r.booksViaPush} fetched=${r.booksFetched}")
         assertTrue("opened before it was handed anything", novig.opened >= 1)
         assertEquals("one bulk subscribe a scan", 1, novig.watched.size)
         val asked = novig.watched.single()
