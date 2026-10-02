@@ -461,7 +461,7 @@ class AutoScanService : Service() {
             ensureChannel(context)
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_scan)
-            .withWallet(context)
+                .withWallet(context)
                 .setContentTitle("Auto-scan paused")
                 .setContentText("Android stopped it in the background. Open Vigilant to start it again.")
                 .setAutoCancel(true)

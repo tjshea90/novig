@@ -152,7 +152,7 @@ object EvAlerts {
             val timeout = a.startsAtMs?.let { minOf(SHOWN_FOR_MS, (it - now).coerceAtLeast(60_000L)) } ?: SHOWN_FOR_MS
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_scan)
-            .withWallet(context)
+                .withWallet(context)
                 .setContentTitle(title(a))
                 .setContentText(text(a))
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
