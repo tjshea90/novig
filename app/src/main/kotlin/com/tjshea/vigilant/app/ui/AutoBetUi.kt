@@ -104,11 +104,27 @@ object AutoBetText {
         val s = state.settings
         return when {
             !AppBook.isNovig -> "Auto-bet is for Novig."
-            !state.betting.enabled -> "Betting through the API isn't set up: enable it above first (the wallet is where auto-bets come from)."
+            !state.betting.enabled -> "Betting through Novig's API isn't set up yet: connect your Novig key and turn on betting first (the wallet is where auto-bets come from)."
             s.autoBetHalted != null -> "Stopped: ${s.autoBetHalted}"
             s.paused -> "Scanning is paused (the ⏸ button): auto-bet waits for it."
-            s.scanner == ScannerMode.VIGILANT -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read: pick Both or CNO only (Settings › Scan)."
-            s.autoScan == AutoScanMode.OFF -> "Background auto-scan is off, and auto-bet runs with it: pick CNO or CNO + Vigilant (Settings › Scan)."
+            s.scanner == ScannerMode.VIGILANT -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read."
+            s.autoScan == AutoScanMode.OFF -> "The background scan is off, and auto-bet runs inside it."
+            else -> null
+        }
+    }
+
+    /** The one tap that fixes [whyNotRunning]. */
+    enum class Fix { SET_UP_BETTING, RESUME_SCANNING, SCANNER, BACKGROUND_SCAN }
+
+    fun fixFor(state: UiState): Fix? {
+        val s = state.settings
+        return when {
+            !AppBook.isNovig -> null
+            !state.betting.enabled -> Fix.SET_UP_BETTING
+            s.autoBetHalted != null -> null
+            s.paused -> Fix.RESUME_SCANNING
+            s.scanner == ScannerMode.VIGILANT -> Fix.SCANNER
+            s.autoScan == AutoScanMode.OFF -> Fix.BACKGROUND_SCAN
             else -> null
         }
     }
@@ -120,10 +136,10 @@ object AutoBetText {
     /** The Kelly sizing note, when a Kelly stake is chosen. */
     fun kellyNote(s: ScanSettings): String? {
         val f = s.autoBetStake.kelly ?: return null
-        return "Kelly sizing uses your bankroll (${Format.money(s.bankroll)}, set in Bankroll & Kelly above): bankroll × ${Format.kellyLabel(f).removeSuffix(" Kelly")} × " +
+        return "Kelly sizing uses your bankroll (${Format.money(s.bankroll)}, Settings › Betting & Novig account): bankroll × ${Format.kellyLabel(f).removeSuffix(" Kelly")} × " +
             "(fair chance − price) ÷ (1 − price), so it changes with each bet's odds and edge. It's held to your most per bet, to what Novig has for sale at +EV " +
             "and to what's in the wallet, floored to the cent; under a cent is skipped, never rounded up (a Kelly stake under a dollar is placed as it is). At the same edge a longer price stakes less " +
-            "(a +300 bet gets a third of a +100 bet's stake), but nothing caps the odds itself: that is the longest-odds limit above."
+            "(a +300 bet gets a third of a +100 bet's stake), but nothing caps the odds itself: that is the longest-odds limit (What it bets)."
     }
 }
 
@@ -484,14 +500,27 @@ object SharpConfirmText {
         if (s.useOddsApi && keys(ApiProvider.THE_ODDS_API) > 0) add("The Odds API")
     }
 
+    /** What the sharp books are, in plain words. */
+    fun sharpIntro(): String =
+        "Sharp books are the sportsbooks whose odds are the most accurate (they let winning bettors bet big, so their prices get corrected fast). Which ones " +
+            "are sharpest depends on the kind of bet."
+
+    /** What each mode does, in plain words. */
+    fun modeNote(mode: SharpMode): String = when (mode) {
+        SharpMode.OFF -> "Off: the sharp books have no say; the other rules decide."
+        SharpMode.VETO -> "Veto (recommended): a bet is skipped only when the sharpest book for its kind of bet says it isn't +EV. Free: it uses the prices already read."
+        SharpMode.CONFIRM -> "Require a confirmation (strict, far fewer bets): a fresh Pinnacle price must also show the bet is +EV. On player props Pinnacle is " +
+            "often missing or soft, so most props are skipped."
+    }
+
     fun intro(): String =
         "On top of every other criterion: a sharp book (Pinnacle) must show the bet is +EV on its own price. Its two sides for the exact same game, market, line and " +
             "side are devigged (worst case of four methods) and compared with Novig's price now; the quote must be newer than the limit below, and a sharp book that says " +
-            "it isn't +EV vetoes the bet. Each switch is off until you turn it on."
+            "it isn't +EV vetoes the bet."
 
     fun feedsNote(s: ScanSettings, feeds: List<String>): String = when {
         feeds.isEmpty() && !s.sharpConfirmViaCno ->
-            "No Pinnacle feed is on with a key (Settings › Usage & keys: PinnWire or pinnapi, PropLine, ParlayAPI), so with a switch on nothing can be confirmed: " +
+            "No Pinnacle feed is on with a key (Settings › Fair odds & sources: PinnWire or pinnapi, PropLine, ParlayAPI), so nothing can be confirmed: " +
                 "the auto-bet skips every bet and no CNO alert is sent. Or switch on \"Also take Pinnacle's price from CNO's page\" below."
         feeds.isEmpty() -> "No Pinnacle feed is on with a key: only CNO's page can confirm."
         else -> "Asked in this order, and the first that has the bet answers: ${feeds.joinToString(", ")}. Only a bet that already passed every other criterion is looked up " +
@@ -527,43 +556,54 @@ object SharpConfirmText {
 }
 
 /**
- * Settings › Betting › Sharp books (Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement"): for the auto-bet and for CNO's push alerts, Off, Veto (the
- * default: [SharpVeto]) or Require a confirmation ([SharpConfirm], with its criteria shown only then).
+ * The sharp books' say over the auto-bet (its tab) or CNO's push alerts (Settings › Alerts) (Tj, 2026-10-02 17:01Z: "sharp veto instead of requirement"):
+ * Off, Veto (the default: [SharpVeto]) or Require a confirmation ([SharpConfirm], its criteria shown only then; they're shared by both).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SharpConfirmSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+fun SharpVetoSection(state: UiState, forAlerts: Boolean, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+    val mode = if (forAlerts) s.sharpAlerts else s.sharpAutoBet
+    SectionTitle(if (forAlerts) "Sharp-book veto for alerts" else "Sharp-book veto")
+    Text(SharpConfirmText.sharpIntro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
+    Chips(SharpMode.entries.toList(), mode, { it.displayName }, modifier = Modifier.testTag(if (forAlerts) "sharpAlerts" else "sharpAutoBet")) { v ->
+        onUpdate { if (forAlerts) it.copy(sharpAlerts = v) else it.copy(sharpAutoBet = v) }
+    }
+    Text(SharpConfirmText.modeNote(mode), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag(if (forAlerts) "sharpAlertsNote" else "sharpAutoBetNote"))
+    if (mode == SharpMode.VETO) {
+        Text(SharpConfirmText.vetoNote(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("sharpVetoNote"))
+    }
+    if (mode == SharpMode.CONFIRM) SharpConfirmCriteria(state, onUpdate)
+}
+
+/** The confirmation's criteria (shared by the auto-bet and the alerts): which sharp books, how fresh, how big an edge, and CNO's page. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SharpConfirmCriteria(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val s = state.settings
     val feeds = SharpConfirmText.feedsOn(s) { state.keysOf(it).size }
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
-    SectionTitle("Sharp books")
-    Text(SharpConfirmText.vetoNote(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("sharpVetoNote"))
-    Text("Auto-bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(SharpMode.entries.toList(), s.sharpAutoBet, { it.displayName }) { v -> onUpdate { it.copy(sharpAutoBet = v) } }
-    Text("CNO push alerts", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(SharpMode.entries.toList(), s.sharpAlerts, { it.displayName }) { v -> onUpdate { it.copy(sharpAlerts = v) } }
-    if (s.sharpAutoBet == SharpMode.CONFIRM || s.sharpAlerts == SharpMode.CONFIRM) {
-        Text(SharpConfirmText.intro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
-        Text("Sharp books", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-        Chips(SharpBookChoice.entries.toList(), s.sharpConfirmBooks, { it.displayName }) { v -> onUpdate { it.copy(sharpConfirmBooks = v) } }
-        Text("Newest quote allowed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-        Chips(ScanSettings.SHARP_MAX_AGE_CHOICES, s.sharpConfirmMaxAgeSeconds, SharpConfirmText::ageLabel) { v -> onUpdate { it.copy(sharpConfirmMaxAgeSeconds = v) } }
-        Text("Edge the sharp book must show at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-        Chips(ScanSettings.SHARP_MIN_EV_CHOICES, s.sharpConfirmMinEv, SharpConfirmText::edgeLabel) { v -> onUpdate { it.copy(sharpConfirmMinEv = v) } }
-        Row(
-            Modifier.fillMaxWidth().toggleable(value = s.sharpConfirmViaCno, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(sharpConfirmViaCno = v) } })
-                .padding(top = 8.dp, bottom = 2.dp).testTag("sharpConfirmViaCno"),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Also take Pinnacle's price from CNO's page", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
-            Switch(checked = s.sharpConfirmViaCno, onCheckedChange = null)
-        }
-        Text(SharpConfirmText.viaCnoNote(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("sharpConfirmViaCnoNote"))
-        SharpConfirmText.confirmNote(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag("sharpConfirmNote")) }
-        Text(
-            SharpConfirmText.feedsNote(s, feeds), style = MaterialTheme.typography.bodySmall,
-            color = if (feeds.isEmpty() && !s.sharpConfirmViaCno) Edge.colors.warning else subtle, modifier = Modifier.padding(top = 4.dp).testTag("sharpConfirmFeeds"),
-        )
+    Text(SharpConfirmText.intro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
+    Text("Sharp books that can confirm", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(SharpBookChoice.entries.toList(), s.sharpConfirmBooks, { it.displayName }) { v -> onUpdate { it.copy(sharpConfirmBooks = v) } }
+    Text("Oldest quote allowed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.SHARP_MAX_AGE_CHOICES, s.sharpConfirmMaxAgeSeconds, SharpConfirmText::ageLabel) { v -> onUpdate { it.copy(sharpConfirmMaxAgeSeconds = v) } }
+    Text("Edge the sharp book must show at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.SHARP_MIN_EV_CHOICES, s.sharpConfirmMinEv, SharpConfirmText::edgeLabel) { v -> onUpdate { it.copy(sharpConfirmMinEv = v) } }
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = s.sharpConfirmViaCno, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(sharpConfirmViaCno = v) } })
+            .padding(top = 8.dp, bottom = 2.dp).testTag("sharpConfirmViaCno"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Also take Pinnacle's price from CNO's page", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+        Switch(checked = s.sharpConfirmViaCno, onCheckedChange = null)
     }
+    Text(SharpConfirmText.viaCnoNote(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("sharpConfirmViaCnoNote"))
+    SharpConfirmText.confirmNote(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag("sharpConfirmNote")) }
+    Text(
+        SharpConfirmText.feedsNote(s, feeds), style = MaterialTheme.typography.bodySmall,
+        color = if (feeds.isEmpty() && !s.sharpConfirmViaCno) Edge.colors.warning else subtle, modifier = Modifier.padding(top = 4.dp).testTag("sharpConfirmFeeds"),
+    )
 }
 
