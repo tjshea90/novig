@@ -23,6 +23,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 /**
@@ -66,6 +68,21 @@ class BackgroundTrimTest {
             now,
         )
     }
+
+    /**
+     * A heap with room: the scanner also lets its caches go mid-scan when the heap is pressing ([com.tjshea.vigilant.data.MemoryGuard.pressing]),
+     * and on CI's busy test JVM that counted as trims here (failed twice on CI, 2026-10-02 04:46Z and 15:17Z). This test is about leaving the
+     * screen, not about memory pressure (StreamingScanTest covers that).
+     */
+    @Before fun roomyHeap() {
+        com.tjshea.vigilant.data.MemoryGuard.probe = object : com.tjshea.vigilant.data.MemoryGuard.Probe {
+            override fun used() = 0L
+            override fun max() = 1L shl 30
+            override fun collect() {}
+        }
+    }
+
+    @After fun realHeap() = com.tjshea.vigilant.data.MemoryGuard.useRealProbe()
 
     @Test
     fun `boards past every freshness limit go when Vigilant leaves the screen, young ones stay and still price`() = runTest {
