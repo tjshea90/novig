@@ -386,6 +386,16 @@ class AutoBettorTest {
     }
 
     @Test
+    fun `once the wallet put Vigilant to sleep, the rest of that background cycle (alerts, closes, locks, Vigilant's scan) doesn't run`() {
+        val f = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").takeIf { it.exists() } ?: java.io.File("app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt")
+        val cycle = f.readText().substringAfter("suspend fun cycle(forceVigilant: Boolean = false): Boolean").substringBefore("private suspend fun cnoRead")
+        val bet = cycle.indexOf("c.autoBet.run(s, snapshot(s))")
+        val asleep = cycle.indexOf("if (c.currentSettings().paused) return true")
+        assertTrue(bet > 0 && asleep > bet)
+        assertTrue("before the alerts", asleep < cycle.indexOf("cnoAlerts(s)"))
+    }
+
+    @Test
     fun `a wallet the cycle just read as empty puts Vigilant to sleep even with no bet on offer`() = runBlocking {
         app.container.settingsStore.update { settings() }
         val s = settings()
