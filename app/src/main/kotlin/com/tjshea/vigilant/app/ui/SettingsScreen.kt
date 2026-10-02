@@ -840,7 +840,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     ) { v -> onUpdate { it.copy(includeLive = v) } }
 }
 
-/** Betting: bankroll and Kelly, the bet slip's amount, and betting through Novig's API. */
+/** Betting & Novig account: the key and wallet, then how much each bet is (bankroll, Kelly, the starting amounts), and the limits. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.BettingTab(
@@ -850,10 +850,28 @@ private fun ColumnScope.BettingTab(
     onNovigTest: () -> Unit,
     onNovigDisconnect: () -> Unit,
     bettingActions: BettingActions,
+    onOpenAutoBet: (() -> Unit)? = null,
 ) {
     val s = state.settings
-    // ---- Stake sizing -----------------------------------------------------------------
-    SectionTitle("Bankroll & Kelly")
+    if (AppBook.isNovig) {
+        Intro(
+            "Connect your Novig API key to bet straight from Vigilant (the Bet sheet) and to use auto-bet. Bets come from a separate Vigilant wallet inside " +
+                "your Novig account that you move money into. Without a key, a tap on a bet opens Novig's own bet slip instead.",
+        )
+        // In CNO only too: CNO's cards bet through the API as well, and the Bet sheet's "Add money" lands on this wallet.
+        SectionTitle("Novig API key")
+        NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status, onForgetKey = bettingActions.onForgetKey)
+        // Betting through Novig's API: needs the connected key's subaccount (Tj, 2026-09-29).
+        if (state.novig.connection != null) {
+            NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
+        }
+        if (s.cnoOn && onOpenAutoBet != null) {
+            OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
+        }
+    }
+
+    // ---- How much each bet is ------------------------------------------------------------
+    SectionTitle("Bet amounts")
     var bankroll by remember(s.bankroll) { mutableStateOf(String.format(Locale.US, "%.0f", s.bankroll)) }
     OutlinedTextField(
         value = bankroll,
@@ -866,15 +884,20 @@ private fun ColumnScope.BettingTab(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth(),
     )
+    Hint("The money you set aside for betting. Kelly stakes are a share of it.")
+    Text("Kelly fraction for suggested stakes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
     Hint(
-        if (AppBook.exchange) "Suggested stakes are capped at what Novig's book can actually fill at +EV."
-        else "${AppBook.name} doesn't publish its limits: a suggested stake over your max bet there is capped by ${AppBook.name} itself.",
+        "Kelly is a formula that sizes a bet by how big its edge is: a bigger edge, a bigger bet. Full Kelly swings hard; most bettors use ¼ Kelly because " +
+            "edges are estimates. Used for the stake each card suggests and for \"Kelly\" below. (Auto-bet has its own stake rule, on its tab.) " +
+            if (AppBook.exchange) "Suggested stakes are capped at what Novig's book can actually fill at +EV."
+            else "${AppBook.name} doesn't publish its limits: a suggested stake over your max bet there is capped by ${AppBook.name} itself.",
     )
     if (AppBook.isNovig) {
-        // Novig's bet-slip links take a wager (Tj, 2026-09-28: "automatically enter 1 dollar per bet, the kelly value
-        // per bet, or an amount I can type into the settings"; NovigLinks).
-        Text("Amount in Novig's bet slip", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+        // Novig's bet-slip links take a wager (Tj, 2026-09-28: "automatically enter 1 dollar per bet, the kelly value per bet, or an amount I can type into
+        // the settings"; NovigLinks). One choice for both places a bet starts (2026-10-02 ~18:10Z: "$1" filled the slip with $1 but the Bet sheet with
+        // "Amount a bet starts at"): the bet slip and Vigilant's own Bet sheet.
+        Text("Amount a bet starts at", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
         ChoiceChips(com.tjshea.vigilant.data.novig.SlipStake.entries.toList(), s.slipStake, { it.label }) { v -> onUpdate { it.copy(slipStake = v) } }
         if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.CUSTOM) {
             var custom by remember(s.slipCustomStake) { mutableStateOf(com.tjshea.vigilant.data.novig.NovigLinks.amountText(s.slipCustomStake)) }
@@ -890,18 +913,12 @@ private fun ColumnScope.BettingTab(
                 modifier = Modifier.fillMaxWidth().testTag("slipCustomStake"),
             )
         }
-        Hint(
-            when (s.slipStake) {
-                com.tjshea.vigilant.data.novig.SlipStake.OFF -> "Tapping a bet opens Novig's bet slip with no amount: you type it in Novig."
-                com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR -> "Every bet you tap opens in Novig's bet slip with $1 entered."
-                com.tjshea.vigilant.data.novig.SlipStake.KELLY ->
-                    "Every bet opens with its own Kelly stake entered, to the cent: bankroll × the Kelly fraction above × (fair chance − price) ÷ (1 − price), " +
-                        "so it changes with each bet's odds and edge, held to what Novig has for sale at +EV."
-                com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> "Every bet you tap opens with this amount entered."
-            } + " From the +EV tab, the widget, the CNO tab and alerts. You still confirm the bet in Novig." +
-                (if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY || s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.CUSTOM)
-                    " Vigilant's own Bet sheet (the wallet) opens with the same amount, within your per-bet limit." else ""),
-        )
+        Hint(StakeText.startHint(s))
+        // The Bet sheet's own amount: used only when the choice above has none for a bet (2026-10-02 ~18:10Z: shown only then).
+        if (state.betting.enabled && StakeText.sheetAmountUsed(s)) {
+            Text(StakeText.sheetAmountTitle(s), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(STAKE_AMOUNT_CHOICES, s.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
+        }
     }
     if (!AppBook.isNovig) {
         // BetMGM's sites are per state: its bet-slip links need Tj's (BetMgmLinks).
@@ -920,27 +937,30 @@ private fun ColumnScope.BettingTab(
             else "Taps open sports.${s.bookState}.betmgm.com: the bet slip with the bet in it when the feed sent ${AppBook.name}'s ids, else the game.",
         )
     }
-
-    // In CNO only too: CNO's cards bet through the API as well, and the Bet sheet's "Add money" lands on this wallet.
-    if (AppBook.isNovig) {
-        SectionTitle("Novig API key")
-        NovigKeySection(state.novig, onNovigConnect, onNovigTest, onNovigDisconnect, lastScan = state.status, onForgetKey = bettingActions.onForgetKey)
-        // Betting through Novig's API: needs the connected key's subaccount (Tj, 2026-09-29).
-        if (state.novig.connection != null) {
-            NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
-            // Auto-bet (Tj, 2026-10-01): off until turned on; places CNO's bets through the wallet above.
-            val context = androidx.compose.ui.platform.LocalContext.current
-            AutoBetSection(
-                state,
-                notificationsBlocked = com.tjshea.vigilant.app.AutoBetNotes.blocked(context),
-                onTestNotification = { (context.applicationContext as? android.app.Application)?.let(com.tjshea.vigilant.app.AutoBetNotes::sample) ?: false },
-                onUpdate = onUpdate,
-            )
-        }
-        // Sharp-book confirmation (Tj, 2026-10-02): for the auto-bet and for CNO's push alerts, so it doesn't need the betting key.
-        SharpConfirmSection(state, onUpdate)
-    }
 }
+
+/** The bet-amount lines (pure, for tests). */
+object StakeText {
+    /** What the starting-amount choice does, for the bet slip and the Bet sheet. */
+    fun startHint(s: ScanSettings): String = when (s.slipStake) {
+        com.tjshea.vigilant.data.novig.SlipStake.OFF -> "Novig's bet slip opens with no amount (you type it in Novig); Vigilant's Bet sheet starts at the amount below."
+        com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR -> "Every bet starts at \$1: in Novig's bet slip and in Vigilant's Bet sheet."
+        com.tjshea.vigilant.data.novig.SlipStake.KELLY ->
+            "Every bet starts at its own Kelly stake, to the cent: bankroll × the Kelly fraction above × (true chance − price) ÷ (1 − price), so a bigger edge " +
+                "gets more. Held to what Novig has for sale at +EV and to your most for one bet."
+        com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> "Every bet starts at this amount: in Novig's bet slip and in Vigilant's Bet sheet."
+    } + " You can always change it before you confirm."
+
+    /** Whether the Bet sheet's own amount ([ScanSettings.apiBetStake]) is ever used at this choice. */
+    fun sheetAmountUsed(s: ScanSettings): Boolean =
+        s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.OFF || s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY
+
+    fun sheetAmountTitle(s: ScanSettings): String =
+        if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY) "When a bet has no Kelly stake (no edge at its price), start at" else "Bet sheet starts at"
+}
+
+/** The Bet sheet's starting amounts. */
+val STAKE_AMOUNT_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
 
 /** Usage & keys: each API's usage meter and the keys backup. */
 @OptIn(ExperimentalLayoutApi::class)
