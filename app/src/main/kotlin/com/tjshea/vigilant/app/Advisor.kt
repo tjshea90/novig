@@ -80,8 +80,29 @@ object Advisor {
     private val APP_FRAME = Regex("""at (com\.tjshea\.vigilant[\w.$]*)\.([\w$<>]+)\(([\w.]+):(\d+)\)""")
 
     private fun crashes(x: Diagnostics.Extras, now: Long): List<Finding> {
-        val crashes = x.problems.filter { it.area == "App crash" }
-        val bad = x.exits.filter { it.bad && now - it.atMs < 3 * DAY_MS }
+        // A crash or exit from before this version was installed happened on older code: say so, as something to check rather than a bug to
+        // chase (Tj's 2026-10-02 file ranked the v0.38.0 out-of-memory crash, fixed in v0.39.0-0.39.1, as its top BUG on v0.43.0).
+        val installed = x.installedAtMs
+        val (older, current) = x.problems.filter { it.area == "App crash" }.partition { installed != null && it.lastAtMs < installed }
+        return crashesOf(current, x.exits.filter { it.bad && now - it.atMs < 3 * DAY_MS && (installed == null || it.atMs >= installed) }, now) +
+            older.groupBy { frameOf(it) }.map { (frame, ps) ->
+                Finding(
+                    "watch:oldcrash:$frame", "WATCH", "A crash at $frame before this version was installed (${ps.sumOf { it.count }}×, last ${Format.age(ps.maxOf { it.lastAtMs }, now)})",
+                    "${headOf(ps.first())}. It happened on an earlier version; if a later version fixed it, it won't come back.",
+                    "the file ${frame.substringAfterLast('(').substringBefore(':')}; BUILDLOG.md and RESEARCH.md say what changed since", "",
+                    weight = 5.0,
+                )
+            }
+    }
+
+    private fun frameOf(p: com.tjshea.vigilant.data.diag.Problem): String =
+        APP_FRAME.find(p.message)?.let { "${it.groupValues[1].substringAfterLast('.')}.${it.groupValues[2]}(${it.groupValues[3]}:${it.groupValues[4]})" }
+            ?: p.message.lineSequence().firstOrNull { it.isNotBlank() && !it.startsWith("at=") }?.take(80) ?: "unknown"
+
+    private fun headOf(p: com.tjshea.vigilant.data.diag.Problem): String =
+        p.message.lineSequence().firstOrNull { it.contains("Exception") || it.contains("Error") }?.take(140) ?: p.message.take(140)
+
+    private fun crashesOf(crashes: List<com.tjshea.vigilant.data.diag.Problem>, bad: List<AppExits.Exit>, now: Long): List<Finding> {
         if (crashes.isEmpty() && bad.isEmpty()) return emptyList()
         val byFrame = crashes.groupBy { p ->
             APP_FRAME.find(p.message)?.let { "${it.groupValues[1].substringAfterLast('.')}.${it.groupValues[2]}(${it.groupValues[3]}:${it.groupValues[4]})" }
@@ -97,7 +118,7 @@ object Advisor {
         } + bad.filter { e -> crashes.none { kotlin.math.abs(it.lastAtMs - e.atMs) < 120_000L } }.groupBy { it.reason }.map { (reason, es) ->
             Finding(
                 "bug:exit:$reason", "BUG", "Android ended the app ${es.size} time${if (es.size == 1) "" else "s"}: $reason",
-                "last ${Format.age(es.maxOf { it.atMs }, now)}, ${if (es.first().foreground) "on screen" else "in the background"}" + (es.first().description?.let { ": ${it.take(100)}" } ?: "") +
+                "last ${Format.age(es.maxOf { it.atMs }, now)}, ${es.first().where}" + (es.first().pssMb?.let { ", using $it MB" } ?: "") + (es.first().description?.let { ": ${it.take(100)}" } ?: "") +
                     (es.first().trace.firstOrNull { it.contains("vigilant") }?.let { "; main thread at $it" } ?: ""),
                 "'How the app last ended' below (a freeze's main-thread stack)", "A 'not responding' is work on the main thread: find the frame in the stack and move it off (Dispatchers.Default/IO). A memory kill: see the Memory block.", weight = 90.0 + es.size,
             )

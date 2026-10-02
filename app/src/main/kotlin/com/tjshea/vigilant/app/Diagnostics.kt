@@ -36,6 +36,8 @@ object Diagnostics {
         val versionName: String,
         val versionCode: Int,
         val device: String,
+        /** When this version was installed (PackageInfo.lastUpdateTime): a crash or exit before it happened on an older version. Null = not known. */
+        val installedAtMs: Long? = null,
         val autoScan: AutoScanner.Status = AutoScanner.Status(),
         /** What the auto-bet did last (Tj, 2026-10-01). */
         val autoBet: AutoBettor.Status = AutoBettor.Status(),
@@ -128,7 +130,7 @@ object Diagnostics {
         fun ago(ms: Long?) = ms?.let { com.tjshea.vigilant.app.ui.Format.age(it, now) } ?: "never"
         val o = StringBuilder()
         o.appendLine("VIGILANT DIAGNOSTICS · ${at(now)}")
-        o.appendLine("Version ${x.versionName} (code ${x.versionCode}) · ${x.device}")
+        o.appendLine("Version ${x.versionName} (code ${x.versionCode})" + (x.installedAtMs?.let { " installed ${at(it)}" } ?: "") + " · ${x.device}")
         // For whoever reads it next (Tj pastes it to Claude): where the code is, and how the report is laid out.
         o.appendLine("For Claude: code at github.com/tjshea90/novig (modules engine/data/app; paths below are under data/src/main/kotlin/com/tjshea/vigilant/ or app's). Health checks come first, worst first, each with its evidence [in brackets] and the code that owns it (→); the blocks after are the numbers behind them. No keys are ever included.")
         val set = s.settings
@@ -365,7 +367,8 @@ object Diagnostics {
         if (x.exits.isEmpty()) o.appendLine("Nothing recorded.")
         x.exits.forEach { e ->
             o.appendLine(
-                "${at(e.atMs)} · ${e.reason}" + (if (e.foreground) " · on screen" else " · in the background") + (e.pssMb?.let { " · ${it} MB" } ?: "") +
+                "${at(e.atMs)} · ${e.reason} · ${e.where}" + (e.pssMb?.let { " · ${it} MB" } ?: "") +
+                    (if (x.installedAtMs != null && e.atMs < x.installedAtMs) " · before this version was installed" else "") +
                     (e.description?.takeIf { it.isNotBlank() }?.let { " · ${com.tjshea.vigilant.data.diag.ProblemLog.clean(it).take(200)}" } ?: ""),
             )
             // Where the main thread was stuck when Android said "not responding".

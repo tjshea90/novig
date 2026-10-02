@@ -1523,6 +1523,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return Diagnostics.Extras(
             versionName = info?.versionName ?: "?",
             versionCode = info?.let { androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(it).toInt() } ?: 0,
+            installedAtMs = info?.lastUpdateTime?.takeIf { it > 0 },
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
             autoBet = c.autoBet.status.value,

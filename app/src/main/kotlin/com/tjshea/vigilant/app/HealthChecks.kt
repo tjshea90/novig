@@ -234,18 +234,26 @@ object HealthChecks {
 
     private fun MutableList<Check>.phone(s: UiState, x: Diagnostics.Extras, now: Long) {
         // Crashes, freezes and kills for memory in the last day (Android's own record: AppExits).
-        val bad = x.exits.filter { it.bad && now - it.atMs < 24 * HOUR }
+        val day = x.exits.filter { now - it.atMs < 24 * HOUR }
+        val bad = day.filter { it.bad }
+        // Android freeing a cached Vigilant (nothing running) is what it does to any app in the background: said, never a failure.
+        val reclaimed = day.count { it.reclaimed }
+        val reclaimedText = if (reclaimed > 0) "; Android also freed Vigilant's memory $reclaimed time${plural(reclaimed)} while it sat cached in the background (normal, costs a cold start)" else ""
         if (bad.isNotEmpty()) {
             val last = bad.maxByOrNull { it.atMs }!!
+            // Only before this version was installed: the version running now hasn't done it (yet).
+            val since = x.installedAtMs?.let { at -> bad.count { it.atMs >= at } } ?: bad.size
             add(
                 Check(
-                    Level.FAIL, "App stability", "the app ended badly ${bad.size} time${plural(bad.size)} in the last day (${bad.groupingBy { it.reason }.eachCount().entries.joinToString { "${it.value} ${it.key}" }})",
-                    "the last ${Format.age(last.atMs, now)}, ${if (last.foreground) "on screen" else "in the background"}" + (last.description?.takeIf { it.isNotBlank() }?.let { ": ${com.tjshea.vigilant.data.diag.ProblemLog.clean(it).take(140)}" } ?: ""),
+                    if (since > 0) Level.FAIL else Level.WARN, "App stability",
+                    "the app ended badly ${bad.size} time${plural(bad.size)} in the last day (${bad.groupingBy { it.reason }.eachCount().entries.joinToString { "${it.value} ${it.key}" }})" +
+                        (if (since < bad.size) ", ${bad.size - since} before this version was installed" else ""),
+                    "the last ${Format.age(last.atMs, now)}, ${last.where}" + (last.description?.takeIf { it.isNotBlank() }?.let { ": ${com.tjshea.vigilant.data.diag.ProblemLog.clean(it).take(140)}" } ?: "") + reclaimedText,
                     "How the app last ended (a freeze's main-thread stack) and Recent problems (a crash's stack) below",
                 ),
             )
         } else if (x.exits.isNotEmpty()) {
-            add(Check(Level.OK, "App stability", "no crash, freeze or memory kill in the last day"))
+            add(Check(Level.OK, "App stability", "no crash, freeze or memory kill while it was working in the last day" + reclaimedText))
         }
         val p = x.phone
         val set = s.settings
