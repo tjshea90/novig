@@ -121,6 +121,8 @@ data class BetActions(
     val onPrice: (String, Int) -> Unit = { _, _ -> },
     /** Betting through the API is set up: add what Novig filled that the Tracker doesn't have. */
     val onSync: () -> Unit = {},
+    /** Lock in a bet's profit (market id, the profit Tj confirmed): RESEARCH.md §67. */
+    val onLock: (String, Double) -> Unit = { _, _ -> },
 )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
@@ -328,6 +330,7 @@ fun TrackerScreen(
                             onDelete = { confirmDelete = bet },
                             injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
                             move = state.lineMoves[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
+                            lock = if (bet.viaApi && open(bet)) state.locks[bet.marketId] else null,
                         )
                     }
                 }
@@ -348,6 +351,8 @@ fun TrackerScreen(
             onDelete = { confirmDelete = bet },
             onDismiss = { openId = null },
             injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.betKey(bet)],
+            lock = if (bet.viaApi) state.locks[bet.marketId] else null,
+            locking = state.locking == bet.marketId,
         )
     }
     confirmDelete?.let { bet ->
@@ -568,6 +573,8 @@ private fun BetCard(
     injury: com.tjshea.vigilant.data.reference.Injury? = null,
     /** An open team bet's game moved at Pinnacle (PARLAY_API.md §6.3). */
     move: com.tjshea.vigilant.data.reference.LineMove? = null,
+    /** The lock on this bet's market, when it was placed through the API (RESEARCH.md §67). */
+    lock: com.tjshea.vigilant.app.LockView? = null,
 ) {
     val open = bet.status == BetStatus.PENDING
     val awaiting = TrackerText.awaiting(bet, now)
@@ -599,6 +606,12 @@ private fun BetCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    LockText.badge(lock)?.let {
+                        Text(it, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.testTag("lockBadge"))
+                    }
+                    if (bet.isLock) {
+                        Text("🔒 A lock: the other side of an earlier bet (not in the record, EV or CLV)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     if (bet.isOutlier) {
                         Text(
                             "Outlier (over ±${Format.percent(BetTracker.OUTLIER_EV, 0)} EV): not in stats",
