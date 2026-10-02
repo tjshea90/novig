@@ -127,11 +127,11 @@ class DiagnosticsShareTest {
     }
 
     @Test
-    fun `the file is also saved whole to Downloads, Vigilant folder, and a refused save leaves nothing half-written`() {
+    fun `the file is also saved whole to Downloads, Vigilant folder, and shown to other apps only once written`() {
         // Tj, 2026-10-02 17:01Z: "in addition to the share with feature, make sure the diagnosis prompt file for Claude is saved to my android downloads folder".
         val file = DiagnosticsShare.write(app, "the whole report\n".repeat(2_000), "vigilant-diagnostics-v0.45.0-2026-10-02-1730.txt")
         val resolver = shadowOf(app.contentResolver)
-        resolver.setNextDatabaseIdForInserts(7)
+        resolver.setNextDatabaseIdForInserts(6) // the next insert is row 7
         val expected = android.content.ContentUris.withAppendedId(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, 7)
         val out = java.io.ByteArrayOutputStream()
         resolver.registerOutputStream(expected, out)
