@@ -1189,7 +1189,7 @@ fun autoScanHint(s: ScanSettings): String {
         if (vigilantEvery != s.autoScanSeconds) " (it starts at most every ${ScanSettings.intervalLabel(vigilantEvery)}, however fast CNO is read)" else ""
     val fast = if (s.autoScanSeconds < 60) " Under a minute apart is constant background work: more battery." + (if (KeepAwake.active(s)) "" else " Android may space scans out while the phone sits idle (Keep awake, below, prevents that).") else ""
     val notification = " A quiet notification shows while it's on (Scan now, Stop)." +
-        if (s.autoBetsNow) " Auto-bet is on: bets that pass your criteria are placed with each CNO check (Settings › Betting & Novig account)." else ""
+        if (s.autoBetsNow) " Auto-bet is on: bets that pass your rules are placed with each CNO check (the Auto-bet tab)." else ""
     return when {
         s.autoScansCno && s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $cnoPart, then $vigilantPart.$notification$fast"
         s.autoScansCno -> "Every $every, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work.$fast" +
