@@ -1,6 +1,6 @@
 package com.tjshea.vigilant.app
 
-import com.tjshea.vigilant.data.diag.CycleLog
+import com.tjshea.vigilant.app.ui.Format
 import com.tjshea.vigilant.data.diag.Level
 import com.tjshea.vigilant.data.diag.Snap
 import com.tjshea.vigilant.data.diag.Trend
