@@ -1,22 +1,22 @@
-# CHECKPOINT 2378 — read me first, then TASKS.md
+# CHECKPOINT 2379 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T20:08:10Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `fb160827` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T20:09:45Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `c4867092` (this checkpoint is the commit after it)
 
 ## Just done
-AZ: Tj's request (hide locked bets, lock stats, Novig-odds misses) written into TASKS.md
+AZ1 investigation workflow running (ids, read path, pricer, lock/stats map); found: logCno never passes marketId, only a one-shot betFinder.find repairs it
 
 ## Do this next
-AZ1: investigate why open bets miss Novig odds (priceable blank ids, market() 404/catalog, 3-way otherOutcome, one-sided books, CNO ids)
+AZ1: read workflow wf_7af9002d-ac8 results, fix id gaps (retry finding Novig ids for open bets), per-bet miss reasons; then AZ2/AZ3
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  c4867092 ckpt 2378: AZ: Tj's request (hide locked bets, lock stats, Novig-odds misses) written i
   4061e276 ckpt 2377: AY done: v0.47.0 released, verified, recorded (locks + auto-lock + Novig-onl
   bbd3d8b0 ckpt 2376: pre-release: v0.47.0: lock in a profit on bets placed through Vigilant once 
   1738e581 ckpt 2375: floor green on v0.47.0 (1,736: 1,713 passed, 23 skipped)
@@ -26,8 +26,4 @@ AZ1: investigate why open bets miss Novig odds (priceable blank ids, market() 40
   0cacac9f ckpt 2371: AY3-AY5 done: lock scanner, by-hand lock card, auto-lock, stats; LockAppTest
   d3f03028 ckpt 2370: AY4/AY5 UI: LockCard + confirm on the bet sheet, Tracker lock badge, Auto-be
   568d448b ckpt 2369: AY3/AY4 app wiring: LockScanner + AutoLocker (cycle hook, notification), UiS
-  2e25da47 ckpt 2368: AY4 data side: placeLock (FOK, positions check), LockPositions, lockFor; Loc
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
