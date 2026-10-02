@@ -3241,3 +3241,15 @@ Research first; build only if the research says it has merit.
   Done: it does not (§62.4). Kept: the study script (re-run when NBA/NHL months are published); the finding that makers earn the spread (supports the maker-bid line, §16.4); big depth at a price already +EV against Pinnacle is good for Tj as the taker (already shown as "$X fillable at +EV"). Sharp action is already followed at its source: devigged Pinnacle/Circa, and since v0.42.0 the fresh-Pinnacle confirmation (§60).
 - [x] AN3 Build what AN2 decides (only if merit), tests (mutation-checked), full floor, ship, answer Tj.
   Done: nothing to build, per Tj's condition ("Only make this if you discover that it has merit"). No app change, no version, no Release.
+
+
+## Tj, 2026-10-02 ~03:50Z: "Run full tests on this app, look for ways to improve the app and scanners. Look into these issues: 1) when I start the vigilant scanner the list of bets gets laggy. This is ok if it's supposed to but not ok if it's a sign of bad code. 2) look at the screenshot, most odds say 9 minutes old. Is there a way to get fresh odds during a scan? Is 9 minute old odds still good data? 3) consider ways to use free apis such as ESPN apis and also my paid parlayapi to their full extent and get as much benefit as possible from the apis. Research API features and docs if needed. Search for free apis that can improve this app. Look at their docs. I'm about to send a diagnostics file from the app, review that too"
+
+The screenshot: +EV feed while "Scanning" (Novig prices 1883/4588), three NCAAF cards (Total UCF @ Houston, NC State Under 27.5 team total, Gardner-Webb -7.5) each "odds 9 min old" in amber.
+
+- [ ] AO1 Full tests (test-protocols skill): the whole floor with screenshots, every PNG looked at, the sweep of every tab and subsystem; fix what's found, each fix with a test that fails without it.
+- [ ] AO2 Lag: find out why the +EV list gets laggy while a Vigilant scan runs (recomposition per streamed price, sorting/filtering on the main thread, unstable params, the progress bar, the "odds N min old" ticker). Say whether it's expected or bad code; fix what's bad code, with a test or a measurement.
+- [ ] AO3 "odds 9 min old": what that age measures (the reference book's quote age vs. Novig's price), why most cards show 9 min mid-scan, whether a scan can get fresher odds (re-read reference books for the cards on screen, PinnWire/ParlayAPI freshness, the end-of-scan re-read), and whether 9-min-old odds are still good data (by market, by time to start; RESEARCH.md §24/§30 freshness rules). Build what the answer supports.
+- [ ] AO4 APIs to their full extent: ParlayAPI (every endpoint and feature on Tj's plan vs. what Vigilant uses, PARLAY_API.md), ESPN's free APIs (scores, injuries, lineups, odds, rosters), and a search for other free APIs worth adding (with their docs read). Write it up (RESEARCH.md) and build the ones with the most benefit per cost.
+- [ ] AO5 Review the diagnostics file Tj sends from the app; fix what it shows.
+- [ ] AO6 Full floor, ship, answer Tj with the findings on each point and the Release link.
