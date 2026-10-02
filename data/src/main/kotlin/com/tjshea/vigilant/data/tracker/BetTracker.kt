@@ -148,6 +148,15 @@ data class TrackedBet(
      * pick, so the EV and closing-line stats leave it out ([isLock]).
      */
     val lockFor: String? = null,
+    /**
+     * Novig's own price for this bet's side (Tj, 2026-10-02 ~18:50Z: "find the current novig odds for each of my open bets and show the percent EV compared
+     * only from novig odds"): the middle of Novig's best bid and offer, and when it was read ([NovigNow]); [novigClose] is the last one read before the
+     * start (Novig's own closing line). The Tracker's "Novig only" filter prices the bet from these alone.
+     */
+    val novigFair: Double? = null,
+    val novigAtMs: Long? = null,
+    val novigClose: Double? = null,
+    val novigCloseAtMs: Long? = null,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
@@ -573,6 +582,12 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 }
             }
         }
+    }
+
+    /** Novig's own price now for these bets ([NovigNow.apply]): bet id → the middle of Novig's bid and offer for its side, read at [at]. */
+    suspend fun recordNovig(prices: Map<String, Double>, at: Long) {
+        if (prices.isEmpty()) return
+        store.update { list -> list.map { b -> prices[b.id]?.let { NovigNow.apply(b, it, at) } ?: b } }
     }
 
     suspend fun delete(id: String) {
