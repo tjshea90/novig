@@ -390,6 +390,27 @@ class DiagnosticsTest {
         assertEquals(HealthChecks.Level.OK, HealthChecks.of(SampleScan.state(), extras.copy(exits = listOf(quit, old)), now).first { it.area == "App stability" }.level)
     }
 
+    /** Tj's 2026-10-02 file: "FAIL App stability: the app ended badly 3 times in the last day (3 low memory) [the last 1h ago, in the background]". */
+    @Test
+    fun `Android freeing a cached Vigilant is said but isn't a FAIL, and what ended before this version installed is a WARN`() {
+        val cached = AppExits.Exit(now - 60 * 60_000L, "low memory", null, false, 190, importance = AppExits.CACHED)
+        val x = extras.copy(exits = listOf(cached, cached.copy(atMs = now - 2 * 3_600_000L), cached.copy(atMs = now - 3 * 3_600_000L)))
+        val check = HealthChecks.of(SampleScan.state(), x, now).first { it.area == "App stability" }
+        assertEquals(HealthChecks.Level.OK, check.level)
+        assertTrue(check.finding, check.finding.contains("Android also freed Vigilant's memory 3 times while it sat cached in the background"))
+        val text = report(x = x)
+        assertTrue(text, text.contains("low memory · cached in the background (nothing running) · 190 MB"))
+        // A freeze, but on the version before this one: a WARN that says so, not a FAIL.
+        val freeze = AppExits.Exit(now - 5 * 3_600_000L, "not responding", null, true, 300, importance = AppExits.FOREGROUND)
+        val older = extras.copy(installedAtMs = now - 3_600_000L, exits = listOf(freeze))
+        val warn = HealthChecks.of(SampleScan.state(), older, now).first { it.area == "App stability" }
+        assertEquals(HealthChecks.Level.WARN, warn.level)
+        assertTrue(warn.finding, warn.finding.endsWith(", 1 before this version was installed"))
+        assertTrue(report(x = older).contains("not responding · on screen · 300 MB · before this version was installed"))
+        // On this version: FAIL.
+        assertEquals(HealthChecks.Level.FAIL, HealthChecks.of(SampleScan.state(), older.copy(installedAtMs = now - 6 * 3_600_000L), now).first { it.area == "App stability" }.level)
+    }
+
     /** Tj's v0.38.0 report, 2026-10-01: an OutOfMemoryError at the heap limit mid-scan. The next report says what filled it. */
     @Test
     fun `the report has a memory block and warns when the heap is nearly full`() {
