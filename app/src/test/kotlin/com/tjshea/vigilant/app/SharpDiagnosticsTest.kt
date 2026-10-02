@@ -26,10 +26,12 @@ class SharpDiagnosticsTest {
     private fun checks(s: UiState = state(), x: Diagnostics.Extras = extras) = HealthChecks.of(s, x, now).filter { it.area == "Sharp-book confirmation" }
 
     @Test
-    fun `off, there is no health line, and the report says off`() {
-        val off = SampleScan.state()
-        assertTrue(HealthChecks.of(off, extras, now).none { it.area == "Sharp-book confirmation" })
-        assertTrue(Diagnostics.report(off, extras, now, zone).contains("Sharp-book confirmation (Tj, 2026-10-02): auto-bet off · alerts off\n"))
+    fun `with no confirmation there is no health line, and the report says each mode`() {
+        val veto = SampleScan.state()
+        assertTrue(HealthChecks.of(veto, extras, now).none { it.area == "Sharp-book confirmation" })
+        assertTrue(Diagnostics.report(veto, extras, now, zone).contains("Sharp books (Tj, 2026-10-02: veto by default): auto-bet VETO · alerts VETO\n"))
+        val off = veto.copy(settings = veto.settings.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF))
+        assertTrue(Diagnostics.report(off, extras, now, zone).contains("Sharp books (Tj, 2026-10-02: veto by default): auto-bet OFF · alerts VETO\n"))
     }
 
     @Test
@@ -66,10 +68,10 @@ class SharpDiagnosticsTest {
     fun `the report carries the criteria, the feeds and what they have answered`() {
         val s = state { it.copy(sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 120, sharpConfirmMinEv = 0.01, sharpConfirmViaCno = true) }
         val text = Diagnostics.report(s, extras, now, zone)
-        val line = text.lines().single { it.startsWith("Sharp-book confirmation (Tj, 2026-10-02)") }
-        assertTrue(line, line.contains("auto-bet ON · alerts ON · Pinnacle or Circa, quote at most 2 min old, edge at least 1.0%, CNO's page may confirm"))
+        val line = text.lines().single { it.startsWith("Sharp books (Tj, 2026-10-02") }
+        assertTrue(line, line.contains("auto-bet CONFIRM · alerts CONFIRM · Pinnacle or Circa, quote at most 2 min old, edge at least 1.0%, CNO's page may confirm"))
         assertTrue(line, line.contains("feeds: PinnWire / pinnapi, ParlayAPI · feed calls since the app opened 6 (1 failed), answers: PinnWire 4"))
-        val none = Diagnostics.report(state(), extras.copy(sharpFeeds = emptyList(), sharpAnswers = emptyMap(), sharpCalls = 0, sharpFailures = 0), now, zone).lines().single { it.startsWith("Sharp-book confirmation (Tj, 2026-10-02)") }
+        val none = Diagnostics.report(state(), extras.copy(sharpFeeds = emptyList(), sharpAnswers = emptyMap(), sharpCalls = 0, sharpFailures = 0), now, zone).lines().single { it.startsWith("Sharp books (Tj, 2026-10-02") }
         assertTrue(none, none.contains("edge any +EV, CNO's page only vetoes · feeds: none on with a key · feed calls since the app opened 0 (0 failed)"))
     }
 }
