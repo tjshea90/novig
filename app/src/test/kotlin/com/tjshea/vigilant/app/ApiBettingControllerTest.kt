@@ -129,7 +129,7 @@ class ApiBettingControllerTest {
     }
 
     @Test
-    fun `a bet placed by hand has no minimum edge and no pause: only Tj's dollar limits`() {
+    fun `a bet placed by hand has no minimum edge and no pause, only Tj's dollar limits`() {
         // Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to bet on whatever I want manually.
         // Only keep the hard restrictions on the auto bet function". The old setting at +50% and scanning paused: the sheet still plans.
         val (o, book) = sample()
