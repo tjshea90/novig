@@ -578,12 +578,12 @@ private data class BookmakerDto(
     val key: String,
     val title: String,
     val last_update: String? = null,
-    /** ParlayAPI: [last_update] in milliseconds. */
-    val last_update_ms: Long? = null,
+    /** ParlayAPI: [last_update] in milliseconds (read as a number of any shape: a decimal must not fail the whole answer). */
+    val last_update_ms: Double? = null,
     val markets: List<MarketDto> = emptyList(),
 ) {
     /** When the feed last saw this book on this game (ParlayAPI: a price change or a poll that found the same price). */
-    val seenMs: Long? get() = last_update_ms ?: TheOddsApiClient.parseIsoMs(last_update)
+    val seenMs: Long? get() = last_update_ms?.takeIf { it.isFinite() && it > 0 }?.toLong() ?: TheOddsApiClient.parseIsoMs(last_update)
 }
 
 @Serializable
