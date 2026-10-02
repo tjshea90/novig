@@ -102,7 +102,7 @@ class LaunchResetTest {
     }
 
     @Test
-    fun `opening Vigilant never switches auto-bet off: not fresh, not restored, not after a close, only after a phone restart`() {
+    fun `opening Vigilant never switches auto-bet off, fresh, restored or after a close, only after a phone restart`() {
         // Tj, 2026-10-02 16:05Z: auto-bet running in the notification, Vigilant opened: it must stay on, however the screen was made.
         open().destroy()
         assertTrue(saved().autoBet)
@@ -165,7 +165,7 @@ class LaunchResetTest {
     }
 
     @Test
-    fun `nothing but a restart resets: the screen, the services and the receiver say so in code`() {
+    fun `nothing but a restart resets, in the screen, the services and the receiver`() {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
         val create = src.substringAfter("override fun onCreate(savedInstanceState: Bundle?) {").substringBefore("// No refresh loop")
         assertTrue(create, create.contains("val switchedOff = LaunchReset.onOpen(app, Boot.now(this))"))
