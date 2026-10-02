@@ -33,14 +33,14 @@ class SisterBooksTest {
     fun `four Hard Rock state sites and DraftKings are two books, not five, and can't confirm a bet alone`() {
         // Hard Rock's four sites at one price, all +EV against Novig's +115; DraftKings says it isn't.
         val hr = listOf("HR-IN", "HR-FL", "HR-IL", "HR-OH").map { CnoBookPrice(it, odds = 105, otherOdds = -125) }
-        val v = view(*(hr + CnoBookPrice("DK", odds = -105, otherOdds = -115) + CnoBookPrice("NV", odds = 115)).toTypedArray())
+        val v = view(*(hr + CnoBookPrice("DK", odds = 130, otherOdds = -150) + CnoBookPrice("NV", odds = 115)).toTypedArray())
         val c = CnoBooks.check(v, listOdds = 115)
         assertEquals(2, c.twoSided)
         assertEquals("Hard Rock once", 1, c.agreeing)
         assertEquals("two companies are too few to confirm", CnoBooks.Verdict.THIN, c.verdict)
         // The consensus is Hard Rock's line and DraftKings', one each: not four parts Hard Rock.
         val hrFair = CnoBooks.fairFor(105, -125)!!
-        val dkFair = CnoBooks.fairFor(-105, -115)!!
+        val dkFair = CnoBooks.fairFor(130, -150)!!
         assertEquals(CnoBooks.consensus(listOf(hrFair, dkFair))!!, c.fairProbability!!, 1e-12)
     }
 
