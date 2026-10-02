@@ -3440,3 +3440,8 @@ Research if there is a way to have a setting for the cno scanner and auto bet fe
 ```
 For the diagnostics feature, make it output a file that I can send directly to Claude which Claude can understand and easily diagnose and improve the app. The diagnostic feature in the app should be very comprehensive and log all types of events, code, failures, connection speed and issues, API usage and issues, etc. make it so when I output the diagnostic file, it opens an android "share with" prompt, and I can share it directly with Claude app. This file should tell Claude comprehensive data about the app and signal to Claude what to optimize, what bugs or failures there are to fix, how to make features smarter or faster or better coded. Basically I want a smart diagnostics feature that can improve the app with every upload to Claude.
 ```
+
+## 2026-10-02T02:51:49Z
+```
+I read somewhere that sharp bets can be found on novig by analyzing liquidity on certain bets, and if large liquidity is offered on certain bets that it is probably betting syndicates or sharps. Investigate whether this is true or not. If it is true and a good betting strategy, implement in vigilant a way to scan for this liquidity and follow the sharp bets. Basically a scanner for sharp action. Only make this if you discover that it has merit and is a good strategy. Then find the most effective and efficient way to incorporate it in vigilant using the best sources and keep in mind the apis I already have
+```
