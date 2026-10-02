@@ -73,7 +73,8 @@ class WalletNotificationsTest {
         shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         app.container.wallet.record(42.17)
         val alert = EvAlert(
-            key = "k", bet = "Team A", event = "B @ A", market = "Moneyline", league = "NFL", american = 120, ev = 0.04, startsAtMs = System.currentTimeMillis() + 3_600_000,
+            "CNO", "cno:k", "o1", "Justin Jefferson Under 69.5", "Player Receiving Yards", "Minnesota Vikings @ Tampa Bay Buccaneers",
+            117, 0.0584, 3, 3, System.currentTimeMillis() + 86_400_000L, "novigapp://events/o1", true,
         )
         assertEquals(1, EvAlerts.post(app, listOf(alert)))
         AutoBetNotes.stopped(app, "Auto-bet stopped", "Novig refused an order")
