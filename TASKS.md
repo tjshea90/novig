@@ -3427,3 +3427,8 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   Done: app/Wallet.kt: WalletBalance (one reading for the app, kept across restarts, re-read only when over 30 s old; every balance read records into it: auto-bet's per pass, the Bet sheet's, a transfer's answer), refreshed each background cycle and before a scan's result notification; withWallet() sets every notification's header line (sub-text: collapsed and expanded, push and silent): "Wallet $25.40", "(5m ago)" once over 2 minutes old, "not read yet" / "betting not set up". All 11 notification builders (auto-bet placed, auto-lock, test, stopped; +EV alert, tracked-from-alert; scan progress, scan done; auto-scan ongoing, auto-scan paused; closing-line capture).
 - [x] BC2 Tests (every notification builder carries it), full floor, ship, answer Tj.
   Done: WalletNotificationsTest (5: the line, caching, kept across restarts, a posted push alert and a silent notice both carry it, no builder without it); mutants 2/2; floor 1,764 green.
+
+## Tj, 2026-10-02 ~22:10Z: "When vigilant wallet runs out of money, it already tells me in the notifications, but make it also stop scanning and put the app to sleep once the wallet runs out of money."
+
+- [ ] BD1 When auto-bet finds the Vigilant wallet empty (the same test that already notifies), pause all scanning (ScanSettings.paused: running scan stopped, CNO list held, background auto-scan and its service off) and say so in that notification ("scanning paused: add money, then Resume"). Waking it is Tj's (Resume / adding money doesn't silently restart it). Tests.
+- [ ] BD2 Full floor, ship (folds in v0.49.1's wallet line), answer Tj.
