@@ -70,7 +70,8 @@ object DiagnosticsFile {
             "HOW TO WORK FROM THIS FILE",
             "1. Read WHAT TO DO from the top. Each finding has a KIND (BUG, FAILURE, OPTIMIZE, IMPROVE, WATCH), the evidence this phone recorded, the code to open and what to try. BUG and FAILURE first; a WATCH is not a request.",
             "2. SINCE THE PREVIOUS REPORT says what changed since the last file Tj sent: use it to check that a fix worked (a finding RESOLVED, a number down) before starting new work.",
-            "3. The sections after it are the evidence: health checks, settings, scans, APIs, CNO, background, tracker, accuracy, memory, phone, how the app last ended, recent problems, then the flight recorder (CONNECTIONS, API ISSUES, PERFORMANCE, COUNTERS, EVENT TIMELINE, APP LOG, STORAGE).",
+            "3. The sections after it are the evidence: health checks, settings, scans, APIs, CNO, background, tracker, accuracy (with 'The bet as placed': CLV and results split by agreement, dissent, the sharp veto, time to the start, the book check's EV, kind, sport, preset, liquidity), memory, phone, how the app last ended, recent problems, then the flight recorder (CONNECTIONS, API ISSUES, PERFORMANCE, COUNTERS, EVENT TIMELINE, APP LOG, STORAGE) and EVERY BET (one JSON line per bet with its full record as placed).",
+            "   THE GOAL IS PROFIT: positive EV that the close confirms (CLV) and wins over time. Tune the presets (data/scanner/Presets.kt), the sharp veto's rankings (data/scanner/SharpVeto.kt) and the auto-bet's rules from the splits and EVERY BET; a group needs ~200+ bets with a close before its CLV says much, so weigh small groups against RESEARCH.md §65-§66.",
             "4. Make changes the way the repo asks (CLAUDE.md): write the request into TASKS.md first, load the matching skill, test (mutation-check new tests), run `bash tools/test.sh`, ship with `bash ship.sh`, release via the workflow, and send Tj the Release link.",
             "5. Everything Claude changes should make the NEXT file better: if the data you needed wasn't here, add it to the recorder (data/src/main/kotlin/com/tjshea/vigilant/data/diag/) and say so.",
             "",
@@ -121,6 +122,7 @@ object DiagnosticsFile {
         timeline(x, now, zone, o)
         appLog(x, o)
         storage(x, o)
+        everyBet(s, now, o)
 
         o.appendLine()
         o.appendLine("== CODE MAP ==")
@@ -136,6 +138,19 @@ object DiagnosticsFile {
     }
 
     // ---- the flight recorder's sections -----------------------------------------------------------------------------------
+
+    /**
+     * Every bet, newest first, one JSON object a line ([com.tjshea.vigilant.data.tracker.BetLedger.Row]): the bet, its record as placed (`atBet`: odds,
+     * books and their prices, agreement, dissent, the sharp veto, minutes to the start, EV by CNO and by the book check, stake, preset), its close
+     * (`clv`, `closeFair`, `closeVia`) and its result (`status`, `profit`). As long as the Tracker is: the file has no size limit (Tj, 2026-10-02).
+     */
+    private fun everyBet(s: UiState, now: Long, o: StringBuilder) {
+        o.appendLine()
+        o.appendLine("== EVERY BET (JSON lines, newest first: the bet, atBet = its record as placed, its close and its result; ${s.bets.size} bets) ==")
+        o.appendLine("<<<JSONL")
+        s.bets.sortedByDescending { it.createdAtMs }.forEach { o.appendLine(mask(com.tjshea.vigilant.data.tracker.BetLedger.line(it, now))) }
+        o.appendLine(">>>")
+    }
 
     private fun connections(x: Diagnostics.Extras, now: Long, zone: TimeZone, o: StringBuilder) {
         val since = x.net.sinceMs?.let { SimpleDateFormat("MMM d, h:mm a", Locale.US).apply { timeZone = zone }.format(Date(it)) } ?: "the app opened"

@@ -342,6 +342,18 @@ object Diagnostics {
                 o.appendLine("$scanner · ${row.label}: ${breakdownText(row.stats, closedCount(rows, now))}")
             }
         }
+
+        // The bet as placed (Tj, 2026-10-02 17:01Z: "record all types of information on the bet as placed … include this information for all bets in the
+        // diagnosis feature"): the close and the results split by what each bet looked like when it was made (recorded from v0.45.0).
+        o.appendLine()
+        val recorded = kept.count { it.atBet != null }
+        o.appendLine("== The bet as placed: close and results split by it ($recorded of ${kept.size} bets recorded, from v0.45.0; outliers aside) ==")
+        for (split in com.tjshea.vigilant.data.tracker.BetLedger.Split.entries) {
+            com.tjshea.vigilant.data.tracker.BetLedger.of(kept, split).forEach { row ->
+                val group = kept.filter { com.tjshea.vigilant.data.tracker.BetLedger.keyOf(it, split) == row.label }
+                o.appendLine("${split.label} ${row.label}: ${breakdownText(row.stats, closedCount(group, now))}")
+            }
+        }
         o.appendLine()
         o.appendLine("== Bets by what made their fair odds (recorded from v0.36.0) ==")
         basisLines(kept, now).forEach { o.appendLine(it) }
