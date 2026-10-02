@@ -9,6 +9,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.LockCard
@@ -181,6 +183,7 @@ class LockAppTest {
         compose.setContent {
             VigilantTheme(darkTheme = true) { Surface(color = MaterialTheme.colorScheme.background) { Column { LockCard(v, locking = false) { m, g -> asked += m to g } } } }
         }
+        compose.onRoot().captureRoboImage("screenshots/4l_lock_card.png")
         compose.onNodeWithTag("lockButton").performClick()
         assertTrue(asked.isEmpty())
         compose.onNodeWithText("If the price moves first, nothing is bought", substring = true).assertExists()
