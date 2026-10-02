@@ -471,8 +471,15 @@ fun AutoBetSection(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun <T> Chips(options: List<T>, selected: T, label: (T) -> String, equal: (T, T) -> Boolean = { a, b -> a == b }, onPick: (T) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun <T> Chips(
+    options: List<T>,
+    selected: T,
+    label: (T) -> String,
+    equal: (T, T) -> Boolean = { a, b -> a == b },
+    modifier: Modifier = Modifier,
+    onPick: (T) -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier) {
         options.forEach { o -> FilterChip(selected = equal(o, selected), onClick = { onPick(o) }, label = { Text(label(o)) }) }
     }
 }
