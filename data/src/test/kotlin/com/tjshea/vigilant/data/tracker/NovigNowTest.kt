@@ -39,13 +39,40 @@ class NovigNowTest {
     )
 
     @Test
-    fun `Novig's price is the middle of its bid and offer, the one side there is in a one-sided book, and none in an empty one`() {
-        // A bid 0.45; B bid 0.53, so A is offered at 0.47: the middle is 0.46.
-        assertEquals(0.46, NovigNow.mid(book("m1", 450, 530), market("m1"), "m1-A")!!, 1e-12)
-        assertEquals(0.47, NovigNow.mid(book("m1", null, 530), market("m1"), "m1-A")!!, 1e-12)
-        // Bids on A only (a thin prop): A's bid is Novig's price for it, not "nothing" (Tj, 2026-10-02 20:06Z: open bets missing Novig's odds).
-        assertEquals(0.45, NovigNow.mid(book("m1", 450, null), market("m1"), "m1-A")!!, 1e-12)
-        assertNull(NovigNow.mid(book("m1", null, null), market("m1"), "m1-A"))
+    fun `Novig's price for a bet is its odds on Novig now - the offer, what buying it costs - never the bid or a middle`() {
+        // A bid 0.45; B bid 0.53, so A is offered at 0.47: Novig's odds for A are 0.47 (Tj, 2026-10-02 ~21:35Z: the middle read a wide spread as a move).
+        assertEquals(0.47, NovigNow.odds(book("m1", 450, 530), market("m1"), "m1-A")!!, 1e-12)
+        assertEquals(0.47, NovigNow.odds(book("m1", null, 530), market("m1"), "m1-A")!!, 1e-12)
+        // Bids on A only: nobody is selling A, so Novig has no odds for it.
+        assertNull(NovigNow.odds(book("m1", 450, null), market("m1"), "m1-A"))
+        assertNull(NovigNow.odds(book("m1", null, null), market("m1"), "m1-A"))
+    }
+
+    @Test
+    fun `Tj's two bets - Novig's odds now the same as bet at is 0% EV, and only Novig's numbers are left in the view`() {
+        // Tyson Bagent Over 0.5 at +122 (logged from American odds: 0.4505), Novig offering +122 now (its grid price 0.450), the other side -223.
+        // Before: the middle of 0.31 and 0.45 = 0.38 (+163), "-15.56% EV". Malik Willis Under 15.5 at +115, Novig +115 now (0.465), -120 the other side.
+        fun placed(id: String, american: Int, novig: Double) = bet(id, cost = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(american)).copy(
+            american = american, novigFair = novig, novigAtMs = now - 40_000, fairAtBet = 0.461, evPercentAtBet = 0.0234, cnoFair = 0.38, vigFair = 0.38,
+        )
+        val v = NovigNow.view(listOf(placed("bagent", 122, 0.450), placed("willis", 115, 0.465))).associateBy { it.id }
+        for (b in v.values) {
+            assertEquals(0.0, b.nowEv!!, 1e-12)
+            assertEquals(b.price, b.nowFair!!, 1e-12)
+            // When bet: Novig's own odds, the ones paid, so no edge over Novig; and nothing from any other book.
+            assertEquals(b.price, b.fairAtBet!!, 1e-12)
+            assertEquals(0.0, b.evPercentAtBet!!, 1e-12)
+            assertNull(b.cnoFair)
+            assertNull(b.vigFair)
+            assertTrue(b.books.isEmpty())
+            assertNull(b.nowBooks)
+            assertEquals(NovigNow.VIA, b.nowVia)
+        }
+        assertEquals(122, v.getValue("bagent").nowAmerican)
+        // Novig's odds moving: +122 bet, Novig +150 now (0.40): the bet's odds are worse than Novig's now.
+        val moved = NovigNow.view(listOf(placed("bagent", 122, 0.40))).single()
+        assertEquals(0.40 / (1.0 / 2.22) - 1.0, moved.nowEv!!, 1e-12)
+        assertEquals(150, moved.nowAmerican)
     }
 
     @Test
@@ -101,8 +128,9 @@ class NovigNowTest {
         assertEquals(3, r.due)
         assertEquals(4, r.all)
         assertEquals(setOf("old", "never", "same-market"), r.prices.keys)
-        assertEquals(0.46, r.prices.getValue("old"), 1e-12)
-        assertEquals((0.30 + 0.35) / 2.0, r.prices.getValue("never"), 1e-12)
+        // Novig's odds now: A offered at 1 − B's best bid.
+        assertEquals(0.47, r.prices.getValue("old"), 1e-12)
+        assertEquals(0.35, r.prices.getValue("never"), 1e-12)
         // All fresh (a scan just read them): nothing is asked.
         var calls = 0
         val fresh = bets.filter { it.status == BetStatus.PENDING }.map { it.copy(novigAtMs = now - 10_000, novigFair = 0.5) }
@@ -120,10 +148,10 @@ class NovigNowTest {
         val settled = bet("settled", "m3", status = BetStatus.WON, starts = now - 3_600_000).copy(novigClose = 0.44, novigCloseAtMs = now - 3_600_000 - 60_000, closingFair = 0.60, closingSeenAtMs = now - 3_600_000 - 60_000)
         val noClose = bet("noClose", "m4", status = BetStatus.LOST, starts = now - 3_600_000).copy(closingFair = 0.60, closingSeenAtMs = now - 3_600_000 - 60_000)
         val v = NovigNow.view(listOf(open, unread, settled, noClose)).associateBy { it.id }
-        // Open: EV now = Novig's 0.46 against the 0.40 paid; one "book" (Novig); every other book's line gone.
+        // Open: EV now = Novig's 0.46 against the 0.40 paid; every book's line gone (Novig's odds are the card's own).
         assertEquals(0.46 / 0.40 - 1.0, v.getValue("open").nowEv!!, 1e-12)
         assertEquals(NovigNow.VIA, v.getValue("open").nowVia)
-        assertEquals(listOf("Novig"), v.getValue("open").books.map { it.name })
+        assertTrue(v.getValue("open").books.isEmpty())
         // Not read on Novig yet: no EV now (not every book's), and it says why.
         assertNull(v.getValue("unread").nowFair)
         assertTrue(v.getValue("unread").nowNote!!.contains("Check Novig now"))
