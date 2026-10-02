@@ -21,6 +21,15 @@ enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
 enum class ScannerMode(val displayName: String) { BOTH("Both"), VIGILANT("Vigilant only"), CNO("CNO only") }
 
 /**
+ * Which sharp books can confirm a bet's +EV ([ScanSettings.sharpConfirmAutoBet], [ScanSettings.sharpConfirmAlerts]; Tj, 2026-10-02: "at least one sharp
+ * sports book (usually pinnacle)"). [codes] are CrazyNinjaOdds' column codes ([com.tjshea.vigilant.data.cno.CnoBooks]): PN = Pinnacle, CS = Circa.
+ */
+enum class SharpBookChoice(val displayName: String, val codes: Set<String>) {
+    PINNACLE("Pinnacle", setOf("PN")),
+    PINNACLE_CIRCA("Pinnacle or Circa", setOf("PN", "CS")),
+}
+
+/**
  * What runs in the background on a timer, with Vigilant closed or not (Tj, 2026-09-28: "an option to
  * auto scan either cno or both cno and vigilant every 5 10 20 30 or 40 minutes in the background,
  * even if the app is not open on the screen"). CNO: CrazyNinjaOdds' list and its best bets' books.
@@ -124,6 +133,25 @@ data class ScanSettings(
      * +EV on its own ([com.tjshea.vigilant.data.cno.CnoBooks.Check.agreeing] equal to it). Off by default.
      */
     val autoBetAllAgree: Boolean = false,
+    /**
+     * Sharp-book confirmation (Tj, 2026-10-02: "require bets to be proven positive EV by a current, devigged sharp book such as Pinnacle … fresh (within
+     * the last few minutes) odds from the sharp book(s) devigged and compared to the current novig odds for the same exact bet"): on top of every other
+     * criterion, the bet must be +EV against Novig's price now on a sharp book's own devigged two-sided price for the exact same line and side, no older
+     * than [sharpConfirmMaxAgeSeconds]. One switch for the auto-bet, one for CNO's push alerts; both off by default. See
+     * [SharpConfirm] and `data/reference/SharpBooks` (RESEARCH.md §60).
+     */
+    val sharpConfirmAutoBet: Boolean = false,
+    val sharpConfirmAlerts: Boolean = false,
+    val sharpConfirmBooks: SharpBookChoice = SharpBookChoice.PINNACLE,
+    /** How old a sharp book's quote may be ([SHARP_MAX_AGE_CHOICES]; never over the app's 5-minute limit, [Freshness.MAX_QUOTE_AGE_MS]). */
+    val sharpConfirmMaxAgeSeconds: Int = 180,
+    /** The edge the sharp book's own devigged price must show at Novig's price now: 0 = any +EV, or [SHARP_MIN_EV_CHOICES]. */
+    val sharpConfirmMinEv: Double = 0.0,
+    /**
+     * Also take Pinnacle's price from CrazyNinjaOdds' game page (free, already read for each candidate; the page has a "Last Updated" for the whole page
+     * but no time for a book's own quote). Off: only a Pinnacle feed (PinnWire, pinnapi, PropLine, ParlayAPI) with the quote's own time confirms.
+     */
+    val sharpConfirmViaCno: Boolean = false,
     /** The fewest books that must price both sides of the bet ([com.tjshea.vigilant.data.cno.CnoBooks.Check.twoSided]): 1, 2 or 3. */
     val autoBetTwoSided: Int = 2,
     val autoBetStake: AutoBetStake = AutoBetStake.ONE_DOLLAR,
@@ -564,6 +592,12 @@ data class ScanSettings(
 
         /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
         val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
+
+        /** [sharpConfirmMaxAgeSeconds]' choices. */
+        val SHARP_MAX_AGE_CHOICES = listOf(60, 120, 180, 300)
+
+        /** [sharpConfirmMinEv]'s choices (0 = any +EV). */
+        val SHARP_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
 
         /** [autoBetBooks]' choices (the last is "5+"). */
         val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
