@@ -318,7 +318,19 @@ class AutoScanner(
     /** The alerts the cycle's reads support: [AlertPicks.cno] over the newest state. */
     private suspend fun cnoAlerts(s: ScanSettings): List<EvAlert> {
         if (s.alertMinEv <= 0.0) return emptyList()
-        return AlertPicks.cno(snapshot(s), s.alertMinEv, clock())
+        val state = snapshot(s)
+        val alerts = AlertPicks.cno(state, s.alertMinEv, clock())
+        // Sharp-book confirmation for the alerts (Tj, 2026-10-02; off by default): only a bet that would alert now is asked about, and only then is a feed called.
+        val rules = com.tjshea.vigilant.data.scanner.SharpConfirm.rules(s, autoBet = false) ?: return alerts
+        if (alerts.isEmpty()) return alerts
+        val now = clock()
+        return SharpGate.confirmedAlerts(alerts, c.alertLog.unseen(alerts), AlertPicks.cnoChecked(state, s.alertMinEv, now)) { item ->
+            val row = item.shown.row
+            SharpGate.check(
+                c.sharp, rules, com.tjshea.vigilant.data.reference.SharpBooks.Bet(row.league, row.event, row.startsAtMs, row.market, row.bet),
+                state.booksAt(item.pick.row.key, now)?.view, row.odds, item.pick.live, now,
+            )
+        }
     }
 
     private suspend fun vigilantScan(settings: ScanSettings): List<EvAlert> {

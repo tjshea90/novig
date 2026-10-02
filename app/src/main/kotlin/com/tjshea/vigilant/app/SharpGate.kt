@@ -1,8 +1,11 @@
 package com.tjshea.vigilant.app
 
+import com.tjshea.vigilant.data.alerts.EvAlert
+import com.tjshea.vigilant.data.cno.CnoBooks
 import com.tjshea.vigilant.data.cno.CnoBooksView
 import com.tjshea.vigilant.data.reference.SharpBooks
 import com.tjshea.vigilant.data.scanner.SharpConfirm
+import kotlinx.coroutines.CancellationException
 
 /**
  * The sharp-book check for one CrazyNinjaOdds bet (Tj, 2026-10-02), as the auto-bet and the alerts both ask it: CNO's own game page first, free (a fresh
@@ -28,5 +31,33 @@ object SharpGate {
         }
         val answer = sharp.quotes(bet, rules)
         return SharpConfirm.judge(answer.quotes, novigOdds, live, rules, now, answer.unavailable)
+    }
+
+    /**
+     * [alerts] (CNO's, already judged by the books on its game page) that a sharp book also confirms (Tj, 2026-10-02: the same check for the push alerts as
+     * for the auto-bet). [items]: the candidates they came from ([AlertPicks.cnoChecked]); [unseen]: the alerts never sent (one already sent is not asked
+     * again, only a bet about to alert costs a feed call). [check]: the sharp check for one candidate. An alert whose bet has no verdict, or whose check
+     * threw, is dropped: nothing alerts on a bet that couldn't be proven.
+     */
+    suspend fun confirmedAlerts(
+        alerts: List<EvAlert>,
+        unseen: List<EvAlert>,
+        items: List<AlertPicks.CnoChecked>,
+        check: suspend (AlertPicks.CnoChecked) -> SharpConfirm.Result,
+    ): List<EvAlert> {
+        val byKey = items.filter { it.check.verdict == CnoBooks.Verdict.CONFIRMED }.associateBy { MiniWindow.cnoKey(it.pick.row) }
+        val toCheck = unseen.map { it.key }.toSet()
+        return alerts.filter { a ->
+            if (a.key !in toCheck) return@filter true
+            val item = byKey[a.key] ?: return@filter false
+            val result = try {
+                check(item)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return@filter false
+            }
+            result.confirmed
+        }
     }
 }

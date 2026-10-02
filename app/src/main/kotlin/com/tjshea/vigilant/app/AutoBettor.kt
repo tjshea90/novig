@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.tjshea.vigilant.data.cno.CnoBooks
+import com.tjshea.vigilant.data.cno.CnoBooksView
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.NovigBetFinder
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
@@ -14,7 +15,9 @@ import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.BetTarget
 import com.tjshea.vigilant.data.novig.trading.PlaceResult
+import com.tjshea.vigilant.data.reference.SharpBooks
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.SharpConfirm
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
