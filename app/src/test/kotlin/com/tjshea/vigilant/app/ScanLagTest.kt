@@ -8,16 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.ApiBetActions
 import com.tjshea.vigilant.app.ui.LocalApiBet
 import com.tjshea.vigilant.app.ui.ProvideApiBet
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -25,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
 /**
@@ -35,12 +30,18 @@ import java.io.File
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [35])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ScanLagTest {
 
     @get:Rule
     val compose = createComposeRule()
 
-    private val app: VigilantApp get() = ApplicationProvider.getApplicationContext()
+    /** The Bet buttons' target, without the app's container (whose coroutines would outlive the test). */
+    private val api = object : com.tjshea.vigilant.app.ui.ApiBetTarget {
+        override fun bet(o: com.tjshea.vigilant.data.scanner.Opportunity) {}
+        override fun bet(row: com.tjshea.vigilant.data.cno.CnoRow) {}
+        override fun betPick(p: com.tjshea.vigilant.data.reference.ParlayPick) {}
+    }
 
     /** A card-like piece of the screen whose inputs never change: it should draw once. */
     @Composable
@@ -50,7 +51,7 @@ class ScanLagTest {
     }
 
     @Composable
-    private fun Root(progress: Int, api: ApiBettingController, runs: IntArray) {
+    private fun Root(progress: Int, api: com.tjshea.vigilant.app.ui.ApiBetTarget, runs: IntArray) {
         ProvideApiBet(enabled = true, api = api) {
             Text("Novig prices $progress/4588")
             Card(runs)
@@ -59,7 +60,6 @@ class ScanLagTest {
 
     @Test
     fun `a scan tick no longer redraws every card under the Bet button's actions`() {
-        val api = ApiBettingController(app.container, MutableStateFlow(UiState()), CoroutineScope(SupervisorJob() + Dispatchers.Default), MutableSharedFlow(), readBook = { null })
         var tick by mutableIntStateOf(0)
         val runs = IntArray(1)
         // Shaped like the app's root: it takes the whole state (here a scan's progress) and recomposes with every one.

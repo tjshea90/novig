@@ -222,7 +222,7 @@ class ApiBettingController(
     /** A market's book read from Novig now; null = the app's own reader ([AppContainer.novig]). Tests hand in their own. */
     private val readBook: (suspend (String) -> NovigBook?)? = null,
     private val clock: () -> Long = System::currentTimeMillis,
-) {
+) : com.tjshea.vigilant.app.ui.ApiBetTarget {
     private var betJob: Job? = null
 
     /** The one placer for the trading client in use (its lock keeps orders one at a time), made under [placerLock]. */
@@ -513,7 +513,9 @@ class ApiBettingController(
         }
     }
 
-    fun bet(o: Opportunity) {
+    override fun betPick(p: com.tjshea.vigilant.data.reference.ParlayPick) = bet(p)
+
+    override fun bet(o: Opportunity) {
         if (c.trading == null) return
         val target = ApiBetTargets.of(o)
         if (target == null) {
@@ -524,7 +526,7 @@ class ApiBettingController(
     }
 
     /** A CNO card's bet: its Novig outcome is found first (the same match the Open button uses), then the sheet opens. */
-    fun bet(row: CnoRow) = betRow(row, "CrazyNinjaOdds") { found, market -> ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs) }
+    override fun bet(row: CnoRow) = betRow(row, "CrazyNinjaOdds") { found, market -> ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs) }
 
     /** A CNO-shaped row's Kelly stake (CNO's or ParlayAPI's fair odds against Novig's price, capped at what's available). */
     private fun kellyOf(row: CnoRow): Double? =
