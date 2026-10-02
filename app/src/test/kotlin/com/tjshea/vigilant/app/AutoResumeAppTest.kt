@@ -64,7 +64,7 @@ class AutoResumeAppTest {
         try {
             val vm = pausedApp(ScannerMode.BOTH, toasts, listen)
             vm.checkOdds()
-            waitFor("resumed") { !vm.state.value.settings.paused }
+            waitFor("resumed") { !vm.state.value.settings.paused && toasts.isNotEmpty() }
             assertFalse("saved, as the Resume button saves it", savedPaused())
             waitFor("the check's report") { toasts.any { it.startsWith("No open bets to check") } }
             assertEquals(RESUMED_TOAST, toasts.first())
@@ -82,7 +82,7 @@ class AutoResumeAppTest {
             // CNO only: the scan after resuming starts nothing (Vigilant asleep), so no network is read here.
             val vm = pausedApp(ScannerMode.CNO, toasts, listen)
             vm.scan(resume = true)
-            waitFor("resumed by the +EV pull") { !vm.state.value.settings.paused }
+            waitFor("resumed by the +EV pull, and said") { !vm.state.value.settings.paused && toasts.isNotEmpty() }
             assertFalse(savedPaused())
             assertEquals(listOf(RESUMED_TOAST), toasts)
         } finally {
@@ -94,7 +94,7 @@ class AutoResumeAppTest {
             // Vigilant only: the CNO read after resuming starts nothing either.
             val vm = pausedApp(ScannerMode.VIGILANT, toasts2, listen2)
             vm.refreshCno(resume = true)
-            waitFor("resumed by the CNO pull") { !vm.state.value.settings.paused }
+            waitFor("resumed by the CNO pull, and said") { !vm.state.value.settings.paused && toasts2.isNotEmpty() }
             assertFalse(savedPaused())
             assertEquals(listOf(RESUMED_TOAST), toasts2)
         } finally {

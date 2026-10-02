@@ -96,7 +96,9 @@ class CycleRecorderTest {
         }
         // The screen: opened (fresh or restored), the cold start, the share sheet it starts and the button that asks for it.
         val activity = File(dir + "MainActivity.kt").readText()
-        assertTrue(activity.contains("container.eventLog.info(\"APP\", \"screen opened (\${if (savedInstanceState == null) \"fresh launch\" else \"restored\"})\""))
+        // Which opening it was: restored, a fresh launch, or back from another app (LaunchGate, Tj 2026-10-02).
+        assertTrue(activity.contains("app.container.eventLog.info(\"APP\", \"screen opened (\$how)\""))
+        assertTrue(activity.contains("else -> \"back from another app: auto-bet and auto-scan kept\""))
         assertTrue(activity.contains("perf.noteColdStart(sinceStartMs, COLD_START_WINDOW_MS)"))
         assertTrue(activity.contains("vm.shareRequests.collect { intent -> runCatching { startActivity(intent) }"))
         assertTrue(activity.contains("onShare = vm::shareDiagnostics,"))
