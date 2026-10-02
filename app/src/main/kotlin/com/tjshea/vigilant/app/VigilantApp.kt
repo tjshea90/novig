@@ -78,7 +78,8 @@ import okhttp3.OkHttpClient
 import java.io.File
 
 class VigilantApp : Application() {
-    val container: AppContainer by lazy { AppContainer(this) }
+    private val containerLazy = lazy { AppContainer(this) }
+    val container: AppContainer by containerLazy
 
     override fun onCreate() {
         super.onCreate()
@@ -97,7 +98,8 @@ class VigilantApp : Application() {
      */
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level < android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) return
+        // Nothing built yet (a process started for an alarm or a receiver): nothing to trim, and nothing to build for it.
+        if (level < android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN || !containerLazy.isInitialized()) return
         val c = container
         if (c.runner.state.value.scanning || AutoScanService.running) return
         c.appScope.launch {
