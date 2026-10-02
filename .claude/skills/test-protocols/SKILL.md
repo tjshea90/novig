@@ -19,8 +19,15 @@ unless Tj asks).
 **The app's real surface (v0.4.0+), so "sweep the whole app" is concrete:**
 
 - **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), CNO (`CnoScreen`), Games
-  (`GamesScreen`: board + per-game line table), Tracker (`TrackerScreen`: P/L,
-  ROI, CLV), Settings (`SettingsScreen`).
+  (`GamesScreen`: board + per-game line table), Auto-bet (`AutoBetScreen`, v0.46.0: Novig with CNO on), Tracker
+  (`TrackerScreen`: P/L, ROI, CLV), Settings (`SettingsScreen`: a home list with search, then one page each, below).
+- **Settings pages (v0.46.0; TASKS.md AX):** `SettingsPage` (Scanning, Alerts, CrazyNinjaOdds list, Widget & mini window, +EV feed & scan
+  size, Fair odds & sources, Betting & Novig account, API usage & keys, Diagnostics & about; `shownIn` per scanner), `SettingsSummary` (each
+  row's live line), `SettingsIndex` (search: title, page, plain line, words; `SettingsPagesTest` checks every entry is on its page: add an
+  entry for every new setting), `BackgroundScan` (one switch over `autoScan`), `Shadowed` (a limit CNO's list already decides, said where it's
+  set), `StakeText` (one starting amount for the bet slip and Bet sheet). Tags: `settingsRow-<PAGE>`, `settingsPage-<PAGE|HOME>`,
+  `settingsBack`, `settingsSearch`, `settingsHit-<title>`. Tests: SettingsPagesTest, SettingsFixesTest; Settings UI tests open their page
+  first (`openSettingsTab`, which goes back to the list first).
 - **Subsystems:** fair-odds math (`engine`: `FairValue`, `Devig`, `Fees`,
   `EvMath`); Novig data (`data/novig`: `NovigPublicClient`, `NovigText`);
   reference odds (`data/reference/`: `PinnapiClient` (Pinnacle: PinnWire keys first with
@@ -116,7 +123,7 @@ unless Tj asks).
 - **Auto-bet (v0.39.0; RESEARCH.md §51, BRIEF.md "Auto-bet"; REAL MONEY with nobody confirming, so a sweep reads this diff adversarially every time):** `ScanSettings.autoBet*`
   (off by default; `autoBetsNow`), `data/novig/trading/AutoBet.kt` (pure: `judge`, `stake`, `MAX_SANE_EV`, `priceMatches`), `ApiBetPlacer.placeAuto` (shared `orderLock`),
   `app/AutoBettor.kt` (run inside `AutoScanner.cycle` after `cnoRead`, before `cnoAlerts`; `markPlaced`, `AutoBetNotes`), `AppContainer.autoBetPlacer/subaccountKeyId/orderLock`,
-  `AlertPicks.cnoChecked`, `ui/AutoBetUi.kt` (Settings › Betting card), `TrackedBet.auto`, Diagnostics line + `HealthChecks.autoBet`. Tests: AutoBetTest, ApiBettingTest (auto path),
+  `AlertPicks.cnoChecked`, `ui/AutoBetUi.kt` + `ui/AutoBetScreen.kt` (the Auto-bet tab since v0.46.0; `AutoBetText.fixFor` one-tap fixes), `TrackedBet.auto`, Diagnostics line + `HealthChecks.autoBet`. Tests: AutoBetTest, ApiBettingTest (auto path),
   AutoBettorTest (fake Novig; each safeguard was MUTATION-CHECKED: remove it and a test fails: re-do that when changing it), AutoBetUiTest, AutoBetDiagnosticsTest, screenshots 5k/5k2.
   Never test against a real key with real money from a session.
 - **Pause all scanning and CNO's one-tap buttons (v0.19.5+):** `ScanSettings.paused` (saved; Settings › Scanner switch,
@@ -143,7 +150,7 @@ unless Tj asks).
   Replace guarded), `BetSettler.leaveApiBets`. App: `ApiBetting.kt` (`BettingUi`, `BetSheetUi`, `ApiBetTargets`,
   `ApiBettingController`: closing the sheet never cancels an order in flight), `ui/ApiBettingUi` (Settings section, Bet button,
   Bet sheet), Bet buttons on `FeedScreen`/`CnoScreen`, Tracker API badge + Sync button, `ScanSettings.apiBetStake/apiMaxStake/
-  apiMaxPerDay/apiMinEv`. Tests: ApiBettingTest, NovigBettingSetupTest, ApiSettlerTest, ApiBettingControllerTest,
+  apiMaxPerDay` (`apiMinEv` removed in v0.46.0). Tests: ApiBettingTest, NovigBettingSetupTest, ApiSettlerTest, ApiBettingControllerTest,
   ApiBettingUiTest, ApiBetTargetsTest (all mock Novig: the live behaviour is UNVERIFIED until Tj's first real bet, the list is
   in RESEARCH.md §37). Never test against a real key with real money from a session; never write a key into source or a fixture.
 - **Every open bet's current EV, and sorting the Tracker's bets (v0.21.1; RESEARCH.md §38; Tj 2026-09-29):** "Check odds now"
@@ -166,9 +173,8 @@ unless Tj asks).
   `ReportDialog`/`ReportActions`, `MainViewModel.showDiagnostics/showGradingCheck`, `ReportUiTest`, screenshot 5g. A sweep runs both reports and reads them.
 - **Diagnostics read, Runway, widget opt-in, Settings tabs, pinned bars (v0.22.0; RESEARCH.md §40; Tj 2026-09-29):** `BetsScope.familiesFor` (a Check odds now asks only
   the bets' market families; unreadable wording = all), `data/keys/Runway` (`Runway.lines/roundsNote`, `UsageDelta`, `RoundCost`; Diagnostics "Runway" and "Last rounds"
-  blocks, `AppContainer.lastScanCost/lastCheckCost`), `ScanSettings.miniWindow` off by default + schema 10, `SettingsTab` (seven tabs, `SettingsScreen(startTab)`, tags
-  `settingsTabs`/`settingsTab-<NAME>`), `StickyBar`/`STICKY_BAR` on the Tracker, +EV, Games and CNO lists, Sort/Scanner menu chips (`TrackerSort.barLabel`). Tests:
-  `RunwayTest`, `OpenBetPricerTest` (families), `DiagnosticsTest`, `MiniWindowTest`, `SettingsTabsTest`, `StickyHeadersTest`; Settings UI tests open their tab first (`openSettingsTab`).
+  blocks, `AppContainer.lastScanCost/lastCheckCost`), `ScanSettings.miniWindow` off by default + schema 10, Settings tabs (replaced by pages in v0.46.0: see "Settings pages" above), `StickyBar`/`STICKY_BAR` on the Tracker, +EV, Games and CNO lists, Sort/Scanner menu chips (`TrackerSort.barLabel`). Tests:
+  `RunwayTest`, `OpenBetPricerTest` (families), `DiagnosticsTest`, `MiniWindowTest`, `SettingsPagesTest`, `StickyHeadersTest`.
 - **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
