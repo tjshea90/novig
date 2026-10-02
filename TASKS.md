@@ -3289,3 +3289,13 @@ His screenshot: a Vigilant bet (Under 52.5, Stanford @ Wake Forest) reads "−1.
 - [x] AR2 Check odds now refreshes Novig's current price AND fresh fair odds/EV for every open bet, whatever scanner placed it, within the API budget (BRIEF.md: credits are a budget; free sources first).
   Done: `OpenBetPricer.run(anyScanner = true)` from Check odds now and a bet's Price now (Tj's taps), whatever the scanner choice; background passes stay asleep in CNO only. Same bets-only pass as Both (only the open bets' leagues and families). Settings › Scanner's CNO-only hint says so. Tests: `OpenBetPricerTest` "Tj's own tap prices with the scanner on CNO only too", `CheckOddsAnyScannerAppTest` (3 mutants killed).
 - [ ] AR3 Tests (mutation-checked), ship with AQ, answer Tj.
+
+## Tj, 2026-10-02 ~06:14Z (mid-AQ/AR, sent twice): "If I press check odds now, or pull to refresh, and the scanner is paused, automatically resume the scanner. If I switch from vigilant to another app then back to vigilant, do not turn off auto bet. Auto bet should only be off by default on a fresh app launch or restart, not just switching apps / On the last scan the novig scanning was going very slow, make sure it is set up correctly / In the scanners, especially cno scanner, it is counting identical odds from sister sports books (for example, multiple hard rock sports books just in different states). Investigate if this is smart to do, and if not, don't let vigilant double count odds from the same company sportsbooks / URGENT: … Automatically resume and finish this session in two hours, including all the prompts I sent since the last version."
+
+(Picked up 2026-10-02 ~14:41Z when Tj asked to resume; the two-hour auto-resume had not fired.)
+
+- [ ] AS1 Check odds now, or pull to refresh, while the scanner is paused: resume the scanner automatically.
+- [ ] AS2 Auto-bet survives switching to another app and back: off by default only on a fresh launch / process restart (not on Activity recreation, backgrounding, or returning).
+- [ ] AS3 "Novig scanning was going very slow" on the last scan: check the Novig price read (live feed / REST fallback, batching, rate limit, the plan handed to the feed) is set up correctly; fix what isn't, with a test or a measurement.
+- [ ] AS4 Sister sportsbooks (one company, several state skins, e.g. Hard Rock NJ/IN/…): find where CNO and Vigilant count books (fair price, book counts, consensus); decide whether counting them separately is right (they copy one trading desk, so no); if not, count one company once, with a test.
+- [ ] AS5 Tests (mutation-checked), floor, ship with AQ/AR as one release, answer Tj with the Release link.

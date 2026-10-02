@@ -1,21 +1,23 @@
-# CHECKPOINT 2319 — read me first, then TASKS.md
+# CHECKPOINT 2320 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T06:12:20Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `31dae7ea` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T14:41:58Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-db0aee29-uq46s9` · **builds on:** `28732cc7` (this checkpoint is the commit after it)
 
 ## Just done
-AQ2 part 2: frame meter (FrameStats + FrameMeter) in Diagnostics' Performance block, metrics frames.*.slowPct, Advisor finding perf:frames:*; tests + 5 mutants killed
+AS written to TASKS.md (Tj 06:14Z: auto-resume scanner on Check odds now/pull-to-refresh, auto-bet survives app switch, Novig scan slow, sister books double-counted); version already bumped to 0.44.2 (code 81) by the interrupted session
 
 ## Do this next
-check novigLive/books update rate during a scan (CNO badge recount on main); then bump 0.44.2, floor, ship
+AQ2 last piece (novigLive/books update rate during a scan), then AS1-AS4, then ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  158094f6 ckpt 2319: AQ2 part 2: frame meter (FrameStats + FrameMeter) in Diagnostics' Performanc
   05349b30 ckpt 2318: AQ2 part 1: scan notification built off the main thread, its found count onc
   743a98e6 ckpt 2317: AQ1/AQ3/AQ4/AR1/AR2 ticked; app-level manual-bet test added (ApiBettingContr
   11e9ba2b ckpt 2316: AR1/AR2: Check odds now and Price now price Vigilant's bets whatever the sca
@@ -25,8 +27,7 @@ check novigLive/books update rate during a scan (CNO badge recount on main); the
   eb5c7763 ckpt 2312: pre-release: v0.44.1: a bet under your minimum edge says so and where to cha
   412fd980 ckpt 2311: AP1: a positive edge under Tj's minimum now says so and names the setting (w
   6a52c87b ckpt 2310: v0.44.0 released and recorded (AO1-AO6 done): lag fix, ParlayAPI freshness, 
-  07ce6e1a ckpt 2309: pre-release: v0.44.0: smoother +EV list during scans, ParlayAPI quotes dated
 ```
 
-(5 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
