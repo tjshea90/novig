@@ -185,6 +185,7 @@ class MainActivity : ComponentActivity() {
                         VigilantRoot(
                             state, vm,
                             onScan = { scan() },
+                            onPull = { scan(resume = true) },
                             onMiniWindow = { showWidget(moveBack = true); Unit }.takeIf { MiniWindow.supported(this) || state.settings.floatingWidget },
                             onOpenInNovig = ::openInNovig,
                             onReplaceBet = ::replaceBet,
@@ -551,13 +552,14 @@ class MainActivity : ComponentActivity() {
      * Scan, and the first time, ask to allow notifications (Android 13+): the progress while Tj is
      * in another app and the "scan done" note need it. The scan runs either way.
      */
-    private fun scan() {
+    /** [resume]: a pull to refresh, which resumes a paused scanner first ([MainViewModel.scan]). */
+    private fun scan(resume: Boolean = false) {
         val prefs = getSharedPreferences("ui", MODE_PRIVATE)
         if (!ScanService.canNotify(this) && !prefs.getBoolean(ASKED_NOTIFICATIONS, false)) {
             prefs.edit().putBoolean(ASKED_NOTIFICATIONS, true).apply()
             askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
-        vm.scan()
+        vm.scan(resume)
     }
 
     private companion object {
@@ -625,6 +627,8 @@ private fun VigilantRoot(
     state: UiState,
     vm: MainViewModel,
     onScan: () -> Unit,
+    /** Pull to refresh on the +EV and Games tabs: [onScan] that resumes a paused scanner first (Tj, 2026-10-02). */
+    onPull: () -> Unit,
     onMiniWindow: (() -> Unit)?,
     onOpenInNovig: (CnoRow) -> Unit = {},
     onReplaceBet: (com.tjshea.vigilant.data.tracker.TrackedBet) -> Unit = {},
@@ -682,6 +686,7 @@ private fun VigilantRoot(
                 Tab.EV -> FeedScreen(
                     state = state,
                     onScan = onScan,
+                    onPull = onPull,
                     onToggleLeague = vm::toggleLeague,
                     onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onTrack = vm::trackBet,
@@ -697,6 +702,7 @@ private fun VigilantRoot(
                 Tab.CNO -> CnoTab(
                     state, vm,
                     onRefresh = { vm.refreshCno() },
+                    onPull = { vm.refreshCno(resume = true) },
                     onOpenSettings = { tabName = Tab.SETTINGS.name },
                     onMiniWindow = onMiniWindow,
                     onLoadBooks = vm::loadBooks,
@@ -704,7 +710,7 @@ private fun VigilantRoot(
                     onScanner = { m -> vm.updateSettings { it.copy(scanner = m) } },
                     openingBet = openingBet,
                 )
-                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan)
+                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan, onPull = onPull)
                 Tab.TRACKER -> TrackerScreen(
                     state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
                     onCheckOdds = vm::checkOdds, onShown = { vm.settleBets() },
@@ -799,6 +805,7 @@ private fun CnoTab(
     state: UiState,
     vm: MainViewModel,
     onRefresh: () -> Unit,
+    onPull: () -> Unit,
     onOpenSettings: () -> Unit,
     onMiniWindow: (() -> Unit)?,
     onLoadBooks: (CnoRow, Boolean) -> Unit,
@@ -813,6 +820,7 @@ private fun CnoTab(
     CnoScreen(
         state,
         onRefresh = onRefresh,
+        onPull = onPull,
         onOpenSettings = onOpenSettings,
         onMiniWindow = onMiniWindow,
         onLoadBooks = onLoadBooks,

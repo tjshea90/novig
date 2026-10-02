@@ -124,6 +124,8 @@ fun CnoScreen(
     pullState: androidx.compose.material3.pulltorefresh.PullToRefreshState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState(),
     /** Pause every scan (true) or resume (false). */
     onPause: (Boolean) -> Unit = {},
+    /** Pull to refresh: [onRefresh] that also resumes a paused scanner (Tj, 2026-10-02). */
+    onPull: () -> Unit = onRefresh,
 ) {
     val now = rememberNow(5_000)
     val cno = state.cno
@@ -205,7 +207,7 @@ fun CnoScreen(
         },
     ) { padding ->
         // The arrow spins until the read it started ends (or lets go if CNO's pacing skipped it).
-        VigilantPullToRefresh(busy = cno.refreshing, onRefresh = onRefresh, modifier = Modifier.padding(padding).fillMaxSize(), state = pullState) {
+        VigilantPullToRefresh(busy = cno.refreshing, onRefresh = onPull, modifier = Modifier.padding(padding).fillMaxSize(), state = pullState) {
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
