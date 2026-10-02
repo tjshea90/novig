@@ -69,15 +69,15 @@ class TrackerTextTest {
         val open = listOf(
             bet("a", cost = 0.5, startsTs = now + hour), bet("b", cost = 0.5, startsTs = now - hour), bet("c", cost = 0.5, startsTs = now - 5 * hour, note = "x", manual = true),
         )
-        assertEquals("3 open · $30.00 at risk · pays $30.00 · 2 started · 1 need a tap · current EV on 0 of 1 upcoming", TrackerText.openSummary(open, now))
+        assertEquals("3 open · $30.00 at risk · +$30.00 if all win · 2 started · 1 need a tap · current EV on 0 of 1 upcoming", TrackerText.openSummary(open, now))
         // Once its odds are read, the upcoming bet counts as current (a started game never counts: it waits for a result, not odds).
         val read = listOf(open[0].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1), open[1].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("2 open · $20.00 at risk · pays $20.00 · 1 started · current EV on 1 of 1 upcoming", TrackerText.openSummary(read, now))
+        assertEquals("2 open · $20.00 at risk · +$20.00 if all win · 1 started · current EV on 1 of 1 upcoming", TrackerText.openSummary(read, now))
         // A read older than the fair odds' own age limit is no longer current: 5 minutes for a game within 3 hours, 10 for a far-off one.
         val old = listOf(open[0].copy(nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("1 open · $10.00 at risk · pays $10.00 · current EV on 0 of 1 upcoming", TrackerText.openSummary(old, now))
+        assertEquals("1 open · $10.00 at risk · +$10.00 if all win · current EV on 0 of 1 upcoming", TrackerText.openSummary(old, now))
         val farOff = listOf(open[0].copy(startsTs = now + 30 * hour, nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("1 open · $10.00 at risk · pays $10.00 · current EV on 1 of 1 upcoming", TrackerText.openSummary(farOff, now))
+        assertEquals("1 open · $10.00 at risk · +$10.00 if all win · current EV on 1 of 1 upcoming", TrackerText.openSummary(farOff, now))
     }
 
     @Test

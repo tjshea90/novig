@@ -168,7 +168,7 @@ object TrackerText {
         }.thenBy { it.startsTs },
     )
 
-    /** "101 open · $101.00 at risk · pays $96.40 · 22 started · 9 need a tap · odds read on 61 of 79 upcoming". */
+    /** "101 open · $101.00 at risk · +$96.40 if all win · 22 started · 9 need a tap · odds read on 61 of 79 upcoming". */
     fun openSummary(open: List<TrackedBet>, now: Long): String {
         if (open.isEmpty()) return "No open bets"
         val started = open.count { now >= it.startsTs }
@@ -177,7 +177,7 @@ object TrackerText {
         return listOfNotNull(
             "${open.size} open",
             "${Format.money(open.sumOf { it.stake })} at risk",
-            "pays ${Format.money(open.sumOf { it.profitIfWon })}",
+            "+${Format.money(open.sumOf { it.profitIfWon })} if all win",
             "$started started".takeIf { started > 0 },
             "$needTap need a tap".takeIf { needTap > 0 },
             // Only games still to come have odds to check: a started game is waiting on its result instead.
