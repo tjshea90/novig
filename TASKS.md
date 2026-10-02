@@ -3343,8 +3343,23 @@ His screenshot: a Vigilant bet (Under 52.5, Stanford @ Wake Forest) reads "−1.
 
 ## Tj, 2026-10-02 ~17:55Z: "the settings menu in this app is getting very large and confusing. organize the settings menu intuitively. make it so everything is clear and easy to find. make any advanced setting have a plain English explanation, so even a beginner can understand the setting. look for and fix or remove superfluous settings or settings no longer needed. look for settings that contradict each other and fix them. maybe make the auto bet feature its own section instead of buried in the settings. consider and implement the best intuitive organization and modifications for the settings and features of the app"
 
-- [ ] AX1 Inventory every setting (tab, section, what it does, who reads it, default) into a map; mark superfluous (nothing reads it, or superseded), contradictory (two settings that fight), and unclear (no plain-English line).
-- [ ] AX2 Design the new organization (how betting apps and Android's own Settings group things: a few top-level groups by task, most-used first, advanced tucked under each); write it in TASKS.md / RESEARCH.md before moving code.
+- [x] AX1 Inventory every setting (tab, section, what it does, who reads it, default) into a map; mark superfluous (nothing reads it, or superseded), contradictory (two settings that fight), and unclear (no plain-English line).
+- [x] AX2 Design the new organization (how betting apps and Android's own Settings group things: a few top-level groups by task, most-used first, advanced tucked under each); write it in TASKS.md / RESEARCH.md before moving code.
+  AX1 findings (2026-10-02 ~18:05Z, inventory of SettingsScreen.kt / AutoBetUi.kt / ApiBettingUi.kt / ScanSettings.kt):
+  - Superfluous: `apiMinEv` (nothing reads it since v0.44.2's "no minimum edge by hand"). `cnoEnabled`/`autoScanMinutes` are migration-only (keep).
+  - Contradictions: (a) bet slip "$1" opens Novig's slip at $1 but the Bet sheet at "Amount a bet starts at" ($5); (b) "Only bets the books agree on" forces
+    the book reads while "Green ✓ when books agree" shows off; (c) background auto-scan "CNO + Vigilant" with the scanner on CNO only (or "CNO" with Vigilant
+    only) runs nothing / half; (d) auto-bet on with background scan off silently does nothing (only a line of text says so); (e) auto-bet's longest odds /
+    smallest edge and the alerts' edge can be looser than CNO's own list filters, which then decide silently; (f) "Days ahead" shorter/longer than "Games
+    starting within" (one shadows the other); (g) two different sections both called "Sharp books" (fair-odds sharp books vs the auto-bet/alerts veto).
+  - Scattered: alerts' edge (Scan tab) vs alerts' sharp veto (Betting tab); the auto-scan interval edited in Scan and in Auto-bet; presets (own tab) set
+    auto-bet, alerts and CNO rules; auto-bet buried at the bottom of Betting after the key and wallet.
+  - Jargon without a plain line: devig, worst case, complete sportsbook, sharp weight, outlier guard, Kelly, fill the scan, re-use, keep awake, veto/confirm.
+  AX2 design: Auto-bet becomes a bottom tab (Novig, CNO on): status + one-tap fixes, presets, what it bets, sharp veto, how much, how often, notifications,
+  activity. Settings becomes a home list (search box + categories with live one-line summaries, Android-Settings style) opening pages with a back arrow:
+  Scanning · Alerts · CrazyNinjaOdds list · Widget & mini window · +EV feed & scan size · Fair odds & sources · Betting & Novig account · API usage & keys ·
+  Diagnostics & about, plus an "Auto-bet & presets" row that opens the tab. Advanced settings under "Advanced" headings, each with a plain-English line.
+  A settings index (title, page, keywords) powers search and a test that every indexed setting is on its page.
 - [ ] AX3 Auto-bet as its own section (its own screen or tab outside Settings, with its presets, rules, limits, sharp books and status in one place).
 - [ ] AX4 Move the settings into the new groups; every advanced setting gets a plain-English line a beginner understands.
 - [ ] AX5 Remove or fold superfluous settings (keeping saved values migrating safely); fix contradictions (one setting wins clearly, or the UI prevents the conflict, and says so).
