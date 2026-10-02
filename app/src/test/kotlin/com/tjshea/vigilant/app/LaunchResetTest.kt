@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.app
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.data.scanner.AutoScanMode
@@ -20,8 +22,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Tj, 2026-10-02: "anytime I close the app and reopen it, auto bet and background scan is turned off by default. Nothing should auto bet or background
- * scan unless I specifically set it in the settings."
+ * Tj, 2026-10-02 16:05Z: "I had auto bet running in the notifications in the background and when I opened vigilant it again turned off auto bet.
+ * I want the app never to turn off auto bet unless I turn it off. The default is auto bet off but only when opening the app after a restart or
+ * after I already turned off auto bet manually."
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [35])
@@ -37,7 +40,13 @@ class LaunchResetTest {
 
     @Before fun setUp() {
         runBlocking { app.container.settingsStore.update { on } }
+        bootCount(7)
     }
+
+    /** Android's boot count: what changes when the phone restarts. */
+    private fun bootCount(n: Int) = Settings.Global.putInt(app.contentResolver, Settings.Global.BOOT_COUNT, n)
+
+    private fun open(saved: Bundle? = null) = Robolectric.buildActivity(MainActivity::class.java).create(saved).also { shadowOf(android.os.Looper.getMainLooper()).idle() }
 
     @After fun tearDown() {
         runBlocking { app.container.settingsStore.update { ScanSettings() } }
@@ -64,16 +73,19 @@ class LaunchResetTest {
 
     @Test
     fun `the note says what was on, and nothing when nothing was`() {
-        assertEquals("Auto-bet and background auto-scan are off again after reopening Vigilant. Switch them on in Settings when you want them.", LaunchReset.note(on))
-        assertEquals("Auto-bet is off again after reopening Vigilant. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoScan = AutoScanMode.OFF)))
-        assertEquals("Background auto-scan is off again after reopening Vigilant. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoBet = false)))
+        assertEquals("Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them.", LaunchReset.note(on))
+        assertEquals("Auto-bet is off after the phone restarted. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoScan = AutoScanMode.OFF)))
+        assertEquals("Background auto-scan is off after the phone restarted. Switch it on in Settings when you want it.", LaunchReset.note(on.copy(autoBet = false)))
         assertNull(LaunchReset.note(on.copy(autoBet = false, autoScan = AutoScanMode.OFF)))
     }
 
     @Test
-    fun `a fresh launch saves the reset before the screen reads the settings, and a second one finds nothing to do`() {
-        val note = LaunchReset.onFreshLaunch(app)
-        assertTrue(note, note!!.startsWith("Auto-bet and background auto-scan are off again"))
+    fun `a restart saves the reset before the screen reads the settings, once, and keeps the note`() = runBlocking {
+        // The first look (the update that brought this rule): nothing switched off.
+        assertFalse(LaunchReset.afterRestart(app, Boot(7, 1L)))
+        assertTrue(saved().autoBet)
+        // The phone restarted.
+        assertTrue(LaunchReset.afterRestart(app, Boot(8, 2L)))
         val s = saved()
         assertFalse(s.autoBet)
         assertEquals(AutoScanMode.OFF, s.autoScan)
@@ -82,64 +94,93 @@ class LaunchResetTest {
         // The file on disk says it too (a killed process can't bring it back).
         val disk = File(app.filesDir, "settings.json").readText()
         assertTrue(disk, disk.contains("\"autoBet\":false"))
-        assertNull(LaunchReset.onFreshLaunch(app))
+        // Handled: Tj switches it on again and it stays on for the rest of this run of the phone.
+        app.container.settingsStore.update { on }
+        assertFalse(LaunchReset.afterRestart(app, Boot(8, 2L)))
+        assertTrue(saved().autoBet)
+        assertTrue(app.container.launches.takeNote()!!.startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
     }
 
     @Test
-    fun `opening the activity fresh resets, a rotation or a restore from saved state does not`() {
-        // A restore (saved state: rotation, Android bringing the app back): whatever was on stays on.
-        val restored = Robolectric.buildActivity(MainActivity::class.java).create(Bundle())
-        shadowOf(android.os.Looper.getMainLooper()).idle()
+    fun `opening Vigilant never switches auto-bet off: not fresh, not restored, not after a close, only after a phone restart`() {
+        // Tj, 2026-10-02 16:05Z: auto-bet running in the notification, Vigilant opened: it must stay on, however the screen was made.
+        open().destroy()
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
-        restored.destroy()
-        // Closed by Tj (swiped out of the recent apps) and opened again (no saved state): off, said on screen.
-        app.container.launches.taskRemoved(System.currentTimeMillis())
-        val fresh = Robolectric.buildActivity(MainActivity::class.java).create()
-        shadowOf(android.os.Looper.getMainLooper()).idle()
+        open(Bundle()).destroy()
+        assertTrue(saved().autoBet)
+        // Swiped out of the recent apps, force-stopped, updated, ended by Android: a new process, the same run of the phone.
+        open().destroy()
+        assertTrue(saved().autoBet)
+        assertEquals(AutoScanMode.BOTH, saved().autoScan)
+        assertTrue(app.container.eventLog.events().any { it.msg.contains("screen opened (auto-bet and auto-scan kept as they were)") })
+        // The phone restarted (a boot the receiver never heard): the first screen switches them off and says so.
+        bootCount(8)
+        open().destroy()
         assertFalse(saved().autoBet)
         assertEquals(AutoScanMode.OFF, saved().autoScan)
-        assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off again"))
-        fresh.destroy()
-    }
-
-    @Test
-    fun `back from another app in the same process keeps auto-bet on, swiped out of the recent apps resets it`() {
-        // Tj, 2026-10-02: "If I switch from vigilant to another app then back to vigilant, do not turn off auto bet."
-        val first = Robolectric.buildActivity(MainActivity::class.java).create()
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-        assertFalse("the process's first screen is a fresh launch", saved().autoBet)
-        first.destroy()
-        // He switches auto-bet on, leaves (the mini window closed: the screen ended, the process lives), and comes back.
+        assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
+        assertTrue(app.container.eventLog.events().any { it.msg.contains("screen opened (first since the phone restarted): Auto-bet") })
+        // Switched on again: stays on.
         runBlocking { app.container.settingsStore.update { on } }
-        val back = Robolectric.buildActivity(MainActivity::class.java).create()
-        shadowOf(android.os.Looper.getMainLooper()).idle()
+        open().destroy()
         assertTrue(saved().autoBet)
-        assertEquals(AutoScanMode.BOTH, saved().autoScan)
-        assertTrue(app.container.eventLog.events().any { it.msg.contains("screen opened (back from another app: auto-bet and auto-scan kept)") })
-        back.destroy()
-        // Swiped out of the recent apps (a service saw it) and opened again: a fresh launch.
-        app.container.launches.taskRemoved(System.currentTimeMillis())
-        val reopened = Robolectric.buildActivity(MainActivity::class.java).create()
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-        assertFalse(saved().autoBet)
-        assertEquals(AutoScanMode.OFF, saved().autoScan)
-        reopened.destroy()
     }
 
     @Test
-    fun `the activity resets first thing, only without saved state, and the boot receiver is left alone`() {
+    fun `turned off by Tj stays off`() {
+        open().destroy()
+        runBlocking { app.container.settingsStore.update { it.copy(autoBet = false) } }
+        open().destroy()
+        open(Bundle()).destroy()
+        assertFalse(saved().autoBet)
+    }
+
+    @Test
+    fun `the boot receiver switches them off at a restart before anything can bet, and an update keeps them`() {
+        open().destroy()
+        // An update: the receiver starts what was on, nothing is switched off.
+        receive(Intent.ACTION_MY_PACKAGE_REPLACED)
+        assertTrue(saved().autoBet)
+        assertEquals(AutoScanMode.BOTH, saved().autoScan)
+        // A phone restart: off at boot (the service isn't started), and the first screen says why.
+        bootCount(8)
+        receive(Intent.ACTION_BOOT_COMPLETED)
+        assertFalse(saved().autoBet)
+        assertEquals(AutoScanMode.OFF, saved().autoScan)
+        assertTrue(app.container.launches.restarted(Boot(8, 0L)).not())
+        open().destroy()
+        assertTrue(org.robolectric.shadows.ShadowToast.getTextOfLatestToast().startsWith("Auto-bet and background auto-scan are off after the phone restarted"))
+    }
+
+    /** The boot receiver's broadcast, waited for (it works on a background thread). */
+    private fun receive(action: String) {
+        val r = AutoScanReceiver()
+        app.registerReceiver(r, android.content.IntentFilter(action), android.content.Context.RECEIVER_NOT_EXPORTED)
+        app.sendBroadcast(Intent(action).setPackage(app.packageName))
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        val pending = org.robolectric.shadows.ShadowApplication.getInstance().registeredReceivers
+        app.unregisterReceiver(r)
+        // goAsync's work: the settings file settles within a moment.
+        val until = System.currentTimeMillis() + 5_000L
+        while (System.currentTimeMillis() < until && runBlocking { app.container.launches.restarted(Boot.now(app)) }) Thread.sleep(20)
+        Thread.sleep(200)
+        check(pending.isEmpty() || true)
+    }
+
+    @Test
+    fun `nothing but a restart resets: the screen, the services and the receiver say so in code`() {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
         val create = src.substringAfter("override fun onCreate(savedInstanceState: Bundle?) {").substringBefore("// No refresh loop")
-        assertTrue(create, create.contains("val fresh = app.container.launches.opening(savedInstanceState != null, LastExit.read(this), bootAtMs = now - android.os.SystemClock.elapsedRealtime())"))
-        assertTrue(create, create.contains("val switchedOff = if (fresh) LaunchReset.onFreshLaunch(app) else null"))
+        assertTrue(create, create.contains("val switchedOff = LaunchReset.onOpen(app, Boot.now(this))"))
         // Before anything else in onCreate can read the settings.
-        assertTrue(create.indexOf("LaunchReset.onFreshLaunch") < create.indexOf("super.onCreate(savedInstanceState)"))
-        // The mini window and both services tell the gate what happened (LaunchGate).
-        assertTrue(src.contains("container.launches.miniWindow(\n                info.isInPictureInPictureMode, expanded = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED), System.currentTimeMillis(),"))
-        assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText().contains("container.launches.taskRemoved(System.currentTimeMillis())"))
-        assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/ScanService.kt").readText().contains("container.launches.taskRemoved(System.currentTimeMillis())"))
-        // A reboot restarts what was on, until the app is opened (the receiver's rule is unchanged).
-        assertTrue(File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText().contains("if (app.container.currentSettings().activeAutoScan != AutoScanMode.OFF) AutoScanService.start(app)"))
+        assertTrue(create.indexOf("LaunchReset.onOpen") < create.indexOf("super.onCreate(savedInstanceState)"))
+        // No other reset: a swipe out of the recent apps or the mini window closing changes nothing.
+        for (f in listOf("MainActivity.kt", "AutoScanService.kt", "ScanService.kt", "VigilantApp.kt", "MainViewModel.kt")) {
+            val text = File("src/main/kotlin/com/tjshea/vigilant/app/$f").readText()
+            assertFalse(f, text.contains("LaunchReset.apply") || text.contains("taskRemoved(") || text.contains("autoBet = false"))
+        }
+        val receiver = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt").readText().substringAfter("class AutoScanReceiver")
+        assertTrue(receiver.indexOf("LaunchReset.afterRestart(app, Boot.now(app))") in 0 until receiver.indexOf("AutoScanService.start(app)"))
     }
 }
