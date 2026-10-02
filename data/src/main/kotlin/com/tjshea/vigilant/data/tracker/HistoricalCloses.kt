@@ -499,12 +499,12 @@ class CloseBackfill(
          * looked at once more, within the same 60 days.
          */
         fun reopened(b: TrackedBet, now: Long, activeIds: Collection<String>): Boolean =
-            b.closeFinal && b.closeFair == null && b.status != BetStatus.VOID && b.createdAtMs < b.startsTs &&
+            b.closeFinal && b.closeFair == null && b.status != BetStatus.VOID && !b.isLock && b.createdAtMs < b.startsTs &&
                 now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
                 activeIds.any { it !in (b.closeAskedOf ?: ASKED_BEFORE) }
 
         fun due(b: TrackedBet, now: Long, force: Boolean = false): Boolean =
-            b.status != BetStatus.VOID && !b.closeFinal && b.createdAtMs < b.startsTs && now >= b.startsTs + AFTER_START_MS &&
+            b.status != BetStatus.VOID && !b.isLock && !b.closeFinal && b.createdAtMs < b.startsTs && now >= b.startsTs + AFTER_START_MS &&
                 now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
                 (b.closeLookedAtMs == null || now - b.closeLookedAtMs >= (if (force) FORCE_GAP_MS else RETRY_MS))
     }

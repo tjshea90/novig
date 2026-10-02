@@ -52,7 +52,8 @@ data class CheckOddsStats(
 
         /** [bets]' open ones whose current EV was read at or after [sinceMs] (when the check began), games that have started by [now] aside. */
         fun of(bets: List<TrackedBet>, sinceMs: Long, now: Long): CheckOddsStats {
-            val reRead = bets.filter { b -> b.status == BetStatus.PENDING && (b.nowAtMs ?: Long.MIN_VALUE) >= sinceMs && b.nowEv?.isNaN() == false }
+            // A lock's EV now says nothing about the picks' edges (the other side of a bet already held), so it isn't counted ([TrackedBet.isLock]).
+            val reRead = bets.filter { b -> b.status == BetStatus.PENDING && !b.isLock && (b.nowAtMs ?: Long.MIN_VALUE) >= sinceMs && b.nowEv?.isNaN() == false }
             val (started, pregame) = reRead.partition { now >= it.startsTs }
             val evs = pregame.map { it.nowEv!! }
             if (evs.isEmpty()) return EMPTY.copy(live = started.size)

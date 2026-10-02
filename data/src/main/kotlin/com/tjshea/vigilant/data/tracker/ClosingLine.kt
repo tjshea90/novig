@@ -59,7 +59,8 @@ object ClosingLine {
 
     /** [closeFair] and where it came from: [SOURCE_CAPTURED] or the history source's [TrackedBet.closeVia]. */
     fun closeOf(b: TrackedBet, now: Long): Pair<Double, String>? {
-        if (now < b.startsTs || b.createdAtMs >= b.startsTs) return null
+        // A lock isn't a pick: its close says nothing about the edges, so it has none (as BetTracker.stats leaves it out of CLV).
+        if (now < b.startsTs || b.createdAtMs >= b.startsTs || b.isLock) return null
         captured(b)?.let { return it to SOURCE_CAPTURED }
         if (b.closeFair != null) return b.closeFair to (b.closeVia ?: "history")
         return null
@@ -91,7 +92,7 @@ object ClosingLine {
 
     /** Open, bet before its game, still to start, and without a close read in the window yet: the capture still has work for it. */
     fun needsClose(b: TrackedBet, now: Long): Boolean {
-        if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs) return false
+        if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs || b.isLock) return false
         val seen = b.closingSeenAtMs
         val inWindow = b.closingFair != null && seen != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && seen >= b.startsTs - DUE_MS
         return !inWindow
@@ -102,7 +103,7 @@ object ClosingLine {
      * replaces it ([ClosingLine]). A bet with no read yet isn't this one (it [needsClose]).
      */
     fun needsFinalRead(b: TrackedBet, now: Long): Boolean {
-        if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs) return false
+        if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs || b.isLock) return false
         val seen = b.closingSeenAtMs ?: return false
         return b.closingFair != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && b.startsTs - seen > FINAL_FRESH_MS
     }
@@ -182,7 +183,7 @@ data class ClvStats(
         fun of(bets: List<TrackedBet>, now: Long, period: ClvPeriod = ClvPeriod.ALL, dropOutliers: Boolean = false, zone: ZoneId = ZoneId.systemDefault()): ClvStats {
             val range = period.range(now, zone)
             val inPeriod = bets.filter { b ->
-                b.status != BetStatus.VOID && b.createdAtMs < b.startsTs && (range == null || (b.createdAtMs >= range.first && b.createdAtMs < range.second))
+                b.status != BetStatus.VOID && !b.isLock && b.createdAtMs < b.startsTs && (range == null || (b.createdAtMs >= range.first && b.createdAtMs < range.second))
             }
             val closedBets = inPeriod.mapNotNull { b -> ClosingLine.clv(b, now)?.let { b to it } }
             val clvs = closedBets.map { it.second }

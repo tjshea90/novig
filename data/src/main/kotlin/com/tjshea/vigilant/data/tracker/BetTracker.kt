@@ -183,7 +183,9 @@ data class TrackedBet(
         get() = when (status) {
             BetStatus.WON -> profitIfWon
             BetStatus.LOST -> -stake
-            BetStatus.PUSH, BetStatus.VOID -> 0.0
+            // A push gives back what the contracts cost, not a live fee ([paid]: a bet placed through the API; a ✓ has none on record).
+            BetStatus.PUSH -> paid?.let { it - stake } ?: 0.0
+            BetStatus.VOID -> 0.0
             BetStatus.FMV -> settleValue?.let { stake * (it / cost - 1.0) } ?: 0.0
             BetStatus.PENDING -> null
         }
@@ -318,7 +320,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             outcomeId = outcomeId,
             price = price,
             cost = price + fee,
-            fairAtBet = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: ((1 + ev) / decimal),
+            // With no fair on record, backed out of the EV at what the bet cost ([ev] is net of the live fee, as an alert's is): fair = (1 + EV) × cost.
+            fairAtBet = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: ((1 + ev) * (price + fee)),
             evPercentAtBet = ev,
             stake = stake,
             source = source,
@@ -715,26 +718,27 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         val twoSided = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() }
         // Novig's price now without its fee (the fee stays in the bet's own cost), as CNO's page shows it.
         val novigNow = o.quote?.price?.coerceIn(0.001, 0.999)?.let(com.tjshea.vigilant.engine.Odds::probabilityToAmerican) ?: b.nowAmerican
+        // The read is as old as its oldest book price: a close made from it is dated by that, here and when it's merged ([mergeReads]).
+        val asOf = minOf(now, o.fairAsOfMs ?: now)
         if (alongside) {
             // The book list CNO's page (or its backup) wrote in this same check stays; an older one gives way to this read's (Tj, 2026-09-30:
             // "all the vigilant results show stale odds").
             val keepBooks = lines.isEmpty() || b.booksAtMs?.let { now - it < BetRecheck.FRESH_MS } == true
             return b.copy(
-                vigFair = fair, vigAtMs = now, vigBooks = twoSided ?: b.vigBooks, nowAmerican = novigNow,
+                vigFair = fair, vigAtMs = now, vigAsOfMs = asOf, vigBooks = twoSided ?: b.vigBooks, nowAmerican = novigNow,
                 books = if (keepBooks) b.books else lines, booksAtMs = if (keepBooks) b.booksAtMs else now,
             )
         }
         // A read once the game is under way is its odds now, never its close. The close is dated by its oldest book price, not by when it
         // was saved, so only a line that was really current in the last minutes before the start counts as the true close.
         val closing = now < b.startsTs
-        val asOf = minOf(now, o.fairAsOfMs ?: now)
         return b.copy(
             closingFair = if (closing && ClosingLine.supersedes(b, asOf)) fair else b.closingFair,
             closingSeenAtMs = if (closing && ClosingLine.supersedes(b, asOf)) asOf else b.closingSeenAtMs,
             nowFair = fair, nowEv = fair / b.cost - 1.0, nowAtMs = now, nowVia = via, nowNote = null, nowNoteAtMs = null,
             books = lines.ifEmpty { b.books }, booksAtMs = if (lines.isEmpty()) b.booksAtMs else now,
             nowBooks = twoSided ?: b.nowBooks,
-            vigFair = fair, vigAtMs = now, vigBooks = twoSided ?: b.vigBooks,
+            vigFair = fair, vigAtMs = now, vigAsOfMs = asOf, vigBooks = twoSided ?: b.vigBooks,
             nowAmerican = novigNow,
         )
     }
@@ -778,11 +782,11 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                         both += b.id
                         withFair(
                             (c + v) / 2.0, maxOf(b.cnoAtMs!!, b.vigAtMs!!), VIA_BOTH, maxOf(b.nowBooks ?: 0, b.vigBooks ?: 0).takeIf { it > 0 },
-                            seen = minOf(b.cnoAtMs, b.vigAtMs),
+                            seen = minOf(b.cnoAtMs, b.vigAsOfMs ?: b.vigAtMs),
                         )
                     }
                     c != null -> { cnoOnly += b.id; b }
-                    v != null -> { vigOnly += b.id; withFair(v, b.vigAtMs!!, VIA_VIGILANT, b.vigBooks) }
+                    v != null -> { vigOnly += b.id; withFair(v, b.vigAtMs!!, VIA_VIGILANT, b.vigBooks, seen = b.vigAsOfMs ?: b.vigAtMs) }
                     else -> {
                         neither += b.id
                         val cnoSaid = b.nowNote != null && (b.nowNoteAtMs ?: Long.MIN_VALUE) >= cnoSince

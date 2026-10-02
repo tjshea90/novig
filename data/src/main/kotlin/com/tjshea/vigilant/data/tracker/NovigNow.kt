@@ -75,8 +75,10 @@ object NovigNow {
             nowNoteAtMs = if (open) note(b)?.let { b.novigWhyAtMs } else b.nowNoteAtMs,
             cnoFair = null, vigFair = if (open) fair else b.vigFair,
             books = b.books.filter { it.name.equals(b.book.ifBlank { "Novig" }, ignoreCase = true) },
-            // Novig's own close, judged as every close is: read in the last minutes before the start.
-            closingFair = b.novigClose, closingSeenAtMs = b.novigCloseAtMs, closeFair = null, closeVia = null,
+            // Novig's own close, judged as every close is: read in the last minutes before the start, else what Novig's own trades closed at (its
+            // trade history, [NovigTradeCloses]); another book's close found afterwards isn't Novig's.
+            closingFair = b.novigClose, closingSeenAtMs = b.novigCloseAtMs,
+            closeFair = b.closeFair?.takeIf { novigTrades(b) }, closeVia = b.closeVia?.takeIf { novigTrades(b) },
         )
     }
 
@@ -93,6 +95,9 @@ object NovigNow {
     }
 
     const val VIA = "novig"
+
+    /** [b]'s close found afterwards came from Novig's own trade history ([NovigTradeCloses]). */
+    private fun novigTrades(b: TrackedBet): Boolean = b.closeVia?.startsWith(CloseBackfill.VIA_NOVIG) == true
 
     /** [Read.why] when Novig's order book for the market couldn't be read. */
     const val BOOK_UNREAD = "Novig's order book for this market couldn't be read just now"
