@@ -291,6 +291,7 @@ class AutoBettor(
         } catch (e: Exception) {
             SharpConfirm.Result(SharpConfirm.Verdict.UNAVAILABLE, reason = "couldn't get a fresh ${rules.label} price (${e.message ?: e.javaClass.simpleName})".take(REASON_CHARS))
         }
+        if (sharpSaid.size > SHARP_SAID_KEEP) sharpSaid.clear()
         sharpSaid[item.pick.row.key] = result
         return result.reason
     }
@@ -322,6 +323,9 @@ class AutoBettor(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** How many sharp-check answers are kept for the pop-ups before they're dropped (a run's bets are a handful). */
+        private const val SHARP_SAID_KEEP = 200
+
         /** A game starting sooner than this isn't bet: Novig may be moving it to live, and the price is about to jump. */
         const val MIN_LEAD_MS = 60_000L
 
