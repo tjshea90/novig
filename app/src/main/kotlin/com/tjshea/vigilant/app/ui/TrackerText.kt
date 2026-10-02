@@ -18,9 +18,7 @@ object TrackerText {
      * What the "Novig only" filter is showing: EV and closing lines from Novig's own prices, and how fresh they are (Tj, 2026-10-02 ~18:50Z: "show the
      * percent EV compared only from novig odds, filtering out other sports books").
      */
-    fun novigOnlyNote(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String = novigOnlyCounts(bets, now)
-
-    private fun novigOnlyCounts(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String {
+    fun novigOnlyNote(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String {
         // Every open bet at Novig counts, Novig's ids on record or not (Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds").
         val open = com.tjshea.vigilant.data.tracker.NovigNow.open(bets, now)
         if (open.isEmpty()) return "Novig's odds only: EV is Novig's odds now against the odds you bet at, CLV against Novig's closing odds."
