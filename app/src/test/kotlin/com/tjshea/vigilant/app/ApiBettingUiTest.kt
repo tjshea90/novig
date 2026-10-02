@@ -158,8 +158,8 @@ class ApiBettingUiTest {
         compose.onNodeWithText("Turn betting off").performScrollTo().performClick()
         assertTrue(synced && off)
         // A limit chip changes the setting.
-        compose.onNodeWithText("$100.00").performScrollTo().performClick()
-        assertTrue(settings.apiMaxStake == 100.0 || settings.apiMaxPerDay == 100.0)
+        compose.onNodeWithText("$250.00").performScrollTo().performClick()
+        assertEquals(250.0, settings.apiMaxPerDay, 1e-9)
         // No minimum edge for a bet placed by hand (Tj, 2026-10-02): the chips are gone and the section says so.
         compose.onAllNodesWithText("Smallest edge a bet is still placed at").assertCountEquals(0)
         compose.onAllNodesWithText("Any +EV").assertCountEquals(0)
