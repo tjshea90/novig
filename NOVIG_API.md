@@ -574,3 +574,13 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   credits `qty × 1¢`, a push credits the collateral back, a fair-market-value void credits `price × qty × 1¢`; a **loss moves no money** (the cost left the wallet at the fill), so it has
   no row: a loss is "the position is gone and no settlement row paid it". `GET /v3/portfolio/positions` lists what's still held (`qty`, `cost`). **Not yet seen on the real API**: the
   shape above is the documented one; Vigilant cross-checks every ledger grade against the score feeds and leaves a disagreement to a tap.
+
+## 16. Locks and Novig-only pricing (2026-10-02 ~19:00Z; RESEARCH.md §67; Tj: "arbitrage bet my own bets in novig based on timing")
+- **A lock** buys the other outcome of the same market so both outcomes are held equally: every contract pays $0.01 whichever wins, and an FMV void's
+  prices sum to 1, so equal holdings pay the same either way (§7, §14.2). Vigilant places it as ONE `FOK` order (§14.3: "an unfilled FOK ... is a
+  `reject`") at a limit worked out as the worst case (`LockIn.plan`, fee included when live), only after `GET /v3/portfolio/positions?market=` matches
+  the Tracker's contracts exactly on both outcomes. Not yet seen live: the FOK path and positions' shape are the documented ones (§15); the first real
+  lock is the test. Bets placed in the Novig app (cash wallet) can't be locked: the API can't see them (§14.2).
+- **Novig's own price for a side** (the Tracker's "Novig only" filter, `NovigNow`): the middle of its best bid and its offer (`1 − best bid on the other
+  outcome`, §7). Read from the same book reads the scanner already makes (public or keyed, with the websocket and ETag cache), never another book's API.
+

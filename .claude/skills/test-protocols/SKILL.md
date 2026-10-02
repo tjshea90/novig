@@ -21,6 +21,11 @@ unless Tj asks).
 - **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), CNO (`CnoScreen`), Games
   (`GamesScreen`: board + per-game line table), Auto-bet (`AutoBetScreen`, v0.46.0: Novig with CNO on), Tracker
   (`TrackerScreen`: P/L, ROI, CLV), Settings (`SettingsScreen`: a home list with search, then one page each, below).
+- **Locks and the Novig-only filter (v0.47.0; RESEARCH.md §67, NOVIG_API.md §16; REAL MONEY for locks):** `data/novig/trading/LockIn` (pure math,
+  property-tested), `LockPositions`, `ApiBetPlacer.placeLock` (fresh book, positions must match, one FOK), `app/LockScanner` + `AutoLocker` (cycle hook,
+  `AutoBetNotes.locked`), `ui/LockUi` (bet sheet card + confirm, Tracker badge), `ScanSettings.autoLock*`, `TrackedBet.lockFor/isLock` (money yes; record,
+  EV, CLV no: `BetTracker.stats`). `data/tracker/NovigNow` + `TrackedBet.novig*`, `MainViewModel.refreshNovigOnly`, Tracker chip `novigOnlyChip` /
+  `checkNovig`. Tests: LockInTest, LockPlacerTest, LockAppTest, NovigNowTest, TrackerNovigOnlyTest.
 - **Settings pages (v0.46.0; TASKS.md AX):** `SettingsPage` (Scanning, Alerts, CrazyNinjaOdds list, Widget & mini window, +EV feed & scan
   size, Fair odds & sources, Betting & Novig account, API usage & keys, Diagnostics & about; `shownIn` per scanner), `SettingsSummary` (each
   row's live line), `SettingsIndex` (search: title, page, plain line, words; `SettingsPagesTest` checks every entry is on its page: add an
