@@ -878,7 +878,7 @@ private fun ColumnScope.BettingTab(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth(),
     )
-    Hint("The money you set aside for betting. Kelly stakes are a share of it.")
+    Hint("Your bankroll: the money you set aside for betting. Kelly stakes are a share of it.")
     Text("Kelly fraction for suggested stakes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
     Hint(
