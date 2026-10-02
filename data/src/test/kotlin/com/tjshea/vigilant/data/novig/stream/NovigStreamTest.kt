@@ -152,6 +152,52 @@ class NovigStreamTest {
     }
 
     @Test
+    fun `dropping more markets than the bucket holds costs one bucket, not minutes of debt`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        // A 100-token bucket refilling 50 a second. Novig charges any request at most the bucket (docs.novig.com/api/streaming), so swapping
+        // 300 markets for 300 others is one full bucket to drop them and one to add the rest: ~4 s here. Charged 1 a subject uncapped, the
+        // drop waited for 300 tokens a 100-token bucket can never hold and left it 200 in debt: ~12 s here, minutes on the phone.
+        val stream = NovigStream(
+            OkHttpClient(), signer(), scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"),
+            capacity = 100.0, refillPerSec = 50.0, maxMarkets = 300,
+        )
+        val first = (1..300).map { "m$it" }
+        val second = (301..600).map { "m$it" }
+        stream.watch(first)
+        until { stream.live(first).size == 300 }
+        val t0 = System.currentTimeMillis()
+        stream.watch(second)
+        until { stream.live(second).size == 300 }
+        val took = System.currentTimeMillis() - t0
+        assertTrue("took $took ms", took < 8_000)
+        assertEquals(300, received.single { it["unsubscribe"] != null }["unsubscribe"]!!.jsonArray.size)
+        assertEquals(2, subscribes.size)
+        stream.close()
+    }
+
+    @Test
+    fun `opening the feed connects without changing what it watches`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val stream = stream()
+        stream.watch(listOf("m1", "m2"))
+        until { stream.live(listOf("m1", "m2")).size == 2 }
+        // A scan opens the feed at its first plan: what it holds stays held, and nothing is dropped or added.
+        stream.open()
+        delay(200)
+        assertEquals(setOf("m1", "m2"), stream.live(listOf("m1", "m2")).keys)
+        assertTrue(received.none { it["unsubscribe"] != null })
+        assertEquals(1, subscribes.size)
+        stream.close()
+        // Closed, open() connects again (one more upgrade) and subscribes nothing until it's handed markets.
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        stream.open()
+        until { stream.state.value is StreamState.Live }
+        delay(200)
+        assertEquals(1, subscribes.size)
+        stream.close()
+    }
+
+    @Test
     fun `a throttled subscribe is sent again, and a limit refusal asks for fewer`() = runBlocking {
         // First: Novig's throttle (a reply with no nonce). Then: over the watch limit above 50 markets.
         server.enqueue(
