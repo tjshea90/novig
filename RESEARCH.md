@@ -3719,3 +3719,25 @@ the book check (fair, EV, books pricing both sides, one-sided, agreeing, verdict
 EV at Novig's price, agrees or not), the sharpest book and what it said, the stake rule, Kelly fraction, full-Kelly share, stake, bankroll and
 wallet. Diagnostics lists every bet with it (JSON lines) and splits CLV by agreement, dissent, the sharpest book's verdict, minutes to the start,
 the check's EV band, kind and preset.
+
+### 66.5 The presets' values, and what Apply changes (written 2026-10-02 ~19:50Z; the values are `Presets.kt`'s)
+| Rule | App default | **Volume + safe CLV** (recommended) | Strict CLV | Why (sections above) |
+| :- | :- | :- | :- | :- |
+| Smallest edge (auto-bet) | 3% | **2.5%** | 4% | Tj's 1–2% bets weren't distinguishable from zero CLV, 2–3% beat the close by +1.3%, 4%+ beat it 83% of the time; shown edges shrink ~1.5 points (65, 66.2) |
+| Books pricing both sides | 2 | **3** | 3 | more independent opinions; 3 is the most the app offers (65) |
+| Books agreeing on their own | 3 | **3** | 4 | |
+| Every book must agree | off | **off** | off | a dissent matters only when it is the sharpest book for that kind of bet: the veto (65, 66.2) |
+| Odds range | any | **−200 to +150** | −200 to +130 | favorite–longshot bias, thin books on long shots (8.1, 16.2); betsharpmoney's range (66.1) |
+| Kinds of bet | every kind | **props, moneylines, spreads** | same | his game totals (−2.8% CLV), team totals and 1st-half totals lost to the close (65) |
+| Stake rule | $1 | **¼ Kelly** (still capped by his own most per bet and per day) | same | edge estimates this noisy: a quarter of Kelly (65) |
+| Sharp books, auto-bet and alerts | veto | **veto** | veto | (66.3) |
+| Alerts from | 3% | **2.5%** | 4% | same floor as the auto-bet |
+| CNO filters | conservative, 4+ books, 50 rows | **conservative, 4+ books, 1% min, 100 rows, complete book, both sides** | same | more rows = more candidates for the same read |
+| Background scan | 10 min | **30 s** | 30 s | CNO publishes every 13–33 s; Vigilant's own (credit-spending) scan keeps its own cap (`vigilantEverySeconds`) |
+
+Not set by a preset: bankroll, wallet, most per bet, most per day, keys, and whether auto-bet / auto-scan are on.
+
+**Kind of bet, fixed in the post-build sweep (AW7):** `BetKind.of` first read kinds through the grader, which gives up on what it can't grade from a
+score: Player Interceptions, Sacks, Field Goals, Singles, Pitcher Outs, Blocked Shots and Shots on Target came out "Other", so the Volume preset never
+auto-bet them and the veto judged them by Pinnacle/Circa instead of the prop books. It now falls back to the market's words (player/batter/pitcher/
+anytime → prop; quarter/period/half/inning → period line), and a tennis set spread or total sets counts as the whole match. `SharpVetoTest`.

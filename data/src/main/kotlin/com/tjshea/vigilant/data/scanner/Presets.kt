@@ -55,7 +55,8 @@ data class PresetRules(
             s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds,
         )
 
-        private fun pct(v: Double) = String.format(java.util.Locale.US, if (v * 100 % 1.0 == 0.0) "%.0f%%" else "%.1f%%", v * 100)
+        /** "2.5%", "3%" (0.03 × 100 is 3.0000000000000004 in floating point: rounded to tenths first). */
+        private fun pct(v: Double): String = Math.round(v * 1000).let { t -> if (t % 10 == 0L) "${t / 10}%" else String.format(java.util.Locale.US, "%.1f%%", t / 10.0) }
     }
 }
 
