@@ -1342,7 +1342,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _state.update { it.copy(readingNovig = false) }
             }
             val (looked, read) = done ?: run { if (force) _toasts.tryEmit("Couldn't read Novig's prices just now."); return@launch }
-            NovigOnlyToast.of(looked, read, force)?.let { _toasts.tryEmit(it) }
+            com.tjshea.vigilant.app.ui.TrackerText.novigReadToast(looked, read, force)?.let { _toasts.tryEmit(it) }
         }
     }
 

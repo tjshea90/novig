@@ -33,6 +33,23 @@ object TrackerText {
     }
 
 
+    /**
+     * What a "Novig only" read did, for its toast: prices read (Novig only), bets found on Novig by name, and bets with no Novig price now (each says why).
+     * Null for a read on its own (the Tracker opening) that had nothing to do.
+     */
+    fun novigReadToast(looked: com.tjshea.vigilant.data.tracker.NovigIds.Found?, read: com.tjshea.vigilant.data.tracker.NovigNow.Read, force: Boolean): String? {
+        val found = looked?.ids?.size ?: 0
+        val notFound = looked?.why?.size ?: 0
+        if (read.due == 0 && found == 0 && notFound == 0) return if (force) "No open bet to price on Novig." else null
+        val s = { n: Int -> if (n == 1) "" else "s" }
+        return listOfNotNull(
+            "Novig's prices read for ${read.prices.size} of ${read.due} open bet${s(read.due)} (Novig only: no other book asked)",
+            "${read.all - read.due} already fresh".takeIf { !force && read.due < read.all },
+            "$found found on Novig by name".takeIf { found > 0 },
+            (notFound + read.why.size).takeIf { it > 0 }?.let { "$it with no Novig price now (why on each bet)" },
+        ).joinToString("; ") + "."
+    }
+
     // ---- closing line value (Tj, 2026-09-29) --------------------------------------------------------------------------
 
     /** Why a started bet shows no close yet, and whether one is still being looked for (ESPN, Novig's trades; [CloseBackfill]). */
