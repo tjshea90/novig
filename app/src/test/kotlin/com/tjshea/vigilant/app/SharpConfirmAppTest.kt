@@ -303,4 +303,21 @@ class SharpConfirmAppTest {
         assertTrue(SharpConfirmText.viaCnoNote(ScanSettings()).startsWith("Off: only a Pinnacle feed"))
         assertTrue(SharpConfirmText.viaCnoNote(ScanSettings(sharpConfirmViaCno = true)).startsWith("On: Pinnacle's column on CNO's game page can confirm a bet too"))
     }
+
+    /** A background cycle needs CNO and a clock to run for real: this pins that its alerts go through the sharp check, only when Settings switch it on. */
+    @Test
+    fun `the background cycle's CNO alerts go through the sharp check only when the alerts switch is on`() {
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        val alerts = src.substringAfter("private suspend fun cnoAlerts(s: ScanSettings): List<EvAlert> {").substringBefore("private suspend fun vigilantScan")
+        assertTrue(alerts, alerts.contains("val rules = com.tjshea.vigilant.data.scanner.SharpConfirm.rules(s, autoBet = false) ?: return alerts"))
+        assertTrue(alerts, alerts.contains("return SharpGate.confirmedAlerts(alerts, c.alertLog.unseen(alerts), AlertPicks.cnoChecked(state, s.alertMinEv, now))"))
+        // Judged by the books first, then by the sharp one: the sharp check only sees alerts the books already confirmed.
+        assertTrue(alerts.indexOf("AlertPicks.cno(state") < alerts.indexOf("SharpConfirm.rules"))
+        // Vigilant's own alerts are not asked: its fair odds already come from the sharp books.
+        assertFalse(src.substringAfter("private suspend fun vigilantScan").substringBefore("private suspend fun send").contains("SharpGate"))
+        // And the auto-bet's check comes after every other criterion, before the stake.
+        val bettor = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt").readText()
+        assertTrue(bettor.indexOf("AutoBet.judge(rules, item.shown.ev") < bettor.indexOf("?: sharpReason(item, settings, state, now)"))
+        assertTrue(bettor.indexOf("?: sharpReason(item, settings, state, now)") < bettor.indexOf("AutoBet.stake(rules, item.shown.row"))
+    }
 }
