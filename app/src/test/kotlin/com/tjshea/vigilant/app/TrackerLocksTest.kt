@@ -93,10 +93,10 @@ class TrackerLocksTest {
         compose.onNodeWithText("+5.3%", substring = true).assertExists()
         compose.onNodeWithText("Hidden from the other numbers", substring = true).assertExists()
         compose.onRoot().captureRoboImage("screenshots/4l_tracker_locked_in.png")
-        // Hidden: only Team C's $4.00 is open money; shown, all three bets' $13.50.
+        // Hidden: only Team C's $4.00 is open money; shown, both picks (the lock is in the money, not the picks).
         compose.onNodeWithText("The 1 open bet", substring = true).assertExists()
         hide = false
-        compose.onNodeWithText("The 3 open bets", substring = true).assertExists()
+        compose.onNodeWithText("The 2 open bets", substring = true).assertExists()
         compose.onNodeWithText("Also counted in the other numbers", substring = true).assertExists()
     }
 }
