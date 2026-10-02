@@ -9,7 +9,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.shadow.api.Shadow
 import org.robolectric.shadows.ShadowNetworkCapabilities
 
 /** The connection figures name the network the phone was on ([NetKind]): Wi-Fi, mobile, anything else, or none. */
