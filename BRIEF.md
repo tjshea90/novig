@@ -347,6 +347,11 @@ robolectric.org/configuring/.
   Check odds now holds a focus (`FocusGate`, in memory, 15 minutes at most): the background cycle (so auto-bet), CNO's refresh, scans, the widget's rescans and
   the movers wait until it ends, and it looks for every closing line (`CloseBackfill.run(force = true)`).
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
+  **Nothing runs by itself after a reopen (Tj, 2026-10-02; v0.42.0, RESEARCH.md §60.1):** each fresh launch of the app (no saved state) saves `autoBet = false` and `autoScan = OFF`
+  (`LaunchReset`, first thing in `MainActivity.onCreate`); Tj switches them on in Settings when he wants them. Never remove it without his word.
+  **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
+  two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
+  (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.
   **Keeping it alive with the screen off (Tj, 2026-10-02; v0.41.0, RESEARCH.md §59):** `ScanSettings.autoScanKeepAwake` (on by default) makes `AutoScanService` hold a
   partial wake lock (CPU, never the screen) and run the cycles from its own loop while auto-scan runs faster than every 9 minutes (`KeepAwake.active`); the alarm is then only a safety net
   (`KeepAwake.watchdogAtMs`, never announced as the next scan). Alarms alone are throttled in Doze, so a fast schedule can't be kept that way. Never use a screen or full wake lock for it.
