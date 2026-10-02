@@ -152,9 +152,13 @@ class LockPlacerTest {
         placer(t, novig).placeLock(holding(t), market, 0.01, pushable = false, auto = false) as PlaceResult.Placed
         // $4 of bets and a $5.50 lock today; a $10 limit per day leaves $6 for bets, not $0.50.
         val limits = BetLimits(maxStake = 10.0, maxPerDay = 10.0)
-        val p = ApiBetPlacer(novig, t, books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { })
-        val other = BetTarget(market.copy(marketId = "mkt2"), "A", "NBA", "D @ C", startsTs, "Moneyline", "Team C", fair = 0.60, fairAsOfMs = now, source = BetTracker.SOURCE_CNO)
+        val market2 = market.copy(marketId = "mkt2", outcomes = listOf(NovigOutcome("C", "Team C", "TBD"), NovigOutcome("D", "Team D", "TBD")))
+        val book2 = NovigBook("mkt2", 1, mapOf("D" to listOf(BidLevel(450, 5_000)), "C" to listOf(BidLevel(400, 5_000))), now)
+        val p = ApiBetPlacer(novig, t, books = { book2 }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { })
+        val other = BetTarget(market2, "C", "NBA", "D @ C", startsTs, "Moneyline", "Team C", fair = 0.60, fairAsOfMs = now, source = BetTracker.SOURCE_CNO)
         val r = p.plan(other, 6.0, limitsOverride = limits)
-        assertTrue(r.toString(), r !is PlanResult.Refused || !(r as PlanResult.Refused).reason.contains("daily limit"))
+        assertTrue(r.toString(), r is PlanResult.Ready)
+        // Without the lock's exemption the day would already be at $9.50: $6 more would be refused.
+        assertTrue(p.plan(other, 6.01, limitsOverride = limits) is PlanResult.Ready)
     }
 }
