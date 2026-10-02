@@ -79,7 +79,8 @@ object BetLedger {
         val a = b.atBet ?: return NOT_RECORDED
         return when (split) {
             Split.AGREEMENT -> a.agreeing?.let { n -> a.twoSided?.let { t -> if (t > 0 && n == t) "every one ($n of $t)" else if (t > 0) "${t - n} of $t not agreeing" else null } } ?: NOT_RECORDED
-            Split.DISSENT -> when (val d = a.dissent.size) {
+            // A record with no book page (a ✓ on a notification) has the counts but not the names: the count says how many disagreed.
+            Split.DISSENT -> when (val d = if (a.books.isEmpty() && a.twoSided != null && a.agreeing != null) (a.twoSided - a.agreeing).coerceAtLeast(0) else a.dissent.size) {
                 0 -> if (a.twoSided == null) NOT_RECORDED else "none"
                 1 -> "1"
                 else -> if (d >= 3) "3 or more" else "2"
