@@ -188,10 +188,25 @@ object DiagnosticsFile {
         x.coldStartMs?.let { o.appendLine("Screen appeared $it ms after the process started.") } ?: o.appendLine("Cold start: not measured this run (the process was started by a service or alarm, or no screen opened yet).")
         if (x.perf.isEmpty()) o.appendLine("No timings yet.")
         x.perf.forEach { (name, v) -> o.appendLine("$name: ${v.count} samples · p50 ${v.p50.toLong()} · p95 ${v.p95.toLong()} · max ${v.max.toLong()} · mean ${v.mean.toLong()}") }
+        frameLines(x.frames).forEach(o::appendLine)
         o.appendLine("Heap ${x.memory.usedMb} of ${x.memory.maxMb} MB (${Math.round(x.memory.fraction * 100)}%).")
         val p = x.phone
         o.appendLine("Battery ${p.batteryPct?.let { "$it%" } ?: "?"}${if (p.charging == true) " (charging)" else if (p.charging == false) " (not charging)" else ""} · thermal ${p.thermal ?: "?"} · Doze now ${p.dozing ?: "?"} · standby bucket ${p.standbyBucket ?: "?"}")
         s.status.timing?.let { o.appendLine("Last Vigilant scan, where the time went: " + com.tjshea.vigilant.data.scanner.ScanTiming.text(it, s.status.booksFetched, s.status.booksViaKey, s.status.booksViaPush, s.status.keyReadPerSec)) }
+    }
+
+    /**
+     * The frame meter's lines (Tj, 2026-10-02: "the entire app becomes laggy" during a Vigilant scan): the screen's frames this run, by what the app
+     * was doing, so a stutter that comes with a scan (or a Check odds now, or CNO's reads) shows against the frames drawn with none of them running.
+     */
+    internal fun frameLines(frames: Map<String, com.tjshea.vigilant.data.diag.FrameStats.Bucket>): List<String> {
+        if (frames.values.none { it.frames > 0 }) return listOf("Screen frames: none timed yet this run (timed while Vigilant is in front).")
+        val order = listOf(FrameStats.SCAN, FrameStats.CHECK, FrameStats.CNO, FrameStats.QUIET)
+        return listOf("Screen frames this run, by what was running (slow: over twice the frame's deadline; frozen: over ${FrameStats.FROZEN_MS.toLong()} ms):") +
+            frames.entries.sortedBy { order.indexOf(it.key).let { i -> if (i < 0) order.size else i } }.filter { it.value.frames > 0 }.map { (what, b) ->
+                "  $what: ${b.frames} frames · ${Format.percent(b.slowShare, 1)} slow (${b.slow}) · ${b.frozen} frozen · " +
+                    "p50 ${b.durations.p50.toLong()} ms · p95 ${b.durations.p95.toLong()} ms · worst ${b.durations.max.toLong()} ms (of the last ${b.durations.count})"
+            }
     }
 
     private fun counters(x: Diagnostics.Extras, now: Long, o: StringBuilder) {

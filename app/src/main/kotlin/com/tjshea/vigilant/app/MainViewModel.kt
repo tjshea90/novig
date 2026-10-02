@@ -1542,6 +1542,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             eventsSinceMs = c.eventLog.sinceMs(),
             perf = c.perf.summaries(),
             coldStartMs = c.perf.coldStartMs,
+            frames = c.frames.snapshot(),
             logcat = g.logcat,
             storage = g.storage,
             previous = g.previous,
