@@ -1,13 +1,13 @@
-# CHECKPOINT 2375 — read me first, then TASKS.md
+# CHECKPOINT 2376 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T19:23:59Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `971f4c34` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T19:30:13Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `1738e581` (this checkpoint is the commit after it)
 
 ## Just done
-floor green on v0.47.0 (1,736: 1,713 passed, 23 skipped)
+pre-release: v0.47.0: lock in a profit on bets placed through Vigilant once their odds move your way (one fill-or-kill order on the other side of the same Novig market, checked against Novig's positions), auto-lock option on the Auto-bet tab, Tracker 'Novig only' filter (EV and CLV from Novig's own prices, reading only Novig) (versionCode 85, v0.47.0)
 
 ## Do this next
-CI green on this commit, ship.sh, release.yml, confirm + record, answer Tj
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.47.0), then run: bash tools/record-release.sh v0.47.0 85 "v0.47.0: lock in a profit on bets placed through Vigilant once their odds move your way (one fill-or-kill order on the other side of the same Novig market, checked against Novig's positions), auto-lock option on the Auto-bet tab, Tracker 'Novig only' filter (EV and CLV from Novig's own prices, reading only Novig)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ CI green on this commit, ship.sh, release.yml, confirm + record, answer Tj
 
 ## Last ten checkpoints
 ```
+  1738e581 ckpt 2375: floor green on v0.47.0 (1,736: 1,713 passed, 23 skipped)
   971f4c34 ckpt 2374: floor had 2 StickyHeadersTest fails (Novig-only row made the pinned bar too 
   3a659c13 ckpt 2373: AY6 done + docs: NovigNow, Tracker Novig-only chip, diagnostics fields, NOVI
   cb1d3514 ckpt 2372: AY6 code: TrackedBet novigFair/novigAtMs/novigClose(+At), NovigNow (mid, app
@@ -25,5 +26,4 @@ CI green on this commit, ship.sh, release.yml, confirm + record, answer Tj
   2e25da47 ckpt 2368: AY4 data side: placeLock (FOK, positions check), LockPositions, lockFor; Loc
   1f5b01ae ckpt 2367: AY2 done: LockIn math + LockInTest (property test over 20k cases), mutants 3
   a3e8603c ckpt 2366: AY1 done: RESEARCH.md §67 (lock-in plausible and exact on Novig: FOK, same 
-  004e33fc ckpt 2365: AY: Tj's 18:50Z request (lock-in arbitrage on own Novig bets + auto-lock; Tr
 ```
