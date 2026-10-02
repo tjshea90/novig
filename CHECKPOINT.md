@@ -1,13 +1,13 @@
-# CHECKPOINT 2318 — read me first, then TASKS.md
+# CHECKPOINT 2319 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T06:08:49Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `38dcaeb9` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T06:12:20Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-ea5bf769-s5xd3t` · **builds on:** `31dae7ea` (this checkpoint is the commit after it)
 
 ## Just done
-AQ2 part 1: scan notification built off the main thread, its found count once per new result (FoundCount); ScanNotifyLagTest, 3 mutants killed
+AQ2 part 2: frame meter (FrameStats + FrameMeter) in Diagnostics' Performance block, metrics frames.*.slowPct, Advisor finding perf:frames:*; tests + 5 mutants killed
 
 ## Do this next
-AQ2 part 2: on-phone frame meter (FrameMetrics) in Diagnostics, split by Vigilant scan running vs not
+check novigLive/books update rate during a scan (CNO badge recount on main); then bump 0.44.2, floor, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ AQ2 part 2: on-phone frame meter (FrameMetrics) in Diagnostics, split by Vigilan
 
 ## Last ten checkpoints
 ```
+  05349b30 ckpt 2318: AQ2 part 1: scan notification built off the main thread, its found count onc
   743a98e6 ckpt 2317: AQ1/AQ3/AQ4/AR1/AR2 ticked; app-level manual-bet test added (ApiBettingContr
   11e9ba2b ckpt 2316: AR1/AR2: Check odds now and Price now price Vigilant's bets whatever the sca
   9c48a379 ckpt 2315: AR written to TASKS.md (Check odds now must refresh every open bet, Vigilant
@@ -25,8 +26,7 @@ AQ2 part 2: on-phone frame meter (FrameMetrics) in Diagnostics, split by Vigilan
   412fd980 ckpt 2311: AP1: a positive edge under Tj's minimum now says so and names the setting (w
   6a52c87b ckpt 2310: v0.44.0 released and recorded (AO1-AO6 done): lag fix, ParlayAPI freshness, 
   07ce6e1a ckpt 2309: pre-release: v0.44.0: smoother +EV list during scans, ParlayAPI quotes dated
-  d8695cbe ckpt 2308: AO1 full tests done: floor 1604/23/0 with screenshots, 97 PNGs looked at, 3 
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
