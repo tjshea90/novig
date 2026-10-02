@@ -168,7 +168,7 @@ class AutoBettor(
         }
         if (passing.isEmpty()) {
             // Nothing to bet this cycle, but the wallet this cycle read may already be empty (Tj, 2026-10-02 ~22:10Z): asleep until he adds money.
-            c.wallet.last?.takeIf { c.wallet.isSetUp && now - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
+            c.wallet.last?.takeIf { now - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
                 if (w.dollars < AutoBet.MIN_STAKE) { if (!walletEmptyNoted) walletRanOut(w.dollars) } else walletEmptyNoted = false
             }
             return finish(now, Report(looked = all.size, skipped = skipped))

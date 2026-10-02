@@ -388,9 +388,8 @@ class AutoBettorTest {
     @Test
     fun `a wallet the cycle just read as empty puts Vigilant to sleep even with no bet on offer`() = runBlocking {
         app.container.settingsStore.update { settings() }
-        app.container.installTradingForTest(trading(), "sub")
         val s = settings()
-        val nothing = state(s).copy(cno = state(s).cno.copy(rows = emptyList()))
+        val nothing = state(s).let { it.copy(cno = it.cno.copy(snapshot = it.cno.snapshot!!.copy(rows = emptyList()))).indexed(now) }
         app.container.wallet.record(0.0, at = now - 5_000)
         AutoBettor(app, app.container, clock = { now }, placer = { placer(FakeNovig()) }, wallet = { 0.0 }, resolve = { targetOf(it) }).run(s, nothing)
         assertTrue(app.container.settingsStore.flow.value!!.paused)
