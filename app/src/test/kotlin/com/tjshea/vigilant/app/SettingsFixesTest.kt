@@ -106,6 +106,31 @@ class SettingsFixesTest {
         compose.onNodeWithTag("backgroundAutoBetOff").assertExists()
     }
 
+    // ---- (b) "Only ✓ bets" lives under the ✓ switch it needs -------------------------------------------------------------
+
+    @Test
+    fun `a saved only-agreed with the check off shows the check on, and turning only-agreed off keeps the check`() {
+        // The contradiction as saved by an older version: ✓ off, but "only bets the books agree on" on (which reads the books anyway).
+        var s by mutableStateOf(base.copy(scanner = ScannerMode.CNO, cnoCheckBooks = false, cnoOnlyAgreed = true))
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    SettingsScreen(SampleScan.state().copy(settings = s), { t -> s = t(s) }, page = SettingsPage.CNO)
+                }
+            }
+        }
+        compose.onNodeWithTag("cnoCheckBooks").performScrollTo().assertIsOn()
+        compose.onNodeWithTag("cnoOnlyAgreed").assertIsOn().performClick()
+        assertFalse(s.cnoOnlyAgreed)
+        assertTrue("the ✓ it was showing stays on", s.cnoCheckBooks)
+        compose.onNodeWithTag("cnoCheckBooks").assertIsOn()
+        // The ✓ off takes its child with it.
+        compose.onNodeWithTag("cnoOnlyAgreed").performClick()
+        compose.onNodeWithTag("cnoCheckBooks").performClick()
+        assertFalse(s.cnoCheckBooks || s.cnoOnlyAgreed)
+        compose.onNodeWithTag("cnoOnlyAgreed").assertDoesNotExist()
+    }
+
     // ---- (a) the starting amount: one choice for the bet slip and the Bet sheet --------------------------------------------
 
     @Test
