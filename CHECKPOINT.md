@@ -1,13 +1,13 @@
-# CHECKPOINT 2377 — read me first, then TASKS.md
+# CHECKPOINT 2378 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T19:35:53Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `e1d5431e` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T20:08:10Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-38dc4f3b-3f0cld` · **builds on:** `fb160827` (this checkpoint is the commit after it)
 
 ## Just done
-AY done: v0.47.0 released, verified, recorded (locks + auto-lock + Novig-only filter)
+AZ: Tj's request (hide locked bets, lock stats, Novig-odds misses) written into TASKS.md
 
 ## Do this next
-answer Tj with the v0.47.0 link: plausible yes, how it works, what it costs, limits (API bets only, first live lock unverified)
+AZ1: investigate why open bets miss Novig odds (priceable blank ids, market() 404/catalog, 3-way otherOutcome, one-sided books, CNO ids)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ answer Tj with the v0.47.0 link: plausible yes, how it works, what it costs, lim
 
 ## Last ten checkpoints
 ```
+  4061e276 ckpt 2377: AY done: v0.47.0 released, verified, recorded (locks + auto-lock + Novig-onl
   bbd3d8b0 ckpt 2376: pre-release: v0.47.0: lock in a profit on bets placed through Vigilant once 
   1738e581 ckpt 2375: floor green on v0.47.0 (1,736: 1,713 passed, 23 skipped)
   971f4c34 ckpt 2374: floor had 2 StickyHeadersTest fails (Novig-only row made the pinned bar too 
@@ -26,5 +27,7 @@ answer Tj with the v0.47.0 link: plausible yes, how it works, what it costs, lim
   d3f03028 ckpt 2370: AY4/AY5 UI: LockCard + confirm on the bet sheet, Tracker lock badge, Auto-be
   568d448b ckpt 2369: AY3/AY4 app wiring: LockScanner + AutoLocker (cycle hook, notification), UiS
   2e25da47 ckpt 2368: AY4 data side: placeLock (FOK, positions check), LockPositions, lockFor; Loc
-  1f5b01ae ckpt 2367: AY2 done: LockIn math + LockInTest (property test over 20k cases), mutants 3
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
