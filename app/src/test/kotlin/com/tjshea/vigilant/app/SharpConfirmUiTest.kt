@@ -22,7 +22,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.assertCountEquals
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.tjshea.vigilant.app.ui.SharpConfirmSection
+import com.tjshea.vigilant.app.ui.SharpVetoSection
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.SharpBookChoice
@@ -59,7 +59,8 @@ class SharpConfirmUiTest {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(Modifier.verticalScroll(rememberScrollState())) {
-                        SharpConfirmSection(ui) { t -> ui = ui.copy(settings = t(ui.settings)) }
+                        SharpVetoSection(ui, forAlerts = false) { t -> ui = ui.copy(settings = t(ui.settings)) }
+                        SharpVetoSection(ui, forAlerts = true) { t -> ui = ui.copy(settings = t(ui.settings)) }
                     }
                 }
             }
