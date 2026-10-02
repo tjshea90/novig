@@ -61,7 +61,7 @@ class AppRecorderTest {
     @Test
     fun `a process start brings back what earlier runs kept, notes the start after it, and writes both files on its timer`() = runBlocking {
         // An earlier run left an event, a counter and a host's stats.
-        eventStore.update { EventBook(listOf(Event(1_000L, "OLD", Level.WARN, "from the last run")), mapOf("x.count" to 5L), 1_000L) }
+        eventStore.update { EventBook(listOf(Event(1_000L, "OLD", Level.WARN, "from the last run")), mapOf("x.count" to 5L), System.currentTimeMillis() - 3_600_000L) }
         netStore.update { NetBook(mapOf("old.example.com" to HostStat(calls = 7)), System.currentTimeMillis()) }
         val events = EventLog(eventStore)
         val net = NetStats(netStore)
@@ -133,7 +133,7 @@ class AppRecorderTest {
         recorder.settingsChanged(
             before,
             before.copy(
-                autoBet = !before.autoBet, autoScan = AutoScanMode.BOTH, autoScanSeconds = 600, autoScanKeepAwake = !before.autoScanKeepAwake, sharpConfirmAutoBet = !before.sharpConfirmAutoBet,
+                autoBet = !before.autoBet, autoScan = AutoScanMode.BOTH, autoScanSeconds = 5, autoScanKeepAwake = !before.autoScanKeepAwake, sharpConfirmAutoBet = !before.sharpConfirmAutoBet,
                 sharpConfirmAlerts = !before.sharpConfirmAlerts, paused = !before.paused, scanner = ScannerMode.CNO, autoBetHalted = "a bet failed",
             ),
         )
