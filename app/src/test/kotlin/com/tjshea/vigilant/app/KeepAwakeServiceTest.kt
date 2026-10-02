@@ -100,6 +100,17 @@ class KeepAwakeServiceTest {
     }
 
     @Test
+    fun `starting and stopping the service are events in the flight recorder`() {
+        val controller = start()
+        waitFor("the loop's first cycle") { status.pausedForCheck }
+        assertTrue(app.container.eventLog.events().any { it.cat == "SERVICE" && it.msg == "auto-scan service started" })
+        controller.withIntent(Intent(app, AutoScanService::class.java).setAction(AutoScanService.ACTION_STOP)).startCommand(0, 4)
+        waitFor("Stop") { app.container.eventLog.events().any { it.cat == "SERVICE" && it.msg.startsWith("auto-scan service stopping") } }
+        controller.destroy()
+        assertTrue(app.container.eventLog.events().any { it.cat == "SERVICE" && it.msg == "auto-scan service destroyed" })
+    }
+
+    @Test
     fun `a loop with no cycle to run doesn't spin`() {
         val controller = start()
         try {

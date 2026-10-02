@@ -129,15 +129,33 @@ class EventLog(private val store: JsonFileStore<EventBook>, private val clock: (
         const val WINDOW_MS = 14L * 24 * 3_600_000L
 
         /**
-         * Where an exception came from: the first three frames of the app's own code ("AutoScanner.cycle(AutoScan.kt:231)"), else the first frame at all.
-         * Class names and line numbers only: nothing a user typed.
+         * Where an exception came from: the first three frames of the app's own code ("com.tjshea.vigilant.app.AutoScanner.cycle(AutoScan.kt:231)"), else the first
+         * frame at all. Class names and line numbers only: nothing a user typed. [short] and [pathOf] turn a frame into what a reader wants.
          */
         fun whereOf(t: Throwable): String {
             val chain = generateSequence(t) { it.cause?.takeIf { c -> c !== it } }.take(6).toList()
             val frames = chain.flatMap { it.stackTrace.toList() }
             val mine = frames.filter { it.className.startsWith("com.tjshea.vigilant") }
             val pick = (if (mine.isNotEmpty()) mine else frames).take(3)
-            return pick.joinToString(" < ") { "${it.className.substringAfterLast('.')}.${it.methodName}(${it.fileName ?: "?"}:${it.lineNumber})" }
+            return pick.joinToString(" < ") { "${it.className}.${it.methodName}(${it.fileName ?: "?"}:${it.lineNumber})" }
+        }
+
+        /** The first frame of [where], with its class without the package: "AutoScanner.cycle(AutoScan.kt:231)". */
+        fun short(where: String): String = where.substringBefore(" < ").let { f ->
+            val call = f.substringBefore('(')
+            val cls = call.substringBeforeLast('.').substringAfterLast('.').substringBefore('$')
+            "$cls.${call.substringAfterLast('.')}(${f.substringAfter('(')}"
+        }
+
+        /** The repo path of the file a frame names: "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt"; null for a frame that isn't the app's. */
+        fun pathOf(where: String): String? {
+            val f = where.substringBefore(" < ")
+            val cls = f.substringBefore('(').substringBeforeLast('.')
+            val file = f.substringAfter('(').substringBefore(':').takeIf { it.endsWith(".kt") } ?: return null
+            if (!cls.startsWith("com.tjshea.vigilant.")) return null
+            val pkg = cls.substringBeforeLast('.').let { p -> if (cls.substringAfterLast('.').first().isUpperCase()) p else cls }
+            val module = pkg.removePrefix("com.tjshea.vigilant.").substringBefore('.').takeIf { it in setOf("app", "data", "engine", "mgm") } ?: return null
+            return "$module/src/main/kotlin/${pkg.replace('.', '/')}/$file"
         }
     }
 }

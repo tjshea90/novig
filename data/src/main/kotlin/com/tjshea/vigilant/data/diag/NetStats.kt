@@ -78,7 +78,8 @@ class NetStats(private val store: JsonFileStore<NetBook>, private val clock: () 
             val hours = (h.hours + (hour to HourStat(oldHour.calls + 1, oldHour.errors + if (failed) 1 else 0, oldHour.ms + ttfbMs, oldHour.bytes + bytes)))
                 .filterKeys { (it.toLongOrNull() ?: 0L) > now / HOUR_MS - HOURS_KEPT }
             val paths = (h.paths + (shape to PathStat(path.calls + 1, path.errors + if (failed) 1 else 0, path.totalMs + ttfbMs, status ?: path.lastStatus)))
-                .let { m -> if (m.size > MAX_PATHS) m.entries.sortedByDescending { it.value.calls }.take(MAX_PATHS).associate { it.toPair() } else m }
+                // Full: the quietest of the others goes, never the one just called, so an endpoint that starts failing can't be kept out by older busy ones.
+                .let { m -> if (m.size > MAX_PATHS) m - m.entries.filter { it.key != shape }.minByOrNull { it.value.calls }!!.key else m }
             val limited = status == 429 || (status == 403 && limit != null)
             book = book.copy(
                 sinceMs = book.sinceMs ?: now,

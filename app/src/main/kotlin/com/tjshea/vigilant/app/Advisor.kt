@@ -1,7 +1,9 @@
 package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.app.ui.Format
+import com.tjshea.vigilant.data.diag.EventLog
 import com.tjshea.vigilant.data.diag.Level
+import com.tjshea.vigilant.data.diag.ProblemLog
 import com.tjshea.vigilant.data.diag.Snap
 import com.tjshea.vigilant.data.diag.Trend
 import java.util.Locale
@@ -105,12 +107,12 @@ object Advisor {
     /** Errors the code reported with where they came from ([com.tjshea.vigilant.data.diag.EventLog.error]): the first app frame is the place to open. */
     private fun errorEvents(x: Diagnostics.Extras, now: Long): List<Finding> {
         val errors = x.events.filter { it.level == Level.ERROR && it.where != null && now - it.atMs < 3 * DAY_MS }
-        return errors.groupBy { it.where!!.substringBefore(" < ") }.map { (where, es) ->
+        return errors.groupBy { EventLog.short(it.where!!) }.map { (where, es) ->
             val n = es.sumOf { it.n }
             Finding(
                 "bug:error:$where", "BUG", "$n caught error${if (n == 1) "" else "s"} at $where",
-                "${es.last().cat}: ${es.last().msg}; last ${Format.age(es.maxOf { it.lastMs }, now)} (${es.last().where})",
-                where.substringAfter('(').substringBefore(':').let { "the file $it, around the line in the title" },
+                "${es.last().cat}: ${ProblemLog.clean(es.last().msg)}; last ${Format.age(es.maxOf { it.lastMs }, now)} (${es.last().where!!.split(" < ").joinToString(" < ") { EventLog.short(it) }})",
+                (EventLog.pathOf(es.last().where!!) ?: where.substringAfter('(').substringBefore(':')).let { "$it, around the line in the title" },
                 "Find why it throws here (the message says what), handle that case on purpose, and add a test for it; an error that is caught and logged still means a feature didn't finish.", weight = 70.0 + n,
             )
         }
@@ -134,7 +136,8 @@ object Advisor {
             val kind = if (c.level == HealthChecks.Level.FAIL) "FAILURE" else "WATCH"
             Finding(
                 "health:${c.area}:${c.finding.take(60)}", kind, "${c.area}: ${c.finding}", c.evidence ?: "(no further evidence)", c.look ?: "",
-                if (c.level == HealthChecks.Level.FAIL) "This is a failing check: the evidence says what, the 'code' says where to look." else "Not failing yet; decide whether the cause is the app's or the phone's.",
+                // A failing check is work; a warning is information (and the 'code' line may be something Tj can do, not a file).
+                if (c.level == HealthChecks.Level.FAIL) "A failing health check: the evidence says what, 'code' says where to look (or what to change on the phone)." else "",
                 weight = if (c.level == HealthChecks.Level.FAIL) 10.0 else 1.0,
             )
         }
@@ -144,11 +147,12 @@ object Advisor {
     /** Where each host's pacing lives, for a rate-limit finding. */
     private val PACE_CODE = mapOf(
         "crazyninjaodds.com" to "data/.../cno/CnoClient.kt (CnoPace) and CnoFeed.kt (the 3 s floor, backoff)",
-        "api.novig.us" to "data/.../novig/NovigPublicClient.kt and signing/NovigSignedClient.kt (the key's 16 a second)",
+        "api.novig.com" to "data/.../novig/NovigPublicClient.kt, RateGate.kt and signing/NovigSignedClient.kt (the key's 16 a second)",
+        "data.novig.com" to "data/.../tracker/HistoricalCloses.kt (Novig's trade files)",
         "parlay-api.com" to "data/.../reference/TheOddsApiClient.kt (CreditPace) and keys/Usage.kt",
         "pinnwire.com" to "data/.../reference/PinnapiClient.kt (a key rests on 429)",
         "pinnapi.com" to "data/.../reference/PinnapiClient.kt (a key rests on 429)",
-        "prop-line.com" to "data/.../reference/PropLineClient.kt",
+        "api.prop-line.com" to "data/.../reference/PropLineClient.kt",
         "api.the-odds-api.com" to "data/.../reference/TheOddsApiClient.kt",
     )
 
@@ -161,7 +165,7 @@ object Advisor {
                 add(
                     Finding(
                         "net:$host:errors", "FAILURE", "$host: ${pct(h.errorRate)} of calls failed (${h.errors} of ${h.calls})",
-                        "$kinds" + (worstPath?.let { "; worst endpoint ${it.key} (${it.value.errors}/${it.value.calls})" } ?: "") + (h.lastError?.let { "; last: $it ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}" } ?: ""),
+                        "$kinds" + (worstPath?.let { "; worst endpoint ${it.key} (${it.value.errors}/${it.value.calls})" } ?: "") + (h.lastError?.let { "; last: ${ProblemLog.clean(it)} ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}" } ?: ""),
                         code,
                         when {
                             h.kinds["timeout"].let { it != null && it * 3 >= h.errors } -> "Mostly timeouts: check the call's timeout and how many run at once (HttpSupport.MAX_PER_HOST), and whether the caller retries or backs off; speed matters more than data here."
@@ -211,6 +215,13 @@ object Advisor {
         }
     }
 
+    /** "slowest step: CNO read 1 in 20 over 3400 ms (of 4000 ms for a whole cycle)": which part of a cycle to look at. */
+    private fun slowestStep(x: Diagnostics.Extras): String {
+        val steps = x.perf.filterKeys { it.startsWith("cycle.step.") }.filterValues { it.count >= 5 }
+        val worst = steps.maxByOrNull { it.value.p95 } ?: return "per-step timings: none yet"
+        return "slowest step: ${worst.key.removePrefix("cycle.step.")} (1 in 20 over ${worst.value.p95.toLong()} ms; typical ${worst.value.p50.toLong()} ms)"
+    }
+
     private fun SampleSummaryLow(h: com.tjshea.vigilant.data.diag.HostStat): Double = h.recentBps.sorted().let { it[(it.size * 0.05).toInt().coerceIn(0, it.size - 1)].toDouble() }
 
     // ---- timings --------------------------------------------------------------------------------------------------------
@@ -222,7 +233,7 @@ object Advisor {
             add(
                 Finding(
                     "perf:cycle", "OPTIMIZE", "Background cycles run longer than their interval: typical ${(cycle.p50 / 1000).toLong()} s, 1 in 20 over ${(cycle.p95 / 1000).toLong()} s",
-                    "interval ${com.tjshea.vigilant.data.scanner.ScanSettings.intervalLabel(s.settings.autoScanSeconds)}, ${cycle.count} cycles this run; the notification step names what a cycle is doing",
+                    "interval ${com.tjshea.vigilant.data.scanner.ScanSettings.intervalLabel(s.settings.autoScanSeconds)}, ${cycle.count} cycles this run; " + slowestStep(x),
                     "app/AutoScan.kt (AutoScanner.cycle: cnoRead, auto-bet, alerts, closing capture, the Vigilant scan)",
                     "Find the step that takes the time (CNO read, each game page's books, the sharp lookup, the Vigilant scan) and overlap it with the others or skip what hasn't changed since the last cycle; an overrun is what makes a 5 s schedule late.",
                     weight = cycle.p95 / 1000.0,

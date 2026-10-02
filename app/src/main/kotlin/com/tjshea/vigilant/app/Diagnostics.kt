@@ -376,7 +376,7 @@ object Diagnostics {
         o.appendLine("== Recent problems (saved across restarts, newest first) ==")
         if (x.problems.isEmpty()) o.appendLine("None recorded.")
         x.problems.take(MAX_PROBLEMS).forEach { pr ->
-            o.appendLine("${at(pr.lastAtMs)} · ${pr.area}: ${pr.message}" + if (pr.count > 1) " (×${pr.count} since ${at(pr.firstAtMs)})" else "")
+            o.appendLine("${at(pr.lastAtMs)} · ${pr.area}: ${com.tjshea.vigilant.data.diag.ProblemLog.mask(pr.message)}" + if (pr.count > 1) " (×${pr.count} since ${at(pr.firstAtMs)})" else "")
         }
         return o.toString().trimEnd()
     }

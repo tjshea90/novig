@@ -62,7 +62,8 @@ class NetInterceptor(
             chain.proceed(request)
         } catch (e: IOException) {
             val ms = clock() - t0
-            val kind = kindOf(e)
+            // A call the caller cancelled (a scan stopped, a screen closed) fails with whatever the socket says: the call itself knows it was cancelled.
+            val kind = if (chain.call().isCanceled()) "cancelled" else kindOf(e)
             stats.record(host, shape, null, kind, ms, ms, 0, net, error = "${e.javaClass.simpleName}: ${e.message ?: ""}".let { ProblemLog.clean(it) })
             // A call cancelled on purpose (a scan stopped, a screen closed) is not a failure to report.
             if (kind != "cancelled") events?.record("NET", Level.WARN, "$host$shape failed: $kind after ${ms} ms")

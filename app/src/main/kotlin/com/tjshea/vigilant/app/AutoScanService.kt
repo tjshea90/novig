@@ -280,8 +280,8 @@ class AutoScanService : Service() {
 
     private fun stopNow() {
         stopping = true
-        runCatching { container.eventLog.info("SERVICE", "auto-scan service stopping (auto-scan off, paused or Stop)") }
         AutoScanAlarm.cancel(this)
+        runCatching { container.eventLog.info("SERVICE", "auto-scan service stopping (auto-scan off, paused or Stop)") }
         stopLoop()
         cycleJob?.cancel()
         releaseWakeLock()

@@ -55,8 +55,10 @@ class ProblemLog(
         const val MAX_LENGTH = 300
         const val CRASH_LENGTH = 1_500
 
-        /** Long runs of letters and digits (a key, a token, a signature) masked to their last four; the app's words stay. */
-        fun clean(message: String): String =
-            message.replace(Regex("[A-Za-z0-9_\\-]{24,}")) { "…" + it.value.takeLast(4) }.replace(Regex("\\s+"), " ").trim()
+        /** Long runs of letters and digits (a key, a token, a signature) masked to their last four; the app's words stay, and so do the line breaks (a stack). */
+        fun mask(message: String): String = message.replace(Regex("[A-Za-z0-9_\\-]{24,}")) { "…" + it.value.takeLast(4) }
+
+        /** [mask]ed, on one line. */
+        fun clean(message: String): String = mask(message).replace(Regex("\\s+"), " ").trim()
     }
 }

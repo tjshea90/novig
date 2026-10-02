@@ -320,4 +320,31 @@ class SharpConfirmAppTest {
         assertTrue(bettor.indexOf("AutoBet.judge(rules, item.shown.ev") < bettor.indexOf("?: sharpReason(item, settings, state, now)"))
         assertTrue(bettor.indexOf("?: sharpReason(item, settings, state, now)") < bettor.indexOf("AutoBet.stake(rules, item.shown.row"))
     }
+
+    // ---- the flight recorder sees every run (Tj, 2026-10-02) ---------------------------------------------------------------
+
+    @Test
+    fun `a run is written to the flight recorder with the funnel in counters, why bets weren't placed, and an event for each bet placed`() = runBlocking {
+        val log = app.container.eventLog
+        val before = log.counters()
+        bettor(FakeNovig(), ArrayList()) { yes }.run(settings(), state())
+        var c = log.counters()
+        fun delta(k: String) = (c[k] ?: 0L) - (before[k] ?: 0L)
+        assertEquals(1L, delta("autobet.runs"))
+        assertEquals(1L, delta("autobet.looked"))
+        assertEquals(1L, delta("autobet.passed"))
+        assertEquals(1L, delta("autobet.placed"))
+        assertEquals(1L, delta("sharp.autobet.CONFIRMED"))
+        assertTrue(log.events().any { it.cat == "AUTOBET" && it.msg.startsWith("placed Justin Jefferson Under 69.5 \$1.00 at +117") })
+        // A no: counted by its reason, nothing placed.
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        bettor(FakeNovig(), ArrayList()) { no() }.run(settings(), state())
+        c = log.counters()
+        assertEquals(1L, delta("sharp.autobet.NOT_CONFIRMED"))
+        assertEquals(1L, delta("autobet.skip.Pinnacle's own devigged price doesn't show it +EV at Novig's price"))
+        assertEquals(1L, delta("autobet.placed"))
+        // An unavailable check is a warning event too.
+        bettor(FakeNovig(), ArrayList()) { SharpConfirm.Result(SharpConfirm.Verdict.UNAVAILABLE, reason = "couldn't get a fresh Pinnacle price (credits held back)") }.run(settings(), state())
+        assertTrue(log.events().any { it.cat == "SHARP" && it.msg.contains("credits held back") })
+    }
 }

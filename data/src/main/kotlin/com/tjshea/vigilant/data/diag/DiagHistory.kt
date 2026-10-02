@@ -37,11 +37,11 @@ object Trend {
     /** Metrics whose rise is bad, and the smallest relative change worth a line. */
     private const val MIN_RELATIVE = 0.25
 
-    /** Lines for the report: empty when there's nothing earlier to compare with. */
+    /** Lines for the report ([ago]: a time as a phrase, "3d ago"); a first report has nothing to compare with. */
     fun lines(prev: Snap?, now: Snap, ago: (Long) -> String): List<String> {
         if (prev == null) return listOf("This is the first report saved on this phone: nothing earlier to compare with.")
         val out = ArrayList<String>()
-        out += "Previous report: ${ago(prev.atMs)} ago, version ${prev.version} (code ${prev.code}); this one is version ${now.version} (code ${now.code})" +
+        out += "Previous report: ${ago(prev.atMs)}, version ${prev.version} (code ${prev.code}); this one is version ${now.version} (code ${now.code})" +
             if (prev.code != now.code) ": THE APP WAS UPDATED SINCE, so changes below may be the update's." else "."
         val resolved = prev.findings.keys - now.findings.keys
         val fresh = now.findings.keys - prev.findings.keys

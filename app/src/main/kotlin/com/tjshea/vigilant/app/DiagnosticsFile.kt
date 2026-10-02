@@ -48,13 +48,13 @@ object DiagnosticsFile {
         "Sharp-book confirmation" to "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/SharpConfirm.kt, data/src/main/kotlin/com/tjshea/vigilant/data/reference/SharpBooks.kt, app/src/main/kotlin/com/tjshea/vigilant/app/SharpGate.kt",
         "CrazyNinjaOdds (CNO) reads and checks" to "data/src/main/kotlin/com/tjshea/vigilant/data/cno/CnoClient.kt, CnoFeed.kt, CnoBooks.kt, CnoChecks.kt, NovigBetFinder.kt, NovigLive.kt",
         "Novig API (public and signed)" to "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt, RateGate.kt, signing/, stream/",
-        "Vigilant's own scan and fair odds" to "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt, Planner.kt, Pricing.kt, Freshness.kt; sources in data/src/main/kotlin/com/tjshea/vigilant/data/reference/",
+        "Vigilant's own scan and fair odds" to "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt, Planner.kt, Pricing.kt, Freshness.kt; data/src/main/kotlin/com/tjshea/vigilant/data/reference/ (the fair-odds sources)",
         "Odds math (devig, EV, fees)" to "engine/src/main/kotlin/com/tjshea/vigilant/engine/Devig.kt, EvMath.kt, Fees.kt, Odds.kt",
         "API keys, usage meters, credit pacing" to "data/src/main/kotlin/com/tjshea/vigilant/data/keys/",
         "Tracker, grading, closing lines (CLV)" to "data/src/main/kotlin/com/tjshea/vigilant/data/tracker/",
         "Alerts and notifications" to "app/src/main/kotlin/com/tjshea/vigilant/app/EvAlerts.kt, data/src/main/kotlin/com/tjshea/vigilant/data/alerts/",
-        "Screens and settings" to "app/src/main/kotlin/com/tjshea/vigilant/app/ui/ (SettingsScreen.kt, AutoBetUi.kt, ReportDialog.kt), MainViewModel.kt, MainActivity.kt",
-        "This report (diagnostics)" to "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt, HealthChecks.kt, Advisor.kt, DiagnosticsFile.kt; recorder in data/src/main/kotlin/com/tjshea/vigilant/data/diag/",
+        "Screens and settings" to "app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt, MainActivity.kt; app/src/main/kotlin/com/tjshea/vigilant/app/ui/ (SettingsScreen.kt, AutoBetUi.kt, ReportDialog.kt)",
+        "This report (diagnostics)" to "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt, HealthChecks.kt, Advisor.kt, DiagnosticsFile.kt; data/src/main/kotlin/com/tjshea/vigilant/data/diag/ (the recorder)",
         "Settings (every switch and default)" to "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt",
         "Project rules and history" to "CLAUDE.md, BRIEF.md, TASKS.md, RESEARCH.md, NOVIG_API.md, PARLAY_API.md, BUILDLOG.md (repo root)",
     )
@@ -157,8 +157,8 @@ object DiagnosticsFile {
             h.paths.entries.sortedByDescending { it.value.calls }.take(MAX_PATHS).forEach { (path, p) ->
                 o.appendLine("    $path · ${p.calls} calls · ${p.errors} failed · ${p.totalMs / maxOf(p.calls, 1)} ms average to first byte" + (p.lastStatus?.let { " · last HTTP $it" } ?: ""))
             }
-            h.lastError?.let { o.appendLine("    last failure ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}: $it") }
-            h.lastLimit?.let { o.appendLine("    last rate limit ${h.lastLimitAtMs?.let { t -> Format.age(t, now) } ?: ""}: $it (${h.limits} in all)") }
+            h.lastError?.let { o.appendLine("    last failure ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}: ${clean(it)}") }
+            h.lastLimit?.let { o.appendLine("    last rate limit ${h.lastLimitAtMs?.let { t -> Format.age(t, now) } ?: ""}: ${clean(it)} (${h.limits} in all)") }
             val recent = h.hours.entries.sortedByDescending { it.key.toLongOrNull() ?: 0 }.take(6)
             if (recent.isNotEmpty()) o.appendLine("    last hours (calls/failed): " + recent.joinToString(" ") { (hr, v) -> "${hourLabel(hr, zone)} ${v.calls}/${v.errors}" })
         }
@@ -170,7 +170,7 @@ object DiagnosticsFile {
         val hosts = x.net.hosts
         val limited = hosts.filter { it.value.limits > 0 }
         if (limited.isEmpty()) o.appendLine("No host has asked the app to slow down (no 429, no 403 with a Retry-After).")
-        limited.forEach { (h, v) -> o.appendLine("$h: ${v.limits} rate-limit answers; last ${v.lastLimitAtMs?.let { Format.age(it, now) } ?: "?"}: ${v.lastLimit}") }
+        limited.forEach { (h, v) -> o.appendLine("$h: ${v.limits} rate-limit answers; last ${v.lastLimitAtMs?.let { Format.age(it, now) } ?: "?"}: ${v.lastLimit?.let(::clean)}") }
         val kinds = hosts.values.flatMap { it.kinds.entries }.groupBy({ it.key }, { it.value }).mapValues { it.value.sum() }
         o.appendLine("Calls that failed before an answer, by kind: " + kinds.entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value}" }.ifEmpty { "none" })
         val statuses = hosts.values.flatMap { it.status.entries }.groupBy({ it.key }, { it.value }).mapValues { it.value.sum() }
@@ -229,8 +229,8 @@ object DiagnosticsFile {
         if (events.isEmpty()) o.appendLine("No events yet.")
         events.forEach { e ->
             o.appendLine(
-                "${clock.format(Date(e.atMs))} ${e.level.name.padEnd(5)} ${e.cat.padEnd(8)} ${e.msg}" + (if (e.n > 1) " (×${e.n}, last ${clock.format(Date(e.lastMs))})" else "") +
-                    (e.ms?.let { " [$it ms]" } ?: "") + (e.where?.let { " @ $it" } ?: ""),
+                "${clock.format(Date(e.atMs))} ${e.level.name.padEnd(5)} ${e.cat.padEnd(8)} ${clean(e.msg)}" + (if (e.n > 1) " (×${e.n}, last ${clock.format(Date(e.lastMs))})" else "") +
+                    (e.ms?.let { " [$it ms]" } ?: "") + (e.where?.let { " @ ${clean(it.split(" < ").joinToString(" < ") { f -> com.tjshea.vigilant.data.diag.EventLog.short(f) })}" } ?: ""),
             )
         }
     }
@@ -239,7 +239,7 @@ object DiagnosticsFile {
         o.appendLine()
         o.appendLine("== APP LOG (this process's warnings and errors from Android's own log, newest last) ==")
         if (x.logcat.isEmpty()) o.appendLine("Nothing (none was written, or this phone doesn't let the app read its log).")
-        x.logcat.forEach { o.appendLine(it.toString()) }
+        x.logcat.forEach { o.appendLine(clean(it.toString())) }
     }
 
     private fun storage(x: Diagnostics.Extras, o: StringBuilder) {
@@ -274,6 +274,9 @@ object DiagnosticsFile {
     )
 
     // ---- small things -------------------------------------------------------------------------------------------------------
+
+    /** Every free-text field goes through the same masking as a problem (a key, token or long id becomes its last four characters), whatever stored it. */
+    private fun clean(s: String) = com.tjshea.vigilant.data.diag.ProblemLog.clean(s)
 
     private fun pctOf(v: Double) = String.format(Locale.US, "%.1f%%", v * 100)
 

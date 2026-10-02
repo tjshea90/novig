@@ -56,4 +56,17 @@ class ProblemLogTest {
         assertEquals(now - 3_600_000L, p.firstAtMs)
         assertEquals(ProblemLog.CRASH_LENGTH, p.message.length)
     }
+
+    /** The event log is told of every problem as it is added (Tj, 2026-10-02), masked, and a listener that throws can't stop a problem being kept. */
+    @Test
+    fun `every problem is also told to the listener, masked, and a failing listener changes nothing`() = kotlinx.coroutines.runBlocking {
+        val told = ArrayList<Pair<String, String>>()
+        val l = ProblemLog(JsonFileStore(File(tmp.root, "p2.json"), ProblemBook.serializer(), { ProblemBook() }), clock = { now }, onAdd = { a, m -> told += a to m })
+        l.add("CNO", "failed with key abcdefghijklmnopqrstuvwxyz0123456789SECRET9")
+        assertEquals(listOf("CNO"), told.map { it.first })
+        assertFalse(told.single().second.contains("abcdefghijklmnopqrstuvwxyz0123456789SECRET9"))
+        val boom = ProblemLog(JsonFileStore(File(tmp.root, "p3.json"), ProblemBook.serializer(), { ProblemBook() }), clock = { now }, onAdd = { _, _ -> error("listener broke") })
+        boom.add("X", "still kept")
+        assertEquals(1, boom.recent().size)
+    }
 }
