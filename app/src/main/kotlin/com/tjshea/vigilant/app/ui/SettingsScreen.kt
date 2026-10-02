@@ -79,46 +79,123 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 
-/** The Settings pages, one tab each (Tj, 2026-09-29: "the settings section is getting very long... Maybe tabs on the top"): what the tab holds is named in [labelFor]'s order below. */
-enum class SettingsTab(val label: String) {
-    /** Pause, scanner choice, start window, background auto-scan and alerts. */
-    SCAN("Scan"),
+/**
+ * The Settings pages (Tj, 2026-10-02 ~17:55Z: "the settings menu in this app is getting very large and confusing. organize the settings menu intuitively.
+ * make it so everything is clear and easy to find"): a home list of these, each with a one-line summary of what it's set to now, opening a page with a
+ * back arrow (Android's own Settings works this way). Auto-bet has its own bottom tab ([AutoBetScreen]); the home list links to it.
+ */
+enum class SettingsPage(val title: String, val about: String) {
+    /** Pause, which scanner, which games, the background scan. */
+    SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background"),
 
-    /** Built-in and Tj's own presets: every auto-bet, veto, alert and CNO rule at once (Tj, 2026-10-02 17:01Z). */
-    PRESETS("Presets"),
+    /** Push alerts for new +EV bets, and the sharp books' say over them. */
+    ALERTS("Alerts", "A notification when a new bet is good enough"),
 
-    /** The CNO scanner's filters and refresh, and the widget / mini window. */
-    CNO("CNO & widget"),
+    /** CrazyNinjaOdds' list: its filters, refresh, and each bet's book check. */
+    CNO("CrazyNinjaOdds list", "What CNO's +EV list shows and how often it refreshes"),
 
-    /** How fair odds are worked out, where they come from (and their keys), the sportsbooks. */
-    FAIR("Fair odds"),
+    /** The floating widget and the picture-in-picture window. */
+    WIDGET("Widget & mini window", "The small window that floats over other apps"),
 
-    /** What the +EV feed shows and how big a scan is. */
-    FEED("+EV feed"),
+    /** What Vigilant's own +EV feed shows and how much a scan reads. */
+    FEED("+EV feed & scan size", "Vigilant's own scan: what it shows and how much it reads"),
 
-    /** Bankroll and Kelly, the bet slip's amount, and betting through Novig's API. */
-    BETTING("Betting"),
+    /** How fair odds are worked out, and where they come from (with keys). */
+    FAIR("Fair odds & sources", "How the true odds are worked out, and from which feeds"),
 
-    /** Each API's usage meter and the keys backup. */
-    USAGE("Usage & keys"),
+    /** The Novig key, the wallet, bet amounts, limits, bankroll. */
+    BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits"),
+
+    /** Each feed's usage meter, and the keys backup. */
+    USAGE("API usage & keys", "Credits left on each feed, and a backup of your keys"),
 
     /** Diagnostics, the grading check, About. */
-    TOOLS("Tools"),
+    HELP("Diagnostics & about", "Send Claude a report, check grading, version"),
     ;
 
-    /** Vigilant's own scanner is asleep in CNO only: its pages (fair odds, feed, API usage) go with it. */
+    /** Pages for a scanner that's asleep are hidden (CNO only hides Vigilant's scan and its feeds; Vigilant only hides CNO's list). */
     fun shownIn(s: ScanSettings): Boolean = when (this) {
-        FAIR, FEED, USAGE -> s.vigilantOn
+        CNO -> s.cnoOn
+        FEED, FAIR, USAGE -> s.vigilantOn
+        ALERTS -> AppBook.isNovig
         else -> true
     }
 
-    /** The tab's name for these settings: without CNO on, the CNO page is the widget's alone. */
-    fun labelFor(s: ScanSettings): String = if (this == CNO && !s.cnoOn) "Widget" else label
-
     companion object {
-        /** The tabs shown for [s], in order. */
-        fun shown(s: ScanSettings): List<SettingsTab> = entries.filter { it.shownIn(s) }
+        /** The pages shown for [s], in order. */
+        fun shown(s: ScanSettings): List<SettingsPage> = entries.filter { it.shownIn(s) }
+
+        fun named(name: String?): SettingsPage? = entries.firstOrNull { it.name == name }
     }
+}
+
+/** Each page's one line on the Settings home list: what it's set to now, in a few words (pure, for tests). */
+object SettingsSummary {
+    fun of(page: SettingsPage, state: UiState): String {
+        val s = state.settings
+        return when (page) {
+            SettingsPage.SCANNING -> listOfNotNull(
+                if (s.paused) "Paused" else s.scanner.displayName,
+                if (AppBook.isNovig) "games within ${startsWithinLabel(s.startsWithinHours).lowercase(Locale.US)}" else null,
+                if (!AppBook.isNovig) null else if (BackgroundScan.on(s)) "background every ${ScanSettings.intervalLabel(s.autoScanSeconds)}" else "background off",
+            ).joinToString(" · ")
+            SettingsPage.ALERTS -> if (s.alertMinEv <= 0.0) "Off" else "${alertLabel(s.alertMinEv)} · sharp books: ${s.sharpAlerts.displayName.lowercase(Locale.US)}"
+            SettingsPage.CNO -> s.cnoFilters.let { f ->
+                "${f.devig.displayName} · ${f.minBooks}+ books · ${if (f.maxOdds > 0) "up to +${f.maxOdds}" else "any odds"} · ${Format.percent(f.minEv, 0)}+ · every ${secondsLabel(s.cnoRefreshSeconds)}"
+            }
+            SettingsPage.WIDGET -> (if (s.floatingWidget) "Floating widget" else "Picture-in-picture") + if (s.miniWindow) " · opens when you leave Vigilant" else ""
+            SettingsPage.FEED -> "${Format.percent(s.minEvPercent, 1)}+ · ${maxOddsLabel(s.maxOdds).let { if (it == "Any") "any odds" else "up to $it" }} · ${s.families.size} market types · ${s.daysAhead} days ahead"
+            SettingsPage.FAIR -> {
+                val on = listOf(s.usePinnacle, s.usePolymarket, s.useKalshi, s.usePropLine, s.useParlay, s.useOddsApi).count { it }
+                "${s.fairSource.shortName} · $on of 6 feeds on"
+            }
+            SettingsPage.BETTING -> listOfNotNull(
+                when {
+                    !AppBook.isNovig -> null
+                    state.novig.connection == null -> "Novig key not connected"
+                    state.betting.enabled -> "Wallet " + (state.betting.balance?.let { Format.money(it) } ?: "…")
+                    else -> "Novig key connected, betting off"
+                },
+                "bankroll ${Format.money(s.bankroll)}",
+                Format.kellyLabel(s.kellyMultiplier),
+            ).joinToString(" · ")
+            SettingsPage.USAGE -> "Credits left on each feed · keys backup"
+            SettingsPage.HELP -> "Share with Claude · Vigilant ${BuildConfig.VERSION_NAME}"
+        }
+    }
+
+    /** The Auto-bet row on the home list (it opens the Auto-bet tab). */
+    fun autoBet(s: ScanSettings): String = when {
+        s.autoBetHalted != null -> "Stopped: needs you"
+        s.autoBet -> "On" + (Presets.active(s)?.let { " · ${it.name}" } ?: "")
+        else -> "Off" + (Presets.active(s)?.let { " · ${it.name}" } ?: "")
+    }
+}
+
+/**
+ * The background scan as one switch (2026-10-02 ~18:10Z, fixing a contradiction: "CNO + Vigilant" with the scanner on CNO only ran half of it, and "CNO"
+ * with the scanner on Vigilant only ran nothing). On = it runs whatever the scanner has on; with both scanners on, Vigilant's own scan joins it only when
+ * asked ([alsoVigilant]: it spends API credits). Pure, for tests.
+ */
+object BackgroundScan {
+    /** Whether the background scan runs something (pause aside): what the switch shows. */
+    fun on(s: ScanSettings): Boolean = (s.autoScan.cno && s.cnoOn) || (s.autoScan.vigilant && s.vigilantOn)
+
+    /** Vigilant's own scan runs in the background too (only meaningful with both scanners on). */
+    fun alsoVigilant(s: ScanSettings): Boolean = s.autoScan == AutoScanMode.BOTH
+
+    /** [s] with the switch set to [on]: with Vigilant only, on means its scan (stored as BOTH, which is what runs it). */
+    fun set(s: ScanSettings, on: Boolean): ScanSettings = s.copy(
+        autoScan = when {
+            !on -> AutoScanMode.OFF
+            !s.cnoOn -> AutoScanMode.BOTH
+            s.autoScan == AutoScanMode.BOTH -> AutoScanMode.BOTH
+            else -> AutoScanMode.CNO
+        },
+    )
+
+    /** [s] with Vigilant's own scan joining the background scan or not (both scanners on). */
+    fun setAlsoVigilant(s: ScanSettings, also: Boolean): ScanSettings = s.copy(autoScan = if (also) AutoScanMode.BOTH else AutoScanMode.CNO)
 }
 
 private typealias SettingsUpdate = ((ScanSettings) -> ScanSettings) -> Unit
