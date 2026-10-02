@@ -571,7 +571,10 @@ private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
 @Composable
 private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: SettingsUpdate) {
     val s = state.settings
-    // ---- Fair odds ---------------------------------------------------------------------
+    Intro(
+        "Fair (true) odds are what a bet's odds would be with the sportsbooks' profit taken out. Vigilant compares Novig's price with them: a price better than " +
+            "fair is a +EV bet. These choices decide how Vigilant's own scan works them out (CrazyNinjaOdds works out its own).",
+    )
     SectionTitle("Fair odds method")
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         FairSource.entries.forEachIndexed { i, source ->
@@ -584,9 +587,9 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     }
     Hint(
         when (s.fairSource) {
-            FairSource.SHARP -> "Fair price from the sharp books you mark below (Pinnacle by default)."
-            FairSource.MARKET_AVERAGE -> "Each book is devigged on its own, then all of them are averaged."
-            FairSource.BLEND -> "A weighted mix: ${(s.sharpWeight * 100).roundToInt()}% sharp, ${100 - (s.sharpWeight * 100).roundToInt()}% market average."
+            FairSource.SHARP -> "From the sharp books you mark below (Pinnacle by default): books that let winning bettors bet big, so their odds are the most accurate."
+            FairSource.MARKET_AVERAGE -> "The average of every book, each with its profit taken out first."
+            FairSource.BLEND -> "A mix: ${(s.sharpWeight * 100).roundToInt()}% the sharp books, ${100 - (s.sharpWeight * 100).roundToInt()}% the average of every book."
         },
     )
     if (s.fairSource == FairSource.BLEND) {
@@ -606,7 +609,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         }
     }
 
-    Text("Sharp books", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+    Text("Books that count as sharp", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FairSettings.KNOWN_SHARP_CANDIDATES.forEach { key ->
             FilterChip(
@@ -618,15 +621,17 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     }
     Hint("Pinnacle comes from your PinnWire or pinnapi key (or PropLine / The Odds API). Polymarket and Kalshi are exchanges: their prices count as sharp when the market is tight (3¢ or less).")
 
-    Text("Minimum books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
+    Text("Fewest books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
     ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
+    Hint("An average of one or two books can be one book's mistake: a line with fewer books than this is skipped.")
     SwitchRow(
         "Outlier guard",
         "With 3 or more books, use the lower of their average and median, so one stale book can't create a fake edge.",
         s.outlierGuard,
     ) { v -> onUpdate { it.copy(outlierGuard = v) } }
 
-    SectionTitle("Devig method")
+    SectionTitle("Devig method (advanced)")
+    Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots; Power is a good default.")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DevigMethod.entries.forEach { m ->
             FilterChip(selected = s.devigMethod == m, onClick = { onUpdate { it.copy(devigMethod = m) } }, label = { Text(m.displayName) })
@@ -773,9 +778,10 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
-    SectionTitle("+EV feed")
+    Intro("Vigilant's own scan: what its +EV list shows, and how much each scan reads. Bigger scans find more but take longer and spend more of Novig's rate limit.")
+    SectionTitle("What the feed shows")
     var minEv by remember(s.minEvPercent) { mutableFloatStateOf((s.minEvPercent * 100).toFloat()) }
-    Text("Minimum EV: ${String.format(Locale.US, "%.1f", minEv)}%", style = MaterialTheme.typography.bodyMedium)
+    Text("Smallest edge (EV) shown: ${String.format(Locale.US, "%.1f", minEv)}%", style = MaterialTheme.typography.bodyMedium)
     Slider(
         value = minEv,
         onValueChange = { minEv = (it * 2).roundToInt() / 2f },
@@ -797,6 +803,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
         }
     }
     // Novig's per-line reads are what these limit; a sportsbook's lines cost no request each.
+    SectionTitle("Scan size (advanced)")
     if (AppBook.exchange) {
     Text("Alternate lines per game: ${allLabel(s.linesPerGame)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, ::allLabel) { v -> onUpdate { it.copy(linesPerGame = v) } }
@@ -822,9 +829,8 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.DAYS_AHEAD_CHOICES, s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
     Hint(
-        "Games starting within this many days are scanned (or within \"Starts within\" when that's shorter), then the scan " +
-            "stops. A week takes in the next college Saturday and NFL Sunday; the fair-odds requests barely change with the " +
-            "window, and the soonest games are read first.",
+        "Games starting within this many days are scanned, soonest first. A week takes in the next college Saturday and NFL Sunday." +
+            (Shadowed.daysAhead(s)?.let { " $it" } ?: ""),
     )
     SwitchRow(
         "Include live games",
