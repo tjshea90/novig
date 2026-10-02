@@ -333,6 +333,12 @@ sorted by `timestamp` (ISO, with or without milliseconds), served with `Accept-R
 payout) and MAKER rows on the other outcome at `1 − price`; parlays are `COMBO` rows keyed by a parlay id. `markets.csv`'s `close` is the
 day's last trade (in-play or settled), not the pregame close. Published ~09:00Z for the Eastern day before.
 
+**Used for research (RESEARCH.md §62, 2026-10-02):** a STRAIGHT trade's TAKER and MAKER rows together give both sides of
+every fill with its size, so CLV by trade size (who's sharp: big takers, big resting makers) can be measured from these files
+alone (`tools/research/novig_size_study.py`). The files carry no start time and no result; the settled market leaves the
+public catalog (`/markets/{id}` answers `MARKET_NOT_FOUND`, and `eventStatus=FINAL` lists only futures), so a game's start has to
+be inferred from its trades. Accounts are anonymized, so one bettor's record can't be followed.
+
 ## 11. Throttles (signed routes, per key; `GET /v3/limits` returns live numbers)
 
 | Bucket  | Capacity | Refill/s | Used by |
