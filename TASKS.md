@@ -3271,16 +3271,21 @@ His screenshot: CNO tab, Bet sheet for Under 47.5 (BYU @ TCU, NCAAF), $0.97 (¼ 
 
 ## Tj, 2026-10-02 ~05:4xZ (with the v0.44.1 diagnostics file): "When I scan with vigilant scanner, the entire app becomes laggy still. Remove the restriction of minimum bet EV on bet slips in the app, I should be able to bet on whatever I want manually. Only keep the hard restrictions on the auto bet function based on whatever settings I set. There was an error and it wouldn't let me auto bet. See if this is fixable."
 
-- [ ] AQ1 Read the v0.44.1 diagnostics file end to end: the lag evidence (cycle/scan timings, main-thread signs, memory), the auto-bet error, anything else it flags.
+- [x] AQ1 Read the v0.44.1 diagnostics file end to end: the lag evidence (cycle/scan timings, main-thread signs, memory), the auto-bet error, anything else it flags.
+  Done: no scan numbers in it (scanning paused, "no scan since the app opened"); the auto-bet error is Novig answering 423 on every signed route since 01:33 (limits, catalog/markets, orders) while public routes answer: an account-level lock on Novig's side, not the app (AQ4). Every Check odds now in it says "24 Vigilant bets not updated: the Vigilant scanner is off" (AR).
 - [ ] AQ2 Lag during a Vigilant scan, still: find what is left (measure, don't guess), fix it, with a test or a measurement.
-- [ ] AQ3 Manual bet slips (the Bet sheet, betting through the API by hand) have no minimum-EV rule: Tj can bet whatever he wants manually. Auto-bet keeps every hard rule it has, from his auto-bet settings. Remove or repurpose the "Smallest edge a bet is still placed at" setting for manual bets; say on the sheet what the EV is without refusing.
-- [ ] AQ4 The auto-bet error: find it in the file, fix the cause if it is fixable.
+- [x] AQ3 Manual bet slips (the Bet sheet, betting through the API by hand) have no minimum-EV rule: Tj can bet whatever he wants manually. Auto-bet keeps every hard rule it has, from his auto-bet settings. Remove or repurpose the "Smallest edge a bet is still placed at" setting for manual bets; say on the sheet what the EV is without refusing.
+  Done: `BetLimits.manual` (Bet sheet): no minimum edge, no fair-age refusal (said beside the EV instead), not held by Pause; Tj's max stake, max a day, pregame-only and what Novig sells still apply. The setting's chips are gone from Settings › Betting (auto-bet keeps its own minimum). Tests: `ApiBettingTest` "by hand, …" ×4, "a pause holds the auto-bet, never a bet placed by hand"; `ApiBettingControllerTest` "a bet placed by hand has no minimum edge and no pause…"; `ApiBettingUiTest`. 6 mutants killed.
+- [x] AQ4 The auto-bet error: find it in the file, fix the cause if it is fixable.
+  Done: the cause is Novig's (a 423 account lock: Tj has to ask Novig support, quoting the code); the app now names Novig's 423 code in its words (`NovigApiException.advice`), and a 423 that locks only one market/game/league/player (`betLocked`) skips that bet instead of stopping auto-bet. `ApiBettingTest` "a 423 names Novig's code…", "a locked market skips that one bet…" (mutants killed).
 - [ ] AQ5 Tests (mutation-checked), floor, ship, answer Tj.
 
 ## Tj, 2026-10-02 ~05:55Z (mid-AQ, screenshot of Tracker › Bets, Open (160), Scanner: All): "Review the screenshot. When I press check odds now, it doesn't refresh vigilant odds. I want the check odds now to refresh the current odds and EV for every single open bet regardless of scanner"
 
 His screenshot: a Vigilant bet (Under 52.5, Stanford @ Wake Forest) reads "−1.1% EV at your +115 · fair then +117 · Vigilant's fair odds · 7 books · as of 2h ago · tap Check odds now" after he tapped Check odds now; a CNO bet below it reads "now +2.2% EV … read 3m ago".
 
-- [ ] AR1 Find what Check odds now does today per scanner (CNO vs Vigilant vs ParlayAPI vs manual) and why a Vigilant bet stays "as of 2h ago".
-- [ ] AR2 Check odds now refreshes Novig's current price AND fresh fair odds/EV for every open bet, whatever scanner placed it, within the API budget (BRIEF.md: credits are a budget; free sources first).
+- [x] AR1 Find what Check odds now does today per scanner (CNO vs Vigilant vs ParlayAPI vs manual) and why a Vigilant bet stays "as of 2h ago".
+  Found: `checkOdds` took `c.betPricer?.takeIf { settings.vigilantOn }`, so with the scanner on CNO only a bet with no CNO page (Vigilant's, ParlayAPI's, synced) got neither Vigilant's pricing nor ParlayAPI's books, and `OpenBetPricer.run` itself returned nothing while CNO only. Tj's Diagnostics: "24 Vigilant bets not updated: the Vigilant scanner is off" on every check.
+- [x] AR2 Check odds now refreshes Novig's current price AND fresh fair odds/EV for every open bet, whatever scanner placed it, within the API budget (BRIEF.md: credits are a budget; free sources first).
+  Done: `OpenBetPricer.run(anyScanner = true)` from Check odds now and a bet's Price now (Tj's taps), whatever the scanner choice; background passes stay asleep in CNO only. Same bets-only pass as Both (only the open bets' leagues and families). Settings › Scanner's CNO-only hint says so. Tests: `OpenBetPricerTest` "Tj's own tap prices with the scanner on CNO only too", `CheckOddsAnyScannerAppTest` (3 mutants killed).
 - [ ] AR3 Tests (mutation-checked), ship with AQ, answer Tj.
