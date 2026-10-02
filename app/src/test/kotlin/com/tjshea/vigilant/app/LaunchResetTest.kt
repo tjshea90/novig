@@ -93,7 +93,8 @@ class LaunchResetTest {
         assertTrue(saved().autoBet)
         assertEquals(AutoScanMode.BOTH, saved().autoScan)
         restored.destroy()
-        // Opened from closed (no saved state): off, said on screen.
+        // Closed by Tj (swiped out of the recent apps) and opened again (no saved state): off, said on screen.
+        app.container.launches.taskRemoved(System.currentTimeMillis())
         val fresh = Robolectric.buildActivity(MainActivity::class.java).create()
         shadowOf(android.os.Looper.getMainLooper()).idle()
         assertFalse(saved().autoBet)
