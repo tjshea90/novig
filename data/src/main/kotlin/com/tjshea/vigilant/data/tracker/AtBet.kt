@@ -139,7 +139,11 @@ object AtBets {
         val priced = row.copy(odds = american)
         // Judged at the price taken: Novig's newest when read (as the green check and the auto-bet judge it), else the page's.
         val c = check ?: view?.let { CnoBooks.check(it, priced, live, preferListOdds = novig != null) }
-        val cost = price(american)
+        // What the bet costs, as its EV is judged: Novig's taker fee on top once the game is live (a sportsbook's price is all-in).
+        val cost = price(american).let { p ->
+            val novig = row.book.isBlank() || CnoBooks.codeFor(row.book) == CnoBooks.NOVIG
+            if (live && novig && p < 1.0) p + com.tjshea.vigilant.engine.Fees.takerFee(p, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true) else p
+        }
         val v = veto ?: SharpVeto.judge(view, row.league, row.market, row.bet, american, live)
         val usable = view?.prices.orEmpty().filter { CnoBooks.usableForFair(it.code) }
         val books = view?.prices.orEmpty().map { p ->

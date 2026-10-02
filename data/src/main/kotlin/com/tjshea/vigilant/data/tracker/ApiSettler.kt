@@ -64,6 +64,8 @@ class ApiSettler(
             // A row can name the market (it covers every bet Tj has on it) or one bet's own fill or order.
             val marketPaid = payouts.filter { it.ref == marketId }.sumOf { it.amount }
             val sides = group.map { it.outcomeId }.distinct()
+            // Both sides held so the payout can't say which won (every lock): worked out once for the market ([bothSides]).
+            var both: Pair<Map<String, BetStatus>, String>? = null
             for (bet in group) {
                 val contracts = bet.contracts ?: continue
                 val win = contracts * EvMath.CONTRACT_PAYOUT_DOLLARS
@@ -90,8 +92,15 @@ class ApiSettler(
                                     { settle(changes, bet, BetStatus.WON, null, "Novig paid ${money(marketPaid)} for the market, which is what this side's ${mine.sumOf { it.contracts ?: 0L }} contracts win: a win", now); settled++ }
                                 winners.size == 1 ->
                                     { settle(changes, bet, BetStatus.LOST, null, "Novig paid ${money(marketPaid)} for the market, which is the other side's win: a loss", now); settled++ }
-                                else ->
-                                    { note(changes, bet, "You hold both sides of this market and Novig's payout (${money(marketPaid)}) doesn't say which won: check it in the Novig app", now, manual = true); manual++ }
+                                else -> {
+                                    val v = both ?: bothSides(group, marketPaid).also { both = it }
+                                    val status = v.first[bet.outcomeId]
+                                    if (status != null) {
+                                        settle(changes, bet, status, null, v.second, now); settled++
+                                    } else {
+                                        note(changes, bet, "You hold both sides of this market and Novig's payout (${money(marketPaid)}) doesn't say which won: check it in the Novig app", now, manual = true); manual++
+                                    }
+                                }
                             }
                         }
                     }
@@ -127,6 +136,34 @@ class ApiSettler(
         }
         if (changes.isNotEmpty()) tracker.editMany(changes)
         Report(todo.size, settled, waiting, manual)
+    }
+
+    /**
+     * A market held on both sides whose one payout fits more than one side's win (Tj, 2026-10-02 full tests: equal holdings, every lock, pay the same
+     * whichever side wins, so Novig's ledger alone can never grade them): every side's cost paid back is a push; otherwise the score feeds say which
+     * side won, and it's taken only when Novig's payout is exactly that side's win. Each side's status and the evidence; empty when neither can say.
+     */
+    private suspend fun bothSides(group: List<TrackedBet>, marketPaid: Double): Pair<Map<String, BetStatus>, String> {
+        val sides = group.map { it.outcomeId }.distinct()
+        val paidAll = group.sumOf { it.paid ?: (it.stake - (it.fee ?: 0.0)) }
+        if (kotlin.math.abs(marketPaid - paidAll) <= TOLERANCE) {
+            return sides.associateWith { BetStatus.PUSH } to "Novig paid back the ${money(paidAll)} both sides cost: a push"
+        }
+        if (sides.size != 2) return emptyMap<String, BetStatus>() to ""
+        // The picks first: a lock's own wording is Novig's outcome name, which the feeds read less surely.
+        for (bet in group.sortedBy { it.isLock }) {
+            val feed = scoreGrade(bet) as? BetGrader.Grade.Result ?: continue
+            val winner = when (feed.status) {
+                BetStatus.WON -> bet.outcomeId
+                BetStatus.LOST -> sides.first { it != bet.outcomeId }
+                else -> return emptyMap<String, BetStatus>() to ""
+            }
+            val win = group.filter { it.outcomeId == winner }.sumOf { (it.contracts ?: 0L) * EvMath.CONTRACT_PAYOUT_DOLLARS }
+            if (kotlin.math.abs(marketPaid - win) > TOLERANCE) return emptyMap<String, BetStatus>() to ""
+            return sides.associateWith { if (it == winner) BetStatus.WON else BetStatus.LOST } to
+                "Novig paid ${money(marketPaid)} for the market (you hold both sides, so that fits either); the score feeds say which won: ${feed.evidence}"
+        }
+        return emptyMap<String, BetStatus>() to ""
     }
 
     /** What [payout] dollars means for a bet of [contracts] that paid [paid] dollars and wins [win]: status, fair-value payout per $1 contract, evidence. */
