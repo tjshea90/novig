@@ -125,8 +125,9 @@ class OpenBetPricerTest {
         assertEquals(now, b.nowAtMs)
         assertNull(b.nowNote)
         assertTrue(b.books.isNotEmpty())
-        // Novig's own price from the same book read, kept for the Tracker's "Novig only" filter (no second read): DAL bid 0.38, offered at 1 − 0.615.
-        assertEquals((0.38 + 0.385) / 2.0, b.novigFair!!, 1e-12)
+        // Novig's odds from the same book read, kept for the Tracker's "Novig only" filter (no second read): DAL offered at 1 − 0.615 (the price to buy
+        // it, as Novig shows it; never the middle with the 0.38 bid: Tj, 2026-10-02 ~21:35Z).
+        assertEquals(0.385, b.novigFair!!, 1e-12)
         assertEquals(now, b.novigAtMs)
         assertEquals(b.novigFair, b.novigClose)
         // Only this bet's market was read; the other game on Novig's board never was, and the live feed's watch list was left alone.
