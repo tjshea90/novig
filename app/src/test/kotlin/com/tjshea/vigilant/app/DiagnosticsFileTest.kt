@@ -97,7 +97,7 @@ class DiagnosticsFileTest {
         val readMe = DiagnosticsFile.readMe(extras(), now, zone).joinToString("\n")
         for (needed in listOf(
             "version 0.43.0 (code 78)", "github.com/tjshea90/novig", "WHAT TO DO", "BUG, FAILURE, OPTIMIZE, IMPROVE, WATCH", "SINCE THE PREVIOUS REPORT", "TASKS.md", "bash ship.sh",
-            "Mobile data and phone storage are NOT constraints", "REAL money", "start OFF every time the app is reopened", "never commit a key", "WHAT IS NEVER IN THIS FILE",
+            "Mobile data and phone storage are NOT constraints", "REAL money", "switched off by the app only after a phone restart", "never commit a key", "WHAT IS NEVER IN THIS FILE",
         )) assertTrue(needed, readMe.contains(needed, ignoreCase = true))
         assertTrue(DiagnosticsFile.PROMPT.contains("READ ME FIRST") && DiagnosticsFile.PROMPT.contains("WHAT TO DO") && DiagnosticsFile.PROMPT.contains("CLAUDE.md"))
     }
