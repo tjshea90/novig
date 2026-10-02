@@ -399,12 +399,7 @@ private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
         Warn("The background scan is off (Scanning), so alerts only come while a list or the widget is open on screen.", "alertNoBackground")
         OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }, modifier = Modifier.testTag("alertTurnOnBackground")) { Text("Turn on the background scan") }
     }
-    if (s.cnoOn) {
-        SectionTitle("Sharp-book veto for alerts")
-        SharpModeChoice(s.sharpAlerts, tag = "sharpAlerts") { v -> onUpdate { it.copy(sharpAlerts = v) } }
-        Hint(SharpConfirmText.modeNote(s.sharpAlerts))
-        if (s.sharpAlerts == SharpMode.CONFIRM) SharpConfirmCriteria(state, onUpdate)
-    }
+    if (s.cnoOn) SharpVetoSection(state, forAlerts = true, onUpdate = onUpdate)
     var notify by remember { mutableStateOf(com.tjshea.vigilant.app.ScanService.canNotify(context)) }
     androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
         notify = com.tjshea.vigilant.app.ScanService.canNotify(context)

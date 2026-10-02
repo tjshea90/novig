@@ -689,6 +689,8 @@ private fun VigilantRoot(
                         onClick = {
                             // Leaving Settings lets go of a bet waiting on the wallet.
                             if (t != Tab.SETTINGS) vm.api.dismissTopUp()
+                            // Settings tapped again while in one of its pages: back to its list.
+                            if (t == Tab.SETTINGS && tab == Tab.SETTINGS) settingsPage = null
                             tabName = t.name
                         },
                         icon = { TabIconWithCount(t, state) },
