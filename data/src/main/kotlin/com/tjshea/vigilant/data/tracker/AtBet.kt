@@ -137,7 +137,8 @@ object AtBets {
     ): AtBet {
         val american = novig?.american ?: row.odds
         val priced = row.copy(odds = american)
-        val c = check ?: view?.let { CnoBooks.check(it, priced, live) }
+        // Judged at the price taken: Novig's newest when read (as the green check and the auto-bet judge it), else the page's.
+        val c = check ?: view?.let { CnoBooks.check(it, priced, live, preferListOdds = novig != null) }
         val cost = price(american)
         val v = veto ?: SharpVeto.judge(view, row.league, row.market, row.bet, american, live)
         val usable = view?.prices.orEmpty().filter { CnoBooks.usableForFair(it.code) }
