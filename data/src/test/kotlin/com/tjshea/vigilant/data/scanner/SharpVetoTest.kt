@@ -28,6 +28,26 @@ class SharpVetoTest {
     }
 
     @Test
+    fun `a prop the grader can't grade is still a prop, a quarter is a period line, and a set spread is the whole match`() {
+        // Found 2026-10-02 ~19:45Z: these came out OTHER, so the Volume preset (props, moneylines, spreads) never auto-bet them and the veto asked Pinnacle.
+        for ((market, bet) in listOf(
+            "Player Interceptions" to "Patrick Mahomes Over 0.5", "Player Sacks" to "Micah Parsons Over 0.5", "Player Field Goals" to "Harrison Butker Over 1.5",
+            "Player Singles" to "Luis Arraez Over 0.5", "Player Outs" to "Gerrit Cole Over 17.5", "Player Blocked Shots" to "Adam Fox Over 1.5",
+            "Player Shots On Target" to "Erling Haaland Over 1.5",
+        )) assertEquals(market, BetKind.PROP, BetKind.of(market, bet))
+        for ((market, bet) in listOf(
+            "1st Quarter Spread" to "Kansas City Chiefs -0.5", "1st Quarter Total" to "Over 10.5", "1st Period Total Goals" to "Over 1.5",
+            "1st 5 Innings Moneyline" to "New York Yankees", "2nd Half Spread" to "Kansas City Chiefs -1.5", "1st Set Winner" to "Novak Djokovic",
+        )) assertEquals(market, BetKind.PERIOD, BetKind.of(market, bet))
+        assertEquals(BetKind.SPREAD, BetKind.of("Set Spread", "Novak Djokovic -1.5"))
+        assertEquals(BetKind.TOTAL, BetKind.of("Total Sets", "Over 3.5"))
+        assertEquals(BetKind.OTHER, BetKind.of("Moneyline 3-Way", "Draw"))
+        assertEquals(BetKind.SPREAD, BetKind.of("Alternate Spread", "Kansas City Chiefs -10.5 Yes"))
+        // And the veto asks the prop books about them.
+        assertEquals(SharpVeto.ranking(BetKind.PROP, SharpVeto.Sport.FOOTBALL), SharpVeto.ranking(BetKind.of("Player Sacks", "Micah Parsons Over 0.5"), SharpVeto.Sport.FOOTBALL))
+    }
+
+    @Test
     fun `each league is its sport, college apart`() {
         assertEquals(SharpVeto.Sport.FOOTBALL, SharpVeto.sportOf("NFL"))
         assertEquals(SharpVeto.Sport.COLLEGE_FOOTBALL, SharpVeto.sportOf("NCAAF"))
