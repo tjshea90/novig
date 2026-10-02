@@ -1,23 +1,23 @@
-# CHECKPOINT 2394 — read me first, then TASKS.md
+# CHECKPOINT 2395 — read me first, then TASKS.md
 
-**Written:** 2026-10-02T21:47:13Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `b9a33866` (this checkpoint is the commit after it)
+**Written:** 2026-10-02T21:49:12Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `7f11ca5d` (this checkpoint is the commit after it)
 
 ## Just done
-BB1+BB2 done: Novig only compares Novig's odds now with the odds bet at (offer, not middle; same odds = 0%), nothing from other books on the sheet; tests + mutants green
+pre-ship: v0.49.0: Novig only compares Novig's odds now with the odds you bet at (same odds = 0% EV; no other book's data anywhere on it); full-test fixes: locks out of CLV and the check counter, locked markets graded from score feeds, closes dated by their oldest price, live bets' fair/Kelly/push at cost with the fee, 'profit if all win'
 
 ## Do this next
-full floor, v0.49.0 (code 88, folds in v0.48.1's unreleased fixes), ship, release, answer Tj
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M NOVIG_API.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  7f11ca5d ckpt 2394: BB1+BB2 done: Novig only compares Novig's odds now with the odds bet at (off
   73eb3b3f ckpt 2393: BB: Tj's Novig-only request (Novig's current odds are the fair; no other boo
   075cc8f1 ckpt 2392: pre-release: v0.48.1: full-test fixes: locks out of every CLV stat and the c
   cecc64c5 ckpt 2391: pre-ship: v0.48.1: full-test fixes: locks out of every CLV stat and the chec
@@ -27,8 +27,4 @@ full floor, v0.49.0 (code 88, folds in v0.48.1's unreleased fixes), ship, releas
   b9f36b48 ckpt 2387: AZ done: v0.48.0 released, verified, recorded (hide locked bets + Locked in 
   511ed2bf ckpt 2386: pre-release: v0.48.0: locked markets hidden from the Tracker's lists and sta
   dfdc9a12 ckpt 2385: pre-ship: v0.48.0: locked markets hidden from the Tracker's lists and stats 
-  4d2c5867 ckpt 2384: AZ2+AZ3 done (TASKS ticked): TrackerLocksTest + LockedBetsTest green, mutant
 ```
-
-(11 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
