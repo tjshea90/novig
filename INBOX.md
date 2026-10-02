@@ -3579,3 +3579,8 @@ Look at the screenshots: I want to compare only the novig current odds to the no
 ```
 Small change after you complete the full tests: always include my vigilant wallet current balance in all vigilant notifications whether push or silent, so I can always quickly see how much is in the wallet
 ```
+
+## 2026-10-02T22:05:34Z
+```
+When vigilant wallet runs out of money, it already tells me in the notifications, but make it also stop scanning and put the app to sleep once the wallet runs out of money.
+```
