@@ -59,6 +59,9 @@ object AutoBetText {
     /** A longest-odds choice: "+130", or "No limit". */
     fun oddsLabel(maxOdds: Int): String = if (maxOdds <= 0) "No limit" else "+$maxOdds"
 
+    /** "No limit", "−200": the shortest-odds choices. */
+    fun minOddsLabel(minOdds: Int): String = if (minOdds >= 0) "No limit" else "−${-minOdds}"
+
     /** What each stake choice means, for the confirm and the hint. */
     fun stakeText(s: ScanSettings): String = when (s.autoBetStake) {
         AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake of your ${Format.money(s.bankroll)} bankroll"
@@ -83,6 +86,9 @@ object AutoBetText {
         else "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own"
         return "$agreeing, ${r.twoSided} pricing both sides, an edge of " +
             "${evLabel(r.minEv)} or more at Novig's price now" + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
+            (if (r.minOdds < 0) ", odds no shorter than ${minOddsLabel(r.minOdds)}" else "") +
+            (if (r.kinds.size < BetKind.entries.size) ", only ${r.kinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() }}" else "") +
+            (if (s.sharpAutoBet == SharpMode.VETO) ", unless the sharpest book for it says it isn't +EV" else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
             ", staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
     }
 
@@ -261,6 +267,20 @@ fun AutoBetSection(
             "but a $1 or typed amount doesn't: this is what keeps those off longshots. The CrazyNinjaOdds page's own Max odds filter (Settings › CNO) also still applies.",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetMaxOddsHint"),
     )
+
+    // The shortest odds and the kinds of bet (RESEARCH.md §66: a preset sets them; Tj can change them here).
+    Text("Shortest odds to bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_MIN_ODDS_CHOICES, s.autoBetMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(autoBetMinOdds = v) } }
+    Text("Kinds of bet to place", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("autoBetKinds")) {
+        BetKind.entries.forEach { k ->
+            FilterChip(
+                selected = k in s.autoBetKinds,
+                onClick = { onUpdate { it.copy(autoBetKinds = if (k in it.autoBetKinds) it.autoBetKinds - k else it.autoBetKinds + k) } },
+                label = { Text(k.label) },
+            )
+        }
+    }
 
     // 5) books offering both sides
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
