@@ -9,28 +9,27 @@ import com.tjshea.vigilant.data.novig.NovigMarket
  * doesn't waste any api usage on other sports books … if I already just scanned without using this filter and there is still fresh novig odds for all my
  * bets, it doesn't need to rescan"). Pure.
  *
- * Novig's own fair price for a side is the middle of its best bid and its offer (an exchange's bid and offer bracket the price; no vig to take out
- * beyond that spread). It's kept on the bet ([TrackedBet.novigFair], [TrackedBet.novigAtMs]) by any read of Novig's book for the bet (a pricing pass,
- * or the filter's own read of just the stale ones), and the last one before the start is Novig's closing line ([TrackedBet.novigClose]).
+ * Novig's price for a side is its odds on Novig now: the offer, what Novig shows for the bet and what buying it costs (Tj, 2026-10-02 ~21:35Z: "I want
+ * to compare only the novig current odds to the novig odds I placed the bets at … The current odds at novig only should be considered the 'fair odds'
+ * … no data from any other sports book should be used"; the bid/offer middle it replaced read a thin prop's wide spread as a big move). It's kept on
+ * the bet ([TrackedBet.novigFair], [TrackedBet.novigAtMs]) by any read of Novig's book for the bet (a pricing pass, or the filter's own read of just
+ * the stale ones), and the last one before the start is Novig's closing odds ([TrackedBet.novigClose]).
  */
 object NovigNow {
 
     /** How old Novig's price for a bet may be and still be shown without reading again. */
     const val FRESH_MS = 2 * 60_000L
 
+    /** Novig's odds for [outcomeId] now: the price to buy it (its best offer), as Novig shows it. Null when Novig isn't offering it. */
+    fun odds(book: NovigBook, market: NovigMarket, outcomeId: String): Double? =
+        book.takeLadder(market, outcomeId).minOfOrNull { it.price }?.coerceIn(0.001, 0.999)
+
     /**
-     * Novig's middle price for [outcomeId]: its best bid and the price to buy it now; the one side there is when the book has only one (a thin prop often
-     * has bids on one side only: the offer alone when nobody bids, the bid alone when nothing is offered). Null when the book is empty.
+     * Novig's price [p] as the filter compares it with [b]'s: the odds bet at exactly when Novig shows the same American odds (a bet logged from
+     * American odds, +122 = 0.4505, and Novig's grid price for +122, 0.450, are the same odds: no move, 0% EV), else [p].
      */
-    fun mid(book: NovigBook, market: NovigMarket, outcomeId: String): Double? {
-        val ask = book.takeLadder(market, outcomeId).minOfOrNull { it.price }
-        val bid = book.bestBid(outcomeId)?.price
-        val p = when {
-            ask != null && bid != null -> (bid + ask) / 2.0
-            else -> ask ?: bid ?: return null
-        }
-        return p.coerceIn(0.001, 0.999)
-    }
+    fun asBet(b: TrackedBet, p: Double): Double =
+        if (b.american != null && com.tjshea.vigilant.engine.Odds.probabilityToAmerican(p) == b.american) b.price else p
 
     /** [b] with Novig's price [fair] read at [at]: the latest, and the closing line when it's the latest read before the start. */
     fun apply(b: TrackedBet, fair: Double, at: Long): TrackedBet {
@@ -58,26 +57,27 @@ object NovigNow {
         bets.filter { it.status == BetStatus.PENDING && BetsScope.readable(it, now) && NovigIds.atNovig(it) }
 
     /**
-     * [bets] as the "Novig only" filter shows and counts them: an open bet's fair now and EV now from Novig's price alone (none when Novig's hasn't been
-     * read), its book list cut to Novig's line, and every bet's closing line Novig's own (none without one), so the Tracker's stats, EV and CLV come
-     * from Novig and nothing else.
+     * [bets] as the "Novig only" filter shows and counts them (Tj, 2026-10-02 ~21:35Z: "ONLY compare novig odds currently scanned to the odds I placed
+     * each bet at … no data from any other sports book should be used"): Novig's odds are the fair price throughout. When bet: the price paid (so a bet
+     * at Novig's odds had no edge over them: EV at bet 0, fee aside). Now: Novig's odds now ([novigFair]; none until read), the same odds as bet = 0% EV
+     * ([asBet]). The close: Novig's odds read in the last minutes before the start, else what Novig's own trades closed at ([NovigTradeCloses]).
+     * Every other book's line, fair and close is left out, so the Tracker's stats, EV and CLV come from Novig and nothing else.
      */
     fun view(bets: List<TrackedBet>): List<TrackedBet> = bets.map { b ->
         val open = b.status == BetStatus.PENDING
-        val fair = b.novigFair
+        val fair = b.novigFair?.let { asBet(b, it) }
         b.copy(
+            fairAtBet = b.price, evPercentAtBet = b.price / b.cost - 1.0,
             nowFair = if (open) fair else b.nowFair,
             nowEv = if (open) fair?.let { it / b.cost - 1.0 } else b.nowEv,
             nowAtMs = if (open) b.novigAtMs else b.nowAtMs,
-            nowBooks = if (open && fair != null) 1 else if (open) null else b.nowBooks,
-            nowVia = if (open && fair != null) VIA else b.nowVia,
+            nowBooks = if (open) null else b.nowBooks,
+            nowVia = if (open) VIA else b.nowVia,
             nowNote = if (open) note(b) else b.nowNote,
             nowNoteAtMs = if (open) note(b)?.let { b.novigWhyAtMs } else b.nowNoteAtMs,
-            cnoFair = null, vigFair = if (open) fair else b.vigFair,
-            books = b.books.filter { it.name.equals(b.book.ifBlank { "Novig" }, ignoreCase = true) },
-            // Novig's own close, judged as every close is: read in the last minutes before the start, else what Novig's own trades closed at (its
-            // trade history, [NovigTradeCloses]); another book's close found afterwards isn't Novig's.
-            closingFair = b.novigClose, closingSeenAtMs = b.novigCloseAtMs,
+            nowAmerican = if (open) b.novigFair?.let { com.tjshea.vigilant.engine.Odds.probabilityToAmerican(it) } else b.nowAmerican,
+            cnoFair = null, vigFair = null, books = emptyList(),
+            closingFair = b.novigClose?.let { asBet(b, it) }, closingSeenAtMs = b.novigCloseAtMs,
             closeFair = b.closeFair?.takeIf { novigTrades(b) }, closeVia = b.closeVia?.takeIf { novigTrades(b) },
         )
     }
@@ -106,13 +106,13 @@ object NovigNow {
     const val NOT_LISTED = "Novig no longer lists this market (closed, or taken down)"
 
     /** [Read.why] when the book is empty. */
-    const val NOTHING_OFFERED = "nobody is bidding on or offering this bet on Novig right now (not offered at the moment)"
+    const val NOTHING_OFFERED = "Novig isn't offering this bet right now (no odds to buy it at)"
 
     /** [Read.why] when the side on record isn't one of the market's. */
     const val NOT_A_SIDE = "the side on record isn't one of this Novig market's sides"
 
     /**
-     * What a read found: bet id → Novig's middle price, how many bets were due, the markets asked for, and bet id → why a due bet got no price
+     * What a read found: bet id → Novig's odds now, how many bets were due, the markets asked for, and bet id → why a due bet got no price
      * ([BOOK_UNREAD], [NOT_LISTED], [NOT_A_SIDE], [NOTHING_OFFERED]).
      */
     data class Read(val prices: Map<String, Double>, val due: Int, val all: Int, val marketsAsked: List<String>, val why: Map<String, String> = emptyMap())
@@ -142,7 +142,7 @@ object NovigNow {
                 why[b.id] = NOT_A_SIDE
                 continue
             }
-            val p = mid(book, m, b.outcomeId)
+            val p = odds(book, m, b.outcomeId)
             if (p != null) prices[b.id] = p else why[b.id] = NOTHING_OFFERED
         }
         return Read(prices, due.size, all.size, ids, why)

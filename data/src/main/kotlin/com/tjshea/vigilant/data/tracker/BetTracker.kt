@@ -150,7 +150,7 @@ data class TrackedBet(
     val lockFor: String? = null,
     /**
      * Novig's own price for this bet's side (Tj, 2026-10-02 ~18:50Z: "find the current novig odds for each of my open bets and show the percent EV compared
-     * only from novig odds"): the middle of Novig's best bid and offer, and when it was read ([NovigNow]); [novigClose] is the last one read before the
+     * only from novig odds"): Novig's odds for it (the price to buy it), and when they were read ([NovigNow]); [novigClose] is the last one read before the
      * start (Novig's own closing line). The Tracker's "Novig only" filter prices the bet from these alone.
      */
     val novigFair: Double? = null,
@@ -600,7 +600,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     }
 
     /**
-     * Novig's own price now for these bets ([NovigNow.apply]): bet id → the middle of Novig's bid and offer for its side, read at [at]; and bet id → why a
+     * Novig's odds now for these bets ([NovigNow.apply]): bet id → the price to buy its side on Novig, read at [at]; and bet id → why a
      * bet looked at got none ([TrackedBet.novigWhy]; its last price is kept, older than the reason).
      */
     suspend fun recordNovig(prices: Map<String, Double>, at: Long, why: Map<String, String> = emptyMap()) {
@@ -710,9 +710,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
      * [alongside]: Vigilant's read only ([TrackedBet.vigFair]), the rest left to [mergeReads].
      */
     private fun applyFair(b0: TrackedBet, o: Opportunity, now: Long, via: String, alongside: Boolean = false): TrackedBet {
-        // Novig's own price from the same book read (its bid and offer for this side): the "Novig only" filter reuses it instead of reading again.
-        val novigMid = o.quote?.price?.let { ask -> o.bestBid?.let { bid -> ((bid + ask) / 2.0).coerceIn(0.001, 0.999) } ?: ask }
-        val b = if (novigMid != null && o.bookFetchedAtMs != null) NovigNow.apply(b0, novigMid, o.bookFetchedAtMs) else b0
+        // Novig's odds now from the same book read (the price to buy this side): the "Novig only" filter reuses it instead of reading again.
+        val novigOdds = o.quote?.price?.coerceIn(0.001, 0.999)
+        val b = if (novigOdds != null && o.bookFetchedAtMs != null) NovigNow.apply(b0, novigOdds, o.bookFetchedAtMs) else b0
         val fair = o.fairProbability ?: return b
         val lines = booksOf(o)
         val twoSided = lines.count { it.twoSided }.takeIf { lines.isNotEmpty() }
