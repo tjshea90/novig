@@ -91,4 +91,40 @@ class TrackerNovigOnlyTest {
         compose.onNodeWithTag("novigOnlyChip").performClick()
         assertEquals(listOf(true, false), switched)
     }
+
+    @Test
+    fun `Tj's bet sheet with Novig only - Novig's odds now the same as bet at is 0% EV, and nothing from another book is shown`() {
+        // Tyson Bagent Over 0.5 at +122, Novig still +122 (its other side -223): before, the bid/offer middle (+163) read as -15.56% EV.
+        val placed = bet.copy(
+            selection = "Tyson Bagent Over 0.5", marketLabel = "Player Passing Interceptions", eventName = "New York Jets @ Chicago Bears",
+            american = 122, price = 1.0 / 2.22, cost = 1.0 / 2.22, stake = 1.15, fairAtBet = 0.461, evPercentAtBet = 0.0234,
+            novigFair = 0.450, novigAtMs = now - 40_000, nowFair = 0.38, nowEv = -0.1556, nowBooks = 1, gameUrl = "https://crazyninjaodds.com/x",
+        )
+        val shown = com.tjshea.vigilant.data.tracker.NovigNow.view(listOf(placed)).single()
+        compose.setContent {
+            androidx.compose.runtime.CompositionLocalProvider(com.tjshea.vigilant.app.ui.LocalClock provides { now }) {
+                VigilantTheme(darkTheme = true) {
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        val settings = SampleScan.state().settings.copy(trackerNovigOnly = true)
+                        com.tjshea.vigilant.app.ui.BetSheetContent(
+                            shown, com.tjshea.vigilant.data.tracker.BetInsight.of(shown), now, settings, rereading = false, grading = false, replacing = false,
+                            actions = com.tjshea.vigilant.app.ui.BetActions(), onSettle = {}, onStake = {}, onPrice = {}, onDelete = {},
+                        )
+                    }
+                }
+            }
+        }
+        compose.onRoot().captureRoboImage("screenshots/4o_novig_only_bet_sheet.png")
+        compose.onNodeWithText("Now +0.00% EV at your price").assertExists()
+        compose.onNodeWithText("Novig now").assertExists()
+        compose.onNodeWithText("the same odds you bet at", substring = true).assertExists()
+        compose.onNodeWithText("Novig's odds haven't moved since you placed it.").assertExists()
+        compose.onNodeWithText("no other book is used", substring = true).assertExists()
+        // Nothing from any other book: no fair from the books, no books behind it, no book table, no other-book EV at bet, no ParlayAPI.
+        for (gone in listOf("Fair now", "Books behind it", "Every book", "EV when bet", "Fair when bet", "devigged")) {
+            assertEquals(gone, 0, compose.onAllNodesWithText(gone, substring = true).fetchSemanticsNodes().size)
+        }
+        assertEquals(0, compose.onAllNodesWithText("Second opinion", substring = true).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithText("-15.56%", substring = true).fetchSemanticsNodes().size)
+    }
 }
