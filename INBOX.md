@@ -3540,3 +3540,8 @@ Can you continue where Claude left off or is the progress gone
 ```
 send me the release link when it's done
 ```
+
+## 2026-10-02T17:54:24Z
+```
+the settings menu in this app is getting very large and confusing. organize the settings menu intuitively. make it so everything is clear and easy to find. make any advanced setting have a plain English explanation, so even a beginner can understand the setting. look for and fix or remove superfluous settings or settings no longer needed. look for settings that contradict each other and fix them. maybe make the auto bet feature its own section instead of buried in the settings. consider and implement the best intuitive organization and modifications for the settings and features of the app
+```
