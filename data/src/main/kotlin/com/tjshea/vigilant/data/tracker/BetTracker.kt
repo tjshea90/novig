@@ -780,11 +780,15 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
          * same settled bets, so they can be compared (the edge is real when they run together).
          */
         fun stats(all: List<TrackedBet>, now: Long = System.currentTimeMillis()): TrackerStats {
-            val bets = all.filterNot { it.isOutlier }
+            val money = all.filterNot { it.isOutlier }
+            // A lock ([TrackedBet.isLock]) is real money, so it counts in the stakes and the profit; it isn't a pick, so the record, the EV and the closing
+            // line leave it out (a locked pair would read as a win and a loss, and the lock's EV and CLV say nothing about the picks).
+            val bets = money.filterNot { it.isLock }
             val decided = { b: TrackedBet -> b.status != BetStatus.PENDING && b.status != BetStatus.VOID }
             val settled = bets.filter(decided)
-            val staked = settled.sumOf { it.stake }
-            val profit = settled.sumOf { it.profit ?: 0.0 }
+            val settledMoney = money.filter(decided)
+            val staked = settledMoney.sumOf { it.stake }
+            val profit = settledMoney.sumOf { it.profit ?: 0.0 }
             // A voided bet never happened: it counts toward nothing but the bet count.
             val live = bets.filter { it.status != BetStatus.VOID }
             val open = bets.filter { it.status == BetStatus.PENDING }
@@ -812,7 +816,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 won = bets.count { it.status == BetStatus.WON },
                 lost = bets.count { it.status == BetStatus.LOST },
                 pushed = bets.count { it.status == BetStatus.PUSH || it.status == BetStatus.FMV },
-                outliers = all.size - bets.size,
+                outliers = all.size - money.size,
                 voided = bets.count { it.status == BetStatus.VOID },
                 openStaked = open.sumOf { it.stake },
                 openToWin = open.sumOf { it.profitIfWon },
@@ -821,6 +825,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 settledWithEv = judged.size,
                 expectedSd = kotlin.math.sqrt(variance),
                 profitAll = all.filter(decided).sumOf { it.profit ?: 0.0 },
+                locks = money.count { it.isLock },
             )
         }
     }
