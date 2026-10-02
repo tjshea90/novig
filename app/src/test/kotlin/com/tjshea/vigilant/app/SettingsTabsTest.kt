@@ -21,7 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.SettingsScreen
-import com.tjshea.vigilant.app.ui.SettingsTab
+import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import org.junit.Assert.assertEquals
@@ -46,20 +46,20 @@ class SettingsTabsTest {
     private fun screen(state: UiState = SampleScan.state(), content: @androidx.compose.runtime.Composable (UiState) -> Unit = { SettingsScreen(it, {}) }) =
         compose.setContent { VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content(state) } } }
 
-    private fun open(tab: SettingsTab) {
-        compose.onNodeWithTag("settingsTab-${tab.name}").performScrollTo().performClick()
+    private fun open(tab: SettingsPage) {
+        compose.onNodeWithTag("settingsRow-${tab.name}").performScrollTo().performClick()
         compose.waitForIdle()
     }
 
     /** Each section heading the one long page had, on the one tab that now holds it (headings are drawn in capitals). */
     private val sections = mapOf(
-        SettingsTab.SCAN to listOf("SCANNER", "BACKGROUND AUTO-SCAN"),
-        SettingsTab.CNO to listOf("CNO SCANNER", "MINI WINDOW"),
-        SettingsTab.FAIR to listOf("FAIR ODDS METHOD", "DEVIG METHOD", "WHERE FAIR ODDS COME FROM", "SPORTSBOOKS FOR FAIR ODDS"),
-        SettingsTab.FEED to listOf("+EV FEED"),
-        SettingsTab.BETTING to listOf("BANKROLL & KELLY", "NOVIG API KEY"),
-        SettingsTab.USAGE to listOf("API USAGE", "KEYS BACKUP"),
-        SettingsTab.TOOLS to listOf("DIAGNOSTICS", "ABOUT"),
+        SettingsPage.SCANNING to listOf("SCANNER", "BACKGROUND AUTO-SCAN"),
+        SettingsPage.CNO to listOf("CNO SCANNER", "MINI WINDOW"),
+        SettingsPage.FAIR to listOf("FAIR ODDS METHOD", "DEVIG METHOD", "WHERE FAIR ODDS COME FROM", "SPORTSBOOKS FOR FAIR ODDS"),
+        SettingsPage.FEED to listOf("+EV FEED"),
+        SettingsPage.BETTING to listOf("BANKROLL & KELLY", "NOVIG API KEY"),
+        SettingsPage.USAGE to listOf("API USAGE", "KEYS BACKUP"),
+        SettingsPage.HELP to listOf("DIAGNOSTICS", "ABOUT"),
     )
 
     /** Every text on screen, as drawn (a heading's count, like "(7/10)", is part of it). */
@@ -70,7 +70,7 @@ class SettingsTabsTest {
     @Test
     fun `every section of the old long page is on exactly one tab`() {
         screen()
-        for (tab in SettingsTab.entries) {
+        for (tab in SettingsPage.entries) {
             open(tab)
             for ((home, titles) in sections) {
                 for (title in titles) {
@@ -84,9 +84,9 @@ class SettingsTabsTest {
     @Test
     fun `the tab row shows the pages in order, opens on Scan, and the chosen one is selected`() {
         screen()
-        assertEquals(SettingsTab.entries.size, SettingsTab.shown(SampleScan.settings).size)
+        assertEquals(SettingsPage.entries.size, SettingsPage.shown(SampleScan.settings).size)
         compose.onNodeWithTag("settingsTab-SCAN").assertIsSelected()
-        open(SettingsTab.FAIR)
+        open(SettingsPage.FAIR)
         compose.onNodeWithTag("settingsTab-FAIR").assertIsSelected()
         compose.onNodeWithText("Fair odds method", ignoreCase = true).assertIsDisplayed()
     }
@@ -94,7 +94,7 @@ class SettingsTabsTest {
     @Test
     fun `the tab row stays at the top however far the page is scrolled`() {
         screen()
-        open(SettingsTab.FAIR)
+        open(SettingsPage.FAIR)
         // The longest page, scrolled to its far end: the tabs are still there to tap.
         compose.onNodeWithText("Sportsbooks for fair odds", substring = true, ignoreCase = true).performScrollTo()
         compose.onNodeWithTag("settingsTabs").assertIsDisplayed()
@@ -107,14 +107,14 @@ class SettingsTabsTest {
     fun `CNO only leaves the pages Vigilant's scanner doesn't need, and calls the CNO page the widget's when CNO is off`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsTab.SCAN, SettingsTab.PRESETS, SettingsTab.CNO, SettingsTab.BETTING, SettingsTab.TOOLS),
-            SettingsTab.shown(base.settings.copy(scanner = ScannerMode.CNO)),
+            listOf(SettingsPage.SCANNING, SettingsPage.PRESETS, SettingsPage.CNO, SettingsPage.BETTING, SettingsPage.HELP),
+            SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
-        assertEquals(SettingsTab.entries.toList(), SettingsTab.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
-        assertEquals("CNO & widget", SettingsTab.CNO.labelFor(base.settings))
-        assertEquals("Widget", SettingsTab.CNO.labelFor(base.settings.copy(scanner = ScannerMode.VIGILANT)))
+        assertEquals(SettingsPage.entries.toList(), SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
+        assertEquals("CNO & widget", SettingsPage.CNO.labelFor(base.settings))
+        assertEquals("Widget", SettingsPage.CNO.labelFor(base.settings.copy(scanner = ScannerMode.VIGILANT)))
         // Switching to CNO only while on a tab that goes away lands on the first tab instead of an empty page.
-        screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO))) { SettingsScreen(it, {}, startTab = SettingsTab.FAIR) }
+        screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO))) { SettingsScreen(it, {}, page = SettingsPage.FAIR) }
         compose.onNodeWithTag("settingsTab-SCAN").assertIsSelected()
         compose.onAllNodesWithTag("settingsTab-FAIR").assertCountEquals(0)
     }
@@ -123,7 +123,7 @@ class SettingsTabsTest {
     fun `the tab Tj picked survives a rotation or the app being recreated`() {
         val tester = StateRestorationTester(compose)
         tester.setContent { VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize()) { SettingsScreen(SampleScan.state(), {}) } } }
-        open(SettingsTab.BETTING)
+        open(SettingsPage.BETTING)
         compose.onNodeWithTag("settingsTab-BETTING").assertIsSelected()
         tester.emulateSavedInstanceStateRestore()
         compose.onNodeWithTag("settingsTab-BETTING").assertIsSelected()
@@ -133,9 +133,9 @@ class SettingsTabsTest {
     @Test
     fun `a page opens at its top even after the last one was scrolled`() {
         screen()
-        open(SettingsTab.FAIR)
+        open(SettingsPage.FAIR)
         compose.onNodeWithText("Sportsbooks for fair odds", substring = true, ignoreCase = true).performScrollTo()
-        open(SettingsTab.FEED)
+        open(SettingsPage.FEED)
         compose.onNodeWithText("+EV FEED", ignoreCase = false).assertIsDisplayed()
     }
 
@@ -169,7 +169,7 @@ class SettingsTabsTest {
         screen(connected())
         compose.onNodeWithTag("settingsTab-SCAN").assertIsSelected()
         // And the Betting page opens at its top: the wallet is further down (so the scroll above is real).
-        open(SettingsTab.BETTING)
+        open(SettingsPage.BETTING)
         compose.onNodeWithTag("walletBlock").assertIsNotDisplayed()
     }
 
@@ -177,7 +177,7 @@ class SettingsTabsTest {
     fun `in CNO only the wallet is still there, since CNO's cards bet through the API too`() {
         val base = connected()
         screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO)))
-        open(SettingsTab.BETTING)
+        open(SettingsPage.BETTING)
         compose.onNodeWithTag("walletBlock").performScrollTo().assertIsDisplayed()
     }
 }

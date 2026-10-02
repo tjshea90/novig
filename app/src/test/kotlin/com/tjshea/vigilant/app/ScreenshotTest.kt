@@ -44,7 +44,7 @@ import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.MiniFeed
 import com.tjshea.vigilant.app.ui.OpportunityDetail
 import com.tjshea.vigilant.app.ui.SettingsScreen
-import com.tjshea.vigilant.app.ui.SettingsTab
+import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import org.junit.Rule
@@ -90,9 +90,9 @@ class ScreenshotTest {
     }
 
     /** Settings is one page per tab (v0.22.0, Tj: "tabs on the top"): open [tab] before looking for what's on it. */
-    private fun openSettingsTab(tab: com.tjshea.vigilant.app.ui.SettingsTab) {
+    private fun openSettingsTab(tab: com.tjshea.vigilant.app.ui.SettingsPage) {
         // The row scrolls sideways: the later tabs start off screen, as they do on a phone.
-        compose.onNodeWithTag("settingsTab-${tab.name}").performScrollTo().performClick()
+        compose.onNodeWithTag("settingsRow-${tab.name}").performScrollTo().performClick()
         compose.waitForIdle()
     }
 
@@ -134,26 +134,26 @@ class ScreenshotTest {
     @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
 
     /** One picture per Settings tab (v0.22.0). */
-    private fun settingsTab(tab: SettingsTab) = shoot("5_settings_tab_${tab.name.lowercase()}") { SettingsScreen(SampleScan.state(), {}, startTab = tab) }
+    private fun settingsTab(tab: SettingsPage) = shoot("5_settings_tab_${tab.name.lowercase()}") { SettingsScreen(SampleScan.state(), {}, page = tab) }
 
-    @Test fun settingsTabScan() = settingsTab(SettingsTab.SCAN)
-    @Test fun settingsTabCno() = settingsTab(SettingsTab.CNO)
-    @Test fun settingsTabFair() = settingsTab(SettingsTab.FAIR)
-    @Test fun settingsTabFeed() = settingsTab(SettingsTab.FEED)
-    @Test fun settingsTabBetting() = settingsTab(SettingsTab.BETTING)
-    @Test fun settingsTabUsage() = settingsTab(SettingsTab.USAGE)
-    @Test fun settingsTabTools() = settingsTab(SettingsTab.TOOLS)
+    @Test fun settingsTabScan() = settingsTab(SettingsPage.SCANNING)
+    @Test fun settingsTabCno() = settingsTab(SettingsPage.CNO)
+    @Test fun settingsTabFair() = settingsTab(SettingsPage.FAIR)
+    @Test fun settingsTabFeed() = settingsTab(SettingsPage.FEED)
+    @Test fun settingsTabBetting() = settingsTab(SettingsPage.BETTING)
+    @Test fun settingsTabUsage() = settingsTab(SettingsPage.USAGE)
+    @Test fun settingsTabTools() = settingsTab(SettingsPage.HELP)
 
     /** The Fair odds tab with ParlayAPI on and a key: what a league and a tennis tour cost (TASKS.md Z2, v0.37.0). */
     @Config(qualifiers = "w393dp-h3200dp-xxhdpi")
     @Test fun settingsFairParlayOn() = shoot("5h_settings_fair_parlay_on") {
-        SettingsScreen(SampleScan.state(SampleScan.settings.copy(useParlay = true)).copy(parlayKeys = listOf("pk-FAKE-0000")), {}, startTab = SettingsTab.FAIR)
+        SettingsScreen(SampleScan.state(SampleScan.settings.copy(useParlay = true)).copy(parlayKeys = listOf("pk-FAKE-0000")), {}, page = SettingsPage.FAIR)
     }
 
     @Test fun settingsOfferSportsbookPropsWithTheirCreditBudget() {
         // No PropLine key: The Odds API buys props on its own.
         screen { SettingsScreen(SampleScan.state().copy(proplineKeys = emptyList()), {}) }
-        openSettingsTab(SettingsTab.FAIR)
+        openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("Sportsbook player props").assertExists()
         compose.onNodeWithText("Most credits per scan on props").assertExists()
         compose.onNodeWithText("up to 6 games a scan", substring = true).assertExists()
@@ -162,14 +162,14 @@ class ScreenshotTest {
     /** With a PropLine key, The Odds API's prop credits go only to what PropLine didn't price (RESEARCH.md §23). */
     @Test fun settingsSayPropCreditsOnlyBackUpPropLine() {
         screen { SettingsScreen(SampleScan.state(), {}) }
-        openSettingsTab(SettingsTab.FAIR)
+        openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("Only games and prop types PropLine didn't price", substring = true).assertExists()
         compose.onAllNodesWithText("up to 6 games a scan", substring = true).assertCountEquals(0)
     }
 
     @Test fun settingsTakePinnWireAndPropLineKeys() {
         screen { SettingsScreen(SampleScan.state().copy(pinnwireKeys = emptyList(), proplineKeys = emptyList()), {}) }
-        openSettingsTab(SettingsTab.FAIR)
+        openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("PinnWire keys (game lines and player props)").assertExists()
         compose.onNodeWithText("Add a PinnWire key").assertExists()
         compose.onNodeWithText("Free key at prop-line.com", substring = true).assertExists()
@@ -440,7 +440,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun settingsOfferTheOutlierGuardAndAnOddsCap() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        shoot("5e_settings_feed") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.FEED) }
+        shoot("5e_settings_feed") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.FEED) }
         // Up to 1,200 Novig prices a scan, and props per game up to 24 (v0.18.0).
         for (n in listOf("500", "800", "1200")) compose.onNodeWithText(n).assertExists()
         compose.onAllNodesWithText("24").assertCountEquals(1) // props per game's (props credits' and PropLine games per scan's are on the Fair odds tab)
@@ -456,7 +456,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Fill the scan with every quoted line").performClick()
         assert(picked?.fillBudget == false) { "picked $picked" }
         // The Fair odds tab: the outlier guard, props credits' 24 and PropLine games per scan's 24 (v0.19.6).
-        openSettingsTab(SettingsTab.FAIR)
+        openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("Outlier guard").assertExists()
         compose.onAllNodesWithText("24").assertCountEquals(2)
     }
@@ -567,7 +567,7 @@ class ScreenshotTest {
     @Test fun settingsOfferTheMiniWindowSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
-        openSettingsTab(SettingsTab.CNO)
+        openSettingsTab(SettingsPage.CNO)
         // Off by default (Tj, 2026-09-29: the widget opens only from its button); the switch turns the auto-open on.
         compose.onNodeWithText("The widget opens only when you press its button at the top of the list.").assertExists()
         compose.onNodeWithText("Also open it when I leave Vigilant").assertExists()
@@ -771,7 +771,7 @@ class ScreenshotTest {
     @Test fun settingsOfferTheCnoScannerAndItsFilters() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
-        openSettingsTab(SettingsTab.CNO)
+        openSettingsTab(SettingsPage.CNO)
         compose.onNodeWithText("Shared View link").assertExists()
         compose.onNodeWithText("Longest odds").assertExists()
         // CNO's +150 here; Vigilant's own odds cap's (since v0.18.0) is on the +EV feed tab.
@@ -792,10 +792,10 @@ class ScreenshotTest {
         compose.onNodeWithText("+100").performClick()
         assert(picked?.cnoFilters?.maxOdds == 100) { "picked $picked" }
         // The scanner choice is on the Scan tab; Vigilant's own odds cap on the +EV feed tab.
-        openSettingsTab(SettingsTab.SCAN)
+        openSettingsTab(SettingsPage.SCANNING)
         compose.onNodeWithText("CNO only").performClick()
         assert(picked?.scanner == com.tjshea.vigilant.data.scanner.ScannerMode.CNO) { "picked $picked" }
-        openSettingsTab(SettingsTab.FEED)
+        openSettingsTab(SettingsPage.FEED)
         compose.onAllNodesWithText("+150").assertCountEquals(1)
     }
 
@@ -896,11 +896,11 @@ class ScreenshotTest {
         shoot("5c_settings_cno_only") { SettingsScreen(s, {}) }
         // Vigilant's pages go with its scanner: no fair odds, feed or API usage tab. The Novig key stays on the Betting one: CNO's cards bet
         // through Novig's API too, and a Bet sheet's "Add money" lands on its wallet (Tj, 2026-09-29).
-        for (gone in listOf(SettingsTab.FAIR, SettingsTab.FEED, SettingsTab.USAGE)) compose.onAllNodesWithTag("settingsTab-${gone.name}").assertCountEquals(0)
+        for (gone in listOf(SettingsPage.FAIR, SettingsPage.FEED, SettingsPage.USAGE)) compose.onAllNodesWithTag("settingsTab-${gone.name}").assertCountEquals(0)
         compose.onAllNodesWithText("Fair odds method", ignoreCase = true).assertCountEquals(0)
-        openSettingsTab(SettingsTab.CNO)
+        openSettingsTab(SettingsPage.CNO)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
-        openSettingsTab(SettingsTab.BETTING)
+        openSettingsTab(SettingsPage.BETTING)
         compose.onNodeWithText("Bankroll & Kelly", ignoreCase = true).assertExists()
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(1)
     }
@@ -909,11 +909,11 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h5200dp-xxhdpi")
     @Test fun bothScannersSettingsShowVigilantsSections() {
         screen { SettingsScreen(SampleScan.state(), {}) }
-        openSettingsTab(SettingsTab.FAIR)
+        openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("Fair odds method", ignoreCase = true).assertExists()
-        openSettingsTab(SettingsTab.USAGE)
+        openSettingsTab(SettingsPage.USAGE)
         compose.onNodeWithText("API usage", ignoreCase = true).assertExists()
-        openSettingsTab(SettingsTab.CNO)
+        openSettingsTab(SettingsPage.CNO)
         compose.onNodeWithText("CNO scanner", ignoreCase = true).assertExists()
     }
 
@@ -1273,7 +1273,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsHasTheOnlyAgreedSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.CNO) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.CNO) }
         compose.onNodeWithText("Only bets the books agree on").performClick()
         assert(picked?.cnoOnlyAgreed == true) { "picked $picked" }
     }
@@ -1397,7 +1397,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsOfferVigilantsScanAgainWhileTheWidgetIsOpen() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.CNO) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.CNO) }
         compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
         compose.onNodeWithText("10 min").performClick()
         assertEquals(10, picked?.widgetRescanMinutes)
@@ -1406,7 +1406,7 @@ class ScreenshotTest {
     /** RESEARCH.md §23: with a PropLine key, The Odds API says it only backs PropLine up, and what that costs. */
     @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
     @Test fun settingsSayTheOddsApiBacksUpPropLine() {
-        screen { SettingsScreen(SampleScan.state(), { }, startTab = SettingsTab.FAIR) }
+        screen { SettingsScreen(SampleScan.state(), { }, page = SettingsPage.FAIR) }
         compose.onNodeWithText("Backup to PropLine", substring = true).assertExists()
         compose.onNodeWithText("Nothing while PropLine answers", substring = true).assertExists()
         compose.onNodeWithText("Read from PropLine first", substring = true).assertExists()
@@ -1417,7 +1417,7 @@ class ScreenshotTest {
     @Test fun settingsOfferTheFloatingWidgetOnVigilantsScanAlone() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
         val s = SampleScan.state().copy(settings = SampleScan.settings.copy(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, floatingWidget = false))
-        screen { SettingsScreen(s, { t -> picked = t(s.settings) }, startTab = SettingsTab.CNO) }
+        screen { SettingsScreen(s, { t -> picked = t(s.settings) }, page = SettingsPage.CNO) }
         compose.onNodeWithText("Floating widget you can touch").assertExists().performClick()
         assertEquals(true, picked?.floatingWidget)
         compose.onNodeWithText("Vigilant's scan again while the widget is open").assertExists()
@@ -1449,7 +1449,7 @@ class ScreenshotTest {
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsHaveTheNovigPriceNowSwitch() {
         var picked: com.tjshea.vigilant.data.scanner.ScanSettings? = null
-        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, startTab = SettingsTab.CNO) }
+        screen { SettingsScreen(SampleCno.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.CNO) }
         compose.onNodeWithText("Novig's price now").performClick()
         assertEquals(false, picked?.cnoLivePrices)
     }
@@ -1483,7 +1483,7 @@ class ScreenshotTest {
 
     @Config(qualifiers = "w393dp-h6400dp-xxhdpi")
     @Test fun settingsDescribeTheWidgetAsItIsNow() {
-        screen { SettingsScreen(SampleCno.state(), { }, startTab = SettingsTab.CNO) }
+        screen { SettingsScreen(SampleCno.state(), { }, page = SettingsPage.CNO) }
         compose.onNodeWithText("✕ to remove it without betting", substring = true).assertExists()
         compose.onNodeWithText("switch picks CNO only, Both or Vigilant only", substring = true).assertExists()
     }
@@ -1681,7 +1681,7 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }) }
         // Each "No limit" chip sets its own cap: Novig prices (+EV feed tab), The Odds API credits and PropLine's games (Fair odds tab).
         val set = HashSet<String>()
-        for (tab in listOf(SettingsTab.FEED, SettingsTab.FAIR)) {
+        for (tab in listOf(SettingsPage.FEED, SettingsPage.FAIR)) {
             openSettingsTab(tab)
             val noLimit = compose.onAllNodesWithText("No limit")
             repeat(noLimit.fetchSemanticsNodes().size) { i ->
@@ -1695,7 +1695,7 @@ class ScreenshotTest {
         assertEquals(setOf("prices", "credits", "propline"), set)
         // "All": lines and props per game (+EV feed tab), and the sportsbook-props window (Fair odds tab).
         val all = HashSet<String>()
-        for (tab in listOf(SettingsTab.FEED, SettingsTab.FAIR)) {
+        for (tab in listOf(SettingsPage.FEED, SettingsPage.FAIR)) {
             openSettingsTab(tab)
             val allChips = compose.onAllNodesWithText("All")
             repeat(allChips.fetchSemanticsNodes().size) { i ->

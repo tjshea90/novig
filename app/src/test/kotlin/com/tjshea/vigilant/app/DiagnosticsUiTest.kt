@@ -16,7 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.ReportActions
 import com.tjshea.vigilant.app.ui.ReportDialog
 import com.tjshea.vigilant.app.ui.SettingsScreen
-import com.tjshea.vigilant.app.ui.SettingsTab
+import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -40,7 +40,7 @@ class DiagnosticsUiTest {
         compose.setContent {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SettingsScreen(SampleScan.state(), {}, startTab = SettingsTab.TOOLS, reportActions = ReportActions(onDiagnostics = { shown++ }, onShare = { shared++ }))
+                    SettingsScreen(SampleScan.state(), {}, page = SettingsPage.HELP, reportActions = ReportActions(onDiagnostics = { shown++ }, onShare = { shared++ }))
                 }
             }
         }

@@ -96,7 +96,7 @@ class MgmAppTest {
         var saved: ScanSettings? = null
         val s = SampleMgm.state()
         // BetMGM's state and the missing Novig key are on the Betting tab; the read limits on the +EV feed tab, Novig's price now on the CNO tab.
-        shoot("22_mgm_settings") { SettingsScreen(s, { t -> saved = t(s.settings) }, startTab = com.tjshea.vigilant.app.ui.SettingsTab.BETTING) }
+        shoot("22_mgm_settings") { SettingsScreen(s, { t -> saved = t(s.settings) }, page = com.tjshea.vigilant.app.ui.SettingsPage.BETTING) }
         compose.onNodeWithText("BetMGM state", ignoreCase = true).assertExists()
         compose.onAllNodesWithText("Novig API key", ignoreCase = true).assertCountEquals(0)
         compose.onNodeWithText("NJ").performScrollTo().performClick()
