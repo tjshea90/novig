@@ -74,8 +74,11 @@ class MainActivity : ComponentActivity() {
     private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Closed and opened again (no saved state): auto-bet and background auto-scan start off (Tj, 2026-10-02), saved before anything reads the settings.
+        val switchedOff = if (savedInstanceState == null) LaunchReset.onFreshLaunch(application as VigilantApp) else null
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        switchedOff?.let { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show() }
 
         // No refresh loop for Novig or the odds providers: nothing is fetched until Tj taps Scan
         // or pulls to refresh (his rule, 2026-09-25). A scan he starts keeps running if he
