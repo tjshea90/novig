@@ -137,7 +137,7 @@ class ApiBettingTest {
         val under = refused(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, limits.copy(minEv = 0.03), 0.0))
         assertFalse(under, under.contains("edge is gone"))
         assertTrue(under, under.startsWith("+1.8% EV at Novig's best price now"))
-        assertTrue(under, under.contains("is under your +3.0% minimum (Settings › Betting › Auto-bet › Smallest edge at Novig's price now)"))
+        assertTrue(under, under.contains("is under your +3.0% minimum (Auto-bet tab › Smallest edge (EV) at Novig's price now)"))
         // Auto-bet's limits name auto-bet's setting.
         val auto = refused(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, limits.copy(minEv = 0.03, minEvWhere = "Auto-bet's minimum"), 0.0))
         assertTrue(auto, auto.contains("(Auto-bet's minimum)"))

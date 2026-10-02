@@ -171,10 +171,10 @@ class SharpBooksTest {
     @Test
     fun `no feed on, or only exchanges, says so, and a bet it can't read or a league it doesn't know asks nothing`() = runBlocking {
         val none = sharp().quotes(bet(), rules)
-        assertEquals("no Pinnacle feed is on with a key (Settings › Fair-odds sources)", none.unavailable)
+        assertEquals("no Pinnacle feed is on with a key (Settings › Fair odds & sources)", none.unavailable)
         val kalshi = Feed("kalshi", "Kalshi", { snapshot(game(ml())) })
         val poly = Feed("polymarket", "Polymarket", { snapshot(game(ml())) })
-        assertEquals("no Pinnacle feed is on with a key (Settings › Fair-odds sources)", sharp(kalshi, poly).quotes(bet(), rules).unavailable)
+        assertEquals("no Pinnacle feed is on with a key (Settings › Fair odds & sources)", sharp(kalshi, poly).quotes(bet(), rules).unavailable)
         assertEquals(0, kalshi.calls + poly.calls)
         // A 3-way market, another period's, or a league the app doesn't have: no price, no call.
         val feed = Feed("pinnacle", "PinnWire", { snapshot(game(ml())) })

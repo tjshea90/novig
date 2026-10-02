@@ -25,7 +25,7 @@ import org.junit.Test
 
 /**
  * Tj, 2026-09-28: "Did this latest version change anything with the novig API scan because now it is reading the API
- * very slow". A scan now says where its time went (Settings › Novig API), so the next "slow" comes with numbers.
+ * very slow". A scan now says where its time went (Settings › Betting & Novig account › Novig API key), so the next "slow" comes with numbers.
  */
 class ScanTimingTest {
 

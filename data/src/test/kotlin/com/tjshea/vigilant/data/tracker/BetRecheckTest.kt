@@ -123,7 +123,7 @@ class BetRecheckTest {
             "Checked 3 of 7 open bets · 1 couldn't be read (each bet says why) · 1 game already over (results come from final scores) · 2 Vigilant bets update with each Vigilant scan",
             r.summary(),
         )
-        assertEquals(true, r.summary(vigilantOff = true).contains("2 Vigilant bets not updated: the Vigilant scanner is off (Settings › Scanner)"))
+        assertEquals(true, r.summary(vigilantOff = true).contains("2 Vigilant bets not updated: the Vigilant scanner is off (Settings › Scanning)"))
         // With the grading pass that runs beside it, the finished game says what came of it (Tj: "it only updated 61, I have 100").
         assertEquals(
             "Checked 3 of 7 open bets · 1 couldn't be read (each bet says why) · 1 game already over: graded 1 from final scores · 2 Vigilant bets update with each Vigilant scan",
