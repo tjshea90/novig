@@ -225,17 +225,30 @@ class SharpConfirmAppTest {
         val stale = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 240_000L)).run(settings(), state())
         assertEquals(0, stale.placed.size)
         assertEquals(stale.skipped.toString(), 1, stale.skipped["Pinnacle's price for it is older than 3 min (or has no time)"])
-        // CNO's own page has Pinnacle at +100/−122 (fair about 47.6%): a +EV yes there. Make CNO's Pinnacle say no (Under +140, Over −170: fair about 40%):
-        // the bet is vetoed before any feed is asked.
+        // CNO's own page has Pinnacle at +100/−122 (fair about 47.6%): +EV at Novig's +117. Make CNO's Pinnacle say no (Under +140, Over −170: fair about 40%):
+        // the gate vetoes it before any feed is asked.
+        val sharp = SharpBooks(sources = { listOf(feed(over = 1.90, under = 2.10, ageMs = 30_000L)) }, settings = { ScanSettings() }, clock = { now })
+        val bet = SharpBooks.Bet("NFL", "Minnesota Vikings @ Tampa Bay Buccaneers", jefferson.startsAtMs, "Player Receiving Yards", "Justin Jefferson Under 69.5")
         val noView = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") CnoBookPrice("PN", 140, null, -170, null) else it }) }
-        val vetoState = state().let { st -> st.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = noView))).indexed(now) }
+        val rules = SharpConfirm.rules(settings(), autoBet = true)!!
         calls = 0
-        // (Two books still agree without Pinnacle, so the bet reaches the sharp check: the minimum is 2 for this run.)
-        val vetoSettings = settings { it.copy(autoBetBooks = 2) }
-        val veto = bettorWith(feed(over = 1.90, under = 2.10, ageMs = 30_000L)).run(vetoSettings, vetoState.copy(settings = vetoSettings.copy(cnoLivePrices = true)).indexed(now))
-        assertEquals(0, veto.placed.size)
+        val veto = SharpGate.check(sharp, rules, bet, noView, 117, false, now)
+        assertEquals(SharpConfirm.Verdict.NOT_CONFIRMED, veto.verdict)
         assertEquals("a CNO veto costs no feed call", 0, calls)
-        assertEquals(veto.skipped.toString(), 1, veto.skipped["Pinnacle's own devigged price doesn't show it +EV at Novig's price"])
+        // CNO's page saying yes does not confirm on its own (a feed with the quote's own time is asked) unless Settings let the page confirm.
+        val yesView = SampleCno.jeffersonBooks()
+        assertEquals(SharpConfirm.Verdict.CONFIRMED, SharpGate.check(sharp, rules, bet, yesView, 117, false, now).verdict)
+        assertEquals("the feed was asked", 1, calls)
+        calls = 0
+        val viaCno = rules.copy(viaCno = true)
+        val byPage = SharpGate.check(SharpBooks(sources = { listOf(feed(over = 1.90, under = 2.10, ageMs = 30_000L)) }, settings = { ScanSettings() }, clock = { now }), viaCno, bet, yesView, 117, false, now)
+        assertEquals(SharpConfirm.Verdict.CONFIRMED, byPage.verdict)
+        assertEquals("CNO's page confirmed it for free", 0, calls)
+        assertEquals("CNO's page", byPage.judged.single().quote.via)
+        // A page that is too old to count falls through to the feed.
+        val oldView = yesView.copy(fetchedAtMs = now - 400_000L)
+        assertEquals(SharpConfirm.Verdict.CONFIRMED, SharpGate.check(SharpBooks(sources = { listOf(feed(over = 1.90, under = 2.10, ageMs = 30_000L)) }, settings = { ScanSettings() }, clock = { now }), viaCno, bet, oldView, 117, false, now).verdict)
+        assertEquals(1, calls)
     }
 
     // ---- the alerts ---------------------------------------------------------------------------------------------------
