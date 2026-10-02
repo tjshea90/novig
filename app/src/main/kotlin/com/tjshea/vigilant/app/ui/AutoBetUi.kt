@@ -199,25 +199,6 @@ fun AutoBetSection(
         )
     }
 
-    if (confirming) {
-        AlertDialog(
-            onDismissRequest = { confirming = false },
-            title = { Text("Turn on auto-bet?") },
-            text = { Text(AutoBetText.confirm(s, balance)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        confirming = false
-                        // The background scan is what runs it: off becomes on, anything else stays.
-                        onUpdate { it.copy(autoBet = true, autoScan = if (it.autoScan == AutoScanMode.OFF) AutoScanMode.CNO else it.autoScan) }
-                    },
-                    modifier = Modifier.testTag("autoBetConfirm"),
-                ) { Text("Turn on") }
-            },
-            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
-        )
-    }
-
     // Halted: a lost order. Never silently resumed.
     s.autoBetHalted?.let { why ->
         Text("Auto-bet is stopped: $why", style = MaterialTheme.typography.bodyMedium, color = Edge.colors.negative, modifier = Modifier.padding(vertical = 4.dp).testTag("autoBetHalted"))
