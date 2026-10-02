@@ -255,6 +255,97 @@ class AdvisorTest {
         assertEquals("0.43.0" to 78, snap.version to snap.code)
     }
 
+    // ---- the edges of every rule: just under says nothing, at the limit says it -----------------------------------------------
+
+    private fun keys(x: Diagnostics.Extras, s: UiState = state()) = findings(x, s).map { it.key }.toSet()
+
+    @Test
+    fun `rate limits, name lookups and the sharp funnel speak up exactly at their limits`() {
+        assertFalse("net:h:limits" in keys(base.copy(net = net("h" to host(limits = 2)))))
+        assertTrue("net:h:limits" in keys(base.copy(net = net("h" to host(limits = 3)))))
+        assertFalse("net:dns" in keys(base.copy(net = net("h" to host(kinds = mapOf("dns" to 2L))))))
+        assertTrue("net:dns" in keys(base.copy(net = net("h" to host(kinds = mapOf("dns" to 2L)), "i" to host(kinds = mapOf("dns" to 1L))))))
+        // Ten checks: nine say nothing; at ten, a third unavailable, a third stale or half without a quote is a finding.
+        fun sharp(unavailable: Long = 0, stale: Long = 0, noQuote: Long = 0, confirmed: Long) =
+            base.copy(counters = mapOf("sharp.autobet.UNAVAILABLE" to unavailable, "sharp.autobet.STALE" to stale, "sharp.autobet.NO_QUOTE" to noQuote, "sharp.autobet.CONFIRMED" to confirmed))
+        assertTrue(keys(sharp(unavailable = 9, confirmed = 0)).none { it.startsWith("funnel:sharp") })
+        assertTrue("funnel:sharp:unavailable" in keys(sharp(unavailable = 10, confirmed = 0)))
+        assertFalse("funnel:sharp:unavailable" in keys(sharp(unavailable = 2, confirmed = 8)))
+        assertTrue("funnel:sharp:unavailable" in keys(sharp(unavailable = 3, confirmed = 7)))
+        assertFalse("funnel:sharp:stale" in keys(sharp(stale = 2, confirmed = 8)))
+        assertTrue("funnel:sharp:stale" in keys(sharp(stale = 3, confirmed = 7)))
+        assertFalse("funnel:sharp:noquote" in keys(sharp(noQuote = 4, confirmed = 6)))
+        assertTrue("funnel:sharp:noquote" in keys(sharp(noQuote = 5, confirmed = 5)))
+    }
+
+    @Test
+    fun `the app's log: one dropped-frame line is not a finding, a warning is not an error, and a crash's own tag is left to the crash`() {
+        fun line(level: Char, tag: String, text: String) = LogcatTail.Line("10-02 01:00:00.000", level, tag, text)
+        assertFalse("logcat:jank" in keys(base.copy(logcat = listOf(line('W', "Choreographer", "Skipped 47 frames!")))))
+        assertTrue("logcat:jank" in keys(base.copy(logcat = listOf(line('W', "Choreographer", "Skipped 47 frames!"), line('W', "OpenGLRenderer", "Davey! duration=900ms")))))
+        assertTrue(keys(base.copy(logcat = listOf(line('W', "SomeTag", "just a warning"), line('W', "SomeTag", "another")))).none { it.startsWith("logcat:error") })
+        assertTrue(keys(base.copy(logcat = listOf(line('E', "AndroidRuntime", "FATAL EXCEPTION: main")))).none { it.startsWith("logcat:error") })
+        assertTrue("logcat:error:SomeTag" in keys(base.copy(logcat = listOf(line('E', "SomeTag", "bad")))))
+    }
+
+    @Test
+    fun `a slower kind of finding outranks a bigger one of a lighter kind, and a retry loop whose messages begin alike is one finding each`() {
+        // A host 30 s slow (weight 300) is still below a failing one (a FAILURE) even though its weight is bigger.
+        val x = base.copy(net = net("a.com" to host(calls = 100, errors = 12, kinds = mapOf("timeout" to 12L)), "slow.com" to host(recentMs = List(30) { 30_000 })))
+        val order = findings(x).map { it.key }
+        assertTrue(order.toString(), order.indexOf("net:a.com:errors") < order.indexOf("net:slow.com:slow"))
+        // Two repeating warnings that share their first 48 characters have their own keys (the rest of the message differs): both show, none twice.
+        val common = "the same long beginning of a message, then differ: "
+        val r = findings(base.copy(events = listOf(event(Level.WARN, common + "one", n = 30), event(Level.WARN, common + "two", n = 25)))).filter { it.key.startsWith("repeat:") }
+        assertEquals(r.toString(), 1, r.size)
+        assertTrue(r.first().title, r.first().title.contains("×30") || r.first().title.contains("×25"))
+        // A call that keeps failing is in the connection findings, not also a repeating event.
+        assertTrue(keys(base.copy(events = listOf(event(Level.WARN, "host/x failed: timeout", cat = "NET", n = 40)))).none { it.startsWith("repeat:") })
+    }
+
+    @Test
+    fun `health findings are the checks that are not fine, and only those`() {
+        val x = base.copy(phone = Diagnostics.Phone(notifications = false))
+        val notFine = HealthChecks.of(state(), x, now).count { it.level != HealthChecks.Level.OK }
+        assertTrue(notFine > 0)
+        assertEquals(notFine, findings(x).count { it.key.startsWith("health:") })
+    }
+
+    @Test
+    fun `cycles, scans and starts speak up past their limits and not under them`() {
+        fun cyc(p95: Double, count: Int = 50) = base.copy(perf = mapOf("cycle.ms" to SampleSummary(count, 1_000.0, p95, p95, 2_000.0)))
+        // A 5 s schedule: 20 s is the floor, so 18 s is fine and 25 s is not.
+        assertFalse("perf:cycle" in keys(cyc(18_000.0)))
+        assertTrue("perf:cycle" in keys(cyc(25_000.0)))
+        // A 20 minute schedule: 5 minutes is well inside the interval (nothing to say), 40 minutes is longer than it.
+        val slowSchedule = state { it.copy(autoScanSeconds = 1200) }
+        assertFalse("perf:cycle" in keys(cyc(300_000.0), slowSchedule))
+        assertTrue("perf:cycle" in keys(cyc(1_900_000.0), slowSchedule))
+        assertFalse("perf:cycle" in keys(cyc(25_000.0, count = 7)))
+        assertTrue("perf:cycle" in keys(cyc(25_000.0, count = 8)))
+        // A scan: 3 minutes is the limit.
+        assertFalse("perf:scan" in keys(base.copy(perf = mapOf("scan.ms" to SampleSummary(3, 90_000.0, 170_000.0, 170_000.0, 100_000.0)))))
+        assertTrue("perf:scan" in keys(base.copy(perf = mapOf("scan.ms" to SampleSummary(3, 90_000.0, 180_000.0, 180_000.0, 100_000.0)))))
+        // The first screen: 2.5 s.
+        assertFalse("perf:coldstart" in keys(base.copy(coldStartMs = 2_400)))
+        assertTrue("perf:coldstart" in keys(base.copy(coldStartMs = 2_600)))
+    }
+
+    @Test
+    fun `a league's games unmatched to fair odds are a finding below seven in ten, and not with few games`() {
+        val sample = SampleScan.state().result!!.games.first { it.refEvent != null || it.outcomes.any { o -> o.fairProbability != null } }
+        fun game(i: Int, hit: Boolean) = sample.copy(event = sample.event.copy(description = "Team $i @ Other $i"), refEvent = if (hit) sample.refEvent else null, outcomes = if (hit) sample.outcomes else emptyList())
+        fun withGames(hits: Int, misses: Int): UiState {
+            val st = state()
+            return st.copy(result = st.result!!.copy(games = (1..hits).map { game(it, true) } + (1..misses).map { game(100 + it, false) }))
+        }
+        val league = sample.league.displayName
+        assertTrue(keys(base, withGames(7, 3)).none { it.startsWith("match:") })
+        assertTrue("match:$league" in keys(base, withGames(6, 4)))
+        assertTrue(keys(base, withGames(0, 4)).none { it.startsWith("match:") })
+        assertTrue("match:$league" in keys(base, withGames(0, 5)))
+    }
+
     // ---- what the findings say about the code ------------------------------------------------------------------------------
 
     @Test
