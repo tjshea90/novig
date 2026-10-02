@@ -19,7 +19,7 @@ import org.junit.Test
 class SharpConfirmTest {
 
     private val now = 1_800_000_000_000L
-    private val on = ScanSettings(sharpConfirmAutoBet = true, sharpConfirmAlerts = true)
+    private val on = ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)
     private val rules = SharpConfirm.rules(on, autoBet = true)!!
 
     /** Jefferson Under 69.5 at Pinnacle: +100 the Under, −122 the Over. Devigged worst case its fair chance is about 47.6%: Novig's +117 is +3.3% EV. */
@@ -33,10 +33,10 @@ class SharpConfirmTest {
         assertFalse(off.sharpConfirmAlerts)
         assertNull(SharpConfirm.rules(off, autoBet = true))
         assertNull(SharpConfirm.rules(off, autoBet = false))
-        val onlyBet = ScanSettings(sharpConfirmAutoBet = true)
+        val onlyBet = ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)
         assertTrue(SharpConfirm.rules(onlyBet, autoBet = true) != null)
         assertNull(SharpConfirm.rules(onlyBet, autoBet = false))
-        val onlyAlerts = ScanSettings(sharpConfirmAlerts = true)
+        val onlyAlerts = ScanSettings(sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)
         assertNull(SharpConfirm.rules(onlyAlerts, autoBet = true))
         assertTrue(SharpConfirm.rules(onlyAlerts, autoBet = false) != null)
         // The defaults: Pinnacle, 3 minutes, any +EV, no CNO page as a confirmer.
@@ -196,7 +196,7 @@ class SharpConfirmTest {
         assertEquals(180, old.sharpConfirmMaxAgeSeconds)
         assertEquals(0.0, old.sharpConfirmMinEv, 0.0)
         val saved = ScanSettings(
-            sharpConfirmAutoBet = true, sharpConfirmAlerts = true, sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 60,
+            sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 60,
             sharpConfirmMinEv = 0.02, sharpConfirmViaCno = true,
         )
         assertEquals(saved, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), saved)))

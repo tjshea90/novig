@@ -22,7 +22,7 @@ class SharpBooksTest {
 
     private val start = Instant.parse("2026-10-02T00:15:00Z").toEpochMilli()
     private var now = start - 3_600_000L
-    private val rules = SharpConfirm.rules(ScanSettings(sharpConfirmAutoBet = true), autoBet = true)!!
+    private val rules = SharpConfirm.rules(ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM), autoBet = true)!!
 
     /** Pittsburgh @ Cleveland: Pinnacle's Cleveland ML 2.31 / 1.676, total 38.5 (O 1.909 / U 1.943), an NFL game Novig would list. */
     private fun game(vararg markets: RefBookMarket) = RefEvent("g", "americanfootball_nfl", start, "Cleveland Browns", "Pittsburgh Steelers", markets.toList())

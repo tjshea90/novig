@@ -29,7 +29,7 @@ class SharpRealBoardTest {
     private lateinit var server: MockWebServer
     private val now = Instant.parse("2026-09-27T07:00:00Z").toEpochMilli()
     private val start = Instant.parse("2026-09-27T17:00:00Z").toEpochMilli()
-    private val settings = ScanSettings(sharpConfirmAutoBet = true)
+    private val settings = ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)
     private val rules = SharpConfirm.rules(settings, autoBet = true)!!
 
     @Before fun setUp() {

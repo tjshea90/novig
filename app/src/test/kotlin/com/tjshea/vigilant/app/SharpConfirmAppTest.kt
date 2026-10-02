@@ -115,7 +115,7 @@ class SharpConfirmAppTest {
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) = f(
         ScanSettings(
             autoBet = true, autoScan = AutoScanMode.CNO, autoBetBooks = 3, autoBetMinEv = 0.03, autoBetTwoSided = 2, autoBetStake = AutoBetStake.ONE_DOLLAR, autoBetMaxStake = 10.0,
-            apiMaxPerDay = 50.0, sharpConfirmAutoBet = true,
+            apiMaxPerDay = 50.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM,
         ),
     )
 
@@ -202,7 +202,7 @@ class SharpConfirmAppTest {
     fun `switched off, the check is never asked, and it is asked last so a bet that fails another criterion costs no feed call`() = runBlocking {
         val novig = FakeNovig()
         val asked = ArrayList<Asked>()
-        val off = settings { it.copy(sharpConfirmAutoBet = false) }
+        val off = settings { it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val offReport = bettor(novig, asked) { error("must not be asked") }.run(off, state(off))
         assertEquals(offReport.skipped.toString(), 1, offReport.placed.size)
         assertTrue(asked.isEmpty())
@@ -214,7 +214,7 @@ class SharpConfirmAppTest {
         assertTrue("never asked for a bet that already failed: $asked", asked.isEmpty())
         // The alerts' switch is another switch: it doesn't make the auto-bet ask.
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
-        val alertsOnly = settings { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true) }
+        val alertsOnly = settings { it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF, sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) }
         val alertsReport = bettor(FakeNovig(), asked) { error("must not be asked") }.run(alertsOnly, state(alertsOnly))
         assertEquals(alertsReport.skipped.toString(), 1, alertsReport.placed.size)
     }
@@ -279,7 +279,7 @@ class SharpConfirmAppTest {
 
     @Test
     fun `an alert is sent only if its bet is confirmed, one already sent isn't asked again, and a bet with no verdict or a failed check is dropped`() = runBlocking {
-        val s = settings { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true, alertMinEv = 0.03) }
+        val s = settings { it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF, sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, alertMinEv = 0.03) }
         val st = state(s)
         val items = AlertPicks.cnoChecked(st, s.alertMinEv, now)
         val alerts = AlertPicks.cno(st, s.alertMinEv, now)
@@ -305,7 +305,7 @@ class SharpConfirmAppTest {
 
     @Test
     fun `Settings names the feeds that can confirm, and says plainly when none is on`() {
-        val s = ScanSettings(sharpConfirmAutoBet = true)
+        val s = ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)
         fun keys(vararg on: ApiProvider) = { p: ApiProvider -> if (p in on) 1 else 0 }
         assertEquals(emptyList<String>(), SharpConfirmText.feedsOn(s, keys()))
         assertEquals(listOf("PinnWire / pinnapi", "ParlayAPI"), SharpConfirmText.feedsOn(s, keys(ApiProvider.PINNWIRE, ApiProvider.PARLAY)))
@@ -320,10 +320,10 @@ class SharpConfirmAppTest {
         assertNull(SharpConfirmText.confirmNote(ScanSettings()))
         assertEquals(
             "For the auto-bet and CNO's push alerts: Pinnacle's own price, at most 3 min old, must show any +EV at Novig's price now.",
-            SharpConfirmText.confirmNote(ScanSettings(sharpConfirmAutoBet = true, sharpConfirmAlerts = true)),
+            SharpConfirmText.confirmNote(ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)),
         )
         assertEquals("For the auto-bet: Pinnacle or Circa's own price, at most 1 min old, must show +2% at Novig's price now.",
-            SharpConfirmText.confirmNote(ScanSettings(sharpConfirmAutoBet = true, sharpConfirmBooks = com.tjshea.vigilant.data.scanner.SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 60, sharpConfirmMinEv = 0.02)))
+            SharpConfirmText.confirmNote(ScanSettings(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpConfirmBooks = com.tjshea.vigilant.data.scanner.SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 60, sharpConfirmMinEv = 0.02)))
         assertTrue(SharpConfirmText.viaCnoNote(ScanSettings()).startsWith("Off: only a Pinnacle feed"))
         assertTrue(SharpConfirmText.viaCnoNote(ScanSettings(sharpConfirmViaCno = true)).startsWith("On: Pinnacle's column on CNO's game page can confirm a bet too"))
     }

@@ -21,7 +21,7 @@ class SharpDiagnosticsTest {
     private val extras = Diagnostics.Extras("0.42.0", 77, "Motorola moto g 2026 · Android 16 (API 36)", sharpFeeds = listOf("PinnWire / pinnapi", "ParlayAPI"), sharpCalls = 6, sharpFailures = 1, sharpAnswers = mapOf("PinnWire" to 4))
 
     private fun state(f: (ScanSettings) -> ScanSettings = { it }) =
-        SampleScan.state().copy(settings = f(ScanSettings(autoScan = AutoScanMode.CNO, sharpConfirmAutoBet = true)))
+        SampleScan.state().copy(settings = f(ScanSettings(autoScan = AutoScanMode.CNO, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM)))
 
     private fun checks(s: UiState = state(), x: Diagnostics.Extras = extras) = HealthChecks.of(s, x, now).filter { it.area == "Sharp-book confirmation" }
 
@@ -37,7 +37,7 @@ class SharpDiagnosticsTest {
         val ok = checks().single()
         assertEquals(HealthChecks.Level.OK, ok.level)
         assertTrue(ok.text(), ok.text().contains("on for auto-bet via PinnWire / pinnapi, ParlayAPI (6 feed calls since the app opened)"))
-        val both = checks(state { it.copy(sharpConfirmAlerts = true) }).single()
+        val both = checks(state { it.copy(sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) }).single()
         assertTrue(both.text(), both.text().contains("on for auto-bet and alerts"))
     }
 
@@ -46,7 +46,7 @@ class SharpDiagnosticsTest {
         val none = checks(x = extras.copy(sharpFeeds = emptyList())).single()
         assertEquals(HealthChecks.Level.WARN, none.level)
         assertTrue(none.text(), none.text().contains("no Pinnacle feed is on with a key: nothing can be confirmed, so the auto-bet skips every bet"))
-        val alerts = checks(state { it.copy(sharpConfirmAutoBet = false, sharpConfirmAlerts = true) }, extras.copy(sharpFeeds = emptyList())).single()
+        val alerts = checks(state { it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF, sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) }, extras.copy(sharpFeeds = emptyList())).single()
         assertTrue(alerts.text(), alerts.text().contains("no CNO alert is sent"))
         // CNO's page may confirm: then no feed is not a dead end.
         val viaCno = checks(state { it.copy(sharpConfirmViaCno = true) }, extras.copy(sharpFeeds = emptyList())).single()
@@ -64,7 +64,7 @@ class SharpDiagnosticsTest {
 
     @Test
     fun `the report carries the criteria, the feeds and what they have answered`() {
-        val s = state { it.copy(sharpConfirmAlerts = true, sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 120, sharpConfirmMinEv = 0.01, sharpConfirmViaCno = true) }
+        val s = state { it.copy(sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, sharpConfirmBooks = SharpBookChoice.PINNACLE_CIRCA, sharpConfirmMaxAgeSeconds = 120, sharpConfirmMinEv = 0.01, sharpConfirmViaCno = true) }
         val text = Diagnostics.report(s, extras, now, zone)
         val line = text.lines().single { it.startsWith("Sharp-book confirmation (Tj, 2026-10-02)") }
         assertTrue(line, line.contains("auto-bet ON · alerts ON · Pinnacle or Circa, quote at most 2 min old, edge at least 1.0%, CNO's page may confirm"))

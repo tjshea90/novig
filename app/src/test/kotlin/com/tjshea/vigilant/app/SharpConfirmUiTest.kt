@@ -101,7 +101,7 @@ class SharpConfirmUiTest {
 
     @Test
     fun `the choices change what is saved`() {
-        show({ it.copy(sharpConfirmAutoBet = true) }, keys = listOf("pw-FAKE-0000"))
+        show({ it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) }, keys = listOf("pw-FAKE-0000"))
         compose.onNodeWithText("Pinnacle or Circa").performClick()
         assertEquals(SharpBookChoice.PINNACLE_CIRCA, settings.sharpConfirmBooks)
         for ((label, seconds) in listOf("1 min" to 60, "2 min" to 120, "5 min" to 300)) {
@@ -119,7 +119,7 @@ class SharpConfirmUiTest {
 
     @Test
     fun `with no Pinnacle feed it says nothing can be confirmed, and with one it names it`() {
-        show({ it.copy(sharpConfirmAutoBet = true) })
+        show({ it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) })
         compose.onNodeWithTag("sharpConfirmFeeds").assertExists()
         compose.onNodeWithText("No Pinnacle feed is on with a key", substring = true).assertExists()
         compose.onNodeWithText("the auto-bet skips every bet and no CNO alert is sent", substring = true).assertExists()
@@ -127,7 +127,7 @@ class SharpConfirmUiTest {
 
     @Test
     fun `a saved key makes PinnWire a feed`() {
-        show({ it.copy(sharpConfirmAutoBet = true) }, keys = listOf("pw-FAKE-0000"))
+        show({ it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) }, keys = listOf("pw-FAKE-0000"))
         compose.onNodeWithText("Asked in this order, and the first that has the bet answers: PinnWire / pinnapi.", substring = true).assertExists()
     }
 }
