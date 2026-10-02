@@ -393,7 +393,7 @@ class NovigPublicClientTest {
         assertEquals(before + 1, server.requestCount)
         // ...and, never having tried the key, it still has the reason to give (Tj, 2026-10-02: "the novig scanning was going very slow").
         assertNull(next.keyProblem)
-        assertTrue(c.keyDown(System.currentTimeMillis())!!.contains("VPN"))
+        assertTrue(c.keyDown(now)!!.contains("VPN"))
     }
 
     @Test
@@ -404,8 +404,8 @@ class NovigPublicClientTest {
                 if (request.requestUrl!!.encodedPath.startsWith("/v3/public/")) bookFor(request)
                 else MockResponse().setResponseCode(423).setBody("""{"code":"ACCOUNT_LOCKED","message":"locked"}""")
         }
-        var now = 1_000_000L
-        val c = keyed(client(clock = { now }))
+        now = 1_000_000L
+        val c = keyed(client())
         assertNull(c.keyDown(now))
         c.books(listOf("m1"))
         val why = c.keyDown(now)!!
