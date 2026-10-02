@@ -347,8 +347,11 @@ robolectric.org/configuring/.
   Check odds now holds a focus (`FocusGate`, in memory, 15 minutes at most): the background cycle (so auto-bet), CNO's refresh, scans, the widget's rescans and
   the movers wait until it ends, and it looks for every closing line (`CloseBackfill.run(force = true)`).
   Every bet is tracked exactly like a Bet-sheet bet (`TrackedBet.auto` marks it). Loosening any of this needs Tj's word.
-  **Nothing runs by itself after a reopen (Tj, 2026-10-02; v0.42.0, RESEARCH.md §60.1):** each fresh launch of the app (no saved state) saves `autoBet = false` and `autoScan = OFF`
-  (`LaunchReset`, first thing in `MainActivity.onCreate`); Tj switches them on in Settings when he wants them. Never remove it without his word.
+  **Only a phone restart switches auto-bet off (Tj, 2026-10-02 16:05Z: "I want the app never to turn off auto bet unless I turn it off. The default is auto bet off but
+  only when opening the app after a restart or after I already turned off auto bet manually"; v0.44.3, RESEARCH.md §64.1):** `LaunchGate` keeps Android's boot count; the first
+  look after a new boot (the boot receiver, else the first screen) saves `autoBet = false` and `autoScan = OFF` (`LaunchReset`) and the next screen says so. Nothing else turns
+  them off: not a swipe out of Recents, a force stop, an update, a crash, Android ending the process, or a return from another app. Never add another reset without his word.
+  (The v0.42.0 rule, "off at every reopen", and v0.44.2's "off after a close", are both replaced.)
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.

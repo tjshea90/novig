@@ -3558,3 +3558,50 @@ informed, and in the NFL it is not.
 - **Other free odds APIs:** SportsGameOdds' free tier updates every **10 minutes** with 9 US books and no Pinnacle (fails the freshness rule);
   MoneyLine free = 1,000 requests a month (~33 a day); OddsPapi free = 250 a month, per game. None beats Pinnacle (PinnWire/pinnapi), Kalshi,
   Polymarket, PropLine and ParlayAPI, all already in the scan.
+
+## 64. Auto-bet off only after a phone restart, BetMGM (ON) on CNO's sheet, and the sharp check's volume (v0.44.3, 2026-10-02; Tj: "I had auto bet running in the notifications in the background and when I opened vigilant it again turned off auto bet. I want the app never to turn off auto bet unless I turn it off. The default is auto bet off but only when opening the app after a restart or after I already turned off auto bet manually. / Review the screenshot, notice betmgm and betmgm (on). Is the app still double counting these? / And I'm getting no volume so far on auto bet with the option for each bet to be verified positive EV by a sharp book. Is this working correctly? Is it getting sharp book pricing?")
+
+### 64.1 Why auto-bet went off, and the new rule
+
+v0.44.2's `LaunchGate` called a screen "fresh" (and switched auto-bet and background auto-scan off) after a swipe out of Recents seen by a service's
+`onTaskRemoved`, and on a new process whose last exit Android recorded as Tj's (force stop, swipe), an update, a crash or a reboot. Auto-bet running in the
+notification with Vigilant swiped away is exactly the first case; installing a new version over a running auto-bet is the second (an update). No
+Diagnostics file came with the report, so which one fired isn't known; the event log says it from v0.44.3 on ("screen opened (first since the phone
+restarted)" vs "(auto-bet and auto-scan kept as they were)").
+
+New rule (`LaunchGate`, `LaunchReset`): the only automatic off is the first look after the phone restarted. The gate saves Android's
+`Settings.Global.BOOT_COUNT` (and the boot's wall-clock start, used only where a phone gives no count, with a 10-minute slack for clock changes) in
+`SharedPreferences("launch")`. The boot receiver (`AutoScanReceiver.afterBootOrUpdate`) handles a new boot before anything can bet: it saves the reset, keeps
+the note for the next screen, then marks the boot handled (a process that dies in between does it again); the first screen checks too, for a boot the
+receiver never heard (Android delivers nothing to a force-stopped app). The very first look (a new install, or the update to v0.44.3) is not a restart, so
+installing this version keeps what was on. Background auto-scan follows auto-bet: auto-bet only bets from its CNO cycles (`ScanSettings.autoBetsNow`).
+What still stops auto-bet without switching it off: the in-flight halt (an order whose answer was lost; Resume in Settings), Tj's daily limit, the empty
+wallet, Novig refusing orders (the 423 lock, retried), and Pause. Tests: `LaunchGateTest` (3), `LaunchResetTest` (7), 4 mutants killed.
+
+### 64.2 BetMGM and BetMGM (ON): counted once since v0.44.2
+
+The numbers in Tj's screenshot prove it: two-sided books ProphetX 48.1%, Kalshi 48.4%, BetMGM 50.0%, BetMGM (ON) 50.0%, BetRivers 49.4%. One vote a
+company: four books, mean 48.98%, median 48.9%, lower 48.9% = +104, "4 of 4 books agree" (the sheet's). Counted twice it would be five books, mean
+49.18%, median 49.4%, fair +103 and "5 of 5". The table still listed both rows with their own 50.0%, which read like two votes: now the first site of a
+company shows the company's fair (its sites' average, the number the check uses) and the others "same co.", and the footnote names them ("One company's
+sites count once, at their average: BetMGM and BetMGM (ON)."). `BookTableText`, `SisterRowsTest` (the screenshot's sheet), 2 mutants killed.
+
+### 64.3 The sharp check: working, and why it places so little
+
+Checked end to end with a real PinnWire answer (`pinnwire-football.json`, NFL with `include_specials`) through `PinnapiClient` → `SharpBooks.quotes` →
+`SharpConfirm.judge`, for the bets as CNO names them: Chase Brown Under 21.5 receiving yards (PN −112/−112, confirmed at +110), Chase Brown Over 3.5
+receptions (PN +106/−134: −4.4% at +110, not confirmed), Aaron Rodgers Over 220.5 passing yards (confirmed), the moneyline and a total: each found
+Pinnacle's two sides at the exact line, dated by the board's read (0 s old), devigged worst case. CNO's market names map to the same stats as
+Pinnacle's props for football (passing/rushing/receiving yards, receptions, passing TDs, anytime TD), baseball (strikeouts, total bases, home runs) and
+basketball (points, rebounds, assists, threes). ParlayAPI's `/props` `age_seconds` is the age of the book's latest observation (its docs), so a quiet
+Pinnacle line isn't wrongly "too old". So it gets Pinnacle's prices when a feed has the bet.
+
+Why the volume is near zero: (1) Pinnacle prices far fewer props than CNO's ~20 books, only main lines, and the check needs the exact line: Tj's own
+screenshot (Juwan Johnson Under 39.5) has no Pinnacle column on CNO's page at all; Pinnacle's hockey props aren't read from PinnWire (no stat map: ParlayAPI
+and PropLine can still answer). (2) Where Pinnacle has it, its own devig (worst case) is a harder test than CNO's consensus, and it vetoes (§60.4 said:
+"Expect far fewer bets, especially props"). (3) Novig's 423 lock on his key (§63/NOVIG_API.md) stops every order whatever the check says, if still on.
+Which of these it is on his phone is now on screen: Settings › Betting, under the auto-bet status, "Sharp check since Vigilant started: N bets asked
+about, X confirmed, Y with no Pinnacle price for that exact line, Z that Pinnacle's own price doesn't show +EV (enough), …" (each bet's latest verdict;
+`AutoBettor.sharpLine`, `SharpConfirmAppTest`, 2 mutants killed). The Diagnostics file has the same as counters (`sharp.autobet.*`) and the feed calls.
+Ways to more volume, Tj's call (not built): "Pinnacle or Circa" (already a choice), "Also take Pinnacle's price from CNO's page" (already a switch), a lower
+minimum edge for the check, or not requiring the check for game lines vs props.
