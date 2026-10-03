@@ -385,4 +385,34 @@ class ScanStudyWideTest {
         assertTrue(lean.values.all { it.sights.isEmpty() })
         assertEquals(full.values.map { it.bet }, lean.values.map { it.bet })
     }
+
+    @Test
+    fun `a two-hour evening of 800-row wide reads every 30 seconds, every price flickering, stays small and quick`() = runBlocking {
+        val j = journal()
+        val s = ScanStudy(j, clock = { now }, version = { "0.58.0" }, flushEveryMs = 10_000, io = Dispatchers.Unconfined)
+        val cols = mapOf(
+            "LW-WC EV%" to "3.12%", "Calc" to "", "Extra" to "", "Date" to "...", "Sport" to "Baseball", "League" to "MLB", "Event" to event, "Market" to "Player Total Bases",
+            "Bet Name" to "Player 1 Over 1.5", "Odds" to "+120 (\$40)", "Sportsbook" to "Novig", "Fair Odds" to "+104", "Books" to "5", "@data-fairpercentage" to "0.4901",
+        )
+        val began = System.nanoTime()
+        var read = 0
+        repeat(240) { scan ->
+            now += 30_000
+            val rows = (1..800).map { i ->
+                // Every price moves by a point or two at every read; a few hundred are hidden by the filters (few books, long odds).
+                row("Player Total Bases", "Player $i Over 1.5", 100 + (scan * 7 + i * 13) % 40 + if (i % 3 == 0) 200 else 0, fair = 0.52, books = 1 + i % 6, side = i, cols = cols)
+            }
+            read += rows.size
+            s.wide(wideSnap(*rows.toTypedArray(), url = "https://cno/view"), null)
+        }
+        s.flush()
+        val tookMs = (System.nanoTime() - began) / 1_000_000
+        val bets = j.fold(day).values
+        assertEquals(800, bets.size)
+        assertEquals("columns once per bet", 800, j.read(day).count { it.e == Line.CNO_COLS })
+        assertTrue("${bets.maxOf { it.sights.size }} looks for one bet", bets.all { it.sights.size <= 125 })
+        System.err.println("WIDE EVENING: ${j.bytes() / 1024} KB for $read row reads, ${bets.sumOf { it.sights.size }} looks, $tookMs ms")
+        assertTrue("${j.bytes()} bytes", j.bytes() < 16_000_000)
+        assertTrue("$tookMs ms for 240 wide reads", tookMs < 20_000)
+    }
 }
