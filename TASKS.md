@@ -3545,6 +3545,10 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   median; ~1,500+ candidate bids waiting on the $8.32 wallet / 20-bid cap; wallet unchanged with $8-12 resting (Novig doesn't hold resting bids;
   resting exceeded the wallet: $12.54 > $8.32); /v3/portfolio/fills 429s (a fills read per ended bid); GC 64% of a core during scans.
   Workflow wf_3002be9a-7af (5 analysts + skeptics) running for root causes and fixes.
+  Resumed 2026-10-03 ~07:20Z (new session, branch ccr-48b3c757-u0bxg1): that workflow's findings were never written to disk (the session
+  was cut off at 07:13Z) and the old session is on another account, so they are lost; the v0.53.0 file itself is not in this container either.
+  Work from the evidence above: (a) churn: re-posting an expiring bid from the same aging fair; (b) fills read per ended bid → 429s; (c) resting
+  dollars over the wallet; (d) the bids that lead their side (or can) first when the wallet/cap binds; (e) GC during scans.
 - [ ] BJ2 Fix what's broken and improve the fill chance only where still +EV (never under the margin rules; never loosen a safety limit); tests with mutants.
 - [ ] BJ3 Work the file's other findings (FAILURE/OPTIMIZE first) where the evidence supports a change; check v0.53.0's own changes (ThreadCpu split, scan lag, 429s, key retry, WTA matching, cycles not blocking).
 - [ ] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
