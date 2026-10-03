@@ -359,7 +359,7 @@ class AutoScanService : Service() {
             // The scan that just ended is logged for the study and written to the disk before the wake lock goes (the study's watcher may not get the CPU after it).
             runCatching {
                 kotlinx.coroutines.withContext(Dispatchers.Default + kotlinx.coroutines.NonCancellable) {
-                    kotlinx.coroutines.withTimeoutOrNull(AutoScanner.STUDY_SYNC_MS) { container.studySync.catchUp(0L) }
+                    kotlinx.coroutines.withTimeoutOrNull(AutoScanner.STUDY_SYNC_MS) { container.studySync.catchUp(Long.MAX_VALUE) }
                 }
             }
             if (cycleJob?.isActive != true) releaseWakeLock()
