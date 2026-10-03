@@ -31,11 +31,12 @@ import novig_size_study as s  # noqa: E402
 from novig_strategy_study import kind  # noqa: E402
 
 rng = np.random.default_rng(70)
-MARGINS = [0.5, 1.0, 1.5, 2.0, 3.0, 5.0]           # cents below the fair
-POST_H = [0.5, 1, 2, 3, 6, 12, 24, 48]              # hours before the close the bid is posted
+MARGINS = [1.0, 2.0, 3.0, 4.0, 6.0, 8.0]           # EV% at the fair: the bid is fair / (1 + margin), on the grid
+POST_H = [0.5, 1, 3, 6, 12, 24, 48]              # hours before the close the bid is posted
 TTL_H = [0.25, 1, 3, 6, 1e9]                        # hours it rests (1e9 = until the close)
 REQUOTE_MIN = 10                                    # minutes between re-quotes in the re-quoting test
 K_FAIR = 7                                          # trades in the stand-in fair
+WS = (0.0, 0.25, 0.5)                               # how far the fair leads Novig toward its close
 
 
 def snap_down(p):
@@ -97,10 +98,10 @@ def simulate(d, close_a, a_won):
                 offer = tp[:j][sel][-1] if sel.any() else np.nan
                 i0 = np.searchsorted(mt[x], t0)
                 ft, fp = mt[x][i0:], mp[x][i0:]
-                for w in (0.0, 0.5):
+                for w in WS:
                     fairA = nowA + w * (closeA - nowA)
                     fair = fairA if x else 1 - fairA
-                    bids = snap_down(fair - np.array(MARGINS) / 100)
+                    bids = snap_down(fair / (1 + np.array(MARGINS) / 100))
                     for m, b in zip(MARGINS, bids):
                         if b < 0.02 or b > 0.98:
                             continue
