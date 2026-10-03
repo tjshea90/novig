@@ -127,6 +127,7 @@ class MakerDesk(
     private val lock: Mutex = Mutex(),
     private val clock: () -> Long = System::currentTimeMillis,
     private val dayStart: (Long) -> Long = { ApiBetPlacer.localMidnight(it) },
+    private val pause: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
 ) {
     /** What a cycle did. [fills]: Tracker bets that are new or grew this cycle. */
     data class Report(
@@ -281,8 +282,23 @@ class MakerDesk(
         }
     }
 
-    /** True: cancelled. False: it had filled (all or part) first. Null: Novig refused or didn't answer ([problems] says why). */
-    private suspend fun cancelOne(orderId: String, why: String, problems: MutableList<String>): Boolean? {
+    /** What came of a cancel. */
+    private enum class Cancel {
+        /** Novig says it left the book with nothing new filled: its side can be bid again. */
+        GONE,
+        /** Cancel queued, not yet confirmed (watched as [MakerStatus.CANCELING] until it is). */
+        PENDING,
+        /** It filled (all or part) before the cancel: a bet now, recorded. */
+        FILLED,
+        /** Novig refused the cancel or didn't answer ([problems] says why); the bid stays as it was. */
+        FAILED,
+    }
+
+    /**
+     * Cancels [orderId] and waits a moment for Novig to confirm it left the book (a `200` only says the cancel was queued, and a fill can land before
+     * it's applied): every fill is recorded, and only a confirmed cancel with nothing new filled frees the side for a new bid.
+     */
+    private suspend fun cancelOne(orderId: String, why: String, problems: MutableList<String>): Cancel {
         val bid = store.all().firstOrNull { it.orderId == orderId }
         val status = try {
             trading.cancelOrder(orderId)
@@ -290,22 +306,32 @@ class MakerDesk(
             throw e
         } catch (e: Exception) {
             problems += "Cancel: ${(e as? NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}"
-            return null
+            return Cancel.FAILED
         }
-        // What it holds now: a fill between the last look and the cancel is a bet, and it's recorded now.
-        val order = readOrder(orderId)
+        store.update { list -> list.map { if (it.orderId == orderId && it.resting) it.copy(status = MakerStatus.CANCELING, why = why) else it } }
+        // Novig's record of it, until it says the order ended (or a few looks, then the next pass finishes the job).
+        var order = readOrder(orderId)
+        var looks = 1
+        while (order != null && !order.terminal && looks < CANCEL_LOOKS) {
+            pause(CANCEL_LOOK_MS)
+            order = readOrder(orderId)
+            looks++
+        }
         val filledNow = order?.let { it.qty - it.remaining } ?: bid?.filled ?: 0L
-        if (bid != null && filledNow > bid.filled) recordFills(bid, order)
+        val filled = bid != null && filledNow > bid.filled
+        if (filled) recordFills(bid!!, order)
+        val ended = order?.terminal == true || status == null || status == "FILLED" || status == "CANCELED" || status == "REJECTED"
+        if (!ended) return if (filled) Cancel.FILLED else Cancel.PENDING
         val now = clock()
-        val gone = status == null || status == "FILLED" || status == "CANCELED" || status == "REJECTED"
+        val fullyFilled = order?.status == "FILLED" || status == "FILLED"
         store.update { list ->
             list.map {
                 if (it.orderId != orderId || it.status.ended) it
-                else if (status == "FILLED") it.copy(status = MakerStatus.FILLED, endedAtMs = now)
-                else it.copy(status = MakerStatus.CANCELED, endedAtMs = now, why = if (gone && status != "CANCELED") "$why (Novig had already ended it)" else why)
+                else if (fullyFilled) it.copy(status = MakerStatus.FILLED, endedAtMs = now)
+                else it.copy(status = MakerStatus.CANCELED, endedAtMs = now, why = why)
             }
         }
-        return if (status == "FILLED" || (bid != null && filledNow > bid.filled)) false else true
+        return if (filled || fullyFilled) Cancel.FILLED else Cancel.GONE
     }
 
     /** What Novig says happened to every active bid since the last look; fills go to the Tracker. Returns the bets new or grown. */
@@ -331,47 +357,40 @@ class MakerDesk(
         for (bid in active) {
             val order = bid.orderId?.let { openById[it] } ?: openByClient[bid.clientId]
             if (order != null) {
-                // Still resting (a lost answer's order found by its clientId gets its id).
+                // Still on the book (a lost answer's order found by its clientId gets its id; a cancel not applied yet stays CANCELING).
                 if (bid.orderId == null) store.update { l -> l.map { if (it.clientId == bid.clientId) it.copy(orderId = order.orderId, status = MakerStatus.RESTING) else it } }
                 val withId = bid.copy(orderId = order.orderId)
                 if (order.qty - order.remaining > bid.filled) recordFills(withId, order)?.let { grown += it }
                 continue
             }
             if (bid.orderId == null) {
-                // A lost answer and no resting order with its clientId: give it a minute (Novig's lists lag), then it's gone.
-                if (now - bid.postedAtMs > LOST_AFTER_MS) store.update { l -> l.map { if (it.clientId == bid.clientId) it.copy(status = MakerStatus.LOST, endedAtMs = now, why = "Novig's lists don't show it") else it } }
+                // A lost answer and no resting order with its clientId: it may have filled or ended already, so Novig's other lists are asked.
+                if (now - bid.postedAtMs < LOST_AFTER_MS) continue
+                val found = findByClientId(bid)
+                if (found == null) {
+                    store.update { l -> l.map { if (it.clientId == bid.clientId) it.copy(status = MakerStatus.LOST, endedAtMs = now, why = "Novig's lists don't show it") else it } }
+                    continue
+                }
+                store.update { l -> l.map { if (it.clientId == bid.clientId) it.copy(orderId = found.orderId) else it } }
+                finish(bid.copy(orderId = found.orderId), found, now)?.let { grown += it }
                 continue
             }
             // Not in the open list: filled, expired, voided or cancelled, or so new it's still queued. Its own record says which.
             val ended = readOrder(bid.orderId)
             // Novig's reads can lag a just-placed order (404, or PENDING): asked again next time.
             if (ended == null && now - bid.postedAtMs < LOST_AFTER_MS) continue
-            if (ended != null && (ended.status == "PENDING" || (ended.status == "OPEN" && ended.remaining > 0))) {
+            if (ended != null && !ended.terminal) {
                 if (ended.qty - ended.remaining > bid.filled) recordFills(bid, ended)?.let { grown += it }
                 continue
             }
-            val filledNow = ended?.let { it.qty - it.remaining } ?: bid.filled
-            if (filledNow > bid.filled || ended?.status == "FILLED") recordFills(bid, ended)?.let { grown += it }
-            val status = when {
-                ended?.status == "FILLED" || (ended != null && ended.remaining <= 0 && filledNow > 0) -> MakerStatus.FILLED
-                ended?.status == "REJECTED" -> MakerStatus.REFUSED
-                now >= bid.startsTs -> MakerStatus.VOIDED
-                bid.expiresAtMs != null && now >= bid.expiresAtMs - 1_000 -> MakerStatus.EXPIRED
-                else -> MakerStatus.CANCELED
-            }
-            val why = when (status) {
-                MakerStatus.REFUSED -> "Novig refused it (a post-only bid that would have taken)"
-                MakerStatus.VOIDED -> "The game started: Novig cancels resting bids"
-                MakerStatus.EXPIRED -> null
-                MakerStatus.CANCELED -> "Novig cancelled it"
-                else -> null
-            }
-            store.update { l -> l.map { if (it.orderId == bid.orderId && it.active) it.copy(status = status, endedAtMs = now, why = why ?: it.why) else it } }
+            finish(bid, ended, now)?.let { grown += it }
         }
         // A post-only order resting on Novig that Vigilant has no record of (a lost list) is nobody's to watch: it comes down.
-        val known = store.all().mapNotNullTo(HashSet()) { it.orderId }
+        val known = store.all()
+        val knownIds = known.mapNotNullTo(HashSet()) { it.orderId }
+        val knownClients = known.mapTo(HashSet()) { it.clientId }
         for (o in open) {
-            if (o.tif == "PO" && o.orderId !in known && o.clientId !in bids.map { it.clientId }) {
+            if (o.tif == "PO" && o.orderId !in knownIds && o.clientId !in knownClients) {
                 try {
                     trading.cancelOrder(o.orderId)
                 } catch (e: CancellationException) {
@@ -382,6 +401,44 @@ class MakerDesk(
             }
         }
         return grown
+    }
+
+    /** [bid]'s order has ended ([order]: Novig's record, null when it can't be read): every fill recorded, then why it ended. */
+    private suspend fun finish(bid: MakerBid, order: NovigOrder?, now: Long): TrackedBet? {
+        // Fills are read whatever the record says (or when there's none): a fill must never go unrecorded.
+        val bet = recordFills(bid, order)
+        val filledNow = order?.let { it.qty - it.remaining } ?: (bet?.contracts ?: bid.filled)
+        val status = when {
+            order?.status == "FILLED" || (order != null && order.remaining <= 0 && filledNow > 0) || (bet?.contracts ?: 0L) >= bid.contracts -> MakerStatus.FILLED
+            order?.status == "REJECTED" -> MakerStatus.REFUSED
+            bid.status == MakerStatus.CANCELING -> MakerStatus.CANCELED
+            now >= bid.startsTs -> MakerStatus.VOIDED
+            bid.expiresAtMs != null && now >= bid.expiresAtMs - 1_000 -> MakerStatus.EXPIRED
+            else -> MakerStatus.CANCELED
+        }
+        val why = when (status) {
+            MakerStatus.REFUSED -> "Novig refused it (a post-only bid that would have taken)"
+            MakerStatus.VOIDED -> "The game started: Novig cancels resting bids"
+            MakerStatus.CANCELED -> if (bid.status == MakerStatus.CANCELING) null else "Novig cancelled it"
+            else -> null
+        }
+        store.update { l -> l.map { if (it.clientId == bid.clientId && it.active) it.copy(status = status, endedAtMs = now, why = why ?: it.why) else it } }
+        return bet
+    }
+
+    /** The order a lost answer placed, looked for by its clientId in every status Novig lists (on its outcome only); null when none has it. */
+    private suspend fun findByClientId(bid: MakerBid): NovigOrder? {
+        for (status in listOf("FILLED", "CANCELED", "REJECTED", "PENDING")) {
+            val hit = try {
+                trading.orders(status, outcomeId = bid.outcomeId).firstOrNull { it.clientId == bid.clientId }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            if (hit != null) return hit
+        }
+        return null
     }
 
     /** Reads [bid]'s fills and logs them to the Tracker; keeps the bid's filled count. */
@@ -424,7 +481,17 @@ class MakerDesk(
     private fun money(v: Double) = String.format(java.util.Locale.US, "$%,.2f", v)
 
     companion object {
-        /** A bid whose answer was lost and that no list shows after this long is called gone. */
+        /** A bid whose answer was lost and that no list shows after this long is looked for in Novig's other lists, then called gone. */
         const val LOST_AFTER_MS = 90_000L
+
+        /** No bid is sent to rest for less than this (its window closed while the pass worked). */
+        const val MIN_TTL_MS = 60_000L
+
+        /** A side Novig refused a post-only bid on isn't bid on again for this long (the scan's price there was out of date). */
+        const val REFUSED_COOLOFF_MS = 5 * 60_000L
+
+        /** After a cancel, Novig's record is read up to this many times, this far apart, for its confirmation. */
+        const val CANCEL_LOOKS = 4
+        const val CANCEL_LOOK_MS = 400L
     }
 }
