@@ -56,7 +56,10 @@ class CnoWideTest {
 
     @Test
     fun `the wide read posts CNO's numeric filters opened right up, with Tj's devig and the view's scope`() = runBlocking {
-        server.enqueue(page("wide1"))
+        // A view whose link ticked "Require a Complete Sportsbook".
+        val ticked = CnoFixtures.page().replace("id=\"complete\" type=\"checkbox\"", "id=\"complete\" type=\"checkbox\" checked=\"checked\"")
+        assertTrue(ticked.contains("checked=\"checked\" name=\"") || ticked.contains("id=\"complete\" type=\"checkbox\" checked=\"checked\""))
+        server.enqueue(MockResponse().setBody(ticked).addHeader("Set-Cookie", "ASP.NET_SessionId=wide1; path=/; HttpOnly"))
         server.enqueue(reply("wide+two=="))
         val snap = client.fetchWide(url, tj, 1000)!!
 
