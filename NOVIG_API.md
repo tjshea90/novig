@@ -623,7 +623,15 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   `DELETE /v3/orders/batch` (207 lists the ones already `FILLED` / `NOT_FOUND`). `cancel` bucket 256 burst / 16 a second. A `200` is queued: the
   `cancel` event confirms. No route cancels by `clientId`.
 - **Fees:** the maker never pays. Pregame game markets charge the taker nothing either (`WHEN_LIVE`, §8). The Maker Credit (50% of the taker's fee)
-  is paid only on fills **in play**, so pregame bids earn none. **NFL and NCAAF futures:** taker fee 0.06·P(1−P) on every fill and a **70% maker credit
+  is paid only on fills **in play**, so pregame bids earn none. **Re-checked 2026-10-03 ~18:15Z (Tj: "Reconsider whether novig pays maker credit
+  pregame"):** the Maker Credit Program terms §2 ("Trading fees assessed at any other time — including before the event begins — are not Live Trading
+  fees and do not generate Maker Credits"), the Trading Fees page ("A fill matched at any other time is not charged, on either side, and generates no
+  Maker Credit"), and the live catalog (every NFL/NCAAF/MLB game market read: moneylines, spreads, totals, props, 1st halves, team totals carry
+  `{coefficient 0.03, makerCredit 0.5, charged WHEN_LIVE}`; `makerCredit` is a share of a taker fee that is zero pregame). And `GOLIVE` voids every
+  resting order, so a pregame bid can't become a live fill (the fees page's example of "a resting order placed hours before kickoff that fills in the
+  second quarter" contradicts the void and can't happen). Eligible: every member except Exchange affiliates and members with a Market Maker
+  Agreement; nothing in the terms excludes API or "bot" orders (a third-party report's claim, RESEARCH.md §73). MLB futures (awards) also carry
+  `{0.06, 0.7, ALWAYS}` in the catalog, but the Program's Notice designates only NFL and NCAAF futures; Vigilant trades no futures (BRIEF.md). **NFL and NCAAF futures:** taker fee 0.06·P(1−P) on every fill and a **70% maker credit
   on every fill** (0.042·P(1−P) a contract: ~2% of the cost at even money), paid within 7 days. Members with a Market Maker Agreement are excluded.
 - **Money:** a bid the wallet can't cover is refused (`422 INSUFFICIENT_BALANCE`). **Verified 2026-10-03 (Tj's v0.53.0 Diagnostics, RESEARCH.md §70.9): a
   resting bid's cost is NOT held from the balance** ("wallet $8.32 → $8.32 with $12.54 resting": bids worth more than the wallet rested and the balance

@@ -3646,5 +3646,9 @@ Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book p
 
 ## Tj, 2026-10-03 ~18:10Z: "Reconsider whether novig pays maker credit pregame"
 
-- [ ] BN1 Re-read Novig's own docs (Fees, Maker Credit Program, market `fee` objects) and any first-party Novig pages; check the live API's `fee` objects and a fill/ledger shape for a credit; settle: does a pregame maker fill earn anything, how much, and who qualifies (API/bot orders?).
-- [ ] BN2 Correct NOVIG_API.md §8/§17, RESEARCH.md (§70, §72.3, §73 #9/#14) and the maker math (EV of a bid, Bids tab text) if the answer changes anything; tests if code changes; answer Tj.
+- [x] BN1 Re-read Novig's own docs (Fees, Maker Credit Program, market `fee` objects) and any first-party Novig pages; check the live API's `fee` objects and a fill/ledger shape for a credit; settle: does a pregame maker fill earn anything, how much, and who qualifies (API/bot orders?).
+- [x] BN2 Correct NOVIG_API.md §8/§17, RESEARCH.md (§70, §72.3, §73 #9/#14) and the maker math (EV of a bid, Bids tab text) if the answer changes anything; tests if code changes; answer Tj.
+  Done (BN1-BN2): no pregame maker credit on any game market (Program terms §2, fees page, live catalog: every NFL/NCAAF/MLB game market WHEN_LIVE,
+  GOLIVE voids resting orders); only NFL/NCAAF futures earn a credit on every fill (70% of 0.06·P(1−P)). Vigilant's maker math (no credit) already
+  right: no code change. NOVIG_API.md §17 and RESEARCH.md §73 (row 9 + addendum) updated; the report's "bot orders don't qualify" isn't in the terms.
+

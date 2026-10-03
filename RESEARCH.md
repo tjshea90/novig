@@ -4417,7 +4417,7 @@ sharp-wallet watch.
 | 6 | Steam/RLM following loses | Accurate | Pinnacle article; §72.4 | Not built (§72) |
 | 7 | The trap is adverse selection on resting quotes | Accurate | §71, §72.2-§72.3 | Trap guard, sharp veto bar, game-line bid move rule |
 | 8 | Closers beat openers (NFL 65.9% vs 63.5%) | Consistent | §71.2 Tj's bets, §72.2 B | 6 h trap guard |
-| 9 | Novig: CFTC market since 2026-08-04; pregame no fee; live taker 0.03·P(1−P); maker credit half the fee | Fees accurate (credit only in play) | NOVIG_API.md §8, §17; `Fees.kt` | Already modeled |
+| 9 | Novig: CFTC market since 2026-08-04; pregame no fee; live taker 0.03·P(1−P); maker credit half the fee; "bot orders don't qualify" | Fees accurate; the credit is **in-play only** (re-checked 2026-10-03 ~18:15Z: Program terms §2, the fees page, the live catalog's `WHEN_LIVE` on every game market, and `GOLIVE` voiding resting orders); "bot orders" exclusion **not in the terms** (only Exchange affiliates and Market Maker Agreement members are excluded) | NOVIG_API.md §8, §17; `Fees.kt` | Already modeled: a pregame bid earns its price edge only, no credit |
 | 10 | Tailing sharps has no support | Mostly accurate | §72.4: leaderboard copy 0.00¢; but the best quarter by past CLV copied 1 min later kept +1.0¢ on Polymarket | Wallet watch proposed (§72.4) |
 | 11 | "Bet favorites early, underdogs late" (MLB lines drift −3.4¢ to favorites in the last 2 h; +180 dogs move toward the favorite 54%) | **False on Novig** | `novig_drift_study.py` (9,127 markets): game-line favorites drift **−0.08¢** [−0.13, −0.03] in the last 2 h (MLB −0.03¢ [−0.10, +0.03]); +180 dogs moved toward the favorite **33%**, away 49%; Pinnacle soccer early→close: favorites +0.03 to +0.23 points, dogs 50/50 | No timing rule by favorite/underdog |
 | 12 | "Final two hours move less than one tick" on prediction markets | **Partly** | Novig game lines: median move from 2 h to the close is one step (0.5¢); only 32% move less than a step (props 28%) | Late bets still see moves; nothing to change |
@@ -4432,3 +4432,19 @@ sharp-wallet watch.
 
 Re-run: `python3 tools/research/novig_drift_study.py --cache DIR` (~3 min once cached), `sharp_anchor_study.py --dir DIR` (section F),
 `tj_bets_by_lead.py <diagnostics file>` (new splits: shown edge, Novig over the best book).
+
+**§73 addendum: does Novig pay a maker credit pregame? (2026-10-03 ~18:15Z; Tj: "Reconsider whether novig pays maker credit pregame")** No, for every market
+Vigilant trades. Four independent checks: (1) the Maker Credit Program terms §2: "Trading fees assessed at any other time — including before the event
+begins — are not Live Trading fees and do not generate Maker Credits"; a qualifying trade is one "matched (filled) while the underlying event is in
+progress (in-game)"; (2) the Trading Fees page: a straight-contract fill "matched at any other time is not charged, on either side, and generates no
+Maker Credit"; (3) Novig's live catalog, read now: every NFL, NCAAF and MLB game market (moneylines, spreads, totals, player props, 1st halves, team
+totals) carries `fee {coefficient 0.03, makerCredit 0.5, charged WHEN_LIVE}`: the credit is half of a taker fee that is zero pregame; (4) `GOLIVE`
+voids every resting order (event-lifecycle and fees pages), so a bid posted pregame can never be filled in-game. The only markets with a credit
+outside live play are futures: NFL and NCAAF futures by the Program's Notice (taker 0.06·P(1−P) on every fill, maker credit 70% of it = 0.042·P(1−P)
+a contract, ~2.1% of the cost at even money, paid within 7 days), and MLB awards futures carry `{0.06, 0.7, ALWAYS}` in the catalog though the Notice
+names only NFL and NCAAF. Vigilant trades no futures (BRIEF.md: left out of the app). So Vigilant's maker math is right as built: a pregame bid earns its
+price edge under the fair and nothing else (`MakerQuote.stake`, EV = fair ÷ price − 1, no fee, no credit). Two places a credit could be earned, neither
+built and neither recommended without research: in-game bids (0.015·P(1−P) a contract, ~0.75% of the cost at even money, against in-game adverse
+selection from faster feeds) and NFL/NCAAF futures bids (needs a futures fair Vigilant doesn't read; book futures carry 15-30% hold; money tied up
+for a season).
+
