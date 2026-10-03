@@ -35,6 +35,11 @@ interface CnoSource {
 
     /** The Novig app link for [row]'s game (`novigapp://events/<id>/cno`), from CNO's deeplink. */
     suspend fun novigLink(row: CnoRow): String? = null
+
+    companion object {
+        /** Rows the scan study's wide read asks for first ([CnoFeed.WIDE_ROW_STEPS] steps down if CNO won't send that many). */
+        const val WIDE_ROWS = 1000
+    }
 }
 
 /**
@@ -348,9 +353,6 @@ class CnoClient(
 
         /** The least time between two requests of a bulk read ([booksBulk]): two a second at most. */
         const val BULK_GAP_MS = 500L
-
-        /** Rows the scan study's wide read asks for first ([CnoFeed.WIDE_ROW_STEPS] steps down if CNO won't send that many). */
-        const val WIDE_ROWS = 1000
 
         /** A field of the form that is one of the filters (as opposed to ASP.NET's own state). */
         private val CONTROL = Regex("(TextBox|DropDownList|CheckBox)[A-Za-z]*$")
