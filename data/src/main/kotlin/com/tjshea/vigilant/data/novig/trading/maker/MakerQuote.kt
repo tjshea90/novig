@@ -55,6 +55,13 @@ data class MakerRules(
      * takers' dollars trade in the last 6 h anyway, so the wallet goes where the fills are.
      */
     val earlyHours: Int = 0,
+    /**
+     * The trap guard's second rule for game-line bids ([com.tjshea.vigilant.data.scanner.TrapGuard.move], [ScanSettings.trapNovigMove]): a line whose
+     * Novig price just fell 2¢+ under where it traded this hour, with $100+ bought on the other side in 15 min, gets no bid (one resting there comes
+     * down). RESEARCH.md §72: re-quoted game-line bids on a side whose price fell 2¢+ over the hour kept +1.2% at the close per fill against +6-7% on
+     * steady lines (fair leading Novig by a quarter of the move); the same flow on props and 1st-half lines didn't hurt bids, so they aren't checked.
+     */
+    val novigMove: Boolean = false,
 ) {
     companion object {
         fun of(s: ScanSettings) = MakerRules(
@@ -76,6 +83,7 @@ data class MakerRules(
             sharpVeto = s.makerSharpVeto,
             sharpMinEv = s.sharpVetoMinEv.coerceIn(0.0, MAX_SHARP_MIN_EV),
             earlyHours = s.trapEarlyHours.coerceAtLeast(0),
+            novigMove = s.trapNovigMove,
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
@@ -121,6 +129,8 @@ data class MakerLine(
     val bookAtMs: Long? = null,
     /** Every resting bid on this side in that book, best first ([bestBid] is the first): what [MakerLines.withoutOwn] takes Vigilant's own out of. */
     val bidLevels: List<com.tjshea.vigilant.data.novig.BidLevel> = emptyList(),
+    /** What Novig's newest trades say about this side's price now ([MakerRules.novigMove]; game lines only); null = not read. */
+    val novigMove: com.tjshea.vigilant.data.scanner.TrapGuard.Move? = null,
 ) {
     val marketId: String get() = market.marketId
 }
@@ -259,6 +269,7 @@ object MakerQuote {
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
+        if (rules.novigMove) line.novigMove?.let { m -> com.tjshea.vigilant.data.scanner.TrapGuard.moveReason(line.kind, m)?.let { return skip(it) } }
         if (rules.sharpVeto) {
             if (line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
             if (line.sharpFairs.any { !com.tjshea.vigilant.data.scanner.SharpVeto.passes(it / price - 1.0, rules.sharpMinEv) }) {

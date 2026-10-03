@@ -56,6 +56,44 @@ class MakerRunner(
     /** One pass at a time (the desk's own order lock keeps orders apart from bets; this keeps two passes from judging the same lines). */
     private val passes = Mutex()
 
+    /** Novig's newest trades per market (when read, the trades), for the trap guard's move rule on game-line bids ([withMoves]). */
+    private val moveReads = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade>>>()
+
+    /**
+     * [lines] with what Novig's own trades say about each game-line side about to get a bid ([MakerRules.novigMove], RESEARCH.md §72): one public
+     * request per market, kept [MOVE_READ_MS], at most [MAX_MOVE_READS] a pass ([read] false: only what's kept, no request; the tab's preview). A read
+     * that fails stops nothing (that line is judged without it). Only moneylines, spreads and game totals that would otherwise be bid on are read:
+     * game lines are off for bids by default, so by default this reads nothing.
+     */
+    private suspend fun withMoves(lines: List<com.tjshea.vigilant.data.novig.trading.maker.MakerLine>, rules: MakerRules, now: Long, read: Boolean):
+        List<com.tjshea.vigilant.data.novig.trading.maker.MakerLine> {
+        if (!rules.novigMove) return lines
+        val wanted = lines.filter {
+            it.kind in com.tjshea.vigilant.data.scanner.TrapGuard.MOVE_KINDS && it.kind in rules.kinds && it.offer != null && it.sharpFairs.isNotEmpty() &&
+                MakerQuote.precheck(it, rules, now) is MakerQuote.Pre.Price
+        }
+        if (wanted.isEmpty()) return lines
+        moveReads.entries.removeIf { now - it.value.first > MOVE_READ_MS }
+        if (read) {
+            for (id in wanted.sortedBy { it.startsTs }.map { it.marketId }.distinct().filter { it !in moveReads }.take(MAX_MOVE_READS)) {
+                val trades = try {
+                    c.novig.trades(id)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    c.eventLog.count("maker.move.unread")
+                    continue
+                }
+                moveReads[id] = now to trades
+            }
+        }
+        val ids = wanted.mapTo(HashSet()) { it.outcomeId }
+        return lines.map { l ->
+            val got = moveReads[l.marketId]?.second
+            if (l.outcomeId !in ids || got == null) l else l.copy(novigMove = com.tjshea.vigilant.data.scanner.TrapGuard.move(got, l.outcomeId, l.offer!!, now))
+        }
+    }
+
     /**
      * One pass. Auto-make on: the bids Vigilant's latest scan wants are posted, moved and cancelled. Auto-make off: the bids Tj approved by hand are
      * watched (fills recorded, taken down when no longer worth it, never re-posted), and new bids are recommended to approve or deny
@@ -91,8 +129,9 @@ class MakerRunner(
             }
             val partial = result?.partial == true
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+            val rules = MakerRules.of(s)
             val report = desk.cycle(
-                MakerLines.from(result, s, now), MakerRules.of(s), stop, s.apiMaxPerDay, wallet,
+                withMoves(MakerLines.from(result, s, now), rules, now, read = stop == null && s.maker), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial,
             )
             notifyFills(report.fills, desk.bids())
@@ -141,7 +180,9 @@ class MakerRunner(
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - resting + busy
         val denied = c.makerDenials.outcomes(clock())
         val run = scan()
-        val decisions = MakerQuote.decideAll(MakerLines.withoutOwn(MakerLines.from(run.result, settings, now), bids), MakerRules.of(settings), now, held).map { d ->
+        val rules = MakerRules.of(settings)
+        val lines = withMoves(MakerLines.withoutOwn(MakerLines.from(run.result, settings, now), bids), rules, now, read = false)
+        val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
         }
         _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
@@ -261,6 +302,12 @@ class MakerRunner(
 
         /** The background cycle's pass is skipped when another started less than this long ago ([run]'s minGapMs). */
         const val BACKGROUND_GAP_MS = 15_000L
+
+        /** How long one read of a market's trades serves the move rule (the auto-bet's cooldown: a move is judged on the last 15 min and the hour). */
+        const val MOVE_READ_MS = 2 * 60_000L
+
+        /** The most markets whose trades one pass reads (public route, paced: [com.tjshea.vigilant.data.novig.NovigPublicClient]). */
+        const val MAX_MOVE_READS = 6
     }
 }
 
