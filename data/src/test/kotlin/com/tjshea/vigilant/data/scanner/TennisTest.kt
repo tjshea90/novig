@@ -251,11 +251,30 @@ class TennisTest {
         assertEquals("Marina Bassols Ribera", bassols.selection)
         assertEquals(0.97 / 1.01, bassols.fairProbability!!, 1e-9)
         assertEquals(0.97, bassols.quote!!.price, 1e-12)
-        // Two days on is another match: no fair price (shown on the Games tab only).
-        val later = match.copy(startsTs = match.startsTs + 2 * 86_400_000L)
-        val unmatched = Planner.plan(listOf(later), listOf(ml), refs, settings, now)
+        // Novig listing it two days before Kalshi's date is another match: no fair price (shown on the Games tab only).
+        val earlier = match.copy(startsTs = match.startsTs - 2 * 86_400_000L)
+        val unmatched = Planner.plan(listOf(earlier), listOf(ml), refs, settings, now - 2 * 86_400_000L)
         assertEquals(0, unmatched.matchedEvents)
         assertTrue(unmatched.markets.none { it.lineKey != null })
+    }
+
+    /**
+     * Tj's v0.52.0 file: "WTA: only 17 of 29 games matched to fair odds" — Beijing's Badosa-Ostapenko, Svitolina-Siniakova and Swiatek-Gao, put off by
+     * rain, kept Kalshi's first date in its code ("26OCT01") while Novig listed them on Oct 3. The same two players can't meet again within days.
+     */
+    @Test
+    fun `a tennis match put off keeps matching Kalshi's listing under its first date, up to three days back, never a later one`() {
+        val ml = market("wml", "MONEY", "M. Bassols Ribera", "w-b" to "M. Bassols Ribera", "w-n" to "O. Nicholls", event = "t2")
+        val refs = listOf(RefSnapshot(wta.oddsApiSportKey, KalshiClient.parse(kalshiEvents(), wta, 0.03, now), now, provider = "kalshi"))
+        fun matched(daysOn: Int): Int {
+            val e = NovigEvent("t2", "TENNIS", "WTA", NovigEvent.STATUS_PREGAME, "Olivia Nicholls @ Marina Bassols Ribera Round of 64", Instant.parse("2026-09-28T02:00:00Z").toEpochMilli() + daysOn * 86_400_000L)
+            return Planner.plan(listOf(e), listOf(ml), refs, settings, now).matchedEvents
+        }
+        assertEquals(1, matched(2))
+        assertEquals(1, matched(3))
+        assertEquals(0, matched(4))
+        // Football keeps its own rule: a day either side only.
+        assertEquals(Planner.TENNIS_DELAY_DAYS, 3L)
     }
 
     @Test

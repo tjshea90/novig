@@ -112,6 +112,9 @@ object Planner {
      * (Yankees/Mets + Cubs/White Sox = 0.5 + 0.5) never pair a game with a different game.
      */
     private const val MIN_EVENT_SIMILARITY = 1.5
+
+    /** How many days before Novig's date a date-only tennis listing may be and still be the same match, put off ([sameStart]). */
+    const val TENNIS_DELAY_DAYS = 3L
     /**
      * Games with no reference match still show Novig's moneyline on the Games tab, but each costs a
      * book request and can never be +EV, so only the next few are fetched.
