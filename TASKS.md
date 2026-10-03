@@ -3506,8 +3506,17 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 - [ ] BI1 Diagnostics review: work the findings (FAILURE/OPTIMIZE first: DNS-over-HTTPS hosts failing 100%, Novig 429s ×1163, ParlayAPI/PropLine slowness, scan frame stutter, WTA matching, Vigilant CLV −0.7% on 40 bets); fix what the evidence supports, with tests.
 - [ ] BI2 Wallet balance visible at all times (a quick look anywhere in the app), refreshed sensibly.
 - [ ] BI3 Lag while a Vigilant scan runs (not with CNO only): find what runs on the main thread / recomposes per scan publish, fix without dropping data; measure.
-- [ ] BI4 Auto-make (bids) gets its own section/tab, not hidden behind links in another tab.
-- [ ] BI5 Auto-make ON didn't post anything by itself (Tj had to press Post now on each): find why, fix, and make "fully automatic" a clear option that posts bids itself.
+- [x] BI4 Auto-make (bids) gets its own section/tab, not hidden behind links in another tab.
+  Done: the Bids tab shows in every scanner mode (it hid in CNO only, where Tj's Auto-bet tab's line was the only way to it); its first row is the
+  choice Off · Recommend · Automatic. Tests: MakerUiTest "the Bids tab is there whatever the scanner …".
+- [x] BI5 Auto-make ON didn't post anything by itself (Tj had to press Post now on each): find why, fix, and make "fully automatic" a clear option that posts bids itself.
+  Why: every automatic pass waited for a FINISHED scan (a scan still running = fills only), Tj's scans took ~8 min (484 s, key refused mid-scan:
+  public route), and by the end the fair prices read first were too old to bid on (5/10-min freshness); the Post button judged the running scan
+  and worked. Fixed: passes judge a running scan's finished leagues (a bid on a line not judged yet stays up: its ttl bounds it), every 20 s while
+  a scan runs; lines use the last scan's Novig book (<=20 min; the bid comes from the fair, PO refuses a cross); the tab says why ready bids wait
+  (most bids/dollars/wallet). Tests: MakerTest (4 new, mutants 3/3), MakerAppTest "fully automatic posts while a scan is still running" (mutant 1/1).
 - [ ] BI6 No bid filled: investigate (price vs the book, margin, ttl/expiry churn, cancel reasons ×46 expired, ×19 paused, ×18 fair goes old), loosen only where still +EV; tests.
-- [ ] BI8 Tj, 2026-10-03 ~05:05Z: "Also make it so the make bidding system is always shown, even if vigilant scanning is turned off. As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs including vigilant scanning" — the Bids tab always shown (any scanner choice); switching bids or auto-make on turns on what they need (Vigilant scanning, background auto-scan of Vigilant, unpause), and says what it turned on.
+- [x] BI8 Tj, 2026-10-03 ~05:05Z: "Also make it so the make bidding system is always shown, even if vigilant scanning is turned off. As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs including vigilant scanning" — the Bids tab always shown (any scanner choice); switching bids or auto-make on turns on what they need (Vigilant scanning, background auto-scan of Vigilant, unpause), and says what it turned on.
+  Done: MakerSetup.set (Recommend/Automatic turn on Vigilant's scanner, background CNO + Vigilant, at most every 60 s, unpause; says so; asks first
+  when that would also start auto-bet); a "Bids need … Turn on" banner when something was switched off since. Tests: MakerTest, MakerUiTest (2 new).
 - [ ] BI7 Sweep for UI/code improvements and bugs; full floor, ship, answer Tj with the link.
