@@ -25,7 +25,9 @@ import com.tjshea.vigilant.data.novig.trading.maker.MakerQuote
 import com.tjshea.vigilant.data.novig.trading.maker.MakerRules
 import com.tjshea.vigilant.data.novig.trading.maker.MakerStatus
 import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.ScannerMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -95,8 +97,10 @@ class MakerUiTest {
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("postBid-$first"))
         compose.onNodeWithTag("postBid-$first").performClick()
         assertEquals(first, posted)
-        compose.onNodeWithTag("makerSwitch").performClick()
+        // Off: nothing posted, nothing recommended.
+        compose.onNodeWithTag("makerMode-OFF").performClick()
         assertFalse(s.maker)
+        assertFalse(s.makerRecommend)
         // The rules: closed, they read as one line; open, a chip sets the margin.
         compose.onNodeWithText(MakerRulesText.summary(settings)).performClick()
         compose.onNodeWithText("6%").performClick()
@@ -169,12 +173,49 @@ class MakerUiTest {
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("undoDeny-gone-1"))
         compose.onNodeWithTag("undoDeny-gone-1").performClick()
         assertEquals("gone-1", undone)
-        // On asks first: nothing changes until Switch on.
-        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerSwitch"))
-        compose.onNodeWithTag("makerSwitch").performClick()
+        // Fully automatic asks first: nothing changes until Switch on.
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerMode"))
+        compose.onNodeWithTag("makerMode-AUTOMATIC").performClick()
         assertFalse(s.maker)
         compose.onNodeWithTag("makerConfirmOn").performClick()
         assertTrue(s.maker)
+    }
+
+    @Test
+    fun `the Bids tab is there whatever the scanner, and picking a mode that bids turns on what bids need and says so`() {
+        ScannerMode.entries.forEach { assertTrue(it.name, Tab.BIDS.shownIn(it)) }
+        // CNO only, no background scan, paused: Recommend turns on Vigilant's scanner, the background scan with Vigilant every minute, and scanning.
+        var s = settings.copy(maker = false, makerRecommend = false, scanner = ScannerMode.CNO, autoScan = AutoScanMode.OFF, autoScanSeconds = 600, paused = true, autoBet = false)
+        compose.setContent {
+            VigilantTheme { MakerScreen(ui(s = s, vigilantOn = false, bids = emptyList()), MakerActions(onUpdate = { f -> s = f(s) })) }
+        }
+        compose.onNodeWithTag("makerMode-RECOMMEND").performClick()
+        assertTrue(s.makerRecommend)
+        assertFalse(s.maker)
+        assertEquals(ScannerMode.BOTH, s.scanner)
+        assertEquals(AutoScanMode.BOTH, s.autoScan)
+        assertEquals(60, s.autoScanSeconds)
+        assertFalse(s.paused)
+        compose.onNodeWithTag("makerTurnedOn").assertTextContains("Vigilant's scanner", substring = true)
+    }
+
+    @Test
+    fun `a bidding mode with Vigilant's scan switched off since says what's missing and turns it back on in one tap, and fully automatic says why ready bids wait`() {
+        var s = settings.copy(maker = true, scanner = ScannerMode.CNO, autoScan = AutoScanMode.BOTH, autoScanSeconds = 30)
+        compose.setContent {
+            VigilantTheme {
+                MakerScreen(
+                    ui(s = s, vigilantOn = false).copy(waiting = mapOf(com.tjshea.vigilant.data.novig.trading.maker.MakerPlan.MAX_BIDS_REACHED.format(20) to 12)),
+                    MakerActions(onUpdate = { f -> s = f(s) }),
+                )
+            }
+        }
+        compose.onNodeWithTag("makerNeeds").assertIsDisplayed()
+        compose.onNodeWithText("Turn on").performClick()
+        assertEquals(ScannerMode.BOTH, s.scanner)
+        assertTrue(s.maker)
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerWaiting"))
+        compose.onNodeWithTag("makerWaiting").assertTextContains("12 ready bids wait: the most bids up at once (20) is reached")
     }
 
     @Test

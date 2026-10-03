@@ -573,7 +573,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Tab(val label: String, val icon: ImageVector? = null, val drawable: Int? = null) {
+internal enum class Tab(val label: String, val icon: ImageVector? = null, val drawable: Int? = null) {
     EV("+EV", Icons.Filled.Star),
     CNO("CNO", drawable = R.drawable.ic_cno),
     GAMES("Games", Icons.Filled.DateRange),
