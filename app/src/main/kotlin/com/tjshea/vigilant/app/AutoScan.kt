@@ -254,7 +254,7 @@ class AutoScanner(
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
                     scanned = true
-                    runCatching { timed("vigilant") { alerts += vigilantScan(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching { timed("vigilant") { vigilantScan(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 // Make orders (RESEARCH.md §70): fills, expiries, the start coming up and fair prices going old are checked every cycle; a cycle that
                 // scanned has its pass from the scan's end ([AppContainer]).
@@ -376,15 +376,30 @@ class AutoScanner(
         }
     }
 
-    private suspend fun vigilantScan(settings: ScanSettings): List<EvAlert> {
+    /**
+     * Starts Vigilant's scan and returns: its alerts go out when it ends ([vigilantAlerts], owned by the app's scope), and the cycles go on meanwhile.
+     * The cycle used to wait the scan out (Tj's v0.52.0 file: "a background cycle took 456 s (its interval is 30 sec)"), and for those minutes CNO
+     * wasn't read and auto-bet placed nothing. Tj's own scan may be running already: then its end is this one's.
+     */
+    private fun vigilantScan(settings: ScanSettings) {
         val before = c.runner.state.value.finished
-        // Tj's own scan may be running: then its result is this cycle's.
-        c.startVigilantScan(settings, runCatching { c.tracker.all() }.getOrDefault(emptyList()), background = true)
-        val run = c.runner.state.first { !it.scanning && it.finished > before }
-        if (settings.alertMinEv <= 0.0) return emptyList()
-        val state = snapshot(settings).copy(result = run.result).indexed(clock())
-        return AlertPicks.vigilant(state, settings.alertMinEv, clock())
+        val started = c.startVigilantScan(settings, runCatching { kotlinx.coroutines.runBlocking { c.tracker.all() } }.getOrDefault(emptyList()), background = true)
+        if (!started && !c.runner.state.value.scanning) return
+        if (settings.alertMinEv <= 0.0) return
+        vigilantAlerts?.takeIf { it.isActive }?.let { return }
+        vigilantAlerts = c.appScope.launch {
+            val run = c.runner.state.first { !it.scanning && it.finished > before }
+            val s = c.currentSettings()
+            if (s.alertMinEv <= 0.0 || !s.autoScansVigilant) return@launch
+            runCatching {
+                val state = snapshot(s).copy(result = run.result).indexed(clock())
+                send(AlertPicks.vigilant(state, s.alertMinEv, clock()))
+            }.onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Background auto-scan", "Vigilant alerts: ${it.message ?: it.javaClass.simpleName}") } }
+        }
     }
+
+    /** The watch that sends a background Vigilant scan's alerts when it ends (one at a time). */
+    @Volatile private var vigilantAlerts: kotlinx.coroutines.Job? = null
 
     /**
      * Posts the alerts not sent before, best EV first, at most [MAX_ALERTS] a cycle: CNO bets get their
