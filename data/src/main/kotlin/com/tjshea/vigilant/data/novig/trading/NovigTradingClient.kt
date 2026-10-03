@@ -158,6 +158,26 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
         return out
     }
 
+    /**
+     * Every fill on events that start after [startsAfterMs] (`GET /v3/portfolio/fills?startsAfter=`, exclusive), every page up to [MAX_FILL_ROWS]:
+     * the fills of many orders in one read. A read costs the `history` bucket 8 + 1 per 50 rows (512, refilled 4 a second): one per order ran it dry
+     * (Tj's v0.53.0 Diagnostics: fills reads answered 429 while bids were being re-posted).
+     */
+    open suspend fun fillsStartingAfter(startsAfterMs: Long, limit: Int = 500): List<NovigFill> {
+        val out = ArrayList<NovigFill>()
+        var cursor: String? = null
+        do {
+            val query = buildString {
+                append("limit=").append(limit.coerceIn(1, 5000)).append("&startsAfter=").append(startsAfterMs)
+                cursor?.let { append("&after=").append(percent(it)) }
+            }
+            val page = json.decodeFromString(FillPageDto.serializer(), signer.call("GET", "/v3/portfolio/fills", query))
+            out += page.items.map { it.toDomain() }
+            cursor = page.next?.takeIf { it.isNotBlank() }
+        } while (cursor != null && out.size < MAX_FILL_ROWS)
+        return out
+    }
+
     /** The subaccount's nonzero positions, or the ones in [marketId]. */
     open suspend fun positions(marketId: String? = null): List<NovigPosition> {
         val query = marketId?.let { "market=" + URLEncoder.encode(it, "UTF-8") }
