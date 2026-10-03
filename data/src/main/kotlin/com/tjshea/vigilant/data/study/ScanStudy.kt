@@ -440,7 +440,8 @@ class ScanStudy(
     /** The study bets [work] through the Tracker's own grading and close lookups, on a scratch file; the changes as result lines. */
     private suspend fun harness(work: List<StudyBet>, scores: ScoreSource, sources: List<CloseSource>, heavyOk: Boolean, scratch: File, now: Long): List<Line> {
         scratch.mkdirs()
-        val file = File.createTempFile("study-grading", ".json", scratch)
+        // Named, not created: an empty file is one the store would call corrupt and move aside.
+        val file = File(scratch, "study-grading-${System.nanoTime()}.json")
         try {
             val tracker = BetTracker(file, clock)
             tracker.addAll(work.map { it.bet })
@@ -458,6 +459,7 @@ class ScanStudy(
         } finally {
             file.delete()
             File(file.path + ".tmp").delete()
+            scratch.listFiles { f -> f.name.startsWith(file.name) }?.forEach { it.delete() }
         }
     }
 
