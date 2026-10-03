@@ -28,6 +28,13 @@ unless Tj asks).
   (`NovigPublicClient.trades`), `MakerRules.earlyHours`, `AtBet.novigMove`, `BetLedger.Split.NOVIG_MOVE`/`LEAD` (every bet), `ui/TrapGuardUi`. Tests: TrapGuardTest,
   AutoBettorTest trap tests (mutants 5/5), AutoScanTest, MakerTest, AutoBetUiTest, SettingsPagesTest. Research scripts: `tools/research/novig_trap_study.py`,
   `tj_bets_by_lead.py` (re-run the second on every new Diagnostics file).
+- **Sharp veto bar, credible edge, Kelly cap, game-line bid move rule (v0.56.0-v0.56.1; RESEARCH.md §72-§73, BRIEF.md; REAL MONEY):**
+  `ScanSettings.sharpVetoMinEv` (1%: `SharpVeto.judge(…, minEv)`/`passes`, `SharpGate.unvetoedAlerts`, `MakerRules.sharpMinEv`, `PresetRules.sharpVetoMinEv`,
+  `AtBet`), `AutoBet.credibleEv`/`NO_SHARP_KEEPS` (the auto-bet's order), `AutoBet.stake(…, sharpFair)` (Kelly never above the sharp fair),
+  `MakerRules.novigMove` + `MakerLines.moveWanted`/`withMoves` + `MakerRunner.withMoves` (≤6 trades reads a pass, none while game lines are off for bids),
+  `MakerPlan.plan`'s freed-dollar credit for a moved bid, counters `sharpbar.*`; UI: `SharpVetoSection` bar chips, Bids tab move switch (`makerTrapMove`).
+  Tests: SharpVetoTest, PresetsTest, MakerTest, AutoBetTest, AutoBettorTest, MakerAppTest, MakerUiTest, SharpConfirmUiTest. Research scripts:
+  `sharp_anchor_study.py`, `novig_toxic_flow_study.py`, `polymarket_follow_study.py`, `novig_drift_study.py`; `tj_bets_by_lead.py` on every Diagnostics file.
 - **Locks and the Novig-only filter (v0.47.0; RESEARCH.md §67, NOVIG_API.md §16; REAL MONEY for locks):** `data/novig/trading/LockIn` (pure math,
   property-tested), `LockPositions`, `ApiBetPlacer.placeLock` (fresh book, positions must match, one FOK), `app/LockScanner` + `AutoLocker` (cycle hook,
   `AutoBetNotes.locked`), `ui/LockUi` (bet sheet card + confirm, Tracker badge), `ScanSettings.autoLock*`, `TrackedBet.lockFor/isLock` (money yes; record,
