@@ -176,7 +176,8 @@ object Diagnostics {
         o.appendLine(
             "Make orders / Bids (RESEARCH.md §70): ${if (set.maker) "ON" else "off"} · ${com.tjshea.vigilant.app.ui.MakerRulesText.summary(set)} · " +
                 "most ${set.makerMaxBids} bids / ${"$%.0f".format(java.util.Locale.US, set.makerMaxDollars)} · stop ${set.makerStopMinutes} min before the start · " +
-                "both sides ${if (set.makerBothSides) "yes" else "no"} · ${x.makerBids.count { it.active }} resting, " +
+                "both sides ${if (set.makerBothSides) "yes" else "no"} · sharp veto ${if (set.makerSharpVeto) "on" else "off"} · fewest books agreeing ${set.makerMinBooks} · " +
+                "recommend ${if (set.makerRecommend) "on" else "off"} · ${x.makerBids.count { it.resting }} resting, ${x.makerBids.count { it.status == com.tjshea.vigilant.data.novig.trading.maker.MakerStatus.CANCELING }} cancelling, " +
                 "${x.makerBids.count { it.filled > 0 }} filled of ${x.makerBids.size} on record (14 days)" +
                 (x.maker.lastAtMs?.let { " · last pass ${com.tjshea.vigilant.app.ui.Format.age(it, now)}" } ?: "") +
                 (x.maker.lastReport?.let { r -> " (${r.placed} posted, ${r.cancelled} cancelled${r.stopped?.let { s -> ", $s" } ?: ""})" } ?: "") +
