@@ -343,12 +343,21 @@ class AutoBettorTest {
 
     @Test
     fun `Kelly stakes follow the bet's odds, are held to the per-bet maximum, and bet no more than the order book fills`() = runBlocking {
-        // 1/8 Kelly of $1,000: fair 0.4878 at +117 (price 0.46083): (0.4878 - 0.46083) / (1 - 0.46083) = 0.050; x 0.125 x 1000 = $6.25.
-        val s = settings { it.copy(autoBetStake = AutoBetStake.EIGHTH_KELLY, bankroll = 1000.0, autoBetMaxStake = 100.0) }
+        // 1/8 Kelly of $1,000: fair 0.4878 at +117 (price 0.46083): (0.4878 - 0.46083) / (1 - 0.46083) = 0.050; x 0.125 x 1000 = $6.25. (Sharp veto off
+        // here: CNO's fair alone; with the veto on, the next block.)
+        val s = settings { it.copy(autoBetStake = AutoBetStake.EIGHTH_KELLY, bankroll = 1000.0, autoBetMaxStake = 100.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val novig = FakeNovig()
         bettor(novig, placer = placer(novig, limits = BetLimits(100.0, 500.0, 0.01))).run(s, state(s))
         val cost = novig.last!!.let { (_, price, qty) -> qty * price * 0.01 }
         assertTrue("about \$6.25 of contracts, never more: $cost", cost in 6.0..6.25)
+        // The veto on (the default): Kalshi, the sharpest prop book on the page, backs less (its own fair ~0.474, +2.9% at +117), so the stake is sized
+        // on Kalshi's fair, about half (RESEARCH.md §72: never more edge than the sharp book backs).
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val withVeto = s.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO)
+        val novigV = FakeNovig()
+        bettor(novigV, placer = placer(novigV, limits = BetLimits(100.0, 500.0, 0.01))).run(withVeto, state(withVeto))
+        val vetoCost = novigV.last!!.let { (_, price, qty) -> qty * price * 0.01 }
+        assertTrue("sized on Kalshi's own fair: $vetoCost", vetoCost in 2.9..3.15)
         // 1/2 Kelly would be $25: Tj's maximum of $10 holds it.
         val capped = settings { it.copy(autoBetStake = AutoBetStake.HALF_KELLY, bankroll = 1000.0, autoBetMaxStake = 10.0) }
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
@@ -520,8 +529,8 @@ class AutoBettorTest {
     /** Tj, 2026-10-01: "I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent … Usually it will be a Kelly number and often under $1". */
     @Test
     fun `a Kelly stake under a dollar is placed as it is, and so is one cent`() = runBlocking {
-        // Jefferson is +117 at a 5.84% edge: full Kelly about 5% of the bankroll, so 1/4 Kelly of $20 is about 25 cents.
-        val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 20.0) }
+        // Jefferson is +117 at a 5.84% edge: full Kelly about 5% of the bankroll, so 1/4 Kelly of $20 is about 25 cents (CNO's fair: the sharp veto off).
+        val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 20.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val novig = FakeNovig()
         val r = bettor(novig).run(s, state(s))
         assertEquals(r.skipped.toString(), 1, r.placed.size)
