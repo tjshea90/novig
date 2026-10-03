@@ -15,13 +15,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * The wallet on every tab (Tj, 2026-10-03: "make a quick way inside the app where I can see my vigilant wallet balance, maybe show it somewhere in the
  * app at all times"): the strip above the tab bar, its words, a tap reading it again, and the one reading every part of the app shares.
  */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [35])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [35], qualifiers = "w393dp-h851dp-xxhdpi")
 class WalletStripTest {
 
     @get:Rule val compose = createComposeRule()

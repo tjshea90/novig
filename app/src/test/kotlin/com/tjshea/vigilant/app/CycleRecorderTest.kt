@@ -68,7 +68,7 @@ class CycleRecorderTest {
         val cycle = src.substringAfter("suspend fun cycle(forceVigilant: Boolean = false): Boolean {").substringBefore("private inline fun <T> timed(")
         listOf(
             "timed(\"cno\") { cnoRead(s) }", "timed(\"autobet\") { c.autoBet.run(s, snapshot(s)) }", "timed(\"alerts\") { alerts += cnoAlerts(s) }",
-            "timed(\"closing\") {", "timed(\"vigilant\") { alerts += vigilantScan(settings) }",
+            "timed(\"closing\") {", "timed(\"vigilant\") { vigilantScan(settings) }",
         ).forEach { assertTrue(it, cycle.contains(it)) }
         // Recorded even when the step throws or is cancelled.
         val helper = src.substringAfter("private inline fun <T> timed(").substringBefore("suspend fun afterScan")
