@@ -3618,3 +3618,8 @@ Now do deep research on how to do make orders on novig (post orders). The goal o
 
 You may use sub agents if it is more effective or better
 ```
+
+## 2026-10-03T03:03:01Z
+```
+After the new version ships, run full tests on the new system and make sure the API usage is correct for make bets. Make sure the math is sound and that it only will make bets which are positive EV, aiming for as much profit as possible. Make it so it can auto make bets just the same way that auto bet already takes bets. Also make it so it can recommend bets to make and I manually approve or deny them when auto bet is turned off. Double check all the math and also the timing. It should not keep make orders long enough that they lose their positive EV. It should not aim at break even, it should aim for Max positive EV and beating clv. Accuracy is very important because real money will be used. Make sure to implement the strategies of proven professional bettors. Then scan for ui and code improvements and bug fixes.
+```
