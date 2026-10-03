@@ -462,6 +462,9 @@ object MakerPlan {
         }
         if (!repost) return MakerActions(cancels, emptyList(), kept)
         val covered = kept.mapTo(HashSet()) { it.outcomeId } + noRepost
+        // [budget] still counts every bid cancelled this pass as up. A side's replacement may use the dollars its own cancelled bid frees (the desk
+        // places a replacement only once that cancel is confirmed gone); no other side may, since a cancel can still be filled before it lands.
+        val freed = cancels.associate { (r, _) -> r.outcomeId to r.restingDollars }
         var bids = kept.size
         var dollars = kept.sumOf { it.restingDollars }
         var spend = budget
@@ -469,15 +472,16 @@ object MakerPlan {
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
         for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(PRIORITY)) {
+            val credit = freed[w.line.outcomeId] ?: 0.0
             when {
                 bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
                 dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
-                w.cost > spend + 1e-9 -> wait(BUDGET_REACHED)
+                w.cost > spend + credit + 1e-9 -> wait(BUDGET_REACHED)
                 else -> {
                     places += w
                     bids++
                     dollars += w.cost
-                    spend -= w.cost
+                    spend -= (w.cost - credit).coerceAtLeast(0.0)
                 }
             }
         }
