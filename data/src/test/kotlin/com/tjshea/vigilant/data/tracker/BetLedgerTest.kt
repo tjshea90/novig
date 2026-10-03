@@ -76,7 +76,7 @@ class BetLedgerTest {
     }
 
     @Test
-    fun `the time to the start is known for every bet, recorded as placed or not (RESEARCH 71: the trap guard's split)`() {
+    fun `the time to the start is known for every bet, recorded as placed or not (RESEARCH 71, the trap guard's split)`() {
         val old = bet("old", null)
         val lead = (old.startsTs - old.createdAtMs) / 60_000L
         assertEquals(BetLedger.leadBand(lead), BetLedger.keyOf(old, BetLedger.Split.LEAD))
