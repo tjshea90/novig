@@ -112,8 +112,8 @@ object CnoPage {
     /** Where the rows are, and what they say. */
     class Table(val rows: List<CnoRow>, val evLabel: String?, val note: String?)
 
-    /** The +EV table inside the grid panel's HTML. [base] resolves CNO's relative links. */
-    fun table(gridHtml: String, base: HttpUrl): Table {
+    /** The +EV table inside the grid panel's HTML. [base] resolves CNO's relative links; [keepColumns] keeps every column's text on each row ([CnoRow.cols]). */
+    fun table(gridHtml: String, base: HttpUrl, keepColumns: Boolean = false): Table {
         val note = Regex("""LabelRedMessage"[^>]*>(.*?)</span>""", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
             .find(gridHtml)?.groupValues?.get(1)?.let(::text)?.takeIf { it.isNotEmpty() }
         val tableStart = gridHtml.indexOf("GridView1")
@@ -163,10 +163,22 @@ object CnoPage {
                     betUrl = link(cells[book], base),
                     // CNO's legend: ⚠️ = devigged from 1-way lines using an estimated juice.
                     oneWay = WARNING in text(cells[ev] + " " + cells.getOrNull(extra).orEmpty() + " " + cells.getOrNull(fair).orEmpty()),
+                    cols = if (keepColumns) columns(headers, cells, attributes(tr.groupValues[1])) else emptyMap(),
                 )
             }
             .toList()
         return Table(rows, headers[ev].removeSuffix("EV%").trim().takeIf { it.isNotEmpty() }, note)
+    }
+
+    /** A row's columns as text by header (a repeated or blank header is numbered), then the row's own `data-*` attributes with an `@` before the name. */
+    private fun columns(headers: List<String>, cells: List<String>, attrs: Map<String, String>): Map<String, String> {
+        val out = LinkedHashMap<String, String>()
+        for ((i, cell) in cells.withIndex()) {
+            val name = headers.getOrNull(i)?.takeIf { it.isNotEmpty() } ?: "col$i"
+            out[if (name in out) "$name#${i + 1}" else name] = text(cell)
+        }
+        attrs.forEach { (k, v) -> if (k.startsWith("data-")) out["@$k"] = v }
+        return out
     }
 
     /**

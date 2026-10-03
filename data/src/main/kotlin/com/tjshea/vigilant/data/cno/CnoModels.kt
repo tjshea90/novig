@@ -32,6 +32,11 @@ data class CnoRow(
     val betUrl: String? = null,
     /** CNO marked it ⚠️: devigged from one-way lines with an estimated juice (less reliable). */
     val oneWay: Boolean = false,
+    /**
+     * Every column CNO printed for the row, by its header, and every `data-*` attribute of the row (`@data-fairpercentage`), as text: kept only by the
+     * scan study's wide read ([CnoSource.fetchWide]), so a column CNO adds is logged without the app knowing it. Empty on the list's own reads.
+     */
+    val cols: Map<String, String> = emptyMap(),
 ) {
     /** One side at one book. CNO's game link names the side (`side_id`); the devig in it is dropped. */
     val key: String get() = ((gameUrl?.replace(DEVIG_PARAM, "")) ?: "$event|$market|$bet") + "|" + book
@@ -91,6 +96,10 @@ data class CnoSnapshot(
     val note: String? = null,
     /** The filters it was read with (null in lists saved before v0.14.0). */
     val filters: CnoFilters? = null,
+    /** True for the scan study's wide read ([CnoSource.fetchWide]): CNO's numeric filters opened right up, so [filters] is what the app's own list would apply to it. */
+    val wide: Boolean = false,
+    /** For a wide read: the filter fields as they were posted (`TextBoxMinimumEVPercentage=0%, …`), so the first log says what CNO was asked. */
+    val asked: String? = null,
 ) {
     /** When CNO's odds were last updated on CNO's side. */
     val dataAtMs: Long get() = fetchedAtMs - (cnoAgeSeconds ?: 0) * 1000L
