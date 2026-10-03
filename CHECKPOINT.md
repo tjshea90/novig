@@ -1,22 +1,22 @@
-# CHECKPOINT 2483 — read me first, then TASKS.md
+# CHECKPOINT 2484 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T21:29:32Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `6662d290` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T21:30:24Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `904a092c` (this checkpoint is the commit after it)
 
 ## Just done
-v0.57.0 prepared: version 99; floor green (1,887 passed, 23 skipped); screenshot of Diagnostics & about checked
+study export: the fields Tj named (kind, minutes to the start, CNO books, books two-sided, books agreeing, agree share, dollars, sharp verdict) at the top level of every line
 
 ## Do this next
-wait CI green on this commit, then bash ship.sh, release.yml, record, answer Tj
+CI green on this commit, then ship.sh, release.yml, record, answer Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  d20871f6 ckpt 2483: v0.57.0 prepared: version 99; floor green (1,887 passed, 23 skipped); screen
   1804c72b ckpt 2482: BP done in code: scan study (data/study + wiring + Settings + Diagnostics li
   cd772480 ckpt 2481: BP3/BP4: data/study done (model, journal, ScanStudy observe/enrich/settle, S
   bfc6c4cb ckpt 2480: BO done and shipped (v0.56.2 released+recorded). BP1 mapped; BP2/BP3 in prog
@@ -26,7 +26,6 @@ wait CI green on this commit, then bash ship.sh, release.yml, record, answer Tj
   d0217e12 ckpt 2476: BO2/BO3 (part): v0.56.1 file re-read (ANR 15:52 main thread in PlacedIndex.h
   d9d7fe90 ckpt 2475: BP: Tj's resume-other-session + Scan Study log feature request written to TA
   12e771ff ckpt 2474: BO1 read: ANR at 15:52 = main thread in PlacedIndex.has->BetGrader.pickOf (r
-  d2e98a7f ckpt 2473: BO: Tj's auto-bid lag / slow pause / no fills report written to TASKS.md (BO
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
