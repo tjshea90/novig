@@ -4124,3 +4124,83 @@ fills read a pass for all bids (`startsAfter`), cancels confirmed by one re-read
 open. **What decides fills from here:** how long bids can rest (each one's fair: the fair-odds sources' credit budgets set how often fairs are
 re-read) and the hours they're up (afternoon and evening, when the takers are there). Judge it again over a full day of bids, by fills per bid-hour
 and, past ~200 fills, by their CLV (§70.5).
+
+## 71. Trap bets: "gifts" a sharp on Novig priced before the books caught up, and the trap guard (v0.55.0, 2026-10-03; Tj, with the v0.54.0 Diagnostics file: "Research if there is a way to indicate sharp bettors offering odds based on knowledge that the other books haven't caught up to, because I noticed that some of my "gift" positive EV bets moved against me dramatically, and I think they were made by sharp bettors with information not yet reflected by other sports books. See if there is a way to find these trap bets and avoid them.")
+
+**Verdict: yes, two signals carry it, and both are now the trap guard (`data/scanner/TrapGuard.kt`, on by default).** (1) **When** the bet is
+placed: Tj's own bets placed 6 h or more before the start lost to the close; bets inside 6 h beat it. (2) On **game lines**, Novig's own trades:
+a price that just fell 2¢+ under where it traded this hour, while $100+ was bought on the other side, is a trap on Novig's whole history. The
+size of the resting order that gives the gift, its being quote-led or flow-led on props, and the size of the gift itself are **not** signals.
+Re-run both: `python3 tools/research/tj_bets_by_lead.py <diagnostics file>` and `python3 tools/research/novig_trap_study.py --cache DIR`
+(about 5 min for all 61 published days once cached; `pip install pandas numpy`).
+
+### 71.1 How a gift is made on Novig, and who makes it
+Every price a taker gets is someone's resting bid on the other side (NOVIG_API.md §7): the Under at +117 exists because someone bids the Over at
+0.54. A "gift" against the books means that bidder values the Over above the books' consensus. Either the bidder is stale or careless (a real
+gift) or knows something (an injury, a role, a lineup, a better model) and the books are the stale side (a trap). Tj's worst closes in the file
+look like the second: Veronica Burton Under 11.5 +117 (fair +113) closed +147, DK Metcalf Under 40.5 +115 → +144, Jesus Luzardo Under 2.5 K
++125 → +156, Jamie Drysdale Over 1.5 SOG → −24.8% CLV. All were placed 10 to 100 hours before the start, on props with a handful of Novig trades.
+
+### 71.2 What Tj's own bets say (`tj_bets_by_lead.py`, v0.54.0 file: 176 bets with a true close and an EV, outliers and locks aside)
+| Placed before the start | Bets | CLV (95%) | Beat the close | EV when bet |
+| :- | -: | -: | -: | -: |
+| 0-1 h | 23 | +3.08% ±1.38 | 83% | +2.70% |
+| 1-3 h | 19 | +1.47% ±1.56 | 74% | +3.46% |
+| 3-6 h | 13 | +1.60% ±1.16 | 77% | +3.08% |
+| 6-12 h | 34 | −0.25% ±1.88 | 41% | +2.95% |
+| 12-24 h | 47 | −0.67% ±2.21 | 47% | +2.51% |
+| 24-48 h | 26 | −1.06% ±2.68 | 50% | +2.81% |
+| 48 h+ | 14 | −0.57% ±4.05 | 50% | +2.25% |
+| **under 6 h** | **55** | **+2.17% ±0.85** | **78%** | +3.05% |
+| **6 h or more** | **121** | **−0.62% ±1.24** | **46%** | +2.67% |
+
+The gap (2.8 points) is about 3.6 standard errors; it holds for CNO's bets (+2.35% vs −0.23%), Vigilant's (+1.29% vs −1.52%) and props (+2.53%
+vs −0.46%). Settled results agree: every settled bet with an EV returned **+8.3%** under 6 h (66 bets) and **−9.8%** at 6 h or more (141).
+On the same shown EV, the close realized ~70% of it inside 6 h and none of it earlier.
+
+**Why:** Vigilant and CNO have no model of their own; their fair is the books' consensus, devigged. The consensus is weakest far from the start
+(openers, prop lines set by formula, before the news and the limits that move them), and a Novig maker who disagrees with it then is often the
+better-informed side (the pros who bet openers bet with models: §69.1). Near the start the books have taken their sharp action and the
+consensus is the sharpest price there is, so a Novig price under it is Novig lagging: the real gift. A consensus-follower should bet late.
+
+Matched by time and price to Tj's own taker trades in Novig's file (398 bets, all exact to the cent within a second; the file carries no names):
+almost none of Tj's bets was a gift against Novig's own trading level (1 of 109 with a level), so his traps were standing prices that disagreed
+with the books, not sudden Novig moves. Thin Novig markets (fewer than 3 trades in the hour before) did worse (−1.0% CLV, n=48) than ones with
+a trading level (+0.6%, n=108), not significant alone.
+
+### 71.3 What Novig's trades say (`novig_trap_study.py`, 61 days 2026-08-03..10-02, 1.24M pregame taker orders in 10,556 two-outcome markets)
+A gift here is a taker buying a side **2¢+ under that side's own median price over the hour before** (3+ trades). CLV is against test A's close
+(§62), in cents; "kept" = CLV ÷ the gift (100% = the whole discount was real).
+- **Gifts against Novig's own level keep nothing on average:** 2-3¢ gifts −0.37¢ [−0.60, −0.16], 3-5¢ −0.15¢, 5-8¢ −1.38¢ (an ordinary taker:
+  −0.22¢). The new price is the informed one: the market moved and stayed.
+- **Game lines:** a gift with **$100+ bought on the other side in the 15 min before** lost **−2.26¢ [−4.19, −0.53]** (n=2,551, 469 markets;
+  $1,000+: −2.71¢); quote-led or under $100: about 0. By time to the close it holds at 0-3 h (−3.0¢), 3-12 h (−1.3¢) and 12 h+ (−1.8¢). It fires
+  on ~0.3% of game-line taker orders. **This is the trap guard's second rule.**
+- **Player props:** gifts are neutral to slightly real (+0.23¢ with $100+ flow, +0.43¢ with $1,000+; NFL props +0.82¢); not a trap signal.
+- **Period lines (1st half, F5…):** gifts are real (+1.4¢ quote-led, +1.6¢ flow-led, 38-75% kept): the guard leaves them alone.
+- **The size of the resting order a gift came from** (the maker fill size, $0-25 to $2,000+): −0.4¢ to −1.1¢ at every size. Size doesn't mark
+  the sharp one (as §62 found for following liquidity).
+- **Where the takers are:** 71% of prop taker dollars and 57% of game-line dollars trade in the last 6 h before the close (88% / 75% in 12 h).
+
+### 71.4 What was built (v0.55.0)
+- **`ScanSettings.trapEarlyHours`** (Off / 3 / 6 / 12 / 24 h, **6 h by default**): the auto-bet, the +EV alerts (CNO's and Vigilant's) and the
+  bids leave alone any game starting more than that far off. The lists still show every bet. A game too far off isn't a candidate, so the
+  cycle doesn't spend CNO page reads on it; the auto-bet's report counts how many it left alone (`AlertPicks.tooEarly`). For bids it also puts the
+  wallet (which binds: 1,814 bids waited on $3.03 in the v0.54.0 file) where 71% of the takers' dollars trade.
+- **`ScanSettings.trapNovigMove`** (on): before the auto-bet places a full-game moneyline, spread or total, one public request reads the market's
+  newest trades (`NovigPublicClient.trades`, NOVIG_API.md §5); `TrapGuard.move` takes the hour's level for our side and the other side's buying
+  in 15 min; 2¢+ under with $100+ is skipped (2-min cooldown). A failed read stops nothing. What it read is on the bet's record
+  (`AtBet.novigMove`: CLEAR / NO LEVEL / UNREAD) and split in Diagnostics ("Novig's own trades just before").
+- **Diagnostics:** "Time to the start" now splits **every** bet (from `startsTs − createdAtMs`; it was only the 56 with a record as placed), so the
+  next file shows this effect directly; the Settings block states the guard; each bet's JSON line carries Novig's public `marketId`/`outcomeId`
+  so research can find it in Novig's trade files by id.
+- UI: the Auto-bet tab's "Trap guard" section (both rules), Settings › Alerts (the early rule), the Bids tab's rules (the early rule); Settings
+  search finds all three.
+
+### 71.5 What is not verified, and what to watch
+- Tj's split is 176 bets over ~8 days, mostly NFL/WNBA/MLB props; the 6 h line is where his data breaks, not a tuned optimum. Re-run
+  `tj_bets_by_lead.py` on each new file: if bets 6-12 h out turn positive with more data, 12 h is the setting.
+- The move rule's CLV is Novig's own close (test A); the books' fair at the time isn't in Novig's files, so the study can't separate "Novig moved
+  and the books followed" from "Novig moved and the books had already moved" (Vigilant wouldn't bet the second: no edge). The game-line result is
+  the mix, the safe direction for a veto.
+- Unfilled resting orders (the book's history) aren't published, so the quote-led case is seen only through the trades that hit it.
