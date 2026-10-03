@@ -184,12 +184,17 @@ object Advisor {
         for ((host, h) in x.net.hosts) {
             val worstPath = h.paths.entries.filter { it.value.calls >= 3 }.maxByOrNull { it.value.errors.toDouble() / it.value.calls }
             val code = PACE_CODE[host] ?: "the client for $host (grep for the host in data/.../)"
-            if (h.calls >= MIN_CALLS && h.errorRate >= 0.10) {
+            // Calls made with no network at all fail whatever the app does (Tj's v0.52.0 file: the DNS-over-HTTPS fallback's 25 calls, all offline,
+            // read as "100% of calls failed"): judged on the calls that had a connection.
+            val offline = (h.byNet[NetKind.NONE] ?: 0L).coerceAtMost(h.errors)
+            val onlineCalls = h.calls - offline
+            val onlineRate = if (onlineCalls <= 0) 0.0 else (h.errors - offline).toDouble() / onlineCalls
+            if (onlineCalls >= MIN_CALLS && onlineRate >= 0.10) {
                 val kinds = (h.kinds.entries.map { "${it.value} ${it.key}" } + h.status.entries.filter { (it.key.toIntOrNull() ?: 0) >= 400 }.map { "${it.value}× HTTP ${it.key}" }).joinToString(", ")
                 add(
                     Finding(
-                        "net:$host:errors", "FAILURE", "$host: ${pct(h.errorRate)} of calls failed (${h.errors} of ${h.calls})",
-                        "$kinds" + (worstPath?.let { "; worst endpoint ${it.key} (${it.value.errors}/${it.value.calls})" } ?: "") + (h.lastError?.let { "; last: ${ProblemLog.clean(it)} ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}" } ?: ""),
+                        "net:$host:errors", "FAILURE", "$host: ${pct(onlineRate)} of calls failed (${h.errors - offline} of $onlineCalls with a connection)",
+                        "$kinds" + (if (offline > 0) "; $offline more failed with no connection (not counted)" else "") + (worstPath?.let { "; worst endpoint ${it.key} (${it.value.errors}/${it.value.calls})" } ?: "") + (h.lastError?.let { "; last: ${ProblemLog.clean(it)} ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}" } ?: ""),
                         code,
                         when {
                             h.kinds["timeout"].let { it != null && it * 3 >= h.errors } -> "Mostly timeouts: check the call's timeout and how many run at once (HttpSupport.MAX_PER_HOST), and whether the caller retries or backs off; speed matters more than data here."
