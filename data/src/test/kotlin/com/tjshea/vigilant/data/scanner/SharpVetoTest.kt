@@ -130,7 +130,7 @@ class SharpVetoTest {
     }
 
     @Test
-    fun `the veto's bar: the sharpest book must give Novig's price at least the set edge (1% by default)`() {
+    fun `the veto's bar - the sharpest book must give Novig's price at least the set edge, 1% by default`() {
         // RESEARCH.md §72: what a bet keeps at the close is about the sharp book's own edge; 0-1% of it was not distinguishable from nothing.
         assertEquals(0.01, ScanSettings().sharpVetoMinEv, 0.0)
         assertEquals(SharpVeto.DEFAULT_MIN_EV, ScanSettings().sharpVetoMinEv, 0.0)
