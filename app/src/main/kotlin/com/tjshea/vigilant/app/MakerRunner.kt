@@ -280,7 +280,7 @@ class MakerRunner(
      * Whether a pass may still send a new bid: the saved settings now (not the ones the pass started with) still have scanning running and auto-make on.
      * Pause is one tap, and every bid after it would only be cancelled again.
      */
-    private fun stillPosting(): Boolean = c.settingsStore.flow.value?.let { !it.paused && it.maker } ?: true
+    private fun stillPosting(): Boolean = c.settingsStore.flow.value?.makerNow ?: true
 
     private fun stopReason(s: ScanSettings): String? = when {
         !AppBook.isNovig -> "Make orders are for Novig"

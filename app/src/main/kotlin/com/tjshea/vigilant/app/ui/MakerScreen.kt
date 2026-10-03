@@ -81,17 +81,46 @@ data class MakerUi(
     val mode: BidMode get() = BidMode.of(settings)
 
     /** Bids up on Novig, and ones on their way down (a fill can still land until Novig confirms). */
-    val resting: List<MakerBid> get() = bids.filter { it.active }.sortedBy { it.startsTs }
-    val filled: List<MakerBid> get() = bids.filter { it.filled > 0 }.sortedByDescending { it.postedAtMs }
-    private val restingOutcomes: Set<String> get() = resting.mapTo(HashSet()) { it.outcomeId }
+    val resting: List<MakerBid> get() = lists.resting
+    val filled: List<MakerBid> get() = lists.filled
 
     /** The bids the latest scan wants that aren't up: what Post would send. */
-    val ready: List<MakerDecision.Post>
-        get() = decisions.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in restingOutcomes }.sortedWith(compareBy({ it.price }, { -it.evAtFair }))
+    val ready: List<MakerDecision.Post> get() = lists.ready
 
     /** Why the other lines get no bid, most common first. */
-    val skipped: List<Pair<String, Int>>
-        get() = decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { MakerText.reasonGroup(it.why) }.eachCount().entries.sortedByDescending { it.value }.map { it.key to it.value }
+    val skipped: List<Pair<String, Int>> get() = lists.skipped
+
+    /** The lists above, worked out once for these [bids] and [decisions] (not on every recomposition of every state). */
+    private val lists: MakerLists get() = MakerLists.of(bids, decisions)
+}
+
+/**
+ * What the Bids tab lists, worked out from the bids on record and the latest pass's decisions (a busy slate judges thousands of lines). The tab used
+ * to filter, sort and group them again for every state the app published (a scan publishes three a second) and several times within each, on the main
+ * thread: part of Tj's "so laggy I almost couldn't use it" while auto-bid ran (2026-10-03, v0.56.1 Diagnostics). The last answer is kept, found by the
+ * identity of the two lists: both come from state flows that hand out the same list until something changes.
+ */
+private class MakerLists private constructor(private val bids: List<MakerBid>, private val decisions: List<MakerDecision>) {
+    val resting: List<MakerBid> by lazy(LazyThreadSafetyMode.NONE) { bids.filter { it.active }.sortedBy { it.startsTs } }
+    val filled: List<MakerBid> by lazy(LazyThreadSafetyMode.NONE) { bids.filter { it.filled > 0 }.sortedByDescending { it.postedAtMs } }
+
+    val ready: List<MakerDecision.Post> by lazy(LazyThreadSafetyMode.NONE) {
+        val up = resting.mapTo(HashSet()) { it.outcomeId }
+        decisions.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in up }.sortedWith(compareBy({ it.price }, { -it.evAtFair }))
+    }
+
+    val skipped: List<Pair<String, Int>> by lazy(LazyThreadSafetyMode.NONE) {
+        decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { MakerText.reasonGroup(it.why) }.eachCount().entries.sortedByDescending { it.value }.map { it.key to it.value }
+    }
+
+    companion object {
+        @Volatile private var last: MakerLists? = null
+
+        fun of(bids: List<MakerBid>, decisions: List<MakerDecision>): MakerLists {
+            last?.takeIf { it.bids === bids && it.decisions === decisions }?.let { return it }
+            return MakerLists(bids, decisions).also { last = it }
+        }
+    }
 }
 
 /** The tab's buttons: settings changes, a pass now, Post / Cancel one, Cancel all, and the Betting settings page. */
