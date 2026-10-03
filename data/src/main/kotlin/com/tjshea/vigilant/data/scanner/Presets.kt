@@ -26,13 +26,15 @@ data class PresetRules(
     val alertMinEv: Double,
     val cnoFilters: CnoFilters,
     val autoScanSeconds: Int,
+    /** The sharp veto's bar ([ScanSettings.sharpVetoMinEv]); a preset saved before v0.56.0 has none and reads as the default (1%). */
+    val sharpVetoMinEv: Double = SharpVeto.DEFAULT_MIN_EV,
 ) {
     /** [s] with these rules in force, named [name] ([ScanSettings.presetName]). */
     fun applyTo(s: ScanSettings, name: String?): ScanSettings = s.copy(
         autoBetMinEv = autoBetMinEv, autoBetBooks = autoBetBooks, autoBetTwoSided = autoBetTwoSided, autoBetAllAgree = autoBetAllAgree,
         autoBetMaxOdds = autoBetMaxOdds, autoBetMinOdds = autoBetMinOdds, autoBetKinds = autoBetKinds, autoBetStake = autoBetStake,
         sharpAutoBet = sharpAutoBet, sharpAlerts = sharpAlerts, alertMinEv = alertMinEv, cnoFilters = cnoFilters, autoScanSeconds = autoScanSeconds,
-        presetName = name,
+        sharpVetoMinEv = sharpVetoMinEv, presetName = name,
     )
 
     /** These rules in one line, for Settings, the bet's record and Diagnostics. */
@@ -42,7 +44,7 @@ data class PresetRules(
         add("odds " + (if (autoBetMinOdds < 0) "${autoBetMinOdds} to " else "up to ") + (if (autoBetMaxOdds > 0) "+$autoBetMaxOdds" else "any"))
         add(if (autoBetKinds.size == BetKind.entries.size) "every kind of bet" else autoBetKinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() })
         add(autoBetStake.label + " stakes")
-        add("sharp check: " + sharpAutoBet.displayName.lowercase())
+        add("sharp check: " + sharpAutoBet.displayName.lowercase() + if (sharpAutoBet == SharpMode.VETO && sharpVetoMinEv > 0.0) " under ${pct(sharpVetoMinEv)}" else "")
         add("CNO: ${cnoFilters.devig.displayName.lowercase()} devig, ${cnoFilters.minBooks}+ books, ${cnoFilters.rows} rows")
         add("alerts ≥ ${pct(alertMinEv)}")
         add("auto-scan every ${ScanSettings.intervalLabel(autoScanSeconds)}")
@@ -52,7 +54,7 @@ data class PresetRules(
         /** The rules [s] has now (the Auto-bet tab › Presets › Save current settings). */
         fun of(s: ScanSettings): PresetRules = PresetRules(
             s.autoBetMinEv, s.autoBetBooks, s.autoBetTwoSided, s.autoBetAllAgree, s.autoBetMaxOdds, s.autoBetMinOdds, s.autoBetKinds, s.autoBetStake,
-            s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds,
+            s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds, s.sharpVetoMinEv,
         )
 
         /** "2.5%", "3%" (0.03 × 100 is 3.0000000000000004 in floating point: rounded to tenths first). */
@@ -72,7 +74,8 @@ object Presets {
      * distinguishable from zero; estimated edges shrink by ~1.5 points), three books pricing both sides and three agreeing without needing every one (a
      * dissent isn't a red flag unless it is the sharpest book: the veto), odds −200 to +150 (betsharpmoney's range; long shots carry the favorite–longshot
      * bias), player props, moneylines and spreads (his game totals, team totals and 1st-half totals lose to the close), ¼ Kelly (edge estimates this
-     * noisy), the sharp veto for the auto-bet and the alerts, CNO's conservative devig with 4+ books and 100 rows, alerts from 2.5%, a background scan
+     * noisy), the sharp veto for the auto-bet and the alerts (vetoing when the sharpest book gives Novig's price under 1%: what a bet keeps at the close
+     * is about the sharp book's own edge, RESEARCH.md §72), CNO's conservative devig with 4+ books and 100 rows, alerts from 2.5%, a background scan
      * every 30 seconds (CNO publishes every 13–33 s: an edge is caught before it closes).
      */
     val VOLUME = SavedPreset(
@@ -82,17 +85,17 @@ object Presets {
             autoBetKinds = setOf(BetKind.PROP, BetKind.MONEYLINE, BetKind.SPREAD), autoBetStake = AutoBetStake.QUARTER_KELLY,
             sharpAutoBet = SharpMode.VETO, sharpAlerts = SharpMode.VETO, alertMinEv = 0.025,
             cnoFilters = CnoFilters(devig = CnoDevig.CONSERVATIVE, maxOdds = 150, minBooks = 4, minEv = 0.01, rows = 100, completeBook = true, minSides = 2),
-            autoScanSeconds = 30,
+            autoScanSeconds = 30, sharpVetoMinEv = 0.01,
         ),
     )
 
     /**
      * Fewer bets, the strongest closes (RESEARCH.md §65-§66): a 4% edge (Tj's 4%+ bets beat the close 83% of the time), four books agreeing, odds −200 to
-     * +130; otherwise as [VOLUME].
+     * +130, and the sharpest book must give at least 2% itself (§72: sharp 2-4% kept +2.8% at the close); otherwise as [VOLUME].
      */
     val STRICT = SavedPreset(
         "Strict CLV",
-        VOLUME.rules.copy(autoBetMinEv = 0.04, autoBetBooks = 4, autoBetMaxOdds = 130, alertMinEv = 0.04),
+        VOLUME.rules.copy(autoBetMinEv = 0.04, autoBetBooks = 4, autoBetMaxOdds = 130, alertMinEv = 0.04, sharpVetoMinEv = 0.02),
     )
 
     val BUILT_IN: List<SavedPreset> = listOf(VOLUME, STRICT)
