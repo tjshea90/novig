@@ -122,7 +122,8 @@ object SampleScan {
             mlBids = 560 to 430, refMl = 1.70 to 2.25)
     }
 
-    val settings = ScanSettings(leagues = setOf("NFL", "MLB"), minEvPercent = 0.01)
+    /** The sample's games are 8 h to a day off: the trap guard's early rule (6 h by default) is off here; TrapGuardAppTest turns it on. */
+    val settings = ScanSettings(leagues = setOf("NFL", "MLB"), minEvPercent = 0.01, trapEarlyHours = 0)
 
     fun result(s: ScanSettings = settings): ScanResult {
         val snaps = refs.mapValues { (k, v) -> RefSnapshot(k, v, NOW - 3 * 60_000, 488) }
