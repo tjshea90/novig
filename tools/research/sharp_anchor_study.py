@@ -265,5 +265,25 @@ def main():
     table('C. Who was informed? Share of the gap (venue early vs consensus early) the close moved toward the venue', rows)
     table('C2. Benter blend on the results (1X2, early prices): how much weight each fair earns', blend)
 
+    # E. The sharp veto's bar: bets the CONSENSUS calls +EV (2.5%+, Vigilant's default edge), split by what the SHARP book's own fair says
+    # about the same price. Early prices (the veto judges a live price, before the close), judged by the sharp close and the results.
+    rows = []
+    for price, nm in (('maxO', 'best price'), ('B365O', 'bet365')):
+        y = x.dropna(subset=[price, 'avgO', 'pinO']).copy()
+        cev = y[price] * y.avgO - 1
+        sev = y[price] * y.pinO - 1
+        y = y[cev >= 0.025]
+        sev = sev[cev >= 0.025]
+        for lo, hi in ((-1, -0.02), (-0.02, 0), (0, 0.01), (0.01, 0.02), (0.02, 0.04), (0.04, 9)):
+            m = (sev >= lo) & (sev < hi)
+            if m.sum() < 30:
+                continue
+            clv = (y[price] * y.pinC - 1)[m]
+            roi = np.where(y.won[m].isna(), np.nan, (y[price] * y.won - 1)[m])
+            rows.append(f'{nm:<10} consensus EV 2.5%+, sharp EV {100 * lo:>4.0f}..{100 * hi:<4.0f}%: shown {100 * (y[price] * y.avgO - 1)[m].mean():+5.2f}'
+                        f'  CLV {fmt(ci(clv.values, y.mid[m].values)):<26} ROI {fmt(ci(roi, y.mid[m].values)):<26} n={m.sum():,}')
+    table('E. Consensus says +EV; what the sharp book adds (the sharp veto today vetoes only at sharp EV <= 0)', rows)
+
+
 if __name__ == '__main__':
     main()
