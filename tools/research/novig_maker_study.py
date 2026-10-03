@@ -121,11 +121,18 @@ def simulate(d, close_a, a_won):
             close = closeA if x else 1 - closeA
             xwon = won if x else (1 - won if won == won else np.nan)
             fx = fairs if x else 1 - fairs
+            # X's last traded offer at each re-quote (2 h back): a bid at or above it would take, so none is posted then
+            xt = tt[tisA == x]
+            xp = tp[tisA == x]
+            li = np.searchsorted(xt, grid) - 1
+            offer = np.where((li >= 0) & (xt[np.clip(li, 0, None)] >= grid - 2) if len(xt) else False, xp[np.clip(li, 0, None)] if len(xt) else np.nan, np.nan)
             # which interval each maker fill on X fell in
             k = np.searchsorted(grid, mt[x], side='right') - 1
+            kc = np.clip(k, 0, len(grid) - 1)
             for m in MARGINS:
                 b = snap_down(fx - m / 100)
-                hit = (k >= 0) & (mp[x] < b[np.clip(k, 0, len(b) - 1)] - 1e-9) & (mt[x] >= grid[0])
+                b = np.where(np.isnan(offer) | (b < offer - 1e-9), b, np.nan)
+                hit = (k >= 0) & (mp[x] < b[kc] - 1e-9) & (mt[x] >= grid[0])
                 if hit.any():
                     i = np.nonzero(hit)[0][0]
                     bi = b[k[i]]
@@ -188,7 +195,8 @@ def main():
 
     for w in (0.0, 0.5):
         P = post[post.w == w]
-        print(f'\n######## fair stand-in w={w} ({"Novig\'s own price then" if w == 0 else "half-way to the close: a fair that leads Novig"})')
+        what = "Novig's own price then" if w == 0 else 'half-way to the close: a fair that leads Novig'
+        print(f'\n######## fair stand-in w={w} ({what})')
         print('\n== 1. Margin below the fair (posted 3 h before the close, resting until the close; all kinds)')
         for m in MARGINS:
             report(f'{m:.1f}¢ below fair', P[(P.h == 3) & (P.m == m)])
