@@ -374,7 +374,7 @@ class AutoScanner(
         val now = clock()
         // The sharp veto (the default, Tj 2026-10-02 17:01Z): an alert whose bet the sharpest book for its kind says isn't +EV is dropped (free: its book page).
         if (s.sharpAlerts == com.tjshea.vigilant.data.scanner.SharpMode.VETO) {
-            return SharpGate.unvetoedAlerts(alerts, AlertPicks.cnoChecked(state, s.alertMinEv, now), { state.booksAt(it.pick.row.key, now)?.view }) {
+            return SharpGate.unvetoedAlerts(alerts, AlertPicks.cnoChecked(state, s.alertMinEv, now), { state.booksAt(it.pick.row.key, now)?.view }, s.sharpVetoMinEv) {
                 c.eventLog.count("sharp.alertveto.${it.verdict}")
             }
         }

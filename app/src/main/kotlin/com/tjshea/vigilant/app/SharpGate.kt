@@ -35,20 +35,22 @@ object SharpGate {
 
     /**
      * [alerts] less those whose bet the sharpest book for its kind says isn't +EV ([SharpVeto], Tj 2026-10-02 17:01Z: the veto, not a requirement). [items]: the
-     * candidates the alerts came from ([AlertPicks.cnoChecked]); [view]: a candidate's book page. An alert with no candidate, or no sharp book on its page,
-     * stays. [onVerdict]: each verdict, for the counters.
+     * candidates the alerts came from ([AlertPicks.cnoChecked]); [view]: a candidate's book page; [minEv]: the veto's bar
+     * ([com.tjshea.vigilant.data.scanner.ScanSettings.sharpVetoMinEv]). An alert with no candidate, or no sharp book on its page, stays. [onVerdict]: each
+     * verdict, for the counters.
      */
     fun unvetoedAlerts(
         alerts: List<EvAlert>,
         items: List<AlertPicks.CnoChecked>,
         view: (AlertPicks.CnoChecked) -> CnoBooksView?,
+        minEv: Double,
         onVerdict: (com.tjshea.vigilant.data.scanner.SharpVeto.Result) -> Unit = {},
     ): List<EvAlert> {
         val byKey = items.associateBy { MiniWindow.cnoKey(it.pick.row) }
         return alerts.filter { a ->
             val item = byKey[a.key] ?: return@filter true
             val row = item.shown.row
-            val veto = com.tjshea.vigilant.data.scanner.SharpVeto.judge(view(item), row.league, row.market, row.bet, row.odds, item.pick.live)
+            val veto = com.tjshea.vigilant.data.scanner.SharpVeto.judge(view(item), row.league, row.market, row.bet, row.odds, item.pick.live, minEv)
             onVerdict(veto)
             !veto.vetoed
         }
