@@ -470,6 +470,8 @@ class ScanStudyTest {
         s.cno(snap(moneyline, total, prop))
         now += 90_000
         s.cno(snap(row("Moneyline", "New York Mets", 120), total, prop))
+        // The green check read the moneyline's page: four companies price both sides, all four agree.
+        s.observeBooks(mapOf(moneyline.key to CnoBooksState(view = view(now - 5_000))), settings, emptyMap())
         s.flush()
         now = start + 4 * 3_600_000L
         s.settle(FakeScores(), listOf(FakeClose(0.55)), emptyList(), File(tmp.root, "scratch"))
@@ -508,9 +510,23 @@ class ScanStudyTest {
         assertEquals(0.55 * 2.05 - 1.0, ml.clv!!, 1e-9)
         // At the better price it later had, the close was beaten by more.
         assertEquals(0.55 / (1.0 / 2.2) - 1.0, ml.clvBest!!, 1e-9)
-        assertEquals(2, ml.looks)
-        assertEquals(2, ml.s.size)
+        // Looks: the two CNO reads and the book page read.
+        assertEquals(3, ml.looks)
+        assertEquals(3, ml.s.size)
         assertEquals(180, ml.s[0].toString().removePrefix("[").substringBefore(",").toInt())
+        // The fields Tj named, at the top level: kind, minutes to the start, books, how many agree and what share.
+        assertEquals("MONEYLINE", ml.kind)
+        assertEquals("BASEBALL", ml.sport)
+        assertEquals(180L, ml.minToStartFirst)
+        assertEquals(5, ml.cnoBooks)
+        assertEquals(4, ml.booksTwoSided)
+        assertEquals(4, ml.booksAgreeing)
+        assertEquals(1.0, ml.agreeShare!!, 1e-9)
+        assertEquals(40.0, ml.available!!, 1e-9)
+        assertNotNull(ml.sharpVerdict)
+        // A bet whose page wasn't read has no share (not a zero).
+        assertNull(rows.first { it.market == "Total Runs" }.agreeShare)
+        assertEquals(5, rows.first { it.market == "Total Runs" }.cnoBooks)
         assertFalse(ml.placedByTj)
         assertTrue(rows.first { it.market == "Player Total Bases" }.placedByTj)
         assertEquals(122, rows.first { it.market == "Player Total Bases" }.placedAmerican)

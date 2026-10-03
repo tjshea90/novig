@@ -96,6 +96,20 @@ object StudyExport {
         val placedAmerican: Int? = null,
         val marketId: String? = null,
         val outcomeId: String? = null,
+        /**
+         * The most used fields of [atBet], at the top level for convenience: kind and sport, minutes to the start at the first look, CNO's book count, the book check's
+         * companies pricing both sides, how many agree and the share ([agreeShare] = [booksAgreeing] / [booksTwoSided]; null with no book check), dollars at the price,
+         * and the sharp veto's verdict.
+         */
+        val kind: String? = null,
+        val sport: String? = null,
+        val minToStartFirst: Long? = null,
+        val cnoBooks: Int? = null,
+        val booksTwoSided: Int? = null,
+        val booksAgreeing: Int? = null,
+        val agreeShare: Double? = null,
+        val available: Double? = null,
+        val sharpVerdict: String? = null,
         /** The record as first listed (see AtBet.kt): the book check is the first page read, stamped [AtBet.checkAtMs]. */
         val atBet: AtBet? = null,
         /**
@@ -135,6 +149,9 @@ object StudyExport {
             gone = ended?.second?.let { Sight.isGone(it.k) } == true,
             looks = sb.sights.size, placedByTj = own != null, placedAmerican = own?.american,
             marketId = b.marketId.ifBlank { null }, outcomeId = b.outcomeId.ifBlank { null },
+            kind = a?.kind?.ifBlank { null }, sport = a?.sport?.ifBlank { null }, minToStartFirst = a?.minutesToStart, cnoBooks = a?.cnoBooks, booksTwoSided = a?.twoSided,
+            booksAgreeing = a?.agreeing, agreeShare = a?.let { x -> x.agreeing?.let { g -> x.twoSided?.takeIf { it > 0 }?.let { n -> (g.toDouble() / n).round(4) } } },
+            available = a?.available, sharpVerdict = a?.sharpVerdict,
             atBet = a?.copy(rules = null), vig = sb.vig?.copy(rules = null), cno = sb.cnoRec?.copy(rules = null),
             s = JsonArray(
                 sb.sights.map { (t, sg) ->
@@ -416,6 +433,7 @@ object StudyExport {
         "clv · clvBest · clvLast: closeFair / cost − 1 at the first-listed price, at the best (longest) odds it was listed at, and at the last listed price. bestAmerican · lastAmerican: those prices. novigClose: Novig's own last price before the start when the Tracker read it.",
         "listedMin · lastListedMinToStart · gone: minutes from the first look to the last, how many minutes before the start the last look was, and whether a scan then dropped it (its edge fell under the filters, or CNO's row limit pushed it out).",
         "looks · placedByTj · placedAmerican: number of looks; whether Tj also placed this bet (his own Tracker's) and at what price. marketId · outcomeId: Novig's public ids when known.",
+        "kind · sport · minToStartFirst · cnoBooks · booksTwoSided · booksAgreeing · agreeShare · available · sharpVerdict: the most used fields of atBet at the top level. cnoBooks = books behind CNO's fair price (on every row); booksTwoSided = companies whose page prices both sides, booksAgreeing = those whose own fair says +EV at Novig's price, agreeShare = booksAgreeing / booksTwoSided (null when the book check wasn't made: only the top few bets get a page read).",
         "atBet: the app's record of the bet as first listed (data/.../tracker/AtBet.kt): league, sport, kind (PROP, MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PERIOD, OTHER), minutesToStart, american, otherAmerican (the other side's price), available (Novig dollars at the price), ev, fair, cnoBooks (books behind CNO's fair), cnoOneWay, cnoListAgeSec,",
         "    and the app's own BOOK CHECK from CNO's game page when it was read (checkAtMs says when; a page is read for the top few bets, so many bets have none): twoSided (companies pricing both sides), oneSided, agreeing (those whose own fair says +EV at Novig's price), verdict (CONFIRMED / NOT_CONFIRMED …), checkFair, checkEv, books (every book's odds, other side, fair and the EV it gives Novig's price), dissent (books saying not +EV),",
         "    sharpVerdict / sharpBook / sharpEv (the sharpest book for the kind of bet — Pinnacle and Circa for game lines, Kalshi and ProphetX for props — and whether it VETOED the price), fullKelly (the Kelly share of bankroll this edge calls for), preset (the preset in force).",
