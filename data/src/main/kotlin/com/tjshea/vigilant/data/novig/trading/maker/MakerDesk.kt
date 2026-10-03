@@ -182,6 +182,10 @@ class MakerDesk(
         Report(placed, cancelled, fills, problems, after, stopAll, decisions)
     }
 
+    /** Every bid on record (active and ended, newest last), and the same as it changes. */
+    suspend fun bids(): List<MakerBid> = store.all()
+    val flow get() = store.flow
+
     /** Tj's Post button: one bid now, outside the cycle (the same checks: [decision] was worked out just now). */
     suspend fun post(decision: MakerDecision.Post, rules: MakerRules): String? = lock.withLock {
         if (store.all().any { it.active && it.outcomeId == decision.line.outcomeId }) return@withLock "There's already a bid on this side"
