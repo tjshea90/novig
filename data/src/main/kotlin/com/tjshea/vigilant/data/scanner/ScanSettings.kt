@@ -201,8 +201,22 @@ data class ScanSettings(
     val maker: Boolean = false,
     /** The EV at the fair each bid is posted at: fair / (1 + this), on Novig's grid ([MAKER_MARGIN_CHOICES]). 4% is §70's balance point. */
     val makerMargin: Double = 0.04,
-    /** Dollars per bid (what it costs if it fills), never more than [apiMaxStake]. */
+    /**
+     * How a bid is sized, like the auto-bet's stake rule ([autoBetStake]): ¼ Kelly by default (Benter's and the pros' fractional Kelly on the edge at
+     * the fair, RESEARCH.md §69.1), on [bankroll], never over [makerMaxStake] or [apiMaxStake].
+     */
+    val makerStakeMode: AutoBetStake = AutoBetStake.QUARTER_KELLY,
+    /** The dollars "My amount" ([AutoBetStake.CUSTOM]) bids. */
     val makerStake: Double = 5.0,
+    /** The most one bid may cost, whatever the stake rule says (and never over [apiMaxStake]). */
+    val makerMaxStake: Double = 10.0,
+    /** Skip a bid that a sharp book in the fair, devigged on its own, says isn't +EV (the auto-bet's sharp veto). */
+    val makerSharpVeto: Boolean = true,
+    /**
+     * With auto-make off, recommend bids to approve or deny (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"): the Bids
+     * tab's list, and a notification for each new one (at most a few a cycle) with Approve and Deny.
+     */
+    val makerRecommend: Boolean = true,
     /** The most bids resting at once ([MAKER_MAX_BIDS_CHOICES]). */
     val makerMaxBids: Int = 20,
     /** The most dollars resting at once, all bids together ([MAKER_MAX_DOLLARS_CHOICES]): Novig needs the wallet to cover each bid. */
@@ -662,8 +676,8 @@ data class ScanSettings(
         /** [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). */
         val MAKER_MARGIN_CHOICES = listOf(0.03, 0.04, 0.06, 0.08)
 
-        /** [makerStake]'s choices, dollars. */
-        val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0)
+        /** [makerStake]'s and [makerMaxStake]'s choices, dollars. */
+        val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
 
         /** [makerMaxBids]' choices. */
         val MAKER_MAX_BIDS_CHOICES = listOf(5, 10, 20, 40)
