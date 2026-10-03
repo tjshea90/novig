@@ -48,7 +48,7 @@ class DiagnosticsFileTest {
 
     private fun host(calls: Long, errors: Long) = HostStat(
         calls = calls, errors = errors, bytes = calls * 10_000, totalMs = calls * 400, status = mapOf("200" to calls - errors, "500" to errors), kinds = mapOf("timeout" to errors),
-        recentMs = List(40) { 300 + it * 10 }, recentBps = List(10) { 300_000 }, paths = mapOf("/v1/sports/{id}/odds" to PathStat(calls, errors, calls * 400, 200)), byNet = mapOf("Wi-Fi" to calls),
+        recentMs = List(40) { 300 + it * 10 }, recentBps = List(10) { 300_000 }, paths = mapOf("/v1/sports/{id}/odds" to PathStat(calls, errors, calls * 400, 200, if (errors >= 30) mapOf("500" to errors - 10, "timeout" to 10L) else emptyMap())), byNet = mapOf("Wi-Fi" to calls),
         lastError = "SocketTimeoutException: timeout while sending $fakeKey", lastErrorAtMs = now - 60_000,
         hours = mapOf((now / 3_600_000L).toString() to com.tjshea.vigilant.data.diag.HourStat(calls.toInt(), errors.toInt(), calls * 400, calls * 10_000)),
         limits = 2, lastLimit = "Retry-After: 30", lastLimitAtMs = now - 120_000,
@@ -135,7 +135,7 @@ class DiagnosticsFileTest {
             // Since the last upload (3 days ago, v0.42.0): the app was updated, "gone" is resolved, the failure is still there.
             "Previous report: 3d ago, version 0.42.0 (code 77); this one is version 0.43.0 (code 78): THE APP WAS UPDATED SINCE", "RESOLVED since then (1): gone [was BUG]",
             // Connections by host with percentiles and endpoints.
-            "parlay-api.com · 120 · 30 (25.0%) · 490/", "    /v1/sports/{id}/odds · 120 calls · 30 failed · 400 ms average to first byte · last HTTP 200",
+            "parlay-api.com · 120 · 30 (25.0%) · 490/", "    /v1/sports/{id}/odds · 120 calls · 30 failed (HTTP 500×20, timeout×10) · 400 ms average to first byte · last HTTP 200",
             "last rate limit", "Retry-After: 30 (2 in all)",
             // API issues, performance, counters, timeline, log, storage.
             "Calls that failed before an answer, by kind: timeout 32", "cycle.ms: 100 samples · p50 900 · p95 4000 · max 9000 · mean 1100",
