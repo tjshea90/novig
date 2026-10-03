@@ -183,7 +183,9 @@ fun OpportunityDetail(
             }
         }
 
-        o.makerBid(maxOf(settings.minEvPercent, MAKER_MIN_EV))?.takeIf { AppBook.exchange }?.let { bid ->
+        // The Bids tab's margin (RESEARCH.md §70.2: closer than ~3% the fills lose to the close), never under the feed's own minimum.
+        val makerMin = maxOf(settings.minEvPercent, settings.makerMargin, MAKER_MIN_EV)
+        o.makerBid(makerMin)?.takeIf { AppBook.exchange }?.let { bid ->
             SectionTitle("Or post a bid (maker)")
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 LabeledValue("Bid up to", "${Format.american(bid.price)} · ${Format.percent(bid.price)}")
@@ -192,7 +194,8 @@ fun OpportunityDetail(
             }
             Text(
                 "Makers pay no fee on Novig. A resting bid fills only when someone takes it, often after the line has moved " +
-                    "against it, so this asks for at least ${Format.percent(maxOf(settings.minEvPercent, MAKER_MIN_EV))} EV at today's fair price.",
+                    "against it, so this asks for at least ${Format.percent(makerMin)} EV at today's fair price (the Bids tab's margin). " +
+                    "The Bids tab posts it for you and takes it down when the fair moves against it.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
