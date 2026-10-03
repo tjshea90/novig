@@ -207,6 +207,7 @@ object MakerQuote {
         }
         fun skip(why: String) = MakerDecision.Skip(line, why)
         val fair = line.fair!!
+        if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
@@ -241,7 +242,6 @@ object MakerQuote {
         // A bid never outlives what it was priced from: the fair's own freshness, the stop window before the start, and the expiry setting.
         val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + Freshness.maxAgeMs(line.startsTs, now))
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
-        if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
         val price = PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The fair price is too small to bid under")
         if (price < rules.minPrice - 1e-9 || price > rules.maxPrice + 1e-9) {
