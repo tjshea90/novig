@@ -3589,3 +3589,8 @@ When vigilant wallet runs out of money, it already tells me in the notifications
 ```
 Research whether https://api-sports.io/ or therundown apis are better than the apis I currently use or if they would add value to the app in any way
 ```
+
+## 2026-10-03T00:40:58Z
+```
+Now do deep research on proven successful betting strategies. Not speculative things but research how professional bettors were able to profit. What did they look for? Am I on the right track with vigilant? What settings most closely matches professionals? Novig has betting history with liquidity and there are probably other sources with betting information and history; can these be used to find successful strategies for betting? The goal is to use novig to make as much money as possible. Research how this can be accomplished
+```
