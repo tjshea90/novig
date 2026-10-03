@@ -203,6 +203,7 @@ class CnoClient(
             filters = filters,
             wide = wideRows != null,
             asked = asked,
+            limit = wideRows,
         )
     }
 

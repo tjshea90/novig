@@ -100,6 +100,8 @@ data class CnoSnapshot(
     val wide: Boolean = false,
     /** For a wide read: the filter fields as they were posted (`TextBoxMinimumEVPercentage=0%, …`), so the first log says what CNO was asked. */
     val asked: String? = null,
+    /** For a wide read: the most rows it asked CNO for; a read with that many rows may have left some out. */
+    val limit: Int? = null,
 ) {
     /** When CNO's odds were last updated on CNO's side. */
     val dataAtMs: Long get() = fetchedAtMs - (cnoAgeSeconds ?: 0) * 1000L

@@ -65,6 +65,7 @@ class ScanStudy(
         var checked = false
         var vigRecorded = false
         var cnoRecorded = false
+        var colsRecorded = false
         var idsKnown = false
     }
 
@@ -75,6 +76,8 @@ class ScanStudy(
     private var lastFlushMs = clock()
     private var lastCnoAt = Long.MIN_VALUE
     private var lastCnoBaseline: Pair<String, Any?>? = null
+    private var lastWideAt = Long.MIN_VALUE
+    private var lastWideBaseline: Pair<String, Any?>? = null
     private var lastVigAt = Long.MIN_VALUE
     private var lastVigBaseline: Any? = null
     private var hydrated = false
@@ -123,42 +126,101 @@ class ScanStudy(
             val seen = HashSet<String>()
             var created = 0
             for (row in snap.rows) {
-                val starts = row.startsAtMs ?: continue
-                if (starts <= now) continue
-                val identity = PlacedIndex.identity(row.event, row.market, row.bet)
-                val fallback = "c|${row.key}"
-                val lp = live[row.key]?.takeIf { now - it.atMs <= LIVE_FRESH_MS }
-                val view = books[row.key]?.view?.takeIf { now - it.fetchedAtMs <= VIEW_FRESH_MS }
-                val priced = if (lp != null) row.copy(odds = lp.american) else row
-                val ev = lp?.ev ?: row.ev
-                val outcome = lp?.outcomeId ?: CnoFeed.outcomeIdOf(links[CnoFeed.linkKey(row)])
-                val sight = Sight(Sight.CNO, o = priced.odds, ev = ev, f = CnoChecks.fairProbability(row), b = row.books, a = lp?.available ?: row.available)
-                var a = find(identity, row.league, starts, fallback)
-                if (a == null) {
-                    val atBet = AtBets.cno(row, false, view, null, lp, snap.dataAtMs, s, now, AtBet.HOW_STUDY, BetTracker.SOURCE_CNO, version())
-                    val bet = BetTracker.cnoBet(
-                        priced, ev, false, null, STUDY_STAKE, lp?.marketId.orEmpty(), outcome.orEmpty(), BetTracker.SOURCE_CNO, atBet, idOf(identity, fallback, starts), now,
-                    )
-                    a = register(bet, identity, CnoChecks.rejection(row, filters, now)?.name, now, checked = view != null)
-                    created++
-                }
-                seen += a.id
-                a.listed += Sight.CNO
-                a.row = row
-                if (!a.cnoRecorded) {
-                    queue(a, Line(Line.CNO_REC, a.id, now, a = AtBets.cno(row, false, view, null, lp, snap.dataAtMs, s, now, AtBet.HOW_STUDY, BetTracker.SOURCE_CNO, version())))
-                    a.cnoRecorded = true
-                }
-                record(a, sight, now)
-                if (!a.idsKnown && outcome != null) {
-                    queue(a, Line(Line.IDS, a.id, now, m = lp?.marketId, o = outcome))
-                    a.idsKnown = true
-                }
+                if (lookAt(row, snap, Sight.CNO, s, books, live, links, now, seen) { CnoChecks.rejection(it, filters, now)?.name }) created++
             }
             if (same) sweepGone(Sight.CNO, Sight.GONE_CNO, seen, now)
             maybeFlush(now)
             created
         }
+
+    /**
+     * One wide read ([wide], [CnoFeed.readWide]): every row CNO found with its filters opened right up, the rows the app's own CNO list carries ([narrow], its newest
+     * read) and the ones Tj's filters hide alike (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria … They should still be
+     * hidden in the app but logged"). Logged as [Sight.WIDE] looks, a new bet with why the app's list would not show it ([Line.sc]: the app's own screen's reason, or
+     * [Line.NOT_LISTED] when the screen passes it and CNO's read under his filters didn't carry it) and every column CNO printed for it, once. Nothing the app shows is
+     * read from or changed by this. Returns the bets first listed.
+     */
+    suspend fun observeCnoWide(
+        wide: CnoSnapshot, narrow: CnoSnapshot?, s: ScanSettings, books: Map<String, CnoBooksState>, live: Map<String, LivePrice>, links: Map<String, String>,
+    ): Int = mutex.withLock {
+        if (!s.scanStudy || !s.scanStudyHidden) return@withLock 0
+        val now = clock()
+        if (wide.fetchedAtMs == lastWideAt) return@withLock 0
+        lastWideAt = wide.fetchedAtMs
+        if (now - wide.fetchedAtMs > MAX_SCAN_AGE_MS) return@withLock 0
+        hydrate(now)
+        prune(now)
+        val baseline = wide.url to wide.filters
+        val same = baseline == lastWideBaseline
+        lastWideBaseline = baseline
+        if (!same) active.values.forEach { it.listed.remove(Sight.WIDE) }
+        val filters = wide.filters ?: s.cnoFilters
+        // What the app's list carried when this was read: unknown when its newest read is another view's or filters', or too far from this one.
+        val appKeys = narrow?.takeIf { it.url == wide.url && it.filters == wide.filters && abs(wide.fetchedAtMs - it.fetchedAtMs) <= LIST_MATCH_MS }
+            ?.rows?.mapTo(HashSet()) { it.key }
+        val seen = HashSet<String>()
+        var created = 0
+        for (row in wide.rows) {
+            val hidden = { r: CnoRow -> CnoChecks.rejection(r, filters, now)?.name ?: Line.NOT_LISTED.takeIf { appKeys != null && r.key !in appKeys } }
+            if (lookAt(row, wide, Sight.WIDE, s, books, live, links, now, seen, hidden)) created++
+        }
+        // A read that came back with as many rows as it asked for may have cut some off: nothing is called gone across it.
+        val capped = wide.limit != null && wide.rows.size >= wide.limit
+        if (same && !capped) sweepGone(Sight.WIDE, Sight.GONE_WIDE, seen, now)
+        maybeFlush(now)
+        created
+    }
+
+    /**
+     * One row of a CNO read ([snap]; [kind] says which: [Sight.CNO] the app's list, [Sight.WIDE] the wide read) as a look at its bet: the bet is made on its first look
+     * (its record as placed, and [screenOf]'s say on why the app's list wouldn't show it), then the look is logged when it's worth a line. Returns whether the bet is new.
+     */
+    private fun lookAt(
+        row: CnoRow, snap: CnoSnapshot, kind: String, s: ScanSettings, books: Map<String, CnoBooksState>, live: Map<String, LivePrice>, links: Map<String, String>,
+        now: Long, seen: MutableSet<String>, screenOf: (CnoRow) -> String?,
+    ): Boolean {
+        val starts = row.startsAtMs ?: return false
+        if (starts <= now) return false
+        val identity = PlacedIndex.identity(row.event, row.market, row.bet)
+        val fallback = "c|${row.key}"
+        val lp = live[row.key]?.takeIf { now - it.atMs <= LIVE_FRESH_MS }
+        val view = books[row.key]?.view?.takeIf { now - it.fetchedAtMs <= VIEW_FRESH_MS }
+        val priced = if (lp != null) row.copy(odds = lp.american, cols = emptyMap()) else row.copy(cols = emptyMap())
+        val ev = lp?.ev ?: row.ev
+        val outcome = lp?.outcomeId ?: CnoFeed.outcomeIdOf(links[CnoFeed.linkKey(row)])
+        val sight = Sight(kind, o = priced.odds, ev = ev, f = CnoChecks.fairProbability(row), b = row.books, a = lp?.available ?: row.available)
+        var a = find(identity, row.league, starts, fallback)
+        var created = false
+        if (a == null) {
+            val atBet = atBetOf(row, view, lp, snap, s, now)
+            val bet = BetTracker.cnoBet(
+                priced, ev, false, null, STUDY_STAKE, lp?.marketId.orEmpty(), outcome.orEmpty(), BetTracker.SOURCE_CNO, atBet, idOf(identity, fallback, starts), now,
+            )
+            a = register(bet, identity, screenOf(row), now, checked = view != null)
+            created = true
+        }
+        seen += a.id
+        a.listed += kind
+        if (kind == Sight.CNO) a.row = row
+        if (!a.cnoRecorded) {
+            queue(a, Line(Line.CNO_REC, a.id, now, a = atBetOf(row, view, lp, snap, s, now)))
+            a.cnoRecorded = true
+        }
+        if (!a.colsRecorded && row.cols.isNotEmpty()) {
+            queue(a, Line(Line.CNO_COLS, a.id, now, c = row.cols))
+            a.colsRecorded = true
+        }
+        record(a, sight, now)
+        if (!a.idsKnown && outcome != null) {
+            queue(a, Line(Line.IDS, a.id, now, m = lp?.marketId, o = outcome))
+            a.idsKnown = true
+        }
+        return created
+    }
+
+    /** The row's record as first listed, without the rules summary (the file's header carries the rules in force; a copy on every one of thousands of bets is only size). */
+    private fun atBetOf(row: CnoRow, view: com.tjshea.vigilant.data.cno.CnoBooksView?, lp: LivePrice?, snap: CnoSnapshot, s: ScanSettings, now: Long): AtBet =
+        AtBets.cno(row, false, view, null, lp, snap.dataAtMs, s, now, AtBet.HOW_STUDY, BetTracker.SOURCE_CNO, version()).copy(rules = null)
 
     /**
      * One finished Vigilant scan ([result]): the +EV bets its feed lists, the same way. A bet CNO listed too is the same bet (one record, looks from both);
@@ -510,6 +572,9 @@ class ScanStudy(
 
         /** A list read longer ago than this is a saved one shown before the launch's first read, not a scan. */
         const val MAX_SCAN_AGE_MS = 90_000L
+
+        /** The app's CNO list is the one a wide read is compared with when its newest read was within this long of the wide read's. */
+        const val LIST_MATCH_MS = 60_000L
 
         /** Novig's live price and a game page are used only this fresh. */
         const val LIVE_FRESH_MS = 60_000L
