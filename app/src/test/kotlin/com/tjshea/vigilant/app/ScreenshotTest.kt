@@ -134,8 +134,13 @@ class ScreenshotTest {
     @Test fun gamesBeforeFirstScan() = shoot("3b_games_before_scan") { GamesScreen(SampleScan.fresh(), {}, {}) }
 
 
-    @Config(qualifiers = "w393dp-h6800dp-xxhdpi")
-    @Test fun settings() = shoot("5_settings") { SettingsScreen(SampleScan.state(), {}) }
+    /** The home list as the app shows it: with the rows that open the Auto-bet and Bids tabs. */
+    @Config(qualifiers = "w393dp-h2400dp-xxhdpi")
+    @Test fun settings() {
+        shoot("5_settings") { SettingsScreen(SampleScan.state(), {}, onOpenAutoBet = {}, onOpenBids = {}) }
+        compose.onNodeWithTag("settingsRow-AUTOBET").assertExists()
+        compose.onNodeWithTag("settingsRow-BIDS").assertExists()
+    }
 
     /** One picture per Settings tab (v0.22.0). */
     private fun settingsTab(tab: SettingsPage) = shoot("5_settings_tab_${tab.name.lowercase()}") { SettingsScreen(SampleScan.state(), {}, page = tab) }
