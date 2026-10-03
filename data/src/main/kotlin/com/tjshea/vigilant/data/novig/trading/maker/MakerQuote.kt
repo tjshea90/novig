@@ -38,6 +38,11 @@ data class MakerRules(
     val bankroll: Double = 0.0,
     /** Skip a bid that a sharp book in the fair, devigged on its own, says isn't +EV (the auto-bet's sharp veto, RESEARCH.md §66). */
     val sharpVeto: Boolean = true,
+    /**
+     * The sharp veto's bar at the bid's own price ([ScanSettings.sharpVetoMinEv], as the auto-bet's veto): every sharp book in the fair must give the bid
+     * at least this edge on its own (zero or less is always a veto). A filled bid keeps about the sharp book's edge, not the blend's (RESEARCH.md §72).
+     */
+    val sharpMinEv: Double = 0.0,
     /** A resting bid is moved up only when the bid wanted is at least this many grid steps higher (moving loses its place in the queue). */
     val requoteSteps: Int = 2,
     /** A bid this close to expiring is re-posted now (so a bid that's still good is always up). */
@@ -69,11 +74,15 @@ data class MakerRules(
             maxStake = minOf(s.makerMaxStake, s.apiMaxStake).coerceAtLeast(0.01),
             bankroll = s.bankroll,
             sharpVeto = s.makerSharpVeto,
+            sharpMinEv = s.sharpVetoMinEv.coerceIn(0.0, MAX_SHARP_MIN_EV),
             earlyHours = s.trapEarlyHours.coerceAtLeast(0),
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
         val GAME_LINES = setOf(BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TOTAL)
+
+        /** The highest bar a saved setting can set for the bids' sharp veto (a bid's whole margin is 4% by default). */
+        const val MAX_SHARP_MIN_EV = 0.10
     }
 }
 
@@ -250,7 +259,12 @@ object MakerQuote {
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
-        if (rules.sharpVeto && line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
+        if (rules.sharpVeto) {
+            if (line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
+            if (line.sharpFairs.any { !com.tjshea.vigilant.data.scanner.SharpVeto.passes(it / price - 1.0, rules.sharpMinEv) }) {
+                return skip("A sharp book's own price gives this bid under the sharp veto's ${percent(rules.sharpMinEv)} edge")
+            }
+        }
         val stake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
