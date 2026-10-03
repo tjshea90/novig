@@ -302,6 +302,22 @@ class AutoBetTest {
         assertEquals(0.4, AutoBet.priceOf(row(150, 0.5)), 1e-12)
     }
 
+    /** RESEARCH.md §72 + Benter: Kelly on an overestimated edge overbets, so a Kelly stake is never sized on more edge than the sharpest book backs. */
+    @Test
+    fun `a Kelly stake uses the sharpest book's own fair when it is lower than CNO's, never a higher one`() {
+        // +100 (price 0.5), CNO's fair 0.52 (4% edge, full Kelly 0.04): 1/4 of $1,000 = $10. The sharp book's 0.505 (1%): full Kelly 0.01, 1/4 = $2.50.
+        val even = row(100, 0.52)
+        assertEquals(10.00, amount(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), even, 1000.0, 500.0)), 1e-9)
+        assertEquals(2.50, amount(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), even, 1000.0, 500.0, sharpFair = 0.505)), 1e-9)
+        // A sharp book that backs MORE doesn't raise it (the shown edge stays the most it bets on), nor does a nonsense one.
+        assertEquals(10.00, amount(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), even, 1000.0, 500.0, sharpFair = 0.56)), 1e-9)
+        assertEquals(10.00, amount(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), even, 1000.0, 500.0, sharpFair = 0.0)), 1e-9)
+        // A sharp fair at or under the price leaves no Kelly stake (the veto's bar would have stopped it first).
+        assertTrue(skip(AutoBet.stake(rules(AutoBetStake.QUARTER_KELLY), even, 1000.0, 500.0, sharpFair = 0.5)).contains("no Kelly stake"))
+        // Flat stakes don't use a fair at all.
+        assertEquals(1.0, amount(AutoBet.stake(rules(AutoBetStake.ONE_DOLLAR), even, 1000.0, 500.0, sharpFair = 0.505)), 1e-9)
+    }
+
     /** RESEARCH.md §72: when not every bet can be placed, the money goes to the edges most likely to hold by the close. */
     @Test
     fun `the credible edge is the sharpest book's own edge when it priced the bet, else 70% of the shown edge`() {
