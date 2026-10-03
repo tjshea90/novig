@@ -169,6 +169,11 @@ data class TrackedBet(
      * is when it was saved. A close merged from it ([BetTracker.mergeReads]) is dated by this, as a scan's is ([ClosingLine]).
      */
     val vigAsOfMs: Long? = null,
+    /**
+     * A make order (Tj, 2026-10-03; RESEARCH.md §70): a bid Vigilant posted under its fair price that a taker filled
+     * ([com.tjshea.vigilant.data.novig.trading.maker.MakerDesk]). [fairAtBet] and [evPercentAtBet] are the fair and EV when it was posted.
+     */
+    val maker: Boolean = false,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
@@ -576,6 +581,62 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             } else {
                 // The ✓ marks for the same row (a CNO bet or an alert) are replaced by the real bet.
                 (if (target.placedKey == null) list else list.filterNot { it.placedKey == target.placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet
+            }
+        }
+        return logged
+    }
+
+    /**
+     * A make order's fills ([TrackedBet.maker]; RESEARCH.md §70): the first fill of [orderId] logs the bet with the fair and EV it was posted at, later fills
+     * of the same order are merged into it ([fills] is every fill of the order so far; the cost, contracts and EV follow them). A bet the Tracker's sync
+     * already imported from the same order (no fair on record) takes the bid's fair. Null when there's nothing filled.
+     */
+    suspend fun logMakerFills(
+        target: com.tjshea.vigilant.data.novig.trading.BetTarget,
+        orderId: String,
+        fills: List<com.tjshea.vigilant.data.novig.trading.NovigFill>,
+    ): TrackedBet? {
+        val all = fills.distinctBy { it.fillId }
+        val contracts = all.sumOf { it.qty }
+        if (contracts <= 0L) return null
+        val paid = all.sumOf { it.cost }
+        val fee = all.sumOf { it.fee }
+        val payout = contracts * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS
+        val stake = paid + fee
+        val price = paid / payout
+        val cost = stake / payout
+        val note = "Maker bid filled through Novig's API: $contracts contracts, ${"%.2f".format(java.util.Locale.US, paid)} paid"
+        fun TrackedBet.withFills() = copy(
+            price = price, cost = cost, stake = stake, contracts = contracts, paid = paid, fee = fee, fillIds = all.map { it.fillId },
+            american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)),
+            fairAtBet = target.fair, evPercentAtBet = target.fair / cost - 1.0, fairBasis = target.basis ?: fairBasis,
+            atBet = (target.atBet ?: atBet)?.copy(stake = stake), maker = true, imported = false, auto = target.auto,
+            source = target.source, gradeNote = if (status == BetStatus.PENDING) note else gradeNote,
+        )
+        var logged: TrackedBet? = null
+        store.update { list ->
+            val i = list.indexOfFirst { it.orderId == orderId }
+            if (i >= 0) {
+                val have = list[i]
+                // Nothing new filled and already a maker bet: left exactly as it is.
+                if (have.maker && have.fillIds.toSet() == all.map { it.fillId }.toSet()) {
+                    logged = have
+                    return@update list
+                }
+                val next = have.withFills()
+                logged = next
+                list.toMutableList().also { it[i] = next }
+            } else {
+                val bet = TrackedBet(
+                    id = UUID.randomUUID().toString(),
+                    createdAtMs = all.minOf { it.ts }.takeIf { it > 0 } ?: clock(),
+                    league = target.league, eventName = target.eventName, startsTs = target.startsTs, marketLabel = target.marketLabel,
+                    selection = target.selection, marketId = target.market.marketId, outcomeId = target.outcomeId,
+                    price = price, cost = cost, fairAtBet = target.fair, evPercentAtBet = target.fair / cost - 1.0, stake = stake,
+                    source = target.source, book = target.book, gameUrl = target.gameUrl, orderId = orderId,
+                ).withFills()
+                logged = bet
+                list + bet
             }
         }
         return logged
