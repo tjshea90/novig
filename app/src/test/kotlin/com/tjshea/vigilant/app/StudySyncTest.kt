@@ -106,14 +106,21 @@ class StudySyncTest {
     }
 
     @Test
-    fun `a watcher that came late and dropped the list doesn't stop the catch-up logging it`() = runBlocking {
+    fun `watchers that came late and dropped the reads as old ones don't stop the catch-up logging them`() = runBlocking {
         val rig = Rig()
         val cycleStart = now
         rig.cno.refresh("u", CnoFilters())
+        // The wide read was made in the cycle (its watcher got that far); the watchers that log what was read got their turn only three minutes on.
+        rig.sync.wideRead(rig.cno.state.value.snapshot!!)
         now += 180_000
         rig.sync.list(rig.cno.state.value.snapshot!!)
+        rig.sync.wide(rig.cno.wide.value.snapshot!!)
+        assertEquals(0, rig.bets().size)
         rig.sync.catchUp(cycleStart)
-        assertEquals(2, rig.bets().size)
+        val bets = rig.bets().associateBy { it.bet.marketLabel }
+        assertEquals(2, bets.size)
+        assertTrue("the app's list's own look of the Mets moneyline", bets.getValue("Moneyline").sights.any { it.second.k == Sight.CNO })
+        assertTrue("the wide read's row the list never had", bets.getValue("Total Runs").sights.any { it.second.k == Sight.WIDE })
     }
 
     @Test
