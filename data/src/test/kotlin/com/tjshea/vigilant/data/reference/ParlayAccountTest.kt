@@ -187,6 +187,20 @@ class ParlayAccountTest {
         assertEquals(resetSec * 1000, key().resetAtMs)
     }
 
+    /** Tj's v0.52.0 file: NFL props failed 39 of 82 times ("props_temporarily_busy … Retry in a couple of seconds") with one retry. */
+    @Test
+    fun `a busy board is asked again twice - a 503 or a 200 that only says busy - and a third failure stands`() = runBlocking<Unit> {
+        val busy = """{"error":"props_temporarily_busy","detail":"The props board is being rebuilt. Retry in a couple of seconds."}"""
+        server.enqueue(MockResponse().setResponseCode(503).setBody(busy))
+        server.enqueue(MockResponse().setBody(busy))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        assertTrue(parlay().fetch("americanfootball_nfl", listOf("pinnacle")).events.isNotEmpty())
+        assertEquals(3, server.requestCount)
+        repeat(3) { server.enqueue(MockResponse().setResponseCode(503).setBody(busy)) }
+        assertTrue(runCatching { parlay().fetch("americanfootball_nfl", listOf("pinnacle")) }.isFailure)
+        assertEquals(6, server.requestCount)
+    }
+
     @Test
     fun `a 4xx is never retried, and a failure names ParlayAPI's request id`() = runBlocking<Unit> {
         server.enqueue(MockResponse().setResponseCode(400).setHeader("X-Request-ID", "req-77").setBody("""{"error":"BAD_PARAM"}"""))
