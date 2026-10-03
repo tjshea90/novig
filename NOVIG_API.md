@@ -629,3 +629,8 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   balance; treat it as held (the sum of resting bids ≤ the wallet). Every order is a buy, so a bid on each outcome of one market is two buys: both
   filling holds both sides (a lock, §16). A bid of yours on one outcome and one on the other at prices summing to 1 or more would self-match (a wash).
 - **Not yet seen live:** the `PO` reject, `ttl` expiry and maker fills on Tj's subaccount. The first real bid is the test (QA, §1, can try it first).
+- **How Vigilant uses it (v0.51.0, the Bids tab; RESEARCH.md §70.6):** `data/novig/trading/maker/` (`MakerQuote`, `MakerPlan`, `MakerDesk`, `MakerStore`) and
+  `app/MakerRunner`: every bid `PO` with `ttl` = min(30 min, until the start); each pass reads `GET /v3/orders?status=OPEN`, an order that left the list is read with
+  `GET /v3/orders/{id}` (a 404 or `PENDING` just after placing is asked about again, not called ended) and its fills with `GET /v3/portfolio/fills?order=`; moves are
+  `DELETE /v3/orders/{id}` then a new `POST` (no amend), the order read once more after the cancel so a fill in between is recorded and that side isn't re-posted; Cancel all
+  is `DELETE /v3/orders`. Not yet seen live (the first real bid is the test).

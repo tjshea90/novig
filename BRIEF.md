@@ -352,6 +352,17 @@ robolectric.org/configuring/.
   look after a new boot (the boot receiver, else the first screen) saves `autoBet = false` and `autoScan = OFF` (`LaunchReset`) and the next screen says so. Nothing else turns
   them off: not a swipe out of Recents, a force stop, an update, a crash, Android ending the process, or a return from another app. Never add another reset without his word.
   (The v0.42.0 rule, "off at every reopen", and v0.44.2's "off after a close", are both replaced.)
+  **Make orders / the Bids tab (Tj, 2026-10-03; v0.51.0, RESEARCH.md §70, NOVIG_API.md §17): the second thing that spends money unattended, so its rules are fixed too.**
+  Off by default (`ScanSettings.maker`, the Bids tab's switch). Bids are priced from Vigilant's own scan (every line it prices), posted from the Vigilant wallet only, pregame only,
+  each one `PO` (post-only: refused rather than taking) with a `ttl` (default 30 min, never past the start) at `PriceGrid.floor(fair / (1 + makerMargin))` (default 4%), only
+  under Novig's offer (at or over it is a bet to take, not a bid), within the price window (0.10-0.65), on the chosen kinds (props, 1st-half/inning lines and team totals by
+  default; game lines off: §70.2), with at least `makerMinBooks` books and a fresh fair. Every pass (`MakerDesk.cycle`, after each Vigilant scan and each background cycle,
+  under the ONE order lock the Bet sheet, auto-bet and locks share) first reads what Novig did (fills logged to the Tracker as bets with the fair and EV when posted,
+  `TrackedBet.maker`), then cancels a bid whose line is no longer wanted, moves it down at once when the fair falls and up only after 2 grid steps, re-posts one about to expire,
+  and posts new ones cheapest first within `makerMaxBids`, `makerMaxDollars`, the wallet and the day's API limit (fills count; resting bids may not push it over). The same side is
+  never bought twice (an open Tracker bet on it, or a filled bid); a partly filled bid isn't re-posted; a lost answer is never re-sent (found by its `clientId`); a post-only
+  order Vigilant has no record of is cancelled. Switching bids off or pausing (an empty wallet pauses) cancels every bid at once (`AppContainer`). Each fill gets a notification.
+  Loosening any of this needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.
