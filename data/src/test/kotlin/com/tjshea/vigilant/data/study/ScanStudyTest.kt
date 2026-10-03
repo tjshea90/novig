@@ -1,0 +1,480 @@
+package com.tjshea.vigilant.data.study
+
+import com.tjshea.vigilant.data.cno.CnoBookPrice
+import com.tjshea.vigilant.data.cno.CnoBooksState
+import com.tjshea.vigilant.data.cno.CnoBooksView
+import com.tjshea.vigilant.data.cno.CnoFilters
+import com.tjshea.vigilant.data.cno.CnoRow
+import com.tjshea.vigilant.data.cno.CnoSnapshot
+import com.tjshea.vigilant.data.cno.LivePrice
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.tracker.AtBet
+import com.tjshea.vigilant.data.tracker.BetGraderTest
+import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.CloseLookup
+import com.tjshea.vigilant.data.tracker.CloseSource
+import com.tjshea.vigilant.data.tracker.FreeScores
+import com.tjshea.vigilant.data.tracker.GameScore
+import com.tjshea.vigilant.data.tracker.PlayerLine
+import com.tjshea.vigilant.data.tracker.ScoreSource
+import com.tjshea.vigilant.data.tracker.TrackedBet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
+import java.io.StringWriter
+import java.time.LocalDate
+
+/**
+ * Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information such as … odds at the time of scan, type of bet, percent EV,
+ * amount of books that agree, percentage of books that agree, time before the game begins … when those bets are final, it logs whether they won or lost or
+ * pushed and their closing line odds … utilize already available features in the app, such as the function in the app that already grades results and
+ * closing odds … efficient and doesn't interrupt or break any other part of the app".
+ */
+class ScanStudyTest {
+
+    @get:Rule val tmp = TemporaryFolder()
+
+    private val start = BetGraderTest.METS_START
+    private var now = start - 3 * 3_600_000L
+    private val day: LocalDate = FreeScores.etDate(start)
+    private val settings = ScanSettings()
+    private val event = "New York Mets @ Washington Nationals"
+
+    private fun journal() = StudyJournal(File(tmp.root, "study"))
+
+    private fun study(j: StudyJournal = journal(), flushEveryMs: Long = 0L) = ScanStudy(j, clock = { now }, version = { "0.57.0" }, flushEveryMs = flushEveryMs, io = Dispatchers.Unconfined)
+
+    private fun row(market: String, bet: String, odds: Int, ev: Double = 0.045, books: Int = 5, startsAt: Long? = start, fair: Double? = 0.5122, side: Int = 1) = CnoRow(
+        ev = ev, startsAtMs = startsAt, league = "MLB", sport = "BASEBALL", event = event, market = market, bet = bet, odds = odds, available = 40.0, book = "Novig",
+        fairOdds = -105, fairProbability = fair, books = books, gameUrl = "https://x/game.aspx?game_id=9&side_id=$side&devig_method=8",
+    )
+
+    private val moneyline get() = row("Moneyline", "New York Mets", 105)
+    private val total get() = row("Total Runs", "Over 8.5", 110, ev = 0.03, side = 2)
+    private val prop get() = row("Player Total Bases", "Carson Benge Over 1.5", 120, ev = 0.05, side = 3)
+
+    private var read = 0L
+    private fun snap(vararg rows: CnoRow, url: String = "https://cno/view", filters: CnoFilters = CnoFilters()): CnoSnapshot {
+        read = now
+        return CnoSnapshot(url, rows.toList(), fetchedAtMs = now, cnoAgeSeconds = 4, filters = filters)
+    }
+
+    private suspend fun ScanStudy.cno(s: CnoSnapshot, books: Map<String, CnoBooksState> = emptyMap(), live: Map<String, LivePrice> = emptyMap(), links: Map<String, String> = emptyMap(), set: ScanSettings = settings) =
+        observeCno(s, set, books, live, links)
+
+    // ---- logging -------------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `every pregame bet a CNO scan lists is logged with its record as first listed, and a started or undated row isn't`() = runBlocking {
+        val s = study()
+        val created = s.cno(snap(moneyline, prop, row("Moneyline", "Washington Nationals", -125, startsAt = now - 600_000), row("Total Runs", "Under 8.5", -130, startsAt = null)))
+        assertEquals(2, created)
+        s.flush()
+        val bets = journal().fold(day).values.toList()
+        assertEquals(2, bets.size)
+        val ml = bets.first { it.bet.marketLabel == "Moneyline" }
+        val a = ml.bet.atBet!!
+        // What Tj named: odds, type of bet, percent EV, books, time before the game, all as the scan showed them.
+        assertEquals(AtBet.HOW_STUDY, a.how)
+        assertEquals("cno", a.scanner)
+        assertEquals("MONEYLINE", a.kind)
+        assertEquals(180L, a.minutesToStart)
+        assertEquals(105, a.american)
+        assertEquals(0.045, a.ev!!, 1e-9)
+        assertEquals(5, a.cnoBooks)
+        assertEquals(40.0, a.available!!, 1e-9)
+        assertEquals("0.57.0", a.version)
+        assertEquals(105, ml.bet.american)
+        assertEquals(1.0 / 2.05, ml.bet.cost, 1e-9)
+        assertEquals(1.0, ml.bet.stake, 1e-9)
+        assertEquals("cno", ml.bet.source)
+        assertNull(ml.screen)
+        assertEquals(BetStatus.PENDING, ml.bet.status)
+        assertEquals("PROP", bets.first { it.bet.marketLabel == "Player Total Bases" }.bet.atBet!!.kind)
+        // Its first look: where, at what price and EV.
+        val look = ml.sights.single().second
+        assertEquals(Sight.CNO, look.k)
+        assertEquals(105, look.o)
+        assertEquals(0.045, look.ev!!, 1e-9)
+        assertEquals(5, look.b)
+    }
+
+    @Test
+    fun `the same read twice, a list saved before the launch's first read and a switched-off study log nothing`() = runBlocking {
+        val s = study()
+        val first = snap(moneyline)
+        assertEquals(1, s.cno(first))
+        assertEquals(0, s.cno(first))
+        // A list saved on disk: read long ago.
+        now += 10 * 60_000L
+        assertEquals(0, s.cno(first.copy(fetchedAtMs = now - 5 * 60_000L, rows = listOf(prop))))
+        assertEquals(0, s.cno(snap(prop), set = settings.copy(scanStudy = false)))
+        s.flush()
+        assertEquals(1, journal().fold(day).size)
+        assertEquals(1L, s.betsLogged)
+    }
+
+    @Test
+    fun `a watched bet is logged again when its price moves, at most once a minute, and at least every five minutes`() = runBlocking {
+        val s = study()
+        s.cno(snap(moneyline))
+        now += 20_000
+        // Within a minute: a price move isn't another line.
+        s.cno(snap(row("Moneyline", "New York Mets", 110)))
+        now += 45_000
+        s.cno(snap(row("Moneyline", "New York Mets", 110)))
+        now += 61_000
+        // Unchanged but over a minute: nothing; changed: a line.
+        s.cno(snap(row("Moneyline", "New York Mets", 110)))
+        now += 61_000
+        s.cno(snap(row("Moneyline", "New York Mets", 115)))
+        // Quiet for five minutes: one anyway.
+        now += 5 * 60_000L + 1_000
+        s.cno(snap(row("Moneyline", "New York Mets", 115)))
+        s.flush()
+        val looks = journal().fold(day).values.single().sights.map { it.second.o }
+        assertEquals(listOf(105, 110, 115, 115), looks)
+    }
+
+    @Test
+    fun `a bet the same list stops showing is logged as gone, with when; a changed view calls nothing gone; and it's logged again when it returns`() = runBlocking {
+        val s = study()
+        s.cno(snap(moneyline, prop))
+        now += 30_000
+        s.cno(snap(moneyline))
+        now += 30_000
+        // Another view: its rows leave without having gone.
+        s.cno(snap(prop, url = "https://cno/other"))
+        now += 30_000
+        s.cno(snap(moneyline, prop, url = "https://cno/other"))
+        s.flush()
+        val bets = journal().fold(day).values
+        val p = bets.first { it.bet.marketLabel == "Player Total Bases" }
+        assertEquals(listOf(Sight.CNO, Sight.GONE_CNO), p.sights.map { it.second.k }.take(2))
+        assertEquals(now - 60_000, p.sights[1].first)
+        // The prop went at the second read, came back at the fourth (a different view made the third's changes not gone).
+        assertEquals(listOf(Sight.CNO, Sight.GONE_CNO, Sight.CNO), p.sights.map { it.second.k })
+        val m = bets.first { it.bet.marketLabel == "Moneyline" }
+        // Listed, then dropped by the third read's other view: no "gone" there, and listed again in the fourth.
+        assertFalse(m.sights.any { Sight.isGone(it.second.k) })
+    }
+
+    @Test
+    fun `Novig's own price is the look's price when it was read in the last minute, and a stale one isn't`() = runBlocking {
+        val s = study()
+        val live = mapOf(moneyline.key to LivePrice(american = 118, available = 75.0, ev = 0.061, atMs = now - 20_000, marketId = "m-1", outcomeId = "o-1"))
+        s.cno(snap(moneyline), live = live)
+        now += 120_000
+        val stale = mapOf(moneyline.key to LivePrice(american = 140, available = 5.0, ev = 0.2, atMs = now - 90_000))
+        s.cno(snap(moneyline), live = stale)
+        s.flush()
+        val b = journal().fold(day).values.single()
+        assertEquals(118, b.bet.american)
+        assertEquals("m-1", b.bet.marketId)
+        assertEquals("o-1", b.bet.outcomeId)
+        assertEquals(listOf(118, 105), b.sights.map { it.second.o })
+        assertEquals(75.0, b.sights[0].second.a!!, 1e-9)
+    }
+
+    @Test
+    fun `a bet CNO's screen would hide is logged with why`() = runBlocking {
+        val s = study()
+        // One book behind the fair, under the four the filters ask for.
+        s.cno(snap(row("Moneyline", "New York Mets", 105, books = 1)))
+        s.flush()
+        assertEquals("BOOKS", journal().fold(day).values.single().screen)
+    }
+
+    // ---- the book check ---------------------------------------------------------------------------------------------------
+
+    private fun view(at: Long) = CnoBooksView(
+        "New York Mets", "Washington Nationals", null, false,
+        listOf(
+            CnoBookPrice("PN", 100, null, -115, null), CnoBookPrice("DK", 100, null, -118, null), CnoBookPrice("FD", -102, null, -112, null),
+            CnoBookPrice("CZR", 100, null, -120, null), CnoBookPrice("NV", 105, null, -125, null),
+        ),
+        fetchedAtMs = at,
+    )
+
+    @Test
+    fun `the book page the green check read adds the check to the bet's record and to its looks, once`() = runBlocking {
+        val s = study()
+        s.cno(snap(moneyline))
+        now += 30_000
+        val books = mapOf(moneyline.key to CnoBooksState(view = view(now - 5_000)))
+        assertEquals(1, s.observeBooks(books, settings, emptyMap()))
+        // The same page again: nothing new.
+        assertEquals(0, s.observeBooks(books, settings, emptyMap()))
+        s.flush()
+        val b = journal().fold(day).values.single()
+        val a = b.bet.atBet!!
+        assertNotNull(a.twoSided)
+        assertEquals(4, a.agreeing)
+        assertEquals(a.twoSided, a.books.count { it.other != null && it.book != "Novig" })
+        assertEquals(now, a.checkAtMs)
+        // The record as first listed is kept: the price and minutes to start are the first look's.
+        assertEquals(105, a.american)
+        assertEquals(180L, a.minutesToStart)
+        val check = b.sights.map { it.second }.last { it.k == Sight.CHECK }
+        assertEquals(4, check.g)
+        assertEquals(a.twoSided, check.n)
+        assertNotNull(check.ce)
+        assertNotNull(check.sv)
+    }
+
+    // ---- the journal --------------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `after a restart a bet the list still shows isn't logged a second time, and a half-written line is skipped`() = runBlocking {
+        val j = journal()
+        val a = study(j)
+        a.cno(snap(moneyline, prop))
+        a.flush()
+        // The process died mid-line.
+        j.file(day).appendText("""{"e":"s","id":"zz","t":1,"s":{"k":"c","o":""")
+        now += 30_000
+        val b = study(j)
+        assertEquals(0, b.cno(snap(moneyline, prop)))
+        b.flush()
+        val folded = j.fold(day)
+        assertEquals(2, folded.size)
+        // The next append starts on its own line: nothing was glued onto the torn one.
+        assertTrue(j.read(day).count() >= 4)
+        assertEquals(2, j.read(day).count { it.e == Line.BET })
+        assertEquals(1, folded.values.first { it.bet.marketLabel == "Moneyline" }.sights.size)
+    }
+
+    @Test
+    fun `lines are written together once the flush gap has passed, and kept when the disk refuses them`() = runBlocking {
+        val j = StudyJournal(File(tmp.root, "blocked").also { it.writeText("a file where the folder should be") })
+        val s = ScanStudy(j, clock = { now }, flushEveryMs = 10_000, io = Dispatchers.Unconfined)
+        s.cno(snap(moneyline))
+        assertNotNull(s.lastProblem)
+        // A disk that works again takes everything that waited.
+        val ok = journal()
+        val t = ScanStudy(ok, clock = { now }, flushEveryMs = 10_000, io = Dispatchers.Unconfined)
+        t.cno(snap(moneyline))
+        // Within the gap nothing is written yet; past it, one write.
+        assertTrue(ok.fold(day).isEmpty())
+        now += 11_000
+        t.cno(snap(prop))
+        assertEquals(2, ok.fold(day).size)
+    }
+
+    @Test
+    fun `the study makes no request: it reads only what the scan handed it`() {
+        val source = File("src/main/kotlin/com/tjshea/vigilant/data/study/ScanStudy.kt").readText()
+        assertFalse(source.contains("okhttp3"))
+        assertFalse(source.contains("OkHttpClient"))
+        assertFalse(source.contains("loadBooks("))
+        assertFalse(source.contains("readNow("))
+    }
+
+    // ---- grading and closes -------------------------------------------------------------------------------------------------
+
+    private class FakeScores : ScoreSource {
+        override fun covers(league: String) = league == "MLB"
+        override suspend fun games(league: String, date: LocalDate): List<GameScore>? =
+            if (league == "MLB" && date == LocalDate.of(2026, 9, 26)) {
+                listOf(GameScore("822678", "MLB", "Washington Nationals", "New York Mets", BetGraderTest.METS_START, true, false, 1, 7, listOf(0, 0, 1, 0, 0, 0, 0, 0, 0), listOf(0, 0, 0, 0, 0, 0, 4, 1, 2)))
+            } else emptyList()
+
+        override suspend fun players(game: GameScore): List<PlayerLine>? = BetGraderTest.padded(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
+    }
+
+    private class FakeClose(val fair: Double = 0.55, val note: String? = null) : CloseSource {
+        var asked = 0
+        override val id: String get() = "fake"
+        override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> {
+            asked += bets.size
+            return bets.associate { it.id to (if (note == null) CloseLookup.Found(fair, "Fake · Pinnacle close") else CloseLookup.None(note)) }
+        }
+    }
+
+    @Test
+    fun `after the game the logged bets are graded and closed by the app's own grader and close lookups, and the results go to the journal`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline, total, prop))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        val close = FakeClose(0.55)
+        val report = s.settle(FakeScores(), listOf(close), emptyList(), File(tmp.root, "scratch"))
+        assertEquals(3, report.looked)
+        assertEquals(3, report.graded)
+        assertEquals(3, report.closed)
+        val bets = j.fold(day).values.associateBy { it.bet.marketLabel }
+        assertEquals(BetStatus.WON, bets.getValue("Moneyline").bet.status)
+        assertEquals(BetStatus.LOST, bets.getValue("Total Runs").bet.status)
+        assertEquals(BetStatus.WON, bets.getValue("Player Total Bases").bet.status)
+        assertEquals(1.05, bets.getValue("Moneyline").bet.profit!!, 1e-9)
+        assertEquals(0.55, bets.getValue("Moneyline").bet.closeFair!!, 1e-9)
+        assertEquals("Fake · Pinnacle close", bets.getValue("Moneyline").bet.closeVia)
+        // CLV the app's own way: the close's fair over what the price cost, minus one.
+        val b = bets.getValue("Moneyline").bet
+        assertEquals(0.55 * 2.05 - 1.0, com.tjshea.vigilant.data.tracker.ClosingLine.clv(b, now)!!, 1e-9)
+        // Nothing is left to do: the next pass looks at nothing, asks no feed, and writes nothing.
+        val lines = j.read(day).count()
+        val again = s.settle(FakeScores(), listOf(close), emptyList(), File(tmp.root, "scratch"))
+        assertEquals(0, again.looked)
+        assertEquals(lines, j.read(day).count())
+        assertEquals(3, close.asked)
+        // The scratch Tracker file is gone.
+        assertTrue(File(tmp.root, "scratch").listFiles().orEmpty().isEmpty())
+    }
+
+    @Test
+    fun `a bet whose game isn't over or has no close yet is tried again next pass, with the close lookup's own gap kept`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        now = start + 90 * 60_000L
+        val none = FakeClose(note = "ESPN keeps no line for this")
+        val live = object : ScoreSource by FakeScores() {
+            override suspend fun games(league: String, date: LocalDate): List<GameScore>? = FakeScores().games(league, date)?.map { it.copy(final = false) }
+        }
+        s.settle(live, listOf(none), emptyList(), File(tmp.root, "scratch"))
+        var b = j.fold(day).values.single().bet
+        assertEquals(BetStatus.PENDING, b.status)
+        assertEquals("ESPN keeps no line for this", b.closeNote)
+        assertTrue(b.closeFinal)
+        // Every source said never: a close isn't looked for again; the result is, once the game is over.
+        now += 40 * 60_000L
+        s.settle(FakeScores(), listOf(none), emptyList(), File(tmp.root, "scratch"))
+        b = j.fold(day).values.single().bet
+        assertEquals(BetStatus.WON, b.status)
+        assertNull(b.closeFair)
+        assertEquals(1, none.asked)
+    }
+
+    @Test
+    fun `a bet Tj placed himself takes its result and its close from his Tracker bet, and nothing is looked up for it`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline, total))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        val placed = TrackedBet(
+            id = "tj", createdAtMs = start - 2 * 3_600_000L, league = "MLB", eventName = event, startsTs = start, marketLabel = "Moneyline", selection = "New York Mets",
+            marketId = "", outcomeId = "", price = 0.48, cost = 0.48, fairAtBet = 0.5, evPercentAtBet = 0.04, stake = 2.0, american = 108, status = BetStatus.LOST,
+            settledAtMs = now - 1_000, settledBy = "scores", closingFair = 0.57, closingSeenAtMs = start - 120_000, novigClose = 0.56, novigCloseAtMs = start - 100_000,
+        )
+        val close = FakeClose(0.5)
+        val report = s.settle(FakeScores(), listOf(close), listOf(placed), File(tmp.root, "scratch"))
+        assertEquals(1, report.copied)
+        val bets = j.fold(day).values.associateBy { it.bet.marketLabel }
+        val ml = bets.getValue("Moneyline")
+        // His bet's graded result and the close read just before the start, copied; the unrelated total graded the normal way.
+        assertEquals(BetStatus.LOST, ml.bet.status)
+        assertEquals(0.57, com.tjshea.vigilant.data.tracker.ClosingLine.closeFair(ml.bet, now)!!, 1e-9)
+        assertEquals(0.56, ml.bet.novigClose!!, 1e-9)
+        assertEquals("tracker", ml.from)
+        assertEquals(BetStatus.LOST, bets.getValue("Total Runs").bet.status)
+        // The close source was asked only for the total.
+        assertEquals(1, close.asked)
+    }
+
+    // ---- the pieces -------------------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `a look is worth a line when it's the first, a change, or the heartbeat - never more than once a minute`() {
+        val a = Sight(Sight.CNO, o = 105, ev = 0.045, f = 0.512, b = 5)
+        val t = 1_000_000L
+        assertTrue(ScanStudy.worthLogging(null, null, a, t))
+        assertFalse(ScanStudy.worthLogging(a, t, a.copy(o = 110), t + 59_000))
+        assertTrue(ScanStudy.worthLogging(a, t, a.copy(o = 110), t + 60_000))
+        assertFalse(ScanStudy.worthLogging(a, t, a.copy(ev = 0.0449), t + 120_000))
+        assertTrue(ScanStudy.worthLogging(a, t, a.copy(ev = 0.0476), t + 120_000))
+        assertTrue(ScanStudy.worthLogging(a, t, a.copy(b = 6), t + 120_000))
+        assertTrue(ScanStudy.worthLogging(a, t, a.copy(f = 0.515), t + 120_000))
+        assertFalse(ScanStudy.worthLogging(a, t, a, t + 299_000))
+        assertTrue(ScanStudy.worthLogging(a, t, a, t + 300_000))
+    }
+
+    // ---- the file for Claude ----------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `the file tells Claude the goal and to be thorough, sums the bets up by every split, and has one JSON line per bet with its looks, close and result`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline, total, prop))
+        now += 90_000
+        s.cno(snap(row("Moneyline", "New York Mets", 120), total, prop))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        s.settle(FakeScores(), listOf(FakeClose(0.55)), emptyList(), File(tmp.root, "scratch"))
+        val out = StringWriter()
+        val meta = StudyExport.Meta("0.57.0", 99, "moto g", "edge ≥ 2.5%", java.util.TimeZone.getTimeZone("America/New_York"))
+        val placed = TrackedBet(
+            id = "tj", createdAtMs = start - 3_600_000L, league = "MLB", eventName = event, startsTs = start, marketLabel = "Player Total Bases", selection = "Carson Benge Over 1.5",
+            marketId = "", outcomeId = "", price = 0.45, cost = 0.45, fairAtBet = 0.5, evPercentAtBet = 0.04, stake = 1.0, american = 122,
+        )
+        val n = StudyExport.write(out, j, listOf(placed), meta, now, File(tmp.root, "export.tmp"))
+        assertEquals(3, n)
+        val text = out.toString()
+        assertTrue(text, text.startsWith("VIGILANT SCAN STUDY · version 0.57.0 · vigilant-scan-study-v0.57.0-"))
+        // The goal and the instruction Tj asked for.
+        assertTrue(text.contains("THE GOAL IS PROFIT"))
+        assertTrue(text.contains("be thorough, and analyze ALL of the data for patterns and for profitable bet strategies"))
+        assertTrue(text.contains("== DATA DICTIONARY =="))
+        assertTrue(text.contains("== HOW THIS DATA WAS COLLECTED, AND WHAT IT CAN'T SAY =="))
+        // The sums: 3 bets, 2 won and 1 lost at the first-listed price; the close beaten on all three.
+        assertTrue(text, text.contains("ALL BETS · 3 bets · 2-1-0 (W-L-P)"))
+        assertTrue(text, text.contains("Closes found: 3 of 3 (Fake 3)"))
+        assertTrue(text.contains("-- Books agreeing --") && text.contains("-- Kind of bet --") && text.contains("-- Time to the start --") && text.contains("-- League --"))
+        assertTrue(text, text.contains("Moneylines · 1 bets") || text.contains("Moneyline"))
+        // The lines.
+        val lines = text.substringAfter("<<<JSONL\n").substringBefore("\n>>>").lines().filter { it.isNotBlank() }
+        assertEquals(3, lines.size)
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val rows = lines.map { json.decodeFromString(StudyExport.StudyRow.serializer(), it) }
+        val ml = rows.first { it.market == "Moneyline" }
+        assertEquals("c", ml.src)
+        assertEquals(105, ml.american)
+        assertEquals(120, ml.bestAmerican)
+        assertEquals(120, ml.lastAmerican)
+        assertEquals("WON", ml.status)
+        assertEquals(0.55, ml.closeFair!!, 1e-9)
+        assertEquals(0.55 * 2.05 - 1.0, ml.clv!!, 1e-9)
+        // At the better price it later had, the close was beaten by more.
+        assertEquals(0.55 / (1.0 / 2.2) - 1.0, ml.clvBest!!, 1e-9)
+        assertEquals(2, ml.looks)
+        assertEquals(2, ml.s.size)
+        assertEquals(180, ml.s[0].toString().removePrefix("[").substringBefore(",").toInt())
+        assertFalse(ml.placedByTj)
+        assertTrue(rows.first { it.market == "Player Total Bases" }.placedByTj)
+        assertEquals(122, rows.first { it.market == "Player Total Bases" }.placedAmerican)
+        // The close's number as odds, and the rules line isn't repeated on every bet.
+        assertNotNull(ml.closeAmerican)
+        assertNull(ml.atBet!!.rules)
+        // Newest first, and the scratch file is gone.
+        assertTrue(rows.zipWithNext().all { (a, b) -> a.firstSeenMs >= b.firstSeenMs })
+        assertFalse(File(tmp.root, "export.tmp").exists())
+    }
+
+    @Test
+    fun `a day too big for the file's limit stays on the phone, newest days first`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        val older = LocalDate.of(2026, 9, 20)
+        j.append(older, listOf(Line(Line.BET, "old1", start - 6 * 86_400_000L, b = j.fold(day).values.single().bet.copy(id = "old1", startsTs = start - 6 * 86_400_000L, createdAtMs = start - 6 * 86_400_000L - 3_600_000L))))
+        val out = StringWriter()
+        val meta = StudyExport.Meta("0.57.0", 99, "moto g", "rules")
+        // A limit that holds only the newest day.
+        val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() + 10)
+        assertEquals(1, n)
+        assertTrue(out.toString().contains("1 older day(s) are on the phone but left out"))
+        assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp")))
+    }
+}
