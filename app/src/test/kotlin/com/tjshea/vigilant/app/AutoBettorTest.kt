@@ -839,7 +839,8 @@ class AutoBettorTest {
         val novig = FakeNovig()
         val early = bettor(novig).run(settings { it.copy(trapEarlyHours = 12) }, state(settings { it.copy(trapEarlyHours = 12) }))
         assertEquals(0, novig.orders.get())
-        assertEquals(1, early.skipped[TrapGuard.earlyReason(12)])
+        // Jefferson, Bowers and St. Brown start a day off (Ohio, 8 h off, has no books read, so it isn't a candidate here).
+        assertEquals(3, early.skipped[TrapGuard.earlyReason(12)])
         val inside = bettor(novig).run(settings { it.copy(trapEarlyHours = 24) }, state(settings { it.copy(trapEarlyHours = 24) }))
         assertEquals(1, inside.placed.size)
     }
