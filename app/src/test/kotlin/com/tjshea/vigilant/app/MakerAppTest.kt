@@ -20,6 +20,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -156,5 +157,64 @@ class MakerAppTest {
         assertTrue(text, text.contains("Make orders / Bids (RESEARCH.md §70): ON · 4% under the fair"))
         assertTrue(text, text.contains("${bids.count { it.active }} resting"))
         assertEquals(ScanSettings().maker, false)
+    }
+
+    @Test
+    fun `with auto-make off it recommends a few new bids once each, Approve posts one after re-checking it, and the next pass leaves it up`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { it.copy(maker = false, makerRecommend = true) }
+        val nm = shadowOf(app.getSystemService(NotificationManager::class.java))
+        nm.allNotifications.forEach { }
+        val run = runner(novig)
+        assertEquals(null, run.run("test"))
+        fun recommended() = nm.allNotifications.filter { it.extras.getCharSequence(Notification.EXTRA_TITLE)?.startsWith("Bid to approve") == true }
+        val first = recommended()
+        assertTrue("${first.size}", first.size in 1..MakerRunner.MAX_RECOMMENDED)
+        assertEquals(listOf("Approve", "Deny"), first.first().actions.map { it.title.toString() })
+        assertTrue(first.all { it.extras.getCharSequence(Notification.EXTRA_SUB_TEXT).toString().startsWith("Wallet") })
+        run.run("test")
+        assertEquals(first.size, recommended().size)
+        assertTrue(novig.placed.isEmpty())
+        // Approve: the first recommended side is posted.
+        val side = run.status.value.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().minBy { it.price }.line.outcomeId
+        assertNull(run.post(side))
+        assertEquals(1, novig.placed.size)
+        // The next pass (auto-make off) keeps the approved bid up.
+        val r = run.run("test")!!
+        assertEquals(0, r.cancelled)
+        assertEquals(0, r.placed)
+        assertTrue(novig.orders.values.single().status == "OPEN")
+    }
+
+    @Test
+    fun `Deny from the notification skips that side until its game, and Cancel by hand denies the side too`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { it.copy(maker = false) }
+        app.container.makerDenials.all().forEach { app.container.makerDenials.undo(it.outcomeId) }
+        val run = runner(novig)
+        run.preview()
+        val post = run.status.value.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().first()
+        val intent = android.content.Intent(app, MakerActionReceiver::class.java).setAction(MakerNotes.ACTION_DENY)
+            .putExtra(MakerNotes.EXTRA_OUTCOME, post.line.outcomeId).putExtra(MakerNotes.EXTRA_STARTS, post.line.startsTs).putExtra(MakerNotes.EXTRA_SELECTION, post.line.selection)
+        MakerActionReceiver().onReceive(app, intent)
+        withTimeout(10_000) { while (post.line.outcomeId !in app.container.makerDenials.outcomes()) delay(50) }
+        val again = run.preview().first { it.line.outcomeId == post.line.outcomeId }
+        assertEquals(com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.DENIED, (again as com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Skip).why)
+        assertEquals(com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.DENIED, run.post(post.line.outcomeId))
+        run.undoDeny(post.line.outcomeId)
+        assertNull(run.post(post.line.outcomeId))
+        val id = novig.orders.keys.single()
+        assertNull(run.cancel(id))
+        assertTrue(post.line.outcomeId in app.container.makerDenials.outcomes())
+    }
+
+    @Test
+    fun `a phone restart switches auto-make off with auto-bet, and says so`() {
+        val s = ScanSettings(maker = true, autoBet = true)
+        assertTrue(!LaunchReset.apply(s).maker)
+        assertEquals("Auto-bet and auto-make (Bids tab) are off after the phone restarted. Switch them on when you want them.", LaunchReset.note(s))
+        assertEquals("Auto-make (Bids tab) is off after the phone restarted. Switch it on when you want it.", LaunchReset.note(ScanSettings(maker = true)))
     }
 }

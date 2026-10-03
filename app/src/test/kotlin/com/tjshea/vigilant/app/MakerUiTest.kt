@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -141,5 +142,51 @@ class MakerUiTest {
             VigilantTheme { MakerScreen(ui(bids = listOf(bid("rest-1", MakerStatus.RESTING), bid("f-1", MakerStatus.FILLED, filled = 1_098, orderId = "o-f"))), MakerActions()) }
         }
         compose.onRoot().captureRoboImage("screenshots/4p_bids_tab.png")
+    }
+
+    @Test
+    fun `Approve and Deny on a recommendation, Undo on a denied side, and switching auto-make on asks first`() {
+        var posted: String? = null
+        var denied: String? = null
+        var undone: String? = null
+        var s = settings.copy(maker = false)
+        val deniedSide = com.tjshea.vigilant.data.novig.trading.maker.DeniedBid("gone-1", now + 3_600_000L, "Someone Over 1.5", now - 60_000)
+        compose.setContent {
+            VigilantTheme {
+                MakerScreen(
+                    ui(s = settings.copy(maker = false)).copy(denied = listOf(deniedSide)),
+                    MakerActions(onUpdate = { f -> s = f(s) }, onPost = { posted = it }, onDeny = { denied = it }, onUndoDeny = { undone = it }),
+                )
+            }
+        }
+        val first = ui(s = settings.copy(maker = false)).ready.first().line.outcomeId
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("denyBid-$first"))
+        compose.onNodeWithTag("denyBid-$first").performClick()
+        assertEquals(first, denied)
+        compose.onNodeWithTag("postBid-$first").assertTextContains("Approve")
+        compose.onNodeWithTag("postBid-$first").performClick()
+        assertEquals(first, posted)
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("undoDeny-gone-1"))
+        compose.onNodeWithTag("undoDeny-gone-1").performClick()
+        assertEquals("gone-1", undone)
+        // On asks first: nothing changes until Switch on.
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerSwitch"))
+        compose.onNodeWithTag("makerSwitch").performClick()
+        assertFalse(s.maker)
+        compose.onNodeWithTag("makerConfirmOn").performClick()
+        assertTrue(s.maker)
+    }
+
+    @Test
+    fun `the Auto-bet tab says what auto-make is set to and opens the Bids tab`() {
+        var opened = 0
+        compose.setContent {
+            VigilantTheme {
+                com.tjshea.vigilant.app.ui.AutoBetScreen(SampleScan.fresh(settings.copy(maker = true)), onUpdate = {}, onOpenBids = { opened++ })
+            }
+        }
+        compose.onNodeWithTag("autoMakeLink").assertIsDisplayed()
+        compose.onNodeWithText("Bids").performClick()
+        assertEquals(1, opened)
     }
 }
