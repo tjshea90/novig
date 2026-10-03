@@ -403,6 +403,10 @@ robolectric.org/configuring/.
   **v0.56.1 (full test):** a bid that moves (the fair fell, or it's about to expire with a fresher fair) is re-posted in the same pass on the dollars its own
   cancelled bid frees (`MakerPlan.plan`'s credit; the desk places it only once that cancel is confirmed gone; no other side may use them), so a tight wallet
   no longer leaves that side bare for a pass. The veto bar has its own Diagnostics counters (`sharpbar.autobet.under`, `sharpbar.alerts.under`). Lowering the bar under 1% or dropping the bid move rule needs Tj's word.
+  **v0.56.2 (lag + Pause, RESEARCH.md §74):** the +EV feed is never built on the main thread (`FeedBuild.kt`: `publishResult`/`refeed`/`reindex` build off it and swap in only what's
+  still current; a source pin in `FeedBuildTest` keeps `feedOf` out of every `_state.update`); a bet's wording and matchup are read once (`BetGrader.pickOf`, `PlacedIndex`); `applySettings`
+  shows the new settings first and re-prices as its own latest-wins job (a re-pricing waits for a running scan: nothing waits for it); a maker pass asks `keepPosting` before each bid
+  (Pause stops it at the next one); the Bids tab's lists are worked out once per change. Diagnostics: `MakerStats.recent`, the last 24 h of bids in bid-hours against the fills §70.3 expects.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.
