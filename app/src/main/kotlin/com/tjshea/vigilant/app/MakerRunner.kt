@@ -75,7 +75,7 @@ class MakerRunner(
         if (wanted.isEmpty()) return lines
         moveReads.entries.removeIf { now - it.value.first > MOVE_READ_MS }
         if (read) {
-            for (id in wanted.sortedBy { it.startsTs }.map { it.marketId }.distinct().filter { it !in moveReads }.take(MAX_MOVE_READS)) {
+            for (id in wanted.sortedBy { it.startsTs }.map { it.marketId }.distinct().filter { !moveReads.containsKey(it) }.take(MAX_MOVE_READS)) {
                 val trades = try {
                     c.novig.trades(id)
                 } catch (e: CancellationException) {
