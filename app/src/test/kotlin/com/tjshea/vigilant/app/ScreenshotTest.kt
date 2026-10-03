@@ -313,8 +313,9 @@ class ScreenshotTest {
         val dallas = s.feed.first { it.selection == "Dallas Cowboys" }
         compose.onAllNodes(androidx.compose.ui.test.hasScrollToKeyAction()).onFirst().performScrollToKey(dallas.key)
         compose.onNodeWithText("Dallas Cowboys").performClick()
-        compose.onNodeWithText("FAIR ODDS: BLEND · POWER").assertIsDisplayed()
-        compose.onNodeWithText("Track").assertIsDisplayed()
+        // The sheet scrolls: since v0.52.0 a +EV line also shows the bid 4% under the fair (the Bids tab's margin), so these sit lower.
+        compose.onNodeWithText("FAIR ODDS: BLEND · POWER").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Track").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun beforeTheFirstScanTheFeedAsksForOneAndTheButtonScans() {
