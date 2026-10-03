@@ -87,6 +87,8 @@ class CycleRecorderTest {
         assertTrue(scan.contains("if (slowCycle(tookMs, settings.autoScanSeconds)) {\n                        c.eventLog.warn(\"CYCLE\", \"a background cycle took \${tookMs / 1_000} s"))
         // The alerts: each sharp verdict counted, each batch sent an event and a count.
         assertTrue(scan.contains(").also { c.eventLog.count(\"sharp.alert.\${it.verdict}\") }"))
+        // The alerts' veto bar has its own counter too (v0.56.0's bar, RESEARCH.md §72).
+        assertTrue(scan.contains("if (it.vetoed && (it.ev ?: 0.0) > 0.0) c.eventLog.count(AutoBettor.SHARP_BAR_ALERT_COUNTER)"))
         assertTrue(scan.contains("c.eventLog.info(\"ALERT\", \"sent \$posted +EV alert"))
         assertTrue(scan.contains("c.eventLog.count(\"alerts.sent\", posted.toLong())"))
         // The service: it started, was refused, was stopped, destroyed or swiped away.

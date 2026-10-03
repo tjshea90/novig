@@ -240,10 +240,13 @@ class AutoBettorTest {
         val bar = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
         assertEquals(0.01, bar.sharpVetoMinEv, 0.0)
         val novig = FakeNovig()
+        val underBefore = app.container.eventLog.counters()[AutoBettor.SHARP_BAR_COUNTER] ?: 0L
         val r = bettor(novig).run(bar, withBooks(small, bar))
         assertEquals(0, r.placed.size)
         assertEquals(0, novig.orders.get())
         assertEquals(r.skipped.toString(), 1, r.skipped["Kalshi, the sharpest book for player props, gives Novig's price under the sharp veto's 1.0% edge"])
+        // Diagnostics counts what the bar alone stopped (BRIEF.md: a new rule gets its own counter), apart from "the sharp book says it isn't +EV".
+        assertEquals(underBefore + 1, app.container.eventLog.counters()[AutoBettor.SHARP_BAR_COUNTER] ?: 0L)
         // The old bar (any +EV) places it.
         val any = bar.copy(sharpVetoMinEv = 0.0)
         assertEquals(1, bettor(FakeNovig()).run(any, withBooks(small, any)).placed.size)
