@@ -280,6 +280,10 @@ class AutoScanner(
             } finally {
                 _status.update { it.copy(running = false, step = null, lastEndMs = clock(), lastError = errors.firstOrNull()) }
                 withContext(NonCancellable) {
+                    // The scan study's log of what this cycle read, finished and written to the disk before the wake lock goes (the study's watchers do the same as
+                    // things arrive, but in the alarm-only mode they get no CPU once the cycle ends; Tj, 2026-10-03: "confirm that all the betting data is being logged
+                    // even when the app is backgrounded but in auto scan background mode"). Bounded, and never an error of the cycle.
+                    runCatching { kotlinx.coroutines.withTimeoutOrNull(STUDY_SYNC_MS) { c.studySync.catchUp(start) } }
                     errors.forEach { e -> runCatching { c.problems.add("Background auto-scan", e) } }
                     runCatching { c.cycleLog.record(start, clock(), settings.autoScanSeconds, screenOff, dozing, afterPause) }
                     // The flight recorder: how long the cycle took (Diagnostics' performance block), and a line when it ran long.
@@ -451,6 +455,9 @@ class AutoScanner(
     }
 
     companion object {
+        /** The most a cycle's end waits for the scan study's catch-up (a wide read, a few pages' checks, one write). */
+        const val STUDY_SYNC_MS = 25_000L
+
         /** A cycle that took more than three intervals (and over half a minute) is worth a line in the timeline: the schedule couldn't be kept. */
         fun slowCycle(tookMs: Long, autoScanSeconds: Int): Boolean = tookMs > maxOf(30_000L, 3L * autoScanSeconds * 1_000L)
 
