@@ -4278,7 +4278,7 @@ at 3-8% and 14% at 12%+ (ROI −49% and −57% at 8%+, n=38 each): big gifts fro
 **C. Who was informed.** Share of the early gap (venue vs consensus) the close moved toward the venue: Pinnacle off by 1-2 points → Pinnacle's
 close sat **68%** of the way to its own early price and the consensus's close moved **39%** toward it (2-4 points: 51% / 22%); bet365, Bet&Win,
 William Hill, BetVictor off the consensus → the close moved −12% to +14% toward them (no information). **Benter's blend on the results**
-(logistic regression of the result on both early fairs): Pinnacle 89% / consensus 11%; each soft book got a negative weight (−12% to −38%).
+(logistic regression of the result on both early fairs): Pinnacle 89% / consensus 11%; Bet&Win, William Hill and BetVictor each got a negative weight (−12% to −38%; bet365's fit didn't converge).
 
 **D. Favorite-longshot bias at Pinnacle's close**: wins minus fair −0.81 points [−1.56, −0.02] under 0.10 (n=4,031; about −13% relative), within
 ±0.3 elsewhere. Bids under 0.10 stay off (Vigilant's bids start at 0.10).
