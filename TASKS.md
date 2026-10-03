@@ -3599,4 +3599,6 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   and the hours; the trap guard puts bids where 71% of prop takers' dollars trade (the last 6 h).
   Done (BK5): RESEARCH.md §71; `TrapGuard` (early 6 h + game-line Novig move), wired into AutoBettor/alerts/bids/sheets; TrapGuardTest,
   AutoBettorTest (3 trap tests, mutants 5/5), AutoScanTest, MakerTest, TrapGuardUiTest, AutoBetUiTest; scripts novig_trap_study.py, tj_bets_by_lead.py.
-- [ ] BK6 Sweep, full floor, ship, answer Tj with the link.
+- [x] BK6 Sweep, full floor, ship, answer Tj with the link.
+  Done: own diff re-read (money paths: a failed trades read never blocks, a skip never orders, early lines get no bid); floor 1,838 passed / 23
+  skipped; CI green on 4a4c2e8b; v0.55.0 (code 95) released 2026-10-03T16:26Z (release.yml), recorded in BUILDLOG.md.
