@@ -84,4 +84,47 @@ class ScanStudyUiTest {
         assertEquals("1,234 bets logged over 6 days · 812 graded · 640 with a closing line · last logged 3m ago · 4.1 MB", note)
         assertEquals("1 bets logged over 1 day · 0 graded · 0 with a closing line · 2 KB", StudyText.note(com.tjshea.vigilant.data.study.ScanStudy.Overview(1, 1, 0, 0, 2_100L, null, 1), now))
     }
+
+    @Test
+    fun `the hidden-bets switch is on by default, separate from the logging switch, and says the app's list stays as it is`() {
+        var ui by androidx.compose.runtime.mutableStateOf(SampleScan.state())
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    SettingsScreen(ui, { f -> ui = ui.copy(settings = f(ui.settings)) }, page = SettingsPage.HELP, reportActions = ReportActions())
+                }
+            }
+        }
+        compose.onNodeWithText("Also log what your CNO filters hide").performScrollTo().assertExists()
+        compose.onNodeWithText("The app's list, alerts, auto-bet and widget don't change", substring = true).assertExists()
+        assertTrue(ui.settings.scanStudyHidden)
+        compose.onNodeWithTag("scanStudyHiddenSwitch").performScrollTo().performClick()
+        assertFalse(ui.settings.scanStudyHidden)
+        assertTrue("the logging switch is its own", ui.settings.scanStudy)
+        compose.onNodeWithTag("scanStudyHiddenSwitch").performClick()
+        assertTrue(ui.settings.scanStudyHidden)
+    }
+
+    @Test
+    fun `the wide read's line says what it read against the app's list, what CNO was asked, and what went wrong`() {
+        val now = 1_800_000_000_000L
+        fun row(i: Int) = com.tjshea.vigilant.data.cno.CnoRow(0.05, event = "E$i", market = "M", bet = "B", odds = 110, book = "Novig", gameUrl = "https://x/g?side_id=$i")
+        val appList = com.tjshea.vigilant.data.cno.CnoSnapshot("u", (1..3).map(::row), now - 8_000L)
+        val wide = com.tjshea.vigilant.data.cno.CnoSnapshot("u", (1..10).map(::row), now - 5_000L, wide = true, asked = "TextBoxMinimumEVPercentage=0%", limit = 1000)
+        val ok = com.tjshea.vigilant.data.cno.CnoWideState(snapshot = wide, reads = 7)
+        assertEquals(
+            "10 rows read ${com.tjshea.vigilant.app.ui.Format.age(wide.fetchedAtMs, now)} (3 also in the app's list of 3; 7 only the wide read found), asked for up to 1000 · 7 good reads since the app opened · form as posted: TextBoxMinimumEVPercentage=0%",
+            StudyText.wideNote(ok, appList, true, now),
+        )
+        // A list of another view says nothing about this read's rows.
+        assertFalse(StudyText.wideNote(ok, appList.copy(url = "other"), true, now).contains("also in the app's list"))
+        // As many rows as asked for: CNO may have more.
+        assertTrue(StudyText.wideNote(ok.copy(snapshot = wide.copy(limit = 10)), null, true, now).contains("AS MANY AS ASKED FOR, so CNO may have more"))
+        // No read yet, with what went wrong.
+        assertEquals(
+            "no read yet since the app opened · last problem: CrazyNinjaOdds: Maximum result count is 500 (2 in a row; asking for up to 500 rows)",
+            StudyText.wideNote(com.tjshea.vigilant.data.cno.CnoWideState(error = "CrazyNinjaOdds: Maximum result count is 500", errors = 2, rowsAsked = 500), null, true, now),
+        )
+        assertTrue(StudyText.wideNote(ok, null, false, now).startsWith("off (Settings"))
+    }
 }

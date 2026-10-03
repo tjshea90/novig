@@ -152,7 +152,27 @@ class ScanStudyAppTest {
         assertTrue(off, off.contains("Scan study: not read · logging OFF (Settings › Diagnostics & about)"))
     }
 
+    @Test
+    fun `Diagnostics has a line for the wide read`() {
+        val now = SampleScan.NOW
+        val text = Diagnostics.report(SampleScan.fresh(), Diagnostics.Extras("t", 1, "d", studyWide = "10 rows read 5s ago, asked for up to 1000"), now)
+        assertTrue(text, text.contains("Scan study's wide CNO read: 10 rows read 5s ago, asked for up to 1000"))
+        assertFalse(Diagnostics.report(SampleScan.fresh(), Diagnostics.Extras("t", 1, "d"), now).contains("wide CNO read"))
+    }
+
     // ---- how it is wired: nothing of it can stop a scan ---------------------------------------------------------------------
+
+    @Test
+    fun `nothing the app shows reads the wide read's rows`() {
+        // The list, alerts, auto-bet, widget and mini window are built from cno.state and what comes of it; the wide read lives in cno.wide, read by the study's two watchers
+        // (VigilantApp), the file's header and Diagnostics' line (MainViewModel) and the words for them (StudyText), and by nothing else.
+        val readers = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }
+            .filter { f -> f.readText().let { "cno.wide" in it || "readWide(" in it || "CnoWideState" in it } }.map { it.name }.toSortedSet()
+        assertEquals(sortedSetOf("MainViewModel.kt", "StudyText.kt", "VigilantApp.kt"), readers)
+        val data = File("../data/src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }
+            .filter { f -> f.readText().let { "readWide(" in it || "fetchWide(" in it } }.map { it.name }.toSortedSet()
+        assertEquals(sortedSetOf("CnoClient.kt", "CnoFeed.kt"), data)
+    }
 
     private fun source(path: String) = File("src/main/kotlin/com/tjshea/vigilant/app/$path").readText()
 
