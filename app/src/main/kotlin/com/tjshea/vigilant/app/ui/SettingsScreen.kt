@@ -143,7 +143,9 @@ object SettingsSummary {
                 if (!AppBook.isNovig) null else if (s.startsWithinHours <= 0) "any start time" else "games within ${s.startsWithinHours}h",
                 if (!AppBook.isNovig) null else if (BackgroundScan.on(s)) "background every ${ScanSettings.intervalLabel(s.autoScanSeconds)}" else "background off",
             ).joinToString(" · ")
-            SettingsPage.ALERTS -> if (s.alertMinEv <= 0.0) "Off" else "${alertLabel(s.alertMinEv)} · sharp books: ${s.sharpAlerts.displayName.lowercase(Locale.US)}"
+            SettingsPage.ALERTS -> if (s.alertMinEv <= 0.0) "Off" else "${alertLabel(s.alertMinEv)} · sharp books: ${s.sharpAlerts.displayName.lowercase(Locale.US)}" +
+                // The veto's bar (v0.56.0, RESEARCH.md §72) is part of what the veto does.
+                (if (s.sharpAlerts == com.tjshea.vigilant.data.scanner.SharpMode.VETO && s.sharpVetoMinEv > 0.0) " under ${AutoBetText.evLabel(s.sharpVetoMinEv)}" else "")
             SettingsPage.CNO -> s.cnoFilters.let { f ->
                 "${f.devig.displayName} · ${f.minBooks}+ books · ${if (f.maxOdds > 0) "up to +${f.maxOdds}" else "any odds"} · ${Format.percent(f.minEv, 0)}+ · every ${secondsLabel(s.cnoRefreshSeconds)}"
             }
