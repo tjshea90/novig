@@ -46,6 +46,27 @@ class AutoScanTest {
 
     // ---- settings ----------------------------------------------------------------------------------
 
+    /**
+     * Tj's v0.52.0 file: "a background cycle took 456 s (its interval is 30 sec)": the cycle waited Vigilant's whole scan out, and CNO went unread and
+     * auto-bet idle for those minutes. Now the cycle starts the scan and ends; the scan's alerts go out when it ends.
+     */
+    @Test
+    fun `a background cycle starts Vigilant's scan and ends without waiting for it`() {
+        val app = context as VigilantApp
+        kotlinx.coroutines.runBlocking {
+            app.container.settingsStore.update {
+                ScanSettings(autoScan = AutoScanMode.BOTH, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScanSeconds = 30, leagues = setOf("NFL"), alertMinEv = 0.03)
+            }
+        }
+        var started = 0
+        // A scan that's started and never ends (the runner isn't even asked): the old cycle would wait for it forever.
+        val scanner = AutoScanner(context, app.container, clock = { now }, phone = { false to false }, startVigilant = { _, _ -> started++; true })
+        val ran = kotlinx.coroutines.runBlocking { kotlinx.coroutines.withTimeout(20_000) { scanner.cycle(forceVigilant = true) } }
+        assertTrue(ran)
+        assertEquals(1, started)
+        assertFalse(scanner.status.value.running)
+    }
+
     @Test
     fun `auto-scan is off by default, every 5 seconds to 40 minutes, alerts at 2, 3 or 4 percent (3 by default)`() {
         val s = ScanSettings()
