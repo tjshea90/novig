@@ -234,6 +234,18 @@ data class ScanSettings(
     val makerBothSides: Boolean = true,
     /** The fewest books behind the fair price for a bid to be posted. */
     val makerMinBooks: Int = 2,
+    /**
+     * The trap guard's first rule (Tj, 2026-10-03: "find these trap bets and avoid them"; RESEARCH.md §71, [TrapGuard.early]): the auto-bet, the +EV
+     * alerts and the bids leave alone any game starting more than this many hours from now ([TrapGuard.EARLY_CHOICES]; 0 = off). 6 h by default: Tj's
+     * own bets placed earlier than that lost to the close. The lists still show them (each card says so).
+     */
+    val trapEarlyHours: Int = TrapGuard.DEFAULT_EARLY_HOURS,
+    /**
+     * The trap guard's second rule ([TrapGuard.move]): before the auto-bet places a moneyline, spread or game total, Novig's own trades in the market
+     * are read (one public request); a price that just moved 2¢+ under where it traded this hour, with \$100+ bought on the other side in the last
+     * 15 min, isn't bet.
+     */
+    val trapNovigMove: Boolean = true,
     /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */
     val presets: List<SavedPreset> = emptyList(),
     /** The preset applied last (a built-in's or one of [presets]' names), null = none; recorded on each bet ([com.tjshea.vigilant.data.tracker.AtBet]). */
