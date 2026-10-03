@@ -56,7 +56,7 @@ def main(path):
     # placed (atBet.sharpEv, on bets with a record as placed), against the close: the bar is right if 0-1% shows no CLV and 1%+ does.
     sharp = lambda b: (b.get('atBet') or {}).get('sharpEv')
     rec = [b for b in bets if b.get('atBet')]
-    print(f'\n  By the sharpest book's own edge when bet ({len(rec)} bets with a record as placed; RESEARCH.md §72):')
+    print(f"\n  By the sharpest book's own edge when bet ({len(rec)} bets with a record as placed; RESEARCH.md §72):")
     show('no sharp book on the page', [b for b in rec if sharp(b) is None])
     for lo, hi in [(-1, 0), (0, 0.01), (0.01, 0.02), (0.02, 1)]:
         show(f'sharp {100 * lo:+.0f}..{100 * hi:+.0f}%' if hi < 1 else f'sharp {100 * lo:+.0f}%+', [b for b in rec if sharp(b) is not None and lo <= sharp(b) < hi])
