@@ -16,6 +16,14 @@ import java.io.IOException
 interface CnoSource {
     suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot
 
+    /**
+     * The scan study's wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): [url]'s view read in a
+     * session of its own with CNO's numeric filters opened right up (no EV floor, no odds cap, any book count, one-sided markets, no complete-book rule,
+     * up to [rows] rows), every column kept ([CnoRow.cols]). [filters] are Tj's: the devig method is posted as his (so EV means the same), and the snapshot
+     * carries them for the app's own screen to judge each row. Null where a source can't (fakes); it never touches [fetch]'s session.
+     */
+    suspend fun fetchWide(url: String, filters: CnoFilters, rows: Int = WIDE_ROWS): CnoSnapshot? = null
+
     /** Every book's price for [row] (its CNO game page). */
     suspend fun books(row: CnoRow): CnoBooksView? = null
 
@@ -70,7 +78,36 @@ class CnoClient(
 
     private var session: Session? = null
 
+    /** The wide read's own session (its own cookies, form and fields): the list's values are never changed by it. Guarded by [CnoFeed]'s wide mutex. */
+    private var wideSession: Session? = null
+
     override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot = withContext(work) { fetchHere(url, filters) }
+
+    override suspend fun fetchWide(url: String, filters: CnoFilters, rows: Int): CnoSnapshot = withContext(work) { fetchWideHere(url, filters, rows) }
+
+    private suspend fun fetchWideHere(url: String, filters: CnoFilters, rows: Int): CnoSnapshot {
+        val reuse = wideSession?.takeIf { it.view == url && clock() - it.usedAtMs < SESSION_MS && it.form.button != null }
+        if (reuse != null) {
+            try {
+                return list(reuse, useTimer = false, filters, wideRows = rows)
+            } catch (e: IOException) {
+                wideSession = null
+                throw unreachable(e)
+            } catch (e: CnoException) {
+                if (e.retryAfterSeconds != null) throw e
+                wideSession = null
+            }
+        }
+        return try {
+            list(open(url), useTimer = true, filters, wideRows = rows)
+        } catch (e: IOException) {
+            wideSession = null
+            throw unreachable(e)
+        } catch (e: CnoException) {
+            wideSession = null
+            throw e
+        }
+    }
 
     private suspend fun fetchHere(url: String, filters: CnoFilters): CnoSnapshot {
         val reuse = session?.takeIf { it.view == url && clock() - it.usedAtMs < SESSION_MS && it.form.button != null }
@@ -143,14 +180,14 @@ class CnoClient(
         return Session(url, postUrl, cookies, form, LinkedHashMap(form.fields.toMap()), clock())
     }
 
-    /** One +EV list read: the table and CNO's "last updated", plus the state for the next read. */
-    private suspend fun list(s: Session, useTimer: Boolean, filters: CnoFilters): CnoSnapshot {
-        applyFilters(s, filters)
+    /** One +EV list read: the table and CNO's "last updated", plus the state for the next read. [wideRows] set: the study's wide read ([fetchWide]) in [wideSession]. */
+    private suspend fun list(s: Session, useTimer: Boolean, filters: CnoFilters, wideRows: Int? = null): CnoSnapshot {
+        val asked = if (wideRows != null) applyWide(s, filters, wideRows) else { applyFilters(s, filters); null }
         val records = postback(s, useTimer)
         val grid = records.grid()
         val info = records.firstOrNull { it.type == "updatePanel" && it.id.endsWith("UpdatePanelServerInfo") }
-        session = s
-        val table = CnoPage.table(grid, s.view.toHttpUrl())
+        if (wideRows != null) wideSession = s else session = s
+        val table = CnoPage.table(grid, s.view.toHttpUrl(), keepColumns = wideRows != null)
         return CnoSnapshot(
             url = s.view,
             rows = table.rows,
@@ -159,6 +196,8 @@ class CnoClient(
             evLabel = table.evLabel,
             note = table.note,
             filters = filters,
+            wide = wideRows != null,
+            asked = asked,
         )
     }
 
@@ -228,6 +267,26 @@ class CnoClient(
     }
 
     /**
+     * The wide read's form: Tj's devig method, and every numeric filter CNO has opened up, in this session's own fields. What the view's link scopes (book, sport,
+     * league, main lines, live, and any filter this doesn't name) stays as the link says. Returns the filter fields as posted ([CnoSnapshot.asked]).
+     */
+    private fun applyWide(s: Session, f: CnoFilters, rows: Int): String {
+        val fields = s.fields
+        fun key(suffix: String): String? = fields.keys.firstOrNull { it.endsWith(suffix) }
+        fun put(suffix: String, value: String) { key(suffix)?.let { fields[it] = value } }
+        put("DropDownListDevigMethod", f.devig.code.toString())
+        put("TextBoxMaximumOdds", "")
+        put("TextBoxMinimumOdds", "")
+        put("TextBoxMinimumOddsProviderCount", "1")
+        put("TextBoxMinimumEVPercentage", "0%")
+        put("TextBoxMinimumSubMarketSideCount", "1")
+        put("TextBoxMaximumResultCount", rows.toString())
+        s.form.checkboxes.firstOrNull { it.endsWith("CheckBoxRequireACompleteSportsbook") }?.let { fields.remove(it) }
+        return fields.entries.filter { (k, _) -> CONTROL.containsMatchIn(k) }
+            .joinToString(", ") { (k, v) -> "${k.substringAfterLast('$')}=$v" }
+    }
+
+    /**
      * One request to CNO, in [pace], read off the caller's thread. A network failure (a dead
      * connection left from before the phone slept, a timeout, a DNS hiccup) is tried once more
      * straight away on a fresh connection: most of the "timeout" and "unable to resolve" Tj saw
@@ -289,5 +348,11 @@ class CnoClient(
 
         /** The least time between two requests of a bulk read ([booksBulk]): two a second at most. */
         const val BULK_GAP_MS = 500L
+
+        /** Rows the scan study's wide read asks for first ([CnoFeed.WIDE_ROW_STEPS] steps down if CNO won't send that many). */
+        const val WIDE_ROWS = 1000
+
+        /** A field of the form that is one of the filters (as opposed to ASP.NET's own state). */
+        private val CONTROL = Regex("(TextBox|DropDownList|CheckBox)[A-Za-z]*$")
     }
 }
