@@ -407,9 +407,10 @@ class MakerDesk(
     private suspend fun finish(bid: MakerBid, order: NovigOrder?, now: Long): TrackedBet? {
         // Fills are read whatever the record says (or when there's none): a fill must never go unrecorded.
         val bet = recordFills(bid, order)
-        val filledNow = order?.let { it.qty - it.remaining } ?: (bet?.contracts ?: bid.filled)
+        val stored = store.all().firstOrNull { it.clientId == bid.clientId }?.filled ?: bid.filled
+        val filledNow = maxOf(order?.let { it.qty - it.remaining } ?: 0L, stored)
         val status = when {
-            order?.status == "FILLED" || (order != null && order.remaining <= 0 && filledNow > 0) || (bet?.contracts ?: 0L) >= bid.contracts -> MakerStatus.FILLED
+            order?.status == "FILLED" || (order != null && order.remaining <= 0 && filledNow > 0) || filledNow >= bid.contracts -> MakerStatus.FILLED
             order?.status == "REJECTED" -> MakerStatus.REFUSED
             bid.status == MakerStatus.CANCELING -> MakerStatus.CANCELED
             now >= bid.startsTs -> MakerStatus.VOIDED
@@ -452,16 +453,18 @@ class MakerDesk(
             return null
         }
         if (fills.isEmpty()) return null
+        val filled = fills.distinctBy { it.fillId }.sumOf { it.qty }
+        val known = store.all().firstOrNull { it.orderId == orderId }?.filled ?: bid.filled
         val bet = tracker.logMakerFills(bid.target(), orderId, fills) ?: return null
-        val filled = fills.sumOf { it.qty }
-        val paid = fills.sumOf { it.cost }
+        val paid = fills.distinctBy { it.fillId }.sumOf { it.cost }
         store.update { l ->
             l.map {
                 if (it.orderId != orderId) it
                 else it.copy(filled = filled, paid = paid, betId = bet.id, status = if (order?.status == "FILLED" || filled >= it.contracts) MakerStatus.FILLED else it.status, endedAtMs = if (filled >= it.contracts) clock() else it.endedAtMs)
             }
         }
-        return bet
+        // Only a bet that's new or grew is news (a notification each).
+        return bet.takeIf { filled > known }
     }
 
     private suspend fun readOrder(orderId: String): NovigOrder? = try {
