@@ -132,25 +132,27 @@ object MakerLines {
     /**
      * [result]'s priced sides in [settings]' leagues at [now], pregame, as [MakerLine]s: on a scan still running, the leagues whose fair-odds sources
      * have all answered (as the feed holds them back), each with the newest Novig book read in the last [MAX_BOOK_AGE_MS]. Each book's own fair
-     * ([bookFairs], a devig per book) is worked out only for the kinds of bet bids are on (a busy slate prices 13,000 sides).
+     * ([bookFairs], a devig per book) is worked out only for the lines that pass [MakerQuote.precheck] (a busy slate prices 13,000 sides, and a pass
+     * runs every 20 s while a scan does).
      */
     fun from(result: com.tjshea.vigilant.data.scanner.ScanResult?, settings: ScanSettings, now: Long): List<MakerLine> {
         result ?: return emptyList()
+        val rules = MakerRules.of(settings)
         return result.opportunities.filter { o ->
             o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
                 o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= MAX_BOOK_AGE_MS &&
                 (result.waitingFor.isEmpty() || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
         }.map { o ->
-            val kind = kindOf(o)
-            val judged = kind in settings.makerKinds
-            MakerLine(
+            val line = MakerLine(
                 market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
-                eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kind, fair = o.fairProbability,
+                eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
                 fairAsOfMs = o.fairAsOfMs, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
-                basis = FairBasis.of(o), bookFairs = if (judged) bookFairs(o, sharpOnly = false) else emptyList(),
-                sharpFairs = if (judged) bookFairs(o, sharpOnly = true) else emptyList(), bookAtMs = o.bookFetchedAtMs,
+                basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs,
             )
+            // Each book's own fair only where a bid could follow: every other line is skipped before [MakerQuote.decide] asks for them.
+            if (MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line
+            else line.copy(bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true))
         }
     }
 
@@ -199,7 +201,35 @@ object MakerQuote {
      * (a post-only bid at or over it would be refused: that side is a bet to take now, the +EV feed's).
      */
     fun decide(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): MakerDecision {
+        val (price, until) = when (val pre = precheck(line, rules, now, held)) {
+            is Pre.No -> return pre.skip
+            is Pre.Price -> pre.price to pre.until
+        }
         fun skip(why: String) = MakerDecision.Skip(line, why)
+        val fair = line.fair!!
+        // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
+        val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
+        if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
+        if (rules.sharpVeto && line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
+        val stake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
+        val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
+        if (contracts < 1) return skip("The stake is too small for one contract")
+        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until)
+    }
+
+    /** What [precheck] made of a line before the books are asked: no bid (why), or the bid's price and how long it may rest. */
+    sealed interface Pre {
+        data class No(val skip: MakerDecision.Skip) : Pre
+        data class Price(val price: Double, val until: Long) : Pre
+    }
+
+    /**
+     * [decide]'s checks that don't need each book's own fair: the start, the market, the kind, the fair and its age, the price window, Novig's offer.
+     * A line that fails here fails [decide] at the same check at any later moment (each check only gets stricter with time), so [MakerLines.from]
+     * works out the books' fairs (a devig per book) only for lines that pass.
+     */
+    fun precheck(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): Pre {
+        fun skip(why: String) = Pre.No(MakerDecision.Skip(line, why))
         if (line.live || now >= line.startsTs) return skip("The game has started (Novig cancels resting bids at the start)")
         if (now >= line.startsTs - rules.stopMs) return skip("Starts within ${rules.stopMs / 60_000} min: no bids this close")
         if (line.market.status != "OPEN") return skip("Novig isn't taking orders on this market")
@@ -219,14 +249,7 @@ object MakerQuote {
         }
         val offer = line.offer
         if (offer != null && price >= offer - 1e-9) return skip("Novig already offers it at ${percent(offer)}, at or under this bid: take it instead")
-        // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
-        val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
-        if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
-        if (rules.sharpVeto && line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
-        val stake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
-        val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
-        if (contracts < 1) return skip("The stake is too small for one contract")
-        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until)
+        return Pre.Price(price, until)
     }
 
     /**
