@@ -12,11 +12,18 @@ object StudyText {
     const val HINT =
         "Scan study: the app logs every bet a CNO or Vigilant scan lists as +EV (odds, type of bet, EV, how many books agree and what share, minutes to the start, and more), " +
             "watches each one while it stays listed, and after its game grades it (won, lost, push) and records its closing line. Share scan study with Claude sends the whole log " +
-            "with a note telling Claude to analyze every bet for the patterns that beat the close and profit. It makes no request of its own."
+            "with a note telling Claude to analyze every bet for the patterns that beat the close and profit. The log also holds the bets your CNO filters hide from the app " +
+            "(still hidden there): see the switch below."
 
     const val SWITCH_TITLE = "Log every scan for the study"
 
     const val SWITCH_SUB = "Off: nothing new is logged (what is logged stays on this phone)."
+
+    const val HIDDEN_TITLE = "Also log what your CNO filters hide"
+
+    const val HIDDEN_SUB =
+        "Reads CNO's list a second time, at most every 30 s while the CNO list is being read, with its filters opened up (any EV, odds, number of books), " +
+            "and logs every row for the study, marked hidden and why. The app's list, alerts, auto-bet and widget don't change. Off: only the rows the app lists are logged."
 
     /** "1,234 bets logged over 6 days · 812 graded · 640 with a closing line · last logged 3m ago · 4.1 MB". */
     fun note(o: ScanStudy.Overview, now: Long): String {

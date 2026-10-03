@@ -1032,6 +1032,7 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
     }
     state.studyNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("scanStudyNote")) }
     SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
+    SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
 
     SectionTitle("About")
     Hint(
