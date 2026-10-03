@@ -160,6 +160,8 @@ class MakerTest {
         val fillsBy = HashMap<String, MutableList<NovigFill>>()
         val placed = ArrayList<List<Any?>>()
         val cancelled = ArrayList<String>()
+        /** Orders Novig's reads don't show yet (its replica lags a just-placed order: 404). */
+        val lagging = HashSet<String>()
         var loseNextAnswer = false
         var refuse: NovigApiException? = null
         private var n = 0
@@ -176,9 +178,9 @@ class MakerTest {
             return id
         }
 
-        override suspend fun orders(status: String, limit: Int, outcomeId: String?) = orders.values.filter { it.status == status }
+        override suspend fun orders(status: String, limit: Int, outcomeId: String?) = orders.values.filter { it.status == status && it.orderId !in lagging }
 
-        override suspend fun order(orderId: String) = orders[orderId]
+        override suspend fun order(orderId: String) = orders[orderId]?.takeIf { orderId !in lagging }
 
         override suspend fun fills(orderId: String?, limit: Int) = fillsBy[orderId].orEmpty().toList()
 
@@ -303,6 +305,22 @@ class MakerTest {
         val r2 = d.cycle(listOf(line("m1-over"), line("m1-under", fair = 0.48, offer = 0.50)), rules, null, 50.0, 100.0)
         assertEquals("Already bet or bid on this side", (r2.decisions.first { it.line.outcomeId == "m1-under" } as MakerDecision.Skip).why)
         assertEquals(1, novig.placed.size)
+    }
+
+    @Test
+    fun `a bid Novig's reads don't show yet isn't called ended - it's asked about again`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        novig.lagging += "o1"
+        now += 30_000
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        assertEquals(MakerStatus.RESTING, d.bids().single().status)
+        assertEquals(1, novig.placed.size)
+        novig.lagging.clear()
+        now += 30_000
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        assertEquals(MakerStatus.RESTING, d.bids().single().status)
     }
 
     @Test
