@@ -357,7 +357,7 @@ writing or changing any ParlayAPI code, and update it whenever something is veri
 Every bet a CNO or Vigilant scan lists is logged, graded and closed in the background (v0.57.0, Tj 2026-10-03), and Settings › Diagnostics & about › **Share scan study with Claude** makes one file for
 Claude to find what beats the close: the READ ME in `data/study/StudyExport.kt` says how, `RESEARCH.md` §75 says why it is built this way. Code: `data/.../study/` (`ScanStudy` observes and grades,
 `StudyJournal` is the append-only store, `files/study/study-<day>.jsonl`), wired in `VigilantApp` (`study`, `settleStudy`) and `MainViewModel.shareScanStudy`. It reuses `AtBets`, `BetSettler`,
-`CloseBackfill` and `ClosingLine`; never add a request of its own to a scan. When Tj sends a scan-study file, work from its READ ME and its splits, and ask him before changing any rule it suggests.
+`CloseBackfill` and `ClosingLine`; its only request of its own is the wide read (v0.58.0, RESEARCH.md §76: CNO's list read a second time in a session of its own with the filters opened, every row logged and flagged hidden/shown; `CnoFeed.readWide`, paced, switch in Settings), which the app's list, alerts, auto-bet and widget never read. When Tj sends a scan-study file, work from its READ ME and its splits, and ask him before changing any rule it suggests.
 
 ## Project rules
 

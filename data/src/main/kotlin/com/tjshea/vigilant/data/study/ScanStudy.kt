@@ -40,7 +40,8 @@ import kotlin.math.abs
  * close and profits.
  *
  * It costs the scans nothing: it reads what a scan already produced (the CNO list, the book pages the green check read, Novig's live prices, Vigilant's
- * result) and makes no request of its own while scanning; grading and the close lookups run beside the Tracker's own (the 3-hourly worker) through the
+ * result) and the wide read ([CnoFeed.readWide]: CNO's list a second time with its filters opened, so the rows Tj's criteria hide are logged too, flagged; the one
+ * request the study causes, made by [CnoFeed] in a session of its own and paced there; this class only reads its result); grading and the close lookups run beside the Tracker's own (the 3-hourly worker) through the
  * same score feed and close sources, and a bet Tj placed himself takes its result and close from the Tracker's bet (nothing looked up twice). Everything is
  * appended to a day's journal ([StudyJournal]) off the screen's thread, in one write every [FLUSH_MS]; any failure is kept and tried again, never thrown at a
  * scan.

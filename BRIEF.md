@@ -428,6 +428,12 @@ robolectric.org/configuring/.
   partial wake lock (CPU, never the screen) and run the cycles from its own loop while auto-scan runs faster than every 9 minutes (`KeepAwake.active`); the alarm is then only a safety net
   (`KeepAwake.watchdogAtMs`, never announced as the next scan). Alarms alone are throttled in Doze, so a fast schedule can't be kept that way. Never use a screen or full wake lock for it.
   Every cycle is written to the `CycleLog` (Diagnostics' Cycle record) with the screen and Doze state, so "does it keep its schedule overnight" is answered from the report, not guessed.
+  **v0.58.0 (the study logs what CNO's filters hide, Tj 2026-10-03; RESEARCH.md §76):** a second CNO read (`CnoClient.fetchWide`, own session, filters opened: any EV/odds/books/sides, complete
+  book off, up to 1000 rows, columns kept as `CnoRow.cols`; `CnoFeed.readWide`: ≥ 30 s apart, only when CNO's odds moved, never while the list fails or CNO asked a pause, rows 1000 → 500 → 200 if
+  refused) feeds `ScanStudy.observeCnoWide`: every row is a "w" look, each new bet flagged by `screen` (the app's own reason, or NOT_LISTED) and its CNO columns logged once; hidden bets are graded
+  like the rest (futures never; 1,500 a day per pass, the app list's first). **The list, alerts, auto-bet and widget never see the wide rows** (`cno.wide` is read by VigilantApp's two study watchers,
+  the file header and Diagnostics only: source-pinned). Settings › Diagnostics & about › "Also log what your CNO filters hide" (`ScanSettings.scanStudyHidden`, on) is its switch; Diagnostics' "Scan
+  study's wide CNO read" line says what it read and what CNO was asked. The file sums shown and hidden bets apart, keeps the app-hidden bets to 65% of its 24 MB of lines (all counted in the sums).
 
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
   `com.tjshea.vigilant.betmgm` ("Vigilant MGM"), built by module `mgm` from `app`'s OWN sources and resources

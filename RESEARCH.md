@@ -4530,3 +4530,39 @@ them. The scan study logs the whole population: ~50-100 bets per CNO read, thous
 Selection: only what CNO's filters and row limit listed (Tj's: conservative devig, 4+ books, ≤ +150, ≥ 1%, 100 rows) and what Vigilant's feed listed. ROI is at the first-listed price with a unit: Novig had only
 `available` dollars there, so size matters. Closes differ by source (compare CLV by `closeVia` before pooling). Same-game bets are correlated: count games. A group needs ~200+ bets with a close before its CLV
 says much (§65-§66). The READ ME in the file tells Claude all of this and the task: the checks, the splits, timing, traps, candidate rules measured out of sample by date, and the deliverables.
+
+
+## 76. The wide read: every row CNO finds, including the ones Tj's filters hide (v0.58.0, 2026-10-03; Tj: "make it include cno scanned bets that are filtered out of showing up in the vigilant list. In other words, log all cno finds on every scan with all the information for each bet cno shows even if these bets don't meet my criteria for showing up in the list in the app. They should still be hidden in the app but logged into the scan study file. The more information the better")
+
+### 76.1 What the study saw before, and what it lost
+The app reads CNO with Tj's filters posted into CNO's own form (§19: the form is the filter): devig method, minimum EV, longest odds, fewest books, "Require a Complete Sportsbook", minimum market sides,
+result count, and any stricter value the Shared View link set. CNO drops what those exclude **before** the app sees a row, so the v0.57.0 study could only log what CNO sent (and flag what the app's own
+screen, `CnoChecks`, then hid: NOT_A_GAME, MISMATCH, ONE_WAY, BOOKS, ODDS, TOO_GOOD, EV). Never seen: rows under the EV floor, under the book count, over the odds cap, one-sided or not on a complete
+sportsbook, and everything past the row limit.
+
+### 76.2 The design: a second session with the filters opened, kept apart from the list
+- **`CnoClient.fetchWide`** loads the same view in a **session of its own** (own cookies, own form fields, own view state) and posts: Tj's devig method (EV means the same thing), `TextBoxMaximumOdds` and
+  `TextBoxMinimumOdds` blank, `TextBoxMinimumOddsProviderCount` 1, `TextBoxMinimumEVPercentage` 0%, `TextBoxMinimumSubMarketSideCount` 1, `TextBoxMaximumResultCount` 1000, the complete-sportsbook box
+  unticked. What the Shared View link scopes (book, sport, league, main lines, live, and any filter the app has no name for) is **kept**. Because the session is separate, nothing the list posts
+  can change (`CnoWideTest`: a wide read between two list reads leaves the list's second read one postback with its own cookie, view state and filter values).
+- **`CnoPage.table(keepColumns = true)`** keeps every column CNO printed for the row by its header (and every `data-*` attribute of the row) as `CnoRow.cols`: a column CNO adds is logged without the app
+  knowing it. The list's own reads keep none (rows compare equal; the disk copy isn't rewritten every read).
+- **`CnoFeed.readWide`** (own mutex, own `wide` state): never faster than every 30 s (CNO's robots.txt asks 30 s between pages), only after a list read and only when CNO's odds have moved since the last wide
+  read, never while the list is failing or CNO asked for a pause (and a pause CNO asks for during it pauses every lane); a failure waits 30 s × 2^n up to 10 minutes; a refusal (an error, or CNO's red
+  message and no table) asks for fewer rows next time (1000 → 500 → 200). The list's `state`, its disk copy, alerts, auto-bet, widget and mini window never read it (source-pinned in `ScanStudyAppTest`).
+  Cost: one ~0.8 MB reply every 30 s while the CNO list is being read, one paced request among the shared pace's one-a-second.
+- **The study** (`ScanStudy.observeCnoWide`): each wide row is a `Sight.WIDE` ("w") look (and "xw" when a read with room no longer has it; a read with as many rows as it asked for calls nothing gone). A bet
+  the app's list carries too is one bet with looks of both kinds (`src` "c+w"); one only the wide read finds is "w" and has no app-list life (`listedMin`, `gone` are the app's lists' only). The bet's
+  **`screen`** at its first look: the app's own reason (`CnoChecks.rejection` under Tj's filters), or **NOT_LISTED** (the screen passes it, the list's CNO read under his filters didn't carry it: the
+  complete-book or sides rule, the row limit, a link filter), null = shown. NOT_LISTED is only judged when the app's newest list read is the same view and filters and within a minute. `cols` goes on its own
+  line once per bet. A futures bet is logged but never graded (no feed has a result). Grading takes at most 1,500 bets of a day per pass, the app's list's bets first.
+- **Cost on the phone**: `hydrate` (after a restart) streams the journal a line at a time instead of folding days; grading and the counts fold without the looks; the journal's `rules` string isn't copied onto
+  every bet. Measured (`a two-hour evening of 800-row wide reads …`): 240 reads of 800 rows with every price flickering and 14 columns each = 1.8 s of CPU, 12 MB of journal (worst case; most rows
+  don't move every read). The file: bets' lines stop at 24 MB (the app-hidden ones take at most 65% of it) and every bet is still in the summary, which now sums the shown and the hidden apart.
+
+### 76.3 Not verified live (this container never reads CNO: its terms bar automated reads, Tj's own phone does)
+- Whether CNO accepts a blank odds field, a minimum of 1 side, and a result count of 1000 (200 was accepted in §19). If it answers with its red message the wide read steps the row count down and says so in
+  Diagnostics ("Scan study's wide CNO read: … last problem: …"); a refusal of the blank/1 values would show the same way. The file's READ ME prints the form as posted (`CnoSnapshot.asked`), every filter
+  field the page has by name, so the first file tells which link filters (a liquidity floor, hours to the start) still apply and can be opened next.
+- How many rows a read holds, how often "AS MANY AS ASKED FOR" appears, and the journal's real growth per day: Diagnostics' line (rows read, how many were also in the app's list, reads since launch).
+
