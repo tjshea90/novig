@@ -407,7 +407,7 @@ object MakerRulesText {
     fun summary(s: ScanSettings): String =
         "${pct(s.makerMargin)} under the fair · ${stake(s)} · " +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
-            "up to ${s.makerTtlMinutes} min (less if the fair goes old)"
+            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else ""
 
     /** "¼ Kelly, up to $10 a bid" / "$5 a bid". */
     fun stake(s: ScanSettings): String {
@@ -420,6 +420,12 @@ object MakerRulesText {
     }
 
     fun pct(v: Double): String = String.format(Locale.US, if (v * 100 % 1.0 == 0.0) "%.0f%%" else "%.1f%%", v * 100)
+
+    /** The trap guard's early rule as it touches bids (RESEARCH.md §71). */
+    fun earlyNote(hours: Int): String =
+        if (hours <= 0) "Off: bids go up on games however far off." else
+            "No bid on a game more than $hours h off: the fair that far out is the least reliable, and most of Novig's prop takers (71% of the dollars) " +
+                "trade in the last 6 h, so the wallet goes where the fills are."
 }
 
 @OptIn(ExperimentalLayoutApi::class)
