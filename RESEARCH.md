@@ -4266,7 +4266,7 @@ the shown edge at 1-2 / 2-3 / 3-5 / 5-8 / 8-12 / 12%+ (n 14,652 … 287), ROI +0
 ROI +2.2% [+0.7, +3.9] at 1-2% up to +16.2% at 12%+. Single books differ (BetVictor's small early gifts kept nothing; Bet&Win's kept 54-75%).
 
 **B. The best price over the CONSENSUS fair** (Vigilant's method when no sharp book prices a line): early it kept 75% / 87% / 79% / 87% / 59% /
-72% by edge band; at the close 74% / 85% / 95% / 101% / 105% / 104%, with significant ROI from 3% up (+5.5% [+2.7, +8.4] at 3-5%). **Late is
+72% by edge band; at the close 74% / 85% / 95% / 101% / 105% / 104%, with significant ROI at 3-5% (+5.5% [+2.7, +8.4]), 5-8% (+5.5% [+0.2, +10.4]) and 12%+ (+18.6%). **Late is
 better, and big early edges are the least reliable.** Totals (over/under 2.5) kept more than 100% early and late (+29.6% ROI on 5%+ early, n=102);
 Asian handicap's big early edges kept 37% (n=61). A lone book far above the rest (best ≥10% over the average price) kept 55% at a 2-5% edge, vs
 ~100% when the best is 3-10% over.
@@ -4341,7 +4341,7 @@ resolved markets (15,379 with a minute price history, 157 accounts, 1,571 market
 ### 72.5 Timing of +EV bets
 - **Takers: late beats early for a consensus fair.** Tj's bets: under 6 h +2.2% CLV, 6 h+ −0.6% (§71). Soccer: the consensus method kept more of
   its edge at the close than early, and its big early edges least. Kaunitz bet 1-5 h before kick-off; Pinnacle says to read its price an hour out
-  for the fair; Data Golf: Pinnacle's own openers realized 1.29% of a 9.35% expected edge. Early is where originators with models win (Pinnacle
+  for the fair; Data Golf (golf matchups): Pinnacle's own openers realized 1.29% of a 9.35% expected edge. Early is where originators with models win (Pinnacle
   moves 54.7% toward Betcris's opener) and where a consensus-follower is the one picked off. **The trap guard's 6 h stays**; inside it, the closer
   the better (Tj: 0-1 h +3.1%, 1-6 h ~+1.5%).
 - **News windows**: the informed price appears around injury reports and lineups (NBA 5 p.m. the day before and late morning on game day; MLB
@@ -4371,7 +4371,7 @@ What marks a trap (a sharp on the other side, the rest of the market lagging), w
 - **Take**: a consensus edge of 2.5-3%+ (presets) at Novig's live price, inside 6 h of the start, books agreeing, the sharpest book for the kind
   giving at least 1% itself (2% on Strict), game lines not just moved by Novig; when money or the per-cycle cap is short, the bets with the biggest
   **credible edge** go first (the sharp book's own edge where it priced the bet, else 70% of the shown edge, `AutoBet.credibleEv`); ¼ Kelly on the
-  shown edge (an edge that keeps ~70% makes it ~⅙ Kelly in truth, Benter's safe side).
+  shown edge (on an edge that keeps ~70% that is about ⅓ Kelly of the true edge: inside Benter's ½-⅓).
 - **Make**: 4% under the fair, props/period/team totals (game lines only with a sharp book and now the move rule), 0.10-0.65, re-quoted, inside
   6 h, every sharp book in the fair giving the bid at least the bar.
 - **Judge**: CLV per segment over 200+ bets; `tj_bets_by_lead.py` now splits by the sharp book's edge when bet, so Tj's own data tests the 1% bar.
