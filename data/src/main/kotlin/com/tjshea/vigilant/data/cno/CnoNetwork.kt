@@ -32,7 +32,7 @@ object CnoNetwork {
      * the list's own reads (every few seconds) keep one warm while the scanner is on screen.
      * DNS remembers CNO's last address for when the phone's DNS fails ("unable to resolve").
      */
-    fun client(base: OkHttpClient, dns: Dns = RememberingDns(fallback = DnsOverHttps(base))): OkHttpClient = base.newBuilder()
+    fun client(base: OkHttpClient, online: () -> Boolean = { true }, dns: Dns = RememberingDns(fallback = DnsOverHttps(base), online = online)): OkHttpClient = base.newBuilder()
         .connectionPool(ConnectionPool(2, KEEP_ALIVE_SECONDS, TimeUnit.SECONDS))
         .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .callTimeout(30, TimeUnit.SECONDS)
@@ -53,6 +53,8 @@ class RememberingDns(
     private val fallback: Dns? = null,
     private val keepMs: Long = 24 * 60 * 60_000L,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** The phone has a network: with none, [fallback] can't reach its resolvers either, so it isn't asked (Tj's v0.52.0 file: 50 such calls, all failed). */
+    private val online: () -> Boolean = { true },
 ) : Dns {
     private class Known(val addresses: List<InetAddress>, val atMs: Long)
 
@@ -62,7 +64,7 @@ class RememberingDns(
         val first = try {
             system.lookup(hostname)
         } catch (e: UnknownHostException) {
-            val second = fallback?.let { runCatching { it.lookup(hostname) }.getOrNull() }
+            val second = fallback?.takeIf { runCatching { online() }.getOrDefault(true) }?.let { runCatching { it.lookup(hostname) }.getOrNull() }
             if (second.isNullOrEmpty()) {
                 return known[hostname]?.takeIf { clock() - it.atMs < keepMs }?.addresses ?: throw e
             }

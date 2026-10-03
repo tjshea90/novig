@@ -236,7 +236,7 @@ class AppContainer(private val app: Application) {
 
     val cno = CnoFeed(
         // Its own client over the shared one: CNO's DNS fallback, short keep-alive, retry (CnoNetwork).
-        CnoClient(CnoNetwork.client(http)),
+        CnoClient(CnoNetwork.client(http, online = { NetKind.of(app) != NetKind.NONE })),
         JsonFileStore(File(app.filesDir, "cno.json"), CnoCache.serializer(), { CnoCache() }, json),
         linkStore = JsonFileStore(File(app.filesDir, "cno_links.json"), CnoLinks.serializer(), { CnoLinks() }, json),
         // Bet links from Novig's catalog first, so taps don't depend on CNO answering (Tj, 2026-09-27).
