@@ -3504,7 +3504,9 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 ## Tj, 2026-10-03 ~04:50Z (with vigilant-diagnostics-v0.52.0-2026-10-03-0045.txt): "A few optimizations to this app. 1) review the attached diagnostics file and make optimizations 2) make a quick way inside the app where I can see my vigilant wallet balance, maybe show it somewhere in the app at all times. 3) the entire app gets laggy when vigilant is scanning, but not when cno only is scanning 4) make auto-make betting have its own section or tab. Right now it is hidden inside links in another tab 5) I had auto make bids turned on, but it didn't actually make any bids by itself. I had to manually press each bid to post now. I want to have an option for it to be fully automatic and make the bids itself. 6) I posted plenty of bids and not one of them was taken. Maybe the criteria is too restrictive. Investigate, but it should never be too loose where it is no longer positive ev."
 
 - [ ] BI1 Diagnostics review: work the findings (FAILURE/OPTIMIZE first: DNS-over-HTTPS hosts failing 100%, Novig 429s ×1163, ParlayAPI/PropLine slowness, scan frame stutter, WTA matching, Vigilant CLV −0.7% on 40 bets); fix what the evidence supports, with tests.
-- [ ] BI2 Wallet balance visible at all times (a quick look anywhere in the app), refreshed sensibly.
+- [x] BI2 Wallet balance visible at all times (a quick look anywhere in the app), refreshed sensibly.
+  Done: a strip above the tab bar on every tab ("Vigilant wallet $18.51 · 3 bids up ($8.20) · 2m ago"), from WalletBalance.flow (every balance read
+  anywhere feeds it), read again every 30 s while Vigilant is on screen, tap = read now. Tests: WalletStripTest (3).
 - [ ] BI3 Lag while a Vigilant scan runs (not with CNO only): find what runs on the main thread / recomposes per scan publish, fix without dropping data; measure.
 - [x] BI4 Auto-make (bids) gets its own section/tab, not hidden behind links in another tab.
   Done: the Bids tab shows in every scanner mode (it hid in CNO only, where Tj's Auto-bet tab's line was the only way to it); its first row is the

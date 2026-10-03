@@ -1,13 +1,13 @@
-# CHECKPOINT 2426 — read me first, then TASKS.md
+# CHECKPOINT 2427 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T05:11:18Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-9491e046-7f6pnb` · **builds on:** `96ec3a93` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T05:13:44Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-9491e046-7f6pnb` · **builds on:** `eccb877c` (this checkpoint is the commit after it)
 
 ## Just done
-BI4/BI5/BI8 done: Bids tab always shown with Off/Recommend/Automatic, turning bids on turns on what they need, passes during running scans; tests green
+BI2 done: wallet strip above the tab bar (WalletBalance.flow, 30 s refresh on screen, tap to read)
 
 ## Do this next
-BI2 wallet strip above the tab bar (StateFlow from WalletBalance, refresh while on screen); then BI3 lag (scan on a background-priority dispatcher, AutoScanService follow off main, thread CPU diagnostics)
+BI3 lag: scan on a background-priority dispatcher; AutoScanService follow off main; per-thread CPU during scans in Diagnostics
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ BI2 wallet strip above the tab bar (StateFlow from WalletBalance, refresh while 
 
 ## Last ten checkpoints
 ```
+  7f0b773f ckpt 2426: BI4/BI5/BI8 done: Bids tab always shown with Off/Recommend/Automatic, turnin
   17e09f11 ckpt 2425: BI5 core: maker passes judge running scans (partial: unjudged bids stay), li
   784bead3 ckpt 2424: BI8 added (Tj: Bids tab always shown; turning bids/auto-make on turns on Vig
   58d0876a ckpt 2423: BI: Tj's 6 optimizations (diagnostics, wallet always visible, scan lag, Bids
@@ -26,8 +27,7 @@ BI2 wallet strip above the tab bar (StateFlow from WalletBalance, refresh while 
   46b57f5f ckpt 2419: BH1-BH6 done: maker audit fixes (6 bugs), books agree + sharp veto + Kelly, 
   597acd33 ckpt 2418: BH1-3 data fixes: cancels confirmed (CANCELING), fills read even on 404 / lo
   e8755330 ckpt 2417: BH0 done: v0.51.0 released + recorded (BG6 ticked)
-  622feada ckpt 2416: BH: Tj's make-orders follow-up written to TASKS.md (full tests, +EV only, ti
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
