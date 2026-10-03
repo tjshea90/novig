@@ -19,8 +19,15 @@ unless Tj asks).
 **The app's real surface (v0.4.0+), so "sweep the whole app" is concrete:**
 
 - **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), CNO (`CnoScreen`), Games
-  (`GamesScreen`: board + per-game line table), Auto-bet (`AutoBetScreen`, v0.46.0: Novig with CNO on), Tracker
-  (`TrackerScreen`: P/L, ROI, CLV), Settings (`SettingsScreen`: a home list with search, then one page each, below).
+  (`GamesScreen`: board + per-game line table), Auto-bet (`AutoBetScreen`, v0.46.0: Novig with CNO on), Bids (`MakerScreen`, v0.51.0+: make orders,
+  Off · Recommend · Automatic, `data/novig/trading/maker/`: `MakerQuote`, `MakerDesk`, `MakerPlan`; `app/MakerRunner`; RESEARCH.md §70), Tracker
+  (`TrackerScreen`: P/L, ROI, CLV), Settings (`SettingsScreen`: a home list with search, then one page each, below; its home has rows for the Auto-bet
+  and Bids tabs, and search finds their settings: `SettingsIndex.Entry.bids`). The wallet strip (`WalletStrip`) sits above the tabs.
+- **Trap guard (v0.55.0; RESEARCH.md §71, BRIEF.md; REAL MONEY: it gates the auto-bet, alerts and bids):** `data/scanner/TrapGuard` (pure: `early`, `move`),
+  `ScanSettings.trapEarlyHours` (6 h) / `trapNovigMove`, `AlertPicks.cnoCandidates`/`tooEarly`/`vigilant`, `AutoBettor.novigMove` + `recentTrades`
+  (`NovigPublicClient.trades`), `MakerRules.earlyHours`, `AtBet.novigMove`, `BetLedger.Split.NOVIG_MOVE`/`LEAD` (every bet), `ui/TrapGuardUi`. Tests: TrapGuardTest,
+  AutoBettorTest trap tests (mutants 5/5), AutoScanTest, MakerTest, AutoBetUiTest, SettingsPagesTest. Research scripts: `tools/research/novig_trap_study.py`,
+  `tj_bets_by_lead.py` (re-run the second on every new Diagnostics file).
 - **Locks and the Novig-only filter (v0.47.0; RESEARCH.md §67, NOVIG_API.md §16; REAL MONEY for locks):** `data/novig/trading/LockIn` (pure math,
   property-tested), `LockPositions`, `ApiBetPlacer.placeLock` (fresh book, positions must match, one FOK), `app/LockScanner` + `AutoLocker` (cycle hook,
   `AutoBetNotes.locked`), `ui/LockUi` (bet sheet card + confirm, Tracker badge), `ScanSettings.autoLock*`, `TrackedBet.lockFor/isLock` (money yes; record,

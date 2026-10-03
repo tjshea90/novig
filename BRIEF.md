@@ -387,6 +387,11 @@ robolectric.org/configuring/.
   (`fillsStartingAfter`), cancels confirmed by one re-read of the open orders, an order's own record read only if it never showed open (`MakerBid.seenOpen`),
   and a fills read that fails finishes nothing; the background cycle's pass is skipped within 15 s of another (`MakerRunner.BACKGROUND_GAP_MS`).
   Loosening any of this needs Tj's word.
+  **The trap guard (Tj, 2026-10-03: "find these trap bets and avoid them"; v0.55.0, RESEARCH.md §71, `TrapGuard`):** on by default for everything that bets or alerts
+  by itself. `trapEarlyHours` (6 h; Off/3/6/12/24): the auto-bet, the +EV alerts and the bids leave alone any game starting further off than that (Tj's own bets placed 6 h+
+  out lost to the close, inside 6 h they beat it); the lists still show them. `trapNovigMove` (on): before the auto-bet places a full-game moneyline, spread or total, it
+  reads the market's newest Novig trades (one public request) and skips a price 2¢+ under this hour's level with $100+ bought on the other side in 15 min (−2.3¢ to the
+  close on Novig's 61 days); a read that fails stops nothing; props and period lines are never checked (the same move isn't a trap there). Turning either off needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.
