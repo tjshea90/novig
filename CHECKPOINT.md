@@ -1,23 +1,23 @@
-# CHECKPOINT 2413 — read me first, then TASKS.md
+# CHECKPOINT 2414 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T02:52:29Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `c763ec28` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T02:54:26Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `e79c9c9b` (this checkpoint is the commit after it)
 
 ## Just done
-BG6e done: Bids tab + MakerRunner + container wiring + Diagnostics + Tracker tag; tests MakerUiTest 5, MakerAppTest 3 (mutants 2/2); docs BRIEF/NOVIG_API §17/RESEARCH §70.6; version 0.51.0 (91)
+pre-ship: v0.51.0: make orders (the Bids tab): post-only bids under Vigilant's fair on Novig, re-priced as the fair moves, expiring on their own, fills tracked as bets; research RESEARCH.md §70
 
 ## Do this next
-BG6f: full floor (bash tools/test.sh), then ship.sh, wait CI, trigger release.yml, record-release, answer Tj
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
-     M app/build.gradle.kts
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  e79c9c9b ckpt 2413: BG6e done: Bids tab + MakerRunner + container wiring + Diagnostics + Tracker
   6e894597 ckpt 2412: BG6e in progress: MakerRunner (container: desk, after-scan pass, cancel on o
   9fa8c34e ckpt 2411: BG6a-d done: client ttl/cancel, maker settings, MakerQuote/MakerPlan/MakerLi
   49ed7b56 ckpt 2410: BG1-BG5 ticked; BG6 planned in TASKS.md (6a client, 6b settings, 6c MakerQuo
@@ -27,8 +27,4 @@ BG6f: full floor (bash tools/test.sh), then ship.sh, wait CI, trigger release.ym
   d9acefe2 ckpt 2406: BF answered: Tj sent the RESEARCH.md §69 summary (pro strategies, Vigilant 
   b1d6f76e ckpt 2405: BF done: RESEARCH.md §69 (pro strategies, Vigilant vs pros, Novig maker/tak
   f6753027 ckpt 2404: BF: Tj's deep-research request (pro betting strategies, Vigilant vs pros, No
-  064c0204 ckpt 2403: v0.50.0 released, verified, recorded (wallet line on every notification + sl
 ```
-
-(7 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
