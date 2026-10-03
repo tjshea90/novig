@@ -33,7 +33,11 @@ class MakerTest {
 
     private var now = 1_800_000_000_000L
     private val start = now + 6 * 3_600_000L
-    private val rules = MakerRules.of(ScanSettings())
+    /** The defaults with a fixed $5 a bid (the sizing tests below cover Kelly). */
+    private val rules = MakerRules.of(ScanSettings()).copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0)
+
+    /** A far-off game's fair is fresh for 10 minutes (Freshness), seen 30 s ago: a bid rests 9.5 min at most, not the 30-minute expiry. */
+    private val life = 10 * 60_000L - 30_000L
 
     private fun market(id: String = "m1", starts: Long = start, status: String = "OPEN") = NovigMarket(
         marketId = id, eventId = "ev-$id", marketType = "RECEIVING_YARDS", status = status, description = "Player Receiving Yards", startsTs = starts,
@@ -219,9 +223,9 @@ class MakerTest {
         val d = desk(novig, t)
         val r = d.cycle(listOf(line("m1-over", fair = 0.52), line("m1-under", fair = 0.48, offer = 0.50)), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
         assertEquals(2, r.placed)
-        // Post-only, 30 minutes to live, at fair / 1.04 on the grid.
-        assertEquals(listOf("m1-under", 0.460, 1_086L, "PO", 1_800_000L), novig.placed[0])
-        assertEquals(listOf("m1-over", 0.500, 1_000L, "PO", 1_800_000L), novig.placed[1])
+        // Post-only, living only as long as the fair it was priced from, at fair / 1.04 on the grid.
+        assertEquals(listOf("m1-under", 0.460, 1_086L, "PO", life), novig.placed[0])
+        assertEquals(listOf("m1-over", 0.500, 1_000L, "PO", life), novig.placed[1])
         val over = novig.orders.values.first { it.outcomeId == "m1-over" }.orderId
         // A taker fills 400 of the Over bid.
         novig.fill(over, 400)
