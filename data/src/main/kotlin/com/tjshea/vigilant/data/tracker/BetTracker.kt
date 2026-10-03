@@ -306,38 +306,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         source: String = SOURCE_CNO,
         atBet: AtBet? = null,
     ): TrackedBet {
-        val decimal = com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
-        val price = 1.0 / decimal
-        val fee = if (live && price > 0.0 && price < 1.0) {
-            com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
-        } else {
-            0.0
-        }
-        val bet = TrackedBet(
-            id = UUID.randomUUID().toString(),
-            createdAtMs = clock(),
-            league = row.league,
-            eventName = row.event,
-            startsTs = row.startsAtMs ?: clock(),
-            marketLabel = row.market,
-            selection = row.bet,
-            marketId = marketId,
-            outcomeId = outcomeId,
-            price = price,
-            cost = price + fee,
-            // With no fair on record, backed out of the EV at what the bet cost ([ev] is net of the live fee, as an alert's is): fair = (1 + EV) × cost.
-            fairAtBet = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: ((1 + ev) * (price + fee)),
-            evPercentAtBet = ev,
-            stake = stake,
-            source = source,
-            placedKey = placedKey,
-            american = row.odds,
-            book = row.book,
-            gameUrl = row.gameUrl,
-            betUrl = row.betUrl,
-            fairBasis = FairBasis(if (source == SOURCE_PARLAY) FairBasis.SOURCE_PARLAY else FairBasis.SOURCE_CNO, books = row.books ?: 0),
-            atBet = atBet,
-        )
+        val bet = cnoBet(row, ev, live, placedKey, stake, marketId, outcomeId, source, atBet, UUID.randomUUID().toString(), clock())
         store.update { list -> list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null } + bet }
         return bet
     }
@@ -489,29 +458,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     }
 
     suspend fun track(o: Opportunity, stake: Double, placedKey: String? = null, atBet: AtBet? = null): TrackedBet? {
-        val q = o.quote ?: return null
-        val fair = o.fairProbability ?: return null
-        val bet = TrackedBet(
-            id = UUID.randomUUID().toString(),
-            createdAtMs = clock(),
-            league = o.league.displayName,
-            eventName = o.event.description,
-            startsTs = o.event.startsTs,
-            marketLabel = o.marketLabel,
-            selection = o.selection,
-            marketId = o.market.marketId,
-            outcomeId = o.outcome.outcomeId,
-            price = q.price,
-            cost = q.cost,
-            fairAtBet = fair,
-            evPercentAtBet = q.evPercent,
-            stake = stake,
-            placedKey = placedKey,
-            american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
-            book = ownBook,
-            fairBasis = FairBasis.of(o),
-            atBet = atBet,
-        )
+        val bet = opportunityBet(o, stake, placedKey, atBet, UUID.randomUUID().toString(), clock(), ownBook) ?: return null
         store.update { list -> (if (placedKey == null) list else list.filterNot { it.placedKey == placedKey && it.status == BetStatus.PENDING && it.orderId == null }) + bet }
         return bet
     }
@@ -859,9 +806,100 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         return Merged(both.toSet(), cnoOnly.toSet(), vigOnly.toSet(), neither.toSet())
     }
 
+    /**
+     * [bets] added as they are (new ids only), in one save. For the scan study's grading harness, which builds each bet itself ([cnoBet],
+     * [opportunityBet]) and has many at a time; the Tracker's own ✓ and placed bets go through [logCno], [track] and [logApi].
+     */
+    suspend fun addAll(bets: List<TrackedBet>) {
+        if (bets.isEmpty()) return
+        store.update { list ->
+            val have = list.mapTo(HashSet()) { it.id }
+            val fresh = bets.filter { have.add(it.id) }
+            if (fresh.isEmpty()) list else list + fresh
+        }
+    }
+
     companion object {
         const val SOURCE_VIGILANT = "vigilant"
         const val SOURCE_CNO = "cno"
+
+        /**
+         * The bet a CNO-shaped [row] makes at its price ([logCno]'s record, which the scan study's bets are built by too): [live] adds Novig's taker fee to
+         * the cost, [ev] is net of it, and the fair is CNO's own (else what [ev] implies at the cost).
+         */
+        fun cnoBet(
+            row: com.tjshea.vigilant.data.cno.CnoRow,
+            ev: Double,
+            live: Boolean,
+            placedKey: String?,
+            stake: Double,
+            marketId: String,
+            outcomeId: String,
+            source: String,
+            atBet: AtBet?,
+            id: String,
+            now: Long,
+        ): TrackedBet {
+            val decimal = com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
+            val price = 1.0 / decimal
+            val fee = if (live && price > 0.0 && price < 1.0) {
+                com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
+            } else {
+                0.0
+            }
+            return TrackedBet(
+                id = id,
+                createdAtMs = now,
+                league = row.league,
+                eventName = row.event,
+                startsTs = row.startsAtMs ?: now,
+                marketLabel = row.market,
+                selection = row.bet,
+                marketId = marketId,
+                outcomeId = outcomeId,
+                price = price,
+                cost = price + fee,
+                // With no fair on record, backed out of the EV at what the bet cost ([ev] is net of the live fee, as an alert's is): fair = (1 + EV) × cost.
+                fairAtBet = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: ((1 + ev) * (price + fee)),
+                evPercentAtBet = ev,
+                stake = stake,
+                source = source,
+                placedKey = placedKey,
+                american = row.odds,
+                book = row.book,
+                gameUrl = row.gameUrl,
+                betUrl = row.betUrl,
+                fairBasis = FairBasis(if (source == SOURCE_PARLAY) FairBasis.SOURCE_PARLAY else FairBasis.SOURCE_CNO, books = row.books ?: 0),
+                atBet = atBet,
+            )
+        }
+
+        /** The bet Vigilant's own [o] makes at its quote ([track]'s record, which the scan study's bets are built by too); null with no quote or fair. */
+        fun opportunityBet(o: Opportunity, stake: Double, placedKey: String?, atBet: AtBet?, id: String, now: Long, ownBook: String = "Novig"): TrackedBet? {
+            val q = o.quote ?: return null
+            val fair = o.fairProbability ?: return null
+            return TrackedBet(
+                id = id,
+                createdAtMs = now,
+                league = o.league.displayName,
+                eventName = o.event.description,
+                startsTs = o.event.startsTs,
+                marketLabel = o.marketLabel,
+                selection = o.selection,
+                marketId = o.market.marketId,
+                outcomeId = o.outcome.outcomeId,
+                price = q.price,
+                cost = q.cost,
+                fairAtBet = fair,
+                evPercentAtBet = q.evPercent,
+                stake = stake,
+                placedKey = placedKey,
+                american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)),
+                book = ownBook,
+                fairBasis = FairBasis.of(o),
+                atBet = atBet,
+            )
+        }
 
         /** ParlayAPI's own +EV list at Novig (its /best-bets, re-priced at Novig; PARLAY_API.md §6.5). */
         const val SOURCE_PARLAY = "parlay"
