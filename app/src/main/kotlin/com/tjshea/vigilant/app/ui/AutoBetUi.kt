@@ -88,7 +88,7 @@ object AutoBetText {
             "${evLabel(r.minEv)} or more at Novig's price now" + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
             (if (r.minOdds < 0) ", odds no shorter than ${minOddsLabel(r.minOdds)}" else "") +
             (if (r.kinds.size < BetKind.entries.size) ", only ${r.kinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() }}" else "") +
-            (if (s.sharpAutoBet == SharpMode.VETO) ", unless the sharpest book for it says it isn't +EV" else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
+            (if (s.sharpAutoBet == SharpMode.VETO) ", unless the sharpest book for it gives it under ${if (s.sharpVetoMinEv <= 0.0) "any edge" else AutoBetText.evLabel(s.sharpVetoMinEv)}" else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
             ", staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
     }
 
@@ -555,7 +555,7 @@ object SharpConfirmText {
     /** What each mode does, in plain words. */
     fun modeNote(mode: SharpMode): String = when (mode) {
         SharpMode.OFF -> "Off: the sharp books have no say; the other rules decide."
-        SharpMode.VETO -> "Veto (recommended): a bet is skipped only when the sharpest book for its kind of bet says it isn't +EV. Free: it uses the prices already read."
+        SharpMode.VETO -> "Veto (recommended): a bet is skipped when the sharpest book for its kind of bet says it isn't +EV, or gives it less than the bar below. Free: it uses the prices already read."
         SharpMode.CONFIRM -> "Require a confirmation (strict, far fewer bets): a fresh Pinnacle price must also show the bet is +EV. On player props Pinnacle is " +
             "often missing or soft, so most props are skipped."
     }
@@ -596,6 +596,16 @@ object SharpConfirmText {
 
     private fun names(codes: List<String>) = codes.joinToString(", ") { com.tjshea.vigilant.data.cno.CnoBooks.name(it) }
 
+    /**
+     * The veto's bar in words ([ScanSettings.sharpVetoMinEv], RESEARCH.md §72): why a sharp book's small edge isn't enough, and that the same bar applies to
+     * the auto-bet, CNO's alerts and the bids.
+     */
+    fun vetoBarNote(minEv: Double): String =
+        (if (minEv <= 0.0) "Any +EV on the sharpest book's own price passes. " else "The sharpest book's own price must show at least ${AutoBetText.evLabel(minEv)} at Novig's price, or the bet is skipped. ") +
+            "What a bet keeps by the close is about the sharpest book's own edge, not the average's: on 48,394 soccer matches, bets the average called +EV " +
+            "kept +0.8% (no better than zero) when the sharp book gave them 0-1%, +1.6% at 1-2%, +2.8% at 2-4%. 1% is recommended. The same bar is used by " +
+            "the auto-bet, CNO's alerts and the bids."
+
     fun confirmNote(s: ScanSettings): String? {
         val where = listOfNotNull("the auto-bet".takeIf { s.sharpAutoBet == SharpMode.CONFIRM }, "CNO's push alerts".takeIf { s.sharpAlerts == SharpMode.CONFIRM }).joinToString(" and ")
         if (where.isEmpty()) return null
@@ -621,6 +631,16 @@ fun SharpVetoSection(state: UiState, forAlerts: Boolean, onUpdate: ((ScanSetting
     Text(SharpConfirmText.modeNote(mode), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag(if (forAlerts) "sharpAlertsNote" else "sharpAutoBetNote"))
     if (mode == SharpMode.VETO) {
         Text(SharpConfirmText.vetoNote(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("sharpVetoNote"))
+        // One bar for the auto-bet, the alerts and the bids (a filled bid is a bet): the same setting on each screen.
+        Text("Edge the sharpest book must give Novig's price", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        Chips(
+            ScanSettings.SHARP_VETO_MIN_EV_CHOICES, s.sharpVetoMinEv, SharpConfirmText::edgeLabel,
+            modifier = Modifier.testTag(if (forAlerts) "sharpVetoMinEvAlerts" else "sharpVetoMinEv"),
+        ) { v -> onUpdate { it.copy(sharpVetoMinEv = v) } }
+        Text(
+            SharpConfirmText.vetoBarNote(s.sharpVetoMinEv), style = MaterialTheme.typography.bodySmall, color = subtle,
+            modifier = Modifier.padding(top = 4.dp).testTag(if (forAlerts) "sharpVetoBarNoteAlerts" else "sharpVetoBarNote"),
+        )
     }
     if (mode == SharpMode.CONFIRM) SharpConfirmCriteria(state, onUpdate)
 }
