@@ -148,4 +148,27 @@ class PresetsTest {
         assertTrue(mine, mine.startsWith("edge ≥ 3% ·") && mine.contains("alerts ≥ 7% ·"))
         assertTrue(Presets.STRICT.rules.summary().startsWith("edge ≥ 4% ·"))
     }
+
+    /** RESEARCH.md §72: what a bet keeps by the close is about the sharpest book's own edge, so the presets set the veto's bar too. */
+    @Test
+    fun `the presets set the sharp veto's bar - 1% for volume, 2% for strict - and a preset saved before has the default`() {
+        val v = Presets.apply(mine.copy(sharpVetoMinEv = 0.0), Presets.VOLUME)
+        assertEquals(0.01, v.sharpVetoMinEv, 0.0)
+        assertTrue(Presets.matches(v, Presets.VOLUME))
+        assertFalse("a changed bar is a change since the preset", Presets.matches(v.copy(sharpVetoMinEv = 0.005), Presets.VOLUME))
+        val st = Presets.apply(mine, Presets.STRICT)
+        assertEquals(0.02, st.sharpVetoMinEv, 0.0)
+        assertTrue(st.sharpVetoMinEv in ScanSettings.SHARP_VETO_MIN_EV_CHOICES && v.sharpVetoMinEv in ScanSettings.SHARP_VETO_MIN_EV_CHOICES)
+        // Saving keeps the bar Tj has; a preset saved by v0.55.0 (no bar in the file) reads as the default.
+        assertEquals(0.015, PresetRules.of(mine.copy(sharpVetoMinEv = 0.015)).sharpVetoMinEv, 0.0)
+        val json = Json { ignoreUnknownKeys = true }
+        val saved = json.encodeToString(SavedPreset.serializer(), SavedPreset("old", Presets.VOLUME.rules))
+            .replace(Regex(",?\\"sharpVetoMinEv\\":[0-9.]+"), "")
+        assertFalse(saved, saved.contains("sharpVetoMinEv"))
+        assertEquals(SharpVeto.DEFAULT_MIN_EV, json.decodeFromString(SavedPreset.serializer(), saved).rules.sharpVetoMinEv, 0.0)
+        // The summary says the bar only with the veto on and a bar set.
+        assertTrue(Presets.STRICT.rules.summary().contains("sharp check: veto under 2% ·"))
+        assertTrue(Presets.VOLUME.rules.copy(sharpVetoMinEv = 0.0).summary().contains("sharp check: veto ·"))
+        assertTrue(Presets.VOLUME.rules.copy(sharpAutoBet = SharpMode.OFF).summary().contains("sharp check: off ·"))
+    }
 }
