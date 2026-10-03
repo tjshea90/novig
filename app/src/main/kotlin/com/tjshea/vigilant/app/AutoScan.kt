@@ -162,6 +162,8 @@ class AutoScanner(
     private val clock: () -> Long = System::currentTimeMillis,
     /** Whether the screen is off and Android's Doze is on, as a cycle starts ([CycleLog]'s evidence that scanning goes on while the phone idles). */
     private val phone: () -> Pair<Boolean, Boolean> = { screenOffAndDozing(app) },
+    /** Starts Vigilant's scan for a cycle (false: not started, one may already be running); tests stand in their own. */
+    private val startVigilant: suspend (ScanSettings, List<com.tjshea.vigilant.data.tracker.TrackedBet>) -> Boolean = { s, bets -> c.startVigilantScan(s, bets, background = true) },
 ) {
 
     data class Status(
@@ -384,7 +386,7 @@ class AutoScanner(
     private suspend fun vigilantScan(settings: ScanSettings) {
         val before = c.runner.state.value.finished
         val bets = runCatching { c.tracker.all() }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())
-        val started = c.startVigilantScan(settings, bets, background = true)
+        val started = startVigilant(settings, bets)
         if (!started && !c.runner.state.value.scanning) return
         if (settings.alertMinEv <= 0.0) return
         vigilantAlerts?.takeIf { it.isActive }?.let { return }
