@@ -76,6 +76,20 @@ class MakerTest {
     }
 
     @Test
+    fun `no bid on a game further off than the trap guard's hours (RESEARCH 71) - posted once it's inside them, and none of it when the guard is off`() {
+        val far = market(starts = now + 7 * 3_600_000L)
+        val rules6 = rules.copy(earlyHours = 6)
+        val skip = MakerQuote.decide(line(m = far), rules6, now) as MakerDecision.Skip
+        assertEquals("Starts in more than 6 h: no bids this early (trap guard)", skip.why)
+        // An hour later the same game is inside the window.
+        assertTrue(MakerQuote.decide(line(m = far).copy(fairAsOfMs = now + 3_600_000L - 30_000), rules6, now + 3_600_000L) is MakerDecision.Post)
+        assertTrue(MakerQuote.decide(line(m = far), rules6.copy(earlyHours = 0), now) is MakerDecision.Post)
+        // The settings carry it: 6 h by default.
+        assertEquals(6, MakerRules.of(ScanSettings()).earlyHours)
+        assertEquals(0, MakerRules.of(ScanSettings(trapEarlyHours = 0)).earlyHours)
+    }
+
+    @Test
     fun `no bid - and why - when it can't or shouldn't rest`() {
         fun why(l: MakerLine, held: Set<String> = emptySet(), r: MakerRules = rules) = (MakerQuote.decide(l, r, now, held) as MakerDecision.Skip).why
         assertTrue(why(line(live = true)).startsWith("The game has started"))
