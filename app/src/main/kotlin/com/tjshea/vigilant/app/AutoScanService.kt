@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -140,6 +141,7 @@ class AutoScanService : Service() {
     }
 
     /** Settings changes (off, paused, a new interval, keep awake) and the cycle's progress, into the notification, the alarm and the loop. */
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
     private suspend fun follow() {
         combine(
             container.settingsStore.flow.filterNotNull().map { Plan(it.activeAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }.distinctUntilChanged(),
@@ -379,6 +381,8 @@ class AutoScanService : Service() {
     }
 
     companion object {
+        /** How often a running scan's progress reaches the notification (it shows it at most once a second). */
+        private const val PROGRESS_SAMPLE_MS = 1_000L
         private const val CHANNEL = "auto_scan"
         private const val ONGOING_ID = 3
         private const val PAUSED_ID = 4
