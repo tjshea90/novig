@@ -63,6 +63,9 @@ object Diagnostics {
         val closingAlarmAtMs: Long? = null,
         /** The last look for closes after the start ([com.tjshea.vigilant.data.tracker.CloseBackfill]) and the bytes Novig's trade files cost. */
         val backfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null,
+        /** The scan study at a glance, and the last thing that went wrong in it ([com.tjshea.vigilant.data.study.ScanStudy]); null: not read. */
+        val study: com.tjshea.vigilant.data.study.ScanStudy.Overview? = null,
+        val studyProblem: String? = null,
         val novigTradeBytes: Long = 0,
         /** Calls to ParlayAPI's closing lines since the app opened (Pinnacle's closes, when Tj has a key). */
         val parlayCloseRequests: Int = 0,
@@ -331,6 +334,11 @@ object Diagnostics {
             val c = com.tjshea.vigilant.data.tracker.CheckOddsStats.of(bets, since, now)
             o.appendLine("Check odds now counter (since ${at(since)}): ${TrackerText.checkCounts(c)} · ${TrackerText.checkAverage(c)}" + (if (c.outliers > 0) " (${c.outliers} over ±5% left out)" else "") + (if (c.live > 0) " (${c.live} live games left out)" else ""))
         }
+        // The scan study (Tj, 2026-10-03): every bet a scan listed, for Settings › Tools › Share scan study with Claude.
+        o.appendLine(
+            "Scan study: " + (x.study?.let { StudyText.note(it, now) + " · ${it.loggedThisRun} bets logged since the app opened" } ?: "not read") +
+                " · ${if (set.scanStudy) "logging on" else "logging OFF (Settings › Diagnostics & about)"}" + (x.studyProblem?.let { " · last problem: $it" } ?: ""),
+        )
         o.appendLine("Settled by: score feeds ${bets.count { it.settledBy == BetSettler.BY_SCORES }}, Novig's ledger ${bets.count { it.settledBy == BetSettler.BY_NOVIG }}, you ${bets.count { it.settledBy == BetSettler.BY_YOU }}")
         val overdue = started.filter { now - it.startsTs > 6 * 3_600_000L }
         o.appendLine("Started and still open: ${started.size} (${overdue.size} for over 6 hours, ${started.count { it.gradeManual || it.autoGradeOff }} need a tap)")

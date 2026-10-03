@@ -1647,6 +1647,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val previous: com.tjshea.vigilant.data.diag.Snap?,
         /** Read from the file, not the store's flow: the flow is null until something reads it (bids off, the Bids tab not opened). */
         val makerBids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>,
+        /** The scan study's counts: read from its journal off the main thread. */
+        val study: com.tjshea.vigilant.data.study.ScanStudy.Overview?,
     )
 
     private suspend fun gatherDiag(): DiagInputs = withContext(Dispatchers.IO) {
@@ -1657,6 +1659,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             storage = runCatching { DiagnosticsShare.storage(getApplication()) }.getOrDefault(emptyList()),
             previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),
             makerBids = runCatching { c.makerStore.all() }.getOrDefault(emptyList()),
+            study = runCatching { c.study.overview() }.getOrNull(),
         )
     }
 
@@ -1813,6 +1816,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             lastCheck = c.lastCheckCost,
             closingAlarmAtMs = ClosingAlarm.nextAtMs,
             backfill = c.lastBackfill,
+            study = g.study,
+            studyProblem = c.study.lastProblem,
             novigTradeBytes = c.novigCloses.bytesRead,
             parlayCloseRequests = c.parlayCloses.requests,
             parlayAccounts = c.parlayAccount.last,
