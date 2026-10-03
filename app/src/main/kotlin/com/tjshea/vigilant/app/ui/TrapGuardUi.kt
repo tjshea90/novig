@@ -58,16 +58,18 @@ object TrapGuardText {
     /** What the move rule does. */
     fun moveNote(on: Boolean): String =
         if (on) {
-            "Before the auto-bet places a moneyline, spread or game total, Novig's own trades in it are read (one free request). A price that just fell " +
-                "2¢+ under where it traded this hour while \$100+ was bought on the other side isn't bet: on Novig such bets lost 2.3¢ to the close. Props " +
-                "aren't checked: the same move on a prop isn't a trap."
+            "Before the auto-bet places a moneyline, spread or game total (or a game-line bid goes up, when the Bids tab takes game lines), Novig's own " +
+                "trades in it are read (one free request). A price that just fell 2¢+ under where it traded this hour while \$100+ was bought on the other " +
+                "side isn't bet or bid on: on Novig such bets lost 2.3¢ to the close, and such bids kept +1.2% a fill instead of +6.5%. Props aren't " +
+                "checked: the same move on a prop isn't a trap."
         } else {
-            "Off: game lines are bet without reading Novig's recent trades."
+            "Off: game lines are bet and bid on without reading Novig's recent trades."
         }
 }
 
 /**
- * The trap guard's two switches. [showMove]: the move rule is the auto-bet's only (the Auto-bet tab); the alerts and the bids show the early rule.
+ * The trap guard's two switches. [showMove]: the move rule is for placing game lines (the Auto-bet tab; the Bids tab shows the same switch once it takes
+ * game lines); the alerts show the early rule only.
  * [tag] prefixes the test tags so each place's controls can be told apart.
  */
 @OptIn(ExperimentalLayoutApi::class)

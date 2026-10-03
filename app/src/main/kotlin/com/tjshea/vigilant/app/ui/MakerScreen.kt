@@ -468,6 +468,12 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             MakerRulesText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag("makerTrapEarlyNote"),
         )
+        // Game-line bids get the trap guard's move rule (v0.56.0, RESEARCH.md §72.3): the auto-bet's same switch, shown here once game lines get bids.
+        if (s.makerKinds.any { it in com.tjshea.vigilant.data.novig.trading.maker.MakerRules.GAME_LINES }) {
+            SwitchRow("Skip game lines Novig just moved (shared with auto-bet)", TrapGuardText.moveNote(s.trapNovigMove), s.trapNovigMove, "makerTrapMove", noteTag = "makerTrapMoveNote") { on ->
+                onUpdate { it.copy(trapNovigMove = on) }
+            }
+        }
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Both sides of a market", style = MaterialTheme.typography.bodyMedium)
@@ -491,18 +497,19 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         ) { on -> onUpdate { it.copy(makerRecommend = on) } }
         Text(
             "Bids are priced between ${Format.american(s.makerMinPrice)} and ${Format.american(s.makerMaxPrice)} (favorites shorter than that almost never fill), with at least " +
-                "${s.makerMinBooks} books each pricing the bid +EV on their own, game lines only with a sharp book in the fair, pregame only.",
+                "${s.makerMinBooks} books each pricing the bid +EV on their own, game lines only with a sharp book in the fair" +
+                (if (s.trapNovigMove) " and not on a line Novig just moved" else "") + ", pregame only.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
         )
     }
 }
 
 @Composable
-private fun SwitchRow(title: String, sub: String, on: Boolean, tag: String, onChange: (Boolean) -> Unit) {
+private fun SwitchRow(title: String, sub: String, on: Boolean, tag: String, noteTag: String? = null, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyMedium)
-            Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = if (noteTag != null) Modifier.testTag(noteTag) else Modifier)
         }
         Switch(checked = on, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
     }
