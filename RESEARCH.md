@@ -3976,10 +3976,9 @@ two-outcome markets with a close, 1.6M simulated bids) and `tools/research/novig
 | Kind | Fill | EV@close per fill w=0 / 0.25 / 0.5 | Per posted bid w=0 / 0.25 / 0.5 |
 | :- | -: | -: | -: |
 | Player props | 30% | **+1.27% / +2.51% / +3.78%** | +0.38% / +0.73% / +1.05% |
-| Period lines (1st half, F5 …) | 15% | +1.61% / +2.59% / +4.06%* | +0.25% / +0.36% / +0.6%* |
+| Period lines (1st half, F5 …) | 15% | +1.61% / +2.59% / +3.78% | +0.25% / +0.36% / +0.44% |
 | Team totals (74 markets) | 30% | +1.49% / +4.00% / +4.31% | +0.44% / +1.08% / +1.28% |
 | Game lines | 13% | **−0.30%** / +1.10% / +2.94% | −0.04% / +0.12% / +0.25% |
-(*re-quoted figure; the static row isn't in the shortened table)
 
 **Props make money even with no outside information; game lines only with a fair that leads Novig.** On props the spread is wide and the takers are
 recreational; on game lines the takers who reach a resting bid are disproportionately the ones who know the line just moved.
