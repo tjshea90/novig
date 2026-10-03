@@ -182,6 +182,12 @@ class MakerDesk(
         Report(placed, cancelled, fills, problems, after, stopAll, decisions)
     }
 
+    /**
+     * Only what Novig says happened to the bids (fills to the Tracker, expiries, voids), nothing posted or moved: for a pass with no fair prices to
+     * judge by (no scan yet in this process). [problems] collects what went wrong.
+     */
+    suspend fun settleOnly(problems: MutableList<String> = ArrayList()): List<TrackedBet> = lock.withLock { settle(problems) }
+
     /** Every bid on record (active and ended, newest last), and the same as it changes. */
     suspend fun bids(): List<MakerBid> = store.all()
     val flow get() = store.flow
