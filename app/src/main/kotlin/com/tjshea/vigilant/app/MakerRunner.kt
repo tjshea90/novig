@@ -41,7 +41,7 @@ class MakerRunner(
         val problem: String? = null,
         val decisions: List<MakerDecision> = emptyList(),
         val decisionsAtMs: Long? = null,
-        /** When the scan behind [decisions] finished; null = no scan yet. */
+        /** When the scan behind [decisions] was priced; null = no scan yet. */
         val scanAtMs: Long? = null,
     )
 
@@ -69,7 +69,8 @@ class MakerRunner(
         try {
             val now = clock()
             val stop = stopReason(s)
-            if (result == null && stop == null) {
+            // No scan yet, or one still running (its lines come in a league at a time): only fills and expiries until it's done.
+            if ((result == null || run.scanning || result.partial) && stop == null) {
                 val fills = desk.settleOnly()
                 notifyFills(fills, desk.bids())
                 _status.update { it.copy(running = false, lastAtMs = now, problem = null) }
@@ -85,7 +86,7 @@ class MakerRunner(
             _status.update {
                 it.copy(
                     running = false, lastAtMs = now, lastReport = report, problem = report.problems.firstOrNull(),
-                    decisions = report.decisions, decisionsAtMs = now, scanAtMs = run.finished.takeIf { f -> f > 0 },
+                    decisions = report.decisions, decisionsAtMs = now, scanAtMs = result?.computedAtMs,
                 )
             }
             report
@@ -108,7 +109,7 @@ class MakerRunner(
         val resting = c.makerDesk()?.bids()?.filter { it.active }?.mapTo(HashSet()) { it.outcomeId }.orEmpty()
         val run = c.runner.state.value
         val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held - resting)
-        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.finished.takeIf { f -> f > 0 }) }
+        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
     }
 
     /** Tj's Post on one line: posted now if it still gets a bid. Null when posted, else why not. */

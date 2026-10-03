@@ -414,6 +414,20 @@ class AppContainer(private val app: Application) {
     val locks: LockScanner by lazy { LockScanner(this) }
     val autoLock: AutoLocker by lazy { AutoLocker(app, this) }
 
+    /** Every bid make orders posted (files/maker.json; RESEARCH.md §70). */
+    val makerStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(app.filesDir, "maker.json"))
+    @Volatile private var makerDeskCache: Pair<NovigTradingClient, com.tjshea.vigilant.data.novig.trading.maker.MakerDesk>? = null
+
+    /** The make-orders desk on the Vigilant wallet, sharing the one order lock; null when betting through the API isn't set up. */
+    fun makerDesk(): com.tjshea.vigilant.data.novig.trading.maker.MakerDesk? {
+        val t = trading ?: return null
+        makerDeskCache?.takeIf { it.first === t }?.let { return it.second }
+        return com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(t, tracker, makerStore, lock = orderLock).also { makerDeskCache = t to it }
+    }
+
+    /** Make orders: the passes and the Make tab's state ([MakerRunner]). */
+    val maker: MakerRunner by lazy { MakerRunner(app, this) }
+
     /** Diagnostics' "Recent problems" (files/problems.json, Tj 2026-09-30): what went wrong, kept across restarts, never a key. */
     val problems = com.tjshea.vigilant.data.diag.ProblemLog(
         JsonFileStore(File(app.filesDir, "problems.json"), com.tjshea.vigilant.data.diag.ProblemBook.serializer(), { com.tjshea.vigilant.data.diag.ProblemBook() }, json),
@@ -455,6 +469,19 @@ class AppContainer(private val app: Application) {
         }
         appScope.launch {
             cno.state.map { it.error }.distinctUntilChanged().filterNotNull().collect { runCatching { problems.add("CrazyNinjaOdds", it) } }
+        }
+        // Make orders (RESEARCH.md §70): a pass after every finished Vigilant scan (new fair prices to bid under), and every bid down the moment bids are
+        // switched off or scanning pauses (the background cycle doesn't run while paused, and an empty wallet pauses it).
+        appScope.launch {
+            runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.filter { it.finished > 0 && !it.scanning }.collect {
+                runCatching { maker.run("after a scan") }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }
+            }
+        }
+        appScope.launch {
+            settingsStore.flow.filterNotNull().map { it.makerNow }.distinctUntilChanged().filter { on -> !on }.collect {
+                val why = if (currentSettings().paused) "Scanning is paused" else "Bids are switched off"
+                runCatching { maker.cancelAll(why) }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
+            }
         }
         // A crash saved as the last process went down ([AppExits.install]): into Recent problems at the time it happened.
         appScope.launch(Dispatchers.IO) {
