@@ -26,6 +26,7 @@ import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.engine.MarketFee
@@ -113,7 +114,9 @@ class AutoBettorTest {
         wallet: Double? = 25.0,
         placer: ApiBetPlacer = placer(novig),
         resolve: suspend (CnoRow) -> BetTarget? = { targetOf(it) },
-    ) = AutoBettor(app, app.container, clock = { now }, placer = { placer }, wallet = { wallet }, resolve = resolve)
+        // Never Novig's real /trades from a test: the trap guard's move rule reads this instead.
+        trades: suspend (String) -> List<TrapGuard.Trade> = { emptyList() },
+    ) = AutoBettor(app, app.container, clock = { now }, placer = { placer }, wallet = { wallet }, resolve = resolve, recentTrades = trades)
 
     /** On, CNO scanning in the background, 3 books agreeing, 3% edge, 2 books both sides, $1 a bet; the trap guard off (the sample games are 8 h+ off: TrapGuardAppTest). */
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) =
@@ -826,5 +829,79 @@ class AutoBettorTest {
         assertTrue(cycle.contains("listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).minEv.takeIf { s.autoBetsNow }).minOrNull()"))
         assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ApiBetting.kt").readText().contains("lock = c.orderLock"))
         assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText().contains("lock = orderLock"))
+    }
+
+    // ---- the trap guard (Tj, 2026-10-03: "find these trap bets and avoid them"; RESEARCH.md §71) ----------------------------------------------
+
+    @Test
+    fun `the trap guard's early rule - a bet further off than its hours isn't placed and the report counts it, one inside them is`() = runBlocking {
+        // Jefferson starts a day after the sample's clock.
+        val novig = FakeNovig()
+        val early = bettor(novig).run(settings { it.copy(trapEarlyHours = 12) }, state(settings { it.copy(trapEarlyHours = 12) }))
+        assertEquals(0, novig.orders.get())
+        assertEquals(1, early.skipped[TrapGuard.earlyReason(12)])
+        val inside = bettor(novig).run(settings { it.copy(trapEarlyHours = 24) }, state(settings { it.copy(trapEarlyHours = 24) }))
+        assertEquals(1, inside.placed.size)
+    }
+
+    /** Ohio −33.5 (a spread, 8 h off) at +117 with Pinnacle and two books pricing both sides at +EV, Novig's price read 5 s ago. */
+    private val ohio = SampleCno.rows[2]
+
+    private fun ohioState(s: ScanSettings): UiState {
+        val view = com.tjshea.vigilant.data.cno.CnoBooksView(
+            bet = "Ohio -33.5", otherBet = "Stonehill +33.5", cnoFair = 106,
+            prices = listOf(
+                com.tjshea.vigilant.data.cno.CnoBookPrice("PN", -105, null, -115, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("DK", -108, null, -112, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("FD", -106, null, -114, null),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("NV", 117, 100.0, -127, 120.0),
+            ),
+            fetchedAtMs = now - 5_000,
+        )
+        val base = SampleCno.state(SampleScan.state().copy(settings = s.copy(cnoLivePrices = true)))
+        return base.copy(
+            books = mapOf(ohio.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view)),
+            novigLive = mapOf(ohio.key to LivePrice(117, 100.0, 0.0528, now - 5_000, "mkt", "out-jj")),
+        ).indexed(now)
+    }
+
+    /** Our side traded around 0.53 this hour (the other side's makers at 0.47); [otherSide] dollars bought the other side 5 min ago. */
+    private fun movedTrades(otherSide: Double): List<TrapGuard.Trade> =
+        List(5) { TrapGuard.Trade("out-other", 0.47, 500, now - (50 - it) * 60_000L) } +
+            listOfNotNull(TrapGuard.Trade("out-jj", 0.47, Math.round(otherSide / (0.53 * 0.01)), now - 5 * 60_000L).takeIf { otherSide > 0 })
+
+    @Test
+    fun `the trap guard's move rule - a spread whose Novig price just fell under its level as the other side was bought isn't placed, a quiet one is and records what was read`() = runBlocking {
+        val s = settings { it.copy(trapEarlyHours = 12) }
+        val novig = FakeNovig()
+        val asked = ArrayList<String>()
+        val trap = bettor(novig, trades = { asked += it; movedTrades(otherSide = 150.0) }).run(s, ohioState(s))
+        assertEquals(listOf("mkt"), asked)
+        assertEquals(0, novig.orders.get())
+        assertEquals(1, trap.skipped[AutoBettor.MOVE_SKIP])
+        // The same spread with nobody buying the other side: placed, and its record says what Novig's trades showed.
+        val clear = bettor(novig, trades = { movedTrades(otherSide = 0.0) }).run(s, ohioState(s))
+        assertEquals(1, clear.placed.size)
+        val rec = app.container.tracker.all().single().atBet!!
+        assertTrue(rec.novigMove, rec.novigMove!!.startsWith("CLEAR · Novig level 0.530"))
+    }
+
+    @Test
+    fun `the move rule reads nothing for a prop or with the rule off, and a read that fails stops no bet`() = runBlocking {
+        val novig = FakeNovig()
+        var reads = 0
+        // Jefferson is a prop: never read.
+        assertEquals(1, bettor(novig, trades = { reads++; movedTrades(5_000.0) }).run(settings(), state()).placed.size)
+        assertEquals(0, reads)
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        // Off: the spread isn't read either.
+        val off = settings { it.copy(trapEarlyHours = 12, trapNovigMove = false) }
+        assertEquals(1, bettor(novig, trades = { reads++; movedTrades(5_000.0) }).run(off, ohioState(off)).placed.size)
+        assertEquals(0, reads)
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        // On, and Novig doesn't answer: the bet goes on its other checks, recorded as unread.
+        val on = settings { it.copy(trapEarlyHours = 12) }
+        assertEquals(1, bettor(novig, trades = { throw java.io.IOException("HTTP 429") }).run(on, ohioState(on)).placed.size)
+        assertTrue(app.container.tracker.all().single().atBet!!.novigMove!!.startsWith("UNREAD"))
     }
 }
