@@ -4204,3 +4204,33 @@ A gift here is a taker buying a side **2¢+ under that side's own median price o
   and the books followed" from "Novig moved and the books had already moved" (Vigilant wouldn't bet the second: no edge). The game-line result is
   the mix, the safe direction for a veto.
 - Unfilled resting orders (the book's history) aren't published, so the quote-led case is seen only through the trades that hit it.
+
+## 72. Beating the close, spotting sharp money, and trap bets: the sources, three new studies, and what changed (v0.56.0, 2026-10-03; Tj: "do deep research on beating clv and finding true positive EV bets while avoiding "trap" bets ("gift" bets with positive EV on paper but are actually offered by sharp bettors with information). find historical betting information from different sources, especially sharp data, which shows how sharp money can be spotted and avoid the other side of those bets ... the timing of positive EV bets, types of bets, and best methods ... both taking and making bets and bids ... whether it would be practical or plausible to "follow" verified sharp bets ... implement all of the findings")
+
+*(DRAFT, being written: BL1-BL5 in TASKS.md. Builds on §62, §65-66, §69, §70, §71; nothing there is re-derived.)*
+
+### 72.1 Sources read (primary first)
+- Kaunitz, Zhong & Kreiner 2017 (arXiv 1710.02824, read): consensus-follower: bet when a book's price > 1/(consensus prob − 0.05); 10-year
+  closing-odds simulation +3.5%; minute-by-minute simulation betting **1 to 5 h before kick-off** +9.9% on 6,994 bets; real money then limited.
+- Moskowitz 2021, J. Finance "Asset Pricing and Sports Betting" (read): >100k contracts, 4 US leagues, 30 years; open-to-close moves chase team
+  momentum and about half is reversed by the result, but every strategy loses after the vig ("−32.12% returns per year" for the best). The
+  close is near-efficient: fine as the scoreboard.
+- Buchdahl, Pinnacle "What can closing odds tell us about profit expectation?" (read): 132,645 matches, opening/closing ratio ≈ actual
+  return (1.05 → ~105%); 162,672 matches: opening→closing odds ratio mean 1.003, sd 0.12; spread grows with the odds.
+- Buchdahl, football-data.co.uk "Market efficiency of opening odds at Pinnacle vs bet365" (read): 28,748 bet365 openers ≥2% over Pinnacle's
+  devigged opener: expected 106.3%, actual 107.4%; 115% expected → 117.7%.
+- Data Golf "How sharp are bookmakers?" (read): Pinnacle's fair → ~1:1 expected vs realized ROI; when Pinnacle and Betcris open 5% apart,
+  **Pinnacle moves 54.7% of the way to Betcris** (70.2% at 15%), Betcris 15.6%; DraftKings/bet365 barely move; Pinnacle's OPENERS against
+  other books' openers at a 5% bar: 9.35% expected, **1.29% realized**.
+- Unabated "Who sets the line? The market makers" (read): a few originators (Pinnacle, BetCRIS, Circa in US markets); most books "move their
+  lines only when the market leader moves"; early lines at low limits, limits grow toward the start.
+- Pinnacle "Market movement in betting" (read): Pinnacle opens at reduced limits and lets sharp money move it ("limits gradually increasing"),
+  "check Pinnacle's odds 1 hour before the start" for the fair. Pinnacle "Should you use public betting percentages?" (read): splits come
+  from recreational books, aren't tied to the number bet, and waiting for them costs CLV; RLM's "sharp side" after the move is a coin flip at
+  −110. Pinnacle "Historical NFL line movements" (read): average NFL move 1.1 points; 23% of lines close where they opened.
+- Bürgi, Deng & Whelan 2026 "Makers and Takers: The Economics of the Kalshi Prediction Market" (read): 313,972 contracts; makers −9.64% vs
+  takers −31.46% after fees; both lose on cheap contracts (≤10¢ significantly, makers included); makers buying 50¢+ earn +2.6%.
+- Microstructure: "The Market Maker's Dilemma" (arXiv 2502.18625) and "Market informedness and market-maker profitability" (arXiv 2606.05882):
+  fill probability and post-fill return trade off; quotes should widen or withdraw when flow is informed.
+- Copy-trading on Polymarket (dev.to analysis of 200+ whale wallets; marketing-grade, used only as a pointer): most copiers trail the wallet
+  they copy because the whale's own order moves the price before the copy lands.
