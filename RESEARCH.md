@@ -4060,3 +4060,16 @@ the start coming up, fairs going old): a bid moves down at once when the fair fa
 so their CLV is measured like every bet's; Diagnostics has the settings, the bids' outcomes and the fills' CLV. The tab lists the bids up (Cancel), the bids the
 latest scan would post (Post, by hand, works with the switch off), why the other lines get none, and the fills with their CLV. Judge it by the fills' CLV over
 200+ fills (§70.5): that measures the w the simulation could only bracket.
+
+### 70.7 v0.52.0: only +EV bids, never older than their fair, sized and judged like the pros (2026-10-03; Tj: "Make sure the math is sound and that it only will make bets which are positive EV, aiming for as much profit as possible … It should not keep make orders long enough that they lose their positive EV … Make sure to implement the strategies of proven professional bettors")
+- **The EV invariant.** A bid is posted at `floor(fair / (1 + margin))` on the grid, so its EV at the fair is at least the margin; at every pass a
+  resting bid is kept only while that's still true at the new fair (the bid wanted is the same or higher), else it comes down at once. Checked over
+  4,000 random fairs, margins and moves (MakerTest). The margin is the floor, not the target: 4% by default (§70.2's per-bid optimum), never break-even.
+- **Never older than its fair (§70.3: "a bid loses value as it ages").** Expiry = min(ttl, start − stop window, oldest book price behind the fair +
+  its freshness limit: 5 min, 10 min for games over 3 h off). With background Vigilant scans every 4 min the bids are re-priced before their fair goes
+  old; without them they lapse within minutes instead of resting on a stale price.
+- **Confidence before money (Benter: combine with the market; Buchdahl/Unabated: the books must agree).** At least 2 books each put the bid at +EV on
+  their own worst-case devig; a sharp book saying no vetoes it; game lines (efficient on Novig, §70.2) need a sharp book in the fair.
+- **Fractional Kelly (Benter ½-⅓, Walters 1-3% of the bankroll a bet).** ¼ Kelly on the edge at the fair by default, capped per bid (`makerMaxStake`,
+  never over the per-bet limit), the day's API limit and the wallet. A filled bid is a bet and its CLV is measured like every bet (judge it over 200+ fills).
+- **Underdog sides and props first** (the plan posts cheapest first; props, 1st-half lines and team totals by default): §70.2's best per-bid groups.

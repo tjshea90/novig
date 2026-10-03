@@ -353,7 +353,7 @@ robolectric.org/configuring/.
   them off: not a swipe out of Recents, a force stop, an update, a crash, Android ending the process, or a return from another app. Never add another reset without his word.
   (The v0.42.0 rule, "off at every reopen", and v0.44.2's "off after a close", are both replaced.)
   **Make orders / the Bids tab (Tj, 2026-10-03; v0.51.0, RESEARCH.md §70, NOVIG_API.md §17): the second thing that spends money unattended, so its rules are fixed too.**
-  Off by default (`ScanSettings.maker`, the Bids tab's switch). Bids are priced from Vigilant's own scan (every line it prices), posted from the Vigilant wallet only, pregame only,
+  Off by default (`ScanSettings.maker`, the Bids tab's switch, with a confirm). Bids are priced from Vigilant's own scan (every line it prices), posted from the Vigilant wallet only, pregame only,
   each one `PO` (post-only: refused rather than taking) with a `ttl` (default 30 min, never past the start) at `PriceGrid.floor(fair / (1 + makerMargin))` (default 4%), only
   under Novig's offer (at or over it is a bet to take, not a bid), within the price window (0.10-0.65), on the chosen kinds (props, 1st-half/inning lines and team totals by
   default; game lines off: §70.2), with at least `makerMinBooks` books and a fresh fair. Every pass (`MakerDesk.cycle`, after each Vigilant scan and each background cycle,
@@ -362,6 +362,18 @@ robolectric.org/configuring/.
   and posts new ones cheapest first within `makerMaxBids`, `makerMaxDollars`, the wallet and the day's API limit (fills count; resting bids may not push it over). The same side is
   never bought twice (an open Tracker bet on it, or a filled bid); a partly filled bid isn't re-posted; a lost answer is never re-sent (found by its `clientId`); a post-only
   order Vigilant has no record of is cancelled. Switching bids off or pausing (an empty wallet pauses) cancels every bid at once (`AppContainer`). Each fill gets a notification.
+  **v0.52.0 (Tj, 2026-10-03: "it only will make bets which are positive EV … It should not keep make orders long enough that they lose their positive
+  EV … auto make bets just the same way that auto bet already takes bets … recommend bets to make and I manually approve or deny them"):** a bid's expiry is
+  the earliest of the ttl, the start minus the stop window, and the fair's own freshness (`Freshness.maxAgeMs` from its oldest book price; a fair of
+  unknown age is never bid on); every resting bid is at least the margin under the CURRENT fair or it comes down (a 4,000-case property test); at least
+  `makerMinBooks` books must each put the bid at +EV on their own (worst-case devig), a sharp book saying no vetoes it (`makerSharpVeto`), game lines need a
+  sharp book in the fair; sized like auto-bet (`makerStakeMode`, ¼ Kelly on the bankroll by default, never over `makerMaxStake` / `apiMaxStake`). A cancel
+  is only queued, so a bid goes CANCELING and is watched until Novig confirms (a fill in that gap is recorded; the side gets no new bid until then);
+  fills are read even when the order's record can't be; a lost answer is searched for by `clientId` in every list; a refused post-only side cools off 5
+  min. Auto-make (`maker`) asks first to switch on and a phone restart switches it off (`LaunchReset`), as auto-bet. With it off, passes only watch the
+  bids Tj approved (down when the fair falls under them, never moved or re-posted) and recommend new ones (`makerRecommend`: the tab's Approve / Deny,
+  and up to 3 notifications a pass, each side once, Approve re-checking on the latest prices: `MakerActionReceiver`); Deny or Cancel by hand blocks that
+  side until its game (`MakerDenials`, Undo in the tab). Turning auto-make off takes down only the bids it posted.
   Loosening any of this needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise

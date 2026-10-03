@@ -634,3 +634,8 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   `GET /v3/orders/{id}` (a 404 or `PENDING` just after placing is asked about again, not called ended) and its fills with `GET /v3/portfolio/fills?order=`; moves are
   `DELETE /v3/orders/{id}` then a new `POST` (no amend), the order read once more after the cancel so a fill in between is recorded and that side isn't re-posted; Cancel all
   is `DELETE /v3/orders`. Not yet seen live (the first real bid is the test).
+- **v0.52.0:** a cancel's `200` is only "queued": the bid is CANCELING until `GET /v3/orders/{id}` says the order ended (up to 4 looks 400 ms apart, then
+  each pass), and only then is its side bid again; `DELETE /v3/orders` (cancel all) is followed by the same confirmation. Fills are read with
+  `GET /v3/portfolio/fills?order=` whenever an order leaves the open list, whatever its record says (a 404 included). A lost answer's order is looked for
+  in `GET /v3/orders?status=FILLED|CANCELED|REJECTED|PENDING&outcome=` by its `clientId` before it's called lost. The `ttl` sent is the bid's whole life:
+  never past the start minus the stop window or the fair's freshness (a minute at least).
