@@ -3554,13 +3554,17 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   (re-posted every 20 s pass from the same fair: no longer life, back of the queue), two passes running at once ("during a scan" + "background
   cycle"), GET /v3/orders/{id} answers 404 after an order ends (~200 in the timeline, each before a fills read), /v3/portfolio/fills 429 (history
   bucket 512 / 4 a s, 8 a read: one read per ended bid), wallet $8.32 → $8.32 with $12.54 resting (Novig holds nothing, takes bids past it).
-  - [ ] BJ2a Churn: re-post an expiring bid only when the replacement rests at least a minute longer (a fresher fair); else it rests to its expiry.
-  - [ ] BJ2b Own bids aren't competition: a line's best bid leaves out Vigilant's own resting at the time the book was read (book ladder minus own
+  - [x] BJ2a Churn: re-post an expiring bid only when the replacement rests at least a minute longer (a fresher fair); else it rests to its expiry.
+  - [x] BJ2b Own bids aren't competition: a line's best bid leaves out Vigilant's own resting at the time the book was read (book ladder minus own
     contracts); Diagnostics' "led their side" counts the same way.
-  - [ ] BJ2c Leaders first: when the most-bids cap or the wallet binds, bids that would lead their side go up before ones behind another bid.
-  - [ ] BJ2d Wallet: resting bids count against the wallet (Novig doesn't hold them); NOVIG_API.md §17 updated with what the file proved.
-  - [ ] BJ2e Novig reads: one fills read a pass (`startsAfter`) for every bid that ended or filled, not one per bid; no order read once an order
+  - [x] BJ2c Leaders first: when the most-bids cap or the wallet binds, bids that would lead their side go up before ones behind another bid.
+  - [x] BJ2d Wallet: resting bids count against the wallet (Novig doesn't hold them); NOVIG_API.md §17 updated with what the file proved.
+  - [x] BJ2e Novig reads: one fills read a pass (`startsAfter`) for every bid that ended or filled, not one per bid; no order read once an order
     left the open list (404s); a cancel is confirmed by one re-read of the open list.
-  - [ ] BJ2f One pass at a time: the background cycle's bid pass is skipped when a pass ran in the last 15 s.
+  - [x] BJ2f One pass at a time: the background cycle's bid pass is skipped when a pass ran in the last 15 s.
+  Done (BJ2a-f): MakerTest 7 new ("an expiring bid is re-posted only when a fresher fair…", "a bid priced from an aging fair rests to its expiry…",
+  "Vigilant's own bids aren't the bid to beat…", "when not every bid can go up, the ones that would lead…", "bids already up count against the wallet…",
+  "bids that end are finished with one fills read…", "a fills read Novig throttles finishes nothing…"), MakerAppTest "the background cycle's pass is
+  skipped…"; mutants 7/7 killed. Also: MakerBid.seenOpen (an order's own record is read only if it never showed open: a post-only refusal).
 - [ ] BJ3 Work the file's other findings (FAILURE/OPTIMIZE first) where the evidence supports a change; check v0.53.0's own changes (ThreadCpu split, scan lag, 429s, key retry, WTA matching, cycles not blocking).
 - [ ] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
