@@ -42,6 +42,10 @@ def main(path):
         show(f'{lo}-{hi} h before' if hi < 1e8 else f'{lo} h+ before', [b for b in bets if lo <= lead(b) < hi])
     show('under 6 h', [b for b in bets if lead(b) < 6])
     show('6 h or more', [b for b in bets if lead(b) >= 6])
+    # Results over every settled bet with an EV (a close or not): the bigger sample for ROI.
+    done = [b for b in rows if b.get('profit') is not None and b.get('evAtBet') is not None and not b.get('outlier') and not b.get('lockFor')]
+    for label, xs in [('settled, under 6 h', [b for b in done if lead(b) < 6]), ('settled, 6 h or more', [b for b in done if lead(b) >= 6])]:
+        print(f'  {label:<26} n={len(xs):3d}  ROI {100 * sum(b["profit"] for b in xs) / max(sum(b["stake"] for b in xs), 1e-9):+.1f}%')
     for s in sorted({b['scanner'] for b in bets}):
         show(f'{s} under 6 h', [b for b in bets if b['scanner'] == s and lead(b) < 6])
         show(f'{s} 6 h or more', [b for b in bets if b['scanner'] == s and lead(b) >= 6])
