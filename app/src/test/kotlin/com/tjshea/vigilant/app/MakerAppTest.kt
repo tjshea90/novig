@@ -130,6 +130,22 @@ class MakerAppTest {
     }
 
     @Test
+    fun `fully automatic posts while a scan is still running, not only at its end (Tj, 2026-10-03 - "it didn't actually make any bids by itself")`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        val running = MakerRunner(
+            app, app.container, clock = { now },
+            scan = { ScanRun(scanning = true, result = SampleScan.result().copy(freshSinceMs = now - 60_000), finished = 1) },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+        )
+        val r = running.run("during a scan")!!
+        assertTrue("placed ${r.placed}", r.placed >= 2)
+        assertTrue(r.partial)
+        assertEquals(r.placed, novig.placed.size)
+        assertEquals("${r.placed} posted, scan running", com.tjshea.vigilant.app.ui.MakerText.passLine(r))
+    }
+
+    @Test
     fun `pausing takes every bid down too`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
