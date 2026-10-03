@@ -98,8 +98,12 @@ object StudyExport {
         val outcomeId: String? = null,
         /** The record as first listed (see AtBet.kt): the book check is the first page read, stamped [AtBet.checkAtMs]. */
         val atBet: AtBet? = null,
-        /** Vigilant's own record of the bet when its scan listed it (its fair line's method and books). */
+        /**
+         * The other scanner's record of the bet when both listed it ([atBet] is the first lister's): Vigilant's (its fair line's method and books) or CNO's
+         * (its books, one-way flag and list age).
+         */
         val vig: AtBet? = null,
+        val cno: AtBet? = null,
         /** Every look, newest last: [minutes before the start, kind, American odds, EV, fair, books, dollars, agreeing, companies both sides, check EV, sharp verdict]. */
         val s: JsonArray = JsonArray(emptyList()),
     )
@@ -131,7 +135,7 @@ object StudyExport {
             gone = ended?.second?.let { Sight.isGone(it.k) } == true,
             looks = sb.sights.size, placedByTj = own != null, placedAmerican = own?.american,
             marketId = b.marketId.ifBlank { null }, outcomeId = b.outcomeId.ifBlank { null },
-            atBet = a?.copy(rules = null), vig = sb.vig?.copy(rules = null),
+            atBet = a?.copy(rules = null), vig = sb.vig?.copy(rules = null), cno = sb.cnoRec?.copy(rules = null),
             s = JsonArray(
                 sb.sights.map { (t, sg) ->
                     JsonArray(
@@ -415,7 +419,7 @@ object StudyExport {
         "atBet: the app's record of the bet as first listed (data/.../tracker/AtBet.kt): league, sport, kind (PROP, MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PERIOD, OTHER), minutesToStart, american, otherAmerican (the other side's price), available (Novig dollars at the price), ev, fair, cnoBooks (books behind CNO's fair), cnoOneWay, cnoListAgeSec,",
         "    and the app's own BOOK CHECK from CNO's game page when it was read (checkAtMs says when; a page is read for the top few bets, so many bets have none): twoSided (companies pricing both sides), oneSided, agreeing (those whose own fair says +EV at Novig's price), verdict (CONFIRMED / NOT_CONFIRMED …), checkFair, checkEv, books (every book's odds, other side, fair and the EV it gives Novig's price), dissent (books saying not +EV),",
         "    sharpVerdict / sharpBook / sharpEv (the sharpest book for the kind of bet — Pinnacle and Circa for game lines, Kalshi and ProphetX for props — and whether it VETOED the price), fullKelly (the Kelly share of bankroll this edge calls for), preset (the preset in force).",
-        "vig: Vigilant's own record when its scan listed the bet (its fair line's method, the books and sharp books behind it, how old their quotes were).",
+        "vig / cno: the OTHER scanner's record when both listed the bet (atBet is the first lister's): vig = Vigilant's (its fair line's method, the books and sharp books behind it, how old their quotes were); cno = CNO's (its books, one-way flag, list age).",
         "s: every look, oldest first, each [minutesBeforeStart, kind, american, ev, fair, books, dollars, agreeing, companiesBothSides, checkEv, sharpVerdict]. kind: c = a CNO scan listed it, v = a Vigilant scan did, k = its book page was read (agreeing / companies / checkEv / sharp verdict are filled), xc / xv = that scan no longer lists it.",
         "    A look is logged when the bet is first seen, when odds / books change or EV moves 0.25 points (at most one a minute), at least every 5 minutes while it's listed, when it drops off, and for each book check that changed.",
     )

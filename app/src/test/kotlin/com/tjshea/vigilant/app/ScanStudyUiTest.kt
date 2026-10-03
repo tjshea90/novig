@@ -3,6 +3,8 @@ package com.tjshea.vigilant.app
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -15,7 +17,6 @@ import com.tjshea.vigilant.app.ui.ReportActions
 import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
-import com.tjshea.vigilant.data.scanner.ScanSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -41,13 +42,12 @@ class ScanStudyUiTest {
         var studied = 0
         var shared = 0
         var shown = 0
-        var settings = ScanSettings()
+        var ui by androidx.compose.runtime.mutableStateOf(SampleScan.state().copy(studyNote = "1,234 bets logged over 6 days · 812 graded · 640 with a closing line · 4.1 MB"))
         compose.setContent {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     SettingsScreen(
-                        SampleScan.state().copy(studyNote = "1,234 bets logged over 6 days · 812 graded · 640 with a closing line · 4.1 MB"),
-                        { f -> settings = f(settings) }, page = SettingsPage.HELP,
+                        ui, { f -> ui = ui.copy(settings = f(ui.settings)) }, page = SettingsPage.HELP,
                         reportActions = ReportActions(onShare = { shared++ }, onShareStudy = { studied++ }, onStudyShown = { shown++ }),
                     )
                 }
@@ -66,11 +66,11 @@ class ScanStudyUiTest {
         compose.onNodeWithText("Scan study: the app logs every bet a CNO or Vigilant scan lists as +EV", substring = true).assertExists()
         compose.onNodeWithText("analyze every bet for the patterns that beat the close and profit", substring = true).assertExists()
         // The switch: on by default, and Tj can turn the logging off.
-        assertTrue(settings.scanStudy)
+        assertTrue(ui.settings.scanStudy)
         compose.onNodeWithTag("scanStudySwitch").performScrollTo().performClick()
-        assertFalse(settings.scanStudy)
+        assertFalse(ui.settings.scanStudy)
         compose.onNodeWithTag("scanStudySwitch").performClick()
-        assertTrue(settings.scanStudy)
+        assertTrue(ui.settings.scanStudy)
     }
 
     @Test

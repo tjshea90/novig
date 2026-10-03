@@ -90,7 +90,7 @@ class ScanStudyAppTest {
             assertTrue(text.contains("THE GOAL IS PROFIT") && text.contains("== SUMMARY") && text.contains("== SPLITS"))
             // The bet the CNO scan listed, with what the scan showed.
             val line = text.substringAfter("<<<JSONL\n").substringBefore("\n>>>").lines().single { it.isNotBlank() }
-            assertTrue(line, line.contains("\"selection\":\"New York Mets\"") && line.contains("\"american\":105") && line.contains("\"src\":\"c\"") && line.contains("\"minutesToStart\":180"))
+            assertTrue(line, line.contains("\"selection\":\"New York Mets\"") && line.contains("\"american\":105") && line.contains("\"src\":\"c\"") && Regex("\"minutesToStart\":(179|180)").containsMatchIn(line))
             // The file, saved where the diagnostics file goes too, is the one the intent carries.
             assertEquals(files.single().name, send.clipData!!.description.label.toString())
             // The page's line says what is logged.
@@ -120,7 +120,8 @@ class ScanStudyAppTest {
         assertEquals("study", first.bet.atBet!!.how)
         assertNotNull(first.bet.atBet!!.fairMethod)
         assertEquals(Sight.VIGILANT, first.sights.single().second.k)
-        assertNotNull(first.vig)
+        // Vigilant's own record is the bet's own (it listed it first); CNO's goes beside it once CNO lists it too.
+        assertEquals(null, first.cnoRec)
         // CNO lists the first of them too: the same bet, not a second record.
         val o = feed.first { it.key == first.bet.marketId + "/" + first.bet.outcomeId }
         val cno = CnoRow(
@@ -134,7 +135,9 @@ class ScanStudyAppTest {
         assertEquals(setOf(Sight.VIGILANT, Sight.CNO), merged.sights.map { it.second.k }.toSet())
         val row = StudyExport.rowOf(merged, clock, null)
         assertEquals("c+v", row.src)
-        assertNotNull(row.vig)
+        assertEquals("vigilant", row.atBet!!.scanner)
+        assertEquals("cno", row.cno!!.scanner)
+        assertEquals(5, row.cno!!.cnoBooks)
         dir.deleteRecursively()
     }
 

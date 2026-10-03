@@ -71,7 +71,7 @@ data class StudyResult(
     val from: String? = null,
 )
 
-/** One line of a day's journal. [e] says which of the fields it carries ([BET], [SIGHT], [CHECK], [VIG], [RES], [IDS]). */
+/** One line of a day's journal. [e] says which of the fields it carries ([BET], [SIGHT], [CHECK], [VIG], [CNO_REC], [RES], [IDS]). */
 @Serializable
 data class Line(
     /** [BET] a bet first listed, [SIGHT], [CHECK] its book check, [VIG] Vigilant's own record of it, [RES] a grading or close result. */
@@ -90,6 +90,7 @@ data class Line(
 ) {
     companion object {
         const val IDS = "ids"
+        const val CNO_REC = "cnorec"
         const val BET = "bet"
         const val SIGHT = "s"
         const val CHECK = "chk"
@@ -110,8 +111,12 @@ class StudyBet(
     /** Every look, in order, with when. */
     val sights = ArrayList<Pair<Long, Sight>>()
 
-    /** Vigilant's own record of the bet, when a Vigilant scan listed it too. */
+    /** Vigilant's own record of the bet, when it wasn't Vigilant that first listed it but a Vigilant scan listed it too. */
     var vig: AtBet? = null
+        private set
+
+    /** CNO's own record of the bet (its books, one-way flag, list age), when it wasn't CNO that first listed it but a CNO scan listed it too. */
+    var cnoRec: AtBet? = null
         private set
 
     /** When the last result line was written (nothing else says a bet was looked at). */
@@ -142,6 +147,10 @@ class StudyBet(
 
     fun applyVig(a: AtBet) {
         if (vig == null) vig = a
+    }
+
+    fun applyCnoRec(a: AtBet) {
+        if (cnoRec == null) cnoRec = a
     }
 
     fun applyIds(marketId: String?, outcomeId: String?) {

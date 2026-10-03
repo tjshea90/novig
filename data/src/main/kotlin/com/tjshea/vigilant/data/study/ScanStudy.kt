@@ -63,7 +63,8 @@ class ScanStudy(
         var row: CnoRow? = null
         var viewAtMs = 0L
         var checked = false
-        var vig = false
+        var vigRecorded = false
+        var cnoRecorded = false
         var idsKnown = false
     }
 
@@ -144,6 +145,10 @@ class ScanStudy(
                 seen += a.id
                 a.listed += Sight.CNO
                 a.row = row
+                if (!a.cnoRecorded) {
+                    queue(a, Line(Line.CNO_REC, a.id, now, a = AtBets.cno(row, false, view, null, lp, snap.dataAtMs, s, now, AtBet.HOW_STUDY, BetTracker.SOURCE_CNO, version())))
+                    a.cnoRecorded = true
+                }
                 record(a, sight, now)
                 if (!a.idsKnown && outcome != null) {
                     queue(a, Line(Line.IDS, a.id, now, m = lp?.marketId, o = outcome))
@@ -188,11 +193,10 @@ class ScanStudy(
                 val atBet = AtBets.opportunity(o, s, now, AtBet.HOW_STUDY, version())
                 val bet = BetTracker.opportunityBet(o, STUDY_STAKE, null, atBet, idOf(identity, fallback, starts), now) ?: continue
                 a = register(bet, identity, null, now, checked = false)
-                a.vig = true
                 created++
-            } else if (!a.vig) {
+            } else if (!a.vigRecorded) {
                 queue(a, Line(Line.VIG, a.id, now, a = AtBets.opportunity(o, s, now, AtBet.HOW_STUDY, version())))
-                a.vig = true
+                a.vigRecorded = true
             }
             seen += a.id
             a.listed += Sight.VIGILANT
@@ -267,6 +271,8 @@ class ScanStudy(
         val a = Active(bet.id, FreeScores.etDate(bet.startsTs), bet.startsTs, bet.league, identity)
         a.checked = checked
         a.idsKnown = bet.outcomeId.isNotEmpty()
+        a.cnoRecorded = bet.source == BetTracker.SOURCE_CNO
+        a.vigRecorded = bet.source == BetTracker.SOURCE_VIGILANT
         active[a.id] = a
         identity?.let { byIdentity.getOrPut(it) { ArrayList() } += a }
         queue(a, Line(Line.BET, a.id, now, b = bet, sc = screen))
@@ -327,7 +333,8 @@ class ScanStudy(
                         val identity = PlacedIndex.identity(b.eventName, b.marketLabel, b.selection)
                         val a = Active(id, day, b.startsTs, b.league, identity)
                         a.checked = b.atBet?.let { it.checkAtMs != null || it.twoSided != null } == true
-                        a.vig = sb.vig != null
+                        a.vigRecorded = sb.vig != null || b.source == BetTracker.SOURCE_VIGILANT
+                        a.cnoRecorded = sb.cnoRec != null || b.source == BetTracker.SOURCE_CNO
                         a.idsKnown = b.outcomeId.isNotEmpty()
                         for ((t, sg) in sb.sights) {
                             if (Sight.isListing(sg.k) || sg.k == Sight.CHECK) {
