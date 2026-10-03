@@ -1651,6 +1651,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val logcat: List<com.tjshea.vigilant.data.diag.LogcatTail.Line>,
         val storage: List<Pair<String, Long>>,
         val previous: com.tjshea.vigilant.data.diag.Snap?,
+        /** Read from the file, not the store's flow: the flow is null until something reads it (bids off, the Bids tab not opened). */
+        val makerBids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>,
     )
 
     private suspend fun gatherDiag(): DiagInputs = withContext(Dispatchers.IO) {
@@ -1660,6 +1662,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             logcat = com.tjshea.vigilant.data.diag.LogcatTail.read(android.os.Process.myPid()),
             storage = runCatching { DiagnosticsShare.storage(getApplication()) }.getOrDefault(emptyList()),
             previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),
+            makerBids = runCatching { c.makerStore.all() }.getOrDefault(emptyList()),
         )
     }
 
@@ -1741,7 +1744,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
             autoBet = c.autoBet.status.value,
-            makerBids = c.makerStore.flow.value.orEmpty(),
+            makerBids = g.makerBids,
             maker = c.maker.status.value,
             memory = memoryNow(),
             autoScanServiceRunning = AutoScanService.running,
