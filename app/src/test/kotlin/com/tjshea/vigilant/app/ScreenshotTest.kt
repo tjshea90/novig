@@ -162,7 +162,7 @@ class ScreenshotTest {
         shoot("5m_auto_bet_tab") { com.tjshea.vigilant.app.ui.AutoBetScreen(s, {}) }
         compose.onNodeWithTag("autoBetSwitch").assertIsOn()
         compose.onNodeWithText("Running with the background CNO scan", substring = true).assertExists()
-        for (section in listOf("PRESETS", "WHAT IT BETS", "SHARP-BOOK VETO", "HOW MUCH", "HOW OFTEN", "NOTIFICATIONS")) compose.onNodeWithText(section).assertExists()
+        for (section in listOf("PRESETS", "WHAT IT BETS", "SHARP-BOOK VETO", "TRAP GUARD", "HOW MUCH", "HOW OFTEN", "NOTIFICATIONS")) compose.onNodeWithText(section).assertExists()
     }
 
     /** The Fair odds tab with ParlayAPI on and a key: what a league and a tennis tour cost (TASKS.md Z2, v0.37.0). */
