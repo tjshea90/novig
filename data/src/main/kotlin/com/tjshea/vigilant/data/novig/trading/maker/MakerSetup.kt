@@ -8,10 +8,10 @@ import com.tjshea.vigilant.data.scanner.ScannerMode
  * What bids are set to (the Bids tab's one choice): none, recommended for Tj to approve or deny, or posted by themselves (Tj, 2026-10-03: "I want to
  * have an option for it to be fully automatic and make the bids itself").
  */
-enum class BidMode(val label: String) {
+enum class BidMode(val label: String, /** On the tab's three-way choice, where a phone has room for about ten letters a choice. */ val short: String = label) {
     OFF("Off"),
     RECOMMEND("Recommend"),
-    AUTOMATIC("Fully automatic"),
+    AUTOMATIC("Fully automatic", "Automatic"),
     ;
 
     companion object {

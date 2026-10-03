@@ -128,7 +128,7 @@ object MakerText {
     fun modeText(mode: BidMode): String = when (mode) {
         BidMode.OFF -> "No bids. Pick Recommend to approve each bid yourself, or Fully automatic to let Vigilant post them."
         BidMode.RECOMMEND -> "Vigilant recommends bids (here and as notifications) for you to approve or deny; it posts nothing by itself."
-        BidMode.AUTOMATIC -> "Vigilant posts, moves and cancels bids by itself within the rules, while each scan runs and every background cycle: nothing to tap."
+        BidMode.AUTOMATIC -> "Fully automatic: Vigilant posts, moves and cancels bids by itself within the rules, while each scan runs and every background cycle. Nothing to tap."
     }
 
     /** "Bids need these, turned on now: …" (or, before switching, what it will turn on). */
@@ -364,11 +364,9 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
                         }
                     },
                     shape = SegmentedButtonDefaults.itemShape(i, BidMode.entries.size),
-                    // No check mark: "Fully automatic" needs the room on a phone.
-                    icon = {},
                     enabled = m == BidMode.OFF || ui.setUp || ui.mode == m,
                     modifier = Modifier.testTag("makerMode-${m.name}"),
-                ) { Text(m.label, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                ) { Text(m.short, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
         }
         Text(MakerText.modeText(ui.mode), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
