@@ -268,8 +268,14 @@ object StudyExport {
 
     private fun isProp(r: StudyRow) = r.kind == BetKind.PROP.name
 
-    /** The sharp veto's verdict at the bet's first book check; null when no page was read (no verdict). */
-    private fun verdictOf(r: StudyRow): String? = r.atBet?.sharpVerdict
+    /** Whether the bet's CNO game page was read (at its first look or by the green check after): only then does its record carry a real sharp verdict. */
+    private fun pageRead(r: StudyRow): Boolean = r.atBet?.let { it.checkAtMs != null || it.twoSided != null || it.books.isNotEmpty() } == true
+
+    /**
+     * The sharp veto's verdict at the bet's first book check; null when no page was read (no verdict). Not the record's own field alone: a bet logged with no page
+     * is judged against no books and says NO_SHARP, which is "nobody ranked prices both sides" only when there was a page to look at.
+     */
+    private fun verdictOf(r: StudyRow): String? = if (pageRead(r)) r.atBet?.sharpVerdict else null
 
     internal fun propSharp(r: StudyRow): String {
         val a = r.atBet
@@ -280,7 +286,7 @@ object StudyExport {
     }
 
     internal fun propSharpEdge(r: StudyRow): String? {
-        val a = r.atBet ?: return null
+        val a = r.atBet?.takeIf { pageRead(r) } ?: return null
         val ev = a.sharpEv ?: return null
         return when {
             ev < 0.0 -> "sharp edge under 0%"
