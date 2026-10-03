@@ -231,26 +231,39 @@ def main():
         rows += realized(y, 'maxO', 'avgO', f'best {100 * lo:.0f}-{100 * hi:.0f}% over avg price', ((0.02, 0.05), (0.05, 1.0)))
     table('B by how far the best book is above the average book (one book far out = it may be the informed one, or wrong)', rows)
 
-    # C. lambda: when a venue disagrees with the consensus early, how far does the sharp close move toward that venue?
+    # C. lambda: when a venue disagrees with the consensus early, how far does the close move toward that venue? Judged two ways: by the
+    # sharp close (Pinnacle's own move, so biased toward Pinnacle) and by the consensus close (the average book's own move).
     rows = []
+    y1 = x[x.mkt == '1X2'].copy()
+    blend = []
     for venue, col in (('Pinnacle', 'pinO'), ('bet365', 'B365O'), ('Bet&Win', 'BWO'), ('William Hill', 'WHO'), ('BetVictor', 'VCO')):
-        y = x[x.mkt == '1X2'].copy()
+        y = y1.dropna(subset=[col, 'avgO', 'avgC']).copy()
         if col != 'pinO':
-            # the venue's own fair: proportional share of its three prices is not available row-wise here; use its price over the
-            # consensus margin: fair_venue = (1/odds) / (consensus overround) - an estimate that keeps the venue's margin out.
-            over = (1 / y.avgOodds).groupby(y.match).transform('sum')
             vq = (1 / y[col]).groupby(y.match).transform('sum')
-            y['vf'] = (1 / y[col]) / vq
+            y = y[vq.groupby(y.match).transform('size') == 3] if False else y
+            y['vf'] = (1 / y[col]) / vq  # the venue's own fair, proportional devig of its three prices
         else:
             y['vf'] = y.pinO
         gap = y.vf - y.avgO
         for lo, hi in ((0.01, 0.02), (0.02, 0.04), (0.04, 1)):
             m = (gap.abs() >= lo) & (gap.abs() < hi)
-            lam = ((y.pinC - y.avgO)[m] / gap[m]).clip(-3, 4)
-            r = ci(lam.values, y.match[m].values)
-            rows.append(f'{venue:<13} disagrees {100 * lo:.0f}-{100 * hi:.0f} pts: close moves {fmt(r, pct=True)}% of the way to it  n={m.sum():,}')
-    table('C. Who was informed? Share of the gap (venue early vs consensus early) the sharp close moved toward the venue', rows)
-
+            r1 = ci(((y.pinC - y.avgO)[m] / gap[m]).clip(-3, 4).values, y.match[m].values)
+            r2 = ci(((y.avgC - y.avgO)[m] / gap[m]).clip(-3, 4).values, y.match[m].values)
+            rows.append(f'{venue:<13} off the consensus by {100 * lo:.0f}-{100 * hi:.0f} pts: Pinnacle close moves {fmt(r1)}%, average close '
+                        f'{fmt(r2)}% of the way to it  n={m.sum():,}')
+        # Benter's blend: logistic regression of the result on both fairs' logits; the weights say how much each one knows.
+        z = y.dropna(subset=['won'])
+        lg = lambda p: np.log(np.clip(p, 1e-4, 1 - 1e-4) / (1 - np.clip(p, 1e-4, 1 - 1e-4)))
+        X = np.column_stack([lg(z.avgO.values), lg(z.vf.values)])
+        w = np.zeros(2)
+        for _ in range(30):
+            pr = 1 / (1 + np.exp(-X @ w))
+            g = X.T @ (z.won.values - pr)
+            H = (X * (pr * (1 - pr))[:, None]).T @ X
+            w = w + np.linalg.solve(H, g)
+        blend.append(f'{venue:<13} result ~ consensus early x {w[0]:+.2f}  +  {venue} early x {w[1]:+.2f}   (share {100 * w[1] / w.sum():.0f}% {venue})')
+    table('C. Who was informed? Share of the gap (venue early vs consensus early) the close moved toward the venue', rows)
+    table('C2. Benter blend on the results (1X2, early prices): how much weight each fair earns', blend)
 
 if __name__ == '__main__':
     main()
