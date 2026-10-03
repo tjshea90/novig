@@ -1,13 +1,13 @@
-# CHECKPOINT 2476 — read me first, then TASKS.md
+# CHECKPOINT 2477 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T20:47:07Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `61832433` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T20:50:11Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `b13fb332` (this checkpoint is the commit after it)
 
 ## Just done
-BO2/BO3 (part): v0.56.1 file re-read (ANR 15:52 main thread in PlacedIndex.has->pickOf; 8 scanner switches + Pause queued rebuilds of feedOf in _state.update on Main; applySettings awaited repriceNow which waits on the scan's mutex). Fixed: pickOf/gameKey/pickKey memoized (tests+mutants), FeedBuild.kt publishResult/refeed/reindex off-main (FeedBuildTest, mutants killed), applySettings publishes settings first + latest-wins reprice job, MakerDesk.cycle keepPosting stops a pass on Pause, MakerUi lists cached
+BO2-BO4 done: lag/pause root causes fixed+tested (RESEARCH §74), fills answered, diagnostics now has last-24h bid-hours vs expected fills
 
 ## Do this next
-BO3: sweep other main-thread work in auto-bid paths (diagnostics, CNO list has()); BO4 fills answer + any fill fix; then BP1 map of the scan data
+BO5: run the full floor (bash tools/test.sh), ship v0.56.2 (ship.sh), trigger release.yml, record; THEN BP1 map the scan data
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ BO3: sweep other main-thread work in auto-bid paths (diagnostics, CNO list has()
 
 ## Last ten checkpoints
 ```
+  d0217e12 ckpt 2476: BO2/BO3 (part): v0.56.1 file re-read (ANR 15:52 main thread in PlacedIndex.h
   d9d7fe90 ckpt 2475: BP: Tj's resume-other-session + Scan Study log feature request written to TA
   12e771ff ckpt 2474: BO1 read: ANR at 15:52 = main thread in PlacedIndex.has->BetGrader.pickOf (r
   d2e98a7f ckpt 2473: BO: Tj's auto-bid lag / slow pause / no fills report written to TASKS.md (BO
@@ -26,8 +27,7 @@ BO3: sweep other main-thread work in auto-bid paths (diagnostics, CNO list has()
   007465de ckpt 2469: full test (in progress): floor 1,849 passed/23 skipped + 109 screenshots loo
   c02508d9 ckpt 2468: BN done: Novig pays no maker credit pregame on game markets (terms §2, fees
   8ce66782 ckpt 2467: BN: Tj's 'reconsider whether novig pays maker credit pregame' written to TAS
-  463896c4 ckpt 2466: BM done: another AI's report checked (RESEARCH.md §73, 20 claims); novig_dr
 ```
 
-(12 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

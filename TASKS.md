@@ -3659,6 +3659,12 @@ Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book p
 - [x] BO2 Find the root cause of the lag while auto-bid runs (MakerRunner passes, MakerDesk store writes, Bids tab recomposition, scan priority, main-thread work) and of the slow Pause (the pause path: cancel-all under NonCancellable before the UI updates?); prove each with a failing-first test where possible.
 - [x] BO3 Fix them (tests, mutants); sweep the auto-bid paths for more of the same.
 - [x] BO4 Answer "how long do they usually take to get filled?" from RESEARCH.md §70.3/§72.3 and the file's own bids (price vs market, time resting, why none filled); fix anything in the app that keeps bids from filling if the evidence shows one.
+  Done (BO1-BO4, RESEARCH.md §74): causes = the feed built on Main in `_state.update` (regex-heavy PlacedIndex.has) at every switch/Pause/scan end/✓, eight
+  switches queued ahead of Pause; applySettings awaited a re-pricing that waits on the scan's mutex; a pass kept posting after Pause; the Bids tab re-sorted
+  thousands of decisions per state. Proofs: PlacedIndexTest `a listing's wording is read once…`, BetGraderTest `asking again reads nothing…` + `a bet's wording is
+  read once…` (mutants killed), FeedBuildTest (4 behaviour tests + the source pin; mutants killed), MakerTest `a pass told to stop posts no further bids…`,
+  MakerUiTest `the tab's lists are worked out once…`, MakerAppTest `the last 24 hours of bids are counted in bid-hours…`. Fills (BO4): zero is expected from ~9
+  min of ≤13 bids (≈0.1-0.2 fills at §70.3's rates); no defect found; the options that raise fills are Tj's (wallet, bid life vs his freshness rule, hours).
 - [ ] BO5 Full floor, ship, answer Tj with the link and a plain summary.
 
 
