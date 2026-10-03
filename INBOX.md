@@ -3738,3 +3738,8 @@ Also consider if it is needed or smart to require that prop bets have at least o
 ```
 Do option 1 and add the props split to the study
 ```
+
+## 2026-10-03T23:06:08Z
+```
+Confirm that all the betting data is being logged even when the app is backgrounded but in auto scan background mode.
+```
