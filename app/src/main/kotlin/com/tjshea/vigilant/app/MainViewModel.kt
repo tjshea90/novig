@@ -1172,10 +1172,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             runCatching { c.settingsStore.update(transform) }.getOrElse { transform(_state.value.settings) }
         }
         val before = _state.value.settings
-        _state.update {
-            if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList())
-            else it.copy(settings = next).let { n -> n.copy(feed = n.feedOf(n.result)) }
-        }
+        // The settings are on screen at once (Pause, a scanner switch); the feed under them follows, built off the main thread ([refeed]).
+        _state.update { if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList()) else it.copy(settings = next) }
         // CNO only now: Vigilant is asleep. A scan running now (Tj's own or a background cycle's) stops so it spends no more API credits, and a
         // "scan done" note would name bets no screen shows any more.
         if (before.vigilantOn && !next.vigilantOn) {
@@ -1189,7 +1187,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (before.activeAutoScan == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && next.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) {
             AutoScanService.start(getApplication())
         }
-        if (next.leagues.isNotEmpty()) repriceNow(next)
+        if (next.leagues.isNotEmpty()) {
+            _state.refeed()
+            rescheduleReprice()
+        }
+    }
+
+    /** The re-pricing under the newest settings, started now: an earlier one still waiting is dropped (eight quick switches are one re-pricing). */
+    private var repricing: Job? = null
+
+    /**
+     * Re-prices from cache in the background, never awaited by the change that asked: the scanner is held by a running scan for all of it (minutes),
+     * and Pause, a switch or a filter must not wait for that to be told it's done (Tj, 2026-10-03: "I pressed pause and even that took a while to
+     * register"; a scan's end re-prices again if the settings changed meanwhile: [applyReport]).
+     */
+    private fun rescheduleReprice() {
+        repricing?.cancel()
+        repricing = viewModelScope.launch { repriceNow(_state.value.settings) }
     }
 
     fun toggleLeague(league: String) = updateSettings { s ->
