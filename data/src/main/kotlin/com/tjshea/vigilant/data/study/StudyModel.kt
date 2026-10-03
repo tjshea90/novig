@@ -175,7 +175,7 @@ class StudyBet(
                 settledAtMs = after.settledAtMs.takeIf { it != before.settledAtMs },
                 settledBy = after.settledBy.takeIf { it != before.settledBy },
                 settleValue = after.settleValue.takeIf { it != before.settleValue },
-                gradeNote = after.gradeNote.takeIf { it != before.gradeNote && (after.status != before.status || after.gradeManual != before.gradeManual || it != null) },
+                gradeNote = after.gradeNote.takeIf { it != null && it != before.gradeNote },
                 gradeAtMs = after.gradeAtMs.takeIf { it != before.gradeAtMs && after.gradeNote != before.gradeNote },
                 gradeManual = after.gradeManual,
                 closeFair = after.closeFair.takeIf { it != before.closeFair },
