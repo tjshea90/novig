@@ -598,6 +598,12 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     }
 }
 
+/** A tab's name under its icon: one line, the bar's small type, never broken mid-word. */
+@Composable
+internal fun TabLabel(t: Tab) {
+    Text(t.label, style = androidx.compose.material3.MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+}
+
 /** The wallet strip, reading its own flows so a new balance or bid redraws only it. */
 @Composable
 private fun WalletBar(vm: MainViewModel) {
@@ -714,7 +720,8 @@ private fun VigilantRoot(
                             tabName = t.name
                         },
                         icon = { TabIconWithCount(t, state) },
-                        label = { Text(t.label) },
+                        // One line in the bar's small type: seven tabs on a phone wrapped "Auto-bet", "Tracker" and "Settings" mid-word.
+                        label = { TabLabel(t) },
                     )
                 }
             }

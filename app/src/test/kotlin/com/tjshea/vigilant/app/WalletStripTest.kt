@@ -83,7 +83,7 @@ class WalletStripTest {
             WalletStrip(WalletBalance.Reading(18.51, System.currentTimeMillis() - 150_000), 3, 8.2, onRefresh = {})
             NavigationBar {
                 for (t in Tab.entries.filter { it.shownIn(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH) }) {
-                    NavigationBarItem(selected = t == Tab.BIDS, onClick = {}, icon = { TabGlyph(t) }, label = { Text(t.label) })
+                    NavigationBarItem(selected = t == Tab.BIDS, onClick = {}, icon = { TabGlyph(t) }, label = { TabLabel(t) })
                 }
             }
         }
