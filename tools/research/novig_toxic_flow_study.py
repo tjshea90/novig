@@ -147,7 +147,7 @@ def main():
     for w in WS:
         z = q[q.w == w]
         print(f'\n===== fair stand-in w={w} (margin 4%, re-quoted every 10 min from 24 h before the close) =====')
-        for kd in ('game', 'prop', 'period', 'teamtotal'):
+        for kd in ('game line', 'player prop', 'period line', 'team total'):
             y = z[z.kind == kd]
             if len(y) == 0:
                 continue
