@@ -3640,3 +3640,8 @@ After the new version ships, run full tests on the new system and make sure the 
 
 6) I posted plenty of bids and not one of them was taken. Maybe the criteria is too restrictive. Investigate, but it should never be too loose where it is no longer positive ev.
 ```
+
+## 2026-10-03T04:50:21Z
+```
+Also make it so the make bidding system is always shown, even if vigilant scanning is turned off. As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs including vigilant scanning
+```
