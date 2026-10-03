@@ -47,6 +47,12 @@ object BetLedger {
         /** Novig's own price now and its close ([NovigNow]). */
         val novigFair: Double? = null,
         val novigClose: Double? = null,
+        /**
+         * Novig's public catalog ids for the bet (not account ids: anyone can read them), so research can find the bet in Novig's published trades
+         * by id (RESEARCH.md §71 had to match Tj's bets to his own trades by time and price).
+         */
+        val marketId: String? = null,
+        val outcomeId: String? = null,
     )
 
     private val json = Json { encodeDefaults = false; explicitNulls = false }
@@ -58,6 +64,7 @@ object BetLedger {
         clv = ClosingLine.clv(b, now), closeFair = ClosingLine.closeFair(b, now), closeVia = b.closeVia, closeFinal = b.closeFinal,
         nowEv = b.nowEv, nowAtMs = b.nowAtMs, outlier = b.isOutlier, atBet = b.atBet,
         lockFor = b.lockFor?.take(8), novigFair = b.novigFair, novigClose = b.novigClose,
+        marketId = b.marketId.ifBlank { null }, outcomeId = b.outcomeId.ifBlank { null },
     )
 
     /** [b] as one JSON line. */
@@ -78,10 +85,14 @@ object BetLedger {
         HOW("How placed"),
         LIQUIDITY("Novig dollars at the price"),
         PAGE_AGE("Book page's age"),
+        NOVIG_MOVE("Novig's own trades just before (trap guard)"),
     }
 
     /** [b]'s group for [split]; [NOT_RECORDED] for a bet placed before v0.45.0 (or one that didn't have that fact). */
     fun keyOf(b: TrackedBet, split: Split): String {
+        // Every bet knows when it was placed and when its game starts: the time to the start needs no record as placed (RESEARCH.md §71: the
+        // strongest split of Tj's closes, and the trap guard's first rule).
+        if (split == Split.LEAD) return (b.atBet?.minutesToStart ?: b.startsTs.takeIf { it > 0 }?.let { (it - b.createdAtMs) / 60_000L })?.let(::leadBand) ?: NOT_RECORDED
         val a = b.atBet ?: return NOT_RECORDED
         return when (split) {
             Split.AGREEMENT -> a.agreeing?.let { n -> a.twoSided?.let { t -> if (t > 0 && n == t) "every one ($n of $t)" else if (t > 0) "${t - n} of $t not agreeing" else null } } ?: NOT_RECORDED
@@ -93,7 +104,7 @@ object BetLedger {
             }
             Split.SHARP -> a.sharpVerdict ?: NOT_RECORDED
             Split.SHARP_BOOK -> a.sharpBook?.let { "$it ${if (a.sharpVerdict == SharpVeto.Verdict.VETOED.name) "said no" else "agreed"}" } ?: if (a.sharpVerdict != null) "none on the page" else NOT_RECORDED
-            Split.LEAD -> a.minutesToStart?.let(::leadBand) ?: NOT_RECORDED
+            Split.LEAD -> NOT_RECORDED // answered above
             Split.CHECK_EV -> a.checkEv?.let(TrackerBreakdown::evBand) ?: NOT_RECORDED
             Split.TWO_SIDED -> a.twoSided?.let { if (it >= 10) "10 or more" else if (it >= 6) "6-9" else if (it >= 4) "4-5" else "$it" } ?: NOT_RECORDED
             Split.KIND -> runCatching { BetKind.valueOf(a.kind).label }.getOrDefault(a.kind.ifEmpty { NOT_RECORDED })
@@ -102,6 +113,7 @@ object BetLedger {
             Split.HOW -> a.how
             Split.LIQUIDITY -> a.available?.let { if (it < 25) "under $25" else if (it < 100) "$25-100" else if (it < 500) "$100-500" else "$500 or more" } ?: NOT_RECORDED
             Split.PAGE_AGE -> a.pageAgeSec?.let { if (it < 30) "under 30 s" else if (it < 120) "30 s-2 min" else if (it < 600) "2-10 min" else "10 min or more" } ?: NOT_RECORDED
+            Split.NOVIG_MOVE -> a.novigMove?.substringBefore(" ·") ?: NOT_RECORDED
         }
     }
 

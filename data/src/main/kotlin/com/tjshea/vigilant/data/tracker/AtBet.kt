@@ -85,6 +85,12 @@ data class AtBet(
     val stake: Double? = null,
     val bankroll: Double? = null,
     val wallet: Double? = null,
+    /**
+     * What Novig's own trades said just before the auto-bet placed a game line (the trap guard, [com.tjshea.vigilant.data.scanner.TrapGuard.move]):
+     * "CLEAR · Novig level 0.512, +0.5¢ under, $40 on the other side in 15 min", "NO LEVEL · …", or "UNREAD · why". Null: not checked (a prop, a
+     * hand bet, or the rule off).
+     */
+    val novigMove: String? = null,
 ) {
     companion object {
         const val HOW_AUTO = "auto"
