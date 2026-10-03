@@ -82,6 +82,13 @@ data class MakerBid(
     val auto: Boolean = true,
     /** The Tracker bet its fills became. */
     val betId: String? = null,
+    /**
+     * Novig's book on this side when it was posted (Diagnostics: whether bids lead their side, why they fill or don't): the best bid already
+     * resting, the price to take it, and when that book was read.
+     */
+    val bestBidAtPost: Double? = null,
+    val offerAtPost: Double? = null,
+    val bookAtMs: Long? = null,
 ) {
     val active: Boolean get() = !status.ended
 
@@ -320,6 +327,7 @@ class MakerDesk(
             margin = rules.margin, books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
+            bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,
         )
         val ttl = bid.expiresAtMs!! - now
         // Worked out a moment ago: if that window has closed since, nothing is sent.

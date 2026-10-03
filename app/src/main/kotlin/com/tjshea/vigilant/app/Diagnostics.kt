@@ -185,6 +185,7 @@ object Diagnostics {
                 (x.maker.lastReport?.let { r -> " (${r.placed} posted, ${r.cancelled} cancelled${r.stopped?.let { s -> ", $s" } ?: ""})" } ?: "") +
                 (x.maker.problem?.let { " · problem: $it" } ?: ""),
         )
+        MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
         x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)
             .forEach { o.appendLine("  bids ended ×${it.value}: ${it.key}") }
         o.appendLine(
@@ -568,4 +569,28 @@ object Diagnostics {
     private const val MAX_ERRORS = 8
     private const val MAX_PROBLEMS = 25
     private const val MAX_CLOSE_ROWS = 30
+}
+
+/**
+ * What the bids did, in one line for Diagnostics (Tj, 2026-10-03: "I posted plenty of bids and not one of them was taken"): how many were posted by
+ * auto-make and by hand, how long they rested, whether they led their side's book when posted, and how far under Novig's price to take them they sat.
+ */
+object MakerStats {
+    fun line(bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>, now: Long): String? {
+        val posted = bids.filter { it.orderId != null }
+        if (posted.isEmpty()) return null
+        fun pct(n: Int, of: Int) = if (of == 0) "?" else "${Math.round(n * 100.0 / of)}%"
+        val lives = posted.map { ((it.endedAtMs ?: now) - it.postedAtMs).coerceAtLeast(0L) / 60_000.0 }.sorted()
+        fun at(q: Double) = lives[((lives.size - 1) * q).toInt()]
+        val known = posted.filter { it.offerAtPost != null || it.bestBidAtPost != null || it.bookAtMs != null }
+        val led = known.count { b -> b.bestBidAtPost == null || b.bestBidAtPost < b.price - 1e-9 }
+        val gaps = known.mapNotNull { b -> b.offerAtPost?.let { it - b.price } }.sorted()
+        val bookAges = known.mapNotNull { b -> b.bookAtMs?.let { (b.postedAtMs - it).coerceAtLeast(0L) / 60_000.0 } }.sorted()
+        return "bids posted ${posted.size} (auto-make ${posted.count { it.auto }}, by hand ${posted.count { !it.auto }}) · " +
+            "rested ${"%.0f".format(java.util.Locale.US, at(0.5))} min at the median, ${"%.0f".format(java.util.Locale.US, at(0.9))} at the 90th · filled ${posted.count { it.filled > 0 }}" +
+            (if (known.isEmpty()) " · their book when posted: not recorded (from v0.53.0)" else
+                " · led their side (no bid as high) ${pct(led, known.size)} of ${known.size}" +
+                    (gaps.takeIf { it.isNotEmpty() }?.let { g -> " · under Novig's price to take ${"%.1f".format(java.util.Locale.US, g[g.size / 2] * 100)}¢ at the median" } ?: "") +
+                    (bookAges.takeIf { it.isNotEmpty() }?.let { a -> " · priced with a book ${"%.0f".format(java.util.Locale.US, a[a.size / 2])} min old at the median" } ?: ""))
+    }
 }
