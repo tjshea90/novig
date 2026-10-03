@@ -131,7 +131,7 @@ object SharpVeto {
                 "${CnoBooks.name(book!!)}, the sharpest book for ${kind.label.lowercase(Locale.US)}, says it isn't +EV at Novig's price"
             } else {
                 "${CnoBooks.name(book!!)}, the sharpest book for ${kind.label.lowercase(Locale.US)}, gives Novig's price under the sharp veto's " +
-                    "${SharpConfirm.percent(minEv).removePrefix("+")} edge"
+                    "${SharpConfirm.percent(minEv, sign = false)} edge"
             }
 
         /** The numbers: "ProphetX −2.1% (devigged)", for the bet's record and Diagnostics. */

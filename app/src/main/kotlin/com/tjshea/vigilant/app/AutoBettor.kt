@@ -328,7 +328,7 @@ class AutoBettor(
         when (settings.sharpAutoBet) {
             SharpMode.OFF -> return null
             SharpMode.VETO -> {
-                val veto = SharpVeto.judge(state.booksAt(item.pick.row.key, now)?.view, row.league, row.market, row.bet, row.odds, item.pick.live)
+                val veto = SharpVeto.judge(state.booksAt(item.pick.row.key, now)?.view, row.league, row.market, row.bet, row.odds, item.pick.live, settings.sharpVetoMinEv)
                 vetoSaid[item.pick.row.key] = veto
                 tally(item.pick.row.key, "veto.${veto.verdict}")
                 c.eventLog.count("sharp.veto.${veto.verdict}")
