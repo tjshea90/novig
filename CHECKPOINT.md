@@ -1,13 +1,13 @@
-# CHECKPOINT 2437 — read me first, then TASKS.md
+# CHECKPOINT 2438 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T07:17:23Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-48b3c757-u0bxg1` · **builds on:** `f328ce94` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T07:23:36Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-48b3c757-u0bxg1` · **builds on:** `6f5aa939` (this checkpoint is the commit after it)
 
 ## Just done
-resumed after usage cut: sub-agent workflow results lost (never committed, other account), diag file absent; BJ1 evidence in TASKS.md is the basis
+BJ1 evidence confirmed from Tj's re-sent v0.53.0 file; BJ2 split into BJ2a-f in TASKS.md
 
 ## Do this next
-BJ2: read MakerDesk/MakerQuote/MakerRunner; fix churn, fills reads, wallet budget, lead-first priority; GC
+implement BJ2a (MakerPlan churn) then BJ2b-f with MakerTest cases
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ BJ2: read MakerDesk/MakerQuote/MakerRunner; fix churn, fills reads, wallet budge
 
 ## Last ten checkpoints
 ```
+  1beb897b ckpt 2437: resumed after usage cut: sub-agent workflow results lost (never committed, o
   71b673fb ckpt 2436: BJ1 evidence read (churn loop, wallet over-commit, fills 429s, 41% lead, GC 
   beef13c3 ckpt 2435: BJ: Tj 'None of my auto bids were accepted' (v0.53.0 diag) written to TASKS.
   4d10f75f ckpt 2434: BI done: v0.53.0 (code 93) released + recorded
@@ -28,5 +29,5 @@ BJ2: read MakerDesk/MakerQuote/MakerRunner; fix churn, fills reads, wallet budge
   c4671489 ckpt 2428: BI3 in progress: scan on background-priority threads (ScanThreads), CPU spli
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
