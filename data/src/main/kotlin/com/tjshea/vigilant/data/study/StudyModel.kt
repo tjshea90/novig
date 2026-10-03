@@ -16,7 +16,10 @@ import kotlinx.serialization.json.Json
 /** One look at a listed bet: where it was seen ([k]) and what the price and the books were then. Compact: a busy day has tens of thousands. */
 @Serializable
 data class Sight(
-    /** [CNO] a CNO scan listed it, [VIGILANT] a Vigilant scan did, [CHECK] its book page was read, [GONE_CNO]/[GONE_VIGILANT] that scan no longer lists it. */
+    /**
+     * [CNO] the app's CNO list carried it (CNO's read under Tj's filters), [WIDE] the study's wide read found it (CNO's filters opened right up: every row CNO finds, the
+     * app's list's rows too), [VIGILANT] a Vigilant scan listed it, [CHECK] its book page was read, [GONE_CNO]/[GONE_WIDE]/[GONE_VIGILANT] that read no longer lists it.
+     */
     val k: String,
     /** Novig's price for the bet then (American): CNO's own price, or Novig's live one when it had been read in the last minute; Vigilant's quote. */
     val o: Int? = null,
@@ -35,14 +38,20 @@ data class Sight(
 ) {
     companion object {
         const val CNO = "c"
+        const val WIDE = "w"
         const val VIGILANT = "v"
         const val CHECK = "k"
         const val GONE_CNO = "xc"
+        const val GONE_WIDE = "xw"
         const val GONE_VIGILANT = "xv"
 
         /** The sight kinds that carry a price (a listing), as opposed to a check or a disappearance. */
-        fun isListing(k: String) = k == CNO || k == VIGILANT
-        fun isGone(k: String) = k == GONE_CNO || k == GONE_VIGILANT
+        fun isListing(k: String) = k == CNO || k == VIGILANT || k == WIDE
+        fun isGone(k: String) = k == GONE_CNO || k == GONE_VIGILANT || k == GONE_WIDE
+
+        /** The same, for the lists the app itself shows (CNO's list under Tj's filters, Vigilant's feed): what "listed" meant before the wide read. */
+        fun isAppListing(k: String) = k == CNO || k == VIGILANT
+        fun isAppGone(k: String) = k == GONE_CNO || k == GONE_VIGILANT
     }
 }
 
@@ -71,7 +80,7 @@ data class StudyResult(
     val from: String? = null,
 )
 
-/** One line of a day's journal. [e] says which of the fields it carries ([BET], [SIGHT], [CHECK], [VIG], [CNO_REC], [RES], [IDS]). */
+/** One line of a day's journal. [e] says which of the fields it carries ([BET], [SIGHT], [CHECK], [VIG], [CNO_REC], [CNO_COLS], [RES], [IDS]). */
 @Serializable
 data class Line(
     /** [BET] a bet first listed, [SIGHT], [CHECK] its book check, [VIG] Vigilant's own record of it, [RES] a grading or close result. */
@@ -79,7 +88,10 @@ data class Line(
     val id: String,
     val t: Long,
     val b: TrackedBet? = null,
-    /** On [BET]: why the app's own CNO screen would hide the row ([com.tjshea.vigilant.data.cno.CnoChecks.Reason] name); null = it shows it. */
+    /**
+     * On [BET]: why the app's own CNO list would not show the row at the first look: a [com.tjshea.vigilant.data.cno.CnoChecks.Reason] name (the app's own screen under
+     * Tj's filters), or [NOT_LISTED] (the screen passes it, but CNO's read under his filters didn't carry it: a filter CNO applies itself, or the row limit); null = it shows it.
+     */
     val sc: String? = null,
     val s: Sight? = null,
     val a: AtBet? = null,
@@ -87,8 +99,12 @@ data class Line(
     /** On [IDS]: the Novig market and outcome the bet turned out to be, once its link was found (Novig's trade history is read by them). */
     val m: String? = null,
     val o: String? = null,
+    /** On [CNO_COLS]: every column CNO printed for the row, by its header, and the row's `data-*` attributes ([com.tjshea.vigilant.data.cno.CnoRow.cols]). */
+    val c: Map<String, String>? = null,
 ) {
     companion object {
+        const val NOT_LISTED = "NOT_LISTED"
+        const val CNO_COLS = "cols"
         const val IDS = "ids"
         const val CNO_REC = "cnorec"
         const val BET = "bet"
@@ -117,6 +133,10 @@ class StudyBet(
 
     /** CNO's own record of the bet (its books, one-way flag, list age), when it wasn't CNO that first listed it but a CNO scan listed it too. */
     var cnoRec: AtBet? = null
+        private set
+
+    /** Every column CNO printed for the row (the wide read's [Line.CNO_COLS]), once. */
+    var cols: Map<String, String>? = null
         private set
 
     /** When the last result line was written (nothing else says a bet was looked at). */
@@ -151,6 +171,10 @@ class StudyBet(
 
     fun applyCnoRec(a: AtBet) {
         if (cnoRec == null) cnoRec = a
+    }
+
+    fun applyCols(c: Map<String, String>) {
+        if (cols == null) cols = c
     }
 
     fun applyIds(marketId: String?, outcomeId: String?) {

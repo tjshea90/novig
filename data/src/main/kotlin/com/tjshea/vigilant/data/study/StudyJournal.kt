@@ -49,16 +49,20 @@ class StudyJournal(private val dir: File) {
         }
     }
 
-    /** [day]'s bets folded from their lines: the first line for a bet makes it, every later one adds to it. Bets by id, in the order first listed. */
-    fun fold(day: LocalDate): Map<String, StudyBet> {
+    /**
+     * [day]'s bets folded from their lines: the first line for a bet makes it, every later one adds to it. Bets by id, in the order first listed. [withSights] false
+     * leaves the looks out ([StudyBet.sights] stays empty): grading and the counts don't need them, and a day of wide-read bets has tens of thousands.
+     */
+    fun fold(day: LocalDate, withSights: Boolean = true): Map<String, StudyBet> {
         val out = LinkedHashMap<String, StudyBet>()
         for (l in read(day)) {
             when (l.e) {
                 Line.BET -> if (l.b != null && l.id !in out) out[l.id] = StudyBet(l.id, l.b, l.sc)
-                Line.SIGHT -> if (l.s != null) out[l.id]?.addSight(l.t, l.s)
+                Line.SIGHT -> if (withSights && l.s != null) out[l.id]?.addSight(l.t, l.s)
                 Line.CHECK -> if (l.a != null) out[l.id]?.applyCheck(l.t, l.a)
                 Line.VIG -> if (l.a != null) out[l.id]?.applyVig(l.a)
                 Line.CNO_REC -> if (l.a != null) out[l.id]?.applyCnoRec(l.a)
+                Line.CNO_COLS -> if (l.c != null) out[l.id]?.applyCols(l.c)
                 Line.RES -> if (l.r != null) out[l.id]?.applyResult(l.t, l.r)
                 Line.IDS -> out[l.id]?.applyIds(l.m, l.o)
             }
