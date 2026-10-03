@@ -61,9 +61,11 @@ class MakerRunner(
      * watched (fills recorded, taken down when no longer worth it, never re-posted), and new bids are recommended to approve or deny
      * ([ScanSettings.makerRecommend]). Scanning paused: every bid comes down. No scan yet: only fills and expiries are read. A scan still running is
      * judged as far as it has got (its finished leagues; a bid on a line it hasn't judged yet stays up). Null when betting through the API isn't set
-     * up. [why] is logged.
+     * up. [why] is logged. [minGapMs]: skipped (null) when a pass started less than this long ago (the background cycle's, while a scan's own passes
+     * run every [VigilantApp] MAKER_SCAN_PASS_MS: Tj's v0.53.0 file had both running, a pass every ~10 s).
      */
-    suspend fun run(why: String): MakerDesk.Report? = passes.withLock {
+    suspend fun run(why: String, minGapMs: Long = 0L): MakerDesk.Report? = passes.withLock {
+        if (minGapMs > 0) _status.value.lastAtMs?.let { last -> if (clock() - last < minGapMs) return@withLock null }
         val desk = desk() ?: return@withLock null
         val s = c.currentSettings()
         val any = desk.bids().any { it.active }
@@ -139,7 +141,7 @@ class MakerRunner(
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - resting + busy
         val denied = c.makerDenials.outcomes(clock())
         val run = scan()
-        val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held).map { d ->
+        val decisions = MakerQuote.decideAll(MakerLines.withoutOwn(MakerLines.from(run.result, settings, now), bids), MakerRules.of(settings), now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
         }
         _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
@@ -159,7 +161,7 @@ class MakerRunner(
         val bids = desk.bids()
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } +
             bids.filter { it.active }.map { it.outcomeId }
-        val line = MakerLines.from(scan().result, s, now).firstOrNull { it.outcomeId == outcomeId } ?: return "That line isn't in the latest scan any more"
+        val line = MakerLines.withoutOwn(MakerLines.from(scan().result, s, now).filter { it.outcomeId == outcomeId }, bids).firstOrNull() ?: return "That line isn't in the latest scan any more"
         val rules = MakerRules.of(s)
         val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
