@@ -71,7 +71,7 @@ class ScanStudy(
     private val byIdentity = HashMap<String, MutableList<Active>>()
     private val pending = LinkedHashMap<LocalDate, MutableList<Line>>()
     private var pendingCount = 0
-    private var lastFlushMs = 0L
+    private var lastFlushMs = clock()
     private var lastCnoAt = Long.MIN_VALUE
     private var lastCnoBaseline: Pair<String, Any?>? = null
     private var lastVigAt = Long.MIN_VALUE

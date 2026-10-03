@@ -52,14 +52,19 @@ class ScanStudyTest {
 
     private fun study(j: StudyJournal = journal(), flushEveryMs: Long = 0L) = ScanStudy(j, clock = { now }, version = { "0.57.0" }, flushEveryMs = flushEveryMs, io = Dispatchers.Unconfined)
 
-    private fun row(market: String, bet: String, odds: Int, ev: Double = 0.045, books: Int = 5, startsAt: Long? = start, fair: Double? = 0.5122, side: Int = 1) = CnoRow(
+    /** A CNO row whose EV follows from its fair probability and price (the app's own screen checks that), as CNO prints it. */
+    private fun row(
+        market: String, bet: String, odds: Int, fair: Double = 0.5122, books: Int = 5, startsAt: Long? = start, side: Int = 1,
+        ev: Double = fair * com.tjshea.vigilant.engine.Odds.americanToDecimal(odds) - 1.0,
+    ) = CnoRow(
         ev = ev, startsAtMs = startsAt, league = "MLB", sport = "BASEBALL", event = event, market = market, bet = bet, odds = odds, available = 40.0, book = "Novig",
         fairOdds = -105, fairProbability = fair, books = books, gameUrl = "https://x/game.aspx?game_id=9&side_id=$side&devig_method=8",
     )
 
+    private val mlEv = 0.5122 * 2.05 - 1.0
     private val moneyline get() = row("Moneyline", "New York Mets", 105)
-    private val total get() = row("Total Runs", "Over 8.5", 110, ev = 0.03, side = 2)
-    private val prop get() = row("Player Total Bases", "Carson Benge Over 1.5", 120, ev = 0.05, side = 3)
+    private val total get() = row("Total Runs", "Over 8.5", 110, fair = 0.5, side = 2)
+    private val prop get() = row("Player Total Bases", "Carson Benge Over 1.5", 120, fair = 0.4773, side = 3)
 
     private var read = 0L
     private fun snap(vararg rows: CnoRow, url: String = "https://cno/view", filters: CnoFilters = CnoFilters()): CnoSnapshot {
@@ -88,7 +93,7 @@ class ScanStudyTest {
         assertEquals("MONEYLINE", a.kind)
         assertEquals(180L, a.minutesToStart)
         assertEquals(105, a.american)
-        assertEquals(0.045, a.ev!!, 1e-9)
+        assertEquals(mlEv, a.ev!!, 1e-9)
         assertEquals(5, a.cnoBooks)
         assertEquals(40.0, a.available!!, 1e-9)
         assertEquals("0.57.0", a.version)
@@ -103,7 +108,7 @@ class ScanStudyTest {
         val look = ml.sights.single().second
         assertEquals(Sight.CNO, look.k)
         assertEquals(105, look.o)
-        assertEquals(0.045, look.ev!!, 1e-9)
+        assertEquals(mlEv, look.ev!!, 1e-9)
         assertEquals(5, look.b)
     }
 
@@ -198,8 +203,8 @@ class ScanStudyTest {
     private fun view(at: Long) = CnoBooksView(
         "New York Mets", "Washington Nationals", null, false,
         listOf(
-            CnoBookPrice("PN", 100, null, -115, null), CnoBookPrice("DK", 100, null, -118, null), CnoBookPrice("FD", -102, null, -112, null),
-            CnoBookPrice("CZR", 100, null, -120, null), CnoBookPrice("NV", 105, null, -125, null),
+            CnoBookPrice("PN", -105, null, -110, null), CnoBookPrice("DK", -105, null, -110, null), CnoBookPrice("FD", -105, null, -110, null),
+            CnoBookPrice("CZR", -105, null, -110, null), CnoBookPrice("NV", 105, null, -125, null),
         ),
         fetchedAtMs = at,
     )
@@ -243,30 +248,33 @@ class ScanStudyTest {
         now += 30_000
         val b = study(j)
         assertEquals(0, b.cno(snap(moneyline, prop)))
+        // A price move a minute on: its line goes after the torn one, on a line of its own.
+        now += 70_000
+        assertEquals(0, b.cno(snap(row("Moneyline", "New York Mets", 110), prop)))
         b.flush()
         val folded = j.fold(day)
         assertEquals(2, folded.size)
-        // The next append starts on its own line: nothing was glued onto the torn one.
-        assertTrue(j.read(day).count() >= 4)
         assertEquals(2, j.read(day).count { it.e == Line.BET })
-        assertEquals(1, folded.values.first { it.bet.marketLabel == "Moneyline" }.sights.size)
+        assertEquals(3, j.read(day).count { it.e == Line.SIGHT })
+        assertEquals(listOf(105, 110), folded.values.first { it.bet.marketLabel == "Moneyline" }.sights.map { it.second.o })
     }
 
     @Test
     fun `lines are written together once the flush gap has passed, and kept when the disk refuses them`() = runBlocking {
-        val j = StudyJournal(File(tmp.root, "blocked").also { it.writeText("a file where the folder should be") })
-        val s = ScanStudy(j, clock = { now }, flushEveryMs = 10_000, io = Dispatchers.Unconfined)
-        s.cno(snap(moneyline))
+        // A disk that refuses: nothing is thrown at the scan, the problem is noted, the lines wait.
+        val blocked = StudyJournal(File(tmp.root, "blocked").also { it.writeText("a file where the folder should be") })
+        val s = ScanStudy(blocked, clock = { now }, flushEveryMs = 0, io = Dispatchers.Unconfined)
+        assertEquals(1, s.cno(snap(moneyline)))
         assertNotNull(s.lastProblem)
-        // A disk that works again takes everything that waited.
+        // Within the gap nothing is written yet; past it, one write for everything that waited.
         val ok = journal()
         val t = ScanStudy(ok, clock = { now }, flushEveryMs = 10_000, io = Dispatchers.Unconfined)
         t.cno(snap(moneyline))
-        // Within the gap nothing is written yet; past it, one write.
         assertTrue(ok.fold(day).isEmpty())
         now += 11_000
         t.cno(snap(prop))
         assertEquals(2, ok.fold(day).size)
+        assertEquals(1, ok.read(day).count { it.e == Line.BET && it.id == ok.fold(day).keys.first() })
     }
 
     @Test
