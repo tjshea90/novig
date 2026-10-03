@@ -574,7 +574,7 @@ class AppContainer(private val app: Application) {
             }
         }
         scanScope.launch {
-            cno.books.conflate().collect { books ->
+            cno.books.collect { books ->
                 studyStep("book check") { study.observeBooks(books, currentSettings(), live.prices.value) }
                 delay(STUDY_BOOKS_GAP_MS)
             }
