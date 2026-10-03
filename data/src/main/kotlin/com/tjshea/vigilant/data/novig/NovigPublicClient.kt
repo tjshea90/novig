@@ -591,6 +591,9 @@ class NovigPublicClient(
             "Disconnect it in Settings and connect it again."
         const val MAX_CACHED_BOOKS = 3000
 
+        /** How many of a market's newest trades the trap guard reads: an hour of a busy game line (the route takes up to 500 and pages past that). */
+        const val TRADES_LIMIT = 200
+
         /** The key route is tried again this soon after Novig refused the network's address ([keyRetryAfter]). */
         const val NETWORK_RETRY_MS = 2 * 60_000L
 
@@ -723,5 +726,18 @@ private data class BookDto(
             if (o.qty > 0) byPrice[milli] = (byPrice[milli] ?: 0L) + o.qty
         }
         return byPrice.entries.sortedByDescending { it.key }.map { BidLevel(it.key, it.value) }
+    }
+}
+
+@Serializable
+private data class TradePageDto(val items: List<TradeDto> = emptyList())
+
+/** One trade as the public route gives it: the resting order's outcome and price (a string, "0.515"), [qty] contracts, [ts] epoch ms. */
+@Serializable
+private data class TradeDto(val outcomeId: String = "", val price: String = "", val qty: Long = 0, val ts: Long = 0) {
+    fun toDomain(): com.tjshea.vigilant.data.scanner.TrapGuard.Trade? {
+        val p = price.toDoubleOrNull()?.takeIf { it > 0.0 && it < 1.0 } ?: return null
+        if (outcomeId.isBlank() || qty <= 0 || ts <= 0) return null
+        return com.tjshea.vigilant.data.scanner.TrapGuard.Trade(outcomeId, p, qty, ts)
     }
 }
