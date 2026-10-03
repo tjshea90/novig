@@ -4207,7 +4207,21 @@ A gift here is a taker buying a side **2¢+ under that side's own median price o
 
 ## 72. Beating the close, spotting sharp money, and trap bets: the sources, three new studies, and what changed (v0.56.0, 2026-10-03; Tj: "do deep research on beating clv and finding true positive EV bets while avoiding "trap" bets ("gift" bets with positive EV on paper but are actually offered by sharp bettors with information). find historical betting information from different sources, especially sharp data, which shows how sharp money can be spotted and avoid the other side of those bets ... the timing of positive EV bets, types of bets, and best methods ... both taking and making bets and bids ... whether it would be practical or plausible to "follow" verified sharp bets ... implement all of the findings")
 
-*(DRAFT, being written: BL1-BL5 in TASKS.md. Builds on §62, §65-66, §69, §70, §71; nothing there is re-derived.)*
+**Verdict.** (1) **The scoreboard holds**: beating the close is the expected return (Buchdahl: open/close ratio ≈ actual return on 132,645
+matches; Moskowitz: the close is near-efficient, nothing beats it after the vig). (2) **A "gift" is a trap when the price comes from the better-
+informed venue**: on 48,394 soccer matches, when Pinnacle's own early price beat the soft books' consensus, betting it LOST −2.3% to the close and
+−21% in results; the close moved ~70% of the way to Pinnacle. When a soft book was the one out of line, the gift was real. On Novig the
+informed venue is Novig itself far from the start (§71: Tj's bets 6 h+ out lost to the close) and on game lines it has just moved (§71 rule 2).
+(3) **What a +EV bet keeps by the close is about the sharpest book's own edge, not the consensus's**: bets the consensus called +2.5%+ kept +0.8%
+(no better than zero) when the sharp book gave them 0-1%, +1.6% at 1-2%, +2.8% at 2-4%, +5.7% at 4%+. Built: **the sharp veto's bar**, 1% by
+default (was "any +EV"), for the auto-bet, the alerts and the bids. (4) **Bids**: one-sided buying does NOT predict bad prop or 1st-half fills;
+on game lines a side whose Novig price just fell 2¢+ in the hour kept far less per fill. Built: the trap guard's move rule now also stands over
+game-line bids. (5) **Following sharps**: impossible on Novig (no accounts); following RLM/"sharp splits" after the move buys the moved price;
+on Polymarket the best quarter of sports accounts by past CLV kept beating the close, and a 1-minute copy kept about two thirds of it (+1.0¢,
++1.3¢ on moneylines, before the spread). Vigilant already prices off Polymarket as a sharp book; a wallet-watch feature is a proposal for Tj, not
+built. Re-run everything: `sharp_anchor_study.py --dir DIR` (football-data, ~12 s once downloaded), `novig_toxic_flow_study.py --cache DIR`
+(Novig's 61 published days, ~15 min), `polymarket_follow_study.py --cache DIR` (public APIs, ~20 min first run), `tj_bets_by_lead.py <file>`
+(now also splits Tj's bets by the sharp book's edge when bet).
 
 ### 72.1 Sources read (primary first)
 - Kaunitz, Zhong & Kreiner 2017 (arXiv 1710.02824, read): consensus-follower: bet when a book's price > 1/(consensus prob − 0.05); 10-year
@@ -4234,3 +4248,148 @@ A gift here is a taker buying a side **2¢+ under that side's own median price o
   fill probability and post-fill return trade off; quotes should widen or withdraw when flow is informed.
 - Copy-trading on Polymarket (dev.to analysis of 200+ whale wallets; marketing-grade, used only as a pointer): most copiers trail the wallet
   they copy because the whale's own order moves the price before the copy lands.
+- Injury and lineup news windows (league rules, read 2026-10-03): NBA teams report by 5 p.m. local the day before and again 11 a.m.-1 p.m. on
+  game day (official.nba.com); NFL inactives 90 minutes before kickoff, Friday game statuses; MLB lineups usually 1-4 h before first pitch,
+  scratches in the last 1-2 h. These are when an informed price appears before the books move, and most of them fall outside the trap guard's
+  6 h window or inside its last hours.
+- Sportsbook "sharp action" signals (reverse line movement, bet-vs-money splits): the evidence offered is vendor records (Sports Insights) and
+  small samples (92 NFL games 2022-23); Pinnacle's own article: splits come from recreational books, aren't tied to the number bet, and the
+  "sharp side" after the move is "a coin flip at −110". No independent test shows RLM beats the close after the line has moved.
+
+### 72.2 Study A: who is right when a price disagrees (`sharp_anchor_study.py`, football-data.co.uk, 48,394 matches, 22 leagues, 2019/20-2025/26)
+Each match has Pinnacle's early price (Friday/Tuesday afternoon, 1-3 days out) and close, the same for bet365, Bet&Win, William Hill, BetVictor
+and Interwetten, and the best (Max) and average (Avg) price across ~40 books, with results; 145,182 1X2, 96,586 over/under 2.5 and 27,764 Asian
+handicap outcomes. Fair = power devig; CLV = price × Pinnacle's closing fair − 1; 95% intervals bootstrapped over matches.
+
+**A. A soft price over the SHARP fair** keeps most of it: the best price early vs Pinnacle's early fair kept 82% / 78% / 73% / 58% / 52% / 59% of
+the shown edge at 1-2 / 2-3 / 3-5 / 5-8 / 8-12 / 12%+ (n 14,652 … 287), ROI +0.8 to +8.8% (wide); at the close, by construction, all of it, with
+ROI +2.2% [+0.7, +3.9] at 1-2% up to +16.2% at 12%+. Single books differ (BetVictor's small early gifts kept nothing; Bet&Win's kept 54-75%).
+
+**B. The best price over the CONSENSUS fair** (Vigilant's method when no sharp book prices a line): early it kept 75% / 87% / 79% / 87% / 59% /
+72% by edge band; at the close 74% / 85% / 95% / 101% / 105% / 104%, with significant ROI from 3% up (+5.5% [+2.7, +8.4] at 3-5%). **Late is
+better, and big early edges are the least reliable.** Totals (over/under 2.5) kept more than 100% early and late (+29.6% ROI on 5%+ early, n=102);
+Asian handicap's big early edges kept 37% (n=61). A lone book far above the rest (best ≥10% over the average price) kept 55% at a 2-5% edge, vs
+~100% when the best is 3-10% over.
+
+**The trap, measured: Pinnacle early vs the consensus early.** When Pinnacle's OWN price was the "gift" against the soft consensus, it lost:
+1-2% shown → **−2.34% CLV [−3.11, −1.61], ROI −21% [−32, −10]** (n=694); 3-5% → −2.16%. bet365 as the gift-giver: kept 90% at 1-2% but 23-41%
+at 3-8% and 14% at 12%+ (ROI −49% and −57% at 8%+, n=38 each): big gifts from a well-run book are suspect too.
+
+**C. Who was informed.** Share of the early gap (venue vs consensus) the close moved toward the venue: Pinnacle off by 1-2 points → Pinnacle's
+close sat **68%** of the way to its own early price and the consensus's close moved **39%** toward it (2-4 points: 51% / 22%); bet365, Bet&Win,
+William Hill, BetVictor off the consensus → the close moved −12% to +14% toward them (no information). **Benter's blend on the results**
+(logistic regression of the result on both early fairs): Pinnacle 89% / consensus 11%; each soft book got a negative weight (−12% to −38%).
+
+**D. Favorite-longshot bias at Pinnacle's close**: wins minus fair −0.81 points [−1.56, −0.02] under 0.10 (n=4,031; about −13% relative), within
+±0.3 elsewhere. Bids under 0.10 stay off (Vigilant's bids start at 0.10).
+
+**E. The sharp veto's bar.** Bets the consensus called +2.5%+ (shown ~3.5%), by what Pinnacle's own early price gave the same price:
+
+| Sharp book's edge | n | CLV at the close (95%) | ROI |
+| :- | -: | -: | -: |
+| under −2% | 389 | +0.42 [−1.45, +2.20] | −6.4% |
+| −2 to 0% | 174 | −0.15 [−2.19, +2.14] | −0.1% |
+| **0 to 1%** | 155 | **+0.81 [−1.61, +2.79]** | +16.2% (wide) |
+| 1 to 2% | 301 | +1.55 [+0.31, +2.81] | −13.2% (wide) |
+| 2 to 4% | 1,199 | +2.75 [+2.10, +3.33] | +3.5% |
+| 4%+ | 2,252 | +5.69 [+5.17, +6.19] | +5.8% |
+
+Regression on every bet the consensus called +EV: CLV ≈ 0.69 × sharp edge + 0.48 × consensus edge − 0.5% (best price, n=40,741); with one book's
+price (bet365, n=3,040) CLV ≈ 0.46 × sharp edge − 0.08 × consensus edge: once the sharp book's edge is known the consensus adds nothing.
+**Accuracy**: Pinnacle's close and the average's close are nearly tied (Brier 0.21872 vs 0.21876); both early prices are worse (0.21958, 0.21964).
+
+### 72.3 Study B: do Novig bids get picked off after one-sided buying? (`novig_toxic_flow_study.py`, 61 days, 10,130 markets, 3.39M quotes)
+A bid at 4% under the stand-in fair, re-quoted every 10 min from 24 h before the close (as Vigilant's maker does), on both sides; each 10-minute
+interval split by what the app can see at posting. w=0: fair = Novig's own price; w=0.25: a fair that knows a quarter of the move to the close
+(§70.1). EV per fill at Novig's close.
+
+| Slice (w=0 / w=0.25) | Game lines | Player props | Period lines |
+| :- | -: | -: | -: |
+| all | +0.08 / +5.36% (fill 0.5%) | +1.67 / +4.36% (2.2%) | +1.75 / +3.28% (1.6%) |
+| other side bought $1,000+ in 15 min | −0.58 / +3.89% | +1.76 / +5.09% (fill 8.6%) | (24 fills) |
+| our side fell 0.5-2¢ over the hour | −0.94 / +6.22% | +1.75 / +4.89% | +3.48 / +4.48% |
+| **our side fell 2¢+ over the hour** | **−2.59 / +1.21%** | +2.35 / +6.01% | (5 fills) |
+| our side rose 0.5-2¢ | +1.22 / +6.62% | +2.50 / +4.91% | +1.96 / +3.24% |
+| §71's rule (other ≥ $100 and fell ≥ 1¢) | −2.13 / +1.71% | +0.63 / +4.01% | (10 fills) |
+
+- **Props and 1st-half lines: no adverse selection from flow.** One-sided buying raises the fill rate (8.6% vs 1.9%) at the same EV per fill, so
+  props stay unguarded (as §71 found for prop takers).
+- **Game lines: momentum.** EV per fill falls monotonically as our side's price falls over the hour, and a 2¢+ fall (or §71's rule) leaves
+  little; a side that's been rising earns the most. This is the classic maker adverse selection, and why game-line bids need a fair that leads Novig.
+- Price bands (props, w=0): bids 0.65+ lose (−1.49%, fill 0.2%); under 0.20 earn the most vs the close (+3.8 to +5.5%), but prop results can't
+  confirm it at settlement (too few, biased toward markets traded in-game), and Kalshi's makers lose on ≤10¢ contracts at settlement (§72.1): the
+  0.10-0.65 window stays. By time (props, per quote): 3-6 h +0.053%, 0-1 h +0.048%, 1-3 h +0.041%, 6-12 h +0.040%, 12-25 h +0.014% (fills 1.0%).
+
+### 72.4 Study C: can you follow verified sharps? (`polymarket_follow_study.py`, Polymarket's public ledger, read 2026-10-03)
+Cohort: Polymarket's sports profit leaderboard (all-time and this month, top 100 each: 186 accounts, 520,560 buys); their newest pregame buys on
+resolved markets (15,379 with a minute price history, 157 accounts, 1,571 markets); CLV = price at the game's start − price paid, in cents.
+
+- **The leaderboard as a whole**: CLV +0.25¢ [−0.03, +0.55] (ROI +23%, but the ranking is by profit on these same results: in-sample luck). A copy
+  1, 5 or 30 min later paid +0.25¢ more and kept **0.00¢**: following "top traders" picked by profit gets nothing.
+- **Persistence**: an account's CLV in its older half vs its newer half correlates **+0.65** (137 accounts with 30+ buys); 63% stay positive.
+- **Following the best quarter, picked on the older half, copying the newer half**: theirs +1.51¢ [+1.11, +1.97]; copy 1 min later **+0.99¢
+  [+0.55, +1.48]**, 5 min +0.86¢, 30 min +0.61¢ (paying +0.52 to +0.90¢ more than they did). Moneylines +1.75¢ theirs, **+1.32¢** copy@1min [+0.79,
+  +2.00]; spreads +0.81¢ (borderline); totals ~0. Taking the OTHER side of their buy a minute later: −0.99¢. ROI at settlement: not significant.
+- **What that means for Vigilant**: (a) on Novig nobody can be followed (anonymous trades), and following Novig's big money lost (§62); (b) a copy
+  pays the spread (~1¢ on liquid games), so the edge left is about +0.5-1¢ on moneylines the best accounts happen to trade; (c) Polymarket is
+  already one of Vigilant's sharp books (`FairSettings.DEFAULT_SHARP_BOOKS`, 70% sharp weight in the blend), so when these accounts move
+  Polymarket's price and Novig lags, Vigilant's scan already sees it; the wallet signal adds speed and the part their trades haven't moved the price
+  for yet. A "sharp wallet" watch (a list of accounts refreshed by this script; skip a Novig game line whose other side a listed account just bought,
+  note it when one bought ours) is plausible and cheap per bet (one public read of the market's trades), but it is a new subsystem: proposed to
+  Tj, not built.
+
+### 72.5 Timing of +EV bets
+- **Takers: late beats early for a consensus fair.** Tj's bets: under 6 h +2.2% CLV, 6 h+ −0.6% (§71). Soccer: the consensus method kept more of
+  its edge at the close than early, and its big early edges least. Kaunitz bet 1-5 h before kick-off; Pinnacle says to read its price an hour out
+  for the fair; Data Golf: Pinnacle's own openers realized 1.29% of a 9.35% expected edge. Early is where originators with models win (Pinnacle
+  moves 54.7% toward Betcris's opener) and where a consensus-follower is the one picked off. **The trap guard's 6 h stays**; inside it, the closer
+  the better (Tj: 0-1 h +3.1%, 1-6 h ~+1.5%).
+- **News windows**: the informed price appears around injury reports and lineups (NBA 5 p.m. the day before and late morning on game day; MLB
+  lineups 1-4 h out; NFL inactives 90 min out). Novig makers who know first are the trap; books update minutes later.
+- **Makers: bids within ~12 h earn about the same per quote; further out fills dry up** (§72.3), and the consensus fair is the weak part early:
+  bids keep the trap guard's 6 h.
+
+### 72.6 Types of bets
+- Props: the softest books' market and Tj's best group (§65-§66, §69); the sharpest prop books are weak references (Kalshi, ProphetX, FanDuel,
+  Caesars), so most props have no sharp veto and keep ~70% of their shown edge late. Bids: props make money even with no outside information.
+- Game lines: the most efficient; Novig's are quoted off the sharp books, so the sharp veto (Pinnacle, Circa) decides; bids only with a sharp
+  book in the fair and now with the move rule.
+- Totals: soccer's over/under kept more than 100% of consensus edges; Tj's own game totals lost to the close (§65): judged by his CLV, as now.
+- Period lines / team totals: bids earn steadily (+1.6 to +3.3% per fill, §72.3), no trap pattern.
+
+### 72.7 Spotting sharp money and the other side of it
+What marks a trap (a sharp on the other side, the rest of the market lagging), with what it was measured on:
+1. **The price comes from the informed venue**: Pinnacle/Betcris/Circa on game lines, an exchange's resting order far from the start, Novig early
+   (Tj, §71). Measured: Pinnacle's gifts −2.3% CLV (§72.2), Tj's 6 h+ bets −0.6% (§71). → trap guard early rule; the sharp veto's bar.
+2. **The venue just moved with money behind it** (Novig game lines: 2¢ under the hour's level with $100+ bought on the other side): −2.3¢ for
+   takers (§71), +1.2% vs +6.5% per bid fill (§72.3). → the move rule, now for bids too.
+3. **The sharpest book doesn't give the edge itself**: CLV tracks the sharp book's own edge (§72.2 E). → the bar (1%).
+4. Not signals: the size of the resting order (§62, §71), the gift's size on Novig (§71), one-sided flow on props (§71, §72.3), leaderboard or
+   splits "sharp money" after the move (§72.1, §72.4).
+
+### 72.8 The method, taking and making (what Vigilant does from v0.56.0)
+- **Take**: a consensus edge of 2.5-3%+ (presets) at Novig's live price, inside 6 h of the start, books agreeing, the sharpest book for the kind
+  giving at least 1% itself (2% on Strict), game lines not just moved by Novig; when money or the per-cycle cap is short, the bets with the biggest
+  **credible edge** go first (the sharp book's own edge where it priced the bet, else 70% of the shown edge, `AutoBet.credibleEv`); ¼ Kelly on the
+  shown edge (an edge that keeps ~70% makes it ~⅙ Kelly in truth, Benter's safe side).
+- **Make**: 4% under the fair, props/period/team totals (game lines only with a sharp book and now the move rule), 0.10-0.65, re-quoted, inside
+  6 h, every sharp book in the fair giving the bid at least the bar.
+- **Judge**: CLV per segment over 200+ bets; `tj_bets_by_lead.py` now splits by the sharp book's edge when bet, so Tj's own data tests the 1% bar.
+
+### 72.9 What was built (v0.56.0)
+- `ScanSettings.sharpVetoMinEv` (0 / 0.5 / 1 / 1.5 / 2%, **1% default**): `SharpVeto.judge(…, minEv)` (auto-bet, CNO alerts, the bet's record),
+  `MakerRules.sharpMinEv` (bids at their own price), presets (`PresetRules.sharpVetoMinEv`: Volume + safe CLV 1%, Strict CLV 2%; presets saved
+  earlier read as 1%), the Auto-bet tab's and Alerts' veto sections (chips + note), the Bids tab's veto row, Settings search, Diagnostics.
+- `AutoBet.credibleEv` / `NO_SHARP_KEEPS` (0.7): the auto-bet's order when not every bet can be placed.
+- Game-line bids: `MakerRules.novigMove` (= `trapNovigMove`), `MakerLines.moveWanted` / `withMoves`, `MakerRunner` reads at most 6 markets a pass
+  (kept 2 min; none by default, game lines being off for bids); a resting game-line bid on a just-moved line comes down.
+- Tests: SharpVetoTest (bar, inclusive edge), PresetsTest, MakerTest (bar at the bid, move rule), AutoBetTest (credible edge), AutoBettorTest (bar
+  on the real auto-bet path, order pin), MakerAppTest (reads only for game lines), SharpConfirmUiTest (chips, one setting), SharpDiagnosticsTest;
+  mutants 7/7 killed.
+
+### 72.10 Not verified, and what to watch
+- The bar's evidence is soccer main markets with Pinnacle as the sharp book; US props' "sharpest" books are weaker, so the right bar there may be
+  lower (or the veto less useful). Tj's next file answers it: `tj_bets_by_lead.py` splits his bets by the sharp book's edge when bet.
+- The Polymarket follow result is against Polymarket's own close, on 35 accounts' newer trades; whether Novig's close follows is untested.
+- The bid study's fair is a stand-in (w); game-line bids are off by default, so the move rule for bids is protection for when Tj turns them on.
+
