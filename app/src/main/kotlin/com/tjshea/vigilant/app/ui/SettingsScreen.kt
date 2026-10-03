@@ -58,6 +58,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.BuildConfig
+import com.tjshea.vigilant.app.StudyText
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.tjshea.vigilant.app.UiState
