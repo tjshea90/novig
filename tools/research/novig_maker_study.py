@@ -206,63 +206,75 @@ def main():
     print(f'{d.marketId.nunique():,} markets with a close; simulating ...', flush=True)
     r, q = simulate(d, close_a, a_won)
     if a.save:
-        pd.to_pickle((r, q), a.save)
+        pd.to_pickle((r, q, ALLF), a.save)
     post = r[r.cross == 0]
     print(f'{len(r):,} simulated bids, {r.cross.mean():.0%} would have taken (at or above the offer) and are left out')
-    print('fill = traded THROUGH the bid before it expired (lower bound); "touch" rows = a fill AT the bid (upper bound, queue permitting).')
+    print('A bid is posted at fair / (1 + margin), on the grid: "4%" = 4% EV at the fair, about 2¢ below it at even money.')
+    print('fill = traded THROUGH the bid before it expired (lower bound); "touch" = a fill AT the bid (upper bound, queue permitting).')
     print('CLV¢ / EV@close% / ROI% are per filled bid; "per posted bid" = fill rate × EV@close (what each bid you post earns on average).')
-
-    for w in (0.0, 0.5):
+    labels = {0.0: "Novig's own price then (no outside information)", 0.25: 'a quarter of the way to the close', 0.5: 'half-way to the close (a fair that leads Novig)'}
+    for w in WS:
         P = post[post.w == w]
-        what = "Novig's own price then" if w == 0 else 'half-way to the close: a fair that leads Novig'
-        print(f'\n######## fair stand-in w={w} ({what})')
-        print('\n== 1. Margin below the fair (posted 3 h before the close, resting until the close; all kinds)')
+        print(f'\n######## fair stand-in w={w}: {labels[w]}')
+        print('\n== 1. Margin (posted 3 h before the close, resting until the close; all kinds)')
         for m in MARGINS:
-            report(f'{m:.1f}¢ below fair', P[(P.h == 3) & (P.m == m)])
-            report(f'{m:.1f}¢ below fair (touch)', P[(P.h == 3) & (P.m == m)], bound='touH')
-        print('\n== 2. When to post (1.0¢ and 2.0¢ below fair, resting until the close)')
-        for m in (1.0, 2.0):
+            report(f'{m:g}% under the fair', P[(P.h == 3) & (P.m == m)])
+            if w == 0.0:
+                report(f'{m:g}% under the fair (touch)', P[(P.h == 3) & (P.m == m)], bound='touH')
+        print('\n== 2. Kind of market x margin (posted 3 h before, until the close)')
+        for k in ('player prop', 'period line', 'game line', 'team total'):
+            for m in MARGINS:
+                report(f'{k} {m:g}%', P[(P.h == 3) & (P.m == m) & (P.kind == k)])
+        print('\n== 3. When to post (4%, resting until the close; props, then game lines)')
+        for k in ('player prop', 'game line'):
             for h in POST_H:
-                report(f'{m:.1f}¢, posted {h:g} h before the close', P[(P.h == h) & (P.m == m)])
-        print('\n== 3. How long it rests (posted 6 h before the close, 1.0¢ and 2.0¢ below fair)')
-        for m in (1.0, 2.0):
+                report(f'{k} 4%, posted {h:g} h before', P[(P.h == h) & (P.m == 4.0) & (P.kind == k)])
+        print('\n== 4. How long it rests (posted 6 h before the close, 4%; props, then game lines)')
+        for k in ('player prop', 'game line'):
             for ttl in TTL_H:
-                report(f'{m:.1f}¢, expires after {"the close" if ttl > 1e8 else f"{ttl:g} h"}', P[(P.h == 6) & (P.m == m)], ttl=ttl)
-        print('\n== 4. Kind of market (posted 3 h before, until the close)')
-        for k in sorted(P.kind.unique()):
-            for m in (1.0, 2.0, 3.0):
-                report(f'{k} {m:.1f}¢', P[(P.h == 3) & (P.m == m) & (P.kind == k)])
-        print('\n== 5. Price of the side bid on (3 h, 2.0¢)')
+                report(f'{k} 4%, expires after {"the close" if ttl > 1e8 else f"{ttl:g} h"}', P[(P.h == 6) & (P.m == 4.0) & (P.kind == k)], ttl=ttl)
+        print('\n== 5. Price of the side bid on (3 h, 4%)')
         for lo, hi in [(0, .2), (.2, .35), (.35, .5), (.5, .65), (.65, .8), (.8, 1)]:
-            report(f'bid {lo:.2f}-{hi:.2f}', P[(P.h == 3) & (P.m == 2.0) & (P.b >= lo) & (P.b < hi)])
-        print('\n== 6. League (3 h, 2.0¢; leagues with 100+ markets)')
-        x = P[(P.h == 3) & (P.m == 2.0)]
-        for lg, y in x.groupby('league'):
-            if y.marketId.nunique() >= 100:
-                report(lg, y)
+            report(f'bid {lo:.2f}-{hi:.2f}', P[(P.h == 3) & (P.m == 4.0) & (P.b >= lo) & (P.b < hi)])
+        print('\n== 6. League (3 h, 4%; leagues with 100+ markets; props and game lines)')
+        for k in ('player prop', 'game line'):
+            x = P[(P.h == 3) & (P.m == 4.0) & (P.kind == k)]
+            for lg, y in x.groupby('league'):
+                if y.marketId.nunique() >= 100:
+                    report(f'{k} {lg}', y)
         print('\n== 7. Both sides bid (3 h, until the close): both filled = a lock of the two margins')
         for m in MARGINS:
             y = P[(P.h == 3) & (P.m == m)]
             both = y.groupby('marketId').filter(lambda z: len(z) == 2)
             n = both.marketId.nunique()
             two = both.groupby('marketId').thrH.apply(lambda v: v.notna().all()).sum()
-            print(f'  {m:.1f}¢: {n:,} markets bid on both sides, both filled in {two / max(n, 1):.0%}')
+            print(f'  {m:g}%: {n:,} markets bid on both sides, both filled in {two / max(n, 1):.0%}')
 
-    print('\n######## Re-quoting every 10 min at the fair then (w=0), from 24 h before the close: the first fill per side')
-    for m in MARGINS:
-        y = q[q.m == m]
-        f = y.dropna(subset=['b']).copy()
-        f['clv'] = 100 * (f.close - f.b)
-        f['ev'] = 100 * (f.close / f.b - 1)
-        f['roi'] = 100 * (f.won / f.b - 1)
-        won = f.dropna(subset=['won'])
-        fill = len(f) / len(y)
-        print(f'  {m:.1f}¢ re-quoted: sides {len(y):,} fill {fill:.0%}  CLV¢ {ci_mean(f, "clv")}  EV@close% {ci_mean(f, "ev")}  '
-              f'ROI% {ci_mean(won, "roi") if len(won) >= 30 else "-"}  per side {fill * f.ev.mean():+.2f}%  median {f.hoursLeft.median():.1f} h before the close')
-        for k in ('game line', 'player prop'):
-            fk = f[f.kind == k]
-            if len(fk) > 30:
-                print(f'      {k:<12} fill {len(fk) / len(y[y.kind == k]):.0%}  EV@close% {ci_mean(fk, "ev")}')
+    for w in WS:
+        print(f'\n######## Re-quoting every {REQUOTE_MIN} min at the fair then (w={w}: {labels[w]}), from 24 h before the close: the first fill per side')
+        Q = q[q.w == w]
+        for m in MARGINS:
+            y = Q[Q.m == m]
+            f = y.dropna(subset=['b']).copy()
+            f['clv'] = 100 * (f.close - f.b)
+            f['ev'] = 100 * (f.close / f.b - 1)
+            f['roi'] = 100 * (f.won / f.b - 1)
+            won = f.dropna(subset=['won'])
+            fill = len(f) / len(y)
+            print(f'  {m:g}% re-quoted: sides {len(y):,} fill {fill:.0%}  CLV¢ {ci_mean(f, "clv")}  EV@close% {ci_mean(f, "ev")}  '
+                  f'ROI% {ci_mean(won, "roi") if len(won) >= 30 else "-"} (n={len(won)})  per side {fill * f.ev.mean():+.2f}%  median {f.hoursLeft.median():.1f} h before the close')
+            for k in ('player prop', 'period line', 'game line'):
+                fk, yk = f[f.kind == k], y[y.kind == k]
+                if len(fk) > 30:
+                    print(f'      {k:<12} fill {len(fk) / len(yk):.0%}  EV@close% {ci_mean(fk, "ev")}  per side {len(fk) / len(yk) * fk.ev.mean():+.2f}%')
+        print(f'  every re-quote that filled, by hours before the close (4%): fills, EV@close%')
+        for k in ('player prop', 'game line'):
+            cells = []
+            for hb in range(len(LEFT_BINS)):
+                n_, ev_, _ = ALLF.get((w, 4.0, k, hb), [0, 0.0, 0.0])
+                lab = f'{LEFT_BINS[hb]:g}-{LEFT_BINS[hb + 1]:g}h' if hb + 1 < len(LEFT_BINS) else f'{LEFT_BINS[hb]:g}h+'
+                cells.append(f'{lab} {n_:,} {ev_ / max(n_, 1):+.2f}%')
+            print(f'      {k:<12} ' + ' | '.join(cells))
 
 
 if __name__ == '__main__':
