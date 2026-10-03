@@ -42,8 +42,9 @@ def line(label, x):
         return
     won = x.dropna(subset=['won'])
     roi = ci(won, 'roi') if len(won) >= 20 else '-'
-    kept = 100 * x['clv¢'].sum() / max(x['gift¢'].sum(), 1e-9) if 'gift¢' in x else float('nan')
-    print(f'  {label:<44} CLV¢ {ci(x, "clv¢"):<24} gift¢ {x["gift¢"].mean():5.2f}  kept {kept:+5.0f}%  ROI% {roi:<24} n={len(x):,} mk={x.marketId.nunique():,}')
+    g = x['gift¢'].mean()
+    kept = f'{100 * x["clv¢"].mean() / g:+5.0f}%' if g >= 0.5 else '    -'
+    print(f'  {label:<44} CLV¢ {ci(x, "clv¢"):<24} gift¢ {g:5.2f}  kept {kept}  ROI% {roi:<24} n={len(x):,} mk={x.marketId.nunique():,}')
 
 
 def main():
