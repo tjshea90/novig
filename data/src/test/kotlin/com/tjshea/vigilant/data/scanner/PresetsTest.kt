@@ -139,7 +139,7 @@ class PresetsTest {
     @Test
     fun `a preset in one line`() {
         assertEquals(
-            "edge ≥ 2.5% · 3+ books price both sides, 3+ agree · odds -200 to +150 · player props, moneylines, spreads · ¼ Kelly stakes · sharp check: veto · " +
+            "edge ≥ 2.5% · 3+ books price both sides, 3+ agree · odds -200 to +150 · player props, moneylines, spreads · ¼ Kelly stakes · sharp check: veto under 1% · " +
                 "CNO: conservative devig, 4+ books, 100 rows · alerts ≥ 2.5% · auto-scan every 30 sec",
             Presets.VOLUME.rules.summary(),
         )
