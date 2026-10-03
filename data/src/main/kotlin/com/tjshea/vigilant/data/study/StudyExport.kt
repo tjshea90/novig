@@ -301,8 +301,10 @@ object StudyExport {
     // ---- the file -----------------------------------------------------------------------------------------------------
 
     /**
-     * Writes the whole file to [out]: the days in [journal] newest first, as many as fit under [maxBytes] of journal ([tmp] holds the bets' lines while the
-     * summary is added up). [tracked]: Tj's own Tracker bets, to mark the ones he placed. Returns the bets written.
+     * Writes the whole file to [out]: the days in [journal] newest first, as many as fit under [DAYS_FACTOR] times [maxBytes] of journal ([tmp] holds the bets' lines
+     * while the summary is added up). The bets' lines stop at [maxBytes] (the bets the app's lists never carried, [StudyRow.src] "w", at most [HIDDEN_SHARE] of it, so
+     * a day of wide-read finds can't push out the ones the app showed); every bet is in the summary all the same. [tracked]: Tj's own Tracker bets, to mark the ones he
+     * placed. Returns the bets written.
      */
     fun write(out: java.io.Writer, journal: StudyJournal, tracked: List<TrackedBet>, meta: Meta, now: Long, tmp: File, maxBytes: Long = MAX_BYTES): Int {
         val ownIndex = tracked.filter { !it.isLock && it.createdAtMs < it.startsTs }.groupBy { PlacedIndex.identity(it.eventName, it.marketLabel, it.selection) ?: "" }
@@ -312,12 +314,14 @@ object StudyExport {
         val days = ArrayList<LocalDate>()
         for (d in all) {
             val size = journal.file(d).length()
-            if (days.isNotEmpty() && bytes + size > maxBytes) break
+            if (days.isNotEmpty() && bytes + size > maxBytes * DAYS_FACTOR) break
             bytes += size
             days += d
         }
         val leftOut = all.size - days.size
         val overall = Agg()
+        val shown = Agg()
+        val hidden = Agg()
         val noOutliers = Agg()
         val splits = BetLedger.Split.entries.associateWith { LinkedHashMap<String, Agg>() }
         val extras = extraSplits.associate { it.name to LinkedHashMap<String, Agg>() }
@@ -325,6 +329,9 @@ object StudyExport {
         val closeVia = HashMap<String, Int>()
         var withCloseCount = 0
         var rows = 0
+        var cut = 0
+        var written = 0L
+        var hiddenWritten = 0L
         var firstDay: LocalDate? = null
         var lastDay: LocalDate? = null
         tmp.parentFile?.mkdirs()
@@ -340,10 +347,19 @@ object StudyExport {
                         ownIndex[id]?.firstOrNull { abs(it.startsTs - sb.bet.startsTs) <= tol }
                     }
                     val row = rowOf(sb, now, own)
-                    lines.write(json.encodeToString(StudyRow.serializer(), row))
-                    lines.write("\n")
-                    rows++
+                    val text = json.encodeToString(StudyRow.serializer(), row)
+                    val hiddenOnly = row.src == "w"
+                    if (written + text.length < maxBytes && !(hiddenOnly && hiddenWritten + text.length > maxBytes * HIDDEN_SHARE)) {
+                        lines.write(text)
+                        lines.write("\n")
+                        rows++
+                        written += text.length + 1
+                        if (hiddenOnly) hiddenWritten += text.length + 1
+                    } else {
+                        cut++
+                    }
                     overall.add(row)
+                    (if (row.screen == null) shown else hidden).add(row)
                     if (!sb.bet.isOutlier) noOutliers.add(row)
                     for (split in BetLedger.Split.entries) splits.getValue(split).getOrPut(BetLedger.keyOf(sb.bet, split)) { Agg() }.add(row)
                     for (x in extraSplits) extras.getValue(x.name).getOrPut(x.key(row, meta.zone)) { Agg() }.add(row)
@@ -357,7 +373,7 @@ object StudyExport {
         out.appendLine("VIGILANT SCAN STUDY · version ${meta.versionName} · ${fileName(meta.versionName, now, meta.zone)}")
         out.appendLine()
         out.appendLine("== READ ME FIRST (for Claude) ==")
-        readMe(meta, clock.format(Date(now)), rows, firstDay, lastDay, days.size, leftOut, bytes).forEach { out.appendLine(it) }
+        readMe(meta, clock.format(Date(now)), rows, cut, firstDay, lastDay, days.size, leftOut, bytes).forEach { out.appendLine(it) }
         out.appendLine()
         out.appendLine("== DATA DICTIONARY ==")
         DICTIONARY.forEach { out.appendLine(it) }
@@ -368,8 +384,10 @@ object StudyExport {
         out.appendLine()
         out.appendLine("== SUMMARY (added up on the phone; ROI is at the first-listed price with one unit a bet; CLV is against the close found, see closeVia) ==")
         out.appendLine(overall.line("ALL BETS"))
+        out.appendLine(shown.line("shown by the app's lists (screen = none)"))
+        out.appendLine(hidden.line("hidden from the app's lists (screen set: the wide read's extra finds)"))
         out.appendLine(noOutliers.line("without outliers (EV listed over ±6%)"))
-        out.appendLine("Closes found: $withCloseCount of $rows" + (closeVia.takeIf { it.isNotEmpty() }?.entries?.sortedByDescending { it.value }?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: ""))
+        out.appendLine("Closes found: $withCloseCount of ${overall.n}" + (closeVia.takeIf { it.isNotEmpty() }?.entries?.sortedByDescending { it.value }?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: ""))
         if (closeReasons.isNotEmpty()) {
             out.appendLine("Why started bets have no close yet, most common first:")
             closeReasons.entries.sortedByDescending { it.value }.take(8).forEach { out.appendLine("    ×${it.value} ${it.key}") }
@@ -389,7 +407,7 @@ object StudyExport {
             groups.entries.sortedByDescending { it.value.n }.take(MAX_SPLIT_GROUPS).forEach { out.appendLine("   " + it.value.line(it.key)) }
         }
         out.appendLine()
-        out.appendLine("== EVERY BET (JSON lines, newest first; $rows bets) ==")
+        out.appendLine("== EVERY BET (JSON lines, newest first; $rows bets" + (if (cut > 0) ", $cut more left out of these lines but counted above" else "") + ") ==")
         out.appendLine("<<<JSONL")
         tmp.bufferedReader().use { it.copyTo(out) }
         out.appendLine(">>>")
