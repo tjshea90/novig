@@ -374,6 +374,12 @@ robolectric.org/configuring/.
   bids Tj approved (down when the fair falls under them, never moved or re-posted) and recommend new ones (`makerRecommend`: the tab's Approve / Deny,
   and up to 3 notifications a pass, each side once, Approve re-checking on the latest prices: `MakerActionReceiver`); Deny or Cancel by hand blocks that
   side until its game (`MakerDenials`, Undo in the tab). Turning auto-make off takes down only the bids it posted.
+  **v0.53.0 (Tj, 2026-10-03: "I had auto make bids turned on, but it didn't actually make any bids by itself" … "make the bidding system always shown"):**
+  passes judge a scan STILL RUNNING (its finished leagues' lines, every 20 s: a bid whose line it hasn't judged yet stays up, its `ttl` already bounds it;
+  `MakerPlan.plan(partial)`), lines carry the last scan's Novig book up to 20 min old (`MakerLines.MAX_BOOK_AGE_MS`: the bid's price comes from the fair
+  alone, `PO` refuses a cross), the Bids tab is in every scanner mode with one choice Off · Recommend · Automatic (`BidMode`), and picking a mode that bids
+  turns on what it needs (`MakerSetup.set`: Vigilant's scanner, the background scan with Vigilant at least once a minute, scanning resumed; asks first when that
+  would also start auto-bet). The +EV-only invariant, the expiry bound and every cap are unchanged.
   Loosening any of this needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise

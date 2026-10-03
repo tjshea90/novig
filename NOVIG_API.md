@@ -639,3 +639,9 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   `GET /v3/portfolio/fills?order=` whenever an order leaves the open list, whatever its record says (a 404 included). A lost answer's order is looked for
   in `GET /v3/orders?status=FILLED|CANCELED|REJECTED|PENDING&outcome=` by its `clientId` before it's called lost. The `ttl` sent is the bid's whole life:
   never past the start minus the stop window or the fair's freshness (a minute at least).
+- **v0.53.0:** passes run on a scan still in progress (every 20 s), so bids go up as each league's fair odds arrive, not at the scan's end. Each pass that
+  posts logs the wallet just before and just after (Diagnostics' timeline, "wallet $A → $B with $C resting"): the first real evidence of whether Novig
+  holds a resting bid's cost from the balance (still assumed held). After a `451 ANONYMIZED_NETWORK` (or a restricted region) the key route is tried
+  again after 2 minutes, not 10 (the verdict on a carrier's address flaps; `NovigPublicClient.keyRetryAfter`), and after 30 s when the request never
+  reached Novig. The public routes' pacer remembers the pace a `429` came at for 10 minutes and climbs back only to a step under it (`RateGate`; the
+  v0.52.0 file had a 429 about once a minute, 1,163 in all, each time the minute's slow-down ended).
