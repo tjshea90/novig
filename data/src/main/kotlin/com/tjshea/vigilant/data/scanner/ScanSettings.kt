@@ -242,7 +242,7 @@ data class ScanSettings(
     val trapEarlyHours: Int = TrapGuard.DEFAULT_EARLY_HOURS,
     /**
      * The trap guard's second rule ([TrapGuard.move]): before the auto-bet places a moneyline, spread or game total, Novig's own trades in the market
-     * are read (one public request); a price that just moved 2¢+ under where it traded this hour, with \$100+ bought on the other side in the last
+     * are read (one public request); a price that just moved 2¢+ under where it traded this hour, with $100+ bought on the other side in the last
      * 15 min, isn't bet.
      */
     val trapNovigMove: Boolean = true,
