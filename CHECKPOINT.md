@@ -1,13 +1,13 @@
-# CHECKPOINT 2419 — read me first, then TASKS.md
+# CHECKPOINT 2420 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T03:23:19Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `97f49058` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T03:32:36Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `6fec4d4a` (this checkpoint is the commit after it)
 
 ## Just done
-BH1-BH6 done: maker audit fixes (6 bugs), books agree + sharp veto + Kelly, auto-make like auto-bet (confirm, restart reset, link), approve/deny + recommendation notifications; mutants 12/12
+pre-ship: v0.52.0: make orders only +EV and never older than their fair (expiry bounded by the fair's freshness), confirmed cancels, books agree + sharp veto + Kelly sizing, auto-make like auto-bet, approve/deny recommendations (tab + notifications)
 
 ## Do this next
-BH7: full floor -Pscreenshots, look at PNGs, sweep per test-protocols (maker diff adversarially, Compose reviews), fix, docs, ship v0.52.0
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ BH7: full floor -Pscreenshots, look at PNGs, sweep per test-protocols (maker dif
 
 ## Last ten checkpoints
 ```
+  46b57f5f ckpt 2419: BH1-BH6 done: maker audit fixes (6 bugs), books agree + sharp veto + Kelly, 
   597acd33 ckpt 2418: BH1-3 data fixes: cancels confirmed (CANCELING), fills read even on 404 / lo
   e8755330 ckpt 2417: BH0 done: v0.51.0 released + recorded (BG6 ticked)
   622feada ckpt 2416: BH: Tj's make-orders follow-up written to TASKS.md (full tests, +EV only, ti
@@ -26,8 +27,7 @@ BH7: full floor -Pscreenshots, look at PNGs, sweep per test-protocols (maker dif
   6e894597 ckpt 2412: BG6e in progress: MakerRunner (container: desk, after-scan pass, cancel on o
   9fa8c34e ckpt 2411: BG6a-d done: client ttl/cancel, maker settings, MakerQuote/MakerPlan/MakerLi
   49ed7b56 ckpt 2410: BG1-BG5 ticked; BG6 planned in TASKS.md (6a client, 6b settings, 6c MakerQuo
-  6bb1779f ckpt 2409: BG1-BG5 research written: NOVIG_API.md §17 (PO + ttl, cancel, queue, fees, 
 ```
 
-(14 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

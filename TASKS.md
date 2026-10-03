@@ -3496,4 +3496,7 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   linked from the Auto-bet tab, background-scan banner. Recommendations: Approve/Deny in the tab (Denied list with Undo, Cancel by hand denies the side),
   notifications with Approve/Deny (MakerActionReceiver; each side once; Approve re-checks on the latest prices). Tests: MakerTest 21 (mutants 8/8),
   MakerUiTest 7, MakerAppTest 6 (mutants 4/4).
-- [ ] BH7 UI and code improvements and bug fixes found in the sweep; full floor, ship, answer Tj with the link.
+- [x] BH7 UI and code improvements and bug fixes found in the sweep; full floor, ship, answer Tj with the link.
+  Done: full floor with screenshots (106 PNGs; the Bids tab, Auto-bet tab and feed looked at); the +EV detail sheet suggested bids 2% under the fair
+  (§70.2: those lose to the close) → the Bids tab's margin (MakerUiTest, fails pre-fix); recommendations capped at 6 an hour (MakerAppTest); Diagnostics
+  line lists the new settings and the cancelling count; release notes mention Bids; ScreenshotTest scrolls to the sheet's lower rows. Floor 1,784 passed.
