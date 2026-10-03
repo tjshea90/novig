@@ -597,4 +597,35 @@ class MakerTest {
         assertEquals(listOf("fresh-over", "lastscan-over"), lines.map { it.outcomeId })
         assertEquals(now - 9 * 60_000, lines[1].bookAtMs)
     }
+
+    // ---- switching bids on (Tj, 2026-10-03: "As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs")
+
+    @Test
+    fun `a mode that bids turns on Vigilant's scanner, the background scan with Vigilant at least once a minute and scanning, says so, and Off touches nothing else`() {
+        val cnoOnly = ScanSettings(
+            scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.OFF, autoScanSeconds = 600,
+            paused = true, maker = false, makerRecommend = false,
+        )
+        val rec = MakerSetup.set(cnoOnly, BidMode.RECOMMEND)
+        assertEquals(BidMode.RECOMMEND, BidMode.of(rec.settings))
+        assertEquals(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH, rec.settings.scanner)
+        assertEquals(com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, rec.settings.autoScan)
+        assertEquals(60, rec.settings.autoScanSeconds)
+        assertFalse(rec.settings.paused)
+        assertTrue(rec.settings.autoScansVigilant)
+        assertEquals(4, rec.turnedOn.size)
+        assertFalse(rec.startsAutoBet)
+        val auto = MakerSetup.set(cnoOnly, BidMode.AUTOMATIC)
+        assertTrue(auto.settings.maker)
+        assertTrue(auto.settings.makerNow)
+        // Already set up (Vigilant only, background every 30 s): nothing else changes, nothing to say.
+        val ready = ScanSettings(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 30)
+        assertEquals(ready.copy(maker = true), MakerSetup.set(ready, BidMode.AUTOMATIC).settings)
+        assertTrue(MakerSetup.set(ready, BidMode.AUTOMATIC).turnedOn.isEmpty())
+        // Off: bids off, the scanner and the background scan left as they are.
+        val off = MakerSetup.set(auto.settings, BidMode.OFF)
+        assertEquals(auto.settings.copy(maker = false, makerRecommend = false), off.settings)
+        // Auto-bet on but idle for want of the background scan: switching bids on starts it too, and says so first.
+        assertTrue(MakerSetup.set(cnoOnly.copy(autoBet = true), BidMode.RECOMMEND).startsAutoBet)
+    }
 }
