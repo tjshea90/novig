@@ -1,24 +1,22 @@
-# CHECKPOINT 2468 — read me first, then TASKS.md
+# CHECKPOINT 2469 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T18:04:24Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-c4435189-1cfj54` · **builds on:** `8ce66782` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T18:14:43Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-c4435189-1cfj54` · **builds on:** `9301ebca` (this checkpoint is the commit after it)
 
 ## Just done
-BN done: Novig pays no maker credit pregame on game markets (terms §2, fees page, live catalog WHEN_LIVE, GOLIVE voids); futures-only exception; NOVIG_API §17 + RESEARCH §73 addendum
+full test (in progress): floor 1,849 passed/23 skipped + 109 screenshots looked at; fixed stale trap move copy (bids), Bids tab move switch when game lines on (MakerUiTest, failed pre-fix), Alerts summary shows the veto bar, diagnostics wording, veto-bar counters (sharpbar.*; mutants killed), tooSmallBelow comment
 
 ## Do this next
-wait for Tj: per-game exposure cap? Polymarket wallet watch? next Diagnostics → tj_bets_by_lead.py
+continue sweep: maker plan/desk money path re-read, network duplicates (trades reads), coroutine owners; then full regression and ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M NOVIG_API.md
-     M RESEARCH.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  c02508d9 ckpt 2468: BN done: Novig pays no maker credit pregame on game markets (terms §2, fees
   8ce66782 ckpt 2467: BN: Tj's 'reconsider whether novig pays maker credit pregame' written to TAS
   463896c4 ckpt 2466: BM done: another AI's report checked (RESEARCH.md §73, 20 claims); novig_dr
   2f50f400 ckpt 2465: BM: Tj's request to vet another AI's CLV/EV report written to TASKS.md (BM1-
@@ -28,5 +26,7 @@ wait for Tj: per-game exposure cap? Polymarket wallet watch? next Diagnostics �
   921776ca ckpt 2461: BL7: Kelly stake's fair capped at the sharpest book's own (AutoBet.stake sha
   4ac19f72 ckpt 2460: BL7: veto status wording covers the bar; diff re-read (callers complete, mak
   b3af55aa ckpt 2459: BL1-BL6 ticked: RESEARCH.md §72 written (sources, 3 studies, timing/types/s
-  4688088a ckpt 2458: BL6c: veto bar UI test (SharpConfirmUiTest), Diagnostics veto bar line, test
 ```
+
+(8 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
