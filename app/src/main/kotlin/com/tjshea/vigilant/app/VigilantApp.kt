@@ -67,6 +67,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -127,6 +128,9 @@ class AppContainer(private val app: Application) {
 
         /** Excluded from backups (res/xml): sealed by this phone's Keystore, it couldn't be opened anywhere else. */
         const val MANAGEMENT_KEY_FILE = "novig_management_key.json"
+
+        /** The fewest milliseconds between two make-orders passes on a running scan's partial results. */
+        const val MAKER_SCAN_PASS_MS = 20_000L
     }
 
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
