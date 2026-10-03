@@ -548,9 +548,9 @@ class ScanStudyTest {
         j.append(older, listOf(Line(Line.BET, "old1", start - 6 * 86_400_000L, b = j.fold(day).values.single().bet.copy(id = "old1", startsTs = start - 6 * 86_400_000L, createdAtMs = start - 6 * 86_400_000L - 3_600_000L))))
         val out = StringWriter()
         val meta = StudyExport.Meta("0.57.0", 99, "moto g", "rules")
-        // A limit that holds only the newest day.
-        val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() + 10)
-        assertEquals(1, n)
+        // A limit whose days budget (three times it) holds only the newest day.
+        val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = j.file(day).length() / 3)
+        assertEquals("the older day is in neither the lines nor the sums", 1, n)
         assertTrue(out.toString().contains("1 older day(s) are on the phone but left out"))
         assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp")))
     }

@@ -47,7 +47,7 @@ class ScanStudyWideTest {
     private fun study(j: StudyJournal = journal()) = ScanStudy(j, clock = { now }, version = { "0.58.0" }, flushEveryMs = 0L, io = Dispatchers.Unconfined)
 
     private fun row(
-        market: String, bet: String, odds: Int, fair: Double = 0.5122, books: Int = 5, side: Int = 1, startsAt: Long? = start, ev: String? = null,
+        market: String, bet: String, odds: Int, fair: Double = 0.5122, books: Int = 5, side: Int = 1, startsAt: Long? = start,
         cols: Map<String, String> = emptyMap(), eventName: String = event,
     ) = CnoRow(
         ev = fair * com.tjshea.vigilant.engine.Odds.americanToDecimal(odds) - 1.0, startsAtMs = startsAt, league = "MLB", sport = "BASEBALL", event = eventName, market = market, bet = bet,
@@ -190,21 +190,21 @@ class ScanStudyWideTest {
         val s = study(j)
         s.wide(wideSnap(shown, lowEv), null)
         now += 61_000
+        // lowEv isn't in this read, which had room: gone.
         s.wide(wideSnap(shown), null)
-        // As many rows as it asked for: lowEv may be past the cut, not gone.
         now += 61_000
+        // As many rows as it asked for: the Mets moneyline may be past the cut, not gone; lowEv is back.
         s.wide(wideSnap(lowEv, limit = 1), null)
         now += 61_000
-        // Back, then really gone while the read has room.
         s.wide(wideSnap(shown, lowEv), null)
         now += 61_000
-        s.wide(wideSnap(lowEv), null)
+        // Really gone again, in a read with room.
+        s.wide(wideSnap(shown), null)
         s.flush()
         val b = bets(j)
-        assertEquals(listOf(Sight.WIDE, Sight.GONE_WIDE, Sight.WIDE), b.getValue("Moneyline | New York Mets").sights.map { it.second.k }.take(3))
-        // The capped read didn't call the Mets moneyline gone (the read before it already had), and the last read did call it gone again after it was back.
-        assertEquals(listOf(Sight.WIDE, Sight.GONE_WIDE, Sight.WIDE, Sight.GONE_WIDE), b.getValue("Moneyline | New York Mets").sights.map { it.second.k })
-        val row = StudyExport.rowOf(b.getValue("Moneyline | New York Mets"), now, null)
+        assertEquals(listOf(Sight.WIDE, Sight.GONE_WIDE, Sight.WIDE, Sight.GONE_WIDE), b.getValue("Total Runs | Over 8.5").sights.map { it.second.k })
+        assertEquals("the capped read called nothing gone", listOf(Sight.WIDE), b.getValue("Moneyline | New York Mets").sights.map { it.second.k })
+        val row = StudyExport.rowOf(b.getValue("Total Runs | Over 8.5"), now, null)
         assertFalse("gone from the wide read is not gone from the app's list", row.gone)
     }
 
@@ -251,7 +251,7 @@ class ScanStudyWideTest {
         b.flush()
         assertEquals(bets, j.read(day).count { it.e == Line.BET })
         assertEquals("a look inside the minute isn't another line", sights, j.read(day).count { it.e == Line.SIGHT })
-        assertEquals(2, j.read(day).count { it.e == Line.CNO_COLS } + j.read(day).count { it.e == Line.CNO_COLS && false })
+        assertEquals(1, j.read(day).count { it.e == Line.CNO_COLS })
         // A price move after the minute is one more look, not a second bet.
         now += 70_000
         assertEquals(0, b.wide(wideSnap(row("Moneyline", "New York Mets", 110, cols = cols), lowEv), null))
@@ -285,17 +285,17 @@ class ScanStudyWideTest {
     fun `a futures bet is logged but never graded or closed, and the rest of the day still is`() = runBlocking {
         val j = journal()
         val s = study(j)
-        val future = row("Outright Winner", "New York Mets", 900, fair = 0.12, side = 6, eventName = "2026 World Series")
+        val future = row("Outright Winner", "New York Yankees", 900, fair = 0.12, side = 6, eventName = "2026 World Series")
         s.wide(wideSnap(shown, future), null)
         s.flush()
-        assertEquals("NOT_A_GAME", bets(j).getValue("Outright Winner | New York Mets").screen)
+        assertEquals("NOT_A_GAME", bets(j).getValue("Outright Winner | New York Yankees").screen)
         now = start + 4 * 3_600_000L
         val close = FakeClose()
         val report = s.settle(FakeScores(), listOf(close), emptyList(), File(tmp.root, "scratch"))
         assertEquals(1, report.looked)
         assertEquals(1, report.graded)
         assertEquals(listOf("New York Mets"), close.askedFor)
-        assertEquals(BetStatus.PENDING, bets(j).getValue("Outright Winner | New York Mets").bet.status)
+        assertEquals(BetStatus.PENDING, bets(j).getValue("Outright Winner | New York Yankees").bet.status)
         assertEquals(BetStatus.WON, bets(j).getValue("Moneyline | New York Mets").bet.status)
     }
 
@@ -356,7 +356,7 @@ class ScanStudyWideTest {
         val one = StringWriter().also { StudyExport.write(it, j, emptyList(), meta, now, File(tmp.root, "export.tmp")) }.toString()
         val rowBytes = one.lines().first { it.startsWith("{") && it.contains("\"market\":\"Moneyline\"") }.length
         val out = StringWriter()
-        val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = rowBytes * 2L + 50)
+        val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = rowBytes * 2L + 400)
         assertEquals("every bet is counted", 4, n)
         val text = out.toString()
         assertEquals(2, text.lines().count { it.startsWith("{") })

@@ -159,17 +159,22 @@ class ScanStudyAppTest {
     @Test
     fun `each scan's log step runs on the scan's own background threads, behind a catch, and the worker and the share button grade first`() {
         val container = source("VigilantApp.kt")
-        // Three watchers, all on scanScope (background priority), each step through studyStep (a failure is a line in Recent problems, never thrown at the scan).
+        // Seven watchers (the wide read's two among them), all on scanScope (background priority), each step through studyStep (a failure is a line in Recent problems, never thrown at the scan).
         val block = container.substringAfter("// The scan study (Tj, 2026-10-03; [ScanStudy])").substringBefore("// Make orders (RESEARCH.md §70)")
-        assertEquals(5, Regex("scanScope\\.launch").findAll(block).count())
+        assertEquals(7, Regex("scanScope\\.launch").findAll(block).count())
         assertFalse(block.contains("appScope.launch"))
         assertTrue(block.contains("studyStep(\"CNO scan\") { study.observeCno(snap, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }"))
         assertTrue(block.contains("studyStep(\"Vigilant scan\") { study.observeVigilant(r, currentSettings()) }"))
         assertTrue(block.contains("studyStep(\"book check\") { study.observeBooks(books, currentSettings(), live.prices.value) }"))
         val step = container.substringAfter("private suspend fun studyStep").substringBefore("\n    }\n")
         assertTrue(step, step.contains("catch (e: kotlinx.coroutines.CancellationException) {\n            throw e") && step.contains("catch (e: Exception)"))
-        // The study reads from the scans' state and never asks CNO or Novig for anything itself.
+        // The study reads from the scans' state and asks CNO for one thing only, the wide read (its own session, kept in cno.wide, never the list's): behind both switches,
+        // only after a fresh list read, paced by CnoFeed, and its rows are logged by a step of their own.
         assertFalse(block.contains("loadBooks(") || block.contains("refresh(") || block.contains("readNow("))
+        assertEquals(1, Regex("readWide\\(").findAll(block).count())
+        assertTrue(block.contains("if (s.scanStudy && s.scanStudyHidden && s.cnoOn && System.currentTimeMillis() - snap.fetchedAtMs <= com.tjshea.vigilant.data.study.ScanStudy.MAX_SCAN_AGE_MS)"))
+        assertTrue(block.contains("studyStep(\"CNO wide read\") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }"))
+        assertTrue(block.contains("studyStep(\"CNO wide scan\") { study.observeCnoWide(wide, cno.state.value.snapshot, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }"))
         // Its close lookups are the Tracker's own sources, ParlayAPI's behind a credit guard; its grading is the Tracker's settler's feed.
         assertTrue(container.contains("GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses"))
         assertTrue(container.contains("study.settle(scores, studyCloses,") && container.contains("yieldTo = { trackerClosing.get() > 0 }"))
