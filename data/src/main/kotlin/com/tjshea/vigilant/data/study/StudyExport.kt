@@ -4,7 +4,6 @@ import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetLedger
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.ClosingLine
-import com.tjshea.vigilant.data.tracker.FreeScores
 import com.tjshea.vigilant.data.tracker.PlacedIndex
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.engine.Odds
@@ -193,32 +192,35 @@ object StudyExport {
         private fun pct(v: Double) = String.format(Locale.US, "%+.2f%%", v * 100)
     }
 
-    /** The study-specific splits (beyond [BetLedger.Split]); each says which group a row is in. */
-    private val extraSplits: List<Pair<String, (StudyRow, TimeZone) -> String>> = listOf(
-        "Who listed it (c = CNO, v = Vigilant's scan)" to { r, _ -> r.src },
-        "Would the app's own CNO screen have shown it" to { r, _ -> r.screen?.let { "hidden: $it" } ?: "shown" },
-        "League" to { r, _ -> r.league.ifBlank { "?" } },
-        "Market" to { r, _ -> r.market.ifBlank { "?" } },
-        "Odds when first listed" to { r, _ -> oddsBand(r.american) },
-        "EV when first listed" to { r, _ -> r.ev?.let(::evBand) ?: "?" },
-        "Books behind the fair (CNO's count)" to { r, _ -> r.atBet?.cnoBooks?.let { if (it >= 8) "8 or more" else "$it" } ?: "?" },
-        "Share of two-sided books agreeing (the book check)" to { r, _ ->
+    /** A study-specific split (beyond [BetLedger.Split]): [key] says which group a row is in. */
+    private class Extra(val name: String, val key: (StudyRow, TimeZone) -> String)
+
+    private val extraSplits: List<Extra> = listOf(
+        Extra("Who listed it (c = CNO, v = Vigilant's scan)") { r, _ -> r.src },
+        Extra("Would the app's own CNO screen have shown it") { r, _ -> r.screen?.let { "hidden: $it" } ?: "shown" },
+        Extra("League") { r, _ -> r.league.ifBlank { "?" } },
+        Extra("Market") { r, _ -> r.market.ifBlank { "?" } },
+        Extra("Odds when first listed") { r, _ -> oddsBand(r.american) },
+        Extra("EV when first listed") { r, _ -> r.ev?.let(::evBand) ?: "?" },
+        Extra("Books behind the fair (CNO's count)") { r, _ -> r.atBet?.cnoBooks?.let { if (it >= 8) "8 or more" else "$it" } ?: "?" },
+        Extra("Share of two-sided books agreeing (the book check)") { r, _ ->
             val a = r.atBet
-            if (a?.agreeing == null || a.twoSided == null || a.twoSided == 0) "no check" else shareBand(a.agreeing.toDouble() / a.twoSided)
+            val agreeing = a?.agreeing
+            val twoSided = a?.twoSided
+            if (agreeing == null || twoSided == null || twoSided == 0) "no check" else shareBand(agreeing.toDouble() / twoSided)
         },
-        "How long it stayed listed" to { r, _ -> r.listedMin?.let(::listedBand) ?: "?" },
-        "Whether a scan dropped it before the start" to { r, _ -> if (r.gone) "dropped off the list" else "still listed at its last look" },
-        "Hour of day listed (Eastern)" to { r, z -> hourOf(r.firstSeenMs, z) },
-        "Tj placed it" to { r, _ -> if (r.placedByTj) "yes" else "no" },
-        "Price moved after the first look (best listed odds vs first)" to { r, _ ->
+        Extra("How long it stayed listed") { r, _ -> r.listedMin?.let(::listedBand) ?: "?" },
+        Extra("Whether a scan dropped it before the start") { r, _ -> if (r.gone) "dropped off the list" else "still listed at its last look" },
+        Extra("Hour of day first listed (Eastern)") { r, z -> hourOf(r.firstSeenMs, z) },
+        Extra("Tj placed it") { r, _ -> if (r.placedByTj) "yes" else "no" },
+        Extra("Price moved after the first look (best listed odds vs the first)") { r, _ ->
             val f = r.american
             val bst = r.bestAmerican
-            if (f == null || bst == null) "?" else {
-                val d = Odds.americanToDecimal(bst) / Odds.americanToDecimal(f) - 1.0
-                if (d > 0.005) "got longer (better for the bettor)" else "same"
-            }
+            if (f == null || bst == null) "?" else if (Odds.americanToDecimal(bst) / Odds.americanToDecimal(f) - 1.0 > 0.005) "got longer (better for the bettor)" else "same"
         },
-        "Where it closed against its price (CLV)" to { r, _ -> r.clv?.let { if (it > 0.05) "CLV over +5%" else if (it > 0.0) "CLV 0 to +5%" else if (it > -0.05) "CLV 0 to -5%" else "CLV under -5%" } ?: "no close" },
+        Extra("Where it closed against its price (CLV)") { r, _ ->
+            r.clv?.let { if (it > 0.05) "CLV over +5%" else if (it > 0.0) "CLV 0 to +5%" else if (it > -0.05) "CLV 0 to -5%" else "CLV under -5%" } ?: "no close"
+        },
     )
 
     private fun oddsBand(a: Int?): String = when {
@@ -273,7 +275,7 @@ object StudyExport {
      * Writes the whole file to [out]: the days in [journal] newest first, as many as fit under [maxBytes] of journal ([tmp] holds the bets' lines while the
      * summary is added up). [tracked]: Tj's own Tracker bets, to mark the ones he placed. Returns the bets written.
      */
-    fun write(out: Appendable, journal: StudyJournal, tracked: List<TrackedBet>, meta: Meta, now: Long, tmp: File, maxBytes: Long = MAX_BYTES): Int {
+    fun write(out: java.io.Writer, journal: StudyJournal, tracked: List<TrackedBet>, meta: Meta, now: Long, tmp: File, maxBytes: Long = MAX_BYTES): Int {
         val ownIndex = tracked.filter { !it.isLock && it.createdAtMs < it.startsTs }.groupBy { PlacedIndex.identity(it.eventName, it.marketLabel, it.selection) ?: "" }
             .filterKeys { it.isNotEmpty() }
         val all = journal.days().reversed()
@@ -289,7 +291,7 @@ object StudyExport {
         val overall = Agg()
         val noOutliers = Agg()
         val splits = BetLedger.Split.entries.associateWith { LinkedHashMap<String, Agg>() }
-        val extras = extraSplits.associate { it.first to LinkedHashMap<String, Agg>() }
+        val extras = extraSplits.associate { it.name to LinkedHashMap<String, Agg>() }
         val closeReasons = HashMap<String, Int>()
         val closeVia = HashMap<String, Int>()
         var withCloseCount = 0
@@ -315,7 +317,7 @@ object StudyExport {
                     overall.add(row)
                     if (!sb.bet.isOutlier) noOutliers.add(row)
                     for (split in BetLedger.Split.entries) splits.getValue(split).getOrPut(BetLedger.keyOf(sb.bet, split)) { Agg() }.add(row)
-                    for ((name, key) in extraSplits) extras.getValue(name).getOrPut(key(row, meta.zone)) { Agg() }.add(row)
+                    for (x in extraSplits) extras.getValue(x.name).getOrPut(x.key(row, meta.zone)) { Agg() }.add(row)
                     if (row.clv != null) { withCloseCount++; closeVia.merge(row.closeVia?.substringBefore(" ·") ?: "?", 1, Int::plus) }
                     else if (sb.bet.startsTs < now && row.closeNote != null) closeReasons.merge(row.closeNote.take(90), 1, Int::plus)
                 }
@@ -351,27 +353,21 @@ object StudyExport {
             out.appendLine("-- ${split.label} --")
             groups.entries.sortedByDescending { it.value.n }.forEach { out.appendLine("   " + it.value.line(it.key)) }
         }
-        for ((name, _) in extraSplits) {
-            val groups = extras.getValue(name)
+        for (x in extraSplits) {
+            val groups = extras.getValue(x.name)
             if (groups.isEmpty()) continue
-            out.appendLine("-- $name --")
+            out.appendLine("-- ${x.name} --")
             groups.entries.sortedByDescending { it.value.n }.take(MAX_SPLIT_GROUPS).forEach { out.appendLine("   " + it.value.line(it.key)) }
         }
         out.appendLine()
         out.appendLine("== EVERY BET (JSON lines, newest first; $rows bets) ==")
         out.appendLine("<<<JSONL")
-        tmp.bufferedReader().use { r -> r.copyTo(out as? java.io.Writer ?: java.io.StringWriter().also { w -> w.append("") }.let { _ -> object : java.io.Writer() {
-            override fun write(cbuf: CharArray, off: Int, len: Int) { out.append(String(cbuf, off, len)) }
-            override fun flush() {}
-            override fun close() {}
-        } }) }
+        tmp.bufferedReader().use { it.copyTo(out) }
         out.appendLine(">>>")
         out.appendLine("== END OF FILE ==")
         tmp.delete()
         return rows
     }
-
-    private fun Appendable.appendLine(s: String = ""): Appendable = append(s).append('\n')
 
     // ---- the words -----------------------------------------------------------------------------------------------------
 
