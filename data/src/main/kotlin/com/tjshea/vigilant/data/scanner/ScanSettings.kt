@@ -659,6 +659,27 @@ data class ScanSettings(
         /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
         val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
 
+        /** [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). */
+        val MAKER_MARGIN_CHOICES = listOf(0.03, 0.04, 0.06, 0.08)
+
+        /** [makerStake]'s choices, dollars. */
+        val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0)
+
+        /** [makerMaxBids]' choices. */
+        val MAKER_MAX_BIDS_CHOICES = listOf(5, 10, 20, 40)
+
+        /** [makerMaxDollars]' choices. */
+        val MAKER_MAX_DOLLARS_CHOICES = listOf(25.0, 50.0, 100.0, 250.0)
+
+        /** [makerTtlMinutes]' choices. */
+        val MAKER_TTL_CHOICES = listOf(10, 30, 60, 120)
+
+        /** [makerStopMinutes]' choices. */
+        val MAKER_STOP_CHOICES = listOf(5, 15, 30, 60)
+
+        /** [makerKinds]' default: where a bid earns even with no edge on Novig's own price (RESEARCH.md §70.2). */
+        val MAKER_DEFAULT_KINDS = setOf(BetKind.PROP, BetKind.PERIOD, BetKind.TEAM_TOTAL)
+
         /** [sharpConfirmMaxAgeSeconds]' choices. */
         val SHARP_MAX_AGE_CHOICES = listOf(60, 120, 180, 300)
 
