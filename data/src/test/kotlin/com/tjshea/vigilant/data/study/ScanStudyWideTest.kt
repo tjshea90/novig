@@ -355,6 +355,7 @@ class ScanStudyWideTest {
         s.flush()
         val one = StringWriter().also { StudyExport.write(it, j, emptyList(), meta, now, File(tmp.root, "export.tmp")) }.toString()
         val rowBytes = one.lines().first { it.startsWith("{") && it.contains("\"market\":\"Moneyline\"") }.length
+        one.lines().filter { it.startsWith("{") }.forEach { System.err.println("ROWLEN ${it.length} " + it.take(60)) }
         val out = StringWriter()
         val n = StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), maxBytes = rowBytes * 2L + 400)
         assertEquals("every bet is counted", 4, n)
