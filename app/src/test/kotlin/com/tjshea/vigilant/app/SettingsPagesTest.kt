@@ -67,7 +67,7 @@ class SettingsPagesTest {
     /** Each section heading, on the one page that holds it (headings are drawn in capitals). */
     private val sections = mapOf(
         SettingsPage.SCANNING to listOf("SCANNER", "BACKGROUND SCAN"),
-        SettingsPage.ALERTS to listOf("WHEN TO ALERT", "SHARP-BOOK VETO FOR ALERTS"),
+        SettingsPage.ALERTS to listOf("WHEN TO ALERT", "SHARP-BOOK VETO FOR ALERTS", "TRAP GUARD"),
         SettingsPage.CNO to listOf("WHAT THE LIST SHOWS", "CHECKING EACH BET", "REFRESH"),
         SettingsPage.WIDGET to listOf("MINI WINDOW"),
         SettingsPage.FEED to listOf("WHAT THE FEED SHOWS", "SCAN SIZE (ADVANCED)"),
