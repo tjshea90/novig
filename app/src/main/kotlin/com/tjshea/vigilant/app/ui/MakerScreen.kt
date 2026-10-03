@@ -64,7 +64,12 @@ data class MakerUi(
     val problem: String?,
     val bets: List<TrackedBet>,
     val now: Long,
+    /** Sides Tj denied (no bid there before the game). */
+    val denied: List<com.tjshea.vigilant.data.novig.trading.maker.DeniedBid> = emptyList(),
+    /** The background scan runs Vigilant's scan (fresh fairs for bids without Tj scanning). */
+    val backgroundFeeds: Boolean = true,
 ) {
+    /** Bids up on Novig, and ones on their way down (a fill can still land until Novig confirms). */
     val resting: List<MakerBid> get() = bids.filter { it.active }.sortedBy { it.startsTs }
     val filled: List<MakerBid> get() = bids.filter { it.filled > 0 }.sortedByDescending { it.postedAtMs }
     private val restingOutcomes: Set<String> get() = resting.mapTo(HashSet()) { it.outcomeId }
@@ -87,14 +92,24 @@ data class MakerActions(
     val onCancel: (String) -> Unit = {},
     val onCancelAll: () -> Unit = {},
     val onOpenBetting: () -> Unit = {},
+    val onDeny: (String) -> Unit = {},
+    val onUndoDeny: (String) -> Unit = {},
 )
 
 /** The tab's words, free of Compose so they're tested. */
 object MakerText {
     const val INTRO =
         "Vigilant posts bids under its fair price on Novig and waits for someone to take them (a make order: no fee). Each bid is post-only (it never " +
-            "takes), expires on its own, is re-posted at the current fair after each scan, and comes down when the fair moves against it, the game is " +
-            "about to start, or scanning is paused. A filled bid is a bet in the Tracker."
+            "takes), never rests longer than the fair it was priced from stays fresh, and comes down at once when the fair moves against it, the game is " +
+            "about to start, or scanning is paused. With auto-make off, Vigilant recommends bids for you to approve or deny. A filled bid is a bet in the Tracker."
+
+    const val CONFIRM =
+        "Vigilant will post and move bids by itself from the Vigilant wallet, within these rules, after each scan and each background cycle: real money, " +
+            "nobody confirming each one (the same way auto-bet places bets). A phone restart switches it off."
+
+    const val NO_BACKGROUND =
+        "The background scan doesn't run Vigilant's scan (Settings › Scanning: background CNO + Vigilant), so bids are only priced while you scan, and " +
+            "come down within minutes when their fair goes old."
 
     const val RESEARCH =
         "Research (60 days of Novig's trades, RESEARCH.md §70): bids 4% under the fair on player props filled on 30-45% of sides and beat Novig's close by " +
