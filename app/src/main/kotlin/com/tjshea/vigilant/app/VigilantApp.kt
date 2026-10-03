@@ -365,6 +365,16 @@ class AppContainer(private val app: Application) {
         com.tjshea.vigilant.data.study.StudyJournal(File(app.filesDir, "study")), version = { BuildConfig.VERSION_NAME },
     )
 
+    /**
+     * How the study gets the scans' results ([StudySync]): the watchers below call it as things arrive, and a background cycle (and the Vigilant scan it started, when that ends)
+     * calls [StudySync.catchUp] before its wake lock goes, so nothing the study still had to do waits for an alarm that is minutes off.
+     */
+    val studySync = StudySync(
+        study, cno, livePrices = { live.prices.value },
+        finishedScan = { runner.state.value.takeIf { it.finished > 0 && !it.scanning }?.result },
+        settings = { currentSettings() }, step = { what, block -> studyStep(what, block) },
+    )
+
     /** ParlayAPI's closes cost credits: the study asks for them only while the month's credits are over [STUDY_PARLAY_RESERVE] left (the Tracker's own bets always do). */
     private fun parlayCreditsPlentiful(): Boolean {
         val keys = usage.flow.value.providers["parlay"]?.keys?.values.orEmpty()
@@ -574,32 +584,29 @@ class AppContainer(private val app: Application) {
         // already holds (no request of its own), on the scan's background-priority threads so it never competes with the screen.
         scanScope.launch {
             cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
-                studyStep("CNO scan") { study.observeCno(snap, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }
+                studySync.list(snap)
             }
         }
         // The wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): the study's one request of its own, after a live list
         // read, in a session of its own, kept in cno.wide and nowhere else (the list, alerts, auto-bet and widget never see it); CnoFeed paces it (30 s, only when CNO's odds moved).
         scanScope.launch {
             cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
-                val s = currentSettings()
-                if (s.scanStudy && s.scanStudyHidden && s.cnoOn && System.currentTimeMillis() - snap.fetchedAtMs <= com.tjshea.vigilant.data.study.ScanStudy.MAX_SCAN_AGE_MS) {
-                    studyStep("CNO wide read") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }
-                }
+                studySync.wideRead(snap)
             }
         }
         scanScope.launch {
             cno.wide.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { wide ->
-                studyStep("CNO wide scan") { study.observeCnoWide(wide, cno.state.value.snapshot, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }
+                studySync.wide(wide)
             }
         }
         scanScope.launch {
             runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.filter { it.finished > 0 && !it.scanning }.collect { run ->
-                run.result?.let { r -> studyStep("Vigilant scan") { study.observeVigilant(r, currentSettings()) } }
+                run.result?.let { r -> studySync.vigilant(r) }
             }
         }
         scanScope.launch {
             cno.books.collect { books ->
-                studyStep("book check") { study.observeBooks(books, currentSettings(), live.prices.value) }
+                studySync.books(books)
                 delay(STUDY_BOOKS_GAP_MS)
             }
         }

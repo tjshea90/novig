@@ -29,6 +29,7 @@ class StudySync(
     private val finishedScan: () -> ScanResult?,
     private val settings: suspend () -> ScanSettings,
     private val step: suspend (String, suspend () -> Unit) -> Unit,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
     /** A CNO read as the app's list has it. */
@@ -39,7 +40,7 @@ class StudySync(
     /** The wide read after [snap] (the list's newest read): whether it is due is [CnoFeed.readWide]'s to say. */
     suspend fun wideRead(snap: CnoSnapshot, maxAgeMs: Long = ScanStudy.MAX_SCAN_AGE_MS) {
         val s = settings()
-        if (s.scanStudy && s.scanStudyHidden && s.cnoOn && System.currentTimeMillis() - snap.fetchedAtMs <= maxAgeMs) {
+        if (s.scanStudy && s.scanStudyHidden && s.cnoOn && clock() - snap.fetchedAtMs <= maxAgeMs) {
             step("CNO wide read") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }
         }
     }
