@@ -368,7 +368,8 @@ class AutoScanService : Service() {
 
     private fun ongoing(status: AutoScanner.Status): Notification {
         val s = settings ?: container.settingsStore.flow.value ?: ScanSettings()
-        val progress = container.runner.state.value.progress.takeIf { status.running && status.step == "Vigilant scan" }
+        // Vigilant's scan runs beside the cycles now (they no longer wait for it): its progress shows whenever it's running.
+        val progress = container.runner.state.value.takeIf { it.scanning }?.progress
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
             .withWallet(this)
@@ -509,6 +510,7 @@ object AutoScanText {
             return "${status.step ?: "Scanning"}$p…"
         }
         if (status.pausedForCheck) return "Paused while Check odds now runs (auto-bet too)"
+        val scan = progress?.let { p -> "Vigilant scan" + (p.takeIf { it.total > 0 }?.let { " ${it.done}/${it.total}" }.orEmpty()) }
         // Seconds only when scans are under a minute apart: "Next at 3:42:15 PM".
         val clock = SimpleDateFormat(if (s.autoScanSeconds < 60) "h:mm:ss a" else "h:mm a", Locale.US).apply { timeZone = zone }
         val next = nextAtMs?.takeIf { it > now }?.let { "Next at ${clock.format(Date(it))}" } ?: "Next scan soon"
@@ -519,7 +521,7 @@ object AutoScanText {
             status.lastFound == 0 -> "last found nothing to alert"
             else -> "last found ${status.lastFound} (${status.lastAlerts} new)"
         }
-        return listOfNotNull(next, last, alerts, "stays awake".takeIf { KeepAwake.active(s) }).joinToString(" · ")
+        return listOfNotNull(scan, next, last, alerts, "stays awake".takeIf { KeepAwake.active(s) }).joinToString(" · ")
     }
 }
 
