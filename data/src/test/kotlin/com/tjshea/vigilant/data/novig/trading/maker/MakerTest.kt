@@ -433,6 +433,43 @@ class MakerTest {
         assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules.copy(sharpVeto = false), now) is MakerDecision.Post)
     }
 
+    /**
+     * RESEARCH.md §72 (`novig_toxic_flow_study.py`): re-quoted game-line bids on a side whose Novig price fell 2¢+ over the hour kept far less at the close
+     * than on steady lines; props and 1st-half lines didn't. So the trap guard's move rule also stands over game-line bids, read at Novig's price now.
+     */
+    @Test
+    fun `a game-line bid on a side Novig just moved against gets none - props aren't checked, and the rule off or no trades read changes nothing`() {
+        val ml = rules.copy(kinds = rules.kinds + BetKind.MONEYLINE, novigMove = true)
+        val game = line(kind = BetKind.MONEYLINE).copy(sharpFairs = listOf(0.53))
+        // Over the last 15 min our side traded at 0.58 three times: takers bought the other side for $126 (3 × 10,000 × 0.42¢), and the price to take
+        // our side is now 0.55, 3¢ under that level.
+        val moved = (1..3).map { com.tjshea.vigilant.data.scanner.TrapGuard.Trade("m1-over", 0.58, 10_000, now - it * 60_000L) }
+        val trades = mapOf("m1" to moved)
+        val wanted = MakerLines.moveWanted(listOf(game), ml, now)
+        assertEquals(listOf(game.outcomeId), wanted.map { it.outcomeId })
+        val judged = MakerLines.withMoves(listOf(game), wanted, trades, now).single()
+        assertTrue(judged.novigMove!!.trap)
+        val why = (MakerQuote.decide(judged, ml, now) as MakerDecision.Skip).why
+        assertTrue(why, why.startsWith("Novig just moved: 3.0¢ under where it traded this hour, with \$126 bought on the other side in 15 min"))
+        // The rule off: posted (and nothing is wanted for reading).
+        assertTrue(MakerQuote.decide(judged, ml.copy(novigMove = false), now) is MakerDecision.Post)
+        assertTrue(MakerLines.moveWanted(listOf(game), ml.copy(novigMove = false), now).isEmpty())
+        // No trades read for that market: judged without the rule, posted.
+        assertTrue(MakerQuote.decide(MakerLines.withMoves(listOf(game), wanted, emptyMap(), now).single(), ml, now) is MakerDecision.Post)
+        // A quiet market (no money on the other side): posted.
+        val quiet = (1..3).map { com.tjshea.vigilant.data.scanner.TrapGuard.Trade("m1-under", 0.42, 10, now - it * 60_000L) }
+        assertTrue(MakerQuote.decide(MakerLines.withMoves(listOf(game), wanted, mapOf("m1" to quiet), now).single(), ml, now) is MakerDecision.Post)
+        // What isn't read: a prop (the same flow didn't hurt prop bids), a game line with no sharp book, game lines switched off for bids, nothing offered.
+        val prop = line().copy(sharpFairs = listOf(0.53))
+        assertTrue(MakerLines.moveWanted(listOf(prop, line(kind = BetKind.MONEYLINE), game.copy(offer = null)), ml, now).isEmpty())
+        assertTrue(MakerLines.moveWanted(listOf(game), ml.copy(kinds = rules.kinds), now).isEmpty())
+        // A prop with a "trap" read anyway is still bid on.
+        assertTrue(MakerQuote.decide(MakerLines.withMoves(listOf(prop), listOf(prop), trades, now).single(), ml, now) is MakerDecision.Post)
+        // The setting is the auto-bet's trap switch.
+        assertTrue(MakerRules.of(ScanSettings()).novigMove)
+        assertFalse(MakerRules.of(ScanSettings(trapNovigMove = false)).novigMove)
+    }
+
     /** RESEARCH.md §72: a filled bid keeps about the sharp book's own edge, so the auto-bet's veto bar applies to a bid's own price too. */
     @Test
     fun `the sharp veto's bar applies at the bid's price - every sharp book must give the bid the set edge, 1% by default`() {

@@ -12,6 +12,7 @@ import com.tjshea.vigilant.data.novig.trading.NovigFill
 import com.tjshea.vigilant.data.novig.trading.NovigOrder
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.novig.trading.maker.MakerStatus
+import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.ScanRun
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.delay
@@ -115,6 +116,27 @@ class MakerAppTest {
         assertTrue(runner.run("during a scan") != null)
         t += MakerRunner.BACKGROUND_GAP_MS
         assertTrue(runner.run("background cycle", minGapMs = MakerRunner.BACKGROUND_GAP_MS) != null)
+    }
+
+    /** RESEARCH.md §72: game-line bids get the trap guard's move rule; game lines are off for bids by default, so nothing is read by default. */
+    @Test
+    fun `a pass reads Novig's trades only for game-line bids - none by default, a few markets with game lines on, and a failed read stops nothing`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        val asked = java.util.concurrent.CopyOnWriteArrayList<String>()
+        fun runner(fail: Boolean) = MakerRunner(
+            app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+            recentTrades = { id -> asked += id; if (fail) throw java.io.IOException("429") else emptyList() },
+        )
+        assertTrue(runner(fail = false).run("default kinds") != null)
+        assertTrue("game lines are off for bids by default: nothing read ($asked)", asked.isEmpty())
+        // Game lines on (the sample's moneylines have Pinnacle in the fair): their markets are read, a few a pass, and the bids still go up when every read fails.
+        app.container.makerStore.update { emptyList() }
+        app.container.settingsStore.update { it.copy(makerKinds = it.makerKinds + BetKind.MONEYLINE, trapEarlyHours = 0) }
+        val r = runner(fail = true).run("game lines on")!!
+        assertTrue("read $asked", asked.isNotEmpty() && asked.size <= MakerRunner.MAX_MOVE_READS)
+        assertTrue(r.problems.toString(), r.placed > 0)
     }
 
     @Test
