@@ -1,21 +1,23 @@
-# CHECKPOINT 2474 — read me first, then TASKS.md
+# CHECKPOINT 2475 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T20:07:00Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-c4435189-1cfj54` · **builds on:** `d2e98a7f` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T20:32:53Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `daf977ae` (this checkpoint is the commit after it)
 
 ## Just done
-BO1 read: ANR at 15:52 = main thread in PlacedIndex.has->BetGrader.pickOf (regex; ~70-110us/call on JVM, worse on ART); applySettings/applyReport/repriceNow/recheck run feedOf (has per feed row) inside _state.update on Main; bids rest 1 min median (163 'about to expire: re-posted', 48 'fair goes old'), wallet ~$12 caps ~10 bids while 300-450 wait, 0 fills of 320. Workflow wf_7de17a06-a5d investigating (main-thread, maker-loop, pause-path, fills, diag-gaps)
+BP: Tj's resume-other-session + Scan Study log feature request written to TASKS.md (BP0-BP5)
 
 ## Do this next
-BO2: read workflow results, then fix: memoize pickOf/identity, move feedOf off Main, pause publishes first; bids: rest longer (fair refresh instead of expiry), see fills findings
+BP0: finish BO2/BO3 lag fix (pickOf memo half-done in BetGrader), then BO4, then BP1 map
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  12e771ff ckpt 2474: BO1 read: ANR at 15:52 = main thread in PlacedIndex.has->BetGrader.pickOf (r
   d2e98a7f ckpt 2473: BO: Tj's auto-bid lag / slow pause / no fills report written to TASKS.md (BO
   6eedaee9 ckpt 2472: full test shipped: v0.56.1 (code 97) released + recorded (release.yml run 37
   a6cb53bf ckpt 2471: pre-release: v0.56.1: full test: Bids tab shows the trap guard's move switch
@@ -25,5 +27,7 @@ BO2: read workflow results, then fix: memoize pickOf/identity, move feedOf off M
   8ce66782 ckpt 2467: BN: Tj's 'reconsider whether novig pays maker credit pregame' written to TAS
   463896c4 ckpt 2466: BM done: another AI's report checked (RESEARCH.md §73, 20 claims); novig_dr
   2f50f400 ckpt 2465: BM: Tj's request to vet another AI's CLV/EV report written to TASKS.md (BM1-
-  0b8eaa2f ckpt 2464: BL done: v0.56.0 (code 96) released + recorded (sharp veto bar 1%, Kelly cap
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
