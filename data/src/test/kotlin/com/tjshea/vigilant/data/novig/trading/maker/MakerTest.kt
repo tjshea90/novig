@@ -616,6 +616,158 @@ class MakerTest {
         assertEquals(now - 9 * 60_000, lines[1].bookAtMs)
     }
 
+    // ---- why no bid filled (Tj, 2026-10-03, v0.53.0: "None of my auto bids were accepted") -----------------------------------------------------
+
+    @Test
+    fun `an expiring bid is re-posted only when a fresher fair lets the new one rest at least a minute longer - never from the same fair`() {
+        val r = resting("m1-over", 0.500, expires = now + 90_000)
+        // The same fair: the new bid would end when this one does, and only lose its place in the queue.
+        val same = MakerPlan.plan(listOf(post("m1-over", 0.500).copy(restUntilMs = now + 90_000)), listOf(r), rules, now)
+        assertTrue(same.cancels.isEmpty() && same.places.isEmpty())
+        assertEquals(1, same.kept.size)
+        // 30 s more: not worth it.
+        assertTrue(MakerPlan.plan(listOf(post("m1-over", 0.500).copy(restUntilMs = now + 120_000)), listOf(r), rules, now).cancels.isEmpty())
+        // A fresher fair, a minute more: re-posted.
+        val fresher = MakerPlan.plan(listOf(post("m1-over", 0.500).copy(restUntilMs = now + 150_000)), listOf(r), rules, now)
+        assertEquals("About to expire: re-posted", fresher.cancels.single().second)
+        assertEquals(1, fresher.places.size)
+    }
+
+    @Test
+    fun `a bid priced from an aging fair rests to its expiry instead of being re-posted every pass, and its re-post doesn't count our own bid as one to beat`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        // A game 2 hours off (fairs good for 5 minutes), its fair seen 2 minutes ago: the bid rests 3 minutes.
+        val near = market(starts = now + 2 * 3_600_000L)
+        val seen = now - 2 * 60_000
+        d.cycle(listOf(line(m = near).copy(fairAsOfMs = seen)), rules, null, 50.0, 100.0)
+        assertEquals(180_000L, novig.placed.single()[4])
+        val posted = now
+        // Passes 20 s apart on the same scan: within 2 minutes of its expiry from the third on, and it stays.
+        repeat(4) {
+            now += 20_000
+            val r = d.cycle(listOf(line(m = near).copy(fairAsOfMs = seen)), rules, null, 50.0, 100.0)
+            assertEquals(0, r.cancelled + r.placed)
+        }
+        // A new scan's fair: re-posted with its longer life. Its book (read after our bid went up) shows only our own 1,000 at 0.500.
+        now += 20_000
+        val fresh = line(m = near).copy(fairAsOfMs = now - 10_000, bestBid = 0.500, bookAtMs = now - 5_000, bidLevels = listOf(com.tjshea.vigilant.data.novig.BidLevel(500, 1_000)))
+        val r = d.cycle(listOf(fresh), rules, null, 50.0, 100.0)
+        assertEquals(1, r.cancelled)
+        assertEquals(1, r.placed)
+        assertEquals(290_000L, novig.placed.last()[4])
+        // The re-post leads its side: nobody else's bid was there.
+        assertNull(d.bids().last().bestBidAtPost)
+        assertTrue(d.bids().first().postedAtMs == posted)
+    }
+
+    @Test
+    fun `Vigilant's own bids aren't the bid to beat - only the book's other bids are`() {
+        val bookAt = now - 60_000
+        val levels = listOf(com.tjshea.vigilant.data.novig.BidLevel(500, 1_000), com.tjshea.vigilant.data.novig.BidLevel(480, 500))
+        val l = line("m1-over").copy(bestBid = 0.500, bookAtMs = bookAt, bidLevels = levels)
+        fun mine(price: Double, contracts: Long, posted: Long = bookAt - 30_000, ended: Long? = null, outcome: String = "m1-over") = MakerBid(
+            clientId = "c-$price-$contracts-$posted-$ended", orderId = "o-$posted", marketId = "m1", eventId = "ev-m1", outcomeId = outcome, league = "NFL",
+            eventName = "A @ B", startsTs = start, marketLabel = "x", selection = "x", price = price, contracts = contracts, fair = 0.52, evAtFair = 0.04,
+            margin = 0.04, postedAtMs = posted, endedAtMs = ended, status = if (ended == null) MakerStatus.RESTING else MakerStatus.EXPIRED,
+        )
+        fun best(vararg bids: MakerBid) = MakerLines.withoutOwn(listOf(l), bids.toList()).single().bestBid
+        // All 1,000 at 0.500 were ours: the best bid is someone else's 0.480.
+        assertEquals(0.480, best(mine(0.500, 1_000))!!, 1e-9)
+        // 600 of them ours: someone else is at 0.500 too.
+        assertEquals(0.500, best(mine(0.500, 600))!!, 1e-9)
+        // Ours were the only bids: nobody to beat.
+        assertNull(MakerLines.withoutOwn(listOf(l.copy(bidLevels = levels.take(1))), listOf(mine(0.500, 1_000))).single().bestBid)
+        // Posted within 2 s of the read (maybe not in it yet), ended before it, or on the other side: nothing taken off.
+        assertEquals(0.500, best(mine(0.500, 1_000, posted = bookAt - 1_000))!!, 1e-9)
+        assertEquals(0.500, best(mine(0.500, 1_000, ended = bookAt - 1))!!, 1e-9)
+        assertEquals(0.500, best(mine(0.500, 1_000, outcome = "m1-under"))!!, 1e-9)
+    }
+
+    @Test
+    fun `when not every bid can go up, the ones that would lead their side go first, then the cheapest`() {
+        // Someone already bids 0.30 on b: ours at 0.30 would sit behind it. a leads at 0.40 (best 0.35); nobody bids on c.
+        val behind = MakerDecision.Post(line("b-over").copy(bestBid = 0.30), 0.30, 1_666, 0.04)
+        val leads = MakerDecision.Post(line("a-over").copy(bestBid = 0.35), 0.40, 1_250, 0.04)
+        val alone = MakerDecision.Post(line("c-over"), 0.45, 1_111, 0.04)
+        assertFalse(behind.leads)
+        assertTrue(leads.leads && alone.leads)
+        val two = MakerPlan.plan(listOf(behind, leads, alone), emptyList(), rules.copy(maxBids = 2), now)
+        assertEquals(listOf("a-over", "c-over"), two.places.map { it.line.outcomeId })
+        assertEquals(mapOf(MakerPlan.MAX_BIDS_REACHED.format(2) to 1), two.waiting)
+    }
+
+    @Test
+    fun `bids already up count against the wallet - Novig doesn't hold them from the balance`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val two = listOf(line("m1-over"), line("m2-over", m = market("m2")))
+        // $5 a bid, $8 in the wallet: one bid.
+        val r = d.cycle(two, rules, null, 50.0, wallet = 8.0)
+        assertEquals(1, r.placed)
+        assertEquals(mapOf(MakerPlan.BUDGET_REACHED to 1), r.waiting)
+        // The balance still reads $8 with that bid up (as Novig's did, Tj's v0.53.0 file): no second one.
+        now += 30_000
+        val r2 = d.cycle(two, rules, null, 50.0, wallet = 8.0)
+        assertEquals(0, r2.placed)
+        assertEquals(1, novig.orders.values.count { it.status == "OPEN" })
+    }
+
+    @Test
+    fun `bids that end are finished with one fills read for all of them, and a bid seen on the book isn't looked up one by one`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val three = listOf(line("m1-over"), line("m2-over", m = market("m2")), line("m3-over", m = market("m3")))
+        d.cycle(three, rules, null, 50.0, 100.0)
+        now += 30_000
+        d.cycle(three, rules, null, 50.0, 100.0)
+        // All three run out their time; 200 of one filled first.
+        novig.fill("o2", 200)
+        listOf("o1", "o2", "o3").forEach { novig.orders[it] = novig.orders.getValue(it).copy(status = "CANCELED") }
+        now += 10 * 60_000
+        novig.orderReads = 0
+        novig.fillReads = 0
+        val r = d.cycle(emptyList(), rules, null, 50.0, 100.0)
+        assertEquals(1, novig.fillReads)
+        assertEquals(0, novig.orderReads)
+        assertEquals(200L, r.fills.single().contracts)
+        assertEquals(listOf(MakerStatus.EXPIRED, MakerStatus.EXPIRED, MakerStatus.EXPIRED), d.bids().map { it.status })
+        // Cancels too: a stop takes three down with one look at the open orders and one fills read.
+        d.cycle(three.map { it.copy(fairAsOfMs = now - 30_000) }, rules, null, 50.0, 100.0)
+        now += 30_000
+        novig.orderReads = 0
+        novig.fillReads = 0
+        val stop = d.cycle(three, rules, "Scanning is paused", 50.0, 100.0)
+        assertEquals(2, stop.cancelled)
+        assertEquals(1, novig.fillReads)
+        assertEquals(0, novig.orderReads)
+        assertTrue(d.bids().none { it.active })
+    }
+
+    @Test
+    fun `a fills read Novig throttles finishes nothing - the bid stays on its way down, no bid replaces it, and its fill is recorded next pass`() = runBlocking {
+        val novig = FakeNovig()
+        val t = tracker()
+        val d = desk(novig, t)
+        d.cycle(listOf(line("m1-over", fair = 0.52)), rules, null, 50.0, 100.0)
+        novig.throttleFills = true
+        now += 30_000
+        novig.fill("o1", 300)
+        // The fair falls: the bid comes down, but its fills can't be read.
+        val r = d.cycle(listOf(line("m1-over", fair = 0.50)), rules, null, 50.0, 100.0)
+        assertEquals(0, r.placed)
+        assertTrue(r.problems.joinToString(), r.problems.any { it.startsWith("Novig's fills") })
+        assertEquals(MakerStatus.CANCELING, d.bids().single().status)
+        assertTrue(t.all().isEmpty())
+        novig.throttleFills = false
+        now += 30_000
+        val r2 = d.cycle(listOf(line("m1-over", fair = 0.50)), rules, null, 50.0, 100.0)
+        assertEquals(300L, r2.fills.single().contracts)
+        assertEquals(MakerStatus.CANCELED, d.bids().single().status)
+        // That side is a bet now: no new bid.
+        assertEquals(0, r2.placed)
+    }
+
     // ---- switching bids on (Tj, 2026-10-03: "As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs")
 
     @Test
