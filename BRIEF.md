@@ -434,6 +434,10 @@ robolectric.org/configuring/.
   like the rest (futures never; 1,500 a day per pass, the app list's first). **The list, alerts, auto-bet and widget never see the wide rows** (`cno.wide` is read by VigilantApp's two study watchers,
   the file header and Diagnostics only: source-pinned). Settings › Diagnostics & about › "Also log what your CNO filters hide" (`ScanSettings.scanStudyHidden`, on) is its switch; Diagnostics' "Scan
   study's wide CNO read" line says what it read and what CNO was asked. The file sums shown and hidden bets apart, keeps the app-hidden bets to 65% of its 24 MB of lines (all counted in the sums).
+  **v0.58.1 (the props split, Tj 2026-10-03; RESEARCH.md §76.4):** the study file splits props by the sharp-ranked book's verdict (exchange Kalshi/ProphetX or an originating book FanDuel/Caesars/DraftKings agrees
+  or says no, none prices both sides, no page read), by that book's own edge and by whether the exchanges are on the page, and a WHAT IF section simulates three rules (today's veto; a sharp-ranked book must agree;
+  an exchange must agree) with the props each keeps, drops and can't judge (W-L-P, ROI, CLV); the READ ME puts Tj's question to Claude. **No app rule changed** (Tj chose to let the data decide). A bet logged with no
+  page isn't "NO_SHARP": only props whose page was read have a verdict.
 
 - **Vigilant MGM: the same app for BetMGM (Tj, 2026-09-27; v0.17.0, RESEARCH.md §25).** A second app,
   `com.tjshea.vigilant.betmgm` ("Vigilant MGM"), built by module `mgm` from `app`'s OWN sources and resources

@@ -4566,3 +4566,16 @@ sportsbook, and everything past the row limit.
   field the page has by name, so the first file tells which link filters (a liquidity floor, hours to the start) still apply and can be opened next.
 - How many rows a read holds, how often "AS MANY AS ASKED FOR" appears, and the journal's real growth per day: Diagnostics' line (rows read, how many were also in the app's list, reads since launch).
 
+### 76.4 The props split (v0.58.1, 2026-10-03; Tj, after §65/§66.2/§72.6 were put to him again: "consider if it is needed or smart to require that prop bets have at least one sharp prop book that agrees … Do option 1 and add the props split to the study")
+Nothing about the app's rules changed (option 1: leave them, let the data decide). What is true today: a prop's EV and fair on the CNO list are CNO's consensus of 4+ books, mostly soft; the sharp veto
+(`SharpVeto`: Kalshi, ProphetX, then FanDuel and Caesars, DraftKings and FanDuel on MLB) touches only auto-bet, alerts and bids, only after the bet's page was read, and only when the first ranked book that prices both
+sides says no; with none of them on the page (`NO_SHARP`) the prop goes through. In Tj's 43 recorded prop bets (v0.56.1 file) 24 had Kalshi/ProphetX pricing both sides, 5 one side, 14 neither; several passed on
+Caesars or FanDuel alone; 4 of the 57 recorded bets had a close, so his own data can't say whether a sharp-confirmed prop beats the close more.
+The study file now answers it (`StudyExport`): three PROPS splits (what the sharp-ranked book said: an exchange agrees / says no, an originating book agrees / says no, nobody ranked prices both sides, no page read;
+the sharp book's own edge band; whether Kalshi/ProphetX are on the bet's page at all) and a WHAT IF section: for each of three rules (today's veto; a sharp-ranked book must agree; an exchange must agree) the props it would
+keep, drop and not be able to judge, each with W-L-P, ROI and CLV; the READ ME asks Claude the question (item 7) and the caveats say the sample is the props whose page was read.
+**A bug the test caught before it shipped:** a study bet logged with no page is judged against no books, and `SharpVeto` says `NO_SHARP` for that: counted as "nobody ranked prices both sides" it would have made every
+unchecked prop look kept by the veto and dropped by the requirement. A prop only has a verdict when its page was read (`checkAtMs`, `twoSided` or `books` on its record); the rest are "not judged".
+Limits: a verdict exists only for bets whose game page the green check read (the top ~10 of the list, again every 4 minutes) and the first read is the one used, so the judged props are the best-EV rows; wide-read-only
+props have none. If the first files show the judged sample is too thin, the next step is reading more pages for props (CNO requests: Tj's call).
+
