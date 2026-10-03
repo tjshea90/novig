@@ -208,6 +208,7 @@ object DiagnosticsFile {
         if (x.perf.isEmpty()) o.appendLine("No timings yet.")
         x.perf.forEach { (name, v) -> o.appendLine("$name: ${v.count} samples · p50 ${v.p50.toLong()} · p95 ${v.p95.toLong()} · max ${v.max.toLong()} · mean ${v.mean.toLong()}") }
         frameLines(x.frames).forEach(o::appendLine)
+        o.appendLine(x.scanCpu?.let { ThreadCpu.text(it, "the last Vigilant scan") } ?: "CPU during a Vigilant scan: no scan has ended in this run of the app yet.")
         o.appendLine("Heap ${x.memory.usedMb} of ${x.memory.maxMb} MB (${Math.round(x.memory.fraction * 100)}%).")
         val p = x.phone
         o.appendLine("Battery ${p.batteryPct?.let { "$it%" } ?: "?"}${if (p.charging == true) " (charging)" else if (p.charging == false) " (not charging)" else ""} · thermal ${p.thermal ?: "?"} · Doze now ${p.dozing ?: "?"} · standby bucket ${p.standbyBucket ?: "?"}")

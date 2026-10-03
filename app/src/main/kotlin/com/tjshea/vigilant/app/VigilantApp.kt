@@ -202,7 +202,17 @@ class AppContainer(private val app: Application) {
      * apps or backs out of Vigilant. [ScanService] keeps the process alive while one runs.
      */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val runner = ScanRunner(scanner, appScope)
+
+    /**
+     * Where Vigilant's scan runs: as long as the process, like [appScope], but on [ScanThreads] (background priority), so the scan's parsing and
+     * pricing yield the CPU to the screen (Tj, 2026-10-03: "the entire app gets laggy when vigilant is scanning, but not when cno only is scanning").
+     */
+    val scanScope = CoroutineScope(SupervisorJob() + ScanThreads.dispatcher())
+    val runner = ScanRunner(scanner, scanScope)
+
+    /** Where the CPU went during the last finished Vigilant scan ([ThreadCpu]), for Diagnostics; null until one ends in this process. */
+    @Volatile var scanCpu: ThreadCpu.Split? = null
+        private set
 
     init {
         // The closing capture's alarm follows the open bets (Tj, 2026-09-29: true closing lines): armed for the next start, moved when a bet is
@@ -445,6 +455,22 @@ class AppContainer(private val app: Application) {
         // The flight recorder: what earlier runs kept comes back first, then events and connection stats are written out every half minute.
         appScope.launch(Dispatchers.IO) {
             recorder.run(runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull(), FLUSH_EVERY_MS)
+        }
+        // Each scan's CPU by thread group ([ThreadCpu]): a snapshot as it starts, the split as it ends.
+        appScope.launch(Dispatchers.IO) {
+            var before: Map<Int, ThreadCpu.Thread>? = null
+            var startedAt = 0L
+            runner.state.map { it.scanning }.distinctUntilChanged().collect { scanning ->
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (scanning) {
+                    before = runCatching { ThreadCpu.snapshot() }.getOrNull()
+                    startedAt = now
+                } else {
+                    val b = before ?: return@collect
+                    runCatching { ThreadCpu.snapshot() }.getOrNull()?.let { after -> scanCpu = ThreadCpu.between(b, after, now - startedAt) }
+                    before = null
+                }
+            }
         }
         // What happened to the Vigilant scan, in one line each: its length, what it read, what failed.
         appScope.launch {

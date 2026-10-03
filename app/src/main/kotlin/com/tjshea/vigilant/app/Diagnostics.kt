@@ -86,6 +86,8 @@ object Diagnostics {
         val coldStartMs: Long? = null,
         /** The screen's frames this run, by what the app was doing ([com.tjshea.vigilant.data.diag.FrameStats]). */
         val frames: Map<String, com.tjshea.vigilant.data.diag.FrameStats.Bucket> = emptyMap(),
+        /** Where the CPU went during the last finished Vigilant scan ([ThreadCpu]). */
+        val scanCpu: ThreadCpu.Split? = null,
         val logcat: List<com.tjshea.vigilant.data.diag.LogcatTail.Line> = emptyList(),
         /** The app's files and their sizes in bytes, largest first. */
         val storage: List<Pair<String, Long>> = emptyList(),

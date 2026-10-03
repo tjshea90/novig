@@ -1758,6 +1758,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             perf = c.perf.summaries(),
             coldStartMs = c.perf.coldStartMs,
             frames = c.frames.snapshot(),
+            scanCpu = c.scanCpu,
             logcat = g.logcat,
             storage = g.storage,
             previous = g.previous,
