@@ -376,6 +376,7 @@ class AutoScanner(
         if (s.sharpAlerts == com.tjshea.vigilant.data.scanner.SharpMode.VETO) {
             return SharpGate.unvetoedAlerts(alerts, AlertPicks.cnoChecked(state, s.alertMinEv, now), { state.booksAt(it.pick.row.key, now)?.view }, s.sharpVetoMinEv) {
                 c.eventLog.count("sharp.alertveto.${it.verdict}")
+                if (it.vetoed && (it.ev ?: 0.0) > 0.0) c.eventLog.count(AutoBettor.SHARP_BAR_ALERT_COUNTER)
             }
         }
         // Sharp-book confirmation for the alerts (Tj, 2026-10-02): only a bet that would alert now is asked about, and only then is a feed called.

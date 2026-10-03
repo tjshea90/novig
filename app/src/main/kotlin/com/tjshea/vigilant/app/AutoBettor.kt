@@ -339,6 +339,8 @@ class AutoBettor(
                 vetoSaid[item.pick.row.key] = veto
                 tally(item.pick.row.key, "veto.${veto.verdict}")
                 c.eventLog.count("sharp.veto.${veto.verdict}")
+                // The bar's own share (v0.56.0, RESEARCH.md §72): vetoed though the sharp book gave a small edge, so Diagnostics can say what the bar costs.
+                if (veto.vetoed && (veto.ev ?: 0.0) > 0.0) c.eventLog.count(SHARP_BAR_COUNTER)
                 return veto.reason
             }
             SharpMode.CONFIRM -> Unit
@@ -459,6 +461,12 @@ class AutoBettor(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** Auto-bet bets the sharp veto stopped only for its bar (the sharpest book gave a positive edge under [ScanSettings.sharpVetoMinEv]). */
+        const val SHARP_BAR_COUNTER = "sharpbar.autobet.under"
+
+        /** The same for CNO's alerts. */
+        const val SHARP_BAR_ALERT_COUNTER = "sharpbar.alerts.under"
+
         /** The report's reason for a game line the trap guard's move rule stopped (one wording, so the report counts them together). */
         const val MOVE_SKIP = "Novig just moved: its price fell 2¢+ under this hour's level as the other side was bought (trap guard)"
 
