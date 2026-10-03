@@ -189,4 +189,14 @@ class MakerUiTest {
         compose.onNodeWithText("Bids").performClick()
         assertEquals(1, opened)
     }
+
+    @Test
+    fun `the +EV detail sheet's suggested bid uses the Bids tab's margin, not the old 2 percent`() {
+        val s = settings.copy(makerMargin = 0.06)
+        val o = SampleScan.result(s).opportunities.first { it.quote != null && it.makerBid(0.06) != null }
+        compose.setContent { VigilantTheme { com.tjshea.vigilant.app.ui.OpportunityDetail(o, s, onRecheck = {}) {} } }
+        compose.onNodeWithText("at least ${com.tjshea.vigilant.app.ui.Format.percent(0.06)} EV", substring = true).assertExists()
+        compose.onNodeWithText("Bid up to").assertExists()
+        compose.onNodeWithText("${com.tjshea.vigilant.app.ui.Format.american(o.makerBid(0.06)!!.price)} · ${com.tjshea.vigilant.app.ui.Format.percent(o.makerBid(0.06)!!.price)}").assertExists()
+    }
 }
