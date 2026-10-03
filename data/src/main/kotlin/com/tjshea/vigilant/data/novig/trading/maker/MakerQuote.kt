@@ -103,6 +103,8 @@ data class MakerLine(
     val gameUrl: String? = null,
     /** When Novig's book behind [offer] and [bestBid] was read (it can be the last scan's: [MakerLines.MAX_BOOK_AGE_MS]). */
     val bookAtMs: Long? = null,
+    /** Every resting bid on this side in that book, best first ([bestBid] is the first): what [MakerLines.withoutOwn] takes Vigilant's own out of. */
+    val bidLevels: List<com.tjshea.vigilant.data.novig.BidLevel> = emptyList(),
 ) {
     val marketId: String get() = market.marketId
 }
@@ -148,13 +150,37 @@ object MakerLines {
                 eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
                 fairAsOfMs = o.fairAsOfMs, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
-                basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs,
+                basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels,
             )
             // Each book's own fair only where a bid could follow: every other line is skipped before [MakerQuote.decide] asks for them.
             if (MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line
             else line.copy(bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true))
         }
     }
+
+    /**
+     * [lines] with each one's [MakerLine.bestBid] leaving out Vigilant's own [bids] that rested on that side when its book was read: a bid of ours is
+     * not one a new bid has to beat to lead (Tj's v0.53.0 file: "led their side 41%", counted against the very bids being re-posted). Our contracts
+     * at a price are taken off that level of the book; the best level with any left is the best bid. A bid posted within [OWN_SETTLE_MS] of the read
+     * may not be in it yet and isn't taken off (it then counts as someone else's: the safe side).
+     */
+    fun withoutOwn(lines: List<MakerLine>, bids: List<MakerBid>): List<MakerLine> {
+        val mine = bids.filter { it.orderId != null }.groupBy { it.outcomeId }
+        if (mine.isEmpty()) return lines
+        return lines.map { l ->
+            val at = l.bookAtMs ?: return@map l
+            val own = HashMap<Int, Long>()
+            for (b in mine[l.outcomeId].orEmpty()) {
+                if (b.postedAtMs + OWN_SETTLE_MS <= at && (b.endedAtMs ?: Long.MAX_VALUE) > at) own.merge(Math.round(b.price * 1000).toInt(), b.contracts - b.filled, Long::plus)
+            }
+            if (own.isEmpty() || l.bidLevels.isEmpty()) return@map l
+            val others = l.bidLevels.firstOrNull { it.contracts - (own[it.priceMilli] ?: 0L) > 0 }?.price
+            if (others == l.bestBid) l else l.copy(bestBid = others)
+        }
+    }
+
+    /** How long after posting a bid is taken to be in the books Novig answers with ([withoutOwn]). */
+    const val OWN_SETTLE_MS = 2_000L
 
     /**
      * Each book behind [o]'s fair, devigged on its own the worst way for this side (the lowest of multiplicative, additive, power and Shin, as the
@@ -188,6 +214,12 @@ sealed interface MakerDecision {
      */
     data class Post(override val line: MakerLine, val price: Double, val contracts: Long, val evAtFair: Double, val restUntilMs: Long = Long.MAX_VALUE) : MakerDecision {
         val cost: Double get() = contracts * price * EvMath.CONTRACT_PAYOUT_DOLLARS
+
+        /**
+         * Over every other bid on its side (or the only one): the first a taker on the other side reaches. Novig fills the best bid first, so a bid
+         * behind another fills only once that one is used up.
+         */
+        val leads: Boolean get() = line.bestBid.let { it == null || it < price - 1e-9 }
     }
 
     data class Skip(override val line: MakerLine, val why: String) : MakerDecision
@@ -320,8 +352,8 @@ object MakerPlan {
      * Resting bids against the bids wanted now. [stopAll]: every bid comes down (paused, wallet empty, daily limit, bids switched off). A resting bid is
      * cancelled when its line is no longer wanted (with that line's reason from [skips]), moved when the fair fell under it (it would now be over the
      * fair minus the margin: the bid that gets picked off, §70.3) or rose by [MakerRules.requoteSteps] steps or more, and re-posted when it's about to
-     * expire; a partly filled bid isn't re-posted (that side is now a bet). New bids go in cheapest first (the underdog side earns the most per bid),
-     * within [MakerRules.maxBids], [MakerRules.maxDollars] and [budget] (the wallet and the day's limit).
+     * expire with a fresher fair behind it; a partly filled bid isn't re-posted (that side is now a bet). New bids go in by [PRIORITY] (those that lead
+     * their side, then the cheapest), within [MakerRules.maxBids], [MakerRules.maxDollars] and [budget] (the wallet and the day's limit, less what's up).
      */
     fun plan(
         wanted: List<MakerDecision.Post>,
@@ -358,7 +390,9 @@ object MakerPlan {
                 w == null -> skips[r.outcomeId] ?: "No longer a bid to post"
                 w.price < r.price - 1e-9 -> if (repost) "The fair price fell: re-posted lower" else "The fair price fell under the bid: taken down"
                 repost && w.price >= r.price + rules.requoteSteps * MakerQuote.step(r.price) - 1e-9 -> "The fair price rose: re-posted higher"
-                repost && r.expiresAtMs != null && r.expiresAtMs - now <= rules.refreshBeforeMs -> "About to expire: re-posted"
+                // Only when the new bid would rest at least [MakerRules.minLifeMs] longer (a fresher fair): re-posted from the same fair it would end at
+                // the same moment and only lose its place in the queue (Tj's v0.53.0 file: 163 of 289 bids re-posted every pass, a minute's rest each).
+                repost && r.expiresAtMs != null && r.expiresAtMs - now <= rules.refreshBeforeMs && w.restUntilMs - r.expiresAtMs >= rules.minLifeMs -> "About to expire: re-posted"
                 else -> null
             }
             if (why == null) {
@@ -376,7 +410,7 @@ object MakerPlan {
         val places = ArrayList<MakerDecision.Post>()
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
-        for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(compareBy<MakerDecision.Post> { it.price }.thenByDescending { it.evAtFair })) {
+        for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(PRIORITY)) {
             when {
                 bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
                 dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
@@ -391,6 +425,13 @@ object MakerPlan {
         }
         return MakerActions(cancels, places, kept, waiting)
     }
+
+    /**
+     * Which wanted bids go up first when the most bids, the most dollars or the wallet can't take them all: the ones that would lead their side (a
+     * bid behind another fills only after it: Tj's v0.53.0 file, 0 fills with 59% of the bids behind one), then the cheapest (the underdog side earns
+     * the most per bid, RESEARCH.md §70.2), then the most EV.
+     */
+    val PRIORITY: Comparator<MakerDecision.Post> = compareByDescending<MakerDecision.Post> { it.leads }.thenBy { it.price }.thenByDescending { it.evAtFair }
 
     /** Why a wanted bid waits (the tab and Diagnostics say how many each). */
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
