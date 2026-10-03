@@ -283,6 +283,23 @@ class NovigPublicClient(
         }
     }
 
+    /**
+     * [marketId]'s newest trades, newest first (at most [limit]): what the trap guard reads before an auto-bet on a game line ([com.tjshea.vigilant.data.scanner.TrapGuard.move]).
+     * Verified live 2026-10-03 against Novig's trade file (NOVIG_API.md §5): each item is the RESTING order's outcome and price, `qty` in contracts.
+     * One public request, paced with the rest; a market Novig no longer lists is none.
+     */
+    suspend fun trades(marketId: String, limit: Int = TRADES_LIMIT): List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade> {
+        val request = Request.Builder().url("$baseUrl/v3/public/catalog/markets/$marketId/trades?limit=$limit").get().build()
+        publicGate.acquire()
+        http.newCall(request).await().use { response ->
+            count(response.code)
+            if (response.code == 404) return emptyList()
+            val body = response.body?.string().orEmpty()
+            if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
+            return json.decodeFromString(TradePageDto.serializer(), body).items.mapNotNull { it.toDomain() }
+        }
+    }
+
     /** The last book seen for [marketId], without any network. */
     fun cached(marketId: String): NovigBook? = bookCache[marketId]?.book
 
