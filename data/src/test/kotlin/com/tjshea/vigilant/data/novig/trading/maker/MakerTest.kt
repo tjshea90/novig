@@ -521,4 +521,80 @@ class MakerTest {
         now = start + 1
         assertTrue(denials.outcomes().isEmpty())
     }
+
+    // ---- a scan still running (Tj, 2026-10-03: "I had auto make bids turned on, but it didn't actually make any bids by itself") ------------------
+
+    @Test
+    fun `on a running scan a bid whose line it hasn't judged yet stays up, one it judged comes down for its reason, and a finished scan judges them all`() {
+        val two = listOf(resting("m1-over", 0.500), resting("m2-over", 0.500))
+        // The scan has priced m1 only so far (m2's league is still waiting for its fair odds): m2's bid stays, its ttl still bounds it.
+        val running = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now, partial = true)
+        assertTrue(running.cancels.isEmpty())
+        assertEquals(setOf("m1-over", "m2-over"), running.kept.map { it.outcomeId }.toSet())
+        // It judged m2 and wants no bid there: down, with that line's reason.
+        val judged = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now, skips = mapOf("m2-over" to "The fair price is too old to bid on"), partial = true)
+        assertEquals(listOf("m2-over" to "The fair price is too old to bid on"), judged.cancels.map { it.first.outcomeId to it.second })
+        // The finished scan has no line for m2 at all: down.
+        val done = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now)
+        assertEquals(listOf("m2-over" to "No longer a bid to post"), done.cancels.map { it.first.outcomeId to it.second })
+    }
+
+    @Test
+    fun `bids wanted that can't go up say why - the most bids, the most dollars, the wallet`() {
+        val wanted = listOf(post("a-over", 0.50), post("b-over", 0.30, 1_666), post("c-over", 0.40, 1_250))
+        assertEquals(mapOf(MakerPlan.MAX_BIDS_REACHED.format(1) to 2), MakerPlan.plan(wanted, emptyList(), rules.copy(maxBids = 1), now).waiting)
+        assertEquals(mapOf(MakerPlan.MAX_DOLLARS_REACHED.format("$10.00") to 1), MakerPlan.plan(wanted, emptyList(), rules.copy(maxDollars = 10.0), now).waiting)
+        assertEquals(mapOf(MakerPlan.BUDGET_REACHED to 2), MakerPlan.plan(wanted, emptyList(), rules, now, budget = 6.0).waiting)
+        assertTrue(MakerPlan.plan(wanted, emptyList(), rules, now).waiting.isEmpty())
+    }
+
+    @Test
+    fun `the desk on a running scan posts the lines it has and leaves the other bids up`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        d.cycle(listOf(line("m1-over"), line("m2-over", m = market("m2"))), rules, null, 50.0, 100.0)
+        assertEquals(2, novig.orders.size)
+        now += 60_000
+        // A new scan has priced m3 so far: it's posted, and the two bids it hasn't judged stay up.
+        val r = d.cycle(listOf(line("m3-over", m = market("m3"))), rules, null, 50.0, 100.0, partial = true)
+        assertEquals(1, r.placed)
+        assertEquals(0, r.cancelled)
+        assertTrue(r.partial)
+        assertEquals(3, d.bids().count { it.resting })
+        // The same pass on a finished scan takes the two down.
+        val f = d.cycle(listOf(line("m3-over", m = market("m3"))), rules, null, 50.0, 100.0)
+        assertEquals(2, f.cancelled)
+        assertEquals(1, d.bids().count { it.resting })
+    }
+
+    @Test
+    fun `a running scan's lines are bid on with the last scan's Novig book (the bid comes from the fair), never one older than 20 minutes or a league still waiting`() {
+        val start = now + 6 * 3_600_000L
+        val event = com.tjshea.vigilant.data.novig.NovigEvent("e1", "FOOTBALL", "NFL", com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME, "A @ B", start)
+        fun opp(id: String, bookAt: Long?, league: String = "NFL") = com.tjshea.vigilant.data.scanner.Opportunity(
+            league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(league)!!, event = event, market = market(id),
+            outcome = market(id).outcomes.first(), marketLabel = "Player Receiving Yards", kind = com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP,
+            selection = "Player Over 50.5", fair = null, fairProbability = 0.52, quote = null, ladder = emptyList(), depth = null, suggestedStake = null,
+            novigWidth = null, bookFetchedAtMs = bookAt, fairUpdatedMs = now - 30_000, refEvent = null, lineKey = null, target = null, fairAsOfMs = now - 30_000,
+        )
+        val scanStart = now - 60_000
+        val result = com.tjshea.vigilant.data.scanner.ScanResult(
+            games = emptyList(),
+            opportunities = listOf(
+                opp("fresh", now - 5_000),
+                // Read by the last scan, 9 minutes ago: still judged (only the offer and the best bid come from it).
+                opp("lastscan", now - 9 * 60_000),
+                opp("ancient", now - 21 * 60_000),
+                opp("never", null),
+                opp("waiting", now - 5_000, league = "MLB"),
+            ),
+            stats = com.tjshea.vigilant.data.scanner.ScanStats(0, 0, 0, 0, 0),
+            computedAtMs = now, freshSinceMs = scanStart,
+            waitingFor = setOf(com.tjshea.vigilant.data.scanner.ScanResult.waitKey("MLB", props = true)),
+        )
+        val settings = ScanSettings(leagues = setOf("NFL", "MLB"))
+        val lines = MakerLines.from(result, settings, now)
+        assertEquals(listOf("fresh-over", "lastscan-over"), lines.map { it.outcomeId })
+        assertEquals(now - 9 * 60_000, lines[1].bookAtMs)
+    }
 }
