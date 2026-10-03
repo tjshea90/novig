@@ -61,8 +61,9 @@ def prep(d):
     c = win.groupby('marketId').pA.agg(['median', 'size'])
     close_a = c[c['size'] >= 3]['median']
     d = d[d.marketId.isin(close_a.index) & (d.ts < d.cut)].copy()
-    d['t'] = d.ts.astype('int64') / 3.6e12   # hours
-    d['cutH'] = d.cut.astype('int64') / 3.6e12
+    epoch = pd.Timestamp('2026-01-01', tz='UTC')
+    d['t'] = (d.ts - epoch) / pd.Timedelta(hours=1)   # hours
+    d['cutH'] = (d.cut - epoch) / pd.Timedelta(hours=1)
     return d, close_a, a_won
 
 
