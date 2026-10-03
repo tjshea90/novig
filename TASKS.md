@@ -3722,3 +3722,9 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
   Built (v0.58.1 code 101, RESEARCH.md §76.4): StudyExport (nullable Extra key; 3 PROPS splits; WHAT IF section; READ ME item 7 and caveat; `pageRead` so an unchecked bet is "no verdict", not NO_SHARP).
   Proofs: ScanStudyPropsTest (6; real SharpVeto verdicts through observeBooks, results/CLV in the groups, bands, README); 11 mutants killed; floor 1,925 passed, 23 skipped. BS3 ticks when released.
 
+## Tj, 2026-10-03 ~23:10Z: "Confirm that all the betting data is being logged even when the app is backgrounded but in auto scan background mode."
+
+- [ ] BT1 Trace every way the scan study gets its data (the CNO list read, the wide read, the green check's book pages, Vigilant's scan, grading/closes, the flush to disk) through a background auto-scan cycle (screen off / app backgrounded / service or alarm or worker waking the process), and say for each whether it runs and is written to disk before the process can be frozen or killed.
+- [ ] BT2 Fix whatever isn't (a log step that waits on a timer the background cycle won't outlive, a flush only on the foreground path, a read that only happens while a screen is watching), and pin it with a test that runs a background cycle and reads the journal (failing-first, mutants).
+- [ ] BT3 Full floor, ship if code changed (version 0.58.2), answer Tj plainly: confirmed or not, what was wrong, what changed.
+
