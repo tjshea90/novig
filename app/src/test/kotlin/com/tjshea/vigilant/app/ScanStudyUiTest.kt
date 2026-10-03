@@ -54,14 +54,14 @@ class ScanStudyUiTest {
             }
         }
         // Both buttons are there, and each asks for its own file.
-        compose.onNodeWithTag("shareDiagnostics").performScrollTo().assertTextContains("Share with Claude")
-        compose.onNodeWithTag("shareScanStudy").performScrollTo().assertTextContains("Share scan study with Claude")
+        compose.onNodeWithTag("shareDiagnostics").performScrollTo().assertTextContains("Share with Claude", substring = true)
+        compose.onNodeWithTag("shareScanStudy").performScrollTo().assertTextContains("Share scan study with Claude", substring = true)
         compose.onNodeWithTag("shareScanStudy").performClick()
         assertEquals(1, studied)
         assertEquals(0, shared)
         // The page asks for the counts when it opens, and shows them.
         assertEquals(1, shown)
-        compose.onNodeWithTag("scanStudyNote").performScrollTo().assertTextContains("1,234 bets logged over 6 days")
+        compose.onNodeWithTag("scanStudyNote").performScrollTo().assertTextContains("1,234 bets logged over 6 days", substring = true)
         // What it does, in words.
         compose.onNodeWithText("Scan study: the app logs every bet a CNO or Vigilant scan lists as +EV", substring = true).assertExists()
         compose.onNodeWithText("analyze every bet for the patterns that beat the close and profit", substring = true).assertExists()

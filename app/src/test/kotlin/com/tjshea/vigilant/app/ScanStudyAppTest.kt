@@ -103,7 +103,7 @@ class ScanStudyAppTest {
     }
 
     @Test
-    fun `a finished Vigilant scan's +EV bets go into the same log, and a bet CNO listed too is one record with looks from both`() = runBlocking {
+    fun `a finished Vigilant scan's +EV bets go into the same log, and a bet CNO listed too is one record with looks from both`() = runBlocking<Unit> {
         val clock = SampleScan.NOW
         val dir = File(app.cacheDir, "study-test").also { it.deleteRecursively() }
         val study = ScanStudy(StudyJournal(dir), clock = { clock }, version = { "0.57.0" }, flushEveryMs = 0)
