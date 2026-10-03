@@ -51,6 +51,7 @@ def main():
     ap.add_argument('--from', dest='start', default=None)
     ap.add_argument('--to', dest='end', default=None)
     ap.add_argument('--cache', default=os.path.join(os.environ.get('TMPDIR', '/tmp'), 'novig-trades'))
+    ap.add_argument('--save', default=None, help='pickle every taker order with its gift and flow here, for more slicing')
     a = ap.parse_args()
     with urllib.request.urlopen(f'{s.DATA}/index.json', timeout=30) as r:
         days = [x for x in json.load(r)['dates'] if (not a.start or x >= a.start) and (not a.end or x <= a.end)]
@@ -99,6 +100,8 @@ def main():
     tk['clv¢'] = 100 * (tk.close - tk.p)
     tk['roi'] = 100 * (tk.won / tk.p - 1)
     base = tk[tk.nPrev60 >= 3]
+    if a.save:
+        tk.to_pickle(a.save)
     print(f'{len(base):,} orders with 3+ trades in the hour before (a level to compare with)')
 
     print('\n== 0. Every taker, by how far under its own side\'s recent level it bought (gift¢)')
