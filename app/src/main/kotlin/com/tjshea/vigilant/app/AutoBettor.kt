@@ -156,9 +156,7 @@ class AutoBettor(
         // such price isn't placed (its edge is whatever it was a while ago).
         val all = AlertPicks.cnoChecked(state, rules.minEv, now)
         // The trap guard's first rule: games too far off were left out of the candidates (their books weren't even read); counted here.
-        AlertPicks.tooEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n ->
-            TrapGuard.early(now + (settings.trapEarlyHours + 1) * 3_600_000L, now, settings.trapEarlyHours)?.let { skipped[it] = n }
-        }
+        AlertPicks.tooEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.earlyReason(settings.trapEarlyHours)] = n }
         val passing = ArrayList<AlertPicks.CnoChecked>()
         for (item in all.distinctBy { it.pick.row.key }.sortedByDescending { it.shown.ev }) {
             val row = item.pick.row

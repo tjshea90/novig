@@ -49,8 +49,11 @@ object TrapGuard {
         if (hours <= 0 || startsAtMs == null) return null
         val left = startsAtMs - now
         if (left <= hours * 3_600_000L) return null
-        return "it starts in more than ${hours} h (trap guard: bets this early lost to the close)"
+        return earlyReason(hours)
     }
+
+    /** [early]'s words for [hours] (one wording per setting, so the auto-bet's report counts them together). */
+    fun earlyReason(hours: Int): String = "it starts in more than $hours h (trap guard: bets this early lost to the close)"
 
     /** Whether [startsAtMs] is past the guard's window at [now] (the cards' and Bids tab's note). */
     fun isEarly(startsAtMs: Long?, now: Long, hours: Int): Boolean = early(startsAtMs, now, hours) != null
