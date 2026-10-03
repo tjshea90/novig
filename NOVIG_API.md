@@ -598,3 +598,34 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   "locked": hidden from the Tracker's lists and stats while "Hide locked bets" is on (default), counted on their own card (bets locked and their
   share, profit locked = contracts × $0.01 − everything spent on both sides, its % of that).
 
+
+## 17. Make (post) orders: resting bids, expiry, cancel, fills (2026-10-03 ~02:00Z, docs re-read: Orders, Order lifecycle, Private stream, Book, Lifecycle, Fees, Maker Credit Program, Money; Tj: "figure out how to do make orders through the novig API … how long the make orders should be placed before they expire, and how to set this option in the novig API")
+
+- **Place a bid that only rests:** `POST /v3/orders {outcomeId, price, qty, tif: "PO", ttl, clientId}` (`trading` key, `place` bucket 256 burst / 8 a second).
+  `PO` = post only: "Rejected instead of taking": a price that would match a resting bid on the other outcome (at or above this outcome's offer,
+  `1 − best bid on the other side`, §7) is refused whole and nothing fills (it ends `REJECTED`; the refusal is a `reject` event, never an HTTP status).
+  **`ttl` (milliseconds) is "optional for `PO`"**: the order cancels itself when it runs out (a `cancel` with no `reason`; the `open` event carries
+  `expiresAt`, a listed order `expiresTs`). `GTT` + `ttl` also expires but can take; `GTC` rests until filled, cancelled or voided. So a maker bid is
+  **`PO` with a `ttl`**: it can never take by accident and it can't outlive the app watching it.
+- **What `201 {orderId, clientId}` means:** queued. `open` (private stream) = resting; `fill {price, qty, remaining}` (the traded price, can be better
+  than the limit; `remaining 0` = FILLED); a partly filled order stays `OPEN` ("track `remaining`"). `cancel` reasons: none (you, expiry, an admin),
+  `GO_LIVE`, `MARKET_CLOSED`, `SETTLED`, `NEUTRALIZED` (a cash-out).
+- **`GOLIVE` voids every resting order** (lifecycle channel; it can repeat). A pregame bid can't fill in play.
+- **No amend.** "Cancel the order. Then place a replacement. The replacement joins the back of its price level. A fill can land between the cancel and
+  the place. Size the replacement from the `cancel` event's `remaining`." Re-pricing a bid always loses its place in the queue.
+- **The queue is price, then time:** the book "lists the best price first. Within a price, it lists the earlier order first. The array order is the
+  queue." The public book (§5) lists every resting order (`order`, `price`, `qty`), so what sits ahead of a bid is readable before posting it.
+- **Read them back:** `GET /v3/orders?status=OPEN` (`market` / `event` / `outcome` filters; `read` bucket, 1 token; `trading::read` works),
+  `GET /v3/orders/{id}` (can 404 just after the 201), `GET /v3/account/orders` (the resting snapshot with the stream's `seq`, ETag; `trading` key,
+  `account` bucket), fills from `GET /v3/portfolio/fills?order=` (`taker: false` = a maker fill; `history` bucket, 8 + 1 per 50 rows), or live on
+  the private `orders` channel (1 token).
+- **Cancel:** `DELETE /v3/orders/{id}`; `DELETE /v3/orders?event=|market=|outcome=` cancels every resting order in that scope (`{canceled: n}`);
+  `DELETE /v3/orders/batch` (207 lists the ones already `FILLED` / `NOT_FOUND`). `cancel` bucket 256 burst / 16 a second. A `200` is queued: the
+  `cancel` event confirms. No route cancels by `clientId`.
+- **Fees:** the maker never pays. Pregame game markets charge the taker nothing either (`WHEN_LIVE`, §8). The Maker Credit (50% of the taker's fee)
+  is paid only on fills **in play**, so pregame bids earn none. **NFL and NCAAF futures:** taker fee 0.06·P(1−P) on every fill and a **70% maker credit
+  on every fill** (0.042·P(1−P) a contract: ~2% of the cost at even money), paid within 7 days. Members with a Market Maker Agreement are excluded.
+- **Money:** a bid the wallet can't cover is refused (`422 INSUFFICIENT_BALANCE`). The docs don't say whether a resting bid's cost is held from the
+  balance; treat it as held (the sum of resting bids ≤ the wallet). Every order is a buy, so a bid on each outcome of one market is two buys: both
+  filling holds both sides (a lock, §16). A bid of yours on one outcome and one on the other at prices summing to 1 or more would self-match (a wash).
+- **Not yet seen live:** the `PO` reject, `ttl` expiry and maker fills on Tj's subaccount. The first real bid is the test (QA, §1, can try it first).
