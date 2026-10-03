@@ -212,6 +212,29 @@ object MakerLines {
      * Each book behind [o]'s fair, devigged on its own the worst way for this side (the lowest of multiplicative, additive, power and Shin, as the
      * app's agreement check does: [com.tjshea.vigilant.data.scanner.Agreement]), one per book; only the sharp ones with [sharpOnly].
      */
+    /**
+     * The sides [MakerRules.novigMove] reads Novig's trades for (RESEARCH.md §72): moneylines, spreads and game totals that would otherwise be bid on (their
+     * kind switched on for bids, a sharp book in the fair, a price Novig offers, and every check [MakerQuote.precheck] makes). Empty with the rule off.
+     */
+    fun moveWanted(lines: List<MakerLine>, rules: MakerRules, now: Long): List<MakerLine> = if (!rules.novigMove) emptyList() else lines.filter {
+        it.kind in com.tjshea.vigilant.data.scanner.TrapGuard.MOVE_KINDS && it.kind in rules.kinds && it.offer != null && it.sharpFairs.isNotEmpty() &&
+            MakerQuote.precheck(it, rules, now) is MakerQuote.Pre.Price
+    }
+
+    /**
+     * [lines] with what [trades] (Novig's newest, by market) say about each side in [wanted] at Novig's price to take it now ([MakerLine.offer]): the move
+     * rule judges the price the market shows, not the bid under it. A market with no trades read is left as it was (judged without the rule).
+     */
+    fun withMoves(lines: List<MakerLine>, wanted: List<MakerLine>, trades: Map<String, List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade>>, now: Long): List<MakerLine> {
+        if (wanted.isEmpty()) return lines
+        val ids = wanted.mapTo(HashSet()) { it.outcomeId }
+        return lines.map { l ->
+            val got = trades[l.marketId]
+            val offer = l.offer
+            if (l.outcomeId !in ids || got == null || offer == null) l else l.copy(novigMove = com.tjshea.vigilant.data.scanner.TrapGuard.move(got, l.outcomeId, offer, now))
+        }
+    }
+
     fun bookFairs(o: com.tjshea.vigilant.data.scanner.Opportunity, sharpOnly: Boolean): List<Double> {
         val fair = o.fair ?: return emptyList()
         val side = o.referenceIndex ?: return emptyList()

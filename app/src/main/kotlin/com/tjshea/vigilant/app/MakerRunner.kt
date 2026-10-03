@@ -37,6 +37,9 @@ class MakerRunner(
     private val scan: () -> com.tjshea.vigilant.data.scanner.ScanRun = { c.runner.state.value },
     /** The desk on the Vigilant wallet; null when betting through the API isn't set up. */
     private val desk: () -> MakerDesk? = { c.makerDesk() },
+    /** A Novig market's newest trades (public, one request): what the trap guard's move rule reads before a game line gets a bid ([withMoves]). */
+    private val recentTrades: suspend (String) -> List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade> =
+        { id -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { c.novig.trades(id) } },
 ) {
     /** What the Make tab shows: the last pass and the bids each line would get now. */
     data class Status(
@@ -60,24 +63,19 @@ class MakerRunner(
     private val moveReads = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade>>>()
 
     /**
-     * [lines] with what Novig's own trades say about each game-line side about to get a bid ([MakerRules.novigMove], RESEARCH.md §72): one public
-     * request per market, kept [MOVE_READ_MS], at most [MAX_MOVE_READS] a pass ([read] false: only what's kept, no request; the tab's preview). A read
-     * that fails stops nothing (that line is judged without it). Only moneylines, spreads and game totals that would otherwise be bid on are read:
-     * game lines are off for bids by default, so by default this reads nothing.
+     * [lines] with what Novig's own trades say about each game-line side about to get a bid ([MakerRules.novigMove], [MakerLines.moveWanted], RESEARCH.md
+     * §72): one public request per market, kept [MOVE_READ_MS], at most [MAX_MOVE_READS] a pass ([read] false: only what's kept, no request; the tab's
+     * preview). A read that fails stops nothing (that line is judged without it). Game lines are off for bids by default, so by default this reads nothing.
      */
     private suspend fun withMoves(lines: List<com.tjshea.vigilant.data.novig.trading.maker.MakerLine>, rules: MakerRules, now: Long, read: Boolean):
         List<com.tjshea.vigilant.data.novig.trading.maker.MakerLine> {
-        if (!rules.novigMove) return lines
-        val wanted = lines.filter {
-            it.kind in com.tjshea.vigilant.data.scanner.TrapGuard.MOVE_KINDS && it.kind in rules.kinds && it.offer != null && it.sharpFairs.isNotEmpty() &&
-                MakerQuote.precheck(it, rules, now) is MakerQuote.Pre.Price
-        }
+        val wanted = MakerLines.moveWanted(lines, rules, now)
         if (wanted.isEmpty()) return lines
         moveReads.entries.removeIf { now - it.value.first > MOVE_READ_MS }
         if (read) {
             for (id in wanted.sortedBy { it.startsTs }.map { it.marketId }.distinct().filter { !moveReads.containsKey(it) }.take(MAX_MOVE_READS)) {
                 val trades = try {
-                    c.novig.trades(id)
+                    recentTrades(id)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -87,11 +85,7 @@ class MakerRunner(
                 moveReads[id] = now to trades
             }
         }
-        val ids = wanted.mapTo(HashSet()) { it.outcomeId }
-        return lines.map { l ->
-            val got = moveReads[l.marketId]?.second
-            if (l.outcomeId !in ids || got == null) l else l.copy(novigMove = com.tjshea.vigilant.data.scanner.TrapGuard.move(got, l.outcomeId, l.offer!!, now))
-        }
+        return MakerLines.withMoves(lines, wanted, moveReads.mapValues { it.value.second }, now)
     }
 
     /**
