@@ -101,6 +101,8 @@ data class MakerLine(
     val source: String,
     val basis: FairBasis? = null,
     val gameUrl: String? = null,
+    /** When Novig's book behind [offer] and [bestBid] was read (it can be the last scan's: [MakerLines.MAX_BOOK_AGE_MS]). */
+    val bookAtMs: Long? = null,
 ) {
     val marketId: String get() = market.marketId
 }
@@ -120,22 +122,34 @@ object MakerLines {
     }
 
     /**
-     * [result]'s priced sides in [settings]' leagues at [now], pregame, as [MakerLine]s; on a scan still running, only the leagues whose fair-odds
-     * sources have all answered (as the feed holds them back) and Novig prices read by this scan.
+     * The oldest Novig book a line may be judged with. A bid's price comes from the fair alone; Novig's book only says whether the bid would cross
+     * its offer (a post-only bid that would is refused whole, nothing fills) and what's already bid. So a scan still reading Novig's books can bid on
+     * every line whose fair odds are in, with the book its last scan read, instead of waiting minutes for each book to be read again (Tj, 2026-10-03:
+     * "I had auto make bids turned on, but it didn't actually make any bids by itself": a scan took 8 minutes and bids waited for its end).
+     */
+    const val MAX_BOOK_AGE_MS = 20 * 60_000L
+
+    /**
+     * [result]'s priced sides in [settings]' leagues at [now], pregame, as [MakerLine]s: on a scan still running, the leagues whose fair-odds sources
+     * have all answered (as the feed holds them back), each with the newest Novig book read in the last [MAX_BOOK_AGE_MS]. Each book's own fair
+     * ([bookFairs], a devig per book) is worked out only for the kinds of bet bids are on (a busy slate prices 13,000 sides).
      */
     fun from(result: com.tjshea.vigilant.data.scanner.ScanResult?, settings: ScanSettings, now: Long): List<MakerLine> {
         result ?: return emptyList()
         return result.opportunities.filter { o ->
             o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
-                (result.freshSinceMs == null || (o.bookFetchedAtMs ?: 0L) >= result.freshSinceMs) &&
+                o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= MAX_BOOK_AGE_MS &&
                 (result.waitingFor.isEmpty() || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
         }.map { o ->
+            val kind = kindOf(o)
+            val judged = kind in settings.makerKinds
             MakerLine(
                 market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
-                eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
+                eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kind, fair = o.fairProbability,
                 fairAsOfMs = o.fairAsOfMs, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
-                basis = FairBasis.of(o), bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true),
+                basis = FairBasis.of(o), bookFairs = if (judged) bookFairs(o, sharpOnly = false) else emptyList(),
+                sharpFairs = if (judged) bookFairs(o, sharpOnly = true) else emptyList(), bookAtMs = o.bookFetchedAtMs,
             )
         }
     }
