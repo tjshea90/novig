@@ -87,7 +87,7 @@ class MakerRunner(
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
             val report = desk.cycle(
                 MakerLines.from(result, s, now), MakerRules.of(s), stop, s.apiMaxPerDay, wallet,
-                denied = c.makerDenials.outcomes(), autoPost = s.maker,
+                denied = c.makerDenials.outcomes(clock()), autoPost = s.maker,
             )
             notifyFills(report.fills, desk.bids())
             if (report.placed > 0 || report.cancelled > 0 || report.fills.isNotEmpty()) {
@@ -121,7 +121,7 @@ class MakerRunner(
         val resting = bids.filter { it.resting }.mapTo(HashSet()) { it.outcomeId }
         val busy = bids.filter { it.active && !it.resting }.mapTo(HashSet()) { it.outcomeId }
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - resting + busy
-        val denied = c.makerDenials.outcomes()
+        val denied = c.makerDenials.outcomes(clock())
         val run = scan()
         val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
@@ -138,7 +138,7 @@ class MakerRunner(
         val desk = desk() ?: return "Betting through Novig's API isn't set up (Settings › Betting & Novig account)"
         val s = c.currentSettings()
         if (s.paused) return "Scanning is paused: resume it to post bids"
-        if (outcomeId in c.makerDenials.outcomes()) return MakerDesk.DENIED
+        if (outcomeId in c.makerDenials.outcomes(clock())) return MakerDesk.DENIED
         val now = clock()
         val bids = desk.bids()
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } +

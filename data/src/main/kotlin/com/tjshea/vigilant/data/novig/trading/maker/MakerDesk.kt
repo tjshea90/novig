@@ -122,10 +122,10 @@ class MakerDenials(file: File, private val clock: () -> Long = System::currentTi
     private val store = JsonFileStore(file, ListSerializer(DeniedBid.serializer()), { emptyList() })
     val flow get() = store.flow
 
-    /** The sides denied now (games not started). */
-    suspend fun all(): List<DeniedBid> = store.read().filter { it.startsTs > clock() }
+    /** The sides denied at [now] (games not started). */
+    suspend fun all(now: Long = clock()): List<DeniedBid> = store.read().filter { it.startsTs > now }
 
-    suspend fun outcomes(): Set<String> = all().mapTo(HashSet()) { it.outcomeId }
+    suspend fun outcomes(now: Long = clock()): Set<String> = all(now).mapTo(HashSet()) { it.outcomeId }
 
     suspend fun deny(outcomeId: String, startsTs: Long, selection: String) {
         val now = clock()

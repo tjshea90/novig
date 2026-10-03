@@ -192,14 +192,14 @@ class MakerAppTest {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
         app.container.settingsStore.update { it.copy(maker = false) }
-        app.container.makerDenials.all().forEach { app.container.makerDenials.undo(it.outcomeId) }
+        app.container.makerDenials.all(now).forEach { app.container.makerDenials.undo(it.outcomeId) }
         val run = runner(novig)
         run.preview()
         val post = run.status.value.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().first()
         val intent = android.content.Intent(app, MakerActionReceiver::class.java).setAction(MakerNotes.ACTION_DENY)
             .putExtra(MakerNotes.EXTRA_OUTCOME, post.line.outcomeId).putExtra(MakerNotes.EXTRA_STARTS, post.line.startsTs).putExtra(MakerNotes.EXTRA_SELECTION, post.line.selection)
         MakerActionReceiver().onReceive(app, intent)
-        withTimeout(10_000) { while (post.line.outcomeId !in app.container.makerDenials.outcomes()) delay(50) }
+        withTimeout(10_000) { while (post.line.outcomeId !in app.container.makerDenials.outcomes(now)) delay(50) }
         val again = run.preview().first { it.line.outcomeId == post.line.outcomeId }
         assertEquals(com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.DENIED, (again as com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Skip).why)
         assertEquals(com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.DENIED, run.post(post.line.outcomeId))
@@ -207,7 +207,7 @@ class MakerAppTest {
         assertNull(run.post(post.line.outcomeId))
         val id = novig.orders.keys.single()
         assertNull(run.cancel(id))
-        assertTrue(post.line.outcomeId in app.container.makerDenials.outcomes())
+        assertTrue(post.line.outcomeId in app.container.makerDenials.outcomes(now))
     }
 
     @Test
