@@ -67,12 +67,13 @@ def trades_of(wallet, pages=8):
 
 
 def markets(cids):
-    info = {}
     cids = list(cids)
-    for i in range(0, len(cids), 40):
-        q = '&'.join(f'condition_ids={c}' for c in cids[i:i + 40])
-        for closed in ('true', 'false'):
-            for m in get(f'{GAMMA}/markets?{q}&closed={closed}&limit=100') or []:
+    urls = [f'{GAMMA}/markets?' + '&'.join(f'condition_ids={c}' for c in cids[i:i + 40]) + f'&closed={closed}&limit=100'
+            for i in range(0, len(cids), 40) for closed in ('true', 'false')]
+    info = {}
+    with ThreadPoolExecutor(8) as ex:
+        for ms in ex.map(get, urls):
+            for m in ms or []:
                 info[m['conditionId']] = m
     return info
 
@@ -109,6 +110,8 @@ def main():
     rows = [dict(t, wallet=w) for w, ts in allt.items() for t in ts if t.get('side') == 'BUY']
     t = pd.DataFrame(rows)
     print(f'{len(t):,} buys fetched')
+    # Each account's newest buys only (4x the sample, before the pregame and resolved filters): the market lookups stay in the thousands.
+    t = t.sort_values('timestamp', ascending=False).groupby('wallet').head(4 * a.per)
     info = markets(set(t.conditionId))
     t['start'] = t.conditionId.map(lambda c: pd.Timestamp(info[c]['gameStartTime']).timestamp()
                                    if c in info and info[c].get('gameStartTime') else np.nan)
