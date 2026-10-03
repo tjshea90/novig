@@ -174,7 +174,11 @@ object DiagnosticsFile {
                     (h.status.entries.sortedBy { it.key }.joinToString(", ") { "${it.key}×${it.value}" } + h.kinds.entries.joinToString("") { ", ${it.key}×${it.value}" }).ifEmpty { "none" },
             )
             h.paths.entries.sortedByDescending { it.value.calls }.take(MAX_PATHS).forEach { (path, p) ->
-                o.appendLine("    $path · ${p.calls} calls · ${p.errors} failed · ${p.totalMs / maxOf(p.calls, 1)} ms average to first byte" + (p.lastStatus?.let { " · last HTTP $it" } ?: ""))
+                o.appendLine(
+                    "    $path · ${p.calls} calls · ${p.errors} failed" +
+                        (p.fails.takeIf { it.isNotEmpty() }?.entries?.sortedByDescending { it.value }?.joinToString(", ", " (", ")") { (k, n) -> if (k.toIntOrNull() != null) "HTTP $k×$n" else "$k×$n" } ?: "") +
+                        " · ${p.totalMs / maxOf(p.calls, 1)} ms average to first byte" + (p.lastStatus?.let { " · last HTTP $it" } ?: ""),
+                )
             }
             h.lastError?.let { o.appendLine("    last failure ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}: ${clean(it)}") }
             h.lastLimit?.let { o.appendLine("    last rate limit ${h.lastLimitAtMs?.let { t -> Format.age(t, now) } ?: ""}: ${clean(it)} (${h.limits} in all)") }

@@ -5,7 +5,14 @@ import kotlinx.serialization.Serializable
 
 /** One endpoint's figures at a host ("/v1/sports/{sport}/odds": [NetShape]). */
 @Serializable
-data class PathStat(val calls: Long = 0, val errors: Long = 0, val totalMs: Long = 0, val lastStatus: Int? = null)
+data class PathStat(
+    val calls: Long = 0,
+    val errors: Long = 0,
+    val totalMs: Long = 0,
+    val lastStatus: Int? = null,
+    /** How this endpoint's calls failed: an HTTP status ("500") or a kind ("timeout"), counted (Tj's v0.54.0 file: NFL props failed 41 of 94, how?). */
+    val fails: Map<String, Long> = emptyMap(),
+)
 
 /** One hour's calls to one host, for the trend over the last two days. */
 @Serializable
@@ -77,7 +84,8 @@ class NetStats(private val store: JsonFileStore<NetBook>, private val clock: () 
             val bps = if (bytes >= BPS_MIN_BYTES && totalMs > 0) (bytes * 1000 / totalMs).toInt().coerceAtLeast(1) else null
             val hours = (h.hours + (hour to HourStat(oldHour.calls + 1, oldHour.errors + if (failed) 1 else 0, oldHour.ms + ttfbMs, oldHour.bytes + bytes)))
                 .filterKeys { (it.toLongOrNull() ?: 0L) > now / HOUR_MS - HOURS_KEPT }
-            val paths = (h.paths + (shape to PathStat(path.calls + 1, path.errors + if (failed) 1 else 0, path.totalMs + ttfbMs, status ?: path.lastStatus)))
+            val why = if (!failed) null else status?.toString() ?: kind ?: "other"
+            val paths = (h.paths + (shape to PathStat(path.calls + 1, path.errors + if (failed) 1 else 0, path.totalMs + ttfbMs, status ?: path.lastStatus, if (why != null) path.fails.merge(why) else path.fails)))
                 // Full: the quietest of the others goes, never the one just called, so an endpoint that starts failing can't be kept out by older busy ones.
                 .let { m -> if (m.size > MAX_PATHS) m - m.entries.filter { it.key != shape }.minByOrNull { it.value.calls }!!.key else m }
             val limited = status == 429 || (status == 403 && limit != null)
@@ -142,7 +150,7 @@ class NetStats(private val store: JsonFileStore<NetBook>, private val clock: () 
                 recentMs = (y.recentMs + x.recentMs).takeLast(RECENT), recentBps = (y.recentBps + x.recentBps).takeLast(RECENT_BPS),
                 paths = (y.paths.keys + x.paths.keys).associateWith { k ->
                     val p = y.paths[k] ?: PathStat(); val q = x.paths[k] ?: PathStat()
-                    PathStat(p.calls + q.calls, p.errors + q.errors, p.totalMs + q.totalMs, q.lastStatus ?: p.lastStatus)
+                    PathStat(p.calls + q.calls, p.errors + q.errors, p.totalMs + q.totalMs, q.lastStatus ?: p.lastStatus, p.fails.sumWith(q.fails))
                 },
                 hours = (y.hours.keys + x.hours.keys).associateWith { k ->
                     val p = y.hours[k] ?: HourStat(); val q = x.hours[k] ?: HourStat()
