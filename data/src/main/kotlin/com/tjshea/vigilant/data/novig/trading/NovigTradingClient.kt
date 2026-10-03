@@ -69,22 +69,46 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
      * [clientId] is echoed on the order and its fills and is what finds it again after a lost answer (Novig never checks it for uniqueness).
      * It must be a UUID: Novig parses it as one (Tj's first real order, 2026-09-29: "clientId: UUID parsing failed ... found `v`" for
      * "vigilant-<uuid>"), so [newClientId] makes them and anything else is refused here, before a request is sent.
+     * [ttlMs]: how long the order may rest before Novig cancels it (NOVIG_API.md §17: "Required for `GTT`, optional for `PO`, forbidden otherwise");
+     * a maker bid is `PO` (post only: refused rather than taking) with one.
      */
-    open suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+    open suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long? = null): String {
         require(isUuid(clientId)) { "clientId must be a UUID (Novig parses it as one): $clientId" }
+        require(ttlMs == null || (tif == "PO" || tif == "GTT") && ttlMs > 0) { "ttl is only for PO and GTT orders, and positive: $tif $ttlMs" }
+        require(tif != "GTT" || ttlMs != null) { "a GTT order needs a ttl" }
         val body = json.encodeToString(
             JsonObject.serializer(),
             JsonObject(
-                mapOf(
-                    "outcomeId" to JsonPrimitive(outcomeId),
-                    "price" to JsonPrimitive(priceText(price)),
-                    "qty" to JsonPrimitive(qty),
-                    "tif" to JsonPrimitive(tif),
-                    "clientId" to JsonPrimitive(clientId),
-                ),
+                buildMap {
+                    put("outcomeId", JsonPrimitive(outcomeId))
+                    put("price", JsonPrimitive(priceText(price)))
+                    put("qty", JsonPrimitive(qty))
+                    put("tif", JsonPrimitive(tif))
+                    ttlMs?.let { put("ttl", JsonPrimitive(it)) }
+                    put("clientId", JsonPrimitive(clientId))
+                },
             ),
         )
         return json.decodeFromString(AcceptedDto.serializer(), signer.call("POST", "/v3/orders", body = body)).orderId
+    }
+
+    /**
+     * Asks Novig to cancel one resting order (`DELETE /v3/orders/{id}`, the `cancel` bucket). The answer only says the cancel was queued, with the
+     * order's status at that moment ([NovigOrder.status]: `FILLED` means it was too late); null when Novig has no such order (404: it ended and left).
+     */
+    open suspend fun cancelOrder(orderId: String): String? = try {
+        json.decodeFromString(CancelDto.serializer(), signer.call("DELETE", "/v3/orders/$orderId")).status
+    } catch (e: NovigApiException) {
+        if (e.status == 404) null else throw e
+    }
+
+    /**
+     * Cancels every resting order of the subaccount in one market, one event, or (both null) everywhere (`DELETE /v3/orders`): how many cancels
+     * Novig queued.
+     */
+    open suspend fun cancelOrders(marketId: String? = null, eventId: String? = null): Int {
+        val query = listOfNotNull(eventId?.let { "event=" + percent(it) }, marketId?.let { "market=" + percent(it) }).joinToString("&").ifEmpty { null }
+        return json.decodeFromString(CancelAllDto.serializer(), signer.call("DELETE", "/v3/orders", query)).canceled
     }
 
     /** The order, or null while Novig answers 404 (it can, right after the 201). */
@@ -186,6 +210,12 @@ private data class BalanceDto(val balance: String)
 
 @Serializable
 private data class AcceptedDto(val orderId: String, val clientId: String? = null)
+
+@Serializable
+private data class CancelDto(val orderId: String = "", val status: String = "")
+
+@Serializable
+private data class CancelAllDto(val canceled: Int = 0)
 
 @Serializable
 private data class OrderDto(
