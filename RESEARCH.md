@@ -4395,3 +4395,40 @@ What marks a trap (a sharp on the other side, the rest of the market lagging), w
 - The Polymarket follow result is against Polymarket's own close, on 35 accounts' newer trades; whether Novig's close follows is untested.
 - The bid study's fair is a stand-in (w); game-line bids are off by default, so the move rule for bids is protection for when Tj turns them on.
 
+
+## 73. Another AI's CLV/EV report, checked claim by claim (2026-10-03 ~18:00Z; Tj: "Attached is a report from another AI. If the information is accurate, research and see if any of the information can improve the logic, accuracy, or profitability of vigilant"; the report: `research/external_report_2026-10-03_clv_ev.md`)
+
+**Verdict.** The report's general principles are sound and Vigilant already does them (de-vigged fair from sharp books, CLV against the de-vigged
+close, 2.5-3% edges, fractional Kelly, no tailing, no parlays). Its two concrete, testable timing claims are **false on Novig** (no late drift toward
+favorites; "under a tick in the last 2 h" is about one tick), its Novig market-making advice is **wrong for pregame Novig** (no maker credit pregame,
+game-line quotes at Novig's own price earn ~0 after adverse selection), and its escrow claim **contradicts Tj's own wallet**. Its "edges over 5% are your
+error" rule is **contradicted by the 48,394-match soccer study** at the close and only half true early, so it isn't adopted as a hard rule; Tj's own bets
+will test it (`tj_bets_by_lead.py` now splits by shown edge and by Novig's price over the best book). **No app logic changed**: nothing new in the
+report survived testing that Vigilant doesn't already do. Two proposals for Tj (not built): a per-game exposure cap, and (from §72.4) a Polymarket
+sharp-wallet watch.
+
+| # | Report's claim | Verdict | Evidence | For Vigilant |
+| :- | :- | :- | :- | :- |
+| 1 | Beating the no-vig close predicts profit; ~50 bets to show it | Accurate (50 bets only at a ~5% CLV) | Buchdahl 132,645 matches (§72.1); §69.1 | Already the scoreboard (§41-§42) |
+| 2 | De-vig the close before CLV | Accurate | — | Already: CLV = de-vigged close fair ÷ cost − 1 (`ClosingLine.clv`) |
+| 3 | Pinnacle's no-vig close is the reference | Accurate for main markets | §72.2: Pinnacle close ≈ average close (Brier 0.21872 vs 0.21876) | Pinnacle closes from ParlayAPI are one close source |
+| 4 | Pass below ~2%; pros 3-5% | Consistent | §65-§66: Tj's 1-2% bets showed no edge | Presets 2.5% / 4% |
+| 5 | Edges >5% are a red flag ("your error") | **Half true** | §72.2 B: vs the consensus at the close 5-8% kept 101%, 12%+ 104% (ROI +18.6%); early 8-12% kept 59%. bet365's own big gifts were traps | Not a hard rule. The trap guard already keeps bets late, where big edges held; `AutoBet.MAX_SANE_EV` (15%) catches data errors; Tj's own split added |
+| 6 | Steam/RLM following loses | Accurate | Pinnacle article; §72.4 | Not built (§72) |
+| 7 | The trap is adverse selection on resting quotes | Accurate | §71, §72.2-§72.3 | Trap guard, sharp veto bar, game-line bid move rule |
+| 8 | Closers beat openers (NFL 65.9% vs 63.5%) | Consistent | §71.2 Tj's bets, §72.2 B | 6 h trap guard |
+| 9 | Novig: CFTC market since 2026-08-04; pregame no fee; live taker 0.03·P(1−P); maker credit half the fee | Fees accurate (credit only in play) | NOVIG_API.md §8, §17; `Fees.kt` | Already modeled |
+| 10 | Tailing sharps has no support | Mostly accurate | §72.4: leaderboard copy 0.00¢; but the best quarter by past CLV copied 1 min later kept +1.0¢ on Polymarket | Wallet watch proposed (§72.4) |
+| 11 | "Bet favorites early, underdogs late" (MLB lines drift −3.4¢ to favorites in the last 2 h; +180 dogs move toward the favorite 54%) | **False on Novig** | `novig_drift_study.py` (9,127 markets): game-line favorites drift **−0.08¢** [−0.13, −0.03] in the last 2 h (MLB −0.03¢ [−0.10, +0.03]); +180 dogs moved toward the favorite **33%**, away 49%; Pinnacle soccer early→close: favorites +0.03 to +0.23 points, dogs 50/50 | No timing rule by favorite/underdog |
+| 12 | "Final two hours move less than one tick" on prediction markets | **Partly** | Novig game lines: median move from 2 h to the close is one step (0.5¢); only 32% move less than a step (props 28%) | Late bets still see moves; nothing to change |
+| 13 | Resting Make orders sit in escrow; editable | **Wrong for the API** | Tj's v0.53.0 file: $12.54 resting on an $8.32 wallet, balance unchanged; NOVIG_API.md §17: no amend (cancel + re-post) | NOVIG_API.md §17 now says so plainly |
+| 14 | Market-make both sides near fair in liquid NFL sides/totals and collect the credit | **Wrong for pregame Novig** | No maker credit pregame (§17); game-line bids at Novig's own price earn ~0 per fill (§70.2, §72.3: +0.08% w=0) | Bids stay props/period/team totals first; game lines only with a sharp book + move rule |
+| 15 | Toxicity guard: pull quotes when fills skew one-sided | **Only on game lines** | §72.3: props/period bids unhurt by flow; game lines hurt | Built for game lines (v0.56.0) |
+| 16 | Never risk >1.5-2% of bankroll on one event | Practitioner advice (untested here) | Walters 1-3% (§69.1) | Per-bet: ¼ Kelly + Tj's per-bet cap. **Per game: no cap today** (several props in one game add up) → proposed |
+| 17 | News windows (no bets 30-60 min after unresolved news) | Untested | Kickoff times aren't in Novig's files, so the windows can't be resolved | The 6 h guard and freshness (5-10 min) stand; nothing built |
+| 18 | CLV unreliable in props (no market-making books) | Plausible, partly | Tj's props: under 6 h +2.5% CLV and settled bets under 6 h +8.3% ROI (§71.2): CLV and results agreed | Keep judging props by CLV, with more bets |
+| 19 | De-vig with Shin/odds-ratio/log, not equal margin | Accurate | — | Already: power (≈ log) for Vigilant's fair, worst case of four for CNO's checks |
+| 20 | Quarter Kelly ≈ 44% of full growth, half ≈ 75% | Accurate (f(2−f)) | — | ¼ Kelly default, capped at the sharp fair (v0.56.0) |
+
+Re-run: `python3 tools/research/novig_drift_study.py --cache DIR` (~3 min once cached), `sharp_anchor_study.py --dir DIR` (section F),
+`tj_bets_by_lead.py <diagnostics file>` (new splits: shown edge, Novig over the best book).

@@ -3633,7 +3633,13 @@ Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book p
 
 ## Tj, 2026-10-03 ~17:51Z (with another AI's report, saved as research/external_report_2026-10-03_clv_ev.md): "Attached is a report from another AI. If the information is accurate, research and see if any of the information can improve the logic, accuracy, or profitability of vigilant"
 
-- [ ] BM1 Check each claim of the report against what is verified (NOVIG_API.md, RESEARCH.md §62-§72, the code): mark accurate / wrong / untested, with the evidence.
-- [ ] BM2 Test the testable claims that could change Vigilant: (a) "favorites early, underdogs late" (late drift toward favorites) on Novig's trades and Pinnacle open→close; (b) "the last 2 hours move less than a tick"; (c) "edges over 5% are a red flag" and "off-market vs every book" (soccer data; add splits to tj_bets_by_lead.py for Tj's own); (d) news windows for bids if the data can resolve them.
-- [ ] BM3 Verify the math claims against the code: CLV de-vigged, de-vig method, Novig fees (live taker 0.03×P×(1−P), maker credit, parlays), staking caps.
-- [ ] BM4 Implement what the evidence supports (tests, mutants), log in RESEARCH.md §73; sweep, full floor, ship if anything changed; answer Tj with what was right, wrong, and what changed.
+- [x] BM1 Check each claim of the report against what is verified (NOVIG_API.md, RESEARCH.md §62-§72, the code): mark accurate / wrong / untested, with the evidence.
+- [x] BM2 Test the testable claims that could change Vigilant: (a) "favorites early, underdogs late" (late drift toward favorites) on Novig's trades and Pinnacle open→close; (b) "the last 2 hours move less than a tick"; (c) "edges over 5% are a red flag" and "off-market vs every book" (soccer data; add splits to tj_bets_by_lead.py for Tj's own); (d) news windows for bids if the data can resolve them.
+- [x] BM3 Verify the math claims against the code: CLV de-vigged, de-vig method, Novig fees (live taker 0.03×P×(1−P), maker credit, parlays), staking caps.
+- [x] BM4 Implement what the evidence supports (tests, mutants), log in RESEARCH.md §73; sweep, full floor, ship if anything changed; answer Tj with what was right, wrong, and what changed.
+  Done (BM1-BM4): RESEARCH.md §73 (20 claims: accurate / half true / false on Novig / wrong for the API / untested). Tested: `novig_drift_study.py`
+  (no late drift to favorites on Novig: −0.08¢ game lines, MLB −0.03¢; +180 dogs toward the favorite 33% not 54%; median 2-h move one step),
+  `sharp_anchor_study.py` section F (Pinnacle soccer favorites +0.03 to +0.23 pts, dogs 50/50); math checked in code (CLV de-vigged, fees, Kelly).
+  NOVIG_API.md §17 corrected (resting bids not held, verified). `tj_bets_by_lead.py`: splits by shown edge and by Novig over the best book. No app
+  logic changed (nothing new survived testing), so no release. Proposed to Tj: a per-game exposure cap; the Polymarket wallet watch (§72.4).
+
