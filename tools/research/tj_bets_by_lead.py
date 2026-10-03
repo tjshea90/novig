@@ -61,6 +61,28 @@ def main(path):
     for lo, hi in [(-1, 0), (0, 0.01), (0.01, 0.02), (0.02, 1)]:
         show(f'sharp {100 * lo:+.0f}..{100 * hi:+.0f}%' if hi < 1 else f'sharp {100 * lo:+.0f}%+', [b for b in rec if sharp(b) is not None and lo <= sharp(b) < hi])
 
+    # RESEARCH.md §73 (another AI's report): "edges over 5% are a red flag" and "a price off-market vs every book: investigate". The soccer study says big
+    # edges against the consensus are real at the close and partly real early (§72.2 B); these splits test both on Tj's own bets.
+    print("\n  By the edge shown when bet (the report's '>5% is your error' rule; RESEARCH.md §73):")
+    for lo, hi in [(0, 0.02), (0.02, 0.03), (0.03, 0.05), (0.05, 0.08), (0.08, 1)]:
+        show(f'shown {100 * lo:.0f}-{100 * hi:.0f}%' if hi < 1 else f'shown {100 * lo:.0f}%+', [b for b in bets if lo <= b['evAtBet'] < hi])
+        show(f'  ... placed under 6 h', [b for b in bets if lo <= b['evAtBet'] < hi and lead(b) < 6])
+
+    def dec(am):
+        return 1 + (am / 100 if am > 0 else 100 / -am) if am else None
+
+    def over_best(b):
+        """Novig's price over the best other book's price for the same side when bet (decimal odds ratio − 1); None without books."""
+        at = b.get('atBet') or {}
+        nv = dec(at.get('american') or 0)
+        others = [dec(x.get('odds') or 0) for x in at.get('books') or [] if x.get('odds') and 'novig' not in (x.get('book') or '').lower()]
+        return nv / max(others) - 1 if nv and others else None
+    ob = [b for b in rec if over_best(b) is not None]
+    print(f"\n  By how far Novig's price was over the best other book's (the report's 'off-market vs everyone'; {len(ob)} bets):")
+    for lo, hi in [(-1, 0), (0, 0.03), (0.03, 0.06), (0.06, 0.10), (0.10, 9)]:
+        show(f'Novig {100 * lo:+.0f}..{100 * hi:+.0f}% over the best' if hi < 9 else f'Novig {100 * lo:+.0f}%+ over the best',
+             [b for b in ob if lo <= over_best(b) < hi])
+
 
 if __name__ == '__main__':
     main(sys.argv[1])
