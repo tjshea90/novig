@@ -583,7 +583,7 @@ object MakerStats {
         val lives = posted.map { ((it.endedAtMs ?: now) - it.postedAtMs).coerceAtLeast(0L) / 60_000.0 }.sorted()
         fun at(q: Double) = lives[((lives.size - 1) * q).toInt()]
         val known = posted.filter { it.offerAtPost != null || it.bestBidAtPost != null || it.bookAtMs != null }
-        val led = known.count { b -> b.bestBidAtPost == null || b.bestBidAtPost < b.price - 1e-9 }
+        val led = known.count { b -> b.bestBidAtPost.let { it == null || it < b.price - 1e-9 } }
         val gaps = known.mapNotNull { b -> b.offerAtPost?.let { it - b.price } }.sorted()
         val bookAges = known.mapNotNull { b -> b.bookAtMs?.let { (b.postedAtMs - it).coerceAtLeast(0L) / 60_000.0 } }.sorted()
         return "bids posted ${posted.size} (auto-make ${posted.count { it.auto }}, by hand ${posted.count { !it.auto }}) · " +
