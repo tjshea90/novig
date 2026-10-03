@@ -573,6 +573,12 @@ class NovigPublicClient(
         const val KEY_CANT_SIGN = "The Novig key on this phone can't sign any more (normal after restoring to a new phone). " +
             "Disconnect it in Settings and connect it again."
         const val MAX_CACHED_BOOKS = 3000
+
+        /** The key route is tried again this soon after Novig refused the network's address ([keyRetryAfter]). */
+        const val NETWORK_RETRY_MS = 2 * 60_000L
+
+        /** … and this soon after a request that never reached Novig (no connection, a DNS failure). */
+        const val NO_CONNECTION_RETRY_MS = 30_000L
         const val SHORT_RETRY_SECONDS = 5
         const val MAX_SHORT_RETRIES = 8
         const val MAX_PAGES = 20

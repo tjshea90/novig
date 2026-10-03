@@ -15,10 +15,10 @@ import kotlin.math.min
  * [pause] holds every caller until a server-given time (a `Retry-After`), and [slowDown] halves
  * the rate for [slowForMs] after a refusal, so one 429 can't turn into a burst of them.
  *
- * With a [maxRate] above [ratePerSecond], steady success raises the pace by [rampStep] every
- * [rampEvery] clean requests, never past [maxRate]. Any refusal drops it back to the starting pace
- * (then halves it for [slowForMs]), and so does a quiet spell of [idleResetMs]: a scan an hour
- * later starts at the proven pace again, not at whatever the last one reached.
+ * Steady success raises the pace by [rampStep] every [rampEvery] clean requests, never past [maxRate]. A
+ * refusal halves it for [slowForMs], then the pace restarts a step under the one refused (at most the
+ * starting pace) and climbs no higher than a step under it for [ceilingForMs]; a quiet spell of
+ * [idleResetMs] restarts at the starting pace (or under the remembered ceiling while it lasts).
  */
 class RateGate(
     private val ratePerSecond: Double,
@@ -31,6 +31,8 @@ class RateGate(
     private val rampEvery: Int = 40,
     private val rampStep: Double = 0.5,
     private val idleResetMs: Long = 5 * 60_000L,
+    /** How long the pace that drew a refusal is remembered as the ceiling ([slowDown]). */
+    private val ceilingForMs: Long = 10 * 60_000L,
 ) {
     private val mutex = Mutex()
     private var tokens = burst.toDouble()
@@ -45,6 +47,14 @@ class RateGate(
     private var lastAcquire = Long.MIN_VALUE
     private var lastSlowDown = Long.MIN_VALUE
 
+    /**
+     * The pace a refusal came at, and until when it's remembered: after the slow-down the pace climbs back toward it but stops a step under it,
+     * instead of going straight back to the pace that was just refused (Tj's v0.52.0 file: Novig's public edge answered 429 about once a minute,
+     * every time the minute's slow-down ended and the full pace came back: 1,163 refusals).
+     */
+    private var ceiling = Double.MAX_VALUE
+    private var ceilingUntil = Long.MIN_VALUE
+
     /** The rate in force right now, for display. */
     val currentRate: Double get() = if (clock() < slowUntil) slowRate else rampedRate
 
@@ -54,7 +64,7 @@ class RateGate(
             val wait = mutex.withLock {
                 val now = clock()
                 if (lastAcquire != Long.MIN_VALUE && now - lastAcquire > idleResetMs) {
-                    rampedRate = ratePerSecond
+                    rampedRate = if (now < ceilingUntil) min(ratePerSecond, slowRate) else ratePerSecond
                     cleanStreak = 0
                 }
                 if (now < pausedUntil) return@withLock pausedUntil - now
@@ -78,10 +88,13 @@ class RateGate(
      * slow-down, raise the pace one [rampStep] (up to [maxRate]).
      */
     suspend fun success() = mutex.withLock {
-        if (maxRate <= ratePerSecond || clock() < slowUntil) return@withLock
+        val now = clock()
+        if (now < slowUntil) return@withLock
+        val top = if (now < ceilingUntil) min(maxRate, ceiling - rampStep).coerceAtLeast(minRate) else maxRate
+        if (rampedRate >= top) return@withLock
         if (++cleanStreak >= rampEvery) {
             cleanStreak = 0
-            rampedRate = min(maxRate, rampedRate + rampStep)
+            rampedRate = min(top, rampedRate + rampStep)
         }
     }
 
@@ -102,9 +115,13 @@ class RateGate(
         val now = clock()
         if (lastSlowDown != Long.MIN_VALUE && now - lastSlowDown < SAME_BURST_MS) return@withLock
         lastSlowDown = now
-        slowRate = max(minRate, (if (now < slowUntil) slowRate else rampedRate) / 2)
+        val refusedAt = if (now < slowUntil) slowRate else rampedRate
+        slowRate = max(minRate, refusedAt / 2)
         slowUntil = now + slowForMs
-        rampedRate = ratePerSecond
+        ceiling = refusedAt
+        ceilingUntil = now + ceilingForMs
+        // After the slow-down, back to the starting pace only if that's under the pace just refused; else a step under it, climbing from there.
+        rampedRate = max(slowRate, min(ratePerSecond, refusedAt - rampStep))
         cleanStreak = 0
     }
 
