@@ -4050,3 +4050,13 @@ posting **15 minutes before the start** (configurable).
 **What it could make:** at 4% on props re-quoted, each side quoted earns +0.6% to +1.8% of its stake per game (w=0 to w=0.5), about +1.3% at Tj's
 realized w. 20 props a day, both sides, $10 a bid: ~40 bids → ~17 fills → ~$170 a day matched at +3% EV at the close ≈ $5 a day, before scaling
 the stake with the wallet. It adds to the taker bets (it uses lines the taker side skips: their offer isn't +EV, but a bid under it is).
+
+### 70.6 What was built (v0.51.0, the Bids tab)
+The rules above as defaults (BRIEF.md "Make orders"): off until Tj switches them on; 4% under the fair, $5 a bid (never over the per-bet limit), at most 20 bids
+and $100 up at once, props + 1st-half/inning lines + team totals (game lines off), bid prices 0.10-0.65, both sides, at least 2 books behind the fair, each bid
+post-only with a 30-minute `ttl`, none within 15 minutes of the start. A pass runs after every Vigilant scan (new fairs) and every background cycle (fills, expiries,
+the start coming up, fairs going old): a bid moves down at once when the fair falls (the stale bid is the one that gets picked off, §70.3), up only after 2 grid steps
+(moving loses its queue place), and is re-posted before it expires. Fills are Tracker bets (`TrackedBet.maker`, "your bid, filled") with the fair and EV when posted,
+so their CLV is measured like every bet's; Diagnostics has the settings, the bids' outcomes and the fills' CLV. The tab lists the bids up (Cancel), the bids the
+latest scan would post (Post, by hand, works with the switch off), why the other lines get none, and the fills with their CLV. Judge it by the fills' CLV over
+200+ fills (§70.5): that measures the w the simulation could only bracket.
