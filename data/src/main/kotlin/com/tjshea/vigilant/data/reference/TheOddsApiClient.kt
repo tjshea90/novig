@@ -364,12 +364,15 @@ class TheOddsApiClient(
                 val response = try {
                     httpClient.newCall(request).await()
                 } catch (e: java.io.IOException) {
-                    if (retryable && attempt == 1) { delay(RETRY_AFTER_MS); continue }
+                    if (retryable && attempt < MAX_ATTEMPTS) { delay(RETRY_AFTER_MS * attempt); continue }
                     throw e
                 }
-                if (retryable && attempt == 1 && response.code in 502..504) {
-                    // ParlayAPI's best practices: a 503 with Retry-After says how long to wait; honor it (capped), else a second.
-                    val wait = retryAfterMs(response.header("Retry-After")) ?: RETRY_AFTER_MS
+                // A busy board ("props_temporarily_busy … Retry in a couple of seconds", as a 503 or inside a 200) is asked again twice, a second
+                // and then two later (Tj's v0.52.0 file: NFL props failed 39 of 82 times with one retry, leaving the league's props without
+                // ParlayAPI's books for that scan; a 200 "busy" read as an empty board).
+                if (retryable && attempt < MAX_ATTEMPTS && (response.code in 502..504 || busyBody(response))) {
+                    // ParlayAPI's best practices: a 503 with Retry-After says how long to wait; honor it (capped), else a second (then two).
+                    val wait = retryAfterMs(response.header("Retry-After")) ?: (RETRY_AFTER_MS * attempt)
                     response.close()
                     delay(wait)
                     continue
@@ -414,6 +417,10 @@ class TheOddsApiClient(
         }
     }
 
+    /** A 200 whose small body is ParlayAPI's "busy, retry shortly" (`props_temporarily_busy`), read without using up the body. */
+    private fun busyBody(response: okhttp3.Response): Boolean =
+        response.code == 200 && runCatching { response.peekBody(BUSY_PEEK_BYTES).string().contains("temporarily_busy") }.getOrDefault(false)
+
     private fun errorCode(body: String): String? =
         Regex("\"error_code\"\\s*:\\s*\"([A-Z_]+)\"").find(body)?.groupValues?.get(1)
 
@@ -426,6 +433,12 @@ class TheOddsApiClient(
 
         /** ParlayAPI's best practices: a 502 or a dropped connection is retried once, this much later. */
         const val RETRY_AFTER_MS = 1_000L
+
+        /** ParlayAPI's calls go out at most this many times (two retries for a busy board or a gateway blip). */
+        const val MAX_ATTEMPTS = 3
+
+        /** How much of a 200's body is looked at for ParlayAPI's "busy" answer (a few hundred bytes; a real board is megabytes). */
+        const val BUSY_PEEK_BYTES = 512L
 
         /** The longest Retry-After honored before a retry: past it the caller gives up and says it's busy. */
         const val MAX_RETRY_AFTER_MS = 20_000L
