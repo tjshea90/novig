@@ -128,6 +128,15 @@ class MainActivity : ComponentActivity() {
             }
         }
         ContextCompat.registerReceiver(this, miniButtons, IntentFilter(MiniWindow.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
+        // The wallet strip's balance (Tj, 2026-10-03): read again every half minute while Vigilant is on screen (one `account` token; nothing off screen).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    vm.refreshWallet()
+                    kotlinx.coroutines.delay(WalletBalance.FRESH_MS)
+                }
+            }
+        }
         // Background auto-scan (Tj, 2026-09-28): its service runs while the setting is on. Started from
         // here (Android lets a visible app start it), again each time Vigilant opens, in case Android
         // stopped it; switching it off stops it. Alerts need notifications: asked when it's turned on.
