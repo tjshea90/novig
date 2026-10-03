@@ -22,6 +22,8 @@ data class NovigOrder(
     val tif: String,
     val status: String,
     val createdTs: Long,
+    /** When Novig cancels it by itself (an order placed with a `ttl`); null when it doesn't expire. */
+    val expiresTs: Long? = null,
 ) {
     /**
      * No more can happen to it: filled, canceled or refused (the docs: "a partly filled order stays OPEN, track `remaining`, not the status", so
@@ -229,8 +231,9 @@ private data class OrderDto(
     val tif: String = "",
     val status: String = "",
     val createdTs: Long = 0,
+    val expiresTs: Long? = null,
 ) {
-    fun toDomain() = NovigOrder(orderId, clientId, marketId, outcomeId, price.toDouble(), qty, remaining, tif, status, createdTs)
+    fun toDomain() = NovigOrder(orderId, clientId, marketId, outcomeId, price.toDouble(), qty, remaining, tif, status, createdTs, expiresTs)
 }
 
 @Serializable
