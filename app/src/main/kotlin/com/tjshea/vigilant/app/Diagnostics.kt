@@ -66,6 +66,8 @@ object Diagnostics {
         /** The scan study at a glance, and the last thing that went wrong in it ([com.tjshea.vigilant.data.study.ScanStudy]); null: not read. */
         val study: com.tjshea.vigilant.data.study.ScanStudy.Overview? = null,
         val studyProblem: String? = null,
+        /** The study's wide read of CNO in a line ([StudyText.wideNote]); null: not read. */
+        val studyWide: String? = null,
         val novigTradeBytes: Long = 0,
         /** Calls to ParlayAPI's closing lines since the app opened (Pinnacle's closes, when Tj has a key). */
         val parlayCloseRequests: Int = 0,
@@ -339,6 +341,7 @@ object Diagnostics {
             "Scan study: " + (x.study?.let { StudyText.note(it, now) + " · ${it.loggedThisRun} bets logged since the app opened" } ?: "not read") +
                 " · ${if (set.scanStudy) "logging on" else "logging OFF (Settings › Diagnostics & about)"}" + (x.studyProblem?.let { " · last problem: $it" } ?: ""),
         )
+        x.studyWide?.let { o.appendLine("Scan study's wide CNO read: $it") }
         o.appendLine("Settled by: score feeds ${bets.count { it.settledBy == BetSettler.BY_SCORES }}, Novig's ledger ${bets.count { it.settledBy == BetSettler.BY_NOVIG }}, you ${bets.count { it.settledBy == BetSettler.BY_YOU }}")
         val overdue = started.filter { now - it.startsTs > 6 * 3_600_000L }
         o.appendLine("Started and still open: ${started.size} (${overdue.size} for over 6 hours, ${started.count { it.gradeManual || it.autoGradeOff }} need a tap)")

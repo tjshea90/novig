@@ -1729,6 +1729,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         versionCode = info?.let { androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(it).toInt() } ?: 0,
                         device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
                         rules = com.tjshea.vigilant.data.scanner.PresetRules.of(_state.value.settings).summary(),
+                        wide = StudyText.wideNote(c.cno.wide.value, c.cno.state.value.snapshot, _state.value.settings.scanStudyHidden, now).takeIf { _state.value.settings.scanStudyHidden },
                     )
                     val tracked = runCatching { c.tracker.all() }.getOrDefault(emptyList())
                     val file = DiagnosticsShare.writeStudy(app, com.tjshea.vigilant.data.study.StudyExport.fileName(meta.versionName, now)) { w ->
@@ -1818,6 +1819,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             backfill = c.lastBackfill,
             study = g.study,
             studyProblem = c.study.lastProblem,
+            studyWide = StudyText.wideNote(c.cno.wide.value, c.cno.state.value.snapshot, _state.value.settings.scanStudyHidden, System.currentTimeMillis()),
             novigTradeBytes = c.novigCloses.bytesRead,
             parlayCloseRequests = c.parlayCloses.requests,
             parlayAccounts = c.parlayAccount.last,

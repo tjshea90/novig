@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.app
 
 import com.tjshea.vigilant.app.ui.Format
+import com.tjshea.vigilant.data.cno.CnoSnapshot
+import com.tjshea.vigilant.data.cno.CnoWideState
 import com.tjshea.vigilant.data.study.ScanStudy
 import java.util.Locale
 
@@ -24,6 +26,22 @@ object StudyText {
     const val HIDDEN_SUB =
         "Reads CNO's list a second time, at most every 30 s while the CNO list is being read, with its filters opened up (any EV, odds, number of books), " +
             "and logs every row for the study, marked hidden and why. The app's list, alerts, auto-bet and widget don't change. Off: only the rows the app lists are logged."
+
+    /**
+     * The wide read in a line, for Diagnostics and the study file's header: what it read last (and how many of those rows the app's own list [appList] had), what CNO was
+     * asked, and how the reads are going. Words only: nothing here changes what the app shows.
+     */
+    fun wideNote(w: CnoWideState, appList: CnoSnapshot?, on: Boolean, now: Long): String {
+        if (!on) return "off (Settings › Diagnostics & about › Also log what your CNO filters hide)"
+        val problem = w.error?.let { " · last problem: $it (${w.errors} in a row; asking for up to ${w.rowsAsked} rows)" }.orEmpty()
+        val snap = w.snapshot ?: return "no read yet since the app opened$problem"
+        val keys = appList?.takeIf { it.url == snap.url }?.rows?.mapTo(HashSet()) { it.key }
+        val shared = keys?.let { k -> snap.rows.count { it.key in k } }
+        val versus = if (shared != null) " (${shared} also in the app's list of ${keys.size}; ${snap.rows.size - shared} only the wide read found)" else ""
+        val full = if (snap.limit != null && snap.rows.size >= snap.limit) " — AS MANY AS ASKED FOR, so CNO may have more" else ""
+        return "${snap.rows.size} rows read ${Format.age(snap.fetchedAtMs, now)}$versus, asked for up to ${snap.limit ?: "?"}$full · ${w.reads} good reads since the app opened · " +
+            "form as posted: ${snap.asked ?: "?"}$problem"
+    }
 
     /** "1,234 bets logged over 6 days · 812 graded · 640 with a closing line · last logged 3m ago · 4.1 MB". */
     fun note(o: ScanStudy.Overview, now: Long): String {

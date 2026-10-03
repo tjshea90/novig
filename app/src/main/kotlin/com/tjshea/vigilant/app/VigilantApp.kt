@@ -577,6 +577,21 @@ class AppContainer(private val app: Application) {
                 studyStep("CNO scan") { study.observeCno(snap, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }
             }
         }
+        // The wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): the study's one request of its own, after a live list
+        // read, in a session of its own, kept in cno.wide and nowhere else (the list, alerts, auto-bet and widget never see it); CnoFeed paces it (30 s, only when CNO's odds moved).
+        scanScope.launch {
+            cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
+                val s = currentSettings()
+                if (s.scanStudy && s.scanStudyHidden && s.cnoOn && System.currentTimeMillis() - snap.fetchedAtMs <= com.tjshea.vigilant.data.study.ScanStudy.MAX_SCAN_AGE_MS) {
+                    studyStep("CNO wide read") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }
+                }
+            }
+        }
+        scanScope.launch {
+            cno.wide.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { wide ->
+                studyStep("CNO wide scan") { study.observeCnoWide(wide, cno.state.value.snapshot, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }
+            }
+        }
         scanScope.launch {
             runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.filter { it.finished > 0 && !it.scanning }.collect { run ->
                 run.result?.let { r -> studyStep("Vigilant scan") { study.observeVigilant(r, currentSettings()) } }
