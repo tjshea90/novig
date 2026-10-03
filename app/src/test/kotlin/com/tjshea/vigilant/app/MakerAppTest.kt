@@ -173,8 +173,11 @@ class MakerAppTest {
         assertTrue("${first.size}", first.size in 1..MakerRunner.MAX_RECOMMENDED)
         assertEquals(listOf("Approve", "Deny"), first.first().actions.map { it.title.toString() })
         assertTrue(first.all { it.extras.getCharSequence(Notification.EXTRA_SUB_TEXT).toString().startsWith("Wallet") })
+        val sent = app.container.eventLog.counters()["maker.recommended"] ?: 0L
         run.run("test")
         assertEquals(first.size, recommended().size)
+        // Each side once: the second pass recommends nothing new.
+        assertEquals(sent, app.container.eventLog.counters()["maker.recommended"] ?: 0L)
         assertTrue(novig.placed.isEmpty())
         // Approve: the first recommended side is posted.
         val side = run.status.value.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().minBy { it.price }.line.outcomeId
