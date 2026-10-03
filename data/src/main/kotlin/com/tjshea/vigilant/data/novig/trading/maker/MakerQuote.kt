@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.novig.trading.maker
 
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.scanner.Freshness
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.FairBasis
 import com.tjshea.vigilant.engine.EvMath
@@ -134,9 +135,30 @@ object MakerLines {
                 eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
                 fairAsOfMs = o.fairAsOfMs, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
-                basis = FairBasis.of(o),
+                basis = FairBasis.of(o), bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true),
             )
         }
+    }
+
+    /**
+     * Each book behind [o]'s fair, devigged on its own the worst way for this side (the lowest of multiplicative, additive, power and Shin, as the
+     * app's agreement check does: [com.tjshea.vigilant.data.scanner.Agreement]), one per book; only the sharp ones with [sharpOnly].
+     */
+    fun bookFairs(o: com.tjshea.vigilant.data.scanner.Opportunity, sharpOnly: Boolean): List<Double> {
+        val fair = o.fair ?: return emptyList()
+        val side = o.referenceIndex ?: return emptyList()
+        val used = fair.booksUsed.toHashSet()
+        return fair.perBook.asSequence()
+            .filter { it.book.bookTitle in used && (!sharpOnly || it.isSharp) }
+            .distinctBy { it.book.bookKey }
+            .mapNotNull { b ->
+                val odds = b.book.decimalOdds
+                if (odds.size < 2 || !odds.all { it > 1.0 && it.isFinite() }) return@mapNotNull null
+                val raw = odds.map { 1.0 / it }
+                val sum = raw.sum()
+                runCatching { if (sum <= 1.0) raw.map { it / sum } else com.tjshea.vigilant.engine.Devig.worstCase(raw) }.getOrNull()?.getOrNull(side)
+            }
+            .toList()
     }
 }
 
@@ -144,8 +166,11 @@ object MakerLines {
 sealed interface MakerDecision {
     val line: MakerLine
 
-    /** Post [contracts] at [price] (what they cost: [cost] dollars); [evAtFair] = fair / price − 1. */
-    data class Post(override val line: MakerLine, val price: Double, val contracts: Long, val evAtFair: Double) : MakerDecision {
+    /**
+     * Post [contracts] at [price] (what they cost: [cost] dollars); [evAtFair] = fair / price − 1; [restUntilMs]: when it must be down (the expiry, the
+     * fair's freshness and the stop window before the start, whichever comes first).
+     */
+    data class Post(override val line: MakerLine, val price: Double, val contracts: Long, val evAtFair: Double, val restUntilMs: Long = Long.MAX_VALUE) : MakerDecision {
         val cost: Double get() = contracts * price * EvMath.CONTRACT_PAYOUT_DOLLARS
     }
 
@@ -168,7 +193,11 @@ object MakerQuote {
         val fair = line.fair ?: return skip("No fair price")
         if (fair <= 0.0 || fair >= 1.0) return skip("No fair price")
         if (line.fairOld) return skip("The fair price is too old to bid on")
-        if (line.books < rules.minBooks) return skip("Only ${line.books} book${if (line.books == 1) "" else "s"} behind the fair price (fewest: ${rules.minBooks})")
+        val seen = line.fairAsOfMs ?: return skip("The fair price's age isn't known: no bid on it")
+        // A bid never outlives what it was priced from: the fair's own freshness, the stop window before the start, and the expiry setting.
+        val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + Freshness.maxAgeMs(line.startsTs, now))
+        if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
+        if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
         val price = PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The fair price is too small to bid under")
         if (price < rules.minPrice - 1e-9 || price > rules.maxPrice + 1e-9) {
@@ -176,9 +205,31 @@ object MakerQuote {
         }
         val offer = line.offer
         if (offer != null && price >= offer - 1e-9) return skip("Novig already offers it at ${percent(offer)}, at or under this bid: take it instead")
-        val contracts = floor(rules.stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
+        // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
+        val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
+        if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
+        if (rules.sharpVeto && line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")
+        val stake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
+        val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
-        return MakerDecision.Post(line, price, contracts, fair / price - 1.0)
+        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until)
+    }
+
+    /**
+     * What one bid stakes (dollars it costs if it fills), held to [MakerRules.maxStake]: a fraction of full Kelly on the bankroll for this bid's own
+     * price and fair (`(fair − price) / (1 − price)`: makers pay no fee), a dollar, or the set amount. Null when Kelly has nothing to stake.
+     */
+    fun stake(fair: Double, price: Double, rules: MakerRules): Double? {
+        val wanted = when (rules.stakeMode) {
+            com.tjshea.vigilant.data.scanner.AutoBetStake.ONE_DOLLAR -> 1.0
+            com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM -> rules.customStake
+            else -> {
+                val f = rules.stakeMode.kelly ?: return null
+                if (!(rules.bankroll > 0.0) || fair <= price || price >= 1.0) return null
+                f * (fair - price) / (1.0 - price) * rules.bankroll
+            }
+        }
+        return minOf(wanted, rules.maxStake).takeIf { it > 0.0 }
     }
 
     /**
