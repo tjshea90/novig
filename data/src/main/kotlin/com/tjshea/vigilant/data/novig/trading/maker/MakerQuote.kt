@@ -44,6 +44,12 @@ data class MakerRules(
     val refreshBeforeMs: Long = 2 * 60_000L,
     /** No bid is posted for less time than this (its fair about to go old, the start or the stop window too near). */
     val minLifeMs: Long = 60_000L,
+    /**
+     * The trap guard's first rule ([com.tjshea.vigilant.data.scanner.TrapGuard.early], RESEARCH.md §71): no bid on a game starting more than this
+     * many hours from now (0 = off). The fair that far out is the least reliable (Tj's own bets placed then lost to the close), and 71% of prop
+     * takers' dollars trade in the last 6 h anyway, so the wallet goes where the fills are.
+     */
+    val earlyHours: Int = 0,
 ) {
     companion object {
         fun of(s: ScanSettings) = MakerRules(
@@ -63,6 +69,7 @@ data class MakerRules(
             maxStake = minOf(s.makerMaxStake, s.apiMaxStake).coerceAtLeast(0.01),
             bankroll = s.bankroll,
             sharpVeto = s.makerSharpVeto,
+            earlyHours = s.trapEarlyHours.coerceAtLeast(0),
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
@@ -258,13 +265,16 @@ object MakerQuote {
 
     /**
      * [decide]'s checks that don't need each book's own fair: the start, the market, the kind, the fair and its age, the price window, Novig's offer.
-     * A line that fails here fails [decide] at the same check at any later moment (each check only gets stricter with time), so [MakerLines.from]
-     * works out the books' fairs (a devig per book) only for lines that pass.
+     * [MakerLines.from] works out the books' fairs (a devig per book) only for lines that pass, on every pass with that pass's clock (a line too far
+     * off now is judged again once its game is inside the trap guard's window).
      */
     fun precheck(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): Pre {
         fun skip(why: String) = Pre.No(MakerDecision.Skip(line, why))
         if (line.live || now >= line.startsTs) return skip("The game has started (Novig cancels resting bids at the start)")
         if (now >= line.startsTs - rules.stopMs) return skip("Starts within ${rules.stopMs / 60_000} min: no bids this close")
+        if (com.tjshea.vigilant.data.scanner.TrapGuard.isEarly(line.startsTs, now, rules.earlyHours)) {
+            return skip("Starts in more than ${rules.earlyHours} h: no bids this early (trap guard)")
+        }
         if (line.market.status != "OPEN") return skip("Novig isn't taking orders on this market")
         if (line.kind !in rules.kinds) return skip("${line.kind.label} are off for bids")
         val fair = line.fair ?: return skip("No fair price")
