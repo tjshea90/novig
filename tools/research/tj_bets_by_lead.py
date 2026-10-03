@@ -6,6 +6,8 @@ comes from this split of the bets in the file's EVERY BET block (closes as the a
 out, as the Tracker's stats leave them out).
 
     python3 tools/research/tj_bets_by_lead.py vigilant-diagnostics-<version>-<date>.txt
+
+Also splits the bets by the sharpest book's own edge when they were placed (the sharp veto's bar, RESEARCH.md §72).
 """
 import json, math, sys
 
@@ -49,6 +51,15 @@ def main(path):
     for s in sorted({b['scanner'] for b in bets}):
         show(f'{s} under 6 h', [b for b in bets if b['scanner'] == s and lead(b) < 6])
         show(f'{s} 6 h or more', [b for b in bets if b['scanner'] == s and lead(b) >= 6])
+
+    # RESEARCH.md §72: the sharp veto's bar (1% by default since v0.56.0). What the sharpest book for the bet's kind gave Novig's price when it was
+    # placed (atBet.sharpEv, on bets with a record as placed), against the close: the bar is right if 0-1% shows no CLV and 1%+ does.
+    sharp = lambda b: (b.get('atBet') or {}).get('sharpEv')
+    rec = [b for b in bets if b.get('atBet')]
+    print(f'\n  By the sharpest book's own edge when bet ({len(rec)} bets with a record as placed; RESEARCH.md §72):')
+    show('no sharp book on the page', [b for b in rec if sharp(b) is None])
+    for lo, hi in [(-1, 0), (0, 0.01), (0.01, 0.02), (0.02, 1)]:
+        show(f'sharp {100 * lo:+.0f}..{100 * hi:+.0f}%' if hi < 1 else f'sharp {100 * lo:+.0f}%+', [b for b in rec if sharp(b) is not None and lo <= sharp(b) < hi])
 
 
 if __name__ == '__main__':
