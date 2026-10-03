@@ -318,7 +318,7 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
     if (AppBook.isNovig && s.cnoOn && onOpenAutoBet != null) {
         SettingsRow(
             title = "Auto-bet & presets",
-            summary = "Its own tab now · ${SettingsSummary.autoBet(s)}",
+            summary = "Its own tab · ${SettingsSummary.autoBet(s)}",
             tag = "settingsRow-AUTOBET",
             onClick = onOpenAutoBet,
         )
