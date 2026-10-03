@@ -1387,7 +1387,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** The bids the latest scan's lines would get, posting nothing (the tab opening). */
     fun makerPreview() {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { c.makerStore.all(); c.maker.preview() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            runCatching { c.makerStore.all(); c.makerDenials.all(); c.maker.preview() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         }
     }
 
@@ -1415,8 +1415,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun makerCancel(orderId: String) {
         viewModelScope.launch {
             val why = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.maker.cancel(orderId) }.getOrElse { it.message ?: it.javaClass.simpleName } }
-            _toasts.tryEmit(why?.let { "Not cancelled: $it" } ?: "Bid cancelled")
+            _toasts.tryEmit(why?.let { "Not cancelled: $it" } ?: "Bid cancelled; that side is denied until its game (undo under Denied)")
         }
+    }
+
+    /** Every side Tj denied ([com.tjshea.vigilant.data.novig.trading.maker.MakerDenials]); null until first read. */
+    val makerDenied get() = c.makerDenials.flow
+
+    fun makerDeny(outcomeId: String) {
+        viewModelScope.launch {
+            val why = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.maker.deny(outcomeId) }.getOrElse { it.message ?: it.javaClass.simpleName } }
+            _toasts.tryEmit(why?.let { "Not denied: $it" } ?: "Denied: no bid on that side until its game (undo under Denied)")
+        }
+    }
+
+    fun makerUndoDeny(outcomeId: String) {
+        viewModelScope.launch(Dispatchers.IO) { runCatching { c.maker.undoDeny(outcomeId) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
     }
 
     fun makerCancelAll() {

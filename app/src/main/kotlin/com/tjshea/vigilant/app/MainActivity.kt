@@ -769,6 +769,7 @@ private fun VigilantRoot(
                 Tab.BIDS -> {
                     val status by vm.makerStatus.collectAsStateWithLifecycle()
                     val bids by vm.makerBids.collectAsStateWithLifecycle()
+                    val denied by vm.makerDenied.collectAsStateWithLifecycle()
                     val now = com.tjshea.vigilant.app.ui.rememberNow(30_000)
                     // The bids each line of the latest scan would get, worked out as the tab opens (each pass and each scan keep it current after).
                     androidx.compose.runtime.LaunchedEffect(vm) { vm.makerPreview() }
@@ -780,6 +781,8 @@ private fun VigilantRoot(
                             onCancel = vm::makerCancel,
                             onCancelAll = vm::makerCancelAll,
                             onOpenBetting = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.BETTING.name; tabName = Tab.SETTINGS.name },
+                            onDeny = vm::makerDeny,
+                            onUndoDeny = vm::makerUndoDeny,
                         )
                     }
                     com.tjshea.vigilant.app.ui.MakerScreen(
@@ -787,6 +790,7 @@ private fun VigilantRoot(
                             settings = state.settings, setUp = state.betting.enabled, vigilantOn = state.settings.vigilantOn, bids = bids.orEmpty(),
                             decisions = status.decisions, scanAtMs = status.scanAtMs, lastPassAtMs = status.lastAtMs, running = status.running,
                             problem = status.problem, bets = state.bets, now = now,
+                            denied = denied.orEmpty().filter { it.startsTs > now }, backgroundFeeds = state.settings.autoScansVigilant,
                         ),
                         actions,
                     )
