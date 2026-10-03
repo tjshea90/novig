@@ -32,6 +32,8 @@ class MakerRunner(
     private val app: Application,
     private val c: AppContainer,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Vigilant's latest scan (its result is what bids are judged on). */
+    private val scan: () -> com.tjshea.vigilant.data.scanner.ScanRun = { c.runner.state.value },
 ) {
     /** What the Make tab shows: the last pass and the bids each line would get now. */
     data class Status(
@@ -63,7 +65,7 @@ class MakerRunner(
             preview(s)
             return@withLock null
         }
-        val run = c.runner.state.value
+        val run = scan()
         val result = run.result
         _status.update { it.copy(running = true) }
         try {
@@ -107,7 +109,7 @@ class MakerRunner(
         val now = clock()
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId }
         val resting = c.makerDesk()?.bids()?.filter { it.active }?.mapTo(HashSet()) { it.outcomeId }.orEmpty()
-        val run = c.runner.state.value
+        val run = scan()
         val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held - resting)
         _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
     }
@@ -119,7 +121,7 @@ class MakerRunner(
         if (s.paused) return "Scanning is paused: resume it to post bids"
         val now = clock()
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId }
-        val line = MakerLines.from(c.runner.state.value.result, s, now).firstOrNull { it.outcomeId == outcomeId } ?: return "That line isn't in the latest scan any more"
+        val line = MakerLines.from(scan().result, s, now).firstOrNull { it.outcomeId == outcomeId } ?: return "That line isn't in the latest scan any more"
         val rules = MakerRules.of(s)
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
             is MakerDecision.Skip -> d.why
