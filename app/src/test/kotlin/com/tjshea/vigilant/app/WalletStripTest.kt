@@ -5,6 +5,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.painterResource
 import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -66,28 +72,27 @@ class WalletStripTest {
 
     @Test
     fun `screenshot - the wallet strip above the tab bar, every tab there`() {
-        compose.setContent {
-            VigilantTheme {
-                androidx.compose.foundation.layout.Column {
-                    WalletStrip(WalletBalance.Reading(18.51, System.currentTimeMillis() - 150_000), 3, 8.2, onRefresh = {})
-                    androidx.compose.material3.NavigationBar {
-                        Tab.entries.filter { it.shownIn(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH) }.forEach { t ->
-                            androidx.compose.material3.NavigationBarItem(
-                                selected = t == Tab.BIDS, onClick = {},
-                                icon = {
-                                    when {
-                                        t.icon != null -> androidx.compose.material3.Icon(t.icon, null)
-                                        t.drawable != null -> androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(t.drawable), null)
-                                    }
-                                },
-                                label = { androidx.compose.material3.Text(t.label) },
-                            )
-                        }
-                    }
+        compose.setContent { VigilantTheme { StripAndTabs() } }
+        compose.onNodeWithText("Vigilant wallet \$18.51").assertExists()
+        compose.onRoot().captureRoboImage("screenshots/0_wallet_strip_tabs.png")
+    }
+
+    @androidx.compose.runtime.Composable
+    private fun StripAndTabs() {
+        Column {
+            WalletStrip(WalletBalance.Reading(18.51, System.currentTimeMillis() - 150_000), 3, 8.2, onRefresh = {})
+            NavigationBar {
+                for (t in Tab.entries.filter { it.shownIn(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH) }) {
+                    NavigationBarItem(selected = t == Tab.BIDS, onClick = {}, icon = { TabGlyph(t) }, label = { Text(t.label) })
                 }
             }
         }
-        compose.onNodeWithText("Vigilant wallet \$18.51").assertExists()
-        compose.onRoot().captureRoboImage("screenshots/0_wallet_strip_tabs.png")
+    }
+
+    @androidx.compose.runtime.Composable
+    private fun TabGlyph(t: Tab) {
+        val vector = t.icon
+        val drawable = t.drawable
+        if (vector != null) Icon(vector, null) else if (drawable != null) Icon(painterResource(drawable), null)
     }
 }
