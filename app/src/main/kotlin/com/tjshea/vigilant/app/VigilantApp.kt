@@ -131,6 +131,15 @@ class AppContainer(private val app: Application) {
 
         /** The fewest milliseconds between two make-orders passes on a running scan's partial results. */
         const val MAKER_SCAN_PASS_MS = 20_000L
+
+        /** The scan study looks at the green check's book pages at most this often (a page is read every few seconds; the study logs the newest). */
+        const val STUDY_BOOKS_GAP_MS = 5_000L
+
+        /** A newly started process waits this long before the study grades what ended meanwhile (the screen's own reads come first). */
+        const val STUDY_SETTLE_DELAY_MS = 90_000L
+
+        /** The study asks ParlayAPI for closes only while at least this share of its month's credits is left. */
+        const val STUDY_PARLAY_RESERVE = 0.4
     }
 
     val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -323,7 +332,9 @@ class AppContainer(private val app: Application) {
         apiSync = ApiBetSync(tracker, client, novig)
     }
 
-    val settler = BetSettler(tracker, FreeScores(http, json), leaveApiBets = { trading != null })
+    /** The free score feeds (ESPN, MLB): one instance, so its per-day and box-score caches serve the Tracker's grading and the scan study's alike. */
+    val scores = FreeScores(http, json)
+    val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null })
 
     /**
      * Closes found after the start (Tj, 2026-09-30: "My phone will not always be on"): ESPN's closing game lines, then Novig's trade history,
@@ -341,6 +352,53 @@ class AppContainer(private val app: Application) {
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
     val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(parlayCloses, espnCloses, novigCloses))
+
+    /**
+     * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … when those bets are final, it logs whether
+     * they won or lost or pushed and their closing line odds"; [com.tjshea.vigilant.data.study.ScanStudy]): every bet a CNO or Vigilant scan lists, logged as it's
+     * listed, graded and closed afterwards with the Tracker's own grader and close lookups ([settleStudy]), for Settings › Tools › Share scan study with Claude.
+     */
+    val study = com.tjshea.vigilant.data.study.ScanStudy(
+        com.tjshea.vigilant.data.study.StudyJournal(File(app.filesDir, "study")), version = { BuildConfig.VERSION_NAME },
+    )
+
+    /** ParlayAPI's closes cost credits: the study asks for them only while the month's credits are over [STUDY_PARLAY_RESERVE] left (the Tracker's own bets always do). */
+    private fun parlayCreditsPlentiful(): Boolean {
+        val keys = usage.flow.value.providers["parlay"]?.keys?.values.orEmpty()
+        val limit = keys.sumOf { it.limit ?: 0 }
+        return limit <= 0 || keys.sumOf { it.remaining ?: 0 } >= limit * STUDY_PARLAY_RESERVE
+    }
+
+    private val studyCloses = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(
+        com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
+    )
+
+    /**
+     * Grades the study's bets whose games have started and finds their closes, beside the Tracker's own (the 3-hourly worker, a little after the process
+     * starts): a bet Tj placed himself takes its result and close from his Tracker bet, the rest go through the same grader and close sources. Never throws.
+     */
+    suspend fun settleStudy() {
+        try {
+            parlayCloses.enabled = currentSettings().useParlay
+            study.settle(scores, studyCloses, runCatching { tracker.all() }.getOrDefault(emptyList()), File(app.cacheDir, "study-grading"))
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Looked at again on the next pass.
+        }
+    }
+
+    /** One step of the study's logging: whatever goes wrong is a line in Recent problems, never a failure of the scan it watched. */
+    private suspend fun studyStep(what: String, block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            eventLog.count("study.errors")
+            runCatching { problems.add("Scan study", "$what: ${e.message ?: e.javaClass.simpleName}") }
+        }
+    }
 
     /** The last back-fill's report (this process), for Diagnostics. */
     @Volatile var lastBackfill: com.tjshea.vigilant.data.tracker.CloseBackfill.Report? = null
@@ -502,6 +560,29 @@ class AppContainer(private val app: Application) {
         }
         appScope.launch {
             cno.state.map { it.error }.distinctUntilChanged().filterNotNull().collect { runCatching { problems.add("CrazyNinjaOdds", it) } }
+        }
+        // The scan study (Tj, 2026-10-03; [ScanStudy]): each CNO read, each finished Vigilant scan and each book page the green check read is logged from what it
+        // already holds (no request of its own), on the scan's background-priority threads so it never competes with the screen.
+        scanScope.launch {
+            cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
+                studyStep("CNO scan") { study.observeCno(snap, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }
+            }
+        }
+        scanScope.launch {
+            runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.filter { it.finished > 0 && !it.scanning }.collect { run ->
+                run.result?.let { r -> studyStep("Vigilant scan") { study.observeVigilant(r, currentSettings()) } }
+            }
+        }
+        scanScope.launch {
+            cno.books.conflate().collect { books ->
+                studyStep("book check") { study.observeBooks(books, currentSettings(), live.prices.value) }
+                delay(STUDY_BOOKS_GAP_MS)
+            }
+        }
+        // A while after the process starts (a restart, an alarm, a service): the games that ended since are graded and closed.
+        scanScope.launch {
+            delay(STUDY_SETTLE_DELAY_MS)
+            settleStudy()
         }
         // Make orders (RESEARCH.md §70): a pass after every finished Vigilant scan (new fair prices to bid under), and every bid down the moment bids are
         // switched off or scanning pauses (the background cycle doesn't run while paused, and an empty wallet pauses it).

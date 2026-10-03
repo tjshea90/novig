@@ -397,10 +397,11 @@ class ScanStudy(
         var closed = 0
         var copied = 0
         var daysDone = 0
+        val activeIds = sources.filter { it.active }.map { it.id }
         try {
             for (day in journal.days().filter { it <= today && it >= today.minusDays(SETTLE_DAYS) }.reversed()) {
                 val folded = withContext(io) { journal.fold(day) }
-                val work = folded.values.filter { needsWork(it.bet, now) }
+                val work = folded.values.filter { needsWork(it.bet, now, activeIds) }
                 if (work.isEmpty()) continue
                 daysDone++
                 looked += work.size
@@ -414,7 +415,7 @@ class ScanStudy(
                         sb.applyResult(now, r)
                         copied++
                     }
-                    if (needsWork(sb.bet, now)) rest += sb
+                    if (needsWork(sb.bet, now, activeIds)) rest += sb
                 }
                 if (rest.isNotEmpty()) {
                     val found = harness(rest, scores, sources, heavyOk, scratch, now)
@@ -522,9 +523,11 @@ class ScanStudy(
         }
 
         /** Whether a started bet still has a result or a close to look for. */
-        fun needsWork(b: TrackedBet, now: Long): Boolean {
+        fun needsWork(b: TrackedBet, now: Long, activeSources: Collection<String> = emptyList()): Boolean {
             val age = now - b.startsTs
             if (age < CloseBackfill.AFTER_START_MS) return false
+            // Every source asked said "never", and one that wasn't asked is on now: looked at once more.
+            if (activeSources.isNotEmpty() && CloseBackfill.reopened(b, now, activeSources)) return true
             val grade = b.status == BetStatus.PENDING && b.settledBy != BetSettler.BY_YOU && age >= BetSettler.AFTER_START_MS && age <= BetSettler.GIVE_UP_MS
             val close = !b.closeFinal && ClosingLine.closeOf(b, now) == null && age <= CloseBackfill.GIVE_UP_MS && b.createdAtMs < b.startsTs
             return grade || close
