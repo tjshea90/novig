@@ -1,6 +1,5 @@
 package com.tjshea.vigilant.app
 
-import com.tjshea.vigilant.data.scanner.TrapGuard
 import android.app.Application
 import com.tjshea.vigilant.data.alerts.EvAlert
 import com.tjshea.vigilant.data.cno.CnoBooks
@@ -11,6 +10,7 @@ import com.tjshea.vigilant.data.scanner.Agreement
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.tracker.ClosingLine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
