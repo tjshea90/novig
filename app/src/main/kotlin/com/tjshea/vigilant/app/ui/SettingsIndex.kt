@@ -93,6 +93,10 @@ object SettingsIndex {
         Entry("Shortest odds to bet", null, "No heavy favorites past this for auto-bet", "auto-bet min odds favorite", autoBetTab),
         Entry("Kinds of bet to place", null, "Props, moneylines, spreads, totals…", "auto-bet kinds markets props", autoBetTab),
         Entry("Sharp-book veto", null, "Skip a bet the sharpest book disagrees with", "auto-bet sharp veto confirm pinnacle kalshi", autoBetTab),
+        Entry(
+            "Edge the sharpest book must give Novig's price", null, "The sharp veto's bar: skip a bet the sharpest book gives under this edge (1% by default)",
+            "auto-bet sharp veto bar minimum edge pinnacle kalshi trap clv", { autoBetTab(it) && it.sharpAutoBet == com.tjshea.vigilant.data.scanner.SharpMode.VETO },
+        ),
         Entry("Skip game lines Novig just moved", null, "Trap guard: skip games too far from the start, and game lines Novig just moved", "auto-bet trap sharp early hours gift steam moved", autoBetTab),
         Entry("Amount per bet", null, "Auto-bet's stake: Kelly, \$1 or your amount", "auto-bet stake kelly amount", autoBetTab),
         Entry("Check every", null, "How often auto-bet looks for bets", "auto-bet interval often", autoBetTab),
