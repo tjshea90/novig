@@ -202,7 +202,10 @@ class AutoBettor(
         var walletEmpty = false
         var halted = false
 
-        for (item in passing) {
+        // When the wallet or the cycle's cap can't take every bet, the money goes first to the edges most likely to hold (RESEARCH.md §72): the sharpest
+        // book's own edge where its veto priced the bet, else 70% of the shown edge ([AutoBet.credibleEv]). Ties keep the shown edge's order.
+        val ordered = passing.sortedByDescending { AutoBet.credibleEv(it.shown.ev, vetoSaid[it.pick.row.key]?.takeIf { v -> v.verdict == SharpVeto.Verdict.PASSED }?.ev) }
+        for (item in ordered) {
             currentCoroutineContext().ensureActive()
             if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
             val row = item.pick.row

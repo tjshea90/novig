@@ -55,6 +55,21 @@ object AutoBet {
     /** A bet that was refused (the price moved, the edge went) isn't tried again for this long. */
     const val COOLDOWN_MS = 2 * 60_000L
 
+    /**
+     * What share of a shown edge a bet with no sharp book's own price behind it kept at the close: Tj's bets placed within 6 h of the start kept about
+     * 70% (+2.2% CLV on +3.1% shown, RESEARCH.md §71.2). The soccer study (§72) found the same for the best price against the average's fair at the
+     * close (74-105% kept).
+     */
+    const val NO_SHARP_KEEPS = 0.7
+
+    /**
+     * The edge a bet is most likely to keep by the close (RESEARCH.md §72), for choosing which bets get the money when not all of them can (the wallet,
+     * [MAX_PER_CYCLE]): the sharpest book's own edge at Novig's price when it priced both sides ([sharpEv]; what bets kept on 48,394 soccer matches was
+     * about the sharp book's edge, not the average's), else [NO_SHARP_KEEPS] of the shown edge ([shownEv]). It orders bets only: the stake and every
+     * rule still use the shown edge.
+     */
+    fun credibleEv(shownEv: Double, sharpEv: Double?): Double = sharpEv ?: (shownEv * NO_SHARP_KEEPS)
+
     data class Rules(
         val minBooks: Int,
         val minEv: Double,
