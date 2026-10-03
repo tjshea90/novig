@@ -3936,3 +3936,118 @@ Vigilant's EV already uses the real taker price, so the minimum edge covers it; 
    like any bet. Risks: being picked off on news (the big-maker losses in §62.3), the queue (Novig's own LPs are ahead at the best price), and
    fills that are slow and uncertain. Start with a by-hand "Post a bid" on the bet sheet and measure fills and CLV before any automation.
 5. **Don't chase** whale-following, liquidity-following or leaderboard-copying: measured on Novig (§62) and Polymarket (69.1), they don't hold.
+
+## 70. Make orders on Novig: where to post, how far under the fair, how long, and how to keep the CLV (2026-10-03 ~02:00–03:00Z; Tj: "Now do deep research on how to do make orders on novig (post orders). The goal of the make orders is to get positive ev orders filled. 1) figure out how to do make orders through the novig API 2) figure out the optimal way to get the most positive EV out of my make orders but also a good chance that the orders get filled 3) figure out how long the make orders should be placed before they expire, and how to set this option in the novig API 4) figure out the best timing and types of bets to make for profit and positive EV 5) figure out how to get the most clv out of make bets 6) … build the system in the app")
+
+Builds on §69.2 (makers beat the close on Novig, takers lose to it). The API is NOVIG_API.md §17. Two new scripts, both re-runnable:
+`tools/research/novig_maker_study.py` (a posted bid simulated against every fill in Novig's 60 published days, 2026-08-03..10-01: 10,670
+two-outcome markets with a close, 1.6M simulated bids) and `tools/research/novig_book_snapshot.py` (701 live books read 2026-10-03 ~02:05Z).
+
+### 70.1 How the simulation works, and its limits
+- A bid on outcome X at price b **filled** if a later maker fill on X traded **below** b before the bid expired: Novig matches best price first, so
+  every bid at b was used up first (a lower bound: a fill AT b only reached a bid there if the queue ahead was used up; that upper bound is shown once).
+- A bid at or above X's last traded offer would have taken, not rested (post-only refuses it): 2% of the simulated bids, left out.
+- **The fair price at posting time** isn't in Novig's files (Vigilant's comes from other books). Three stand-ins: **w=0** Novig's own price then
+  (the median of its last 7 trades: a fair with no outside information), **w=0.25** and **w=0.5** a fair that already knows a quarter or half of the
+  move to Novig's close (a sharp book leading Novig). Tj's own taker bets realized about 40% of their shown EV at the close (§65: +2.5% shown, +0.9% CLV;
+  Data Golf and Buchdahl about half), so **Vigilant's fair is about w=0.25-0.5 on props, nearer w=0 on game lines** (Novig's game lines are quoted
+  by liquidity providers off the same sharp books, §62.2).
+- The bid is posted at **fair / (1 + margin)**, snapped down to Novig's grid: "4%" = 4% EV at the fair, about 2¢ under it at even money.
+- CLV/EV are measured at Novig's close (test A, §62). ROI at settlement is shown where the last trade shows a winner (mostly game lines; prop results
+  are few, so their ROI intervals are wide and nothing below leans on them).
+- Not measurable: unfilled orders, the real queue at the time, and whether Tj's bid would change what takers do (small bids: assumed not).
+
+### 70.2 Q2: how far under the fair (posted 3 h before the close, left until the close)
+| Margin | Fill (all kinds) | EV@close per fill, w=0 | w=0.25 | w=0.5 | Per posted bid, w=0 | w=0.25 | w=0.5 |
+| -: | -: | -: | -: | -: | -: | -: | -: |
+| 1% | 48% | −0.24% | +0.35% | +0.79% | −0.12% | +0.17% | +0.39% |
+| 2% | 35% | −0.01% | +0.95% | +1.68% | 0.00% | +0.32% | +0.55% |
+| 3% | 26% | +0.32% | +1.51% | +2.64% | +0.08% | +0.37% | +0.60% |
+| **4%** | **20%** | **+0.73%** | **+2.09%** | **+3.55%** | +0.15% | **+0.38%** | +0.58% |
+| 6% | 13% | +1.54% | +3.33% | +5.25% | +0.19% | +0.35% | +0.48% |
+| 8% | 8% | +2.61% | +4.63% | +7.08% | +0.22% | +0.31% | +0.39% |
+
+- **Adverse selection is the whole story.** A bid close to the fair fills often, and the fills that happen are the ones where the price moved through
+  it: at 1-2% with no outside information the fills LOSE to the close. Every point of margin buys back some of it.
+- **The per-bid optimum is 3-4% (w=0.25-0.5), the per-fill value keeps rising with the margin.** 4% is the balance point: about the best expected
+  profit per bid posted, +2 to +3.5% EV at the close on each fill, and a fill on one bid in five (more for props, below).
+- By kind of market (4%, 3 h before, until the close):
+
+| Kind | Fill | EV@close per fill w=0 / 0.25 / 0.5 | Per posted bid w=0 / 0.25 / 0.5 |
+| :- | -: | -: | -: |
+| Player props | 30% | **+1.27% / +2.51% / +3.78%** | +0.38% / +0.73% / +1.05% |
+| Period lines (1st half, F5 …) | 15% | +1.61% / +2.59% / +4.06%* | +0.25% / +0.36% / +0.6%* |
+| Team totals (74 markets) | 30% | +1.49% / +4.00% / +4.31% | +0.44% / +1.08% / +1.28% |
+| Game lines | 13% | **−0.30%** / +1.10% / +2.94% | −0.04% / +0.12% / +0.25% |
+(*re-quoted figure; the static row isn't in the shortened table)
+
+**Props make money even with no outside information; game lines only with a fair that leads Novig.** On props the spread is wide and the takers are
+recreational; on game lines the takers who reach a resting bid are disproportionately the ones who know the line just moved.
+- **By the price of the side bid on (4%):** under 0.20: fill 47%, +2.3/+3.0/+4.2% per fill, the best per posted bid (+1.1 to +1.9%); 0.20-0.35:
+  33%, +1.4/+2.9/+3.6%; 0.35-0.65: 15-20%, +0.2-0.6% (w=0) to +3.3-3.7% (w=0.5); 0.65 and up: fills 1-4% (almost never). **Bid on the underdog side.**
+  (A taker who buys the favorite fills a maker on the underdog: the favorite-longshot bias, §69.1, from the other side of the trade.)
+- **By league (props, 4%):** MLB +1.2/+2.5/+3.7%, NFL +1.9/+2.8/+4.1%, WNBA +0.9/+2.3/+3.8%: all positive. Game lines: MLB −0.6% and MLS −2.1% at w=0,
+  NFL/NCAAF/WNBA/EPL about 0 at w=0, positive from w=0.25.
+- **Both sides at once:** both bids filled in 2-4% of markets at 4% (17-22% at 1%): a double fill is a lock of the two margins (≈ 2 × 4% of the stake).
+
+### 70.3 Q3: how long a bid should rest, and how to set it
+Static bids (posted 6 h before the close at 4%, then left alone), player props:
+
+| Expires after | Fill | EV@close per fill w=0 / 0.25 / 0.5 | Per posted bid w=0.25 |
+| :- | -: | -: | -: |
+| 15 min | 4% | +1.9% / +5.2% / +6.0% | +0.20% |
+| 1 h | 11% | +2.1% / +4.5% / +5.4% | +0.50% |
+| 3 h | 25% | +1.6% / +3.3% / +4.4% | +0.80% |
+| 6 h | 37% | +1.3% / +2.7% / +3.7% | +1.00% |
+| until the close | 40% | +1.3% / +2.6% / +3.6% | +1.04% |
+
+Game lines show the same shape, steeper (w=0.25: +5.9% per fill at 15 min down to +1.1% until the close; at w=0, −0.6% to −0.7% once it rests 3 h+).
+**A bid loses value as it ages:** the fair it was priced from goes stale and the later fills are the ones the market moved through. But a longer life
+fills more, so the total keeps rising. The way to get both is not a long expiry but **re-quoting**: keep a bid up all the time at the CURRENT fair.
+
+**Re-quoting every 10 min at the fair then, from 24 h before the close (first fill per side):**
+
+| Margin | Fill | EV@close per fill w=0 / 0.25 / 0.5 | Per side w=0 / 0.25 / 0.5 | Props per side w=0 / 0.25 / 0.5 |
+| -: | -: | -: | -: | -: |
+| 2% | 53-58% | −0.05% / +1.45% / +2.35% | −0.03% / +0.81% / +1.24% | +0.02% / +0.74% / +1.20% |
+| 3% | 40-45% | +0.37% / +2.28% / +3.50% | +0.17% / +0.97% / +1.42% | +0.33% / +1.09% / +1.58% |
+| **4%** | 31-35% | **+0.87% / +3.07% / +4.65%** | +0.31% / +0.99% / +1.43% | **+0.57% / +1.32% / +1.78%** |
+| 6% | 19-22% | +2.03% / +4.65% / +6.81% | +0.45% / +0.89% / +1.27% | +0.84% / +1.45% / +1.88% |
+| 8% | 12-14% | +3.34% / +6.2% / +8.94% | +0.48% / – / +1.06% | +0.92% / – / +1.77% |
+
+Props fill on 41-46% of sides at 4% (24-33% at 6%). Re-quoting beats a static bid at the same margin on both counts: 4% props re-quoted earn +1.32% per
+side (w=0.25) against +0.73% for a single 3-h bid, and more of it per fill.
+
+**How to set it (NOVIG_API.md §17):** `tif: "PO"` (post only) with `ttl` in milliseconds. Vigilant's choice: a `ttl` of **30 minutes** as a safety net
+(if the phone or the app stops checking, nothing rests longer than that on a stale fair), re-posted at the current fair while the bet is still good,
+and cancelled at once when the fair moves against it. Never `GTC` (it would rest until the game starts, unwatched).
+
+**When to stop:** fills in the last half hour before the close are still positive on props (+1.5% w=0, +3.4% w=0.25 per fill at 4%) but the lowest
+of the day; game lines at w=0 lose in the last hour (−1.25% at 0.5-1 h). Novig voids every resting bid at the start anyway (`GOLIVE`). Vigilant stops
+posting **15 minutes before the start** (configurable).
+
+### 70.4 Q4: when and what to post
+- **What:** player props first (MLB, NFL, WNBA all positive), period lines and team totals next; **game lines only with a sharp fair** (off by default).
+  The underdog side of a market (bid under 0.35) is the best per bid; favorites over 0.65 almost never fill.
+- **When:** for props, as early as Vigilant has a fair for them: posted 12-48 h before the close a 4% prop bid fills ~50% of the time at the same EV
+  per fill as one posted 1 h before (which fills 16-20%); w=0.25: +2.6% per fill at every posting time, +1.3% per bid at 12-48 h vs +0.45% at 1 h.
+  Game lines posted early lose at w=0 (−0.4 to −0.6%).
+- **What's there now (live books, 2026-10-03 ~02:05Z):** props within 24 h of the start: **69% of sides have no bid at all** and only 8-28% are
+  two-sided: a Vigilant bid would usually be the whole book on its side, with nobody ahead in the queue. Game lines: two-sided, 4-10 grid steps
+  (2-5¢) wide, 1-3 orders at the best price, about $25-140 there. Period lines and team totals: 6-14 steps wide.
+
+### 70.5 Q5: getting the most CLV out of make bets
+1. **A margin of 4% or more under the fair** (6% for more per fill, fewer fills). Below 3% the adverse selection eats the edge unless the fair leads
+   Novig by a lot.
+2. **Re-quote at the current fair**, cancelling the moment the fair moves against the bid (the stale bid is the one that gets picked off: §70.3).
+   A short `ttl` makes the phone going quiet safe.
+3. **Props, period lines, team totals; underdog sides.** Game lines only with a fair that leads Novig (a fresh sharp-book price).
+4. **Post early** (as soon as there's a fair) and keep re-quoting until ~15 min before the start.
+5. **Size like a bet** (¼ Kelly on the EV at the fair, capped by the per-bet limit): a filled bid is a bet. Spread the wallet over many small bids:
+   Novig holds the cost of a resting bid (assumed), so the number of bids at once is the wallet ÷ the stake.
+6. **Judge it by CLV per fill**, like the taker bets, over 200+ fills, and by kind (props vs game lines): the w the simulation can't know is what
+   Tj's own fills will measure.
+
+**What it could make:** at 4% on props re-quoted, each side quoted earns +0.6% to +1.8% of its stake per game (w=0 to w=0.5), about +1.3% at Tj's
+realized w. 20 props a day, both sides, $10 a bid: ~40 bids → ~17 fills → ~$170 a day matched at +3% EV at the close ≈ $5 a day, before scaling
+the stake with the wallet. It adds to the taker bets (it uses lines the taker side skips: their offer isn't +EV, but a bid under it is).
