@@ -231,15 +231,16 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
             if (resting.isEmpty()) item(key = "restingNone") { Muted("No bids up right now.") }
             items(resting, key = { "r-" + it.clientId }) { b -> RestingRow(b, ui.now, actions.onCancel) }
             item(key = "readyTitle") {
-                SectionTitle("Ready to post (${ready.size})")
+                SectionTitle(if (ui.settings.maker) "Ready to post (${ready.size})" else "Recommended: approve or deny (${ready.size})")
                 Muted(
                     when {
                         ui.scanAtMs == null -> "No Vigilant scan yet: scan (or let the background scan run) to price lines to bid on."
-                        else -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}." + if (ui.settings.maker) " Posted at the next pass." else " Bids are off: post one by hand, or switch them on."
+                        ui.settings.maker -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Posted at the next pass, cheapest (underdog) first."
+                        else -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
                     },
                 )
             }
-            items(ready.take(MAX_READY), key = { "p-" + it.line.outcomeId }) { d -> ReadyRow(d, ui.now, ui.setUp, actions.onPost) }
+            items(ready.take(MAX_READY), key = { "p-" + it.line.outcomeId }) { d -> ReadyRow(d, ui.now, ui.setUp, ui.settings.maker, actions) }
             if (ready.size > MAX_READY) item(key = "readyMore") { Muted("+${ready.size - MAX_READY} more (cheapest first)") }
             val skipped = ui.skipped
             if (skipped.isNotEmpty()) {
@@ -248,6 +249,18 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                         Text("${skipped.sumOf { it.second }} lines get no bid: ${if (skippedOpen) "hide why" else "why"}")
                     }
                     if (skippedOpen) skipped.forEach { (why, n) -> Muted("$n · $why") }
+                }
+            }
+            if (ui.denied.isNotEmpty()) {
+                item(key = "deniedTitle") { SectionTitle("Denied (${ui.denied.size})") }
+                items(ui.denied, key = { "d-" + it.outcomeId }) { d ->
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "${d.selection.ifBlank { "A side" }} · no bid until its game (starts in ${MakerText.span(d.startsTs - ui.now)})",
+                            style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = { actions.onUndoDeny(d.outcomeId) }, modifier = Modifier.testTag("undoDeny-${d.outcomeId}")) { Text("Undo") }
+                    }
                 }
             }
             item(key = "filledTitle") {
@@ -272,23 +285,37 @@ private fun Muted(text: String) {
 
 @Composable
 private fun MakerHead(ui: MakerUi, actions: MakerActions) {
+    var confirming by rememberSaveable { mutableStateOf(false) }
+    if (confirming) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text("Post bids automatically?") },
+            text = { Text(MakerText.CONFIRM + "\n\n" + MakerRulesText.summary(ui.settings)) },
+            confirmButton = {
+                TextButton(onClick = { confirming = false; actions.onUpdate { it.copy(maker = true) } }, modifier = Modifier.testTag("makerConfirmOn")) { Text("Switch on") }
+            },
+            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
+        )
+    }
     Column(Modifier.padding(top = 4.dp)) {
         Text(MakerText.INTRO, style = MaterialTheme.typography.bodyMedium)
         Text(MakerText.RESEARCH, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         if (!ui.setUp) Banner(MakerText.NEEDS_BETTING, Modifier.padding(top = 10.dp), action = "Set up", onAction = actions.onOpenBetting)
         if (!ui.vigilantOn) Banner(MakerText.NEEDS_VIGILANT, Modifier.padding(top = 10.dp))
         if (ui.settings.paused) Banner("Scanning is paused: every bid is down until you resume.", Modifier.padding(top = 10.dp))
+        if (!ui.backgroundFeeds && (ui.settings.maker || ui.settings.makerRecommend)) Banner(MakerText.NO_BACKGROUND, Modifier.padding(top = 10.dp))
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Post bids automatically", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("Auto-make: post bids automatically", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(
-                    "After each scan and each background cycle, within the rules below.",
+                    if (ui.settings.maker) "On: after each scan and each background cycle, within the rules below." else "Off: bids are recommended below for you to approve or deny.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Switch(
                 checked = ui.settings.maker,
-                onCheckedChange = { on -> actions.onUpdate { it.copy(maker = on) } },
+                // On asks first (real money, nobody confirming each bid); off is immediate.
+                onCheckedChange = { on -> if (on) confirming = true else actions.onUpdate { it.copy(maker = false) } },
                 enabled = ui.setUp || ui.settings.maker,
                 modifier = Modifier.testTag("makerSwitch"),
             )
@@ -297,7 +324,7 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
         ui.problem?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.padding(top = 4.dp)) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
             OutlinedButton(onClick = actions.onRunNow, enabled = ui.setUp && !ui.running, modifier = Modifier.testTag("makerRunNow")) {
-                Text(if (ui.running) "Working…" else if (ui.settings.maker) "Run a pass now" else "Check fills now")
+                Text(if (ui.running) "Working…" else if (ui.settings.maker) "Run a pass now" else "Check my bids now")
             }
             if (ui.resting.isNotEmpty()) {
                 OutlinedButton(onClick = actions.onCancelAll, modifier = Modifier.testTag("makerCancelAll")) { Text("Cancel all") }
@@ -310,8 +337,19 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
 object MakerRulesText {
     /** "4% under the fair · $5 a bid · Props, 1st half / inning, Team totals · expire after 30 min". */
     fun summary(s: ScanSettings): String =
-        "${pct(s.makerMargin)} under the fair · ${Format.money(minOf(s.makerStake, s.apiMaxStake))} a bid · " +
-            "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · expire after ${s.makerTtlMinutes} min"
+        "${pct(s.makerMargin)} under the fair · ${stake(s)} · " +
+            "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
+            "up to ${s.makerTtlMinutes} min (less if the fair goes old)"
+
+    /** "¼ Kelly, up to $10 a bid" / "$5 a bid". */
+    fun stake(s: ScanSettings): String {
+        val max = Format.money(minOf(s.makerMaxStake, s.apiMaxStake))
+        return when (s.makerStakeMode) {
+            com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM -> "${Format.money(minOf(s.makerStake, s.makerMaxStake, s.apiMaxStake))} a bid"
+            com.tjshea.vigilant.data.scanner.AutoBetStake.ONE_DOLLAR -> "\$1 a bid"
+            else -> "${s.makerStakeMode.label} of ${Format.money(s.bankroll)}, up to $max a bid"
+        }
+    }
 
     fun pct(v: Double): String = String.format(Locale.US, if (v * 100 % 1.0 == 0.0) "%.0f%%" else "%.1f%%", v * 100)
 }
@@ -321,7 +359,14 @@ object MakerRulesText {
 private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     Column(Modifier.testTag("makerRules")) {
         RuleChips("Under the fair (the EV each bid is posted at): more fills at 3%, more per fill at 6-8%", ScanSettings.MAKER_MARGIN_CHOICES, s.makerMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerMargin = v) } }
-        RuleChips("Each bid (held to your ${Format.money(s.apiMaxStake)} per-bet limit)", ScanSettings.MAKER_STAKE_CHOICES, s.makerStake, Format::money) { v -> onUpdate { it.copy(makerStake = v) } }
+        RuleChips(
+            "Size of each bid (a filled bid is a bet): fractional Kelly on your ${Format.money(s.bankroll)} bankroll, like auto-bet and the pros (RESEARCH.md §69)",
+            com.tjshea.vigilant.data.scanner.AutoBetStake.entries.toList(), s.makerStakeMode, { it.label },
+        ) { v -> onUpdate { it.copy(makerStakeMode = v) } }
+        if (s.makerStakeMode == com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM) {
+            RuleChips("My amount", ScanSettings.MAKER_STAKE_CHOICES, s.makerStake, Format::money) { v -> onUpdate { it.copy(makerStake = v) } }
+        }
+        RuleChips("Most one bid may cost (never over your ${Format.money(s.apiMaxStake)} per-bet limit)", ScanSettings.MAKER_STAKE_CHOICES, s.makerMaxStake, Format::money) { v -> onUpdate { it.copy(makerMaxStake = v) } }
         RuleChips("Most bids up at once", ScanSettings.MAKER_MAX_BIDS_CHOICES, s.makerMaxBids, { it.toString() }) { v -> onUpdate { it.copy(makerMaxBids = v) } }
         RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, Format::money) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
         Text("Kinds of bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
@@ -351,11 +396,30 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             }
             Switch(checked = s.makerBothSides, onCheckedChange = { on -> onUpdate { it.copy(makerBothSides = on) } }, modifier = Modifier.testTag("makerBothSides"))
         }
+        SwitchRow(
+            "Sharp-book veto", "Skip a bid that a sharp book in the fair (Pinnacle, Circa, the exchanges) says isn't +EV on its own price.",
+            s.makerSharpVeto, "makerSharpVeto",
+        ) { on -> onUpdate { it.copy(makerSharpVeto = on) } }
+        SwitchRow(
+            "Recommend bids when auto-make is off", "A notification for each new bid worth posting, with Approve and Deny (a few a cycle at most).",
+            s.makerRecommend, "makerRecommend",
+        ) { on -> onUpdate { it.copy(makerRecommend = on) } }
         Text(
             "Bids are priced between ${Format.american(s.makerMinPrice)} and ${Format.american(s.makerMaxPrice)} (favorites shorter than that almost never fill), with at least " +
-                "${s.makerMinBooks} books behind the fair, pregame only.",
+                "${s.makerMinBooks} books each pricing the bid +EV on their own, game lines only with a sharp book in the fair, pregame only.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
         )
+    }
+}
+
+@Composable
+private fun SwitchRow(title: String, sub: String, on: Boolean, tag: String, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = on, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
     }
 }
 
@@ -399,17 +463,24 @@ private fun RestingRow(b: MakerBid, now: Long, onCancel: (String) -> Unit) {
 }
 
 @Composable
-private fun ReadyRow(d: MakerDecision.Post, now: Long, setUp: Boolean, onPost: (String) -> Unit) {
+private fun ReadyRow(d: MakerDecision.Post, now: Long, setUp: Boolean, auto: Boolean, actions: MakerActions) {
     val line = d.line
     RowCard {
         BetTitle(line.selection, "${line.marketLabel} · ${line.eventName}")
         Text(MakerText.bidLine(d.price, line.fair ?: d.price, d.evAtFair, d.contracts), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                listOfNotNull(line.offer?.let { "Novig offers ${Format.american(it)} now" }, "starts in ${MakerText.span(line.startsTs - now)}").joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
-            )
-            TextButton(onClick = { onPost(line.outcomeId) }, enabled = setUp, modifier = Modifier.testTag("postBid-${line.outcomeId}")) { Text("Post") }
+        Text(
+            listOfNotNull(
+                line.offer?.let { "Novig offers ${Format.american(it)} now" },
+                "fair good for ${MakerText.span(d.restUntilMs - now)}".takeIf { d.restUntilMs != Long.MAX_VALUE },
+                "starts in ${MakerText.span(line.startsTs - now)}",
+            ).joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = { actions.onDeny(line.outcomeId) }, modifier = Modifier.testTag("denyBid-${line.outcomeId}")) { Text("Deny") }
+            TextButton(onClick = { actions.onPost(line.outcomeId) }, enabled = setUp, modifier = Modifier.testTag("postBid-${line.outcomeId}")) {
+                Text(if (auto) "Post now" else "Approve")
+            }
         }
     }
 }
