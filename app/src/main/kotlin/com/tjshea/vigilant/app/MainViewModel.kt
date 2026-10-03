@@ -1376,6 +1376,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Locks in [marketId]'s profit (the Tracker's Lock button, after Tj confirmed [confirmed] dollars): placed only if it still pays at least that
      * (a price that moved against him is refused with "look again"), through [ApiBetPlacer.placeLock].
      */
+    // ---- the Bids tab: make orders (Tj, 2026-10-03; RESEARCH.md §70) ------------------------------------------------------------
+
+    /** The last pass and the bids each line would get ([MakerRunner.status]). */
+    val makerStatus get() = c.maker.status
+
+    /** Every bid on record ([com.tjshea.vigilant.data.novig.trading.maker.MakerStore]); null until first read. */
+    val makerBids get() = c.makerStore.flow
+
+    /** The bids the latest scan's lines would get, posting nothing (the tab opening). */
+    fun makerPreview() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { c.makerStore.all(); c.maker.preview() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+        }
+    }
+
+    /** "Run a pass now": fills read, bids posted, moved and cancelled as the rules say (only fills read with bids off). */
+    fun makerRun() {
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.maker.run("Bids tab") } }
+            r.exceptionOrNull()?.let { _toasts.tryEmit("Bids: ${it.message ?: it.javaClass.simpleName}") }
+            r.getOrNull()?.let { rep ->
+                _toasts.tryEmit(
+                    rep.stopped?.let { "Bids: $it (${rep.cancelled} cancelled)" }
+                        ?: "Bids: ${rep.placed} posted, ${rep.cancelled} moved or cancelled, ${rep.fills.size} filled, ${rep.resting} resting",
+                )
+            }
+        }
+    }
+
+    fun makerPost(outcomeId: String) {
+        viewModelScope.launch {
+            val why = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.maker.post(outcomeId) }.getOrElse { it.message ?: it.javaClass.simpleName } }
+            _toasts.tryEmit(why?.let { "Not posted: $it" } ?: "Bid posted (post-only: it rests until someone takes it)")
+        }
+    }
+
+    fun makerCancel(orderId: String) {
+        viewModelScope.launch {
+            val why = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.maker.cancel(orderId) }.getOrElse { it.message ?: it.javaClass.simpleName } }
+            _toasts.tryEmit(why?.let { "Not cancelled: $it" } ?: "Bid cancelled")
+        }
+    }
+
+    fun makerCancelAll() {
+        viewModelScope.launch {
+            val n = withContext(Dispatchers.IO + NonCancellable) { runCatching { c.maker.cancelAll("Cancelled by you") } }
+            _toasts.tryEmit(n.getOrNull()?.let { "Cancelled $it bid${if (it == 1) "" else "s"}" } ?: "Couldn't cancel: ${n.exceptionOrNull()?.message ?: "betting isn't set up"}")
+        }
+    }
+
     fun lockIn(marketId: String, confirmed: Double) {
         val view = _state.value.locks[marketId] ?: return
         val market = view.market ?: return

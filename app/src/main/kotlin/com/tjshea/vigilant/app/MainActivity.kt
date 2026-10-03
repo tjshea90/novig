@@ -579,6 +579,8 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
     GAMES("Games", Icons.Filled.DateRange),
     /** Its own tab since 2026-10-02 (Tj: "maybe make the auto bet feature its own section instead of buried in the settings"). */
     AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet),
+    /** Make orders (Tj, 2026-10-03: "It may need a separate section in the app"; RESEARCH.md §70): bids posted under Vigilant's fair. */
+    BIDS("Bids", drawable = R.drawable.ic_bids),
     TRACKER("Tracker", Icons.AutoMirrored.Filled.List),
     SETTINGS("Settings", Icons.Filled.Settings),
     ;
@@ -589,6 +591,8 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
         CNO -> mode != ScannerMode.VIGILANT
         // Auto-bet bets CrazyNinjaOdds' list through Novig's API.
         AUTOBET -> AppBook.isNovig && mode != ScannerMode.VIGILANT
+        // Bids are priced from Vigilant's own scan (every line it prices, not only the +EV ones).
+        BIDS -> AppBook.isNovig && mode != ScannerMode.CNO
         TRACKER, SETTINGS -> true
     }
 }
@@ -760,6 +764,31 @@ private fun VigilantRoot(
                         onOpenSettings = { p -> settingsPage = p.name; tabName = Tab.SETTINGS.name },
                         notificationsBlocked = AutoBetNotes.blocked(context),
                         onTestNotification = { (context.applicationContext as? android.app.Application)?.let(AutoBetNotes::sample) ?: false },
+                    )
+                }
+                Tab.BIDS -> {
+                    val status by vm.makerStatus.collectAsStateWithLifecycle()
+                    val bids by vm.makerBids.collectAsStateWithLifecycle()
+                    val now = com.tjshea.vigilant.app.ui.rememberNow(30_000)
+                    // The bids each line of the latest scan would get, worked out as the tab opens (each pass and each scan keep it current after).
+                    androidx.compose.runtime.LaunchedEffect(vm) { vm.makerPreview() }
+                    val actions = remember(vm) {
+                        com.tjshea.vigilant.app.ui.MakerActions(
+                            onUpdate = vm::updateSettings,
+                            onRunNow = vm::makerRun,
+                            onPost = vm::makerPost,
+                            onCancel = vm::makerCancel,
+                            onCancelAll = vm::makerCancelAll,
+                            onOpenBetting = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.BETTING.name; tabName = Tab.SETTINGS.name },
+                        )
+                    }
+                    com.tjshea.vigilant.app.ui.MakerScreen(
+                        com.tjshea.vigilant.app.ui.MakerUi(
+                            settings = state.settings, setUp = state.betting.enabled, vigilantOn = state.settings.vigilantOn, bids = bids.orEmpty(),
+                            decisions = status.decisions, scanAtMs = status.scanAtMs, lastPassAtMs = status.lastAtMs, running = status.running,
+                            problem = status.problem, bets = state.bets, now = now,
+                        ),
+                        actions,
                     )
                 }
                 Tab.SETTINGS -> SettingsScreen(
