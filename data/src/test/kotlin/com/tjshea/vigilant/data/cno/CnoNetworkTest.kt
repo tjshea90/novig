@@ -40,6 +40,25 @@ class CnoNetworkTest {
     }
 
     @Test
+    fun `with no network at all DNS over HTTPS isn't asked (it can't be reached either), and the last good address still answers`() {
+        val system = FlakyDns(fail = false, answer = cnoIp)
+        var asked = 0
+        val doh = object : Dns {
+            override fun lookup(hostname: String): List<InetAddress> { asked++; throw UnknownHostException(hostname) }
+        }
+        var online = true
+        val dns = RememberingDns(system, doh, online = { online })
+        dns.lookup("crazyninjaodds.com")
+        system.fail = true
+        online = false
+        assertEquals(cnoIp, dns.lookup("crazyninjaodds.com"))
+        assertEquals(0, asked)
+        online = true
+        dns.lookup("crazyninjaodds.com")
+        assertEquals(1, asked)
+    }
+
+    @Test
     fun `DNS over HTTPS replies are read the way Cloudflare and Google send them`() {
         val cloudflare = """{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":false,"Question":[{"name":"crazyninjaodds.com","type":1}],"Answer":[{"name":"crazyninjaodds.com","type":1,"TTL":1399,"data":"162.250.75.106"}]}"""
         val (ips, ttl) = DnsOverHttps.parse(cloudflare)!!

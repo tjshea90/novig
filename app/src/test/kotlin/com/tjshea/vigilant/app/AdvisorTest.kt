@@ -151,7 +151,7 @@ class AdvisorTest {
         val h = host(calls = 200, errors = 40, kinds = mapOf("timeout" to 30L), status = mapOf("200" to 160L, "500" to 10L), paths = mapOf("/site/browse/game.aspx" to PathStat(50, 35, 900_000, null), "/ok" to PathStat(100, 0, 1, 200)), lastError = "SocketTimeoutException: timeout", byNet = mapOf("mobile" to 150L, "Wi-Fi" to 50L))
         val f = byKey(base.copy(net = net("crazyninjaodds.com" to h))).getValue("net:crazyninjaodds.com:errors")
         assertEquals("FAILURE", f.kind)
-        assertTrue(f.title, f.title == "crazyninjaodds.com: 20% of calls failed (40 of 200)")
+        assertTrue(f.title, f.title == "crazyninjaodds.com: 20% of calls failed (40 of 200 with a connection)")
         assertTrue(f.evidence, f.evidence.contains("30 timeout") && f.evidence.contains("10× HTTP 500") && f.evidence.contains("worst endpoint /site/browse/game.aspx (35/50)"))
         assertTrue(f.code, f.code.contains("CnoClient.kt"))
         assertTrue(f.action, f.action.startsWith("Mostly timeouts"))
@@ -161,6 +161,17 @@ class AdvisorTest {
         // Refusals get the pacing advice.
         val limited = byKey(base.copy(net = net("parlay-api.com" to host(calls = 50, errors = 10, status = mapOf("200" to 40L, "429" to 10L), limits = 10)))).getValue("net:parlay-api.com:errors")
         assertTrue(limited.action, limited.action.startsWith("Refused with 429/403"))
+    }
+
+    @Test
+    fun `calls made with no network at all aren't the host's failures - Tj's v0,52,0 file called the DNS fallback 100 percent failed`() {
+        // All 25 failed with the phone offline: no finding.
+        assertTrue(findings(base.copy(net = net("dns.google" to host(calls = 25, errors = 25, kinds = mapOf("connect" to 25L), status = emptyMap(), byNet = mapOf(NetKind.NONE to 25L))))).none { it.key == "net:dns.google:errors" })
+        // Some failed with a connection too: judged on those, the offline ones named apart.
+        val h = host(calls = 60, errors = 30, kinds = mapOf("connect" to 30L), status = mapOf("200" to 30L), byNet = mapOf(NetKind.NONE to 20L, "mobile" to 40L))
+        val f = byKey(base.copy(net = net("a.com" to h))).getValue("net:a.com:errors")
+        assertEquals("a.com: 25% of calls failed (10 of 40 with a connection)", f.title)
+        assertTrue(f.evidence, f.evidence.contains("20 more failed with no connection (not counted)"))
     }
 
     @Test
