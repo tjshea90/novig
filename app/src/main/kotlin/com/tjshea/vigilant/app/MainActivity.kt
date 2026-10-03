@@ -598,6 +598,15 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     }
 }
 
+/** The wallet strip, reading its own flows so a new balance or bid redraws only it. */
+@Composable
+private fun WalletBar(vm: MainViewModel) {
+    val wallet by vm.wallet.collectAsStateWithLifecycle()
+    val bids by vm.makerBids.collectAsStateWithLifecycle()
+    val up = remember(bids) { bids.orEmpty().filter { it.resting } }
+    com.tjshea.vigilant.app.ui.WalletStrip(wallet, up.size, remember(up) { up.sumOf { it.restingDollars } }, onRefresh = { vm.refreshWallet(0L) })
+}
+
 /** The tab's icon with its bet count. Its own clock, so only the badge ticks, not the whole screen. */
 @Composable
 private fun TabIconWithCount(t: Tab, state: UiState) {
@@ -687,6 +696,9 @@ private fun VigilantRoot(
     ) {
     Scaffold(
         bottomBar = {
+            androidx.compose.foundation.layout.Column {
+            // The wallet on every tab (Tj, 2026-10-03: "show it somewhere in the app at all times"), once betting through the API is set up.
+            if (AppBook.isNovig && state.betting.enabled) WalletBar(vm)
             NavigationBar {
                 tabs.forEach { t ->
                     NavigationBarItem(
@@ -702,6 +714,7 @@ private fun VigilantRoot(
                         label = { Text(t.label) },
                     )
                 }
+            }
             }
         },
     ) { padding ->

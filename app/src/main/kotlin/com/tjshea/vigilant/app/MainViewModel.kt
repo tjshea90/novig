@@ -1384,6 +1384,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Every bid on record ([com.tjshea.vigilant.data.novig.trading.maker.MakerStore]); null until first read. */
     val makerBids get() = c.makerStore.flow
 
+    /** The Vigilant wallet's latest balance, for the strip above the tabs ([WalletBalance.flow]). */
+    val wallet get() = c.wallet.flow
+
+    /** Reads the wallet again when the last reading is older than [maxAgeMs] (0: now, Tj's tap on the strip). */
+    fun refreshWallet(maxAgeMs: Long = WalletBalance.FRESH_MS) {
+        if (!c.wallet.isSetUp) return
+        viewModelScope.launch(Dispatchers.IO) { runCatching { c.wallet.fresh(maxAgeMs) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+    }
+
     /** The bids the latest scan's lines would get, posting nothing (the tab opening). */
     fun makerPreview() {
         viewModelScope.launch(Dispatchers.IO) {
