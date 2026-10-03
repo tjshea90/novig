@@ -351,6 +351,9 @@ class ScanStudyWideTest {
     fun `a file over its limit leaves out hidden bets' lines first but still counts every bet`() = runBlocking {
         val j = journal()
         val s = study(j)
+        // The shown bet is the older; the three hidden ones came a minute later, so they are first in a file that lists the newest first.
+        s.wide(wideSnap(shown), narrowSnap(shown))
+        now += 70_000
         s.wide(wideSnap(shown, lowEv, fewBooks, longOdds), narrowSnap(shown))
         s.flush()
         val one = StringWriter().also { StudyExport.write(it, j, emptyList(), meta, now, File(tmp.root, "export.tmp")) }.toString()
@@ -360,9 +363,26 @@ class ScanStudyWideTest {
         assertEquals("every bet is counted", 4, n)
         val text = out.toString()
         assertEquals(2, text.lines().count { it.startsWith("{") })
+        assertTrue("the hidden bets' share of the limit keeps the shown bet's line in", text.lines().any { it.startsWith("{") && it.contains("\"market\":\"Moneyline\"") })
         assertTrue("the shown bet's line is always kept", text.lines().any { it.startsWith("{") && it.contains("\"market\":\"Moneyline\"") })
         assertTrue(text, text.contains("2 more left out of these lines but counted above"))
         assertTrue(text.contains("ALL BETS · 4 bets"))
         assertTrue(text.contains("2 bets (the hidden ones first) are counted in the SUMMARY"))
+    }
+
+    @Test
+    fun `a day folded without its looks has none, and the same bets`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.wide(wideSnap(shown, lowEv), null)
+        now += 61_000
+        s.wide(wideSnap(row("Moneyline", "New York Mets", 110), lowEv), null)
+        s.flush()
+        val full = j.fold(day)
+        val lean = j.fold(day, withSights = false)
+        assertEquals(full.keys, lean.keys)
+        assertTrue(full.values.any { it.sights.size > 1 })
+        assertTrue(lean.values.all { it.sights.isEmpty() })
+        assertEquals(full.values.map { it.bet }, lean.values.map { it.bet })
     }
 }
