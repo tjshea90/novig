@@ -735,6 +735,17 @@ class ScreenshotTest {
         com.tjshea.vigilant.app.ui.CnoScreen(SampleCno.withBooks().let { it.copy(settings = it.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR)) }, {}, {})
     }
 
+    /** The trap guard on CNO's bet sheet (RESEARCH.md §71): a game a day off with the guard at its 6 h default. */
+    @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
+    @Test fun cnoDetailTrapGuard() {
+        val s = SampleCno.withBooks()
+        val pick = s.cnoPicks(SampleScan.NOW)!!.picks.first { it.row.bet == "Justin Jefferson Under 69.5" }
+        shoot("8t_cno_detail_trap_guard") {
+            com.tjshea.vigilant.app.ui.CnoDetail(pick, s.cno.snapshot, s.settings.copy(trapEarlyHours = 6), s.cnoUrl, s.books[pick.row.key], SampleScan.NOW)
+        }
+        compose.onNodeWithTag("trapEarlySheet").assertIsDisplayed()
+    }
+
     @Config(qualifiers = "w393dp-h1400dp-xxhdpi")
     @Test fun cnoDetailWithEveryBook() {
         val s = SampleCno.withBooks()
