@@ -88,7 +88,7 @@ object AutoBetText {
             "${evLabel(r.minEv)} or more at Novig's price now" + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
             (if (r.minOdds < 0) ", odds no shorter than ${minOddsLabel(r.minOdds)}" else "") +
             (if (r.kinds.size < BetKind.entries.size) ", only ${r.kinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() }}" else "") +
-            (if (s.sharpAutoBet == SharpMode.VETO) ", unless the sharpest book for it gives it under ${if (s.sharpVetoMinEv <= 0.0) "any edge" else AutoBetText.evLabel(s.sharpVetoMinEv)}" else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
+            (if (s.sharpAutoBet == SharpMode.VETO) (if (s.sharpVetoMinEv <= 0.0) ", unless the sharpest book for it says it isn't +EV" else ", unless the sharpest book for it gives it under ${evLabel(s.sharpVetoMinEv)}") else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
             ", staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
     }
 
