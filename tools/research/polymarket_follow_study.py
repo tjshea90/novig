@@ -198,6 +198,23 @@ def main():
         print(f'  worst quarter ({len(bot)}):            older {bot.clv1.mean():+.2f}¢ -> newer {bot.clv2.mean():+.2f}¢ CLV, newer ROI {bot.roi2.mean():+.1f}%')
         print(f'  share of accounts with positive newer-half CLV: {100 * (p.clv2 > 0).mean():.0f}%')
 
+        # The real test of following: pick the accounts on their OLDER half (as a follower would), then copy their NEWER trades.
+        print('\n## Following the best quarter (picked on older-half CLV) in their newer half - their price vs a copy\'s')
+        newer = []
+        for w, y in t.sort_values('timestamp').groupby('wallet'):
+            if w in set(top.w):
+                newer.append(y.iloc[len(y) // 2:])
+        nz = pd.concat(newer)
+        g2 = nz.conditionId
+        print(f'  theirs        CLV {ci(nz.clv, g2)} ¢   ROI {ci(nz.roi, g2)} %   n={len(nz):,}')
+        for k, nm in (('p1', 'copy 1 min'), ('p5', 'copy 5 min'), ('p30', 'copy 30 min')):
+            print(f'  {nm:<13} CLV {ci(nz[f"clv_{k}"], g2)} ¢   ROI {ci(nz[f"roi_{k}"], g2)} %   paid {ci(100 * (nz[k] - nz.price), g2)} ¢ more')
+        lead2 = (nz.start - nz.timestamp) / 3600
+        for lo, hi in ((0, 1), (1, 6), (6, 1e9)):
+            y = nz[(lead2 >= lo) & (lead2 < hi)]
+            if len(y) >= 50:
+                print(f'  {lo}-{hi:g} h before: theirs {ci(y.clv, y.conditionId)}  copy@1min {ci(y.clv_p1, y.conditionId)}  n={len(y):,}')
+
 
 if __name__ == '__main__':
     main()
