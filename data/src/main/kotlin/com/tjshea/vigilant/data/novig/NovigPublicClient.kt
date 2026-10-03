@@ -206,6 +206,18 @@ class NovigPublicClient(
     /** After the key route fails, stay on public routes this long before trying it again. */
     private val keyedRetryMs = 10 * 60_000L
 
+    /**
+     * How long the public routes stand in after the key route failed with [e]: Novig's verdict on the network's address (`451 ANONYMIZED_NETWORK`,
+     * a restricted region) flaps as a carrier moves the phone between addresses (Tj's v0.52.0 file: 51 such refusals in bursts, each sending every
+     * read to the public routes at a third of the pace for 10 minutes), so it's tried again after [NETWORK_RETRY_MS]; no connection at all after
+     * [NO_CONNECTION_RETRY_MS]; anything else (a revoked key, a 423 lock) after [keyedRetryMs].
+     */
+    private fun keyRetryAfter(e: Throwable): Long = when {
+        e is NovigApiException && e.networkRefusal -> NETWORK_RETRY_MS
+        e !is NovigApiException && e is IOException -> NO_CONNECTION_RETRY_MS
+        else -> keyedRetryMs
+    }
+
     @Volatile
     private var keyedDownUntil = 0L
 
@@ -292,7 +304,7 @@ class NovigPublicClient(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                keyedCatalogDownUntil = clock() + keyedRetryMs
+                keyedCatalogDownUntil = clock() + keyRetryAfter(e)
                 keyDownWhy = (e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName
             }
         }
@@ -364,7 +376,7 @@ class NovigPublicClient(
                                     return@run BookFetch.Failed(id, e.advice)
                                 }
                                 if (useKey.getAndSet(null) != null) {
-                                    keyedDownUntil = clock() + keyedRetryMs
+                                    keyedDownUntil = clock() + keyRetryAfter(e)
                                     keyDownWhy = e.brief
                                     keyProblem.compareAndSet(null, e.brief)
                                 }
