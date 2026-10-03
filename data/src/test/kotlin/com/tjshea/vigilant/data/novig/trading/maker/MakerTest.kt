@@ -433,6 +433,29 @@ class MakerTest {
         assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules.copy(sharpVeto = false), now) is MakerDecision.Post)
     }
 
+    /** RESEARCH.md §72: a filled bid keeps about the sharp book's own edge, so the auto-bet's veto bar applies to a bid's own price too. */
+    @Test
+    fun `the sharp veto's bar applies at the bid's price - every sharp book must give the bid the set edge, 1% by default`() {
+        assertEquals(0.01, rules.sharpMinEv, 0.0)
+        // Bid 0.500 (fair 0.52). A sharp fair of 0.504 gives it +0.8%: under 1%, skipped; 0.505 gives exactly 1%: posted (the bar is inclusive).
+        assertEquals(
+            "A sharp book's own price gives this bid under the sharp veto's 1.0% edge",
+            (MakerQuote.decide(line().copy(sharpFairs = listOf(0.504)), rules, now) as MakerDecision.Skip).why,
+        )
+        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.505)), rules, now) is MakerDecision.Post)
+        // Every sharp book in the fair must clear it, not just one.
+        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.53, 0.504)), rules, now) is MakerDecision.Skip)
+        // The old bar (any +EV), or the veto off, lets it through.
+        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.504)), rules.copy(sharpMinEv = 0.0), now) is MakerDecision.Post)
+        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.504)), rules.copy(sharpVeto = false), now) is MakerDecision.Post)
+        // No sharp book in the fair (most props): nothing to veto.
+        assertTrue(MakerQuote.decide(line(), rules.copy(sharpMinEv = 0.02), now) is MakerDecision.Post)
+        // The setting is the auto-bet's, held to 0..10%.
+        assertEquals(0.02, MakerRules.of(ScanSettings(sharpVetoMinEv = 0.02)).sharpMinEv, 0.0)
+        assertEquals(MakerRules.MAX_SHARP_MIN_EV, MakerRules.of(ScanSettings(sharpVetoMinEv = 0.5)).sharpMinEv, 0.0)
+        assertEquals(0.0, MakerRules.of(ScanSettings(sharpVetoMinEv = -0.01)).sharpMinEv, 0.0)
+    }
+
     @Test
     fun `sizing - a quarter Kelly on the bankroll for the bid's own edge, held to the most a bid may cost`() {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.QUARTER_KELLY, bankroll = 1_000.0, maxStake = 25.0)
