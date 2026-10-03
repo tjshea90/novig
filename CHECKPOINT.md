@@ -1,13 +1,13 @@
-# CHECKPOINT 2416 — read me first, then TASKS.md
+# CHECKPOINT 2417 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T03:04:08Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `34528580` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T03:06:41Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `c25c8790` (this checkpoint is the commit after it)
 
 ## Just done
-BH: Tj's make-orders follow-up written to TASKS.md (full tests, +EV only, timing, auto-make like auto-bet, approve/deny recommendations, pro sizing, sweep)
+BH0 done: v0.51.0 released + recorded (BG6 ticked)
 
 ## Do this next
-BH0: confirm v0.51.0 release (release.yml queued), record-release; then BH1 full tests
+BH1-3: fix audit findings in MakerDesk (cancel is only queued: CANCELING until Novig confirms; replacement only after; fills on 404; lost-answer search by clientId across statuses; refused cool-off), MakerQuote (expiry bounded by fair freshness and the stop window, fair age required, game lines need sharp, books agreeing, sharp veto)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ BH0: confirm v0.51.0 release (release.yml queued), record-release; then BH1 full
 
 ## Last ten checkpoints
 ```
+  622feada ckpt 2416: BH: Tj's make-orders follow-up written to TASKS.md (full tests, +EV only, ti
   94cdbdc2 ckpt 2415: pre-release: v0.51.0: make orders (the Bids tab): post-only bids under Vigil
   56e1fac1 ckpt 2414: pre-ship: v0.51.0: make orders (the Bids tab): post-only bids under Vigilant
   e79c9c9b ckpt 2413: BG6e done: Bids tab + MakerRunner + container wiring + Diagnostics + Tracker
@@ -26,8 +27,4 @@ BH0: confirm v0.51.0 release (release.yml queued), record-release; then BH1 full
   6bb1779f ckpt 2409: BG1-BG5 research written: NOVIG_API.md §17 (PO + ttl, cancel, queue, fees, 
   aa59075d ckpt 2408: BG1 API read (docs: PO + ttl, GTT, no amend, queue = price then time, cancel
   ce5b1931 ckpt 2407: BG: Tj's make-orders request written to TASKS.md (research BG1-BG5, then pla
-  d9acefe2 ckpt 2406: BF answered: Tj sent the RESEARCH.md §69 summary (pro strategies, Vigilant 
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
