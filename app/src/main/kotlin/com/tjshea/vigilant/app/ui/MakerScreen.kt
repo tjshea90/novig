@@ -115,12 +115,8 @@ object MakerText {
             "about to start, or scanning is paused. With auto-make off, Vigilant recommends bids for you to approve or deny. A filled bid is a bet in the Tracker."
 
     const val CONFIRM =
-        "Vigilant will post and move bids by itself from the Vigilant wallet, within these rules, after each scan and each background cycle: real money, " +
+        "Vigilant will post and move bids by itself from the Vigilant wallet, within these rules, while each scan runs and every background cycle: real money, " +
             "nobody confirming each one (the same way auto-bet places bets). A phone restart switches it off."
-
-    const val NO_BACKGROUND =
-        "The background scan doesn't run Vigilant's scan (Settings › Scanning: background CNO + Vigilant), so bids are only priced while you scan, and " +
-            "come down within minutes when their fair goes old."
 
     const val RESEARCH =
         "Research (60 days of Novig's trades, RESEARCH.md §70): bids 4% under the fair on player props filled on 30-45% of sides and beat Novig's close by " +

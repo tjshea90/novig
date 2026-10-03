@@ -69,7 +69,7 @@ fun AutoBetScreen(
 @Composable
 private fun AutoMakeLink(s: ScanSettings, onOpenBids: (() -> Unit)?) {
     Banner(
-        "Auto-make (bids under the fair, RESEARCH.md §70): ${if (s.maker) "ON" else "off"} · ${MakerRulesText.summary(s)}" +
+        "Bids (make orders under the fair, the Bids tab): ${com.tjshea.vigilant.data.novig.trading.maker.BidMode.of(s).label} · ${MakerRulesText.summary(s)}" +
             (if (onOpenBids == null) " · needs Vigilant's scanner (Settings › Scanning: Both or Vigilant only)" else ""),
         Modifier.padding(top = 8.dp).testTag("autoMakeLink"),
         color = MaterialTheme.colorScheme.primary,
