@@ -3684,3 +3684,10 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
   (three scanScope collectors behind studyStep, settleStudy, SettleWorker), Settings › Diagnostics & about button + counts + switch, Diagnostics line. Proofs: ScanStudyTest (17: logging, record as first
   listed, dedupe/throttle, gone, restart + torn line, book check, grading + closes through the real settler, copy from the Tracker, the file, size limit, a two-hour evening = 0.56 s; 10 of 11 mutants
   killed, the 11th equivalent), ScanStudyUiTest, ScanStudyAppTest (the real share flow, Vigilant + CNO merge, Diagnostics line, wiring pins).
+
+
+## Tj, 2026-10-03 ~21:50Z (after v0.57.0): "For the scan study feature, if it doesn't already do so, make it include cno scanned bets that are filtered out of showing up in the vigilant list. In other words, log all cno finds on every scan with all the information for each bet cno shows even if these bets don't meet my criteria for showing up in the list in the app. They should still be hidden in the app but logged into the scan study file. The more information the better"
+
+- [ ] BQ1 Find out what the study sees today: CNO is read with Tj's filters posted to CNO (min EV, min books, longest odds, devig, rows, complete book, min sides), so rows those filters drop never reach the app, let alone the study; the app's own screen (CnoChecks) hides more after that. Say exactly which finds are lost, and what CNO lets a read ask for.
+- [ ] BQ2 Make the study log every row CNO finds on every scan (wide), with all that CNO shows for it, and flag which ones the app's list (Tj's criteria) shows or hides and why; the app's list, alerts, auto-bet and widget must see exactly what they see today.
+- [ ] BQ3 Keep it efficient and safe for CNO (rate, size, pacing), log what extra each wide row carries (CNO's own columns), tests (failing-first, mutants), full floor, ship, answer Tj with the link.
