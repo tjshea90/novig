@@ -38,6 +38,16 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `it says what the trap guard is set to, and splits every bet by its time to the start, recorded as placed or not (RESEARCH 71)`() {
+        // The sample keeps it off (its games are 8 h+ off); the default is 6 h with the game-line check on.
+        assertTrue(report().contains("Trap guard (RESEARCH.md §71): auto-bet, alerts and bids only on games starting within any time (off)"))
+        val on = report(SampleScan.state().let { it.copy(settings = it.settings.copy(trapEarlyHours = 6, trapNovigMove = true)) })
+        assertTrue(on, on.contains("only on games starting within 6 h · game lines Novig just moved skipped (auto-bet reads Novig's trades first)"))
+        // The sample's bets have no record as placed: their time to the start is split all the same.
+        assertTrue(on, on.lines().any { it.startsWith("Time to the start ") && !it.startsWith("Time to the start not recorded") })
+    }
+
+    @Test
     fun `it says what the background scan really runs at each scanner choice`() {
         fun runs(scanner: ScannerMode, auto: AutoScanMode) = Diagnostics.runsText(SampleScan.settings.copy(scanner = scanner, autoScan = auto))
         assertEquals("CNO + Vigilant", runs(ScannerMode.BOTH, AutoScanMode.BOTH))

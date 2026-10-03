@@ -152,6 +152,16 @@ class DiagnosticsShareTest {
     }
 
     @Test
+    fun `the file's bids come from the bids file, not a flow nobody has read yet (v0 54 0 file - 0 of 0 on record beside a 257 KB maker json)`() {
+        val vm = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt").readText()
+        val gather = vm.substringAfter("private suspend fun gatherDiag()").substringBefore("/** One-shot hand-offs")
+        assertTrue(gather, gather.contains("makerBids = runCatching { c.makerStore.all() }"))
+        val extras = vm.substringAfter("private fun diagnosticsExtras(").substringBefore("memory = memoryNow()")
+        assertTrue(extras, extras.contains("makerBids = g.makerBids,"))
+        assertTrue(extras, !extras.contains("makerStore.flow.value"))
+    }
+
+    @Test
     fun `from the view model, sharing makes the file, hands over the sheet, remembers the numbers, and the next file compares with them`() {
         val vm = MainViewModel(app)
         waitFor("settings loaded") { vm.state.value.loaded }
