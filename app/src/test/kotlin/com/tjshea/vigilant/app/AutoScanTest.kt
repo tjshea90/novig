@@ -234,6 +234,23 @@ class AutoScanTest {
     }
 
     @Test
+    fun `the trap guard's early rule (RESEARCH 71) - no alert for a game further off than its hours, CNO's or Vigilant's, and its books aren't read for one`() {
+        fun guarded(hours: Int, base: UiState) = base.let { it.copy(settings = it.settings.copy(trapEarlyHours = hours)) }.indexed(now)
+        // Jefferson starts a day off.
+        assertTrue(AlertPicks.cno(guarded(12, SampleCno.withBooks()), 0.03, now).isEmpty())
+        assertEquals(1, AlertPicks.cno(guarded(24, SampleCno.withBooks()), 0.03, now).size)
+        assertEquals(1, AlertPicks.cno(guarded(0, SampleCno.withBooks()), 0.03, now).size)
+        // The candidates whose books a cycle reads leave them out too, and the auto-bet's count says how many.
+        val twelve = guarded(12, SampleCno.withBooks())
+        assertTrue(AlertPicks.cnoCandidates(twelve, 0.03, now).all { it.row.startsAtMs!! - now <= 12 * 3_600_000L })
+        assertTrue(AlertPicks.tooEarly(twelve, 0.03, now) >= 1)
+        assertEquals(0, AlertPicks.tooEarly(guarded(0, SampleCno.withBooks()), 0.03, now))
+        // Vigilant's own alerts: every sample game is 8 h or more off.
+        assertTrue(AlertPicks.vigilant(SampleScan.state().indexed(now), 0.02, now).isNotEmpty())
+        assertTrue(AlertPicks.vigilant(guarded(6, SampleScan.state()), 0.02, now).isEmpty())
+    }
+
+    @Test
     fun `a CNO bet whose Novig link is known opens that exact bet slip`() {
         val link = "novigapp://events/out-123/cno"
         val s = SampleCno.withBooks().copy(cnoLinks = mapOf(CnoFeed.linkKey(jefferson) to link)).indexed(now)
