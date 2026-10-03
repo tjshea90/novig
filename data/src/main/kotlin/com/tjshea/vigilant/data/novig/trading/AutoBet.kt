@@ -145,14 +145,15 @@ object AutoBet {
      * The stake for [row] (judged at Novig's price now): the rule's amount, held to Tj's per-bet maximum and to what's left in the wallet
      * ([balance]), floored to the cent, never under [MIN_STAKE]. A Kelly stake is [bankroll] × the fraction × full Kelly for this bet's own
      * price and fair chance (`(fair − price) / (1 − price)`, no fee pregame), held to what Novig has for sale at +EV, so it changes with the
-     * odds of every bet.
+     * odds of every bet. [sharpFair]: the sharpest book's own fair for this side when its veto priced the bet; the Kelly fair is never above it
+     * (RESEARCH.md §72: what a bet keeps is about the sharp book's edge, and Kelly on an edge overestimated by more than 2× loses money: Benter).
      */
-    fun stake(rules: Rules, row: CnoRow, bankroll: Double, balance: Double): Stake {
+    fun stake(rules: Rules, row: CnoRow, bankroll: Double, balance: Double, sharpFair: Double? = null): Stake {
         if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty
         val wanted = when (rules.stake) {
             AutoBetStake.ONE_DOLLAR -> 1.0
             AutoBetStake.CUSTOM -> rules.customStake
-            else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction")) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
+            else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction"), sharpFair) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
         }
         if (!(wanted > 0.0)) return Stake.Skip("the amount to stake is $0")
         val capped = floorCents(minOf(wanted, rules.maxStake, balance))
@@ -168,10 +169,14 @@ object AutoBet {
         return Stake.Amount(capped)
     }
 
-    /** The Kelly stake in dollars at [fraction] of full Kelly; null when there's no edge, no fair probability or no bankroll. */
-    fun kellyStake(row: CnoRow, bankroll: Double, fraction: Double): Double? {
+    /**
+     * The Kelly stake in dollars at [fraction] of full Kelly; null when there's no edge, no fair probability or no bankroll. The fair is CNO's, or
+     * [sharpFair] (the sharpest book's own) when that is lower: never more than the sharp book backs.
+     */
+    fun kellyStake(row: CnoRow, bankroll: Double, fraction: Double, sharpFair: Double? = null): Double? {
         if (!(bankroll > 0.0)) return null
-        val fair = CnoChecks.fairProbability(row) ?: return null
+        val cno = CnoChecks.fairProbability(row) ?: return null
+        val fair = if (sharpFair != null && sharpFair > 0.0 && sharpFair < cno) sharpFair else cno
         val price = 1.0 / Odds.americanToDecimal(row.odds)
         val stake = EvMath.suggestedStake(EvQuote(fair, price, 0.0), bankroll, fraction, row.available)
         return stake.takeIf { it > 0.0 }
