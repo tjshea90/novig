@@ -3707,9 +3707,16 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
 
 - [x] BR1 Find out what is true today: where a prop bet's EV/fair comes from in CNO's list (CNO's books column) and in Vigilant's own scan (fair-line sources), whether soft sportsbooks can make it, and what the existing sharp veto (SharpVeto: Kalshi/ProphetX for props) already requires, including what happens when no sharp prop book prices the bet.
 - [x] BR2 Check the evidence we have (the diagnostics file Tj attached, RESEARCH.md §65-§73, the scan study when it has data): do prop bets with no sharp book, or with a sharp book dissenting, lose to the close more than those a sharp book confirms?
-- [ ] BR3 Answer Tj plainly: needed or not, smart or not, what it would cost (bets lost), and what to change if yes. Change the app only if the answer is clearly yes and Tj's rules allow it; otherwise propose and ask.
+- [x] BR3 Answer Tj plainly: needed or not, smart or not, what it would cost (bets lost), and what to change if yes. Change the app only if the answer is clearly yes and Tj's rules allow it; otherwise propose and ask.
   BR1/BR2 findings (answered to Tj 2026-10-03 ~22:35Z; BR3 stays open until he picks): true: a prop's EV and fair on the CNO list come from CNO's consensus of 4+ books (mostly soft); the sharp veto (KI, PX, then FD/CZR; MLB KI, PX, DK, FD)
   touches only auto-bet, alerts and bids, only once the page was read, and only when that book prices both sides (NO_SHARP passes). Of 43 recorded prop bets: 24 had Kalshi/ProphetX two-sided, 5 one-sided, 14 none; several passed on
   Caesars/FanDuel only. His closes can't settle it (4 of 57 recorded bets have one); CNO props overall +0.8% CLV on 106 closes, 63% beat. RESEARCH.md §65/§66.2/§72.6 already advised against requiring a sharp book on props (volume, thin books).
   Options put to Tj: (1) leave and let the scan study answer (add a props split by sharp verdict: agrees/dissents/absent), (2) a higher edge for props with no sharp book (e.g. 4% vs 2.5%), (3) an off-by-default switch skipping props unless a sharp-ranked book agrees.
+  Tj picked option 1 (2026-10-03 ~23:00Z): "Do option 1 and add the props split to the study" (BS below).
+
+## Tj, 2026-10-03 ~23:00Z (answer to BR3): "Do option 1 and add the props split to the study"
+
+- [ ] BS1 Add to the scan study file the props split: for prop bets, CLV / ROI / W-L by the sharp prop book's verdict (an exchange, Kalshi or ProphetX, agrees / says no; FanDuel, Caesars or DraftKings agrees / says no; no sharp-ranked book prices both sides; no book page read), by the sharp book's own edge band, and by whether the exchanges price the bet at all.
+- [ ] BS2 What-if lines in the file: what each candidate rule (today's veto; a sharp-ranked book must agree; an exchange must agree) would keep, drop and not be able to judge, with those bets' CLV / ROI, so the first file answers "needed or smart" with numbers; READ ME asks Claude to answer Tj's question from them.
+- [ ] BS3 Tests (failing-first, mutants), full floor, version 0.58.1 (code 101), CI green, ship, release, record, answer Tj with the link. No rule changes in the app (option 1 = leave the rules, let the data decide).
 
