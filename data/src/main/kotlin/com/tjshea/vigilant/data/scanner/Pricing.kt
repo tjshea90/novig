@@ -38,6 +38,8 @@ data class Opportunity(
     val novigWidth: Double?,
     /** The best resting bid for this outcome itself: the price a new bid has to beat to lead. */
     val bestBid: Double? = null,
+    /** Every resting bid on this outcome, best first (the book's own list, not a copy): what a bid of Vigilant's sits behind ([com.tjshea.vigilant.data.novig.trading.maker.MakerLines.withoutOwn]). */
+    val bidLevels: List<com.tjshea.vigilant.data.novig.BidLevel> = emptyList(),
     val bookFetchedAtMs: Long?,
     /** Newest `last_update` among the books that fed the fair line. */
     val fairUpdatedMs: Long?,
@@ -287,6 +289,7 @@ object Pricing {
                     suggestedStake = stake,
                     novigWidth = width,
                     bestBid = book?.bestBid(po.outcome.outcomeId)?.price,
+                    bidLevels = book?.bidsByOutcome?.get(po.outcome.outcomeId).orEmpty(),
                     bookFetchedAtMs = book?.fetchedAtMs,
                     fairUpdatedMs = fair?.usedUpdates?.first,
                     fairAsOfMs = fair?.usedUpdates?.second,
