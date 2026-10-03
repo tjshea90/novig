@@ -417,18 +417,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // A bet tracked anywhere leaves every list at once (Tj, 2026-09-27).
             // Taken at most every TRACKER_MIRROR_MS (a Check odds now saves every 5 bets), with the placed index and the feed rebuilt off the
             // main thread (Tj, 2026-10-01: "I used the check odds now function and the list of open bets got very laggy").
-            followThrottled(c.tracker.flow.filterNotNull(), TRACKER_MIRROR_MS) { bets ->
-                val before = _state.value
-                val built = withContext(Dispatchers.Default) { before.copy(bets = bets).indexed() }
-                _state.update { s ->
-                    // The marks, the result or the settings changed while it was built: built again from what's current (rare).
-                    if (s.placed === before.placed && s.result === before.result && s.settings == before.settings) {
-                        s.copy(bets = bets, placedIndex = built.placedIndex, feed = built.feed)
-                    } else {
-                        s.copy(bets = bets).indexed()
-                    }
-                }
-            }
+            // (If the marks, the result or the settings change while it's built, it is built again from what's current: [reindex].)
+            followThrottled(c.tracker.flow.filterNotNull(), TRACKER_MIRROR_MS) { bets -> _state.reindex { it.copy(bets = bets) } }
         }
         viewModelScope.launch {
             // Every API call is counted as it happens (a scan's 1,500 Novig reads each change the meter): the screen takes the newest count
@@ -458,7 +448,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Results of games that ended while Vigilant was closed, then every 3 h in the background.
             settleBets()
             runCatching { SettleWorker.schedule(getApplication()) }
-            c.placed.flow.filterNotNull().collect { b -> _state.update { it.copy(placed = b.bets).indexed() } }
+            c.placed.flow.filterNotNull().collect { b -> _state.reindex { it.copy(placed = b.bets) } }
         }
         viewModelScope.launch {
             runCatching { c.teams.load() }
@@ -899,10 +889,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(status = it.status.copy(rechecking = true)) }
             val outcome = runCatching { withContext(Dispatchers.IO) { c.scanner.recheck(_state.value.settings, marketIds) } }
             val report = outcome.getOrNull()
-            _state.update { s ->
-                val r = report?.result ?: s.result
-                s.copy(result = r, feed = if (r != null) s.feedOf(r) else s.feed, status = s.status.copy(rechecking = false))
-            }
+            val r = report?.result ?: _state.value.result
+            if (r != null) _state.publishResult(r) { s -> s.copy(status = s.status.copy(rechecking = false)) }
+            else _state.update { s -> s.copy(status = s.status.copy(rechecking = false)) }
             runCatching { c.usage.flush() }
             _toasts.tryEmit(
                 when {
@@ -946,14 +935,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 val r = run.result
                 if (r != null && r !== shown) {
-                    val before = _state.value
-                    val feed = withContext(Dispatchers.Default) { before.feedOf(r) }
                     shown = r
-                    _state.update { s ->
-                        // Settings or the placed marks changed while it was built: built again from what's current (rare, and cheap once).
-                        val current = s.settings == before.settings && s.placedIndex === before.placedIndex
-                        s.copy(result = r, feed = if (current) feed else s.feedOf(r), status = s.status.copy(scanning = run.scanning, progress = run.progress))
-                    }
+                    // Settings or the placed marks changed while the feed was built: built again from what's current (rare, and cheap once).
+                    _state.publishResult(r) { s -> s.copy(status = s.status.copy(scanning = run.scanning, progress = run.progress)) }
                 } else {
                     // Only the progress moved: the feed is what it was.
                     _state.update { s -> s.copy(status = s.status.copy(scanning = run.scanning, progress = run.progress)) }
@@ -964,11 +948,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun applyReport(report: ScanReport, settings: ScanSettings, result: ScanResult?) {
-        _state.update { s ->
-            val r = result ?: s.result
+        _state.publishResult(result ?: _state.value.result) { s ->
             s.copy(
-                result = r,
-                feed = s.feedOf(r),
                 status = s.status.copy(
                     scanning = false,
                     progress = null,
@@ -997,10 +978,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val repriced = withContext(Dispatchers.Default) { c.scanner.reprice(settings) }
         // Before the first scan there's nothing "missing": the whole feed says tap Scan.
         val unscanned = if (_state.value.status.scannedAtMs == null) emptySet() else c.scanner.unscannedLeagues(settings)
-        _state.update {
-            val r = repriced ?: it.result
-            it.copy(result = r, feed = it.feedOf(r), status = it.status.copy(unscanned = unscanned))
-        }
+        _state.publishResult(repriced ?: _state.value.result) { it.copy(status = it.status.copy(unscanned = unscanned)) }
     }
 
     /**
