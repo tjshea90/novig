@@ -601,7 +601,11 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
 /** A tab's name under its icon: one line, the bar's small type, never broken mid-word. */
 @Composable
 internal fun TabLabel(t: Tab) {
-    Text(t.label, style = androidx.compose.material3.MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false)
+    Text(
+        t.label, maxLines = 1, softWrap = false,
+        // Seven tabs leave each about 47 dp on a 393 dp phone: "Auto-bet" and "Settings" fit at 10 sp with no added letter spacing.
+        style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.sp),
+    )
 }
 
 /** The wallet strip, reading its own flows so a new balance or bid redraws only it. */
