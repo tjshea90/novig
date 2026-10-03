@@ -209,6 +209,11 @@ def main():
         print(f'  theirs        CLV {ci(nz.clv, g2)} ¢   ROI {ci(nz.roi, g2)} %   n={len(nz):,}')
         for k, nm in (('p1', 'copy 1 min'), ('p5', 'copy 5 min'), ('p30', 'copy 30 min')):
             print(f'  {nm:<13} CLV {ci(nz[f"clv_{k}"], g2)} ¢   ROI {ci(nz[f"roi_{k}"], g2)} %   paid {ci(100 * (nz[k] - nz.price), g2)} ¢ more')
+        for kd, y in nz.groupby('kind'):
+            if len(y) >= 50:
+                print(f'  {kd:<14} theirs {ci(y.clv, y.conditionId)}  copy@1min {ci(y.clv_p1, y.conditionId)}  copy@5min {ci(y.clv_p5, y.conditionId)}  n={len(y):,}')
+        # Betting AGAINST them: the other side of their buy at the same moment, as a price of 1 - theirs (what a trap would be).
+        print(f'  the other side of their buy, 1 min later: CLV {ci(-nz.clv_p1, g2)} ¢ (before the spread)')
         lead2 = (nz.start - nz.timestamp) / 3600
         for lo, hi in ((0, 1), (1, 6), (6, 1e9)):
             y = nz[(lead2 >= lo) & (lead2 < hi)]
