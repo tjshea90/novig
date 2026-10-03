@@ -71,6 +71,53 @@ class MakerUiTest {
         lastPassAtMs = now - 60_000, running = false, problem = null, bets = emptyList(), now = now,
     )
 
+    /** A list that counts how often its elements are walked: the work a screen does with it. */
+    private class WalkCounted<T>(private val inner: List<T>) : java.util.AbstractList<T>() {
+        var walks = 0
+        override val size: Int get() = inner.size
+        override fun get(index: Int): T = inner[index]
+        override fun iterator(): MutableIterator<T> {
+            walks++
+            return inner.toMutableList().iterator()
+        }
+    }
+
+    /**
+     * Tj, 2026-10-03 (v0.56.1 Diagnostics, "so laggy I almost couldn't use it" while auto-bid ran): the tab filtered, sorted and grouped the pass's
+     * thousands of decisions again for every state the app published (three a second in a scan), and several times within each. The lists are worked
+     * out once for the same bids and decisions, however many times the screen asks and however many [MakerUi]s it builds from them.
+     */
+    @Test
+    fun `the tab's lists are worked out once for the same bids and decisions, not on every state`() {
+        val decided = WalkCounted(decisions())
+        val bids = listOf(bid("rest-1", MakerStatus.RESTING), bid("fill-1", MakerStatus.FILLED, filled = 500))
+        // The root builds a new MakerUi for every state it takes; the lists inside it come from the same flows.
+        fun built() = MakerUi(
+            settings = settings, setUp = true, vigilantOn = true, bids = bids, decisions = decided, scanAtMs = now - 2 * 60_000,
+            lastPassAtMs = now - 60_000, running = false, problem = null, bets = emptyList(), now = now,
+        )
+        val first = built()
+        val ready = first.ready
+        val skipped = first.skipped
+        assertEquals(listOf("rest-1"), first.resting.map { it.outcomeId })
+        assertEquals(listOf("fill-1"), first.filled.map { it.outcomeId })
+        assertTrue(ready.isNotEmpty() && skipped.isNotEmpty())
+        val walked = decided.walks
+        repeat(10) {
+            val u = built()
+            assertEquals(ready, u.ready)
+            assertEquals(skipped, u.skipped)
+            u.resting; u.filled
+            MakerText.status(u)
+            MakerText.fillSummary(u)
+        }
+        assertEquals("no more walks of the decisions", walked, decided.walks)
+        // A finished pass hands over new decisions: worked out again, for them.
+        val next = WalkCounted(decisions())
+        built().copy(decisions = next).ready
+        assertTrue(next.walks > 0)
+    }
+
     @Test
     fun `the sample scan's prop and team total get bids, its game lines don't (they're off by default)`() {
         val d = decisions()
