@@ -4095,3 +4095,32 @@ once a minute). **Two limits Tj controls:** the Vigilant wallet ($18.51 then: re
 bids fit at once; the tab now says when bids wait on the wallet), and the hours (prop takers trade in the day and evening, not after midnight).
 Diagnostics now records per bid who posted it, how long it rested, and whether it led its side of Novig's book when posted (`MakerStats`), so the
 next file says whether bids rest long enough and sit at the top of the book.
+
+### 70.9 v0.54.0: why none of Tj's automatic bids filled either (2026-10-03; Tj: "None of my auto bids were accepted", with the v0.53.0 file)
+**Evidence (v0.53.0 Diagnostics, 02:37 EDT; v0.53.0 installed 01:56):** 289 bids on record (206 by auto-make in ~40 min, 83 by hand earlier), rested
+**1 min at the median** (6 at the 90th), 0 filled. Ended: **163 "About to expire: re-posted"**, 46 expired, 43 paused by Tj, 35 "the fair price goes
+old within a minute", 2 sharp veto. Led their side 41%; 4.0¢ under Novig's price to take at the median; Novig's book 2 min old at posting. Up to
+1,913 wanted bids waiting on the $8.32 wallet or the 20-bid cap. Wallet "$8.32 → $8.32 with $12.54 resting". `/v3/portfolio/fills` answered 429.
+
+**Why (four causes, none of them the margin):**
+1. **A re-post loop.** A bid lives only as long as its fair price stays fresh (§70.7: 5 min under 3 h from the start, 10 min past; Vigilant's fairs
+   are already 1-3 min old when a scan prices them). A bid within 2 min of its expiry was re-posted every pass, from the same fair: the new bid
+   ended at the same moment, joined the back of the queue (no amend on Novig, §17), and was re-posted again 20 s later. A "bid" was a string of
+   one-minute bids, each starting last in line. Two passes ran at once (the scan's own every 20 s and the background cycle's), a pass every ~10 s.
+2. **Bids behind other bids.** Novig fills the best bid first; a bid behind another fills only once that one is used up (on Novig's thin prop books,
+   practically never in minutes). 59% of the bids were counted behind one, many of them behind **our own** previous bid at the same price (the book
+   read 2 min earlier still held it), the rest behind someone else's. With the wallet and the cap binding, the order bids went up in (cheapest
+   first) didn't care.
+3. **The hour and the length.** §70.3: a prop bid at 4% left 15 minutes fills ~4% of the time. ~206 bids × ~1.5 min ≈ 5 bid-hours ≈ 20 such
+   15-minute bids → **under one fill expected**, after 2 AM when prop takers are scarce. Zero was the likely outcome even without causes 1-2.
+4. **Novig holds nothing for a resting bid** (verified, NOVIG_API.md §17): the app thought the balance already reflected the bids up and posted
+   $12.54 against $8.32. Not why nothing filled, but a limit broken.
+
+**What changed (v0.54.0), no +EV rule loosened (4% margin, books agree, sharp veto, freshness, stop window all unchanged):** an expiring bid is
+re-posted only when a fresher fair lets the new one rest a minute longer (else it keeps its place to the end of its life); one pass at a time (the
+background cycle skips its pass when one ran in the last 15 s); a line's best bid leaves out Vigilant's own bids that were in the book read;
+**bids that would lead their side go up first** (then the underdog side, then the most EV); every bid not yet ended counts against the wallet; one
+fills read a pass for all bids (`startsAfter`), cancels confirmed by one re-read of the open orders, no per-order record reads once an order showed
+open. **What decides fills from here:** how long bids can rest (each one's fair: the fair-odds sources' credit budgets set how often fairs are
+re-read) and the hours they're up (afternoon and evening, when the takers are there). Judge it again over a full day of bids, by fills per bid-hour
+and, past ~200 fills, by their CLV (§70.5).
