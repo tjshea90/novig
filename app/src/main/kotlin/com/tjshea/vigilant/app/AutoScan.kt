@@ -249,10 +249,18 @@ class AutoScanner(
                     _status.update { it.copy(step = "Auto-lock") }
                     runCatching { timed("autolock") { c.autoLock.run(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Auto-lock: ${it.message ?: it.javaClass.simpleName}" }
                 }
+                var scanned = false
                 if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock()))) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
+                    scanned = true
                     runCatching { timed("vigilant") { alerts += vigilantScan(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Vigilant: ${it.message ?: it.javaClass.simpleName}" }
+                }
+                // Make orders (RESEARCH.md §70): fills, expiries, the start coming up and fair prices going old are checked every cycle; a cycle that
+                // scanned has its pass from the scan's end ([AppContainer]).
+                if (settings.makerNow && !scanned) {
+                    _status.update { it.copy(step = "Make orders") }
+                    runCatching { timed("maker") { c.maker.run("background cycle") } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 val sent = send(alerts)
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }
