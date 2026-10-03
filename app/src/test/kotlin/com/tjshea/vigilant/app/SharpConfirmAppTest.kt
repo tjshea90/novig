@@ -311,16 +311,16 @@ class SharpConfirmAppTest {
         assertTrue(alerts.isNotEmpty())
         val verdicts = ArrayList<com.tjshea.vigilant.data.scanner.SharpVeto.Verdict>()
         // The sample's books: Kalshi (the sharpest for props) says +EV: every alert stays.
-        assertEquals(alerts.map { it.key }, SharpGate.unvetoedAlerts(alerts, items, { st.booksAt(it.pick.row.key, now)?.view }) { verdicts += it.verdict }.map { it.key })
+        assertEquals(alerts.map { it.key }, SharpGate.unvetoedAlerts(alerts, items, { st.booksAt(it.pick.row.key, now)?.view }, 0.0) { verdicts += it.verdict }.map { it.key })
         assertTrue(verdicts.toString(), verdicts.isNotEmpty() && verdicts.all { it == com.tjshea.vigilant.data.scanner.SharpVeto.Verdict.PASSED })
         // Kalshi says no: that alert goes; Pinnacle saying no wouldn't (not a prop sharp).
         val kalshiNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 105, 106.0, -135, 13_662.0) else it }) }
         val jj = MiniWindow.cnoKey(jefferson)
-        assertFalse(SharpGate.unvetoedAlerts(alerts, items, { if (MiniWindow.cnoKey(it.pick.row) == jj) kalshiNo else st.booksAt(it.pick.row.key, now)?.view }).any { it.key == jj })
+        assertFalse(SharpGate.unvetoedAlerts(alerts, items, { if (MiniWindow.cnoKey(it.pick.row) == jj) kalshiNo else st.booksAt(it.pick.row.key, now)?.view }, 0.0).any { it.key == jj })
         val pinnacleNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") com.tjshea.vigilant.data.cno.CnoBookPrice("PN", 105, null, -135, null) else it }) }
-        assertTrue(SharpGate.unvetoedAlerts(alerts, items, { if (MiniWindow.cnoKey(it.pick.row) == jj) pinnacleNo else st.booksAt(it.pick.row.key, now)?.view }).any { it.key == jj })
+        assertTrue(SharpGate.unvetoedAlerts(alerts, items, { if (MiniWindow.cnoKey(it.pick.row) == jj) pinnacleNo else st.booksAt(it.pick.row.key, now)?.view }, 0.0).any { it.key == jj })
         // No page, no veto.
-        assertEquals(alerts.size, SharpGate.unvetoedAlerts(alerts, items, { null }).size)
+        assertEquals(alerts.size, SharpGate.unvetoedAlerts(alerts, items, { null }, 0.0).size)
     }
 
     // ---- Settings words ------------------------------------------------------------------------------------------------
