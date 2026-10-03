@@ -135,6 +135,9 @@ class AppContainer(private val app: Application) {
         /** The scan study looks at the green check's book pages at most this often (a page is read every few seconds; the study logs the newest). */
         const val STUDY_BOOKS_GAP_MS = 5_000L
 
+        /** Logged lines are written at least this often, scan or no scan. */
+        const val STUDY_FLUSH_MS = 30_000L
+
         /** A newly started process waits this long before the study grades what ended meanwhile (the screen's own reads come first). */
         const val STUDY_SETTLE_DELAY_MS = 90_000L
 
@@ -380,7 +383,7 @@ class AppContainer(private val app: Application) {
     suspend fun settleStudy() {
         try {
             parlayCloses.enabled = currentSettings().useParlay
-            study.settle(scores, studyCloses, runCatching { tracker.all() }.getOrDefault(emptyList()), File(app.cacheDir, "study-grading"))
+            study.settle(scores, studyCloses, runCatching { tracker.all() }.getOrDefault(emptyList()), File(app.cacheDir, "study-grading"), yieldTo = { trackerClosing.get() > 0 })
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -412,6 +415,7 @@ class AppContainer(private val app: Application) {
      * or phone storage always."
      */
     suspend fun backfillCloses(force: Boolean = false) {
+        trackerClosing.incrementAndGet()
         try {
             parlayCloses.enabled = currentSettings().useParlay
             lastBackfill = closeBackfill.run(heavyOk = true, force = force)
@@ -419,8 +423,13 @@ class AppContainer(private val app: Application) {
             throw e
         } catch (e: Exception) {
             // Looked at again on the next pass.
+        } finally {
+            trackerClosing.decrementAndGet()
         }
     }
+
+    /** How many of the Tracker's own close lookups are running now: the scan study's grading waits its turn behind them (it shares their feeds and never delays Tj's own bets). */
+    private val trackerClosing = java.util.concurrent.atomic.AtomicInteger()
 
     /**
      * The Tracker's "Check odds now": every open bet's CNO game page re-read through [cno], [RECHECK_AT_ONCE] at a time at a brisk
@@ -577,6 +586,13 @@ class AppContainer(private val app: Application) {
             cno.books.collect { books ->
                 studyStep("book check") { study.observeBooks(books, currentSettings(), live.prices.value) }
                 delay(STUDY_BOOKS_GAP_MS)
+            }
+        }
+        // What a scan logged is written within half a minute even when no scan follows (the process may be ended any time).
+        scanScope.launch {
+            while (true) {
+                delay(STUDY_FLUSH_MS)
+                studyStep("flush") { study.flush() }
             }
         }
         // A while after the process starts (a restart, an alarm, a service): the games that ended since are graded and closed.

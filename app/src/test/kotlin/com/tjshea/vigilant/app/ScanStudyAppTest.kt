@@ -161,7 +161,7 @@ class ScanStudyAppTest {
         val container = source("VigilantApp.kt")
         // Three watchers, all on scanScope (background priority), each step through studyStep (a failure is a line in Recent problems, never thrown at the scan).
         val block = container.substringAfter("// The scan study (Tj, 2026-10-03; [ScanStudy])").substringBefore("// Make orders (RESEARCH.md §70)")
-        assertEquals(4, Regex("scanScope\\.launch").findAll(block).count())
+        assertEquals(5, Regex("scanScope\\.launch").findAll(block).count())
         assertFalse(block.contains("appScope.launch"))
         assertTrue(block.contains("studyStep(\"CNO scan\") { study.observeCno(snap, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }"))
         assertTrue(block.contains("studyStep(\"Vigilant scan\") { study.observeVigilant(r, currentSettings()) }"))
@@ -172,7 +172,9 @@ class ScanStudyAppTest {
         assertFalse(block.contains("loadBooks(") || block.contains("refresh(") || block.contains("readNow("))
         // Its close lookups are the Tracker's own sources, ParlayAPI's behind a credit guard; its grading is the Tracker's settler's feed.
         assertTrue(container.contains("GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses"))
-        assertTrue(container.contains("study.settle(scores, studyCloses,"))
+        assertTrue(container.contains("study.settle(scores, studyCloses,") && container.contains("yieldTo = { trackerClosing.get() > 0 }"))
+        // Whatever a scan logged is written within half a minute even when no scan follows.
+        assertTrue(block.contains("delay(STUDY_FLUSH_MS)") && block.contains("studyStep(\"flush\") { study.flush() }"))
         assertTrue(container.contains("val settler = BetSettler(tracker, scores,"))
         assertTrue(source("SettleWorker.kt").contains("runCatching { app.container.settleStudy() }"))
         assertTrue(source("MainViewModel.kt").contains("kotlinx.coroutines.withTimeoutOrNull(STUDY_SETTLE_WAIT_MS) { c.settleStudy() }"))

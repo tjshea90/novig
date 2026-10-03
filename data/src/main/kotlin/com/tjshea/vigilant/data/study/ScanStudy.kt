@@ -394,7 +394,15 @@ class ScanStudy(
      * after. Bets whose result or close is still to come are asked again on the next pass (the 3-hourly worker), the backfill's own retry gaps kept (a look is
      * written to the journal). Never throws except for cancellation: a pass that fails is noted ([lastProblem]) and tried again.
      */
-    suspend fun settle(scores: ScoreSource, sources: List<CloseSource>, tracked: List<TrackedBet>, scratch: File, heavyOk: Boolean = true): SettleReport = settleLock.withLock {
+    suspend fun settle(
+        scores: ScoreSource,
+        sources: List<CloseSource>,
+        tracked: List<TrackedBet>,
+        scratch: File,
+        heavyOk: Boolean = true,
+        /** True while something that matters more is using the same feeds (the Tracker's own close lookups): the pass stops before its next day and is picked up on the next. */
+        yieldTo: () -> Boolean = { false },
+    ): SettleReport = settleLock.withLock {
         flush()
         val now = clock()
         val today = FreeScores.etDate(now)
@@ -407,6 +415,7 @@ class ScanStudy(
         val activeIds = sources.filter { it.active }.map { it.id }
         try {
             for (day in journal.days().filter { it <= today && it >= today.minusDays(SETTLE_DAYS) }.reversed()) {
+                if (yieldTo()) break
                 val folded = withContext(io) { journal.fold(day) }
                 val work = folded.values.filter { needsWork(it.bet, now, activeIds) }
                 if (work.isEmpty()) continue

@@ -51,7 +51,8 @@ class ParlayCloses(
 
     private class Kept(val atMs: Long, val value: JsonElement?)
 
-    private val kept = HashMap<String, Kept>()
+    // Shared with the scan study's grading (which runs beside the Tracker's own): two looks at once mustn't corrupt it.
+    private val kept = java.util.concurrent.ConcurrentHashMap<String, Kept>()
 
     override val id: String get() = ID
 

@@ -340,6 +340,23 @@ class ScanStudyTest {
     }
 
     @Test
+    fun `grading yields to the Tracker's own close lookups and picks the bets up on the next pass`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        val close = FakeClose(0.55)
+        val busy = s.settle(FakeScores(), listOf(close), emptyList(), File(tmp.root, "scratch"), yieldTo = { true })
+        assertEquals(0, busy.looked)
+        assertEquals(0, close.asked)
+        assertEquals(BetStatus.PENDING, j.fold(day).values.single().bet.status)
+        val free = s.settle(FakeScores(), listOf(close), emptyList(), File(tmp.root, "scratch"), yieldTo = { false })
+        assertEquals(1, free.graded)
+        assertEquals(1, free.closed)
+    }
+
+    @Test
     fun `a bet whose game isn't over or has no close yet is tried again next pass, with the close lookup's own gap kept`() = runBlocking {
         val j = journal()
         val s = study(j)
