@@ -38,6 +38,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.test.assertTextContains
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -389,5 +390,26 @@ class AutoBetUiTest {
     fun `screenshot - auto-bet stopped after a lost order`() {
         show({ it.copy(autoBet = true, autoBetHalted = "Novig didn't answer, and its lists don't show the order (connection reset). Nothing is assumed: open the Tracker and tap Sync with Novig in a minute, and check Novig before betting this again.") })
         compose.onRoot().captureRoboImage("screenshots/5k2_settings_auto_bet_stopped.png")
+    }
+
+    @Test
+    fun `the trap guard is on the Auto-bet tab - games within 6 h and game lines Novig just moved by default, each switch changes the setting, the notes follow`() {
+        show()
+        compose.onNodeWithTag("autoBet-trapEarlyNote").performScrollTo().assertTextContains("more than 6 h", substring = true)
+        compose.onNodeWithTag("autoBet-trapMoveNote").assertTextContains("Novig's own trades", substring = true)
+        compose.onNodeWithTag("autoBet-trapEarly").performScrollTo()
+        compose.onNodeWithText("24 h").performScrollTo().performClick()
+        assertEquals(24, settings.trapEarlyHours)
+        compose.onNodeWithTag("autoBet-trapEarlyNote").assertTextContains("more than 24 h", substring = true)
+        compose.onNodeWithTag("autoBet-trapMove").performScrollTo().performClick()
+        assertFalse(settings.trapNovigMove)
+        compose.onNodeWithTag("autoBet-trapMoveNote").assertTextContains("Off", substring = true)
+        // Every setting search sends to this tab is on it.
+        for (e in com.tjshea.vigilant.app.ui.SettingsIndex.entries.filter { it.page == null && !it.bids && it.shown(settings) }) {
+            assertTrue(
+                "\"${e.title}\" should be on the Auto-bet tab",
+                compose.onAllNodesWithText(e.title, substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            )
+        }
     }
 }
