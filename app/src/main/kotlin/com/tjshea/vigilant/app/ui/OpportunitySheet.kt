@@ -193,9 +193,8 @@ fun OpportunityDetail(
                 LabeledValue("Best bid now", o.bestBid?.let { "${Format.american(it)} · ${Format.percent(it)}" } ?: "none")
             }
             Text(
-                "Makers pay no fee on Novig. A resting bid fills only when someone takes it, often after the line has moved " +
-                    "against it, so this asks for at least ${Format.percent(makerMin)} EV at today's fair price (the Bids tab's margin). " +
-                    "The Bids tab posts it for you and takes it down when the fair moves against it.",
+                "No maker fee. A bid often fills after the line moved against it, so this asks ${Format.percent(makerMin)} EV at the fair " +
+                    "(the Bids tab's margin; that tab posts it for you).",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),

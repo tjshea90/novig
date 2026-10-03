@@ -195,7 +195,7 @@ class MakerUiTest {
         val s = settings.copy(makerMargin = 0.06)
         val o = SampleScan.result(s).opportunities.first { it.quote != null && it.makerBid(0.06) != null }
         compose.setContent { VigilantTheme { com.tjshea.vigilant.app.ui.OpportunityDetail(o, s, onRecheck = {}) {} } }
-        compose.onNodeWithText("at least ${com.tjshea.vigilant.app.ui.Format.percent(0.06)} EV", substring = true).assertExists()
+        compose.onNodeWithText("asks ${com.tjshea.vigilant.app.ui.Format.percent(0.06)} EV at the fair", substring = true).assertExists()
         compose.onNodeWithText("Bid up to").assertExists()
         compose.onNodeWithText("${com.tjshea.vigilant.app.ui.Format.american(o.makerBid(0.06)!!.price)} · ${com.tjshea.vigilant.app.ui.Format.percent(o.makerBid(0.06)!!.price)}").assertExists()
     }
