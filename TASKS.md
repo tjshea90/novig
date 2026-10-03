@@ -3500,3 +3500,13 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   Done: full floor with screenshots (106 PNGs; the Bids tab, Auto-bet tab and feed looked at); the +EV detail sheet suggested bids 2% under the fair
   (§70.2: those lose to the close) → the Bids tab's margin (MakerUiTest, fails pre-fix); recommendations capped at 6 an hour (MakerAppTest); Diagnostics
   line lists the new settings and the cancelling count; release notes mention Bids; ScreenshotTest scrolls to the sheet's lower rows. Floor 1,784 passed.
+
+## Tj, 2026-10-03 ~04:50Z (with vigilant-diagnostics-v0.52.0-2026-10-03-0045.txt): "A few optimizations to this app. 1) review the attached diagnostics file and make optimizations 2) make a quick way inside the app where I can see my vigilant wallet balance, maybe show it somewhere in the app at all times. 3) the entire app gets laggy when vigilant is scanning, but not when cno only is scanning 4) make auto-make betting have its own section or tab. Right now it is hidden inside links in another tab 5) I had auto make bids turned on, but it didn't actually make any bids by itself. I had to manually press each bid to post now. I want to have an option for it to be fully automatic and make the bids itself. 6) I posted plenty of bids and not one of them was taken. Maybe the criteria is too restrictive. Investigate, but it should never be too loose where it is no longer positive ev."
+
+- [ ] BI1 Diagnostics review: work the findings (FAILURE/OPTIMIZE first: DNS-over-HTTPS hosts failing 100%, Novig 429s ×1163, ParlayAPI/PropLine slowness, scan frame stutter, WTA matching, Vigilant CLV −0.7% on 40 bets); fix what the evidence supports, with tests.
+- [ ] BI2 Wallet balance visible at all times (a quick look anywhere in the app), refreshed sensibly.
+- [ ] BI3 Lag while a Vigilant scan runs (not with CNO only): find what runs on the main thread / recomposes per scan publish, fix without dropping data; measure.
+- [ ] BI4 Auto-make (bids) gets its own section/tab, not hidden behind links in another tab.
+- [ ] BI5 Auto-make ON didn't post anything by itself (Tj had to press Post now on each): find why, fix, and make "fully automatic" a clear option that posts bids itself.
+- [ ] BI6 No bid filled: investigate (price vs the book, margin, ttl/expiry churn, cancel reasons ×46 expired, ×19 paused, ×18 fair goes old), loosen only where still +EV; tests.
+- [ ] BI7 Sweep for UI/code improvements and bugs; full floor, ship, answer Tj with the link.
