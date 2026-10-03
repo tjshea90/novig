@@ -3679,6 +3679,7 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
 - [x] BP3 Implement the log writer hooked into the CNO scan + the settle step that fills in result (won/lost/push/void) and closing odds/CLV from the existing functions; tests (failing-first) for write, update, settle, restart, cap/corruption.
 - [x] BP4 Settings > Diagnosis: a button that exports the study file for Claude exactly like the other diagnosis buttons (same share path), whose header tells Claude the goal (find patterns that beat CLV and profit; be thorough, analyze every bet, give strategies), with a field legend and summary stats.
 - [x] BP5 Prove it doesn't interrupt anything: perf test on a big scan, no main-thread work, no change in scan results; full floor green; screenshots if UI changes; ship; answer Tj with the link.
+  Shipped: v0.57.0 (code 99), CI run 37155402752 green on the commit, release.yml: https://github.com/tjshea90/novig/releases/tag/v0.57.0
   Done (BP1-BP5, RESEARCH.md §75): data/study/ (StudyModel, StudyJournal, ScanStudy, StudyExport, GuardedCloses), reuse of AtBets/BetSettler/CloseBackfill/ClosingLine, wiring in VigilantApp
   (three scanScope collectors behind studyStep, settleStudy, SettleWorker), Settings › Diagnostics & about button + counts + switch, Diagnostics line. Proofs: ScanStudyTest (17: logging, record as first
   listed, dedupe/throttle, gone, restart + torn line, book check, grading + closes through the real settler, copy from the Tracker, the file, size limit, a two-hour evening = 0.56 s; 10 of 11 mutants
