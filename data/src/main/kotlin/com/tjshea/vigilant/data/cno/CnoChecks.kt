@@ -68,6 +68,9 @@ object CnoChecks {
         return CnoScreened(kept.sortedByDescending { it.ev }, hidden)
     }
 
+    /** Why the app's own screen leaves [row] out of its list under [filters] at [now], or null when it shows it (the scan study records this beside every row). */
+    fun rejection(row: CnoRow, filters: CnoFilters, now: Long): Reason? = reject(row, filters, now)
+
     private fun reject(row: CnoRow, f: CnoFilters, now: Long): Reason? {
         if (!Picks.isGame(row.event)) return Reason.NOT_A_GAME
         val fair = fairProbability(row)

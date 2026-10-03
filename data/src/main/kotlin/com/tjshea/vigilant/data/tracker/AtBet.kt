@@ -91,8 +91,15 @@ data class AtBet(
      * hand bet, or the rule off).
      */
     val novigMove: String? = null,
+    /**
+     * When the book check ([checkFair], [books], the sharp veto) was made, when that wasn't at [atMs]: the scan study's bets are logged when a scan first lists
+     * them, and CNO's game page is read for the top ones a little later ([com.tjshea.vigilant.data.study.ScanStudy]). Null: made at [atMs] (a placed bet's).
+     */
+    val checkAtMs: Long? = null,
 ) {
     companion object {
+        /** Not a placed bet: a bet a scan listed, logged for the scan study (Tj, 2026-10-03), to see which kinds beat the close. */
+        const val HOW_STUDY = "study"
         const val HOW_AUTO = "auto"
         const val HOW_SHEET = "sheet"
         const val HOW_MARKED = "marked"

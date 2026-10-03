@@ -199,6 +199,13 @@ data class ScanSettings(
      * sense for me to track a bet that is already cashed out"). On unless he turns it off; the lock numbers still show what they made.
      */
     val trackerHideLocked: Boolean = true,
+    /**
+     * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … the odds at the time of scan, type of bet,
+     * percent EV, books that agree, time before the game begins … when those bets are final, it logs whether they won or lost and their closing line odds"):
+     * every bet a CNO or Vigilant scan lists is logged ([com.tjshea.vigilant.data.study.ScanStudy]) and graded later, for Settings › Tools › Share scan study
+     * with Claude. On unless he turns it off; it reads nothing of its own from CNO or Novig.
+     */
+    val scanStudy: Boolean = true,
     val autoLockMinPercent: Double = 0.02,
     val autoLockLive: Boolean = true,
     /**
