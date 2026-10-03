@@ -112,6 +112,19 @@ class LockAppTest {
         LockScanner(clock = clock, readMarket = { market() }, readBooks = { ids -> if (book != null && "mkt" in ids) mapOf("mkt" to book) else emptyMap() })
 
     @Test
+    fun `a market's sides are read once for hours, however often the Tracker's Novig-only read asks (v0 54 0 file - 1,655 public catalog reads refused)`() = runBlocking {
+        var t = now
+        var reads = 0
+        val s = LockScanner(clock = { t }, readMarket = { reads++; market() }, readBooks = { emptyMap() })
+        repeat(50) { s.market("mkt"); t += 60_000L }
+        assertEquals(1, reads)
+        t += LockScanner.MARKET_TTL_MS
+        s.market("mkt")
+        assertEquals(2, reads)
+        assertTrue(LockScanner.MARKET_TTL_MS >= 3_600_000L)
+    }
+
+    @Test
     fun `the scanner finds the lock on an API bet from Novig's book alone, and words it`() = runBlocking {
         betA()
         // A bet marked by hand (✓) is never a lock candidate: its contracts can't be confirmed.
