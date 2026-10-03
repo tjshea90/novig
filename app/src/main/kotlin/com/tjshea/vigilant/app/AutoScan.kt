@@ -263,7 +263,7 @@ class AutoScanner(
                 // scanned has its pass from the scan's end ([AppContainer]).
                 if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && !scanned) {
                     _status.update { it.copy(step = "Make orders") }
-                    runCatching { timed("maker") { c.maker.run("background cycle") } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching { timed("maker") { c.maker.run("background cycle", minGapMs = MakerRunner.BACKGROUND_GAP_MS) } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 val sent = send(alerts)
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }

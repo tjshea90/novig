@@ -62,7 +62,7 @@ class MakerRunner(
      * ([ScanSettings.makerRecommend]). Scanning paused: every bid comes down. No scan yet: only fills and expiries are read. A scan still running is
      * judged as far as it has got (its finished leagues; a bid on a line it hasn't judged yet stays up). Null when betting through the API isn't set
      * up. [why] is logged. [minGapMs]: skipped (null) when a pass started less than this long ago (the background cycle's, while a scan's own passes
-     * run every [VigilantApp] MAKER_SCAN_PASS_MS: Tj's v0.53.0 file had both running, a pass every ~10 s).
+     * run every [AppContainer.MAKER_SCAN_PASS_MS]: Tj's v0.53.0 file had both running, a pass every ~10 s).
      */
     suspend fun run(why: String, minGapMs: Long = 0L): MakerDesk.Report? = passes.withLock {
         if (minGapMs > 0) _status.value.lastAtMs?.let { last -> if (clock() - last < minGapMs) return@withLock null }
@@ -258,6 +258,9 @@ class MakerRunner(
         /** The most bids recommended (notified) in one pass, and in an hour. */
         const val MAX_RECOMMENDED = 3
         const val MAX_RECOMMENDED_PER_HOUR = 6
+
+        /** The background cycle's pass is skipped when another started less than this long ago ([run]'s minGapMs). */
+        const val BACKGROUND_GAP_MS = 15_000L
     }
 }
 
