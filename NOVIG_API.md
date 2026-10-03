@@ -645,3 +645,19 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   again after 2 minutes, not 10 (the verdict on a carrier's address flaps; `NovigPublicClient.keyRetryAfter`), and after 30 s when the request never
   reached Novig. The public routes' pacer remembers the pace a `429` came at for 10 minutes and climbs back only to a step under it (`RateGate`; the
   v0.52.0 file had a 429 about once a minute, 1,163 in all, each time the minute's slow-down ended).
+- **VERIFIED on Tj's subaccount (v0.53.0 Diagnostics, 2026-10-03 02:35-02:37 EDT, 289 real `PO` bids):**
+  - **Novig does NOT hold a resting bid's cost from the balance**, and takes bids past it: "wallet $8.32 → $8.32 with $12.54 resting" (no `422`).
+    Only each order's own cost is checked against the balance at placing. So the app counts the bids up against the wallet itself (v0.54.0:
+    budget = min(wallet, day's limit left) − every bid not yet ended).
+  - **`GET /v3/orders/{id}` answers `404 ORDER_NOT_FOUND` once an order is off the book** (cancelled or expired), not only just after the `201`:
+    ~200 such 404s in the timeline, each right after a cancel or an expiry. Its record can't say how an order ended; its fills can.
+  - **`GET /v3/portfolio/fills` costs the `history` bucket (512, refilled 4 a second) 8 + 1 per 50 rows**, and one read per ended order ran it dry
+    (429s, `Retry-After` 1-5 s). It takes `startsAfter` (Unix ms, exclusive, on the event's scheduled start; also `startsBefore`, `event`, `market`,
+    `outcome`, `order`), so **one read covers every bid at once** (v0.54.0: `NovigTradingClient.fillsStartingAfter`, the earliest bid's start less a day).
+  - The cancel's `200` carries the order's status when the cancel arrived (`OPEN` = it was resting; `FILLED` = nothing left to cancel).
+  - `ttl` expiry and `PO` posting work as documented (46 bids ended by their `ttl`, 0 refused). No maker fill yet (0 of 289): see RESEARCH.md §70.9.
+- **v0.54.0:** each pass reads the open orders once; a bid seen there before and missing now is off the book, finished with one fills read for all such bids
+  (its record is read only if it never showed open: a `PO` refusal says `REJECTED` there); cancels are confirmed by one more read of the open orders
+  400 ms later and one fills read; a fills read that fails finishes nothing (the bids stay on their way down, no new bid on their sides, read again
+  next pass). An expiring bid is re-posted only when the new one would rest a minute longer (a fresher fair). A line's best bid leaves out Vigilant's
+  own bids that were in the book read (the book's levels less our contracts), and bids that would lead their side go up first.
