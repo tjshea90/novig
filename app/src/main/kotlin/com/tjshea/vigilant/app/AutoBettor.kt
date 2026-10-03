@@ -21,6 +21,7 @@ import com.tjshea.vigilant.data.scanner.SharpConfirm
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.SharpMode
 import com.tjshea.vigilant.data.scanner.SharpVeto
+import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.TrackedBet
@@ -76,6 +77,8 @@ class AutoBettor(
         { rules, bet, view, odds, live, at -> SharpGate.check(c.sharp, rules, bet, view, odds, live, at) },
     /** How long nothing is sent after Novig refuses an order ([FAIL_BACKOFF_MS]). */
     private val failBackoffMs: Long = FAIL_BACKOFF_MS,
+    /** A Novig market's newest trades (public, one request): what the trap guard's move rule reads before a game line is bet ([TrapGuard.move]). */
+    private val recentTrades: suspend (String) -> List<TrapGuard.Trade> = { id -> withContext(Dispatchers.IO) { c.novig.trades(id) } },
 ) {
 
     /** What the last [run] did, for Settings, Diagnostics and the tests. */
@@ -152,6 +155,10 @@ class AutoBettor(
         // Pregame bets at Novig whose books were read, best edge first. Each is judged on Novig's price read in the last minute: a bet with no
         // such price isn't placed (its edge is whatever it was a while ago).
         val all = AlertPicks.cnoChecked(state, rules.minEv, now)
+        // The trap guard's first rule: games too far off were left out of the candidates (their books weren't even read); counted here.
+        AlertPicks.tooEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n ->
+            TrapGuard.early(now + (settings.trapEarlyHours + 1) * 3_600_000L, now, settings.trapEarlyHours)?.let { skipped[it] = n }
+        }
         val passing = ArrayList<AlertPicks.CnoChecked>()
         for (item in all.distinctBy { it.pick.row.key }.sortedByDescending { it.shown.ev }) {
             val row = item.pick.row
@@ -223,6 +230,9 @@ class AutoBettor(
             val priced = item.live?.outcomeId
             if (priced != null && priced != target.outcomeId) { cooldown[row.key] = now + NOT_FOUND_COOLDOWN_MS; skip("Novig's price and its bet slip name different outcomes"); continue }
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
+            // The trap guard's second rule (RESEARCH.md §71): on a game line, Novig's own trades say whether the price just moved to make it look cheap.
+            val moveReason = novigMove(item, target, settings)
+            if (moveReason != null) { cooldown[row.key] = clock() + AutoBet.COOLDOWN_MS; skip(moveReason); continue }
 
             // The order is marked in flight BEFORE it can be sent (saved, and auto-bet stays stopped until it's cleared): if the process dies after
             // Novig takes the order and before the Tracker has it (Tj's v0.38.0 report: the app crashed, out of memory), the next cycle would find
@@ -345,6 +355,41 @@ class AutoBettor(
         return result.reason
     }
 
+    /** What the trap guard's move rule read for each game line it checked (CNO row key → the bet record's words, [AtBet.novigMove]). */
+    private val moveSaid = object : LinkedHashMap<String, String>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?) = size > SHARP_SAID_KEEP
+    }
+
+    /**
+     * Why the trap guard's move rule stops [item] (a stable reason, counted by the report), or null. Only full-game moneylines, spreads and totals
+     * ([TrapGuard.MOVE_KINDS]) with [ScanSettings.trapNovigMove] on are read; a read that fails stops nothing (the guard adds a check, it never
+     * blocks betting on a hiccup) and is recorded as UNREAD.
+     */
+    private suspend fun novigMove(item: AlertPicks.CnoChecked, target: BetTarget, settings: ScanSettings): String? {
+        val row = item.shown.row
+        val kind = BetKind.of(row.market, row.bet)
+        if (!settings.trapNovigMove || kind !in TrapGuard.MOVE_KINDS) return null
+        val move = try {
+            TrapGuard.move(recentTrades(target.market.marketId), target.outcomeId, AutoBet.priceOf(row), clock())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            moveSaid[item.pick.row.key] = "UNREAD · ${(e.message ?: e.javaClass.simpleName).take(REASON_CHARS)}"
+            c.eventLog.count("trap.move.UNREAD")
+            return null
+        }
+        val verdict = when {
+            move.level == null -> "NO LEVEL"
+            move.trap -> "TRAP"
+            else -> "CLEAR"
+        }
+        moveSaid[item.pick.row.key] = "$verdict · ${TrapGuard.describe(move)}"
+        c.eventLog.count("trap.move.${verdict.replace(' ', '_')}")
+        val why = TrapGuard.moveReason(kind, move) ?: return null
+        c.eventLog.info("AUTOBET", "trap guard: ${row.bet}: $why")
+        return MOVE_SKIP
+    }
+
     /** What the sharp veto said about each bet it judged (CNO row key → verdict), for the bet's record ([AtBet]). */
     private val vetoSaid = object : LinkedHashMap<String, SharpVeto.Result>() {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, SharpVeto.Result>?) = size > SHARP_SAID_KEEP
@@ -355,7 +400,7 @@ class AutoBettor(
         BetRecord.cno(
             state.copy(settings = settings), item.shown.row, item.pick.live, AtBet.HOW_AUTO, com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO, now,
             stake = stake, check = item.check, veto = vetoSaid[item.pick.row.key], sharpConfirm = sharpSaid[item.pick.row.key]?.detail,
-        )
+        ).copy(novigMove = moveSaid[item.pick.row.key])
     }.getOrNull()
 
     /** One bet's newest sharp verdict ("veto.PASSED", "confirm.NO_QUOTE") into Settings' tally. */
@@ -409,6 +454,9 @@ class AutoBettor(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** The report's reason for a game line the trap guard's move rule stopped (one wording, so the report counts them together). */
+        const val MOVE_SKIP = "Novig just moved: its price fell 2¢+ under this hour's level as the other side was bought (trap guard)"
+
         /** How many sharp-check answers are kept for the pop-ups before they're dropped (a run's bets are a handful). */
         private const val SHARP_SAID_KEEP = 200
 
