@@ -72,7 +72,18 @@ class BetLedgerTest {
         assertEquals("auto", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.HOW))
         assertEquals("$100-500", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.LIQUIDITY))
         assertEquals("under 30 s", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.PAGE_AGE))
-        for (split in BetLedger.Split.entries) assertEquals(split.name, BetLedger.NOT_RECORDED, BetLedger.keyOf(bet("old", null), split))
+        for (split in BetLedger.Split.entries - BetLedger.Split.LEAD) assertEquals(split.name, BetLedger.NOT_RECORDED, BetLedger.keyOf(bet("old", null), split))
+    }
+
+    @Test
+    fun `the time to the start is known for every bet, recorded as placed or not (RESEARCH 71: the trap guard's split)`() {
+        val old = bet("old", null)
+        val lead = (old.startsTs - old.createdAtMs) / 60_000L
+        assertEquals(BetLedger.leadBand(lead), BetLedger.keyOf(old, BetLedger.Split.LEAD))
+        assertTrue(BetLedger.keyOf(old, BetLedger.Split.LEAD) != BetLedger.NOT_RECORDED)
+        // The record's own minutes win when there is one.
+        assertEquals("24 h or more", BetLedger.keyOf(bet("a", at(4, 4, minutes = 2_000)), BetLedger.Split.LEAD))
+        assertEquals(BetLedger.NOT_RECORDED, BetLedger.keyOf(old.copy(startsTs = 0), BetLedger.Split.LEAD))
     }
 
     @Test
