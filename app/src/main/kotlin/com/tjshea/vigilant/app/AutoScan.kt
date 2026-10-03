@@ -381,9 +381,10 @@ class AutoScanner(
      * The cycle used to wait the scan out (Tj's v0.52.0 file: "a background cycle took 456 s (its interval is 30 sec)"), and for those minutes CNO
      * wasn't read and auto-bet placed nothing. Tj's own scan may be running already: then its end is this one's.
      */
-    private fun vigilantScan(settings: ScanSettings) {
+    private suspend fun vigilantScan(settings: ScanSettings) {
         val before = c.runner.state.value.finished
-        val started = c.startVigilantScan(settings, runCatching { kotlinx.coroutines.runBlocking { c.tracker.all() } }.getOrDefault(emptyList()), background = true)
+        val bets = runCatching { c.tracker.all() }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())
+        val started = c.startVigilantScan(settings, bets, background = true)
         if (!started && !c.runner.state.value.scanning) return
         if (settings.alertMinEv <= 0.0) return
         vigilantAlerts?.takeIf { it.isActive }?.let { return }
