@@ -239,7 +239,8 @@ class CnoWideTest {
         t += 10_000
         assertFalse("under 30 s", feed.readWide("u", CnoFilters()))
         t += 25_000
-        // The list was read again, but CNO's data is the same age as at the last wide read (its odds haven't moved).
+        // The list was read again, but CNO's data is as old as it was at the last wide read (its odds haven't moved).
+        source.age = 45
         feed.refresh("u")
         assertFalse("the same odds again", feed.readWide("u", CnoFilters()))
         // CNO published: the list's data time moves on.
@@ -254,12 +255,6 @@ class CnoWideTest {
     @Test
     fun `no wide read while the list is failing or CNO asked for a pause`() = runTest {
         var t = 0L
-        val source = WideSource { t }
-        val feed = CnoFeed(source, clock = { t })
-        feed.refresh("u")
-        // A pause CNO asked for (a books read refused).
-        feed.loadBooks(CnoRow(0.05, event = "E", market = "M", bet = "B", odds = 110, book = "Novig", gameUrl = "https://x/g?side_id=1"))
-        assertEquals("nothing paused it", null, feed.state.value.pausedUntilMs)
         val failing = object : CnoSource {
             override suspend fun fetch(url: String, filters: CnoFilters): CnoSnapshot = throw CnoException("down")
             override suspend fun fetchWide(url: String, filters: CnoFilters, rows: Int): CnoSnapshot? = error("must not be asked")

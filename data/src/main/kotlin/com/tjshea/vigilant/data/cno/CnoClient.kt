@@ -355,6 +355,6 @@ class CnoClient(
         const val BULK_GAP_MS = 500L
 
         /** A field of the form that is one of the filters (as opposed to ASP.NET's own state). */
-        private val CONTROL = Regex("(TextBox|DropDownList|CheckBox)[A-Za-z]*$")
+        private val CONTROL = Regex("(TextBox|DropDownList|CheckBox)[A-Za-z_]*$")
     }
 }
