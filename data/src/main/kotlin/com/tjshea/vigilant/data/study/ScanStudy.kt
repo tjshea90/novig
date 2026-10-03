@@ -481,6 +481,8 @@ class ScanStudy(
         heavyOk: Boolean = true,
         /** True while something that matters more is using the same feeds (the Tracker's own close lookups): the pass stops before its next day and is picked up on the next. */
         yieldTo: () -> Boolean = { false },
+        /** The most bets of one day put through the grader and the close lookups in one pass; the rest wait for the next ([SETTLE_BATCH]). */
+        batch: Int = SETTLE_BATCH,
     ): SettleReport = settleLock.withLock {
         flush()
         val now = clock()
@@ -495,8 +497,8 @@ class ScanStudy(
         try {
             for (day in journal.days().filter { it <= today && it >= today.minusDays(SETTLE_DAYS) }.reversed()) {
                 if (yieldTo()) break
-                val folded = withContext(io) { journal.fold(day) }
-                val work = folded.values.filter { needsWork(it.bet, now, activeIds) }
+                val folded = withContext(io) { journal.fold(day, withSights = false) }
+                val work = folded.values.filter { !ungradable(it) && needsWork(it.bet, now, activeIds) }
                 if (work.isEmpty()) continue
                 daysDone++
                 looked += work.size
@@ -512,9 +514,11 @@ class ScanStudy(
                     }
                     if (needsWork(sb.bet, now, activeIds)) rest += sb
                 }
-                if (rest.isNotEmpty()) {
-                    val found = harness(rest, scores, sources, heavyOk, scratch, now)
-                    val byId = rest.associateBy { it.id }
+                // A day of wide-read bets has thousands: the bets the app's lists showed go first, the rest in the order their games started; what's left is asked on the next pass.
+                val turn = if (rest.size <= batch) rest else rest.sortedWith(compareBy<StudyBet>({ it.screen != null }, { it.bet.startsTs })).take(batch)
+                if (turn.isNotEmpty()) {
+                    val found = harness(turn, scores, sources, heavyOk, scratch, now)
+                    val byId = turn.associateBy { it.id }
                     for (l in found) {
                         val before = byId.getValue(l.id).bet
                         val after = StudyBet.applied(before, l.r!!)
@@ -620,6 +624,12 @@ class ScanStudy(
             return cur.o != prev.o || cur.b != prev.b || abs((cur.ev ?: 0.0) - (prev.ev ?: 0.0)) >= EV_STEP || abs((cur.f ?: 0.0) - (prev.f ?: 0.0)) >= FAIR_STEP
         }
 
+        /** The most bets of a day graded and closed in one settle pass (the grader asks 200 a pass, eight passes). */
+        const val SETTLE_BATCH = 1_500
+
+        /** A futures bet (the app's screen: not a game between two sides) is logged but never graded: no feed has a result or a close for it. */
+        fun ungradable(sb: StudyBet): Boolean = sb.screen == CnoChecks.Reason.NOT_A_GAME.name
+
         /** Whether a started bet still has a result or a close to look for. */
         fun needsWork(b: TrackedBet, now: Long, activeSources: Collection<String> = emptyList()): Boolean {
             val age = now - b.startsTs
@@ -661,7 +671,7 @@ class ScanStudy(
         var n = 0
         for (day in journal.days().filter { it >= today.minusDays(days.toLong()) }) {
             n++
-            for (sb in journal.fold(day).values) {
+            for (sb in journal.fold(day, withSights = false).values) {
                 bets++
                 if (sb.bet.status != BetStatus.PENDING) graded++
                 if (ClosingLine.closeOf(sb.bet, now) != null || sb.bet.closeFair != null) closed++
