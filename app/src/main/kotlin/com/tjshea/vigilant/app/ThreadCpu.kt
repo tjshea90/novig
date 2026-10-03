@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app
 
+import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -110,5 +111,5 @@ object ScanThreads {
     }
 
     fun dispatcher(threads: Int = Runtime.getRuntime().availableProcessors().coerceAtLeast(2)) =
-        kotlinx.coroutines.asCoroutineDispatcher(Executors.newFixedThreadPool(threads, factory()))
+        Executors.newFixedThreadPool(threads, factory()).asCoroutineDispatcher()
 }
