@@ -186,6 +186,7 @@ object Diagnostics {
                 (x.maker.problem?.let { " · problem: $it" } ?: ""),
         )
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
+        MakerStats.recent(x.makerBids, now).forEach { o.appendLine("  $it") }
         x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)
             .forEach { o.appendLine("  bids ended ×${it.value}: ${it.key}") }
         o.appendLine(
@@ -584,6 +585,49 @@ object Diagnostics {
  * auto-make and by hand, how long they rested, whether they led their side's book when posted, and how far under Novig's price to take them they sat.
  */
 object MakerStats {
+    /**
+     * The chance that one prop bid 4% under the fair fills while it rests [hours] (RESEARCH.md §70.3, static bids: 4% at 15 min, 11% at 1 h, 25% at 3 h,
+     * 37% at 6 h, 40% until the close), straight between those rows. A rough yardstick: team totals and periods fill differently, the margin is Tj's.
+     */
+    fun fillChance(hours: Double): Double {
+        val rows = listOf(0.0 to 0.0, 0.25 to 0.04, 1.0 to 0.11, 3.0 to 0.25, 6.0 to 0.37, 24.0 to 0.40)
+        if (hours <= 0.0) return 0.0
+        val i = rows.indexOfFirst { it.first >= hours }
+        if (i < 0) return rows.last().second
+        val (h0, p0) = rows[i - 1]
+        val (h1, p1) = rows[i]
+        return p0 + (p1 - p0) * (hours - h0) / (h1 - h0)
+    }
+
+    /**
+     * What the last 24 hours of bids add up to (Tj, 2026-10-03: "how long do they usually take to get filled?"): the bids' total time up (bid-hours: what
+     * fills depend on, not how many were posted), the fills the research would expect from lives like those, the fills there were, and why the ended ones
+     * ended. The 14-day line above mixes versions, including the one-minute re-posting; this is the recent one. Empty when none was posted in the day.
+     */
+    fun recent(bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>, now: Long): List<String> {
+        val posted = bids.filter { it.orderId != null && it.postedAtMs >= now - DAY_MS }
+        if (posted.isEmpty()) return emptyList()
+        val hours = posted.map { ((it.endedAtMs ?: now) - it.postedAtMs).coerceAtLeast(0L) / 3_600_000.0 }
+        val up = hours.sum()
+        val expected = hours.sumOf(::fillChance)
+        val filled = posted.count { it.filled > 0 }
+        val longest = hours.max() * 60
+        val verdict = when {
+            expected < 3.0 -> "too few bid-hours to judge: ${if (filled == 0) "no fill" else "this many"} is the likely outcome"
+            filled < expected / 3 -> "well under the research's rate: look at the book position (led their side) and the margin"
+            else -> "in line with the research"
+        }
+        val reasons = posted.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries
+            .sortedByDescending { it.value }.take(4).joinToString(" · ") { "×${it.value} ${it.key}" }
+        return listOfNotNull(
+            "last 24 h: ${posted.size} bids posted, ${"%.1f".format(java.util.Locale.US, up)} bid-hours up (longest ${"%.0f".format(java.util.Locale.US, longest)} min) · filled $filled · " +
+                "the research (§70.3: a prop bid 4% under the fair fills ~4% in 15 min, 11% in 1 h, 25% in 3 h, 37% in 6 h) expects ≈${"%.1f".format(java.util.Locale.US, expected)} from lives like these: $verdict",
+            reasons.takeIf { it.isNotEmpty() }?.let { "last 24 h ended: $it" },
+        )
+    }
+
+    private const val DAY_MS = 24 * 3_600_000L
+
     fun line(bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>, now: Long): String? {
         val posted = bids.filter { it.orderId != null }
         if (posted.isEmpty()) return null

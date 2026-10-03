@@ -238,6 +238,44 @@ class MakerAppTest {
         assertNull(MakerStats.line(emptyList(), now))
     }
 
+    /**
+     * Tj, 2026-10-03 ("The bids are still not getting filled, how long do they usually take to get filled?"): the file's 14-day line mixed a month of
+     * versions (320 bids, mostly one-minute re-posts). The last 24 hours says how many bid-hours were really up and what the research expects from them.
+     */
+    @Test
+    fun `the last 24 hours of bids are counted in bid-hours against the fills the research expects`() {
+        val base = com.tjshea.vigilant.data.novig.trading.maker.MakerBid(
+            clientId = "c", orderId = "o", marketId = "m", eventId = "e", outcomeId = "x", league = "NFL", eventName = "A @ B", startsTs = now + 3_600_000L,
+            marketLabel = "Yards", selection = "P Over 50.5", price = 0.45, contracts = 100, fair = 0.47, evAtFair = 0.04, margin = 0.04, postedAtMs = now - 600_000,
+        )
+        val min = 60_000L
+        // 26 bids resting ~20 minutes each (about 8.7 bid-hours): too few to expect much; none filled.
+        val few = (1..26).map { i ->
+            base.copy(clientId = "c$i", postedAtMs = now - 30 * min, endedAtMs = now - 10 * min, status = MakerStatus.CANCELED, why = "The fair price goes old")
+        }
+        val lines = MakerStats.recent(few, now)
+        assertEquals(2, lines.size)
+        assertTrue(lines[0], lines[0].startsWith("last 24 h: 26 bids posted, 8.7 bid-hours up (longest 20 min) · filled 0 · "))
+        assertTrue(lines[0], lines[0].contains("too few bid-hours to judge"))
+        assertEquals("last 24 h ended: ×26 Cancelled: The fair price goes old", lines[1])
+        // A day of hour-long bids with none filled is well under the research's rate.
+        val many = (1..60).map { i -> base.copy(clientId = "m$i", postedAtMs = now - 4 * 3_600_000L, endedAtMs = now - 3 * 3_600_000L, status = MakerStatus.EXPIRED) }
+        assertTrue(MakerStats.recent(many, now)[0], MakerStats.recent(many, now)[0].contains("well under the research's rate"))
+        // With fills in line: no complaint. Older bids and bids with no order don't count.
+        val fine = many.mapIndexed { i, b -> if (i < 10) b.copy(filled = 100, status = MakerStatus.FILLED) else b } +
+            base.copy(clientId = "old", postedAtMs = now - 3 * 24 * 3_600_000L, endedAtMs = now - 3 * 24 * 3_600_000L + min) + base.copy(clientId = "no", orderId = null)
+        assertTrue(MakerStats.recent(fine, now)[0], MakerStats.recent(fine, now)[0].startsWith("last 24 h: 60 bids posted, 60.0 bid-hours up"))
+        assertTrue(MakerStats.recent(fine, now)[0].contains("in line with the research"))
+        assertTrue(MakerStats.recent(emptyList(), now).isEmpty())
+        // The yardstick: the research's table, straight between its rows.
+        assertEquals(0.04, MakerStats.fillChance(0.25), 1e-9)
+        assertEquals(0.11, MakerStats.fillChance(1.0), 1e-9)
+        assertEquals(0.18, MakerStats.fillChance(2.0), 1e-9)
+        assertEquals(0.37, MakerStats.fillChance(6.0), 1e-9)
+        assertEquals(0.40, MakerStats.fillChance(100.0), 1e-9)
+        assertEquals(0.0, MakerStats.fillChance(0.0), 1e-9)
+    }
+
     @Test
     fun `with auto-make off it recommends a few new bids once each, Approve posts one after re-checking it, and the next pass leaves it up`() = runBlocking {
         val novig = FakeNovig()
