@@ -115,7 +115,7 @@ class SharpConfirmAppTest {
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) = f(
         ScanSettings(
             autoBet = true, autoScan = AutoScanMode.CNO, autoBetBooks = 3, autoBetMinEv = 0.03, autoBetTwoSided = 2, autoBetStake = AutoBetStake.ONE_DOLLAR, autoBetMaxStake = 10.0,
-            apiMaxPerDay = 50.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM,
+            apiMaxPerDay = 50.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM, trapEarlyHours = 0,
         ),
     )
 
