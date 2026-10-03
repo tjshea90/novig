@@ -148,6 +148,16 @@ object MakerText {
 
     const val STARTS_AUTO_BET = "Auto-bet is on: with the background scan running it will also place bets by itself (the Auto-bet tab)."
 
+    /** What a pass did: "3 posted, 1 cancelled, scan running" ("nothing to change" when it changed nothing). */
+    fun passLine(r: com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.Report): String {
+        val parts = listOfNotNull(
+            r.placed.takeIf { it > 0 }?.let { "$it posted" },
+            r.cancelled.takeIf { it > 0 }?.let { "$it cancelled" },
+            r.fills.size.takeIf { it > 0 }?.let { "$it filled" },
+        ).ifEmpty { listOf("nothing to change") }
+        return parts.joinToString(", ") + (if (r.partial) ", scan running" else "")
+    }
+
     /** "12 ready bids wait: the most bids up at once (20) is reached" (the reasons most common first); null when none wait. */
     fun waitingLine(waiting: Map<String, Int>): String? {
         val n = waiting.values.sum()

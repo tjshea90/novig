@@ -591,8 +591,9 @@ private enum class Tab(val label: String, val icon: ImageVector? = null, val dra
         CNO -> mode != ScannerMode.VIGILANT
         // Auto-bet bets CrazyNinjaOdds' list through Novig's API.
         AUTOBET -> AppBook.isNovig && mode != ScannerMode.VIGILANT
-        // Bids are priced from Vigilant's own scan (every line it prices, not only the +EV ones).
-        BIDS -> AppBook.isNovig && mode != ScannerMode.CNO
+        // Always there (Tj, 2026-10-03: "make it so the make bidding system is always shown, even if vigilant scanning is turned off"): picking a mode
+        // that bids turns Vigilant's scanner on ([com.tjshea.vigilant.data.novig.trading.maker.MakerSetup]).
+        BIDS -> AppBook.isNovig
         TRACKER, SETTINGS -> true
     }
 }
@@ -792,6 +793,7 @@ private fun VigilantRoot(
                             decisions = status.decisions, scanAtMs = status.scanAtMs, lastPassAtMs = status.lastAtMs, running = status.running,
                             problem = status.problem, bets = state.bets, now = now,
                             denied = denied.orEmpty().filter { it.startsTs > now }, backgroundFeeds = state.settings.autoScansVigilant,
+                            waiting = status.lastReport?.waiting.orEmpty(), lastPass = status.lastReport?.let(com.tjshea.vigilant.app.ui.MakerText::passLine),
                         ),
                         actions,
                     )
