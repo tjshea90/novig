@@ -34,6 +34,20 @@ data class CnoState(
     val lastPauseAtMs: Long? = null,
 )
 
+/** The scan study's wide read ([CnoFeed.readWide]): the last good one, and how the reads are going. Never shown in the app: only the study and Diagnostics read it. */
+data class CnoWideState(
+    val snapshot: CnoSnapshot? = null,
+    /** Why the last wide read failed (or what CNO said when it sent nothing); cleared by the next good one. */
+    val error: String? = null,
+    /** Failed reads in a row (the wait before the next grows with it). */
+    val errors: Int = 0,
+    val lastAttemptMs: Long? = null,
+    /** Good reads, and the rows the last one had beyond the rows the app's list carried then (what the study sees that the app doesn't). */
+    val reads: Long = 0,
+    /** The row count asked for now: [CnoFeed.WIDE_ROW_STEPS] steps down when CNO refuses the larger. */
+    val rowsAsked: Int = CnoSource.WIDE_ROWS,
+)
+
 /** Which view to keep current, with which filters, and how often ([CnoFeed.REALTIME], seconds, or 0 = taps only). */
 data class CnoConfig(
     val enabled: Boolean,
@@ -193,6 +207,59 @@ class CnoFeed(
                 if (!refresh(c.url, c.filters)) delay(500)
             }
         }
+    }
+
+    // ---- The scan study's wide read ----------------------------------------------------------------
+
+    private val _wide = MutableStateFlow(CnoWideState())
+
+    /** The wide read's state: its last rows and how the reads are going. Nothing in the app's list, alerts, auto-bet or widget reads it. */
+    val wide: StateFlow<CnoWideState> = _wide.asStateFlow()
+
+    private val wideMutex = Mutex()
+
+    /** Milliseconds until a wide read may start (0 = now): [WIDE_GAP_MS] after the last, longer after failures, never inside a pause CNO asked for. */
+    fun waitForWideMs(now: Long = clock()): Long {
+        val w = _wide.value
+        val gap = w.lastAttemptMs?.let { it + wideGapMs(w.errors) - now } ?: 0L
+        val pause = _state.value.pausedUntilMs?.let { it - now } ?: 0L
+        return maxOf(0L, gap, pause)
+    }
+
+    /**
+     * The scan study's second read of [url] (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): CNO's numeric filters
+     * opened right up ([CnoSource.fetchWide]), kept in [wide] and nowhere else, so the list ([state]) and everything built on it see exactly what they did before.
+     * It goes after a list read, never faster than every [WIDE_GAP_MS] (CNO's robots.txt asks for 30 s between pages), only when CNO's odds have moved since the last
+     * one, never while the list is failing or CNO asked for a pause, and it pauses every lane when CNO asks (as any read does). A failure is [CnoWideState.error], never
+     * the list's. Returns whether a read happened.
+     */
+    suspend fun readWide(url: String, filters: CnoFilters): Boolean = wideMutex.withLock {
+        val now = clock()
+        val narrow = _state.value
+        if (waitForWideMs(now) > 0 || narrow.error != null) return@withLock false
+        // CNO's odds haven't moved since the last wide read: the same rows again.
+        val newest = narrow.snapshot?.takeIf { it.url == url }
+        val last = _wide.value.snapshot
+        if (newest != null && last != null && last.url == url && newest.dataAtMs <= last.dataAtMs) return@withLock false
+        val asked = _wide.value.rowsAsked
+        _wide.update { it.copy(lastAttemptMs = now) }
+        try {
+            val snap = source.fetchWide(url, filters, asked) ?: return@withLock false
+            // CNO answered with its red message and no table: the row count (or a filter) was refused; try fewer next time.
+            if (snap.rows.isEmpty() && snap.note != null) {
+                _wide.update { it.copy(error = "CrazyNinjaOdds: ${snap.note}", errors = it.errors + 1, rowsAsked = nextRows(asked)) }
+            } else {
+                _wide.update { it.copy(snapshot = snap, error = null, errors = 0, reads = it.reads + 1) }
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (!currentCoroutineContext().isActive) throw kotlinx.coroutines.CancellationException("CNO wide read cancelled").apply { initCause(e) }
+            val message = (e as? CnoException)?.message ?: "Couldn't read CrazyNinjaOdds (${e.message ?: e.javaClass.simpleName})"
+            (e as? CnoException)?.let { pauseFor(it, "the study's wide read") }
+            _wide.update { it.copy(error = message, errors = it.errors + 1, rowsAsked = if ((e as? CnoException)?.retryAfterSeconds == null) nextRows(asked) else asked) }
+        }
+        true
     }
 
     // ---- A bet's books (CNO's game page), on tap --------------------------------------------
@@ -488,6 +555,18 @@ class CnoFeed(
 
         /** The refresh setting's value for "real time". */
         const val REALTIME = -1
+
+        /** The least time between two of the scan study's wide reads (and the first wait after a failure, doubling to [WIDE_MAX_GAP_MS]). */
+        const val WIDE_GAP_MS = 30_000L
+        const val WIDE_MAX_GAP_MS = 10 * 60_000L
+
+        /** The row counts the wide read asks for, largest first: the next one down when CNO answers with an error. */
+        val WIDE_ROW_STEPS = listOf(CnoSource.WIDE_ROWS, 500, 200)
+
+        fun nextRows(asked: Int): Int = WIDE_ROW_STEPS.firstOrNull { it < asked } ?: WIDE_ROW_STEPS.last()
+
+        /** The wait before a wide read after [errors] failed ones in a row. */
+        fun wideGapMs(errors: Int): Long = minOf(WIDE_MAX_GAP_MS, WIDE_GAP_MS shl errors.coerceIn(0, 5))
 
         /** Write the list to disk at least this often while it's unchanged. */
         const val SAVE_EVERY_MS = 60_000L
