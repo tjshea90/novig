@@ -3536,3 +3536,10 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 - [x] BI7 Sweep for UI/code improvements and bugs; full floor, ship, answer Tj with the link.
   Done: own diff re-read (found: the non-blocking cycle let the CPU sleep mid-scan → wake lock held to the scan's end; main-thread timers removed);
   seven tab labels wrapped mid-word → one line (screenshot 0_wallet_strip_tabs.png); Auto-bet tab's bids line names the mode. Floor 1,806 passed.
+
+## Tj, 2026-10-03 ~06:40Z (with vigilant-diagnostics-v0.53.0-2026-10-03-0237.txt): "None of my auto bids were accepted"
+
+- [ ] BJ1 Read the v0.53.0 file's bids evidence (MakerStats line: auto vs hand, rest time, led the book, gap to the offer; bids ended by why; MAKER timeline: posted/cancelled, "wallet A → B"; maker.* counters; refusals): say exactly why no auto bid filled (not enough rest time? not the best bid? price far under the offer? few takers at that hour? refused/cancelled? something broken?).
+- [ ] BJ2 Fix what's broken and improve the fill chance only where still +EV (never under the margin rules; never loosen a safety limit); tests with mutants.
+- [ ] BJ3 Work the file's other findings (FAILURE/OPTIMIZE first) where the evidence supports a change; check v0.53.0's own changes (ThreadCpu split, scan lag, 429s, key retry, WTA matching, cycles not blocking).
+- [ ] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
