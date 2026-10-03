@@ -42,7 +42,7 @@ data class CnoWideState(
     /** Failed reads in a row (the wait before the next grows with it). */
     val errors: Int = 0,
     val lastAttemptMs: Long? = null,
-    /** Good reads, and the rows the last one had beyond the rows the app's list carried then (what the study sees that the app doesn't). */
+    /** Good reads since the process started. */
     val reads: Long = 0,
     /** The row count asked for now: [CnoFeed.WIDE_ROW_STEPS] steps down when CNO refuses the larger. */
     val rowsAsked: Int = CnoSource.WIDE_ROWS,
