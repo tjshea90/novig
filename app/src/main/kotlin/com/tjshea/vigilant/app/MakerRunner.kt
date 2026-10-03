@@ -56,15 +56,18 @@ class MakerRunner(
     private val passes = Mutex()
 
     /**
-     * One pass: with bids on, the bids Vigilant's latest scan wants are posted, moved and cancelled; with them off or scanning paused, every bid comes
-     * down; with no scan yet, only fills and expiries are read. Null when betting through the API isn't set up. [why] is logged.
+     * One pass. Auto-make on: the bids Vigilant's latest scan wants are posted, moved and cancelled. Auto-make off: the bids Tj approved by hand are
+     * watched (fills recorded, taken down when no longer worth it, never re-posted), and new bids are recommended to approve or deny
+     * ([ScanSettings.makerRecommend]). Scanning paused: every bid comes down. No scan yet, or one still running: only fills and expiries are read.
+     * Null when betting through the API isn't set up. [why] is logged.
      */
     suspend fun run(why: String): MakerDesk.Report? = passes.withLock {
         val desk = desk() ?: return@withLock null
         val s = c.currentSettings()
         val any = desk.bids().any { it.active }
         if (!s.maker && !any) {
-            preview(s)
+            val decisions = preview(s)
+            if (s.makerRecommend && !s.paused && AppBook.isNovig) recommend(decisions)
             return@withLock null
         }
         val run = scan()
@@ -81,7 +84,10 @@ class MakerRunner(
                 return@withLock null
             }
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
-            val report = desk.cycle(MakerLines.from(result, s, now), MakerRules.of(s), stop, s.apiMaxPerDay, wallet)
+            val report = desk.cycle(
+                MakerLines.from(result, s, now), MakerRules.of(s), stop, s.apiMaxPerDay, wallet,
+                denied = c.makerDenials.outcomes(), autoPost = s.maker,
+            )
             notifyFills(report.fills, desk.bids())
             if (report.placed > 0 || report.cancelled > 0 || report.fills.isNotEmpty()) {
                 c.eventLog.info("MAKER", "$why: ${report.placed} posted, ${report.cancelled} cancelled, ${report.fills.size} filled, ${report.resting} resting" + (report.stopped?.let { " ($it)" } ?: ""))
@@ -93,6 +99,7 @@ class MakerRunner(
                     decisions = report.decisions, decisionsAtMs = now, scanAtMs = result?.computedAtMs,
                 )
             }
+            if (!s.maker && stop == null && s.makerRecommend) recommend(report.decisions)
             report
         } catch (e: CancellationException) {
             _status.update { it.copy(running = false) }
@@ -105,34 +112,74 @@ class MakerRunner(
         }
     }
 
-    /** The bids each line of the latest scan would get now, posting nothing (the Make tab with bids off, or between passes). */
-    suspend fun preview(s: ScanSettings? = null) {
+    /** The bids each line of the latest scan would get now, posting nothing (the tab with auto-make off, or between passes). */
+    suspend fun preview(s: ScanSettings? = null): List<MakerDecision> {
         val settings = s ?: c.currentSettings()
         val now = clock()
-        val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId }
-        val resting = desk()?.bids()?.filter { it.active }?.mapTo(HashSet()) { it.outcomeId }.orEmpty()
+        val bids = desk()?.bids().orEmpty()
+        val resting = bids.filter { it.resting }.mapTo(HashSet()) { it.outcomeId }
+        val busy = bids.filter { it.active && !it.resting }.mapTo(HashSet()) { it.outcomeId }
+        val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - resting + busy
+        val denied = c.makerDenials.outcomes()
         val run = scan()
-        val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held - resting)
+        val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held).map { d ->
+            if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
+        }
         _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
+        return decisions
     }
 
-    /** Tj's Post on one line: posted now if it still gets a bid. Null when posted, else why not. */
+    /**
+     * Tj's Approve (or Post) on one line: worked out again on the latest scan at this moment (the fair must still be fresh and the bid still at least
+     * the margin under it), then posted. Null when posted, else why not.
+     */
     suspend fun post(outcomeId: String): String? {
         val desk = desk() ?: return "Betting through Novig's API isn't set up (Settings › Betting & Novig account)"
         val s = c.currentSettings()
         if (s.paused) return "Scanning is paused: resume it to post bids"
+        if (outcomeId in c.makerDenials.outcomes()) return MakerDesk.DENIED
         val now = clock()
-        val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId }
+        val bids = desk.bids()
+        val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } +
+            bids.filter { it.active }.map { it.outcomeId }
         val line = MakerLines.from(scan().result, s, now).firstOrNull { it.outcomeId == outcomeId } ?: return "That line isn't in the latest scan any more"
         val rules = MakerRules.of(s)
+        val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
             is MakerDecision.Skip -> d.why
-            is MakerDecision.Post -> desk.post(d, rules).also { if (it == null) preview(s) }
+            is MakerDecision.Post -> when {
+                wallet != null && d.cost > wallet + 1e-9 -> "The wallet has ${com.tjshea.vigilant.app.ui.Format.money(wallet)}, under this bid's ${com.tjshea.vigilant.app.ui.Format.money(d.cost)}"
+                else -> desk.post(d, rules).also { if (it == null) { MakerNotes.cancelRecommendation(app, outcomeId); preview(s) } }
+            }
         }
     }
 
-    /** Tj's Cancel on one bid. */
-    suspend fun cancel(orderId: String): String? = desk()?.cancel(orderId).also { preview() }
+    /** Tj's Deny: no bid on that side (by hand or auto-make) before its game starts, and a resting one comes down. Null when done, else why not. */
+    suspend fun deny(outcomeId: String, startsTs: Long? = null, selection: String? = null): String? {
+        val line = _status.value.decisions.firstOrNull { it.line.outcomeId == outcomeId }?.line
+        val bid = desk()?.bids()?.lastOrNull { it.outcomeId == outcomeId }
+        val starts = startsTs ?: line?.startsTs ?: bid?.startsTs ?: return "That line isn't in the latest scan any more"
+        c.makerDenials.deny(outcomeId, starts, selection ?: line?.selection ?: bid?.selection ?: "")
+        MakerNotes.cancelRecommendation(app, outcomeId)
+        bid?.takeIf { it.resting && it.orderId != null }?.let { desk()?.cancel(it.orderId!!) }
+        preview()
+        return null
+    }
+
+    suspend fun undoDeny(outcomeId: String) {
+        c.makerDenials.undo(outcomeId)
+        preview()
+    }
+
+    /** Tj's Cancel on one bid: it comes down and its side is denied (else auto-make would post it again at the next pass). */
+    suspend fun cancel(orderId: String): String? {
+        val desk = desk() ?: return null
+        val bid = desk.bids().firstOrNull { it.orderId == orderId }
+        val why = desk.cancel(orderId)
+        if (why == null && bid != null) c.makerDenials.deny(bid.outcomeId, bid.startsTs, bid.selection)
+        preview()
+        return why
+    }
 
     /** Every bid down ([why] on each). How many cancels Novig took; null when betting isn't set up. */
     suspend fun cancelAll(why: String): Int? {
@@ -144,9 +191,33 @@ class MakerRunner(
         }
     }
 
+    /** Auto-make switched off: the bids it posted come down; the ones Tj approved by hand stay. */
+    suspend fun cancelAuto(why: String): Int? {
+        val desk = desk() ?: return null
+        if (desk.bids().none { it.active && it.auto }) return 0
+        return desk.cancelAuto(why).also {
+            c.eventLog.info("MAKER", "auto-make's bids cancelled: $why")
+            preview()
+        }
+    }
+
+    /**
+     * New bids worth approving, as notifications with Approve and Deny (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"):
+     * each side once before its game, best first, at most [MAX_RECOMMENDED] a pass.
+     */
+    private suspend fun recommend(decisions: List<MakerDecision>) {
+        val posts = decisions.filterIsInstance<MakerDecision.Post>()
+        if (posts.isEmpty()) return
+        val fresh = c.makerRecommended.unseen(posts.map { it.line.outcomeId to it.line.startsTs }, clock())
+        val pick = posts.filter { it.line.outcomeId in fresh }.sortedWith(compareBy({ it.price }, { -it.evAtFair })).take(MAX_RECOMMENDED)
+        if (pick.isEmpty()) return
+        pick.forEach { MakerNotes.recommend(app, it) }
+        c.makerRecommended.mark(pick.map { it.line.outcomeId to it.line.startsTs }, clock())
+        c.eventLog.count("maker.recommended", pick.size.toLong())
+    }
+
     private fun stopReason(s: ScanSettings): String? = when {
         !AppBook.isNovig -> "Make orders are for Novig"
-        !s.maker -> "Bids are switched off"
         s.paused -> "Scanning is paused"
         else -> null
     }
@@ -157,6 +228,28 @@ class MakerRunner(
             MakerNotes.filled(app, bet, bid)
             c.eventLog.count("maker.filled")
         }
+    }
+
+    companion object {
+        /** The most bids recommended (notified) in one pass. */
+        const val MAX_RECOMMENDED = 3
+    }
+}
+
+/** Sides already recommended (files/maker_recommended.json): each side once before its game. */
+class MakerRecommended(file: java.io.File) {
+    @kotlinx.serialization.Serializable
+    data class Seen(val outcomeId: String, val startsTs: Long, val atMs: Long)
+
+    private val store = com.tjshea.vigilant.data.store.JsonFileStore(file, kotlinx.serialization.builtins.ListSerializer(Seen.serializer()), { emptyList() })
+
+    suspend fun unseen(sides: List<Pair<String, Long>>, now: Long): Set<String> {
+        val seen = store.read().filter { it.startsTs > now }.mapTo(HashSet()) { it.outcomeId }
+        return sides.map { it.first }.filterTo(HashSet()) { it !in seen }
+    }
+
+    suspend fun mark(sides: List<Pair<String, Long>>, now: Long) {
+        store.update { list -> list.filter { it.startsTs > now } + sides.map { (o, s) -> Seen(o, s, now) } }
     }
 }
 
