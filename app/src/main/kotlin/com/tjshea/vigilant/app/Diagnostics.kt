@@ -41,6 +41,9 @@ object Diagnostics {
         val autoScan: AutoScanner.Status = AutoScanner.Status(),
         /** What the auto-bet did last (Tj, 2026-10-01). */
         val autoBet: AutoBettor.Status = AutoBettor.Status(),
+        /** Make orders (RESEARCH.md §70): every bid on record and the last pass. */
+        val makerBids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid> = emptyList(),
+        val maker: MakerRunner.Status = MakerRunner.Status(),
         /** The app's heap and what is held in it (Tj's 2026-10-01 report: an OutOfMemoryError mid-scan). */
         val memory: Memory = Memory(),
         val autoScanServiceRunning: Boolean = false,
@@ -170,6 +173,17 @@ object Diagnostics {
                 " · Tracker Novig-only filter ${if (set.trackerNovigOnly) "on" else "off"}" +
                 " · hide locked bets ${if (set.trackerHideLocked) "on" else "off"}",
         )
+        o.appendLine(
+            "Make orders / Bids (RESEARCH.md §70): ${if (set.maker) "ON" else "off"} · ${com.tjshea.vigilant.app.ui.MakerRulesText.summary(set)} · " +
+                "most ${set.makerMaxBids} bids / ${"$%.0f".format(java.util.Locale.US, set.makerMaxDollars)} · stop ${set.makerStopMinutes} min before the start · " +
+                "both sides ${if (set.makerBothSides) "yes" else "no"} · ${x.makerBids.count { it.active }} resting, " +
+                "${x.makerBids.count { it.filled > 0 }} filled of ${x.makerBids.size} on record (14 days)" +
+                (x.maker.lastAtMs?.let { " · last pass ${com.tjshea.vigilant.app.ui.Format.age(it, now)}" } ?: "") +
+                (x.maker.lastReport?.let { r -> " (${r.placed} posted, ${r.cancelled} cancelled${r.stopped?.let { s -> ", $s" } ?: ""})" } ?: "") +
+                (x.maker.problem?.let { " · problem: $it" } ?: ""),
+        )
+        x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)
+            .forEach { o.appendLine("  bids ended ×${it.value}: ${it.key}") }
         o.appendLine(
             "Sharp books (Tj, 2026-10-02: veto by default): auto-bet ${set.sharpAutoBet} · alerts ${set.sharpAlerts}" +
                 if (set.sharpAutoBet != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM && set.sharpAlerts != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) "" else {
@@ -330,6 +344,16 @@ object Diagnostics {
         // Locks (Tj, 2026-10-02 20:06Z): the numbers above count every bet; the Tracker hides locked ones when its switch is on.
         val locks = com.tjshea.vigilant.data.tracker.LockedBets.stats(bets)
         o.appendLine("Locked in: ${TrackerText.lockCaption(locks, s.settings.trackerHideLocked)}" + String.format(Locale.US, " (profit %% %s)", locks.roi?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "–"))
+        // Make orders' fills against the close (RESEARCH.md §70.5: judge them by CLV over 200+ fills).
+        val makerFills = bets.filter { it.maker }
+        if (makerFills.isNotEmpty()) {
+            val mc = com.tjshea.vigilant.data.tracker.ClvStats.of(makerFills, now)
+            o.appendLine(
+                "Maker fills: ${makerFills.size} bets · average EV at the fair when posted " +
+                    (makerFills.mapNotNull { it.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average()?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "–") +
+                    " · CLV ${mc.averageClv?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "–"} on ${mc.closed} with a close, ${mc.beat} beat it",
+            )
+        }
         // Why open Novig bets have no Novig price now (the Novig-only filter; Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds").
         val novigOpen = com.tjshea.vigilant.data.tracker.NovigNow.open(bets, now)
         o.appendLine("Novig's own price: ${novigOpen.count { com.tjshea.vigilant.data.tracker.NovigNow.note(it) == null }} of ${novigOpen.size} open Novig bets · ${novigOpen.count { it.marketId.isBlank() || it.outcomeId.isBlank() }} without Novig's ids on record")

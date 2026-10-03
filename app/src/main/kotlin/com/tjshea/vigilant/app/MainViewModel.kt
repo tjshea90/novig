@@ -1718,6 +1718,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
             autoScan = c.autoScan.status.value,
             autoBet = c.autoBet.status.value,
+            makerBids = c.makerStore.flow.value.orEmpty(),
+            maker = c.maker.status.value,
             memory = memoryNow(),
             autoScanServiceRunning = AutoScanService.running,
             keepAwakeHeld = AutoScanService.keepAwakeHeld,
