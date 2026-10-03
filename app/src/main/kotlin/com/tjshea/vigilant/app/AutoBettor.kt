@@ -482,7 +482,7 @@ class AutoBettor(
             fun c(v: SharpVeto.Verdict) = n[v.name] ?: 0
             val parts = listOfNotNull(
                 "${c(SharpVeto.Verdict.PASSED)} the sharpest book agreed",
-                c(SharpVeto.Verdict.VETOED).takeIf { it > 0 }?.let { "$it vetoed (the sharpest book said not +EV)" },
+                c(SharpVeto.Verdict.VETOED).takeIf { it > 0 }?.let { "$it vetoed (the sharpest book said not +EV, or under the bar)" },
                 c(SharpVeto.Verdict.NO_SHARP).takeIf { it > 0 }?.let { "$it with no sharp book on the page (not vetoed)" },
             )
             return "Sharp veto since Vigilant started: $asked bet${if (asked == 1) "" else "s"} judged, " + parts.joinToString(", ") + "."
