@@ -172,7 +172,29 @@ class MakerAppTest {
         val text = Diagnostics.report(state, Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = run.status.value), now)
         assertTrue(text, text.contains("Make orders / Bids (RESEARCH.md §70): ON · 4% under the fair"))
         assertTrue(text, text.contains("${bids.count { it.active }} resting"))
+        // Why bids fill or don't (Tj, 2026-10-03: "not one of them was taken"): who posted them, how long they rested, whether they led their side.
+        assertTrue(text, text.contains("bids posted ${bids.size} (auto-make ${bids.size}, by hand 0) · rested 0 min at the median"))
+        assertTrue(text, text.contains("led their side (no bid as high)"))
         assertEquals(ScanSettings().maker, false)
+    }
+
+    @Test
+    fun `the bids' line counts hand and auto bids, their lives, and the book they were posted against`() {
+        val base = com.tjshea.vigilant.data.novig.trading.maker.MakerBid(
+            clientId = "c", orderId = "o", marketId = "m", eventId = "e", outcomeId = "x", league = "NFL", eventName = "A @ B", startsTs = now + 3_600_000L,
+            marketLabel = "Yards", selection = "P Over 50.5", price = 0.45, contracts = 100, fair = 0.47, evAtFair = 0.04, margin = 0.04, postedAtMs = now - 600_000,
+        )
+        val bids = listOf(
+            base.copy(clientId = "a", auto = false, endedAtMs = now - 300_000, bestBidAtPost = 0.40, offerAtPost = 0.50, bookAtMs = now - 660_000),
+            base.copy(clientId = "b", auto = false, endedAtMs = now - 540_000, bestBidAtPost = 0.46, offerAtPost = 0.48, bookAtMs = now - 900_000),
+            base.copy(clientId = "c", auto = true, offerAtPost = 0.52, bookAtMs = now - 600_000),
+        )
+        assertEquals(
+            "bids posted 3 (auto-make 1, by hand 2) · rested 5 min at the median, 5 at the 90th · filled 0 · led their side (no bid as high) 67% of 3 · " +
+                "under Novig's price to take 5.0¢ at the median · priced with a book 1 min old at the median",
+            MakerStats.line(bids, now),
+        )
+        assertNull(MakerStats.line(emptyList(), now))
     }
 
     @Test
