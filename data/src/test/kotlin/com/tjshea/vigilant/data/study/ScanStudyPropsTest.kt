@@ -175,7 +175,7 @@ class ScanStudyPropsTest {
     }
 
     @Test
-    fun `no props, no what-if section; a bet without a check is no verdict`() = runBlocking {
+    fun `no props means no what-if section, and a bet without a check is no verdict`() = runBlocking {
         val j = journal()
         val s = study(j)
         s.observeCno(snap(moneyline), settings, emptyMap(), emptyMap(), emptyMap())
