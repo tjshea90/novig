@@ -102,6 +102,7 @@ class SharpConfirmUiTest {
         }
         compose.onNodeWithTag("sharpVetoBarNote").assertTextContains("must show at least +1% at Novig's price", substring = true)
         compose.onNodeWithTag("sharpVetoBarNote").assertTextContains("the auto-bet, CNO's alerts and the bids", substring = true)
+        compose.onRoot().captureRoboImage("screenshots/5m2_settings_sharp_veto_bar.png")
         // A pick in one section is the setting both read.
         chip("+2%", "sharpVetoMinEv").performClick()
         assertEquals(0.02, settings.sharpVetoMinEv, 0.0)
