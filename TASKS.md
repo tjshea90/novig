@@ -3539,7 +3539,7 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 
 ## Tj, 2026-10-03 ~06:40Z (with vigilant-diagnostics-v0.53.0-2026-10-03-0237.txt): "None of my auto bids were accepted"
 
-- [ ] BJ1 Read the v0.53.0 file's bids evidence (MakerStats line: auto vs hand, rest time, led the book, gap to the offer; bids ended by why; MAKER timeline: posted/cancelled, "wallet A → B"; maker.* counters; refusals): say exactly why no auto bid filled (not enough rest time? not the best bid? price far under the offer? few takers at that hour? refused/cancelled? something broken?).
+- [x] BJ1 Read the v0.53.0 file's bids evidence (MakerStats line: auto vs hand, rest time, led the book, gap to the offer; bids ended by why; MAKER timeline: posted/cancelled, "wallet A → B"; maker.* counters; refusals): say exactly why no auto bid filled (not enough rest time? not the best bid? price far under the offer? few takers at that hour? refused/cancelled? something broken?).
   Evidence so far (v0.53.0 file, 02:37 EDT, ~40 min of bids from 01:56): 289 bids (auto 206), rested 1 min median / 6 min p90, filled 0; ended ×163
   "About to expire: re-posted" (re-post from the same aging fair = churn loop), ×35 fair going old; led their side 41%; 4.0¢ under the offer at the
   median; ~1,500+ candidate bids waiting on the $8.32 wallet / 20-bid cap; wallet unchanged with $8-12 resting (Novig doesn't hold resting bids;
@@ -3549,7 +3549,7 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   was cut off at 07:13Z) and the old session is on another account, so they are lost; the v0.53.0 file itself is not in this container either.
   Work from the evidence above: (a) churn: re-posting an expiring bid from the same aging fair; (b) fills read per ended bid → 429s; (c) resting
   dollars over the wallet; (d) the bids that lead their side (or can) first when the wallet/cap binds; (e) GC during scans.
-- [ ] BJ2 Fix what's broken and improve the fill chance only where still +EV (never under the margin rules; never loosen a safety limit); tests with mutants.
+- [x] BJ2 Fix what's broken and improve the fill chance only where still +EV (never under the margin rules; never loosen a safety limit); tests with mutants.
   Tj re-sent both files at ~07:20Z (v0.52.0 + v0.53.0); confirmed from the v0.53.0 file: 163 of 289 bids ended "About to expire: re-posted"
   (re-posted every 20 s pass from the same fair: no longer life, back of the queue), two passes running at once ("during a scan" + "background
   cycle"), GET /v3/orders/{id} answers 404 after an order ends (~200 in the timeline, each before a fills read), /v3/portfolio/fills 429 (history
@@ -3573,4 +3573,6 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   refused none, 0 books lost): pacing already handles it; WTA matching RESOLVED; background cycles not blocking: 1,528 cycles, 6 late (one 5 min
   at 02:15 beside a Check-odds run), cycle p95 12 s; Vigilant CLV −0.7% on 40 bets: too few (§65-66), stays reported. PropLine/ParlayAPI/CNO
   slowness: their servers.
-- [ ] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
+- [x] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
+  Done: own diff re-read (no bugs found); full floor 1,815 passed / 23 skipped; CI green on 3234a954; v0.54.0 (code 94) released 2026-10-03T07:54Z
+  (release.yml run 37107600132), recorded; RESEARCH.md §70.9 has the plain reason (re-post loop, bids behind other bids, 2 AM + short rests, wallet).
