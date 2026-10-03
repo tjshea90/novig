@@ -8,7 +8,7 @@ import java.util.Locale
 
 /**
  * Every setting by name, where it lives and what it does in a line (Tj, 2026-10-02 ~17:55Z: "make it so everything is clear and easy to find"): what
- * Settings' search box looks through. [Entry.page] null = the Auto-bet tab. [Entry.title] is the words the page shows for it (SettingsIndexTest checks
+ * Settings' search box looks through. [Entry.page] null = the Auto-bet tab, or the Bids tab with [Entry.bids]. Titles are unique (each is a hit's test tag). [Entry.title] is the words the page shows for it (SettingsIndexTest checks
  * each is there), [Entry.help] a plain line, [Entry.words] other words someone might search by. [Entry.shown]: only while the page shows it.
  */
 object SettingsIndex {
@@ -93,7 +93,7 @@ object SettingsIndex {
         Entry("Shortest odds to bet", null, "No heavy favorites past this for auto-bet", "auto-bet min odds favorite", autoBetTab),
         Entry("Kinds of bet to place", null, "Props, moneylines, spreads, totals…", "auto-bet kinds markets props", autoBetTab),
         Entry("Sharp-book veto", null, "Skip a bet the sharpest book disagrees with", "auto-bet sharp veto confirm pinnacle kalshi", autoBetTab),
-        Entry("Trap guard", null, "Skip games too far from the start, and game lines Novig just moved", "auto-bet trap sharp early hours gift steam moved", autoBetTab),
+        Entry("Skip game lines Novig just moved", null, "Trap guard: skip games too far from the start, and game lines Novig just moved", "auto-bet trap sharp early hours gift steam moved", autoBetTab),
         Entry("Amount per bet", null, "Auto-bet's stake: Kelly, \$1 or your amount", "auto-bet stake kelly amount", autoBetTab),
         Entry("Check every", null, "How often auto-bet looks for bets", "auto-bet interval often", autoBetTab),
         Entry("Lock in profits automatically", null, "Buy the other side once a bet's odds moved your way, for a sure profit", "lock hedge arbitrage arb guarantee green", autoBetTab),

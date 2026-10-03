@@ -309,7 +309,7 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
             SettingsRow(
                 title = e.title,
                 summary = "${e.where} · ${e.help}",
-                tag = "settingsHit-${e.where}-${e.title}",
+                tag = "settingsHit-${e.title}",
                 onClick = { if (e.bids) onOpenBids?.invoke() else if (e.page != null) onOpen(e.page) else onOpenAutoBet?.invoke() },
             )
         }
