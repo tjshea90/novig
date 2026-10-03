@@ -22,6 +22,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.SharpVetoSection
@@ -86,6 +90,33 @@ class SharpConfirmUiTest {
         compose.onAllNodesWithText("Oldest quote allowed").assertCountEquals(0)
     }
 
+    /** RESEARCH.md §72: the sharpest book's own edge is what a bet keeps by the close, so the veto has a bar (1% by default), one for every screen. */
+    @Test
+    fun `the veto's bar shows under Veto, 1% by default, one setting for the auto-bet, the alerts and the bids`() {
+        show()
+        assertEquals(0.01, settings.sharpVetoMinEv, 0.0)
+        fun chip(label: String, tag: String) = compose.onNode(hasText(label) and hasAnyAncestor(hasTestTag(tag)))
+        for (tag in listOf("sharpVetoMinEv", "sharpVetoMinEvAlerts")) {
+            for (label in listOf("Any +EV", "+0.5%", "+1%", "+1.5%", "+2%")) chip(label, tag).assertExists()
+            chip("+1%", tag).assertIsSelected()
+        }
+        compose.onNodeWithTag("sharpVetoBarNote").assertTextContains("must show at least +1% at Novig's price", substring = true)
+        compose.onNodeWithTag("sharpVetoBarNote").assertTextContains("the auto-bet, CNO's alerts and the bids", substring = true)
+        // A pick in one section is the setting both read.
+        chip("+2%", "sharpVetoMinEv").performClick()
+        assertEquals(0.02, settings.sharpVetoMinEv, 0.0)
+        chip("+2%", "sharpVetoMinEvAlerts").assertIsSelected()
+        chip("+1%", "sharpVetoMinEvAlerts").assertIsNotSelected()
+        compose.onNodeWithTag("sharpVetoBarNoteAlerts").assertTextContains("must show at least +2%", substring = true)
+        chip("Any +EV", "sharpVetoMinEvAlerts").performClick()
+        assertEquals(0.0, settings.sharpVetoMinEv, 0.0)
+        compose.onNodeWithTag("sharpVetoBarNote").assertTextContains("Any +EV on the sharpest book's own price passes", substring = true)
+        // Off (or a confirmation required) has no veto, so no bar for that section.
+        compose.onAllNodesWithText("Off")[0].performClick()
+        compose.onAllNodesWithTag("sharpVetoMinEv").assertCountEquals(0)
+        compose.onAllNodesWithTag("sharpVetoMinEvAlerts").assertCountEquals(1)
+    }
+
     @Test
     fun `each is its own, and requiring a confirmation shows the criteria with their defaults`() {
         show(keys = listOf("pw-FAKE-0000"))
@@ -95,7 +126,8 @@ class SharpConfirmUiTest {
         // The defaults, selected: Pinnacle, 3 minutes, any +EV; CNO's page off.
         compose.onNodeWithText("Pinnacle").assertIsSelected()
         compose.onNodeWithText("3 min").assertIsSelected()
-        compose.onNodeWithText("Any +EV").assertIsSelected()
+        // (The alerts' section, still on Veto, has its bar's "Any +EV" chip too, below this one.)
+        compose.onAllNodesWithText("Any +EV")[0].assertIsSelected()
         compose.onNodeWithTag("sharpConfirmViaCno").assertIsOff()
         compose.onNodeWithTag("sharpConfirmNote").assertExists()
         // The alerts' own.
