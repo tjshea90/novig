@@ -237,7 +237,7 @@ class AutoBetUiTest {
             assertEquals(label, odds, settings.autoBetMaxOdds)
         }
         compose.onNodeWithText("+130").performClick()
-        assertTrue(AutoBetText.criteria(settings), AutoBetText.criteria(settings).contains(", odds no longer than +130, unless the sharpest book for it says it isn't +EV, staking"))
+        assertTrue(AutoBetText.criteria(settings), AutoBetText.criteria(settings).contains(", odds no longer than +130, unless the sharpest book for it gives it under +1%, staking"))
         compose.onNodeWithTag("autoBetSwitch").performClick()
         compose.onNodeWithText("odds no longer than +130", substring = true).assertExists()
         compose.onNodeWithText("Cancel").performClick()
