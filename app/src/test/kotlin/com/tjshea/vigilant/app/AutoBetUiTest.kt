@@ -165,9 +165,10 @@ class AutoBetUiTest {
     fun `the smallest edge offers Tj's seven choices and a typed amount`() {
         show()
         for ((label, ev) in listOf("+2%" to 0.02, "+2.5%" to 0.025, "+3%" to 0.03, "+3.25%" to 0.0325, "+3.5%" to 0.035, "+3.75%" to 0.0375, "+4%" to 0.04)) {
-            compose.onNodeWithText(label).performClick()
+            // The edge's own chips come first ("+2%" is also one of the sharp veto's bar further down the tab).
+            compose.onAllNodesWithText(label)[0].performClick()
             assertEquals(label, ev, settings.autoBetMinEv, 1e-12)
-            compose.onNodeWithText(label).assertIsSelected()
+            compose.onAllNodesWithText(label)[0].assertIsSelected()
         }
         // Typed: 3.1% is a value no chip has.
         compose.onNodeWithTag("autoBetMinEvField").performTextClearance()

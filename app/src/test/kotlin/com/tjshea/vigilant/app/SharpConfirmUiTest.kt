@@ -152,7 +152,8 @@ class SharpConfirmUiTest {
             assertEquals(label, seconds, settings.sharpConfirmMaxAgeSeconds)
         }
         for ((label, ev) in listOf("+1%" to 0.01, "+2%" to 0.02, "+3%" to 0.03, "Any +EV" to 0.0)) {
-            compose.onNodeWithText(label).performClick()
+            // The first of each (the alerts' section below, on Veto, has a bar with some of the same labels).
+            compose.onAllNodesWithText(label)[0].performClick()
             assertEquals(label, ev, settings.sharpConfirmMinEv, 0.0)
         }
         compose.onNodeWithTag("sharpConfirmViaCno").performClick()

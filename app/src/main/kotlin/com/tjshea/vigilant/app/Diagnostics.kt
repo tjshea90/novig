@@ -190,12 +190,14 @@ object Diagnostics {
             .forEach { o.appendLine("  bids ended ×${it.value}: ${it.key}") }
         o.appendLine(
             "Sharp books (Tj, 2026-10-02: veto by default): auto-bet ${set.sharpAutoBet} · alerts ${set.sharpAlerts}" +
-                " · veto bar ${if (set.sharpVetoMinEv <= 0.0) "any +EV" else "${pct(set.sharpVetoMinEv)} on the sharpest book (RESEARCH.md §72)"}" +
                 if (set.sharpAutoBet != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM && set.sharpAlerts != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) "" else {
                     " · ${set.sharpConfirmBooks.displayName}, quote at most ${ScanSettings.intervalLabel(set.sharpConfirmMaxAgeSeconds)} old, edge ${if (set.sharpConfirmMinEv <= 0.0) "any +EV" else "at least ${pct(set.sharpConfirmMinEv)}"}, " +
                         "CNO's page ${if (set.sharpConfirmViaCno) "may confirm" else "only vetoes"} · feeds: ${x.sharpFeeds.joinToString(", ").ifEmpty { "none on with a key" }} · " +
                         "feed calls since the app opened ${x.sharpCalls} (${x.sharpFailures} failed)" + (x.sharpAnswers.takeIf { it.isNotEmpty() }?.let { m -> ", answers: " + m.entries.joinToString(", ") { "${it.key} ${it.value}" } } ?: "")
-                },
+                } +
+                // The veto's bar (RESEARCH.md §72), where a veto uses it: the auto-bet's, the alerts' and the bids'.
+                (if (set.sharpAutoBet != com.tjshea.vigilant.data.scanner.SharpMode.VETO && set.sharpAlerts != com.tjshea.vigilant.data.scanner.SharpMode.VETO && !set.makerSharpVeto) "" else
+                    " · veto bar ${if (set.sharpVetoMinEv <= 0.0) "any +EV" else "${pct(set.sharpVetoMinEv)} on the sharpest book (RESEARCH.md §72)"}"),
         )
         o.appendLine(
             "Trap guard (RESEARCH.md §71): auto-bet, alerts and bids only on games starting within " +

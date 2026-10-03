@@ -29,9 +29,12 @@ class SharpDiagnosticsTest {
     fun `with no confirmation there is no health line, and the report says each mode`() {
         val veto = SampleScan.state()
         assertTrue(HealthChecks.of(veto, extras, now).none { it.area == "Sharp-book confirmation" })
-        assertTrue(Diagnostics.report(veto, extras, now, zone).contains("Sharp books (Tj, 2026-10-02: veto by default): auto-bet VETO · alerts VETO\n"))
+        assertTrue(Diagnostics.report(veto, extras, now, zone).contains("Sharp books (Tj, 2026-10-02: veto by default): auto-bet VETO · alerts VETO · veto bar 1.0% on the sharpest book (RESEARCH.md §72)\n"))
         val off = veto.copy(settings = veto.settings.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF))
-        assertTrue(Diagnostics.report(off, extras, now, zone).contains("Sharp books (Tj, 2026-10-02: veto by default): auto-bet OFF · alerts VETO\n"))
+        assertTrue(Diagnostics.report(off, extras, now, zone).contains("Sharp books (Tj, 2026-10-02: veto by default): auto-bet OFF · alerts VETO · veto bar 1.0% on the sharpest book (RESEARCH.md §72)\n"))
+        // No veto anywhere (the bids' included): no bar to report.
+        val none = off.copy(settings = off.settings.copy(sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.OFF, makerSharpVeto = false))
+        assertTrue(Diagnostics.report(none, extras, now, zone).contains("auto-bet OFF · alerts OFF\n"))
     }
 
     @Test
