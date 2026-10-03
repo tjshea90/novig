@@ -3733,3 +3733,8 @@ For the scan study feature, if it doesn't already do so, make it include cno sca
 ```
 Also consider if it is needed or smart to require that prop bets have at least one sharp prop book that agrees that the prop bet is positive EV. I might be wrong but I think right now it can derive EV on prop bets from soft sports books. See if this is true and if it is a good idea to require at least one sharp prop book to agree the bet is positive EV before showing up in vigilant, or if this is not necessary
 ```
+
+## 2026-10-03T22:56:52Z
+```
+Do option 1 and add the props split to the study
+```
