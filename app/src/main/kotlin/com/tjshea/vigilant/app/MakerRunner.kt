@@ -202,8 +202,9 @@ class MakerRunner(
         val bids = desk.bids()
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } +
             bids.filter { it.active }.map { it.outcomeId }
-        val line = MakerLines.withoutOwn(MakerLines.from(scan().result, s, now).filter { it.outcomeId == outcomeId }, bids).firstOrNull() ?: return "That line isn't in the latest scan any more"
         val rules = MakerRules.of(s)
+        val line = withMoves(MakerLines.withoutOwn(MakerLines.from(scan().result, s, now).filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
+            .firstOrNull() ?: return "That line isn't in the latest scan any more"
         val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
             is MakerDecision.Skip -> d.why
