@@ -76,10 +76,11 @@ def simulate(d, close_a, a_won):
         closeA = close_a[mid_]
         won = a_won.get(mid_, np.nan)
         tk = g[g.side == 'TAKER']
-        tt, tpa, tisA, tp = tk.t.values, tk.pA.values, tk.isA.values, tk.p.values
+        tt, tpa = tk.t.to_numpy(float), tk.pA.to_numpy(float)
+        tisA, tp = tk.isA.to_numpy(bool), tk.p.to_numpy(float)
         mk = {x: g[(g.side == 'MAKER') & (g.isA == x)] for x in (True, False)}
-        mt = {x: mk[x].t.values for x in mk}
-        mp = {x: mk[x].p.values for x in mk}
+        mt = {x: mk[x].t.to_numpy(float) for x in mk}
+        mp = {x: mk[x].p.to_numpy(float) for x in mk}
         info = (g.league.iat[0], g.kind.iat[0])
         # --- static posts: one bid, posted at cut − h, resting for each TTL
         for h in POST_H:
@@ -125,8 +126,11 @@ def simulate(d, close_a, a_won):
             # X's last traded offer at each re-quote (2 h back): a bid at or above it would take, so none is posted then
             xt = tt[tisA == x]
             xp = tp[tisA == x]
-            li = np.searchsorted(xt, grid) - 1
-            offer = np.where((li >= 0) & (xt[np.clip(li, 0, None)] >= grid - 2) if len(xt) else False, xp[np.clip(li, 0, None)] if len(xt) else np.nan, np.nan)
+            offer = np.full(len(grid), np.nan)
+            if len(xt):
+                li = np.searchsorted(xt, grid) - 1
+                lc = np.clip(li, 0, None)
+                offer = np.where((li >= 0) & (xt[lc] >= grid - 2), xp[lc], np.nan)
             # which interval each maker fill on X fell in
             k = np.searchsorted(grid, mt[x], side='right') - 1
             kc = np.clip(k, 0, len(grid) - 1)
