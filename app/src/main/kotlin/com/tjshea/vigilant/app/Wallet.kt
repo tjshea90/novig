@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.app.NotificationCompat
 import com.tjshea.vigilant.app.ui.Format
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.updateAndGet
 
 /**
  * The Vigilant wallet's balance as every notification shows it (Tj, 2026-10-02 21:51Z: "always include my vigilant wallet current balance in all vigilant
@@ -28,21 +29,17 @@ class WalletBalance(
     /** The latest reading as it changes: the wallet strip above the tabs shows it (Tj, 2026-10-03: "show it somewhere in the app at all times"). */
     val flow: kotlinx.coroutines.flow.StateFlow<Reading?> = _flow
 
-    var last: Reading?
-        get() = _flow.value
-        private set(value) {
-            _flow.value = value
-        }
+    val last: Reading? get() = _flow.value
 
     val isSetUp: Boolean get() = setUp()
 
     /** A balance just read elsewhere (Novig's answer): kept as the latest. */
     fun record(dollars: Double, at: Long = clock()) {
         if (!dollars.isFinite()) return
-        val l = last
-        if (l != null && l.atMs > at) return
-        last = Reading(dollars, at)
-        prefs?.edit()?.putString(KEY_DOLLARS, dollars.toString())?.putLong(KEY_AT, at)?.apply()
+        val next = Reading(dollars, at)
+        // A newer reading already in (two reads racing) stays.
+        val kept = _flow.updateAndGet { l -> if (l != null && l.atMs > at) l else next }
+        if (kept === next) prefs?.edit()?.putString(KEY_DOLLARS, dollars.toString())?.putLong(KEY_AT, at)?.apply()
     }
 
     /** The balance no older than [maxAgeMs]: the last reading when it's that young, else read now (the last one stands if Novig doesn't answer). */
