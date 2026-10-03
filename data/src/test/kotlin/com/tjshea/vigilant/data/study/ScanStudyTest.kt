@@ -391,6 +391,42 @@ class ScanStudyTest {
         assertEquals(1, close.asked)
     }
 
+    // ---- efficiency ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * Tj, 2026-10-03: "app storage is no concern … make sure it is efficient". A busy evening: CNO's 100 rows read every 30 seconds for two hours, every price
+     * flickering. The journal takes a line per change at most once a minute, one write every ten seconds, and the whole evening costs a few seconds of CPU.
+     */
+    @Test
+    fun `a two-hour evening of 100-row scans every 30 seconds stays small and quick, and logs a price flicker once a minute at most`() = runBlocking {
+        val j = journal()
+        val s = ScanStudy(j, clock = { now }, version = { "0.57.0" }, flushEveryMs = 10_000, io = Dispatchers.Unconfined)
+        val picks = (1..100).map { "Player $it Over 1.5" }
+        var flickers = 0
+        val began = System.nanoTime()
+        repeat(240) { scan ->
+            now += 30_000
+            val rows = picks.mapIndexed { i, p ->
+                // Every price moves by a point or two at every read.
+                row("Player Total Bases", p, 100 + (scan * 7 + i * 13) % 40, fair = 0.52, side = i + 1)
+            }
+            flickers += rows.size
+            s.cno(snap(*rows.toTypedArray()))
+        }
+        s.flush()
+        val tookMs = (System.nanoTime() - began) / 1_000_000
+        val bets = j.fold(day).values
+        assertEquals(100, bets.size)
+        // At most a line a minute for 120 minutes, plus the first.
+        assertTrue("${bets.maxOf { it.sights.size }} looks for one bet", bets.all { it.sights.size <= 125 })
+        assertTrue("${bets.sumOf { it.sights.size }} looks for $flickers reads", bets.sumOf { it.sights.size } <= 100 * 125)
+        // A few MB at most for the whole evening, and a few seconds.
+        assertTrue("${j.bytes()} bytes", j.bytes() < 6_000_000)
+        assertTrue("$tookMs ms for 240 scans", tookMs < 8_000)
+        // Written in about a line of writes per ten seconds, not one per scan.
+        assertTrue(j.read(day).count() > 100)
+    }
+
     // ---- the pieces -------------------------------------------------------------------------------------------------------------
 
     @Test
