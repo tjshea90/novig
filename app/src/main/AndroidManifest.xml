@@ -83,6 +83,11 @@
             android:name=".AlertActionReceiver"
             android:exported="false" />
 
+        <!-- A recommended bid's "Approve" and "Deny" (make orders, auto-make off): run in the background, no screen. -->
+        <receiver
+            android:name=".MakerActionReceiver"
+            android:exported="false" />
+
         <!-- The closing-line capture's alarm, a few minutes before each open bet's start (ClosingCapture.kt). -->
         <receiver
             android:name=".ClosingReceiver"

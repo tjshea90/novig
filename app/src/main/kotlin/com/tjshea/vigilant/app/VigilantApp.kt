@@ -415,8 +415,10 @@ class AppContainer(private val app: Application) {
     val locks: LockScanner by lazy { LockScanner(this) }
     val autoLock: AutoLocker by lazy { AutoLocker(app, this) }
 
-    /** Every bid make orders posted (files/maker.json; RESEARCH.md §70). */
+    /** Every bid make orders posted (files/maker.json; RESEARCH.md §70), the sides Tj denied, and the sides already recommended. */
     val makerStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(app.filesDir, "maker.json"))
+    val makerDenials = com.tjshea.vigilant.data.novig.trading.maker.MakerDenials(File(app.filesDir, "maker_denied.json"))
+    val makerRecommended = MakerRecommended(File(app.filesDir, "maker_recommended.json"))
     @Volatile private var makerDeskCache: Pair<NovigTradingClient, com.tjshea.vigilant.data.novig.trading.maker.MakerDesk>? = null
 
     /** The make-orders desk on the Vigilant wallet, sharing the one order lock; null when betting through the API isn't set up. */
@@ -479,9 +481,15 @@ class AppContainer(private val app: Application) {
             }
         }
         appScope.launch {
-            settingsStore.flow.filterNotNull().map { it.makerNow }.distinctUntilChanged().filter { on -> !on }.collect {
-                val why = if (currentSettings().paused) "Scanning is paused" else "Bids are switched off"
-                runCatching { maker.cancelAll(why) }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
+            // Paused (the Pause button, or the wallet ran out): every bid down. Auto-make switched off: the bids it posted down; the ones Tj approved stay.
+            settingsStore.flow.filterNotNull().map { it.paused to it.maker }.distinctUntilChanged().collect { (paused, on) ->
+                runCatching {
+                    when {
+                        paused -> maker.cancelAll("Scanning is paused")
+                        !on -> maker.cancelAuto("Auto-make switched off")
+                        else -> null
+                    }
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
             }
         }
         // A crash saved as the last process went down ([AppExits.install]): into Recent problems at the time it happened.

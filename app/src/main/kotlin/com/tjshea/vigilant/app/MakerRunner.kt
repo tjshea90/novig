@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.Locale
@@ -253,9 +254,93 @@ class MakerRecommended(file: java.io.File) {
     }
 }
 
-/** The notification for a filled bid (its own each: the bet's id is the tag). */
+/** The notifications of make orders: a filled bid, and a bid recommended to approve or deny (each its own: tagged by the bet or the side). */
 object MakerNotes {
     private const val ID_FILLED = 5_100_000
+    private const val ID_RECOMMEND = 5_100_001
+
+    /** Bids to approve: their own channel, so Tj can set how loud they are apart from the bets placed. */
+    const val CHANNEL_RECOMMEND = "maker_recommend"
+
+    const val ACTION_APPROVE = "com.tjshea.vigilant.action.BID_APPROVE"
+    const val ACTION_DENY = "com.tjshea.vigilant.action.BID_DENY"
+    const val EXTRA_OUTCOME = "outcome"
+    const val EXTRA_STARTS = "starts"
+    const val EXTRA_SELECTION = "selection"
+
+    fun ensureChannel(context: android.content.Context) {
+        val nm = context.getSystemService(android.app.NotificationManager::class.java) ?: return
+        nm.createNotificationChannel(
+            android.app.NotificationChannel(CHANNEL_RECOMMEND, "Bids to approve", android.app.NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "A bid Vigilant recommends posting on Novig (auto-make off): Approve posts it, Deny skips that side until its game."
+            },
+        )
+    }
+
+    /** "Bid to approve · +4.5% EV · Lamar Jackson Over 224.5". */
+    fun recommendTitle(d: MakerDecision.Post): String =
+        "Bid to approve · ${String.format(Locale.US, "%+.1f%%", d.evAtFair * 100)} EV · ${d.line.selection}"
+
+    /** "Bid +120 (fair +111) · $9.95 · Passing Yards · BAL @ DAL · good for 8 min". */
+    fun recommendText(d: MakerDecision.Post, now: Long): String {
+        val f = com.tjshea.vigilant.app.ui.Format
+        val left = ((d.restUntilMs - now) / 60_000).coerceAtLeast(1)
+        return "Bid ${f.american(d.price)} (fair ${f.american(d.line.fair ?: d.price)}) · ${f.money(d.cost)} · ${d.line.marketLabel} · ${d.line.eventName} · " +
+            "its fair is good for $left min: Approve re-checks it first"
+    }
+
+    fun recommend(app: Application, d: MakerDecision.Post, now: Long = System.currentTimeMillis()) {
+        if (!ScanService.canNotify(app)) return
+        ensureChannel(app)
+        val text = recommendText(d, now)
+        val n = NotificationCompat.Builder(app, CHANNEL_RECOMMEND)
+            .setSmallIcon(R.drawable.ic_bids)
+            .withWallet(app)
+            .setContentTitle(recommendTitle(d))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_RECOMMENDATION)
+            .setAutoCancel(true)
+            // The fair behind it goes old: so does the recommendation.
+            .setTimeoutAfter((d.restUntilMs - now).coerceAtLeast(60_000L))
+            .setContentIntent(EvAlerts.openVigilant(app, ID_RECOMMEND))
+            .addAction(0, "Approve", action(app, ACTION_APPROVE, d))
+            .addAction(0, "Deny", action(app, ACTION_DENY, d))
+            .build()
+        runCatching { NotificationManagerCompat.from(app).notify(d.line.outcomeId, ID_RECOMMEND, n) }
+    }
+
+    private fun action(app: Application, what: String, d: MakerDecision.Post): android.app.PendingIntent {
+        val i = android.content.Intent(app, MakerActionReceiver::class.java).setAction(what)
+            .putExtra(EXTRA_OUTCOME, d.line.outcomeId).putExtra(EXTRA_STARTS, d.line.startsTs).putExtra(EXTRA_SELECTION, d.line.selection)
+        return android.app.PendingIntent.getBroadcast(
+            app, (what + d.line.outcomeId).hashCode(), i, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    /** What came of an Approve from the notification: "Bid posted …" or why not (the same notification, replaced). */
+    fun approved(app: Application, outcomeId: String, selection: String, why: String?) {
+        if (!ScanService.canNotify(app)) return
+        ensureChannel(app)
+        val title = if (why == null) "Bid posted · $selection" else "Not posted · $selection"
+        val text = why ?: "Post-only: it rests on Novig until someone takes it, and comes down when its fair moves against it. A fill is a bet in the Tracker."
+        val n = NotificationCompat.Builder(app, CHANNEL_RECOMMEND)
+            .setSmallIcon(R.drawable.ic_bids)
+            .withWallet(app)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setContentIntent(EvAlerts.openVigilant(app, ID_RECOMMEND))
+            .build()
+        runCatching { NotificationManagerCompat.from(app).notify(outcomeId, ID_RECOMMEND, n) }
+    }
+
+    fun cancelRecommendation(app: Application, outcomeId: String) {
+        runCatching { NotificationManagerCompat.from(app).cancel(outcomeId, ID_RECOMMEND) }
+    }
 
     /** "Bid filled $4.85 · +4.0% EV · Player Over 50.5". */
     fun title(bet: TrackedBet): String {
@@ -286,5 +371,32 @@ object MakerNotes {
             .setContentIntent(EvAlerts.openVigilant(app, ID_FILLED))
             .build()
         runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_FILLED, n) }
+    }
+}
+
+/** The recommendation's Approve and Deny ([MakerNotes.recommend]): run in the background, no screen; [goAsync] keeps it alive until done. */
+class MakerActionReceiver : android.content.BroadcastReceiver() {
+    override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+        val app = context.applicationContext as? VigilantApp ?: return
+        val outcome = intent.getStringExtra(MakerNotes.EXTRA_OUTCOME) ?: return
+        val selection = intent.getStringExtra(MakerNotes.EXTRA_SELECTION).orEmpty()
+        val starts = intent.getLongExtra(MakerNotes.EXTRA_STARTS, 0L).takeIf { it > 0 }
+        val pending = runCatching { goAsync() }.getOrNull()
+        app.container.appScope.launch {
+            try {
+                when (intent.action) {
+                    MakerNotes.ACTION_APPROVE -> {
+                        val why = runCatching { app.container.maker.post(outcome) }.getOrElse { it.message ?: it.javaClass.simpleName }
+                        MakerNotes.approved(app, outcome, selection, why)
+                    }
+                    MakerNotes.ACTION_DENY -> {
+                        runCatching { app.container.maker.deny(outcome, starts, selection) }
+                        MakerNotes.cancelRecommendation(app, outcome)
+                    }
+                }
+            } finally {
+                pending?.finish()
+            }
+        }
     }
 }

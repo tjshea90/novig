@@ -258,7 +258,7 @@ class AutoScanner(
                 }
                 // Make orders (RESEARCH.md §70): fills, expiries, the start coming up and fair prices going old are checked every cycle; a cycle that
                 // scanned has its pass from the scan's end ([AppContainer]).
-                if (settings.makerNow && !scanned) {
+                if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && !scanned) {
                     _status.update { it.copy(step = "Make orders") }
                     runCatching { timed("maker") { c.maker.run("background cycle") } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
                 }

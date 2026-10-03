@@ -25,7 +25,7 @@ import kotlin.math.abs
 object LaunchReset {
 
     /** [s] with the two background things off; everything else (limits, criteria, the interval, the halt) kept as it was. */
-    fun apply(s: ScanSettings): ScanSettings = s.copy(autoBet = false, autoScan = AutoScanMode.OFF)
+    fun apply(s: ScanSettings): ScanSettings = s.copy(autoBet = false, autoScan = AutoScanMode.OFF, maker = false)
 
     /** What [apply] switches off in [s], in words for the note on screen; null when both were off already. */
     fun note(s: ScanSettings): String? {
