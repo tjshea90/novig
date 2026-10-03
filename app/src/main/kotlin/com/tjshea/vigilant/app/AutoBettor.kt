@@ -119,8 +119,9 @@ class AutoBettor(
     private val cooldown = HashMap<String, Long>()
 
     /**
-     * The most Novig refused as too small this run (`ORDER_TOO_SMALL`; its threshold isn't published), 0 = none yet: a stake at or under it is
-     * skipped, not sent again. A fresh run asks again, in case Novig changed it.
+     * The most Novig refused as too small since the app process started (`ORDER_TOO_SMALL`; its threshold isn't published), 0 = none yet: a stake at
+     * or under it is skipped, not sent again, on every later cycle too (AutoBettorTest "once Novig has refused a size…"). A restart asks again, in case
+     * Novig changed it.
      */
     private var tooSmallBelow = 0.0
 
