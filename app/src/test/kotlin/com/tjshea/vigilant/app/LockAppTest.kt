@@ -91,7 +91,7 @@ class LockAppTest {
     ) {
         val sent = ArrayList<String>()
         var last: Triple<String, Double, Long>? = null
-        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             sent += "$outcomeId $price $qty $tif"
             last = Triple(outcomeId, price, qty)
             return "o-${sent.size}"

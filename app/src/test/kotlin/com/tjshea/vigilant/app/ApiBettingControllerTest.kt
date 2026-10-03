@@ -82,7 +82,7 @@ class ApiBettingControllerTest {
             override fun sign(message: ByteArray) = ByteArray(0)
         }), Json { ignoreUnknownKeys = true }) {
         var last: Triple<String, Double, Long>? = null
-        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             orders.incrementAndGet()
             last = Triple(outcomeId, price, qty)
             if (slowMs > 0) kotlinx.coroutines.delay(slowMs)

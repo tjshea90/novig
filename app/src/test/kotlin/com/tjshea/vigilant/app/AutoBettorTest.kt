@@ -74,7 +74,7 @@ class AutoBettorTest {
             override fun sign(message: ByteArray) = ByteArray(0)
         }), Json { ignoreUnknownKeys = true }) {
         var last: Triple<String, Double, Long>? = null
-        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             // Novig's ORDER_TOO_SMALL (its threshold isn't published): refused before it is an order.
             if (qty * price * 0.01 < minDollars) {
                 tooSmall.incrementAndGet()
@@ -700,7 +700,7 @@ class AutoBettorTest {
             Json { ignoreUnknownKeys = true },
         ) {
             val sent = AtomicInteger()
-            override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+            override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
                 sent.incrementAndGet()
                 throw com.tjshea.vigilant.data.novig.signing.NovigApiException(451, "GEOLOCATION_EXPIRED", "x")
             }
@@ -739,7 +739,7 @@ class AutoBettorTest {
             Json { ignoreUnknownKeys = true },
         ) {
             val sent = AtomicInteger()
-            override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+            override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
                 sent.incrementAndGet()
                 // What is on disk at the moment the order goes to Novig.
                 savedWhenSent = app.container.settingsStore.read().autoBetHalted

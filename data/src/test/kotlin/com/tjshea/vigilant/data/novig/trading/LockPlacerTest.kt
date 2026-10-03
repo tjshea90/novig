@@ -51,7 +51,7 @@ class LockPlacerTest {
         Json { ignoreUnknownKeys = true },
     ) {
         val sent = ArrayList<List<Any>>()
-        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String): String {
+        override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             sent += listOf(outcomeId, price, qty, tif)
             return "o-lock"
         }
