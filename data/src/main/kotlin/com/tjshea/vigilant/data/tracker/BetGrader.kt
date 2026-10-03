@@ -63,7 +63,11 @@ object BetGrader {
     private val reads = java.util.concurrent.ConcurrentHashMap<String, Read>()
     private const val READ_LIMIT = 20_000
 
+    /** How many wordings have been read from scratch (not answered from [reads]) in this process: the tests' proof that a wording is read once. */
+    internal val readCount = java.util.concurrent.atomic.AtomicLong()
+
     private fun read(marketLabel: String, selection: String): Pick? {
+        readCount.incrementAndGet()
         val market = marketLabel.trim()
         val lower = market.lowercase()
         val (who, line) = Picks.split(selection.trim())

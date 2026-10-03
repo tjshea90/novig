@@ -1,6 +1,9 @@
 package com.tjshea.vigilant.data.tracker
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -30,6 +33,30 @@ class PlacedIndexTest {
         assertFalse(index.has(key = "m2/o1", event = event, market = "Receptions", selection = "Erick All Jr. Under 1.5", startsTs = start))
         assertFalse(index.has(key = "m3/o1", event = event, market = "Receptions", selection = "Ja'Marr Chase Under 0.5", startsTs = start))
         assertFalse(index.has(key = "m4/o1", event = event, market = "Receiving Yards", selection = "Erick All Jr. Under 0.5", startsTs = start))
+    }
+
+    /**
+     * Tj's Diagnostics 2026-10-03 (v0.56.1): Android ended the app ("not responding") with its main thread in [PlacedIndex.has] reading a listed bet's
+     * wording (a dozen regexes) for every row of the feed, on every screen update. A listing's matchup and wording are read once, and the answer kept.
+     */
+    @Test
+    fun `a listing's wording is read once, however often the feed asks about it`() {
+        val index = PlacedIndex.of(listOf(cnoMark), emptyList(), now)
+        val listings = (1..300).map { "Memo Tester Number $it Under 0.5" }
+        fun askAll() = listings.count { index.has(event = event, market = "Receptions", selection = it, startsTs = start) }
+        val before = BetGrader.readCount.get()
+        assertEquals(0, askAll())
+        val first = BetGrader.readCount.get() - before
+        assertEquals("each wording read once the first time", 300L, first)
+        repeat(4) { assertEquals(0, askAll()) }
+        assertEquals("the next four passes read nothing", first, BetGrader.readCount.get() - before)
+        // The matchup too: the same text gives back the very same answer, not a fresh parse.
+        assertSame(PlacedIndex.gameKey(event), PlacedIndex.gameKey(event))
+        assertNull(PlacedIndex.gameKey("not a matchup"))
+        assertNull(PlacedIndex.gameKey("not a matchup"))
+        // And the answers are unchanged: the placed bet is still found, another line of it still isn't.
+        assertTrue(index.has(event = event, market = "Receptions", selection = "Erick All Jr. Under 0.5", startsTs = start))
+        assertFalse(index.has(event = event, market = "Receptions", selection = "Erick All Jr. Under 1.5", startsTs = start))
     }
 
     @Test

@@ -268,6 +268,14 @@ class BetGraderTest {
         assertEquals(Pick.Spread("Dallas Cowboys", 3.5, Period.GAME), BetGrader.pickOf("Spread", "Dallas Cowboys +3.5"))
     }
 
+    @Test
+    fun `asking again reads nothing, an unreadable wording included`() {
+        val before = BetGrader.readCount.get()
+        repeat(5) { BetGrader.pickOf("Player Receptions", "A Memo Tester Under 6.5") }
+        repeat(5) { assertNull(BetGrader.pickOf("Some Novelty Market 7", "Something Over 1.5")) }
+        assertEquals("two wordings, each read once", 2L, BetGrader.readCount.get() - before)
+    }
+
     companion object {
         /** [lines] among enough other players for the box score to count as posted (a real one lists dozens). */
         fun padded(vararg lines: PlayerLine): List<PlayerLine> =

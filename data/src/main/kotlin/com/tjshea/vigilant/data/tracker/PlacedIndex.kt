@@ -135,7 +135,7 @@ class PlacedIndex private constructor(
          * "baltimore ravens@dallas cowboys" (never contains '|'). Each matchup is read once ([gameKeys]): the same listing is asked about on every
          * screen update, by every listed bet (Tj's Diagnostics 2026-10-03, v0.56.1: the main thread was in here when Android ended the app).
          */
-        private fun gameKey(event: String): String? = kept(gameKeys, event) {
+        internal fun gameKey(event: String): String? = kept(gameKeys, event) {
             NovigText.parseMatchup(event)?.let { "${team(it.away)}@${team(it.home)}" }
         }
 
