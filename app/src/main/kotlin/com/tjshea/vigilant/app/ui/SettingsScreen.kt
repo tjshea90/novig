@@ -1217,7 +1217,8 @@ fun alertHint(s: ScanSettings): String =
     if (s.alertMinEv <= 0.0) "Off: no alerts." else "A notification for each new bet at ${Math.round(s.alertMinEv * 100)}% EV or better that several books agree on " +
         "(${CnoBooks.MIN_TWO_SIDED}+ books price both sides and ${CnoBooks.MIN_AGREEING}+ of them alone make it +EV), found by a background scan " +
         "or a scan you left running. Tap it to open Vigilant; its ✓ Placed button tracks the bet from the notification, without " +
-        "opening Vigilant (Undo right after). Each bet alerts once; placed and removed bets, and games outside \"Starts within\", never do."
+        "opening Vigilant (Undo right after). Each bet alerts once; placed and removed bets, and games outside \"Starts within\", never do" +
+        (if (s.trapEarlyHours > 0) ", nor games more than ${s.trapEarlyHours} h off (the trap guard, below)." else ".")
 
 /** Tj's CNO Shared View link: paste, check, save. Blank means the app's book (Novig; BetMGM in Vigilant MGM) with CNO's defaults. */
 @Composable
