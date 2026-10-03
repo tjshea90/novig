@@ -364,6 +364,8 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
                         }
                     },
                     shape = SegmentedButtonDefaults.itemShape(i, BidMode.entries.size),
+                    // No check mark: "Fully automatic" needs the room on a phone.
+                    icon = {},
                     enabled = m == BidMode.OFF || ui.setUp || ui.mode == m,
                     modifier = Modifier.testTag("makerMode-${m.name}"),
                 ) { Text(m.label, maxLines = 1, overflow = TextOverflow.Ellipsis) }
