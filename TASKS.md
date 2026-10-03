@@ -3698,3 +3698,10 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
   link scope kept), columns kept as CNO printed them, row-count steps down if CNO refuses; CnoFeed.readWide (own mutex, 30 s gap, shared pause/back-off, never touches `state`); (b) the study: a
   wide row the app's CNO list also carries is logged as before (c); one it doesn't is a new kind `w` (xw when gone), the bet's `sc` = the app's reason or NOT_LISTED; CNO's columns (`cols`) logged once
   per bet; (c) settings switch (default on), Diagnostics line, export fields/splits/READ ME; (d) hidden futures are logged but never graded.
+
+## Tj, 2026-10-03 ~22:40Z (after the wide read): "Also consider if it is needed or smart to require that prop bets have at least one sharp prop book that agrees that the prop bet is positive EV. I might be wrong but I think right now it can derive EV on prop bets from soft sports books. See if this is true and if it is a good idea to require at least one sharp prop book to agree the bet is positive EV before showing up in vigilant, or if this is not necessary"
+
+- [ ] BR1 Find out what is true today: where a prop bet's EV/fair comes from in CNO's list (CNO's books column) and in Vigilant's own scan (fair-line sources), whether soft sportsbooks can make it, and what the existing sharp veto (SharpVeto: Kalshi/ProphetX for props) already requires, including what happens when no sharp prop book prices the bet.
+- [ ] BR2 Check the evidence we have (the diagnostics file Tj attached, RESEARCH.md §65-§73, the scan study when it has data): do prop bets with no sharp book, or with a sharp book dissenting, lose to the close more than those a sharp book confirms?
+- [ ] BR3 Answer Tj plainly: needed or not, smart or not, what it would cost (bets lost), and what to change if yes. Change the app only if the answer is clearly yes and Tj's rules allow it; otherwise propose and ask.
+
