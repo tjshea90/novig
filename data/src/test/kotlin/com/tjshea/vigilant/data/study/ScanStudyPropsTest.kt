@@ -203,4 +203,20 @@ class ScanStudyPropsTest {
         assertTrue(text.contains("PROPS splits and the WHAT IF section use atBet.sharpVerdict"))
         assertNotNull(text.lines().firstOrNull { it.trim().startsWith("8. Deliver") })
     }
+
+    @Test
+    fun `the sharp edge bands break at 0, 1, 2 and 4 percent`() {
+        val base = StudyExport.rowOf(
+            StudyBet("id", com.tjshea.vigilant.data.tracker.BetTracker.cnoBet(exchangeAgrees, 0.03, false, null, 1.0, "", "", "cno", null, "id", now), null), now, null,
+        )
+        fun band(ev: Double) = StudyExport.propSharpEdge(base.copy(atBet = com.tjshea.vigilant.data.tracker.AtBet(atMs = 1, how = "study", scanner = "cno", checkAtMs = 1, sharpEv = ev)))
+        assertEquals("sharp edge under 0%", band(-0.001))
+        assertEquals("sharp edge 0 to 1%", band(0.0))
+        assertEquals("sharp edge 0 to 1%", band(0.0099))
+        assertEquals("sharp edge 1 to 2%", band(0.01))
+        assertEquals("sharp edge 2 to 4%", band(0.02))
+        assertEquals("sharp edge 4% or more", band(0.04))
+        // A bet whose page was never read has no sharp edge, whatever its record says.
+        assertEquals(null, StudyExport.propSharpEdge(base.copy(atBet = com.tjshea.vigilant.data.tracker.AtBet(atMs = 1, how = "study", scanner = "cno", sharpEv = 0.05))))
+    }
 }
