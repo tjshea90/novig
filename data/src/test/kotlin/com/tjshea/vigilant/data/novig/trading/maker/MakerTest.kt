@@ -192,9 +192,27 @@ class MakerTest {
         override suspend fun orders(status: String, limit: Int, outcomeId: String?) =
             orders.values.filter { it.status == status && it.orderId !in lagging && (outcomeId == null || it.outcomeId == outcomeId) }
 
-        override suspend fun order(orderId: String) = orders[orderId]?.takeIf { orderId !in lagging && orderId !in unreadable }
+        /** Reads of one order's record, and of fills (every one is a whole read of the `history` bucket). */
+        var orderReads = 0
+        var fillReads = 0
+        /** Fills reads answer 429 while set. */
+        var throttleFills = false
 
-        override suspend fun fills(orderId: String?, limit: Int) = fillsBy[orderId].orEmpty().toList()
+        override suspend fun order(orderId: String): NovigOrder? {
+            orderReads++
+            return orders[orderId]?.takeIf { orderId !in lagging && orderId !in unreadable }
+        }
+
+        override suspend fun fills(orderId: String?, limit: Int): List<NovigFill> {
+            fillReads++
+            return fillsBy[orderId].orEmpty().toList()
+        }
+
+        override suspend fun fillsStartingAfter(startsAfterMs: Long, limit: Int): List<NovigFill> {
+            fillReads++
+            if (throttleFills) throw NovigApiException(429, "RATE_LIMIT_EXCEEDED", "Rate limit exceeded")
+            return fillsBy.values.flatten()
+        }
 
         override suspend fun cancelOrder(orderId: String): String? {
             val o = orders[orderId] ?: return null

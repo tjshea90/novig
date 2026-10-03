@@ -74,6 +74,7 @@ class MakerAppTest {
         override suspend fun orders(status: String, limit: Int, outcomeId: String?) = orders.values.filter { it.status == status }
         override suspend fun order(orderId: String) = orders[orderId]
         override suspend fun fills(orderId: String?, limit: Int) = fillsBy[orderId].orEmpty()
+        override suspend fun fillsStartingAfter(startsAfterMs: Long, limit: Int) = fillsBy.values.flatten()
         override suspend fun cancelOrder(orderId: String): String? {
             val o = orders[orderId] ?: return null
             if (o.status == "OPEN") orders[orderId] = o.copy(status = "CANCELED")
