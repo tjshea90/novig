@@ -11,12 +11,16 @@ import kotlin.math.floor
 
 /**
  * How bids are posted (Tj, 2026-10-03: "figure out the optimal bets and math for make bets with the highest chance of beating clv and profiting, build
- * the system in the app"; RESEARCH.md §70), from [ScanSettings]: [margin] under the fair, [stake] a bid, at most [maxBids] and [maxDollars] resting,
- * on [kinds], each resting [ttlMs] at most, none within [stopMs] of the start, bid prices in [minPrice]..[maxPrice].
+ * the system in the app"; then "it only will make bets which are positive EV, aiming for as much profit as possible … Make sure to implement the
+ * strategies of proven professional bettors"; RESEARCH.md §69-§70), from [ScanSettings]: [margin] under the fair, sized by [stakeMode] (fractional
+ * Kelly on [bankroll] like the auto-bet, a dollar, or [customStake]) and never over [maxStake], at most [maxBids] and [maxDollars] resting, on
+ * [kinds], each resting [ttlMs] at most and never past the fair's own freshness, none within [stopMs] of the start, bid prices in
+ * [minPrice]..[maxPrice], at least [minBooks] books each pricing the bid +EV on their own, and (with [sharpVeto]) no sharp book saying it isn't.
  */
 data class MakerRules(
     val margin: Double,
-    val stake: Double,
+    /** The amount [AutoBetStake.CUSTOM] bids. */
+    val customStake: Double,
     val maxBids: Int,
     val maxDollars: Double,
     val kinds: Set<BetKind>,
@@ -26,16 +30,24 @@ data class MakerRules(
     val maxPrice: Double,
     val bothSides: Boolean,
     val minBooks: Int,
+    val stakeMode: com.tjshea.vigilant.data.scanner.AutoBetStake = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM,
+    /** The most one bid may cost (Tj's per-bet limit is the ceiling). */
+    val maxStake: Double = customStake,
+    /** What a Kelly stake is a fraction of (Settings' bankroll, as the auto-bet uses). */
+    val bankroll: Double = 0.0,
+    /** Skip a bid that a sharp book in the fair, devigged on its own, says isn't +EV (the auto-bet's sharp veto, RESEARCH.md §66). */
+    val sharpVeto: Boolean = true,
     /** A resting bid is moved up only when the bid wanted is at least this many grid steps higher (moving loses its place in the queue). */
     val requoteSteps: Int = 2,
     /** A bid this close to expiring is re-posted now (so a bid that's still good is always up). */
     val refreshBeforeMs: Long = 2 * 60_000L,
+    /** No bid is posted for less time than this (its fair about to go old, the start or the stop window too near). */
+    val minLifeMs: Long = 60_000L,
 ) {
     companion object {
         fun of(s: ScanSettings) = MakerRules(
             margin = s.makerMargin.coerceIn(0.005, 0.5),
-            // A filled bid is a bet: never more than the per-bet limit.
-            stake = minOf(s.makerStake, s.apiMaxStake).coerceAtLeast(0.01),
+            customStake = s.makerStake.coerceAtLeast(0.01),
             maxBids = s.makerMaxBids.coerceAtLeast(0),
             maxDollars = s.makerMaxDollars.coerceAtLeast(0.0),
             kinds = s.makerKinds,
@@ -45,7 +57,15 @@ data class MakerRules(
             maxPrice = s.makerMaxPrice.coerceIn(0.001, 0.999),
             bothSides = s.makerBothSides,
             minBooks = s.makerMinBooks.coerceAtLeast(1),
+            stakeMode = s.makerStakeMode,
+            // A filled bid is a bet: never more than the per-bet limit.
+            maxStake = minOf(s.makerMaxStake, s.apiMaxStake).coerceAtLeast(0.01),
+            bankroll = s.bankroll,
+            sharpVeto = s.makerSharpVeto,
         )
+
+        /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
+        val GAME_LINES = setOf(BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TOTAL)
     }
 }
 
@@ -68,6 +88,10 @@ data class MakerLine(
     val fairOld: Boolean,
     /** Books behind [fair]. */
     val books: Int,
+    /** Each book's own fair for this side, devigged worst case (one per book): what "books agree" counts. Empty = not known. */
+    val bookFairs: List<Double> = emptyList(),
+    /** The same for the sharp books in the fair (Pinnacle, Circa, the exchanges Settings calls sharp). */
+    val sharpFairs: List<Double> = emptyList(),
     /** Novig's price to take this side now (1 − the best bid on the other side); null when nothing is offered. */
     val offer: Double?,
     /** The best resting bid on this side now (what a new bid has to beat to lead). */
