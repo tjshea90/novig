@@ -168,7 +168,7 @@ class ScanStudyAppTest {
         // (VigilantApp), the file's header and Diagnostics' line (MainViewModel) and the words for them (StudyText), and by nothing else.
         val readers = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { f -> f.readText().let { "cno.wide" in it || "readWide(" in it || "CnoWideState" in it } }.map { it.name }.toSortedSet()
-        assertEquals(sortedSetOf("MainViewModel.kt", "StudyText.kt", "VigilantApp.kt"), readers)
+        assertEquals(sortedSetOf("MainViewModel.kt", "StudySync.kt", "StudyText.kt", "VigilantApp.kt"), readers)
         val data = File("../data/src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { f -> f.readText().let { "readWide(" in it || "fetchWide(" in it } }.map { it.name }.toSortedSet()
         assertEquals(sortedSetOf("CnoClient.kt", "CnoFeed.kt"), data)
@@ -183,18 +183,26 @@ class ScanStudyAppTest {
         val block = container.substringAfter("// The scan study (Tj, 2026-10-03; [ScanStudy])").substringBefore("// Make orders (RESEARCH.md §70)")
         assertEquals(7, Regex("scanScope\\.launch").findAll(block).count())
         assertFalse(block.contains("appScope.launch"))
-        assertTrue(block.contains("studyStep(\"CNO scan\") { study.observeCno(snap, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }"))
-        assertTrue(block.contains("studyStep(\"Vigilant scan\") { study.observeVigilant(r, currentSettings()) }"))
-        assertTrue(block.contains("studyStep(\"book check\") { study.observeBooks(books, currentSettings(), live.prices.value) }"))
+        assertTrue(block.contains("studySync.list(snap)"))
+        assertTrue(block.contains("studySync.vigilant(r)"))
+        assertTrue(block.contains("studySync.books(books)"))
+        // The steps themselves, each behind studyStep's catch, are StudySync's (the background cycle's catch-up calls the same ones).
+        val steps = source("StudySync.kt")
+        assertTrue(steps.contains("step(\"CNO scan\") { study.observeCno(snap, settings(), cno.books.value, livePrices(), cno.links.value, maxAgeMs) }"))
+        assertTrue(steps.contains("step(\"Vigilant scan\") { study.observeVigilant(result, settings()) }"))
+        assertTrue(steps.contains("step(\"book check\") { study.observeBooks(books, settings(), livePrices()) }"))
         val step = container.substringAfter("private suspend fun studyStep").substringBefore("\n    }\n")
         assertTrue(step, step.contains("catch (e: kotlinx.coroutines.CancellationException) {\n            throw e") && step.contains("catch (e: Exception)"))
         // The study reads from the scans' state and asks CNO for one thing only, the wide read (its own session, kept in cno.wide, never the list's): behind both switches,
         // only after a fresh list read, paced by CnoFeed, and its rows are logged by a step of their own.
         assertFalse(block.contains("loadBooks(") || block.contains("refresh(") || block.contains("readNow("))
-        assertEquals(1, Regex("readWide\\(").findAll(block).count())
-        assertTrue(block.contains("if (s.scanStudy && s.scanStudyHidden && s.cnoOn && System.currentTimeMillis() - snap.fetchedAtMs <= com.tjshea.vigilant.data.study.ScanStudy.MAX_SCAN_AGE_MS)"))
-        assertTrue(block.contains("studyStep(\"CNO wide read\") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }"))
-        assertTrue(block.contains("studyStep(\"CNO wide scan\") { study.observeCnoWide(wide, cno.state.value.snapshot, currentSettings(), cno.books.value, live.prices.value, cno.links.value) }"))
+        assertFalse(block.contains("readWide("))
+        assertTrue(block.contains("studySync.wideRead(snap)") && block.contains("studySync.wide(wide)"))
+        val steps2 = source("StudySync.kt")
+        assertEquals(1, Regex("readWide\\(").findAll(steps2).count())
+        assertTrue(steps2.contains("if (s.scanStudy && s.scanStudyHidden && s.cnoOn && clock() - snap.fetchedAtMs <= maxAgeMs)"))
+        assertTrue(steps2.contains("step(\"CNO wide read\") { cno.readWide(snap.url, snap.filters ?: s.cnoFilters) }"))
+        assertTrue(steps2.contains("step(\"CNO wide scan\") { study.observeCnoWide(w, cno.state.value.snapshot, settings(), cno.books.value, livePrices(), cno.links.value, maxAgeMs) }"))
         // Its close lookups are the Tracker's own sources, ParlayAPI's behind a credit guard; its grading is the Tracker's settler's feed.
         assertTrue(container.contains("GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses"))
         assertTrue(container.contains("study.settle(scores, studyCloses,") && container.contains("yieldTo = { trackerClosing.get() > 0 }"))

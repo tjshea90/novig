@@ -117,10 +117,8 @@ class ScanStudy(
             if (!s.scanStudy) return@withLock 0
             val now = clock()
             if (snap.fetchedAtMs == lastCnoAt) return@withLock 0
-            if (now - snap.fetchedAtMs > maxAgeMs) {
-                lastCnoAt = snap.fetchedAtMs
-                return@withLock 0
-            }
+            // A saved list is not remembered as seen: the same read may come again from a caller that knows it was made in the scan it is closing.
+            if (now - snap.fetchedAtMs > maxAgeMs) return@withLock 0
             lastCnoAt = snap.fetchedAtMs
             hydrate(now)
             prune(now)
@@ -154,8 +152,8 @@ class ScanStudy(
         if (!s.scanStudy || !s.scanStudyHidden) return@withLock 0
         val now = clock()
         if (wide.fetchedAtMs == lastWideAt) return@withLock 0
-        lastWideAt = wide.fetchedAtMs
         if (now - wide.fetchedAtMs > maxAgeMs) return@withLock 0
+        lastWideAt = wide.fetchedAtMs
         hydrate(now)
         prune(now)
         val baseline = wide.url to wide.filters
