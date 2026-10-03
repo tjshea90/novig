@@ -38,10 +38,10 @@ object TrapGuardText {
     fun earlyNote(hours: Int): String =
         if (hours <= 0) {
             "Off: the auto-bet, alerts and bids take games however far off. Your own bets placed 6 h or more before the start lost to the close " +
-                "(−0.6%, 46% beat it); those under 6 h beat it (+2.2%, 78%)."
+                "to Oct 3 (−0.6%, 46% beat it); those under 6 h beat it (+2.2%, 78%)."
         } else {
             "The auto-bet, alerts and bids leave alone any game starting more than $hours h from now (the lists still show it). Your own bets placed 6 h " +
-                "or more before the start lost to the close (−0.6%, 46% beat it; −9.8% returned); those under 6 h beat it (+2.2%, 78%; +8.3% returned)."
+                "or more before the start lost to the close to Oct 3 (−0.6%, 46% beat it; −9.8% returned); those under 6 h beat it (+2.2%, 78%; +8.3% returned)."
         }
 
     /**
@@ -51,8 +51,8 @@ object TrapGuardText {
     fun sheetNote(startsAtMs: Long?, now: Long, hours: Int): String? {
         if (!TrapGuard.isEarly(startsAtMs, now, hours)) return null
         val left = ((startsAtMs!! - now) / 3_600_000L).coerceAtLeast(1)
-        return "Trap guard: this game starts in about $left h, more than $hours h off. Bets placed this early lost to the close in your own record " +
-            "(the books' lines aren't settled yet, and a Novig price that beats them is often the better-informed one), so auto-bet, alerts and bids leave it alone."
+        return "Trap guard: this game starts in about $left h, more than $hours h off, so auto-bet, alerts and bids leave it alone. Your bets placed 6 h or " +
+            "more before a start lost to the close (the books' lines aren't settled that early, and a Novig price that beats them is often the better-informed one)."
     }
 
     /** What the move rule does. */

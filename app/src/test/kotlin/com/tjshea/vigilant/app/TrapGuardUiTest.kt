@@ -46,7 +46,7 @@ class TrapGuardUiTest {
 
     @Test
     fun `the sheet's note is there past the guard's hours and only then`() {
-        assertTrue(TrapGuardText.sheetNote(now + 24 * h, now, 6)!!.startsWith("Trap guard: this game starts in about 24 h, more than 6 h off."))
+        assertTrue(TrapGuardText.sheetNote(now + 24 * h, now, 6)!!.startsWith("Trap guard: this game starts in about 24 h, more than 6 h off, so auto-bet, alerts and bids leave it alone."))
         assertNull(TrapGuardText.sheetNote(now + 5 * h, now, 6))
         assertNull(TrapGuardText.sheetNote(now + 24 * h, now, 0))
         assertNull(TrapGuardText.sheetNote(null, now, 6))
