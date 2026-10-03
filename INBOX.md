@@ -3699,3 +3699,8 @@ Reconsider whether novig pays  maker credit pregame
 ```
 Run full tests on the latest version
 ```
+
+## 2026-10-03T19:56:59Z
+```
+@"/root/.claude/uploads/6b2f0607-5241-57f2-8a40-a787a7d32668/8493d88b-vigilant-diagnostics-v0.56.1-2026-10-03-1553.txt" The app was running on auto bid and it got so laggy I almost couldn't use it and I pressed pause and even that took a while to register. The bids are still not getting filled, how long do they usually take to get filled?
+```
