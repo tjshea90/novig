@@ -150,7 +150,7 @@ class ScanStudyTest {
     }
 
     @Test
-    fun `a bet the same list stops showing is logged as gone, with when; a changed view calls nothing gone; and it's logged again when it returns`() = runBlocking {
+    fun `a bet the same list stops showing is logged as gone with when, a changed view calls nothing gone, and it's logged again when it returns`() = runBlocking {
         val s = study()
         s.cno(snap(moneyline, prop))
         now += 30_000
@@ -278,7 +278,7 @@ class ScanStudyTest {
     }
 
     @Test
-    fun `the study makes no request: it reads only what the scan handed it`() {
+    fun `the study makes no request of its own and reads only what the scan handed it`() {
         val source = File("src/main/kotlin/com/tjshea/vigilant/data/study/ScanStudy.kt").readText()
         assertFalse(source.contains("okhttp3"))
         assertFalse(source.contains("OkHttpClient"))
