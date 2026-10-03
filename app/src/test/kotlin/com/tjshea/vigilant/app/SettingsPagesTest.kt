@@ -202,6 +202,26 @@ class SettingsPagesTest {
     }
 
     @Test
+    fun `the Bids tab has its row on the Settings list and search finds its rules and the trap guard (Tj 2026-10-03 - settings organized well)`() {
+        var bids = 0
+        var autoBet = 0
+        screen { SettingsScreen(it, {}, onOpenAutoBet = { autoBet++ }, onOpenBids = { bids++ }) }
+        compose.onNodeWithTag("settingsRow-BIDS").performScrollTo().assertExists()
+        compose.onNodeWithTag("settingsSearch").performTextInput("bids")
+        compose.onNodeWithTag("settingsHit-Under the fair").assertExists()
+        compose.onNodeWithTag("settingsHit-Most bids up at once").performClick()
+        assertEquals(1, bids)
+        compose.onNodeWithTag("settingsSearch").performTextClearance()
+        compose.onNodeWithTag("settingsSearch").performTextInput("trap")
+        compose.onNodeWithTag("settingsHit-Trap guard").assertExists()
+        compose.onNodeWithTag("settingsHit-Trap guard: only games starting within").assertExists()
+        compose.onNodeWithTag("settingsHit-Skip game lines Novig just moved").performClick()
+        assertEquals(1, autoBet)
+        // Every hit's title is unique: each is a hit's test tag.
+        assertEquals(SettingsIndex.entries.size, SettingsIndex.entries.map { it.title }.toSet().size)
+    }
+
+    @Test
     fun `every setting search knows about is on the page it names`() {
         val state = connected()
         screen(state) { SettingsScreen(it, {}) }

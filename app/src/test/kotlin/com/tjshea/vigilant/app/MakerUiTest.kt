@@ -3,6 +3,7 @@ package com.tjshea.vigilant.app
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -244,5 +245,23 @@ class MakerUiTest {
         compose.onNodeWithText("asks ${com.tjshea.vigilant.app.ui.Format.percent(0.06)} EV at the fair", substring = true).assertExists()
         compose.onNodeWithText("Bid up to").assertExists()
         compose.onNodeWithText("${com.tjshea.vigilant.app.ui.Format.american(o.makerBid(0.06)!!.price)} · ${com.tjshea.vigilant.app.ui.Format.percent(o.makerBid(0.06)!!.price)}").assertExists()
+    }
+
+    @Test
+    fun `every Bids-tab setting search knows about is on the tab once its rules are open, the trap guard's hours among them`() {
+        var s = settings
+        compose.setContent {
+            VigilantTheme { MakerScreen(ui(), MakerActions(onUpdate = { f -> s = f(s) })) }
+        }
+        compose.onNodeWithTag("makerRulesToggle").performClick()
+        compose.waitForIdle()
+        for (e in com.tjshea.vigilant.app.ui.SettingsIndex.entries.filter { it.bids }) {
+            assertTrue(
+                "\"${e.title}\" should be on the Bids tab",
+                compose.onAllNodesWithText(e.title, substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
+            )
+        }
+        compose.onNodeWithText("12 h", useUnmergedTree = true).performScrollTo().performClick()
+        assertEquals(12, s.trapEarlyHours)
     }
 }
