@@ -586,8 +586,9 @@ object SharpConfirmText {
      * which books are sharpest for those bet types"): which books decide for each kind of bet ([SharpVeto.ranking]).
      */
     fun vetoNote(): String =
-        "Veto: a bet is skipped only when the sharpest book for its kind of bet, among those pricing both sides on its book page, says it isn't +EV at " +
-            "Novig's price (its own two prices, devigged worst case). None of them on the page: no veto. Sharpest first: player props " +
+        // (The mode's own note just above says what a veto does; this says who decides, without repeating it.)
+        "Who decides: the sharpest of the books pricing both sides on the bet's book page, judged on its own two prices (devigged worst case) at " +
+            "Novig's price. None of them on the page: no veto. Sharpest first: player props " +
             names(SharpVeto.ranking(BetKind.PROP, SharpVeto.Sport.FOOTBALL)) + " (MLB props " + names(SharpVeto.ranking(BetKind.PROP, SharpVeto.Sport.BASEBALL)) +
             "); moneylines, spreads, totals and period lines " + names(SharpVeto.ranking(BetKind.SPREAD, SharpVeto.Sport.FOOTBALL)) + " (college " +
             names(SharpVeto.ranking(BetKind.SPREAD, SharpVeto.Sport.COLLEGE_FOOTBALL)) + "; soccer and tennis " +

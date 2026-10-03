@@ -155,7 +155,7 @@ class ScreenshotTest {
     @Test fun autoBetTab() {
         val base = SampleScan.state()
         val s = base.copy(
-            settings = base.settings.copy(autoBet = true, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 30),
+            settings = base.settings.copy(autoBet = true, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.CNO, autoScanSeconds = 30, trapEarlyHours = 6),
             novig = NovigUi(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("read-1", "a", "sub-1", false, tradingKeyId = "t", tradingAlias = "a2")),
             betting = BettingUi(enabled = true, balance = 42.0),
         )
