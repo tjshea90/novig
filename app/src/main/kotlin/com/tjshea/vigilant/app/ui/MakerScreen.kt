@@ -479,7 +479,10 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             Switch(checked = s.makerBothSides, onCheckedChange = { on -> onUpdate { it.copy(makerBothSides = on) } }, modifier = Modifier.testTag("makerBothSides"))
         }
         SwitchRow(
-            "Sharp-book veto", "Skip a bid that a sharp book in the fair (Pinnacle, Circa, the exchanges) says isn't +EV on its own price.",
+            "Sharp-book veto",
+            "Skip a bid that a sharp book in the fair (Pinnacle, Circa, the exchanges) gives " +
+                (if (s.sharpVetoMinEv <= 0.0) "no edge" else "under ${AutoBetText.evLabel(s.sharpVetoMinEv)}") +
+                " on its own price (the Auto-bet tab's veto bar: a filled bid keeps about the sharp book's edge).",
             s.makerSharpVeto, "makerSharpVeto",
         ) { on -> onUpdate { it.copy(makerSharpVeto = on) } }
         SwitchRow(
