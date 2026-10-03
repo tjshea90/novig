@@ -481,4 +481,44 @@ class MakerTest {
         d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
         assertEquals(2, novig.placed.size)
     }
+
+    @Test
+    fun `with auto-make off a bid Tj approved is only taken down when it stops being worth it - never moved, re-posted or joined by new ones`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        // Approved by hand: posted through post().
+        val post = MakerQuote.decide(line("m1-over", fair = 0.52), rules, now) as MakerDecision.Post
+        assertNull(d.post(post, rules))
+        // The fair rises two steps and another line is worth a bid: nothing moves, nothing new goes up.
+        now += 60_000
+        val up = d.cycle(listOf(line("m1-over", fair = 0.535), line("m2-over", m = market("m2"))), rules, null, 50.0, 100.0, autoPost = false)
+        assertEquals(0, up.placed)
+        assertEquals(0, up.cancelled)
+        // It nears its expiry: left to expire, not re-posted.
+        now += 8 * 60_000
+        val late = d.cycle(listOf(line("m1-over", fair = 0.52)), rules, null, 50.0, 100.0, autoPost = false)
+        assertEquals(0, late.cancelled + late.placed)
+        // The fair falls under it: it comes down, with nothing posted in its place.
+        val down = d.cycle(listOf(line("m1-over", fair = 0.50).copy(fairAsOfMs = now - 10_000)), rules, null, 50.0, 100.0, autoPost = false)
+        assertEquals(1, down.cancelled)
+        assertEquals(0, down.placed)
+        assertEquals("The fair price fell under the bid: taken down", d.bids().single().why)
+        assertEquals(1, novig.placed.size)
+    }
+
+    @Test
+    fun `a denied side gets no bid and a resting one there comes down, and the denial lasts until its game`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        now += 60_000
+        val r = d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0, denied = setOf("m1-over"))
+        assertEquals(1, r.cancelled)
+        assertEquals(MakerDesk.DENIED, (r.decisions.single() as MakerDecision.Skip).why)
+        val denials = MakerDenials(File.createTempFile("denied", ".json").also { it.delete() }, clock = { now })
+        denials.deny("m1-over", start, "Player Over 50.5")
+        assertEquals(setOf("m1-over"), denials.outcomes())
+        now = start + 1
+        assertTrue(denials.outcomes().isEmpty())
+    }
 }
