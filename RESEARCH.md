@@ -4448,3 +4448,55 @@ built and neither recommended without research: in-game bids (0.015·P(1−P) a 
 selection from faster feeds) and NFL/NCAAF futures bids (needs a futures fair Vigilant doesn't read; book futures carry 15-30% hold; money tied up
 for a season).
 
+
+## 74. Why the app locked up with auto-bid on and Pause took long, and why no bid has filled (v0.56.2, 2026-10-03; Tj, with the v0.56.1 Diagnostics: "The app was running on auto bid and it got so laggy I almost couldn't use it and I pressed pause and even that took a while to register. The bids are still not getting filled, how long do they usually take to get filled?")
+
+### 74.1 What the file says
+- **Android ended the app**: 15:52:05, "not responding": input dispatch timed out after 10 s, the **main thread** in `BetGrader.totalWording` ← `pickOf` ←
+  `PlacedIndex.pickKey` ← `PlacedIndex.has` (a java.util.regex matcher, `Runnable`, not blocked on a lock: pure CPU on the UI thread).
+- **The timeline before it**: 15:42:41 Tj switched scanning on (background auto-scan BOTH, paused → running). The 342-s Vigilant scan ended 15:48:45. At
+  **15:51:09-15:51:52 the scanner was switched CNO↔BOTH eight times**, auto-make switched off 15:51:38, **Pause 15:51:50**, ANR 15:52:05. The phone was
+  on Battery Saver (slower CPU).
+- **Bids**: wallet $12.60 (≈ $1.24 a bid → 9-13 resting at once); **151-451 wanted bids waiting** on the wallet every pass; 0 filled of 320 on record.
+  Bids rest 1 min at the median, 6 at the 90th over the 14 days (the file's numbers mix every version since v0.51.0).
+
+### 74.2 The causes (main-thread work, and what made Pause wait)
+1. **The feed was built on the main thread, inside `_state.update { ... }`**, at every scanner switch, Pause, scan end, recheck, ✓ mark (`applySettings`,
+   `applyReport`, `repriceNow`, `recheck`, the placed-marks collector). Building it = filter + sort of every priced side, then `PlacedIndex.has` per row, which
+   read each row's matchup (`parseMatchup`: a regex) and wording (`BetGrader.pickOf`: a dozen regexes + a stat lookup) from scratch every time, for any game Tj
+   has a bet on. ~0.1 ms a row on a desktop JVM, several times that on the phone on Battery Saver, × a feed of thousands of rows × eight switches queued ahead
+   of the Pause, and `StateFlow.update` re-runs its lambda whenever another thread wins the swap. That is the ANR, and "pause took a while": Pause was ninth in
+   line.
+2. **`applySettings` waited for a re-pricing, and a re-pricing waits for a running scan**: `Scanner.reprice` takes the scanner's mutex, which `scan()` holds
+   for all of its minutes. Every settings change (Pause's toast and `resumeThen`'s next step included) was held until the scan unwound.
+3. **A pass kept posting after Pause**: `MakerDesk.cycle` sent every bid it had planned, one request after another, holding the lock that the Pause's
+   cancel-all needs; the cancel-all then took each of those down again.
+4. **The Bids tab re-worked its lists on every state** (filter + sort + group of the pass's thousands of decisions, several times per recomposition, three
+   recompositions a second in a scan), on the main thread.
+
+Not causes: the store writes (a whole-list JSON write + fsync per update, but on `Dispatchers.IO`: ~20 a pass, tens of ms each, no main-thread work),
+the maker pass's own maths (`MakerLines.from` prechecks before it devigs, §70.7), the request pacing (the 429s are the public routes' 1-s Retry-After).
+
+### 74.3 What changed (v0.56.2)
+- `BetGrader.pickOf` keeps each wording's answer (a bounded map, `unreadable` kept too), and `PlacedIndex` keeps each matchup's and wording's key: a row is
+  now two hash lookups. Every caller of the wording readers gets it (sharp veto, injury tags, maker lines, parlay compare, the CNO list's `hasCno`).
+- The feed is built **off the main thread** (`FeedBuild.kt`: `publishResult`, `refeed`, `reindex`): built on `Dispatchers.Default` from a snapshot, swapped
+  in only if the result, settings and marks it was built from are still current (else built again). No screen update builds a feed itself (a source pin).
+- `applySettings` swaps the new settings in first (Pause shows at once), stops the scan, shows the feed under the new settings, and starts the re-pricing as
+  its own latest-wins job (eight quick switches = one re-pricing, after the scan) that nothing waits for.
+- A pass asks before each new bid whether scanning is still running and auto-make still on (`MakerDesk.cycle(keepPosting)`), so Pause stops posting at the
+  next bid and the cancel-all gets the lock.
+- The Bids tab works its lists out once per change of bids/decisions (`MakerLists`, found by list identity).
+- Diagnostics: **last 24 h of bids in bid-hours** against the fills §70.3 expects from lives like those (`MakerStats.recent`), so the next file says
+  whether zero fills is bad luck or a real shortfall.
+
+### 74.4 How long does a bid take to fill? (the answer for Tj)
+From §70.3 (60 days of Novig's trades, prop bids 4% under the fair): a bid left up **15 min fills 4% of the time, 1 h 11%, 3 h 25%, 6 h 37%**, and a side
+re-quoted from 24 h out fills **40-46%** of the time. So a bid is not a minutes-long wait: **when a bid fills it is usually hours in**, and more than half
+never fill. What decides it is bid-hours up at a competitive price, in the hours takers trade (afternoon and evening), not how many bids were posted.
+
+This file's window: auto-bid actually ran for **~9 minutes** (15:42:41-15:51:38) with 9-13 bids up on a $12.60 wallet ≈ 1.5-2 bid-hours, i.e. **≈ 0.1-0.2
+fills expected**. Zero is the expected result, not a defect. (The 320 bids on record are mostly the v0.51-v0.53 one-minute bids, §70.8-§70.9.) What
+limits fills in the app, none a bug, all Tj's call: **(1)** a bid never outlives its fair's freshness (5 min under 3 h from the start, 10 min past it,
+§70.7), by design ("it should not keep make orders long enough that they lose their positive EV"), and a re-post goes to the back of the queue; **(2)** the
+wallet: ~$12 holds ~10 bids while 150-450 wanted bids wait; **(3)** the scan runs only while Tj has it on (the fairs behind bids must be fresh).
