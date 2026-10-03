@@ -46,7 +46,7 @@ import kotlin.math.abs
  * scan.
  */
 class ScanStudy(
-    private val journal: StudyJournal,
+    val journal: StudyJournal,
     private val clock: () -> Long = System::currentTimeMillis,
     private val version: () -> String? = { null },
     private val flushEveryMs: Long = FLUSH_MS,
