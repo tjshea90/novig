@@ -144,7 +144,9 @@ class AutoScanService : Service() {
         combine(
             container.settingsStore.flow.filterNotNull().map { Plan(it.activeAutoScan, it.autoScanSeconds, KeepAwake.active(it)) }.distinctUntilChanged(),
             container.autoScan.status,
-            container.runner.state.map { it.progress }.distinctUntilChanged(),
+            // A scan's progress moves with every Novig price (~16 a second): the notification shows it at most once a second, so the main thread
+            // is woken that often for it, not 16 times (Tj, 2026-10-03: "the entire app gets laggy when vigilant is scanning").
+            container.runner.state.map { it.progress }.distinctUntilChanged().sample(PROGRESS_SAMPLE_MS),
         ) { next, status, _ -> next to status }
             .collect { (next, status) ->
                 if (next.mode == AutoScanMode.OFF) {
