@@ -61,18 +61,39 @@ object DiagnosticsShare {
     }
 
     /** The share sheet for [file]: plain text with the file attached, the prompt as the message, read permission for that file only. */
-    fun intent(context: Context, file: File, versionName: String): Intent {
+    fun intent(context: Context, file: File, versionName: String): Intent =
+        share(context, file, "Vigilant diagnostics (v$versionName)", DiagnosticsFile.PROMPT, "Share diagnostics with Claude")
+
+    /** The same for the scan study's file ([com.tjshea.vigilant.data.study.StudyExport]): its own subject and message, telling Claude to analyze every bet. */
+    fun studyIntent(context: Context, file: File, versionName: String): Intent =
+        share(context, file, "Vigilant scan study (v$versionName)", com.tjshea.vigilant.data.study.StudyExport.PROMPT, "Share scan study with Claude")
+
+    private fun share(context: Context, file: File, subject: String, prompt: String, title: String): Intent {
         val uri = FileProvider.getUriForFile(context, authority(context), file)
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "Vigilant diagnostics (v$versionName)")
-            putExtra(Intent.EXTRA_TEXT, DiagnosticsFile.PROMPT)
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, prompt)
             clipData = ClipData.newRawUri(file.name, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        return Intent.createChooser(send, "Share diagnostics with Claude").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        return Intent.createChooser(send, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
+
+    /**
+     * Makes the scan study's file [name] in the same cache folder the FileProvider already shares ([fill] writes it, streaming: the file can be megabytes), and
+     * removes all but the newest [KEEP] study files (their own count: the diagnostics files are left alone).
+     */
+    fun writeStudy(context: Context, name: String, fill: (java.io.Writer) -> Unit): File {
+        val dir = dir(context).apply { mkdirs() }
+        val file = File(dir, name)
+        file.bufferedWriter().use(fill)
+        dir.listFiles { f -> f.isFile && f.name.startsWith(STUDY_PREFIX) }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
+        return file
+    }
+
+    const val STUDY_PREFIX = "vigilant-scan-study-"
 
     /** The app's files and their sizes in bytes, largest first (the file listing in the report). */
     fun storage(context: Context): List<Pair<String, Long>> =
