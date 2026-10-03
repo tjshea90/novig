@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.study
 
+import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetLedger
 import com.tjshea.vigilant.data.tracker.BetStatus
@@ -221,8 +223,8 @@ object StudyExport {
         private fun pct(v: Double) = String.format(Locale.US, "%+.2f%%", v * 100)
     }
 
-    /** A study-specific split (beyond [BetLedger.Split]): [key] says which group a row is in. */
-    private class Extra(val name: String, val key: (StudyRow, TimeZone) -> String)
+    /** A study-specific split (beyond [BetLedger.Split]): [key] says which group a row is in; null: the row isn't part of this split. */
+    private class Extra(val name: String, val key: (StudyRow, TimeZone) -> String?)
 
     private val extraSplits: List<Extra> = listOf(
         Extra("Who listed it (c = CNO, v = Vigilant's scan)") { r, _ -> r.src },
@@ -249,6 +251,69 @@ object StudyExport {
         },
         Extra("Where it closed against its price (CLV)") { r, _ ->
             r.clv?.let { if (it > 0.05) "CLV over +5%" else if (it > 0.0) "CLV 0 to +5%" else if (it > -0.05) "CLV 0 to -5%" else "CLV under -5%" } ?: "no close"
+        },
+        // Tj, 2026-10-03: "consider if it is needed or smart to require that prop bets have at least one sharp prop book that agrees … Do option 1 and add the props split to the study".
+        Extra("PROPS: what the sharp-ranked book said (the app's veto; the first of Kalshi, ProphetX, then FanDuel/Caesars, DraftKings on MLB, that prices both sides)") { r, _ ->
+            if (isProp(r)) propSharp(r) else null
+        },
+        Extra("PROPS: the sharp book's own edge at Novig's price") { r, _ ->
+            if (isProp(r)) propSharpEdge(r) else null
+        },
+        Extra("PROPS: are the exchanges (Kalshi, ProphetX) on the bet's page") { r, _ ->
+            if (isProp(r)) propExchanges(r) else null
+        },
+    )
+
+    private val EXCHANGES = setOf("Kalshi", "ProphetX")
+
+    private fun isProp(r: StudyRow) = r.kind == BetKind.PROP.name
+
+    /** The sharp veto's verdict at the bet's first book check; null when no page was read (no verdict). */
+    private fun verdictOf(r: StudyRow): String? = r.atBet?.sharpVerdict
+
+    internal fun propSharp(r: StudyRow): String {
+        val a = r.atBet
+        val v = verdictOf(r) ?: return "no book page was read (no verdict)"
+        if (v == SharpVeto.Verdict.NO_SHARP.name) return "no sharp-ranked book prices both sides (not vetoed)"
+        val says = if (v == SharpVeto.Verdict.PASSED.name) "agrees" else "says no (vetoed)"
+        return if (a?.sharpBook in EXCHANGES) "an exchange (Kalshi or ProphetX) $says" else "an originating book (FanDuel, Caesars or DraftKings) $says"
+    }
+
+    internal fun propSharpEdge(r: StudyRow): String? {
+        val a = r.atBet ?: return null
+        val ev = a.sharpEv ?: return null
+        return when {
+            ev < 0.0 -> "sharp edge under 0%"
+            ev < 0.01 -> "sharp edge 0 to 1%"
+            ev < 0.02 -> "sharp edge 1 to 2%"
+            ev < 0.04 -> "sharp edge 2 to 4%"
+            else -> "sharp edge 4% or more"
+        }
+    }
+
+    internal fun propExchanges(r: StudyRow): String {
+        val books = r.atBet?.books.orEmpty()
+        if (books.isEmpty()) return "no book page was read"
+        val on = books.filter { it.book in EXCHANGES }
+        return when {
+            on.any { it.other != null } -> "an exchange prices both sides"
+            on.isNotEmpty() -> "an exchange prices one side only"
+            else -> "neither exchange is on the page"
+        }
+    }
+
+    /** A rule for props that keeps or drops each bet by the sharp veto's verdict (null: no verdict, can't tell). Simulated over the log: the app's rules are unchanged. */
+    private class WhatIf(val label: String, val keeps: (StudyRow) -> Boolean?)
+
+    private val whatIfRules: List<WhatIf> = listOf(
+        WhatIf("TODAY'S RULE: skip a prop only when a sharp-ranked book that prices both sides says it isn't +EV enough (no sharp book on the page: kept)") { r ->
+            verdictOf(r)?.let { it != SharpVeto.Verdict.VETOED.name }
+        },
+        WhatIf("REQUIRE a sharp-ranked book (Kalshi, ProphetX, FanDuel, Caesars, DraftKings) to price both sides and agree") { r ->
+            verdictOf(r)?.let { it == SharpVeto.Verdict.PASSED.name }
+        },
+        WhatIf("REQUIRE an exchange (Kalshi or ProphetX) to price both sides and agree") { r ->
+            verdictOf(r)?.let { it == SharpVeto.Verdict.PASSED.name && r.atBet?.sharpBook in EXCHANGES }
         },
     )
 
@@ -325,6 +390,8 @@ object StudyExport {
         val noOutliers = Agg()
         val splits = BetLedger.Split.entries.associateWith { LinkedHashMap<String, Agg>() }
         val extras = extraSplits.associate { it.name to LinkedHashMap<String, Agg>() }
+        // Props only: for each what-if rule, the bets it would keep, drop and can't judge.
+        val whatIf = whatIfRules.map { Triple(Agg(), Agg(), Agg()) }
         val closeReasons = HashMap<String, Int>()
         val closeVia = HashMap<String, Int>()
         var withCloseCount = 0
@@ -362,7 +429,11 @@ object StudyExport {
                     (if (row.screen == null) shown else hidden).add(row)
                     if (!sb.bet.isOutlier) noOutliers.add(row)
                     for (split in BetLedger.Split.entries) splits.getValue(split).getOrPut(BetLedger.keyOf(sb.bet, split)) { Agg() }.add(row)
-                    for (x in extraSplits) extras.getValue(x.name).getOrPut(x.key(row, meta.zone)) { Agg() }.add(row)
+                    for (x in extraSplits) x.key(row, meta.zone)?.let { k -> extras.getValue(x.name).getOrPut(k) { Agg() }.add(row) }
+                    if (isProp(row)) whatIfRules.forEachIndexed { i, rule ->
+                        val (kept, dropped, unjudged) = whatIf[i]
+                        when (rule.keeps(row)) { true -> kept; false -> dropped; null -> unjudged }.add(row)
+                    }
                     if (row.clv != null) { withCloseCount++; closeVia.merge(row.closeVia?.substringBefore(" ·") ?: "?", 1, Int::plus) }
                     else if (sb.bet.startsTs < now && row.closeNote != null) closeReasons.merge(row.closeNote.take(90), 1, Int::plus)
                 }
@@ -406,6 +477,17 @@ object StudyExport {
             out.appendLine("-- ${x.name} --")
             groups.entries.sortedByDescending { it.value.n }.take(MAX_SPLIT_GROUPS).forEach { out.appendLine("   " + it.value.line(it.key)) }
         }
+        if (whatIf.first().let { it.first.n + it.second.n + it.third.n } > 0) {
+            out.appendLine()
+            out.appendLine("== WHAT IF PROPS NEEDED A SHARP BOOK (props only; Tj asked 2026-10-03 whether to require one. Each rule is simulated over the logged props: the app's rules are unchanged. 'not judged' = no book page was read, so there is no sharp verdict) ==")
+            whatIfRules.forEachIndexed { i, rule ->
+                val (kept, dropped, unjudged) = whatIf[i]
+                out.appendLine("-- ${rule.label} --")
+                out.appendLine("   " + kept.line("KEPT"))
+                out.appendLine("   " + dropped.line("DROPPED"))
+                out.appendLine("   " + unjudged.line("NOT JUDGED"))
+            }
+        }
         out.appendLine()
         out.appendLine("== EVERY BET (JSON lines, newest first; $rows bets" + (if (cut > 0) ", $cut more left out of these lines but counted above" else "") + ") ==")
         out.appendLine("<<<JSONL")
@@ -443,6 +525,9 @@ object StudyExport {
         " 5. Traps: bets that look +EV on paper and lose to the close (the other side was a sharp's). Find the signs that separate them (a sharp book dissenting, a falling EV across the looks, few books, a long price, how long it stayed listed …).",
         " 6. Strategies: build candidate rules that pick bets (and the price and moment to take them), measure each out of sample (split by DATE, never at random; same-game bets are correlated, so count games, not bets), and report for every rule:",
         "    bets, games, CLV with a confidence interval, ROI, expected bets a day, and the stake it could carry (the `available` dollars). Prefer a few simple rules that hold on both halves of the period over many fitted ones; say how likely each is to be luck.",
+ 8. TJ'S OPEN QUESTION (2026-10-03): should a prop bet need a sharp prop book to agree it is +EV before the app lists or bets it? Today a prop's EV is CNO's consensus of 4+ books (mostly soft) and the sharp veto only skips it when a sharp-ranked book that prices both sides says no.",
+        "    Answer it from the PROPS splits (what the sharp-ranked book said, its own edge, whether the exchanges are on the page) and the WHAT IF lines: for each rule, the props kept, dropped and not judged, with CLV (by closeVia), ROI and counts of games not bets, split by date. Say whether requiring one",
+        "    raises CLV enough to pay for the bets it drops, which book's agreement matters (exchanges or the originating books), whether a higher edge for props with no sharp book is the better rule, and how many bets a day each choice costs. Only judged props (a book page was read: the top of each CNO scan) have a verdict: say how that selection could bias it.",
         " 7. Deliver: a ranked list of the strategies worth trying with the evidence, the exact app settings to change (presets in data/scanner/Presets.kt, the sharp veto in data/scanner/SharpVeto.kt, the trap guard, the auto-bet's rules, CNO's filters), and what",
         "    more this log should record next time. If the data is too thin to say, say so and what number of bets would settle it.",
         "",
@@ -466,6 +551,7 @@ object StudyExport {
         "clv · clvBest · clvLast: closeFair / cost − 1 at the first-listed price, at the best (longest) odds it was listed at, and at the last listed price. bestAmerican · lastAmerican: those prices. novigClose: Novig's own last price before the start when the Tracker read it.",
         "listedMin · lastListedMinToStart · gone: for the app's own lists (c and v; null for a bet only the wide read found): minutes from the first look to the last, how many minutes before the start the last look was, and whether a scan then dropped it (its edge fell under the filters, or CNO's row limit pushed it out).",
         "looks · placedByTj · placedAmerican: number of looks; whether Tj also placed this bet (his own Tracker's) and at what price. marketId · outcomeId: Novig's public ids when known.",
+        "PROPS splits and the WHAT IF section use atBet.sharpVerdict (PASSED: a sharp-ranked book that prices both sides gives Novig's price the veto's bar or more; VETOED: it gives less; NO_SHARP: none of them prices both sides), atBet.sharpBook (Kalshi, ProphetX, FanDuel, Caesars, DraftKings … the first ranked book that did) and atBet.sharpEv (its own edge at Novig's price): all from the first book page read for the bet.",
         "kind · sport · minToStartFirst · cnoBooks · booksTwoSided · booksAgreeing · agreeShare · available · sharpVerdict: the most used fields of atBet at the top level. cnoBooks = books behind CNO's fair price (on every row); booksTwoSided = companies whose page prices both sides, booksAgreeing = those whose own fair says +EV at Novig's price, agreeShare = booksAgreeing / booksTwoSided (null when the book check wasn't made: only the top few bets get a page read).",
         "atBet: the app's record of the bet as first listed (data/.../tracker/AtBet.kt): league, sport, kind (PROP, MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PERIOD, OTHER), minutesToStart, american, otherAmerican (the other side's price), available (Novig dollars at the price), ev, fair, cnoBooks (books behind CNO's fair), cnoOneWay, cnoListAgeSec,",
         "    and the app's own BOOK CHECK from CNO's game page when it was read (checkAtMs says when; a page is read for the top few bets, so many bets have none): twoSided (companies pricing both sides), oneSided, agreeing (those whose own fair says +EV at Novig's price), verdict (CONFIRMED / NOT_CONFIRMED …), checkFair, checkEv, books (every book's odds, other side, fair and the EV it gives Novig's price), dissent (books saying not +EV),",
@@ -478,6 +564,7 @@ object StudyExport {
     private val CAVEATS: List<String> = listOf(
         "- SELECTION: the app's list is CNO read under Tj's filters (devig method, longest odds, fewest books, smallest EV, row limit, complete book, both sides — see the rules line below); the WIDE read opens all of those but his devig method, his book, and what his Shared View link scopes (sports, leagues, main lines, live, and any filter the app doesn't know: THE WIDE READ line says which fields were posted). So a bet the filters hid IS here, flagged by `screen`; one outside the link's scope, or past the wide read's row limit, is not.",
         "- The wide read runs at most every 30 seconds, and only while the app's CNO list is being read: a bet that appeared and vanished between two reads is missed. A bet \"dropped\" (gone) from the app's list may have lost its edge OR been pushed out by the row limit; look at its `w` looks to tell which (still there in the wide read = pushed out or filtered).",
+        "- PROPS AND THE SHARP BOOK: a verdict exists only for bets whose CNO game page was read (the green check reads the best ~10 of the list, again every 4 minutes) and the bet's first read is the one used. Those are the app's best-EV rows, not a random sample, and hidden/wide-only props have none: compare inside the judged set, and say what the not-judged bets would change.",
         "- HIDDEN BETS: many are hidden for good reason (one-way devigs, one or two books, a price over the cap, futures, a stale line over 20% EV). The hidden group's ROI and CLV are real numbers like any other, but its CLV is mostly against the same closes: do not read a hidden kind as a strategy until it holds on both halves of the period.",
         "- FIRST-LISTED PRICE: ROI and clv assume the bet could be taken at the price at the first look, for a unit. Novig had only `available` dollars at that price, and many bets were listed for minutes: check listedMin and available before believing a rule's size.",
         "- CLOSES: the close sources differ (Pinnacle is sharper than ESPN's DraftKings line; Novig's last trades can lag). Compare CLV by closeVia before pooling. Bets with no close are left out of every CLV figure; their reasons are in the summary.",
