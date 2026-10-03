@@ -160,6 +160,15 @@ data class ScanSettings(
      * but no time for a book's own quote). Off: only a Pinnacle feed (PinnWire, pinnapi, PropLine, ParlayAPI) with the quote's own time confirms.
      */
     val sharpConfirmViaCno: Boolean = false,
+    /**
+     * The sharp veto's bar (Tj, 2026-10-03: "avoiding bets that look like positive EV but are actually sharp bets on the other side and the rest of
+     * the markets lag"; RESEARCH.md §72): with [SharpMode.VETO], the sharpest book for the bet's kind, devigged on its own, must give Novig's price at
+     * least this edge or the bet is vetoed ([SharpVeto.judge]); a bid's own price must clear it too when the bids' sharp veto is on
+     * ([com.tjshea.vigilant.data.novig.trading.maker.MakerRules.sharpMinEv]). 1% by default: across 48,394 soccer matches with Pinnacle's early and
+     * closing prices, bets the consensus called +EV kept about the SHARP book's own edge at the close, not the consensus's (sharp 0-1%: +0.8% CLV,
+     * not distinguishable from zero; 1-2%: +1.6%; 2-4%: +2.8%; 4%+: +5.7%). 0 = any +EV (the bar before v0.56.0). [SHARP_VETO_MIN_EV_CHOICES].
+     */
+    val sharpVetoMinEv: Double = SharpVeto.DEFAULT_MIN_EV,
     /** The fewest books that must price both sides of the bet ([com.tjshea.vigilant.data.cno.CnoBooks.Check.twoSided]): 1, 2 or 3. */
     val autoBetTwoSided: Int = 2,
     val autoBetStake: AutoBetStake = AutoBetStake.ONE_DOLLAR,
@@ -711,6 +720,9 @@ data class ScanSettings(
 
         /** [sharpConfirmMinEv]'s choices (0 = any +EV). */
         val SHARP_MIN_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03)
+
+        /** [sharpVetoMinEv]'s choices (0 = any +EV). */
+        val SHARP_VETO_MIN_EV_CHOICES = listOf(0.0, 0.005, 0.01, 0.015, 0.02)
 
         /** [autoBetBooks]' choices (the last is "5+"). */
         val AUTO_BET_BOOKS_CHOICES = listOf(2, 3, 4, 5)
