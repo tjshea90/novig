@@ -381,7 +381,10 @@ class ScanStudy(
         }
     }
 
-    /** After a restart: the bets already logged for the games still to come, so a bet the list still shows isn't logged a second time. */
+    /**
+     * After a restart: the bets already logged for the games still to come, so a bet the list still shows isn't logged a second time. Streamed a line at a time,
+     * keeping only what the index needs (a day of wide-read bets has tens of thousands of lines, and the whole day folded is no more than a restart should hold).
+     */
     private suspend fun hydrate(now: Long) {
         if (hydrated) return
         hydrated = true
@@ -389,23 +392,37 @@ class ScanStudy(
         try {
             withContext(io) {
                 for (day in (-1L..3L).map { today.plusDays(it) }) {
-                    for ((id, sb) in journal.fold(day)) {
-                        val b = sb.bet
-                        if (b.startsTs < now - PRUNE_AFTER_MS || id in active) continue
-                        val identity = PlacedIndex.identity(b.eventName, b.marketLabel, b.selection)
-                        val a = Active(id, day, b.startsTs, b.league, identity)
-                        a.checked = b.atBet?.let { it.checkAtMs != null || it.twoSided != null } == true
-                        a.vigRecorded = sb.vig != null || b.source == BetTracker.SOURCE_VIGILANT
-                        a.cnoRecorded = sb.cnoRec != null || b.source == BetTracker.SOURCE_CNO
-                        a.idsKnown = b.outcomeId.isNotEmpty()
-                        for ((t, sg) in sb.sights) {
-                            if (Sight.isListing(sg.k) || sg.k == Sight.CHECK) {
-                                a.last[sg.k] = sg
-                                a.lastAt[sg.k] = t
+                    val fresh = HashMap<String, Active>()
+                    for (l in journal.read(day)) {
+                        when (l.e) {
+                            Line.BET -> {
+                                val b = l.b ?: continue
+                                if (b.startsTs < now - PRUNE_AFTER_MS || l.id in active) continue
+                                val identity = PlacedIndex.identity(b.eventName, b.marketLabel, b.selection)
+                                val a = Active(l.id, day, b.startsTs, b.league, identity)
+                                a.checked = b.atBet?.let { it.checkAtMs != null || it.twoSided != null } == true
+                                a.vigRecorded = b.source == BetTracker.SOURCE_VIGILANT
+                                a.cnoRecorded = b.source == BetTracker.SOURCE_CNO
+                                a.idsKnown = b.outcomeId.isNotEmpty()
+                                fresh[l.id] = a
                             }
+                            Line.SIGHT -> fresh[l.id]?.let { a ->
+                                val sg = l.s ?: return@let
+                                if (Sight.isListing(sg.k) || sg.k == Sight.CHECK) {
+                                    a.last[sg.k] = sg
+                                    a.lastAt[sg.k] = l.t
+                                }
+                            }
+                            Line.CHECK -> fresh[l.id]?.let { if (l.a != null) it.checked = true }
+                            Line.VIG -> fresh[l.id]?.vigRecorded = true
+                            Line.CNO_REC -> fresh[l.id]?.cnoRecorded = true
+                            Line.CNO_COLS -> fresh[l.id]?.colsRecorded = true
+                            Line.IDS -> fresh[l.id]?.let { if (!l.o.isNullOrEmpty()) it.idsKnown = true }
                         }
+                    }
+                    for ((id, a) in fresh) {
                         active[id] = a
-                        identity?.let { byIdentity.getOrPut(it) { ArrayList() } += a }
+                        a.identity?.let { byIdentity.getOrPut(it) { ArrayList() } += a }
                     }
                 }
             }
