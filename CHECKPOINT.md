@@ -1,22 +1,22 @@
-# CHECKPOINT 2451 — read me first, then TASKS.md
+# CHECKPOINT 2452 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T16:13:40Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-f3d86383-spsexb` · **builds on:** `ec138cae` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T16:22:21Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-f3d86383-spsexb` · **builds on:** `4a4c2e8b` (this checkpoint is the commit after it)
 
 ## Just done
-BK1-BK5 ticked with tests named; floor 1,838 passed / 23 skipped
+pre-release: v0.55.0: trap guard (auto-bet, alerts and bids only on games within 6 h; game lines Novig just moved are skipped), bet-sheet trap warnings, Settings lists and searches the Bids tab, Novig 429 storm fixed (market details kept 6 h), Diagnostics splits every bet by time to the start (versionCode 95, v0.55.0)
 
 ## Do this next
-BK6: ship.sh v0.55.0, CI green check, release.yml, record-release, answer Tj
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.55.0), then run: bash tools/record-release.sh v0.55.0 95 "v0.55.0: trap guard (auto-bet, alerts and bids only on games within 6 h; game lines Novig just moved are skipped), bet-sheet trap warnings, Settings lists and searches the Bids tab, Novig 429 storm fixed (market details kept 6 h), Diagnostics splits every bet by time to the start"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  4a4c2e8b ckpt 2451: BK1-BK5 ticked with tests named; floor 1,838 passed / 23 skipped
   ec138cae ckpt 2450: BK2: bet-sheet trap note (CNO + Vigilant sheets) + TrapGuardUiTest, screensh
   544557f4 ckpt 2449: BK1: diag per-endpoint failure kinds (PathStat.fails), market cache 6 h (429
   58cd9bd0 ckpt 2448: BK5 trap guard: AutoBettor/alerts/maker wiring + tests (mutants 5/5), UI Tra
@@ -26,5 +26,4 @@ BK6: ship.sh v0.55.0, CI green check, release.yml, record-release, answer Tj
   3234a954 ckpt 2444: pre-release: v0.54.0: bids rest to their expiry (no re-post loop), bids that
   d8e2170f ckpt 2443: v0.54.0 (code 94) bumped; BRIEF.md v0.54.0 make-orders rules; full floor run
   5b96f57a ckpt 2442: BJ3 done: findings worked/triaged from the v0.53.0 file (lag resolved, 429s,
-  9a2850d5 ckpt 2441: NOVIG_API.md §17 verified facts (wallet not held, orders/{id} 404 off book,
 ```
