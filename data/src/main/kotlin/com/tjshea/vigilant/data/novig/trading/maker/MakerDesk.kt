@@ -312,8 +312,14 @@ class MakerDesk(
                 if (now - bid.postedAtMs > LOST_AFTER_MS) store.update { l -> l.map { if (it.clientId == bid.clientId) it.copy(status = MakerStatus.LOST, endedAtMs = now, why = "Novig's lists don't show it") else it } }
                 continue
             }
-            // Not resting any more: filled, expired, voided or cancelled. Its own record says which.
+            // Not in the open list: filled, expired, voided or cancelled, or so new it's still queued. Its own record says which.
             val ended = readOrder(bid.orderId)
+            // Novig's reads can lag a just-placed order (404, or PENDING): asked again next time.
+            if (ended == null && now - bid.postedAtMs < LOST_AFTER_MS) continue
+            if (ended != null && (ended.status == "PENDING" || (ended.status == "OPEN" && ended.remaining > 0))) {
+                if (ended.qty - ended.remaining > bid.filled) recordFills(bid, ended)?.let { grown += it }
+                continue
+            }
             val filledNow = ended?.let { it.qty - it.remaining } ?: bid.filled
             if (filledNow > bid.filled || ended?.status == "FILLED") recordFills(bid, ended)?.let { grown += it }
             val status = when {
