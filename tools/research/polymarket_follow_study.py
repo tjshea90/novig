@@ -16,7 +16,7 @@ profit leaderboard, so it is the one place to test "follow the sharps" on real m
     pip install pandas numpy
     python3 tools/research/polymarket_follow_study.py [--cache DIR] [--wallets 60] [--per 120]
 """
-import argparse, json, os, sys, time, hashlib, urllib.request, urllib.parse
+import argparse, json, os, sys, time, hashlib, threading, urllib.request, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import pandas as pd
@@ -29,15 +29,20 @@ CACHE = None
 def get(url, tries=4):
     key = os.path.join(CACHE, hashlib.sha1(url.encode()).hexdigest() + '.json')
     if os.path.exists(key):
-        with open(key) as f:
-            return json.load(f)
+        try:
+            with open(key) as f:
+                return json.load(f)
+        except ValueError:
+            os.remove(key)  # a half-written file from an interrupted run: fetched again
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'vigilant-research'})
             with urllib.request.urlopen(req, timeout=40) as r:
                 d = json.load(r)
-            with open(key, 'w') as f:
+            tmp = f'{key}.{os.getpid()}.{threading.get_ident()}'
+            with open(tmp, 'w') as f:
                 json.dump(d, f)
+            os.replace(tmp, key)  # atomic: two threads asking the same URL never read a half-written file
             return d
         except Exception:
             time.sleep(1.5 * (i + 1))
