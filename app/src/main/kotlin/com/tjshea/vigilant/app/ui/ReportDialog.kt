@@ -33,6 +33,9 @@ data class ReportActions(
     val onCopied: () -> Unit = {},
     /** Make the diagnostics file and open Android's share sheet (Tj, 2026-10-02): "Share diagnostics with Claude". */
     val onShare: () -> Unit = {},
+    /** Make the scan study's file and open the share sheet (Tj, 2026-10-03), and read the line that says what's logged when the page opens. */
+    val onShareStudy: () -> Unit = {},
+    val onStudyShown: () -> Unit = {},
 )
 
 /** A report in a dialog: the text to select or copy, and Copy / Close. */

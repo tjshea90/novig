@@ -180,6 +180,8 @@ data class UiState(
      * card), from either scanner: hidden from every list ([PlacedIndex]). Rebuilt when those change.
      */
     val placedIndex: PlacedIndex = PlacedIndex.EMPTY,
+    /** What the scan study has logged, in a line for Settings › Diagnostics & about ([StudyText.note]); null until that page asked. */
+    val studyNote: String? = null,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -1696,6 +1698,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** The scan study's line for Settings › Diagnostics & about (how many bets are logged, graded and closed): read when that page opens. */
+    fun refreshStudy() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val o = runCatching { c.study.overview() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull() ?: return@launch
+            _state.update { it.copy(studyNote = StudyText.note(o, System.currentTimeMillis())) }
+        }
+    }
+
+    /**
+     * Settings › Diagnostics & about › Share scan study with Claude (Tj, 2026-10-03): the games that ended since the last pass are graded first (a minute at
+     * most), then the whole log is written as one file for Claude ([com.tjshea.vigilant.data.study.StudyExport]: the goal, a dictionary, the sums, a line per
+     * bet), saved to Downloads/Vigilant like the diagnostics file, and Android's share sheet is handed to the screen. Never throws: a failure is a toast.
+     */
+    fun shareScanStudy() {
+        viewModelScope.launch {
+            _toasts.tryEmit("Making the scan study file…")
+            val intent = try {
+                withContext(Dispatchers.IO) {
+                    kotlinx.coroutines.withTimeoutOrNull(STUDY_SETTLE_WAIT_MS) { c.settleStudy() }
+                    c.study.flush()
+                    val now = System.currentTimeMillis()
+                    val app = getApplication<Application>()
+                    val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                    val meta = com.tjshea.vigilant.data.study.StudyExport.Meta(
+                        versionName = info?.versionName ?: "?",
+                        versionCode = info?.let { androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(it).toInt() } ?: 0,
+                        device = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
+                        rules = com.tjshea.vigilant.data.scanner.PresetRules.of(_state.value.settings).summary(),
+                    )
+                    val tracked = runCatching { c.tracker.all() }.getOrDefault(emptyList())
+                    val file = DiagnosticsShare.writeStudy(app, com.tjshea.vigilant.data.study.StudyExport.fileName(meta.versionName, now)) { w ->
+                        com.tjshea.vigilant.data.study.StudyExport.write(w, c.study.journal, tracked, meta, now, java.io.File(app.cacheDir, "study-export.tmp"))
+                    }
+                    runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                        .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
+                        .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})"); c.eventLog.warn("DIAG", "couldn't save the scan study file to Downloads: ${e.message}") }
+                    c.eventLog.info("DIAG", "scan study file made (${file.length() / 1024} KB)")
+                    c.eventLog.flush(force = true)
+                    DiagnosticsShare.studyIntent(app, file, meta.versionName)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                c.eventLog.error("DIAG", "couldn't make the scan study file", e)
+                null
+            }
+            if (intent == null) _toasts.tryEmit("Couldn't make the scan study file") else shares.send(intent)
+        }
+    }
+
     /** What Android allows Vigilant on this phone, for Diagnostics' health checks (each null where it couldn't be read). */
     private fun phoneNow(app: Application): Diagnostics.Phone {
         val cm = app.getSystemService(android.net.ConnectivityManager::class.java)
@@ -1971,6 +2023,9 @@ internal suspend fun <T> followThrottled(runs: Flow<T>, everyMs: Long, onRun: su
         kotlinx.coroutines.delay(everyMs)
     }
 }
+
+/** How long Share scan study waits for the grading of games that ended since the last pass before it writes the file anyway. */
+internal const val STUDY_SETTLE_WAIT_MS = 45_000L
 
 /** How often, at most, the Tracker's saved bets reach the screen: a Check odds now saves every few bets (Tj, 2026-10-01: "very laggy"). */
 internal const val TRACKER_MIRROR_MS = 300L

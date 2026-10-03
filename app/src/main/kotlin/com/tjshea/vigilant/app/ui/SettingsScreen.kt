@@ -281,7 +281,7 @@ fun SettingsScreen(
                 SettingsPage.FAIR -> FairOddsTab(state, keys, onUpdate)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
                 SettingsPage.USAGE -> UsageTab(state, keys)
-                SettingsPage.HELP -> ToolsTab(state, reportActions)
+                SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
         }
     }
@@ -1003,7 +1003,7 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
 /** Tools: Diagnostics, the grading check, About. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions) {
+private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     Intro("When something looks wrong, Share with Claude makes one file with everything the app recorded, for Claude to diagnose and fix.")
     // ---- Diagnostics ---------------------------------------------------------------------
     SectionTitle("Diagnostics")
@@ -1021,6 +1021,16 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions) {
     if (AppBook.isNovig && state.betting.enabled) {
         Hint("Grading check: what Novig's ledger and positions say about each bet you placed through the API, beside how the Tracker graded it. Run it after a game ends.")
     }
+
+    // ---- The scan study (Tj, 2026-10-03): every bet a scan lists, logged and graded, for Claude to find what beats the close -------------
+    val studyShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onStudyShown)
+    androidx.compose.runtime.LaunchedEffect(Unit) { studyShown() }
+    Hint(StudyText.HINT)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.material3.Button(onClick = reportActions.onShareStudy, modifier = Modifier.testTag("shareScanStudy")) { Text(StudyText.BUTTON) }
+    }
+    state.studyNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("scanStudyNote")) }
+    SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
 
     SectionTitle("About")
     Hint(

@@ -83,6 +83,8 @@ object SettingsIndex {
         Entry("Keys backup", SettingsPage.USAGE, "Export or import your keys", "export import backup keys"),
         // Diagnostics & about
         Entry("Share with Claude", SettingsPage.HELP, "Make the diagnostics file for Claude", "diagnostics report bug claude share"),
+        Entry("Share scan study with Claude", SettingsPage.HELP, "Every bet a scan listed, graded, with its close, for Claude to find patterns", "scan study log patterns clv close profit claude share analyze"),
+        Entry("Log every scan for the study", SettingsPage.HELP, "Switch the scan study's logging off or on", "scan study log switch"),
         Entry("About", SettingsPage.HELP, "Version and where the data comes from", "version about"),
         // The Auto-bet tab
         Entry("Place bets automatically", null, "Auto-bet: turn it on or off", "auto-bet autobet automatic on off", autoBetTab),
