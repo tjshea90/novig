@@ -90,7 +90,7 @@ class MakerTest {
         assertTrue(why(line(fair = 0.80, offer = 0.85)).contains("outside the price window"))
         // Novig already sells it at the bid or cheaper: that's a bet to take now, not to bid on.
         assertTrue(why(line(fair = 0.52, offer = 0.50)).contains("take it instead"))
-        assertTrue(why(line(), r = rules.copy(stake = 0.001)).startsWith("The stake is too small"))
+        assertTrue(why(line(), r = rules.copy(customStake = 0.001)).startsWith("The stake is too small"))
     }
 
     @Test
