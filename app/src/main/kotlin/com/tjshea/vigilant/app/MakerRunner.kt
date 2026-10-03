@@ -34,6 +34,8 @@ class MakerRunner(
     private val clock: () -> Long = System::currentTimeMillis,
     /** Vigilant's latest scan (its result is what bids are judged on). */
     private val scan: () -> com.tjshea.vigilant.data.scanner.ScanRun = { c.runner.state.value },
+    /** The desk on the Vigilant wallet; null when betting through the API isn't set up. */
+    private val desk: () -> MakerDesk? = { c.makerDesk() },
 ) {
     /** What the Make tab shows: the last pass and the bids each line would get now. */
     data class Status(
@@ -58,7 +60,7 @@ class MakerRunner(
      * down; with no scan yet, only fills and expiries are read. Null when betting through the API isn't set up. [why] is logged.
      */
     suspend fun run(why: String): MakerDesk.Report? = passes.withLock {
-        val desk = c.makerDesk() ?: return@withLock null
+        val desk = desk() ?: return@withLock null
         val s = c.currentSettings()
         val any = desk.bids().any { it.active }
         if (!s.maker && !any) {
@@ -108,7 +110,7 @@ class MakerRunner(
         val settings = s ?: c.currentSettings()
         val now = clock()
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId }
-        val resting = c.makerDesk()?.bids()?.filter { it.active }?.mapTo(HashSet()) { it.outcomeId }.orEmpty()
+        val resting = desk()?.bids()?.filter { it.active }?.mapTo(HashSet()) { it.outcomeId }.orEmpty()
         val run = scan()
         val decisions = MakerQuote.decideAll(MakerLines.from(run.result, settings, now), MakerRules.of(settings), now, held - resting)
         _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
@@ -116,7 +118,7 @@ class MakerRunner(
 
     /** Tj's Post on one line: posted now if it still gets a bid. Null when posted, else why not. */
     suspend fun post(outcomeId: String): String? {
-        val desk = c.makerDesk() ?: return "Betting through Novig's API isn't set up (Settings › Betting & Novig account)"
+        val desk = desk() ?: return "Betting through Novig's API isn't set up (Settings › Betting & Novig account)"
         val s = c.currentSettings()
         if (s.paused) return "Scanning is paused: resume it to post bids"
         val now = clock()
@@ -130,11 +132,11 @@ class MakerRunner(
     }
 
     /** Tj's Cancel on one bid. */
-    suspend fun cancel(orderId: String): String? = c.makerDesk()?.cancel(orderId).also { preview() }
+    suspend fun cancel(orderId: String): String? = desk()?.cancel(orderId).also { preview() }
 
     /** Every bid down ([why] on each). How many cancels Novig took; null when betting isn't set up. */
     suspend fun cancelAll(why: String): Int? {
-        val desk = c.makerDesk() ?: return null
+        val desk = desk() ?: return null
         if (desk.bids().none { it.active }) return 0
         return desk.cancelAll(why).also {
             c.eventLog.info("MAKER", "every bid cancelled: $why")

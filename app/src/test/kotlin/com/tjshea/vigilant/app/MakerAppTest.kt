@@ -91,19 +91,23 @@ class MakerAppTest {
         }
     }
 
-    private fun runner() = MakerRunner(app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.result(), finished = 1) })
+    /** The runner and its desk on the sample scan's clock (the container's own desk keeps the phone's: it only cancels here). */
+    private fun runner(novig: FakeNovig) = MakerRunner(
+        app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+        desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+    )
 
     @Test
     fun `a pass posts post-only bids with an expiry, a fill is a maker bet with a notification, and switching bids off takes the rest down`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
-        val r = runner().run("test")!!
+        val r = runner(novig).run("test")!!
         assertTrue("placed ${r.placed}", r.placed >= 2)
         assertTrue(novig.placed.joinToString(), novig.placed.all { it.endsWith(" PO 1800000") })
         // A taker fills the first bid.
         val first = novig.orders.values.minBy { it.orderId }
         novig.fillAll(first.orderId)
-        val r2 = runner().run("test")!!
+        val r2 = runner(novig).run("test")!!
         val bet = r2.fills.single()
         assertTrue(bet.maker)
         assertEquals(first.qty, bet.contracts)
@@ -127,7 +131,7 @@ class MakerAppTest {
     fun `pausing takes every bid down too`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
-        runner().run("test")
+        runner(novig).run("test")
         assertTrue(novig.orders.values.any { it.status == "OPEN" })
         app.container.settingsStore.update { it.copy(paused = true) }
         withTimeout(10_000) {
@@ -143,7 +147,7 @@ class MakerAppTest {
     fun `Diagnostics says what bids are set to and did`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
-        val run = runner()
+        val run = runner(novig)
         run.run("test")
         val bids = app.container.makerDesk()!!.bids()
         val state = SampleScan.fresh(SampleScan.settings.copy(maker = true))
