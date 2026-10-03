@@ -4,7 +4,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -265,4 +267,29 @@ class MakerUiTest {
         compose.onNodeWithText("12 h", useUnmergedTree = true).performScrollTo().performClick()
         assertEquals(12, s.trapEarlyHours)
     }
+
+    /** v0.56.0 put the trap guard's move rule over game-line bids (RESEARCH.md §72.3): the Bids tab shows that switch once game lines get bids. */
+    @Test
+    fun `with game lines on for bids, the rules show the trap guard's move switch (the auto-bet's same switch), and not without them`() {
+        var s = settings.copy(makerKinds = settings.makerKinds + BetKind.MONEYLINE)
+        compose.setContent {
+            VigilantTheme { MakerScreen(ui(s), MakerActions(onUpdate = { f -> s = f(s) })) }
+        }
+        compose.onNodeWithTag("makerRulesToggle").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("makerTrapMove", useUnmergedTree = true).performScrollTo().assertExists()
+        compose.onNodeWithTag("makerTrapMoveNote", useUnmergedTree = true).assertTextContains("game-line bid", substring = true)
+        compose.onNodeWithTag("makerTrapMove", useUnmergedTree = true).performClick()
+        assertFalse(s.trapNovigMove)
+        assertTrue(com.tjshea.vigilant.app.ui.TrapGuardText.moveNote(true).contains("bid"))
+    }
+
+    @Test
+    fun `with game lines off for bids (the default) there is no move switch on the Bids tab`() {
+        compose.setContent { VigilantTheme { MakerScreen(ui(), MakerActions()) } }
+        compose.onNodeWithTag("makerRulesToggle").performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithTag("makerTrapMove", useUnmergedTree = true).assertCountEquals(0)
+    }
 }
+
