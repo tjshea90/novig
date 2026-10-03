@@ -1,22 +1,22 @@
-# CHECKPOINT 2485 — read me first, then TASKS.md
+# CHECKPOINT 2486 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T21:31:22Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `e0ae8f5b` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T21:38:41Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `831086dd` (this checkpoint is the commit after it)
 
 ## Just done
-study READ ME: no 'rank in the list' (not recorded), bids margin not hard-coded
+pre-release: v0.57.0: scan study: every bet a CNO or Vigilant scan lists is logged with its odds, type, EV, books agreeing (count and share), minutes to the start and more, watched while listed, graded and closed with the app's own grader, and Settings › Diagnostics & about › Share scan study with Claude sends the whole log with a prompt to analyze all of it for profitable patterns; makes no request of its own while scanning (versionCode 99, v0.57.0)
 
 ## Do this next
-CI green on this commit, then ship.sh, release.yml, record, answer Tj
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.57.0), then run: bash tools/record-release.sh v0.57.0 99 "v0.57.0: scan study: every bet a CNO or Vigilant scan lists is logged with its odds, type, EV, books agreeing (count and share), minutes to the start and more, watched while listed, graded and closed with the app's own grader, and Settings › Diagnostics & about › Share scan study with Claude sends the whole log with a prompt to analyze all of it for profitable patterns; makes no request of its own while scanning"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M data/src/main/kotlin/com/tjshea/vigilant/data/study/StudyExport.kt
 
 ## Last ten checkpoints
 ```
+  831086dd ckpt 2485: study READ ME: no 'rank in the list' (not recorded), bids margin not hard-co
   e0ae8f5b ckpt 2484: study export: the fields Tj named (kind, minutes to the start, CNO books, bo
   d20871f6 ckpt 2483: v0.57.0 prepared: version 99; floor green (1,887 passed, 23 skipped); screen
   1804c72b ckpt 2482: BP done in code: scan study (data/study + wiring + Settings + Diagnostics li
@@ -26,5 +26,4 @@ CI green on this commit, then ship.sh, release.yml, record, answer Tj
   cb44ab24 ckpt 2478: v0.56.2 prepared: version 98, BRIEF note; floor green (1,863 passed, 23 skip
   03ca5c35 ckpt 2477: BO2-BO4 done: lag/pause root causes fixed+tested (RESEARCH §74), fills answ
   d0217e12 ckpt 2476: BO2/BO3 (part): v0.56.1 file re-read (ANR 15:52 main thread in PlacedIndex.h
-  d9d7fe90 ckpt 2475: BP: Tj's resume-other-session + Scan Study log feature request written to TA
 ```
