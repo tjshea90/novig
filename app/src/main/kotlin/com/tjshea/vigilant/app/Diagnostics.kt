@@ -190,6 +190,7 @@ object Diagnostics {
             .forEach { o.appendLine("  bids ended ×${it.value}: ${it.key}") }
         o.appendLine(
             "Sharp books (Tj, 2026-10-02: veto by default): auto-bet ${set.sharpAutoBet} · alerts ${set.sharpAlerts}" +
+                " · veto bar ${if (set.sharpVetoMinEv <= 0.0) "any +EV" else "${pct(set.sharpVetoMinEv)} on the sharpest book (RESEARCH.md §72)"}" +
                 if (set.sharpAutoBet != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM && set.sharpAlerts != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) "" else {
                     " · ${set.sharpConfirmBooks.displayName}, quote at most ${ScanSettings.intervalLabel(set.sharpConfirmMaxAgeSeconds)} old, edge ${if (set.sharpConfirmMinEv <= 0.0) "any +EV" else "at least ${pct(set.sharpConfirmMinEv)}"}, " +
                         "CNO's page ${if (set.sharpConfirmViaCno) "may confirm" else "only vetoes"} · feeds: ${x.sharpFeeds.joinToString(", ").ifEmpty { "none on with a key" }} · " +
