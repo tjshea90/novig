@@ -200,6 +200,12 @@ class MakerDesk(
         autoPost: Boolean = true,
         /** [lines] are a running scan's ([MakerPlan.plan]'s partial): a bid whose line isn't among them stays up for a later pass to judge. */
         partial: Boolean = false,
+        /**
+         * Asked before each new bid is sent: false = no more go up this pass (Pause, or auto-make switched off, while it ran: Tj's Diagnostics
+         * 2026-10-03, "I pressed pause and even that took a while to register": the pass held the lock the Pause's cancel-all waits for until its last
+         * bid was posted, and then that bid was cancelled).
+         */
+        keepPosting: () -> Boolean = { true },
     ): Report = lock.withLock {
         val problems = ArrayList<String>()
         val fills = ArrayList(settle(problems))
@@ -248,6 +254,7 @@ class MakerDesk(
         var placed = 0
         val wantedLines = actions.places.filter { it.line.outcomeId !in noReplace }
         for (post in wantedLines) {
+            if (!keepPosting()) break
             val result = withContext(NonCancellable) { placeOne(post, rules, auto = true) }
             when (result) {
                 is Placed.Ok -> placed++

@@ -339,6 +339,28 @@ class MakerTest {
         assertTrue(novig.orders.values.none { it.status == "OPEN" })
     }
 
+    /**
+     * Tj, 2026-10-03 (v0.56.1 Diagnostics: "I pressed pause and even that took a while to register"): a pass posted every bid it wanted, one request
+     * after another, under the lock the Pause's cancel-all waits for, and then that cancel-all took them down again. A pass told to stop stops at once.
+     */
+    @Test
+    fun `a pass told to stop posts no further bids, and those already up stay for the cancel-all`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val lines = listOf(line("a-over", fair = 0.40), line("b-over", fair = 0.45), line("c-over", fair = 0.50), line("d-over", fair = 0.52))
+        // Paused after the second bid went up.
+        val r = d.cycle(lines, rules, null, 50.0, 100.0, keepPosting = { novig.placed.size < 2 })
+        assertEquals(2, r.placed)
+        assertEquals(2, novig.placed.size)
+        assertEquals(2, d.bids().count { it.active })
+        // Nothing stops it by default: the same four lines, all posted.
+        val all = FakeNovig()
+        assertEquals(4, desk(all, tracker()).cycle(lines, rules, null, 50.0, 100.0).placed)
+        // And the cancel-all that follows the pause finds the lock free and takes both down.
+        assertEquals(2, d.cancelAll("Scanning is paused"))
+        assertTrue(d.bids().none { it.active })
+    }
+
     @Test
     fun `a bid that ran out its time is marked expired, one Vigilant has no record of comes down, and the day's limit stops new bids`() = runBlocking {
         val novig = FakeNovig()

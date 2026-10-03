@@ -126,7 +126,7 @@ class MakerRunner(
             val rules = MakerRules.of(s)
             val report = desk.cycle(
                 withMoves(MakerLines.from(result, s, now), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
-                denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial,
+                denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
             )
             notifyFills(report.fills, desk.bids())
             if (report.placed > 0 || report.cancelled > 0 || report.fills.isNotEmpty()) {
@@ -275,6 +275,12 @@ class MakerRunner(
     }
 
     private fun money(v: Double) = com.tjshea.vigilant.app.ui.Format.money(v)
+
+    /**
+     * Whether a pass may still send a new bid: the saved settings now (not the ones the pass started with) still have scanning running and auto-make on.
+     * Pause is one tap, and every bid after it would only be cancelled again.
+     */
+    private fun stillPosting(): Boolean = c.settingsStore.flow.value?.let { !it.paused && it.maker } ?: true
 
     private fun stopReason(s: ScanSettings): String? = when {
         !AppBook.isNovig -> "Make orders are for Novig"
