@@ -380,6 +380,12 @@ robolectric.org/configuring/.
   alone, `PO` refuses a cross), the Bids tab is in every scanner mode with one choice Off · Recommend · Automatic (`BidMode`), and picking a mode that bids
   turns on what it needs (`MakerSetup.set`: Vigilant's scanner, the background scan with Vigilant at least once a minute, scanning resumed; asks first when that
   would also start auto-bet). The +EV-only invariant, the expiry bound and every cap are unchanged.
+  **v0.54.0 (Tj, 2026-10-03: "None of my auto bids were accepted"; RESEARCH.md §70.9):** an expiring bid is re-posted only when the new one would rest
+  at least `minLifeMs` longer (a fresher fair), else it keeps its place to its expiry; bids that would lead their side go up first (`MakerPlan.PRIORITY`:
+  leads, then the cheapest, then the most EV), a line's best bid leaving out Vigilant's own bids that were in the book read (`MakerLines.withoutOwn`); every
+  bid not yet ended counts against the wallet (Novig holds nothing for a resting bid: verified, NOVIG_API.md §17); one fills read a pass for every bid
+  (`fillsStartingAfter`), cancels confirmed by one re-read of the open orders, an order's own record read only if it never showed open (`MakerBid.seenOpen`),
+  and a fills read that fails finishes nothing; the background cycle's pass is skipped within 15 s of another (`MakerRunner.BACKGROUND_GAP_MS`).
   Loosening any of this needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
