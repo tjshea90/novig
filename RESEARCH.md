@@ -4579,3 +4579,26 @@ unchecked prop look kept by the veto and dropped by the requirement. A prop only
 Limits: a verdict exists only for bets whose game page the green check read (the top ~10 of the list, again every 4 minutes) and the first read is the one used, so the judged props are the best-EV rows; wide-read-only
 props have none. If the first files show the judged sample is too thin, the next step is reading more pages for props (CNO requests: Tj's call).
 
+## 77. Is the study logged in the background auto-scan? (v0.58.2, 2026-10-03; Tj: "Confirm that all the betting data is being logged even when the app is backgrounded but in auto scan background mode.")
+
+### 77.1 What was true, traced through a background cycle
+- **The watchers live in `AppContainer`** (built when a process starts for the service or an alarm, with no Activity): CNO list, wide read, wide rows, book pages and Vigilant scan each log from what a scan already produced, on `scanScope`. They run in the background.
+- **Keep awake on (cycles under 9 minutes apart, the default)**: the service holds a partial wake lock the whole time, so the watchers run as results land and the 30 s flush loop ticks. Everything was logged.
+- **Alarm only (keep awake off, or cycles 9+ minutes apart)**: the wake lock is held only while `AutoScanner.cycle` runs and let go the moment it returns (`releaseAfterScan`). The study's work was **not part of the cycle**: the wide read (a network
+  call a watcher starts after the list read), the checks of the last book pages (the books watcher waits 5 s between looks), the wide rows' log and the write to disk came after, with the CPU free to sleep. Android could freeze the process
+  there until the next alarm (9+ minutes on). By then the list that cycle read was older than `MAX_SCAN_AGE_MS` (90 s, which keeps the list saved on disk at launch from being logged as a scan), so it was **dropped as "saved"**, and
+  the page checks (older than `VIEW_FRESH_MS`) with it; lines still in memory when Android ended the process were lost. A Vigilant scan that outlived the cycle had the same race at its end.
+- **Also true in every mode**: `cycle` skips entirely while Check odds now holds the focus (no CNO read, so nothing to log: the study adds no read of its own to make up for it); grading and closes run in `SettleWorker` every 3 h and
+  at launch, background-safe (WorkManager, network required).
+
+### 77.2 What was built
+`StudySync` (app/): the watchers' steps (list, wide read, wide rows, books, Vigilant) in one place, and `catchUp(cycleStartMs)`: the list read at or after the cycle's start counts as that cycle's scan whatever its age by now, the wide read after it,
+the wide rows, the book pages, a finished Vigilant scan, then `ScanStudy.flush()`. `AutoScanner.cycle` calls it in its `NonCancellable` finish (bounded, `STUDY_SYNC_MS` 25 s) while the cycle still holds the mutex and the service its wake lock; the
+service's `scanHold` calls it when a Vigilant scan the cycle started ends, before the wake lock goes. Every step is idempotent (`ScanStudy` keeps what it last saw of each scan), so the watchers and the catch-up never double-log; a read
+dropped as old is not remembered as seen, so a late watcher can't stop the catch-up logging it. A list saved from before the cycle (the scanner is Vigilant's, or the read failed) is still not a scan, and makes no wide read.
+Cost: up to one wide read (≤ every 30 s, only when CNO's odds moved) at the end of a cycle, and one write.
+
+### 77.3 Not verified on the phone
+That Android really sleeps the CPU between alarm-only cycles with the process alive is Android's documented behavior, not measured here. Diagnostics' "Scan study" line (bets logged since the app opened, last logged, last problem) and the cycle log
+(screen off / dozing per cycle) show on the phone whether a background run logged: a 10-minute auto-scan with the screen off should add bets every cycle.
+

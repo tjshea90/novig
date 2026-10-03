@@ -3718,13 +3718,16 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
 
 - [x] BS1 Add to the scan study file the props split: for prop bets, CLV / ROI / W-L by the sharp prop book's verdict (an exchange, Kalshi or ProphetX, agrees / says no; FanDuel, Caesars or DraftKings agrees / says no; no sharp-ranked book prices both sides; no book page read), by the sharp book's own edge band, and by whether the exchanges price the bet at all.
 - [x] BS2 What-if lines in the file: what each candidate rule (today's veto; a sharp-ranked book must agree; an exchange must agree) would keep, drop and not be able to judge, with those bets' CLV / ROI, so the first file answers "needed or smart" with numbers; READ ME asks Claude to answer Tj's question from them.
-- [ ] BS3 Tests (failing-first, mutants), full floor, version 0.58.1 (code 101), CI green, ship, release, record, answer Tj with the link. No rule changes in the app (option 1 = leave the rules, let the data decide).
+- [ ] BS3 Tests (failing-first, mutants), full floor, version 0.58.1 (code 101; shipped inside v0.58.2, code 102), CI green, ship, release, record, answer Tj with the link. No rule changes in the app (option 1 = leave the rules, let the data decide).
   Built (v0.58.1 code 101, RESEARCH.md §76.4): StudyExport (nullable Extra key; 3 PROPS splits; WHAT IF section; READ ME item 7 and caveat; `pageRead` so an unchecked bet is "no verdict", not NO_SHARP).
   Proofs: ScanStudyPropsTest (6; real SharpVeto verdicts through observeBooks, results/CLV in the groups, bands, README); 11 mutants killed; floor 1,925 passed, 23 skipped. BS3 ticks when released.
 
 ## Tj, 2026-10-03 ~23:10Z: "Confirm that all the betting data is being logged even when the app is backgrounded but in auto scan background mode."
 
-- [ ] BT1 Trace every way the scan study gets its data (the CNO list read, the wide read, the green check's book pages, Vigilant's scan, grading/closes, the flush to disk) through a background auto-scan cycle (screen off / app backgrounded / service or alarm or worker waking the process), and say for each whether it runs and is written to disk before the process can be frozen or killed.
-- [ ] BT2 Fix whatever isn't (a log step that waits on a timer the background cycle won't outlive, a flush only on the foreground path, a read that only happens while a screen is watching), and pin it with a test that runs a background cycle and reads the journal (failing-first, mutants).
+- [x] BT1 Trace every way the scan study gets its data (the CNO list read, the wide read, the green check's book pages, Vigilant's scan, grading/closes, the flush to disk) through a background auto-scan cycle (screen off / app backgrounded / service or alarm or worker waking the process), and say for each whether it runs and is written to disk before the process can be frozen or killed.
+- [x] BT2 Fix whatever isn't (a log step that waits on a timer the background cycle won't outlive, a flush only on the foreground path, a read that only happens while a screen is watching), and pin it with a test that runs a background cycle and reads the journal (failing-first, mutants).
 - [ ] BT3 Full floor, ship if code changed (version 0.58.2), answer Tj plainly: confirmed or not, what was wrong, what changed.
+  BT1/BT2 done (v0.58.2 code 102, RESEARCH.md §77): keep awake on = all logged live; alarm-only mode lost the wide read / last page checks / flush after the cycle's wake lock went (and dropped the list as a saved one).
+  Built StudySync.catchUp, called in AutoScanner.cycle's finish and when a cycle-started Vigilant scan ends; stale reads no longer remembered as seen. Proofs: StudySyncTest (8: late watchers, saved list, wide read, books, Vigilant, switch off, source pins),
+  10 mutants killed. v0.58.1 (props split) ships inside v0.58.2.
 
