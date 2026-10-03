@@ -51,10 +51,18 @@ enum class BetKind(val label: String) {
  *
  * For each kind of bet and sport, the books whose price is the sharpest, best first ([ranking]). The first of them that prices both sides on the bet's
  * book page (CNO's game page: free, already read for the book check) decides: its own two prices devigged worst case ([CnoBooks.fairFor], as the book
- * check does) and judged at Novig's price; zero or less is a veto. When none of them prices both sides there is no veto: the bet goes on its other
- * criteria. A sister site counts as its company ("FDYW" for FanDuel).
+ * check does) and judged at Novig's price; an edge under the bar ([ScanSettings.sharpVetoMinEv], 1% by default; zero or less always) is a veto. When
+ * none of them prices both sides there is no veto: the bet goes on its other criteria. A sister site counts as its company ("FDYW" for FanDuel).
+ *
+ * Why a bar over zero (RESEARCH.md §72): what a +EV bet keeps at the close is about the sharp book's own edge, not the consensus's. On 48,394 soccer
+ * matches with Pinnacle's early and closing prices, bets the consensus called +2.5% or better kept +0.8% CLV when Pinnacle's own price gave them 0-1%
+ * (not distinguishable from zero), +1.6% at 1-2%, +2.8% at 2-4% and +5.7% at 4%+; with one soft book's price, the consensus added nothing once the
+ * sharp book's edge was known (CLV ≈ 0.46 × the sharp edge − 0.08 × the consensus edge).
  */
 object SharpVeto {
+
+    /** The bar's default: the sharpest book must give Novig's price at least a 1% edge. */
+    const val DEFAULT_MIN_EV = 0.01
 
     enum class Sport { FOOTBALL, COLLEGE_FOOTBALL, BASKETBALL, COLLEGE_BASKETBALL, BASEBALL, HOCKEY, SOCCER, TENNIS, OTHER }
 
@@ -103,12 +111,28 @@ object SharpVeto {
     }
 
     /** What the veto found: [book] (its code), its own fair chance and the EV it gives Novig's price. */
-    data class Result(val verdict: Verdict, val kind: BetKind, val book: String? = null, val fair: Double? = null, val ev: Double? = null) {
+    data class Result(
+        val verdict: Verdict,
+        val kind: BetKind,
+        val book: String? = null,
+        val fair: Double? = null,
+        val ev: Double? = null,
+        /** The bar it was judged against ([ScanSettings.sharpVetoMinEv]). */
+        val minEv: Double = 0.0,
+    ) {
         val vetoed: Boolean get() = verdict == Verdict.VETOED
 
-        /** One general sentence with no numbers (the auto-bet's skip report counts bets by reason), null unless vetoed. */
+        /**
+         * One general sentence (the auto-bet's skip report counts bets by reason: the book and the bar, never the bet's own numbers), null unless vetoed.
+         * A sharp edge at or under zero says "isn't +EV"; a small one says it's under the bar.
+         */
         val reason: String?
-            get() = if (!vetoed) null else "${CnoBooks.name(book!!)}, the sharpest book for ${kind.label.lowercase(Locale.US)}, says it isn't +EV at Novig's price"
+            get() = if (!vetoed) null else if ((ev ?: 0.0) <= 0.0) {
+                "${CnoBooks.name(book!!)}, the sharpest book for ${kind.label.lowercase(Locale.US)}, says it isn't +EV at Novig's price"
+            } else {
+                "${CnoBooks.name(book!!)}, the sharpest book for ${kind.label.lowercase(Locale.US)}, gives Novig's price under the sharp veto's " +
+                    "${SharpConfirm.percent(minEv).removePrefix("+")} edge"
+            }
 
         /** The numbers: "ProphetX −2.1% (devigged)", for the bet's record and Diagnostics. */
         val detail: String
@@ -116,19 +140,26 @@ object SharpVeto {
                 "${CnoBooks.name(book)} ${SharpConfirm.percent(ev ?: 0.0)} (devigged, fair ${String.format(Locale.US, "%.1f%%", (fair ?: 0.0) * 100)})"
     }
 
-    /** [view]: the bet's book page; [novigOdds]: Novig's price now (American); [live]: Novig's taker fee applies; [judged]: the book being bet. */
-    fun judge(view: CnoBooksView?, kind: BetKind, sport: Sport, novigOdds: Int, live: Boolean, judged: String = CnoBooks.NOVIG): Result {
+    /**
+     * [view]: the bet's book page; [novigOdds]: Novig's price now (American); [live]: Novig's taker fee applies; [minEv]: the bar the sharpest book's own
+     * edge must reach ([ScanSettings.sharpVetoMinEv]; 0 = any +EV); [judged]: the book being bet.
+     */
+    fun judge(view: CnoBooksView?, kind: BetKind, sport: Sport, novigOdds: Int, live: Boolean, minEv: Double, judged: String = CnoBooks.NOVIG): Result {
+        val bar = minEv.coerceAtLeast(0.0)
         val prices = view?.prices.orEmpty().filter { it.twoSided && it.code != judged }
         for (code in ranking(kind, sport)) {
             val p = prices.firstOrNull { CnoBooks.company(it.code) == code } ?: continue
             val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!) ?: continue
             val ev = CnoBooks.evAt(fair, novigOdds, live)
-            return Result(if (ev > 0.0) Verdict.PASSED else Verdict.VETOED, kind, code, fair, ev)
+            return Result(if (passes(ev, bar)) Verdict.PASSED else Verdict.VETOED, kind, code, fair, ev, bar)
         }
-        return Result(Verdict.NO_SHARP, kind)
+        return Result(Verdict.NO_SHARP, kind, minEv = bar)
     }
 
     /** [judge] for a bet as CNO names it ([league], [market], [bet]). */
-    fun judge(view: CnoBooksView?, league: String, market: String, bet: String, novigOdds: Int, live: Boolean, judged: String = CnoBooks.NOVIG): Result =
-        judge(view, BetKind.of(market, bet), sportOf(league), novigOdds, live, judged)
+    fun judge(view: CnoBooksView?, league: String, market: String, bet: String, novigOdds: Int, live: Boolean, minEv: Double, judged: String = CnoBooks.NOVIG): Result =
+        judge(view, BetKind.of(market, bet), sportOf(league), novigOdds, live, minEv, judged)
+
+    /** A sharp book's own edge [ev] clears the bar [minEv]: above zero always, and at least the bar. */
+    fun passes(ev: Double, minEv: Double): Boolean = ev > 0.0 && ev >= minEv - 1e-12
 }
