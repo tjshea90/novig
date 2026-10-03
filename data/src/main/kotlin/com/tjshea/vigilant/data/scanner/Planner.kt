@@ -358,7 +358,11 @@ object Planner {
         val novigDate = java.time.LocalDate.parse(KalshiClient.etDate(e.startsTs))
         val refDate = runCatching { java.time.LocalDate.parse(date) }.getOrNull() ?: return false
         val days = abs(java.time.temporal.ChronoUnit.DAYS.between(novigDate, refDate))
-        return days == 0L || (days == 1L && league.maxStartGapHours >= 24)
+        if (days == 0L || (days == 1L && league.maxStartGapHours >= 24)) return true
+        // A tennis match put off (rain, a long day before it) keeps the date it was first set for in Kalshi's code while Novig lists its new start
+        // (Tj's v0.52.0 file: WTA Beijing's Badosa-Ostapenko, Svitolina-Siniakova and Swiatek-Gao, Kalshi's "Oct 1"/"Oct 2", Novig's Oct 3, left
+        // unpriced). The same two players can't meet again within days, so a listing up to [TENNIS_DELAY_DAYS] before Novig's date is the same match.
+        return league.tennis && refDate.isBefore(novigDate) && days <= TENNIS_DELAY_DAYS
     }
 
     /** Maps a Novig-side (away/home) to the reference feed's side, honoring a home/away swap. */
