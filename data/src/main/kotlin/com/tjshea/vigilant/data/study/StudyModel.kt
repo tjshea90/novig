@@ -148,7 +148,7 @@ class StudyBet(
         bet = bet.copy(marketId = marketId?.takeIf { it.isNotEmpty() } ?: bet.marketId, outcomeId = outcomeId?.takeIf { it.isNotEmpty() } ?: bet.outcomeId)
     }
 
-    fun apply(t: Long, r: StudyResult) {
+    fun applyResult(t: Long, r: StudyResult) {
         resultAtMs = t
         r.from?.let { from = it }
         bet = applied(bet, r)

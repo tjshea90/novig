@@ -411,15 +411,16 @@ class ScanStudy(
                     val r = own?.let { copyOf(sb.bet, it, now) }
                     if (r != null) {
                         lines += Line(Line.RES, sb.id, now, r = r)
-                        sb.apply(now, r)
+                        sb.applyResult(now, r)
                         copied++
                     }
                     if (needsWork(sb.bet, now)) rest += sb
                 }
                 if (rest.isNotEmpty()) {
                     val found = harness(rest, scores, sources, heavyOk, scratch, now)
+                    val byId = rest.associateBy { it.id }
                     for (l in found) {
-                        val before = rest.first { it.id == l.id }.bet
+                        val before = byId.getValue(l.id).bet
                         val after = StudyBet.applied(before, l.r!!)
                         if (before.status == BetStatus.PENDING && after.status != BetStatus.PENDING) graded++
                         if (ClosingLine.closeOf(before, now) == null && after.closeFair != null) closed++

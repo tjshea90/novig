@@ -58,7 +58,7 @@ class StudyJournal(private val dir: File) {
                 Line.SIGHT -> if (l.s != null) out[l.id]?.addSight(l.t, l.s)
                 Line.CHECK -> if (l.a != null) out[l.id]?.applyCheck(l.t, l.a)
                 Line.VIG -> if (l.a != null) out[l.id]?.applyVig(l.a)
-                Line.RES -> if (l.r != null) out[l.id]?.apply(l.t, l.r)
+                Line.RES -> if (l.r != null) out[l.id]?.applyResult(l.t, l.r)
                 Line.IDS -> out[l.id]?.applyIds(l.m, l.o)
             }
         }
