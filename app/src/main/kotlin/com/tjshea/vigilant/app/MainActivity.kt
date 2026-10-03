@@ -764,6 +764,7 @@ private fun VigilantRoot(
                         onOpenSettings = { p -> settingsPage = p.name; tabName = Tab.SETTINGS.name },
                         notificationsBlocked = AutoBetNotes.blocked(context),
                         onTestNotification = { (context.applicationContext as? android.app.Application)?.let(AutoBetNotes::sample) ?: false },
+                        onOpenBids = if (Tab.BIDS.shownIn(mode)) ({ tabName = Tab.BIDS.name }) else null,
                     )
                 }
                 Tab.BIDS -> {

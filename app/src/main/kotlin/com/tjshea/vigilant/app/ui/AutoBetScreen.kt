@@ -32,6 +32,8 @@ fun AutoBetScreen(
     onOpenSettings: (SettingsPage) -> Unit = {},
     notificationsBlocked: String? = null,
     onTestNotification: () -> Boolean = { true },
+    /** Opens the Bids tab (auto-make, Tj 2026-10-03: "auto make bets just the same way that auto bet already takes bets"); null when it isn't shown. */
+    onOpenBids: (() -> Unit)? = null,
 ) {
     Scaffold(
         topBar = {
@@ -50,6 +52,7 @@ fun AutoBetScreen(
                 .padding(bottom = 32.dp)
                 .testTag("autoBetScreen"),
         ) {
+            AutoMakeLink(state.settings, onOpenBids)
             AutoBetSection(
                 state,
                 notificationsBlocked = notificationsBlocked,
@@ -60,4 +63,17 @@ fun AutoBetScreen(
             )
         }
     }
+}
+
+/** Auto-make's one line on the Auto-bet tab: what it's set to, and the way to the Bids tab where it lives. */
+@Composable
+private fun AutoMakeLink(s: ScanSettings, onOpenBids: (() -> Unit)?) {
+    Banner(
+        "Auto-make (bids under the fair, RESEARCH.md §70): ${if (s.maker) "ON" else "off"} · ${MakerRulesText.summary(s)}" +
+            (if (onOpenBids == null) " · needs Vigilant's scanner (Settings › Scanning: Both or Vigilant only)" else ""),
+        Modifier.padding(top = 8.dp).testTag("autoMakeLink"),
+        color = MaterialTheme.colorScheme.primary,
+        action = if (onOpenBids != null) "Bids" else null,
+        onAction = { onOpenBids?.invoke() },
+    )
 }
