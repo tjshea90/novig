@@ -168,13 +168,20 @@ class MakerTest {
         val lagging = HashSet<String>()
         var loseNextAnswer = false
         var refuse: NovigApiException? = null
+        /** A cancel Novig queues but hasn't applied: the order stays on the book until [applyCancels]. */
+        var slowCancel = false
+        private val queuedCancels = ArrayList<String>()
+        /** Post-only orders refused after acceptance (their price would have taken). */
+        var rejectPosts = false
+        /** Orders whose record answers 404 (their fills can still be read). */
+        val unreadable = HashSet<String>()
         private var n = 0
 
         override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             refuse?.let { throw it }
             placed += listOf(outcomeId, price, qty, tif, ttlMs)
             val id = "o${++n}"
-            orders[id] = NovigOrder(id, clientId, outcomeId.substringBefore('-'), outcomeId, price, qty, qty, tif, "OPEN", now, ttlMs?.let { now + it })
+            orders[id] = NovigOrder(id, clientId, outcomeId.substringBefore('-'), outcomeId, price, qty, qty, tif, if (rejectPosts) "REJECTED" else "OPEN", now, ttlMs?.let { now + it })
             if (loseNextAnswer) {
                 loseNextAnswer = false
                 throw java.io.IOException("timeout")
@@ -182,9 +189,10 @@ class MakerTest {
             return id
         }
 
-        override suspend fun orders(status: String, limit: Int, outcomeId: String?) = orders.values.filter { it.status == status && it.orderId !in lagging }
+        override suspend fun orders(status: String, limit: Int, outcomeId: String?) =
+            orders.values.filter { it.status == status && it.orderId !in lagging && (outcomeId == null || it.outcomeId == outcomeId) }
 
-        override suspend fun order(orderId: String) = orders[orderId]?.takeIf { orderId !in lagging }
+        override suspend fun order(orderId: String) = orders[orderId]?.takeIf { orderId !in lagging && orderId !in unreadable }
 
         override suspend fun fills(orderId: String?, limit: Int) = fillsBy[orderId].orEmpty().toList()
 
@@ -192,8 +200,13 @@ class MakerTest {
             val o = orders[orderId] ?: return null
             cancelled += orderId
             if (o.status != "OPEN") return o.status
-            orders[orderId] = o.copy(status = "CANCELED")
+            if (slowCancel) queuedCancels += orderId else orders[orderId] = o.copy(status = "CANCELED")
             return "OPEN"
+        }
+
+        fun applyCancels() {
+            queuedCancels.forEach { id -> orders[id]?.takeIf { it.status == "OPEN" }?.let { orders[id] = it.copy(status = "CANCELED") } }
+            queuedCancels.clear()
         }
 
         override suspend fun cancelOrders(marketId: String?, eventId: String?): Int {
@@ -212,7 +225,7 @@ class MakerTest {
     }
 
     private fun desk(novig: FakeNovig, tracker: BetTracker) =
-        MakerDesk(novig, tracker, MakerStore(File.createTempFile("maker", ".json").also { it.delete() }), clock = { now }, dayStart = { now - 3_600_000L })
+        MakerDesk(novig, tracker, MakerStore(File.createTempFile("maker", ".json").also { it.delete() }), clock = { now }, dayStart = { now - 3_600_000L }, pause = {})
 
     private fun tracker() = BetTracker(File.createTempFile("bets", ".json").also { it.delete() }, clock = { now })
 
@@ -337,5 +350,135 @@ class MakerTest {
         assertEquals(1, r.problems.size)
         assertEquals(MakerStatus.REFUSED, d.bids().single().status)
         assertFalse(d.bids().single().active)
+    }
+
+    // ---- only +EV, never outliving the fair (Tj, 2026-10-03: "It should not keep make orders long enough that they lose their positive EV") ----
+
+    @Test
+    fun `a bid never outlives its fair, the stop window or the expiry, and isn't posted on a fair of unknown age or about to go old`() {
+        // A game 2 hours off: fairs are good for 5 minutes. Seen a minute ago: the bid may rest 4 minutes.
+        val near = market(starts = now + 2 * 3_600_000L)
+        val post = MakerQuote.decide(line(m = near).copy(fairAsOfMs = now - 60_000), rules, now) as MakerDecision.Post
+        assertEquals(now + 4 * 60_000, post.restUntilMs)
+        // 20 minutes off with no bids in the last 15: the stop window ends it at 5 minutes, before its fair would.
+        val soon = market(starts = now + 20 * 60_000L)
+        assertEquals(now + 5 * 60_000, (MakerQuote.decide(line(m = soon).copy(fairAsOfMs = now), rules, now) as MakerDecision.Post).restUntilMs)
+        assertEquals("The fair price's age isn't known: no bid on it", (MakerQuote.decide(line().copy(fairAsOfMs = null), rules, now) as MakerDecision.Skip).why)
+        // Seen 9.5 minutes ago on a far-off game: 30 seconds of freshness left, under the one-minute floor.
+        assertTrue((MakerQuote.decide(line().copy(fairAsOfMs = now - 570_000), rules, now) as MakerDecision.Skip).why.startsWith("The fair price goes old"))
+    }
+
+    @Test
+    fun `every bid posted is at least the margin under the fair, and a resting bid stays only while it still is at the new fair`() {
+        val rnd = java.util.Random(70)
+        repeat(4_000) {
+            val fair = 0.11 + rnd.nextDouble() * 0.6
+            val margin = listOf(0.03, 0.04, 0.06, 0.08)[rnd.nextInt(4)]
+            val r = rules.copy(margin = margin)
+            val d = MakerQuote.decide(line(fair = fair, offer = null), r, now)
+            if (d is MakerDecision.Post) {
+                assertTrue("fair $fair bid ${d.price}", fair / d.price - 1.0 >= margin - 1e-12)
+                // The fair then moves anywhere: the plan keeps the bid only if it's still at least the margin under the new fair.
+                val moved = (fair + (rnd.nextDouble() - 0.5) * 0.06).coerceIn(0.05, 0.9)
+                val again = MakerQuote.decide(line(fair = moved, offer = null), r, now)
+                val resting = RestingBid("o", "m1", "m1-over", d.price, d.contracts, 0, now + 300_000)
+                val plan = MakerPlan.plan(listOfNotNull(again as? MakerDecision.Post), listOf(resting), r, now)
+                if (plan.kept.isNotEmpty()) assertTrue("kept ${d.price} at fair $moved", moved / d.price - 1.0 >= margin - 1e-12)
+            }
+        }
+    }
+
+    @Test
+    fun `game lines need a sharp book in the fair, books must agree the bid is +EV, and a sharp book saying no vetoes it`() {
+        val lines = rules.copy(kinds = rules.kinds + BetKind.MONEYLINE)
+        assertEquals("Game lines need a sharp book (Pinnacle, Circa …) in the fair", (MakerQuote.decide(line(kind = BetKind.MONEYLINE), lines, now) as MakerDecision.Skip).why)
+        assertTrue(MakerQuote.decide(line(kind = BetKind.MONEYLINE).copy(sharpFairs = listOf(0.53)), lines, now) is MakerDecision.Post)
+        // Bid 0.500: two books' own fairs over it, one under.
+        val agree = line().copy(bookFairs = listOf(0.53, 0.505, 0.49))
+        assertTrue(MakerQuote.decide(agree, rules, now) is MakerDecision.Post)
+        assertEquals("Only 2 books price this bid +EV on their own (fewest: 3)", (MakerQuote.decide(agree, rules.copy(minBooks = 3), now) as MakerDecision.Skip).why)
+        assertEquals("A sharp book's own price says this bid isn't +EV", (MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules, now) as MakerDecision.Skip).why)
+        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules.copy(sharpVeto = false), now) is MakerDecision.Post)
+    }
+
+    @Test
+    fun `sizing - a quarter Kelly on the bankroll for the bid's own edge, held to the most a bid may cost`() {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.QUARTER_KELLY, bankroll = 1_000.0, maxStake = 25.0)
+        // fair 0.52 at 0.50: full Kelly (0.52 − 0.50) / (1 − 0.50) = 4% → ¼ = 1% of $1,000 = $10 = 2,000 contracts.
+        assertEquals(10.0, MakerQuote.stake(0.52, 0.50, kelly)!!, 1e-9)
+        assertEquals(2_000L, (MakerQuote.decide(line(fair = 0.52), kelly, now) as MakerDecision.Post).contracts)
+        assertEquals(5.0, MakerQuote.stake(0.52, 0.50, kelly.copy(maxStake = 5.0))!!, 1e-9)
+        assertNull(MakerQuote.stake(0.52, 0.50, kelly.copy(bankroll = 0.0)))
+        assertEquals(1.0, MakerQuote.stake(0.52, 0.50, kelly.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.ONE_DOLLAR))!!, 1e-9)
+    }
+
+    // ---- the desk: a cancel is only queued; fills never go unrecorded ----------------------------------------------------
+
+    @Test
+    fun `a cancel Novig hasn't applied keeps the side busy - a fill that lands meanwhile is recorded - and nothing new goes up there until it ends`() = runBlocking {
+        val novig = FakeNovig()
+        val t = tracker()
+        val d = desk(novig, t)
+        d.cycle(listOf(line("m1-over", fair = 0.52)), rules, null, 50.0, 100.0)
+        novig.slowCancel = true
+        now += 60_000
+        // The fair falls: the bid is cancelled, but Novig hasn't confirmed it.
+        val r = d.cycle(listOf(line("m1-over", fair = 0.50)), rules, null, 50.0, 100.0)
+        assertEquals(1, r.cancelled)
+        assertEquals(0, r.placed)
+        assertEquals(MakerStatus.CANCELING, d.bids().single().status)
+        // A taker fills 300 of it before the cancel is applied.
+        novig.fill("o1", 300)
+        novig.applyCancels()
+        now += 60_000
+        val r2 = d.cycle(listOf(line("m1-over", fair = 0.50)), rules, null, 50.0, 100.0)
+        assertEquals(300L, r2.fills.single().contracts)
+        assertEquals(MakerStatus.CANCELED, d.bids().first { it.orderId == "o1" }.status)
+        // That side is a bet now: no new bid on it.
+        assertEquals(1, novig.placed.size)
+        assertTrue(t.all().single().maker)
+    }
+
+    @Test
+    fun `an order whose record can't be read still has its fills read, and a lost answer that filled is found in Novig's other lists`() = runBlocking {
+        val novig = FakeNovig()
+        val t = tracker()
+        val d = desk(novig, t)
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        novig.fill("o1", 1_000)
+        novig.unreadable += "o1"
+        now += 2 * 60_000
+        val r = d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        assertEquals(1_000L, r.fills.single().contracts)
+        assertEquals(MakerStatus.FILLED, d.bids().single().status)
+        // A second desk: its first bid's answer is lost and the bid fills before the next look.
+        val novig2 = FakeNovig()
+        val t2 = tracker()
+        val d2 = desk(novig2, t2)
+        novig2.loseNextAnswer = true
+        d2.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        novig2.fill("o1", 1_000)
+        now += 2 * 60_000
+        val r2 = d2.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        assertEquals(1_000L, r2.fills.single().contracts)
+        assertEquals(MakerStatus.FILLED, d2.bids().single().status)
+        assertEquals(1, novig2.placed.size)
+    }
+
+    @Test
+    fun `a post-only bid Novig refused isn't sent again on that side for five minutes`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        novig.rejectPosts = true
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        now += 2 * 60_000
+        val r = d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        assertEquals(MakerStatus.REFUSED, d.bids().single().status)
+        assertTrue((r.decisions.single() as MakerDecision.Skip).why.startsWith("Novig refused a bid here"))
+        assertEquals(1, novig.placed.size)
+        novig.rejectPosts = false
+        now += MakerDesk.REFUSED_COOLOFF_MS
+        d.cycle(listOf(line("m1-over")), rules, null, 50.0, 100.0)
+        assertEquals(2, novig.placed.size)
     }
 }
