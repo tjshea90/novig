@@ -53,6 +53,8 @@ data class MakerRules(
 data class MakerLine(
     val market: NovigMarket,
     val outcomeId: String,
+    /** The game's start: the earlier of the event's and the market's. */
+    val startsTs: Long,
     val league: String,
     val eventName: String,
     val marketLabel: String,
@@ -76,7 +78,42 @@ data class MakerLine(
     val gameUrl: String? = null,
 ) {
     val marketId: String get() = market.marketId
-    val startsTs: Long get() = market.startsTs
+}
+
+/** The lines a bid can be judged on: every side Vigilant's scan priced ([com.tjshea.vigilant.data.scanner.Opportunity] keeps them all, +EV or not). */
+object MakerLines {
+
+    /** The kind of bet an outcome is, as [MakerRules.kinds] and the auto-bet name them. */
+    fun kindOf(o: com.tjshea.vigilant.data.scanner.Opportunity): BetKind = when {
+        o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP -> BetKind.PROP
+        o.kind == com.tjshea.vigilant.data.reference.LineKind.TEAM_TOTAL -> BetKind.TEAM_TOTAL
+        o.market.marketType in com.tjshea.vigilant.data.scanner.MarketFamily.FIRST_HALF.novigTypes -> BetKind.PERIOD
+        o.kind == com.tjshea.vigilant.data.reference.LineKind.MONEYLINE -> BetKind.MONEYLINE
+        o.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD -> BetKind.SPREAD
+        o.kind == com.tjshea.vigilant.data.reference.LineKind.TOTAL -> BetKind.TOTAL
+        else -> BetKind.OTHER
+    }
+
+    /**
+     * [result]'s priced sides in [settings]' leagues at [now], pregame, as [MakerLine]s; on a scan still running, only the leagues whose fair-odds
+     * sources have all answered (as the feed holds them back) and Novig prices read by this scan.
+     */
+    fun from(result: com.tjshea.vigilant.data.scanner.ScanResult?, settings: ScanSettings, now: Long): List<MakerLine> {
+        result ?: return emptyList()
+        return result.opportunities.filter { o ->
+            o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
+                (result.freshSinceMs == null || (o.bookFetchedAtMs ?: 0L) >= result.freshSinceMs) &&
+                (result.waitingFor.isEmpty() || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
+        }.map { o ->
+            MakerLine(
+                market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
+                eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
+                fairAsOfMs = o.fairAsOfMs, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
+                bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
+                basis = FairBasis.of(o),
+            )
+        }
+    }
 }
 
 /** What [MakerQuote.decide] made of a line: a bid to post, or why not. */
