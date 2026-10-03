@@ -3723,3 +3723,8 @@ For the feature, app storage is no concern. Make sure it utilizes already availa
 ```
 @"/root/.claude/uploads/2e41638b-78dc-5690-b0ec-742f2e17218b/cad8a89f-vigilant-diagnostics-v0.56.1-2026-10-03-1553.txt" 
 ```
+
+## 2026-10-03T22:00:51Z
+```
+For the scan study feature, if it doesn't already do so, make it include cno scanned bets that are filtered out of showing up in the vigilant list. I'm other words, log all cno finds on every scan with all the information for each bet cno shows  even if these bets don't meet my criteria for showing up in the list in the app. They should still be hidden in the app but logged into the scan study file. The more information the better
+```
