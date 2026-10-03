@@ -100,6 +100,24 @@ class MakerAppTest {
     )
 
     @Test
+    fun `the background cycle's pass is skipped when another ran in the last 15 seconds - two passes at once was a pass every 10 s`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        var t = now
+        val runner = MakerRunner(
+            app, app.container, clock = { t }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { t }) },
+        )
+        assertTrue(runner.run("during a scan") != null)
+        t += 10_000
+        assertNull(runner.run("background cycle", minGapMs = MakerRunner.BACKGROUND_GAP_MS))
+        // A scan's own passes (and the Bids tab's) are never skipped.
+        assertTrue(runner.run("during a scan") != null)
+        t += MakerRunner.BACKGROUND_GAP_MS
+        assertTrue(runner.run("background cycle", minGapMs = MakerRunner.BACKGROUND_GAP_MS) != null)
+    }
+
+    @Test
     fun `a pass posts post-only bids with an expiry, a fill is a maker bet with a notification, and switching bids off takes the rest down`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
