@@ -165,6 +165,10 @@ class MakerDesk(
         val resting: Int,
         val stopped: String?,
         val decisions: List<MakerDecision>,
+        /** Bids wanted but not posted this pass, by why ([MakerActions.waiting]); empty with auto-make off (nothing is posted by a pass then). */
+        val waiting: Map<String, Int> = emptyMap(),
+        /** The pass judged a scan still running (only its finished leagues' lines). */
+        val partial: Boolean = false,
     )
 
     /**
@@ -182,6 +186,8 @@ class MakerDesk(
         denied: Set<String> = emptySet(),
         /** Auto-make on: post, move and re-post. Off: only take down bids that stopped being worth it ([MakerPlan.plan]'s repost). */
         autoPost: Boolean = true,
+        /** [lines] are a running scan's ([MakerPlan.plan]'s partial): a bid whose line isn't among them stays up for a later pass to judge. */
+        partial: Boolean = false,
     ): Report = lock.withLock {
         val problems = ArrayList<String>()
         val fills = settle(problems)
@@ -208,7 +214,7 @@ class MakerDesk(
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
-            repost = autoPost,
+            repost = autoPost, partial = partial,
         )
         var cancelled = 0
         val noReplace = HashSet<String>()
@@ -236,7 +242,7 @@ class MakerDesk(
             }
         }
         val after = store.all().count { it.active }
-        Report(placed, cancelled, fills, problems, after, stopAll, decisions)
+        Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial)
     }
 
     /**
