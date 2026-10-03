@@ -1,22 +1,22 @@
-# CHECKPOINT 2432 — read me first, then TASKS.md
+# CHECKPOINT 2433 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T05:46:44Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-9491e046-7f6pnb` · **builds on:** `93bf8866` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T05:48:30Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-9491e046-7f6pnb` · **builds on:** `be8b82f4` (this checkpoint is the commit after it)
 
 ## Just done
-BI1-BI8 done; v0.53.0 (code 93) bumped; tab labels one line
+pre-release: v0.53.0: bids fully automatic (posted while each scan runs), Bids tab always shown with Off/Recommend/Automatic that turns on what it needs, wallet balance above the tabs, less lag during Vigilant scans (scan at background priority), background cycles no longer wait for Vigilant's scan, Novig/ParlayAPI pacing and retries, WTA delayed matches priced (versionCode 93, v0.53.0)
 
 ## Do this next
-ship v0.53.0 (ship.sh), trigger release.yml, confirm, record-release, answer Tj with link
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.53.0), then run: bash tools/record-release.sh v0.53.0 93 "v0.53.0: bids fully automatic (posted while each scan runs), Bids tab always shown with Off/Recommend/Automatic that turns on what it needs, wallet balance above the tabs, less lag during Vigilant scans (scan at background priority), background cycles no longer wait for Vigilant's scan, Novig/ParlayAPI pacing and retries, WTA delayed matches priced"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  be8b82f4 ckpt 2432: BI1-BI8 done; v0.53.0 (code 93) bumped; tab labels one line
   d478c67b ckpt 2431: test fixes: WalletStripTest own sandbox (like every UI test), CycleRecorderT
   06a89b15 ckpt 2430: BI1/BI3/BI6: background cycle no longer waits for Vigilant's scan (CNO + aut
   0a945718 ckpt 2429: BI1/BI3 work: offline failures not counted + DoH skipped offline; key retrie
@@ -26,8 +26,4 @@ ship v0.53.0 (ship.sh), trigger release.yml, confirm, record-release, answer Tj 
   17e09f11 ckpt 2425: BI5 core: maker passes judge running scans (partial: unjudged bids stay), li
   784bead3 ckpt 2424: BI8 added (Tj: Bids tab always shown; turning bids/auto-make on turns on Vig
   58d0876a ckpt 2423: BI: Tj's 6 optimizations (diagnostics, wallet always visible, scan lag, Bids
-  9ada3d93 ckpt 2422: BH done: v0.52.0 released + recorded (maker audit fixes, +EV-only invariant,
 ```
-
-(6 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
