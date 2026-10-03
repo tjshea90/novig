@@ -163,7 +163,7 @@ class PresetsTest {
         assertEquals(0.015, PresetRules.of(mine.copy(sharpVetoMinEv = 0.015)).sharpVetoMinEv, 0.0)
         val json = Json { ignoreUnknownKeys = true }
         val saved = json.encodeToString(SavedPreset.serializer(), SavedPreset("old", Presets.VOLUME.rules))
-            .replace(Regex(",?\\"sharpVetoMinEv\\":[0-9.]+"), "")
+            .replace(Regex(""",?"sharpVetoMinEv":[0-9.]+"""), "")
         assertFalse(saved, saved.contains("sharpVetoMinEv"))
         assertEquals(SharpVeto.DEFAULT_MIN_EV, json.decodeFromString(SavedPreset.serializer(), saved).rules.sharpVetoMinEv, 0.0)
         // The summary says the bar only with the veto on and a bar set.
