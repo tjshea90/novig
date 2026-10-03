@@ -413,19 +413,23 @@ object StudyExport {
         out.appendLine(">>>")
         out.appendLine("== END OF FILE ==")
         tmp.delete()
-        return rows
+        return overall.n
     }
 
     // ---- the words -----------------------------------------------------------------------------------------------------
 
-    private fun readMe(meta: Meta, madeAt: String, rows: Int, first: LocalDate?, last: LocalDate?, days: Int, leftOut: Int, bytes: Long): List<String> = listOf(
+    private fun readMe(meta: Meta, madeAt: String, rows: Int, cut: Int, first: LocalDate?, last: LocalDate?, days: Int, leftOut: Int, bytes: Long): List<String> = listOf(
         "This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on $madeAt, version ${meta.versionName} (code ${meta.versionCode}), on ${meta.device}.",
         "Vigilant finds +EV bets on the Novig sportsbook for Tj, who owns it; it is built across Claude sessions. Repo: github.com/tjshea90/novig (public), branch main.",
         "",
-        "WHAT THIS IS: the scan study, a log of EVERY bet Vigilant's two scanners listed as +EV on Novig — CrazyNinjaOdds (\"CNO\") and Vigilant's own scan — not only the ones Tj bet.",
-        "$rows bets from game days ${first ?: "?"} to ${last ?: "?"} ($days days, ${bytes / 1024} KB of log)" + if (leftOut > 0) "; $leftOut older day(s) are on the phone but left out to keep this file a size Claude can read." else ".",
-        "Each bet was logged the moment a scan first listed it, with everything the app knew then; watched while it stayed listed (every change of odds, EV or books, and when a scan dropped it); then, after its game,",
-        "graded (won / lost / push) and given its closing line by the app's own grading and closing-line code. Because it covers every listed bet, it has none of the selection of Tj's own bets.",
+        "WHAT THIS IS: the scan study, a log of EVERY +EV bet Vigilant's scanners found on Novig — CrazyNinjaOdds (\"CNO\") and Vigilant's own scan — not only the ones Tj bet, and not only the ones the app showed him:",
+        "besides the list the app shows (CNO read under Tj's filters), the study reads CNO a second time with its numeric filters opened right up (the WIDE read) and logs every row, flagged by why Tj's list would hide it.",
+        "${rows + cut} bets from game days ${first ?: "?"} to ${last ?: "?"} ($days days, ${bytes / 1024} KB of log)" + (if (leftOut > 0) "; $leftOut older day(s) are on the phone but left out to keep this file a size Claude can read" else "") +
+            (if (cut > 0) "; $cut bets (the hidden ones first) are counted in the SUMMARY but their lines were left out for the same reason." else "."),
+        meta.wide?.let { "THE WIDE READ: $it" } ?: "THE WIDE READ: off, or it hasn't read yet: every bet here was in a list the app shows.",
+        "Each bet was logged the moment a scan first found it, with everything the app knew then (and every column CNO printed for it, `cols`); watched while it stayed listed (every change of odds, EV or books, and when a scan dropped it); then, after its game,",
+        "graded (won / lost / push) and given its closing line by the app's own grading and closing-line code (a futures bet is logged but never graded). Because it covers every bet found, it has none of the selection of Tj's own bets.",
+        "THE QUESTION TJ ASKED OF THE HIDDEN ONES: the bets his filters hide (screen is set) are the ones he never sees. Compare them with the shown ones (SUMMARY and the splits): do any hidden kinds beat the close or profit, and do his filters (EV floor, odds cap, book count, one-sided, complete book, row limit) cost him edge or save him from traps?",
         "",
         "THE GOAL IS PROFIT: find which bets, bought when, beat the closing line (CLV) and make money. CLV is the leading indicator (it needs far fewer bets than results do); results confirm it slowly.",
         "Tj bets on Novig only, as a taker at the listed price (pregame Novig takers pay no fee) and, with the Bids tab, as a maker posting bids under its fair price.",
@@ -452,24 +456,29 @@ object StudyExport {
     private val DICTIONARY: List<String> = listOf(
         "One JSON object per line under EVERY BET. Times are epoch milliseconds (UTC); \"days\" are Eastern. Odds are American. Probabilities are 0-1. EV and CLV are fractions (0.04 = 4%).",
         "id · firstSeenMs · startsAtMs · league · event · market · selection: the bet and when a scan first listed it / when its game starts.",
-        "src: who listed it (c = CrazyNinjaOdds, v = Vigilant's scan, c+v = both; a bet both list is one record). screen: why the app's own CNO screen would have hidden it (null = it showed it): NOT_A_GAME, MISMATCH (EV doesn't follow from its fair odds), ONE_WAY, BOOKS, ODDS, TOO_GOOD (EV over 20%), EV.",
+        "src: who found it (c = the app's CNO list, i.e. CNO read under Tj's filters; w = the WIDE read, every row CNO finds with its filters opened, including the ones the app's list hides; v = Vigilant's scan; a bet found by several is one record: c+w, w, c+v+w …).",
+        "screen: why the app's CNO list would not have shown it at its first look (null = it showed it): NOT_A_GAME (futures), MISMATCH (EV doesn't follow from its fair odds), ONE_WAY, BOOKS (under Tj's book count), ODDS (longer than his odds cap), TOO_GOOD (EV over 20%), EV (under his minimum),",
+        "    NOT_LISTED (the app's screen passes it but CNO's read under his filters didn't carry it: its complete-book or both-sides rule, the row limit, or a filter in his Shared View link). Several reasons can apply; this is the first the app's screen found.",
+        "cols: every column CNO printed for the row at its first wide look, by CNO's own header (EV%, Date, Sport, League, Event, Market, Bet Name, Odds with the dollars, Sportsbook, Fair Odds, Books, Extra …), plus the row's data-* attributes with an @. Text as CNO showed it; a column CNO adds appears without the app knowing it.",
         "american · cost · ev · fair: at the FIRST look — the Novig price (American; CNO's, or Novig's own live price when it had been read in the last minute), what a $1 payout costs at it (= implied probability; pregame Novig has no fee), the EV the list showed, and its fair probability (CNO's, or Vigilant's).",
         "status · profit · gradeNote: PENDING, WON, LOST, PUSH, VOID or FMV; profit is units at the first-listed price with a one-unit stake (null while open). gradeNote is the reason a result is missing.",
         "closeFair · closeAmerican · closeVia · closeNote: the closing line — the side's devigged fair probability at the start (and its odds), its source, and why none was found. Sources: \"ParlayAPI · Pinnacle close\" (the sharpest), \"ESPN\" (DraftKings / ESPN BET game lines only), \"Novig's last trades\" (the last half hour before the start), or \"Tracker · …\" (read before the start for a bet Tj also placed).",
         "clv · clvBest · clvLast: closeFair / cost − 1 at the first-listed price, at the best (longest) odds it was listed at, and at the last listed price. bestAmerican · lastAmerican: those prices. novigClose: Novig's own last price before the start when the Tracker read it.",
-        "listedMin · lastListedMinToStart · gone: minutes from the first look to the last, how many minutes before the start the last look was, and whether a scan then dropped it (its edge fell under the filters, or CNO's row limit pushed it out).",
+        "listedMin · lastListedMinToStart · gone: for the app's own lists (c and v; null for a bet only the wide read found): minutes from the first look to the last, how many minutes before the start the last look was, and whether a scan then dropped it (its edge fell under the filters, or CNO's row limit pushed it out).",
         "looks · placedByTj · placedAmerican: number of looks; whether Tj also placed this bet (his own Tracker's) and at what price. marketId · outcomeId: Novig's public ids when known.",
         "kind · sport · minToStartFirst · cnoBooks · booksTwoSided · booksAgreeing · agreeShare · available · sharpVerdict: the most used fields of atBet at the top level. cnoBooks = books behind CNO's fair price (on every row); booksTwoSided = companies whose page prices both sides, booksAgreeing = those whose own fair says +EV at Novig's price, agreeShare = booksAgreeing / booksTwoSided (null when the book check wasn't made: only the top few bets get a page read).",
         "atBet: the app's record of the bet as first listed (data/.../tracker/AtBet.kt): league, sport, kind (PROP, MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PERIOD, OTHER), minutesToStart, american, otherAmerican (the other side's price), available (Novig dollars at the price), ev, fair, cnoBooks (books behind CNO's fair), cnoOneWay, cnoListAgeSec,",
         "    and the app's own BOOK CHECK from CNO's game page when it was read (checkAtMs says when; a page is read for the top few bets, so many bets have none): twoSided (companies pricing both sides), oneSided, agreeing (those whose own fair says +EV at Novig's price), verdict (CONFIRMED / NOT_CONFIRMED …), checkFair, checkEv, books (every book's odds, other side, fair and the EV it gives Novig's price), dissent (books saying not +EV),",
         "    sharpVerdict / sharpBook / sharpEv (the sharpest book for the kind of bet — Pinnacle and Circa for game lines, Kalshi and ProphetX for props — and whether it VETOED the price), fullKelly (the Kelly share of bankroll this edge calls for), preset (the preset in force).",
         "vig / cno: the OTHER scanner's record when both listed the bet (atBet is the first lister's): vig = Vigilant's (its fair line's method, the books and sharp books behind it, how old their quotes were); cno = CNO's (its books, one-way flag, list age).",
-        "s: every look, oldest first, each [minutesBeforeStart, kind, american, ev, fair, books, dollars, agreeing, companiesBothSides, checkEv, sharpVerdict]. kind: c = a CNO scan listed it, v = a Vigilant scan did, k = its book page was read (agreeing / companies / checkEv / sharp verdict are filled), xc / xv = that scan no longer lists it.",
+        "s: every look, oldest first, each [minutesBeforeStart, kind, american, ev, fair, books, dollars, agreeing, companiesBothSides, checkEv, sharpVerdict]. kind: c = the app's CNO list carried it, w = the wide read found it (it finds the c rows too: both are logged), v = a Vigilant scan listed it, k = its book page was read (agreeing / companies / checkEv / sharp verdict are filled), xc / xw / xv = that read no longer lists it.",
         "    A look is logged when the bet is first seen, when odds / books change or EV moves 0.25 points (at most one a minute), at least every 5 minutes while it's listed, when it drops off, and for each book check that changed.",
     )
 
     private val CAVEATS: List<String> = listOf(
-        "- SELECTION: only bets a scanner listed are here. CNO sends its best rows under Tj's filters (devig method, longest odds, fewest books, smallest EV, row limit — see the rules line below); a bet the filters hid is not in the data. A bet \"dropped\" (gone) may have lost its edge OR been pushed out by the row limit.",
+        "- SELECTION: the app's list is CNO read under Tj's filters (devig method, longest odds, fewest books, smallest EV, row limit, complete book, both sides — see the rules line below); the WIDE read opens all of those but his devig method, his book, and what his Shared View link scopes (sports, leagues, main lines, live, and any filter the app doesn't know: THE WIDE READ line says which fields were posted). So a bet the filters hid IS here, flagged by `screen`; one outside the link's scope, or past the wide read's row limit, is not.",
+        "- The wide read runs at most every 30 seconds, and only while the app's CNO list is being read: a bet that appeared and vanished between two reads is missed. A bet \"dropped\" (gone) from the app's list may have lost its edge OR been pushed out by the row limit; look at its `w` looks to tell which (still there in the wide read = pushed out or filtered).",
+        "- HIDDEN BETS: many are hidden for good reason (one-way devigs, one or two books, a price over the cap, futures, a stale line over 20% EV). The hidden group's ROI and CLV are real numbers like any other, but its CLV is mostly against the same closes: do not read a hidden kind as a strategy until it holds on both halves of the period.",
         "- FIRST-LISTED PRICE: ROI and clv assume the bet could be taken at the price at the first look, for a unit. Novig had only `available` dollars at that price, and many bets were listed for minutes: check listedMin and available before believing a rule's size.",
         "- CLOSES: the close sources differ (Pinnacle is sharper than ESPN's DraftKings line; Novig's last trades can lag). Compare CLV by closeVia before pooling. Bets with no close are left out of every CLV figure; their reasons are in the summary.",
         "- RESULTS are noisy: at +3% EV a bet wins its edge once in thousands of bets. Trust CLV first; use ROI only to confirm over hundreds of games. Same-game and same-player bets are correlated: the effective sample is games, not rows.",
@@ -478,8 +487,14 @@ object StudyExport {
         "- The sample is one phone over the dates above, while the app and its rules were changing (the version and preset are in atBet). Say 'the data suggests', and ask Tj when a change needs a decision.",
     )
 
-    /** The most journal bytes in one file (the share sheet and Claude's reading both have limits); older days stay on the phone. */
+    /** The most bytes of bets' lines in one file (the share sheet and Claude's reading both have limits); every bet is still in the summary. */
     const val MAX_BYTES = 24L * 1024 * 1024
+
+    /** Days are taken, newest first, while their journals total under this many times [MAX_BYTES] (a journal holds more than its lines in the file). */
+    private const val DAYS_FACTOR = 3L
+
+    /** The share of the lines' budget the bets only the wide read found may take. */
+    private const val HIDDEN_SHARE = 0.65
 
     private const val MAX_SPLIT_GROUPS = 25
 }
