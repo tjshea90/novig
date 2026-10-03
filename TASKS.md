@@ -3509,4 +3509,5 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 - [ ] BI4 Auto-make (bids) gets its own section/tab, not hidden behind links in another tab.
 - [ ] BI5 Auto-make ON didn't post anything by itself (Tj had to press Post now on each): find why, fix, and make "fully automatic" a clear option that posts bids itself.
 - [ ] BI6 No bid filled: investigate (price vs the book, margin, ttl/expiry churn, cancel reasons ×46 expired, ×19 paused, ×18 fair goes old), loosen only where still +EV; tests.
+- [ ] BI8 Tj, 2026-10-03 ~05:05Z: "Also make it so the make bidding system is always shown, even if vigilant scanning is turned off. As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs including vigilant scanning" — the Bids tab always shown (any scanner choice); switching bids or auto-make on turns on what they need (Vigilant scanning, background auto-scan of Vigilant, unpause), and says what it turned on.
 - [ ] BI7 Sweep for UI/code improvements and bugs; full floor, ship, answer Tj with the link.
