@@ -164,6 +164,33 @@ class MakerTest {
         assertTrue(stop.places.isEmpty())
     }
 
+    /**
+     * Full test 2026-10-03: a bid that moves (the fair fell, or it's about to expire) is cancelled and re-posted in the same pass, but the wallet's budget
+     * still counted the old bid as up, so on a tight wallet the move waited a pass with that side bare. The replacement may use its own predecessor's
+     * dollars, and no other side may.
+     */
+    @Test
+    fun `a moved bid's replacement can use the dollars its own cancelled bid frees, and no other side can`() {
+        // One $5.00 bid up on a $5.00 wallet: the budget beside what's up is $0. The fair falls: the bid moves down to 0.495 ($4.95).
+        val moved = MakerPlan.plan(listOf(post("m1-over", 0.495), post("m2-over", 0.300, 1_000)), listOf(resting("m1-over", 0.500)), rules, now, budget = 0.0)
+        assertEquals("The fair price fell: re-posted lower", moved.cancels.single().second)
+        assertEquals(listOf("m1-over"), moved.places.map { it.line.outcomeId })
+        // The other side's $3.00 bid can't borrow m1's freed $5.00.
+        assertEquals(mapOf(MakerPlan.BUDGET_REACHED to 1), moved.waiting)
+        // A replacement costing more than its predecessor frees still needs the rest from the budget.
+        val bigger = MakerPlan.plan(listOf(post("m1-over", 0.495, 1_200)), listOf(resting("m1-over", 0.500)), rules, now, budget = 0.0)
+        assertTrue(bigger.places.isEmpty())
+        assertEquals(1, MakerPlan.plan(listOf(post("m1-over", 0.495, 1_200)), listOf(resting("m1-over", 0.500)), rules, now, budget = 1.0).places.size)
+        // About to expire with a fresher fair: re-posted on its own dollars too.
+        val expiring = MakerPlan.plan(
+            listOf(post("m1-over", 0.500).copy(restUntilMs = now + 30 * 60_000)), listOf(resting("m1-over", 0.500, expires = now + 60_000)), rules, now, budget = 0.0,
+        )
+        assertEquals("About to expire: re-posted", expiring.cancels.single().second)
+        assertEquals(1, expiring.places.size)
+        // A partly filled bid isn't re-posted at all (that side is a bet now), credit or not.
+        assertTrue(MakerPlan.plan(listOf(post("m1-over", 0.495)), listOf(resting("m1-over", 0.500, filled = 200)), rules, now, budget = 0.0).places.isEmpty())
+    }
+
     // ---- the desk against a fake Novig ----------------------------------------------------------------------------------
 
     private inner class FakeNovig : NovigTradingClient(
