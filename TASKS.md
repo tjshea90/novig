@@ -3566,5 +3566,11 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   "Vigilant's own bids aren't the bid to beat…", "when not every bid can go up, the ones that would lead…", "bids already up count against the wallet…",
   "bids that end are finished with one fills read…", "a fills read Novig throttles finishes nothing…"), MakerAppTest "the background cycle's pass is
   skipped…"; mutants 7/7 killed. Also: MakerBid.seenOpen (an order's own record is read only if it never showed open: a post-only refusal).
-- [ ] BJ3 Work the file's other findings (FAILURE/OPTIMIZE first) where the evidence supports a change; check v0.53.0's own changes (ThreadCpu split, scan lag, 429s, key retry, WTA matching, cycles not blocking).
+- [x] BJ3 Work the file's other findings (FAILURE/OPTIMIZE first) where the evidence supports a change; check v0.53.0's own changes (ThreadCpu split, scan lag, 429s, key retry, WTA matching, cycles not blocking).
+  Done (evidence, v0.53.0 file): scan lag FIXED by v0.53.0 (frames during a scan 4.5% slow vs 4.1% idle; perf:frames:scan RESOLVED); ThreadCpu works
+  (first measure: GC 64% of a core during a scan, no baseline yet, frames fine: WATCH, compare next file); fills 429s fixed by BJ2e; the public
+  catalog 429s (×~290 in v0.53.0) came while the key was refused (451 ×60, the carrier's address flagged as VPN) and were all retried (Novig
+  refused none, 0 books lost): pacing already handles it; WTA matching RESOLVED; background cycles not blocking: 1,528 cycles, 6 late (one 5 min
+  at 02:15 beside a Check-odds run), cycle p95 12 s; Vigilant CLV −0.7% on 40 bets: too few (§65-66), stays reported. PropLine/ParlayAPI/CNO
+  slowness: their servers.
 - [ ] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
