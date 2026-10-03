@@ -62,6 +62,7 @@ class LockScanner(
             null
         } ?: return markets[marketId]?.first
         markets[marketId] = m to now
+        if (markets.size > MAX_MARKETS) markets.entries.sortedBy { it.value.second }.take(markets.size - MAX_MARKETS).forEach { markets.remove(it.key) }
         return m
     }
 
@@ -115,7 +116,15 @@ class LockScanner(
     }
 
     companion object {
-        const val MARKET_TTL_MS = 2 * 60_000L
+        /**
+         * A market's sides, fee and line don't change, so it is read again only after this (6 h). It was 2 minutes, and the Tracker's Novig-only price
+         * read asks for every open bet's market: Tj's v0.54.0 file had ~200 public market reads in two minutes answered 429 (1,655 of 5,064 public
+         * catalog calls refused). Whether Novig still takes orders on it is the order book's and the placer's call, never this cache's.
+         */
+        const val MARKET_TTL_MS = 6 * 3_600_000L
+
+        /** Markets kept at most (an open bet's each, and a lock's): past it the oldest go. */
+        const val MAX_MARKETS = 2_000
     }
 }
 
