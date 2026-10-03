@@ -302,7 +302,7 @@ object StudyExport {
 
     /**
      * Writes the whole file to [out]: the days in [journal] newest first, as many as fit under [DAYS_FACTOR] times [maxBytes] of journal ([tmp] holds the bets' lines
-     * while the summary is added up). The bets' lines stop at [maxBytes] (the bets the app's lists never carried, [StudyRow.src] "w", at most [HIDDEN_SHARE] of it, so
+     * while the summary is added up). The bets' lines stop at [maxBytes] (the bets the app's lists hid, [StudyRow.screen] set, at most [HIDDEN_SHARE] of it, so
      * a day of wide-read finds can't push out the ones the app showed); every bet is in the summary all the same. [tracked]: Tj's own Tracker bets, to mark the ones he
      * placed. Returns the bets written.
      */
@@ -348,13 +348,13 @@ object StudyExport {
                     }
                     val row = rowOf(sb, now, own)
                     val text = json.encodeToString(StudyRow.serializer(), row)
-                    val hiddenOnly = row.src == "w"
-                    if (written + text.length < maxBytes && !(hiddenOnly && hiddenWritten + text.length > maxBytes * HIDDEN_SHARE)) {
+                    val hiddenOne = row.screen != null
+                    if (written + text.length < maxBytes && !(hiddenOne && hiddenWritten + text.length > maxBytes * HIDDEN_SHARE)) {
                         lines.write(text)
                         lines.write("\n")
                         rows++
                         written += text.length + 1
-                        if (hiddenOnly) hiddenWritten += text.length + 1
+                        if (hiddenOne) hiddenWritten += text.length + 1
                     } else {
                         cut++
                     }
@@ -493,7 +493,7 @@ object StudyExport {
     /** Days are taken, newest first, while their journals total under this many times [MAX_BYTES] (a journal holds more than its lines in the file). */
     private const val DAYS_FACTOR = 3L
 
-    /** The share of the lines' budget the bets only the wide read found may take. */
+    /** The share of the lines' budget the bets the app's lists hid may take. */
     private const val HIDDEN_SHARE = 0.65
 
     private const val MAX_SPLIT_GROUPS = 25
