@@ -101,15 +101,15 @@ data class MakerUi(
  * identity of the two lists: both come from state flows that hand out the same list until something changes.
  */
 private class MakerLists private constructor(private val bids: List<MakerBid>, private val decisions: List<MakerDecision>) {
-    val resting: List<MakerBid> by lazy(LazyThreadSafetyMode.NONE) { bids.filter { it.active }.sortedBy { it.startsTs } }
-    val filled: List<MakerBid> by lazy(LazyThreadSafetyMode.NONE) { bids.filter { it.filled > 0 }.sortedByDescending { it.postedAtMs } }
+    val resting: List<MakerBid> by lazy { bids.filter { it.active }.sortedBy { it.startsTs } }
+    val filled: List<MakerBid> by lazy { bids.filter { it.filled > 0 }.sortedByDescending { it.postedAtMs } }
 
-    val ready: List<MakerDecision.Post> by lazy(LazyThreadSafetyMode.NONE) {
+    val ready: List<MakerDecision.Post> by lazy {
         val up = resting.mapTo(HashSet()) { it.outcomeId }
         decisions.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in up }.sortedWith(compareBy({ it.price }, { -it.evAtFair }))
     }
 
-    val skipped: List<Pair<String, Int>> by lazy(LazyThreadSafetyMode.NONE) {
+    val skipped: List<Pair<String, Int>> by lazy {
         decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { MakerText.reasonGroup(it.why) }.eachCount().entries.sortedByDescending { it.value }.map { it.key to it.value }
     }
 
