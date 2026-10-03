@@ -406,6 +406,7 @@ private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
         OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }, modifier = Modifier.testTag("alertTurnOnBackground")) { Text("Turn on the background scan") }
     }
     if (s.cnoOn) SharpVetoSection(state, forAlerts = true, onUpdate = onUpdate)
+    if (AppBook.isNovig) TrapGuardSection(s, showMove = false, tag = "alerts", onUpdate = onUpdate)
     var notify by remember { mutableStateOf(com.tjshea.vigilant.app.ScanService.canNotify(context)) }
     androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
         notify = com.tjshea.vigilant.app.ScanService.canNotify(context)

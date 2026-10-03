@@ -454,6 +454,14 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         )
         RuleChips("Each bid expires after (re-posted while it's still good)", ScanSettings.MAKER_TTL_CHOICES, s.makerTtlMinutes, { if (it < 60) "$it min" else "${it / 60} h" }) { v -> onUpdate { it.copy(makerTtlMinutes = v) } }
         RuleChips("No bids this close to the start", ScanSettings.MAKER_STOP_CHOICES, s.makerStopMinutes, { "$it min" }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
+        RuleChips(
+            "Trap guard: only games starting within (shared with auto-bet and alerts)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapEarlyHours,
+            TrapGuardText::hoursLabel,
+        ) { v -> onUpdate { it.copy(trapEarlyHours = v) } }
+        Text(
+            MakerRulesText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag("makerTrapEarlyNote"),
+        )
         Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Both sides of a market", style = MaterialTheme.typography.bodyMedium)

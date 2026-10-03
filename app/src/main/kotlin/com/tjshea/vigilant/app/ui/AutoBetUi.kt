@@ -366,6 +366,8 @@ fun AutoBetSection(
 
     // ---- The sharp books' say ---------------------------------------------------------------------------
     SharpVetoSection(state, forAlerts = false, onUpdate = onUpdate)
+    // ---- Trap bets (RESEARCH.md §71) --------------------------------------------------------------------
+    TrapGuardSection(s, showMove = true, tag = "autoBet", onUpdate = onUpdate)
 
     // ---- How much -----------------------------------------------------------------------------------
     SectionTitle("How much")
