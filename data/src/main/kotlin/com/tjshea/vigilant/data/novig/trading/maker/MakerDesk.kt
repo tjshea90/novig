@@ -110,6 +110,33 @@ class MakerStore(file: File) {
     }
 }
 
+/** A bid Tj denied (or cancelled by hand): no bid on that side again before its game starts, unless he undoes it. */
+@Serializable
+data class DeniedBid(val outcomeId: String, val startsTs: Long, val selection: String, val deniedAtMs: Long)
+
+/**
+ * Tj's "no" to bids (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"): a denied side gets no bid, by hand or by
+ * auto-make, until its game starts or he undoes it (files/maker_denied.json).
+ */
+class MakerDenials(file: File, private val clock: () -> Long = System::currentTimeMillis) {
+    private val store = JsonFileStore(file, ListSerializer(DeniedBid.serializer()), { emptyList() })
+    val flow get() = store.flow
+
+    /** The sides denied now (games not started). */
+    suspend fun all(): List<DeniedBid> = store.read().filter { it.startsTs > clock() }
+
+    suspend fun outcomes(): Set<String> = all().mapTo(HashSet()) { it.outcomeId }
+
+    suspend fun deny(outcomeId: String, startsTs: Long, selection: String) {
+        val now = clock()
+        store.update { list -> list.filter { it.startsTs > now && it.outcomeId != outcomeId } + DeniedBid(outcomeId, startsTs, selection, now) }
+    }
+
+    suspend fun undo(outcomeId: String) {
+        store.update { list -> list.filterNot { it.outcomeId == outcomeId } }
+    }
+}
+
 /**
  * Make orders (Tj, 2026-10-03: "build the system in the app"; RESEARCH.md §70, NOVIG_API.md §17): Vigilant's bids under its fair price, posted
  * post-only with an expiry from the Vigilant wallet, re-priced as the fair moves, and every fill recorded in the Tracker as a bet
@@ -145,7 +172,15 @@ class MakerDesk(
      * the new bids. [stop]: why every bid comes down instead (null = post). [maxPerDay]: the most a day's API bets may add up to (fills count; resting
      * bids may not push it over).
      */
-    suspend fun cycle(lines: List<MakerLine>, rules: MakerRules, stop: String?, maxPerDay: Double, wallet: Double?): Report = lock.withLock {
+    suspend fun cycle(
+        lines: List<MakerLine>,
+        rules: MakerRules,
+        stop: String?,
+        maxPerDay: Double,
+        wallet: Double?,
+        /** Sides Tj denied ([MakerDenials]): no bid there, and a resting one comes down. */
+        denied: Set<String> = emptySet(),
+    ): Report = lock.withLock {
         val problems = ArrayList<String>()
         val fills = settle(problems)
         val now = clock()
@@ -158,6 +193,7 @@ class MakerDesk(
         val held = (bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - activeOutcomes) + busy
         val refused = bids.filter { it.status == MakerStatus.REFUSED && now - (it.endedAtMs ?: it.postedAtMs) < REFUSED_COOLOFF_MS }.mapTo(HashSet()) { it.outcomeId }
         val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
+            if (d is MakerDecision.Post && d.line.outcomeId in denied) return@map MakerDecision.Skip(d.line, DENIED)
             // Novig refused a bid here a moment ago (post-only: its price had moved to the bid): not asked again until the cool-off passes.
             if (d is MakerDecision.Post && d.line.outcomeId in refused && d.line.outcomeId !in activeOutcomes) {
                 MakerDecision.Skip(d.line, "Novig refused a bid here in the last ${REFUSED_COOLOFF_MS / 60_000} min (its price had moved to the bid)")
@@ -484,6 +520,9 @@ class MakerDesk(
     private fun money(v: Double) = String.format(java.util.Locale.US, "$%,.2f", v)
 
     companion object {
+        /** Why a denied side gets no bid. */
+        const val DENIED = "You denied this bid (Bids tab › Denied to undo)"
+
         /** A bid whose answer was lost and that no list shows after this long is looked for in Novig's other lists, then called gone. */
         const val LOST_AFTER_MS = 90_000L
 
