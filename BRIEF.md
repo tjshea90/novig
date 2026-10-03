@@ -398,8 +398,8 @@ robolectric.org/configuring/.
   the veto on, the sharpest book for the bet's kind must give Novig's price at least that edge on its own two prices (zero or less always vetoes); the same bar for the
   auto-bet, CNO's alerts and the bids (every sharp book in the fair, at the bid's own price). What a +EV bet keeps by the close tracks the sharp book's own edge, not the
   consensus's (48,394 soccer matches: sharp 0-1% kept +0.8%, not distinguishable from zero). Presets carry it (Volume 1%, Strict 2%). When the wallet or the per-cycle cap
-  can't take every bet, the auto-bet places the biggest `AutoBet.credibleEv` first (the sharp book's edge where it priced the bet, else 70% of the shown edge); the
-  stake still uses the shown edge. Lowering the bar under 1% or dropping the bid move rule needs Tj's word.
+  can't take every bet, the auto-bet places the biggest `AutoBet.credibleEv` first (the sharp book's edge where it priced the bet, else 70% of the shown edge); a
+  Kelly stake's fair is the lower of CNO's and the sharpest book's own (`AutoBet.stake(…, sharpFair)`: never sized on more edge than the sharp book backs). Lowering the bar under 1% or dropping the bid move rule needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.

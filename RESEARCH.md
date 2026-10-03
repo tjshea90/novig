@@ -4371,7 +4371,8 @@ What marks a trap (a sharp on the other side, the rest of the market lagging), w
 - **Take**: a consensus edge of 2.5-3%+ (presets) at Novig's live price, inside 6 h of the start, books agreeing, the sharpest book for the kind
   giving at least 1% itself (2% on Strict), game lines not just moved by Novig; when money or the per-cycle cap is short, the bets with the biggest
   **credible edge** go first (the sharp book's own edge where it priced the bet, else 70% of the shown edge, `AutoBet.credibleEv`); ¼ Kelly on the
-  shown edge (on an edge that keeps ~70% that is about ⅓ Kelly of the true edge: inside Benter's ½-⅓).
+  shown edge (on an edge that keeps ~70% that is about ⅓ Kelly of the true edge: inside Benter's ½-⅓), **never on a fair above the sharpest book's
+  own** (a 4% shown edge the sharp book gives 1.2% would otherwise be staked at ~0.8× full Kelly on the edge that holds: Benter's overbet).
 - **Make**: 4% under the fair, props/period/team totals (game lines only with a sharp book and now the move rule), 0.10-0.65, re-quoted, inside
   6 h, every sharp book in the fair giving the bid at least the bar.
 - **Judge**: CLV per segment over 200+ bets; `tj_bets_by_lead.py` now splits by the sharp book's edge when bet, so Tj's own data tests the 1% bar.
@@ -4380,7 +4381,8 @@ What marks a trap (a sharp on the other side, the rest of the market lagging), w
 - `ScanSettings.sharpVetoMinEv` (0 / 0.5 / 1 / 1.5 / 2%, **1% default**): `SharpVeto.judge(…, minEv)` (auto-bet, CNO alerts, the bet's record),
   `MakerRules.sharpMinEv` (bids at their own price), presets (`PresetRules.sharpVetoMinEv`: Volume + safe CLV 1%, Strict CLV 2%; presets saved
   earlier read as 1%), the Auto-bet tab's and Alerts' veto sections (chips + note), the Bids tab's veto row, Settings search, Diagnostics.
-- `AutoBet.credibleEv` / `NO_SHARP_KEEPS` (0.7): the auto-bet's order when not every bet can be placed.
+- `AutoBet.credibleEv` / `NO_SHARP_KEEPS` (0.7): the auto-bet's order when not every bet can be placed. `AutoBet.stake(…, sharpFair)`: a Kelly stake's
+  fair is the lower of CNO's and the sharpest book's own (only ever smaller stakes).
 - Game-line bids: `MakerRules.novigMove` (= `trapNovigMove`), `MakerLines.moveWanted` / `withMoves`, `MakerRunner` reads at most 6 markets a pass
   (kept 2 min; none by default, game lines being off for bids); a resting game-line bid on a just-moved line comes down.
 - Tests: SharpVetoTest (bar, inclusive edge), PresetsTest, MakerTest (bar at the bid, move rule), AutoBetTest (credible edge), AutoBettorTest (bar
