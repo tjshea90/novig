@@ -3623,3 +3623,20 @@ You may use sub agents if it is more effective or better
 ```
 After the new version ships, run full tests on the new system and make sure the API usage is correct for make bets. Make sure the math is sound and that it only will make bets which are positive EV, aiming for as much profit as possible. Make it so it can auto make bets just the same way that auto bet already takes bets. Also make it so it can recommend bets to make and I manually approve or deny them when auto bet is turned off. Double check all the math and also the timing. It should not keep make orders long enough that they lose their positive EV. It should not aim at break even, it should aim for Max positive EV and beating clv. Accuracy is very important because real money will be used. Make sure to implement the strategies of proven professional bettors. Then scan for ui and code improvements and bug fixes.
 ```
+
+## 2026-10-03T04:46:47Z
+```
+@"/root/.claude/uploads/ddef4da2-a70f-5f39-abba-8d696c8afff2/23e76817-vigilant-diagnostics-v0.52.0-2026-10-03-0045.txt" A few optimizations to this app. 
+
+1) review the attached diagnostics file and make optimizations
+
+2) make a quick way inside the app where I can see my vigilant wallet balance, maybe show it somewhere in the app at all times. 
+
+3) the entire app gets laggy when vigilant is scanning, but not when cno only is scanning 
+
+4) make auto-make betting have its own section or tab. Right now it is hidden inside links in another tab
+
+5) I had auto make bids turned on, but it didn't actually make any bids by itself. I had to manually press each bid to post now. I want to have an option for it to be fully automatic and make the bids itself. 
+
+6) I posted plenty of bids and not one of them was taken. Maybe the criteria is too restrictive. Investigate, but it should never be too loose where it is no longer positive ev.
+```
