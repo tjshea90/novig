@@ -125,7 +125,7 @@ class MakerRunner(
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
             val rules = MakerRules.of(s)
             val report = desk.cycle(
-                withMoves(MakerLines.from(result, s, now), rules, now, read = stop == null && s.maker), rules, stop, s.apiMaxPerDay, wallet,
+                withMoves(MakerLines.from(result, s, now), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial,
             )
             notifyFills(report.fills, desk.bids())
