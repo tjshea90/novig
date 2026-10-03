@@ -228,6 +228,37 @@ class AutoBettorTest {
         assertEquals(placed.stake, rec.stake!!, 1e-9)
     }
 
+    /** RESEARCH.md §72: what a bet keeps at the close is about the sharpest book's own edge, so a small sharp edge is vetoed (1% by default). */
+    @Test
+    fun `the sharp veto's bar - a bet the sharpest book gives under 1% isn't placed, the same bet with the bar at any +EV is`() = runBlocking {
+        fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
+            state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
+        // Kalshi +108/-124 on Jefferson's Under: a small positive edge at Novig's +117.
+        val small = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 108, 106.0, -124, 13_662.0) else it }) }
+        val ev = com.tjshea.vigilant.data.scanner.SharpVeto.judge(small, jefferson.league, jefferson.market, jefferson.bet, 117, false, 0.0).ev!!
+        assertTrue("Kalshi's own edge here is small but positive: $ev", ev > 0.0 && ev < 0.01)
+        val bar = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
+        assertEquals(0.01, bar.sharpVetoMinEv, 0.0)
+        val novig = FakeNovig()
+        val r = bettor(novig).run(bar, withBooks(small, bar))
+        assertEquals(0, r.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertEquals(r.skipped.toString(), 1, r.skipped["Kalshi, the sharpest book for player props, gives Novig's price under the sharp veto's 1.0% edge"])
+        // The old bar (any +EV) places it.
+        val any = bar.copy(sharpVetoMinEv = 0.0)
+        assertEquals(1, bettor(FakeNovig()).run(any, withBooks(small, any)).placed.size)
+    }
+
+    /** The money goes first to the edges most likely to hold (RESEARCH.md §72): the order the placement loop walks. */
+    @Test
+    fun `when not every bet can be placed, the one with the bigger credible edge goes first`() {
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt").readText()
+        val sort = src.indexOf("val ordered = passing.sortedByDescending { AutoBet.credibleEv(")
+        assertTrue("the passing bets are ordered by the credible edge", sort > 0)
+        assertTrue("and the placement loop walks that order", src.indexOf("for (item in ordered)") > sort)
+        assertFalse("not the shown edge's order", src.contains("for (item in passing)"))
+    }
+
     /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
     @Test
     fun `with every book must agree on, a bet one book disagrees with is not placed, and one all of them agree with is`() = runBlocking {

@@ -301,4 +301,17 @@ class AutoBetTest {
         assertEquals(0.5, AutoBet.priceOf(row(100, 0.5)), 1e-12)
         assertEquals(0.4, AutoBet.priceOf(row(150, 0.5)), 1e-12)
     }
+
+    /** RESEARCH.md §72: when not every bet can be placed, the money goes to the edges most likely to hold by the close. */
+    @Test
+    fun `the credible edge is the sharpest book's own edge when it priced the bet, else 70% of the shown edge`() {
+        assertEquals(0.7, AutoBet.NO_SHARP_KEEPS, 0.0)
+        // A 5% shown edge the sharp book gives only 1.2%, against a 3% one with no sharp book: 1.2% vs 2.1%, the second first.
+        assertEquals(0.012, AutoBet.credibleEv(0.05, 0.012), 1e-12)
+        assertEquals(0.021, AutoBet.credibleEv(0.03, null), 1e-12)
+        // A sharp book that gives more than the shown edge is believed too (sharp 4%+ kept +5.7% at the close in the soccer study).
+        assertEquals(0.06, AutoBet.credibleEv(0.03, 0.06), 1e-12)
+        val order = listOf(0.05 to 0.012, 0.03 to null, 0.04 to 0.035).sortedByDescending { (shown, sharp) -> AutoBet.credibleEv(shown, sharp) }
+        assertEquals(listOf(0.04 to 0.035, 0.03 to null, 0.05 to 0.012), order)
+    }
 }
