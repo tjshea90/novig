@@ -1,21 +1,23 @@
-# CHECKPOINT 2418 — read me first, then TASKS.md
+# CHECKPOINT 2419 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T03:12:16Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `dd9b888b` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T03:23:19Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-91942f39-sfdkh9` · **builds on:** `97f49058` (this checkpoint is the commit after it)
 
 ## Just done
-BH1-3 data fixes: cancels confirmed (CANCELING), fills read even on 404 / lost answers (searched by clientId), refused cool-off, expiry bounded by the fair's freshness + stop window, fair age required, books agree + sharp veto + game lines need sharp, Kelly sizing (MakerTest 19, mutants 8/8)
+BH1-BH6 done: maker audit fixes (6 bugs), books agree + sharp veto + Kelly, auto-make like auto-bet (confirm, restart reset, link), approve/deny + recommendation notifications; mutants 12/12
 
 ## Do this next
-BH4-6 app: settings UI (stake mode, max, sharp veto, recommend), approve/deny (MakerDenied store, tab buttons, recommendation notifications with actions), confirm to switch auto-make on, LaunchReset, background banner, auto-bet tab link; fix app tests
+BH7: full floor -Pscreenshots, look at PNGs, sweep per test-protocols (maker diff adversarially, Compose reviews), fix, docs, ship v0.52.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  597acd33 ckpt 2418: BH1-3 data fixes: cancels confirmed (CANCELING), fills read even on 404 / lo
   e8755330 ckpt 2417: BH0 done: v0.51.0 released + recorded (BG6 ticked)
   622feada ckpt 2416: BH: Tj's make-orders follow-up written to TASKS.md (full tests, +EV only, ti
   94cdbdc2 ckpt 2415: pre-release: v0.51.0: make orders (the Bids tab): post-only bids under Vigil
@@ -25,8 +27,7 @@ BH4-6 app: settings UI (stake mode, max, sharp veto, recommend), approve/deny (M
   9fa8c34e ckpt 2411: BG6a-d done: client ttl/cancel, maker settings, MakerQuote/MakerPlan/MakerLi
   49ed7b56 ckpt 2410: BG1-BG5 ticked; BG6 planned in TASKS.md (6a client, 6b settings, 6c MakerQuo
   6bb1779f ckpt 2409: BG1-BG5 research written: NOVIG_API.md §17 (PO + ttl, cancel, queue, fees, 
-  aa59075d ckpt 2408: BG1 API read (docs: PO + ttl, GTT, no amend, queue = price then time, cancel
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(14 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

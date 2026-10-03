@@ -3478,10 +3478,22 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 
 - [x] BH0 Finish shipping v0.51.0 (release.yml, get_release_by_tag, record-release) before anything else.
   Done: v0.51.0 (code 91) released 2026-10-03T03:05Z, recorded.
-- [ ] BH1 Full tests (test-protocols skill) on the make-orders system: every Novig route/field it sends and reads checked against NOVIG_API.md §17 and the OpenAPI spec (PO + ttl, cancel routes, order/fill reads, statuses), every number re-derived by hand (grid flooring, EV at the fair, contracts and cost, caps, budget, daily limit).
-- [ ] BH2 Only +EV bids, aimed at the most EV and CLV, not break-even: a bid rests only while its EV at the CURRENT fair is at least the margin; game lines only with a sharp book in the fair; findings fixed with tests.
-- [ ] BH3 Timing: a bid never outlives the fair it was priced from (expiry bounded by the fair's freshness as well as the ttl), re-checked every pass; nothing rests into the start; check the pass cadence against §70.3.
-- [ ] BH4 Auto-make the same way auto-bet takes bets: a confirm to switch it on, the same safeguards (pregame, wallet, daily limit, per-bet limit, stop on lost answers, a phone restart switches it off like auto-bet), its own notifications, works in the background scan (say when the background scan can't feed it).
-- [ ] BH5 Recommendations to approve or deny when auto-make is off: the Bids tab's list with Approve / Deny (a denied bid stays hidden for that game, undo-able), and a notification for new recommendations with Approve / Deny that re-checks the bid before posting.
-- [ ] BH6 Professional strategies (RESEARCH.md §69-§70) in the sizing and selection: fractional Kelly on the edge (stake modes like auto-bet's), most per bid capped, underdog sides first, props first, CLV per fill in the tab and Diagnostics.
+- [x] BH1 Full tests (test-protocols skill) on the make-orders system: every Novig route/field it sends and reads checked against NOVIG_API.md §17 and the OpenAPI spec (PO + ttl, cancel routes, order/fill reads, statuses), every number re-derived by hand (grid flooring, EV at the fair, contracts and cost, caps, budget, daily limit).
+- [x] BH2 Only +EV bids, aimed at the most EV and CLV, not break-even: a bid rests only while its EV at the CURRENT fair is at least the margin; game lines only with a sharp book in the fair; findings fixed with tests.
+- [x] BH3 Timing: a bid never outlives the fair it was priced from (expiry bounded by the fair's freshness as well as the ttl), re-checked every pass; nothing rests into the start; check the pass cadence against §70.3.
+- [x] BH4 Auto-make the same way auto-bet takes bets: a confirm to switch it on, the same safeguards (pregame, wallet, daily limit, per-bet limit, stop on lost answers, a phone restart switches it off like auto-bet), its own notifications, works in the background scan (say when the background scan can't feed it).
+- [x] BH5 Recommendations to approve or deny when auto-make is off: the Bids tab's list with Approve / Deny (a denied bid stays hidden for that game, undo-able), and a notification for new recommendations with Approve / Deny that re-checks the bid before posting.
+- [x] BH6 Professional strategies (RESEARCH.md §69-§70) in the sizing and selection: fractional Kelly on the edge (stake modes like auto-bet's), most per bid capped, underdog sides first, props first, CLV per fill in the tab and Diagnostics.
+  Done (BH1-BH6, 2026-10-03): routes and fields re-checked against the spec (PO + ttl, DELETE by id/scope, GET /v3/orders status/outcome filters, fills `order` filter).
+  Found and fixed: (1) a cancel is only queued (a fill can land after its 200): bids go CANCELING and are watched until Novig confirms, a replacement only
+  after the confirm, cancel-all confirms at once; (2) an order whose record can't be read (404) had its fills skipped: fills are always read; (3) a lost
+  answer whose order filled before the next look was called LOST: Novig's other lists are searched by clientId; (4) a bid could outlive its fair (30-min
+  ttl vs a 5/10-min freshness) and rest into the stop window: expiry = min(ttl, start − stop window, fair seen + freshness), and no fair of unknown age;
+  (5) with auto-make off every pass would have cancelled bids Tj approved by hand: off = watch them, take down only when the fair falls under them;
+  (6) a refused post-only bid would be re-sent every cycle: 5-min cool-off. Added: books agree (each book's own worst-case fair over the bid, at least
+  2), sharp veto, game lines only with a sharp book, ¼ Kelly sizing like auto-bet (stake modes, most per bid), the invariant test (4,000 random fairs:
+  every bid ≥ the margin under the fair, and kept only while still so). Auto-make: confirm to switch on, a phone restart switches it off (LaunchReset),
+  linked from the Auto-bet tab, background-scan banner. Recommendations: Approve/Deny in the tab (Denied list with Undo, Cancel by hand denies the side),
+  notifications with Approve/Deny (MakerActionReceiver; each side once; Approve re-checks on the latest prices). Tests: MakerTest 21 (mutants 8/8),
+  MakerUiTest 7, MakerAppTest 6 (mutants 4/4).
 - [ ] BH7 UI and code improvements and bug fixes found in the sweep; full floor, ship, answer Tj with the link.
