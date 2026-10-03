@@ -71,7 +71,7 @@ data class StudyResult(
     val from: String? = null,
 )
 
-/** One line of a day's journal. [e] says which of the fields it carries. */
+/** One line of a day's journal. [e] says which of the fields it carries ([BET], [SIGHT], [CHECK], [VIG], [RES], [IDS]). */
 @Serializable
 data class Line(
     /** [BET] a bet first listed, [SIGHT], [CHECK] its book check, [VIG] Vigilant's own record of it, [RES] a grading or close result. */
@@ -84,8 +84,12 @@ data class Line(
     val s: Sight? = null,
     val a: AtBet? = null,
     val r: StudyResult? = null,
+    /** On [IDS]: the Novig market and outcome the bet turned out to be, once its link was found (Novig's trade history is read by them). */
+    val m: String? = null,
+    val o: String? = null,
 ) {
     companion object {
+        const val IDS = "ids"
         const val BET = "bet"
         const val SIGHT = "s"
         const val CHECK = "chk"
@@ -138,6 +142,10 @@ class StudyBet(
 
     fun applyVig(a: AtBet) {
         if (vig == null) vig = a
+    }
+
+    fun applyIds(marketId: String?, outcomeId: String?) {
+        bet = bet.copy(marketId = marketId?.takeIf { it.isNotEmpty() } ?: bet.marketId, outcomeId = outcomeId?.takeIf { it.isNotEmpty() } ?: bet.outcomeId)
     }
 
     fun apply(t: Long, r: StudyResult) {
