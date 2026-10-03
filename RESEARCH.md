@@ -4073,3 +4073,25 @@ latest scan would post (Post, by hand, works with the switch off), why the other
 - **Fractional Kelly (Benter ½-⅓, Walters 1-3% of the bankroll a bet).** ¼ Kelly on the edge at the fair by default, capped per bid (`makerMaxStake`,
   never over the per-bet limit), the day's API limit and the wallet. A filled bid is a bet and its CLV is measured like every bet (judge it over 200+ fills).
 - **Underdog sides and props first** (the plan posts cheapest first; props, 1st-half lines and team totals by default): §70.2's best per-bid groups.
+
+### 70.8 v0.53.0: why Tj's first bids never filled, and what changed (2026-10-03; Tj: "I posted plenty of bids and not one of them was taken. Maybe the criteria is too restrictive. Investigate, but it should never be too loose where it is no longer positive ev")
+**Evidence (Tj's v0.52.0 Diagnostics, 00:45 EDT):** 83 bids on record over ~1.5 h (v0.51.0 went out 23:05 EDT), late at night: 46 expired, 19
+cancelled by the Pause button, 18 cancelled "the fair price goes old within a minute"; 0 fills. The Vigilant scan took **484 s** (the key refused
+mid-scan with `451 ANONYMIZED_NETWORK`, so most reads went the public routes at ≤6/s, which answered 429 about once a minute), and **every automatic
+pass waited for a finished scan**. By the end the fair prices read first were 7-8 min old (5-min freshness under 3 h from the start, 10 min past it),
+so the after-scan pass found most lines too old and auto-make posted nothing; Tj's Post-now taps judged the running scan and worked. Those bids then
+lived **minutes** (expiry bounded by the fair's freshness, §70.7) with gaps of several minutes between scans.
+
+**What that means for fills:** §70.3's numbers assume a bid up all the time from hours out: a static bid left 15 minutes fills about 4% of the time
+(props, 4%), re-quoted for 24 h about 40-46%. Bids up a few minutes each, for about an hour and a half after midnight, should expect a fill or two
+from 83, not dozens: zero is unlucky, not proof the margin is wrong. **The criteria are not too tight; the bids weren't up long enough.** The margin
+stays 4% under the fair (the per-bid optimum, §70.2; 3% is the lowest the research supports; nothing under it ships), and every +EV check stays.
+
+**v0.53.0 keeps bids up:** passes run on a scan still in progress (every 20 s; a bid on a line not judged yet stays up, its `ttl` bounds it), the
+lines use the last scan's Novig book (≤20 min: the price comes from the fair, `PO` refuses a cross), so each league's bids are re-quoted within
+seconds of its fair odds arriving; the key comes back 2 minutes after an address refusal instead of 10 (faster scans, fresher fairs); the public
+pacer stops re-trying the pace Novig just refused. Bidding turns on what it needs (Vigilant's scanner, the background scan with Vigilant at least
+once a minute). **Two limits Tj controls:** the Vigilant wallet ($18.51 then: resting bids are treated as held, so at ¼ Kelly of $250 only ~6-9
+bids fit at once; the tab now says when bids wait on the wallet), and the hours (prop takers trade in the day and evening, not after midnight).
+Diagnostics now records per bid who posted it, how long it rested, and whether it led its side of Novig's book when posted (`MakerStats`), so the
+next file says whether bids rest long enough and sit at the top of the book.
