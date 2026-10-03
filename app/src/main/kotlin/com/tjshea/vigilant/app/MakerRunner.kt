@@ -77,22 +77,37 @@ class MakerRunner(
         try {
             val now = clock()
             val stop = stopReason(s)
-            // No scan yet, or one still running (its lines come in a league at a time): only fills and expiries until it's done.
-            if ((result == null || run.scanning || result.partial) && stop == null) {
+            // No scan yet in this process: only fills and expiries. A scan still running is judged as far as it got (Tj, 2026-10-03: "I had auto make
+            // bids turned on, but it didn't actually make any bids by itself": a scan took 8 minutes and every pass waited for its end, by when the fair
+            // prices it read first were going old): its finished leagues' lines are bid on, and a bid whose line it hasn't judged yet stays up.
+            if (result == null && stop == null) {
                 val fills = desk.settleOnly()
                 notifyFills(fills, desk.bids())
                 _status.update { it.copy(running = false, lastAtMs = now, problem = null) }
                 return@withLock null
             }
+            val partial = result?.partial == true
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
             val report = desk.cycle(
                 MakerLines.from(result, s, now), MakerRules.of(s), stop, s.apiMaxPerDay, wallet,
-                denied = c.makerDenials.outcomes(clock()), autoPost = s.maker,
+                denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial,
             )
             notifyFills(report.fills, desk.bids())
             if (report.placed > 0 || report.cancelled > 0 || report.fills.isNotEmpty()) {
-                c.eventLog.info("MAKER", "$why: ${report.placed} posted, ${report.cancelled} cancelled, ${report.fills.size} filled, ${report.resting} resting" + (report.stopped?.let { " ($it)" } ?: ""))
+                // Whether Novig holds a resting bid's cost from the balance isn't in its docs (NOVIG_API.md §17): the wallet just after posting says.
+                val walletNote = if (report.placed > 0 && wallet != null) {
+                    val after = runCatching { c.wallet.fresh(maxAgeMs = 0L)?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+                    val up = desk.bids().filter { it.resting }.sumOf { it.restingDollars }
+                    after?.let { " · wallet ${money(wallet)} → ${money(it)} with ${money(up)} resting" }.orEmpty()
+                } else ""
+                val waiting = report.waiting.entries.sumOf { it.value }.takeIf { it > 0 }?.let { n -> " · $n waiting: ${report.waiting.maxBy { it.value }.key}" }.orEmpty()
+                c.eventLog.info(
+                    "MAKER",
+                    "$why${if (partial) " (scan running)" else ""}: ${report.placed} posted, ${report.cancelled} cancelled, ${report.fills.size} filled, ${report.resting} resting" +
+                        (report.stopped?.let { " ($it)" } ?: "") + waiting + walletNote,
+                )
             }
+            if (report.placed > 0) c.eventLog.count("maker.posted.auto", report.placed.toLong())
             report.problems.forEach { p -> runCatching { c.problems.add("Make orders", p) } }
             _status.update {
                 it.copy(
@@ -219,6 +234,8 @@ class MakerRunner(
         c.makerRecommended.mark(pick.map { it.line.outcomeId to it.line.startsTs }, clock())
         c.eventLog.count("maker.recommended", pick.size.toLong())
     }
+
+    private fun money(v: Double) = com.tjshea.vigilant.app.ui.Format.money(v)
 
     private fun stopReason(s: ScanSettings): String? = when {
         !AppBook.isNovig -> "Make orders are for Novig"
