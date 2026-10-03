@@ -480,6 +480,17 @@ class AppContainer(private val app: Application) {
                 runCatching { maker.run("after a scan") }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }
             }
         }
+        // And while a scan runs (Tj, 2026-10-03: "it didn't actually make any bids by itself"): each league's lines are bid on once its fair odds are
+        // in, not minutes later at the scan's end. The newest partial result at most every [MAKER_SCAN_PASS_MS] (a pass reads Novig's open orders).
+        appScope.launch {
+            runner.state.filter { it.scanning && it.result?.partial == true }.map { it.result }.distinctUntilChanged { a, b -> a === b }.conflate().collect {
+                val s = currentSettings()
+                if (!s.paused && AppBook.isNovig && (s.maker || s.makerRecommend)) {
+                    runCatching { maker.run("during a scan") }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }
+                    kotlinx.coroutines.delay(MAKER_SCAN_PASS_MS)
+                }
+            }
+        }
         appScope.launch {
             // Paused (the Pause button, or the wallet ran out): every bid down. Auto-make switched off: the bids it posted down; the ones Tj approved stay.
             settingsStore.flow.filterNotNull().map { it.paused to it.maker }.distinctUntilChanged().collect { (paused, on) ->
