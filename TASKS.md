@@ -3579,9 +3579,24 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 
 ## Tj, 2026-10-03 ~15:11Z (with vigilant-diagnostics-v0.54.0-2026-10-03-1107.txt): "Run full tests on the app. Make sure all the settings and features are organized well in the ui and everything works as designed. Attached is a diagnostic file I just made. Make sure the clv and EV is properly calculated and that make bids are properly made for profit and have a good chance of being taken. Research if there is a way to indicate sharp bettors offering odds based on knowledge that the other books haven't caught up to, because I noticed that some of my "gift" positive EV bets moved against me dramatically, and I think they were made by sharp bettors with information not yet reflected by other sports books. See if there is a way to find these trap bets and avoid them."
 
-- [ ] BK1 Read the v0.54.0 file end to end (FAILURE/OPTIMIZE first: parlay-api.com 12% errors (500/503 on NFL props), Vigilant CLV −1.0% on 41, Novig Retry-After ×1,673, slow CNO/PropLine/ParlayAPI) and work what the evidence supports.
-- [ ] BK2 Full tests (test-protocols "Full tests"): whole floor + `-Pscreenshots` (every PNG looked at), sweep every tab/subsystem; settings and features organized well in the UI, everything works as designed.
-- [ ] BK3 EV and CLV calculated right: re-derive the EV (fair / taker cost incl. fee − 1) and CLV (close fair vs price paid) code paths against BRIEF.md/NOVIG_API.md; tests that pin each formula.
-- [ ] BK4 Make bids: made for profit (EV after the fee at the bid price) and a good chance of being taken; check pricing, ordering, expiry against RESEARCH.md §70 and the v0.54.0 file's make-orders evidence.
-- [ ] BK5 Research "trap" bets: a Novig price that looks like a gift because a sharp on Novig knows something the books haven't caught up to (Tj: some "gift" +EV bets moved against him dramatically). Is there a signal (who made the price, how fresh/large the order, Novig trades on the other side, sharp books moving, injury news, edge size)? Test it on Tj's own bets + Novig's trades; build a detector/veto only if it has merit.
+- [x] BK1 Read the v0.54.0 file end to end (FAILURE/OPTIMIZE first: parlay-api.com 12% errors (500/503 on NFL props), Vigilant CLV −1.0% on 41, Novig Retry-After ×1,673, slow CNO/PropLine/ParlayAPI) and work what the evidence supports.
+- [x] BK2 Full tests (test-protocols "Full tests"): whole floor + `-Pscreenshots` (every PNG looked at), sweep every tab/subsystem; settings and features organized well in the UI, everything works as designed.
+- [x] BK3 EV and CLV calculated right: re-derive the EV (fair / taker cost incl. fee − 1) and CLV (close fair vs price paid) code paths against BRIEF.md/NOVIG_API.md; tests that pin each formula.
+- [x] BK4 Make bids: made for profit (EV after the fee at the bid price) and a good chance of being taken; check pricing, ordering, expiry against RESEARCH.md §70 and the v0.54.0 file's make-orders evidence.
+- [x] BK5 Research "trap" bets: a Novig price that looks like a gift because a sharp on Novig knows something the books haven't caught up to (Tj: some "gift" +EV bets moved against him dramatically). Is there a signal (who made the price, how fresh/large the order, Novig trades on the other side, sharp books moving, injury news, edge size)? Test it on Tj's own bets + Novig's trades; build a detector/veto only if it has merit.
+  Done (BK1): parlay-api.com's 12% = its own outage (500s 02:35-03:30 EDT, even /usage) + slow NFL props (11 s first byte, 503 busy): retries are
+  bounded (3 a scan, Retry-After honored), no change; the file now says per endpoint how calls failed (`PathStat.fails`, NetStatsTest,
+  DiagnosticsFileTest). Novig 429 ×1,673 = the Tracker's Novig-only read asking every open bet's market publicly one by one with a 2-min cache:
+  market details now kept 6 h (LockAppTest "a market's sides are read once for hours"). The file's bids line read "0 of 0 on record" beside a
+  257 KB maker.json: the bids now come from the file (DiagnosticsShareTest pin). Wallet $0.01 (bids and auto-bet need money); Vigilant CLV −1.0%
+  is mostly bets placed 6 h+ out (§71).
+  Done (BK2): floor 1,838 passed / 23 skipped (`tools/test.sh -Pscreenshots`), every changed PNG looked at; Settings home now has the Bids row
+  and search finds every Bids-tab rule (SettingsPagesTest, MakerUiTest "every Bids-tab setting…", AutoBetUiTest "every setting search sends to
+  the Auto-bet tab is on it"); the sharp-veto note no longer repeats itself; the alert hint names the trap guard.
+  Done (BK3/BK4): EV = fair / (price + fee) − 1, Kelly (p − c)/(1 − c), CLV = close fair / cost − 1 (Novig close = VWAP of both sides' trades on
+  the outcome in the 30 min before the start), bids at floor(fair/1.04) with no maker fee: all match BRIEF.md/NOVIG_API.md and their tests
+  (EvMathTest, ClvPlacedPriceTest, MakerTest's 4,000-case invariant). What limits fills now: the wallet ($3.03 then $0.01: 1,814 bids waited on it)
+  and the hours; the trap guard puts bids where 71% of prop takers' dollars trade (the last 6 h).
+  Done (BK5): RESEARCH.md §71; `TrapGuard` (early 6 h + game-line Novig move), wired into AutoBettor/alerts/bids/sheets; TrapGuardTest,
+  AutoBettorTest (3 trap tests, mutants 5/5), AutoScanTest, MakerTest, TrapGuardUiTest, AutoBetUiTest; scripts novig_trap_study.py, tj_bets_by_lead.py.
 - [ ] BK6 Sweep, full floor, ship, answer Tj with the link.
