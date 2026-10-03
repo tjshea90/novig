@@ -158,9 +158,9 @@ def main():
             for lo, hi in ((0, 1), (1, 100), (100, 1e12)):
                 show(f'OUR side bought ${lo:g}-{hi:g} in 15 min', y[(y.ours >= lo) & (y.ours < hi)])
             for lo, hi in ((-99, -2), (-2, -0.5), (-0.5, 0.5), (0.5, 2), (2, 99)):
-                show(f'our side moved {-hi:+g}..{-lo:+g}c over the hour', y[(y.drop >= lo) & (y.drop < hi)])
-            show('guard: other >= $100 AND drop >= 1c', y[(y.other >= 100) & (y.drop >= 1)])
-            show('rest (guard not firing)', y[~((y.other >= 100) & (y.drop >= 1))])
+                show(f'our side moved {-hi:+g}..{-lo:+g}c over the hour', y[(y['drop'] >= lo) & (y['drop'] < hi)])
+            show('guard: other >= $100 AND drop >= 1c', y[(y.other >= 100) & (y['drop'] >= 1)])
+            show('rest (guard not firing)', y[~((y.other >= 100) & (y['drop'] >= 1))])
             for lo, hi in ((0, 0.1), (0.1, 0.2), (0.2, 0.35), (0.35, 0.5), (0.5, 0.65), (0.65, 1)):
                 show(f'bid {lo:.2f}-{hi:.2f}', y[(y.b >= lo) & (y.b < hi)])
             for lo, hi in ((0, 1), (1, 3), (3, 6), (6, 12), (12, 25)):
