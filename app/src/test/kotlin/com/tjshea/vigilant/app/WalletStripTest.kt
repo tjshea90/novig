@@ -4,6 +4,8 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.VigilantTheme
@@ -60,5 +62,32 @@ class WalletStripTest {
         assertEquals(18.51, w.flow.value!!.dollars, 1e-9)
         kotlinx.coroutines.runBlocking { w.fresh(maxAgeMs = 0L) }
         assertEquals(20.0, w.flow.value!!.dollars, 1e-9)
+    }
+
+    @Test
+    fun `screenshot - the wallet strip above the tab bar, every tab there`() {
+        compose.setContent {
+            VigilantTheme {
+                androidx.compose.foundation.layout.Column {
+                    WalletStrip(WalletBalance.Reading(18.51, System.currentTimeMillis() - 150_000), 3, 8.2, onRefresh = {})
+                    androidx.compose.material3.NavigationBar {
+                        Tab.entries.filter { it.shownIn(com.tjshea.vigilant.data.scanner.ScannerMode.BOTH) }.forEach { t ->
+                            androidx.compose.material3.NavigationBarItem(
+                                selected = t == Tab.BIDS, onClick = {},
+                                icon = {
+                                    when {
+                                        t.icon != null -> androidx.compose.material3.Icon(t.icon, null)
+                                        t.drawable != null -> androidx.compose.material3.Icon(androidx.compose.ui.res.painterResource(t.drawable), null)
+                                    }
+                                },
+                                label = { androidx.compose.material3.Text(t.label) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        compose.onNodeWithText("Vigilant wallet \$18.51").assertExists()
+        compose.onRoot().captureRoboImage("screenshots/0_wallet_strip_tabs.png")
     }
 }
