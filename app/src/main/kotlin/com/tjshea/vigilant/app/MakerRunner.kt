@@ -59,8 +59,9 @@ class MakerRunner(
     /**
      * One pass. Auto-make on: the bids Vigilant's latest scan wants are posted, moved and cancelled. Auto-make off: the bids Tj approved by hand are
      * watched (fills recorded, taken down when no longer worth it, never re-posted), and new bids are recommended to approve or deny
-     * ([ScanSettings.makerRecommend]). Scanning paused: every bid comes down. No scan yet, or one still running: only fills and expiries are read.
-     * Null when betting through the API isn't set up. [why] is logged.
+     * ([ScanSettings.makerRecommend]). Scanning paused: every bid comes down. No scan yet: only fills and expiries are read. A scan still running is
+     * judged as far as it has got (its finished leagues; a bid on a line it hasn't judged yet stays up). Null when betting through the API isn't set
+     * up. [why] is logged.
      */
     suspend fun run(why: String): MakerDesk.Report? = passes.withLock {
         val desk = desk() ?: return@withLock null
