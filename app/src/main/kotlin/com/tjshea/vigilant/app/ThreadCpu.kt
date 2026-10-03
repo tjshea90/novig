@@ -3,7 +3,6 @@ package com.tjshea.vigilant.app
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.File
 import java.util.Locale
-import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -110,6 +109,9 @@ object ScanThreads {
         }
     }
 
-    fun dispatcher(threads: Int = Runtime.getRuntime().availableProcessors().coerceAtLeast(2)) =
-        Executors.newFixedThreadPool(threads, factory()).asCoroutineDispatcher()
+    /** The pool: [threads] at most, each ending after [idleSeconds] with nothing to do (no scan running holds no thread). */
+    fun dispatcher(threads: Int = Runtime.getRuntime().availableProcessors().coerceAtLeast(2), idleSeconds: Long = 30) =
+        java.util.concurrent.ThreadPoolExecutor(threads, threads, idleSeconds, java.util.concurrent.TimeUnit.SECONDS, java.util.concurrent.LinkedBlockingQueue(), factory())
+            .apply { allowCoreThreadTimeOut(true) }
+            .asCoroutineDispatcher()
 }
