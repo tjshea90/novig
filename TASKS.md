@@ -3652,3 +3652,11 @@ Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book p
   GOLIVE voids resting orders); only NFL/NCAAF futures earn a credit on every fill (70% of 0.06·P(1−P)). Vigilant's maker math (no credit) already
   right: no code change. NOVIG_API.md §17 and RESEARCH.md §73 (row 9 + addendum) updated; the report's "bot orders don't qualify" isn't in the terms.
 
+
+## Tj, 2026-10-03 ~19:57Z (with vigilant-diagnostics-v0.56.1-2026-10-03-1553.txt): "The app was running on auto bid and it got so laggy I almost couldn't use it and I pressed pause and even that took a while to register. The bids are still not getting filled, how long do they usually take to get filled?"
+
+- [ ] BO1 Read the file: PERFORMANCE/frames/jank, thread CPU, maker pass timing and count, request pacing/429s, the Bids log (posted/cancelled/ended reasons, bid-hours), wallet, auto-scan cadence; save the key lines in RESEARCH.md or the task note.
+- [ ] BO2 Find the root cause of the lag while auto-bid runs (MakerRunner passes, MakerDesk store writes, Bids tab recomposition, scan priority, main-thread work) and of the slow Pause (the pause path: cancel-all under NonCancellable before the UI updates?); prove each with a failing-first test where possible.
+- [ ] BO3 Fix them (tests, mutants); sweep the auto-bid paths for more of the same.
+- [ ] BO4 Answer "how long do they usually take to get filled?" from RESEARCH.md §70.3/§72.3 and the file's own bids (price vs market, time resting, why none filled); fix anything in the app that keeps bids from filling if the evidence shows one.
+- [ ] BO5 Full floor, ship, answer Tj with the link and a plain summary.
