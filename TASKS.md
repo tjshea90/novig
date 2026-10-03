@@ -3607,10 +3607,22 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 
 Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book per type), §69 (pros), §70 (make orders), §71 (trap guard v0.55.0). Don't redo those; extend them.
 
-- [ ] BL1 Literature + practitioner research (web): how sharp money is spotted (steam, reverse line movement, market-making books, limits, opener vs close), what the evidence says for each signal, CLV as the scoreboard, timing of +EV, bet types, market-maker adverse selection (exchange microstructure), sharp-tracking services. Log every source in RESEARCH.md §72.
-- [ ] BL2 Historical sharp-data study A (a sharp anchor with open and close: football-data.co.uk's Pinnacle opening/closing odds vs soft books): when a soft price beats the sharp fair, who is right at the close, by edge size (are big "gifts" traps?), by time (open vs close), by market; script in tools/research.
-- [ ] BL3 Historical study B (Novig's own trades): makers' adverse selection after one-sided taker flow (a toxic-flow guard for bids?), and any refinement of the taker trap rules (time to start, market type, flow) the data supports.
-- [ ] BL4 Following verified sharps: is it practical? Test persistence and copy latency of the best sports accounts on a public-ledger market (Polymarket), plus what Novig/Kalshi expose; verdict with numbers.
-- [ ] BL5 Deep analysis: timing of +EV bets, types of bets, best methods for genuine +EV with high CLV likelihood, for taking AND making; turn it into concrete rules and settings (RESEARCH.md §72 synthesis).
-- [ ] BL6 Implement the findings in Vigilant: trap/sharp-side logic, auto-bet and auto-bid (make) rules, timing, defaults and presets; tests that pin each rule (mutants killed).
+- [x] BL1 Literature + practitioner research (web): how sharp money is spotted (steam, reverse line movement, market-making books, limits, opener vs close), what the evidence says for each signal, CLV as the scoreboard, timing of +EV, bet types, market-maker adverse selection (exchange microstructure), sharp-tracking services. Log every source in RESEARCH.md §72.
+- [x] BL2 Historical sharp-data study A (a sharp anchor with open and close: football-data.co.uk's Pinnacle opening/closing odds vs soft books): when a soft price beats the sharp fair, who is right at the close, by edge size (are big "gifts" traps?), by time (open vs close), by market; script in tools/research.
+- [x] BL3 Historical study B (Novig's own trades): makers' adverse selection after one-sided taker flow (a toxic-flow guard for bids?), and any refinement of the taker trap rules (time to start, market type, flow) the data supports.
+- [x] BL4 Following verified sharps: is it practical? Test persistence and copy latency of the best sports accounts on a public-ledger market (Polymarket), plus what Novig/Kalshi expose; verdict with numbers.
+- [x] BL5 Deep analysis: timing of +EV bets, types of bets, best methods for genuine +EV with high CLV likelihood, for taking AND making; turn it into concrete rules and settings (RESEARCH.md §72 synthesis).
+- [x] BL6 Implement the findings in Vigilant: trap/sharp-side logic, auto-bet and auto-bid (make) rules, timing, defaults and presets; tests that pin each rule (mutants killed).
+  Done (BL1-BL5): RESEARCH.md §72 (72.1 sources; 72.2 `sharp_anchor_study.py` on 48,394 football-data matches: Pinnacle's own "gifts" vs the
+  consensus lost −2.3% CLV / −21% ROI, close moved ~70% to the informed venue, CLV tracks the sharp book's edge (0-1%: +0.8% n.s.; 1-2% +1.6%);
+  72.3 `novig_toxic_flow_study.py`: prop/period bids not hurt by flow, game-line bids on a side down 2¢+ in the hour keep +1.2% vs +6.5%; 72.4
+  `polymarket_follow_study.py`: leaderboard copy 0.00¢, best quarter by past CLV copied 1 min later +0.99¢ (moneylines +1.32¢), Novig can't be
+  followed; 72.5-72.8 timing, types, signals, the method).
+  Done (BL6): `sharpVetoMinEv` bar (1% default) in SharpVeto/alerts/auto-bet/bids/presets (Volume 1%, Strict 2%) + UI/search/Diagnostics;
+  `AutoBet.credibleEv` ordering; game-line bid move rule (`MakerLines.moveWanted`/`withMoves`, MakerRunner ≤6 reads/pass); `tj_bets_by_lead.py`
+  sharp-edge split. Tests: SharpVetoTest "the veto's bar - …", "the bar is inclusive…", PresetsTest "the presets set the sharp veto's bar…",
+  MakerTest "the sharp veto's bar applies at the bid's price…", "a game-line bid on a side Novig just moved against gets none…", AutoBetTest
+  "the credible edge is…", AutoBettorTest "the sharp veto's bar - a bet the sharpest book gives under 1%…", "when not every bet can be placed…",
+  MakerAppTest "a pass reads Novig's trades only for game-line bids…", SharpConfirmUiTest "the veto's bar shows under Veto…", SharpDiagnosticsTest;
+  mutants 7/7 killed. A Polymarket "sharp wallet" watch is proposed to Tj, not built (a new subsystem: CLAUDE.md user rule on major changes).
 - [ ] BL7 Sweep (UI, math, timing of every make/take path), full floor, ship, answer Tj with the link and a plain summary.
