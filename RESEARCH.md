@@ -3830,3 +3830,109 @@ Verdict: no. It's a stats-and-scores API with slow bookmaker odds, built for soc
 
 **What would actually add value, if anything is ever bought:** ParlayAPI Pro ($20: 100,000 credits, 30 days of closes) only when its meter runs
 short on busy days (§43). Nothing else in this price range beats what Vigilant reads now.
+
+## 69. How professional bettors actually profit, Vigilant against them, and what Novig's history says (2026-10-03; Tj: "Now do deep research on proven successful betting strategies. Not speculative things but research how professional bettors were able to profit. What did they look for? Am I on the right track with vigilant? What settings most closely matches professionals? Novig has betting history with liquidity and there are probably other sources with betting information and history; can these be used to find successful strategies for betting? The goal is to use novig to make as much money as possible.")
+
+Builds on §62 (big Novig money: following it loses), §65-§66 (Tj's own CLV, the presets) and §67 (locks). Only documented records and
+measured data here; every number has its source.
+
+### 69.1 What the documented winners did
+- **Bill Benter** (Hong Kong racing, the best-documented systematic bettor; his 1994 paper "Computer Based Horse Race Handicapping and Wagering
+  Systems: A Report", read in full): a model alone was biased ("always in the direction of being closer to the public's estimate"), so he
+  **combined it with the market's own odds** (a logit of both) before judging any edge; bet every positive-expectation bet available; staked a
+  **conservative fractional Kelly (1/2 to 1/3)** because "if one overestimates the advantage by more than a factor of two, Kelly betting will cause
+  a negative rate of capital growth … Overestimating the advantage by a factor of two is easily done in practice"; "full Kelly … downswings
+  during which more than 50% of total wealth is lost are a common occurrence". It took ~10 person-years and needed "a large number of high
+  advantage betting opportunities".
+- **Billy Walters** (Gambler, 2023; summarized by squarebettor.com and shortform.com): everything starts with a price he believes is wrong (his
+  own numbers: injuries, weather, travel, home field ~2.5 pts not 3); accounts everywhere and watching the market-making books (Circa, Pinnacle,
+  MGM, Caesars) for the moves; half-points around key numbers; **1-3% of bankroll a bet**; no parlays; scale is the point ("a 5% edge on $1M is
+  $50k").
+- **Rufus Peabody** (RotoWire Q&A, The Ringer, Establish the Run): props "much more profitable than sides and totals" in the NFL; attack them
+  early in the week; a model doesn't have to be better than the market, only to know something it doesn't price; now bets more on prediction
+  markets/exchanges.
+- **The modern +EV method** (Kaunitz et al. 2017, Buchdahl's Wisdom of the Crowd, Data Golf, Unabated; §65-§66): take the sharp books' or the
+  market consensus' devigged price as the truth and bet only where a book is clearly better. Buchdahl: ~20,000 bets, 3.4% actual vs 4.0%
+  expected; later ~18,000 at 3.7% actual vs 4.0% expected.
+- **The scoreboard is the closing line.** Buchdahl (Pinnacle articles, pinnacleoddsdropper interview): CLV proves skill far faster than profit
+  ("beating the close by 5% can show significance in as few as 50 bets"; results need thousands). Pikkit's benchmark: beating the close on 60%+
+  of 200+ bets says you are beating the market; 65-70%+ is strong.
+- **What winning looks like in money.** Sustainable ROI is 1-3% on turnover for most winners, 3-6% strong, rarely more (DRatings, Pikkit). On a
+  public exchange the record is visible: Polymarket's all-time sports leaderboard (data-api.polymarket.com, read 2026-10-03): #1 +$18.4M on
+  $1.85B traded (**1.0%**), #2 +$11.9M on $1.22B (0.98%); the 19 top-50 accounts with over $100M traded make a median **1.8%**; the 50
+  biggest by volume: 38 profitable at a median **0.08%** (market makers). The 30-60% ROIs on the list are $10-20M accounts: a profit ranking
+  surfaces lucky runs, not a repeatable edge.
+- **Long shots lose.** "The Favorite-Longshot Bias in Prediction Markets: Evidence from Polymarket" (arXiv 2609.12878): buys under 10¢ lose
+  19.3¢ a dollar, buys at 90¢+ earn 0.83¢; the same bias on Betfair tennis (28,595 matches) and in fixed-odds college markets.
+- **The limit problem, and Novig's answer.** Sportsbooks limit winners; that is why pros run many accounts and "beards". Novig is an exchange:
+  it doesn't limit or close winners (predictionscout.com, darkhorseodds, Novig's own blog). The ceiling on Novig is liquidity at a +EV price,
+  not the book.
+
+### 69.2 What Novig's trades say (`tools/research/novig_strategy_study.py`, all 60 published days 2026-08-03 to 10-01)
+9.7M straight-trade rows, 140,429 two-outcome markets; 1.22M taker orders and 1.52M maker fills before each market's close (test A's close,
+§62: the median price ~1-2 h before the start). CLV in cents of probability; EV@close = close/price − 1; ROI = flat-stake return at
+settlement where the last traded price shows the winner (46% of takers: mostly game lines). 95% intervals bootstrapped over markets.
+
+| Kind (all sizes) | Taker CLV | Taker EV@close | Taker ROI | Maker CLV | Maker EV@close | Maker ROI |
+| :- | -: | -: | -: | -: | -: | -: |
+| Game lines (5,132 markets) | −0.28¢ | −0.54% | **−2.9%** [−5.2, −0.4] | +0.26¢ | +1.02% | **+3.5%** [+0.6, +7.2] |
+| Player props (4,487) | −0.41¢ | −0.80% | −16% (few results) | +0.41¢ | +1.26% | −0.7% (few results) |
+| Period lines (716) | −0.38¢ | −0.78% | – | +0.42¢ | +0.86% | – |
+| Team totals (71) | −0.80¢ | −1.49% | – | +0.81¢ | +1.91% | – |
+
+- **The resting order wins and the taker loses, in every kind of market, at every size under $100, in every big league** (MLB, NFL, NCAAF, WNBA,
+  NHL, EPL); the one exception is a 46-market Champions League sample. Every trade is one taker against one maker (pregame: no fee), so this is
+  the spread changing hands: Novig's average taker pays about 0.3-0.4¢ (0.5-0.8%) to the close.
+- **Earlier is wider.** Takers lose more the earlier they trade: game lines −0.22¢ in the last hour → −0.54¢ at 72 h+; props −0.29¢ → −1.16¢.
+  Makers earn the mirror image. Early Novig markets are thin and wide.
+- **By price:** takers lose least on slight underdogs (0.35-0.50: −0.43% EV) and most on favorites (0.80+: −0.87%); long shots under 0.20 are
+  thin and noisy.
+- **CLV matches results at the extremes:** taker orders that beat the close by 2¢+ returned +6.5% [−6.7, +17.8] at settlement; those that lost
+  2¢+ returned −18.4% [−28.3, −8.0]. The middle bands are all about −2% (the taker average): CLV needs large samples to show in results.
+- **Big resting orders are the exception** (§62): makers filled for $5k+ lose to the close (picked off). The small maker fills are the winners.
+- Not in the data: unfilled orders (the queue, fill rates), who the makers are (Novig's paid liquidity providers are among them, §62.2), and
+  most prop results. So "makers win on average" is a fact about fills that happened, at the place in the queue those makers had.
+
+### 69.3 Other sources of betting history
+- **Novig trades** (used here and in §62): every trade, both sides, size, time; anonymized, so no account can be followed.
+- **Polymarket**: per-account history is public (`/v1/leaderboard?category=SPORTS`, `/trades?user=`). The steady winners there are ~1% market
+  makers; copying a ranked "top trader" mostly copies luck (69.1). Following big takers on Novig lost (§62.3); nothing suggests Polymarket's
+  would be different, and its markets would have to be matched to Novig's. Not a strategy without a persistence test first.
+- **Kalshi**: public trade history with the taker side (`/trade-api/v2/markets/trades`), no accounts. The same maker/taker study could be run on
+  it; it is already one of Vigilant's sharpest prop references (§66).
+- **Closing lines**: ParlayAPI's Pinnacle closes, ESPN's, Novig's trades (already the Tracker's CLV sources, §41-§42).
+- **Bettor-tracking apps** (Pikkit, Juice Reel): aggregate results are published only as marketing snapshots; no raw data.
+
+### 69.4 Vigilant against the professionals
+| What pros do | Vigilant | Verdict |
+| :- | :- | :- |
+| Price every bet against a sharp/consensus fair, devigged (Benter's market blend, Kaunitz, Buchdahl, Unabated) | CNO's consensus + Vigilant's own blend, worst-case devig, lower of mean and median; sharp veto by bet type (§66) | **Matches** |
+| Judge yourself by CLV, not wins | True closes captured or back-filled, CLV card, per-bet record and splits (§41-§42, §66.4) | **Matches**; Tj's CNO props: +2.0% CLV, 71% beat (70 bets): "strong" by Pikkit's bar, sample still small |
+| Shrink estimated edges; fractional Kelly (Benter ½-⅓; Data Golf realizes ~½) | ¼ Kelly in the presets; shown EV runs ~1.5-2 pts above the close on his bets | **Matches** (¼ is right for an edge that shrinks this much) |
+| 1-3% of bankroll a bet (Walters) | "Most per bet" is Tj's own cap | Set it near 2-3% of the wallet |
+| Avoid long shots and parlays | −200 to +150 in the presets; no parlays | **Matches** |
+| Attack soft markets: props (Peabody) | CNO props are his best group | **Matches**; keep props first |
+| Volume at small edges (exchange winners: 1-2% on huge turnover) | Auto-bet, background scan down to 5 s, every league | **Matches**; the limit is bankroll and liquidity |
+| No limits for winners | Novig doesn't limit | Scale stakes as the wallet grows (¼ Kelly does it automatically) |
+| **Provide liquidity (make), don't only take** (exchange pros, Novig's LPs; 69.2) | Takes only; shows a "maker bid" line on the bet sheet (§16.4) but never posts one | **The gap** |
+
+### 69.5 The settings that match professional practice (the presets, re-checked)
+The "Volume + safe CLV" preset (§66.5) is the closest: 2.5% minimum edge (a buffer over the ~1.5-2 point shrink; pros go to 0.5-1% only with
+a Pinnacle-anchored fair on main markets, and Tj's own 1-2% band shows no edge), 3 books pricing both sides, 3 agreeing, every-book-must-agree
+off, −200 to +150, props + moneylines + spreads (his totals lost to the close), ¼ Kelly, sharp veto, background scan 30 s. Two additions from
+this research: (1) **most per bet ≈ 2-3% of the wallet** (Walters; the Kelly cap already enforces it on big edges, this stops a wrong edge
+estimate from doing damage); (2) **don't take Novig markets days ahead without a bigger edge**: Novig's early books are its widest (69.2), and
+Vigilant's EV already uses the real taker price, so the minimum edge covers it; no new setting needed.
+
+### 69.6 How to make the most money on Novig (in order)
+1. **Keep taking only real edges, at volume.** Auto-bet on the Volume preset with background scan on; props first. Profit = edge × turnover:
+   at a realistic 1.5-3% ROI, $10,000 of monthly turnover is $150-300, $100,000 is $1,500-3,000. Novig won't cap a winner; the wallet and the
+   +EV depth will.
+2. **Let the bankroll compound with ¼ Kelly** (stakes grow with the wallet) and keep "most per bet" near 2-3% of it.
+3. **Judge every segment by CLV and cut what loses to the close** (his game totals did, §65), at 200+ bets a segment before trusting a split.
+4. **Add the maker side** (69.2: the one structural edge every Novig market shows). Vigilant already has the fair price that liquidity providers
+   quote from. A careful version, not built: post a post-only bid at the maker price (fair minus a margin, §16.4) on markets with a confident fair,
+   cancel it the moment the fair moves or the game nears its start (Novig already voids resting orders at go-live), and record each fill's CLV
+   like any bet. Risks: being picked off on news (the big-maker losses in §62.3), the queue (Novig's own LPs are ahead at the best price), and
+   fills that are slow and uncertain. Start with a by-hand "Post a bid" on the bet sheet and measure fills and CLV before any automation.
+5. **Don't chase** whale-following, liquidity-following or leaderboard-copying: measured on Novig (§62) and Polymarket (69.1), they don't hold.
