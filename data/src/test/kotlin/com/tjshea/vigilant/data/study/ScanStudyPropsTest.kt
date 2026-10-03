@@ -115,17 +115,17 @@ class ScanStudyPropsTest {
         assertEquals(1, count(verdicts, "no sharp-ranked book prices both sides (not vetoed)"))
         assertEquals(1, count(verdicts, "no book page was read (no verdict)"))
         assertEquals("six props, not seven bets: the moneyline isn't a prop", 6, verdicts.size)
-        // Whether the exchanges are on the page at all: Kalshi/ProphetX both sides on two, ProphetX one side on one, neither on two, no page on one.
+        // Whether the exchanges are on the page at all: both sides on A and B, one side only on C (Kalshi) and E (ProphetX), neither on D, no page on F.
         val ex = section(text, "-- PROPS: are the exchanges")
         assertEquals(2, count(ex, "an exchange prices both sides"))
-        assertEquals(1, count(ex, "an exchange prices one side only"))
-        assertEquals(2, count(ex, "neither exchange is on the page"))
+        assertEquals(2, count(ex, "an exchange prices one side only"))
+        assertEquals(1, count(ex, "neither exchange is on the page"))
         assertEquals(1, count(ex, "no book page was read"))
         // The sharp book's own edge: +15% for those that agree, far under zero for those that say no; none for the two without a sharp book.
         val edge = section(text, "-- PROPS: the sharp book's own edge")
         assertEquals(2, count(edge, "sharp edge 4% or more"))
         assertEquals(2, count(edge, "sharp edge under 0%"))
-        assertEquals(4, edge.size)
+        assertEquals("none for E (nobody ranked prices both sides) or F (no page)", 2, edge.size)
     }
 
     @Test
@@ -170,7 +170,7 @@ class ScanStudyPropsTest {
         val line = verdicts.first { it.trim().startsWith("an exchange (Kalshi or ProphetX) agrees") }
         // Benge's 4 total bases beat 1.5: a win at +130, closed at 0.55 against a cost of 1/2.3: CLV = 0.55 × 2.3 − 1 = +26.5%.
         assertTrue(line, line.contains("1-0-0 (W-L-P)"))
-        assertTrue(line, line.contains("ROI +130.0% (+1.3u on 1u)"))
+        assertTrue(line, line.contains("ROI +130.00% (+1.3u on 1u)"))
         assertTrue(line, line.contains("CLV +26.50% on 1 closes"))
     }
 
