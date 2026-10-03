@@ -3604,3 +3604,17 @@ Continue from where you left off.
 ```
 Continue
 ```
+
+## 2026-10-03T01:58:21Z
+```
+Now do deep research on how to do make orders on novig (post orders). The goal of the make orders is to get positive ev orders filled. 
+
+1) figure out how to do make orders through the novig API
+2) figure out the optimal way to get the most positive EV out of my make orders but also a good chance that the orders get filled
+3) figure out how long the make orders should be placed before they expire, and how to set this option in the novig API
+4) figure out the best timing and types of bets to make for profit and positive EV
+5) figure out how to get the most clv out of make bets
+6) after you figure out the optimal bets and math for make bets with the highest chance of beating clv and profiting, build the system in the app. Plan it out first then build it intuitively. It may need a separate section in the app. 
+
+You may use sub agents if it is more effective or better
+```
