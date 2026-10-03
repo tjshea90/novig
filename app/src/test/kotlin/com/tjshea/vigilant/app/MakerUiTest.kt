@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -114,10 +115,13 @@ class MakerUiTest {
     fun `without betting set up or Vigilant's scanner it says what to do first`() {
         var opened = 0
         compose.setContent {
-            VigilantTheme { MakerScreen(ui(setUp = false, vigilantOn = false, bids = emptyList()), MakerActions(onOpenBetting = { opened++ })) }
+            val off = settings.copy(maker = false, makerRecommend = false, scanner = ScannerMode.CNO)
+            VigilantTheme { MakerScreen(ui(s = off, setUp = false, vigilantOn = false, bids = emptyList()), MakerActions(onOpenBetting = { opened++ })) }
         }
         compose.onNodeWithText(MakerText.NEEDS_BETTING).assertIsDisplayed()
-        compose.onNodeWithText(MakerText.NEEDS_VIGILANT).assertIsDisplayed()
+        compose.onNodeWithText(MakerText.NEEDS_VIGILANT, substring = true).assertIsDisplayed()
+        // Without betting set up only Off can be picked.
+        compose.onNodeWithTag("makerMode-AUTOMATIC").assertIsNotEnabled()
         compose.onNodeWithText("Set up").performClick()
         assertEquals(1, opened)
     }
