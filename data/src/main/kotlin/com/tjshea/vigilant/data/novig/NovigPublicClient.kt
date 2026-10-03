@@ -734,7 +734,7 @@ private data class TradePageDto(val items: List<TradeDto> = emptyList())
 
 /** One trade as the public route gives it: the resting order's outcome and price (a string, "0.515"), [qty] contracts, [ts] epoch ms. */
 @Serializable
-private data class TradeDto(val outcomeId: String = "", val price: String = "", val qty: Long = 0, val ts: Long = 0) {
+private data class TradeDto(val tradeId: String = "", val outcomeId: String = "", val price: String = "", val qty: Long = 0, val ts: Long = 0) {
     fun toDomain(): com.tjshea.vigilant.data.scanner.TrapGuard.Trade? {
         val p = price.toDoubleOrNull()?.takeIf { it > 0.0 && it < 1.0 } ?: return null
         if (outcomeId.isBlank() || qty <= 0 || ts <= 0) return null
