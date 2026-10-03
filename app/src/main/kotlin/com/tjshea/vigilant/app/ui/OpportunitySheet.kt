@@ -118,6 +118,9 @@ fun OpportunityDetail(
             q?.takeIf { !o.fairIsOld(now) }?.let { EvBadge(it.evPercent, large = true) }
         }
         injury?.let { InjuryLine(it, Modifier.padding(top = 8.dp)) }
+        TrapGuardText.sheetNote(o.event.startsTs, now, settings.trapEarlyHours)?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 8.dp).testTag("trapEarlySheet"))
+        }
         // Left open past a few minutes: the other books' prices behind this EV aren't current (RESEARCH.md §24).
         if (o.fairIsOld(now)) {
             Banner(

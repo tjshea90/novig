@@ -44,6 +44,17 @@ object TrapGuardText {
                 "or more before the start lost to the close (−0.6%, 46% beat it; −9.8% returned); those under 6 h beat it (+2.2%, 78%; +8.3% returned)."
         }
 
+    /**
+     * The bet sheet's warning for a game further off than the guard's [hours] at [now] (RESEARCH.md §71), or null. The lists still show such a bet; the
+     * sheet says why the auto-bet, the alerts and the bids leave it alone, so a bet by hand is a choice made knowing it.
+     */
+    fun sheetNote(startsAtMs: Long?, now: Long, hours: Int): String? {
+        if (!TrapGuard.isEarly(startsAtMs, now, hours)) return null
+        val left = ((startsAtMs!! - now) / 3_600_000L).coerceAtLeast(1)
+        return "Trap guard: this game starts in about $left h, more than $hours h off. Bets placed this early lost to the close in your own record " +
+            "(the books' lines aren't settled yet, and a Novig price that beats them is often the better-informed one), so auto-bet, alerts and bids leave it alone."
+    }
+
     /** What the move rule does. */
     fun moveNote(on: Boolean): String =
         if (on) {

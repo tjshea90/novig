@@ -742,6 +742,9 @@ fun CnoDetail(
             Text("${row.market} · ${row.event}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             row.startsAtMs?.let { Text("${row.league.ifEmpty { row.sport }} · ${Format.startTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             injury?.let { InjuryLine(it, Modifier.padding(top = 6.dp)) }
+            TrapGuardText.sheetNote(row.startsAtMs, now, settings.trapEarlyHours)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 6.dp).testTag("trapEarlySheet"))
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             LabeledValue(if (liveAtMs != null) "${row.book} now" else row.book, MiniWindow.american(row.odds))
