@@ -180,6 +180,8 @@ class MakerDesk(
         wallet: Double?,
         /** Sides Tj denied ([MakerDenials]): no bid there, and a resting one comes down. */
         denied: Set<String> = emptySet(),
+        /** Auto-make on: post, move and re-post. Off: only take down bids that stopped being worth it ([MakerPlan.plan]'s repost). */
+        autoPost: Boolean = true,
     ): Report = lock.withLock {
         val problems = ArrayList<String>()
         val fills = settle(problems)
@@ -206,6 +208,7 @@ class MakerDesk(
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
+            repost = autoPost,
         )
         var cancelled = 0
         val noReplace = HashSet<String>()
@@ -264,6 +267,14 @@ class MakerDesk(
                 Cancel.FILLED -> "It filled before the cancel reached Novig (see the Tracker)"
                 Cancel.FAILED -> problems.firstOrNull() ?: "Novig didn't take the cancel"
             }
+        }
+    }
+
+    /** The bids auto-make posted down (auto-make switched off; the ones Tj approved by hand stay). How many cancels Novig took. */
+    suspend fun cancelAuto(why: String): Int = lock.withLock {
+        withContext(NonCancellable) {
+            val problems = ArrayList<String>()
+            store.all().filter { it.resting && it.auto && it.orderId != null }.count { cancelOne(it.orderId!!, why, problems) != Cancel.FAILED }
         }
     }
 

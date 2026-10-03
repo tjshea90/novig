@@ -286,6 +286,11 @@ object MakerPlan {
         skips: Map<String, String> = emptyMap(),
         stopAll: String? = null,
         budget: Double = Double.MAX_VALUE,
+        /**
+         * False with auto-make off: bids Tj approved by hand are only taken down when they stop being worth it (the fair fell under the bid, its line
+         * isn't wanted any more); nothing new is posted, nothing is moved up or re-posted (each bid is the one he approved).
+         */
+        repost: Boolean = true,
     ): MakerActions {
         if (stopAll != null) return MakerActions(resting.map { it to stopAll }, emptyList(), emptyList())
         val byOutcome = wanted.associateBy { it.line.outcomeId }
@@ -296,9 +301,9 @@ object MakerPlan {
             val w = byOutcome[r.outcomeId]
             val why = when {
                 w == null -> skips[r.outcomeId] ?: "No longer a bid to post"
-                w.price < r.price - 1e-9 -> "The fair price fell: re-posted lower"
-                w.price >= r.price + rules.requoteSteps * MakerQuote.step(r.price) - 1e-9 -> "The fair price rose: re-posted higher"
-                r.expiresAtMs != null && r.expiresAtMs - now <= rules.refreshBeforeMs -> "About to expire: re-posted"
+                w.price < r.price - 1e-9 -> if (repost) "The fair price fell: re-posted lower" else "The fair price fell under the bid: taken down"
+                repost && w.price >= r.price + rules.requoteSteps * MakerQuote.step(r.price) - 1e-9 -> "The fair price rose: re-posted higher"
+                repost && r.expiresAtMs != null && r.expiresAtMs - now <= rules.refreshBeforeMs -> "About to expire: re-posted"
                 else -> null
             }
             if (why == null) {
@@ -308,6 +313,7 @@ object MakerPlan {
             cancels += r to why
             if (r.filled > 0) noRepost += r.outcomeId
         }
+        if (!repost) return MakerActions(cancels, emptyList(), kept)
         val covered = kept.mapTo(HashSet()) { it.outcomeId } + noRepost
         var bids = kept.size
         var dollars = kept.sumOf { it.restingDollars }
