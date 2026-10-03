@@ -3728,3 +3728,8 @@ For the feature, app storage is no concern. Make sure it utilizes already availa
 ```
 For the scan study feature, if it doesn't already do so, make it include cno scanned bets that are filtered out of showing up in the vigilant list. I'm other words, log all cno finds on every scan with all the information for each bet cno shows  even if these bets don't meet my criteria for showing up in the list in the app. They should still be hidden in the app but logged into the scan study file. The more information the better
 ```
+
+## 2026-10-03T22:31:41Z
+```
+Also consider if it is needed or smart to require that prop bets have at least one sharp prop book that agrees that the prop bet is positive EV. I might be wrong but I think right now it can derive EV on prop bets from soft sports books. See if this is true and if it is a good idea to require at least one sharp prop book to agree the bet is positive EV before showing up in vigilant, or if this is not necessary
+```
