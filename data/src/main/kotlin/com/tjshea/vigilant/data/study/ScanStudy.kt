@@ -107,15 +107,21 @@ class ScanStudy(
      * One CNO read ([snap]), as the app has it: each pregame row is a bet first listed (logged with its record as placed) or one already watched (logged
      * again when its price, EV or books moved, or after [HEARTBEAT_MS]); a bet the same list listed last time and doesn't now is logged as gone. [books] are
      * the game pages the green check read, [live] Novig's own price now for the top rows, [links] the Novig outcomes found so far. Returns the bets first
-     * listed. The same read twice, or a list saved on disk and shown before this launch's first read, logs nothing.
+     * listed. The same read twice, or a list saved on disk and shown before this launch's first read, logs nothing: a read older than [maxAgeMs] is that
+     * saved list ([MAX_SCAN_AGE_MS]); a caller that knows the read was made in the scan it is closing ([StudySync.catchUp]) says so with a longer one.
      */
-    suspend fun observeCno(snap: CnoSnapshot, s: ScanSettings, books: Map<String, CnoBooksState>, live: Map<String, LivePrice>, links: Map<String, String>): Int =
+    suspend fun observeCno(
+        snap: CnoSnapshot, s: ScanSettings, books: Map<String, CnoBooksState>, live: Map<String, LivePrice>, links: Map<String, String>, maxAgeMs: Long = MAX_SCAN_AGE_MS,
+    ): Int =
         mutex.withLock {
             if (!s.scanStudy) return@withLock 0
             val now = clock()
             if (snap.fetchedAtMs == lastCnoAt) return@withLock 0
+            if (now - snap.fetchedAtMs > maxAgeMs) {
+                lastCnoAt = snap.fetchedAtMs
+                return@withLock 0
+            }
             lastCnoAt = snap.fetchedAtMs
-            if (now - snap.fetchedAtMs > MAX_SCAN_AGE_MS) return@withLock 0
             hydrate(now)
             prune(now)
             // A changed view or filters change what a list holds without the bets having gone: nothing is called gone across it.
@@ -143,12 +149,13 @@ class ScanStudy(
      */
     suspend fun observeCnoWide(
         wide: CnoSnapshot, narrow: CnoSnapshot?, s: ScanSettings, books: Map<String, CnoBooksState>, live: Map<String, LivePrice>, links: Map<String, String>,
+        maxAgeMs: Long = MAX_SCAN_AGE_MS,
     ): Int = mutex.withLock {
         if (!s.scanStudy || !s.scanStudyHidden) return@withLock 0
         val now = clock()
         if (wide.fetchedAtMs == lastWideAt) return@withLock 0
         lastWideAt = wide.fetchedAtMs
-        if (now - wide.fetchedAtMs > MAX_SCAN_AGE_MS) return@withLock 0
+        if (now - wide.fetchedAtMs > maxAgeMs) return@withLock 0
         hydrate(now)
         prune(now)
         val baseline = wide.url to wide.filters
