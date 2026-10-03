@@ -352,6 +352,13 @@ uses it, its real answer shapes (they differ from its docs), costs, credits, pla
 Tj asked for next (TASKS.md §M). Real answers, trimmed and keyless, are in `data/src/test/resources/parlay-*.json`. Read it before
 writing or changing any ParlayAPI code, and update it whenever something is verified or turns out wrong. Never commit a ParlayAPI key.
 
+## Scan study — permanent research memory
+
+Every bet a CNO or Vigilant scan lists is logged, graded and closed in the background (v0.57.0, Tj 2026-10-03), and Settings › Diagnostics & about › **Share scan study with Claude** makes one file for
+Claude to find what beats the close: the READ ME in `data/study/StudyExport.kt` says how, `RESEARCH.md` §75 says why it is built this way. Code: `data/.../study/` (`ScanStudy` observes and grades,
+`StudyJournal` is the append-only store, `files/study/study-<day>.jsonl`), wired in `VigilantApp` (`study`, `settleStudy`) and `MainViewModel.shareScanStudy`. It reuses `AtBets`, `BetSettler`,
+`CloseBackfill` and `ClosingLine`; never add a request of its own to a scan. When Tj sends a scan-study file, work from its READ ME and its splits, and ask him before changing any rule it suggests.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:

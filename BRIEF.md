@@ -407,6 +407,15 @@ robolectric.org/configuring/.
   still current; a source pin in `FeedBuildTest` keeps `feedOf` out of every `_state.update`); a bet's wording and matchup are read once (`BetGrader.pickOf`, `PlacedIndex`); `applySettings`
   shows the new settings first and re-prices as its own latest-wins job (a re-pricing waits for a running scan: nothing waits for it); a maker pass asks `keepPosting` before each bid
   (Pause stops it at the next one); the Bids tab's lists are worked out once per change. Diagnostics: `MakerStats.recent`, the last 24 h of bids in bid-hours against the fills §70.3 expects.
+  **v0.57.0 (the scan study, Tj 2026-10-03; RESEARCH.md §75):** every bet a CNO or Vigilant scan lists is logged (`data/study/ScanStudy`) the moment it first appears with its full record as
+  first listed (`AtBets.cno` / `AtBets.opportunity`: odds, kind, EV, books and how many agree, minutes to the start, the sharp veto, the book check once the green check read its page), watched while
+  it stays listed (a look on each change of price/EV/books, at most one a minute, a heartbeat every 5 minutes, "gone" when its list drops it), and after its game graded and closed by the
+  Tracker's own `BetSettler` and `CloseBackfill` on a scratch Tracker file (ParlayAPI's closes only while 40% of the month's credits are left: `GuardedCloses`); a bet Tj placed himself takes its
+  result and close from his Tracker bet. Append-only journals per game day (`files/study/study-<day>.jsonl`, `StudyJournal`), never rewritten, nothing deleted. **It makes no request while
+  scanning** (it reads the CNO list, the pages the green check read, Novig's live prices, Vigilant's result), runs on `scanScope` (background priority) behind `studyStep`'s catch, and has a
+  kill switch (`ScanSettings.scanStudy`, Settings › Diagnostics & about). Settings › Diagnostics & about › "Share scan study with Claude" (`MainViewModel.shareScanStudy`, `StudyExport`) writes one
+  file (a read-me with the goal and "be thorough, analyze ALL of the data", a data dictionary, the caveats, sums and every split, then one JSON line per bet) through the diagnostics share path.
+  Keep it improving: a new fact about a listed bet goes into `AtBet` / `Sight` and the dictionary in `StudyExport`.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.

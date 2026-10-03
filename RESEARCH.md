@@ -4500,3 +4500,33 @@ fills expected**. Zero is the expected result, not a defect. (The 320 bids on re
 limits fills in the app, none a bug, all Tj's call: **(1)** a bid never outlives its fair's freshness (5 min under 3 h from the start, 10 min past it,
 §70.7), by design ("it should not keep make orders long enough that they lose their positive EV"), and a re-post goes to the back of the queue; **(2)** the
 wallet: ~$12 holds ~10 bids while 150-450 wanted bids wait; **(3)** the scan runs only while Tj has it on (the fairs behind bids must be fresh).
+
+## 75. The scan study: every listed bet, graded, for Claude to find what beats the close (v0.57.0, 2026-10-03; Tj: "on every cno scan, the vigilant app saves logs on all kinds of information … The new feature will be a button in the settings in the diagnosis section that can output a file to Claude … contains comprehensive info about all scanned bets, and is constantly updated. When those bets are final, it logs whether they won or lost or pushed and their closing line odds. The file will prompt Claude to do deep analysis on all of the bets and find profitable patterns … utilizes already available features in the app, such as the function in the app that already grades results and closing odds … efficient and doesn't interrupt or break any other part of the app")
+
+### 75.1 Why a log of everything listed, not only the bets Tj placed
+Every study so far (§65-§73) rests on Tj's own bets (a few hundred, chosen by whatever he or the auto-bet took) or on Novig's trades (no view of what the scanners listed). A bet the scanners
+listed and nobody took has no close and no result in the Tracker, so "which listed bets beat the close?" was unanswerable, and any rule found on placed bets carries the selection of who placed
+them. The scan study logs the whole population: ~50-100 bets per CNO read, thousands a day, each with its closing line and result once its game is over.
+
+### 75.2 What is logged (and where it comes from, nothing recomputed)
+- **At the first look** (`AtBets.cno` / `AtBets.opportunity`, the same record a placed bet gets, Tj's 2026-10-02 request): league, sport, kind, minutes to the start, Novig's price (CNO's, or Novig's own
+  live price when read in the last minute), EV, fair, CNO's book count and one-way flag, list age, dollars available; when the green check had read its page: companies pricing both sides, how many
+  agree, the check's EV, every book's odds/fair/EV, the dissenting books, the sharp veto's verdict (`checkAtMs` says when: a page is read for the top ~10, so many bets have no check).
+- **Why the app's own screen would have hidden it** (`CnoChecks.rejection`): NOT_A_GAME, MISMATCH, ONE_WAY, BOOKS, ODDS, TOO_GOOD, EV: tells whether the app's checks help or hurt.
+- **Looks** (`Sight`): price, EV, fair, books, dollars on each change (≥ 0.25 pt EV or any price/books move, at most 1 a minute), every 5 minutes while listed, each page read's agreement counts, and when
+  a scan drops the bet ("gone": the edge fell under the filters, or CNO's row limit pushed it out). A bet both scanners list is one record with looks from both and each scanner's own record.
+- **After the game**: result (`BetSettler`: ESPN / MLB scores and box scores), the close (`CloseBackfill`: Pinnacle via ParlayAPI, ESPN's DraftKings line, Novig's last trades), and CLV at the first-listed
+  price, at the best price it was ever listed at, and at the last. A bet Tj also placed takes its result, its pre-start close and Novig's close from his Tracker bet.
+
+### 75.3 Why it cannot slow or break the app
+- **No request of its own while scanning**: it reads the CNO list, the pages the green check read, Novig's live prices and Vigilant's result, all already in memory (source-pinned in `ScanStudyTest`).
+- **Append-only journals**, one per game day: a scan adds a few lines in one write every 10 s; nothing is rewritten (the Tracker's file is one document rewritten whole on every save: right for hundreds of
+  bets, wrong for tens of thousands). Measured: 240 scans of 100 rows with every price flickering = 0.56 s of CPU and < 6 MB (`a two-hour evening …`).
+- **Background priority** (`scanScope`, the scan's own threads) and a catch around every step (`studyStep`): a failure is a line in Recent problems. A kill switch in Settings.
+- **Grading reuses the Tracker's code** on a scratch Tracker file (deleted after), beside the 3-hourly `SettleWorker`; ParlayAPI's closes (credits) only while ≥ 40% of the month's credits are left.
+- **The file streams**: one day folded at a time, ≤ 24 MB of journal per file (older days stay on the phone and say so).
+
+### 75.4 What the first files will and won't say
+Selection: only what CNO's filters and row limit listed (Tj's: conservative devig, 4+ books, ≤ +150, ≥ 1%, 100 rows) and what Vigilant's feed listed. ROI is at the first-listed price with a unit: Novig had only
+`available` dollars there, so size matters. Closes differ by source (compare CLV by `closeVia` before pooling). Same-game bets are correlated: count games. A group needs ~200+ bets with a close before its CLV
+says much (§65-§66). The READ ME in the file tells Claude all of this and the task: the checks, the splits, timing, traps, candidate rules measured out of sample by date, and the deliverables.
