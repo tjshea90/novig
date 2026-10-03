@@ -44,8 +44,26 @@ object BetGrader {
     /** What [bet] is on, or null when its wording can't be read for certain. */
     fun pickOf(bet: TrackedBet): Pick? = pickOf(bet.marketLabel, bet.selection)
 
-    /** What a bet on [marketLabel] ("Player Receptions", "Spread") and [selection] ("Brock Bowers Under 4.5") is. */
+    /**
+     * What a bet on [marketLabel] ("Player Receptions", "Spread") and [selection] ("Brock Bowers Under 4.5") is. Each wording is read
+     * once and its answer kept ([reads]): Tj's Diagnostics 2026-10-03 (v0.56.1, "so laggy I almost couldn't use it") caught Android
+     * ending the app with its main thread here, re-reading every listed bet's wording ([PlacedIndex.has], about a dozen regexes and the
+     * stat lookup each, ~0.1 ms on a desktop JVM and several times that on the phone) on every screen update.
+     */
     fun pickOf(marketLabel: String, selection: String): Pick? {
+        val key = marketLabel + '\u0000' + selection
+        reads[key]?.let { return it.pick }
+        if (reads.size > READ_LIMIT) reads.clear()
+        return read(marketLabel, selection).also { reads[key] = Read(it) }
+    }
+
+    /** A kept [pickOf] answer (null included: a wording that can't be read is kept as unreadable). */
+    private class Read(val pick: Pick?)
+
+    private val reads = java.util.concurrent.ConcurrentHashMap<String, Read>()
+    private const val READ_LIMIT = 20_000
+
+    private fun read(marketLabel: String, selection: String): Pick? {
         val market = marketLabel.trim()
         val lower = market.lowercase()
         val (who, line) = Picks.split(selection.trim())

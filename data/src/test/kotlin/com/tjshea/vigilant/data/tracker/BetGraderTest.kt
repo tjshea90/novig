@@ -3,7 +3,9 @@ package com.tjshea.vigilant.data.tracker
 import com.tjshea.vigilant.data.tracker.BetGrader.Period
 import com.tjshea.vigilant.data.tracker.BetGrader.Pick
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 /**
@@ -249,6 +251,21 @@ class BetGraderTest {
         assertEquals("Quarter, period and second-half markets aren't graded automatically", BetGrader.whyNot("1st Quarter Spread", "Dallas Cowboys -0.5"))
         assertEquals(true, BetGrader.whyNot("First Touchdown Scorer", "Jonathan Taylor Yes").contains("play-by-play"))
         assertEquals(true, BetGrader.whyNot("Some Novelty Market", "Something Over 1.5").startsWith("Couldn't read \"Some Novelty Market\""))
+    }
+
+    /**
+     * Tj, 2026-10-03 (Diagnostics v0.56.1: "so laggy I almost couldn't use it", then Android ended the app): its main thread was
+     * re-reading every listed bet's wording (PlacedIndex.has, then pickOf's regexes) on every screen update. A wording is read once and
+     * its answer kept: asking again gives back the same answer, not a fresh read.
+     */
+    @Test
+    fun `a bet's wording is read once and its answer kept`() {
+        val first = BetGrader.pickOf("Player Receptions", "Brock Bowers Under 4.5")
+        assertNotNull(first)
+        assertSame(first, BetGrader.pickOf("Player Receptions", "Brock Bowers Under 4.5"))
+        assertSame(BetGrader.pickOf("Spread", "Dallas Cowboys -3.5"), BetGrader.pickOf("Spread", "Dallas Cowboys -3.5"))
+        // A different wording is its own read.
+        assertEquals(Pick.Spread("Dallas Cowboys", 3.5, Period.GAME), BetGrader.pickOf("Spread", "Dallas Cowboys +3.5"))
     }
 
     companion object {
