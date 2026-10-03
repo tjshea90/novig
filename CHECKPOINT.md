@@ -1,10 +1,10 @@
-# CHECKPOINT 2484 — read me first, then TASKS.md
+# CHECKPOINT 2485 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T21:30:24Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `904a092c` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T21:31:22Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `e0ae8f5b` (this checkpoint is the commit after it)
 
 ## Just done
-study export: the fields Tj named (kind, minutes to the start, CNO books, books two-sided, books agreeing, agree share, dollars, sharp verdict) at the top level of every line
+study READ ME: no 'rank in the list' (not recorded), bids margin not hard-coded
 
 ## Do this next
 CI green on this commit, then ship.sh, release.yml, record, answer Tj
@@ -13,9 +13,11 @@ CI green on this commit, then ship.sh, release.yml, record, answer Tj
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M data/src/main/kotlin/com/tjshea/vigilant/data/study/StudyExport.kt
 
 ## Last ten checkpoints
 ```
+  e0ae8f5b ckpt 2484: study export: the fields Tj named (kind, minutes to the start, CNO books, bo
   d20871f6 ckpt 2483: v0.57.0 prepared: version 99; floor green (1,887 passed, 23 skipped); screen
   1804c72b ckpt 2482: BP done in code: scan study (data/study + wiring + Settings + Diagnostics li
   cd772480 ckpt 2481: BP3/BP4: data/study done (model, journal, ScanStudy observe/enrich/settle, S
@@ -25,8 +27,4 @@ CI green on this commit, then ship.sh, release.yml, record, answer Tj
   03ca5c35 ckpt 2477: BO2-BO4 done: lag/pause root causes fixed+tested (RESEARCH §74), fills answ
   d0217e12 ckpt 2476: BO2/BO3 (part): v0.56.1 file re-read (ANR 15:52 main thread in PlacedIndex.h
   d9d7fe90 ckpt 2475: BP: Tj's resume-other-session + Scan Study log feature request written to TA
-  12e771ff ckpt 2474: BO1 read: ANR at 15:52 = main thread in PlacedIndex.has->BetGrader.pickOf (r
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
