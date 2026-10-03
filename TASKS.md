@@ -3630,3 +3630,10 @@ Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book p
   sharpFair)`, AutoBetTest "a Kelly stake uses the sharpest book's own fair…", AutoBettorTest Kelly tests; veto status wording); mutants 9/9 killed;
   floor 1,849 passed / 23 skipped (ship.sh), `-Pscreenshots` run, 5m2_settings_sharp_veto_bar.png looked at; CI green on 9fc443c0; v0.56.0 (code 96)
   released 2026-10-03T17:46Z (release.yml run 37141531484), recorded. Proposed to Tj, not built: a Polymarket "sharp wallet" watch (§72.4).
+
+## Tj, 2026-10-03 ~17:51Z (with another AI's report, saved as research/external_report_2026-10-03_clv_ev.md): "Attached is a report from another AI. If the information is accurate, research and see if any of the information can improve the logic, accuracy, or profitability of vigilant"
+
+- [ ] BM1 Check each claim of the report against what is verified (NOVIG_API.md, RESEARCH.md §62-§72, the code): mark accurate / wrong / untested, with the evidence.
+- [ ] BM2 Test the testable claims that could change Vigilant: (a) "favorites early, underdogs late" (late drift toward favorites) on Novig's trades and Pinnacle open→close; (b) "the last 2 hours move less than a tick"; (c) "edges over 5% are a red flag" and "off-market vs every book" (soccer data; add splits to tj_bets_by_lead.py for Tj's own); (d) news windows for bids if the data can resolve them.
+- [ ] BM3 Verify the math claims against the code: CLV de-vigged, de-vig method, Novig fees (live taker 0.03×P×(1−P), maker credit, parlays), staking caps.
+- [ ] BM4 Implement what the evidence supports (tests, mutants), log in RESEARCH.md §73; sweep, full floor, ship if anything changed; answer Tj with what was right, wrong, and what changed.
