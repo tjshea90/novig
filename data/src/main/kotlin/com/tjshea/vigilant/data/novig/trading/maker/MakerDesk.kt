@@ -89,6 +89,11 @@ data class MakerBid(
     val bestBidAtPost: Double? = null,
     val offerAtPost: Double? = null,
     val bookAtMs: Long? = null,
+    /**
+     * Seen in Novig's open orders at least once. Once it has been, an order missing from that list is off the book and its record isn't read (Novig
+     * answers 404 by then); one never seen there may have been refused (post-only, `REJECTED`), which only its record says.
+     */
+    val seenOpen: Boolean = false,
 ) {
     val active: Boolean get() = !status.ended
 
@@ -445,12 +450,13 @@ class MakerDesk(
         // Still on the book with new fills, and off it (with Novig's record when one was read): both have their fills read, once, below.
         val grownOpen = ArrayList<Pair<MakerBid, NovigOrder>>()
         val ended = ArrayList<Pair<MakerBid, NovigOrder?>>()
+        val seen = HashMap<String, String>()
         for (bid in active) {
             val order = bid.orderId?.let { openById[it] } ?: openByClient[bid.clientId]
             if (order != null) {
                 // Still on the book (a lost answer's order found by its clientId gets its id; a cancel not applied yet stays CANCELING).
-                if (bid.orderId == null) store.update { l -> l.map { if (it.clientId == bid.clientId) it.copy(orderId = order.orderId, status = MakerStatus.RESTING) else it } }
-                if (order.qty - order.remaining > bid.filled) grownOpen += bid.copy(orderId = order.orderId) to order
+                if (bid.orderId == null || !bid.seenOpen) seen[bid.clientId] = order.orderId
+                if (order.qty - order.remaining > bid.filled) grownOpen += bid.copy(orderId = order.orderId, seenOpen = true) to order
                 continue
             }
             if (bid.orderId == null) {
@@ -465,11 +471,12 @@ class MakerDesk(
                 if (found.terminal) ended += bid.copy(orderId = found.orderId) to found
                 continue
             }
-            // Not in the open list. A young one may only be queued (Novig's reads can lag a 201): its own record says. An older one, or one a cancel
-            // was sent for, is off the book (its record answers 404 by then): its fills say whether it filled.
-            if (now - bid.postedAtMs < LOST_AFTER_MS && bid.status != MakerStatus.CANCELING) {
-                val record = readOrder(bid.orderId) ?: continue
-                if (!record.terminal) {
+            // Not in the open list. Seen there before, or a cancel was sent for it: off the book (its record answers 404 by then), its fills say whether
+            // it filled. Never seen there: queued (Novig's reads can lag a 201) or refused (post-only), which its own record says.
+            if (!bid.seenOpen && bid.status != MakerStatus.CANCELING) {
+                val record = readOrder(bid.orderId)
+                if (record == null && now - bid.postedAtMs < LOST_AFTER_MS) continue
+                if (record != null && !record.terminal) {
                     if (record.qty - record.remaining > bid.filled) grownOpen += bid to record
                     continue
                 }
@@ -477,6 +484,9 @@ class MakerDesk(
                 continue
             }
             ended += bid to null
+        }
+        if (seen.isNotEmpty()) {
+            store.update { l -> l.map { b -> seen[b.clientId]?.let { id -> b.copy(orderId = id, seenOpen = true, status = if (b.status == MakerStatus.SENT) MakerStatus.RESTING else b.status) } ?: b } }
         }
         val grown = ArrayList<TrackedBet>()
         if (grownOpen.isNotEmpty() || ended.isNotEmpty()) {
