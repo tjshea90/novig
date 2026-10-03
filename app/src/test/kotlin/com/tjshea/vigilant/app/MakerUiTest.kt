@@ -128,7 +128,11 @@ class MakerUiTest {
         val filled = bid("f-1", MakerStatus.FILLED, filled = 1_098)
         assertTrue(MakerText.fillLine(filled, null, now).startsWith("Filled 1,098 of 1,098 at"))
         assertEquals("1 fill · +4.2% EV at the fair", MakerText.fillSummary(ui(bids = listOf(filled))))
-        assertEquals("4% under the fair · \$5.00 a bid · Props, Team totals, 1st half / inning · expire after 30 min", MakerRulesText.summary(ScanSettings()))
+        assertEquals(
+            "4% under the fair · ¼ Kelly of \$1,000.00, up to \$10.00 a bid · Props, Team totals, 1st half / inning · up to 30 min (less if the fair goes old)",
+            MakerRulesText.summary(ScanSettings()),
+        )
+        assertEquals("\$5.00 a bid", MakerRulesText.stake(ScanSettings(makerStakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM)))
     }
 
     @Test

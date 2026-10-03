@@ -283,8 +283,16 @@ class MakerDesk(
         withContext(NonCancellable) {
             val n = trading.cancelOrders()
             val now = clock()
-            // On their way down: each is watched until Novig says it ended (a fill can still land first), then marked.
+            // On their way down: each is watched until Novig says it ended (a fill can still land first), then marked. Confirmed now, a few looks at
+            // most (a pause or an empty wallet runs no further passes to finish the job).
             store.update { list -> list.map { if (it.active && it.orderId != null && it.status != MakerStatus.CANCELING) it.copy(status = MakerStatus.CANCELING, why = why) else it } }
+            var looks = 0
+            while (true) {
+                settle(ArrayList())
+                looks++
+                if (looks >= CANCEL_LOOKS || store.all().none { it.status == MakerStatus.CANCELING }) break
+                pause(CANCEL_LOOK_MS)
+            }
             n
         }
     }

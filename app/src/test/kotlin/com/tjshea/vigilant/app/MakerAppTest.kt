@@ -103,7 +103,8 @@ class MakerAppTest {
         app.container.installTradingForTest(novig, "sub-1")
         val r = runner(novig).run("test")!!
         assertTrue("placed ${r.placed}", r.placed >= 2)
-        assertTrue(novig.placed.joinToString(), novig.placed.all { it.endsWith(" PO 1800000") })
+        // Post-only, living only as long as their fair stays fresh: the sample's prices are 3 min old on games 50 h off (fresh 10 min) = 7 min.
+        assertTrue(novig.placed.joinToString(), novig.placed.all { it.endsWith(" PO 420000") })
         // A taker fills the first bid.
         val first = novig.orders.values.minBy { it.orderId }
         novig.fillAll(first.orderId)
@@ -116,7 +117,7 @@ class MakerAppTest {
         val posted = shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications
         val n = posted.single { it.extras.getCharSequence(Notification.EXTRA_TITLE)?.startsWith("Bid filled") == true }
         assertTrue(n.extras.getCharSequence(Notification.EXTRA_SUB_TEXT).toString().startsWith("Wallet"))
-        // Bids off: the container takes every resting bid down (the background cycle wouldn't run them any more).
+        // Auto-make off: the container takes the bids it posted down (the background cycle wouldn't move them any more).
         app.container.settingsStore.update { it.copy(maker = false) }
         withTimeout(10_000) {
             while (novig.orders.values.any { it.status == "OPEN" }) delay(50)
@@ -124,7 +125,7 @@ class MakerAppTest {
         withTimeout(10_000) {
             while (app.container.makerDesk()!!.bids().any { it.active }) delay(50)
         }
-        assertTrue(app.container.makerDesk()!!.bids().filter { it.status == MakerStatus.CANCELED }.all { it.why == "Bids are switched off" })
+        assertTrue(app.container.makerDesk()!!.bids().filter { it.status == MakerStatus.CANCELED }.all { it.why == "Auto-make switched off" })
     }
 
     @Test
