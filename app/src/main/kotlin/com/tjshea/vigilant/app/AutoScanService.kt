@@ -278,7 +278,7 @@ class AutoScanService : Service() {
                 // Off the main thread: book parsing and pricing.
                 kotlinx.coroutines.withContext(Dispatchers.Default) { container.autoScan.cycle(forceVigilant) }
             } finally {
-                releaseWakeLock()
+                releaseAfterScan()
                 // A cycle longer than its interval (a 15 s one with a slow CNO page, any one with Vigilant's scan) had its next alarm go off while
                 // it ran, and that one was dropped ([runCycle]'s guard): the next is armed from here, so the schedule never lapses.
                 // The interval as it is now: Tj may have picked another while the cycle ran.
@@ -339,6 +339,25 @@ class AutoScanService : Service() {
     private fun releaseWakeLock() {
         wakeLock?.let { if (it.isHeld) it.release() }
         wakeLock = null
+    }
+
+    /** The watch that lets the cycle's wake lock go when the Vigilant scan it started ends. */
+    private var scanHold: Job? = null
+
+    /**
+     * The cycle's end: its wake lock goes, unless the Vigilant scan it started is still running (cycles no longer wait for it): then it's held until
+     * the scan ends, so a screen-off phone without keep awake doesn't sleep in the middle of it ([WAKE_LOCK_MAX_MS] still bounds it).
+     */
+    private fun releaseAfterScan() {
+        if (!container.runner.state.value.scanning) {
+            releaseWakeLock()
+            return
+        }
+        if (scanHold?.isActive == true) return
+        scanHold = scope.launch {
+            container.runner.state.first { !it.scanning }
+            if (cycleJob?.isActive != true) releaseWakeLock()
+        }
     }
 
     /** Keep awake: the CPU stays on with the screen off. Held with a timeout and renewed ([KeepAwake.lockRenewDue]), so a dead service can't hold it for ever. */
