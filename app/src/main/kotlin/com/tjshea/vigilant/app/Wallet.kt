@@ -23,9 +23,16 @@ class WalletBalance(
 ) {
     data class Reading(val dollars: Double, val atMs: Long)
 
-    @Volatile
-    var last: Reading? = load()
-        private set
+    private val _flow = kotlinx.coroutines.flow.MutableStateFlow(load())
+
+    /** The latest reading as it changes: the wallet strip above the tabs shows it (Tj, 2026-10-03: "show it somewhere in the app at all times"). */
+    val flow: kotlinx.coroutines.flow.StateFlow<Reading?> = _flow
+
+    var last: Reading?
+        get() = _flow.value
+        private set(value) {
+            _flow.value = value
+        }
 
     val isSetUp: Boolean get() = setUp()
 
