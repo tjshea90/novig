@@ -24,13 +24,19 @@ import kotlin.math.abs
  */
 object LaunchReset {
 
-    /** [s] with the two background things off; everything else (limits, criteria, the interval, the halt) kept as it was. */
+    /** [s] with the background things off (auto-bet, background auto-scan, auto-make); everything else (limits, criteria, the interval, the halt) kept as it was. */
     fun apply(s: ScanSettings): ScanSettings = s.copy(autoBet = false, autoScan = AutoScanMode.OFF, maker = false)
 
     /** What [apply] switches off in [s], in words for the note on screen; null when both were off already. */
     fun note(s: ScanSettings): String? {
         val bet = s.autoBet
         val scan = s.autoScan != AutoScanMode.OFF
+        // Auto-make goes off with auto-bet (Tj, 2026-10-03: "auto make bets just the same way that auto bet already takes bets").
+        if (s.maker) {
+            val off = listOfNotNull("Auto-bet".takeIf { bet }, "auto-make (Bids tab)", "background auto-scan".takeIf { scan })
+            val list = if (off.size == 1) off[0] else off.dropLast(1).joinToString(", ") + " and " + off.last()
+            return "${list.replaceFirstChar { it.uppercase() }} ${if (off.size == 1) "is" else "are"} off after the phone restarted. Switch ${if (off.size == 1) "it" else "them"} on when you want ${if (off.size == 1) "it" else "them"}."
+        }
         return when {
             bet && scan -> "Auto-bet and background auto-scan are off after the phone restarted. Switch them on in Settings when you want them."
             bet -> "Auto-bet is off after the phone restarted. Switch it on in Settings when you want it."
