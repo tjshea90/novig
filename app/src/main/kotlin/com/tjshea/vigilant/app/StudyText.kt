@@ -38,8 +38,9 @@ object StudyText {
         val keys = appList?.takeIf { it.url == snap.url }?.rows?.mapTo(HashSet()) { it.key }
         val shared = keys?.let { k -> snap.rows.count { it.key in k } }
         val versus = if (shared != null) " (${shared} also in the app's list of ${keys.size}; ${snap.rows.size - shared} only the wide read found)" else ""
-        val full = if (snap.limit != null && snap.rows.size >= snap.limit) " — AS MANY AS ASKED FOR, so CNO may have more" else ""
-        return "${snap.rows.size} rows read ${Format.age(snap.fetchedAtMs, now)}$versus, asked for up to ${snap.limit ?: "?"}$full · ${w.reads} good reads since the app opened · " +
+        val limit = snap.limit
+        val full = if (limit != null && snap.rows.size >= limit) " — AS MANY AS ASKED FOR, so CNO may have more" else ""
+        return "${snap.rows.size} rows read ${Format.age(snap.fetchedAtMs, now)}$versus, asked for up to ${limit ?: "?"}$full · ${w.reads} good reads since the app opened · " +
             "form as posted: ${snap.asked ?: "?"}$problem"
     }
 
