@@ -33,7 +33,7 @@ object StudyExport {
 
     /** The message that goes with the file in the share sheet. */
     const val PROMPT =
-        "This is my Vigilant app's scan study: every bet its scanners listed as +EV on Novig, with the odds, EV, books, timing, closing line and result. " +
+        "This is my Vigilant app's scan study: every bet its scanners found as +EV on Novig (CrazyNinjaOdds' whole list, including the bets my filters hide from the app), with the odds, EV, books, timing, closing line and result. " +
             "Please read the READ ME FIRST section, then analyze ALL of the data thoroughly for patterns and find the bet strategies that beat the closing line " +
             "and are profitable. Tell me what you found, with the evidence, and what to change in the app."
 
@@ -49,6 +49,8 @@ object StudyExport {
         /** The CNO view's filters and the app's rules in force now ([com.tjshea.vigilant.data.scanner.PresetRules.summary]): what decided which bets were listed. */
         val rules: String,
         val zone: TimeZone = TimeZone.getDefault(),
+        /** The wide read in words: what CNO was asked, and what its last read held ([CnoWideState]); null when the wide read is off or hasn't run. */
+        val wide: String? = null,
     )
 
     /** One bet, as a JSON line. */
@@ -61,9 +63,12 @@ object StudyExport {
         val event: String,
         val market: String,
         val selection: String,
-        /** Who listed it: "c" (CNO), "v" (Vigilant's scan), "c+v" (both). */
+        /** Who found it: "c" (the app's CNO list), "w" (the wide read: every row CNO finds, hidden ones too), "v" (Vigilant's scan), any together ("c+w", "w", "c+v+w"). */
         val src: String,
-        /** Why the app's own CNO screen would have hidden it ([com.tjshea.vigilant.data.cno.CnoChecks.Reason] name); null: it showed it (or Vigilant listed it). */
+        /**
+         * Why the app's own CNO list would not have shown it at the first look: a [com.tjshea.vigilant.data.cno.CnoChecks.Reason] name (the app's screen under Tj's filters),
+         * NOT_LISTED (the screen passes it but CNO's read under his filters didn't carry it); null: it showed it (or Vigilant listed it).
+         */
         val screen: String? = null,
         /** The price at the first look: American odds, what a $1 payout costs (no fee pregame), the EV the list showed, its fair probability. */
         val american: Int? = null,
@@ -110,6 +115,8 @@ object StudyExport {
         val agreeShare: Double? = null,
         val available: Double? = null,
         val sharpVerdict: String? = null,
+        /** Every column CNO printed for the row at its first wide look, by header, and the row's `data-*` attributes with an `@` (null: it was never in a wide read). */
+        val cols: Map<String, String>? = null,
         /** The record as first listed (see AtBet.kt): the book check is the first page read, stamped [AtBet.checkAtMs]. */
         val atBet: AtBet? = null,
         /**
@@ -133,9 +140,10 @@ object StudyExport {
         // The best price is the longest odds (the lowest cost).
         val best = prices.maxByOrNull { Odds.americanToDecimal(it) }
         val last = listings.lastOrNull()?.second?.o
-        val ended = sb.sights.lastOrNull { Sight.isListing(it.second.k) || Sight.isGone(it.second.k) }
+        // How long it stayed listed means in the app's lists (CNO's, Vigilant's): the wide read finds more than they carry.
+        val ended = sb.sights.lastOrNull { Sight.isAppListing(it.second.k) || Sight.isAppGone(it.second.k) }
         val srcs = listings.map { it.second.k }.toSet()
-        val src = listOfNotNull("c".takeIf { it in srcs }, "v".takeIf { it in srcs }).joinToString("+").ifEmpty { if (b.source == "vigilant") "v" else "c" }
+        val src = listOfNotNull("c".takeIf { it in srcs }, "v".takeIf { it in srcs }, "w".takeIf { it in srcs }).joinToString("+").ifEmpty { if (b.source == "vigilant") "v" else "c" }
         val a = b.atBet
         return StudyRow(
             id = sb.id, firstSeenMs = b.createdAtMs, startsAtMs = b.startsTs, league = b.league, event = b.eventName, market = b.marketLabel, selection = b.selection,
@@ -146,13 +154,13 @@ object StudyExport {
             clv = ClosingLine.clv(b, now), clvBest = clvAt(best), clvLast = clvAt(last), bestAmerican = best, lastAmerican = last,
             novigClose = b.novigClose,
             listedMin = ended?.let { (it.first - b.createdAtMs) / 60_000L }, lastListedMinToStart = ended?.let { (b.startsTs - it.first) / 60_000L },
-            gone = ended?.second?.let { Sight.isGone(it.k) } == true,
+            gone = ended?.second?.let { Sight.isAppGone(it.k) } == true,
             looks = sb.sights.size, placedByTj = own != null, placedAmerican = own?.american,
             marketId = b.marketId.ifBlank { null }, outcomeId = b.outcomeId.ifBlank { null },
             kind = a?.kind?.ifBlank { null }, sport = a?.sport?.ifBlank { null }, minToStartFirst = a?.minutesToStart, cnoBooks = a?.cnoBooks, booksTwoSided = a?.twoSided,
             booksAgreeing = a?.agreeing, agreeShare = a?.let { x -> x.agreeing?.let { g -> x.twoSided?.takeIf { it > 0 }?.let { n -> (g.toDouble() / n).round(4) } } },
             available = a?.available, sharpVerdict = a?.sharpVerdict,
-            atBet = a?.copy(rules = null), vig = sb.vig?.copy(rules = null), cno = sb.cnoRec?.copy(rules = null),
+            cols = sb.cols, atBet = a?.copy(rules = null), vig = sb.vig?.copy(rules = null), cno = sb.cnoRec?.copy(rules = null),
             s = JsonArray(
                 sb.sights.map { (t, sg) ->
                     JsonArray(
