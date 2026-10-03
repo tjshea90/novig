@@ -3625,4 +3625,8 @@ Builds on RESEARCH.md §62 (big Novig money), §65-66 (settings, sharpest book p
   "the credible edge is…", AutoBettorTest "the sharp veto's bar - a bet the sharpest book gives under 1%…", "when not every bet can be placed…",
   MakerAppTest "a pass reads Novig's trades only for game-line bids…", SharpConfirmUiTest "the veto's bar shows under Veto…", SharpDiagnosticsTest;
   mutants 7/7 killed. A Polymarket "sharp wallet" watch is proposed to Tj, not built (a new subsystem: CLAUDE.md user rule on major changes).
-- [ ] BL7 Sweep (UI, math, timing of every make/take path), full floor, ship, answer Tj with the link and a plain summary.
+- [x] BL7 Sweep (UI, math, timing of every make/take path), full floor, ship, answer Tj with the link and a plain summary.
+  Done: own diff re-read (callers of the veto complete; found and fixed the Kelly stake sized on CNO's fair above the sharp book's: `AutoBet.stake(…,
+  sharpFair)`, AutoBetTest "a Kelly stake uses the sharpest book's own fair…", AutoBettorTest Kelly tests; veto status wording); mutants 9/9 killed;
+  floor 1,849 passed / 23 skipped (ship.sh), `-Pscreenshots` run, 5m2_settings_sharp_veto_bar.png looked at; CI green on 9fc443c0; v0.56.0 (code 96)
+  released 2026-10-03T17:46Z (release.yml run 37141531484), recorded. Proposed to Tj, not built: a Polymarket "sharp wallet" watch (§72.4).
