@@ -37,6 +37,8 @@ TTL_H = [0.25, 1, 3, 6, 1e9]                        # hours it rests (1e9 = unti
 REQUOTE_MIN = 10                                    # minutes between re-quotes in the re-quoting test
 K_FAIR = 7                                          # trades in the stand-in fair
 WS = (0.0, 0.25, 0.5)                               # how far the fair leads Novig toward its close
+LEFT_BINS = [0, 0.5, 1, 2, 3, 6, 12, 24]            # hours before the close, for fills while re-quoting
+ALLF = {}                                           # (w, margin, kind, bin) -> [fills, sum EV@close%, sum CLV¢]
 
 
 def snap_down(p):
@@ -112,18 +114,17 @@ def simulate(d, close_a, a_won):
                         tou = np.nonzero(fp <= b + 1e-9)[0]
                         rows.append((mid_, x, h, w, m, b, fair, close, xwon, *info, 0,
                                      ft[thr[0]] - t0 if len(thr) else np.nan, ft[tou[0]] - t0 if len(tou) else np.nan))
-        # --- re-quoting: from 24 h before the close, cancel and re-post every REQUOTE_MIN at the fair then (w=0 only: no look-ahead)
+        # --- re-quoting: from 24 h before the close, cancel and re-post every REQUOTE_MIN at the fair then (the stand-in fair at that moment)
         grid = np.arange(cut - 0.5 - 24, cut, REQUOTE_MIN / 60)
         jj = np.searchsorted(tt, grid)
         ok = jj >= 3
         if not ok.any():
             continue
         grid, jj = grid[ok], jj[ok]
-        fairs = np.array([np.median(tpa[max(0, j - K_FAIR):j]) for j in jj])
+        nowA = np.array([np.median(tpa[max(0, j - K_FAIR):j]) for j in jj])
         for x in (True, False):
             close = closeA if x else 1 - closeA
             xwon = won if x else (1 - won if won == won else np.nan)
-            fx = fairs if x else 1 - fairs
             # X's last traded offer at each re-quote (2 h back): a bid at or above it would take, so none is posted then
             xt = tt[tisA == x]
             xp = tp[tisA == x]
@@ -135,19 +136,31 @@ def simulate(d, close_a, a_won):
             # which interval each maker fill on X fell in
             k = np.searchsorted(grid, mt[x], side='right') - 1
             kc = np.clip(k, 0, len(grid) - 1)
-            for m in MARGINS:
-                b = snap_down(fx - m / 100)
-                b = np.where(np.isnan(offer) | (b < offer - 1e-9), b, np.nan)
-                hit = (k >= 0) & (mp[x] < b[kc] - 1e-9) & (mt[x] >= grid[0])
-                if hit.any():
-                    i = np.nonzero(hit)[0][0]
-                    bi = b[k[i]]
-                    req.append((mid_, x, m, bi, fx[k[i]], close, xwon, *info, cut - 0.5 - mt[x][i]))
-                else:
-                    req.append((mid_, x, m, np.nan, np.nan, close, xwon, *info, np.nan))
+            left = cut - 0.5 - mt[x]
+            for w in WS:
+                fA = nowA + w * (closeA - nowA)
+                fx = fA if x else 1 - fA
+                for m in MARGINS:
+                    b = snap_down(fx / (1 + m / 100))
+                    b = np.where(np.isnan(offer) | (b < offer - 1e-9), b, np.nan)
+                    hit = (k >= 0) & (mp[x] < b[kc] - 1e-9) & (mt[x] >= grid[0])
+                    if hit.any():
+                        idx = np.nonzero(hit)[0]
+                        i = idx[0]
+                        req.append((mid_, x, w, m, b[k[i]], fx[k[i]], close, xwon, *info, left[i]))
+                        # every re-quote interval that filled (one fill each): what fills are worth by time left before the close
+                        _, first_in = np.unique(k[idx], return_index=True)
+                        for j in idx[first_in]:
+                            hb = int(np.searchsorted(LEFT_BINS, left[j], side='right') - 1)
+                            acc = ALLF.setdefault((w, m, info[1], hb), [0, 0.0, 0.0])
+                            acc[0] += 1
+                            acc[1] += 100 * (close / b[k[j]] - 1)
+                            acc[2] += 100 * (close - b[k[j]])
+                    else:
+                        req.append((mid_, x, w, m, np.nan, np.nan, close, xwon, *info, np.nan))
     cols = ['marketId', 'isA', 'h', 'w', 'm', 'b', 'fair', 'close', 'won', 'league', 'kind', 'cross', 'thrH', 'touH']
     r = pd.DataFrame(rows, columns=cols)
-    q = pd.DataFrame(req, columns=['marketId', 'isA', 'm', 'b', 'fair', 'close', 'won', 'league', 'kind', 'hoursLeft'])
+    q = pd.DataFrame(req, columns=['marketId', 'isA', 'w', 'm', 'b', 'fair', 'close', 'won', 'league', 'kind', 'hoursLeft'])
     return r, q
 
 
