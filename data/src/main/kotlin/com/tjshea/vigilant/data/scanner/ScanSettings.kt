@@ -203,9 +203,15 @@ data class ScanSettings(
      * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … the odds at the time of scan, type of bet,
      * percent EV, books that agree, time before the game begins … when those bets are final, it logs whether they won or lost and their closing line odds"):
      * every bet a CNO or Vigilant scan lists is logged ([com.tjshea.vigilant.data.study.ScanStudy]) and graded later, for Settings › Tools › Share scan study
-     * with Claude. On unless he turns it off; it reads nothing of its own from CNO or Novig.
+     * with Claude. On unless he turns it off; it reads nothing of its own from Novig.
      */
     val scanStudy: Boolean = true,
+    /**
+     * The study's wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria for showing up in the list in the app. They should
+     * still be hidden in the app but logged"): CNO's list read a second time with its filters opened up, every row logged and flagged shown or hidden, never shown in the app.
+     * The one request the study makes of its own, at most every 30 s while the CNO list is being read. On unless he turns it off.
+     */
+    val scanStudyHidden: Boolean = true,
     val autoLockMinPercent: Double = 0.02,
     val autoLockLive: Boolean = true,
     /**
