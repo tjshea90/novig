@@ -285,5 +285,20 @@ def main():
     table('E. Consensus says +EV; what the sharp book adds (the sharp veto today vetoes only at sharp EV <= 0)', rows)
 
 
+    # F. Another AI's report (RESEARCH.md §73) claims lines drift toward favorites late ("bet favorites early, underdogs late"). Pinnacle early → close,
+    # the favorite's fair probability change by its early fair, in points (+ = the favorite shortened), and whether betting it early beat the close.
+    rows = []
+    y = x[x.mkt != 'AH'].dropna(subset=['pinO', 'pinC'])
+    fav = y[y.pinO >= 0.5]
+    for lo, hi in ((0.5, 0.6), (0.6, 0.7), (0.7, 0.8), (0.8, 1.01)):
+        m = (fav.pinO >= lo) & (fav.pinO < hi)
+        rows.append(f'favorite early {lo:.1f}-{hi:.1f}: fair moved {fmt(ci((fav.pinC - fav.pinO)[m].values, fav.mid[m].values))} pts by the close  '
+                    f'(CLV of its early Pinnacle price {fmt(ci((fav.pinOodds * fav.pinC - 1)[m].values, fav.mid[m].values))}%)  n={m.sum():,}')
+    dog = y[y.pinO < 0.36]
+    rows.append(f'underdog early under 0.36 (+180 or longer): shortened {100 * (dog.pinC > dog.pinO).mean():.0f}%, lengthened {100 * (dog.pinC < dog.pinO).mean():.0f}%  '
+                f'(CLV of its early price {fmt(ci((dog.pinOodds * dog.pinC - 1).values, dog.mid.values))}%)  n={len(dog):,}')
+    table('F. Do sharp prices drift toward favorites before the start? (Pinnacle early → close, 1X2 and over/under)', rows)
+
+
 if __name__ == '__main__':
     main()
