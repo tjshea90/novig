@@ -1,25 +1,23 @@
-# CHECKPOINT 2482 — read me first, then TASKS.md
+# CHECKPOINT 2483 — read me first, then TASKS.md
 
-**Written:** 2026-10-03T21:26:04Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `fb4be1cc` (this checkpoint is the commit after it)
+**Written:** 2026-10-03T21:29:32Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e9ab2595-yxxu6w` · **builds on:** `6662d290` (this checkpoint is the commit after it)
 
 ## Just done
-BP done in code: scan study (data/study + wiring + Settings + Diagnostics line), 17 data tests + 6 app tests green, mutants killed, docs (BRIEF, CLAUDE.md, RESEARCH §75, TASKS)
+v0.57.0 prepared: version 99; floor green (1,887 passed, 23 skipped); screenshot of Diagnostics & about checked
 
 ## Do this next
-full floor (bash tools/test.sh), bump 0.57.0 / code 99, CI green on the commit, ship.sh, release.yml, record, answer Tj
+wait CI green on this commit, then bash ship.sh, release.yml, record, answer Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
-     M BRIEF.md
      M CHECKPOINT.md
-     M CLAUDE.md
-     M RESEARCH.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  1804c72b ckpt 2482: BP done in code: scan study (data/study + wiring + Settings + Diagnostics li
   cd772480 ckpt 2481: BP3/BP4: data/study done (model, journal, ScanStudy observe/enrich/settle, S
   bfc6c4cb ckpt 2480: BO done and shipped (v0.56.2 released+recorded). BP1 mapped; BP2/BP3 in prog
   756061ed ckpt 2479: pre-release: v0.56.2: lag fix: the +EV feed is built off the main thread (no
@@ -29,8 +27,7 @@ full floor (bash tools/test.sh), bump 0.57.0 / code 99, CI green on the commit, 
   d9d7fe90 ckpt 2475: BP: Tj's resume-other-session + Scan Study log feature request written to TA
   12e771ff ckpt 2474: BO1 read: ANR at 15:52 = main thread in PlacedIndex.has->BetGrader.pickOf (r
   d2e98a7f ckpt 2473: BO: Tj's auto-bid lag / slow pause / no fills report written to TASKS.md (BO
-  6eedaee9 ckpt 2472: full test shipped: v0.56.1 (code 97) released + recorded (release.yml run 37
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
