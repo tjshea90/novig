@@ -37,8 +37,32 @@ class RateGateTest {
         assertEquals(1_000L, now)
         g.slowDown()
         assertEquals(1.0, g.currentRate, 0.0)
+        // The slow-down over: a step under the 2/s that was refused too, not straight back to 4/s.
+        now += 61_000
+        assertEquals(1.5, g.currentRate, 0.0)
+        // Ten clean minutes later the ceiling is forgotten and steady success climbs back to the starting pace.
+        now += 10 * 60_000
+        repeat(40 * 6) { g.success() }
+        assertEquals(4.0, g.currentRate, 0.0)
+    }
+
+    /**
+     * Tj's v0.52.0 file: Novig's public edge answered 429 about once a minute (1,163 in all), each time a minute's slow-down ended and the full pace
+     * came back. The pace that was refused is now remembered for ten minutes: the gate climbs back to a step under it and stays there.
+     */
+    @Test
+    fun `after a refusal the pace climbs back to a step under the refused one and stays there for ten minutes`() = runTest {
+        val g = RateGate(4.0, 10, clock = { now }, sleep = { sleeps += it; now += it }, maxRate = 6.0, rampEvery = 10, rampStep = 0.5)
+        repeat(30) { g.success() }
+        assertEquals(5.5, g.currentRate, 0.0)
+        g.slowDown()
         now += 61_000
         assertEquals(4.0, g.currentRate, 0.0)
+        repeat(100) { g.success() }
+        assertEquals(5.0, g.currentRate, 0.0)
+        now += 10 * 60_000
+        repeat(100) { g.success() }
+        assertEquals(6.0, g.currentRate, 0.0)
     }
 
     /**
@@ -74,6 +98,8 @@ class RateGateTest {
         assertEquals(3.0, g.currentRate, 0.0) // no ramping while slowed down
         now += 61_000
         assertEquals(4.0, g.currentRate, 0.0) // back to the starting pace, not the old ceiling
+        repeat(100) { g.success() }
+        assertEquals(5.5, g.currentRate, 0.0) // and for ten minutes no higher than a step under the 6/s that was refused
     }
 
     @Test
