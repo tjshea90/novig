@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -141,14 +140,19 @@ class AutoScanService : Service() {
     }
 
     /** Settings changes (off, paused, a new interval, keep awake) and the cycle's progress, into the notification, the alarm and the loop. */
-    @OptIn(kotlinx.coroutines.FlowPreview::class)
     private suspend fun follow() = kotlinx.coroutines.coroutineScope {
-        // A scan's progress moves with every Novig price (~16 a second): the notification shows it at most once a second, so the main thread is woken
-        // that often for it, not 16 times (Tj, 2026-10-03: "the entire app gets laggy when vigilant is scanning"). Apart from the settings and the
-        // cycle's status below, which are acted on at once.
-        launch {
-            container.runner.state.map { it.progress }.distinctUntilChanged().sample(PROGRESS_SAMPLE_MS).collect {
-                if (plan?.mode != null && plan?.mode != AutoScanMode.OFF) updateOngoing(container.autoScan.status.value)
+        // A scan's progress moves with every Novig price (~16 a second): it's watched off the main thread, which is woken for the notification at most
+        // once a second, not 16 times (Tj, 2026-10-03: "the entire app gets laggy when vigilant is scanning"). No timer of its own: a tick that
+        // comes inside the second is skipped. Apart from the settings and the cycle's status below, which are acted on at once.
+        launch(Dispatchers.Default) {
+            var lastMs = 0L
+            container.runner.state.map { it.progress }.distinctUntilChanged().collect {
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (now - lastMs < PROGRESS_SAMPLE_MS) return@collect
+                lastMs = now
+                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                    if (plan?.let { p -> p.mode != AutoScanMode.OFF } == true) updateOngoing(container.autoScan.status.value)
+                }
             }
         }
         combine(

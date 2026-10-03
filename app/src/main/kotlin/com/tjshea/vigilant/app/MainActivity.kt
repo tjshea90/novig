@@ -128,15 +128,6 @@ class MainActivity : ComponentActivity() {
             }
         }
         ContextCompat.registerReceiver(this, miniButtons, IntentFilter(MiniWindow.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
-        // The wallet strip's balance (Tj, 2026-10-03): read again every half minute while Vigilant is on screen (one `account` token; nothing off screen).
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                while (true) {
-                    vm.refreshWallet()
-                    kotlinx.coroutines.delay(WalletBalance.FRESH_MS)
-                }
-            }
-        }
         // Background auto-scan (Tj, 2026-09-28): its service runs while the setting is on. Started from
         // here (Android lets a visible app start it), again each time Vigilant opens, in case Android
         // stopped it; switching it off stops it. Alerts need notifications: asked when it's turned on.
@@ -613,6 +604,9 @@ private fun WalletBar(vm: MainViewModel) {
     val wallet by vm.wallet.collectAsStateWithLifecycle()
     val bids by vm.makerBids.collectAsStateWithLifecycle()
     val up = remember(bids) { bids.orEmpty().filter { it.resting } }
+    // Read again every half minute while it's on screen (one `account` token a time; its clock stops with the screen).
+    val tick = com.tjshea.vigilant.app.ui.rememberNow(WalletBalance.FRESH_MS)
+    androidx.compose.runtime.LaunchedEffect(tick) { vm.refreshWallet() }
     com.tjshea.vigilant.app.ui.WalletStrip(wallet, up.size, remember(up) { up.sumOf { it.restingDollars } }, onRefresh = { vm.refreshWallet(0L) })
 }
 
