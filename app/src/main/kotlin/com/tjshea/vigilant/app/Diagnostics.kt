@@ -196,6 +196,11 @@ object Diagnostics {
                         "feed calls since the app opened ${x.sharpCalls} (${x.sharpFailures} failed)" + (x.sharpAnswers.takeIf { it.isNotEmpty() }?.let { m -> ", answers: " + m.entries.joinToString(", ") { "${it.key} ${it.value}" } } ?: "")
                 },
         )
+        o.appendLine(
+            "Trap guard (RESEARCH.md §71): auto-bet, alerts and bids only on games starting within " +
+                (if (set.trapEarlyHours <= 0) "any time (off)" else "${set.trapEarlyHours} h") +
+                " · game lines Novig just moved ${if (set.trapNovigMove) "skipped (auto-bet reads Novig's trades first)" else "not checked"}",
+        )
         o.appendLine("Leagues: ${set.leagues.sorted().joinToString(", ").ifEmpty { "none" }} · days ahead ${set.daysAhead} · starts within ${if (set.startsWithinHours <= 0) "any time" else "${set.startsWithinHours} h"} · live games ${if (set.includeLive) "on" else "off"}")
         o.appendLine("Edge shown: ${pct(set.minEvPercent)} to ${pct(set.maxEvPercent)} · max odds +${set.maxOdds} · fair odds ${set.fairSource} / ${set.devigMethod}, at least ${set.minBooks} book${if (set.minBooks == 1) "" else "s"}")
         o.appendLine("Scan size: ${limit(set.maxBooksPerScan)} Novig prices · lines/game ${limit(set.linesPerGame)} · props/game ${limit(set.propsPerGame)} · fill the budget ${if (set.fillBudget) "on" else "off"} · window ${set.scanWindowHours} h")
