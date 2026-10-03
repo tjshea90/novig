@@ -392,6 +392,14 @@ robolectric.org/configuring/.
   out lost to the close, inside 6 h they beat it); the lists still show them. `trapNovigMove` (on): before the auto-bet places a full-game moneyline, spread or total, it
   reads the market's newest Novig trades (one public request) and skips a price 2¢+ under this hour's level with $100+ bought on the other side in 15 min (−2.3¢ to the
   close on Novig's 61 days); a read that fails stops nothing; props and period lines are never checked (the same move isn't a trap there). Turning either off needs Tj's word.
+  **v0.56.0 (Tj, 2026-10-03: "avoiding bets that look like positive EV but are actually sharp bets on the other side"; RESEARCH.md §72):** the move rule also stands over
+  game-line bids (`MakerRules.novigMove`, read at Novig's price to take the side; `MakerRunner` reads at most 6 markets a pass, kept 2 min; none while game lines are off
+  for bids, the default), and a resting game-line bid on a just-moved line comes down. **The sharp veto's bar** `sharpVetoMinEv` (1% by default; 0/0.5/1/1.5/2%): with
+  the veto on, the sharpest book for the bet's kind must give Novig's price at least that edge on its own two prices (zero or less always vetoes); the same bar for the
+  auto-bet, CNO's alerts and the bids (every sharp book in the fair, at the bid's own price). What a +EV bet keeps by the close tracks the sharp book's own edge, not the
+  consensus's (48,394 soccer matches: sharp 0-1% kept +0.8%, not distinguishable from zero). Presets carry it (Volume 1%, Strict 2%). When the wallet or the per-cycle cap
+  can't take every bet, the auto-bet places the biggest `AutoBet.credibleEv` first (the sharp book's edge where it priced the bet, else 70% of the shown edge); the
+  stake still uses the shown edge. Lowering the bar under 1% or dropping the bid move rule needs Tj's word.
   **Sharp-book confirmation (Tj, 2026-10-02; §60):** `ScanSettings.sharpConfirmAutoBet` / `sharpConfirmAlerts` (off by default): on top of every other criterion, a sharp book's own devigged
   two-sided price for the exact line and side, no older than `sharpConfirmMaxAgeSeconds` (never over 5 minutes), must show +EV at Novig's price now, and no fresh sharp quote may say otherwise
   (`SharpConfirm`, `SharpBooks`, `SharpGate`). Asked last, for a bet about to be placed or alerted, CNO's page vetoes for free; a check that can't answer is a skip, never a bet.
