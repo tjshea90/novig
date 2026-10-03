@@ -266,8 +266,16 @@ data class RestingBid(
     val restingDollars: Double get() = remaining * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 }
 
-/** What one cycle does: cancel these (with why), then place these. */
-data class MakerActions(val cancels: List<Pair<RestingBid, String>>, val places: List<MakerDecision.Post>, val kept: List<RestingBid>)
+/**
+ * What one cycle does: cancel these (with why), then place these. [waiting]: bids wanted that weren't posted this pass, by why (the most bids or
+ * dollars up at once, the wallet or the day's limit), so the tab can say why auto-make isn't posting them.
+ */
+data class MakerActions(
+    val cancels: List<Pair<RestingBid, String>>,
+    val places: List<MakerDecision.Post>,
+    val kept: List<RestingBid>,
+    val waiting: Map<String, Int> = emptyMap(),
+)
 
 object MakerPlan {
 
@@ -291,6 +299,12 @@ object MakerPlan {
          * isn't wanted any more); nothing new is posted, nothing is moved up or re-posted (each bid is the one he approved).
          */
         repost: Boolean = true,
+        /**
+         * The lines come from a scan still running (its leagues arrive one at a time): a resting bid whose line this pass didn't judge (neither
+         * [wanted] nor in [skips]) is left up; its `ttl` already ends it when its fair goes old, and a later pass judges it. On a finished scan a bid
+         * whose line is gone comes down.
+         */
+        partial: Boolean = false,
     ): MakerActions {
         if (stopAll != null) return MakerActions(resting.map { it to stopAll }, emptyList(), emptyList())
         val byOutcome = wanted.associateBy { it.line.outcomeId }
@@ -299,6 +313,10 @@ object MakerPlan {
         val noRepost = HashSet<String>()
         for (r in resting) {
             val w = byOutcome[r.outcomeId]
+            if (w == null && partial && r.outcomeId !in skips) {
+                kept += r
+                continue
+            }
             val why = when {
                 w == null -> skips[r.outcomeId] ?: "No longer a bid to post"
                 w.price < r.price - 1e-9 -> if (repost) "The fair price fell: re-posted lower" else "The fair price fell under the bid: taken down"
@@ -319,14 +337,28 @@ object MakerPlan {
         var dollars = kept.sumOf { it.restingDollars }
         var spend = budget
         val places = ArrayList<MakerDecision.Post>()
+        val waiting = HashMap<String, Int>()
+        fun wait(why: String) = waiting.merge(why, 1, Int::plus)
         for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(compareBy<MakerDecision.Post> { it.price }.thenByDescending { it.evAtFair })) {
-            if (bids >= rules.maxBids) break
-            if (dollars + w.cost > rules.maxDollars + 1e-9 || w.cost > spend + 1e-9) continue
-            places += w
-            bids++
-            dollars += w.cost
-            spend -= w.cost
+            when {
+                bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
+                dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
+                w.cost > spend + 1e-9 -> wait(BUDGET_REACHED)
+                else -> {
+                    places += w
+                    bids++
+                    dollars += w.cost
+                    spend -= w.cost
+                }
+            }
         }
-        return MakerActions(cancels, places, kept)
+        return MakerActions(cancels, places, kept, waiting)
     }
+
+    /** Why a wanted bid waits (the tab and Diagnostics say how many each). */
+    const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
+    const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
+    const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
+
+    private fun money(v: Double) = String.format(Locale.US, "$%,.2f", v)
 }
