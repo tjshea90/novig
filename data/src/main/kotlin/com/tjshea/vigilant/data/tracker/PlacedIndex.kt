@@ -131,11 +131,28 @@ class PlacedIndex private constructor(
             return pickKey(market, selection)?.let { "$game|$it" }
         }
 
-        /** "baltimore ravens@dallas cowboys" (never contains '|'). */
-        private fun gameKey(event: String): String? =
+        /**
+         * "baltimore ravens@dallas cowboys" (never contains '|'). Each matchup is read once ([games]): the same listing is asked about on every
+         * screen update, by every listed bet (Tj's Diagnostics 2026-10-03, v0.56.1: the main thread was in here when Android ended the app).
+         */
+        private fun gameKey(event: String): String? = kept(gameKeys, event) {
             NovigText.parseMatchup(event)?.let { "${team(it.away)}@${team(it.home)}" }
+        }
 
-        private fun pickKey(market: String, selection: String): String? {
+        private fun pickKey(market: String, selection: String): String? = kept(pickKeys, market + '\u0000' + selection) { readPickKey(market, selection) }
+
+        /** [compute]'s answer for [key], kept (an unreadable one too, as ""); the map starts over past [KEEP_LIMIT] entries (a day's listings are far fewer). */
+        private inline fun kept(map: java.util.concurrent.ConcurrentHashMap<String, String>, key: String, compute: () -> String?): String? {
+            map[key]?.let { return it.ifEmpty { null } }
+            if (map.size > KEEP_LIMIT) map.clear()
+            return compute().also { map[key] = it ?: "" }
+        }
+
+        private val gameKeys = java.util.concurrent.ConcurrentHashMap<String, String>()
+        private val pickKeys = java.util.concurrent.ConcurrentHashMap<String, String>()
+        private const val KEEP_LIMIT = 20_000
+
+        private fun readPickKey(market: String, selection: String): String? {
             val pick = BetGrader.pickOf(market, selection) ?: return null
             fun ou(over: Boolean) = if (over) "o" else "u"
             return when (pick) {
