@@ -19,6 +19,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,8 +39,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.tjshea.vigilant.data.novig.trading.maker.BidMode
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDecision
+import com.tjshea.vigilant.data.novig.trading.maker.MakerSetup
 import com.tjshea.vigilant.data.novig.trading.maker.MakerStatus
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -68,7 +73,13 @@ data class MakerUi(
     val denied: List<com.tjshea.vigilant.data.novig.trading.maker.DeniedBid> = emptyList(),
     /** The background scan runs Vigilant's scan (fresh fairs for bids without Tj scanning). */
     val backgroundFeeds: Boolean = true,
+    /** The last pass's bids wanted but not posted, by why ([com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.Report.waiting]). */
+    val waiting: Map<String, Int> = emptyMap(),
+    /** What the last pass did, in words ("3 posted, 1 cancelled · scan running"); null before the first. */
+    val lastPass: String? = null,
 ) {
+    val mode: BidMode get() = BidMode.of(settings)
+
     /** Bids up on Novig, and ones on their way down (a fill can still land until Novig confirms). */
     val resting: List<MakerBid> get() = bids.filter { it.active }.sortedBy { it.startsTs }
     val filled: List<MakerBid> get() = bids.filter { it.filled > 0 }.sortedByDescending { it.postedAtMs }
@@ -117,6 +128,33 @@ object MakerText {
 
     const val NEEDS_VIGILANT = "Bids need Vigilant's own scan for their fair prices (Settings › Scanner: Both or Vigilant only): CrazyNinjaOdds only lists bets to take."
 
+    /** What each mode does, under the choice. */
+    fun modeText(mode: BidMode): String = when (mode) {
+        BidMode.OFF -> "No bids. Pick Recommend to approve each bid yourself, or Fully automatic to let Vigilant post them."
+        BidMode.RECOMMEND -> "Vigilant recommends bids (here and as notifications) for you to approve or deny; it posts nothing by itself."
+        BidMode.AUTOMATIC -> "Vigilant posts, moves and cancels bids by itself within the rules, while each scan runs and every background cycle: nothing to tap."
+    }
+
+    /** "Bids need these, turned on now: …" (or, before switching, what it will turn on). */
+    fun turnedOn(list: List<String>): String = "Turned on for bids: " + list.joinToString("; ") + "."
+
+    /** Fully automatic's confirmation, with what else it turns on and whether auto-bet starts with the background scan. */
+    fun confirmText(ui: MakerUi): String {
+        val change = MakerSetup.set(ui.settings, BidMode.AUTOMATIC)
+        return CONFIRM + "\n\n" + MakerRulesText.summary(ui.settings) +
+            (if (change.turnedOn.isEmpty()) "" else "\n\nIt also turns on: " + change.turnedOn.joinToString("; ") + ".") +
+            (if (change.startsAutoBet) "\n\n" + STARTS_AUTO_BET else "")
+    }
+
+    const val STARTS_AUTO_BET = "Auto-bet is on: with the background scan running it will also place bets by itself (the Auto-bet tab)."
+
+    /** "12 ready bids wait: the most bids up at once (20) is reached" (the reasons most common first); null when none wait. */
+    fun waitingLine(waiting: Map<String, Int>): String? {
+        val n = waiting.values.sum()
+        if (n == 0) return null
+        return "$n ready bid${if (n == 1) "" else "s"} wait${if (n == 1) "s" else ""}: " + waiting.entries.sortedByDescending { it.value }.joinToString("; ") { (why, k) -> if (waiting.size == 1) why else "$k because $why" }
+    }
+
     const val NEEDS_BETTING = "Set up betting through Novig's API first: bids are posted from the Vigilant wallet."
 
     /** "12 resting · $58.20 held · 3 filled today · last pass 2m ago". */
@@ -124,7 +162,7 @@ object MakerText {
         val resting = ui.resting
         val held = resting.sumOf { it.restingDollars }
         val today = ui.bids.count { it.filled > 0 && (it.endedAtMs ?: it.postedAtMs) >= ui.now - 24 * 3_600_000L }
-        val pass = ui.lastPassAtMs?.let { " · last pass ${Format.age(it, ui.now)}" }.orEmpty()
+        val pass = ui.lastPassAtMs?.let { " · last pass ${Format.age(it, ui.now)}" + (ui.lastPass?.let { p -> " ($p)" } ?: "") }.orEmpty()
         return "${resting.size} resting · ${Format.money(held)} held · $today filled in the last 24 h$pass"
     }
 
@@ -231,14 +269,15 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
             if (resting.isEmpty()) item(key = "restingNone") { Muted("No bids up right now.") }
             items(resting, key = { "r-" + it.clientId }) { b -> RestingRow(b, ui.now, actions.onCancel) }
             item(key = "readyTitle") {
-                SectionTitle(if (ui.settings.maker) "Ready to post (${ready.size})" else "Recommended: approve or deny (${ready.size})")
+                SectionTitle(if (ui.settings.maker) "Next to post (${ready.size})" else "Recommended: approve or deny (${ready.size})")
                 Muted(
                     when {
                         ui.scanAtMs == null -> "No Vigilant scan yet: scan (or let the background scan run) to price lines to bid on."
-                        ui.settings.maker -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Posted at the next pass, cheapest (underdog) first."
+                        ui.settings.maker -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Fully automatic posts these by itself at the next pass (every 20-30 s), cheapest (underdog) first; Post now doesn't wait."
                         else -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
                     },
                 )
+                if (ui.settings.maker) MakerText.waitingLine(ui.waiting)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.testTag("makerWaiting")) }
             }
             items(ready.take(MAX_READY), key = { "p-" + it.line.outcomeId }) { d -> ReadyRow(d, ui.now, ui.setUp, ui.settings.maker, actions) }
             if (ready.size > MAX_READY) item(key = "readyMore") { Muted("+${ready.size - MAX_READY} more (cheapest first)") }
@@ -285,40 +324,58 @@ private fun Muted(text: String) {
 
 @Composable
 private fun MakerHead(ui: MakerUi, actions: MakerActions) {
-    var confirming by rememberSaveable { mutableStateOf(false) }
-    if (confirming) {
+    var confirming by rememberSaveable { mutableStateOf<BidMode?>(null) }
+    // What the last switch turned on, said once under the choice (Tj, 2026-10-03: "the app will automatically toggle on everything it needs").
+    var turnedOn by rememberSaveable { mutableStateOf<String?>(null) }
+    var aboutOpen by rememberSaveable { mutableStateOf(false) }
+    fun apply(mode: BidMode) {
+        val change = MakerSetup.set(ui.settings, mode)
+        turnedOn = change.turnedOn.takeIf { it.isNotEmpty() }?.let(MakerText::turnedOn)
+        actions.onUpdate { MakerSetup.set(it, mode).settings }
+    }
+    confirming?.let { mode ->
         androidx.compose.material3.AlertDialog(
-            onDismissRequest = { confirming = false },
-            title = { Text("Post bids automatically?") },
-            text = { Text(MakerText.CONFIRM + "\n\n" + MakerRulesText.summary(ui.settings)) },
+            onDismissRequest = { confirming = null },
+            title = { Text(if (mode == BidMode.AUTOMATIC) "Post bids automatically?" else "Start the background scan?") },
+            text = { Text(if (mode == BidMode.AUTOMATIC) MakerText.confirmText(ui) else MakerText.STARTS_AUTO_BET) },
             confirmButton = {
-                TextButton(onClick = { confirming = false; actions.onUpdate { it.copy(maker = true) } }, modifier = Modifier.testTag("makerConfirmOn")) { Text("Switch on") }
+                TextButton(onClick = { confirming = null; apply(mode) }, modifier = Modifier.testTag("makerConfirmOn")) { Text("Switch on") }
             },
-            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirming = null }) { Text("Cancel") } },
         )
     }
     Column(Modifier.padding(top = 4.dp)) {
-        Text(MakerText.INTRO, style = MaterialTheme.typography.bodyMedium)
-        Text(MakerText.RESEARCH, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
-        if (!ui.setUp) Banner(MakerText.NEEDS_BETTING, Modifier.padding(top = 10.dp), action = "Set up", onAction = actions.onOpenBetting)
-        if (!ui.vigilantOn) Banner(MakerText.NEEDS_VIGILANT, Modifier.padding(top = 10.dp))
-        if (ui.settings.paused) Banner("Scanning is paused: every bid is down until you resume.", Modifier.padding(top = 10.dp))
-        if (!ui.backgroundFeeds && (ui.settings.maker || ui.settings.makerRecommend)) Banner(MakerText.NO_BACKGROUND, Modifier.padding(top = 10.dp))
-        Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Auto-make: post bids automatically", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text(
-                    if (ui.settings.maker) "On: after each scan and each background cycle, within the rules below." else "Off: bids are recommended below for you to approve or deny.",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("makerMode")) {
+            BidMode.entries.forEachIndexed { i, m ->
+                SegmentedButton(
+                    selected = ui.mode == m,
+                    onClick = {
+                        when {
+                            m == ui.mode -> Unit
+                            // Fully automatic asks first (real money, nobody confirming each bid), as does a switch that starts auto-bet with the background scan.
+                            m == BidMode.AUTOMATIC || MakerSetup.set(ui.settings, m).startsAutoBet -> confirming = m
+                            else -> apply(m)
+                        }
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(i, BidMode.entries.size),
+                    enabled = m == BidMode.OFF || ui.setUp || ui.mode == m,
+                    modifier = Modifier.testTag("makerMode-${m.name}"),
+                ) { Text(m.label, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
-            Switch(
-                checked = ui.settings.maker,
-                // On asks first (real money, nobody confirming each bid); off is immediate.
-                onCheckedChange = { on -> if (on) confirming = true else actions.onUpdate { it.copy(maker = false) } },
-                enabled = ui.setUp || ui.settings.maker,
-                modifier = Modifier.testTag("makerSwitch"),
+        }
+        Text(MakerText.modeText(ui.mode), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        turnedOn?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.positive, modifier = Modifier.padding(top = 4.dp).testTag("makerTurnedOn")) }
+        if (!ui.setUp) Banner(MakerText.NEEDS_BETTING, Modifier.padding(top = 10.dp), action = "Set up", onAction = actions.onOpenBetting)
+        // A mode that bids, with something it needs switched off since (or before this version): one tap turns it all back on.
+        val needs = if (ui.mode == BidMode.OFF) emptyList() else MakerSetup.set(ui.settings, ui.mode).turnedOn
+        if (needs.isNotEmpty()) {
+            Banner(
+                "Bids need: " + needs.joinToString("; ") + ". Until then " + (if (ui.settings.paused) "every bid is down." else "bids are only priced while you scan."),
+                Modifier.padding(top = 10.dp).testTag("makerNeeds"), action = "Turn on",
+                onAction = { if (MakerSetup.set(ui.settings, ui.mode).startsAutoBet) confirming = ui.mode else apply(ui.mode) },
             )
+        } else if (!ui.vigilantOn && ui.mode == BidMode.OFF) {
+            Muted(MakerText.NEEDS_VIGILANT + " Picking Recommend or Fully automatic turns it on.")
         }
         Text(MakerText.status(ui), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp).testTag("makerStatus"))
         ui.problem?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.padding(top = 4.dp)) }
@@ -329,6 +386,11 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
             if (ui.resting.isNotEmpty()) {
                 OutlinedButton(onClick = actions.onCancelAll, modifier = Modifier.testTag("makerCancelAll")) { Text("Cancel all") }
             }
+        }
+        TextButton(onClick = { aboutOpen = !aboutOpen }, modifier = Modifier.testTag("makerAbout")) { Text(if (aboutOpen) "Hide how bids work" else "How bids work") }
+        if (aboutOpen) {
+            Text(MakerText.INTRO, style = MaterialTheme.typography.bodyMedium)
+            Text(MakerText.RESEARCH, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         }
     }
 }
