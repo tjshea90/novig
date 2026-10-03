@@ -625,8 +625,10 @@ What is new here is the account/execution half of the API, which Vigilant has ne
 - **Fees:** the maker never pays. Pregame game markets charge the taker nothing either (`WHEN_LIVE`, §8). The Maker Credit (50% of the taker's fee)
   is paid only on fills **in play**, so pregame bids earn none. **NFL and NCAAF futures:** taker fee 0.06·P(1−P) on every fill and a **70% maker credit
   on every fill** (0.042·P(1−P) a contract: ~2% of the cost at even money), paid within 7 days. Members with a Market Maker Agreement are excluded.
-- **Money:** a bid the wallet can't cover is refused (`422 INSUFFICIENT_BALANCE`). The docs don't say whether a resting bid's cost is held from the
-  balance; treat it as held (the sum of resting bids ≤ the wallet). Every order is a buy, so a bid on each outcome of one market is two buys: both
+- **Money:** a bid the wallet can't cover is refused (`422 INSUFFICIENT_BALANCE`). **Verified 2026-10-03 (Tj's v0.53.0 Diagnostics, RESEARCH.md §70.9): a
+  resting bid's cost is NOT held from the balance** ("wallet $8.32 → $8.32 with $12.54 resting": bids worth more than the wallet rested and the balance
+  didn't move), whatever marketing or third-party write-ups say about escrow (§73). Vigilant counts every bid not yet ended against the wallet itself
+  (the sum of resting bids ≤ the wallet). Every order is a buy, so a bid on each outcome of one market is two buys: both
   filling holds both sides (a lock, §16). A bid of yours on one outcome and one on the other at prices summing to 1 or more would self-match (a wash).
 - **Not yet seen live:** the `PO` reject, `ttl` expiry and maker fills on Tj's subaccount. The first real bid is the test (QA, §1, can try it first).
 - **How Vigilant uses it (v0.51.0, the Bids tab; RESEARCH.md §70.6):** `data/novig/trading/maker/` (`MakerQuote`, `MakerPlan`, `MakerDesk`, `MakerStore`) and
