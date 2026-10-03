@@ -3503,11 +3503,20 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 
 ## Tj, 2026-10-03 ~04:50Z (with vigilant-diagnostics-v0.52.0-2026-10-03-0045.txt): "A few optimizations to this app. 1) review the attached diagnostics file and make optimizations 2) make a quick way inside the app where I can see my vigilant wallet balance, maybe show it somewhere in the app at all times. 3) the entire app gets laggy when vigilant is scanning, but not when cno only is scanning 4) make auto-make betting have its own section or tab. Right now it is hidden inside links in another tab 5) I had auto make bids turned on, but it didn't actually make any bids by itself. I had to manually press each bid to post now. I want to have an option for it to be fully automatic and make the bids itself. 6) I posted plenty of bids and not one of them was taken. Maybe the criteria is too restrictive. Investigate, but it should never be too loose where it is no longer positive ev."
 
-- [ ] BI1 Diagnostics review: work the findings (FAILURE/OPTIMIZE first: DNS-over-HTTPS hosts failing 100%, Novig 429s ×1163, ParlayAPI/PropLine slowness, scan frame stutter, WTA matching, Vigilant CLV −0.7% on 40 bets); fix what the evidence supports, with tests.
+- [x] BI1 Diagnostics review: work the findings (FAILURE/OPTIMIZE first: DNS-over-HTTPS hosts failing 100%, Novig 429s ×1163, ParlayAPI/PropLine slowness, scan frame stutter, WTA matching, Vigilant CLV −0.7% on 40 bets); fix what the evidence supports, with tests.
+  Done: DoH "100% failed" was all offline (network "none"): host findings judge calls with a connection, DoH isn't asked offline (AdvisorTest,
+  CnoNetworkTest); key route back 2 min after a 451 network verdict (30 s after no connection), not 10; public pacer remembers the refused pace 10 min
+  (RateGateTest); ParlayAPI busy boards retried twice, a 200 "busy" caught (ParlayAccountTest); WTA delayed matches (Kalshi keeps the first date)
+  matched up to 3 days back (TennisTest); background cycle no longer blocks 7-8 min on Vigilant's scan (CNO + auto-bet kept running; AutoScanTest),
+  its wake lock held until the scan ends. PropLine slowness: server-side, nothing to change. Vigilant CLV −0.7% on 40 (game lines): too few to act on
+  (§65-66 need ~200), reported to Tj.
 - [x] BI2 Wallet balance visible at all times (a quick look anywhere in the app), refreshed sensibly.
   Done: a strip above the tab bar on every tab ("Vigilant wallet $18.51 · 3 bids up ($8.20) · 2m ago"), from WalletBalance.flow (every balance read
   anywhere feeds it), read again every 30 s while Vigilant is on screen, tap = read now. Tests: WalletStripTest (3).
-- [ ] BI3 Lag while a Vigilant scan runs (not with CNO only): find what runs on the main thread / recomposes per scan publish, fix without dropping data; measure.
+- [x] BI3 Lag while a Vigilant scan runs (not with CNO only): find what runs on the main thread / recomposes per scan publish, fix without dropping data; measure.
+  Done: the scan runs on its own pool at Android's background priority (ScanThreads; the screen's threads win the CPU), the auto-scan service watches
+  progress off the main thread (1 wake a second, not 16), bid passes devig books only for lines that can get a bid, and Diagnostics now shows each
+  scan's CPU by thread group (ThreadCpu: main, RenderThread, scan, Default, OkHttp, GC) so the next file measures it. Tests: ScanThreadsTest (4).
 - [x] BI4 Auto-make (bids) gets its own section/tab, not hidden behind links in another tab.
   Done: the Bids tab shows in every scanner mode (it hid in CNO only, where Tj's Auto-bet tab's line was the only way to it); its first row is the
   choice Off · Recommend · Automatic. Tests: MakerUiTest "the Bids tab is there whatever the scanner …".
@@ -3517,8 +3526,13 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
   and worked. Fixed: passes judge a running scan's finished leagues (a bid on a line not judged yet stays up: its ttl bounds it), every 20 s while
   a scan runs; lines use the last scan's Novig book (<=20 min; the bid comes from the fair, PO refuses a cross); the tab says why ready bids wait
   (most bids/dollars/wallet). Tests: MakerTest (4 new, mutants 3/3), MakerAppTest "fully automatic posts while a scan is still running" (mutant 1/1).
-- [ ] BI6 No bid filled: investigate (price vs the book, margin, ttl/expiry churn, cancel reasons ×46 expired, ×19 paused, ×18 fair goes old), loosen only where still +EV; tests.
+- [x] BI6 No bid filled: investigate (price vs the book, margin, ttl/expiry churn, cancel reasons ×46 expired, ×19 paused, ×18 fair goes old), loosen only where still +EV; tests.
+  Done (RESEARCH.md §70.8): not the criteria: bids lived minutes, with gaps of minutes, for ~1.5 h after midnight (expected ~1-2 fills of 83); fixed by
+  BI5 (re-quoted as each league's fairs arrive) and BI1 (faster scans); margin kept at 4% (no +EV rule loosened); the wallet ($18.51) caps bids
+  up at once (the tab says so). Diagnostics' bid line (MakerStats: auto vs hand, rest time, led the book, gap to the offer). Test: MakerAppTest.
 - [x] BI8 Tj, 2026-10-03 ~05:05Z: "Also make it so the make bidding system is always shown, even if vigilant scanning is turned off. As soon as I turn on make bidding or auto make bidding, the app will automatically toggle on everything it needs including vigilant scanning" — the Bids tab always shown (any scanner choice); switching bids or auto-make on turns on what they need (Vigilant scanning, background auto-scan of Vigilant, unpause), and says what it turned on.
   Done: MakerSetup.set (Recommend/Automatic turn on Vigilant's scanner, background CNO + Vigilant, at most every 60 s, unpause; says so; asks first
   when that would also start auto-bet); a "Bids need … Turn on" banner when something was switched off since. Tests: MakerTest, MakerUiTest (2 new).
-- [ ] BI7 Sweep for UI/code improvements and bugs; full floor, ship, answer Tj with the link.
+- [x] BI7 Sweep for UI/code improvements and bugs; full floor, ship, answer Tj with the link.
+  Done: own diff re-read (found: the non-blocking cycle let the CPU sleep mid-scan → wake lock held to the scan's end; main-thread timers removed);
+  seven tab labels wrapped mid-word → one line (screenshot 0_wallet_strip_tabs.png); Auto-bet tab's bids line names the mode. Floor 1,806 passed.
