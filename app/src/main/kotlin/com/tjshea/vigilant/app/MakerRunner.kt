@@ -209,8 +209,11 @@ class MakerRunner(
     private suspend fun recommend(decisions: List<MakerDecision>) {
         val posts = decisions.filterIsInstance<MakerDecision.Post>()
         if (posts.isEmpty()) return
-        val fresh = c.makerRecommended.unseen(posts.map { it.line.outcomeId to it.line.startsTs }, clock())
-        val pick = posts.filter { it.line.outcomeId in fresh }.sortedWith(compareBy({ it.price }, { -it.evAtFair })).take(MAX_RECOMMENDED)
+        val now = clock()
+        val fresh = c.makerRecommended.unseen(posts.map { it.line.outcomeId to it.line.startsTs }, now)
+        // A busy slate prices hundreds of lines: the best few a pass, and no more than [MAX_RECOMMENDED_PER_HOUR] an hour (the tab lists the rest).
+        val room = (MAX_RECOMMENDED_PER_HOUR - c.makerRecommended.since(now - 3_600_000L)).coerceAtLeast(0)
+        val pick = posts.filter { it.line.outcomeId in fresh }.sortedWith(compareBy({ it.price }, { -it.evAtFair })).take(minOf(MAX_RECOMMENDED, room))
         if (pick.isEmpty()) return
         pick.forEach { MakerNotes.recommend(app, it) }
         c.makerRecommended.mark(pick.map { it.line.outcomeId to it.line.startsTs }, clock())
@@ -232,8 +235,9 @@ class MakerRunner(
     }
 
     companion object {
-        /** The most bids recommended (notified) in one pass. */
+        /** The most bids recommended (notified) in one pass, and in an hour. */
         const val MAX_RECOMMENDED = 3
+        const val MAX_RECOMMENDED_PER_HOUR = 6
     }
 }
 
@@ -248,6 +252,9 @@ class MakerRecommended(file: java.io.File) {
         val seen = store.read().filter { it.startsTs > now }.mapTo(HashSet()) { it.outcomeId }
         return sides.map { it.first }.filterTo(HashSet()) { it !in seen }
     }
+
+    /** How many were recommended since [fromMs]. */
+    suspend fun since(fromMs: Long): Int = store.read().count { it.atMs >= fromMs }
 
     suspend fun mark(sides: List<Pair<String, Long>>, now: Long) {
         store.update { list -> list.filter { it.startsTs > now } + sides.map { (o, s) -> Seen(o, s, now) } }

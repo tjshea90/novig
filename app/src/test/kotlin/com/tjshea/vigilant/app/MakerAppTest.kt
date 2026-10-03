@@ -191,6 +191,15 @@ class MakerAppTest {
     }
 
     @Test
+    fun `recommendations are capped at six an hour`() = runBlocking {
+        val rec = MakerRecommended(java.io.File.createTempFile("rec", ".json").also { it.delete() })
+        rec.mark((1..6).map { "side-$it" to now + 3_600_000L }, now - 10 * 60_000)
+        assertEquals(6, rec.since(now - 3_600_000L))
+        assertEquals(0, rec.since(now - 60_000))
+        assertEquals(setOf("side-7"), rec.unseen(listOf("side-1" to now + 1, "side-7" to now + 1), now))
+    }
+
+    @Test
     fun `Deny from the notification skips that side until its game, and Cancel by hand denies the side too`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
