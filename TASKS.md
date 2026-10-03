@@ -3540,6 +3540,11 @@ Cause: the "fair" was the middle of Novig's bid and offer (+122 offered, −223 
 ## Tj, 2026-10-03 ~06:40Z (with vigilant-diagnostics-v0.53.0-2026-10-03-0237.txt): "None of my auto bids were accepted"
 
 - [ ] BJ1 Read the v0.53.0 file's bids evidence (MakerStats line: auto vs hand, rest time, led the book, gap to the offer; bids ended by why; MAKER timeline: posted/cancelled, "wallet A → B"; maker.* counters; refusals): say exactly why no auto bid filled (not enough rest time? not the best bid? price far under the offer? few takers at that hour? refused/cancelled? something broken?).
+  Evidence so far (v0.53.0 file, 02:37 EDT, ~40 min of bids from 01:56): 289 bids (auto 206), rested 1 min median / 6 min p90, filled 0; ended ×163
+  "About to expire: re-posted" (re-post from the same aging fair = churn loop), ×35 fair going old; led their side 41%; 4.0¢ under the offer at the
+  median; ~1,500+ candidate bids waiting on the $8.32 wallet / 20-bid cap; wallet unchanged with $8-12 resting (Novig doesn't hold resting bids;
+  resting exceeded the wallet: $12.54 > $8.32); /v3/portfolio/fills 429s (a fills read per ended bid); GC 64% of a core during scans.
+  Workflow wf_3002be9a-7af (5 analysts + skeptics) running for root causes and fixes.
 - [ ] BJ2 Fix what's broken and improve the fill chance only where still +EV (never under the margin rules; never loosen a safety limit); tests with mutants.
 - [ ] BJ3 Work the file's other findings (FAILURE/OPTIMIZE first) where the evidence supports a change; check v0.53.0's own changes (ThreadCpu split, scan lag, 429s, key retry, WTA matching, cycles not blocking).
 - [ ] BJ4 Sweep, full floor, ship, answer Tj with the link and the plain reason his bids didn't fill.
