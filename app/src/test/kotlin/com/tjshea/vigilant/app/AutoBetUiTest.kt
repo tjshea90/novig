@@ -404,7 +404,15 @@ class AutoBetUiTest {
         compose.onNodeWithTag("autoBet-trapMove").performScrollTo().performClick()
         assertFalse(settings.trapNovigMove)
         compose.onNodeWithTag("autoBet-trapMoveNote").assertTextContains("Off", substring = true)
-        // Every setting search sends to this tab is on it.
+    }
+
+    @Test
+    fun `every setting search sends to the Auto-bet tab is on it`() {
+        ui = SampleScan.state().copy(betting = BettingUi(enabled = true, balance = 25.0), settings = ScanSettings(autoScan = AutoScanMode.CNO))
+        compose.setContent {
+            VigilantTheme(darkTheme = true) { com.tjshea.vigilant.app.ui.AutoBetScreen(ui, { t -> ui = ui.copy(settings = t(ui.settings)) }) }
+        }
+        compose.waitForIdle()
         for (e in com.tjshea.vigilant.app.ui.SettingsIndex.entries.filter { it.page == null && !it.bids && it.shown(settings) }) {
             assertTrue(
                 "\"${e.title}\" should be on the Auto-bet tab",
