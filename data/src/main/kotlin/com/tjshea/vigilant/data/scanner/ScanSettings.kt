@@ -192,6 +192,34 @@ data class ScanSettings(
     val trackerHideLocked: Boolean = true,
     val autoLockMinPercent: Double = 0.02,
     val autoLockLive: Boolean = true,
+    /**
+     * Make orders (Tj, 2026-10-03: "do deep research on how to do make orders on novig … build the system in the app"; RESEARCH.md §70): post bids
+     * under Vigilant's fair price on Novig and let takers fill them ([com.tjshea.vigilant.data.novig.trading.maker.MakerDesk]). Off by default. Each bid
+     * is post-only (it never takes) with an expiry ([makerTtlMinutes]), re-posted at the current fair after each scan while it's still worth it, and
+     * cancelled when the fair moves against it, the game is about to start, or scanning is paused. Pregame only (Novig voids resting orders at the start).
+     */
+    val maker: Boolean = false,
+    /** The EV at the fair each bid is posted at: fair / (1 + this), on Novig's grid ([MAKER_MARGIN_CHOICES]). 4% is §70's balance point. */
+    val makerMargin: Double = 0.04,
+    /** Dollars per bid (what it costs if it fills), never more than [apiMaxStake]. */
+    val makerStake: Double = 5.0,
+    /** The most bids resting at once ([MAKER_MAX_BIDS_CHOICES]). */
+    val makerMaxBids: Int = 20,
+    /** The most dollars resting at once, all bids together ([MAKER_MAX_DOLLARS_CHOICES]): Novig needs the wallet to cover each bid. */
+    val makerMaxDollars: Double = 100.0,
+    /** The kinds of bet it posts on: props, 1st-half/inning lines and team totals by default; game lines only with a fair that leads Novig (§70.2). */
+    val makerKinds: Set<BetKind> = MAKER_DEFAULT_KINDS,
+    /** How long each bid may rest before Novig cancels it by itself (`ttl`, [MAKER_TTL_CHOICES]): the safety net if the phone stops checking. */
+    val makerTtlMinutes: Int = 30,
+    /** No bid rests closer to the start than this ([MAKER_STOP_CHOICES]). */
+    val makerStopMinutes: Int = 15,
+    /** The bid's price window (probability; 0.10 = +900, 0.65 = −186): favorites over 0.65 almost never fill (§70.2). */
+    val makerMinPrice: Double = 0.10,
+    val makerMaxPrice: Double = 0.65,
+    /** Bid both sides of a market (both filling locks in the two margins) or only the side with the better EV per bid. */
+    val makerBothSides: Boolean = true,
+    /** The fewest books behind the fair price for a bid to be posted. */
+    val makerMinBooks: Int = 2,
     /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */
     val presets: List<SavedPreset> = emptyList(),
     /** The preset applied last (a built-in's or one of [presets]' names), null = none; recorded on each bet ([com.tjshea.vigilant.data.tracker.AtBet]). */
@@ -490,6 +518,9 @@ data class ScanSettings(
 
     /** A background cycle locks profits ([autoLock]): on, with the background scan running (any scanner) and not paused. */
     val autoLocksNow: Boolean get() = autoLock && !paused && autoScan != AutoScanMode.OFF
+
+    /** Make orders post and re-price by themselves: on and not paused (the Pause button and an empty wallet cancel every bid). */
+    val makerNow: Boolean get() = maker && !paused
 
     /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
     val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn
