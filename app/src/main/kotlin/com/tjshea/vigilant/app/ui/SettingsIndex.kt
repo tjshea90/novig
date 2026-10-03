@@ -19,7 +19,12 @@ object SettingsIndex {
         val help: String,
         val words: String = "",
         val shown: (ScanSettings) -> Boolean = { true },
-    )
+        /** On the Bids tab (make orders) rather than a Settings page or the Auto-bet tab; its rules open under "Rules". */
+        val bids: Boolean = false,
+    ) {
+        /** Where it lives, as a search hit says it. */
+        val where: String get() = if (bids) "Bids tab" else page?.title ?: "Auto-bet tab"
+    }
 
     private val novig: (ScanSettings) -> Boolean = { AppBook.isNovig }
     private val autoBetTab: (ScanSettings) -> Boolean = { AppBook.isNovig && it.cnoOn }
@@ -35,6 +40,7 @@ object SettingsIndex {
         // Alerts
         Entry("Smallest edge (EV) to alert on", SettingsPage.ALERTS, "How good a new bet must be to notify you", "alerts notification push ev minimum", novig),
         Entry("Sharp-book veto for alerts", SettingsPage.ALERTS, "Skip alerts the sharpest book disagrees with", "pinnacle kalshi confirm veto sharp", { AppBook.isNovig && it.cnoOn }),
+        Entry("Trap guard", SettingsPage.ALERTS, "No alerts for games too far from the start (bets that early lost to the close)", "trap sharp early hours start gift steam", novig),
         // CrazyNinjaOdds list
         Entry("How the true odds are worked out", SettingsPage.CNO, "Devig: taking the sportsbooks' profit out of their odds", "devig vig conservative fair true odds"),
         Entry("Longest odds", SettingsPage.CNO, "No long shots past this in CNO's list", "max odds longshot underdog cno"),
@@ -87,9 +93,19 @@ object SettingsIndex {
         Entry("Shortest odds to bet", null, "No heavy favorites past this for auto-bet", "auto-bet min odds favorite", autoBetTab),
         Entry("Kinds of bet to place", null, "Props, moneylines, spreads, totals…", "auto-bet kinds markets props", autoBetTab),
         Entry("Sharp-book veto", null, "Skip a bet the sharpest book disagrees with", "auto-bet sharp veto confirm pinnacle kalshi", autoBetTab),
+        Entry("Trap guard", null, "Skip games too far from the start, and game lines Novig just moved", "auto-bet trap sharp early hours gift steam moved", autoBetTab),
         Entry("Amount per bet", null, "Auto-bet's stake: Kelly, \$1 or your amount", "auto-bet stake kelly amount", autoBetTab),
         Entry("Check every", null, "How often auto-bet looks for bets", "auto-bet interval often", autoBetTab),
         Entry("Lock in profits automatically", null, "Buy the other side once a bet's odds moved your way, for a sure profit", "lock hedge arbitrage arb guarantee green", autoBetTab),
+        // The Bids tab (make orders)
+        Entry("Fully automatic", null, "Bids: off, recommend each one, or post them by themselves", "bids make orders maker post auto-make recommend", novig, bids = true),
+        Entry("Under the fair", null, "How far under the fair each bid is posted (its EV)", "bids maker margin edge ev", novig, bids = true),
+        Entry("Size of each bid", null, "Kelly, \$1 or your amount per bid", "bids maker stake kelly amount", novig, bids = true),
+        Entry("Most bids up at once", null, "How many bids rest at the same time", "bids maker cap limit", novig, bids = true),
+        Entry("Most dollars up at once", null, "How much money all bids together may hold", "bids maker wallet dollars", novig, bids = true),
+        Entry("Each bid expires after", null, "How long a bid rests before Novig takes it down", "bids maker ttl expiry", novig, bids = true),
+        Entry("No bids this close to the start", null, "Bids come down this long before a game", "bids maker stop start", novig, bids = true),
+        Entry("Trap guard: only games starting within", null, "No bids on games too far off (shared with auto-bet and alerts)", "bids maker trap early hours", novig, bids = true),
     )
 
     /** The entries matching every word of [query] (in the title, the line or the extra words), for these settings. */
@@ -97,7 +113,7 @@ object SettingsIndex {
         val words = query.lowercase(Locale.US).split(Regex("\\s+")).filter { it.isNotBlank() }
         if (words.isEmpty()) return emptyList()
         return entries.filter { e ->
-            val hay = "${e.title} ${e.help} ${e.words} ${e.page?.title ?: "auto-bet"}".lowercase(Locale.US)
+            val hay = "${e.title} ${e.help} ${e.words} ${e.where}".lowercase(Locale.US)
             e.shown(s) && (e.page?.shownIn(s) ?: true) && words.all { hay.contains(it) }
         }
     }

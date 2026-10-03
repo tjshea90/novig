@@ -229,6 +229,8 @@ fun SettingsScreen(
     page: SettingsPage? = null,
     onPage: ((SettingsPage?) -> Unit)? = null,
     onOpenAutoBet: (() -> Unit)? = null,
+    /** Opens the Bids tab (its row on the home list, and search results for it). */
+    onOpenBids: (() -> Unit)? = null,
 ) {
     val s = state.settings
     state.report?.let { ReportDialog(it, reportActions) }
@@ -268,7 +270,7 @@ fun SettingsScreen(
                 .testTag("settingsPage-${current?.name ?: "HOME"}"),
         ) {
             when (current) {
-                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet)
+                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
@@ -285,7 +287,7 @@ fun SettingsScreen(
 
 /** The Settings home: a search box, the Auto-bet row (it opens its tab), then every page with what it's set to now. */
 @Composable
-private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?) {
+private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?) {
     val s = state.settings
     var query by rememberSaveable { mutableStateOf("") }
     OutlinedTextField(
@@ -304,12 +306,11 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
         val hits = SettingsIndex.search(query, s)
         if (hits.isEmpty()) Hint("Nothing matches \"${query.trim()}\". Try another word, like edge, books, stake or widget.")
         hits.forEach { e ->
-            val where = e.page?.title ?: "Auto-bet tab"
             SettingsRow(
                 title = e.title,
-                summary = "$where · ${e.help}",
-                tag = "settingsHit-${e.title}",
-                onClick = { if (e.page != null) onOpen(e.page) else onOpenAutoBet?.invoke() },
+                summary = "${e.where} · ${e.help}",
+                tag = "settingsHit-${e.where}-${e.title}",
+                onClick = { if (e.bids) onOpenBids?.invoke() else if (e.page != null) onOpen(e.page) else onOpenAutoBet?.invoke() },
             )
         }
         return
@@ -320,6 +321,14 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
             summary = "Its own tab now · ${SettingsSummary.autoBet(s)}",
             tag = "settingsRow-AUTOBET",
             onClick = onOpenAutoBet,
+        )
+    }
+    if (AppBook.isNovig && onOpenBids != null) {
+        SettingsRow(
+            title = "Bids (make orders)",
+            summary = "Its own tab · ${com.tjshea.vigilant.data.novig.trading.maker.BidMode.of(s).label} · ${MakerRulesText.summary(s)}",
+            tag = "settingsRow-BIDS",
+            onClick = onOpenBids,
         )
     }
     SettingsPage.shown(s).forEach { p ->

@@ -832,6 +832,7 @@ private fun VigilantRoot(
                     page = com.tjshea.vigilant.app.ui.SettingsPage.named(settingsPage),
                     onPage = { p -> settingsPage = p?.name },
                     onOpenAutoBet = { tabName = Tab.AUTOBET.name },
+                    onOpenBids = if (Tab.BIDS.shownIn(mode)) ({ tabName = Tab.BIDS.name }) else null,
                     keys = com.tjshea.vigilant.app.ui.KeyActions(
                         add = vm::addKey,
                         remove = vm::removeKey,
