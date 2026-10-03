@@ -29,6 +29,11 @@ enum class MakerStatus(val label: String, val ended: Boolean) {
     /** Sent; Novig's answer (the order id) not back yet, or lost. */
     SENT("Sent", false),
     RESTING("Resting", false),
+    /**
+     * Cancel sent; Novig hasn't confirmed it left the book. A fill can still land in that gap (NOVIG_API.md §17: "A fill can land between the cancel and
+     * the place"), so it's watched until Novig says it ended: no new bid on its side until then.
+     */
+    CANCELING("Cancelling", false),
     FILLED("Filled", true),
     CANCELED("Cancelled", true),
     EXPIRED("Expired", true),
@@ -79,6 +84,9 @@ data class MakerBid(
     val betId: String? = null,
 ) {
     val active: Boolean get() = !status.ended
+
+    /** Up on Novig as far as Vigilant knows (sent or resting), not on its way down. */
+    val resting: Boolean get() = status == MakerStatus.SENT || status == MakerStatus.RESTING
     val cost: Double get() = contracts * price * EvMath.CONTRACT_PAYOUT_DOLLARS
     val restingDollars: Double get() = (contracts - filled).coerceAtLeast(0) * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 
@@ -141,11 +149,19 @@ class MakerDesk(
         val fills = settle(problems)
         val now = clock()
         val bids = store.all()
-        val active = bids.filter { it.active && it.orderId != null }
+        val active = bids.filter { it.resting && it.orderId != null }
         val bets = tracker.all()
         val activeOutcomes = active.mapTo(HashSet()) { it.outcomeId }
-        val held = bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - activeOutcomes
-        val decisions = MakerQuote.decideAll(lines, rules, now, held)
+        // Busy: a bid on its way down (a fill can still land) or one whose answer was lost. Never a second bid on that side meanwhile.
+        val busy = bids.filter { it.status == MakerStatus.CANCELING || (it.status == MakerStatus.SENT && it.orderId == null) }.mapTo(HashSet()) { it.outcomeId }
+        val held = (bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - activeOutcomes) + busy
+        val refused = bids.filter { it.status == MakerStatus.REFUSED && now - (it.endedAtMs ?: it.postedAtMs) < REFUSED_COOLOFF_MS }.mapTo(HashSet()) { it.outcomeId }
+        val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
+            // Novig refused a bid here a moment ago (post-only: its price had moved to the bid): not asked again until the cool-off passes.
+            if (d is MakerDecision.Post && d.line.outcomeId in refused && d.line.outcomeId !in activeOutcomes) {
+                MakerDecision.Skip(d.line, "Novig refused a bid here in the last ${REFUSED_COOLOFF_MS / 60_000} min (its price had moved to the bid)")
+            } else d
+        }
         val spent = spentToday(bets, now)
         val stopAll = stop ?: if (spent >= maxPerDay - 1e-9) "Today's limit for API bets (${money(maxPerDay)}) is reached" else null
         val resting = active.map { RestingBid(it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs) }
@@ -159,10 +175,11 @@ class MakerDesk(
         withContext(NonCancellable) {
             for ((r, why) in actions.cancels) {
                 when (cancelOne(r.orderId, why, problems)) {
-                    true -> cancelled++
-                    // It filled (all or part) before the cancel: that side is a bet now, not bid on again this cycle.
-                    false -> noReplace += r.outcomeId
-                    null -> noReplace += r.outcomeId
+                    // Gone, confirmed: its side can be bid again now.
+                    Cancel.GONE -> cancelled++
+                    // On its way down but not confirmed, or it filled first, or Novig refused: nothing new on that side this pass.
+                    Cancel.PENDING -> { cancelled++; noReplace += r.outcomeId }
+                    Cancel.FILLED, Cancel.FAILED -> noReplace += r.outcomeId
                 }
             }
         }
@@ -194,7 +211,7 @@ class MakerDesk(
 
     /** Tj's Post button: one bid now, outside the cycle (the same checks: [decision] was worked out just now). */
     suspend fun post(decision: MakerDecision.Post, rules: MakerRules): String? = lock.withLock {
-        if (store.all().any { it.active && it.outcomeId == decision.line.outcomeId }) return@withLock "There's already a bid on this side"
+        if (store.all().any { it.active && it.outcomeId == decision.line.outcomeId }) return@withLock "There's already a bid on this side (or one on its way down)"
         when (val r = withContext(NonCancellable) { placeOne(decision, rules, auto = false) }) {
             is Placed.Ok -> null
             is Placed.Refused -> r.why
@@ -206,9 +223,9 @@ class MakerDesk(
         val problems = ArrayList<String>()
         withContext(NonCancellable) {
             when (cancelOne(orderId, "Cancelled by you", problems)) {
-                true -> null
-                false -> "It filled before the cancel reached Novig (see the Tracker)"
-                null -> problems.firstOrNull() ?: "Novig didn't take the cancel"
+                Cancel.GONE, Cancel.PENDING -> null
+                Cancel.FILLED -> "It filled before the cancel reached Novig (see the Tracker)"
+                Cancel.FAILED -> problems.firstOrNull() ?: "Novig didn't take the cancel"
             }
         }
     }
@@ -218,7 +235,8 @@ class MakerDesk(
         withContext(NonCancellable) {
             val n = trading.cancelOrders()
             val now = clock()
-            store.update { list -> list.map { if (it.active && it.orderId != null) it.copy(status = MakerStatus.CANCELED, endedAtMs = now, why = why) else it } }
+            // On their way down: each is watched until Novig says it ended (a fill can still land first), then marked.
+            store.update { list -> list.map { if (it.active && it.orderId != null && it.status != MakerStatus.CANCELING) it.copy(status = MakerStatus.CANCELING, why = why) else it } }
             n
         }
     }
@@ -238,10 +256,12 @@ class MakerDesk(
             league = line.league, eventName = line.eventName, startsTs = line.startsTs, marketLabel = line.marketLabel, selection = line.selection,
             kind = line.kind, price = post.price, contracts = post.contracts, fair = line.fair ?: post.price, evAtFair = post.evAtFair,
             margin = rules.margin, books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
-            // Never past the start: Novig voids it there anyway, and an expiry that says so is clearer.
-            expiresAtMs = minOf(now + rules.ttlMs, line.startsTs), auto = auto,
+            // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
+            expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
         )
-        val ttl = (bid.expiresAtMs!! - now).coerceAtLeast(60_000L)
+        val ttl = bid.expiresAtMs!! - now
+        // Worked out a moment ago: if that window has closed since, nothing is sent.
+        if (ttl < MIN_TTL_MS) return Placed.Refused("${line.selection}: its fair price is about to go old; re-priced at the next scan", stopsCycle = false)
         // Recorded before it's sent: an answer that never comes back is still a bid Vigilant knows to look for.
         store.update { it + bid }
         return try {
