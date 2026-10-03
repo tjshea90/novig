@@ -64,7 +64,8 @@ class NetStatsTest {
         assertEquals(mapOf("timeout" to 1L), h.kinds)
         assertEquals(mapOf("Wi-Fi" to 2L, "mobile" to 2L), h.byNet)
         assertEquals(PathStat(2, 0, 1_600, 200), h.paths.getValue("/site/tools/positive-ev.aspx"))
-        assertEquals(PathStat(2, 2, 20_300, 429), h.paths.getValue("/site/browse/game.aspx"))
+        // Each endpoint keeps how its calls failed (v0.54.0 file: "NFL props 41 of 94 failed" said nothing of how).
+        assertEquals(PathStat(2, 2, 20_300, 429, mapOf("timeout" to 1L, "429" to 1L)), h.paths.getValue("/site/browse/game.aspx"))
         assertEquals(1L, h.limits)
         assertEquals("Retry-After: 30", h.lastLimit)
         // The last failure is the 429 (its text is its status); the timeout's text was an earlier one.
@@ -115,7 +116,7 @@ class NetStatsTest {
         assertEquals(2L, h.calls)
         assertEquals(1L, h.errors)
         assertEquals(mapOf("200" to 1L, "500" to 1L), h.status)
-        assertEquals(PathStat(2, 1, 300, 500), h.paths.getValue("/p"))
+        assertEquals(PathStat(2, 1, 300, 500, mapOf("500" to 1L)), h.paths.getValue("/p"))
         assertEquals(2, h.recentMs.size)
         second.load()
         assertEquals(2L, second.snapshot().hosts.getValue("h").calls)
