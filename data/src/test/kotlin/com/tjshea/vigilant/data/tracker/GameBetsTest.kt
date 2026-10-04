@@ -117,14 +117,15 @@ class GameBetsTest {
 
     @Test
     fun `a lock is shown with its bet but the risk counts the market once`() {
-        val pick = bet("pick", market = "m1", outcome = "o1", stake = 5.0)
+        val pick = bet("pick", market = "m1", outcome = "o1", stake = 3.0, contracts = 1_000)
+        // The lock cost more than the pick did (a pick bought at long odds): money in, but never extra risk.
         val lock = bet("lock", market = "m1", outcome = "o2", stake = 4.0, lockFor = "pick", contracts = 800, selection = "Under 44.5")
         val s = GameBets.of(listOf(pick, lock), emptyList()).of(ref(id = "e1"))!!
         assertEquals(2, s.bets.size)
-        assertEquals("both are money in", 9.0, s.placed, 1e-9)
+        assertEquals("both are money in", 7.0, s.placed, 1e-9)
         assertTrue(s.bets.any { it.kind == GameBets.Kind.LOCK })
-        // 1,000 contracts on one side and 800 on the other is not a fully locked market: it counts the larger side only.
-        assertEquals(5.0, s.atRisk, 1e-9)
+        // A lock is never exposure of its own: the pick's $3.00 is what the limit counts.
+        assertEquals(3.0, s.atRisk, 1e-9)
         assertTrue(s.hedged)
     }
 

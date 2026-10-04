@@ -73,7 +73,7 @@ class GameBets private constructor(private val entries: List<Entry>) {
         val risk = GameExposure.atRisk(game, mine.mapNotNull { it.item })
         return Summary(
             game = game,
-            bets = mine.map { it.line }.sortedByDescending { it.atMs },
+            bets = mine.filter { it.line.kind != Kind.BID }.map { it.line }.sortedByDescending { it.atMs },
             bids = mine.filter { it.line.kind == Kind.BID }.map { it.line }.sortedByDescending { it.atMs },
             atRisk = risk,
         )
