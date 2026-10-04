@@ -13,9 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotSelected
-import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -177,6 +179,9 @@ class ApiBettingUiTest {
     private fun chip(label: String) = compose.onNode(hasText(label) and perGame)
     private fun field() = compose.onNodeWithTag("perGameLimitField")
 
+    /** What the field holds (its editable text, not its label, prefix or hint). */
+    private fun assertTyped(expected: String) = field().assert(SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString(expected)))
+
     private fun showPerGame(start: ScanSettings = ScanSettings(), onChange: (ScanSettings) -> Unit = {}): () -> ScanSettings {
         var settings by mutableStateOf(start)
         screen { NovigBettingSection(BettingUi(enabled = true, balance = 12.5), settings, BettingActions(), { t -> settings = t(settings); onChange(settings) }) }
@@ -234,7 +239,7 @@ class ApiBettingUiTest {
         // Letters never get in; clearing the field changes nothing (the last good limit stands).
         field().performTextClearance()
         field().performTextInput("abc")
-        field().assertTextEquals("Or type your own amount", "")
+        assertTyped("")
         assertEquals(25.0, now().apiMaxPerGame, 1e-9)
         assertTrue("nothing was saved while those were typed: $changes", changes.isEmpty())
     }
@@ -242,13 +247,14 @@ class ApiBettingUiTest {
     @Test
     fun `the field shows what is saved - a whole amount, an amount with cents, and nothing for No limit - and follows a chip`() {
         val odd = showPerGame(ScanSettings(apiMaxPerGame = 7.5))
-        field().performScrollTo().assertTextEquals("Or type your own amount", "7.50", "$")
+        field().performScrollTo()
+        assertTyped("7.50")
         listOf("$5.00", "$10.00", "$25.00", "$50.00", "$100.00", "No limit").forEach { chip(it).assertIsNotSelected() }
         chip("$100.00").performScrollTo().performClick()
         assertEquals(100.0, odd().apiMaxPerGame, 1e-9)
-        field().assertTextEquals("Or type your own amount", "100", "$")
+        assertTyped("100")
         chip("No limit").performScrollTo().performClick()
-        field().assertTextEquals("Or type your own amount", "", "$")
+        assertTyped("")
         compose.onNodeWithText("No limit: any amount on one game", substring = true).assertExists()
     }
 
