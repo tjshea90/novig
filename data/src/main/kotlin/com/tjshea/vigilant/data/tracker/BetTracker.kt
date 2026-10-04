@@ -174,6 +174,12 @@ data class TrackedBet(
      * ([com.tjshea.vigilant.data.novig.trading.maker.MakerDesk]). [fairAtBet] and [evPercentAtBet] are the fair and EV when it was posted.
      */
     val maker: Boolean = false,
+    /**
+     * Novig's id for the game this bet is on ([com.tjshea.vigilant.data.novig.NovigMarket.eventId]): every market of one game (moneyline, each alternate
+     * spread and total, its props) shares it, which is what the per-game exposure limit adds up by ([GameExposure]). Empty on a bet saved before v0.59.0,
+     * a ✓ mark or an import: those are matched to a game by their matchup and start time instead.
+     */
+    val eventId: String = "",
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
@@ -505,6 +511,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             book = target.book,
             gameUrl = target.gameUrl,
             betUrl = target.betUrl,
+            eventId = target.market.eventId,
             orderId = orderId,
             contracts = contracts,
             paid = paid,

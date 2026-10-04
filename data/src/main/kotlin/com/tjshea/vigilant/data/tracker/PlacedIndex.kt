@@ -85,7 +85,7 @@ class PlacedIndex private constructor(
         /** A mark with no start time to compare stands for the same bet only this long after it was placed. */
         const val UNKNOWN_START_MS = 24 * 60 * 60_000L
 
-        private fun isBaseball(league: String) = league.equals("MLB", ignoreCase = true)
+        internal fun isBaseball(league: String) = league.equals("MLB", ignoreCase = true)
 
         /** Tracked bets on games that started longer ago than this can't be on any list. */
         private const val TRACKED_WINDOW_MS = 36 * 60 * 60_000L
