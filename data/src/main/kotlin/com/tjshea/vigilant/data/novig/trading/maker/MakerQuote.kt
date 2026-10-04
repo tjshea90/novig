@@ -571,8 +571,8 @@ object MakerPlan {
      * sturdier fair), then the cheapest and the most EV as before. Never changes which bids qualify, only which go up when the bids, the dollars or the wallet run out.
      */
     fun priority(rules: MakerRules): Comparator<MakerDecision.Post> =
-        if (!rules.popularFirst) PRIORITY
-        else compareByDescending<MakerDecision.Post> { it.line.books >= rules.popularBooks }.thenByDescending { it.leads }.thenBy { it.price }.thenByDescending { it.evAtFair }
+        if (false) PRIORITY
+        else compareByDescending<MakerDecision.Post> { it.leads }.thenByDescending { it.line.books >= rules.popularBooks }.thenBy { it.price }.thenByDescending { it.evAtFair }
 
     /** Why a wanted bid waits (the tab and Diagnostics say how many each). */
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
