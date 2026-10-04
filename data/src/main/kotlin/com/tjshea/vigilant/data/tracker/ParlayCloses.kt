@@ -250,6 +250,27 @@ class ParlayCloses(
             return if (before > CLOSE_WITHIN_MS) "Pinnacle's last price was ${before / 3_600_000L}h before the start: not a close" else null
         }
 
+        /**
+         * The game among [games] that is the bet's ([mHome] vs [mAway], starting about [startsTs]): the best [TeamMatcher.gameScore], the nearest start among
+         * equal ones (a doubleheader's own game; the same pairing in two spellings). Null when none fits, or when two DIFFERENT pairings fit equally well:
+         * a close from a guess could be another game's (Tj's scan-study file, 2026-10-03: Washington State -117 "closed" at +272). Order [games] so the
+         * preferred one of equal starts comes first.
+         */
+        private fun <G> bestGame(mHome: String, mAway: String, startsTs: Long, games: List<G>, home: (G) -> String, away: (G) -> String, start: (G) -> Long?): G? {
+            val scored = games.mapNotNull { g -> TeamMatcher.gameScore(mHome, mAway, home(g), away(g)).takeIf { it > 0.0 }?.let { g to it } }
+            val top = scored.maxOfOrNull { it.second } ?: return null
+            val tied = scored.filter { it.second >= top - 1e-9 }.map { it.first }
+            val nearest = tied.minByOrNull { g -> abs((start(g) ?: startsTs) - startsTs) } ?: return null
+            // The others at that score must be this game under another name (or its other start), not a different pairing.
+            val same = tied.all { g ->
+                TeamMatcher.similarity(home(nearest), home(g)) >= SAME_NAME && TeamMatcher.similarity(away(nearest), away(g)) >= SAME_NAME
+            }
+            return nearest.takeIf { same }
+        }
+
+        /** Two spellings of one team: the shorter name's words all found in the longer ([TeamMatcher.similarity]). */
+        private const val SAME_NAME = 0.8
+
         /** [pick]'s Pinnacle close in a closes file: its player, its stat (each book's name for it, [ParlayMarkets]), its exact line, its game's start. */
         fun parseProp(root: JsonElement, pick: BetGrader.Pick.Prop, sportKey: String, startsTs: Long): CloseLookup {
             val rows = rowsOf(root).filter { r ->
@@ -281,15 +302,22 @@ class ParlayCloses(
             fun gamesRow(r: JsonObject) = r.str("home_team").orEmpty().endsWith(ParlayTennis.GAMES_SUFFIX)
             val inSets = (pick as? BetGrader.Pick.Spread)?.period == BetGrader.Period.SETS || (pick as? BetGrader.Pick.Total)?.period == BetGrader.Period.SETS
             val linePick = pick is BetGrader.Pick.Spread || pick is BetGrader.Pick.Total
-            val rows = rowsOf(root).filter { r ->
+            val near = rowsOf(root).filter { r ->
                 (r.str("source") ?: "pinnacle").equals("pinnacle", true) &&
                     (r.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false) &&
-                    TeamMatcher.similarity(m.home, named(r, "home_team")) >= 0.5 && TeamMatcher.similarity(m.away, named(r, "away_team")) >= 0.5 &&
                     (!tennis || gamesRow(r) == (linePick && !inSets))
             }
-            if (rows.isEmpty()) return CloseLookup.None("Not in ParlayAPI's closes file")
+            // The rows of ONE game: the best fit among the games the file has near the start (never rows of several games, never the latest of them).
+            val games = near.groupBy { Triple(named(it, "home_team"), named(it, "away_team"), it.str("commence_time")) }
+            val game = bestGame(m.home, m.away, b.startsTs, games.keys.toList(), { it.first }, { it.second }, { it.third?.let(::ms) })
+                ?: return CloseLookup.None("Not in ParlayAPI's closes file")
+            val rows = games.getValue(game)
             fun of(vararg keys: String) = rows.filter { it.str("market_key") in keys }
-            fun team(r: JsonObject, name: String) = TeamMatcher.similarity(name, named(r, "player_name")) >= 0.5
+            // A row's team is the side of this game it fits best (two "X State" teams both share a word with the bet's team).
+            val want = TeamMatcher.whichOf(pick.teamOrNull().orEmpty(), game.first, game.second)
+            fun side(r: JsonObject) = TeamMatcher.whichOf(named(r, "player_name"), game.first, game.second)
+            fun team(r: JsonObject, @Suppress("UNUSED_PARAMETER") name: String) = want != 0 && side(r) == want
+            fun otherTeam(r: JsonObject) = want != 0 && side(r) == 3 - want
             fun latest(rs: List<JsonObject>) = rs.maxByOrNull { it.str("snapshot_time")?.let(::ms) ?: 0L }
             fun pair(mine: JsonObject?, other: JsonObject?, what: String): CloseLookup {
                 if (mine == null || other == null) return CloseLookup.None("No Pinnacle $what close for this game")
@@ -300,15 +328,17 @@ class ParlayCloses(
             }
             return when (pick) {
                 is BetGrader.Pick.Moneyline -> {
+                    if (want == 0) return CloseLookup.None("Couldn't tell which team ${pick.team} is in ParlayAPI's game")
                     val ml = of("moneyline", "h2h")
                     val mine = latest(ml.filter { team(it, pick.team) })
-                    val other = latest(ml.filter { !team(it, pick.team) })
+                    val other = latest(ml.filter { otherTeam(it) })
                     pair(mine, other, "moneyline")
                 }
                 is BetGrader.Pick.Spread -> {
+                    if (want == 0) return CloseLookup.None("Couldn't tell which team ${pick.team} is in ParlayAPI's game")
                     val sp = of("spreads", "alternate_spreads", "spreads_sets")
                     val mine = latest(sp.filter { team(it, pick.team) && it.num("line")?.let { l -> abs(l - pick.line) < 1e-6 } == true })
-                    val other = latest(sp.filter { !team(it, pick.team) && it.num("line")?.let { l -> abs(l + pick.line) < 1e-6 } == true })
+                    val other = latest(sp.filter { otherTeam(it) && it.num("line")?.let { l -> abs(l + pick.line) < 1e-6 } == true })
                     if (mine == null && sp.any { team(it, pick.team) }) return CloseLookup.None("Pinnacle didn't close your ${pick.line}")
                     pair(mine, other, "spread")
                 }

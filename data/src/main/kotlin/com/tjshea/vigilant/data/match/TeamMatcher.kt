@@ -94,6 +94,41 @@ object TeamMatcher {
         return matched.toDouble() / min(a.size, b.size) - QUALIFIER_PENALTY * strayQualifiers
     }
 
+    /** Each team of a game must score at least this against its counterpart ([gameScore], [whichOf]). */
+    const val MIN_TEAM_SIMILARITY = 0.5
+
+    /**
+     * And together at least this: two names that share only a school word ("State" is the token `st`) score 0.5 each, so a pairing needs one team that
+     * really matches. Two city-only matches (Yankees/Mets + Cubs/White Sox = 0.5 + 0.5) and "Washington State @ Fresno State" against "Oregon State @
+     * Idaho State" (0.5 + 0.5) never pair a game with a different game (Tj's scan-study file, 2026-10-03: a Washington State -117 "closed" at +272, the
+     * close of another State game). The scan's own planner uses the same two numbers ([com.tjshea.vigilant.data.scanner.Planner]).
+     */
+    const val MIN_GAME_SIMILARITY = 1.5
+
+    /**
+     * How well a feed's game ([home2] vs [away2]) is the game [home1] vs [away1], straight order only: the two teams' scores added when each clears
+     * [MIN_TEAM_SIMILARITY] and together they reach [MIN_GAME_SIMILARITY], else 0.0 (not the same game).
+     */
+    fun gameScore(home1: String, away1: String, home2: String, away2: String): Double {
+        val h = similarity(home1, home2)
+        val a = similarity(away1, away2)
+        return if (h >= MIN_TEAM_SIMILARITY && a >= MIN_TEAM_SIMILARITY && h + a >= MIN_GAME_SIMILARITY) h + a else 0.0
+    }
+
+    /**
+     * Which of a game's two team names [team] is: 1 = [first], 2 = [second], 0 = can't tell (neither clears [MIN_TEAM_SIMILARITY], or they fit
+     * equally: two "X State" teams both share a word with "Y State"). The better fit wins; never the first that merely shares a word.
+     */
+    fun whichOf(team: String, first: String, second: String): Int {
+        val a = similarity(team, first)
+        val b = similarity(team, second)
+        return when {
+            a >= MIN_TEAM_SIMILARITY && a > b + 1e-9 -> 1
+            b >= MIN_TEAM_SIMILARITY && b > a + 1e-9 -> 2
+            else -> 0
+        }
+    }
+
     /**
      * Tie-breaker between candidates [similarity] rates equally: the share of ALL tokens that
      * matched, so "Texas" prefers "Texas Longhorns" (1 of 2) over "Texas Tech Red Raiders"
