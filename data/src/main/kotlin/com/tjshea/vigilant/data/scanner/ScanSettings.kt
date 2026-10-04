@@ -246,14 +246,14 @@ data class ScanSettings(
      * dollars or the wallet can't take every bid wanted, the ones on lines many books price ([MAKER_POPULAR_BOOKS]+: a star's prop, a main market) go up before
      * the ones one or two books price, after the ones that lead their side (RESEARCH.md §81.4). On by default: it only orders what is posted.
      */
-    val makerPopularFirst: Boolean = false,
+    val makerPopularFirst: Boolean = true,
     /**
      * Tj, 2026-10-04: "Maybe a sharp book should be required to agree on the positive EV". A bid is posted only when a sharp book (Pinnacle, Circa, the exchanges)
      * prices the line both ways and agrees: the veto ([makerSharpVeto]) stays a veto when one says no, and with this on, none pricing it is a no too. Off by
      * default: Tj's own bets with no sharp book on the page had a CLV of -1.9% (12 closes) against +3.5% (62) with one, but the study's props went the
      * other way on 6 closes; too thin to switch a rule (RESEARCH.md §81.4).
      */
-    val makerRequireSharp: Boolean = false,
+    val makerRequireSharp: Boolean = true,
     /**
      * With auto-make off, recommend bids to approve or deny (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"): the Bids
      * tab's list, and a notification for each new one (at most a few a cycle) with Approve and Deny.
