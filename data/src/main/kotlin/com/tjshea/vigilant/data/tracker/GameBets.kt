@@ -98,14 +98,14 @@ class GameBets private constructor(private val entries: List<Entry>) {
             val locked = LockedBets.markets(bets).keys
             val out = ArrayList<Entry>()
             for (b in bets) {
-                
+                if (b.status != BetStatus.PENDING) continue
                 val game = GameExposure.gameOf(b)
                 val item = if (b.isLock || b.marketId in locked) null else GameExposure.Item(game, b.marketId, b.outcomeId, b.stake)
                 val line = Line(b.id, if (b.isLock) Kind.LOCK else Kind.BET, b.selection, b.marketLabel, b.american, b.stake, b.createdAtMs, b.auto)
                 out += Entry(game, line, PlacedIndex.gameKey(b.eventName), item)
             }
             for (bid in bids) {
-                if (!bid.active || bid.restingDollars <= 0.0) continue
+                
                 val game = GameRef(bid.eventId, bid.eventName, bid.startsTs, bid.league)
                 val item = GameExposure.Item(game, bid.marketId, bid.outcomeId, bid.restingDollars)
                 val line = Line(bid.clientId, Kind.BID, bid.selection, bid.marketLabel, americanOf(bid.price), bid.restingDollars, bid.postedAtMs, bid.auto)
