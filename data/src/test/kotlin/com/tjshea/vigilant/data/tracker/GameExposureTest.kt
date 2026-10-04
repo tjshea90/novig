@@ -157,6 +157,15 @@ class GameExposureTest {
     }
 
     @Test
+    fun `a lock that cost more than the pick it covers is still not exposure - the pick's dollars are what is at risk`() {
+        val g = game()
+        // 1,000 contracts of the pick for $4.00; the lock bought against it, 800 contracts at 55¢, cost $4.40: unequal, so the market is only partly locked.
+        val pick = bet("p", g, "m1", "o1", 4.0, contracts = 1_000)
+        val lock = bet("l", g, "m1", "o2", 4.4, lockFor = "p", contracts = 800)
+        assertEquals(4.0, check(g, listOf(pick, lock), "m9", "o9", 1.0).now, 1e-9)
+    }
+
+    @Test
     fun `a bet that does not raise the game's exposure is never blocked, even over the cap - a hedge or a lock can always go in`() {
         val g = game()
         val open = listOf(bet("a", g, "m1", "o1", 30.0), bet("b", g, "m2", "o3", 8.0))

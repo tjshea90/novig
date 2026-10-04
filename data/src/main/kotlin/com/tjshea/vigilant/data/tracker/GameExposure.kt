@@ -65,7 +65,7 @@ object GameExposure {
      */
     fun items(bets: List<TrackedBet>): List<Item> {
         val locked = LockedBets.markets(bets).keys
-        return bets.filter { it.status == BetStatus.PENDING && !it.isLock && it.stake > 0.0 && it.marketId !in locked }
+        return bets.filter { it.status == BetStatus.PENDING && !it.isLock && it.marketId !in locked }
             .map { Item(gameOf(it), it.marketId, it.outcomeId, it.stake) }
     }
 
