@@ -719,6 +719,13 @@ class MakerTest {
     }
 
     @Test
+    fun `the rules take the per-game limit from the settings, on by default`() {
+        assertEquals(25.0, MakerRules.of(ScanSettings()).maxPerGame, 1e-9)
+        assertEquals(0.0, MakerRules.of(ScanSettings(apiMaxPerGame = 0.0)).maxPerGame, 1e-9)
+        assertEquals(0.0, MakerRules.of(ScanSettings(apiMaxPerGame = -5.0)).maxPerGame, 1e-9)
+    }
+
+    @Test
     fun `no limit when it is 0, and a bid replacing its own side is not counted twice`() {
         val wanted = listOf(inGame("a-over"), inGame("b-over"), inGame("c-over"))
         assertEquals(3, MakerPlan.plan(wanted, emptyList(), rules.copy(maxPerGame = 0.0), now).places.size)
