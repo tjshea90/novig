@@ -1,13 +1,13 @@
-# CHECKPOINT 2511 — read me first, then TASKS.md
+# CHECKPOINT 2512 — read me first, then TASKS.md
 
-**Written:** 2026-10-04T03:19:17Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-e34b35d5-c6t9c8` · **builds on:** `97b45020` (this checkpoint is the commit after it)
+**Written:** 2026-10-04T03:23:58Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-e34b35d5-c6t9c8` · **builds on:** `714fe9a0` (this checkpoint is the commit after it)
 
 ## Just done
-BX2 done in data: WSU close bug confirmed (0.5 matcher bar + latest row not best game; reproduced 0.258 failing-first, same as file's 0.269): TeamMatcher.gameScore/whichOf, ParlayCloses best-game+side assignment, ParlayBooks/OtherBooks same bar, ClosePlausibility backstop in CloseBackfill (bars from Tj's 230 closes); data 1,133 green. Arkansas State close looks legit (3.3 pts = Pinnacle vs CNO conservative devig), only WSU was wrong
+BX3 log-only fixes done in data: rules line now says CNO's edge/odds/books, README sentence on which part decides the shown list, export-time ClosePlausibility guard (old journal closes dropped with reason), Tracker close source named in closeVia; data 1,134 green
 
 ## Do this next
-BX3: study export log-only fixes (READ ME: CNO filters next to rules line, multi-devig close, close source, per-look fields, MISMATCH rows), BX4 independent closes, then mutants + floor + ship; BW workflow results pending
+mutants on BX (matcher, plausibility, export guard), then app tests + full floor, RESEARCH §79 + BUILDLOG, ship (version 0.58.4); BW workflow pending
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ BX3: study export log-only fixes (READ ME: CNO filters next to rules line, multi
 
 ## Last ten checkpoints
 ```
+  3486e5f2 ckpt 2511: BX2 done in data: WSU close bug confirmed (0.5 matcher bar + latest row not 
   1a67a1d6 ckpt 2510: BX: Tj sent an outside analysis of the first scan-study export (v0.58.3, 622
   f39e0e5a ckpt 2509: BW: wrote Tj's per-game exposure request into TASKS.md (BW1-BW5)
   df2c9ade ckpt 2508: v0.58.3 released + recorded (release.yml run 37170946701 green, tag v0.58.3)
@@ -25,8 +26,7 @@ BX3: study export log-only fixes (READ ME: CNO filters next to rules line, multi
   d37ac654 ckpt 2504: BU app tests green (MakerAppTest + WalletStripTest 23 passed). Tj sent diagn
   34f91bf4 ckpt 2503: BU mutants 11/11 killed (M4/M6 needed stronger tests); app layer written: Ma
   ca3a709e ckpt 2502: BU2 done in data: MakerPlan trim (budget<0 takes least valuable bids down: h
-  a9cbe2b6 ckpt 2501: BU: wrote Tj's wallet-vs-open-bids request into TASKS.md; cause confirmed in
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
