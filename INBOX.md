@@ -3807,3 +3807,14 @@ Continue
 ```
 For the most at risk on one game option, add $5 and a manual entry
 ```
+
+## 2026-10-04T20:16:50Z
+```
+@"/root/.claude/uploads/83320564-04d2-5b09-b638-5bd9fe30992b/8454ed52-vigilant-diagnostics-v0.59.1-2026-10-04-1606.txt" @"/root/.claude/uploads/83320564-04d2-5b09-b638-5bd9fe30992b/714ad0a6-vigilant-scan-study-v0.59.1-2026-10-04-1606.txt" Here is a current diagnostics and scan study. Right now, novig scanning is going extremely slow. Maybe 1 per 2 seconds.
+
+Review the diagnosis and scan study for app improvements and EV scanning and logic improvements, but keep in mind the sample size is still relatively low. Also ensure that the study and diagnostic makes sense and it isn't feeding you illogical data.
+
+If the auto bid function isn't getting enough bids taken, consider lowering the EV to 3.5 or 3.25% positive EV per bid placed, with more attractive bets that involve bets that are more popular than obscure players props. But only if this is still a good strategy for beating clv and profit. Maybe a sharp book should be required to agree on the positive EV
+
+My concern is betting too much money on one event. The app is beginning to fix this with a money limit per game. Make it so I can press a button next to any bet shown in the app which shows other bets I already placed in the same game. For example, if I bet 6 player props and a total in the la rams game, make a quick button next to each bet in the scanners that involve the la rams game (and the team they are playing) which pulls up which bets I already placed involving that game, money per bet, and total money across all bets for that game. If possible, make the button itself show the total I already bet involving that game. For example, the button might say "$21 bet in this event, press for details". But try not to make the button too big. A small button or drop down box that I press is fine
+```
