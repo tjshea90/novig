@@ -3732,3 +3732,11 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
   Built StudySync.catchUp, called in AutoScanner.cycle's finish and when a cycle-started Vigilant scan ends; stale reads no longer remembered as seen. Proofs: StudySyncTest (8: late watchers, saved list, wide read, books, Vigilant, switch off, source pins),
   10 mutants killed. v0.58.1 (props split) ships inside v0.58.2.
 
+
+## Tj, 2026-10-04 ~09:45 local (screenshot: "Vigilant wallet $8.98 · 7 bids up ($16.14)"): "Look at the attached screenshot. My wallet has less than open bids money. I think this is because I was betting manually and auto betting and the app doesn't constantly monitor how much money is in the wallet to make sure the open bids aren't more than available money"
+
+- [ ] BU1 Confirm the cause in the code: bids are checked against the wallet only when posted (`MakerDesk.cycle` budget = min(wallet, day's limit left) − bids up); Novig holds nothing for a resting bid (NOVIG_API.md §17), so a manual bet (Bet sheet), an auto-bet take, a bid fill, or money moved out later leaves bids up worth more than the wallet and nothing takes them down.
+- [ ] BU2 Keep the bids within the wallet: every pass, bids up that the wallet (and the day's limit) can't cover come down, the least valuable first (hand-approved last), and a trimmed side is not re-posted that pass; reason on the bid ("The wallet no longer covers it …").
+- [ ] BU3 Watch the wallet between passes: when any balance reading (Bet sheet, auto-bet, the strip's 30 s read, a transfer) shows bids up over the wallet, trim right then (MakerDesk.fit: wallet read first, then settle, then cancel), also with auto-make off; background cycle covers it already.
+- [ ] BU4 Say it where Tj looks: the wallet strip marks bids over the wallet; Diagnostics/MAKER line says what was trimmed and why.
+- [ ] BU5 Tests failing-first + mutants (plan trim, desk fit incl. races/CANCELING/partial fills/hand-approved, app wiring), full floor, sweep for related gaps (day's limit, maxDollars, same-money bets), ship, answer Tj with the Release link.
