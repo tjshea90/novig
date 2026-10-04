@@ -714,8 +714,8 @@ data class ScanSettings(
         /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
         val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
 
-        /** [apiMaxPerGame]'s choices, dollars (0 = no limit). */
-        val API_MAX_PER_GAME_CHOICES = listOf(10.0, 25.0, 50.0, 100.0, 0.0)
+        /** [apiMaxPerGame]'s chips, dollars (0 = no limit); any other amount is typed (Tj, 2026-10-04: "add $5 and a manual entry"). */
+        val API_MAX_PER_GAME_CHOICES = listOf(5.0, 10.0, 25.0, 50.0, 100.0, 0.0)
 
         /** [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). */
         val MAKER_MARGIN_CHOICES = listOf(0.03, 0.04, 0.06, 0.08)

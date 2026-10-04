@@ -296,8 +296,7 @@ fun NovigBettingSection(
     Text("Most in a day (your bets and auto-bets together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(DAY_CHOICES, settings.apiMaxPerDay, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerDay = v) } }
     // One game is one event (Tj, 2026-10-04): the alternate spreads, totals and props of a game win and lose together.
-    Text("Most at risk on one game (all its lines, props and bids together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    ChoiceChips(ScanSettings.API_MAX_PER_GAME_CHOICES, settings.apiMaxPerGame, { if (it <= 0.0) "No limit" else Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerGame = v) } }
+    PerGameLimit(settings.apiMaxPerGame) { v -> onUpdate { it.copy(apiMaxPerGame = v) } }
     Text(
         "Auto-bet and auto-make never take a game past it (one team at +5, +6 and +10 is one bet that can lose three times). A bet you place yourself is " +
             "only warned, and the other side of a market or a lock you already hold is never held back.",
@@ -591,6 +590,36 @@ private fun StakeField(sheet: BetSheetUi, onTypeStake: (Double) -> Unit) {
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = Modifier.fillMaxWidth().testTag("betAmount"),
     )
+}
+
+/**
+ * "Most at risk on one game": chips for the usual amounts and any amount typed (Tj, 2026-10-04: "add $5 and a manual entry"). The typed text is local to
+ * the field and starts over from the saved [limit] whenever that changes (a chip, or a typed amount that was saved), so a chip is never fighting what is
+ * shown; an amount is saved as soon as it can be one (dollars and cents, up to [WalletAmount.MAX]) and the last good limit stands while it can't.
+ * No limit is its own chip (0 isn't typed): the field is empty then.
+ */
+@Composable
+private fun PerGameLimit(limit: Double, onLimit: (Double) -> Unit) {
+    Column(Modifier.testTag("perGameLimit")) {
+        Text("Most at risk on one game (all its lines, props and bids together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        ChoiceChips(ScanSettings.API_MAX_PER_GAME_CHOICES, limit, { if (it <= 0.0) "No limit" else Format.money(it) }, onLimit)
+        var text by remember(limit) { mutableStateOf(if (limit > 0.0) WalletAmount.text(limit) else "") }
+        val problem = if (text.toDoubleOrNull() == 0.0) "Pick No limit above to turn the limit off" else WalletAmount.problem(text)
+        OutlinedTextField(
+            value = text,
+            onValueChange = { t ->
+                text = t.filter { it.isDigit() || it == '.' }.take(10)
+                WalletAmount.parse(text)?.let(onLimit)
+            },
+            label = { Text("Or type your own amount") },
+            prefix = { Text("$") },
+            singleLine = true,
+            isError = problem != null,
+            supportingText = { Text(problem ?: if (limit <= 0.0) "No limit: any amount on one game" else "Dollars and cents, like 7.50") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth().testTag("perGameLimitField"),
+        )
+    }
 }
 
 /** What an order refused for the wallet's balance says: Novig's 422 ([NovigApiException.advice]: "doesn't have enough money") or its own words. */
