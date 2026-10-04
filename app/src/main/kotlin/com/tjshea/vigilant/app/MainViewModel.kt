@@ -54,6 +54,8 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.NonCancellable
@@ -1380,6 +1382,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The Vigilant wallet's latest balance, for the strip above the tabs ([WalletBalance.flow]). */
     val wallet get() = c.wallet.flow
+
+    /**
+     * Tj's open bets and resting bids by game, for the small "$21.30 in game" button on every listed bet (Tj, 2026-10-04; [GameBets]). Rebuilt off the main
+     * thread only when the bets or the bids change (a scan's progress changes neither), and only while a screen collects it. Lazy: nothing is read until asked.
+     */
+    val gameBets: StateFlow<com.tjshea.vigilant.data.tracker.GameBets> by lazy {
+        combine(_state.map { it.bets }.distinctUntilChanged(), c.makerStore.flow.map { it.orEmpty() }.distinctUntilChanged()) { bets, bids ->
+            com.tjshea.vigilant.data.tracker.GameBets.of(bets, bids)
+        }.distinctUntilChanged().flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), com.tjshea.vigilant.data.tracker.GameBets.EMPTY)
+    }
 
     /** Reads the wallet again when the last reading is older than [maxAgeMs] (0: now, Tj's tap on the strip). */
     fun refreshWallet(maxAgeMs: Long = WalletBalance.FRESH_MS) {
