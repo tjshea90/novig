@@ -5,6 +5,8 @@ import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.GameExposure
+import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
@@ -27,7 +29,8 @@ sealed interface PlaceResult {
      * A check said no before anything was sent, or Novig refused the order as too small ([tooSmall]: `ORDER_TOO_SMALL`, no money moved; the
      * auto-bet learns the stake it refused and skips the same or smaller ones instead of asking again).
      */
-    data class Refused(val reason: String, val tooSmall: Boolean = false) : PlaceResult
+    /** [gameLimit]: refused for the per-game limit ([BetLimits.maxPerGame]), which the auto-bet counts under one reason. */
+    data class Refused(val reason: String, val tooSmall: Boolean = false, val gameLimit: Boolean = false) : PlaceResult
 
     /** Novig refused the order or the call failed with an answer (a wallet that's too small, a location check): no money moved. */
     data class Failed(val message: String) : PlaceResult
@@ -60,6 +63,8 @@ class ApiBetPlacer(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     /** One order at a time across every placer of the app: the Bet sheet's and the auto-bet's share it, so the two can never bet the same outcome at once. */
     private val lock: Mutex = Mutex(),
+    /** What Vigilant's resting bids would cost if they filled, by game ([GameExposure.bidItems]): the per-game limit counts them beside the open bets. */
+    private val restingBids: suspend () -> List<GameExposure.Item> = { emptyList() },
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -78,7 +83,12 @@ class ApiBetPlacer(
         } catch (e: Exception) {
             null
         }
-        return ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all))
+        // One game is one event (Tj, 2026-10-04): what is at risk on it across every market, open bets and resting bids, before this one.
+        val game = limits.maxPerGame.takeIf { it > 0.0 }?.let { cap ->
+            val ref = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
+            GameExposure.check(ref, GameExposure.items(all) + restingBids(), target.market.marketId, target.outcomeId, stake, cap)
+        }
+        return ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all), game)
     }
 
     /**
@@ -106,7 +116,7 @@ class ApiBetPlacer(
         expectedPrice: Double?,
     ): PlaceResult = lock.withLock {
         val plan = when (val p = plan(target, stake, allowRepeat, limitsOverride)) {
-            is PlanResult.Refused -> return PlaceResult.Refused(p.reason)
+            is PlanResult.Refused -> return PlaceResult.Refused(p.reason, gameLimit = p.gameLimit)
             is PlanResult.Ready -> p.plan
         }
         if (expectedPrice != null && !AutoBet.priceMatches(expectedPrice, plan.bestPrice)) {
