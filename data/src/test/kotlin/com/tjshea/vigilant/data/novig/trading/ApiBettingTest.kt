@@ -8,6 +8,8 @@ import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.signing.PemSigningKey
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.GameExposure
+import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -290,8 +292,11 @@ class ApiBettingTest {
         }
     }
 
-    private fun placer(t: BetTracker, paused: Boolean = false, book: NovigBook? = book(), l: BetLimits = limits): ApiBetPlacer {
-        return ApiBetPlacer(tradingClient(), t, books = { book }, limits = { l }, paused = { paused }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { now += it })
+    private fun placer(t: BetTracker, paused: Boolean = false, book: NovigBook? = book(), l: BetLimits = limits, resting: List<GameExposure.Item> = emptyList()): ApiBetPlacer {
+        return ApiBetPlacer(
+            tradingClient(), t, books = { book }, limits = { l }, paused = { paused }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { now += it },
+            restingBids = { resting },
+        )
     }
 
     private fun orderBody(): kotlinx.serialization.json.JsonObject =
@@ -651,5 +656,84 @@ class ApiBettingTest {
         assertEquals(1, results.count { it is PlaceResult.Refused })
         assertEquals("exactly one order reached Novig", 1, requests.count { it.method == "POST" })
         assertEquals(1, t.all().size)
+    }
+
+    // ---- the per-game limit (Tj, 2026-10-04: one team at +5, then +6, then +10 is one event) ---------------------------------------------------
+
+    private val gameRef = GameRef("ev", "Team B @ Team A", startsTs, "NFL")
+
+    /** An open API bet of $[dollars] in another market of the game "ev" (an alternate line), as the placer would have logged it. */
+    private suspend fun openOnGame(t: BetTracker, marketId: String, dollars: Double, eventId: String = "ev") {
+        val other = target().copy(market = market.copy(marketId = marketId, eventId = eventId))
+        t.logApi(other, "o-$marketId", listOf(NovigFill("f-$marketId", "o-$marketId", null, marketId, "A", (dollars * 200).toLong(), dollars, true, 0.0, now - 60_000)))!!
+    }
+
+    @Test
+    fun `the planner refuses an auto-bet that takes its game past the limit, and only warns about the same bet by hand`() {
+        val check = GameExposure.check(gameRef, listOf(GameExposure.Item(gameRef, "spread+5", "x", 20.0)), "mkt", "A", 10.0, 25.0)
+        val auto = ApiBetPlanner.plan(target(), book(), 10.0, now, autoLimits.copy(maxPerGame = 25.0), 0.0, check) as PlanResult.Refused
+        assertTrue(auto.reason, auto.reason.contains("$20.00 is already at risk on Team B @ Team A"))
+        assertTrue(auto.reason, auto.reason.contains("$30.00") && auto.reason.contains("$25.00"))
+        assertTrue("the auto-bet counts this under one reason", auto.gameLimit)
+        val hand = ready(ApiBetPlanner.plan(target(), book(), 10.0, now, limits.copy(manual = true, maxPerGame = 25.0), 0.0, check))
+        assertTrue(hand.note!!, hand.note!!.contains("$30.00") && hand.note!!.endsWith("You can still place it."))
+        // Nothing asked (no limit set): the plan is what it was.
+        assertNull(ready(ApiBetPlanner.plan(target(), book(), 0.46, now, limits, 0.0, null)).note)
+    }
+
+    @Test
+    fun `an auto-bet on a game already holding the limit in other markets sends nothing, and another game is untouched`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        openOnGame(t, "spread+5", 10.0)
+        openOnGame(t, "spread+6", 10.0)
+        val capped = autoLimits.copy(maxPerGame = 25.0)
+        val r = placer(t).placeAuto(target(), 10.0, capped, expectedPrice = 0.46) as PlaceResult.Refused
+        assertTrue(r.reason, r.reason.contains("$20.00 is already at risk"))
+        assertTrue("it is the game limit that said no", r.gameLimit)
+        assertTrue("nothing was sent", requests.none { it.method == "POST" })
+        // The same stake on another game goes out: the limit is about one event, not the account.
+        val elsewhere = target().copy(market = market.copy(eventId = "ev-other"), eventName = "Team D @ Team C")
+        assertTrue(placer(t).placeAuto(elsewhere, 10.0, capped, expectedPrice = 0.46) is PlaceResult.Placed)
+    }
+
+    @Test
+    fun `a smaller bet that still fits under the game limit is placed`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        openOnGame(t, "spread+5", 10.0)
+        openOnGame(t, "spread+6", 10.0)
+        assertTrue(placer(t).placeAuto(target(), 5.0, autoLimits.copy(maxPerGame = 25.0), expectedPrice = 0.46) is PlaceResult.Placed)
+    }
+
+    @Test
+    fun `resting bids on the game count beside its open bets`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        openOnGame(t, "spread+5", 10.0)
+        val bid = GameExposure.Item(gameRef, "spread+6", "x", 12.0)
+        val r = placer(t, resting = listOf(bid)).placeAuto(target(), 5.0, autoLimits.copy(maxPerGame = 25.0), expectedPrice = 0.46) as PlaceResult.Refused
+        assertTrue(r.reason, r.reason.contains("$22.00 is already at risk") && r.gameLimit)
+        assertTrue(requests.none { it.method == "POST" })
+    }
+
+    @Test
+    fun `a bet by hand on a game over its limit is placed, with the warning on its plan`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        openOnGame(t, "spread+5", 20.0)
+        val hand = BetLimits.manual(maxStake = 20.0, maxPerDay = 500.0, maxPerGame = 25.0)
+        val plan = ready(placer(t, l = hand).plan(target(), 10.0))
+        assertTrue(plan.note!!, plan.note!!.contains("$30.00") && plan.note!!.contains("You can still place it."))
+        assertTrue(placer(t, l = hand).place(target(), 10.0, confirmedLimit = 0.465) is PlaceResult.Placed)
+    }
+
+    @Test
+    fun `an old bet without an event id still counts toward its game by matchup and start`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        openOnGame(t, "spread+5", 25.0, eventId = "")
+        val r = placer(t).placeAuto(target(), 1.0, autoLimits.copy(maxPerGame = 25.0), expectedPrice = 0.46)
+        assertTrue(r.toString(), r is PlaceResult.Refused && r.gameLimit)
     }
 }
