@@ -124,6 +124,8 @@ class AppRecorderTest {
                 "public route at 4 a second, down to 2 after a refusal, 3.5 at the end · live feed held 315 of 2,000 asked at the end",
             AppRecorder.scanLine(report(timing = slow)),
         )
+        // No key read anything: no live feed to hold anything, so no "held" on the line.
+        assertTrue(!AppRecorder.scanLine(report(timing = slow).copy(booksViaKey = 0)).contains("live feed held"))
         // A fast scan through the key with nothing slowed: its pace and nothing more.
         val fast = ScanTiming(totalMs = 31_000, novigFromMs = 1_000, novigToMs = 7_000, pace = com.tjshea.vigilant.data.novig.ReadPace(4.0, null, 4.0, 14.0, null, 14.0, 0))
         val line = AppRecorder.scanLine(report(timing = fast).copy(booksViaKey = 120))

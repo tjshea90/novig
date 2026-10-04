@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -97,6 +98,9 @@ class ScanTimingTest {
         assertEquals(
             listOf("public route at 4 a second, 5 at the end"), ScanTiming.routeNotes(ScanTiming(pace = ReadPace(4.0, null, 5.0, 14.0, null, 14.0, 0)), publicReads = 12),
         )
+        // No key (nothing through it or its feed): no live feed to hold anything, so no "held 0 of N" on the line.
+        assertTrue(!ScanTiming.text(slow, prices = 8, viaKey = 0, viaPush = 0).contains("live feed held"))
+        assertTrue(ScanTiming.text(slow, prices = 8, viaKey = 8, viaPush = 0).contains("live feed held 315 of 2,000 asked at the end"))
         // A live feed never asked for says nothing; asked and holding none says so.
         assertEquals(emptyList<String>(), ScanTiming.routeNotes(ScanTiming(liveFeedAsked = 0, liveFeedHeld = null), publicReads = 0))
         assertEquals(listOf("live feed held 0 of 50 asked at the end"), ScanTiming.routeNotes(ScanTiming(liveFeedAsked = 50, liveFeedHeld = 0), publicReads = 0))
