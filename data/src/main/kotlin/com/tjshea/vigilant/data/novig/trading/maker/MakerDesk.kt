@@ -181,6 +181,8 @@ class MakerDesk(
         val waiting: Map<String, Int> = emptyMap(),
         /** The pass judged a scan still running (only its finished leagues' lines). */
         val partial: Boolean = false,
+        /** Of [cancelled], the bids the wallet (or the day's limit) no longer covered ([MakerPlan.TRIMMED]). */
+        val trimmed: Int = 0,
     )
 
     /**
@@ -227,30 +229,18 @@ class MakerDesk(
         }
         val spent = spentToday(bets, now)
         val stopAll = stop ?: if (spent >= maxPerDay - 1e-9) "Today's limit for API bets (${money(maxPerDay)}) is reached" else null
-        val resting = active.map { RestingBid(it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs) }
+        val resting = restingOf(active)
         // Every bid not yet ended can still fill (one on its way down too), and Novig doesn't hold a resting bid's cost from the balance (Tj's v0.53.0
-        // file: "wallet $8.32 → $8.32 with $12.54 resting", NOVIG_API.md §17): what's up counts against the wallet as well as the day's limit.
-        val up = bids.filter { it.active }.sumOf { it.restingDollars }
-        val budget = (minOf(wallet ?: Double.MAX_VALUE, maxPerDay - spent) - up).coerceAtLeast(0.0)
+        // file: "wallet $8.32 → $8.32 with $12.54 resting", NOVIG_API.md §17): what's up counts against the wallet as well as the day's limit. Under zero
+        // when the money behind the bids fell short after they went up (a bet by hand, an auto-bet, a fill: Tj, 2026-10-04): the plan takes those bids down.
+        val budget = spare(bids, spent, wallet, maxPerDay)
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
             repost = autoPost, partial = partial,
         )
-        var cancelled = 0
         val noReplace = HashSet<String>()
-        withContext(NonCancellable) {
-            val results = cancelBids(actions.cancels.map { (r, why) -> r.orderId to why }, problems, fills)
-            for ((r, _) in actions.cancels) {
-                when (results[r.orderId]) {
-                    // Gone, confirmed: its side can be bid again now.
-                    Cancel.GONE -> cancelled++
-                    // On its way down but not confirmed, or it filled first, or Novig refused: nothing new on that side this pass.
-                    Cancel.PENDING -> { cancelled++; noReplace += r.outcomeId }
-                    else -> noReplace += r.outcomeId
-                }
-            }
-        }
+        val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
         var placed = 0
         val wantedLines = actions.places.filter { it.line.outcomeId !in noReplace }
         for (post in wantedLines) {
@@ -265,7 +255,59 @@ class MakerDesk(
             }
         }
         val after = store.all().count { it.active }
-        Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial)
+        Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial, actions.trimmed)
+    }
+
+    /**
+     * Between passes: what Novig says happened to every bid (fills to the Tracker), then the bids the [wallet] (and the day's limit) can't cover beside each
+     * other come down, the least valuable first ([MakerPlan.plan]'s trim), nothing posted, moved or judged by a line. Called when a balance reading shows
+     * more bids up than money (a bet by hand or an auto-bet took it, Tj, 2026-10-04), by every pass of the app's, and while no scan has run to judge lines.
+     * The balance is read BEFORE this is called, so a fill that lands between that read and the settle only makes the count lower than the wallet
+     * (a later look catches the rest), never higher. [wallet] null: only the day's limit is checked.
+     */
+    suspend fun fit(rules: MakerRules, maxPerDay: Double, wallet: Double?): Report = lock.withLock {
+        val problems = ArrayList<String>()
+        val fills = ArrayList(settle(problems))
+        val now = clock()
+        val bids = store.all()
+        val actions = MakerPlan.plan(
+            wanted = emptyList(), resting = restingOf(bids.filter { it.resting && it.orderId != null }), rules = rules, now = now,
+            budget = spare(bids, spentToday(tracker.all(), now), wallet, maxPerDay), repost = false, partial = true,
+        )
+        val noReplace = HashSet<String>()
+        val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
+        Report(0, cancelled, fills, problems, store.all().count { it.active }, null, emptyList(), emptyMap(), true, actions.trimmed)
+    }
+
+    /** The bids resting on Novig as the plan sees them (a bid with no order id yet isn't one: it's in the budget as up, but nothing can cancel it). */
+    private fun restingOf(bids: List<MakerBid>): List<RestingBid> = bids.filter { it.resting && it.orderId != null }.map {
+        RestingBid(
+            it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs,
+            auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 },
+        )
+    }
+
+    /**
+     * What's left of the wallet and the day's limit beside every bid not yet ended (any can still fill, one on its way down too): the least of the two,
+     * less what's up. Under zero when the bids up are worth more than either. [wallet] null = no reading.
+     */
+    private fun spare(bids: List<MakerBid>, spent: Double, wallet: Double?, maxPerDay: Double): Double =
+        minOf(wallet ?: Double.MAX_VALUE, maxPerDay - spent) - bids.filter { it.active }.sumOf { it.restingDollars }
+
+    /** Cancels [cancels] (bid, why); how many Novig took. Sides whose cancel isn't confirmed gone go into [noReplace]: nothing new there this pass. */
+    private suspend fun runCancels(cancels: List<Pair<RestingBid, String>>, problems: MutableList<String>, fills: MutableList<TrackedBet>, noReplace: MutableSet<String>): Int {
+        var cancelled = 0
+        val results = cancelBids(cancels.map { (r, why) -> r.orderId to why }, problems, fills)
+        for ((r, _) in cancels) {
+            when (results[r.orderId]) {
+                // Gone, confirmed: its side can be bid again now.
+                Cancel.GONE -> cancelled++
+                // On its way down but not confirmed, or it filled first, or Novig refused: nothing new on that side this pass.
+                Cancel.PENDING -> { cancelled++; noReplace += r.outcomeId }
+                else -> noReplace += r.outcomeId
+            }
+        }
+        return cancelled
     }
 
     /**
@@ -278,9 +320,25 @@ class MakerDesk(
     suspend fun bids(): List<MakerBid> = store.all()
     val flow get() = store.flow
 
-    /** Tj's Post button: one bid now, outside the cycle (the same checks: [decision] was worked out just now). */
-    suspend fun post(decision: MakerDecision.Post, rules: MakerRules): String? = lock.withLock {
-        if (store.all().any { it.active && it.outcomeId == decision.line.outcomeId }) return@withLock "There's already a bid on this side (or one on its way down)"
+    /**
+     * Tj's Post button: one bid now, outside the cycle (the same checks: [decision] was worked out just now). With a [wallet] reading and/or a [maxPerDay]
+     * limit, the bid must fit them beside the bids already up (Tj, 2026-10-04: each hand-approved bid was held only to the whole wallet, so two $5.00 bids
+     * went up on $9.00); null leaves a check out.
+     */
+    suspend fun post(decision: MakerDecision.Post, rules: MakerRules, wallet: Double? = null, maxPerDay: Double = Double.MAX_VALUE): String? = lock.withLock {
+        val bids = store.all()
+        if (bids.any { it.active && it.outcomeId == decision.line.outcomeId }) return@withLock "There's already a bid on this side (or one on its way down)"
+        if (wallet != null || maxPerDay < Double.MAX_VALUE) {
+            val up = bids.filter { it.active }.sumOf { it.restingDollars }
+            val byWallet = (wallet ?: Double.MAX_VALUE) - up
+            val byDay = maxPerDay - spentToday(tracker.all(), clock()) - up
+            if (decision.cost > byWallet + 1e-9) {
+                return@withLock "The wallet's ${money(wallet ?: 0.0)} can't cover this bid's ${money(decision.cost)} beside the ${money(up)} already up"
+            }
+            if (decision.cost > byDay + 1e-9) {
+                return@withLock "Today's limit for API bets (${money(maxPerDay)}) can't cover this bid's ${money(decision.cost)} beside what's been bet and is up"
+            }
+        }
         when (val r = withContext(NonCancellable) { placeOne(decision, rules, auto = false) }) {
             is Placed.Ok -> null
             is Placed.Refused -> r.why
