@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.tracker
 
+import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
 import java.util.Locale
 import kotlin.math.abs
 
@@ -67,6 +68,13 @@ object GameExposure {
         return bets.filter { it.status == BetStatus.PENDING && !it.isLock && it.stake > 0.0 && it.marketId !in locked }
             .map { Item(gameOf(it), it.marketId, it.outcomeId, it.stake) }
     }
+
+    /**
+     * What Vigilant's bids that are not ended would cost if they filled: the contracts still resting, since a filled part is already a bet in the
+     * Tracker ([items]). A bid on its way down counts too (it can still fill until Novig confirms it gone).
+     */
+    fun bidItems(bids: List<MakerBid>): List<Item> =
+        bids.filter { it.active && it.restingDollars > 0.0 }.map { Item(GameRef(it.eventId, it.eventName, it.startsTs, it.league), it.marketId, it.outcomeId, it.restingDollars) }
 
     /** The dollars at risk on [game] in [items]: each market's larger side, added up. */
     fun atRisk(game: GameRef, items: List<Item>): Double {
