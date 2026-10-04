@@ -63,7 +63,7 @@ data class ScanTiming(
             t.liveFeedAtMs?.takeIf { t.liveFeedAsked > 0 && viaKey + viaPush > 0 }?.let {
                 append(" · live feed asked for ").append(String.format(Locale.US, "%,d", t.liveFeedAsked)).append(" at ").append(seconds(it))
             }
-            routeNotes(t, (prices - viaKey - viaPush).coerceAtLeast(0)).forEach { append(" · ").append(it) }
+            routeNotes(t, (prices - viaKey - viaPush).coerceAtLeast(0), keyed = viaKey + viaPush > 0).forEach { append(" · ").append(it) }
             append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
             append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")
             if (t.leftTooLate > 0) append(" · ").append(String.format(Locale.US, "%,d", t.leftTooLate)).append(" left for the next scan (their odds would have been too old)")
@@ -73,15 +73,16 @@ data class ScanTiming(
         /**
          * What paced the reads, in words, only where it says something (Tj, 2026-10-04: "the vigilant scanner slows down significantly when it is scanning
          * novig prices, maybe down to 2 per second"): the public route's pace when [publicReads] went by it (it starts at 4 a second and each refusal
-         * halves it), the key route's pace and refusals, and how much of what the live feed was asked for it held when the scan ended.
+         * halves it), the key route's pace and refusals, and how much of what the live feed was asked for it held when the scan ended ([keyed]: the
+         * scan read through the key or its feed; with no key there is no feed to hold anything).
          */
-        fun routeNotes(t: ScanTiming, publicReads: Int): List<String> = buildList {
+        fun routeNotes(t: ScanTiming, publicReads: Int, keyed: Boolean = true): List<String> = buildList {
             val p = t.pace
             if (p != null && (publicReads > 0 || p.publicLow != null)) add("public route " + route(p.publicStart, p.publicLow, p.publicEnd))
             if (p != null && (p.keyedRefused > 0 || p.keyedLow != null)) {
                 add("key route " + route(p.keyedStart, p.keyedLow, p.keyedEnd) + if (p.keyedRefused > 0) ", refused ${p.keyedRefused}×" else "")
             }
-            t.liveFeedHeld?.takeIf { t.liveFeedAsked > 0 }?.let { add("live feed held $it of ${String.format(Locale.US, "%,d", t.liveFeedAsked)} asked at the end") }
+            t.liveFeedHeld?.takeIf { keyed && t.liveFeedAsked > 0 }?.let { add("live feed held $it of ${String.format(Locale.US, "%,d", t.liveFeedAsked)} asked at the end") }
         }
 
         /** "at 4 a second", "at 4 a second, down to 2 after a refusal, 3.5 at the end". */

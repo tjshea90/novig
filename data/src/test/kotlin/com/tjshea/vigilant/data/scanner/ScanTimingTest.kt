@@ -158,9 +158,9 @@ class ScanTimingTest {
         assertEquals(2_000L, t.novigToMs!! - t.novigFromMs!!)
         assertNotNull("the bet showed", t.firstBetAtMs)
         assertEquals(2, t.refused)
-        // What paced the batch reaches the scan's timing, and a scan that never asked the live feed has no hold to report.
+        // What paced the batch reaches the scan's timing; a scan with no key has no live feed to hold anything, and says nothing of one.
         assertEquals(ReadPace(4.0, 2.0, 3.5, 14.0, null, 14.0, 0), t.pace)
-        assertNull(t.liveFeedHeld)
+        assertEquals(listOf("public route at 4 a second, down to 2 after a refusal, 3.5 at the end"), ScanTiming.routeNotes(t, publicReads = 1, keyed = false))
         assertEquals(1, report.result!!.feed(settings).size)
     }
 
