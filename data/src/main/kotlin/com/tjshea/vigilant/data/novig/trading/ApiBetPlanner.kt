@@ -57,10 +57,15 @@ data class BetLimits(
      * limits, pregame only and the price he confirmed still apply. Auto-bet never sets it.
      */
     val manual: Boolean = false,
+    /**
+     * The most that may be at risk on one game across every market of it (open bets and resting bids, [com.tjshea.vigilant.data.tracker.GameExposure]),
+     * 0 = no limit (Tj, 2026-10-04). The auto-bet is refused past it; a bet by hand is only warned.
+     */
+    val maxPerGame: Double = 0.0,
 ) {
     companion object {
         /** A hand-placed bet's limits: only Tj's own dollar limits. */
-        fun manual(maxStake: Double, maxPerDay: Double) = BetLimits(maxStake, maxPerDay, minEv = 0.0, manual = true)
+        fun manual(maxStake: Double, maxPerDay: Double, maxPerGame: Double = 0.0) = BetLimits(maxStake, maxPerDay, minEv = 0.0, manual = true, maxPerGame = maxPerGame)
     }
 }
 
@@ -87,8 +92,8 @@ data class BetPlan(
 sealed interface PlanResult {
     data class Ready(val plan: BetPlan) : PlanResult
 
-    /** Nothing is sent: [reason] says why, in words for the card. */
-    data class Refused(val reason: String) : PlanResult
+    /** Nothing is sent: [reason] says why, in words for the card. [gameLimit]: it's the per-game limit ([BetLimits.maxPerGame]), which the auto-bet counts under one reason. */
+    data class Refused(val reason: String, val gameLimit: Boolean = false) : PlanResult
 }
 
 /**
@@ -108,12 +113,20 @@ object ApiBetPlanner {
         now: Long,
         limits: BetLimits,
         spentToday: Double,
+        /** What this bet does to its game's exposure ([com.tjshea.vigilant.data.tracker.GameExposure.check]); null = not asked (no limit set). */
+        game: GameExposure.Check? = null,
     ): PlanResult {
         fun no(reason: String) = PlanResult.Refused(reason)
         if (!(stake > 0.0)) return no("Pick an amount to bet.")
         if (stake > limits.maxStake + 1e-9) return no("That's over your ${money(limits.maxStake)} limit per bet (Settings › Betting & Novig account).")
         if (spentToday + stake > limits.maxPerDay + 1e-9) {
             return no("That would take today's API bets to ${money(spentToday + stake)}, over your ${money(limits.maxPerDay)} daily limit (${money(spentToday)} so far).")
+        }
+        // One game is one event: this bet and the others on it win and lose together. The auto-bet never takes a game past its limit; by hand it's said
+        // beside the bet (Tj, 2026-10-02: he decides what he bets by hand).
+        val gameNote = game?.takeIf { it.blocked }?.let {
+            if (!limits.manual) return PlanResult.Refused(it.words(), gameLimit = true)
+            it.words() + " You can still place it."
         }
         // Pregame only: the taker fee that applies once a game is live isn't priced into a one-tap bet.
         if (target.startsTs <= now) return no("This game has started: bets through the API are pregame only.")
@@ -186,7 +199,7 @@ object ApiBetPlanner {
         } else {
             null
         }
-        val note = listOfNotNull(shortNote, fairNote).joinToString(" ").ifEmpty { null }
+        val note = listOfNotNull(shortNote, fairNote, gameNote).joinToString(" ").ifEmpty { null }
         return PlanResult.Ready(
             BetPlan(
                 limitPrice = limit,
