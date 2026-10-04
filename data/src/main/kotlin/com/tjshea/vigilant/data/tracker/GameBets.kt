@@ -73,7 +73,7 @@ class GameBets private constructor(private val entries: List<Entry>) {
         val risk = GameExposure.atRisk(game, mine.mapNotNull { it.item })
         return Summary(
             game = game,
-            bets = mine.filter { it.line.kind != Kind.BID }.map { it.line }.sortedByDescending { it.atMs },
+            bets = mine.map { it.line }.sortedByDescending { it.atMs },
             bids = mine.filter { it.line.kind == Kind.BID }.map { it.line }.sortedByDescending { it.atMs },
             atRisk = risk,
         )
@@ -105,7 +105,7 @@ class GameBets private constructor(private val entries: List<Entry>) {
                 out += Entry(game, line, PlacedIndex.gameKey(b.eventName), item)
             }
             for (bid in bids) {
-                
+                if (!bid.active || bid.restingDollars <= 0.0) continue
                 val game = GameRef(bid.eventId, bid.eventName, bid.startsTs, bid.league)
                 val item = GameExposure.Item(game, bid.marketId, bid.outcomeId, bid.restingDollars)
                 val line = Line(bid.clientId, Kind.BID, bid.selection, bid.marketLabel, americanOf(bid.price), bid.restingDollars, bid.postedAtMs, bid.auto)
