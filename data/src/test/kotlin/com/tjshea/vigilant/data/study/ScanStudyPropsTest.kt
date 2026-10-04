@@ -235,36 +235,40 @@ class ScanStudyPropsTest {
 
             override suspend fun players(game: GameScore): List<PlayerLine>? = BetGraderTest.padded(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
         }
-        val asked = ArrayList<List<String>>()
-        // Seven bets, each closed by a different source or a different number of Novig's trades behind it.
-        val vias = listOf(
-            "Novig's last trades (1)", "Novig's last trades (2)", "Novig's last trades (4)", "Novig's last trades (7)", "Novig's last trades (62)",
-            "ESPN · DraftKings close", "ParlayAPI · Pinnacle close",
-        )
+        // The two bets that can be graded (Benge's total bases, the Mets' moneyline), closed by Novig's trades: 2 trades behind one, 3 behind the other.
         val close = object : CloseSource {
             override val id: String get() = "fake"
-            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> { asked += bets.map { it.selection }; return bets.withIndex().associate { (i, b) -> b.id to CloseLookup.Found(0.55, vias[i % vias.size]) } }
+            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> =
+                bets.associate { b -> b.id to CloseLookup.Found(0.55, if (b.selection.startsWith("Carson")) "Novig's last trades (2)" else "Novig's last trades (3)") }
         }
         s.settle(scores, listOf(close), emptyList(), File(tmp.root, "scratch"))
         val text = export(j)
-        println("ASKED: " + asked)
         val found = text.lines().first { it.startsWith("Closes found:") }
-        // One source, however many trades: not "Novig's last trades (1) 1, (2) 1, (4) 1 …".
-        assertTrue(found, found.contains("Novig's last trades 5"))
-        assertFalse(found, found.contains("Novig's last trades ("))
-        assertTrue(found, found.contains("ESPN 1") && found.contains("ParlayAPI 1"))
+        // One source, however many trades: not "Novig's last trades (2) 1, (3) 1".
+        assertEquals("Closes found: 2 of 7 (Novig's last trades 2)", found)
         val by = section(text, "-- Close source")
-        assertEquals(2, count(by, "Novig's last trades: 1-2 trades (noisy)"))
+        assertEquals(1, count(by, "Novig's last trades: 1-2 trades (noisy)"))
         assertEquals(1, count(by, "Novig's last trades: 3-5 trades"))
-        assertEquals(1, count(by, "Novig's last trades: 6-10 trades"))
-        assertEquals(1, count(by, "Novig's last trades: 11 or more trades"))
-        assertEquals(1, count(by, "ESPN"))
-        assertEquals(1, count(by, "ParlayAPI"))
-        // The words for the bands, and the source of any close without a count.
+        assertEquals("only the bets with a close are in this split", 2, by.size)
+    }
+
+    @Test
+    fun `a close's source and the trades behind it are read from its words, and the bands break at 2, 5 and 10`() {
         assertEquals("Novig's last trades", StudyExport.closeSource("Novig's last trades (62)"))
+        assertEquals("Novig's last trades", StudyExport.closeSource("Novig's last trades (1)"))
+        assertEquals("ESPN", StudyExport.closeSource("ESPN · DraftKings close"))
+        assertEquals("Tracker", StudyExport.closeSource("Tracker · read before the start (3 min before)"))
+        assertEquals("ParlayAPI", StudyExport.closeSource("ParlayAPI · Pinnacle close"))
+        assertEquals("?", StudyExport.closeSource(null))
         assertEquals(62, StudyExport.novigTrades("Novig's last trades (62)"))
         assertEquals(null, StudyExport.novigTrades("ESPN · DraftKings close"))
-        assertEquals("Tracker", StudyExport.closeSource("Tracker · read before the start (3 min before)"))
-        assertEquals("?", StudyExport.closeSource(null))
+        assertEquals(null, StudyExport.novigTrades(null))
+        assertEquals("1-2 trades (noisy)", StudyExport.tradesBand(1))
+        assertEquals("1-2 trades (noisy)", StudyExport.tradesBand(2))
+        assertEquals("3-5 trades", StudyExport.tradesBand(3))
+        assertEquals("3-5 trades", StudyExport.tradesBand(5))
+        assertEquals("6-10 trades", StudyExport.tradesBand(6))
+        assertEquals("6-10 trades", StudyExport.tradesBand(10))
+        assertEquals("11 or more trades", StudyExport.tradesBand(11))
     }
 }
