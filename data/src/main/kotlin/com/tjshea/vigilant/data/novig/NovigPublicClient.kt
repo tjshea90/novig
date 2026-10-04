@@ -249,6 +249,7 @@ class NovigPublicClient(
     private fun keyRetryAfter(e: Throwable): Long = when {
         e is NovigApiException && e.networkRefusal -> NETWORK_RETRY_MS
         e !is NovigApiException && e is IOException -> NO_CONNECTION_RETRY_MS
+        e is NovigApiException && e.status in 500..599 -> NO_CONNECTION_RETRY_MS
         else -> keyedRetryMs
     }
 
@@ -445,7 +446,7 @@ class NovigPublicClient(
                             val rate = if (key != null) keyedGate else publicGate
                             rate.acquire()
                             try {
-                                return@run fetchBook(id, key).also { rate.success(); if (key != null) { keyedServerErrors.set(0); keyedNotFound.set(0) } }
+                                return@run fetchBook(id, key).also { rate.success(); if (key != null) { keyedServerErrors.set(0) } }
                             } catch (e: NovigApiException) {
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
