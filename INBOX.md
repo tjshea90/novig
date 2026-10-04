@@ -3792,3 +3792,8 @@ I noticed some "positive EV" bets from the cno scanner have thousands of dollars
 ```
 I thought you already made the per game exposure guard. What did the last update do?
 ```
+
+## 2026-10-04T04:40:41Z
+```
+Continue from where you left off.
+```
