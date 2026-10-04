@@ -121,7 +121,7 @@ class MakerRunner(
                 // No lines to judge by, but the bids up still have to fit the wallet (a bet by hand or an auto-bet since they went up: Tj, 2026-10-04).
                 val report = desk.fit(rules, s.apiMaxPerDay, wallet)
                 notifyFills(report.fills, desk.bids())
-                logTrim(why, report)
+                logTrim(why, report, wallet)
                 report.problems.forEach { p -> runCatching { c.problems.add("Make orders", p) } }
                 _status.update { it.copy(running = false, lastAtMs = now, problem = report.problems.firstOrNull()) }
                 return@withLock null
