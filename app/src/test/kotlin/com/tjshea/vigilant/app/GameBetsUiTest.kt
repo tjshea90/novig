@@ -6,16 +6,22 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.GameBetsChip
+import com.tjshea.vigilant.app.ui.GamesScreen
+import com.tjshea.vigilant.app.ui.TrackerScreen
+import com.tjshea.vigilant.app.ui.TrackerView
 import com.tjshea.vigilant.app.ui.GameBetsDetail
 import com.tjshea.vigilant.app.ui.GameBetsText
 import com.tjshea.vigilant.app.ui.GameBetsView
@@ -170,5 +176,45 @@ class GameBetsUiTest {
             }
         }
         compose.onNodeWithTag("gameBetsChip").assertTextContains("\$5.50 in game", substring = true)
+    }
+
+    @Test
+    fun `CNO's list shows it too, on the bet in his game only`() {
+        val state = SampleCno.state()
+        val jefferson = SampleCno.rows.first { it.bet == "Justin Jefferson Under 69.5" }
+        val index = GameBets.of(
+            listOf(
+                TrackedBet(
+                    "v1", now - 60_000, "NFL", jefferson.event, jefferson.startsAtMs!!, "Player Receptions", "Another Vikings prop", "m1", "o1", 0.5, 0.5, 0.52, 0.04, 4.0,
+                    source = "cno", american = 100,
+                ),
+            ),
+            emptyList(),
+        )
+        screen { CompositionLocalProvider(LocalGameBets provides GameBetsView(index)) { CnoScreen(state, {}, {}) } }
+        compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(1)
+        compose.onNodeWithTag("gameBetsChip").assertTextContains("\$4.00 in game", substring = true)
+    }
+
+    @Test
+    fun `an open bet in the Tracker shows what its game has, a graded one shows nothing`() {
+        val state = SampleScan.state()
+        val index = GameBets.of(state.bets, emptyList())
+        screen { CompositionLocalProvider(LocalGameBets provides GameBetsView(index)) { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) } }
+        // The sample's three open bets (b3, b4, b5); the settled ones are on the other tab, and nothing is on them any more.
+        compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(3)
+    }
+
+    @Test
+    fun `the Games tab shows it on a game he has money on`() {
+        val state = SampleScan.state()
+        val game = state.result!!.games.first()
+        val bet = TrackedBet(
+            "g1", now - 60_000, game.event.league, game.event.description, game.event.startsTs, "Moneyline", "Somebody", "gm", "go", 0.5, 0.5, 0.52, 0.04, 7.0,
+            american = 100, eventId = game.event.eventId,
+        )
+        screen { CompositionLocalProvider(LocalGameBets provides GameBetsView(GameBets.of(listOf(bet), emptyList()))) { GamesScreen(state, onOpen = {}, onToggleLeague = {}) } }
+        compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(1)
+        compose.onNodeWithTag("gameBetsChip").assertTextContains("\$7.00 in game", substring = true)
     }
 }
