@@ -481,6 +481,8 @@ fun OpportunityCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    // What Tj already has on this game, when he has anything (Tj, 2026-10-04); Novig's own event id finds it exactly.
+                    GameBetsChip(o.eventName, o.event.startsTs, o.event.league, Modifier.padding(top = 3.dp), eventId = o.market.eventId)
                     move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {

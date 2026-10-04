@@ -701,12 +701,16 @@ private fun VigilantRoot(
             onLoadBooks = vm::loadPickBooks,
         )
     }
+    // What Tj has on each game, for the small "$21.30 in game" button on every listed bet (Tj, 2026-10-04): equal while nothing changed.
+    val gameBets by vm.gameBets.collectAsStateWithLifecycle()
+    val gameBetsView = remember(gameBets, state.settings.apiMaxPerGame) { com.tjshea.vigilant.app.ui.GameBetsView(gameBets, state.settings.apiMaxPerGame) }
     com.tjshea.vigilant.app.ui.ProvideApiBet(state.betting.enabled, vm.api) {
     androidx.compose.runtime.CompositionLocalProvider(
         // ParlayAPI's second opinion in every bet sheet (PARLAY_API.md §6.4).
         com.tjshea.vigilant.app.ui.LocalOpinions provides remember(state.canAskParlay, state.opinions) {
             com.tjshea.vigilant.app.ui.OpinionActions(state.canAskParlay, state.opinions, vm::askOpinion)
         },
+        com.tjshea.vigilant.app.ui.LocalGameBets provides gameBetsView,
     ) {
     Scaffold(
         bottomBar = {

@@ -624,6 +624,8 @@ private fun CnoCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    // What Tj already has on this game (either team's side of it), when he has anything (Tj, 2026-10-04).
+                    GameBetsChip(row.event, row.startsAtMs, row.league, Modifier.padding(top = 3.dp))
                     move?.let { LineMoveNote(it) }
                 }
                 Column(horizontalAlignment = Alignment.End) {
