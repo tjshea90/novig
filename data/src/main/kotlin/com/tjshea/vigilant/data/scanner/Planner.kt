@@ -150,7 +150,8 @@ object Planner {
         return events.count { e -> e.startsTs > horizon && e.matchup != null && inPlay(e, settings, now) }
     }
 
-    private const val STARTED_GRACE_MS = 2 * 60_000L
+    /** A game that started longer ago than this is live in practice: no pregame book to read ([inPlay]). */
+    internal const val STARTED_GRACE_MS = 2 * 60_000L
 
     /** Single-feed form, keyed by sport: kept for callers that only ever had one provider. */
     fun plan(

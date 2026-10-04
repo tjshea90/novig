@@ -458,7 +458,10 @@ class Scanner(
                 // A line whose other books' odds (read as the scan began) couldn't stay listed a couple of minutes once
                 // priced is left for the next scan: a long scan (a big budget, public routes) never shows a bet already
                 // on its way out (Tj, 2026-09-28: "consider if increasing this number could be beneficial or dangerous").
+                // A game that kicked off during a long scan has no pregame book any more (Novig answers 404: Tj's v0.59.1 file, every kickoff): not read.
+                val t = clock()
                 val pending = plan.markets.filter { it.market.marketId !in requested && it.market.marketId !in tooLate }
+                    .filter { pm -> settings.includeLive || pm.event.startsTs > t - Planner.STARTED_GRACE_MS }
                     .filter { pm -> canStillShow(pm).also { ok -> if (!ok) tooLate += pm.market.marketId } }
                 // A bets-only pass would replace the feed scanner's subscription with a few dozen markets.
                 if (!betsOnly) feedStream(plan, pending, preview, lastPass, cap)
