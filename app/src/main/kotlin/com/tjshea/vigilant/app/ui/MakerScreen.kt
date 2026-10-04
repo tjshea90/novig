@@ -141,7 +141,8 @@ object MakerText {
     const val INTRO =
         "Vigilant posts bids under its fair price on Novig and waits for someone to take them (a make order: no fee). Each bid is post-only (it never " +
             "takes), never rests longer than the fair it was priced from stays fresh, and comes down at once when the fair moves against it, the game is " +
-            "about to start, or scanning is paused. With auto-make off, Vigilant recommends bids for you to approve or deny. A filled bid is a bet in the Tracker."
+            "about to start, scanning is paused, or the wallet can no longer cover it beside the other bids (a bet by hand, an auto-bet or a fill took the money: the " +
+            "least valuable bids come down first). With auto-make off, Vigilant recommends bids for you to approve or deny. A filled bid is a bet in the Tracker."
 
     const val CONFIRM =
         "Vigilant will post and move bids by itself from the Vigilant wallet, within these rules, while each scan runs and every background cycle: real money, " +
