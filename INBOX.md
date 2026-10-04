@@ -3787,3 +3787,8 @@ Then, answer:
 
 I noticed some "positive EV" bets from the cno scanner have thousands of dollars able to be bet on them while others only have a few dollars. Should I be concerned that the large liquidity is actually a sharp bettor putting thousands of dollars on the better side?
 ```
+
+## 2026-10-04T03:53:34Z
+```
+I thought you already made the per game exposure guard. What did the last update do?
+```
