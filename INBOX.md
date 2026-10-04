@@ -3818,3 +3818,8 @@ If the auto bid function isn't getting enough bids taken, consider lowering the 
 
 My concern is betting too much money on one event. The app is beginning to fix this with a money limit per game. Make it so I can press a button next to any bet shown in the app which shows other bets I already placed in the same game. For example, if I bet 6 player props and a total in the la rams game, make a quick button next to each bet in the scanners that involve the la rams game (and the team they are playing) which pulls up which bets I already placed involving that game, money per bet, and total money across all bets for that game. If possible, make the button itself show the total I already bet involving that game. For example, the button might say "$21 bet in this event, press for details". But try not to make the button too big. A small button or drop down box that I press is fine
 ```
+
+## 2026-10-04T23:06:41Z
+```
+Where are the 3.25 and 3.5 auto bid chips 
+```
