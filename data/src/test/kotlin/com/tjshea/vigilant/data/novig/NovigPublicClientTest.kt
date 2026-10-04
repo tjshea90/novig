@@ -255,6 +255,43 @@ class NovigPublicClientTest {
         assertEquals(16, batch.fetched)
         assertEquals(16, batch.viaKey)
         assertNull(batch.retryAfterSeconds)
+        // What paced it is on the batch (Tj, 2026-10-04: a scan says why it was slow): the key's refusals counted one by one, the key's pace halved
+        // from the 14.4 a second its limits give, the public route untouched.
+        val pace = batch.pace!!
+        assertEquals(refused.get(), pace.keyedRefused)
+        assertEquals(14.4, pace.keyedStart, 1e-9)
+        assertEquals(7.2, pace.keyedLow!!, 1e-9)
+        assertEquals(4.0, pace.publicStart, 0.0)
+        assertNull(pace.publicLow)
+        assertEquals(4.0, pace.publicEnd, 0.0)
+    }
+
+    /**
+     * Tj, 2026-10-04: "the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second". On the public routes a
+     * refusal halves the pace from 4 a second: the batch says it began at 4, was taken down to 2, and ended there (a minute's slow-down), and that the key
+     * route was never involved.
+     */
+    @Test
+    fun `a public refusal is on the batch - the pace began at 4, was halved to 2, and the key route had none`() = runBlocking {
+        val calls = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (calls.getAndIncrement() == 0) MockResponse().setResponseCode(429).setHeader("Retry-After", "1")
+                else MockResponse().setBody(Fixtures.mlBook.replace(Fixtures.ML_MARKET, request.requestUrl!!.pathSegments[4]))
+        }
+        val c = client()
+        val batch = c.books(listOf("m1", "m2", "m3"))
+        val pace = batch.pace!!
+        assertEquals(1, batch.refused)
+        assertEquals(4.0, pace.publicStart, 0.0)
+        assertEquals(2.0, pace.publicLow!!, 0.0)
+        assertEquals(2.0, pace.publicEnd, 0.0)
+        assertEquals(0, pace.keyedRefused)
+        assertNull(pace.keyedLow)
+        // The low is handed over once: the next batch, still in the slow-down, begins at 2 and has no new low.
+        val next = c.books(listOf("m4")).pace!!
+        assertEquals(2.0, next.publicStart, 0.0)
+        assertNull(next.publicLow)
     }
 
     @Test
