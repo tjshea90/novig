@@ -229,7 +229,7 @@ data class ScanSettings(
      */
     val maker: Boolean = false,
     /** The EV at the fair each bid is posted at: fair / (1 + this), on Novig's grid ([MAKER_MARGIN_CHOICES]). 4% is §70's balance point. */
-    val makerMargin: Double = 0.04,
+    val makerMargin: Double = 0.035,
     /**
      * How a bid is sized, like the auto-bet's stake rule ([autoBetStake]): ¼ Kelly by default (Benter's and the pros' fractional Kelly on the edge at
      * the fair, RESEARCH.md §69.1), on [bankroll], never over [makerMaxStake] or [apiMaxStake].

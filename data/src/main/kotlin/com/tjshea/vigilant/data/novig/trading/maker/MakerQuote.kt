@@ -97,7 +97,7 @@ data class MakerRules(
             earlyHours = s.trapEarlyHours.coerceAtLeast(0),
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
-            popularFirst = true,
+            popularFirst = s.makerPopularFirst,
             requireSharp = s.makerRequireSharp,
         )
 
