@@ -3758,3 +3758,8 @@ A lot of times the vigilant scanner slows down significantly when it is scanning
 ```
 @"/root/.claude/uploads/74dc98f3-4b68-58cf-8d39-422c6de991cc/f516f8e4-vigilant-diagnostics-v0.58.2-2026-10-03-2201.txt" 
 ```
+
+## 2026-10-04T02:56:24Z
+```
+Right now I'm noticing I have a lot of bets on the same games. For example, auto bet placed bets on a team at +5 , then the same team at +6, then the same team at +10. These are just example numbers. Should there be some type of safeguard in the app that limits exposure to each game because if that one team loses badly, I lose many bets due to one event. If there should be a safeguard against this, figure out how to make it without incorrectly blocking bets on different games. 
+```
