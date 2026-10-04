@@ -522,4 +522,140 @@ class NovigPublicClientTest {
         assertEquals(0, batch.viaKey)
         assertTrue(batch.keyProblem!!, batch.keyProblem!!.contains("connect it again"))
     }
+    // ---- Tj, 2026-10-04 (v0.59.1 file): "novig scanning is going extremely slow. Maybe 1 per 2 seconds" ----
+    // A 404 for one market's book (its game had just kicked off) at 16:01:07 sent the whole key route to the public routes for ten minutes.
+
+    private fun notFound() = MockResponse().setResponseCode(404).setBody("""{"code":"MARKET_NOT_FOUND","message":"market not found"}""")
+
+    private fun signedBook(request: RecordedRequest) = request.requestUrl!!.encodedPath.startsWith("/v3/catalog/markets/")
+
+    private fun marketOf(request: RecordedRequest) = request.requestUrl!!.pathSegments.dropLast(1).last()
+
+    @Test
+    fun `one market's 404 on the key route is that book's own news - the key goes on and nothing falls to the public routes`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.requestUrl!!.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                signedBook(request) && marketOf(request) == "m2" -> notFound()
+                else -> bookFor(request)
+            }
+        }
+        val c = keyed(client())
+        val batch = c.books(listOf("m1", "m2", "m3", "m4"))
+        assertEquals(1, batch.gone)
+        assertEquals(0, batch.failed)
+        assertEquals("the other three came through the key", 3, batch.viaKey)
+        assertEquals(setOf("m1", "m3", "m4"), batch.books.keys)
+        assertNull("no banner for a market that closed", batch.keyProblem)
+        assertNull(batch.lastError)
+        assertNull("the key route is not standing down", c.keyDown(now))
+        assertTrue(c.keyStanddowns().isEmpty())
+        // The next scan reads through the key too, not the public route for ten minutes.
+        val before = server.requestCount
+        val next = c.books(listOf("m5", "m6"))
+        assertEquals(2, next.viaKey)
+        assertEquals(before + 2, server.requestCount)
+        assertTrue(server.requests().none { it.requestUrl!!.encodedPath.startsWith("/v3/public/") })
+    }
+
+    @Test
+    fun `a market that closed is never served from the cache as if it still had a price`() = runBlocking {
+        var closed = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.requestUrl!!.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                closed && marketOf(request) == "m1" -> notFound()
+                else -> bookFor(request)
+            }
+        }
+        val c = keyed(client())
+        assertEquals(setOf("m1", "m2"), c.books(listOf("m1", "m2")).books.keys)
+        closed = true
+        val batch = c.books(listOf("m1", "m2"))
+        assertEquals(1, batch.gone)
+        assertEquals(0, batch.fromCache)
+        assertEquals(setOf("m2"), batch.books.keys)
+        assertNull(c.cached("m1"))
+    }
+
+    @Test
+    fun `the public route's 404 is the same news - gone, not a failure, and not served from the cache`() = runBlocking {
+        var closed = false
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = if (closed && marketOf(request) == "m1") notFound() else bookFor(request)
+        }
+        val c = client()
+        c.books(listOf("m1", "m2"))
+        closed = true
+        val batch = c.books(listOf("m1", "m2"))
+        assertEquals(1, batch.gone)
+        assertEquals(0, batch.failed)
+        assertEquals(0, batch.fromCache)
+        assertNull(batch.lastError)
+        assertEquals(setOf("m2"), batch.books.keys)
+    }
+
+    @Test
+    fun `a single server error on the key route fails that book only, a run of them stands the key down for half a minute`() = runBlocking {
+        val failing = java.util.concurrent.atomic.AtomicBoolean(false)
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.requestUrl!!.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                signedBook(request) && (marketOf(request) == "m2" || failing.get()) -> MockResponse().setResponseCode(502).setBody("""{"code":"BAD_GATEWAY","message":"upstream"}""")
+                else -> bookFor(request)
+            }
+        }
+        now = 1_000_000L
+        val c = keyed(client())
+        val one = c.books(listOf("m1", "m2", "m3"))
+        assertEquals(1, one.failed)
+        assertEquals(2, one.viaKey)
+        assertNull(c.keyDown(now))
+        // Novig having a bad moment: every read fails. After MAX_KEYED_SERVER_ERRORS in a row the key route stands down, briefly.
+        failing.set(true)
+        val run = c.books((1..30).map { "n$it" })
+        assertTrue("some went public once the key stood down: ${run.fetched}", run.fetched > 0)
+        assertNotNullStanddown(c)
+        val down = c.keyStanddowns().single()
+        assertEquals(NovigPublicClient.NO_CONNECTION_RETRY_MS, down.forMs)
+        assertTrue(down.why, down.why.startsWith("HTTP 502"))
+        assertNull("the key is tried again after the half minute", c.keyDown(now + NovigPublicClient.NO_CONNECTION_RETRY_MS + 1))
+    }
+
+    private fun assertNotNullStanddown(c: NovigPublicClient) = assertEquals(1, c.keyStanddowns().size)
+
+    @Test
+    fun `a dead route - 404 on every book of the key route - is told from closed markets by the length of the run`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.requestUrl!!.encodedPath == "/v3/limits" -> MockResponse().setBody(limitsBody)
+                signedBook(request) -> notFound()
+                else -> bookFor(request)
+            }
+        }
+        val c = keyed(client())
+        val batch = c.books((1..230).map { "k$it" })
+        assertTrue("the run of 404s ends in a stand-down", c.keyStanddowns().isNotEmpty())
+        assertTrue(batch.keyProblem != null)
+        assertTrue("the rest of the scan was read on the public routes: ${batch.fetched}", batch.fetched > 0)
+        assertTrue("gone ${batch.gone}", batch.gone in 150..200)
+    }
+
+    @Test
+    fun `every stand-down of the key route is kept with when, how long and why`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.requestUrl!!.encodedPath.startsWith("/v3/public/")) bookFor(request)
+                else MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK","message":"vpn"}""")
+        }
+        now = 5_000_000L
+        val c = keyed(client())
+        assertTrue(c.keyStanddowns().isEmpty())
+        c.books(listOf("m1", "m2"))
+        val d = c.keyStanddowns().single()
+        assertEquals(5_000_000L, d.atMs)
+        assertEquals(NovigPublicClient.NETWORK_RETRY_MS, d.forMs)
+        assertEquals("HTTP 451 ANONYMIZED_NETWORK", d.why)
+        assertTrue(client().keyStanddowns().isEmpty())
+    }
 }
