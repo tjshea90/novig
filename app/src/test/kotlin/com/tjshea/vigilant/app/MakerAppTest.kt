@@ -280,6 +280,24 @@ class MakerAppTest {
     }
 
     @Test
+    fun `a bid that would take its game past the per-game limit is not recommended, and is once the limit allows it`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        // A one-cent limit on a game: every bid is over it (Tj, 2026-10-04: one event is one risk).
+        app.container.settingsStore.update { it.copy(maker = false, makerRecommend = true, apiMaxPerGame = 0.01) }
+        val nm = shadowOf(app.getSystemService(NotificationManager::class.java))
+        val run = runner(novig)
+        run.run("test")
+        fun recommended() = nm.allNotifications.filter { it.extras.getCharSequence(Notification.EXTRA_TITLE)?.startsWith("Bid to approve") == true }
+        assertTrue("nothing is suggested past the limit", recommended().isEmpty())
+        assertEquals(0L, app.container.eventLog.counters()["maker.recommended"] ?: 0L)
+        // Not marked as seen: with the limit lifted the same sides are recommended on the next pass.
+        app.container.settingsStore.update { it.copy(apiMaxPerGame = 0.0) }
+        run.run("test")
+        assertTrue(recommended().isNotEmpty())
+    }
+
+    @Test
     fun `with auto-make off it recommends a few new bids once each, Approve posts one after re-checking it, and the next pass leaves it up`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
