@@ -219,4 +219,50 @@ class ScanStudyPropsTest {
         // A bet whose page was never read has no sharp edge, whatever its record says.
         assertEquals(null, StudyExport.propSharpEdge(base.copy(atBet = com.tjshea.vigilant.data.tracker.AtBet(atMs = 1, how = "study", scanner = "cno", sharpEv = 0.05))))
     }
+
+    @Test
+    fun `closes are counted by their source, Novig's trades are one source split by how many trades are behind the close`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        logAll(s)
+        now = start + 4 * 3_600_000L
+        val scores = object : ScoreSource {
+            override fun covers(league: String) = league == "MLB"
+            override suspend fun games(league: String, date: LocalDate): List<GameScore>? =
+                if (league == "MLB" && date == LocalDate.of(2026, 9, 26)) {
+                    listOf(GameScore("822678", "MLB", "Washington Nationals", "New York Mets", start, true, false, 1, 7, listOf(0, 0, 1, 0, 0, 0, 0, 0, 0), listOf(0, 0, 0, 0, 0, 0, 4, 1, 2)))
+                } else emptyList()
+
+            override suspend fun players(game: GameScore): List<PlayerLine>? = BetGraderTest.padded(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
+        }
+        // Seven bets, each closed by a different source or a different number of Novig's trades behind it.
+        val vias = listOf(
+            "Novig's last trades (1)", "Novig's last trades (2)", "Novig's last trades (4)", "Novig's last trades (7)", "Novig's last trades (62)",
+            "ESPN · DraftKings close", "ParlayAPI · Pinnacle close",
+        )
+        val close = object : CloseSource {
+            override val id: String get() = "fake"
+            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> = bets.withIndex().associate { (i, b) -> b.id to CloseLookup.Found(0.55, vias[i % vias.size]) }
+        }
+        s.settle(scores, listOf(close), emptyList(), File(tmp.root, "scratch"))
+        val text = export(j)
+        val found = text.lines().first { it.startsWith("Closes found:") }
+        // One source, however many trades: not "Novig's last trades (1) 1, (2) 1, (4) 1 …".
+        assertTrue(found, found.contains("Novig's last trades 5"))
+        assertFalse(found, found.contains("Novig's last trades ("))
+        assertTrue(found, found.contains("ESPN 1") && found.contains("ParlayAPI 1"))
+        val by = section(text, "-- Close source")
+        assertEquals(2, count(by, "Novig's last trades: 1-2 trades (noisy)"))
+        assertEquals(1, count(by, "Novig's last trades: 3-5 trades"))
+        assertEquals(1, count(by, "Novig's last trades: 6-10 trades"))
+        assertEquals(1, count(by, "Novig's last trades: 11 or more trades"))
+        assertEquals(1, count(by, "ESPN"))
+        assertEquals(1, count(by, "ParlayAPI"))
+        // The words for the bands, and the source of any close without a count.
+        assertEquals("Novig's last trades", StudyExport.closeSource("Novig's last trades (62)"))
+        assertEquals(62, StudyExport.novigTrades("Novig's last trades (62)"))
+        assertEquals(null, StudyExport.novigTrades("ESPN · DraftKings close"))
+        assertEquals("Tracker", StudyExport.closeSource("Tracker · read before the start (3 min before)"))
+        assertEquals("?", StudyExport.closeSource(null))
+    }
 }
