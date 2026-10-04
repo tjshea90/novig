@@ -58,6 +58,15 @@ class RateGate(
     /** The rate in force right now, for display. */
     val currentRate: Double get() = if (clock() < slowUntil) slowRate else rampedRate
 
+    /** The lowest pace a refusal took the gate to since [takeLowRate] last asked; [Double.MAX_VALUE] = none did. */
+    private var lowRate = Double.MAX_VALUE
+
+    /**
+     * The lowest pace a refusal took this gate to since the last call (null when none did), then forgotten: a scan's record of what slowed it
+     * (Tj, 2026-10-04: "the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second").
+     */
+    suspend fun takeLowRate(): Double? = mutex.withLock { lowRate.takeIf { it != Double.MAX_VALUE }.also { lowRate = Double.MAX_VALUE } }
+
     /** Waits until one request may go out. */
     suspend fun acquire() {
         while (true) {
@@ -117,6 +126,7 @@ class RateGate(
         lastSlowDown = now
         val refusedAt = if (now < slowUntil) slowRate else rampedRate
         slowRate = max(minRate, refusedAt / 2)
+        lowRate = min(lowRate, slowRate)
         slowUntil = now + slowForMs
         ceiling = refusedAt
         ceilingUntil = now + ceilingForMs

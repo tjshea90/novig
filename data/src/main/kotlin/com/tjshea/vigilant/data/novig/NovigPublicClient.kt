@@ -97,7 +97,30 @@ data class BookBatch(
     val viaPush: Int = 0,
     /** Requests Novig refused (a 429, or its edge's 403), retried or not: each pauses the reads and slows them. */
     val refused: Int = 0,
+    /** What paced this batch: each route's pace and the key route's refusals; null from a source with no pacing of its own. */
+    val pace: ReadPace? = null,
 )
+
+/**
+ * What paced Novig reads (Tj, 2026-10-04: "the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second"):
+ * each route's pace in reads a second when the reads began, the lowest a refusal took it to (null: none did), and when they ended, and the 429s the
+ * key route drew (the public route's are [BookBatch.refused]). One batch's, or a scan's ([merge]).
+ */
+data class ReadPace(
+    val publicStart: Double,
+    val publicLow: Double?,
+    val publicEnd: Double,
+    val keyedStart: Double,
+    val keyedLow: Double?,
+    val keyedEnd: Double,
+    val keyedRefused: Int,
+) {
+    /** This, then [next]: where it began, the lowest either reached, where [next] ended, the refusals added. */
+    fun merge(next: ReadPace) = ReadPace(
+        publicStart, listOfNotNull(publicLow, next.publicLow).minOrNull(), next.publicEnd,
+        keyedStart, listOfNotNull(keyedLow, next.keyedLow).minOrNull(), next.keyedEnd, keyedRefused + next.keyedRefused,
+    )
+}
 
 class NovigHttpException(val code: Int, message: String, val retryAfterSeconds: Int? = null) : IOException(message)
 
@@ -360,6 +383,9 @@ class NovigPublicClient(
         val ids = all.filter { it !in pushed }
         val signer = keyed?.takeIf { clock() >= keyedDownUntil }
         if (signer != null && ids.isNotEmpty()) ensureLimits(signer)
+        val publicStart = publicGate.currentRate
+        val keyedStart = keyedGate.currentRate
+        val keyedRefused = AtomicInteger(0)
         val useKey = AtomicReference(signer)
         val keyProblem = AtomicReference<String?>(null)
         val gate = Semaphore(if (signer != null) keyedConcurrency else publicConcurrency)
@@ -387,6 +413,7 @@ class NovigPublicClient(
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
                                 if (e.status == 429) {
+                                    keyedRefused.incrementAndGet()
                                     keyedGate.pause(rateClock() + 1000L)
                                     keyedGate.slowDown()
                                     if (retries++ < 2) continue
@@ -460,6 +487,10 @@ class NovigPublicClient(
             keyProblem = keyProblem.get(),
             viaPush = pushed.size,
             refused = refused.get(),
+            pace = ReadPace(
+                publicStart, publicGate.takeLowRate(), publicGate.currentRate,
+                keyedStart, keyedGate.takeLowRate(), keyedGate.currentRate, keyedRefused.get(),
+            ),
         )
     }
 
