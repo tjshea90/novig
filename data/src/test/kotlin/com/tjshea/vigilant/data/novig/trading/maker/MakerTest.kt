@@ -1222,4 +1222,64 @@ class MakerTest {
         assertEquals(MakerStatus.CANCELED, d.bids().first { it.outcomeId == "m1-over" }.status)
         assertEquals(MakerStatus.RESTING, d.bids().first { it.outcomeId == "m2-over" }.status)
     }
+
+    // ---- Tj, 2026-10-04: "bids … more popular than obscure players props", "Maybe a sharp book should be required", "lowering the EV to 3.5 or 3.25%" (RESEARCH.md §81.4) ----
+
+    @Test
+    fun `popular lines go up before obscure ones when not every bid fits, but never ahead of the ones that lead their side`() {
+        val popularDear = MakerDecision.Post(line("a-over", books = 8), 0.45, 1_111, 0.04)
+        val obscureCheap = MakerDecision.Post(line("b-over", books = 3), 0.30, 1_666, 0.04)
+        val popularMid = MakerDecision.Post(line("c-over", books = 6), 0.40, 1_250, 0.04)
+        val wanted = listOf(obscureCheap, popularDear, popularMid)
+        // Two bids fit: the two popular ones, the cheaper first among them; the obscure bid, though the cheapest of all, waits.
+        val two = MakerPlan.plan(wanted, emptyList(), rules.copy(maxBids = 2), now)
+        assertEquals(listOf("c-over", "a-over"), two.places.map { it.line.outcomeId })
+        // Off: the old order, the cheapest first.
+        val old = MakerPlan.plan(wanted, emptyList(), rules.copy(maxBids = 2, popularFirst = false), now)
+        assertEquals(listOf("b-over", "c-over"), old.places.map { it.line.outcomeId })
+        // A bid that leads its side is still first: this popular bid would sit behind someone already bidding at its price.
+        val popularBehind = MakerDecision.Post(line("d-over", books = 9).copy(bestBid = 0.35), 0.35, 1_428, 0.04)
+        assertFalse(popularBehind.leads)
+        val lead = MakerPlan.plan(listOf(popularBehind, obscureCheap), emptyList(), rules.copy(maxBids = 1), now)
+        assertEquals(listOf("b-over"), lead.places.map { it.line.outcomeId })
+        // Five books is not popular, six is.
+        val five = MakerDecision.Post(line("e-over", books = 5), 0.20, 2_500, 0.04)
+        val six = MakerDecision.Post(line("f-over", books = 6), 0.44, 1_136, 0.04)
+        assertEquals(listOf("f-over"), MakerPlan.plan(listOf(five, six), emptyList(), rules.copy(maxBids = 1), now).places.map { it.line.outcomeId })
+    }
+
+    @Test
+    fun `a sharp book can be required to agree - none pricing the line is a no, one that says no is still a no, game lines already needed one`() {
+        fun why(l: MakerLine, r: MakerRules) = (MakerQuote.decide(l, r, now) as MakerDecision.Skip).why
+        val noSharp = line(fair = 0.52)
+        // Off (the default): a prop no sharp book prices gets its bid.
+        assertTrue(MakerQuote.decide(noSharp, rules, now) is MakerDecision.Post)
+        val required = rules.copy(requireSharp = true)
+        assertTrue(why(noSharp, required).contains("a sharp book must agree"))
+        // With one that agrees (its own fair 0.55 > the 0.50 bid), the bid goes up.
+        assertTrue(MakerQuote.decide(noSharp.copy(sharpFairs = listOf(0.55)), required, now) is MakerDecision.Post)
+        // The veto is the veto it was: a sharp book at 0.49 says the 0.50 bid isn't +EV.
+        assertTrue(why(noSharp.copy(sharpFairs = listOf(0.49)), required).contains("A sharp book's own price says this bid isn't +EV"))
+        // Game lines asked for one before this setting existed, and say so in their own words.
+        assertTrue(why(line(kind = BetKind.MONEYLINE), rules.copy(kinds = rules.kinds + BetKind.MONEYLINE)).startsWith("Game lines need a sharp book"))
+        // The settings carry both new switches: popular first on, a sharp book required off.
+        val d = MakerRules.of(ScanSettings())
+        assertTrue(d.popularFirst)
+        assertFalse(d.requireSharp)
+        assertEquals(6, d.popularBooks)
+        val set = MakerRules.of(ScanSettings(makerPopularFirst = false, makerRequireSharp = true))
+        assertFalse(set.popularFirst)
+        assertTrue(set.requireSharp)
+    }
+
+    @Test
+    fun `3_25 and 3_5 percent are choices, the default stays 4, and on Novig's half-cent grid they often land on the same price`() {
+        assertTrue(ScanSettings.MAKER_MARGIN_CHOICES.containsAll(listOf(0.03, 0.0325, 0.035, 0.04)))
+        assertEquals(0.04, ScanSettings().makerMargin, 0.0)
+        fun price(fair: Double, margin: Double) = (MakerQuote.decide(line(fair = fair, offer = fair + 0.05), rules.copy(margin = margin), now) as MakerDecision.Post).price
+        // Fair 0.52: 4%, 3.5% and 3.25% all post at 0.500 (the grid's step is half a cent, about 1% of EV at this price).
+        assertEquals(listOf(0.500, 0.500, 0.500), listOf(0.04, 0.035, 0.0325).map { price(0.52, it) })
+        // Fair 0.45: 4% and 3.5% both at 0.430 (4.65% EV at the fair), only 3.25% moves up a step, to 0.435.
+        assertEquals(listOf(0.430, 0.430, 0.435), listOf(0.04, 0.035, 0.0325).map { price(0.45, it) })
+    }
 }

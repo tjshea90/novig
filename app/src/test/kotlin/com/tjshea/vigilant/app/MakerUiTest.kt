@@ -338,5 +338,29 @@ class MakerUiTest {
         compose.waitForIdle()
         compose.onAllNodesWithTag("makerTrapMove", useUnmergedTree = true).assertCountEquals(0)
     }
-}
 
+    @Test
+    fun `the rules offer 3_25 and 3_5 percent with their own words, and switches for popular first and a required sharp book`() {
+        assertEquals("4%", MakerRulesText.pct(0.04))
+        assertEquals("3.5%", MakerRulesText.pct(0.035))
+        assertEquals("3.25%", MakerRulesText.pct(0.0325))
+        assertEquals("8%", MakerRulesText.pct(0.08))
+        var s = settings
+        compose.setContent {
+            VigilantTheme { MakerScreen(ui(), MakerActions(onUpdate = { f -> s = f(s) })) }
+        }
+        compose.onNodeWithText(MakerRulesText.summary(settings)).performClick()
+        compose.onNodeWithText("3.25%").performClick()
+        assertEquals(0.0325, s.makerMargin, 1e-9)
+        compose.onNodeWithText("3.5%").performClick()
+        assertEquals(0.035, s.makerMargin, 1e-9)
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerPopularFirst"))
+        compose.onNodeWithTag("makerPopularFirst").assertIsOn()
+        compose.onNodeWithTag("makerPopularFirst").performClick()
+        assertFalse(s.makerPopularFirst)
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerRequireSharp"))
+        compose.onNodeWithTag("makerRequireSharp").assertIsOff()
+        compose.onNodeWithTag("makerRequireSharp").performClick()
+        assertTrue(s.makerRequireSharp)
+    }
+}
