@@ -116,6 +116,6 @@ class GameBets private constructor(private val entries: List<Entry>) {
 
         /** The American odds of a price (a bid's cost of a $1 payout). */
         private fun americanOf(price: Double): Int? =
-            if (price <= 0.0 || price >= 1.0) null else com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price).let { Math.round(it).toInt() }
+            if (price <= 0.0 || price >= 1.0) null else com.tjshea.vigilant.engine.Odds.probabilityToAmerican(price)
     }
 }
