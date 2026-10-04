@@ -693,8 +693,8 @@ class ApiBettingTest {
         assertTrue(r.reason, r.reason.contains("$20.00 is already at risk"))
         assertTrue("it is the game limit that said no", r.gameLimit)
         assertTrue("nothing was sent", requests.none { it.method == "POST" })
-        // The same stake on another game goes out: the limit is about one event, not the account.
-        val elsewhere = target().copy(market = market.copy(eventId = "ev-other"), eventName = "Team D @ Team C")
+        // The same stake on another game goes out, even with the same teams at the same time (a doubleheader's other game): only the event id differs.
+        val elsewhere = target().copy(market = market.copy(eventId = "ev-other"))
         assertTrue(placer(t).placeAuto(elsewhere, 10.0, capped, expectedPrice = 0.46) is PlaceResult.Placed)
     }
 

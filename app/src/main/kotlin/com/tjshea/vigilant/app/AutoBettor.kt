@@ -201,9 +201,9 @@ class AutoBettor(
             minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
         )
         // One game is one event (Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10"): what is at risk
-        // on each game across all its markets, open bets and resting bids, with each bet this cycle added as it's placed. The placer checks it again on its
-        // own read (the Bet sheet shares it); this pass is what keeps a full game from costing a market read and a book read per bet per cycle.
-        var exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
+        // on each game across all its markets, open bets and resting bids, as the cycle began. The placer checks it again on its own read of the Tracker
+        // (so a bet placed earlier this cycle, or by hand meanwhile, counts there); this pass is what keeps a full game from costing a book read per bet.
+        val exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
         val placed = ArrayList<TrackedBet>()
         var stopped: String? = null
         var walletEmpty = false
@@ -272,7 +272,6 @@ class AutoBettor(
                     val bet = result.bet
                     placed += bet
                     openMarkets += target.market.marketId
-                    exposure = exposure + GameExposure.Item(game, target.market.marketId, target.outcomeId, bet.stake)
                     balance -= bet.stake
                     withContext(NonCancellable) { markPlaced(c, target, result, clock()) }
                     notes.placed(app, target, bet, item.check, walletLeft = balance, sharp = sharpSaid[row.key]?.takeIf { it.confirmed }?.detail)

@@ -198,9 +198,23 @@ class AutoBettorTest {
         openOnJeffersonsGame("alt-2", 10.0)
         val novig = FakeNovig()
         val s = settings(tenDollars)
-        val report = bettor(novig).run(s, state(s))
+        var bookReads = 0
+        val counting = ApiBetPlacer(novig, app.container.tracker, books = { bookReads++; book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
+        val report = bettor(novig, placer = counting).run(s, state(s))
         assertEquals(0, report.placed.size)
         assertEquals("nothing reached Novig", 0, novig.orders.get())
+        assertEquals("not even a book was read for it", 0, bookReads)
+        assertEquals(mapOf(AutoBet.GAME_LIMIT_SKIP to 1), report.skipped)
+    }
+
+    @Test
+    fun `a hold the placer makes on its own read - a bet placed meanwhile - is counted under the same one reason`() = runBlocking {
+        openOnJeffersonsGame("alt-1", 10.0)
+        val novig = FakeNovig()
+        val s = settings(tenDollars)
+        // The cycle's snapshot sees $10 on the game; while the bet is being found on Novig another $10 lands (a bet by hand): only the placer's read has it.
+        val report = bettor(novig, resolve = { row -> openOnJeffersonsGame("alt-2", 10.0); targetOf(row) }).run(s, state(s))
+        assertEquals(0, novig.orders.get())
         assertEquals(mapOf(AutoBet.GAME_LIMIT_SKIP to 1), report.skipped)
     }
 

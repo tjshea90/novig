@@ -112,6 +112,21 @@ class GameExposureTest {
         assertFalse(check(g, listOf(unreadable), "m2", "o2", 10.0).blocked)
     }
 
+    @Test
+    fun `two legacy games that start together are two games - Sunday's 1 pm slate is not one exposure`() {
+        val houston = game(eventId = "", name = "Houston Texans @ Indianapolis Colts")
+        val bears = game(eventId = "", name = "Chicago Bears @ Detroit Lions", start = houston.startsTs)
+        val open = listOf(bet("old", bears, stake = 25.0))
+        assertFalse(check(houston, open, "m2", "o2", 10.0).blocked)
+    }
+
+    @Test
+    fun `bets with no market id each stand alone - they are never folded into one`() {
+        val g = game()
+        val open = listOf(bet("a", g, market = "", outcome = "o1", stake = 10.0), bet("b", g, market = "", outcome = "o2", stake = 10.0))
+        assertEquals(20.0, check(g, open, "m5", "o5", 1.0).now, 1e-9)
+    }
+
     // ---- what counts as dollars at risk ----
 
     @Test
