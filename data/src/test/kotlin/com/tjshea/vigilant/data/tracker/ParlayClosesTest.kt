@@ -229,13 +229,11 @@ class ParlayClosesTest {
         val second = flat("Washington State Cougars", "Fresno State Bulldogs", 150, -170, start = "2026-10-03T23:30:00Z")
         val dh = ParlayCloses.parseGameLine(json.parseToJsonElement("[$first,$second]"), wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
         assertEquals(p(150) / (p(150) + p(-170)), dh.fair, 1e-9)
-        // Two different pairings each as good a fit as the other: refused, not the later one.
-        val x = flat("Washington State", "Fresno State", -115, -105)
-        val y = flat("Washington State Cougars", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
-        val a = flat("Washington State Cougars", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
-        val clash = ParlayCloses.parseGameLine(json.parseToJsonElement("[$x,$y,$a]"), wsu("ml"), pick("Moneyline", "Washington State"))
-        // (x and y are the same pairing by name: the nearest start, x's, is the game.)
-        assertEquals(p(-115) / (p(-115) + p(-105)), (clash as CloseLookup.Found).fair, 1e-9)
+        // Two DIFFERENT pairings each as good a fit as the other (each shares one team exactly and a State word with the other): refused, not the later one.
+        val a = flat("Oregon State Beavers", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
+        val b = flat("Washington State Cougars", "Boise State Broncos", -115, -105)
+        val clash = ParlayCloses.parseGameLine(json.parseToJsonElement("[$a,$b]"), wsu("ml"), pick("Moneyline", "Washington State"))
+        assertTrue(clash.toString(), clash is CloseLookup.None)
     }
 
     private fun fileRow(home: String, away: String, team: String, price: Int, start: String = "2026-10-03T23:30:00Z", snap: String = "2026-10-03T23:28:00Z") =

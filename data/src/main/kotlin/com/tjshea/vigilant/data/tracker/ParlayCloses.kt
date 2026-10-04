@@ -314,7 +314,12 @@ class ParlayCloses(
             val rows = games.getValue(game)
             fun of(vararg keys: String) = rows.filter { it.str("market_key") in keys }
             // A row's team is the side of this game it fits best (two "X State" teams both share a word with the bet's team).
-            val want = TeamMatcher.whichOf(pick.teamOrNull().orEmpty(), game.first, game.second)
+            val pickTeam = when (pick) {
+                is BetGrader.Pick.Moneyline -> pick.team
+                is BetGrader.Pick.Spread -> pick.team
+                else -> ""
+            }
+            val want = TeamMatcher.whichOf(pickTeam, game.first, game.second)
             fun side(r: JsonObject) = TeamMatcher.whichOf(named(r, "player_name"), game.first, game.second)
             fun team(r: JsonObject, @Suppress("UNUSED_PARAMETER") name: String) = want != 0 && side(r) == want
             fun otherTeam(r: JsonObject) = want != 0 && side(r) == 3 - want
@@ -364,37 +369,53 @@ class ParlayCloses(
             val flat = ((root.obj()?.get("data") ?: root.obj()?.get("rows") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }.filter { it.containsKey("home_odds") }
             if (flat.isNotEmpty()) {
                 if (pick !is BetGrader.Pick.Moneyline) return CloseLookup.None("ParlayAPI's closing lines carry moneylines")
-                val row = flat.filter { r ->
-                    r.str("market_key").let { it == null || it == "h2h" } &&
-                        (r.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false) &&
-                        TeamMatcher.similarity(m.home, r.str("home_team").orEmpty()) >= 0.5 && TeamMatcher.similarity(m.away, r.str("away_team").orEmpty()) >= 0.5
-                }.maxByOrNull { it.str("last_update")?.let(::ms) ?: 0L } ?: return CloseLookup.None("Not in ParlayAPI's closing lines")
+                // The row of the game with the best fit (the latest update first among equal starts), not the latest row of every game that shares a word
+                // with it: Tj's scan-study file, 2026-10-03, a Washington State -117 "closed" at +272, another State game's moneyline.
+                val row = bestGame(
+                    m.home, m.away, b.startsTs,
+                    flat.filter { r ->
+                        r.str("market_key").let { it == null || it == "h2h" } &&
+                            (r.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false)
+                    }.sortedByDescending { it.str("last_update")?.let(::ms) ?: 0L },
+                    { it.str("home_team").orEmpty() }, { it.str("away_team").orEmpty() }, { it.str("commence_time")?.let(::ms) },
+                ) ?: return CloseLookup.None("Not in ParlayAPI's closing lines")
                 val home = implied(row.num("home_odds")) ?: return CloseLookup.None("ParlayAPI's close has no price")
                 val away = implied(row.num("away_odds")) ?: return CloseLookup.None("ParlayAPI's close has no price")
                 if (row.num("draw_odds") != null) return CloseLookup.None("A three-way close (with a draw) isn't Novig's two-way line")
-                val homeSide = TeamMatcher.similarity(pick.team, m.home) >= TeamMatcher.similarity(pick.team, m.away)
+                val homeSide = when (TeamMatcher.whichOf(pick.team, row.str("home_team").orEmpty(), row.str("away_team").orEmpty())) {
+                    1 -> true
+                    2 -> false
+                    else -> return CloseLookup.None("Couldn't tell which team ${pick.team} is in ParlayAPI's game")
+                }
                 return CloseLookup.Found(if (homeSide) fair(home, away) else fair(away, home), "ParlayAPI · Pinnacle close")
             }
             val events = ((root.obj()?.get("data") ?: root.obj()?.get("events") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }
-            val game = events.filter { e -> e.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false }
-                .maxByOrNull { e -> TeamMatcher.similarity(m.home, e.str("home_team").orEmpty()) + TeamMatcher.similarity(m.away, e.str("away_team").orEmpty()) }
-                ?.takeIf { e -> TeamMatcher.similarity(m.home, e.str("home_team").orEmpty()) >= 0.5 && TeamMatcher.similarity(m.away, e.str("away_team").orEmpty()) >= 0.5 }
-                ?: return CloseLookup.None("Not in ParlayAPI's closing lines")
+            val game = bestGame(
+                m.home, m.away, b.startsTs, events.filter { e -> e.str("commence_time")?.let(::ms)?.let { abs(it - b.startsTs) <= START_GAP_MS } ?: false },
+                { it.str("home_team").orEmpty() }, { it.str("away_team").orEmpty() }, { it.str("commence_time")?.let(::ms) },
+            ) ?: return CloseLookup.None("Not in ParlayAPI's closing lines")
             val book = game["bookmakers"].arr().mapNotNull { it.obj() }.firstOrNull { it.str("key") == "pinnacle" }
                 ?: return CloseLookup.None("No Pinnacle close for this game")
             fun market(key: String) = book["markets"].arr().mapNotNull { it.obj() }.firstOrNull { it.str("key") == key }?.get("outcomes").arr().mapNotNull { it.obj() }
-            fun team(o: JsonObject, name: String) = TeamMatcher.similarity(name, o.str("name").orEmpty()) >= 0.5
+            // The outcome that is the bet's team: the one of the game's two sides it fits best, never the first that shares a word ("Washington State" /
+            // "Fresno State").
+            fun mineOf(outs: List<JsonObject>, team: String): JsonObject? {
+                val home = game.str("home_team").orEmpty()
+                val away = game.str("away_team").orEmpty()
+                val want = TeamMatcher.whichOf(team, home, away).takeIf { it != 0 } ?: return null
+                return outs.singleOrNull { TeamMatcher.whichOf(it.str("name").orEmpty(), home, away) == want }
+            }
             return when (pick) {
                 is BetGrader.Pick.Moneyline -> {
                     val outs = market("h2h")
                     if (outs.size != 2) return CloseLookup.None("No two-way Pinnacle moneyline close")
-                    val mine = outs.firstOrNull { team(it, pick.team) } ?: return CloseLookup.None("Couldn't tell which team this is")
+                    val mine = mineOf(outs, pick.team) ?: return CloseLookup.None("Couldn't tell which team this is")
                     val other = outs.first { it !== mine }
                     found(mine, other)
                 }
                 is BetGrader.Pick.Spread -> {
                     val outs = market("spreads")
-                    val mine = outs.firstOrNull { team(it, pick.team) } ?: return CloseLookup.None("No Pinnacle spread close for this team")
+                    val mine = mineOf(outs, pick.team) ?: return CloseLookup.None("No Pinnacle spread close for this team")
                     val other = outs.firstOrNull { it !== mine } ?: return CloseLookup.None("No Pinnacle spread close for this game")
                     val point = mine.num("point") ?: return CloseLookup.None("No spread on Pinnacle's close")
                     if (abs(point - pick.line) > 1e-6) return CloseLookup.None("Pinnacle closed at ${point}, not your ${pick.line}")
