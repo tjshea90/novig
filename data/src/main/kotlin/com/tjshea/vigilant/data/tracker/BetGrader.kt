@@ -158,6 +158,16 @@ object BetGrader {
      * The game [bet] was on among [games]: both teams agree (either order written), nearest start wins. A
      * tennis match's two players are in no fixed home/away order, so either order counts there.
      */
+    /**
+     * Whether two teams' scores make the feed's game the bet's: both names match ([MIN_TEAM]), or one matches and the other shares its name, the way the scans' matcher
+     * pairs games ([TeamMatcher.MIN_TEAM_SIMILARITY] each, [TeamMatcher.MIN_GAME_SIMILARITY] together). Tj's v0.59.1 file: "Miami (FL) @ Clemson" and "Arkansas State @
+     * Louisiana-Lafayette" were never found on ESPN's scoreboard ("Miami Hurricanes", "Louisiana Ragin' Cajuns": one team in two scored 0.5) and waited for a tap.
+     * Two games that share only a school word ("Washington State @ Fresno State", "Oregon State @ Idaho State": 0.5 + 0.5) are still two games.
+     */
+    private fun teamsFit(a: Double, b: Double): Boolean =
+        (a >= MIN_TEAM && b >= MIN_TEAM) ||
+            (a >= TeamMatcher.MIN_TEAM_SIMILARITY && b >= TeamMatcher.MIN_TEAM_SIMILARITY && a + b >= TeamMatcher.MIN_GAME_SIMILARITY)
+
     fun gameOf(bet: TrackedBet, games: List<GameScore>): GameScore? {
         val m = NovigText.parseMatchup(bet.eventName) ?: return null
         val scored = games.mapNotNull { g ->
@@ -167,7 +177,7 @@ object BetGrader {
             val homeAway = if (g.tennis) TeamMatcher.similarity(m.home, g.away) else 0.0
             val straight = awayAway + homeHome
             val swapped = awayHome + homeAway
-            val ok = if (swapped > straight) awayHome >= MIN_TEAM && homeAway >= MIN_TEAM else awayAway >= MIN_TEAM && homeHome >= MIN_TEAM
+            val ok = if (swapped > straight) teamsFit(awayHome, homeAway) else teamsFit(awayAway, homeHome)
             val gap = if (g.tennis) TENNIS_START_GAP_MS else MAX_START_GAP_MS
             if (!ok || kotlin.math.abs(g.startMs - bet.startsTs) > gap) null else g to maxOf(straight, swapped)
         }
