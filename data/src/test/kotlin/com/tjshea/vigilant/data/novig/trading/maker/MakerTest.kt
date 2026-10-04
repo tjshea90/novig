@@ -290,6 +290,40 @@ class MakerTest {
 
     private fun tracker() = BetTracker(File.createTempFile("bets", ".json").also { it.delete() }, clock = { now })
 
+    /** [outcomes]' lines, every one a market of the one game "ev-game". */
+    private fun oneGame(vararg outcomes: String) = outcomes.map { line(it, fair = 0.52, m = market(it.substringBefore('-')).copy(eventId = "ev-game")) }
+
+    @Test
+    fun `a cycle holds one game to the per-game limit, and the bids still up from the last pass keep holding it`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val capped = rules.copy(maxPerGame = 12.0)
+        val first = d.cycle(oneGame("a-over", "b-over", "c-over"), capped, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals("two $5 bids fit $12; the third would make $15", 2, first.placed)
+        assertEquals(mapOf(MakerPlan.GAME_REACHED.format("$12.00") to 1), first.waiting)
+        // The same lines again: the two bids up are kept, and their $10 still hold the game: the third is still not posted.
+        val second = d.cycle(oneGame("a-over", "b-over", "c-over"), capped, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(0, second.placed)
+        assertEquals(0, second.cancelled)
+        assertEquals(mapOf(MakerPlan.GAME_REACHED.format("$12.00") to 1), second.waiting)
+    }
+
+    @Test
+    fun `open bets on the game count against a cycle's bids`() = runBlocking {
+        val novig = FakeNovig()
+        val t = tracker()
+        val alt = BetTarget(
+            market = market("alt").copy(eventId = "ev-game"), outcomeId = "alt-over", league = "NFL", eventName = "A @ B", startsTs = start, marketLabel = "Spread",
+            selection = "A -3.5", fair = 0.52, fairAsOfMs = now, source = BetTracker.SOURCE_VIGILANT,
+        )
+        t.logApi(alt, "o-alt", listOf(NovigFill("f-alt", "o-alt", null, "alt", "alt-over", 2_000, 10.0, true, 0.0, now - 60_000)))!!
+        val d = desk(novig, t)
+        val r = d.cycle(oneGame("a-over"), rules.copy(maxPerGame = 12.0), stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals("$10 open + a $5 bid is over $12", 0, r.placed)
+        assertEquals(mapOf(MakerPlan.GAME_REACHED.format("$12.00") to 1), r.waiting)
+        assertEquals(1, d.cycle(oneGame("a-over"), rules.copy(maxPerGame = 15.0), stop = null, maxPerDay = 50.0, wallet = 100.0).placed)
+    }
+
     @Test
     fun `a cycle posts post-only bids with an expiry, and their fills become maker bets in the Tracker at the fair they were posted at`() = runBlocking {
         val novig = FakeNovig()
