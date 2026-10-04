@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.diag.NetStats
 import com.tjshea.vigilant.data.diag.PerfStats
 import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.ScanTiming
 import kotlinx.coroutines.delay
 
 /**
