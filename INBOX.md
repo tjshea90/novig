@@ -3748,3 +3748,8 @@ Confirm that all the betting data is being logged even when the app is backgroun
 ```
 Look at the attached screenshot. My wallet has less than open bids money. I think this is because I was betting manually and auto betting and the app doesn't constantly monitor how much money is in the wallet to make sure the open bids aren't more than available money
 ```
+
+## 2026-10-04T01:58:17Z
+```
+A lot of times the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second. Other times it is very fast. Can this be diagnosed? Should I send the diagnosis file?
+```
