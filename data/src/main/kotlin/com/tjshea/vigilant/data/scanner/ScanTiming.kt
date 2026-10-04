@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.scanner
 
+import com.tjshea.vigilant.data.novig.ReadPace
 import java.util.Locale
 
 /**
@@ -26,6 +27,10 @@ data class ScanTiming(
     /** When the key's live feed was handed this scan's markets, and how many (it holds up to 2,000): null = it wasn't (no key, or nothing to read). */
     val liveFeedAtMs: Long? = null,
     val liveFeedAsked: Int = 0,
+    /** Of the markets the live feed was asked for, how many it held a book for when the scan ended; null = it wasn't asked. */
+    val liveFeedHeld: Int? = null,
+    /** What paced the reads: each route's pace when they began, the lowest a refusal took it to, and when they ended; the key route's 429s. */
+    val pace: ReadPace? = null,
 ) {
     val novigMs: Long get() = if (novigFromMs != null && novigToMs != null) (novigToMs - novigFromMs).coerceAtLeast(0) else 0
 
@@ -58,10 +63,32 @@ data class ScanTiming(
             t.liveFeedAtMs?.takeIf { t.liveFeedAsked > 0 && viaKey + viaPush > 0 }?.let {
                 append(" · live feed asked for ").append(String.format(Locale.US, "%,d", t.liveFeedAsked)).append(" at ").append(seconds(it))
             }
+            routeNotes(t, (prices - viaKey - viaPush).coerceAtLeast(0)).forEach { append(" · ").append(it) }
             append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
             append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")
             if (t.leftTooLate > 0) append(" · ").append(String.format(Locale.US, "%,d", t.leftTooLate)).append(" left for the next scan (their odds would have been too old)")
             keyPerSec?.let { append(" · the key's limit is ").append(rate(it)).append(" a second") }
+        }
+
+        /**
+         * What paced the reads, in words, only where it says something (Tj, 2026-10-04: "the vigilant scanner slows down significantly when it is scanning
+         * novig prices, maybe down to 2 per second"): the public route's pace when [publicReads] went by it (it starts at 4 a second and each refusal
+         * halves it), the key route's pace and refusals, and how much of what the live feed was asked for it held when the scan ended.
+         */
+        fun routeNotes(t: ScanTiming, publicReads: Int): List<String> = buildList {
+            val p = t.pace
+            if (p != null && (publicReads > 0 || p.publicLow != null)) add("public route " + route(p.publicStart, p.publicLow, p.publicEnd))
+            if (p != null && (p.keyedRefused > 0 || p.keyedLow != null)) {
+                add("key route " + route(p.keyedStart, p.keyedLow, p.keyedEnd) + if (p.keyedRefused > 0) ", refused ${p.keyedRefused}×" else "")
+            }
+            t.liveFeedHeld?.takeIf { t.liveFeedAsked > 0 }?.let { add("live feed held $it of ${String.format(Locale.US, "%,d", t.liveFeedAsked)} asked at the end") }
+        }
+
+        /** "at 4 a second", "at 4 a second, down to 2 after a refusal, 3.5 at the end". */
+        private fun route(start: Double, low: Double?, end: Double): String = buildString {
+            append("at ").append(rate(start)).append(" a second")
+            low?.let { append(", down to ").append(rate(it)).append(" after a refusal") }
+            if (Math.abs(end - start) >= 0.05) append(if (low == null) ", " else ", ").append(rate(end)).append(" at the end")
         }
 
         /** "0.9 s" under ten seconds, "27 s" above. */

@@ -62,7 +62,21 @@ class AppRecorder(private val events: EventLog, private val net: NetStats, priva
         fun scanLine(r: ScanReport): String {
             val ms = r.timing?.totalMs
             return "Vigilant scan finished" + (ms?.let { " in ${it / 1000} s" } ?: "") + ": ${r.booksFetched} Novig prices (${r.booksViaKey} through the key), " +
-                "${r.errors.size} error${if (r.errors.size == 1) "" else "s"}" + (r.timing?.refused?.takeIf { it > 0 }?.let { ", Novig refused $it" } ?: "")
+                "${r.errors.size} error${if (r.errors.size == 1) "" else "s"}" + (r.timing?.refused?.takeIf { it > 0 }?.let { ", Novig refused $it" } ?: "") +
+                r.timing?.let { speedNote(it, r) }.orEmpty()
+        }
+
+        /**
+         * How fast the Novig reads went and what paced them, for every scan on the timeline (Tj, 2026-10-04: "a lot of times the vigilant scanner slows
+         * down significantly when it is scanning novig prices, maybe down to 2 per second. Other times it is very fast"): the file used to say it only for
+         * the last scan. " · 14.5 a second (315 live feed, 270 public) · public route at 4 a second, down to 2 after a refusal · key route …".
+         */
+        private fun speedNote(t: ScanTiming, r: ScanReport): String {
+            val public = (r.booksFetched - r.booksViaKey - r.booksViaPush).coerceAtLeast(0)
+            val pace = t.novigMs.takeIf { it > 0 && r.booksFetched > 0 }?.let { String.format(java.util.Locale.US, "%.1f a second", r.booksFetched * 1000.0 / it) }
+            val ways = listOfNotNull("${r.booksViaPush} live feed".takeIf { r.booksViaPush > 0 }, "$public public".takeIf { public > 0 }).joinToString(", ")
+            val head = listOfNotNull(pace, ways.takeIf { it.isNotEmpty() }?.let { "($it)" }).joinToString(" ")
+            return (listOfNotNull(head.takeIf { it.isNotEmpty() }) + ScanTiming.routeNotes(t, public)).joinToString("") { " · $it" }
         }
     }
 }

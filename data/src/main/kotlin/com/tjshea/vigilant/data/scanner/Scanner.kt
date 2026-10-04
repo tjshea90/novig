@@ -314,6 +314,10 @@ class Scanner(
                 sourceMs = synchronized(sourceMs) { sourceMs.toList() },
                 liveFeedAtMs = pump.streamAt,
                 liveFeedAsked = pump.streamAsked,
+                // The feed's whole worth is what it holds: asked for 2,000 at 4 s and holding 315 at the end is the number that says it was slow (Tj's
+                // v0.58.2 file: 315 pushed of 2,000 asked in a 299 s scan, REST-bound at 14.5 a second).
+                liveFeedHeld = pump.streamAt?.let { novig.pushed(pump.streamIds).size },
+                pace = pump.pace,
             ),
         )
     }
@@ -406,6 +410,12 @@ class Scanner(
          */
         var streamAt: Long? = null
         var streamAsked = 0
+
+        /** The markets the feed was asked for ([streamAsked] of them), to count how many it held at the scan's end. */
+        var streamIds: Set<String> = emptySet()
+
+        /** What paced the batches' reads, merged ([com.tjshea.vigilant.data.novig.ReadPace.merge]); null until a batch reported. */
+        var pace: com.tjshea.vigilant.data.novig.ReadPace? = null
         var failed = 0
         var retryAfter: Int? = null
         var lastError: String? = null
@@ -495,6 +505,7 @@ class Scanner(
                     viaPush += batch.viaPush
                     failed += batch.failed
                     refused += batch.refused
+                    batch.pace?.let { p -> pace = pace?.merge(p) ?: p }
                     batch.lastError?.let { lastError = it }
                     if (keyProblem == null) keyProblem = batch.keyProblem
                     // Novig asked us to stop for a while: the rest keep the last scan's prices.
@@ -528,6 +539,7 @@ class Scanner(
             val ids = plan.markets.map { it.market.marketId }.filter { it in held } + unread
             streamAt = waited
             streamAsked = minOf(ids.size, streamRoom)
+            streamIds = ids.take(streamAsked).toHashSet()
             if (ids.isNotEmpty()) novig.watch(ids)
         }
 
