@@ -170,7 +170,7 @@ class BetGraderTest {
         val clemson = ofBet("Miami (FL) @ Clemson", "Miami (FL) -17.5", kickoff)
         assertEquals("m", BetGrader.gameOf(clemson, listOf(miamiOhio, cajuns, miami))?.id)
         assertEquals("c", BetGrader.gameOf(ofBet("Arkansas State @ Louisiana-Lafayette", "Arkansas State +6.5", kickoff + 30 * 60_000L), listOf(miami, cajuns))?.id)
-        // And it grades: Miami won 28-21 away, so -17.5 lost; Arkansas State +6.5 covered (lost 28-21 by 7? no: 28 away beats 21: Arkansas State won outright).
+        // And it grades: Miami won 28-21 away, by 7, so -17.5 lost.
         assertEquals(BetStatus.LOST, BetGrader.grade(BetGrader.pickOf(clemson)!!, miami))
         // Two games sharing only a school word are still two games ("Washington State @ Fresno State" against "Oregon State @ Idaho State": 0.5 + 0.5).
         val other = ncaaf("w", "Oregon State Beavers", "Idaho State Bengals")
