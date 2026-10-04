@@ -445,7 +445,12 @@ class CloseBackfill(
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 left.associate { it.id to CloseLookup.Later(e.message ?: "failed") }
             }
-            for ((id, a) in answers) if (a is CloseLookup.Found) found[id] = a else notes.getOrPut(id) { ArrayList() } += a
+            val byId = left.associateBy { it.id }
+            for ((id, answer) in answers) {
+                // A close that can't be this bet's (another game's or side's: [ClosePlausibility]) is "never" from that source, and the next is asked.
+                val a = if (answer is CloseLookup.Found) byId[id]?.let { ClosePlausibility.reason(it, answer) }?.let { CloseLookup.None(it) } ?: answer else answer
+                if (a is CloseLookup.Found) found[id] = a else notes.getOrPut(id) { ArrayList() } += a
+            }
             left = left.filter { it.id !in found }
         }
         tracker.editMany(todo.associate { b ->
