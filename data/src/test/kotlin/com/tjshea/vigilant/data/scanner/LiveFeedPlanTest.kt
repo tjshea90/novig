@@ -50,7 +50,7 @@ class LiveFeedPlanTest {
      * Novig with a key: requests read 8 at a time; the live feed holds what it was last handed (up to [room]) and pushes it at once. The plan also
      * holds the moneyline of up to 20 games no fair source quotes yet (Novig's own price, shown unpriced), read last.
      */
-    private inner class Keyed(val room: Int = 2_000, val onBooks: (Int) -> Unit = {}, val onWatch: (List<String>) -> Unit = {}) : NovigSource {
+    private inner class Keyed(val room: Int = 2_000, val onBooks: (Int) -> Unit = {}, val onWatch: (List<String>) -> Unit = {}, val delivers: Int = Int.MAX_VALUE) : NovigSource {
         val calls = ArrayList<List<String>>()
         val watched = ArrayList<List<String>>()
         var opened = 0
@@ -72,7 +72,7 @@ class LiveFeedPlanTest {
         override fun watch(marketIds: Collection<String>) {
             if (watched.isEmpty()) callsBeforeWatch = calls.size
             watched += marketIds.toList()
-            held = marketIds.take(room).toSet()
+            held = marketIds.take(room).take(delivers).toSet()
             onWatch(marketIds.toList())
         }
         override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> = marketIds.filter { it in held }.associateWith { book(it) }
@@ -115,6 +115,19 @@ class LiveFeedPlanTest {
         assertEquals(60, r.booksFetched)
         assertEquals(60 - 8, r.booksViaPush)
         assertEquals(asked.size, r.timing!!.liveFeedAsked)
+        // Everything it was asked for, it held at the end.
+        assertEquals(asked.size, r.timing!!.liveFeedHeld)
+    }
+
+    /** Tj's v0.58.2 file: "live feed asked for 2,000 at 4.1 s" and 315 held: what it delivers is what the scan says, not what it was asked. */
+    @Test
+    fun `the scan says how many of the markets the feed was asked for it held at the end`() = runTest {
+        val novig = Keyed(delivers = 10)
+        val r = scanner(novig).scan(settings, listOf(Fair("kalshi", 0, 60)), onProgress = {}, onPartial = {})
+        val t = r.timing!!
+        assertTrue("asked ${t.liveFeedAsked}", t.liveFeedAsked > 10)
+        assertEquals(10, t.liveFeedHeld)
+        assertTrue(ScanTiming.routeNotes(t, publicReads = 0).single().startsWith("live feed held 10 of ${t.liveFeedAsked} asked"))
     }
 
     @Test

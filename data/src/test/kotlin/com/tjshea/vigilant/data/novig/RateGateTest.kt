@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.novig
 
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RateGateTest {
@@ -118,5 +119,26 @@ class RateGateTest {
         now += 6 * 60_000
         g.acquire()
         assertEquals(4.0, g.currentRate, 0.0)
+    }
+
+    /**
+     * Tj, 2026-10-04: "the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second". A scan now says how low the
+     * pace went: the gate hands over the lowest pace a refusal took it to since it was last asked, once.
+     */
+    @Test
+    fun `the lowest pace a refusal took the gate to is handed over once, then forgotten`() = runTest {
+        val g = gate(4.0, 10)
+        assertNull(g.takeLowRate())
+        g.slowDown()
+        // Refusals in the same second are one refusal: still 2/s.
+        g.slowDown()
+        assertEquals(2.0, g.takeLowRate()!!, 0.0)
+        assertNull(g.takeLowRate())
+        now += 5_000
+        g.slowDown()
+        now += 5_000
+        g.slowDown()
+        assertEquals(1.0, g.takeLowRate()!!, 0.0)
+        assertNull(g.takeLowRate())
     }
 }

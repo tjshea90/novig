@@ -76,8 +76,9 @@ class AppRecorder(private val events: EventLog, private val net: NetStats, priva
             val public = (r.booksFetched - r.booksViaKey - r.booksViaPush).coerceAtLeast(0)
             val pace = t.novigMs.takeIf { it > 0 && r.booksFetched > 0 }?.let { String.format(java.util.Locale.US, "%.1f a second", r.booksFetched * 1000.0 / it) }
             val ways = listOfNotNull("${r.booksViaPush} live feed".takeIf { r.booksViaPush > 0 }, "$public public".takeIf { public > 0 }).joinToString(", ")
-            val head = listOfNotNull(pace, ways.takeIf { it.isNotEmpty() }?.let { "($it)" }).joinToString(" ")
-            return (listOfNotNull(head.takeIf { it.isNotEmpty() }) + ScanTiming.routeNotes(t, public)).joinToString("") { " · $it" }
+            // A scan that read no Novig prices has no pace to speak of.
+            val head = pace?.let { listOfNotNull(it, ways.takeIf { w -> w.isNotEmpty() }?.let { w -> "($w)" }).joinToString(" ") }
+            return (listOfNotNull(head) + ScanTiming.routeNotes(t, public)).joinToString("") { " · $it" }
         }
     }
 }

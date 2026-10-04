@@ -109,6 +109,27 @@ class AppRecorderTest {
         assertEquals(2, perf.summary("scan.ms").count)
     }
 
+    /**
+     * Tj, 2026-10-04: "a lot of times the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second": every scan on the
+     * timeline says how fast its Novig reads went and what paced them, not only the last one.
+     */
+    @Test
+    fun `every finished scan on the timeline says its pace and what slowed it`() {
+        val slow = ScanTiming(
+            totalMs = 299_000, novigFromMs = 4_000, novigToMs = 299_000, refused = 5, liveFeedAtMs = 4_100, liveFeedAsked = 2_000, liveFeedHeld = 315,
+            pace = com.tjshea.vigilant.data.novig.ReadPace(4.0, 2.0, 3.5, 14.0, null, 14.0, 0),
+        )
+        assertEquals(
+            "Vigilant scan finished in 299 s: 120 Novig prices (80 through the key), 0 errors, Novig refused 5 · 0.4 a second (40 public) · " +
+                "public route at 4 a second, down to 2 after a refusal, 3.5 at the end · live feed held 315 of 2,000 asked at the end",
+            AppRecorder.scanLine(report(timing = slow)),
+        )
+        // A fast scan through the key with nothing slowed: its pace and nothing more.
+        val fast = ScanTiming(totalMs = 31_000, novigFromMs = 1_000, novigToMs = 7_000, pace = com.tjshea.vigilant.data.novig.ReadPace(4.0, null, 4.0, 14.0, null, 14.0, 0))
+        val line = AppRecorder.scanLine(report(timing = fast).copy(booksViaKey = 120))
+        assertEquals("Vigilant scan finished in 31 s: 120 Novig prices (120 through the key), 0 errors · 20.0 a second", line)
+    }
+
     // ---- CNO's pause and Tj's switches ---------------------------------------------------------------------------------------
 
     @Test
