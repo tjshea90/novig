@@ -4681,3 +4681,32 @@ That Android really sleeps the CPU between alarm-only cycles with the process al
 - Per-look listing reason and fill price: the look's kind (c/w) already says whether the app's list carried it, `placedAmerican` is the price Tj got, and a hidden look's reason follows from its EV, odds and books against the filters now printed on the rules line.
 - The 4 `MISMATCH` rows: CNO's listed EV is a few hundredths of a point positive while its own fair odds give a slightly negative one (rounding of the odds CNO prints); flagged by design, none over 1% EV.
 
+
+## 80. One game is one risk: the per-game exposure limit (v0.59.0, 2026-10-04; Tj: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10 … Should there be some type of safeguard in the app that limits exposure to each game because if that one team loses badly, I lose many bets due to one event … figure out how to make it without incorrectly blocking bets on different games")
+
+### 80.1 What was wrong (read from the code, BW1)
+- Every limit was per bet (`BetLimits.maxStake`), per day (`spentToday`), per Novig MARKET (`AutoBettor`'s `openMarkets`, the placer's same-outcome check) or per bid side. A game's alternate spreads and totals and its props are separate Novig markets of ONE event, so +5, +6 and +10 on the same
+  team each passed every check, and so would a moneyline, a spread and a team total. Those bets are one event: they win and lose together, so their dollars are one exposure, however many lines it was cut into. This is the standard bankroll rule for correlated bets
+  (size the event, not each line), and the reason Kelly sizing assumes independent bets: three bets that are one bet at three thresholds are sized three times too large.
+- No placed bet or resting bid carried the game's identity: `TrackedBet` kept `marketId`, `outcomeId`, `eventName`, `startsTs` but not Novig's `eventId`.
+
+### 80.2 What was built
+- **The unit is the Novig event** (`GameExposure.sameGame`, `TrackedBet.eventId`, set when the order is logged, for maker fills and for Vigilant's own bets). Two different ids are two games whatever their names and times say (a doubleheader's two games, the same teams a day later, two games starting
+  at the same time). A bet saved before this version (no id) matches by its matchup and start the way `PlacedIndex` hides placed bets (12 h; baseball 2 h), and a matchup that can't be read matches nothing: the guard never blocks on a guess.
+- **Exposure** = dollars of open bets plus the unfilled dollars of resting bids (a filled part is already a bet). Per Novig market only the LARGER side counts (the other side can't also lose, which is why a two-sided bid or a hedge isn't double-counted); a market held on both sides
+  equally (locked in) counts nothing; a lock bet is never exposure of its own. The game's exposure is the markets added up.
+- **The limit** `apiMaxPerGame` (Settings › Betting & Novig account › Most at risk on one game; $10 / $25 / $50 / $100 / No limit), **default $25 = 2.5x the default per-bet maximum** (2.5% of the default $1,000 bankroll): two or three full bets fit on a game, the third line of the same team does not.
+  **The default is a judgment, not fitted to Tj's data** (his diagnostics file with the EVERY BET lines was not in the session that built this: BW2 is open until he sends it again); the design doesn't depend on it, only the default does.
+- **Who obeys it:** the auto-bet (a pre-filter in `AutoBettor` that reads no book, and the placer's own check on its fresh read of the Tracker, which also sees a bet placed meanwhile; both count under the one skip reason `AutoBet.GAME_LIMIT_SKIP`, the game and the dollars in the log) and auto-make
+  (`MakerPlan.plan`: open bets and the bids kept from the last pass count; waiting reason `GAME_REACHED`). Recommendations stop suggesting a bid past it (the side isn't marked, so it's suggested later when the game has room). **A bet by hand is only warned** (a line on the Bet sheet's plan:
+  Tj, 2026-10-02: he decides what he bets by hand), a bid he approves is his call, and a **lock is never blocked**: neither is any bet that adds no risk to a game (the other side of a market already held), even when the game is over the limit.
+
+### 80.3 Proofs
+GameExposureTest (16: +5/+6/+10 stack and the third goes over, a smaller third fits, another event never counted, legacy bets by matchup and start, a doubleheader, two games starting together, a lock that cost more than its pick, settled bets, the larger side, blank markets, zero = no limit,
+exactly the cap, the words), ApiBettingTest (+6: planner refuses auto / warns by hand, placer with open bets, with resting bids, another event with the same names, a hand bet placed with the warning, an old bet by matchup), AutoBettorTest (+6: skipped under one reason with no book read, a hold the placer makes on its own read, room, other
+games, bids, 0), MakerTest (+6), MakerAppTest (+1), ApiBettingUiTest (+1). 32 mutants, all killed (one needed a stronger test: a lock costing more than its pick hid behind the larger-side rule).
+
+### 80.4 Not done, for Tj
+- **Tune the default on his bets**: send the diagnostics file again (the EVERY BET lines) and the clusters in it (same side of one game at different lines, and whether they won or lost together) say whether $25 is right.
+- **Correlation inside a game is not modelled**: Over 47 and Under 52 (a middle) or a team's moneyline and the other team's spread are partly hedged, and are counted as added exposure (conservative). A net-worst-case across markets would need each market's payoff, which is not on a bet today.
+- **Bets placed in the Novig app itself** are known only if marked ✓ in Vigilant; Novig's positions carry no event id.
