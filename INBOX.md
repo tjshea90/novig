@@ -3802,3 +3802,8 @@ Continue from where you left off.
 ```
 Continue
 ```
+
+## 2026-10-04T07:12:18Z
+```
+For the most at risk on one game option, add $5 and a manual entry
+```
