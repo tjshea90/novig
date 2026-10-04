@@ -671,3 +671,7 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   400 ms later and one fills read; a fills read that fails finishes nothing (the bids stay on their way down, no new bid on their sides, read again
   next pass). An expiring bid is re-posted only when the new one would rest a minute longer (a fresher fair). A line's best bid leaves out Vigilant's
   own bids that were in the book read (the book's levels less our contracts), and bids that would lead their side go up first.
+- **v0.58.3 (Tj, 2026-10-04: "Vigilant wallet $8.98 · 7 bids up ($16.14)"):** because Novig holds nothing for a resting bid and checks only an order's own cost when it's placed, bids posted
+  under the wallet became bids over it as bets, auto-bets and fills took money out (his v0.58.2 file: "wallet $11.55 → $11.55 with $18.71 resting"). The app now takes the least valuable bids down whenever
+  the bids up (every one not yet ended) are worth more than the wallet or the day's limit (RESEARCH.md §78). **Not known:** what Novig does when a resting bid fills with the balance short of its cost
+  (never seen; the app's rule exists so it never happens).

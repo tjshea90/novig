@@ -4602,3 +4602,45 @@ Cost: up to one wide read (≤ every 30 s, only when CNO's odds moved) at the en
 That Android really sleeps the CPU between alarm-only cycles with the process alive is Android's documented behavior, not measured here. Diagnostics' "Scan study" line (bets logged since the app opened, last logged, last problem) and the cycle log
 (screen off / dozing per cycle) show on the phone whether a background run logged: a 10-minute auto-scan with the screen off should add bets every cycle.
 
+## 78. The wallet kept ahead of the bids, and why Novig scans run fast or slow (v0.58.3, 2026-10-04; Tj, with a screenshot "Vigilant wallet $8.98 · 7 bids up ($16.14)": "My wallet has less than open bids money. I think this is because I was betting manually and auto betting and the app doesn't constantly monitor how much money is in the wallet to make sure the open bids aren't more than available money"; then, with the v0.58.2 file: "A lot of times the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second. Other times it is very fast. Can this be diagnosed?")
+
+### 78.1 Why bids exceeded the wallet (Tj's guess was right, and there was a second way in)
+- **Bids were checked against the wallet once: when posted** (`MakerDesk.cycle`: budget = min(wallet, day's limit left) − every bid not yet ended). Novig holds nothing for a resting bid (§70.9, NOVIG_API.md §17), so any
+  money that left afterwards (a bet from the Bet sheet, an auto-bet, a bid that filled, a transfer out) left more bids up than the wallet covers, and nothing took them down. The v0.58.2 file shows it live: "wallet $11.55 → $11.55
+  with $18.71 resting" (21:41, one minute after auto-bet placed five bets at 21:40:29), "$7.42 with $16.14 resting" (21:45), the same $16.14 as the screenshot.
+- **Approving a bid by hand (the Bids tab's Post, the notification's Approve) was held only to the whole wallet**, not the wallet beside the bids already up: two $5.00 bids went up on $9.00. It didn't look at the day's limit either.
+- What Novig does when a bid fills over the wallet isn't known (not seen live). The fix's point is never to find out.
+
+### 78.2 What was built
+- **`MakerPlan.plan` trims.** The budget may be negative now (it was clamped at 0). The resting bids may add up to budget + their own dollars; over that, the ones that don't fit come down, ranked by worth: Tj's hand-approved bids
+  last, then the ones that lead their side, the cheaper, the more EV (a bid that outranks another but doesn't fit comes down, and a lower one that does fit stays). A trimmed side isn't posted again that pass (not even a smaller bid).
+  Bids already coming down (CANCELING) still count as up until Novig confirms them gone, as in every budget. The day's limit trims the same way ("resting bids may not push it over", the rule's own words). The reason on the bid,
+  shown in the Bids tab and in "last 24 h ended": "The wallet (or today's limit for API bets) no longer covers it beside the other bids up: taken down". Works with auto-make off and on a running scan.
+- **`MakerDesk.fit`**: settle (fills first) then the same trim with no lines to judge. Used by the no-scan pass (a restarted process or a background cycle before any scan: it used to read fills and expiries only) and by the watch.
+  The balance is read before the settle, so a fill that lands between them can only make the count lower than the wallet (caught next look), never higher (no bid taken down for a fill counted twice).
+- **The watch** (`AppContainer` init): `combine(wallet.flow, makerStore.flow)` → `MakerRunner.overWallet` (bids up > the reading by more than half a cent, with a resting bid to take down; no request) → `MakerRunner.fitToWallet`,
+  at most one run per 5 s. Every balance reading anywhere feeds the flow (Bet sheet after a bet, auto-bet before each pass, a transfer's answer, the strip's 30 s read while the app is open, each background cycle), so a manual bet
+  or an auto-bet is followed by the trim within seconds with the app open, and by the next cycle in the background.
+- **Approve** (`MakerDesk.post(wallet, maxPerDay)`): the wallet and the day's limit beside the bids already up.
+- **The strip** says "· over the wallet" in red while the resting bids are worth more than the wallet (the screenshot's state, until the trim lands).
+- Proofs: MakerTest (+10: plan trim, order, partial/auto-make-off, desk cycle, replacement on a short wallet, day's limit, fit incl. settle-first and an unapplied cancel, Approve budget, hand-approved last), MakerAppTest (+5: the
+  watch end to end, no trim when covered, the no-scan pass, Approve, wiring pins), WalletStripTest (+2 incl. the screenshot with Tj's numbers); 11 mutants of the trim/fit/post all killed (two needed stronger tests: the
+  leader-over-cheaper-follower rank, and "not re-posted" with a smaller replacement that would fit).
+- Not changed: `makerMaxDollars` / `makerMaxBids` lowered in Settings don't take bids down (they only gate new ones; a bid lives 30 minutes at most); a reading taken at the moment a fill lands can still trim one bid too many
+  for a moment (the next pass posts it again if the line is still wanted).
+
+### 78.3 "The scanner slows to 2 a second": what the v0.58.2 file shows
+- **The 299 s scan is REST-bound, not broken:** 4,274 Novig prices in 295 s = 14.5 a second against the key's documented 16 a second; "Novig refused none". The live feed was asked for 2,000 at 4.1 s and held 315 by the end,
+  so 3,959 prices came one request at a time. A scan with ~4,300 books to read can't beat ~270 s by REST. The median scan is 31 s (8 scans in the file): few books to read.
+- **The 201 s scan** (21:41-21:44) read 4,359 prices, only 2,501 through the key: ~1,860 came from the feed or the public route, and the timeline has public 429s inside it (×21 at 21:42:48; ×140 at 21:31 in the scan before).
+- **"2 a second" is the public route halved:** the public route starts at 4 a second (up to 6 on a clean run); a 429 halves it for a minute (4 → 2), and afterwards the pace climbs back only to a step under the refused pace for
+  ten minutes (`RateGate`); repeated refusals go to 1 a second. The scan is on the public route when the key route stands down: Novig's network screen judges the phone's carrier address (`451 ANONYMIZED_NETWORK`:
+  Recent problems 12:37 AM "This scan read Novig's public prices instead", 95 such 451s in the file, 7:57 PM and 8:44 PM today), and the key is tried again after 2 minutes. The carrier's address is shared, so the public edge's
+  per-IP limit is spent by other people too: 1,952 public 429s in all (24% of the public route's 8,164 calls), only 100 failures of 58,376 keyed calls.
+- **So the diagnosis is: fast = key route + live feed pushes; slow = either thousands of books by REST at ≤16 a second, or a stretch on the public route after a 451 (2-4 a second, less after 429s).** The file couldn't say
+  which for a given scan (only the last scan's line, with no pace of the public route and no count of how much of the feed arrived).
+- **Recorded now (no pace changed):** every scan's timeline line says its pace and ways (`· 14.5 a second (315 live feed, 270 public)`), the public route's pace when it carried reads (start, lowest after a refusal, end), the
+  key route's pace and 429s, and how many of the markets the live feed was asked for it held at the end (`ScanTiming.pace`, `liveFeedHeld`, `ReadPace`, `RateGate.takeLowRate`). The next file will say, per scan, which of the two it was.
+- **Open, not changed (Tj's call, a scan-plan change):** 4,274 Novig books were read to price 141 lines (214 sides with a fair price): props markets dominate the plan. And the feed holding 315 of 2,000 asked in 299 s
+  is unexplained (no error was reported); the new "held H of N" says whether it's a pattern.
+
