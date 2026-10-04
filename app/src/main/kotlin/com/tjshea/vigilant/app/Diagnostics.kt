@@ -69,6 +69,9 @@ object Diagnostics {
         /** The study's wide read of CNO in a line ([StudyText.wideNote]); null: not read. */
         val studyWide: String? = null,
         val novigTradeBytes: Long = 0,
+        /** The key route's stand-downs since the app opened, oldest first, and why it is down now (null: usable) ([com.tjshea.vigilant.data.novig.NovigPublicClient.keyStanddowns]). */
+        val keyStanddowns: List<com.tjshea.vigilant.data.novig.KeyStanddown> = emptyList(),
+        val keyDownNow: String? = null,
         /** Calls to ParlayAPI's closing lines since the app opened (Pinnacle's closes, when Tj has a key). */
         val parlayCloseRequests: Int = 0,
         /** What each ParlayAPI key said of itself (its free account check): plan, credits left, reset. */
@@ -228,6 +231,11 @@ object Diagnostics {
             "Novig key: ${if (s.novig.connection != null) "connected" else "not connected"} · management key " +
                 (s.novig.managementKey?.let { if (it.unreadable) "saved but can't be unlocked (enter it again)" else "saved on this phone (••••${it.keyIdEnd})" } ?: "not saved"),
         )
+        // Why a scan read the public routes (2-4 a second) instead of the key's (14 a second): each stand-down of the key route, when, how long, and why (RESEARCH.md §81.1).
+        if (s.novig.connection != null) {
+            o.appendLine("Novig key route: " + (x.keyDownNow?.let { "STANDING DOWN now (reads go to the public routes): $it" } ?: "usable now") + " · stand-downs since the app opened: ${x.keyStanddowns.size}")
+            x.keyStanddowns.takeLast(10).forEach { d -> o.appendLine("  ${at(d.atMs)} · public routes for ${d.forMs / 1_000} s · ${d.why}") }
+        }
 
         o.appendLine()
         o.appendLine("== Last Vigilant scan ==")

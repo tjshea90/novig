@@ -189,7 +189,13 @@ class AppContainer(private val app: Application) {
 
     /** When the last Tracker "Check odds now" began: its +EV / −EV counter counts the bets re-read since ([CheckOddsStats]). */
     val lastCheck = JsonFileStore(File(app.filesDir, "last_check.json"), com.tjshea.vigilant.data.tracker.LastCheck.serializer(), { com.tjshea.vigilant.data.tracker.LastCheck() }, json)
-    val novig = NovigPublicClient(http, json, usage = usage)
+    val novig = NovigPublicClient(http, json, usage = usage).also { n ->
+        // Every time the key route stands down (and the scan reads the public routes at a third of the pace) is on Diagnostics' timeline (Tj, 2026-10-04: "novig scanning is going extremely slow").
+        n.onStanddown = { d ->
+            eventLog.warn("NOVIG", "key route stood down for ${d.forMs / 1_000} s (${d.why}): reads go to the public routes meanwhile", d.forMs)
+            eventLog.count("novig.keyStanddowns")
+        }
+    }
     val novigConnection = NovigConnectionStore(app)
 
     /**

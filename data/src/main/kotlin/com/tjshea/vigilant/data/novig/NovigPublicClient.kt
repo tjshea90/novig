@@ -270,16 +270,22 @@ class NovigPublicClient(
 
     override fun keyStanddowns(): List<KeyStanddown> = synchronized(standdownLog) { standdownLog.toList() }
 
+    /** Told of each stand-down as it happens (the app writes it to its event log: Diagnostics' timeline keeps the last day's, this list only the process's). */
+    @Volatile
+    var onStanddown: ((KeyStanddown) -> Unit)? = null
+
     /** The key route (or its catalog) stands down for however long [keyRetryAfter] says [e] deserves: [set] gets when it is tried again, and it is logged. */
     private fun standDown(e: Throwable, set: (Long) -> Unit) {
         val now = clock()
         val forMs = keyRetryAfter(e)
         set(now + forMs)
         val why = (e as? NovigApiException)?.let { "HTTP ${it.status}" + (it.code?.let { c -> " $c" } ?: "") } ?: (e.message ?: e.javaClass.simpleName)
+        val entry = KeyStanddown(now, forMs, why)
         synchronized(standdownLog) {
-            standdownLog += KeyStanddown(now, forMs, why)
+            standdownLog += entry
             while (standdownLog.size > MAX_STANDDOWNS) standdownLog.removeAt(0)
         }
+        runCatching { onStanddown?.invoke(entry) }
     }
 
     @Volatile
