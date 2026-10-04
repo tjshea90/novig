@@ -3775,7 +3775,11 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
   CAP = `maxPerGame` dollars, default $25 (2.5x the $10 per-bet maximum; 2.5% of the default $1,000 bankroll), 0 = no limit. AUTO-BET and AUTO-MAKE refuse past it with a reason that names the game and the numbers
   (never a silent skip); a HAND bet on the Bet sheet is only warned (Tj 2026-10-02: he must be able to bet what he wants by hand); a LOCK is never blocked.
 - [x] BW4 Build it (setting, default on if the data says so; auto-bet and auto-make obey it; the Bet sheet warns by hand), reasons in Diagnostics counters, UI where the cap is set.
-- [ ] BW5 Tests failing-first (cluster blocked, different games and doubleheaders never blocked, bids count, hedges), mutants, full floor, review, ship, answer Tj with the link.
+- [x] BW5 Tests failing-first (cluster blocked, different games and doubleheaders never blocked, bids count, hedges), mutants, full floor, review, ship, answer Tj with the link.
+  Done BW4+BW5 (v0.59.0, code 105, RESEARCH.md §80, release.yml run 37178804663 green, CI 37178435391 green on the shipped commit): `GameExposure` (pure; GameExposureTest 16), `TrackedBet.eventId`, `ScanSettings.apiMaxPerGame` (default $25, 0 = none; Settings › Betting & Novig account chips),
+  `ApiBetPlanner`/`ApiBetPlacer` (auto refused with `gameLimit`, hand bet warned in the plan note; ApiBettingTest +6), `AutoBettor` pre-filter + one skip reason `AutoBet.GAME_LIMIT_SKIP` (AutoBettorTest +6), `MakerPlan`/`MakerDesk` + recommendations (MakerTest +6, MakerAppTest +1), UI (+1), Diagnostics lines.
+  32 mutants all killed (G8 needed a stronger test). Full floor 2,007 passed / 23 skipped. One intermittent failure in the full floor, MakerAppTest "the wallet watch" (message-less AssertionError): NOT from this change: a race in the test (it asserted the `maker.trimmed` counter,
+  which MakerRunner.fitToWallet writes after the cancels it waits for); reproduced with a 400 ms pause before the count, fixed by waiting for the counter, verified against the same pause. BW2 stays OPEN: Tj's diagnostics file (EVERY BET lines) is needed to tune the $25 default.
 
 ## Tj, 2026-10-04 ~03:05Z: "Here are early vigilant results to consider. Make any fixes if needed" (with research/scan_study_analysis_2026-10-03_v0.58.3.md and its checkpoint: another Claude's analysis of the first scan-study export, v0.58.3, 622 bets, one evening)
 
