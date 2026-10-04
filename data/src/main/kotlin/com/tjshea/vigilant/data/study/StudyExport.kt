@@ -255,6 +255,10 @@ object StudyExport {
             val bst = r.bestAmerican
             if (f == null || bst == null) "?" else if (Odds.americanToDecimal(bst) / Odds.americanToDecimal(f) - 1.0 > 0.005) "got longer (better for the bettor)" else "same"
         },
+        // Tj, 2026-10-04: "ensure that the study and diagnostic makes sense and it isn't feeding you illogical data". A pooled CLV mixes yardsticks that disagree (RESEARCH.md §81.2).
+        Extra("Close source, for the bets that have one (never pool across them; Novig's trades split by how many trades are behind the close)") { r, _ ->
+            if (r.clv == null) null else closeSource(r.closeVia).let { src -> novigTrades(r.closeVia)?.let { n -> "$src: ${tradesBand(n)}" } ?: src }
+        },
         Extra("Where it closed against its price (CLV)") { r, _ ->
             r.clv?.let { if (it > 0.05) "CLV over +5%" else if (it > 0.0) "CLV 0 to +5%" else if (it > -0.05) "CLV 0 to -5%" else "CLV under -5%" } ?: "no close"
         },
@@ -271,6 +275,20 @@ object StudyExport {
     )
 
     private val EXCHANGES = setOf("Kalshi", "ProphetX")
+
+    /** A close's source on its own, the way the summary and the splits count it: "Novig's last trades (7)" is "Novig's last trades" (the 7 trades are [novigTrades]). */
+    internal fun closeSource(via: String?): String = via?.substringBefore(" ·")?.replace(Regex("""\s*\(\d+\)$"""), "") ?: "?"
+
+    /** How many trades are behind a "Novig's last trades (N)" close; null for any other. */
+    internal fun novigTrades(via: String?): Int? = via?.let { Regex("""^Novig's last trades \((\d+)\)""").find(it)?.groupValues?.get(1)?.toIntOrNull() }
+
+    /** One or two trades are a price, not a close: Tj's own bets' CLV against them ran -2.3% where 3-5 trades gave +0.9% (RESEARCH.md §81.2). */
+    internal fun tradesBand(n: Int): String = when {
+        n <= 2 -> "1-2 trades (noisy)"
+        n <= 5 -> "3-5 trades"
+        n <= 10 -> "6-10 trades"
+        else -> "11 or more trades"
+    }
 
     private fun isProp(r: StudyRow) = r.kind == BetKind.PROP.name
 
@@ -446,7 +464,7 @@ object StudyExport {
                         val (kept, dropped, unjudged) = whatIf[i]
                         when (rule.keeps(row)) { true -> kept; false -> dropped; null -> unjudged }.add(row)
                     }
-                    if (row.clv != null) { withCloseCount++; closeVia.merge(row.closeVia?.substringBefore(" ·") ?: "?", 1, Int::plus) }
+                    if (row.clv != null) { withCloseCount++; closeVia.merge(closeSource(row.closeVia), 1, Int::plus) }
                     else if (sb.bet.startsTs < now && row.closeNote != null) closeReasons.merge(row.closeNote.take(90), 1, Int::plus)
                 }
             }
@@ -580,7 +598,7 @@ object StudyExport {
         "- PROPS AND THE SHARP BOOK: a verdict exists only for bets whose CNO game page was read (the green check reads the best ~10 of the list, again every 4 minutes) and the bet's first read is the one used. Those are the app's best-EV rows, not a random sample, and hidden/wide-only props have none: compare inside the judged set, and say what the not-judged bets would change.",
         "- HIDDEN BETS: many are hidden for good reason (one-way devigs, one or two books, a price over the cap, futures, a stale line over 20% EV). The hidden group's ROI and CLV are real numbers like any other, but its CLV is mostly against the same closes: do not read a hidden kind as a strategy until it holds on both halves of the period.",
         "- FIRST-LISTED PRICE: ROI and clv assume the bet could be taken at the price at the first look, for a unit. Novig had only `available` dollars at that price, and many bets were listed for minutes: check listedMin and available before believing a rule's size.",
-        "- CLOSES: the close sources differ (Pinnacle is sharper than ESPN's DraftKings line; Novig's last trades can lag). Compare CLV by closeVia before pooling. Bets with no close are left out of every CLV figure; their reasons are in the summary.",
+        "- CLOSES: the close sources differ (Pinnacle is sharper than ESPN's DraftKings line; Novig's last trades can lag). Compare CLV by close source before pooling (the split "Close source" does it; a Novig-trades close of 1-2 trades is a price, not a close: its split says so). Bets with no close are left out of every CLV figure; their reasons are in the summary.",
         "- RESULTS are noisy: at +3% EV a bet wins its edge once in thousands of bets. Trust CLV first; use ROI only to confirm over hundreds of games. Same-game and same-player bets are correlated: the effective sample is games, not rows.",
         "- Every bet is one unit at the first-listed price whatever Tj staked; the bets he placed himself are marked placedByTj. His own placed bets are a separate record (the diagnostics file's EVERY BET).",
         "- Overlap: one bet listed by both scanners is one row. Different books' sister sites are counted once in the book check (one company, one opinion).",
