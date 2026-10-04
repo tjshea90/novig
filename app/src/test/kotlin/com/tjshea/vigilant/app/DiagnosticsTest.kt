@@ -440,4 +440,51 @@ class DiagnosticsTest {
         // No numbers read (a test, a very old caller): no line at all.
         assertTrue(HealthChecks.of(SampleScan.state(), extras, now).none { it.area == "Memory" })
     }
+
+    // ---- Tj, 2026-10-04: "novig scanning is going extremely slow. Maybe 1 per 2 seconds" (RESEARCH.md §81.1) ----
+
+    private fun connected() = SampleScan.state().let { it.copy(novig = it.novig.copy(connection = com.tjshea.vigilant.data.novig.signing.NovigConnection("read-1", "a", "sub-1", false, tradingKeyId = "t"))) }
+
+    @Test
+    fun `it says why a scan was on the public routes - each stand-down of the key route with when, how long and why`() {
+        val none = report(connected())
+        assertTrue(none, none.contains("Novig key route: usable now · stand-downs since the app opened: 0"))
+        val x = extras.copy(
+            keyStanddowns = listOf(
+                com.tjshea.vigilant.data.novig.KeyStanddown(now - 3_600_000L, 120_000L, "HTTP 451 ANONYMIZED_NETWORK"),
+                com.tjshea.vigilant.data.novig.KeyStanddown(now - 60_000L, 30_000L, "HTTP 502 BAD_GATEWAY"),
+            ),
+            keyDownNow = "Novig lists the internet address of the network this phone is on as a VPN or proxy",
+        )
+        val text = report(connected(), x)
+        assertTrue(text, text.contains("Novig key route: STANDING DOWN now (reads go to the public routes): Novig lists the internet address"))
+        assertTrue(text, text.contains("stand-downs since the app opened: 2"))
+        assertTrue(text, text.contains("public routes for 120 s · HTTP 451 ANONYMIZED_NETWORK"))
+        assertTrue(text, text.contains("public routes for 30 s · HTTP 502 BAD_GATEWAY"))
+        // Without a connected key there is no key route to talk about.
+        assertTrue(report(SampleScan.state(), x).contains("Novig key route").not())
+    }
+
+    @Test
+    fun `a key route that stood down is a health warning with its reasons, and one that is down now says so`() {
+        fun checks(x: Diagnostics.Extras, s: UiState = connected()) = HealthChecks.of(s, x, now).filter { it.area == "Novig key route" }
+        assertTrue(checks(extras).isEmpty())
+        val recent = extras.copy(
+            keyStanddowns = listOf(
+                com.tjshea.vigilant.data.novig.KeyStanddown(now - 600_000L, 30_000L, "HTTP 404 MARKET_NOT_FOUND"),
+                com.tjshea.vigilant.data.novig.KeyStanddown(now - 300_000L, 30_000L, "HTTP 404 MARKET_NOT_FOUND"),
+                com.tjshea.vigilant.data.novig.KeyStanddown(now - 100_000L, 120_000L, "HTTP 451 ANONYMIZED_NETWORK"),
+            ),
+        )
+        val c = checks(recent).single()
+        assertEquals(HealthChecks.Level.WARN, c.level)
+        assertEquals("stood down 3 times in the last 6 h", c.finding)
+        assertEquals("HTTP 404 MARKET_NOT_FOUND ×2, HTTP 451 ANONYMIZED_NETWORK ×1", c.evidence)
+        // Older than six hours: not news. No connected key: nothing to judge.
+        assertTrue(checks(extras.copy(keyStanddowns = listOf(com.tjshea.vigilant.data.novig.KeyStanddown(now - 7 * 3_600_000L, 30_000L, "x")))).isEmpty())
+        assertTrue(checks(recent, SampleScan.state()).isEmpty())
+        val down = checks(extras.copy(keyDownNow = "VPN")).single()
+        assertTrue(down.finding, down.finding.startsWith("standing down now"))
+        assertEquals("VPN", down.evidence)
+    }
 }
