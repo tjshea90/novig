@@ -132,6 +132,9 @@ class AppContainer(private val app: Application) {
         /** The fewest milliseconds between two make-orders passes on a running scan's partial results. */
         const val MAKER_SCAN_PASS_MS = 20_000L
 
+        /** The wallet check ([MakerRunner.fitToWallet]) waits this long after each run before it looks again (a run reads Novig's open orders). */
+        const val WALLET_CHECK_GAP_MS = 5_000L
+
         /** The scan study looks at the green check's book pages at most this often (a page is read every few seconds; the study logs the newest). */
         const val STUDY_BOOKS_GAP_MS = 5_000L
 
@@ -639,6 +642,18 @@ class AppContainer(private val app: Application) {
                     kotlinx.coroutines.delay(MAKER_SCAN_PASS_MS)
                 }
             }
+        }
+        // The wallet kept ahead of the bids (Tj, 2026-10-04: "the app doesn't constantly monitor how much money is in the wallet to make sure the open bids
+        // aren't more than available money"): Novig holds nothing for a resting bid, so a bet by hand, an auto-bet or a fill leaves more bids up than money.
+        // Every balance reading (the Bet sheet's, auto-bet's, the strip's half-minute read, a background cycle's) and every change to the bids is checked
+        // against it, and the extra bids come down least valuable first, whatever auto-make is set to. No request unless the bids are over.
+        appScope.launch {
+            kotlinx.coroutines.flow.combine(wallet.flow, makerStore.flow) { reading, bids -> MakerRunner.overWallet(bids.orEmpty(), reading) }
+                .filter { it }.conflate().collect {
+                    runCatching { maker.fitToWallet("wallet check") }
+                        .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
+                    kotlinx.coroutines.delay(WALLET_CHECK_GAP_MS)
+                }
         }
         appScope.launch {
             // Paused (the Pause button, or the wallet ran out): every bid down. Auto-make switched off: the bids it posted down; the ones Tj approved stay.
