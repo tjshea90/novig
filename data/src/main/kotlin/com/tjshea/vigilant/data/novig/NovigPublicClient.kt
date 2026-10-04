@@ -66,6 +66,9 @@ interface NovigSource {
      */
     fun keyDown(at: Long): String? = null
 
+    /** The key route's recent stand-downs (when, for how long, why), oldest first: what Diagnostics says about a slow stretch. Empty from a source with no key. */
+    fun keyStanddowns(): List<KeyStanddown> = emptyList()
+
     /**
      * How many books a scan asks for at a time, between re-plans: enough that every request slot stays busy
      * ([DEFAULT_BATCH] on the public routes; more with a key, which has more in flight).
@@ -76,6 +79,9 @@ interface NovigSource {
         const val DEFAULT_BATCH = 8
     }
 }
+
+/** The key route stood down at [atMs] for [forMs] because of [why] ("HTTP 451 ANONYMIZED_NETWORK"): the reads in between went to the public routes. */
+data class KeyStanddown(val atMs: Long, val forMs: Long, val why: String)
 
 /** The result of fetching many books at once. A failure on some books never discards the rest. */
 data class BookBatch(
@@ -99,6 +105,11 @@ data class BookBatch(
     val refused: Int = 0,
     /** What paced this batch: each route's pace and the key route's refusals; null from a source with no pacing of its own. */
     val pace: ReadPace? = null,
+    /**
+     * Books whose market Novig no longer lists (a 404 on the book: its game just started, or the market closed). Neither a failure nor a verdict on the
+     * key, and never served from the cache: a closed market's last price isn't a price.
+     */
+    val gone: Int = 0,
 )
 
 /**
@@ -238,7 +249,28 @@ class NovigPublicClient(
     private fun keyRetryAfter(e: Throwable): Long = when {
         e is NovigApiException && e.networkRefusal -> NETWORK_RETRY_MS
         e !is NovigApiException && e is IOException -> NO_CONNECTION_RETRY_MS
+        e is NovigApiException && e.status in 500..599 -> NO_CONNECTION_RETRY_MS
         else -> keyedRetryMs
+    }
+
+    /** Server errors in a row on the key route since one last read cleanly: [MAX_KEYED_SERVER_ERRORS] of them take it down ([standDown]). */
+    private val keyedServerErrors = AtomicInteger(0)
+
+    /** The key route's stand-downs, newest last (a short list for Diagnostics: why a scan went to the slower public routes and for how long). */
+    private val standdownLog = Collections.synchronizedList(ArrayList<KeyStanddown>())
+
+    override fun keyStanddowns(): List<KeyStanddown> = synchronized(standdownLog) { standdownLog.toList() }
+
+    /** The key route (or its catalog) stands down for however long [keyRetryAfter] says [e] deserves: [set] gets when it is tried again, and it is logged. */
+    private fun standDown(e: Throwable, set: (Long) -> Unit) {
+        val now = clock()
+        val forMs = keyRetryAfter(e)
+        set(now + forMs)
+        val why = (e as? NovigApiException)?.let { "HTTP ${it.status}" + (it.code?.let { c -> " $c" } ?: "") } ?: (e.message ?: e.javaClass.simpleName)
+        synchronized(standdownLog) {
+            standdownLog += KeyStanddown(now, forMs, why)
+            while (standdownLog.size > MAX_STANDDOWNS) standdownLog.removeAt(0)
+        }
     }
 
     @Volatile
@@ -344,7 +376,7 @@ class NovigPublicClient(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                keyedCatalogDownUntil = clock() + keyRetryAfter(e)
+                standDown(e) { keyedCatalogDownUntil = it }
                 keyDownWhy = (e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName
             }
         }
@@ -408,7 +440,7 @@ class NovigPublicClient(
                             val rate = if (key != null) keyedGate else publicGate
                             rate.acquire()
                             try {
-                                return@run fetchBook(id, key).also { rate.success() }
+                                return@run fetchBook(id, key).also { rate.success(); if (key != null) keyedServerErrors.set(0) }
                             } catch (e: NovigApiException) {
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
@@ -418,13 +450,23 @@ class NovigPublicClient(
                                     if (retries++ < 2) continue
                                     return@run BookFetch.Failed(id, e.advice)
                                 }
+                                // One market's own answer is not Novig's verdict on the key (Tj's v0.59.1 file: a 404 for a market that closed as its game kicked
+                                // off, at 13:12:11 and again at 16:01:07, sent the rest of the scan and every read for the next ten minutes to the public routes
+                                // at 2-4 a second, the 429s of a carrier's shared address included): that book is gone, and the key route goes on.
+                                if (e.status == 404) return@run BookFetch.Gone(id)
+                                // The same for one server error: only a run of them (Novig having a bad moment) takes the key route down, and briefly.
+                                if (e.status in 500..599 && e.code != GEOLOCATION_DOWN && keyedServerErrors.incrementAndGet() < MAX_KEYED_SERVER_ERRORS) {
+                                    return@run BookFetch.Failed(id, e.advice)
+                                }
                                 if (useKey.getAndSet(null) != null) {
-                                    keyedDownUntil = clock() + keyRetryAfter(e)
+                                    standDown(e) { keyedDownUntil = it }
                                     keyDownWhy = e.brief
                                     keyProblem.compareAndSet(null, e.brief)
                                 }
                                 continue
                             } catch (e: NovigHttpException) {
+                                // The public route's 404 is the same news: the market is gone (its cached book is not served either).
+                                if (e.code == 404) return@run BookFetch.Gone(id)
                                 val retryAfter = e.retryAfterSeconds ?: 1
                                 // Measured live 2026-09-25: the edge answers a burst with 429 and
                                 // Retry-After: 1. Pause everyone, halve the pace, retry this book
@@ -465,9 +507,11 @@ class NovigPublicClient(
         var failed = 0
         var fromCache = 0
         var viaKey = 0
+        var gone = 0
         var lastError: String? = null
         for (r in results) {
             when (r) {
+                is BookFetch.Gone -> { gone++; bookCache.remove(r.marketId) }
                 is BookFetch.Fresh -> { books[r.book.marketId] = r.book; fetched++; if (r.viaKey) viaKey++ }
                 is BookFetch.NotModified -> { books[r.book.marketId] = r.book; notModified++; if (r.viaKey) viaKey++ }
                 is BookFetch.Failed -> {
@@ -492,6 +536,7 @@ class NovigPublicClient(
                 publicStart, publicGate.takeLowRate(), publicGate.currentRate,
                 keyedStart, keyedGate.takeLowRate(), keyedGate.currentRate, keyedRefused.get(),
             ),
+            gone = gone,
         )
     }
 
@@ -500,6 +545,7 @@ class NovigPublicClient(
         data class NotModified(val book: NovigBook, val viaKey: Boolean) : BookFetch
         data class Failed(val marketId: String, val reason: String) : BookFetch
         data class Skipped(val marketId: String) : BookFetch
+        data class Gone(val marketId: String) : BookFetch
     }
 
     private suspend fun fetchBook(marketId: String, key: NovigSignedClient?): BookFetch {
@@ -631,6 +677,14 @@ class NovigPublicClient(
 
         /** … and this soon after a request that never reached Novig (no connection, a DNS failure). */
         const val NO_CONNECTION_RETRY_MS = 30_000L
+        /** Server errors in a row on the key route before it stands down. */
+        const val MAX_KEYED_SERVER_ERRORS = 6
+
+        /** Novig's own code for its location screen being down (a verdict on the key route, not on one market). */
+        const val GEOLOCATION_DOWN = "GEOLOCATION_SCREENING_UNAVAILABLE"
+
+        /** Stand-downs kept for the Diagnostics file. */
+        const val MAX_STANDDOWNS = 30
         const val SHORT_RETRY_SECONDS = 5
         const val MAX_SHORT_RETRIES = 8
         const val MAX_PAGES = 20
