@@ -658,4 +658,25 @@ class NovigPublicClientTest {
         assertEquals("HTTP 451 ANONYMIZED_NETWORK", d.why)
         assertTrue(client().keyStanddowns().isEmpty())
     }
+    @Test
+    fun `404s and server errors between clean reads never add up to a stand-down - only a run of them does`() = runBlocking {
+        val seen = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            // Every other book is a closed market, every third a server error: no run of either ever reaches the (lowered) limits of 5 and 4.
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath == "/v3/limits") return MockResponse().setBody(limitsBody)
+                val n = seen.incrementAndGet()
+                return when {
+                    n % 2 == 0 -> notFound()
+                    n % 3 == 0 -> MockResponse().setResponseCode(502).setBody("""{"code":"BAD_GATEWAY","message":"upstream"}""")
+                    else -> bookFor(request)
+                }
+            }
+        }
+        val c = keyed(NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }, maxKeyedServerErrors = 4, maxKeyedNotFound = 5))
+        val batch = c.books((1..30).map { "q$it" })
+        assertTrue("no stand-down: ${c.keyStanddowns()}", c.keyStanddowns().isEmpty())
+        assertNull(batch.keyProblem)
+        assertTrue("some were closed (${batch.gone}) and some failed (${batch.failed}), the rest came through the key (${batch.viaKey})", batch.gone > 0 && batch.failed > 0 && batch.viaKey > 0)
+    }
 }

@@ -178,6 +178,9 @@ class NovigPublicClient(
     private val sleep: suspend (Long) -> Unit = { delay(it) },
     /** Counts every request (and throttle) for the usage meter. */
     private val usage: UsageMeter? = null,
+    /** Server errors in a row ([MAX_KEYED_SERVER_ERRORS]) and 404s in a row ([MAX_KEYED_NOT_FOUND]) on the key route before it stands down; tests lower them. */
+    private val maxKeyedServerErrors: Int = MAX_KEYED_SERVER_ERRORS,
+    private val maxKeyedNotFound: Int = MAX_KEYED_NOT_FOUND,
 ) : NovigSource {
 
     private val publicGate = RateGate(publicRate, publicBurst, rateClock, sleep, maxRate = publicMaxRate)
@@ -446,7 +449,7 @@ class NovigPublicClient(
                             val rate = if (key != null) keyedGate else publicGate
                             rate.acquire()
                             try {
-                                return@run fetchBook(id, key).also { rate.success(); if (key != null) { keyedServerErrors.set(0) } }
+                                return@run fetchBook(id, key).also { rate.success(); if (key != null) { keyedServerErrors.set(0); keyedNotFound.set(0) } }
                             } catch (e: NovigApiException) {
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
@@ -459,9 +462,9 @@ class NovigPublicClient(
                                 // One market's own answer is not Novig's verdict on the key (Tj's v0.59.1 file: a 404 for a market that closed as its game kicked
                                 // off, at 13:12:11 and again at 16:01:07, sent the rest of the scan and every read for the next ten minutes to the public routes
                                 // at 2-4 a second, the 429s of a carrier's shared address included): that book is gone, and the key route goes on.
-                                if (e.status == 404 && keyedNotFound.incrementAndGet() < MAX_KEYED_NOT_FOUND) return@run BookFetch.Gone(id)
+                                if (e.status == 404 && keyedNotFound.incrementAndGet() < maxKeyedNotFound) return@run BookFetch.Gone(id)
                                 // The same for one server error: only a run of them (Novig having a bad moment) takes the key route down, and briefly.
-                                if (e.status in 500..599 && e.code != GEOLOCATION_DOWN && keyedServerErrors.incrementAndGet() < MAX_KEYED_SERVER_ERRORS) {
+                                if (e.status in 500..599 && e.code != GEOLOCATION_DOWN && keyedServerErrors.incrementAndGet() < maxKeyedServerErrors) {
                                     return@run BookFetch.Failed(id, e.advice)
                                 }
                                 if (useKey.getAndSet(null) != null) {
