@@ -244,7 +244,8 @@ class AutoBettorTest {
 
     @Test
     fun `no limit when it is set to 0`() = runBlocking {
-        openOnJeffersonsGame("alt-1", 500.0)
+        // $30 is over the $25 a game would be held to, and inside the day's $50: only the game limit is in question.
+        openOnJeffersonsGame("alt-1", 30.0)
         val novig = FakeNovig()
         val s = settings { tenDollars(it).copy(apiMaxPerGame = 0.0) }
         assertEquals(1, bettor(novig).run(s, state(s)).placed.size)
