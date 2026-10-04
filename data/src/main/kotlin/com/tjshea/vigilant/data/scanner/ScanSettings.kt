@@ -730,7 +730,10 @@ data class ScanSettings(
         /** [apiMaxPerGame]'s chips, dollars (0 = no limit); any other amount is typed (Tj, 2026-10-04: "add $5 and a manual entry"). */
         val API_MAX_PER_GAME_CHOICES = listOf(5.0, 10.0, 25.0, 50.0, 100.0, 0.0)
 
-        /** [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). */
+        /**
+         * [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). 3.25% and 3.5% (Tj, 2026-10-04: "consider lowering the EV to 3.5 or
+         * 3.25%") are offered, not made the default: on Novig's 0.5¢ grid they usually land on the same price as 3% or 4% (§81.4).
+         */
         val MAKER_MARGIN_CHOICES = listOf(0.03, 0.0325, 0.035, 0.04, 0.06, 0.08)
 
         /** A line priced by this many books or more is a popular one ([makerPopularFirst]). */

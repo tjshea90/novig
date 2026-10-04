@@ -449,7 +449,8 @@ object MakerRulesText {
         }
     }
 
-    fun pct(v: Double): String = String.format(Locale.US, if (v * 100 % 1.0 == 0.0) "%.0f%%" else "%.1f%%", v * 100)
+    /** "4%", "3.5%", "3.25%": as many decimals as the number has (to two), never rounded to another choice. */
+    fun pct(v: Double): String = String.format(Locale.US, "%.2f", v * 100).trimEnd('0').trimEnd('.') + "%"
 
     /** The trap guard's early rule as it touches bids (RESEARCH.md §71). */
     fun earlyNote(hours: Int): String =
@@ -521,6 +522,16 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
                 " on its own price (the Auto-bet tab's veto bar: a filled bid keeps about the sharp book's edge).",
             s.makerSharpVeto, "makerSharpVeto",
         ) { on -> onUpdate { it.copy(makerSharpVeto = on) } }
+        SwitchRow(
+            "Popular markets first",
+            "When the wallet or the most bids can't take every bid, the ones on lines ${ScanSettings.MAKER_POPULAR_BOOKS}+ books price (a star's prop, a main market) go up before obscure props, after the ones that lead their side.",
+            s.makerPopularFirst, "makerPopularFirst",
+        ) { on -> onUpdate { it.copy(makerPopularFirst = on) } }
+        SwitchRow(
+            "Require a sharp book to agree",
+            "No bid unless a sharp book (Pinnacle, Circa, an exchange) prices the line both ways and agrees it is +EV. Off: a bid on a prop no sharp book prices is allowed (the veto still stops one a sharp book says no to). Too little data yet to say it pays (RESEARCH.md §81.4).",
+            s.makerRequireSharp, "makerRequireSharp",
+        ) { on -> onUpdate { it.copy(makerRequireSharp = on) } }
         SwitchRow(
             "Recommend bids when auto-make is off", "A notification for each new bid worth posting, with Approve and Deny (a few a cycle at most).",
             s.makerRecommend, "makerRecommend",

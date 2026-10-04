@@ -69,6 +69,11 @@ data class MakerRules(
      * [GameExposure]): auto-make posts no bid that would take a game past it (Tj, 2026-10-04: one event is one risk, however many lines it has).
      */
     val maxPerGame: Double = 0.0,
+    /** Bids on popular lines (priced by [popularBooks] books or more) go up first when not every wanted bid fits ([ScanSettings.makerPopularFirst]). */
+    val popularFirst: Boolean = true,
+    val popularBooks: Int = ScanSettings.MAKER_POPULAR_BOOKS,
+    /** A bid needs a sharp book that prices the line both ways and agrees, on any kind of bet, not game lines only ([ScanSettings.makerRequireSharp]). */
+    val requireSharp: Boolean = false,
 ) {
     companion object {
         fun of(s: ScanSettings) = MakerRules(
@@ -92,6 +97,8 @@ data class MakerRules(
             earlyHours = s.trapEarlyHours.coerceAtLeast(0),
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
+            popularFirst = s.makerPopularFirst,
+            requireSharp = s.makerRequireSharp,
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
@@ -301,6 +308,7 @@ object MakerQuote {
         fun skip(why: String) = MakerDecision.Skip(line, why)
         val fair = line.fair!!
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
+        if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
@@ -434,8 +442,8 @@ object MakerPlan {
      * Resting bids against the bids wanted now. [stopAll]: every bid comes down (paused, wallet empty, daily limit, bids switched off). A resting bid is
      * cancelled when its line is no longer wanted (with that line's reason from [skips]), moved when the fair fell under it (it would now be over the
      * fair minus the margin: the bid that gets picked off, §70.3) or rose by [MakerRules.requoteSteps] steps or more, and re-posted when it's about to
-     * expire with a fresher fair behind it; a partly filled bid isn't re-posted (that side is now a bet). New bids go in by [PRIORITY] (those that lead
-     * their side, then the cheapest), within [MakerRules.maxBids], [MakerRules.maxDollars] and [budget] (the wallet and the day's limit, less what's up).
+     * expire with a fresher fair behind it; a partly filled bid isn't re-posted (that side is now a bet). New bids go in by [priority] (those that lead
+     * their side, then the popular lines, then the cheapest), within [MakerRules.maxBids], [MakerRules.maxDollars] and [budget] (the wallet and the day's limit, less what's up).
      *
      * [budget] may be negative: bids up are worth more than the wallet (or the day's limit) covers (Tj, 2026-10-04: "Vigilant wallet $8.98 · 7 bids up
      * ($16.14)": a bet by hand, an auto-bet or a fill took money out after the bids went up, and Novig holds nothing for a resting bid). The bids that
@@ -530,7 +538,7 @@ object MakerPlan {
         val places = ArrayList<MakerDecision.Post>()
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
-        for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(PRIORITY)) {
+        for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules))) {
             val credit = freed[w.line.outcomeId] ?: 0.0
             when {
                 bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
@@ -556,6 +564,15 @@ object MakerPlan {
      * the most per bid, RESEARCH.md §70.2), then the most EV.
      */
     val PRIORITY: Comparator<MakerDecision.Post> = compareByDescending<MakerDecision.Post> { it.leads }.thenBy { it.price }.thenByDescending { it.evAtFair }
+
+    /**
+     * [PRIORITY] with Tj's popular tilt (2026-10-04: "more attractive bets that involve bets that are more popular than obscure players props"): the ones that lead
+     * their side first, then the popular lines (priced by [MakerRules.popularBooks] books or more: a bid on a line many books quote meets more takers and rests on a
+     * sturdier fair), then the cheapest and the most EV as before. Never changes which bids qualify, only which go up when the bids, the dollars or the wallet run out.
+     */
+    fun priority(rules: MakerRules): Comparator<MakerDecision.Post> =
+        if (!rules.popularFirst) PRIORITY
+        else compareByDescending<MakerDecision.Post> { it.leads }.thenByDescending { it.line.books >= rules.popularBooks }.thenBy { it.price }.thenByDescending { it.evAtFair }
 
     /** Why a wanted bid waits (the tab and Diagnostics say how many each). */
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
