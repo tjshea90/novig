@@ -56,7 +56,7 @@ object AutoBet {
     const val COOLDOWN_MS = 2 * 60_000L
 
     /** Why a bet is skipped for the per-game limit ([BetLimits.maxPerGame]); one reason for every game, the game and the dollars go in the log. */
-    const val GAME_LIMIT_SKIP = "its game already has your most per game at risk (Auto-bet tab › Most on one game)"
+    const val GAME_LIMIT_SKIP = "its game already has your most per game at risk (Settings › Betting & Novig account › Most on one game)"
 
     /**
      * What share of a shown edge a bet with no sharp book's own price behind it kept at the close: Tj's bets placed within 6 h of the start kept about

@@ -295,10 +295,18 @@ fun NovigBettingSection(
     ChoiceChips(MAX_STAKE_CHOICES, settings.apiMaxStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
     Text("Most in a day (your bets and auto-bets together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(DAY_CHOICES, settings.apiMaxPerDay, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerDay = v) } }
+    // One game is one event (Tj, 2026-10-04): the alternate spreads, totals and props of a game win and lose together.
+    Text("Most at risk on one game (all its lines, props and bids together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.API_MAX_PER_GAME_CHOICES, settings.apiMaxPerGame, { if (it <= 0.0) "No limit" else Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerGame = v) } }
+    Text(
+        "Auto-bet and auto-make never take a game past it (one team at +5, +6 and +10 is one bet that can lose three times). A bet you place yourself is " +
+            "only warned, and the other side of a market or a lock you already hold is never held back.",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp),
+    )
     // No minimum edge for a bet placed by hand (Tj, 2026-10-02: "I should be able to bet on whatever I want manually"): auto-bet has its own.
     Text(
         "Bets you place yourself from a Bet sheet have no minimum edge: the sheet shows the EV at Novig's price now (red when it's negative) and " +
-            "you decide. Only the two limits above apply, and the price you confirm. Auto-bet keeps its own rules and its own most per bet (Auto-bet tab).",
+            "you decide. Only the limits above apply (the one per game only warns you), and the price you confirm. Auto-bet keeps its own rules and its own most per bet (Auto-bet tab).",
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
     )
     Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

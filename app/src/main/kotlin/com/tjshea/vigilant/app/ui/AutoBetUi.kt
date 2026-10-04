@@ -96,7 +96,7 @@ object AutoBetText {
     fun confirm(s: ScanSettings, balance: Double?): String =
         "Vigilant will place REAL bets from your Vigilant wallet" + (balance?.let { " (${Format.money(it)})" } ?: "") + " with nobody asking you, " +
             "each time CrazyNinjaOdds' background scan finds a bet with ${criteria(s)}. It never bets a game that has started, never more than " +
-            "${Format.money(s.apiMaxPerDay)} in a day across API bets, and stops when the wallet is empty (under a cent) or if an order's answer is lost. " +
+            "${Format.money(s.apiMaxPerDay)} in a day across API bets${if (s.apiMaxPerGame > 0.0) " and never more than ${Format.money(s.apiMaxPerGame)} at risk on one game" else ""}, and stops when the wallet is empty (under a cent) or if an order's answer is lost. " +
             "Every bet is tracked like one you placed yourself, and you get a notification for each."
 
     /** Why auto-bet isn't running right now though it's on (or what turning it on needs), or null when it is running. */
@@ -403,7 +403,8 @@ fun AutoBetSection(
 
     Text(
         "The most one auto-bet can stake (bets you place yourself have their own most per bet, in Settings › Betting & Novig account). The daily limit there " +
-            "(${Format.money(s.apiMaxPerDay)}) covers auto-bets and yours together.",
+            "(${Format.money(s.apiMaxPerDay)}) covers auto-bets and yours together" +
+            (if (s.apiMaxPerGame > 0.0) ", and so does the most on one game (${Format.money(s.apiMaxPerGame)}: every line, prop and bid of a game added up)." else "."),
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
 

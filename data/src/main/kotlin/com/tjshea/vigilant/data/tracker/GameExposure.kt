@@ -42,7 +42,7 @@ object GameExposure {
         fun words(): String {
             val name = game.eventName.ifBlank { "this game" }
             return "${money(now)} is already at risk on $name; this ${money(dollars)} would make ${money(after)}, over your ${money(cap)} limit per game " +
-                "(Auto-bet tab › Most on one game)."
+                "(Settings › Betting & Novig account › Most on one game)."
         }
     }
 
