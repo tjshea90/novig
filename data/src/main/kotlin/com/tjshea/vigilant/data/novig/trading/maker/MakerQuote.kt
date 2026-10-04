@@ -5,6 +5,8 @@ import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.Freshness
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.FairBasis
+import com.tjshea.vigilant.data.tracker.GameExposure
+import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.PriceGrid
 import java.util.Locale
@@ -62,6 +64,11 @@ data class MakerRules(
      * steady lines (fair leading Novig by a quarter of the move); the same flow on props and 1st-half lines didn't hurt bids, so they aren't checked.
      */
     val novigMove: Boolean = false,
+    /**
+     * The most that may be at risk on one game across every market of it, open bets and resting bids ([ScanSettings.apiMaxPerGame], 0 = no limit;
+     * [GameExposure]): auto-make posts no bid that would take a game past it (Tj, 2026-10-04: one event is one risk, however many lines it has).
+     */
+    val maxPerGame: Double = 0.0,
 ) {
     companion object {
         fun of(s: ScanSettings) = MakerRules(
@@ -84,6 +91,7 @@ data class MakerRules(
             sharpMinEv = s.sharpVetoMinEv.coerceIn(0.0, MAX_SHARP_MIN_EV),
             earlyHours = s.trapEarlyHours.coerceAtLeast(0),
             novigMove = s.trapNovigMove,
+            maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
@@ -269,6 +277,10 @@ sealed interface MakerDecision {
          * behind another fills only once that one is used up.
          */
         val leads: Boolean get() = line.bestBid.let { it == null || it < price - 1e-9 }
+
+        /** What this bid would put at risk, on its game ([GameExposure]). */
+        val gameItem: GameExposure.Item
+            get() = GameExposure.Item(GameRef(line.market.eventId, line.eventName, line.startsTs, line.league), line.market.marketId, line.outcomeId, cost)
     }
 
     data class Skip(override val line: MakerLine, val why: String) : MakerDecision
@@ -394,8 +406,13 @@ data class RestingBid(
     /** The EV at the fair when it was posted, and whether it led its side then: what ranks it when the wallet can't hold every bid and no fresh line judges it. */
     val evAtFair: Double = 0.0,
     val leads: Boolean = true,
+    /** The game it is on, for the per-game limit ([MakerRules.maxPerGame]); null = not known (it counts toward no game). */
+    val game: GameRef? = null,
 ) {
     val restingDollars: Double get() = remaining * price * EvMath.CONTRACT_PAYOUT_DOLLARS
+
+    /** What it would put at risk on its game if it filled; null when its game isn't known. */
+    val gameItem: GameExposure.Item? get() = game?.let { GameExposure.Item(it, marketId, outcomeId, restingDollars) }
 }
 
 /**
@@ -443,6 +460,8 @@ object MakerPlan {
          * whose line is gone comes down.
          */
         partial: Boolean = false,
+        /** What Tj's open bets have at risk, for the per-game limit ([MakerRules.maxPerGame]): bids add to it, never replace it ([GameExposure.items]). */
+        heldItems: List<GameExposure.Item> = emptyList(),
     ): MakerActions {
         if (stopAll != null) return MakerActions(resting.map { it to stopAll }, emptyList(), emptyList())
         val byOutcome = wanted.associateBy { it.line.outcomeId }
@@ -506,6 +525,8 @@ object MakerPlan {
         var bids = kept.size
         var dollars = kept.sumOf { it.restingDollars }
         var spend = budget
+        // One game is one event: what is at risk on each game now (open bets, the bids that stay up) and what this pass adds, market by market.
+        var onGames = if (rules.maxPerGame > 0.0) heldItems + kept.mapNotNull { it.gameItem } else emptyList()
         val places = ArrayList<MakerDecision.Post>()
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
@@ -514,8 +535,11 @@ object MakerPlan {
             when {
                 bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
                 dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
+                rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, onGames, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
+                    wait(GAME_REACHED.format(money(rules.maxPerGame)))
                 w.cost > spend + credit + 1e-9 -> wait(BUDGET_REACHED)
                 else -> {
+                    if (rules.maxPerGame > 0.0) onGames = onGames + w.gameItem
                     places += w
                     bids++
                     dollars += w.cost
@@ -537,6 +561,7 @@ object MakerPlan {
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
     const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
+    const val GAME_REACHED = "the most at risk on one game (%s) is reached"
 
     /** Why a bid that was up came down because the money behind it fell short (the bid's own reason in the Bids tab). */
     const val TRIMMED = "The wallet (or today's limit for API bets) no longer covers it beside the other bids up: taken down"

@@ -11,6 +11,8 @@ import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.GameExposure
+import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.data.tracker.FairBasis
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import com.tjshea.vigilant.engine.EvMath
@@ -237,7 +239,7 @@ class MakerDesk(
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
-            repost = autoPost, partial = partial,
+            repost = autoPost, partial = partial, heldItems = GameExposure.items(bets),
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
@@ -284,6 +286,7 @@ class MakerDesk(
         RestingBid(
             it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs,
             auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 },
+            game = GameRef(it.eventId, it.eventName, it.startsTs, it.league),
         )
     }
 
