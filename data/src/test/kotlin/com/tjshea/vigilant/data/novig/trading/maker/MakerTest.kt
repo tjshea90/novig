@@ -1225,27 +1225,73 @@ class MakerTest {
 
     // ---- Tj, 2026-10-04: "bids … more popular than obscure players props", "Maybe a sharp book should be required", "lowering the EV to 3.5 or 3.25%" (RESEARCH.md §81.4) ----
 
+    /** A bid on a [type] market of [league] (the bid's line carries both), [books] books behind its fair. */
+    private fun typed(outcome: String, type: String, price: Double, contracts: Long, books: Int = 3, league: String = "NFL"): MakerDecision.Post {
+        val m = market(outcome.substringBefore('-')).copy(marketType = type)
+        return MakerDecision.Post(line(outcome, books = books, m = m).copy(league = league), price, contracts, 0.04)
+    }
+
     @Test
-    fun `popular lines go up before obscure ones when not every bid fits, but never ahead of the ones that lead their side`() {
-        val popularDear = MakerDecision.Post(line("a-over", books = 8), 0.45, 1_111, 0.04)
-        val obscureCheap = MakerDecision.Post(line("b-over", books = 3), 0.30, 1_666, 0.04)
-        val popularMid = MakerDecision.Post(line("c-over", books = 6), 0.40, 1_250, 0.04)
-        val wanted = listOf(obscureCheap, popularDear, popularMid)
-        // Two bids fit: the two popular ones, the cheaper first among them; the obscure bid, though the cheapest of all, waits.
+    fun `the kinds of market takers trade most go up first when not every bid fits, but never ahead of the ones that lead their side`() {
+        // NFL, by Novig's volume per listed market (MarketPopularity): anytime touchdowns hot ($5.9k a day), receiving yards popular ($490), longest reception obscure ($51).
+        val hot = typed("a-over", "TOUCHDOWNS", 0.45, 1_111)
+        val popular = typed("c-over", "RECEIVING_YARDS", 0.40, 1_250)
+        val obscureCheap = typed("b-over", "LONGEST_RECEPTION", 0.30, 1_666)
+        val wanted = listOf(obscureCheap, popular, hot)
+        // Two bids fit: hot, then popular; the obscure bid, though the cheapest of all, waits.
         val two = MakerPlan.plan(wanted, emptyList(), rules.copy(maxBids = 2), now)
-        assertEquals(listOf("c-over", "a-over"), two.places.map { it.line.outcomeId })
+        assertEquals(listOf("a-over", "c-over"), two.places.map { it.line.outcomeId })
         // Off: the old order, the cheapest first.
         val old = MakerPlan.plan(wanted, emptyList(), rules.copy(maxBids = 2, popularFirst = false), now)
         assertEquals(listOf("b-over", "c-over"), old.places.map { it.line.outcomeId })
-        // A bid that leads its side is still first: this popular bid would sit behind someone already bidding at its price.
-        val popularBehind = MakerDecision.Post(line("d-over", books = 9).copy(bestBid = 0.35), 0.35, 1_428, 0.04)
-        assertFalse(popularBehind.leads)
-        val lead = MakerPlan.plan(listOf(popularBehind, obscureCheap), emptyList(), rules.copy(maxBids = 1), now)
-        assertEquals(listOf("b-over"), lead.places.map { it.line.outcomeId })
-        // Five books is not popular, six is.
-        val five = MakerDecision.Post(line("e-over", books = 5), 0.20, 2_500, 0.04)
-        val six = MakerDecision.Post(line("f-over", books = 6), 0.44, 1_136, 0.04)
-        assertEquals(listOf("f-over"), MakerPlan.plan(listOf(five, six), emptyList(), rules.copy(maxBids = 1), now).places.map { it.line.outcomeId })
+        // A bid that leads its side is still first: this hot bid would sit behind someone already bidding at its price.
+        val hotBehind = MakerDecision.Post(typed("d-over", "TOUCHDOWNS", 0.35, 1_428).line.copy(bestBid = 0.35), 0.35, 1_428, 0.04)
+        assertFalse(hotBehind.leads)
+        assertEquals(listOf("b-over"), MakerPlan.plan(listOf(hotBehind, obscureCheap), emptyList(), rules.copy(maxBids = 1), now).places.map { it.line.outcomeId })
+        // The same stat is a different market in another league: points are popular in the WNBA ($700 a day), obscure in the NHL ($170).
+        val wnba = typed("e-over", "POINTS", 0.44, 1_136, league = "WNBA")
+        val nhl = typed("f-over", "POINTS", 0.20, 2_500, league = "NHL")
+        assertEquals(listOf("e-over"), MakerPlan.plan(listOf(nhl, wnba), emptyList(), rules.copy(maxBids = 1), now).places.map { it.line.outcomeId })
+    }
+
+    @Test
+    fun `a kind the study never measured is judged by how many books price the line`() {
+        val manyBooks = typed("g-over", "SOME_NEW_PROP", 0.44, 1_136, books = 6)
+        val fewBooks = typed("h-over", "SOME_NEW_PROP", 0.20, 2_500, books = 5)
+        // Six books is popular, five is not: the six-book bid goes first though the five-book one is cheaper.
+        assertEquals(listOf("g-over"), MakerPlan.plan(listOf(fewBooks, manyBooks), emptyList(), rules.copy(maxBids = 1), now).places.map { it.line.outcomeId })
+        // An unmeasured kind with many books is popular, not hot: a measured hot kind is ahead of it, and a measured obscure one behind it.
+        val hot = typed("i-over", "TOUCHDOWNS", 0.45, 1_111, books = 2)
+        val obscure = typed("j-over", "LONGEST_RECEPTION", 0.25, 2_000, books = 12)
+        assertEquals(listOf("i-over", "g-over", "j-over"), MakerPlan.plan(listOf(obscure, manyBooks, hot), emptyList(), rules, now).places.map { it.line.outcomeId })
+        assertEquals(1, MakerPlan.tierOf(manyBooks, rules))
+        assertEquals(2, MakerPlan.tierOf(fewBooks, rules))
+    }
+
+    @Test
+    fun `popularity is measured in dollars a listed market meets a day, hot from 1000, popular from 250`() {
+        fun tier(league: String, type: String) = MarketPopularity.tier(league, type, books = 0, popularBooks = 6)
+        assertEquals(5914.0, MarketPopularity.dollars("NFL", "TOUCHDOWNS")!!, 1.0)
+        assertEquals(5914.0, MarketPopularity.dollars("nfl", "TOUCHDOWNS")!!, 1.0)
+        assertNull(MarketPopularity.dollars("NFL", "SOME_NEW_PROP"))
+        assertNull(MarketPopularity.dollars("CFL", "TOUCHDOWNS"))
+        // Hot: from $1,000 (passing attempts $1,211, pitcher outs $7,447); popular: $978 receptions is just under, $488 receiving yards, $345 goals, $387 points+rebounds+assists.
+        assertEquals(0, tier("NFL", "PASSING_ATTEMPTS"))
+        assertEquals(0, tier("MLB", "PITCHER_OUTS"))
+        assertEquals(1, tier("NFL", "RECEPTIONS"))
+        assertEquals(1, tier("NFL", "RECEIVING_YARDS"))
+        assertEquals(1, tier("NHL", "PLAYER_GOALS"))
+        assertEquals(1, tier("WNBA", "POINTS_REBOUNDS_ASSISTS"))
+        assertEquals(1, tier("MLB", "EARNED_RUNS"))
+        // Obscure: under $250 ($233 double-double and $226 threes are just under; hits $194, a lone longest reception $51).
+        assertEquals(2, tier("WNBA", "DOUBLE_DOUBLE"))
+        assertEquals(2, tier("WNBA", "THREE_POINTERS_MADE"))
+        assertEquals(2, tier("MLB", "HITS"))
+        assertEquals(2, tier("NFL", "LONGEST_RECEPTION"))
+        assertEquals(2, tier("NHL", "POINTS"))
+        // Unmeasured: the books decide.
+        assertEquals(1, MarketPopularity.tier("NFL", "SOME_NEW_PROP", books = 6, popularBooks = 6))
+        assertEquals(2, MarketPopularity.tier("NFL", "SOME_NEW_PROP", books = 5, popularBooks = 6))
     }
 
     @Test
