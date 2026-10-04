@@ -743,6 +743,7 @@ fun CnoDetail(
             Text(pickText(row.bet, team, agrees = false), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("${row.market} · ${row.event}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             row.startsAtMs?.let { Text("${row.league.ifEmpty { row.sport }} · ${Format.startTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            GameBetsChip(row.event, row.startsAtMs, row.league, Modifier.padding(top = 4.dp))
             injury?.let { InjuryLine(it, Modifier.padding(top = 6.dp)) }
             TrapGuardText.sheetNote(row.startsAtMs, now, settings.trapEarlyHours)?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 6.dp).testTag("trapEarlySheet"))

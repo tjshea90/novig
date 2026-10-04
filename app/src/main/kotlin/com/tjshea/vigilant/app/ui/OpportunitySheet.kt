@@ -114,6 +114,7 @@ fun OpportunityDetail(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(o.eventName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                GameBetsChip(o.eventName, o.event.startsTs, o.event.league, Modifier.padding(top = 4.dp), eventId = o.market.eventId)
             }
             q?.takeIf { !o.fairIsOld(now) }?.let { EvBadge(it.evPercent, large = true) }
         }

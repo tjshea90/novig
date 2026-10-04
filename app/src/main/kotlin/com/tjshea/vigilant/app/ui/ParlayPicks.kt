@@ -312,6 +312,7 @@ fun ParlayPickCard(
                         injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
                     }
                     Text("${row.market} · ${row.event}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    GameBetsChip(row.event, row.startsAtMs, row.league, Modifier.padding(top = 3.dp))
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("${com.tjshea.vigilant.app.AppBook.name.uppercase()} NOW", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)

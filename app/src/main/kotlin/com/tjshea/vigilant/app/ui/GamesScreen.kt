@@ -151,6 +151,7 @@ private fun GameRow(g: PricedGame, now: Long, modifier: Modifier, onClick: () ->
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(g.event.description, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                GameBetsChip(g.event.description, g.event.startsTs, g.event.league, Modifier.padding(vertical = 2.dp), eventId = g.event.eventId)
                 Text(
                     if (g.refEvent == null) "${AppBook.name} only · no fair odds for this game" else "${g.outcomes.count { it.fairProbability != null }} prices vs fair",
                     style = MaterialTheme.typography.labelSmall,

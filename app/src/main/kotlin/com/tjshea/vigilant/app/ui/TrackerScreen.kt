@@ -670,6 +670,8 @@ private fun BetCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(bet.eventName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // An open bet: everything Tj has on its game (this bet's included), so a game he's heavy on shows at a glance (Tj, 2026-10-04).
+                    if (open) GameBetsChip(bet.eventName, bet.startsTs, bet.league, Modifier.padding(top = 3.dp, bottom = 2.dp), eventId = bet.eventId)
                     if (open) move?.let { LineMoveNote(it) }
                     Text(
                         TrackerSort.scannerOf(bet).short +
