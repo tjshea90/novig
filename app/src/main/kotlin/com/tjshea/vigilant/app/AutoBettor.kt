@@ -24,6 +24,8 @@ import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.GameExposure
+import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -549,6 +551,9 @@ class AutoBettor(
         const val NOTE_REPEAT_MS = 60 * 60_000L
 
         private const val REASON_CHARS = 90
+
+        /** The per-game hold notes kept so the same one isn't logged every cycle. */
+        private const val GAME_LIMIT_NOTES = 200
 
         /** [row]'s exact bet on Novig, as the Bet sheet finds it ([NovigBetFinder]), with its market; null unless the outcome is in that market. */
         suspend fun resolveOnNovig(c: AppContainer, row: CnoRow): BetTarget? {
