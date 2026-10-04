@@ -167,6 +167,21 @@ class ApiBettingUiTest {
     }
 
     @Test
+    fun `the most at risk on one game is a limit chip, on by default, and No limit turns it off`() {
+        var settings = ScanSettings()
+        assertEquals("on by default (Tj, 2026-10-04: one event is one risk)", 25.0, settings.apiMaxPerGame, 1e-9)
+        screen {
+            NovigBettingSection(BettingUi(enabled = true, balance = 12.5), settings, BettingActions(), { t -> settings = t(settings) })
+        }
+        compose.onNodeWithText("Most at risk on one game", substring = true).performScrollTo().assertExists()
+        compose.onNodeWithText("No limit").performScrollTo().performClick()
+        assertEquals(0.0, settings.apiMaxPerGame, 1e-9)
+        compose.onNodeWithText("$25.00").performScrollTo().performClick()
+        assertEquals(25.0, settings.apiMaxPerGame, 1e-9)
+        compose.onNodeWithText("Auto-bet and auto-make never take a game past it", substring = true).assertExists()
+    }
+
+    @Test
     fun `any amount can be typed in, and only a sendable one moves money`() {
         var moved: Pair<String, Double>? = null
         screen {
