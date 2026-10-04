@@ -90,12 +90,12 @@ class GameBetsTest {
 
     @Test
     fun `resting bids are listed apart from bets and add to the game's total but never to the money placed`() {
-        val s = GameBets.of(listOf(bet("a", stake = 4.0)), listOf(bid("b1")))!!.of(ref(id = "e1"))!!
+        val s = GameBets.of(listOf(bet("a", stake = 4.0)), listOf(bid("b1"))).of(ref(id = "e1"))!!
         assertEquals(4.0, s.placed, 1e-9)
         assertEquals("1,000 contracts at 45 cents, \$0.01 each", 4.5, s.resting, 1e-9)
         assertEquals(8.5, s.total, 1e-9)
         assertEquals(1, s.bids.size)
-        assertEquals(com.tjshea.vigilant.data.tracker.GameBets.Kind.BID, s.bids.single().kind)
+        assertEquals(GameBets.Kind.BID, s.bids.single().kind)
         assertEquals("the limit counts bids beside bets", 8.5, s.atRisk, 1e-9)
     }
 
