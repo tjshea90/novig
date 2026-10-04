@@ -97,8 +97,8 @@ data class MakerRules(
             earlyHours = s.trapEarlyHours.coerceAtLeast(0),
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
-            popularFirst = s.makerPopularFirst,
-            requireSharp = false,
+            popularFirst = true,
+            requireSharp = s.makerRequireSharp,
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
