@@ -191,6 +191,85 @@ class ParlayClosesTest {
         assertTrue(ParlayCloses.parseGameLine(root, soccer, pick("Moneyline", "Arsenal")) is CloseLookup.None)
     }
 
+    // ---- one game, not another that shares a word (Tj's scan-study file, 2026-10-03: a Washington State moneyline of -117 "closed" at +272) ----------
+
+    /**
+     * Tj's v0.58.3 scan-study file: "Fresno State @ Washington State", Washington State -117 (-115 at its last look, fair 54%), got a Pinnacle close of +272 (27%,
+     * CLV -50%). Names share the school word "State" (the matcher's token for it is `st`), and a name pair that shares only that word scores 0.5, the bar the
+     * closes code asked: any other "X State @ Y State" game starting within three hours passed, and the LATEST such row won, not the best fit.
+     */
+    private val sat = Instant.parse("2026-10-03T23:30:00Z").toEpochMilli()
+
+    private fun wsu(id: String, selection: String = "Washington State", market: String = "Moneyline") = TrackedBet(
+        id, sat - 150 * 60_000L, "NCAAF", "Fresno State @ Washington State", sat, market, selection, "m", "", 0.54, 0.54, 0.54, 0.0007, 1.0,
+    )
+
+    private fun flat(home: String, away: String, homeOdds: Int, awayOdds: Int, start: String = "2026-10-03T23:30:00Z", update: String = start) =
+        """{"sport_key":"americanfootball_ncaaf","home_team":"$home","away_team":"$away","bookmaker":"pinnacle","home_odds":$homeOdds,"away_odds":$awayOdds,"draw_odds":null,"market_key":"h2h","commence_time":"$start","last_update":"$update"}"""
+
+    @Test
+    fun `a moneyline close comes from the game with the best fit, never from another game that shares only the word State`() {
+        val truth = flat("Washington State Cougars", "Fresno State Bulldogs", -115, -105)
+        // Another game 15 minutes later between two other State teams: it shares "State" with both of ours, and its row is the later one.
+        val other = flat("Oregon State Beavers", "Idaho State Bengals", 272, -340, start = "2026-10-03T23:45:00Z")
+        val both = json.parseToJsonElement("[$other,$truth]")
+        val found = ParlayCloses.parseGameLine(both, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
+        assertEquals(p(-115) / (p(-115) + p(-105)), found.fair, 1e-9)
+        val away = ParlayCloses.parseGameLine(both, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
+        assertEquals(1.0, found.fair + away.fair, 1e-9)
+        // The real game missing from the file: no close at all beats the other game's.
+        val none = ParlayCloses.parseGameLine(json.parseToJsonElement("[$other]"), wsu("ml"), pick("Moneyline", "Washington State"))
+        assertTrue(none.toString(), none is CloseLookup.None)
+    }
+
+    @Test
+    fun `two games that fit equally well are not guessed between, and a doubleheader's own game is the nearest start`() {
+        // Same two teams twice (a doubleheader, 3 hours apart): the bet's own game by its start.
+        val first = flat("Washington State Cougars", "Fresno State Bulldogs", -115, -105, start = "2026-10-03T20:30:00Z")
+        val second = flat("Washington State Cougars", "Fresno State Bulldogs", 150, -170, start = "2026-10-03T23:30:00Z")
+        val dh = ParlayCloses.parseGameLine(json.parseToJsonElement("[$first,$second]"), wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
+        assertEquals(p(150) / (p(150) + p(-170)), dh.fair, 1e-9)
+        // Two different pairings each as good a fit as the other: refused, not the later one.
+        val x = flat("Washington State", "Fresno State", -115, -105)
+        val y = flat("Washington State Cougars", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
+        val a = flat("Washington State Cougars", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
+        val clash = ParlayCloses.parseGameLine(json.parseToJsonElement("[$x,$y,$a]"), wsu("ml"), pick("Moneyline", "Washington State"))
+        // (x and y are the same pairing by name: the nearest start, x's, is the game.)
+        assertEquals(p(-115) / (p(-115) + p(-105)), (clash as CloseLookup.Found).fair, 1e-9)
+    }
+
+    private fun fileRow(home: String, away: String, team: String, price: Int, start: String = "2026-10-03T23:30:00Z", snap: String = "2026-10-03T23:28:00Z") =
+        """{"commence_time":"$start","home_team":"$home","away_team":"$away","source":"pinnacle","player_name":"$team","market_key":"moneyline","line":null,"over_price":$price,"under_price":null,"snapshot_time":"$snap"}"""
+
+    @Test
+    fun `in the closes file a game of two State teams gets its own close, on the right side, and another State game's rows are never used`() {
+        val truth = listOf(
+            fileRow("Washington State Cougars", "Fresno State Bulldogs", "Washington State Cougars", -115),
+            fileRow("Washington State Cougars", "Fresno State Bulldogs", "Fresno State Bulldogs", -105),
+        )
+        val other = listOf(
+            fileRow("Oregon State Beavers", "Idaho State Bengals", "Oregon State Beavers", 272, start = "2026-10-03T23:45:00Z", snap = "2026-10-03T23:44:00Z"),
+            fileRow("Oregon State Beavers", "Idaho State Bengals", "Idaho State Bengals", -340, start = "2026-10-03T23:45:00Z", snap = "2026-10-03T23:44:00Z"),
+        )
+        val root = json.parseToJsonElement("""{"rows":[${(other + truth).joinToString(",")}]}""")
+        val mine = ParlayCloses.parseFileGameLine(root, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
+        assertEquals(p(-115) / (p(-115) + p(-105)), mine.fair, 1e-9)
+        val theirs = ParlayCloses.parseFileGameLine(root, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
+        assertEquals(1.0, mine.fair + theirs.fair, 1e-9)
+        assertTrue(ParlayCloses.parseFileGameLine(json.parseToJsonElement("""{"rows":[${other.joinToString(",")}]}"""), wsu("ml"), pick("Moneyline", "Washington State")) is CloseLookup.None)
+    }
+
+    @Test
+    fun `in The Odds API's event shape a team is the outcome that fits it best, not the first that shares a word`() {
+        val game = """[{"id":"e","sport_key":"americanfootball_ncaaf","commence_time":"2026-10-03T23:30:00Z","home_team":"Washington State Cougars","away_team":"Fresno State Bulldogs",
+            "bookmakers":[{"key":"pinnacle","markets":[{"key":"h2h","outcomes":[{"name":"Fresno State Bulldogs","price":-105},{"name":"Washington State Cougars","price":-115}]}]}]}]"""
+        val root = json.parseToJsonElement(game)
+        val mine = ParlayCloses.parseGameLine(root, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
+        assertEquals(p(-115) / (p(-115) + p(-105)), mine.fair, 1e-9)
+        val dog = ParlayCloses.parseGameLine(root, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
+        assertEquals(1.0, mine.fair + dog.fair, 1e-9)
+    }
+
     @Test
     fun `the Odds API sport key of a bet's league`() {
         assertEquals("americanfootball_nfl", ParlayCloses.sportKeyOf(bet("a", "Moneyline", "Buffalo Bills")))
