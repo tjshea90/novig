@@ -417,4 +417,40 @@ class ScannerTest {
         assertTrue(r.errors.none { it.contains("ParlayAPI") })
         assertTrue(r.result!!.opportunities.isNotEmpty())
     }
+    /**
+     * Tj's v0.59.1 file, 2026-10-04: a game kicks off while a long scan is still reading its plan, and Novig answers 404 for every one of its markets (a
+     * pregame book is gone at the start). The pump asks only for games that haven't started.
+     */
+    @Test
+    fun `a game that kicked off since the scan began is not read, and is read when it hasn't`() = runTest {
+        val started = Fixtures.START_MS
+        fun novig(bumpPastStart: Boolean) = object : NovigSource {
+            var bookCalls = 0
+            override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(
+                NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", "NFL", "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", started),
+            )
+            override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?): List<NovigMarket> {
+                // The catalog took a while: by the time the books are asked for, the game's two minutes of grace are over.
+                if (bumpPastStart) now = started + 20_000
+                return listOf(
+                    NovigMarket(Fixtures.ML_MARKET, Fixtures.EVENT_ID, "MONEY", "OPEN", "DAL", started, MarketFee.GAME,
+                        listOf(NovigOutcome(Fixtures.ML_DAL, "DAL", "TBD"), NovigOutcome(Fixtures.ML_BAL, "BAL", "TBD"))),
+                )
+            }
+            override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch {
+                bookCalls++
+                return BookBatch(emptyMap(), 0, 0, marketIds.size)
+            }
+            override suspend fun market(marketId: String): NovigMarket? = null
+        }
+        // The scan begins 100 s before the start (inside the plan), and by the books' turn it is 20 s after it.
+        now = started - 100_000
+        val late = novig(bumpPastStart = true)
+        Scanner(late, clock = { now }).scan(settings, listOf(FakeOddsApi()))
+        assertEquals("no book is asked for a game that has started", 0, late.bookCalls)
+        now = started - 100_000
+        val early = novig(bumpPastStart = false)
+        Scanner(early, clock = { now }).scan(settings, listOf(FakeOddsApi()))
+        assertEquals("the same game, not yet started, is read", 1, early.bookCalls)
+    }
 }
