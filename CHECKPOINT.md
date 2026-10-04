@@ -1,21 +1,23 @@
-# CHECKPOINT 2514 — read me first, then TASKS.md
+# CHECKPOINT 2515 — read me first, then TASKS.md
 
-**Written:** 2026-10-04T03:48:35Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-55a7238c-jfgers` · **builds on:** `8446c8bd` (this checkpoint is the commit after it)
+**Written:** 2026-10-04T03:56:30Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-55a7238c-jfgers` · **builds on:** `04f851f5` (this checkpoint is the commit after it)
 
 ## Just done
-v0.58.4 released + recorded (release.yml run 37174473407 green, tag v0.58.4, BUILDLOG line written, pushed). Then answered Tj's question (no code change): does large Novig liquidity on a CNO +EV bet mean a sharp is on the other side? Answer = no per RESEARCH.md §62 (big resting size is LP quoting, symmetric, and loses to the close); the real protections are the sharp-book veto, Pinnacle confirm and trap guard; his own export can test it via the 'Novig dollars at the price' split
+BW1 done (read-only): no per-game limit exists; game id missing on TrackedBet/RestingBid; single chokepoint is ApiBetPlanner.plan via ApiBetPlacer.plan; BW3 design decided and written in TASKS.md (unit eventId, per-market larger side summed, cap $25 default, auto refuses, hand warns, lock never blocked). BW2 not done: Tj's file is not in this container
 
 ## Do this next
-Open job is unchanged: BX5 (ask Tj whether to read a book page for every prop >= 1.5% EV, needed for the sharp-prop-book question), then BW1-BW5 (per-game exposure safeguard). Optional: when Tj's next scan-study file arrives, read CLV by the available-dollars bucket (under $25, $25-100, $100-500, $500+) to confirm the liquidity answer on his own data.
+Build BW4 in data first, failing-first: GameExposure (pure) + TrackedBet.eventId + RestingBid.eventId + ScanSettings.maxPerGame, then ApiBetPlanner/ApiBetPlacer enforcement, AutoBettor pre-skip counters, MakerDesk/MakerPlan, then UI chip row + Bet sheet warning, then BW5 tests/mutants/full floor/ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  24a5e562 ckpt 2514: v0.58.4 released + recorded (release.yml run 37174473407 green, tag v0.58.4,
   9b32300f ckpt 2513: pre-release: v0.58.4: a close from another game can no longer count (a Washi
   2273ba90 ckpt 2512: BX3 log-only fixes done in data: rules line now says CNO's edge/odds/books, 
   3486e5f2 ckpt 2511: BX2 done in data: WSU close bug confirmed (0.5 matcher bar + latest row not 
@@ -25,7 +27,6 @@ Open job is unchanged: BX5 (ask Tj whether to read a book page for every prop >=
   d0334f7d ckpt 2507: pre-release: v0.58.3: bids are kept within the wallet and the day's limit (a
   c80df9fc ckpt 2506: pre-ship: v0.58.3: bids are kept within the wallet and the day's limit (a be
   baa4035c ckpt 2505: BV built: RateGate.takeLowRate, ReadPace on BookBatch (public/key start/low/
-  d37ac654 ckpt 2504: BU app tests green (MakerAppTest + WalletStripTest 23 passed). Tj sent diagn
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
