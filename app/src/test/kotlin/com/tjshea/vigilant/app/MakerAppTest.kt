@@ -352,7 +352,7 @@ class MakerAppTest {
 
     // ---- the wallet kept ahead of the bids (Tj, 2026-10-04) ---------------------------------------------------------------
 
-    private fun upDollars() = app.container.makerDesk()!!.bids().filter { it.active }.sumOf { it.restingDollars }
+    private suspend fun upDollars() = app.container.makerDesk()!!.bids().filter { it.active }.sumOf { it.restingDollars }
 
     @Test
     fun `a balance reading under the bids up takes the extra bids down on its own - the wallet watch`() = runBlocking {
