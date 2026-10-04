@@ -73,9 +73,9 @@ class GameBetsTest {
 
     @Test
     fun `Novig's event id finds the game whatever its name says, the way a Vigilant bet is found`() {
-        val idx = GameBets.of(listOf(bet("a", eventId = "e1", event = "LA Rams at Philly")), emptyList())
+        val idx = GameBets.of(listOf(bet("a", eventId = "e1", event = "Rams game, Week 5")), emptyList())
         assertEquals(1, idx.of(ref(event = "Los Angeles Rams @ Philadelphia Eagles", id = "e1"))!!.bets.size)
-        assertNull("the same names without the id match nothing: the old name can't be read as a matchup", idx.of(ref(event = "Los Angeles Rams @ Philadelphia Eagles")))
+        assertNull("the same names without the id match nothing: the stored name can't be read as a matchup", idx.of(ref(event = "Los Angeles Rams @ Philadelphia Eagles")))
     }
 
     @Test
