@@ -450,7 +450,7 @@ object MakerRulesText {
     }
 
     /** "4%", "3.5%", "3.25%": as many decimals as the number has (to two), never rounded to another choice. */
-    fun pct(v: Double): String = String.format(Locale.US, "%.1f", v * 100).trimEnd('0').trimEnd('.') + "%"
+    fun pct(v: Double): String = String.format(Locale.US, "%.2f", v * 100).trimEnd('0').trimEnd('.') + "%"
 
     /** The trap guard's early rule as it touches bids (RESEARCH.md §71). */
     fun earlyNote(hours: Int): String =
