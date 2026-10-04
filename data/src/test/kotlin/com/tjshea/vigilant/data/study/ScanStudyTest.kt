@@ -392,6 +392,7 @@ class ScanStudyTest {
             id = "tj", createdAtMs = start - 2 * 3_600_000L, league = "MLB", eventName = event, startsTs = start, marketLabel = "Moneyline", selection = "New York Mets",
             marketId = "", outcomeId = "", price = 0.48, cost = 0.48, fairAtBet = 0.5, evPercentAtBet = 0.04, stake = 2.0, american = 108, status = BetStatus.LOST,
             settledAtMs = now - 1_000, settledBy = "scores", closingFair = 0.57, closingSeenAtMs = start - 120_000, novigClose = 0.56, novigCloseAtMs = start - 100_000,
+            nowVia = com.tjshea.vigilant.data.tracker.BetTracker.VIA_CNO,
         )
         val close = FakeClose(0.5)
         val report = s.settle(FakeScores(), listOf(close), listOf(placed), File(tmp.root, "scratch"))
@@ -403,9 +404,46 @@ class ScanStudyTest {
         assertEquals(0.57, com.tjshea.vigilant.data.tracker.ClosingLine.closeFair(ml.bet, now)!!, 1e-9)
         assertEquals(0.56, ml.bet.novigClose!!, 1e-9)
         assertEquals("tracker", ml.from)
+        // Whose fair line that close is, named (the file said only "read before the start" and could not be told from a sharp book's close).
+        assertEquals("Tracker · read before the start (CNO's books)", ml.bet.closeVia)
         assertEquals(BetStatus.LOST, bets.getValue("Total Runs").bet.status)
         // The close source was asked only for the total.
         assertEquals(1, close.asked)
+    }
+
+    /**
+     * Tj's v0.58.3 file: a Washington State moneyline of -117 "closed" at +272 (CLV -50%) and dragged the hidden group's CLV from +2.0% to -0.4%. A close the
+     * lookup finds that can't be the bet's is left out ([com.tjshea.vigilant.data.tracker.ClosePlausibility]); and the journal, which is append-only, may still
+     * hold one from before the matcher was fixed, so the file leaves it out too, with the reason.
+     */
+    @Test
+    fun `a close that can't be the bet's is never kept by the lookup, and one the journal holds is left out of the file with its reason`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        // Today's lookup: the close source says 5% for a bet listed near 50%: no close, with why.
+        s.settle(FakeScores(), listOf(FakeClose(0.05)), emptyList(), File(tmp.root, "scratch"))
+        val held = j.fold(day).values.single().bet
+        assertNull(held.closeFair)
+        assertTrue(held.closeNote, held.closeNote!!.contains("probably another game or side, not used"))
+        // A line written by an older version, before the check: kept in the journal, left out of the file.
+        j.append(day, listOf(Line(Line.RES, j.fold(day).values.single().id, now, r = StudyResult(closeFair = 0.05, closeVia = "ParlayAPI · Pinnacle close", closeFinal = true))))
+        val out = StringWriter()
+        val meta = StudyExport.Meta("0.58.3", 103, "moto g", "edge ≥ 2.5%", java.util.TimeZone.getTimeZone("America/New_York"))
+        StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"))
+        val text = out.toString()
+        assertTrue(text, text.contains("Closes found: 0 of 1"))
+        val row = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString(
+            StudyExport.StudyRow.serializer(), text.substringAfter("<<<JSONL\n").substringBefore("\n>>>").lines().first { it.isNotBlank() },
+        )
+        assertNull(row.closeFair)
+        assertNull(row.clv)
+        assertNull(row.closeVia)
+        assertTrue(row.closeNote!!.contains("probably another game or side"))
+        // The rules line says which part decides the app's list.
+        assertTrue(text, text.contains("follows the 'CNO:' part"))
     }
 
     // ---- efficiency ---------------------------------------------------------------------------------------------------------
