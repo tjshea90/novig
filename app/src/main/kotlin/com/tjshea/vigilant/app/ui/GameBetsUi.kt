@@ -87,7 +87,7 @@ object GameBetsText {
     /** What the per-game limit leaves: its room, or that the game is at it; null when none is set. */
     fun limit(s: GameBets.Summary, limit: Double): String? {
         if (limit <= 0.0) return null
-        val room = limit - s.placed
+        val room = limit - s.atRisk
         return if (room <= 0.004) "At your ${Format.money(limit)} limit per game: auto-bet and bids add nothing more here"
         else "${Format.money(room)} room under your ${Format.money(limit)} limit per game"
     }
@@ -103,7 +103,7 @@ object GameBetsText {
 @Composable
 fun GameBetsChip(event: String, startsTs: Long?, league: String, modifier: Modifier = Modifier, eventId: String = "") {
     val view = LocalGameBets.current
-    val summary = remember(view, event, startsTs, league, eventId) { view.bets.of(event, startsTs, league, eventId) } ?: return
+    val summary = remember(view, event, startsTs, league, eventId) { view.bets.of(event, null, league, eventId) } ?: return
     GameBetsButton(summary, view.limit, modifier)
 }
 
