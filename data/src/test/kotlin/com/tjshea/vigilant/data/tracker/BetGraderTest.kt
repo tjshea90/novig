@@ -154,6 +154,33 @@ class BetGraderTest {
         assertEquals(Pick.Moneyline("Daniil Medvedev"), BetGrader.pickOf(bet("Moneyline", "Daniil Medvedev")))
     }
 
+    /**
+     * Tj's v0.59.1 file, 2026-10-04: three started NCAAF bets "couldn't find this game on the NCAAF scoreboard": Novig says "Miami (FL) @ Clemson" and "Arkansas State @
+     * Louisiana-Lafayette", ESPN says "Miami Hurricanes at Clemson Tigers" and "Arkansas State Red Wolves at Louisiana Ragin' Cajuns" (checked on ESPN's own scoreboard).
+     * One team matched exactly and the other shared its name (0.5), under the grader's 0.8 for each: now the scans' rule (0.5 each, 1.5 together) finds them.
+     */
+    @Test
+    fun `a game ESPN names differently is found when one team matches exactly and the other shares its name`() {
+        val kickoff = java.time.Instant.parse("2026-10-03T23:30:00Z").toEpochMilli()
+        fun ncaaf(id: String, away: String, home: String, start: Long = kickoff) = GameScore(id, "NCAAF", home = home, away = away, startMs = start, final = true, called = false, homeScore = 21, awayScore = 28)
+        val miami = ncaaf("m", "Miami Hurricanes", "Clemson Tigers")
+        val cajuns = ncaaf("c", "Arkansas State Red Wolves", "Louisiana Ragin' Cajuns", kickoff + 30 * 60_000L)
+        val miamiOhio = ncaaf("o", "Bowling Green Falcons", "Miami (OH) RedHawks", kickoff - 4 * 3_600_000L)
+        fun ofBet(event: String, selection: String, start: Long) = bet("Point Spread", selection, event = event, league = "NCAAF", start = start)
+        val clemson = ofBet("Miami (FL) @ Clemson", "Miami (FL) -17.5", kickoff)
+        assertEquals("m", BetGrader.gameOf(clemson, listOf(miamiOhio, cajuns, miami))?.id)
+        assertEquals("c", BetGrader.gameOf(ofBet("Arkansas State @ Louisiana-Lafayette", "Arkansas State +6.5", kickoff + 30 * 60_000L), listOf(miami, cajuns))?.id)
+        // And it grades: Miami won 28-21 away, so -17.5 lost; Arkansas State +6.5 covered (lost 28-21 by 7? no: 28 away beats 21: Arkansas State won outright).
+        assertEquals(BetStatus.LOST, BetGrader.grade(BetGrader.pickOf(clemson)!!, miami))
+        // Two games sharing only a school word are still two games ("Washington State @ Fresno State" against "Oregon State @ Idaho State": 0.5 + 0.5).
+        val other = ncaaf("w", "Oregon State Beavers", "Idaho State Bengals")
+        assertNull(BetGrader.gameOf(ofBet("Washington State @ Fresno State", "Washington State -3.5", kickoff), listOf(other)))
+        // Only one team sharing a word (the other not at all) is no game either.
+        assertNull(BetGrader.gameOf(ofBet("Miami (FL) @ Duke", "Miami (FL) -3.5", kickoff), listOf(miami)))
+        // Right teams, wrong day: the start still has to be close.
+        assertNull(BetGrader.gameOf(ofBet("Miami (FL) @ Clemson", "Miami (FL) -17.5", kickoff + 3 * 24 * 3_600_000L), listOf(miami)))
+    }
+
     @Test
     fun `a tennis match grades from its sets and games`() {
         fun g(market: String, selection: String) = BetGrader.grade(tennis(market, selection), muller)
