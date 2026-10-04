@@ -921,4 +921,206 @@ class MakerTest {
         // Auto-bet on but idle for want of the background scan: switching bids on starts it too, and says so first.
         assertTrue(MakerSetup.set(cnoOnly.copy(autoBet = true), BidMode.RECOMMEND).startsAutoBet)
     }
+
+    // ---- the wallet kept ahead of the bids (Tj, 2026-10-04) ------------------------------------------------------------------
+
+    /**
+     * Tj, 2026-10-04 (screenshot: "Vigilant wallet $8.98 · 7 bids up ($16.14)"): bids were checked against the wallet only when posted, and Novig holds
+     * nothing for a resting bid (NOVIG_API.md §17), so a bet by hand, an auto-bet or a fill afterwards left more bids up than the wallet covers, and
+     * nothing took them down. The plan now trims: the budget (wallet and day's limit, less every bid up) going under zero takes the least valuable bids down.
+     */
+    private fun budgetFor(wallet: Double, vararg bids: RestingBid) = wallet - bids.sumOf { it.restingDollars }
+
+    @Test
+    fun `bids up that the wallet no longer covers come down, and a trimmed side isn't posted again that pass`() {
+        // $5.00, $4.00 and $3.00 up ($12.00) and a wallet that fell to $8.98: the $5.00 bid is the one that doesn't fit.
+        val up = listOf(resting("a-over", 0.50), resting("b-over", 0.40), resting("c-over", 0.30))
+        val wanted = listOf(post("a-over", 0.50), post("b-over", 0.40), post("c-over", 0.30))
+        val plan = MakerPlan.plan(wanted, up, rules, now, budget = budgetFor(8.98, *up.toTypedArray()))
+        assertEquals(listOf("a-over"), plan.cancels.map { it.first.outcomeId })
+        assertEquals(MakerPlan.TRIMMED, plan.cancels.single().second)
+        assertEquals(1, plan.trimmed)
+        assertEquals(setOf("b-over", "c-over"), plan.kept.map { it.outcomeId }.toSet())
+        // Its line is still wanted, but the wallet just took it down: not posted again.
+        assertTrue(plan.places.isEmpty())
+        // Covered to the cent: nothing comes down. One cent short: the bid goes.
+        assertEquals(0, MakerPlan.plan(wanted, up, rules, now, budget = budgetFor(12.0, *up.toTypedArray())).trimmed)
+        assertEquals(1, MakerPlan.plan(wanted, up, rules, now, budget = budgetFor(11.99, *up.toTypedArray())).trimmed)
+        // No wallet reading (the default budget): nothing is judged.
+        assertEquals(0, MakerPlan.plan(wanted, up, rules, now).trimmed)
+    }
+
+    @Test
+    fun `the bids trimmed are the least valuable - those Tj approved by hand last, then ones behind another bid, the dearest and the least EV`() {
+        // Room for two of three $4.00 bids: X leads its side, Y sits behind another bid, Z is Tj's own approval and sits behind one too.
+        val behind = 0.40
+        val x = MakerDecision.Post(line("x-over").copy(bestBid = 0.35), 0.40, 1_000, 0.04)
+        val y = MakerDecision.Post(line("y-over").copy(bestBid = behind), 0.40, 1_000, 0.04)
+        val z = MakerDecision.Post(line("z-over").copy(bestBid = behind), 0.40, 1_000, 0.04)
+        val up = listOf(resting("x-over", 0.40), resting("y-over", 0.40), resting("z-over", 0.40).copy(auto = false))
+        val plan = MakerPlan.plan(listOf(x, y, z), up, rules, now, budget = budgetFor(8.0, *up.toTypedArray()))
+        assertEquals(listOf("y-over"), plan.cancels.map { it.first.outcomeId })
+        // Leaders over followers, the cheaper over the dearer, then the more EV: two leaders, $4.00 + $5.00 won't both fit a $5.50 wallet.
+        val cheap = listOf(resting("a-over", 0.50), resting("b-over", 0.30))
+        assertEquals(listOf("a-over"), MakerPlan.plan(listOf(post("a-over", 0.50), post("b-over", 0.30)), cheap, rules, now, budget = budgetFor(5.5, *cheap.toTypedArray())).cancels.map { it.first.outcomeId })
+        val same = listOf(resting("c-over", 0.40).copy(evAtFair = 0.04), resting("d-over", 0.40).copy(evAtFair = 0.06))
+        val tie = MakerPlan.plan(emptyList(), same, rules, now, budget = budgetFor(4.0, *same.toTypedArray()), partial = true)
+        assertEquals(listOf("c-over"), tie.cancels.map { it.first.outcomeId })
+        // What fits is kept even when it ranks low: a $5.00 leader is trimmed for a $4.00 wallet, the $3.00 bid behind another stays.
+        val fit = listOf(resting("e-over", 0.50), resting("f-over", 0.30))
+        val behindF = MakerDecision.Post(line("f-over").copy(bestBid = 0.30), 0.30, 1_000, 0.04)
+        val kept = MakerPlan.plan(listOf(post("e-over", 0.50), behindF), fit, rules, now, budget = budgetFor(4.0, *fit.toTypedArray()))
+        assertEquals(listOf("e-over"), kept.cancels.map { it.first.outcomeId })
+        assertEquals(listOf("f-over"), kept.kept.map { it.outcomeId })
+    }
+
+    @Test
+    fun `with auto-make off, or a scan still running, a bid the wallet can't cover still comes down`() {
+        val up = listOf(resting("a-over", 0.50), resting("b-over", 0.40))
+        val wanted = listOf(post("a-over", 0.50), post("b-over", 0.40))
+        val hand = MakerPlan.plan(wanted, up, rules, now, budget = budgetFor(6.0, *up.toTypedArray()), repost = false)
+        assertEquals(listOf("a-over"), hand.cancels.map { it.first.outcomeId })
+        assertTrue(hand.places.isEmpty())
+        // A running scan hasn't judged these lines: they stay up, unless the wallet can't hold them.
+        val running = MakerPlan.plan(emptyList(), up, rules, now, budget = budgetFor(6.0, *up.toTypedArray()), partial = true)
+        assertEquals(listOf("a-over"), running.cancels.map { it.first.outcomeId })
+        assertEquals(0, MakerPlan.plan(emptyList(), up, rules, now, budget = budgetFor(9.0, *up.toTypedArray()), partial = true).cancels.size)
+    }
+
+    @Test
+    fun `a cycle takes down the bids a fallen wallet can't cover, and says why on the bid`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        // Two bids up on a $100 wallet: m1's $5.00 and m2's cheaper one (fair 0.45 → bid 0.43).
+        val lines = listOf(line("m1-over", fair = 0.52), line("m2-over", fair = 0.45, m = market("m2")))
+        assertEquals(2, d.cycle(lines, rules, null, 50.0, wallet = 100.0).placed)
+        // A bet by hand takes the wallet to $7.00 (Novig held nothing for the bids): $9.99 is up.
+        now += 30_000
+        val r = d.cycle(lines, rules, null, 50.0, wallet = 7.0)
+        assertEquals(1, r.trimmed)
+        assertEquals(1, r.cancelled)
+        assertEquals(0, r.placed)
+        val m1 = d.bids().first { it.outcomeId == "m1-over" }
+        assertEquals(MakerStatus.CANCELED, m1.status)
+        assertEquals(MakerPlan.TRIMMED, m1.why)
+        assertEquals(MakerStatus.RESTING, d.bids().first { it.outcomeId == "m2-over" }.status)
+        assertEquals(1, novig.orders.values.count { it.status == "OPEN" })
+        // Nothing more comes down while the wallet covers what's left, and nothing is posted into the room that isn't there.
+        now += 30_000
+        val again = d.cycle(lines, rules, null, 50.0, wallet = 7.0)
+        assertEquals(0, again.trimmed + again.cancelled + again.placed)
+        assertEquals(2, novig.placed.size)
+    }
+
+    @Test
+    fun `a bid that moves on a wallet that can't cover its replacement waits - the cancel's dollars don't make up for an empty wallet`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        d.cycle(listOf(line("m1-over", fair = 0.52)), rules, null, 50.0, wallet = 100.0)
+        // The wallet fell to $3.00 and the fair fell: the old $5.00 bid is cancelled, and a $4.95 replacement would be $1.95 over the wallet.
+        now += 30_000
+        val r = d.cycle(listOf(line("m1-over", fair = 0.50)), rules, null, 50.0, wallet = 3.0)
+        assertEquals(1, r.cancelled)
+        assertEquals(0, r.placed)
+        assertEquals(1, novig.placed.size)
+        assertEquals(mapOf(MakerPlan.BUDGET_REACHED to 1), r.waiting)
+    }
+
+    @Test
+    fun `the day's limit trims bids too - resting bids may not push the day's API bets over it`() = runBlocking {
+        val novig = FakeNovig()
+        val t = tracker()
+        val d = desk(novig, t)
+        val lines = listOf(line("m1-over", fair = 0.52), line("m2-over", fair = 0.45, m = market("m2")))
+        d.cycle(lines, rules, null, 50.0, wallet = 100.0)
+        // $5.00 of API bets today against a $12.00 limit leaves $7.00: the $9.99 up is over it.
+        t.logApi(BetTarget(market("m9"), "m9-over", "NFL", "A @ B", start, "Player Receiving Yards", "X Over", 0.5, now, BetTracker.SOURCE_VIGILANT), "taker-1",
+            listOf(NovigFill("tf", "taker-1", null, "m9", "m9-over", 1_000, 5.0, true, 0.0, now)))
+        now += 30_000
+        val r = d.cycle(lines, rules, null, maxPerDay = 12.0, wallet = 100.0)
+        assertEquals(1, r.trimmed)
+        assertEquals(MakerStatus.CANCELED, d.bids().first { it.outcomeId == "m1-over" }.status)
+    }
+
+    @Test
+    fun `fit between passes takes bids down with no lines to judge by, settles first so a bid that filled isn't counted twice, and counts a cancel Novig hasn't applied`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val lines = listOf(line("m1-over", fair = 0.52), line("m2-over", fair = 0.45, m = market("m2")))
+        d.cycle(lines, rules, null, 50.0, wallet = 100.0)
+        // The wallet's balance already shows the m1 bid's $5.00 as spent (it filled), and $5.00 is what's left: m2's $4.99 fits.
+        novig.fill(novig.orders.values.first { it.outcomeId == "m1-over" }.orderId, 1_000)
+        now += 30_000
+        val settled = d.fit(rules, 50.0, wallet = 5.0)
+        assertEquals(0, settled.trimmed)
+        assertEquals(1, settled.fills.size)
+        assertTrue(novig.cancelled.isEmpty())
+        // The wallet falls under m2's bid: it comes down, with nothing posted and no line needed.
+        now += 30_000
+        val r = d.fit(rules, 50.0, wallet = 3.0)
+        assertEquals(1, r.trimmed)
+        assertEquals(0, r.placed)
+        assertEquals(MakerPlan.TRIMMED, d.bids().first { it.outcomeId == "m2-over" }.why)
+        assertEquals(2, novig.placed.size)
+        // Nothing up, nothing to do: no cancel.
+        val none = d.fit(rules, 50.0, wallet = 0.0)
+        assertEquals(0, none.trimmed)
+        assertEquals(1, novig.cancelled.size)
+    }
+
+    @Test
+    fun `a cancel Novig hasn't applied still counts as up - the next fit takes down what the wallet can't hold beside it`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val lines = listOf(line("m1-over", fair = 0.52), line("m2-over", fair = 0.45, m = market("m2")))
+        d.cycle(lines, rules, null, 50.0, wallet = 100.0)
+        novig.slowCancel = true
+        now += 30_000
+        // m1 goes first (the dearer one); Novig hasn't applied its cancel.
+        assertEquals(1, d.fit(rules, 50.0, wallet = 7.0).trimmed)
+        assertEquals(MakerStatus.CANCELING, d.bids().first { it.outcomeId == "m1-over" }.status)
+        // Still on the book: it could still fill, so m2 can't rest beside it on $7.00.
+        now += 30_000
+        assertEquals(1, d.fit(rules, 50.0, wallet = 7.0).trimmed)
+        // Applied: it's off, and m2 (already cancelled above) is the only one left coming down: nothing more.
+        novig.applyCancels()
+        now += 30_000
+        assertEquals(0, d.fit(rules, 50.0, wallet = 7.0).trimmed)
+        assertTrue(d.bids().none { it.active })
+    }
+
+    @Test
+    fun `a bid Tj approves by hand is held to the wallet beside the bids already up, and the day's limit`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val first = MakerQuote.decide(line("m1-over", fair = 0.52), rules, now) as MakerDecision.Post
+        val second = MakerQuote.decide(line("m2-over", fair = 0.52, m = market("m2")), rules, now) as MakerDecision.Post
+        // $9.00 in the wallet: each $5.00 bid is under it alone, both are not.
+        assertNull(d.post(first, rules, wallet = 9.0, maxPerDay = 50.0))
+        val refused = d.post(second, rules, wallet = 9.0, maxPerDay = 50.0)!!
+        assertTrue(refused, refused.contains("wallet"))
+        assertEquals(1, novig.placed.size)
+        // A wallet reading that wasn't made, or room for both, posts.
+        assertNull(d.post(second, rules, wallet = 10.0, maxPerDay = 50.0))
+        // The day's limit counts what's up too: $5.00 + $5.00 up against $12.00 leaves nothing for a third.
+        val third = MakerQuote.decide(line("m3-over", fair = 0.52, m = market("m3")), rules, now) as MakerDecision.Post
+        assertTrue(d.post(third, rules, wallet = 100.0, maxPerDay = 12.0)!!.contains("limit"))
+        assertNull(d.post(third, rules))
+    }
+
+    @Test
+    fun `the bids Tj approved by hand are the last to come down when the wallet can't hold them all`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        // m1 is auto-make's, the cheaper bid (fair 0.40 → bid 0.38); m2 is Tj's own, the dearer one (bid 0.50).
+        val auto = listOf(line("m1-over", fair = 0.40))
+        d.cycle(auto, rules, null, 50.0, wallet = 100.0)
+        assertNull(d.post(MakerQuote.decide(line("m2-over", fair = 0.52, m = market("m2")), rules, now) as MakerDecision.Post, rules))
+        now += 30_000
+        val both = auto + line("m2-over", fair = 0.52, m = market("m2"))
+        val r = d.cycle(both, rules, null, 50.0, wallet = 7.0)
+        assertEquals(1, r.trimmed)
+        assertEquals(MakerStatus.CANCELED, d.bids().first { it.outcomeId == "m1-over" }.status)
+        assertEquals(MakerStatus.RESTING, d.bids().first { it.outcomeId == "m2-over" }.status)
+    }
 }
