@@ -243,8 +243,10 @@ class ApiBettingController(
     private fun placer(): ApiBetPlacer? = synchronized(placerLock) {
         val t = c.trading ?: return null
         placerCache?.takeIf { it.first === t }?.second
-            ?: ApiBetPlacer(t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock)
-                .also { placerCache = t to it }
+            ?: ApiBetPlacer(
+                t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock,
+                restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(c.makerStore.all()) },
+            ).also { placerCache = t to it }
     }
 
     /** The market's book read from Novig just now (never one shown from the last scan). */
