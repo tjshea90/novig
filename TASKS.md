@@ -3798,5 +3798,7 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
 
 ## Tj, 2026-10-04 (after v0.59.0): "For the most at risk on one game option, add $5 and a manual entry"
 
-- [ ] BY1 Add a $5 chip to "Most at risk on one game" (Settings › Betting & Novig account) and a way to type any amount (a manual entry), the way the app's other chip rows with a typed amount work; 0 / "No limit" stays; a typed amount is saved as `apiMaxPerGame`, junk is ignored, a saved odd amount shows as selected.
-- [ ] BY2 Tests (chip $5 sets 5.0; typing sets the limit; bad input changes nothing; the chosen value reads back), full floor, ship, answer Tj with the link.
+- [x] BY1 Add a $5 chip to "Most at risk on one game" (Settings › Betting & Novig account) and a way to type any amount (a manual entry), the way the app's other chip rows with a typed amount work; 0 / "No limit" stays; a typed amount is saved as `apiMaxPerGame`, junk is ignored, a saved odd amount shows as selected.
+- [x] BY2 Tests (chip $5 sets 5.0; typing sets the limit; bad input changes nothing; the chosen value reads back), full floor, ship, answer Tj with the link.
+  Done BY (v0.59.1, code 106): `ScanSettings.API_MAX_PER_GAME_CHOICES` = $5/$10/$25/$50/$100/No limit; `PerGameLimit` in ApiBettingUi (chips + typed field `perGameLimitField`, reuses `WalletAmount.parse/problem/text`: dollars and cents up to $10,000, saved as typed, bad text leaves the last good limit, 0 points to the No limit chip);
+  ApiBettingUiTest +4 (replaced my one chip test); 7 mutants (UI) all killed.
