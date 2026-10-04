@@ -389,6 +389,11 @@ data class RestingBid(
     /** Contracts already filled (a partly filled bid is part bet). */
     val filled: Long,
     val expiresAtMs: Long?,
+    /** Posted by auto-make (false: Tj approved it by hand: the last to come down when the wallet can't hold every bid, [MakerPlan.plan]'s trim). */
+    val auto: Boolean = true,
+    /** The EV at the fair when it was posted, and whether it led its side then: what ranks it when the wallet can't hold every bid and no fresh line judges it. */
+    val evAtFair: Double = 0.0,
+    val leads: Boolean = true,
 ) {
     val restingDollars: Double get() = remaining * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 }
@@ -402,6 +407,8 @@ data class MakerActions(
     val places: List<MakerDecision.Post>,
     val kept: List<RestingBid>,
     val waiting: Map<String, Int> = emptyMap(),
+    /** How many of [cancels] are bids the wallet (or the day's limit) no longer covers ([MakerPlan.TRIMMED]). */
+    val trimmed: Int = 0,
 )
 
 object MakerPlan {
@@ -412,6 +419,10 @@ object MakerPlan {
      * fair minus the margin: the bid that gets picked off, §70.3) or rose by [MakerRules.requoteSteps] steps or more, and re-posted when it's about to
      * expire with a fresher fair behind it; a partly filled bid isn't re-posted (that side is now a bet). New bids go in by [PRIORITY] (those that lead
      * their side, then the cheapest), within [MakerRules.maxBids], [MakerRules.maxDollars] and [budget] (the wallet and the day's limit, less what's up).
+     *
+     * [budget] may be negative: bids up are worth more than the wallet (or the day's limit) covers (Tj, 2026-10-04: "Vigilant wallet $8.98 · 7 bids up
+     * ($16.14)": a bet by hand, an auto-bet or a fill took money out after the bids went up, and Novig holds nothing for a resting bid). The bids that
+     * don't fit come down, the least valuable first ([TRIMMED]); a trimmed side isn't posted again this pass.
      */
     fun plan(
         wanted: List<MakerDecision.Post>,
@@ -460,7 +471,34 @@ object MakerPlan {
             cancels += r to why
             if (r.filled > 0) noRepost += r.outcomeId
         }
-        if (!repost) return MakerActions(cancels, emptyList(), kept)
+        // What the bids still up may add up to: the budget is what's left beside every bid not yet ended (the ones coming down included, which can
+        // still fill), so the resting ones may hold their own dollars plus whatever the budget has left, which is under zero when the money fell short.
+        // Hand-approved first, then the ones that lead their side, the cheaper, the more EV: a bid that outranks another but doesn't fit comes down,
+        // and a lower one that does fit stays.
+        var trimmed = 0
+        val room = budget + resting.sumOf { it.restingDollars }
+        if (kept.sumOf { it.restingDollars } > room + 1e-9) {
+            val worth = compareBy<RestingBid> { it.auto }
+                .thenByDescending { byOutcome[it.outcomeId]?.leads ?: it.leads }
+                .thenBy { it.price }
+                .thenByDescending { byOutcome[it.outcomeId]?.evAtFair ?: it.evAtFair }
+            var left = room
+            val fits = HashSet<String>()
+            for (r in kept.sortedWith(worth)) {
+                if (r.restingDollars <= left + 1e-9) {
+                    fits += r.orderId
+                    left -= r.restingDollars
+                }
+            }
+            val drop = kept.filter { it.orderId !in fits }
+            kept.removeAll(drop.toSet())
+            for (r in drop) {
+                cancels += r to TRIMMED
+                noRepost += r.outcomeId
+            }
+            trimmed = drop.size
+        }
+        if (!repost) return MakerActions(cancels, emptyList(), kept, trimmed = trimmed)
         val covered = kept.mapTo(HashSet()) { it.outcomeId } + noRepost
         // [budget] still counts every bid cancelled this pass as up. A side's replacement may use the dollars its own cancelled bid frees (the desk
         // places a replacement only once that cancel is confirmed gone); no other side may, since a cancel can still be filled before it lands.
@@ -485,7 +523,7 @@ object MakerPlan {
                 }
             }
         }
-        return MakerActions(cancels, places, kept, waiting)
+        return MakerActions(cancels, places, kept, waiting, trimmed)
     }
 
     /**
@@ -499,6 +537,9 @@ object MakerPlan {
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
     const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
+
+    /** Why a bid that was up came down because the money behind it fell short (the bid's own reason in the Bids tab). */
+    const val TRIMMED = "The wallet (or today's limit for API bets) no longer covers it beside the other bids up: taken down"
 
     private fun money(v: Double) = String.format(Locale.US, "$%,.2f", v)
 }
