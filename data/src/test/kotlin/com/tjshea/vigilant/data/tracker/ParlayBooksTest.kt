@@ -212,6 +212,17 @@ class ParlayBooksTest {
         val view = ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrong, truth), now), "Fresno State @ Washington State", starts, "Washington State", pick, now)!!
         assertEquals(us(1.87), view.prices.single().odds)
         assertEquals(us(1.95), view.prices.single().otherOdds)
+        // A total or a prop names no team: the game alone must be right, so another State game's total is never this game's.
+        fun totalGame(id: String, home: String, away: String, over: Double, under: Double) = RefEvent(
+            id, "americanfootball_ncaaf", starts, home, away,
+            listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.TOTAL, listOf(RefQuote(Side.OVER, over, 52.5), RefQuote(Side.UNDER, under, 52.5)), null)),
+        )
+        val totalPick = BetGrader.pickOf("Total", "Over 52.5")!!
+        val wrongTotal = totalGame("wt", "Oregon State Beavers", "Idaho State Bengals", 2.5, 1.5)
+        assertNull(ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrongTotal), now), "Fresno State @ Washington State", starts, "Over 52.5", totalPick, now))
+        val realTotal = totalGame("rt", "Washington State Cougars", "Fresno State Bulldogs", 1.91, 1.91)
+        val total = ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrongTotal, realTotal), now), "Fresno State @ Washington State", starts, "Over 52.5", totalPick, now)!!
+        assertEquals(us(1.91), total.prices.single().odds)
         // The other team of that game is the away side.
         val dog = ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrong, truth), now), "Fresno State @ Washington State", starts, "Fresno State", BetGrader.pickOf("Moneyline", "Fresno State")!!, now)!!
         assertEquals(us(1.95), dog.prices.single().odds)

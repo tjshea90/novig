@@ -229,6 +229,10 @@ class ParlayClosesTest {
         val second = flat("Washington State Cougars", "Fresno State Bulldogs", 150, -170, start = "2026-10-03T23:30:00Z")
         val dh = ParlayCloses.parseGameLine(json.parseToJsonElement("[$first,$second]"), wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
         assertEquals(p(150) / (p(150) + p(-170)), dh.fair, 1e-9)
+        // And the first game's own bet, whichever row came first or was updated last: its own start's game, not the later one.
+        val early = wsu("early").copy(startsTs = Instant.parse("2026-10-03T20:30:00Z").toEpochMilli())
+        val dhEarly = ParlayCloses.parseGameLine(json.parseToJsonElement("[$second,$first]"), early, pick("Moneyline", "Washington State")) as CloseLookup.Found
+        assertEquals(p(-115) / (p(-115) + p(-105)), dhEarly.fair, 1e-9)
         // Two DIFFERENT pairings each as good a fit as the other (each shares one team exactly and a State word with the other): refused, not the later one.
         val a = flat("Oregon State Beavers", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
         val b = flat("Washington State Cougars", "Boise State Broncos", -115, -105)
@@ -255,6 +259,11 @@ class ParlayClosesTest {
         val theirs = ParlayCloses.parseFileGameLine(root, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
         assertEquals(1.0, mine.fair + theirs.fair, 1e-9)
         assertTrue(ParlayCloses.parseFileGameLine(json.parseToJsonElement("""{"rows":[${other.joinToString(",")}]}"""), wsu("ml"), pick("Moneyline", "Washington State")) is CloseLookup.None)
+        // A row of the game that is neither team (a "Draw" row, a newer snapshot) is not the other side of the bet.
+        val draw = fileRow("Washington State Cougars", "Fresno State Bulldogs", "Draw", 900, snap = "2026-10-03T23:29:30Z")
+        val withDraw = json.parseToJsonElement("""{"rows":[${(truth + draw).joinToString(",")}]}""")
+        val steady = ParlayCloses.parseFileGameLine(withDraw, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
+        assertEquals(p(-115) / (p(-115) + p(-105)), steady.fair, 1e-9)
     }
 
     @Test
