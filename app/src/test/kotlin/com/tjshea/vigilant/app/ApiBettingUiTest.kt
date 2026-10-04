@@ -11,6 +11,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.and
+import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -166,19 +173,85 @@ class ApiBettingUiTest {
         compose.onNodeWithText("Bets you place yourself from a Bet sheet have no minimum edge", substring = true).assertExists()
     }
 
+    // ---- the per-game limit: chips and any amount typed (Tj, 2026-10-04: "add $5 and a manual entry") ---------------------------------------
+
+    private val perGame = hasAnyAncestor(hasTestTag("perGameLimit"))
+    private fun chip(label: String) = compose.onNode(hasText(label) and perGame)
+    private fun field() = compose.onNodeWithTag("perGameLimitField")
+
+    private fun showPerGame(start: ScanSettings = ScanSettings(), onChange: (ScanSettings) -> Unit = {}): () -> ScanSettings {
+        var settings by mutableStateOf(start)
+        screen { NovigBettingSection(BettingUi(enabled = true, balance = 12.5), settings, BettingActions(), { t -> settings = t(settings); onChange(settings) }) }
+        return { settings }
+    }
+
     @Test
-    fun `the most at risk on one game is a limit chip, on by default, and No limit turns it off`() {
-        var settings = ScanSettings()
-        assertEquals("on by default (Tj, 2026-10-04: one event is one risk)", 25.0, settings.apiMaxPerGame, 1e-9)
-        screen {
-            NovigBettingSection(BettingUi(enabled = true, balance = 12.5), settings, BettingActions(), { t -> settings = t(settings) })
-        }
+    fun `the most at risk on one game is on by default and has chips for $5 to $100 and No limit`() {
+        val now = showPerGame()
+        assertEquals("on by default (Tj, 2026-10-04: one event is one risk)", 25.0, now().apiMaxPerGame, 1e-9)
         compose.onNodeWithText("Most at risk on one game", substring = true).performScrollTo().assertExists()
-        compose.onNodeWithText("No limit").performScrollTo().performClick()
-        assertEquals(0.0, settings.apiMaxPerGame, 1e-9)
-        compose.onNodeWithText("$25.00").performScrollTo().performClick()
-        assertEquals(25.0, settings.apiMaxPerGame, 1e-9)
+        listOf("$5.00", "$10.00", "$25.00", "$50.00", "$100.00", "No limit").forEach { chip(it).assertExists() }
+        chip("$25.00").assertIsSelected()
+        chip("$5.00").performScrollTo().performClick()
+        assertEquals(5.0, now().apiMaxPerGame, 1e-9)
+        chip("$5.00").assertIsSelected()
+        chip("No limit").performScrollTo().performClick()
+        assertEquals(0.0, now().apiMaxPerGame, 1e-9)
+        chip("No limit").assertIsSelected()
         compose.onNodeWithText("Auto-bet and auto-make never take a game past it", substring = true).assertExists()
+    }
+
+    @Test
+    fun `any amount can be typed as the most on one game - dollars and cents - and it is saved as it is typed`() {
+        val now = showPerGame()
+        field().performScrollTo().performTextClearance()
+        field().performTextInput("7.5")
+        assertEquals(7.5, now().apiMaxPerGame, 1e-9)
+        field().performTextClearance()
+        field().performTextInput("12.50")
+        assertEquals(12.5, now().apiMaxPerGame, 1e-9)
+        field().performTextClearance()
+        field().performTextInput("2000")
+        assertEquals(2000.0, now().apiMaxPerGame, 1e-9)
+        // A typed amount no chip has leaves every chip unselected.
+        listOf("$5.00", "$10.00", "$25.00", "$50.00", "$100.00", "No limit").forEach { chip(it).assertIsNotSelected() }
+    }
+
+    @Test
+    fun `an amount that can't be the limit isn't saved and the field says why`() {
+        val changes = mutableListOf<ScanSettings>()
+        val now = showPerGame { changes += it }
+        field().performScrollTo().performTextClearance()
+        field().performTextInput("0")
+        assertEquals("0 is not a limit: No limit is its own chip", 25.0, now().apiMaxPerGame, 1e-9)
+        compose.onNodeWithText("Pick No limit above to turn the limit off").assertExists()
+        field().performTextClearance()
+        field().performTextInput("12.345")
+        assertEquals(25.0, now().apiMaxPerGame, 1e-9)
+        compose.onNodeWithText("Dollars and cents only (two decimal places)").assertExists()
+        field().performTextClearance()
+        field().performTextInput("99999999")
+        assertEquals(25.0, now().apiMaxPerGame, 1e-9)
+        compose.onNodeWithText("At most $10,000 at a time").assertExists()
+        // Letters never get in; clearing the field changes nothing (the last good limit stands).
+        field().performTextClearance()
+        field().performTextInput("abc")
+        field().assertTextEquals("Or type your own amount", "")
+        assertEquals(25.0, now().apiMaxPerGame, 1e-9)
+        assertTrue("nothing was saved while those were typed: $changes", changes.isEmpty())
+    }
+
+    @Test
+    fun `the field shows what is saved - a whole amount, an amount with cents, and nothing for No limit - and follows a chip`() {
+        val odd = showPerGame(ScanSettings(apiMaxPerGame = 7.5))
+        field().performScrollTo().assertTextEquals("Or type your own amount", "7.50", "$")
+        listOf("$5.00", "$10.00", "$25.00", "$50.00", "$100.00", "No limit").forEach { chip(it).assertIsNotSelected() }
+        chip("$100.00").performScrollTo().performClick()
+        assertEquals(100.0, odd().apiMaxPerGame, 1e-9)
+        field().assertTextEquals("Or type your own amount", "100", "$")
+        chip("No limit").performScrollTo().performClick()
+        field().assertTextEquals("Or type your own amount", "", "$")
+        compose.onNodeWithText("No limit: any amount on one game", substring = true).assertExists()
     }
 
     @Test
