@@ -1,13 +1,13 @@
-# CHECKPOINT 2526 — read me first, then TASKS.md
+# CHECKPOINT 2527 — read me first, then TASKS.md
 
-**Written:** 2026-10-04T21:29:53Z · **tests:** all 3 fast checks green
-**Branch:** `claude/novig-scanning-bet-exposure-k97qvu` · **builds on:** `b95993fb` (this checkpoint is the commit after it)
+**Written:** 2026-10-04T21:35:29Z · **tests:** all 3 fast checks green
+**Branch:** `claude/novig-scanning-bet-exposure-k97qvu` · **builds on:** `817f4783` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.60.0: a closed market no longer sends the Novig scan to the slow public route for ten minutes (one 404 did); a small $ in game button next to every bet shows what you already have on that game; bids can rank popular markets first (Novig's own volume) and require a sharp book (off); study and diagnostics fixes (versionCode 107, v0.60.0)
+v0.60.0 released + recorded (release.yml run 37236337851 green, CI 37235632264 green on b95993fb): BZ1-BZ7 done
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.60.0), then run: bash tools/record-release.sh v0.60.0 107 "v0.60.0: a closed market no longer sends the Novig scan to the slow public route for ten minutes (one 404 did); a small $ in game button next to every bet shows what you already have on that game; bids can rank popular markets first (Novig's own volume) and require a sharp book (off); study and diagnostics fixes"
+Open: Tj to resend the diagnostics + scan study after Sunday's NFL games (BX5, BW2 tuning of the per-game cap, the fair-age limit for longer-lived bids is his call); nothing in flight
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  e1d61b78 ckpt 2526: pre-release: v0.60.0: a closed market no longer sends the Novig scan to the 
   6beff33a ckpt 2525: BZ5 built: GameBets (pure index of open bets + resting bids by game), GameBe
   2f8e43b9 ckpt 2524: BZ: wrote Tj's request (slow Novig scan, study sanity, bids 3.5/3.25%, per-g
   9d745d97 ckpt 2523: v0.59.1 released + recorded (release.yml run 37186059558 green, CI green on 
@@ -25,8 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   519ec408 ckpt 2519: BW5 prep: desk-level maker tests (held bets + bids kept across passes), Make
   6fea08cf ckpt 2518: BW4 done in code: maker (MakerRules.maxPerGame, RestingBid.game, MakerPlan h
   229fab48 ckpt 2517: BW4 step 2+3: ScanSettings.apiMaxPerGame (default 25, 0 = none) -> BetLimits
-  a99026eb ckpt 2516: BW4 step 1: GameExposure (pure) + GameRef + TrackedBet.eventId (set by logAp
 ```
 
-(45 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
