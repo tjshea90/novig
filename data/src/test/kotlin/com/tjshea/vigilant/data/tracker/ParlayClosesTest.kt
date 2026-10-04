@@ -368,7 +368,8 @@ class ParlayClosesTest {
             val now = start + 86_400_000L
             val url = server.url("/v1").toString().trimEnd('/')
             val espn = Fake(CloseLookup.Found(0.7, "ESPN · DraftKings close"))
-            val t = tracker(bet("ml", "Moneyline", "Buffalo Bills"))
+            // Buffalo at -320 at the close: its fair price when bet was about 75%, so Pinnacle's 76% close is that game's.
+            val t = tracker(bet("ml", "Moneyline", "Buffalo Bills").copy(fairAtBet = 0.75))
             val withKey = ParlayCloses(OkHttpClient(), pool("k"), json, url, clock = { now })
             CloseBackfill(t, listOf(withKey, espn), clock = { now }).run()
             assertEquals("ParlayAPI · Pinnacle close", t.all().single().closeVia)

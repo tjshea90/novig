@@ -222,7 +222,8 @@ class HistoricalClosesTest {
     @Test
     fun `ESPN first, then Novig, and the close counts for CLV even days later`() = runBlocking {
         val now = billsStart + 3 * 86_400_000L
-        val t = tracker(bet("ml", "Moneyline", "Buffalo Bills"), bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5", outcomeId = phi))
+        // A favourite at -345: its fair price when bet was about 72%, so a 74% close is a real move (the closes' plausibility check, ClosePlausibility).
+        val t = tracker(bet("ml", "Moneyline", "Buffalo Bills").copy(fairAtBet = 0.72), bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5", outcomeId = phi))
         val espn = Fake { b -> if (b.id == "ml") CloseLookup.Found(0.74, "ESPN · DraftKings close") else CloseLookup.None("ESPN keeps full-game moneylines, spreads and totals only") }
         val novigSrc = Fake { CloseLookup.Found(0.55, "Novig's last trades (4)") }
         val r = CloseBackfill(t, listOf(espn, novigSrc), clock = { now }).run()
@@ -274,7 +275,7 @@ class HistoricalClosesTest {
     @Test
     fun `when a caller holds back the heavy source it waits, the light one still runs`() = runBlocking {
         val now = billsStart + 3_600_000L
-        val t = tracker(bet("ml", "Moneyline", "Buffalo Bills"), bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5", outcomeId = phi))
+        val t = tracker(bet("ml", "Moneyline", "Buffalo Bills").copy(fairAtBet = 0.72), bet("prop", "Player Receptions", "Dalton Kincaid Over 3.5", outcomeId = phi))
         val espn = Fake { b -> if (b.id == "ml") CloseLookup.Found(0.74, "ESPN · DraftKings close") else CloseLookup.None("ESPN keeps full-game moneylines, spreads and totals only") }
         val heavy = object : CloseSource {
             var asked = 0
@@ -290,6 +291,70 @@ class HistoricalClosesTest {
         // On Wi-Fi, 3 hours later, it's found.
         CloseBackfill(t, listOf(espn, heavy), clock = { now + CloseBackfill.RETRY_MS }).run(heavyOk = true)
         assertEquals(0.5, t.all().first { it.id == "prop" }.closeFair!!, 0.0)
+    }
+
+    // ---- a close that can't be this bet's (Tj's scan-study file, 2026-10-03: Washington State -117 "closed" at +272) --------------------------
+
+    /** Washington State at -117 two and a half hours before the start: its fair price when bet was 54%. */
+    private fun wsu(id: String) = TrackedBet(
+        id, billsStart - 150 * 60_000L, "NCAAF", "Fresno State @ Washington State", billsStart, "Moneyline", "Washington State", "m", "", 0.54, 0.54, 0.54, 0.0007, 1.0,
+    )
+
+    @Test
+    fun `a close far from the bet's own fair price is never from that source, and the next source is asked`() = runBlocking {
+        val now = billsStart + 3_600_000L
+        val t = tracker(wsu("wsu"))
+        val wrong = Fake { CloseLookup.Found(0.269, "ParlayAPI · Pinnacle close") }
+        val right = Fake { CloseLookup.Found(0.52, "ESPN · DraftKings close") }
+        val r = CloseBackfill(t, listOf(wrong, right), clock = { now }).run()
+        assertEquals(1, r.found)
+        assertEquals(1, right.asked)
+        val b = t.all().single()
+        assertEquals(0.52, b.closeFair!!, 0.0)
+        assertEquals("ESPN · DraftKings close", b.closeVia)
+        // Alone, it leaves the bet with no close and says why, instead of a -50% CLV that is another game's.
+        val t2 = tracker(wsu("wsu2"))
+        val only = CloseBackfill(t2, listOf(Fake { CloseLookup.Found(0.269, "ParlayAPI · Pinnacle close") }), clock = { now }).run()
+        assertEquals(0, only.found)
+        val note = t2.all().single()
+        assertEquals(null, note.closeFair)
+        assertTrue(note.closeNote, note.closeNote!!.startsWith("ParlayAPI · Pinnacle close's close (26.9%) is 27 points from the fair price when the bet was made (54.0%), 2 h before the start"))
+        assertTrue(note.closeNote!!.endsWith("probably another game or side, not used"))
+        assertTrue(note.closeFinal)
+    }
+
+    @Test
+    fun `a real move is kept, however large for the hours it had, and a bet with no fair price on record is not judged`() = runBlocking {
+        val now = billsStart + 3_600_000L
+        // 54% to 60% in 2.5 hours (6 points): real news, kept.
+        val t = tracker(wsu("a"), wsu("imported").copy(fairAtBet = null, imported = true), wsu("far").copy(createdAtMs = billsStart - 5 * 86_400_000L))
+        CloseBackfill(t, listOf(Fake { CloseLookup.Found(0.60, "ESPN · DraftKings close") }), clock = { now }).run()
+        assertEquals(0.60, t.all().first { it.id == "a" }.closeFair!!, 0.0)
+        assertEquals(0.60, t.all().first { it.id == "imported" }.closeFair!!, 0.0)
+        // Five days out the same bet can move 20 points on news and still be its own game's close.
+        CloseBackfill(tracker(), emptyList(), clock = { now }).run()
+        val far = t.all().first { it.id == "far" }
+        assertEquals(0.60, far.closeFair!!, 0.0)
+    }
+
+    @Test
+    fun `the plausibility bar grows with the hours before the start and sits well above every real move in Tj's 230 closes`() {
+        val h = 3_600_000L
+        assertEquals(0.10, ClosePlausibility.maxMove(30 * 60_000L), 0.0)
+        assertEquals(0.10, ClosePlausibility.maxMove(h), 0.0)
+        assertEquals(0.12, ClosePlausibility.maxMove(2 * h), 0.0)
+        assertEquals(0.20, ClosePlausibility.maxMove(16 * h), 0.0)
+        assertEquals(0.25, ClosePlausibility.maxMove(30 * h), 0.0)
+        // Tj's largest real moves by gap (RESEARCH.md §79): 2.6 pts within an hour, 6.8 within 6 h, 14.7 within a day, 10.4 beyond: each under its bar with room.
+        assertTrue(0.026 < ClosePlausibility.maxMove(h) / 3)
+        assertTrue(0.068 < ClosePlausibility.maxMove(6 * h) / 1.5)
+        assertTrue(0.147 < ClosePlausibility.maxMove(24 * h))
+        assertTrue(0.104 < ClosePlausibility.maxMove(48 * h) / 2)
+        // Exactly at the bar is kept; a point over is not.
+        val b = wsu("x")
+        assertEquals(null, ClosePlausibility.reason(b, CloseLookup.Found(0.54 + 0.12, "v")))
+        assertTrue(ClosePlausibility.reason(b, CloseLookup.Found(0.54 + 0.13, "v")) != null)
+        assertTrue(ClosePlausibility.reason(b, CloseLookup.Found(0.54 - 0.13, "v")) != null)
     }
 
     // ---- Check odds now's forced look (Tj, 2026-10-01: "make sure it gets all available closing line data") ---------------
