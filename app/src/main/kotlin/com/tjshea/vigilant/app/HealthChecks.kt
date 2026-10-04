@@ -33,6 +33,7 @@ object HealthChecks {
         scanning(s, now)
         sources(s)
         apis(s, x, now)
+        keyRoute(s, x, now)
         if (set.cnoOn && !set.paused) cno(s, now)
         background(s, x, now)
         phone(s, x, now)
@@ -99,6 +100,20 @@ object HealthChecks {
             if (t.totalMs > 120_000) add(Check(Level.WARN, "Scan speed", "the last scan took ${t.totalMs / 1000} s", "fair odds ${(t.fairAtMs - t.boardAtMs).coerceAtLeast(0) / 1000} s; Novig refused ${t.refused}", "data/scanner/ScanTiming.kt; the slowest source in Last Vigilant scan"))
             if (t.refused > 3) add(Check(Level.WARN, "Novig", "Novig refused ${t.refused} price reads in the last scan", look = "data/novig/RateGate.kt, NovigSource.batchSize"))
             if (t.leftTooLate > 0) add(Check(Level.WARN, "Scan speed", "${t.leftTooLate} lines were left for the next scan: read later, their books' odds would have been too old", look = "Scanner.BookPump.canStillShow; a smaller scan or a faster source"))
+        }
+    }
+
+    /**
+     * The key route's stand-downs (RESEARCH.md §81.1): each one sends the scan to the public routes (a third of the pace, halved again by a carrier's 429s)
+     * for minutes. Not a 451 (Novig's verdict on the carrier's address, which Tj can only wait out) is a bug in the app or a Novig refusal that deserves a line.
+     */
+    private fun MutableList<Check>.keyRoute(s: UiState, x: Diagnostics.Extras, now: Long) {
+        if (s.novig.connection == null) return
+        x.keyDownNow?.let { add(Check(Level.WARN, "Novig key route", "standing down now: reads are on the public routes (a third of the pace)", it.take(160), "data/novig/NovigPublicClient.kt (standDown, keyRetryAfter)")) }
+        val recent = x.keyStanddowns.filter { now - it.atMs <= 6 * HOUR }
+        if (recent.isNotEmpty() && x.keyDownNow == null) {
+            val byWhy = recent.groupingBy { it.why }.eachCount().entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ×${it.value}" }
+            add(Check(Level.WARN, "Novig key route", "stood down ${recent.size} time${plural(recent.size)} in the last 6 h", byWhy.take(160), "data/novig/NovigPublicClient.kt (standDown); the timeline's NOVIG lines say when"))
         }
     }
 

@@ -1834,6 +1834,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             studyProblem = c.study.lastProblem,
             studyWide = StudyText.wideNote(c.cno.wide.value, c.cno.state.value.snapshot, _state.value.settings.scanStudyHidden, System.currentTimeMillis()),
             novigTradeBytes = c.novigCloses.bytesRead,
+            keyStanddowns = c.novig.keyStanddowns(),
+            keyDownNow = c.novig.keyDown(System.currentTimeMillis()),
             parlayCloseRequests = c.parlayCloses.requests,
             parlayAccounts = c.parlayAccount.last,
             parlayExtras = mapOf(
