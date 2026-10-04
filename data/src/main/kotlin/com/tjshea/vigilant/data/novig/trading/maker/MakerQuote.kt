@@ -69,7 +69,10 @@ data class MakerRules(
      * [GameExposure]): auto-make posts no bid that would take a game past it (Tj, 2026-10-04: one event is one risk, however many lines it has).
      */
     val maxPerGame: Double = 0.0,
-    /** Bids on popular lines (priced by [popularBooks] books or more) go up first when not every wanted bid fits ([ScanSettings.makerPopularFirst]). */
+    /**
+     * Bids on the kinds of market takers trade most go up first when not every wanted bid fits ([ScanSettings.makerPopularFirst], [MarketPopularity]); a kind never
+     * measured counts as popular when [popularBooks] books or more price it.
+     */
     val popularFirst: Boolean = true,
     val popularBooks: Int = ScanSettings.MAKER_POPULAR_BOOKS,
     /** A bid needs a sharp book that prices the line both ways and agrees, on any kind of bet, not game lines only ([ScanSettings.makerRequireSharp]). */
@@ -567,12 +570,16 @@ object MakerPlan {
 
     /**
      * [PRIORITY] with Tj's popular tilt (2026-10-04: "more attractive bets that involve bets that are more popular than obscure players props"): the ones that lead
-     * their side first, then the popular lines (priced by [MakerRules.popularBooks] books or more: a bid on a line many books quote meets more takers and rests on a
-     * sturdier fair), then the cheapest and the most EV as before. Never changes which bids qualify, only which go up when the bids, the dollars or the wallet run out.
+     * their side first, then the kinds of market takers trade most ([MarketPopularity.tier]: hot, popular, obscure, by the dollars Novig's takers put in a listed market of
+     * that kind a day; a kind never measured by how many books price the line), then the cheapest and the most EV as before. Never changes which bids qualify, only which
+     * go up when the bids, the dollars or the wallet run out.
      */
     fun priority(rules: MakerRules): Comparator<MakerDecision.Post> =
         if (!rules.popularFirst) PRIORITY
-        else compareByDescending<MakerDecision.Post> { it.leads }.thenByDescending { it.line.books >= rules.popularBooks }.thenBy { it.price }.thenByDescending { it.evAtFair }
+        else compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }.thenBy { it.price }.thenByDescending { it.evAtFair }
+
+    /** [MarketPopularity.tier] of the market a bid is on. */
+    fun tierOf(p: MakerDecision.Post, rules: MakerRules): Int = MarketPopularity.tier(p.line.league, p.line.market.marketType, p.line.books, rules.popularBooks)
 
     /** Why a wanted bid waits (the tab and Diagnostics say how many each). */
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"

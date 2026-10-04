@@ -243,8 +243,9 @@ data class ScanSettings(
     val makerSharpVeto: Boolean = true,
     /**
      * Tj, 2026-10-04: "bids … with more attractive bets that involve bets that are more popular than obscure players props". When the most bids, the most
-     * dollars or the wallet can't take every bid wanted, the ones on lines many books price ([MAKER_POPULAR_BOOKS]+: a star's prop, a main market) go up before
-     * the ones one or two books price, after the ones that lead their side (RESEARCH.md §81.4). On by default: it only orders what is posted.
+     * dollars or the wallet can't take every bid wanted, the ones on the kinds of market takers trade most (touchdowns, rushing attempts, pitcher outs, shots on goal:
+     * [com.tjshea.vigilant.data.novig.trading.maker.MarketPopularity], Novig's own volume) go up before the obscure ones (longest reception, hits, assists), after the
+     * ones that lead their side (RESEARCH.md §81.4). On by default: it only orders what is posted.
      */
     val makerPopularFirst: Boolean = true,
     /**
@@ -736,7 +737,7 @@ data class ScanSettings(
          */
         val MAKER_MARGIN_CHOICES = listOf(0.03, 0.0325, 0.035, 0.04, 0.06, 0.08)
 
-        /** A line priced by this many books or more is a popular one ([makerPopularFirst]). */
+        /** A kind of market the popularity study didn't measure is popular when this many books or more price the line ([makerPopularFirst]). */
         const val MAKER_POPULAR_BOOKS = 6
 
         /** [makerStake]'s and [makerMaxStake]'s choices, dollars. */

@@ -524,7 +524,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         ) { on -> onUpdate { it.copy(makerSharpVeto = on) } }
         SwitchRow(
             "Popular markets first",
-            "When the wallet or the most bids can't take every bid, the ones on lines ${ScanSettings.MAKER_POPULAR_BOOKS}+ books price (a star's prop, a main market) go up before obscure props, after the ones that lead their side.",
+            "When the wallet or the most bids can't take every bid, the ones on the kinds of market Novig's takers trade most (touchdowns, rushing attempts, receptions, pitcher outs, shots on goal) go up before the obscure ones (longest reception, hits, assists), after the ones that lead their side. Measured on Novig's own volume (RESEARCH.md §81.4).",
             s.makerPopularFirst, "makerPopularFirst",
         ) { on -> onUpdate { it.copy(makerPopularFirst = on) } }
         SwitchRow(
