@@ -192,7 +192,7 @@ class GameExposureTest {
         val up = bid("a", "m1", "o1", MakerStatus.RESTING)                    // 1,000 × 50¢ × $0.01 = $5.00
         val half = bid("b", "m2", "o1", MakerStatus.RESTING, filled = 400)    // 600 left: $3.00 (the 400 filled are a bet in the Tracker)
         val down = bid("c", "m3", "o1", MakerStatus.CANCELING)                // can still fill until Novig says it's gone: $5.00
-        val ended = bid("d", "m4", "o1", MakerStatus.CANCELLED)               // gone
+        val ended = bid("d", "m4", "o1", MakerStatus.CANCELED)               // gone
         val items = GameExposure.bidItems(listOf(up, half, down, ended))
         assertEquals(listOf(5.0, 3.0, 5.0), items.map { it.dollars })
         assertEquals(13.0, GameExposure.atRisk(g, items), 1e-9)
