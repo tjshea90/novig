@@ -664,8 +664,9 @@ class ApiBettingTest {
 
     /** An open API bet of $[dollars] in another market of the game "ev" (an alternate line), as the placer would have logged it. */
     private suspend fun openOnGame(t: BetTracker, marketId: String, dollars: Double, eventId: String = "ev") {
-        val other = target().copy(market = market.copy(marketId = marketId, eventId = eventId))
-        t.logApi(other, "o-$marketId", listOf(NovigFill("f-$marketId", "o-$marketId", null, marketId, "A", (dollars * 200).toLong(), dollars, true, 0.0, now - 60_000)))!!
+        // Its own outcome id, as an alternate line has: the placer's same-outcome repeat check must not be what answers.
+        val other = target().copy(market = market.copy(marketId = marketId, eventId = eventId), outcomeId = "out-$marketId")
+        t.logApi(other, "o-$marketId", listOf(NovigFill("f-$marketId", "o-$marketId", null, marketId, "out-$marketId", (dollars * 200).toLong(), dollars, true, 0.0, now - 60_000)))!!
     }
 
     @Test
