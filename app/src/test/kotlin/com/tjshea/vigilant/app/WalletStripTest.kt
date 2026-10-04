@@ -48,6 +48,21 @@ class WalletStripTest {
         assertEquals("Vigilant wallet not read yet", WalletStripText.balance(null))
     }
 
+    /** Tj, 2026-10-04: "Vigilant wallet $8.98 · 7 bids up ($16.14)": the strip says so while the bids up are worth more than the wallet (the app takes the extra down). */
+    @Test
+    fun `the strip says when the bids up are worth more than the wallet`() {
+        val r = WalletBalance.Reading(8.98, now - 10_000)
+        assertEquals("7 bids up (\$16.14) · over the wallet", WalletStripText.detail(r, 7, 16.14, now))
+        assertEquals(true, WalletStripText.over(r, 7, 16.14))
+        // Covered to the cent, or no bids, or no reading: not over.
+        assertEquals("2 bids up (\$8.98)", WalletStripText.detail(r, 2, 8.98, now))
+        assertEquals(false, WalletStripText.over(r, 2, 8.98))
+        assertEquals(false, WalletStripText.over(r, 0, 0.0))
+        assertEquals(false, WalletStripText.over(null, 3, 5.0))
+        compose.setContent { VigilantTheme { WalletStrip(WalletBalance.Reading(8.98, System.currentTimeMillis()), 7, 16.14, onRefresh = {}) } }
+        compose.onNodeWithTag("walletStrip").assertTextContains("over the wallet", substring = true)
+    }
+
     @Test
     fun `tapping the strip reads the wallet again`() {
         var taps = 0
@@ -75,6 +90,15 @@ class WalletStripTest {
         compose.setContent { VigilantTheme { StripAndTabs() } }
         compose.onNodeWithText("Vigilant wallet \$18.51").assertExists()
         compose.onRoot().captureRoboImage("screenshots/0_wallet_strip_tabs.png")
+    }
+
+    @Test
+    fun `screenshot - the wallet strip while the bids up are worth more than the wallet`() {
+        compose.setContent {
+            VigilantTheme { WalletStrip(WalletBalance.Reading(8.98, System.currentTimeMillis()), 7, 16.14, onRefresh = {}) }
+        }
+        compose.onNodeWithTag("walletStrip").assertTextContains("over the wallet", substring = true)
+        compose.onRoot().captureRoboImage("screenshots/0_wallet_strip_over.png")
     }
 
     @androidx.compose.runtime.Composable

@@ -63,7 +63,10 @@ class MakerAppTest {
         val placed = java.util.concurrent.CopyOnWriteArrayList<String>()
         private var n = 0
 
-        override suspend fun balance(subaccountKeyId: String) = 100.0
+        /** The Vigilant wallet's balance on Novig now; a test moves it as a bet by hand or an auto-bet would. */
+        @Volatile var walletDollars = 100.0
+
+        override suspend fun balance(subaccountKeyId: String) = walletDollars
 
         override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             val id = "o${++n}"
@@ -345,5 +348,110 @@ class MakerAppTest {
         assertTrue(!LaunchReset.apply(s).maker)
         assertEquals("Auto-bet and auto-make (Bids tab) are off after the phone restarted. Switch them on when you want them.", LaunchReset.note(s))
         assertEquals("Auto-make (Bids tab) is off after the phone restarted. Switch it on when you want it.", LaunchReset.note(ScanSettings(maker = true)))
+    }
+
+    // ---- the wallet kept ahead of the bids (Tj, 2026-10-04) ---------------------------------------------------------------
+
+    private fun upDollars() = app.container.makerDesk()!!.bids().filter { it.active }.sumOf { it.restingDollars }
+
+    @Test
+    fun `a balance reading under the bids up takes the extra bids down on its own - the wallet watch`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        val r = runner(novig).run("test")!!
+        assertTrue("placed ${r.placed}", r.placed >= 2)
+        val total = upDollars()
+        val low = total / 2
+        // A bet by hand or an auto-bet takes the wallet under what's up (Novig holds nothing for a resting bid): its answer is recorded like every reading.
+        novig.walletDollars = low
+        app.container.wallet.record(low)
+        withTimeout(30_000) { while (upDollars() > low + 0.005) delay(50) }
+        val open = novig.orders.values.filter { it.status == "OPEN" }.sumOf { it.remaining * it.price * 0.01 }
+        assertTrue("$open on Novig for a wallet of $low", open <= low + 0.005)
+        val taken = app.container.makerDesk()!!.bids().filter { it.status == MakerStatus.CANCELED }
+        assertTrue(taken.isNotEmpty() && taken.all { it.why == com.tjshea.vigilant.data.novig.trading.maker.MakerPlan.TRIMMED })
+        assertTrue((app.container.eventLog.counters()["maker.trimmed"] ?: 0L) >= taken.size)
+        // Money back in the wallet: nothing more comes down, whatever the reading.
+        val left = upDollars()
+        novig.walletDollars = 100.0
+        app.container.wallet.record(100.0)
+        delay(300)
+        assertEquals(left, upDollars(), 1e-9)
+    }
+
+    @Test
+    fun `a bid is never taken down while the wallet covers the bids up, whatever auto-make is set to`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        runner(novig).run("test")
+        val total = upDollars()
+        app.container.settingsStore.update { it.copy(maker = false) }
+        withTimeout(10_000) { while (app.container.makerDesk()!!.bids().any { it.active && it.auto }) delay(50) }
+        // Auto-make off took its own bids down; what's left (none) fits. A reading that covers what's up changes nothing.
+        novig.walletDollars = total + 1.0
+        app.container.wallet.record(total + 1.0)
+        delay(300)
+        assertTrue(novig.orders.values.none { it.status == "OPEN" })
+        assertEquals(0, (app.container.eventLog.counters()["maker.trimmed"] ?: 0L).toInt())
+    }
+
+    @Test
+    fun `with no scan yet in this process a pass still takes down the bids the wallet can't cover`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        runner(novig).run("test")
+        val low = upDollars() / 2
+        novig.walletDollars = low
+        app.container.wallet.record(low)
+        val noScan = MakerRunner(
+            app, app.container, clock = { now }, scan = { ScanRun() },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+        )
+        assertNull(noScan.run("background cycle"))
+        withTimeout(30_000) { while (upDollars() > low + 0.005) delay(50) }
+    }
+
+    @Test
+    fun `Approve holds a bid to the wallet beside the bids already up, not to the whole wallet`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { it.copy(maker = false, makerRecommend = true) }
+        val run = runner(novig)
+        assertNull(run.run("test"))
+        val posts = run.status.value.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().sortedBy { it.price }
+        assertTrue("${posts.size} bids on offer", posts.size >= 2)
+        // The wallet holds either bid alone, not both.
+        novig.walletDollars = maxOf(posts[0].cost, posts[1].cost) + 0.01
+        assertNull(run.post(posts[0].line.outcomeId))
+        val why = run.post(posts[1].line.outcomeId)
+        assertTrue(why.toString(), why != null && why.contains("wallet") && why.contains("already up"))
+        assertEquals(1, novig.placed.size)
+    }
+
+    @Test
+    fun `wiring - the container watches the wallet and the bids, the no-scan pass and Approve use the wallet and the day's limit`() {
+        fun source(path: String) = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/$path").readText()
+        val container = source("VigilantApp.kt")
+        assertTrue(container.contains("combine(wallet.flow, makerStore.flow)"))
+        assertTrue(container.contains("MakerRunner.overWallet("))
+        assertTrue(container.contains("maker.fitToWallet(\"wallet check\")"))
+        val runner = source("MakerRunner.kt")
+        assertTrue(runner.contains("desk.fit(rules, s.apiMaxPerDay, wallet)"))
+        assertTrue(runner.contains("desk.fit(MakerRules.of(s), s.apiMaxPerDay, wallet)"))
+        assertTrue(runner.contains("desk.post(d, rules, wallet = wallet, maxPerDay = s.apiMaxPerDay)"))
+        // The pure check the watch asks: more than half a cent over, and a resting bid to take down.
+        val bid = com.tjshea.vigilant.data.novig.trading.maker.MakerBid(
+            clientId = "c", orderId = "o", marketId = "m", eventId = "e", outcomeId = "x", league = "NFL", eventName = "A @ B", startsTs = now + 3_600_000L,
+            marketLabel = "Yards", selection = "P Over 50.5", price = 0.50, contracts = 1_000, fair = 0.52, evAtFair = 0.04, margin = 0.04, postedAtMs = now - 60_000,
+            status = MakerStatus.RESTING,
+        )
+        val reading = WalletBalance.Reading(4.99, now)
+        assertTrue(MakerRunner.overWallet(listOf(bid), reading))
+        assertTrue(!MakerRunner.overWallet(listOf(bid), reading.copy(dollars = 5.0)))
+        assertTrue(!MakerRunner.overWallet(listOf(bid), null))
+        assertTrue(!MakerRunner.overWallet(emptyList(), reading))
+        // Only bids already coming down: nothing resting to take down, so no request.
+        assertTrue(!MakerRunner.overWallet(listOf(bid.copy(status = MakerStatus.CANCELING)), reading))
+        assertTrue(!MakerRunner.overWallet(listOf(bid.copy(status = MakerStatus.CANCELED)), reading))
     }
 }
