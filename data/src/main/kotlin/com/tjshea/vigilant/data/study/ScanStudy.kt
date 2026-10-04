@@ -647,6 +647,20 @@ class ScanStudy(
             return grade || close
         }
 
+        /**
+         * Whose fair line a close "read before the start" is, from the Tracker bet's own record (" (CNO's books)", " (Vigilant's fair line)", " (both, averaged)"): the file said
+         * only "Tracker · read before the start" and an analysis could not tell it from a sharp book's close (Tj's v0.58.3 file). Empty for any other close, or when unknown.
+         */
+        fun trackerRead(source: String, own: TrackedBet): String {
+            if (source != ClosingLine.SOURCE_CAPTURED) return ""
+            return when (own.nowVia) {
+                BetTracker.VIA_CNO -> " (CNO's books)"
+                BetTracker.VIA_VIGILANT -> " (Vigilant's fair line)"
+                BetTracker.VIA_BOTH -> " (CNO and Vigilant, averaged)"
+                else -> ""
+            }
+        }
+
         /** What Tj's own Tracker bet [own] on the same line already has that [study] still lacks: its result, its close, Novig's close. Null when nothing. */
         fun copyOf(study: TrackedBet, own: TrackedBet, now: Long): StudyResult? {
             val settled = own.status != BetStatus.PENDING && study.status == BetStatus.PENDING
@@ -657,7 +671,7 @@ class ScanStudy(
                 status = own.status.takeIf { settled }, settledAtMs = own.settledAtMs.takeIf { settled }, settledBy = own.settledBy.takeIf { settled },
                 settleValue = own.settleValue.takeIf { settled }, gradeNote = own.gradeNote.takeIf { settled }, gradeAtMs = own.gradeAtMs.takeIf { settled },
                 gradeManual = false,
-                closeFair = close?.first, closeVia = close?.let { "Tracker · " + ClosingLine.sourceLabel(it.second) }, closeFinal = close != null,
+                closeFair = close?.first, closeVia = close?.let { "Tracker · " + ClosingLine.sourceLabel(it.second) + trackerRead(it.second, own) }, closeFinal = close != null,
                 novigClose = novig, novigCloseAtMs = own.novigCloseAtMs.takeIf { novig != null },
                 from = "tracker",
             )

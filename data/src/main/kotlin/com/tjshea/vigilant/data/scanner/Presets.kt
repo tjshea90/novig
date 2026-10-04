@@ -45,7 +45,11 @@ data class PresetRules(
         add(if (autoBetKinds.size == BetKind.entries.size) "every kind of bet" else autoBetKinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() })
         add(autoBetStake.label + " stakes")
         add("sharp check: " + sharpAutoBet.displayName.lowercase() + if (sharpAutoBet == SharpMode.VETO && sharpVetoMinEv > 0.0) " under ${pct(sharpVetoMinEv)}" else "")
-        add("CNO: ${cnoFilters.devig.displayName.lowercase()} devig, ${cnoFilters.minBooks}+ books, ${cnoFilters.rows} rows")
+        // What CNO's list is read with (the app's list and the scan study's "shown" group follow THESE, not the edge, odds and books above, which are the auto-bet's).
+        add(
+            "CNO: ${cnoFilters.devig.displayName.lowercase()} devig, edge ≥ ${pct(cnoFilters.minEv)}, odds up to ${if (cnoFilters.maxOdds > 0) "+${cnoFilters.maxOdds}" else "any"}, " +
+                "${cnoFilters.minBooks}+ books, ${cnoFilters.rows} rows",
+        )
         add("alerts ≥ ${pct(alertMinEv)}")
         add("auto-scan every ${ScanSettings.intervalLabel(autoScanSeconds)}")
     }.joinToString(" · ")

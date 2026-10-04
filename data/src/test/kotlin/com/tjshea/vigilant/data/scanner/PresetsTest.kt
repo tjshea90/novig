@@ -140,7 +140,7 @@ class PresetsTest {
     fun `a preset in one line`() {
         assertEquals(
             "edge ≥ 2.5% · 3+ books price both sides, 3+ agree · odds -200 to +150 · player props, moneylines, spreads · ¼ Kelly stakes · sharp check: veto under 1% · " +
-                "CNO: conservative devig, 4+ books, 100 rows · alerts ≥ 2.5% · auto-scan every 30 sec",
+                "CNO: conservative devig, edge ≥ 1%, odds up to +150, 4+ books, 100 rows · alerts ≥ 2.5% · auto-scan every 30 sec",
             Presets.VOLUME.rules.summary(),
         )
         // Whole percents read whole: 0.03 × 100 is 3.0000000000000004 in floating point and once read "3.0%".

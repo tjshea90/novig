@@ -5,6 +5,8 @@ import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetLedger
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.CloseLookup
+import com.tjshea.vigilant.data.tracker.ClosePlausibility
 import com.tjshea.vigilant.data.tracker.ClosingLine
 import com.tjshea.vigilant.data.tracker.PlacedIndex
 import com.tjshea.vigilant.data.tracker.TrackedBet
@@ -135,7 +137,11 @@ object StudyExport {
     fun rowOf(sb: StudyBet, now: Long, own: TrackedBet?): StudyRow {
         val b = sb.bet
         val listings = sb.sights.filter { Sight.isListing(it.second.k) }
-        val closeOf = ClosingLine.closeOf(b, now)
+        val found = ClosingLine.closeOf(b, now)
+        // A close that can't be this bet's (another game's: Tj's file, 2026-10-03, a Washington State -117 "closed" at +272, -50% CLV) is left out of every figure with
+        // its reason, whatever the journal holds from before the matcher was fixed ([ClosePlausibility]; the journal is append-only and keeps the line).
+        val implausible = found?.let { ClosePlausibility.reason(b, CloseLookup.Found(it.first, it.second)) }
+        val closeOf = found.takeIf { implausible == null }
         val closeFair = closeOf?.first
         fun clvAt(american: Int?): Double? = if (closeFair == null || american == null) null else closeFair / (1.0 / Odds.americanToDecimal(american)) - 1.0
         val prices = listings.mapNotNull { it.second.o }
@@ -152,8 +158,8 @@ object StudyExport {
             src = src, screen = sb.screen, american = b.american, cost = b.cost, ev = b.evPercentAtBet, fair = b.fairAtBet,
             status = b.status.name, profit = b.profit, gradeNote = b.gradeNote.takeIf { b.status == BetStatus.PENDING || b.gradeManual },
             closeFair = closeFair, closeAmerican = closeFair?.let { Odds.probabilityToAmerican(it.coerceIn(0.001, 0.999)) },
-            closeVia = closeOf?.second?.let { if (it == ClosingLine.SOURCE_CAPTURED) b.closeVia ?: "read before the start" else it }, closeNote = b.closeNote.takeIf { closeFair == null },
-            clv = ClosingLine.clv(b, now), clvBest = clvAt(best), clvLast = clvAt(last), bestAmerican = best, lastAmerican = last,
+            closeVia = closeOf?.second?.let { if (it == ClosingLine.SOURCE_CAPTURED) b.closeVia ?: "read before the start" else it }, closeNote = implausible ?: b.closeNote.takeIf { closeFair == null },
+            clv = if (closeOf == null) null else ClosingLine.clv(b, now), clvBest = clvAt(best), clvLast = clvAt(last), bestAmerican = best, lastAmerican = last,
             novigClose = b.novigClose,
             listedMin = ended?.let { (it.first - b.createdAtMs) / 60_000L }, lastListedMinToStart = ended?.let { (b.startsTs - it.first) / 60_000L },
             gone = ended?.second?.let { Sight.isAppGone(it.k) } == true,
@@ -458,6 +464,7 @@ object StudyExport {
         out.appendLine("== HOW THIS DATA WAS COLLECTED, AND WHAT IT CAN'T SAY ==")
         CAVEATS.forEach { out.appendLine(it) }
         out.appendLine("Rules in force when this file was made (they decided which bets the scanners listed; they may have changed during the period): ${meta.rules}")
+        out.appendLine("  Which part decides what: the app's CNO list (screen = none, src c) follows the 'CNO:' part (edge, odds, books, rows); the leading 'edge ≥', books and odds parts are the auto-bet's and Vigilant's own scan's (src v). Check atBet.preset and atBet.version: they changed during one evening.")
         out.appendLine()
         out.appendLine("== SUMMARY (added up on the phone; ROI is at the first-listed price with one unit a bet; CLV is against the close found, see closeVia) ==")
         out.appendLine(overall.line("ALL BETS"))
