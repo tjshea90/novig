@@ -253,7 +253,7 @@ data class ScanSettings(
      * default: Tj's own bets with no sharp book on the page had a CLV of -1.9% (12 closes) against +3.5% (62) with one, but the study's props went the
      * other way on 6 closes; too thin to switch a rule (RESEARCH.md §81.4).
      */
-    val makerRequireSharp: Boolean = true,
+    val makerRequireSharp: Boolean = false,
     /**
      * With auto-make off, recommend bids to approve or deny (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"): the Bids
      * tab's list, and a notification for each new one (at most a few a cycle) with Approve and Deny.
