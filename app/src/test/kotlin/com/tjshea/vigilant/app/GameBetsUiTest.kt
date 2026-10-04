@@ -164,6 +164,8 @@ class GameBetsUiTest {
         assertNull(GameBetsText.hedgeNote(s))
         val hedged = s.copy(atRisk = 15.3)
         assertEquals("\$15.30 at risk: a lock, or both sides of one market, counts once", GameBetsText.hedgeNote(hedged))
+        // The button says the money bet, never the smaller number the limit counts.
+        assertEquals("\$21.30 in game", GameBetsText.chip(hedged))
         val bidsOnly = GameBets.Summary(g, emptyList(), listOf(line("d", GameBets.Kind.BID, 4.5)), atRisk = 4.5)
         assertEquals("\$4.50 in bids", GameBetsText.chip(bidsOnly))
     }
@@ -205,6 +207,18 @@ class GameBetsUiTest {
         screen { CompositionLocalProvider(LocalGameBets provides GameBetsView(index)) { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) } }
         // The sample's three open bets (b3, b4, b5); the settled ones are on the other tab, and nothing is on them any more.
         compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(3)
+    }
+
+    @Test
+    fun `a graded bet in a game that still has an open bet shows no button, the open one does`() {
+        val base = SampleScan.state()
+        // b6 (graded) and a new open bet in the very same game.
+        val b6 = base.bets.first { it.id == "b6" }
+        val state = base.copy(bets = base.bets + b6.copy(id = "b6x", status = BetStatus.PENDING, selection = "Tampa Bay Rays", settledBy = null, stake = 2.0))
+        screen { CompositionLocalProvider(LocalGameBets provides GameBetsView(GameBets.of(state.bets, emptyList()))) { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.BETS) } }
+        compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(4)
+        compose.onNodeWithText("Settled (3)").performClick()
+        compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(0)
     }
 
     @Test

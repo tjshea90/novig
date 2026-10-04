@@ -103,7 +103,7 @@ object GameBetsText {
 @Composable
 fun GameBetsChip(event: String, startsTs: Long?, league: String, modifier: Modifier = Modifier, eventId: String = "") {
     val view = LocalGameBets.current
-    val summary = remember(view, event, startsTs, league, eventId) { view.bets.of(event, null, league, eventId) } ?: return
+    val summary = remember(view, event, startsTs, league, eventId) { view.bets.of(event, startsTs, league, eventId) } ?: return
     GameBetsButton(summary, view.limit, modifier)
 }
 
