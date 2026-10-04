@@ -3743,3 +3743,8 @@ Do option 1 and add the props split to the study
 ```
 Confirm that all the betting data is being logged even when the app is backgrounded but in auto scan background mode.
 ```
+
+## 2026-10-04T01:45:38Z
+```
+Look at the attached screenshot. My wallet has less than open bids money. I think this is because I was betting manually and auto betting and the app doesn't constantly monitor how much money is in the wallet to make sure the open bids aren't more than available money
+```
