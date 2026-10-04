@@ -5,7 +5,13 @@ import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
+import com.tjshea.vigilant.data.reference.LineKind
 import com.tjshea.vigilant.data.reference.OddsFeed
+import com.tjshea.vigilant.data.reference.RefBookMarket
+import com.tjshea.vigilant.data.reference.RefEvent
+import com.tjshea.vigilant.data.reference.RefQuote
+import com.tjshea.vigilant.data.reference.RefSnapshot
+import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.engine.Odds
@@ -189,5 +195,25 @@ class ParlayBooksTest {
         // A props row is dated by its own `age_seconds` before the read (ParlayProps' rule: how long ago the feed saw the price).
         assertEquals(now - 129_600L, allen.getValue("CZR").atMs)
         assertEquals(now - 481_600L, allen.getValue("DK").atMs)
+    }
+
+    /** Tj's scan-study file, 2026-10-03: another State game's prices were taken for Washington State's. A game of two other State teams is not the bet's game. */
+    @Test
+    fun `a game that shares only the word State gives no books, and the real game's books are on the right side`() {
+        val starts = Instant.parse("2026-10-03T23:30:00Z").toEpochMilli()
+        fun event(id: String, home: String, away: String, homeDec: Double, awayDec: Double) = RefEvent(
+            id, "americanfootball_ncaaf", starts, home, away,
+            listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, homeDec, null), RefQuote(Side.AWAY, awayDec, null)), null)),
+        )
+        val wrong = event("w", "Oregon State Beavers", "Idaho State Bengals", 3.72, 1.29)
+        val truth = event("t", "Washington State Cougars", "Fresno State Bulldogs", 1.87, 1.95)
+        val pick = BetGrader.pickOf("Moneyline", "Washington State")!!
+        assertNull(ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrong), now), "Fresno State @ Washington State", starts, "Washington State", pick, now))
+        val view = ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrong, truth), now), "Fresno State @ Washington State", starts, "Washington State", pick, now)!!
+        assertEquals(us(1.87), view.prices.single().odds)
+        assertEquals(us(1.95), view.prices.single().otherOdds)
+        // The other team of that game is the away side.
+        val dog = ParlayBooks.viewOf(RefSnapshot("americanfootball_ncaaf", listOf(wrong, truth), now), "Fresno State @ Washington State", starts, "Fresno State", BetGrader.pickOf("Moneyline", "Fresno State")!!, now)!!
+        assertEquals(us(1.95), dog.prices.single().odds)
     }
 }

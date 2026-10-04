@@ -166,12 +166,17 @@ class ParlayBooks(
                 val b = american(quote(other, otherPoint)?.decimalOdds) ?: return null
                 return a to b
             }
-            fun homeSide(team: String) = TeamMatcher.similarity(team, game.home) >= TeamMatcher.similarity(team, game.away)
+            // The side of the game the team fits BEST, never the home side by default when two names fit alike ("Washington State" / "Fresno State"): no price then.
+            fun homeSide(team: String): Boolean? = when (TeamMatcher.whichOf(team, game.home, game.away)) {
+                1 -> true
+                2 -> false
+                else -> null
+            }
             return when (pick) {
                 is BetGrader.Pick.Moneyline -> if (mk.kind != LineKind.MONEYLINE) null
-                else if (homeSide(pick.team)) both(Side.HOME, Side.AWAY) else both(Side.AWAY, Side.HOME)
+                else homeSide(pick.team)?.let { home -> if (home) both(Side.HOME, Side.AWAY) else both(Side.AWAY, Side.HOME) }
                 is BetGrader.Pick.Spread -> if (mk.kind != LineKind.SPREAD) null
-                else if (homeSide(pick.team)) both(Side.HOME, Side.AWAY, pick.line, -pick.line) else both(Side.AWAY, Side.HOME, pick.line, -pick.line)
+                else homeSide(pick.team)?.let { home -> if (home) both(Side.HOME, Side.AWAY, pick.line, -pick.line) else both(Side.AWAY, Side.HOME, pick.line, -pick.line) }
                 is BetGrader.Pick.Total -> if (mk.kind != LineKind.TOTAL) null
                 else if (pick.over) both(Side.OVER, Side.UNDER, pick.line, pick.line) else both(Side.UNDER, Side.OVER, pick.line, pick.line)
                 is BetGrader.Pick.Prop -> if (mk.kind != LineKind.PLAYER_PROP || mk.stat != pick.stat || !PlayerNames.same(mk.subject, pick.player)) null

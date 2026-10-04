@@ -77,4 +77,30 @@ class TeamMatcherTest {
         assertTrue(first === TeamMatcher.tokens("Mississippi State Bulldogs"))
         assertEquals(listOf("mississippi", "st", "bulldogs"), first)
     }
+
+    /**
+     * Tj's scan-study file, 2026-10-03: a Washington State moneyline "closed" at another State game's price. Two names that share only a school word ("State" is the
+     * token `st`) score 0.5, so a pairing needs one team that really matches, as the scan's planner already demands (1.5 together).
+     */
+    @Test
+    fun `two games that share only the word State are not the same game, and one team really matching is enough`() {
+        assertEquals(0.0, TeamMatcher.gameScore("Washington State", "Fresno State", "Oregon State Beavers", "Idaho State Bengals"), 0.0)
+        assertEquals(2.0, TeamMatcher.gameScore("Washington State", "Fresno State", "Washington State Cougars", "Fresno State Bulldogs"), 0.0)
+        // One team exact, the other only a partial name ("Miami (FL)" / "Miami Hurricanes"): the same game.
+        assertEquals(1.5, TeamMatcher.gameScore("Miami (FL)", "Clemson", "Miami Hurricanes", "Clemson Tigers"), 0.0)
+        // Home and away reversed are not this order's game (callers that accept a swap ask both ways).
+        assertEquals(0.0, TeamMatcher.gameScore("Washington State", "Fresno State", "Fresno State Bulldogs", "Washington State Cougars"), 0.0)
+        // One team the same, the other sharing only the word: another game of that team's pairing would need the same team twice, but the score alone says 1.5.
+        assertEquals(1.5, TeamMatcher.gameScore("Washington State", "Fresno State", "Oregon State Beavers", "Fresno State Bulldogs"), 0.0)
+    }
+
+    @Test
+    fun `a team is the side of a game it fits best - never the first that shares a word, and none when two fit alike`() {
+        assertEquals(1, TeamMatcher.whichOf("Washington State", "Washington State Cougars", "Fresno State Bulldogs"))
+        assertEquals(2, TeamMatcher.whichOf("Fresno State", "Washington State Cougars", "Fresno State Bulldogs"))
+        // Both sides share "State" with it and neither is it: no answer, not the first.
+        assertEquals(0, TeamMatcher.whichOf("Washington State", "Oregon State", "Idaho State"))
+        assertEquals(0, TeamMatcher.whichOf("Alabama", "Ole Miss Rebels", "Georgia Bulldogs"))
+        assertEquals(2, TeamMatcher.whichOf("Miami (FL)", "Clemson Tigers", "Miami Hurricanes"))
+    }
 }
