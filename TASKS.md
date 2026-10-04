@@ -3795,3 +3795,8 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
   the study export drops closes the journal already holds that fail it, rules line names CNO's edge/odds/books, README says which part decides the shown list, Tracker closes name their source. Data suite 1,134+ green; mutants X1-X11 (X4, X8, X9 needed stronger tests).
   BX5 (asked Tj, not done): reading a book page for every prop >= 1.5% EV; Novig ids for the 325 of 622 bets that have none (so Novig's trades can close them); a close under several devig methods. Tell Tj to re-export after Sunday's NFL games.
 
+
+## Tj, 2026-10-04 (after v0.59.0): "For the most at risk on one game option, add $5 and a manual entry"
+
+- [ ] BY1 Add a $5 chip to "Most at risk on one game" (Settings › Betting & Novig account) and a way to type any amount (a manual entry), the way the app's other chip rows with a typed amount work; 0 / "No limit" stays; a typed amount is saved as `apiMaxPerGame`, junk is ignored, a saved odd amount shows as selected.
+- [ ] BY2 Tests (chip $5 sets 5.0; typing sets the limit; bad input changes nothing; the chosen value reads back), full floor, ship, answer Tj with the link.
