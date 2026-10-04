@@ -249,7 +249,6 @@ class NovigPublicClient(
     private fun keyRetryAfter(e: Throwable): Long = when {
         e is NovigApiException && e.networkRefusal -> NETWORK_RETRY_MS
         e !is NovigApiException && e is IOException -> NO_CONNECTION_RETRY_MS
-        e is NovigApiException && e.status in 500..599 -> NO_CONNECTION_RETRY_MS
         else -> keyedRetryMs
     }
 
@@ -687,7 +686,7 @@ class NovigPublicClient(
         const val MAX_KEYED_SERVER_ERRORS = 6
 
         /** 404s in a row on the key route (no book read cleanly between) before it is taken for a dead route, not closed markets. */
-        const val MAX_KEYED_NOT_FOUND = 1_000_000
+        const val MAX_KEYED_NOT_FOUND = 200
 
         /** Novig's own code for its location screen being down (a verdict on the key route, not on one market). */
         const val GEOLOCATION_DOWN = "GEOLOCATION_SCREENING_UNAVAILABLE"
