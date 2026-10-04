@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.tracker
 
+import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
+import com.tjshea.vigilant.data.novig.trading.maker.MakerStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -174,5 +176,26 @@ class GameExposureTest {
         assertTrue(words, words.contains("$20.00"))
         assertTrue(words, words.contains("$30.00"))
         assertTrue(words, words.contains("$25.00"))
+    }
+
+    // ---- resting bids ----
+
+    private fun bid(id: String, market: String, outcome: String, status: MakerStatus, contracts: Long = 1_000, filled: Long = 0, price: Double = 0.5, eventId: String = "e1") = MakerBid(
+        clientId = id, orderId = "ord-$id", marketId = market, eventId = eventId, outcomeId = outcome, league = "NFL", eventName = "Houston Texans @ Indianapolis Colts",
+        startsTs = now + 5 * hour, marketLabel = "Spread", selection = outcome, price = price, contracts = contracts, fair = 0.55, evAtFair = 0.05, margin = 0.04,
+        postedAtMs = now, status = status, filled = filled,
+    )
+
+    @Test
+    fun `a bid that is not ended counts for what is still resting, and an ended one or a filled part does not`() {
+        val g = game()
+        val up = bid("a", "m1", "o1", MakerStatus.RESTING)                    // 1,000 × 50¢ × $0.01 = $5.00
+        val half = bid("b", "m2", "o1", MakerStatus.RESTING, filled = 400)    // 600 left: $3.00 (the 400 filled are a bet in the Tracker)
+        val down = bid("c", "m3", "o1", MakerStatus.CANCELING)                // can still fill until Novig says it's gone: $5.00
+        val ended = bid("d", "m4", "o1", MakerStatus.CANCELLED)               // gone
+        val items = GameExposure.bidItems(listOf(up, half, down, ended))
+        assertEquals(listOf(5.0, 3.0, 5.0), items.map { it.dollars })
+        assertEquals(13.0, GameExposure.atRisk(g, items), 1e-9)
+        assertTrue("a bid on another event is another game", GameExposure.atRisk(game("e2"), items) == 0.0)
     }
 }
