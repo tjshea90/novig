@@ -941,8 +941,11 @@ class MakerTest {
         assertEquals(MakerPlan.TRIMMED, plan.cancels.single().second)
         assertEquals(1, plan.trimmed)
         assertEquals(setOf("b-over", "c-over"), plan.kept.map { it.outcomeId }.toSet())
-        // Its line is still wanted, but the wallet just took it down: not posted again.
+        // Its line is still wanted, but the wallet just took it down: not posted again, not even a smaller bid that would fit what the cancel frees.
         assertTrue(plan.places.isEmpty())
+        val smaller = MakerPlan.plan(listOf(post("a-over", 0.50, 300), post("b-over", 0.40), post("c-over", 0.30)), up, rules, now, budget = budgetFor(8.98, *up.toTypedArray()))
+        assertEquals(listOf("a-over"), smaller.cancels.map { it.first.outcomeId })
+        assertTrue(smaller.places.isEmpty())
         // Covered to the cent: nothing comes down. One cent short: the bid goes.
         assertEquals(0, MakerPlan.plan(wanted, up, rules, now, budget = budgetFor(12.0, *up.toTypedArray())).trimmed)
         assertEquals(1, MakerPlan.plan(wanted, up, rules, now, budget = budgetFor(11.99, *up.toTypedArray())).trimmed)
@@ -960,13 +963,19 @@ class MakerTest {
         val up = listOf(resting("x-over", 0.40), resting("y-over", 0.40), resting("z-over", 0.40).copy(auto = false))
         val plan = MakerPlan.plan(listOf(x, y, z), up, rules, now, budget = budgetFor(8.0, *up.toTypedArray()))
         assertEquals(listOf("y-over"), plan.cancels.map { it.first.outcomeId })
+        // A leader outranks a cheaper bid behind another: $4.00 leading and $3.00 behind won't both fit $4.50, and the leader stays.
+        val dearLeader = MakerDecision.Post(line("l-over").copy(bestBid = 0.35), 0.40, 1_000, 0.04)
+        val cheapFollower = MakerDecision.Post(line("f-over").copy(bestBid = 0.30), 0.30, 1_000, 0.04)
+        val lf = listOf(resting("f-over", 0.30), resting("l-over", 0.40))
+        val ranked = MakerPlan.plan(listOf(dearLeader, cheapFollower), lf, rules, now, budget = budgetFor(4.5, *lf.toTypedArray()))
+        assertEquals(listOf("f-over"), ranked.cancels.map { it.first.outcomeId })
         // Leaders over followers, the cheaper over the dearer, then the more EV: two leaders, $4.00 + $5.00 won't both fit a $5.50 wallet.
         val cheap = listOf(resting("a-over", 0.50), resting("b-over", 0.30))
         assertEquals(listOf("a-over"), MakerPlan.plan(listOf(post("a-over", 0.50), post("b-over", 0.30)), cheap, rules, now, budget = budgetFor(5.5, *cheap.toTypedArray())).cancels.map { it.first.outcomeId })
         val same = listOf(resting("c-over", 0.40).copy(evAtFair = 0.04), resting("d-over", 0.40).copy(evAtFair = 0.06))
         val tie = MakerPlan.plan(emptyList(), same, rules, now, budget = budgetFor(4.0, *same.toTypedArray()), partial = true)
         assertEquals(listOf("c-over"), tie.cancels.map { it.first.outcomeId })
-        // What fits is kept even when it ranks low: a $5.00 leader is trimmed for a $4.00 wallet, the $3.00 bid behind another stays.
+        // What fits is kept even when it ranks lower: the $5.00 leader doesn't fit a $4.00 wallet and comes down; the $3.00 bid behind another one does, and stays.
         val fit = listOf(resting("e-over", 0.50), resting("f-over", 0.30))
         val behindF = MakerDecision.Post(line("f-over").copy(bestBid = 0.30), 0.30, 1_000, 0.04)
         val kept = MakerPlan.plan(listOf(post("e-over", 0.50), behindF), fit, rules, now, budget = budgetFor(4.0, *fit.toTypedArray()))
@@ -1082,7 +1091,7 @@ class MakerTest {
         // Still on the book: it could still fill, so m2 can't rest beside it on $7.00.
         now += 30_000
         assertEquals(1, d.fit(rules, 50.0, wallet = 7.0).trimmed)
-        // Applied: it's off, and m2 (already cancelled above) is the only one left coming down: nothing more.
+        // Applied: both are off the book now, so nothing is up and nothing more comes down.
         novig.applyCancels()
         now += 30_000
         assertEquals(0, d.fit(rules, 50.0, wallet = 7.0).trimmed)
