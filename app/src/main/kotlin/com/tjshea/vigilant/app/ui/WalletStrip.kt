@@ -25,9 +25,13 @@ object WalletStripText {
     /** "Vigilant wallet $18.51". */
     fun balance(r: WalletBalance.Reading?): String = "Vigilant wallet " + (r?.let { Format.money(it.dollars) } ?: "not read yet")
 
-    /** " · 3 bids up ($8.20) · 2m ago" (each part only when it says something). */
+    /** The bids up are worth more than the wallet holds (Novig holds nothing for a resting bid; the app takes the extra down, [com.tjshea.vigilant.app.MakerRunner.fitToWallet]). */
+    fun over(r: WalletBalance.Reading?, bids: Int, bidDollars: Double): Boolean = r != null && bids > 0 && bidDollars > r.dollars + 0.005
+
+    /** " · 3 bids up ($8.20) · 2m ago" (each part only when it says something), "· over the wallet" while the bids up are worth more than it holds. */
     fun detail(r: WalletBalance.Reading?, bids: Int, bidDollars: Double, now: Long): String = listOfNotNull(
         bids.takeIf { it > 0 }?.let { "$it bid${if (it == 1) "" else "s"} up (${Format.money(bidDollars)})" },
+        "over the wallet".takeIf { over(r, bids, bidDollars) },
         r?.takeIf { now - it.atMs >= SAY_AGE_AFTER_MS }?.let { Format.age(it.atMs, now) },
     ).joinToString(" · ")
 }
@@ -49,7 +53,8 @@ fun WalletStrip(reading: WalletBalance.Reading?, bids: Int, bidDollars: Double, 
             val detail = WalletStripText.detail(reading, bids, bidDollars, now)
             if (detail.isNotEmpty()) {
                 Text(
-                    " · $detail", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    " · $detail", style = MaterialTheme.typography.labelMedium,
+                    color = if (WalletStripText.over(reading, bids, bidDollars)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
             }

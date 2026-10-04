@@ -115,15 +115,18 @@ class MakerRunner(
             // No scan yet in this process: only fills and expiries. A scan still running is judged as far as it got (Tj, 2026-10-03: "I had auto make
             // bids turned on, but it didn't actually make any bids by itself": a scan took 8 minutes and every pass waited for its end, by when the fair
             // prices it read first were going old): its finished leagues' lines are bid on, and a bid whose line it hasn't judged yet stays up.
+            val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+            val rules = MakerRules.of(s)
             if (result == null && stop == null) {
-                val fills = desk.settleOnly()
-                notifyFills(fills, desk.bids())
-                _status.update { it.copy(running = false, lastAtMs = now, problem = null) }
+                // No lines to judge by, but the bids up still have to fit the wallet (a bet by hand or an auto-bet since they went up: Tj, 2026-10-04).
+                val report = desk.fit(rules, s.apiMaxPerDay, wallet)
+                notifyFills(report.fills, desk.bids())
+                logTrim(why, report)
+                report.problems.forEach { p -> runCatching { c.problems.add("Make orders", p) } }
+                _status.update { it.copy(running = false, lastAtMs = now, problem = report.problems.firstOrNull()) }
                 return@withLock null
             }
             val partial = result?.partial == true
-            val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
-            val rules = MakerRules.of(s)
             val report = desk.cycle(
                 withMoves(MakerLines.from(result, s, now), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
@@ -140,7 +143,7 @@ class MakerRunner(
                 c.eventLog.info(
                     "MAKER",
                     "$why${if (partial) " (scan running)" else ""}: ${report.placed} posted, ${report.cancelled} cancelled, ${report.fills.size} filled, ${report.resting} resting" +
-                        (report.stopped?.let { " ($it)" } ?: "") + waiting + walletNote,
+                        (report.stopped?.let { " ($it)" } ?: "") + trimNote(report, wallet) + waiting + walletNote,
                 )
             }
             if (report.placed > 0) c.eventLog.count("maker.posted.auto", report.placed.toLong())
@@ -162,6 +165,42 @@ class MakerRunner(
             _status.update { it.copy(running = false, problem = text) }
             null
         }
+    }
+
+    /**
+     * The bids up kept within the wallet between passes (Tj, 2026-10-04: "the app doesn't constantly monitor how much money is in the wallet to make sure
+     * the open bids aren't more than available money"): the balance read now (never older than [GUARD_FRESH_MS]), the fills settled, and the least valuable
+     * bids the wallet (or the day's limit) can't cover come down ([MakerDesk.fit]). The container calls it whenever a balance reading or the bids change and
+     * the bids up add up to more than the reading ([overWallet]), whatever auto-make is set to. Null when nothing needed doing or betting isn't set up.
+     */
+    suspend fun fitToWallet(why: String): MakerDesk.Report? = passes.withLock {
+        val desk = desk() ?: return@withLock null
+        if (desk.bids().none { it.resting && it.orderId != null }) return@withLock null
+        val s = c.currentSettings()
+        val wallet = runCatching { c.wallet.fresh(maxAgeMs = GUARD_FRESH_MS)?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+        try {
+            val report = desk.fit(MakerRules.of(s), s.apiMaxPerDay, wallet)
+            notifyFills(report.fills, desk.bids())
+            logTrim(why, report, wallet)
+            report.problems.forEach { p -> runCatching { c.problems.add("Make orders", p) } }
+            if (report.trimmed > 0 || report.fills.isNotEmpty()) preview(s)
+            report
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            runCatching { c.problems.add("Make orders", (e as? NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName) }
+            null
+        }
+    }
+
+    private fun trimNote(report: MakerDesk.Report, wallet: Double?): String =
+        if (report.trimmed == 0) "" else " · ${report.trimmed} taken down: the wallet${wallet?.let { " (${money(it)})" }.orEmpty()} (or today's limit) can't cover every bid up"
+
+    /** A bid taken down for want of money is written down (Diagnostics' timeline), as is a count for the numbers. */
+    private fun logTrim(why: String, report: MakerDesk.Report, wallet: Double? = null) {
+        if (report.trimmed == 0) return
+        c.eventLog.info("MAKER", "$why: ${report.cancelled} cancelled, ${report.resting} resting" + trimNote(report, wallet))
+        c.eventLog.count("maker.trimmed", report.trimmed.toLong())
     }
 
     /** The bids each line of the latest scan would get now, posting nothing (the tab with auto-make off, or between passes). */
@@ -204,7 +243,8 @@ class MakerRunner(
             is MakerDecision.Skip -> d.why
             is MakerDecision.Post -> when {
                 wallet != null && d.cost > wallet + 1e-9 -> "The wallet has ${com.tjshea.vigilant.app.ui.Format.money(wallet)}, under this bid's ${com.tjshea.vigilant.app.ui.Format.money(d.cost)}"
-                else -> desk.post(d, rules).also { if (it == null) { MakerNotes.cancelRecommendation(app, outcomeId); preview(s) } }
+                // The wallet and the day's limit beside the bids already up, not each bid against the whole wallet (Tj, 2026-10-04).
+                else -> desk.post(d, rules, wallet = wallet, maxPerDay = s.apiMaxPerDay).also { if (it == null) { MakerNotes.cancelRecommendation(app, outcomeId); preview(s) } }
             }
         }
     }
@@ -303,6 +343,19 @@ class MakerRunner(
 
         /** The background cycle's pass is skipped when another started less than this long ago ([run]'s minGapMs). */
         const val BACKGROUND_GAP_MS = 15_000L
+
+        /** The wallet check between passes reads the balance again when the last reading is older than this (a bid comes down on what it says). */
+        const val GUARD_FRESH_MS = 10_000L
+
+        /** Half a cent: the bids up are "over" the wallet only by more than rounding. */
+        private const val CENT_SLACK = 0.005
+
+        /**
+         * Whether the bids resting or coming down on Novig add up to more than the wallet's [reading], with a resting one to take down: what the
+         * container's watch on the wallet and the bids asks before it calls [fitToWallet] (no request).
+         */
+        fun overWallet(bids: List<MakerBid>, reading: WalletBalance.Reading?): Boolean =
+            reading != null && bids.any { it.resting && it.orderId != null } && bids.filter { it.active }.sumOf { it.restingDollars } > reading.dollars + CENT_SLACK
 
         /** How long one read of a market's trades serves the move rule (the auto-bet's cooldown: a move is judged on the last 15 min and the hour). */
         const val MOVE_READ_MS = 2 * 60_000L
