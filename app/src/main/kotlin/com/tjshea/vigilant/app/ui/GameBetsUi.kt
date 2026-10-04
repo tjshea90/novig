@@ -87,7 +87,7 @@ object GameBetsText {
     /** What the per-game limit leaves: its room, or that the game is at it; null when none is set. */
     fun limit(s: GameBets.Summary, limit: Double): String? {
         if (limit <= 0.0) return null
-        val room = limit - s.atRisk
+        val room = limit - s.placed
         return if (room <= 0.004) "At your ${Format.money(limit)} limit per game: auto-bet and bids add nothing more here"
         else "${Format.money(room)} room under your ${Format.money(limit)} limit per game"
     }
