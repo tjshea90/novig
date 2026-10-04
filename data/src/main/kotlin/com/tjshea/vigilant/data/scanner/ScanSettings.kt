@@ -229,7 +229,7 @@ data class ScanSettings(
      */
     val maker: Boolean = false,
     /** The EV at the fair each bid is posted at: fair / (1 + this), on Novig's grid ([MAKER_MARGIN_CHOICES]). 4% is §70's balance point. */
-    val makerMargin: Double = 0.035,
+    val makerMargin: Double = 0.04,
     /**
      * How a bid is sized, like the auto-bet's stake rule ([autoBetStake]): ¼ Kelly by default (Benter's and the pros' fractional Kelly on the edge at
      * the fair, RESEARCH.md §69.1), on [bankroll], never over [makerMaxStake] or [apiMaxStake].
@@ -246,7 +246,7 @@ data class ScanSettings(
      * dollars or the wallet can't take every bid wanted, the ones on lines many books price ([MAKER_POPULAR_BOOKS]+: a star's prop, a main market) go up before
      * the ones one or two books price, after the ones that lead their side (RESEARCH.md §81.4). On by default: it only orders what is posted.
      */
-    val makerPopularFirst: Boolean = true,
+    val makerPopularFirst: Boolean = false,
     /**
      * Tj, 2026-10-04: "Maybe a sharp book should be required to agree on the positive EV". A bid is posted only when a sharp book (Pinnacle, Circa, the exchanges)
      * prices the line both ways and agrees: the veto ([makerSharpVeto]) stays a veto when one says no, and with this on, none pricing it is a no too. Off by
