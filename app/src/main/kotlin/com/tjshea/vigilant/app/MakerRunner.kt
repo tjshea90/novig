@@ -12,6 +12,7 @@ import com.tjshea.vigilant.data.novig.trading.maker.MakerQuote
 import com.tjshea.vigilant.data.novig.trading.maker.MakerRules
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.GameExposure
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -307,7 +308,12 @@ class MakerRunner(
         val fresh = c.makerRecommended.unseen(posts.map { it.line.outcomeId to it.line.startsTs }, now)
         // A busy slate prices hundreds of lines: the best few a pass, and no more than [MAX_RECOMMENDED_PER_HOUR] an hour (the tab lists the rest).
         val room = (MAX_RECOMMENDED_PER_HOUR - c.makerRecommended.since(now - 3_600_000L)).coerceAtLeast(0)
-        val pick = posts.filter { it.line.outcomeId in fresh }.sortedWith(compareBy({ it.price }, { -it.evAtFair })).take(minOf(MAX_RECOMMENDED, room))
+        // One game is one event (Tj, 2026-10-04): a bid that would take its game past the per-game limit isn't suggested (a hand-approved one is still his call;
+        // a side left out here isn't marked, so it can be recommended once the game has room).
+        val cap = c.settingsStore.flow.value?.apiMaxPerGame ?: 0.0
+        val onGames = if (cap > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
+        val withRoom = if (cap <= 0.0) posts else posts.filterNot { p -> GameExposure.check(p.gameItem.game, onGames, p.gameItem.marketId, p.gameItem.outcomeId, p.cost, cap).blocked }
+        val pick = withRoom.filter { it.line.outcomeId in fresh }.sortedWith(compareBy({ it.price }, { -it.evAtFair })).take(minOf(MAX_RECOMMENDED, room))
         if (pick.isEmpty()) return
         pick.forEach { MakerNotes.recommend(app, it) }
         c.makerRecommended.mark(pick.map { it.line.outcomeId to it.line.startsTs }, clock())
