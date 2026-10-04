@@ -413,7 +413,6 @@ class NovigPublicClient(
                                 // The key route refused (VPN, stale location check, revoked key):
                                 // finish this scan on the public routes and say why once.
                                 if (e.status == 429) {
-                                    keyedRefused.incrementAndGet()
                                     keyedGate.pause(rateClock() + 1000L)
                                     keyedGate.slowDown()
                                     if (retries++ < 2) continue
@@ -434,6 +433,8 @@ class NovigPublicClient(
                                 if (e.code == 403) refused.incrementAndGet()
                                 val hits = if (e.code != 429) 0 else {
                                     refused.incrementAndGet()
+                                    // The key's own read bucket ran dry (not the shared public edge): counted apart, a scan says which route was refused.
+                                    if (key != null) keyedRefused.incrementAndGet()
                                     val t = rateClock()
                                     if (t - lastRefusal.getAndSet(t) >= RateGate.SAME_BURST_MS) throttleHits.incrementAndGet() else throttleHits.get()
                                 }
