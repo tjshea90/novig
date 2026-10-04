@@ -18,11 +18,14 @@ import com.tjshea.vigilant.data.novig.signing.NovigKeyAlgorithm
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.signing.NovigSigningKey
 import com.tjshea.vigilant.data.novig.trading.ApiBetPlacer
+import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.novig.trading.BetTarget
 import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.NovigFill
 import com.tjshea.vigilant.data.novig.trading.NovigOrder
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
+import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
+import com.tjshea.vigilant.data.novig.trading.maker.MakerStatus
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -62,6 +65,7 @@ class AutoBettorTest {
         shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         runBlocking {
             app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+            app.container.makerStore.update { emptyList() }
             app.container.settingsStore.update { ScanSettings() }
         }
     }
