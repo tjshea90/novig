@@ -3740,3 +3740,8 @@ Part 1 = resume the BO job above (the other account's session was cut off in BO2
 - [ ] BU3 Watch the wallet between passes: when any balance reading (Bet sheet, auto-bet, the strip's 30 s read, a transfer) shows bids up over the wallet, trim right then (MakerDesk.fit: wallet read first, then settle, then cancel), also with auto-make off; background cycle covers it already.
 - [ ] BU4 Say it where Tj looks: the wallet strip marks bids over the wallet; Diagnostics/MAKER line says what was trimmed and why.
 - [ ] BU5 Tests failing-first + mutants (plan trim, desk fit incl. races/CANCELING/partial fills/hand-approved, app wiring), full floor, sweep for related gaps (day's limit, maxDollars, same-money bets), ship, answer Tj with the Release link.
+
+## Tj, 2026-10-04 (mid-turn, while BU was in progress): "A lot of times the vigilant scanner slows down significantly when it is scanning novig prices, maybe down to 2 per second. Other times it is very fast. Can this be diagnosed? Should I send the diagnosis file?"
+
+- [ ] BV1 Find out what in the code sets the Novig read pace (RateGate / NovigPublicClient pacer: 429 memory, step-down, climb-back), what the diagnostics file already records about it (per-scan Novig request counts, rate, 429s, waits), and whether that is enough to tell why some scans are fast and some slow.
+- [ ] BV2 Answer Tj plainly: can it be diagnosed from the file he already has, should he send one, and what the likely cause is. Add whatever the file lacks to find the cause (per-scan Novig pace, pacer state and why) only if something is missing; no change to the pace itself without his approval.
