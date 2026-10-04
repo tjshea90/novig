@@ -198,6 +198,10 @@ class AutoBettor(
             maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, maxPerGame = settings.apiMaxPerGame,
             minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
         )
+        // One game is one event (Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10"): what is at risk
+        // on each game across all its markets, open bets and resting bids, with each bet this cycle added as it's placed. The placer checks it again on its
+        // own read (the Bet sheet shares it); this pass is what keeps a full game from costing a market read and a book read per bet per cycle.
+        var exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
         val placed = ArrayList<TrackedBet>()
         var stopped: String? = null
         var walletEmpty = false
@@ -235,6 +239,11 @@ class AutoBettor(
             val priced = item.live?.outcomeId
             if (priced != null && priced != target.outcomeId) { cooldown[row.key] = now + NOT_FOUND_COOLDOWN_MS; skip("Novig's price and its bet slip name different outcomes"); continue }
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
+            val game = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
+            if (settings.apiMaxPerGame > 0.0) {
+                val check = GameExposure.check(game, exposure, target.market.marketId, target.outcomeId, stake, settings.apiMaxPerGame)
+                if (check.blocked) { noteGameLimit(check); skip(AutoBet.GAME_LIMIT_SKIP); continue }
+            }
             // The trap guard's second rule (RESEARCH.md §71): on a game line, Novig's own trades say whether the price just moved to make it look cheap.
             val moveReason = novigMove(item, target, settings)
             if (moveReason != null) { cooldown[row.key] = clock() + AutoBet.COOLDOWN_MS; skip(moveReason); continue }
@@ -261,6 +270,7 @@ class AutoBettor(
                     val bet = result.bet
                     placed += bet
                     openMarkets += target.market.marketId
+                    exposure = exposure + GameExposure.Item(game, target.market.marketId, target.outcomeId, bet.stake)
                     balance -= bet.stake
                     withContext(NonCancellable) { markPlaced(c, target, result, clock()) }
                     notes.placed(app, target, bet, item.check, walletLeft = balance, sharp = sharpSaid[row.key]?.takeIf { it.confirmed }?.detail)
@@ -275,7 +285,7 @@ class AutoBettor(
                         failedUntilMs = now + failBackoffMs
                         break
                     }
-                    skip(result.reason.take(REASON_CHARS))
+                    if (result.gameLimit) { c.eventLog.info("AUTOBET", "held back: ${result.reason}"); skip(AutoBet.GAME_LIMIT_SKIP) } else skip(result.reason.take(REASON_CHARS))
                 }
                 is PlaceResult.Failed -> {
                     stopped = "Novig refused: ${result.message}"
@@ -414,6 +424,15 @@ class AutoBettor(
     private fun tally(key: String, verdict: String) {
         sharpVerdicts[key] = verdict
         _status.update { it.copy(sharp = sharpVerdicts.values.groupingBy { v -> v }.eachCount()) }
+    }
+
+    /** The games whose per-game hold was already logged at that exposure: the same hold isn't logged again every cycle. */
+    private val gameLimitNoted = HashSet<String>()
+
+    /** One log line (which game, what's at risk, what this would add) the first time a bet is held back at an exposure; the skip itself is counted every cycle. */
+    private fun noteGameLimit(check: GameExposure.Check) {
+        if (gameLimitNoted.size > GAME_LIMIT_NOTES) gameLimitNoted.clear()
+        if (gameLimitNoted.add("${check.game.eventId}|${check.game.eventName}|${check.now}")) c.eventLog.info("AUTOBET", "held back: ${check.words()}")
     }
 
     private fun postStop(now: Long, why: String, halted: Boolean) {
