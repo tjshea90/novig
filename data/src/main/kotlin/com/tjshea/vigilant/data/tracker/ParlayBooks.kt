@@ -122,8 +122,9 @@ class ParlayBooks(
         ): CnoBooksView? {
             val m = NovigText.parseMatchup(eventName) ?: return null
             val game = snap.events.filter { startsTs == null || abs(it.commenceMs - startsTs) <= gapMs }
-                .map { e -> e to (TeamMatcher.similarity(m.home, e.home) + TeamMatcher.similarity(m.away, e.away)) }
-                .filter { (e, _) -> TeamMatcher.similarity(m.home, e.home) >= 0.5 && TeamMatcher.similarity(m.away, e.away) >= 0.5 }
+                // The same bar as the scan's planner: both teams fit and one of them really does (two "X State" teams alone are another game).
+                .map { e -> e to TeamMatcher.gameScore(m.home, m.away, e.home, e.away) }
+                .filter { (_, score) -> score > 0.0 }
                 // With no start to go by, the soonest of a series' games (the one a pick at Novig now is on).
                 .sortedBy { it.first.commenceMs }
                 .maxByOrNull { it.second }?.first ?: return null

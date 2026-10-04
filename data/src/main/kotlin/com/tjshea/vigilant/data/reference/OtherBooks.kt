@@ -321,13 +321,13 @@ class OtherBooks(
 
         /** The game among [games] (home, away, start) that is [home] vs [away]: the one nearest [startsTs], else the soonest. */
         private fun gameOf(games: List<Triple<String, String, Long?>>, home: String, away: String, startsTs: Long?): Triple<String, String, Long?>? =
-            games.filter { (h, a, _) -> TeamMatcher.similarity(home, h) >= 0.5 && TeamMatcher.similarity(away, a) >= 0.5 }
+            games.filter { (h, a, _) -> TeamMatcher.gameScore(home, away, h, a) > 0.0 }
                 .filter { (_, _, s) -> startsTs == null || s == null || abs(s - startsTs) <= GAME_GAP_MS }
                 .minByOrNull { (_, _, s) -> if (startsTs != null && s != null) abs(s - startsTs) else (s ?: Long.MAX_VALUE) }
 
         private fun sameGame(home: String, away: String, startsMs: Long?, game: Triple<String, String, Long?>): Boolean {
             val start = game.third
-            return TeamMatcher.similarity(home, game.first) >= 0.5 && TeamMatcher.similarity(away, game.second) >= 0.5 &&
+            return TeamMatcher.gameScore(home, away, game.first, game.second) > 0.0 &&
                 (startsMs == null || start == null || abs(startsMs - start) <= GAME_GAP_MS)
         }
 
