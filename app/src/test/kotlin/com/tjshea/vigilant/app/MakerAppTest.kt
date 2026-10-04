@@ -387,8 +387,11 @@ class MakerAppTest {
         val open = novig.orders.values.filter { it.status == "OPEN" }.sumOf { it.remaining * it.price * 0.01 }
         assertTrue("$open on Novig for a wallet of $low", open <= low + 0.005)
         val taken = app.container.makerDesk()!!.bids().filter { it.status == MakerStatus.CANCELED }
-        assertTrue(taken.isNotEmpty() && taken.all { it.why == com.tjshea.vigilant.data.novig.trading.maker.MakerPlan.TRIMMED })
-        assertTrue((app.container.eventLog.counters()["maker.trimmed"] ?: 0L) >= taken.size)
+        assertTrue("taken down: ${taken.map { it.why }}", taken.isNotEmpty() && taken.all { it.why == com.tjshea.vigilant.data.novig.trading.maker.MakerPlan.TRIMMED })
+        // The count is written when the pass that took them down returns, a moment after the last cancel is on record: wait for what is asserted, not race it
+        // (the full floor failed once on this line with no message; a 400 ms pause before the count reproduces it).
+        withTimeout(10_000) { while ((app.container.eventLog.counters()["maker.trimmed"] ?: 0L) < taken.size) delay(50) }
+        assertTrue("trimmed ${app.container.eventLog.counters()["maker.trimmed"]} for ${taken.size} taken down", (app.container.eventLog.counters()["maker.trimmed"] ?: 0L) >= taken.size)
         // Money back in the wallet: nothing more comes down, whatever the reading.
         val left = upDollars()
         novig.walletDollars = 100.0
