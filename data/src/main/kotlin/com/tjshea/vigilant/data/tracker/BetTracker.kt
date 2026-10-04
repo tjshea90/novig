@@ -587,7 +587,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                     league = target.league, eventName = target.eventName, startsTs = target.startsTs, marketLabel = target.marketLabel,
                     selection = target.selection, marketId = target.market.marketId, outcomeId = target.outcomeId,
                     price = price, cost = cost, fairAtBet = target.fair, evPercentAtBet = target.fair / cost - 1.0, stake = stake,
-                    source = target.source, book = target.book, gameUrl = target.gameUrl, orderId = orderId,
+                    source = target.source, book = target.book, gameUrl = target.gameUrl, orderId = orderId, eventId = target.market.eventId,
                 ).withFills()
                 logged = bet
                 list + bet
@@ -895,6 +895,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 selection = o.selection,
                 marketId = o.market.marketId,
                 outcomeId = o.outcome.outcomeId,
+                eventId = o.event.eventId,
                 price = q.price,
                 cost = q.cost,
                 fairAtBet = fair,
