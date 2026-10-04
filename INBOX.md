@@ -3778,3 +3778,12 @@ Here are early vigilant results to consider. Make any fixes if needed
 ```
 @"/root/.claude/uploads/74dc98f3-4b68-58cf-8d39-422c6de991cc/0973ca0c-vigilant-scan-study-v0.58.3-2026-10-03-2248.txt" 
 ```
+
+## 2026-10-04T03:47:18Z
+```
+First, the release is done for the last apk so finish the process.
+
+Then, answer: 
+
+I noticed some "positive EV" bets from the cno scanner have thousands of dollars able to be bet on them while others only have a few dollars. Should I be concerned that the large liquidity is actually a sharp bettor putting thousands of dollars on the better side?
+```
