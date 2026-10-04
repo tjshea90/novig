@@ -377,6 +377,10 @@ A refused key sends every scan to the public routes for 10 minutes at a time (mu
 
 ## 11.1 How Vigilant uses the signed API
 
+**v0.60.0 (RESEARCH.md §81.1): a 404 on a book is a closed market, not a verdict on the key.** `GET /v3/catalog/markets/{id}/book` answers 404 (`MARKET_NOT_FOUND`) for a market whose game has just kicked off or that closed while a scan was still reading its plan (Tj's v0.59.1 file: 13 of them in three days, at kickoffs). Until v0.60.0 any non-429 answer on the key route stood the whole route down for ten
+minutes (the scan went to the public routes at 2-4 a second); now a 404 is that book's own news (`BookFetch.Gone`: not served from the cache either), one 5xx fails only its book, six in a row stand the key down 30 s, and 200 404s in a row (a dead route, not closed markets) stand it down like any refusal. A game that has started is no longer read. Every stand-down (when, how long, why) is in Diagnostics
+(`Novig key route:` line, the timeline's `NOVIG` lines, a health check). The public route's 404 is handled the same way.
+
 **v0.44.0 (current, RESEARCH.md §63.3):** the websocket is OPENED at a scan's first plan (its bucket refills while the fair odds load) and
 HANDED its markets once per scan, when the plan has filled in (every source answered, more unread lines than it holds, or 30 s): what it already
 holds first, then the unread lines. Tj's v0.43.0 file showed why: "113 by live feed, 4475 through the key" in a 318 s, 4,588-price scan, the one
