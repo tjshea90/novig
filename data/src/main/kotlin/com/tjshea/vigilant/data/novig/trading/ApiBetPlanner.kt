@@ -3,6 +3,7 @@ package com.tjshea.vigilant.data.novig.trading
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.scanner.Freshness
+import com.tjshea.vigilant.data.tracker.GameExposure
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.Fees
 import com.tjshea.vigilant.engine.Odds
