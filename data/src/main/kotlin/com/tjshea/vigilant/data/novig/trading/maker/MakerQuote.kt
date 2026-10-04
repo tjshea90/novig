@@ -576,7 +576,7 @@ object MakerPlan {
      */
     fun priority(rules: MakerRules): Comparator<MakerDecision.Post> =
         if (!rules.popularFirst) PRIORITY
-        else compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }.thenBy { it.price }.thenByDescending { it.evAtFair }
+        else compareByDescending<MakerDecision.Post> { it.leads }.thenBy { it.price }.thenByDescending { it.evAtFair }
 
     /** [MarketPopularity.tier] of the market a bid is on. */
     fun tierOf(p: MakerDecision.Post, rules: MakerRules): Int = MarketPopularity.tier(p.line.league, p.line.market.marketType, p.line.books, rules.popularBooks)

@@ -322,7 +322,7 @@ Vigilant's own rows use `novigapp://events/<outcomeId>` the same way. Not checke
 league, marketType, tradeType, legs, cost, qty, side`. `/<date>/markets.csv` has
 `date, marketId, reportTicker, openInterest, dailyVolume, open, high, low, close,
 status`. Each file covers one Eastern-time day and publishes around 5am ET the next day.
-Data runs from 2026-08-03 through the latest day checked (2026-09-28, checked 2026-09-30). The data is anonymized. Observed: in
+`markets.csv` lists EVERY market listed that day, zero-volume ones included (`reportTicker` like `NFL-RECEIVING_YARDS`, `dailyVolume` in dollars): the denominator for how much takers trade each kind of market (RESEARCH.md §81.4, `tools/research/novig_popularity_study.py`). Data runs from 2026-08-03 through the latest day checked (2026-09-28, checked 2026-09-30). The data is anonymized. Observed: in
 `trades.csv`, `cost`/`qty` look like **dollars** (e.g. `qty 33.53`), not
 contract counts. Confirm before relying on it. Read the header row; Novig says
 columns may be added.

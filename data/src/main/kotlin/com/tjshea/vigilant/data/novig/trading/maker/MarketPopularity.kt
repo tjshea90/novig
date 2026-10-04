@@ -107,7 +107,7 @@ object MarketPopularity {
         val d = dollars(league, marketType)
         return when {
             d != null -> if (d >= HOT) 0 else if (d >= POPULAR) 1 else 2
-            books > popularBooks -> 1
+            books >= popularBooks -> 1
             else -> 2
         }
     }
