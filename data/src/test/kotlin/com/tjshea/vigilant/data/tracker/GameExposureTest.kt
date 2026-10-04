@@ -88,7 +88,7 @@ class GameExposureTest {
     @Test
     fun `a legacy bet on the same teams a day later is the next game, not this one`() {
         val g = game(eventId = "e1")
-        val tomorrow = bet("old", g.copy(eventId = "", start = g.startsTs + 24 * hour), stake = 25.0)
+        val tomorrow = bet("old", g.copy(eventId = "", startsTs = g.startsTs + 24 * hour), stake = 25.0)
         assertFalse(check(g, listOf(tomorrow), "m2", "o2", 10.0).blocked)
     }
 
@@ -106,7 +106,7 @@ class GameExposureTest {
     @Test
     fun `a bet whose game can't be read counts for nothing - the guard never blocks on a guess`() {
         val g = game()
-        val unreadable = bet("odd", g.copy(eventId = "", name = "not a matchup"), stake = 25.0)
+        val unreadable = bet("odd", g.copy(eventId = "", eventName = "not a matchup"), stake = 25.0)
         assertFalse(check(g, listOf(unreadable), "m2", "o2", 10.0).blocked)
     }
 
