@@ -178,6 +178,74 @@ class AutoBettorTest {
         assertTrue(report.skipped.keys.toString(), report.skipped.keys.any { it.contains("already open") })
     }
 
+    // ---- one game is one event (Tj, 2026-10-04: one team at +5, then +6, then +10) -----------------------------------------------------------
+
+    /** An open $[dollars] API bet in another market of Jefferson's game (Novig's event "ev"), as the auto-bet or a hand bet would have left it. */
+    private suspend fun openOnJeffersonsGame(marketId: String, dollars: Double, eventId: String? = null) {
+        val t = targetOf(jefferson).let { it.copy(market = it.market.copy(marketId = marketId, eventId = eventId ?: it.market.eventId), outcomeId = "out-$marketId") }
+        app.container.tracker.logApi(t, "o-$marketId", listOf(NovigFill("f-$marketId", "o-$marketId", null, marketId, "out-$marketId", (dollars * 200).toLong(), dollars, true, 0.0, 1_790_400_000_000L)))!!
+    }
+
+    private val tenDollars = { it: ScanSettings -> it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 10.0, apiMaxPerGame = 25.0) }
+
+    @Test
+    fun `a bet that would take its game past the per-game limit is skipped under one reason, before anything is read or sent`() = runBlocking {
+        openOnJeffersonsGame("alt-1", 10.0)
+        openOnJeffersonsGame("alt-2", 10.0)
+        val novig = FakeNovig()
+        val s = settings(tenDollars)
+        val report = bettor(novig).run(s, state(s))
+        assertEquals(0, report.placed.size)
+        assertEquals("nothing reached Novig", 0, novig.orders.get())
+        assertEquals(mapOf(AutoBet.GAME_LIMIT_SKIP to 1), report.skipped)
+    }
+
+    @Test
+    fun `the same bet on a game with room is placed, and so is one under the limit on a full game`() = runBlocking {
+        openOnJeffersonsGame("alt-1", 10.0)
+        openOnJeffersonsGame("alt-2", 10.0)
+        val novig = FakeNovig()
+        // $5 of the $5 left: exactly at the limit.
+        val atLimit = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 5.0, apiMaxPerGame = 25.0) }
+        assertEquals(1, bettor(novig).run(atLimit, state(atLimit)).placed.size)
+    }
+
+    @Test
+    fun `other games are never counted - a full game does not stop a bet on a different event`() = runBlocking {
+        openOnJeffersonsGame("alt-1", 25.0, eventId = "some-other-game")
+        val novig = FakeNovig()
+        val s = settings(tenDollars)
+        val report = bettor(novig).run(s, state(s))
+        assertEquals(1, report.placed.size)
+        assertTrue(report.skipped.toString(), AutoBet.GAME_LIMIT_SKIP !in report.skipped)
+    }
+
+    @Test
+    fun `resting bids on the game count against the limit beside its open bets`() = runBlocking {
+        openOnJeffersonsGame("alt-1", 10.0)
+        app.container.makerStore.update {
+            it + MakerBid(
+                clientId = "c1", orderId = "ord-1", marketId = "alt-bid", eventId = "ev", outcomeId = "out-bid", league = jefferson.league, eventName = jefferson.event,
+                startsTs = jefferson.startsAtMs!!, marketLabel = "Spread", selection = "x", price = 0.5, contracts = 2_400, fair = 0.55, evAtFair = 0.05, margin = 0.04,
+                postedAtMs = now, status = MakerStatus.RESTING,
+            )
+        }
+        val novig = FakeNovig()
+        val s = settings(tenDollars)
+        // $10 bet + $12 of bid (2,400 contracts at 50¢) = $22 at risk before this one: $32 > $25.
+        val report = bettor(novig).run(s, state(s))
+        assertEquals(0, novig.orders.get())
+        assertEquals(mapOf(AutoBet.GAME_LIMIT_SKIP to 1), report.skipped)
+    }
+
+    @Test
+    fun `no limit when it is set to 0`() = runBlocking {
+        openOnJeffersonsGame("alt-1", 500.0)
+        val novig = FakeNovig()
+        val s = settings { tenDollars(it).copy(apiMaxPerGame = 0.0) }
+        assertEquals(1, bettor(novig).run(s, state(s)).placed.size)
+    }
+
     // ---- the criteria -------------------------------------------------------------------------------------------
 
     @Test
