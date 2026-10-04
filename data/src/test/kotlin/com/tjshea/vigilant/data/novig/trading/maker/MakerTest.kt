@@ -13,6 +13,8 @@ import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.GameExposure
+import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -678,6 +680,53 @@ class MakerTest {
         // The finished scan has no line for m2 at all: down.
         val done = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now)
         assertEquals(listOf("m2-over" to "No longer a bid to post"), done.cancels.map { it.first.outcomeId to it.second })
+    }
+
+    // ---- one game is one event (Tj, 2026-10-04): the per-game limit on bids ----------------------------------------------------------------
+
+    /** A $5 bid (1,000 contracts at 50¢) on [outcome] of [market] in the one game "ev-game"; [event] puts it in another. */
+    private fun inGame(outcome: String, market: String = outcome.substringBefore('-'), event: String = "ev-game") =
+        MakerDecision.Post(line(outcome, m = market(market).copy(eventId = event)), 0.5, 1_000, 0.04)
+
+    private val theGame = GameRef("ev-game", "A @ B", start, "NFL")
+
+    @Test
+    fun `new bids on one game stop at the per-game limit, and bids on other games still go up`() {
+        val wanted = listOf(inGame("a-over"), inGame("b-over"), inGame("c-over"), inGame("d-over", event = "ev-other"))
+        val plan = MakerPlan.plan(wanted, emptyList(), rules.copy(maxPerGame = 12.0), now)
+        assertEquals("two $5 bids fit $12 on the game; the third would make $15; the other game is its own", 3, plan.places.size)
+        assertEquals(listOf("a-over", "b-over", "d-over"), plan.places.map { it.line.outcomeId }.sorted())
+        assertEquals(mapOf(MakerPlan.GAME_REACHED.format("$12.00") to 1), plan.waiting)
+    }
+
+    @Test
+    fun `open bets on the game and bids that are kept both count against its limit`() {
+        val held = listOf(GameExposure.Item(theGame, "alt-line", "x", 8.0))
+        assertTrue("$8 held + a $5 bid is over $12", MakerPlan.plan(listOf(inGame("a-over")), emptyList(), rules.copy(maxPerGame = 12.0), now, heldItems = held).places.isEmpty())
+        assertEquals(1, MakerPlan.plan(listOf(inGame("a-over")), emptyList(), rules.copy(maxPerGame = 13.0), now, heldItems = held).places.size)
+        val kept = resting("b-over", 0.50).copy(game = theGame)
+        val plan = MakerPlan.plan(listOf(inGame("a-over"), inGame("b-over")), listOf(kept), rules.copy(maxPerGame = 9.0), now)
+        assertTrue("the kept $5 bid + a new $5 one is $10 over $9", plan.places.isEmpty())
+        assertEquals(listOf(kept), plan.kept)
+    }
+
+    @Test
+    fun `both sides of one market count as the larger side, not twice`() {
+        val both = listOf(inGame("m1-over", "m1"), inGame("m1-under", "m1"))
+        assertEquals(2, MakerPlan.plan(both, emptyList(), rules.copy(maxPerGame = 5.0), now).places.size)
+        val twoMarkets = listOf(inGame("m1-over", "m1"), inGame("m2-over", "m2"))
+        assertEquals(1, MakerPlan.plan(twoMarkets, emptyList(), rules.copy(maxPerGame = 5.0), now).places.size)
+    }
+
+    @Test
+    fun `no limit when it is 0, and a bid replacing its own side is not counted twice`() {
+        val wanted = listOf(inGame("a-over"), inGame("b-over"), inGame("c-over"))
+        assertEquals(3, MakerPlan.plan(wanted, emptyList(), rules.copy(maxPerGame = 0.0), now).places.size)
+        // The kept bid on a-over is cancelled to be re-posted lower: its dollars are not on the game twice.
+        val old = resting("a-over", 0.50).copy(game = theGame)
+        val moved = MakerPlan.plan(listOf(inGame("a-over").copy(price = 0.495)), listOf(old), rules.copy(maxPerGame = 5.0), now)
+        assertEquals(1, moved.cancels.size)
+        assertEquals(1, moved.places.size)
     }
 
     @Test
