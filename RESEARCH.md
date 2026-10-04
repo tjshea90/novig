@@ -4644,3 +4644,40 @@ That Android really sleeps the CPU between alarm-only cycles with the process al
 - **Open, not changed (Tj's call, a scan-plan change):** 4,274 Novig books were read to price 141 lines (214 sides with a fair price): props markets dominate the plan. And the feed holding 315 of 2,000 asked in 299 s
   is unexplained (no error was reported); the new "held H of N" says whether it's a pattern.
 
+## 79. The first scan-study export, read (v0.58.3 file, 2026-10-03; Tj: "Here are early vigilant results to consider. Make any fixes if needed", with another Claude's analysis, `research/scan_study_analysis_2026-10-03_v0.58.3.md`)
+
+### 79.1 What the analysis found, and what was checked against the file and the code
+- **The data is one evening** (622 bets, 63 games, first looks 17:56-22:47 EDT Oct 3; 47 graded; 43 closes), so it can't carry day/hour/out-of-sample findings; **403 of the 622 are Sunday's NFL games, ungraded**. Its headline: results on expectation
+  (25 W vs 24.2 expected), clean CLV **+2.2%** (41 closes, 23 games), no group separable from "everything", the props/sharp-book question **not answerable** (33 of 365 props had a book page read). It changes no
+  rule (keep presets, the veto, the 1% EV floor, the +150 cap, 4+ books). CLAUDE.md: a rule the study suggests waits for Tj; none was suggested.
+- **Verified in the file: its "2 bad Pinnacle closes".** Washington State ML (Fresno State @ Washington State; -117 at first look, -115 at the last, 110 min before the start, CNO fair 54%) "closed" at +272 (26.9%, CLV -50%): wrong, no
+  game moves 27 points in two hours. **Arkansas State +186 → +216 (CLV -9.5%) is NOT shown wrong**: 3.3 points from CNO's last fair (35.0% vs Pinnacle 31.7%), inside the offset between a sharp book and CNO's conservative devig that
+  every close shows (median gap 0.8 points, 90th percentile 2.2, the 41 other closes all within 2.8). The analysis called both "wrong side/game": one is.
+- **Root cause of the Washington State close (reproduced failing-first: the old code gave 0.258, the file's 0.269):** `ParlayCloses` matched a closing-lines row to the bet by `TeamMatcher.similarity >= 0.5` for each team, and two names sharing only a
+  school word ("State" is the token `st`) score exactly 0.5. Any other "X State @ Y State" game starting within 3 hours passed, and the code took the LATEST row among the passing games, not the best fit: another State game's home
+  moneyline was returned as Washington State's close. Same family, found while fixing it: (a) in the event shape the bet's team was "the first outcome that shares a word" (a wrong-SIDE close for two State teams); (b) in the closes file a game of
+  two State teams never got a close (both rows counted as the bet's team, the other side found none); (c) `ParlayBooks.viewOf` (an open bet's books from ParlayAPI) and `OtherBooks` used the same 0.5 bar. Not affected: the scan's planner (it
+  demands 1.5 across the two teams), the grader (`BetGrader.gameOf`, 0.8 a team) and the Novig bet finder (0.8).
+
+### 79.2 What was built (v0.58.4)
+- `TeamMatcher.gameScore` (both teams at least 0.5 AND together at least 1.5: one team really matches, the planner's own bar) and `TeamMatcher.whichOf` (a team is the side of the game it fits BEST, none when two fit alike); `ParlayCloses` takes rows of ONE game
+  (the best fit; the nearest start among equal ones, a doubleheader's own game; two different pairings that fit equally are not guessed between) and assigns sides by `whichOf`; `ParlayBooks` and `OtherBooks` use `gameScore`.
+- **`ClosePlausibility`, a backstop whichever source is wrong** (ESPN, Novig's trades, ParlayAPI; `CloseBackfill` asks it of every found close): a close further from the bet's own fair price when bet than 10 points (within an hour of the start), 12 (6 h),
+  20 (a day), 25 (beyond) is "never" from that source, with the numbers on the bet's close note, and the next source is asked. The bars are 3-4 times the largest real move in Tj's 230 closes by gap (2.6 points within an hour, 6.8 within 6 h,
+  14.7 within a day: a player ruled out hours ahead, 10.4 beyond), so a real move, news included, is kept (dropping the largest real moves would flatter CLV).
+- **The study export applies the same check to what the journal already holds** (it is append-only, so the Washington State line stays on disk): such a close is left out of every figure with its reason in `closeNote`.
+- Log-only: the rules line now says what CNO's list is read with (edge ≥ 1%, odds up to +150, 4+ books, rows), where it said only devig, books and rows, and the file says which part decides which list (the analysis had to work out that the shown list's
+  filters were 1% / +150 / 4+, not the line's "edge ≥ 3%, odds -200 to +120", which are the auto-bet's); a close copied from Tj's Tracker names whose fair line it is ("(CNO's books)", "(Vigilant's fair line)", "(CNO and Vigilant, averaged)").
+- Proofs: ParlayClosesTest (+4: the file's wrong game reproduced and fixed, a doubleheader, two different pairings refused, State-vs-State rows, the event shape's side), TeamMatcherTest (+2), ParlayBooksTest (+1), HistoricalClosesTest (+3 and
+  three fixtures given realistic fair prices), ScanStudyTest (+1, one extended); mutants in §79.4.
+
+### 79.3 Not built (and why), for Tj
+- **The level offset** (closes price these bets ~1.4 points above CNO's conservative-devig fair whatever the listed EV): the close under two or three devig methods needs each source's two raw sides carried through `CloseLookup` into the Tracker and the journal (a
+  schema change). The file already has CNO's fair at every look (`s`), so a close can be compared with CNO's own last fair like for like; the gap in this file is median 0.8 points. Offered, not done.
+- **An independent close for every listed bet** (the analysis' fix 3): the Tracker's closes are only bets Tj placed, and Novig's own last trades would cover the rest, but they publish the next morning (the file was made at 22:48 that evening) and 325 of the 622 bets (every wide-only
+  row and most CNO-only ones) have no Novig market or outcome id, which the trade lookup needs. Finding the ids means Novig catalog requests before each game starts (public edge: the carrier address already draws 429s). **Tj's call**; the Sunday export will show how many
+  closes Novig's trades give for the bets that do carry ids.
+- **A book page for every prop at 1.5% EV or more** (fix 4): more CNO requests; it is what the sharp-book question needs (12% of props judged). **Tj's call.**
+- Per-look listing reason and fill price: the look's kind (c/w) already says whether the app's list carried it, `placedAmerican` is the price Tj got, and a hidden look's reason follows from its EV, odds and books against the filters now printed on the rules line.
+- The 4 `MISMATCH` rows: CNO's listed EV is a few hundredths of a point positive while its own fair odds give a slightly negative one (rounding of the odds CNO prints); flagged by design, none over 1% EV.
+
