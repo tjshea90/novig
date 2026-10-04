@@ -98,7 +98,7 @@ data class MakerRules(
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
             popularFirst = s.makerPopularFirst,
-            requireSharp = s.makerRequireSharp,
+            requireSharp = false,
         )
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
@@ -308,7 +308,7 @@ object MakerQuote {
         fun skip(why: String) = MakerDecision.Skip(line, why)
         val fair = line.fair!!
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
-        if (false) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
+        if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
