@@ -84,13 +84,8 @@ class GameBetsUiTest {
         }
         compose.onNodeWithTag("gameBetsChip").assertTextContains("\$5.50 in game", substring = true)
         compose.onRoot().captureRoboImage("screenshots/0_game_bets_chip.png")
-        // The other game's card (its own $9.00) says its own total, never this game's.
-        compose.setContentOther(other, index)
-    }
-
-    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.setContentOther(o: Opportunity, index: GameBets) {
-        // A second composition in the same rule would replace the first: this checks the lookup the card makes instead.
-        assertEquals(9.0, index.of(o.event.description, o.event.startsTs, o.event.league, o.market.eventId)!!.placed, 1e-9)
+        // The other game's card looks itself up in the same index: its own $9.00, never this game's $5.50.
+        assertEquals(9.0, index.of(other.event.description, other.event.startsTs, other.event.league, other.market.eventId)!!.placed, 1e-9)
     }
 
     @Test
@@ -102,7 +97,7 @@ class GameBetsUiTest {
                 OpportunityCard(first, SampleScan.settings, now, onOpen = false) {}
             }
         }
-        compose.onNodeWithTag("gameBetsChip").assertDoesNotExistCompat()
+        compose.onNodeWithTag("gameBetsChip").assertDoesNotExist()
     }
 
     @Test
@@ -114,10 +109,10 @@ class GameBetsUiTest {
             }
         }
         compose.onNodeWithTag("gameBetsChip").performClick()
-        compose.onNodeWithText("Your bets in this game").assertExistsCompat()
-        compose.onNodeWithText("Matthew Stafford Over 250.5").assertExistsCompat()
-        compose.onNodeWithText("Total Under 44.5").assertExistsCompat()
-        compose.onNodeWithText("Total bet \$5.50 across 2 bets").assertExistsCompat()
+        compose.onNodeWithText("Your bets in this game").assertExists()
+        compose.onNodeWithText("Matthew Stafford Over 250.5").assertExists()
+        compose.onNodeWithText("Total Under 44.5").assertExists()
+        compose.onNodeWithText("Total bet \$5.50 across 2 bets").assertExists()
         compose.onNodeWithTag("gameBetsTotal").assertTextEquals("\$5.50")
     }
 
@@ -132,8 +127,8 @@ class GameBetsUiTest {
         val s = GameBets.of(listOf(bet("a", first, 2.5, "Matthew Stafford Over 250.5"), bet("b", first, 3.0, "Total Under 44.5")), listOf(bid))
             .of(GameRef(first.market.eventId, first.event.description, first.event.startsTs, first.event.league))!!
         screen { GameBetsDetail(s, limit = 10.0) }
-        compose.onNodeWithText("Resting bids (not placed yet)").assertExistsCompat()
-        compose.onNodeWithText("Puka Nacua Over 70.5").assertExistsCompat()
+        compose.onNodeWithText("Resting bids (not placed yet)").assertExists()
+        compose.onNodeWithText("Puka Nacua Over 70.5").assertExists()
         compose.onNodeWithTag("gameBetsTotal").assertTextEquals("\$5.50")
         // $5.50 bet + $4.50 bid = $10.00: exactly at the $10 limit, so the sheet says so and nothing is left.
         compose.onNodeWithTag("gameBetsLimit").assertTextContains("At your \$10.00 limit per game", substring = true)
@@ -177,6 +172,3 @@ class GameBetsUiTest {
         compose.onNodeWithTag("gameBetsChip").assertTextContains("\$5.50 in game", substring = true)
     }
 }
-
-private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertDoesNotExistCompat() = assertDoesNotExist()
-private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertExistsCompat() = assertExists()
