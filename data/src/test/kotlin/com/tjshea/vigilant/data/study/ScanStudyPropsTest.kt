@@ -235,6 +235,7 @@ class ScanStudyPropsTest {
 
             override suspend fun players(game: GameScore): List<PlayerLine>? = BetGraderTest.padded(PlayerLine("Carson Benge", mapOf("TOTAL_BASES" to 4.0)))
         }
+        val asked = ArrayList<List<String>>()
         // Seven bets, each closed by a different source or a different number of Novig's trades behind it.
         val vias = listOf(
             "Novig's last trades (1)", "Novig's last trades (2)", "Novig's last trades (4)", "Novig's last trades (7)", "Novig's last trades (62)",
@@ -242,10 +243,11 @@ class ScanStudyPropsTest {
         )
         val close = object : CloseSource {
             override val id: String get() = "fake"
-            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> = bets.withIndex().associate { (i, b) -> b.id to CloseLookup.Found(0.55, vias[i % vias.size]) }
+            override suspend fun closes(bets: List<TrackedBet>): Map<String, CloseLookup> { asked += bets.map { it.selection }; return bets.withIndex().associate { (i, b) -> b.id to CloseLookup.Found(0.55, vias[i % vias.size]) } }
         }
         s.settle(scores, listOf(close), emptyList(), File(tmp.root, "scratch"))
         val text = export(j)
+        println("ASKED: " + asked)
         val found = text.lines().first { it.startsWith("Closes found:") }
         // One source, however many trades: not "Novig's last trades (1) 1, (2) 1, (4) 1 …".
         assertTrue(found, found.contains("Novig's last trades 5"))
