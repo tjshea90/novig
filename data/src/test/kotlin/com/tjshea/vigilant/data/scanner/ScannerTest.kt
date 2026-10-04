@@ -430,8 +430,8 @@ class ScannerTest {
                 NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", "NFL", "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", started),
             )
             override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?): List<NovigMarket> {
-                // The catalog took a while: by the time the books are asked for, the game's two minutes of grace are over.
-                if (bumpPastStart) now = started + 20_000
+                // The catalog took a while: by the time the books are asked for, the game started over two minutes ago (Planner.STARTED_GRACE_MS) and is live in practice.
+                if (bumpPastStart) now = started + 125_000
                 return listOf(
                     NovigMarket(Fixtures.ML_MARKET, Fixtures.EVENT_ID, "MONEY", "OPEN", "DAL", started, MarketFee.GAME,
                         listOf(NovigOutcome(Fixtures.ML_DAL, "DAL", "TBD"), NovigOutcome(Fixtures.ML_BAL, "BAL", "TBD"))),
@@ -443,12 +443,12 @@ class ScannerTest {
             }
             override suspend fun market(marketId: String): NovigMarket? = null
         }
-        // The scan begins 100 s before the start (inside the plan), and by the books' turn it is 20 s after it.
-        now = started - 100_000
+        // The scan begins 50 s before the start (inside the plan), and by the books' turn it is 125 s after it (175 s into the scan: still inside the fair odds' life).
+        now = started - 50_000
         val late = novig(bumpPastStart = true)
         Scanner(late, clock = { now }).scan(settings, listOf(FakeOddsApi()))
         assertEquals("no book is asked for a game that has started", 0, late.bookCalls)
-        now = started - 100_000
+        now = started - 50_000
         val early = novig(bumpPastStart = false)
         Scanner(early, clock = { now }).scan(settings, listOf(FakeOddsApi()))
         assertEquals("the same game, not yet started, is read", 1, early.bookCalls)
