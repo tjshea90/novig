@@ -125,6 +125,13 @@ data class ScanSettings(
     val apiMaxStake: Double = 10.0,
     val apiMaxPerDay: Double = 50.0,
     /**
+     * The most that may be at risk on one game, every market of it together (open bets plus resting bids: [com.tjshea.vigilant.data.tracker.GameExposure];
+     * Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10 … if that one team loses badly, I lose
+     * many bets due to one event"). The auto-bet and auto-make never take a game past it; a bet by hand is only warned. 0 = no limit. On by default:
+     * $25 is 2.5× the default per-bet maximum, so two or three full bets fit on a game and the fourth line of the same team does not.
+     */
+    val apiMaxPerGame: Double = 25.0,
+    /**
      * Auto-bet (Tj, 2026-10-01: "automatically bet each bet without me doing anything at all, including … in the background as the cno scanner
      * is on in the background"): off by default. A background CNO auto-scan cycle places each CrazyNinjaOdds bet that passes these through Novig's
      * API from the Vigilant wallet, pregame only ([com.tjshea.vigilant.data.novig.trading.AutoBet], `app/AutoBettor`).
@@ -706,6 +713,9 @@ data class ScanSettings(
 
         /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
         val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
+
+        /** [apiMaxPerGame]'s choices, dollars (0 = no limit). */
+        val API_MAX_PER_GAME_CHOICES = listOf(10.0, 25.0, 50.0, 100.0, 0.0)
 
         /** [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). */
         val MAKER_MARGIN_CHOICES = listOf(0.03, 0.04, 0.06, 0.08)

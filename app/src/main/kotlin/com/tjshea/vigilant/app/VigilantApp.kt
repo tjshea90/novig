@@ -313,9 +313,12 @@ class AppContainer(private val app: Application) {
         val limits = {
             val s = settingsStore.flow.value ?: ScanSettings()
             // Every auto-bet passes its own limits; this fallback is the strict kind (a positive edge at least), never the hand-placed one.
-            BetLimits(s.apiMaxStake, s.apiMaxPerDay)
+            BetLimits(s.apiMaxStake, s.apiMaxPerDay, maxPerGame = s.apiMaxPerGame)
         }
-        return ApiBetPlacer(t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock)
+        return ApiBetPlacer(
+            t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock,
+            restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(makerStore.all()) },
+        )
             .also { autoPlacerCache = t to it }
     }
     @Volatile var apiSettler: ApiSettler? = null
