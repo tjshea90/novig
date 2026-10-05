@@ -334,6 +334,70 @@ class DiagnosticsTest {
         assertEquals(HealthChecks.Level.WARN, two.first { it.area == "API Novig" }.level)
     }
 
+    /** A bet placed [hoursBefore] h before a start 2 h ago, at 50¢, whose close was [closeRatio] times its price: CLV = closeRatio − 1; EV when bet +3%. */
+    private fun leadBet(id: String, hoursBefore: Long, closeRatio: Double, source: String = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO): com.tjshea.vigilant.data.tracker.TrackedBet {
+        val start = now - 2 * 3_600_000L
+        return com.tjshea.vigilant.data.tracker.TrackedBet(
+            id, start - hoursBefore * 3_600_000L, "NFL", "A @ B", start, "Moneyline", "A", "m$id", "o$id", 0.5, 0.5, 0.515, 0.03, 1.0,
+            status = BetStatus.PENDING, source = source, closingFair = 0.5 * closeRatio, closingSeenAtMs = start - 5 * 60_000L,
+        )
+    }
+
+    @Test
+    fun `edge accuracy is judged on the bets placed inside the trap guard's window, and the earlier ones are called out on their own (RESEARCH 82)`() {
+        val base = SampleScan.state()
+        // 20 bets placed 1 h before the start that closed 3% better than their price, 20 placed 30 h before that closed 4% worse: pooled −0.5%, a FAIL before.
+        val near = (1..20).map { leadBet("n$it", 1, 1.03) }
+        val early = (1..20).map { leadBet("e$it", 30, 0.96) }
+        val checks = HealthChecks.of(base.copy(bets = near + early), extras, now)
+        val acc = checks.first { it.area == "Edge accuracy (CLV)" }
+        assertEquals(acc.toString(), HealthChecks.Level.OK, acc.level)
+        assertTrue(acc.finding, acc.finding.startsWith("bets placed within 6 h of the start beat the close"))
+        assertTrue(acc.evidence!!, acc.evidence!!.contains("average CLV +3.0%") && acc.evidence!!.contains("20 bets placed within 6 h of the start") && acc.evidence!!.contains("placed earlier: CLV -4.0% on 20 bets"))
+        // The early ones are not hidden: a warning of their own, with the numbers, while some were placed in the last 3 days.
+        val e = checks.first { it.area == "Early bets (CLV)" }
+        assertEquals(HealthChecks.Level.WARN, e.level)
+        assertTrue(e.finding, e.finding.contains("more than 6 h before the start lose to the close, and 20 were placed that early in the last 3 days"))
+        assertTrue(e.evidence!!, e.evidence!!.contains("CLV -4.0% on 20 bets") && e.evidence!!.contains("within 6 h: CLV +3.0% on 20"))
+        assertTrue(e.look!!, e.look!!.contains("Starts within: 6h"))
+        // The window is the guard's own setting.
+        val twelve = HealthChecks.of(base.copy(bets = near + early, settings = base.settings.copy(trapEarlyHours = 12)), extras, now)
+        assertTrue(twelve.first { it.area == "Edge accuracy (CLV)" }.evidence!!.contains("placed within 12 h of the start"))
+        // Early bets from long ago aren't a warning today: they are said, not flagged.
+        val old = (1..20).map { leadBet("o$it", 300, 0.96) }
+        val calm = HealthChecks.of(base.copy(bets = near + old), extras, now).first { it.area == "Early bets (CLV)" }
+        assertEquals(HealthChecks.Level.OK, calm.level)
+        assertTrue(calm.finding, calm.finding.contains("none were placed that early in the last 3 days"))
+        // Early bets that beat the close are no problem either.
+        val fine = HealthChecks.of(base.copy(bets = near + (1..20).map { leadBet("f$it", 30, 1.01) }), extras, now).first { it.area == "Early bets (CLV)" }
+        assertEquals(HealthChecks.Level.OK, fine.level)
+    }
+
+    @Test
+    fun `with too few bets inside the window the edge check judges them all together, and says nothing about a window`() {
+        val checks = HealthChecks.of(SampleScan.state().let { it.copy(bets = (1..10).map { i -> leadBet("n$i", 1, 1.03) } + (1..20).map { i -> leadBet("e$i", 30, 0.96) }) }, extras, now)
+        val acc = checks.first { it.area == "Edge accuracy (CLV)" }
+        assertEquals(HealthChecks.Level.FAIL, acc.level) // −1.7% pooled
+        assertTrue(acc.evidence!!, acc.evidence!!.contains("30 bets") && !acc.evidence!!.contains("placed within"))
+        assertTrue(checks.none { it.area == "Early bets (CLV)" })
+    }
+
+    @Test
+    fun `a scanner that is switched off is a warning for its old bets, not a failure, and a scanner is judged on its bets inside the window`() {
+        val base = SampleScan.state()
+        val vig = (1..15).map { leadBet("v$it", 1, 0.985, com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT) }
+        val on = HealthChecks.of(base.copy(bets = vig, settings = base.settings.copy(scanner = ScannerMode.BOTH)), extras, now).first { it.area == "Vigilant's edges (CLV)" }
+        assertEquals(HealthChecks.Level.FAIL, on.level)
+        val off = HealthChecks.of(base.copy(bets = vig, settings = base.settings.copy(scanner = ScannerMode.CNO)), extras, now).first { it.area == "Vigilant's edges (CLV)" }
+        assertEquals(HealthChecks.Level.WARN, off.level)
+        assertTrue(off.finding, off.finding.contains("asleep") && off.finding.contains("nothing running to fix"))
+        // CNO: 15 bets inside the window that beat the close, 15 earlier that lost to it: judged on the first, the others counted out loud.
+        val cno = (1..15).map { leadBet("c$it", 1, 1.02) } + (1..15).map { leadBet("d$it", 30, 0.95) }
+        val c = HealthChecks.of(base.copy(bets = cno), extras, now).first { it.area == "CNO's edges (CLV)" }
+        assertEquals(HealthChecks.Level.OK, c.level)
+        assertEquals("CLV +2.0% on 15 bets, beat the close 100%, EV when bet +3.0% (placed within 6 h; 15 earlier left out)", c.evidence)
+    }
+
     @Test
     fun `each scanner is judged on its own closes, and imported marks that can never close aren't counted against the capture`() {
         val base = SampleScan.state()
