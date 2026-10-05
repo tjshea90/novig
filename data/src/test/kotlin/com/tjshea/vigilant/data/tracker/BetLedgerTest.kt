@@ -51,6 +51,18 @@ class BetLedgerTest {
     }
 
     @Test
+    fun `an API bet graded lost from Novig's silence alone, or waiting for a tap, carries its grading note (RESEARCH 87)`() {
+        fun note(b: TrackedBet) = Json.parseToJsonElement(BetLedger.line(b, now)).jsonObject["gradeNote"]?.jsonPrimitive?.content
+        val api = bet("api00001", null, BetStatus.LOST).copy(orderId = "o1")
+        // Silence alone: shown. A loss the score feeds backed, and a bet not placed through the API: not shown.
+        assertEquals(ApiSettler.SILENT_LOSS, note(api.copy(gradeNote = ApiSettler.SILENT_LOSS)))
+        assertEquals(null, note(api.copy(gradeNote = "${ApiSettler.SILENT_LOSS} (Final: A 17, B 24)")))
+        assertEquals(null, note(bet("hand0001", null, BetStatus.LOST).copy(gradeNote = ApiSettler.SILENT_LOSS)))
+        // A note that needs a tap: shown.
+        assertEquals(ApiSettler.BOTH_HELD_SILENT, note(api.copy(status = BetStatus.PENDING, gradeNote = ApiSettler.BOTH_HELD_SILENT, gradeManual = true)))
+    }
+
+    @Test
     fun `the record splits bets by agreement, dissent, the veto, the start and more`() {
         assertEquals("every one (4 of 4)", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.AGREEMENT))
         assertEquals("2 of 9 not agreeing", BetLedger.keyOf(bet("a", at(7, 9, listOf("DraftKings", "Caesars"))), BetLedger.Split.AGREEMENT))
