@@ -158,7 +158,7 @@ object Diagnostics {
 
         o.appendLine()
         o.appendLine("== Settings ==")
-        o.appendLine("Scanner: ${set.scanner.displayName} · paused: ${if (set.paused) "YES" else "no"}")
+        o.appendLine("Scanner: ${if (set.pinnacleOnly) "Pinnacle only (${set.scanner.displayName} underneath)" else set.scanner.displayName} · paused: ${if (set.paused) "YES" else "no"}" + (if (set.killed) " · STOPPED by the STOP button" else ""))
         // The kill switch (Tj, 2026-10-05): saved with the settings and in a second copy; what it stops and since when.
         o.appendLine(
             "Kill switch (STOP ALL): ${if (set.killed) "ON" + (set.killedAtMs?.let { " since ${at(it)}" } ?: "") + " · scanning, CNO, auto-bet, auto-lock, bids and the background scan are all held; only RESUME on the red bar lifts it" else "off"}",
@@ -177,7 +177,7 @@ object Diagnostics {
         )
         o.appendLine(
             "Auto-bet (Tj, 2026-10-01): " + if (!set.autoBet) "off" else {
-                "ON · ${com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · most on one game ${if (set.apiMaxPerGame > 0.0) "$%.0f".format(java.util.Locale.US, set.apiMaxPerGame) else "no limit"} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
+                "ON · ${if (set.pinnacleOnly) "Pinnacle only: beats Pinnacle's devigged price by ${com.tjshea.vigilant.app.ui.AutoBetText.evLabel(com.tjshea.vigilant.data.novig.trading.AutoBet.rules(set).minEv)} or more, Pinnacle's price within ${com.tjshea.vigilant.app.ui.PinnacleOnlyText.ageLabel(set.pinnacleMaxAgeSeconds)}" else com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · most on one game ${if (set.apiMaxPerGame > 0.0) "$%.0f".format(java.util.Locale.US, set.apiMaxPerGame) else "no limit"} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
                     (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now)}"
             },
         )
