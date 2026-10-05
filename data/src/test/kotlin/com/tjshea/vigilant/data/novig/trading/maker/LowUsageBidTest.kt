@@ -170,8 +170,7 @@ class LowUsageBidTest {
         assertFalse(MarketPopularity.measuredObscure("NHL", "SHOTS_ON_GOAL"))
         assertFalse(MarketPopularity.measuredObscure("NBA", "POINTS"))
         // The usual bids don't skip them.
-        assertTrue(MakerQuote.decide(line(type = "ASSISTS", league = "NHL"), MakerRules.of(ScanSettings()).copy(kinds = setOf(BetKind.PROP)), now) is MakerDecision.Skip ||
-            true)
+        assertTrue(MakerQuote.decide(line(type = "ASSISTS", league = "NHL"), MakerRules.of(ScanSettings()).copy(kinds = setOf(BetKind.PROP)), now) is MakerDecision.Post)
     }
 
     @Test
