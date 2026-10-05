@@ -105,4 +105,43 @@ class FairValueTest {
         val expected = (devigged(draftkings, DevigMethod.MULTIPLICATIVE)[0] + devigged(fanduel, DevigMethod.MULTIPLICATIVE)[0]) / 2
         assertEquals(expected, line.probabilities[0], 1e-12)
     }
+    // ---- minSharp: a sharp component needs at least this many sharp books (low-usage bids need two, RESEARCH.md §92) ----
+
+    private val kalshi = book("kalshi", -140, 120)
+    private val sharpTwo = setOf("pinnacle", "kalshi")
+
+    @Test
+    fun `one sharp book is enough by default, two are asked for with minSharp`() {
+        val one = FairSettings(source = FairSource.SHARP, sharpBooks = sharpTwo, fallbackToAverage = false)
+        assertNotNull(FairValue.compute(listOf(pinnacle, draftkings), one))
+        val two = one.copy(minSharp = 2)
+        assertNull("a single sharp book can't make a two-sharp fair", FairValue.compute(listOf(pinnacle, draftkings), two))
+        assertNull("a soft book isn't a sharp book", FairValue.compute(listOf(draftkings, fanduel), two))
+    }
+
+    @Test
+    fun `two sharp books make the fair from both and from nobody else`() {
+        val s = FairSettings(source = FairSource.SHARP, method = DevigMethod.MULTIPLICATIVE, sharpBooks = sharpTwo, fallbackToAverage = false, minSharp = 2)
+        val line = FairValue.compute(listOf(pinnacle, kalshi, draftkings), s)!!
+        assertEquals(FairSource.SHARP, line.sourceUsed)
+        assertEquals(setOf("Pinnacle", "Kalshi"), line.sharpBooksUsed.toSet())
+        val expected = (devigged(pinnacle, DevigMethod.MULTIPLICATIVE)[0] + devigged(kalshi, DevigMethod.MULTIPLICATIVE)[0]) / 2
+        assertEquals(expected, line.probabilities[0], 1e-12)
+    }
+
+    @Test
+    fun `too few sharp books fall back to the average only when the fallback is on`() {
+        val s = FairSettings(source = FairSource.SHARP, method = DevigMethod.MULTIPLICATIVE, sharpBooks = sharpTwo, minSharp = 2)
+        val line = FairValue.compute(listOf(pinnacle, draftkings, fanduel), s)!!
+        assertEquals(FairSource.MARKET_AVERAGE, line.sourceUsed)
+    }
+
+    @Test
+    fun `a blend with too few sharp books is the plain average`() {
+        val s = FairSettings(source = FairSource.BLEND, sharpBooks = sharpTwo, minSharp = 2)
+        val line = FairValue.compute(listOf(pinnacle, draftkings, fanduel), s)!!
+        assertEquals(FairSource.MARKET_AVERAGE, line.sourceUsed)
+        val both = FairValue.compute(listOf(pinnacle, kalshi, draftkings, fanduel), s)!!
+        assertEquals(FairSource.BLEND, both.sourceUsed)
+    }
 }
