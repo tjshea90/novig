@@ -91,7 +91,9 @@ object HealthChecks {
         if (!set.lowUsageNow) return
         val plan = x.lowUsagePlan
         if (plan != null && plan.feeds.isEmpty()) {
+            // Nothing is asked, so nothing the last scan did can be judged: this is the one finding.
             add(Check(Level.FAIL, "Low API usage bids", "no feed can be asked for the picked books", com.tjshea.vigilant.data.scanner.LowUsageBids.names(com.tjshea.vigilant.data.scanner.LowUsageBids.books(set)), "Settings › Fair odds & sources and API keys"))
+            return
         } else if (plan != null && plan.unreachable.isNotEmpty()) {
             add(Check(Level.WARN, "Low API usage bids", "${com.tjshea.vigilant.data.scanner.LowUsageBids.names(plan.unreachable.toSet())} can't be read, so a fair needs the other picked books", "no feed that carries it has a key and a switch on", "Settings › API keys, or pick other books on the Bids tab"))
         }
