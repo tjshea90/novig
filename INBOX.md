@@ -3958,3 +3958,8 @@ Review the attached screenshot. Does this scan every 15 seconds setting make the
 ```
 I tried the new low api usage auto bid and it seems like the bids only stay up a couple minutes then they are cancelled and no new bids go up. Is this correct
 ```
+
+## 2026-10-05T23:17:56Z
+```
+It will put up many bids, then leave them a couple minutes, then cancel all of them at the same time. Is there a fresher source for prop odds from sharp books? Either one of my apis or search online to see if the actual sharp books have free feeds or apis
+```
