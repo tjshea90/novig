@@ -291,6 +291,39 @@ class ExchangeClientsTest {
         assertEquals(2, server.requestCount) // the refused try and the retry
     }
 
+    /** RESEARCH.md §90.2: Kalshi's docs name a newer host; if the old one is retired (404 / 410) reads go to the new one at once and stay there. */
+    @Test
+    fun `kalshi moves to the alternate host when the first is retired, and stays there`() = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse = when {
+                request.path!!.startsWith("/old/") -> MockResponse().setResponseCode(404)
+                request.requestUrl!!.queryParameter("series_ticker") == "KXNFLGAME" -> MockResponse().setBody(ExchangeFixtures.kalshiNflGame)
+                else -> MockResponse().setBody("""{"events":[]}""")
+            }
+        }
+        val s = settings.copy(families = setOf(MarketFamily.MONEYLINE))
+        val kalshi = KalshiClient(OkHttpClient(), json, base("/old"), altBaseUrl = base("/new"))
+        assertEquals(1, kalshi.odds(nfl, s).events.size)
+        val firstScan = (1..server.requestCount).map { server.takeRequest().path!! }
+        assertTrue("one refused try on the old host, then the new one: $firstScan", firstScan.first().startsWith("/old/") && firstScan.drop(1).all { it.startsWith("/new/") })
+        // The next read doesn't try the old host again.
+        val before = server.requestCount
+        kalshi.odds(nfl, s)
+        val next = (1..server.requestCount - before).map { server.takeRequest().path!! }
+        assertTrue("only the new host now: $next", next.isNotEmpty() && next.all { it.startsWith("/new/") })
+    }
+
+    /** With no alternate host (the default), a 404 is just a failure, as before. */
+    @Test
+    fun `kalshi without an alternate host fails on a 404`() {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest) = MockResponse().setResponseCode(404)
+        }
+        assertThrows(ReferenceException::class.java) {
+            runBlocking { KalshiClient(OkHttpClient(), json, base("/")).odds(nfl, settings.copy(families = setOf(MarketFamily.MONEYLINE))) }
+        }
+    }
+
     @Test
     fun `kalshi event codes parse with and without a time`() {
         val a = KalshiClient.parseCode("KXNFLGAME-26OCT05ATLNO")!!
