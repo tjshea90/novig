@@ -406,6 +406,10 @@ class MakerDesk(
     suspend fun post(decision: MakerDecision.Post, rules: MakerRules, wallet: Double? = null, maxPerDay: Double = Double.MAX_VALUE): String? = lock.withLock {
         val bids = store.all()
         if (bids.any { it.active && it.outcomeId == decision.line.outcomeId }) return@withLock "There's already a bid on this side (or one on its way down)"
+        // The cycle's wash guard ([MakerPlan.wouldTrade]) for a bid by hand: one that would meet a bid of ours on the other side of its market isn't sent.
+        if (MakerPlan.wouldTrade(decision, bids.filter { it.active }.groupBy({ it.marketId }, { it.outcomeId to it.price }))) {
+            return@withLock "It would trade with your own bid on the other side of this market (a wash: the two prices add up to \$1 or more): cancel that bid first"
+        }
         if (wallet != null || maxPerDay < Double.MAX_VALUE) {
             val up = bids.filter { it.active }.sumOf { it.restingDollars }
             val byWallet = (wallet ?: Double.MAX_VALUE) - up

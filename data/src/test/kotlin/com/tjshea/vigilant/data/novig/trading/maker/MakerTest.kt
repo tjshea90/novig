@@ -1391,6 +1391,22 @@ class MakerTest {
     }
 
     @Test
+    fun `a bid Tj approves by hand that would trade with a bid of ours on the other side of its market is not sent`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        // The Over rests at 0.50 (fair 0.52); an Under bid at 0.51 (fair 0.53 for it, an out-of-date pair) would meet it: 0.50 + 0.51 is over $1.
+        assertNull(d.post(MakerQuote.decide(line("m1-over", fair = 0.52), rules, now) as MakerDecision.Post, rules))
+        val under = MakerQuote.decide(line("m1-under", fair = 0.53, offer = 0.60), rules, now) as MakerDecision.Post
+        assertEquals(0.505, under.price, 1e-9)
+        val refused = d.post(under, rules)!!
+        assertTrue(refused, refused.contains("wash"))
+        assertEquals(1, novig.placed.size)
+        // A fair for the Under that goes with the Over's (the two add up to 1) is a bid that doesn't meet it.
+        assertNull(d.post(MakerQuote.decide(line("m1-under", fair = 0.48, offer = 0.60), rules, now) as MakerDecision.Post, rules))
+        assertEquals(2, novig.placed.size)
+    }
+
+    @Test
     fun `the bids Tj approved by hand are the last to come down when the wallet can't hold them all`() = runBlocking {
         val novig = FakeNovig()
         val d = desk(novig, tracker())
