@@ -113,6 +113,9 @@ class AutoScanService : Service() {
                 runCatching { container.settingsStore.update { it.copy(autoScan = AutoScanMode.OFF) } }
                 stopNow()
             }
+            // The kill switch from the notification (Tj, 2026-10-05): saved and every part stopped, bids down. The app's own scope, not the service's: this service
+            // is stopped by it, and the bids must still come down.
+            ACTION_KILL -> container.appScope.launch { KillSwitch.engage(application, container, "the auto-scan notification's Stop all") }
             ACTION_SCAN_NOW -> runCycle(forceVigilant = true)
             ACTION_CYCLE -> scope.launch {
                 val s = container.currentSettings()
@@ -411,6 +414,7 @@ class AutoScanService : Service() {
             .setContentIntent(openApp(this))
             .addAction(0, "Scan now", service(this, ACTION_SCAN_NOW))
             .addAction(0, "Stop", service(this, ACTION_STOP))
+            .addAction(0, "STOP ALL", service(this, ACTION_KILL))
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .build()
     }
@@ -425,6 +429,9 @@ class AutoScanService : Service() {
         const val ACTION_CYCLE = "com.tjshea.vigilant.AUTO_SCAN_CYCLE"
         const val ACTION_SCAN_NOW = "com.tjshea.vigilant.AUTO_SCAN_NOW"
         const val ACTION_STOP = "com.tjshea.vigilant.AUTO_SCAN_STOP"
+
+        /** The notification's "STOP ALL": the kill switch ([KillSwitch]). */
+        const val ACTION_KILL = "com.tjshea.vigilant.KILL_SWITCH"
 
         /**
          * The CPU is held at most this long for one background scan (1,200 books on a slowed-down Novig). A scan with no
