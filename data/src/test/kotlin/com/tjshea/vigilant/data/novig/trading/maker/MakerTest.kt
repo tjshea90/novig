@@ -292,6 +292,7 @@ class MakerTest {
         val cancelBatches = ArrayList<List<String>>()
         var refuseBatch: NovigApiException? = null
         var loseBatchAnswer = false
+        var garbledBatchAnswer = false
         /** Orders that fill the moment a cancel batch names them, and ones that are off the book by the time it does (answered NOT_FOUND). */
         val fillOnCancel = HashSet<String>()
         val vanishOnCancel = HashSet<String>()
@@ -305,6 +306,7 @@ class MakerTest {
                 o.clientId to id
             }
             if (loseBatchAnswer) throw java.io.IOException("timeout")
+            if (garbledBatchAnswer) throw kotlinx.serialization.SerializationException("not the shape this app reads")
             return ids
         }
 
@@ -1599,6 +1601,21 @@ class MakerTest {
         d.cycle(emptyList(), rules, stop = null, maxPerDay = 50.0, wallet = 100.0, partial = true)
         assertEquals(3, d.bids().count { it.orderId != null && it.status == MakerStatus.RESTING })
         assertEquals(1, novig.batches.size)
+    }
+
+    @Test
+    fun `a batch answer this app cannot read turns batches off - the bids are found by client id, and later passes go one by one`() = runBlocking {
+        val novig = BatchNovig().also { it.garbledBatchAnswer = true }
+        val d = desk(novig, tracker())
+        val first = d.cycle(oneGame("a-over", "b-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(0, first.placed)
+        assertTrue(first.problems.toString(), first.problems.any { it.contains("couldn't be read") })
+        assertEquals(1, novig.batches.size)
+        // The next pass: no batch, the other bid (and any new one) goes alone; the two the batch placed are found by their client ids.
+        val second = d.cycle(oneGame("a-over", "b-over", "c-over", "d-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(1, novig.batches.size)
+        assertEquals(2, second.placed)
+        assertEquals(4, d.bids().count { it.status == MakerStatus.RESTING && it.orderId != null })
     }
 
     @Test

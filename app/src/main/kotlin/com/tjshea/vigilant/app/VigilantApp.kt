@@ -806,7 +806,7 @@ class AppContainer(private val app: Application) {
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
         val client = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) {
-            NovigTradingClient(NovigSignedClient(http, json, KeystoreSigningKey(alias, key)), json)
+            NovigTradingClient(NovigSignedClient(http, json, KeystoreSigningKey(alias, key)), json, batchOrders = true)
         } else {
             null
         }

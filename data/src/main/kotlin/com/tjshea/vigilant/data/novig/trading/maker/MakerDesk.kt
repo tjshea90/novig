@@ -276,7 +276,7 @@ class MakerDesk(
         var placed = 0
         var queue = actions.places.filter { it.line.outcomeId !in noReplace }
         // Many new bids go up in a request each 256, not one by one (each takes ~0.2 s with this lock held, and fair prices move while they do).
-        if (trading.batchOrders && queue.size >= 2) {
+        if (batching && queue.size >= 2) {
             val rest = ArrayList<MakerDecision.Post>()
             var lost = false
             for (chunk in queue.chunked(NovigTradingClient.MAX_BATCH)) {
@@ -508,6 +508,11 @@ class MakerDesk(
         }
     }
 
+    /** The batch routes are used: the client has them and no answer from them has been unreadable (that turns them off for the life of this desk, one by one as ever). */
+    private val batching: Boolean get() = trading.batchOrders && !batchUnreadable
+
+    @Volatile private var batchUnreadable = false
+
     /** How a batch of new bids ended. */
     private sealed interface Batch {
         /** [n] bids are resting. */
@@ -548,6 +553,10 @@ class MakerDesk(
             store.update { list -> list.filterNot { it.clientId in gone } }
             problems += "A batch of ${bids.size} bids was refused (${e.advice}); they go one at a time"
             Batch.Singly(built.map { it.first })
+        } catch (e: kotlinx.serialization.SerializationException) {
+            // Placed (the reply was a success) but not in a shape this app reads: found by client id next look, and no batch is sent again.
+            batchUnreadable = true
+            Batch.Lost("Novig's answer to a batch of ${bids.size} bids couldn't be read; they are looked for by their client ids, and bids go one at a time from now on")
         } catch (e: Exception) {
             Batch.Lost("Novig didn't answer a batch of ${bids.size} bids (${e.message ?: e.javaClass.simpleName}); looked for again next time")
         }
@@ -577,7 +586,7 @@ class MakerDesk(
         // Several cancels go in a request each 256 (partial: one unknown id does not stop the rest); an id the batch could not answer for, or a batch that failed, is
         // cancelled one by one below, which reports its own trouble.
         var singles = orders
-        if (trading.batchOrders && orders.size >= 2) {
+        if (batching && orders.size >= 2) {
             val left = ArrayList<Pair<String, String>>()
             for (chunk in orders.chunked(NovigTradingClient.MAX_BATCH)) {
                 val res = try {
@@ -585,6 +594,7 @@ class MakerDesk(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    if (e is kotlinx.serialization.SerializationException) batchUnreadable = true
                     left += chunk
                     continue
                 }
