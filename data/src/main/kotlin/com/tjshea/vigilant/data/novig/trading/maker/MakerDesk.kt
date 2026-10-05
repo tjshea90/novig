@@ -136,6 +136,7 @@ data class MakerBid(
         market = NovigMarket(marketId, eventId, "", "OPEN", marketLabel, startsTs, null, emptyList()),
         outcomeId = outcomeId, league = league, eventName = eventName, startsTs = startsTs, marketLabel = marketLabel, selection = selection,
         fair = fair, fairAsOfMs = postedAtMs, source = source, gameUrl = gameUrl, basis = fairBasis, auto = auto,
+        atBet = com.tjshea.vigilant.data.tracker.AtBets.bid(this, firstFillAtMs ?: postedAtMs),
     )
 }
 

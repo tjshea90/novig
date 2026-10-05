@@ -104,6 +104,9 @@ data class AtBet(
         const val HOW_SHEET = "sheet"
         const val HOW_MARKED = "marked"
         const val HOW_ALERT = "alert"
+
+        /** A bid Vigilant posted that a taker filled (Tj, 2026-10-05: auto bids "thoroughly tracked"): [AtBets.bid]. */
+        const val HOW_BID = "bid"
     }
 }
 
@@ -204,6 +207,22 @@ object AtBets {
             fullKelly = q?.kellyFraction, stake = stake, bankroll = s.bankroll, wallet = wallet,
         )
     }
+
+    /**
+     * A bid Vigilant posted ([b]) as the bet its fill became (Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked … all information logged"):
+     * the price taken, the fair its margin came from and the EV claimed, what stood behind the fair (its books and sharp books, the sharp book's own fair as the verdict),
+     * the minutes to the start at the fill ([atMs]). The posting's own detail (the book it was posted against, whether it led, the fill's delay) is on the bid; the
+     * scan study and Diagnostics join them ([com.tjshea.vigilant.data.novig.trading.maker.BidReport]).
+     */
+    fun bid(b: com.tjshea.vigilant.data.novig.trading.maker.MakerBid, atMs: Long, version: String? = null): AtBet = AtBet(
+        atMs = atMs, version = version, how = AtBet.HOW_BID, scanner = BetTracker.SOURCE_VIGILANT,
+        league = b.league, sport = SharpVeto.sportOf(b.league).name, kind = b.kind.name, minutesToStart = minutes(b.startsTs, atMs),
+        american = Odds.probabilityToAmerican(b.price.coerceIn(0.001, 0.999)), ev = b.evAtFair, fair = b.fair,
+        fairMethod = b.fairBasis?.source, fairBooks = b.fairBasis?.sharp.orEmpty(), fairSharp = b.fairBasis?.sharp.orEmpty(),
+        sharpVerdict = if (b.sharpFairAtPost != null) "ANCHORED" else "NO_SHARP", sharpEv = b.sharpFairAtPost?.let { it / b.price - 1.0 },
+        twoSided = b.books.takeIf { it > 0 }, fairAgeSec = secs(b.bookAtMs, b.postedAtMs),
+        fullKelly = fullKelly(b.fair, b.price), stake = b.paid.takeIf { it > 0.0 } ?: b.cost,
+    )
 
     /** A bet marked placed from a push alert's ✓: what the alert carried. */
     fun alert(a: com.tjshea.vigilant.data.alerts.EvAlert, now: Long, version: String? = null): AtBet = AtBet(
