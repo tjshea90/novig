@@ -50,6 +50,10 @@ class MakerGuardTest {
         assertFalse(MakerGuard.check((1..5).map { fill(it, fairAfter = 0.47) }).tripped)
         // Eight fills, three picked off: fine.
         assertFalse(MakerGuard.check((1..8).map { fill(it, fairAfter = if (it <= 3) 0.47 else 0.53) }).tripped)
+        // Exactly half picked off (four of eight), the average under 1%: that is the line, and it stops.
+        assertTrue(MakerGuard.check((1..8).map { fill(it, fairAfter = if (it <= 4) 0.47 else 0.505) }).tripped)
+        // Just under half (three of eight): not.
+        assertFalse(MakerGuard.check((1..8).map { fill(it, fairAfter = if (it <= 3) 0.47 else 0.505) }).tripped)
         // Half picked off but the others so good that the average is over 1%: the bids are doing their job.
         assertFalse(MakerGuard.check((1..8).map { fill(it, fairAfter = if (it <= 4) 0.495 else 0.60) }).tripped)
         // Fills with no judgement don't count either way.
