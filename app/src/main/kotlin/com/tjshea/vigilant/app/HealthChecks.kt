@@ -43,6 +43,7 @@ object HealthChecks {
         betting(s)
         autoBet(s, x, now)
         pinnacleOnly(s, x, now)
+        lowUsage(s, x)
         bids(s, x, now)
         sharp(s, x)
         memory(x)
@@ -77,6 +78,32 @@ object HealthChecks {
             val oldSkips = last.skipped["Pinnacle's price is older than your limit"] ?: 0
             if (last.looked >= 3 && oldSkips * 2 >= last.looked) {
                 add(Check(Level.WARN, "Pinnacle only", "the last auto-bet pass refused $oldSkips of ${last.looked} bets for a Pinnacle price older than your limit", "re-reads failing, or the limit (${set.pinnacleMaxAgeSeconds} s) is tighter than the feeds can keep", "Settings › Scanning › Pinnacle only"))
+            }
+        }
+    }
+
+    /**
+     * Low API usage bids (Tj, 2026-10-05; RESEARCH.md §92): on, the picked books must be readable (a feed that carries each with a key and a switch on), the last scan must
+     * have priced props from them and read nothing else, and at least one feed must be asked at all.
+     */
+    private fun MutableList<Check>.lowUsage(s: UiState, x: Diagnostics.Extras) {
+        val set = s.settings
+        if (!set.lowUsageNow) return
+        val plan = x.lowUsagePlan
+        if (plan != null && plan.feeds.isEmpty()) {
+            add(Check(Level.FAIL, "Low API usage bids", "no feed can be asked for the picked books", com.tjshea.vigilant.data.scanner.LowUsageBids.names(com.tjshea.vigilant.data.scanner.LowUsageBids.books(set)), "Settings › Fair odds & sources and API keys"))
+        } else if (plan != null && plan.unreachable.isNotEmpty()) {
+            add(Check(Level.WARN, "Low API usage bids", "${com.tjshea.vigilant.data.scanner.LowUsageBids.names(plan.unreachable.toSet())} can't be read, so a fair needs the other picked books", "no feed that carries it has a key and a switch on", "Settings › API keys, or pick other books on the Bids tab"))
+        }
+        if (set.vigilantOn && s.status.scannedAtMs != null && plan != null) {
+            val reads = s.status.sources.filter { it.fetched + it.reused > 0 }
+            val asked = plan.feeds.toSet()
+            val other = reads.filter { it.id !in asked && it.id != "propline" }
+            if (other.isNotEmpty()) {
+                add(Check(Level.WARN, "Low API usage bids", "the last scan read ${other.joinToString(", ") { it.name }}, which the mode never asks for (a scan from before the switch, or a bug)", look = "data/scanner/Scanner.kt (readable), app/VigilantApp.kt (lowUsageSources)"))
+            }
+            if (reads.none { it.id in asked && it.matched > 0 }) {
+                add(Check(Level.WARN, "Low API usage bids", "the last scan priced no prop from the picked books", reads.joinToString(", ") { "${it.name} ${it.matched} matched" }.ifEmpty { "no feed answered (no game in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h, or the feeds are down)" }.take(160), "Settings › API usage"))
             }
         }
     }
