@@ -241,6 +241,13 @@ class MakerAppTest {
         assertTrue(text, text.contains("-- fills by how fast they were taken --") && text.contains("-- fills by bid price (about the chance the side wins) --"))
         assertTrue(text, text.contains("the newest fills (when"))
         assertTrue(text, text.lines().count { it.contains("PICKED OFF") } == 6)
+        // The health checks say it too: picked off, and most fills within two minutes of posting.
+        val checks = HealthChecks.of(state, Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now).filter { it.area == "Bids" }
+        assertTrue(checks.toString(), checks.any { it.finding == "fills are being picked off" && it.level == HealthChecks.Level.WARN })
+        assertTrue(checks.toString(), checks.any { it.finding == "most fills came within 2 minutes of posting" })
+        // And once the guard has stopped them, that is the first thing it says.
+        val haltedChecks = HealthChecks.of(state.copy(settings = state.settings.copy(makerHalted = "6 of the last 8 fills were picked off")), Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now).filter { it.area == "Bids" }
+        assertTrue(haltedChecks.toString(), haltedChecks.any { it.finding == "stopped by the picked-off guard" })
         // The guard having stopped the bids is said in capitals, with its words.
         val stopped = Diagnostics.report(state.copy(settings = state.settings.copy(makerHalted = "6 of the last 8 fills were picked off")), Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now)
         assertTrue(stopped, stopped.contains("BIDS STOPPED BY THE GUARD: 6 of the last 8 fills were picked off"))
