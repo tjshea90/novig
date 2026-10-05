@@ -19,6 +19,7 @@ import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.ScanContext
 import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
+import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.FairSource
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.test.runTest
@@ -452,5 +453,99 @@ class ScannerTest {
         val early = novig(bumpPastStart = false)
         Scanner(early, clock = { now }).scan(settings, listOf(FakeOddsApi()))
         assertEquals("the same game, not yet started, is read", 1, early.bookCalls)
+    }
+
+    // ---- Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5) -------------------------------------------------------------------------------------
+
+    /** Pinnacle's feed, faked: counts its reads and what it is told to forget. */
+    private class FakePinnacle(val dal: Double, val bal: Double) : ReferenceSource {
+        var calls = 0
+        val forgotten = ArrayList<String>()
+        override val id = "pinnacle"
+        override val displayName = "Pinnacle"
+        override suspend fun forget(league: League) { forgotten += league.novigName }
+        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+            calls++
+            val ev = RefEvent("pin-1", league.oddsApiSportKey, Fixtures.START_MS, home = "Cowboys", away = "Ravens",
+                markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, bal, null), RefQuote(Side.HOME, dal, null)), null)))
+            return RefSnapshot(league.oddsApiSportKey, listOf(ev), 0)
+        }
+    }
+
+    @Test
+    fun `Pinnacle only prices from Pinnacle alone even when other feeds are handed to the scan`() = runTest {
+        val pin = FakePinnacle(dal = 1 / 0.45, bal = 1 / 0.58)
+        val kalshi = FakeExchange("kalshi", dal = 1 / 0.41, bal = 1 / 0.60)
+        val poly = FakeExchange("polymarket", dal = 1 / 0.40, bal = 1 / 0.61)
+        val s = settings.copy(fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, useKalshi = true, usePolymarket = true)
+        // As ever: every feed's books are in the fair.
+        val both = Scanner(FakeNovig(), clock = { now }).scan(s, listOf(pin, kalshi, poly))
+        assertEquals(setOf("Pinnacle", "kalshi", "polymarket"), both.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.fair!!.booksUsed.toSet())
+        // Pinnacle only: the same sources, one book in the fair, and the other feeds were never read.
+        val kalshi2 = FakeExchange("kalshi", dal = 1 / 0.41, bal = 1 / 0.60)
+        val poly2 = FakeExchange("polymarket", dal = 1 / 0.40, bal = 1 / 0.61)
+        val only = Scanner(FakeNovig(), clock = { now }).scan(s.copy(pinnacleOnly = true), listOf(FakePinnacle(1 / 0.45, 1 / 0.58), kalshi2, poly2))
+        val dal = only.result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertEquals(listOf("Pinnacle"), dal.fair!!.booksUsed)
+        assertEquals(0, kalshi2.calls + poly2.calls)
+        assertEquals(DevigMethod.WORST_CASE, dal.fair!!.method)
+        assertTrue(only.sources.none { it.id == "kalshi" || it.id == "polymarket" })
+    }
+
+    @Test
+    fun `a re-price and a recheck under Pinnacle only use Pinnacle alone too`() = runTest {
+        val s = settings.copy(fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, useKalshi = true)
+        val scanner = Scanner(FakeNovig(), clock = { now })
+        scanner.scan(s, listOf(FakePinnacle(1 / 0.45, 1 / 0.58), FakeExchange("kalshi", dal = 1 / 0.41, bal = 1 / 0.60)))
+        val normal = scanner.reprice(s)!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertEquals(setOf("Pinnacle", "kalshi"), normal.fair!!.booksUsed.toSet())
+        val only = scanner.reprice(s.copy(pinnacleOnly = true))!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertEquals(listOf("Pinnacle"), only.fair!!.booksUsed)
+        val rechecked = scanner.recheck(s.copy(pinnacleOnly = true), listOf(Fixtures.ML_MARKET)).result!!.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertEquals(listOf("Pinnacle"), rechecked.fair!!.booksUsed)
+    }
+
+    @Test
+    fun `refreshing the fair reads the asked leagues' fair sources again right now and re-prices with the books already read`() = runTest {
+        val novig = FakeNovig()
+        val pin = FakePinnacle(1 / 0.45, 1 / 0.58)
+        val s = settings.copy(pinnacleOnly = true)
+        val scanner = Scanner(novig, clock = { now })
+        assertNull(scanner.refreshFair(s, listOf(pin), setOf("NFL"))) // nothing to re-price before a scan
+        assertEquals(0, pin.calls)
+        scanner.scan(s, listOf(pin))
+        assertEquals(1, pin.calls)
+        val booksBefore = novig.bookCalls
+        now += 45_000
+        val r = scanner.refreshFair(s, listOf(pin), setOf("NFL"))!!
+        assertEquals(2, pin.calls)
+        assertEquals(listOf("NFL"), pin.forgotten)
+        assertEquals(booksBefore, novig.bookCalls) // Novig's books are not read again by this
+        val dal = r.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        // The fair line is as young as the refresh: its quote was stamped now.
+        assertEquals(now, dal.fairAsOfMs)
+        // A league nobody asked for is left alone.
+        scanner.refreshFair(s, listOf(pin), setOf("MLB"))
+        assertEquals(2, pin.calls)
+    }
+
+    @Test
+    fun `refreshing the fair asks a backup only for a league Pinnacle's own feed did not answer`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val s = settings.copy(pinnacleOnly = true)
+        val scanner = Scanner(FakeNovig(), clock = { now })
+        val first = FakePinnacle(1 / 0.45, 1 / 0.58)
+        val backup = object : ReferenceSource {
+            var calls = 0
+            override val id = "propline"
+            override val displayName = "PropLine"
+            override val fallbackFor = "pinnacle"
+            override suspend fun needed(league: League, settings: ScanSettings, context: ScanContext) = league.novigName !in context.firstAnswered
+            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot { calls++; log += "backup"; return RefSnapshot(league.oddsApiSportKey, emptyList(), 0) }
+        }
+        scanner.scan(s, listOf(first, backup))
+        assertEquals(0, backup.calls)
+        scanner.refreshFair(s, listOf(first, backup), setOf("NFL"))
+        assertEquals(0, backup.calls) // Pinnacle answered both times
     }
 }
