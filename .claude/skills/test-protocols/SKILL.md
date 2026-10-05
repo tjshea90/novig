@@ -194,11 +194,11 @@ unless Tj asks).
   the bets' market families; unreadable wording = all), `data/keys/Runway` (`Runway.lines/roundsNote`, `UsageDelta`, `RoundCost`; Diagnostics "Runway" and "Last rounds"
   blocks, `AppContainer.lastScanCost/lastCheckCost`), `ScanSettings.miniWindow` off by default + schema 10, Settings tabs (replaced by pages in v0.46.0: see "Settings pages" above), `StickyBar`/`STICKY_BAR` on the Tracker, +EV, Games and CNO lists, Sort/Scanner menu chips (`TrackerSort.barLabel`). Tests:
   `RunwayTest`, `OpenBetPricerTest` (families), `DiagnosticsTest`, `MiniWindowTest`, `SettingsPagesTest`, `StickyHeadersTest`.
-- **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 12 / 24 / 48 h,
+- **Start-time window (v0.17.1+, Vigilant only):** `ScanSettings.startsWithinHours` (Any / 3 / 6 / 12 / 24 / 48 h,
   `startsInWindow`) applied at `now` in `UiState.feedAt`, `cnoCandidates` and `gamesAt`, so the +EV feed, CNO tab,
   Games board, badges, mini window, widget and `ScanService`'s counts all obey it; picked on the +EV and CNO tabs
   (`StartsWithinRow`), the floating widget's top bar (`FloatingFeed` `StartsWithinSwitch`, taps cycle
-  Any time → 12h → 24h → 48h) or Settings › Scanner; what it hides is counted (`laterText`, `laterCount`);
+  Any time → 3h → 6h → 12h → 24h → 48h) or Settings › Scanner; what it hides is counted (`laterText`, `laterCount`);
   display only, scans unchanged (`StartsWithinTest`).
 - **Vigilant MGM (v0.17.0 only; DORMANT since 2026-09-27, see "Vigilant MGM is dormant" above; RESEARCH.md §25):** the second app, module `mgm` (`com.tjshea.vigilant.betmgm`),
   compiles `app`'s own sources with `BuildConfig.BOOK = "betmgm"`; `app/AppBook` is the one switch (names, links,
