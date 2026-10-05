@@ -132,10 +132,12 @@ class LowUsageBidsTest {
         assertFalse(e.usePinnacle)
         assertTrue(e.useKalshi)
         assertTrue(e.useParlay)
-        assertFalse("the picked books are on ParlayAPI; PropLine isn't needed for them", e.usePropLine)
+        // A feed that CAN carry a picked book is allowed (FanDuel is on PropLine too); which feeds are really asked is [LowUsageBids.feedsFor]'s call, tested above.
+        assertTrue(e.usePropLine)
         assertFalse(e.includeLive)
-        // Only the sources that carry a picked book can be read at all.
-        assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props"), e.enabledSources)
+        // Only the sources that carry a picked book can be read at all: not Pinnacle's feed, Polymarket or The Odds API.
+        assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props", "propline", "propline_props"), e.enabledSources)
+        assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props"), on.copy(lowUsageBooks = setOf("kalshi", "prophetx")).effective().enabledSources)
     }
 
     @Test
