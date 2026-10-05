@@ -69,6 +69,19 @@ class TrackerBreakdownTest {
     }
 
     @Test
+    fun `bets made with Pinnacle only on read as their own scanner row, apart from Vigilant's others`() {
+        val pin = AtBet(atMs = 0, how = AtBet.HOW_AUTO, scanner = BetTracker.SOURCE_VIGILANT, pinnacleOnly = true)
+        val rows = TrackerBreakdown.of(
+            listOf(
+                bet("1", source = BetTracker.SOURCE_VIGILANT), bet("2", source = BetTracker.SOURCE_VIGILANT).copy(atBet = pin),
+                bet("3", source = BetTracker.SOURCE_VIGILANT).copy(atBet = pin), bet("4", source = BetTracker.SOURCE_CNO),
+            ),
+            By.SCANNER,
+        )
+        assertEquals(mapOf("Pinnacle only" to 2, "Vigilant" to 1, "CNO" to 1), rows.associate { it.label to it.stats.bets })
+    }
+
+    @Test
     fun `bets split by how long before the start they were placed, nearest to the start first whatever the counts (RESEARCH 82)`() {
         val start = 1_000_000_000_000L
         fun at(id: String, hoursBefore: Double, status: BetStatus = BetStatus.WON) =
