@@ -441,6 +441,35 @@ class DiagnosticsTest {
         assertEquals("(1 older bets: not recorded)", basis.last())
     }
 
+    @Test
+    fun `the report says how Pinnacle only is doing - off, on with no bets yet, and its bets by the age of Pinnacle's price, with the profit of every one`() {
+        val set = com.tjshea.vigilant.data.scanner.ScanSettings()
+        assertTrue(Diagnostics.pinnacleOnlyLines(emptyList(), set, AutoBettor.Status(), now).single().startsWith("Off"))
+        val on = set.copy(pinnacleOnly = true, pinnacleMaxAgeSeconds = 60)
+        val none = Diagnostics.pinnacleOnlyLines(emptyList(), on, AutoBettor.Status(), now)
+        assertTrue(none.toString(), none.first().startsWith("On: age limit 1 min") && none.last().startsWith("No bet made with it on yet"))
+        val start = now - 2 * 3_600_000L
+        fun bet(id: String, ageSec: Long?, status: BetStatus, pinnacleOnly: Boolean = true, how: String = com.tjshea.vigilant.data.tracker.AtBet.HOW_AUTO, close: Double = 0.52) =
+            com.tjshea.vigilant.data.tracker.TrackedBet(
+                id, start - 3_600_000L, "NFL", "A @ B", start, "Player Receiving Yards", "Player Over 50.5", "m$id", "o$id", 0.5, 0.5, 0.52, 0.04, 10.0,
+                status = status, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT, american = 100,
+                closingFair = close, closingSeenAtMs = start - 5 * 60_000L,
+                atBet = com.tjshea.vigilant.data.tracker.AtBet(atMs = start - 3_600_000L, how = how, scanner = "Vigilant", pinnacleOnly = pinnacleOnly, pinnacleAgeSec = ageSec),
+            )
+        val bets = listOf(
+            bet("a", 12, BetStatus.WON), bet("b", 25, BetStatus.LOST), bet("c", 75, BetStatus.WON),
+            // Not counted: a plain Vigilant bet, a bet the scan study only logged, a voided bet.
+            bet("d", null, BetStatus.WON, pinnacleOnly = false), bet("e", 5, BetStatus.WON, how = com.tjshea.vigilant.data.tracker.AtBet.HOW_STUDY), bet("f", 5, BetStatus.VOID),
+        )
+        val lines = Diagnostics.pinnacleOnlyLines(bets, on, AutoBettor.Status(), now, mapOf("pinnacle.refresh.ok" to 7L, "pinnacle.refresh.failed" to 1L, "pinnacle.autobet.placed" to 3L))
+        assertTrue(lines.toString(), lines.any { it.startsWith("Pinnacle re-reads before betting: 7 read, 1 failed · bets placed this run: 3") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("Bets: 3 (0 open)") && it.contains("2-1") })
+        assertTrue(lines.toString(), lines.any { it == "Profit (every settled bet): +10.00 on 30.00 staked (+33.3%)" })
+        assertTrue(lines.toString(), lines.any { it.startsWith("Pinnacle's price ≤30 s old: 2 bets") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("Pinnacle's price 61–90 s old: 1 bet") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("Market Player props: 3 bets") })
+    }
+
     // ---- X2 (Tj, 2026-09-30: "The app just crashed a couple times") ----------------------------------------------------------------------
 
     @Test
