@@ -293,6 +293,14 @@ fun AutoBetSection(
     )
     Shadowed.autoBetEdge(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetEdgeShadowed")) }
 
+    if (s.pinnacleOnly) {
+        // The three book-count rules below judge CrazyNinjaOdds' bets by the books on their game page; with Pinnacle the one book, they don't apply.
+        Text(
+            "Pinnacle only is on: the book-count rules below (books agreeing, every book, books pricing both sides) don't apply, because Pinnacle is the one book. " +
+                "What applies is your smallest edge above, the odds limits, the kinds of bet, how much, and the most on one game or in a day.",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 8.dp).testTag("autoBetPinnacleNote"),
+        )
+    }
     Text("Books that each say +EV on their own", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel, modifier = Modifier.testTag("autoBetBooksChips")) { v -> onUpdate { it.copy(autoBetBooks = v) } }
     Text(
