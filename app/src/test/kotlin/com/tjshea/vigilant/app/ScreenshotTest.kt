@@ -1707,6 +1707,34 @@ class ScreenshotTest {
         assertEquals("Scanning is paused · tap ▶ to resume", com.tjshea.vigilant.app.ui.emptyText(s.copy(settings = s.settings.copy(pausedByHand = true)), floating = true))
     }
 
+    /** Tj, 2026-10-05: the kill switch "visible everywhere": the widget's top bar has a red STOP, and once pressed the red play that resumes. */
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetStopsEverythingFromItsTopBar() {
+        var killed = 0
+        var resumed = 0
+        floating("9q_floating_stop", floatingState(), actions = com.tjshea.vigilant.app.ui.FloatingActions(onKill = { killed++ }, onResume = { resumed++ }))
+        compose.onNodeWithContentDescription(com.tjshea.vigilant.app.ui.KillBarText.STOP_DESCRIPTION).performClick()
+        assertEquals(1, killed)
+        assertEquals(0, resumed)
+        compose.onAllNodesWithContentDescription(com.tjshea.vigilant.app.ui.KillBarText.RESUME_DESCRIPTION).assertCountEquals(0)
+    }
+
+    @Config(qualifiers = "w380dp-h320dp-xxhdpi")
+    @Test fun theWidgetSaysStoppedAndResumesFromItsRedPlay() {
+        var killed = 0
+        var resumed = 0
+        val s = floatingState()
+        val stopped = s.copy(settings = s.settings.copy(killed = true, killedAtMs = SampleScan.NOW))
+        floating("9r_floating_stopped", stopped, actions = com.tjshea.vigilant.app.ui.FloatingActions(onKill = { killed++ }, onResume = { resumed++ }))
+        compose.onNodeWithText("STOPPED", substring = true).assertIsDisplayed()
+        compose.onAllNodesWithContentDescription(com.tjshea.vigilant.app.ui.KillBarText.STOP_DESCRIPTION).assertCountEquals(0)
+        compose.onNodeWithContentDescription(com.tjshea.vigilant.app.ui.KillBarText.RESUME_DESCRIPTION).performClick()
+        assertEquals(1, resumed)
+        assertEquals(0, killed)
+        assertTrue(com.tjshea.vigilant.app.ui.miniStatus(stopped, SampleScan.NOW).startsWith("STOPPED"))
+        assertEquals("Everything is stopped · tap the red ▶ to resume", com.tjshea.vigilant.app.ui.emptyText(stopped, floating = true))
+    }
+
     @Config(qualifiers = "w380dp-h320dp-xxhdpi")
     @Test fun theWidgetsPauseButton() {
         val picked = ArrayList<Boolean>()
