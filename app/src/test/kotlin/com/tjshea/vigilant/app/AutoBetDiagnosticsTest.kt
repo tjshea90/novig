@@ -75,6 +75,36 @@ class AutoBetDiagnosticsTest {
         assertTrue(old.single().text(), old.single().text().contains("refused 3 of 4 bets for a Pinnacle price older than your limit"))
     }
 
+    private fun lowChecks(s: UiState, x: Diagnostics.Extras = extras) = HealthChecks.of(s, x, now).filter { it.area == "Low API usage bids" }
+
+    @Test
+    fun `low API usage bids are silent while off, and on they FAIL with no feed to ask, WARN on an unreadable book, another source or an unpriced scan`() {
+        assertTrue(lowChecks(state()).isEmpty())
+        val low = { it: ScanSettings -> it.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) }
+        val books = com.tjshea.vigilant.data.scanner.LowUsageBids.DEFAULT_BOOKS
+        fun plan(vararg available: String) = com.tjshea.vigilant.data.scanner.LowUsageBids.feedsFor(books, available.toSet())
+        fun withSources(vararg r: com.tjshea.vigilant.data.scanner.SourceReport) = state(f = low).let { it.copy(status = it.status.copy(scannedAtMs = now - 60_000, sources = r.toList())) }
+        val ok = com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 1, 0, 3, null)
+        // No feed can be asked at all: FAIL.
+        val none = lowChecks(state(f = low), extras.copy(lowUsagePlan = plan()))
+        assertEquals(listOf(HealthChecks.Level.FAIL), none.map { it.level })
+        // A book no feed with a key carries: WARN, naming it.
+        val missing = lowChecks(state(f = low), extras.copy(lowUsagePlan = plan("kalshi", "propline_props")))
+        assertEquals(listOf(HealthChecks.Level.WARN), missing.map { it.level })
+        assertTrue(missing.single().text(), missing.single().text().contains("ProphetX can't be read"))
+        // All readable and the last scan priced from a picked feed: nothing to say.
+        assertTrue(lowChecks(withSources(ok), extras.copy(lowUsagePlan = plan("kalshi", "parlay_props"))).isEmpty())
+        // A source the mode never asks for was read: WARN.
+        val other = lowChecks(withSources(ok, com.tjshea.vigilant.data.scanner.SourceReport("oddsapi", "The Odds API", 1, 0, 2, null)), extras.copy(lowUsagePlan = plan("kalshi", "parlay_props")))
+        assertEquals(listOf(HealthChecks.Level.WARN), other.map { it.level })
+        assertTrue(other.single().text(), other.single().text().contains("The Odds API"))
+        // The scan read nothing from a picked feed that matched a game: WARN.
+        val unpriced = lowChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 1, 0, 0, null)), extras.copy(lowUsagePlan = plan("kalshi", "parlay_props")))
+        assertEquals(listOf(HealthChecks.Level.WARN), unpriced.map { it.level })
+        // The mode chosen but bids off: nothing (the scan is the usual one).
+        assertTrue(lowChecks(state { it.copy(maker = false, makerRecommend = false, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) }, extras.copy(lowUsagePlan = plan())).isEmpty())
+    }
+
     @Test
     fun `the report names Pinnacle only as the scanner and as the auto-bet's rule`() {
         val s = state { it.copy(pinnacleOnly = true, autoScan = AutoScanMode.BOTH, autoBetMinEv = 0.03, pinnacleMaxAgeSeconds = 60) }
