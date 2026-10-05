@@ -177,6 +177,18 @@ class MakerTest {
     }
 
     @Test
+    fun `the limit is saved with the settings, and a file saved before it existed reads as no limit`() {
+        val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val old = json.decodeFromString(ScanSettings.serializer(), """{"maker":true,"makerMaxBids":5,"schema":12}""")
+        assertEquals(0, old.makerMaxOdds)
+        assertEquals(5, old.makerMaxBids)
+        val picked = ScanSettings(maker = true, makerMaxOdds = 140)
+        val back = json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked))
+        assertEquals(picked, back)
+        assertEquals(140, back.makerMaxOdds)
+    }
+
+    @Test
     fun `a bid already up at odds longer than the limit comes down with the reason, and a bid inside it stays`() {
         val lines = listOf(line("m1-over", fair = 0.43, offer = 0.60), line("m2-over", fair = 0.50, offer = 0.60))
         val decisions = MakerQuote.decideAll(lines, limit140, now, emptySet())
