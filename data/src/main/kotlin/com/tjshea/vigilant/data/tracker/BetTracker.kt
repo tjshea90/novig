@@ -180,6 +180,12 @@ data class TrackedBet(
      * a ✓ mark or an import: those are matched to a game by their matchup and start time instead.
      */
     val eventId: String = "",
+    /**
+     * Set only by the Tracker's "Novig only" lens ([NovigNow.view]), which rewrites [evPercentAtBet] to the price paid against itself (about 0): the outlier
+     * verdict from the EV the bet was LISTED at, kept so both views leave out the same bets (Tj, 2026-10-05: Profit read green with the lens on and red with
+     * it off, because the lens made nothing an outlier). Never saved; null on every bet in the store.
+     */
+    val outlierListed: Boolean? = null,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
@@ -223,7 +229,7 @@ data class TrackedBet(
      * of every stat (Tj, 2026-09-27: "I don't want the average skewed by a single bet that is an
      * outlier"). A bet with no EV on record isn't one.
      */
-    val isOutlier: Boolean get() = evPercentAtBet?.let { kotlin.math.abs(it) > BetTracker.OUTLIER_EV + 1e-9 } ?: false
+    val isOutlier: Boolean get() = outlierListed ?: evPercentAtBet?.let { kotlin.math.abs(it) > BetTracker.OUTLIER_EV + 1e-9 } ?: false
 }
 
 data class TrackerStats(
@@ -259,13 +265,20 @@ data class TrackerStats(
     val settledWithEv: Int = 0,
     /** Standard deviation of [profitWithEv] if every bet's fair probability were exactly right. */
     val expectedSd: Double = 0.0,
-    /** Settled profit with the outliers counted too: what the bankroll really did. */
+    /**
+     * Settled profit and money staked with the outliers counted too: what the bankroll really did. The Tracker's Profit, Profit % and running-profit line
+     * are these (Tj, 2026-10-05: the same bets must make the same profit whichever way the Tracker is filtered); every other number leaves the outliers out.
+     */
     val profitAll: Double = 0.0,
+    val stakedAll: Double = 0.0,
     /** Locks ([TrackedBet.isLock]): in the stakes and profit above, not in the record, EV or closing line. */
     val locks: Int = 0,
 ) {
     /** Wins out of decided bets (Tj: "percentage of actual bet wins and losses"); null before any. */
     val winRate: Double? get() = (won + lost).takeIf { it > 0 }?.let { won.toDouble() / it }
+
+    /** [profitAll] over [stakedAll] (ROI of every settled bet); null before any. */
+    val roiAll: Double? get() = if (stakedAll > 0) profitAll / stakedAll else null
 
     /** Profit above (below) what the edges promised, on the same bets. */
     val vsExpected: Double get() = profitWithEv - expectedProfit
@@ -995,6 +1008,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 settledWithEv = judged.size,
                 expectedSd = kotlin.math.sqrt(variance),
                 profitAll = all.filter(decided).sumOf { it.profit ?: 0.0 },
+                stakedAll = all.filter(decided).sumOf { it.stake },
                 locks = money.count { it.isLock },
             )
         }
