@@ -928,7 +928,8 @@ class MakerTest {
 
     @Test
     fun `both sides of one market count as the larger side, not twice`() {
-        val both = listOf(inGame("m1-over", "m1"), inGame("m1-under", "m1"))
+        // The two sides of a market priced as a two-sided bid is (under $1 together: at 0.50 each they would trade with each other, the wash guard).
+        val both = listOf(inGame("m1-over", "m1"), inGame("m1-under", "m1").copy(price = 0.46))
         assertEquals(2, MakerPlan.plan(both, emptyList(), rules.copy(maxPerGame = 5.0), now).places.size)
         val twoMarkets = listOf(inGame("m1-over", "m1"), inGame("m2-over", "m2"))
         assertEquals(1, MakerPlan.plan(twoMarkets, emptyList(), rules.copy(maxPerGame = 5.0), now).places.size)
