@@ -280,6 +280,19 @@ object StudyExport {
         Extra("Close source, for the bets that have one (never pool across them; Novig's trades split by how many trades are behind the close)") { r, _ ->
             if (r.clv == null) null else closeSource(r.closeVia).let { src -> novigTrades(r.closeVia)?.let { n -> "$src: ${tradesBand(n)}" } ?: src }
         },
+        // Tj, 2026-10-05: "keep track of all betting information used with this Pinnacle only setting on so I can track how well bets do clv and EV and profit when only compared to Pinnacle".
+        Extra("Pinnacle only (the mode: the fair is Pinnacle's devigged price alone, nothing else read)") { r, _ ->
+            if (r.src != "v") null else if (r.atBet?.pinnacleOnly == true) "on: EV is against Pinnacle alone" else "off: Vigilant's usual fair"
+        },
+        Extra("Pinnacle only: how old Pinnacle's price was when the bet was first listed") { r, _ ->
+            if (r.atBet?.pinnacleOnly != true) null else when (val age = r.atBet.pinnacleAgeSec) {
+                null -> "not recorded"
+                in 0..30 -> "30 s or under"
+                in 31..60 -> "31 to 60 s"
+                in 61..90 -> "61 to 90 s"
+                else -> "over 90 s"
+            }
+        },
         Extra("Where it closed against its price (CLV)") { r, _ ->
             r.clv?.let { if (it > 0.05) "CLV over +5%" else if (it > 0.0) "CLV 0 to +5%" else if (it > -0.05) "CLV 0 to -5%" else "CLV under -5%" } ?: "no close"
         },
