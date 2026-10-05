@@ -71,6 +71,8 @@ object KillSwitch {
      */
     suspend fun engage(app: Application, c: AppContainer, by: String, now: Long = System.currentTimeMillis()): Result = withContext(NonCancellable) {
         val problems = ArrayList<String>()
+        // The bids up before the switch is saved: the app's own pause watcher may take them down the moment it is, so the count is what went, by either hand.
+        val upBefore = runCatching { c.makerDesk()?.bids()?.count { it.active } }.getOrNull()
         // 1. Saved first, in two places.
         val at = c.killMarker.atMs ?: now
         runCatching { c.killMarker.set(true, at) }.onFailure { problems += "(The stop couldn't be saved on the phone's preferences: ${it.message ?: it.javaClass.simpleName}.)" }
@@ -84,7 +86,7 @@ object KillSwitch {
         runCatching { c.novig.stream?.close() }
         // 3. Every bid down.
         val cancelled = try {
-            c.maker.cancelAll(CANCEL_WHY)
+            c.maker.cancelAll(CANCEL_WHY)?.let { n -> maxOf(n, (upBefore ?: 0) - (c.makerDesk()?.bids()?.count { it.active } ?: 0)) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

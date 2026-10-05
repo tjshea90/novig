@@ -120,6 +120,11 @@ class VigilantApp : Application() {
  */
 class AppContainer(private val app: Application) {
     private companion object {
+        /** Why scanning stopped, for the bids' cancel reason ([KillSwitch.CANCEL_WHY] for the kill switch). */
+        const val NEITHER = 0
+        const val PAUSED = 1
+        const val KILLED = 2
+
         /** How often the flight recorder is written to its files. */
         const val FLUSH_EVERY_MS = 30_000L
 
