@@ -141,6 +141,20 @@ class KillSwitchAppTest {
     }
 
     @Test
+    fun `the app's own watcher takes the bids down the moment the switch is saved, and gives the kill switch's reason, so whichever gets there first the bids say why`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        runner(novig).run("test")
+        assertTrue("bids are up", novig.orders.values.any { it.status == "OPEN" })
+        // Only the saved switch, no button: the watcher in the container sees `paused` flip and brings every bid down.
+        app.container.settingsStore.update { it.copy(killed = true, killedAtMs = 5L) }
+        waitFor("every bid is off Novig") { novig.orders.values.none { it.status == "OPEN" } }
+        waitFor("and marked as the kill switch's") { runBlocking { app.container.makerDesk()!!.bids().none { it.active } } }
+        val reasons = runBlocking { app.container.makerDesk()!!.bids().mapNotNull { it.why }.distinct() }
+        assertEquals(listOf(KillSwitch.CANCEL_WHY), reasons)
+    }
+
+    @Test
     fun `a settings file that lost the switch - reset, restored from a backup, damaged - gets it back from the second copy, and only Resume turns it off`() = runBlocking {
         app.container.killMarker.set(true, 777L)
         // Reset to the defaults (what a damaged file reads as): the container's default and its reconcile both say stopped.
