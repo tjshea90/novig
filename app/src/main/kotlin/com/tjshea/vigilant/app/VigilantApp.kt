@@ -40,6 +40,7 @@ import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.stream.NovigStream
 import com.tjshea.vigilant.data.reference.KalshiClient
+import com.tjshea.vigilant.data.reference.LowUsageSource
 import com.tjshea.vigilant.data.reference.PinnacleBackup
 import com.tjshea.vigilant.data.reference.PinnapiClient
 import com.tjshea.vigilant.data.reference.PolymarketClient
@@ -49,6 +50,7 @@ import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.TheOddsApiClient
 import com.tjshea.vigilant.data.book.SportsbookScanner
+import com.tjshea.vigilant.data.scanner.LowUsageBids
 import com.tjshea.vigilant.data.scanner.OddsScanner
 import com.tjshea.vigilant.data.scanner.ScanRunner
 import com.tjshea.vigilant.data.scanner.ScanSettings
