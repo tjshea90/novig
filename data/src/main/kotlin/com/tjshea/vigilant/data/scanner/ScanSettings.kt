@@ -9,6 +9,7 @@ import com.tjshea.vigilant.engine.FairSettings
 import com.tjshea.vigilant.engine.FairSource
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /** How many prop types to request from the sportsbooks per game (each costs a credit). */
 enum class BookPropSet(val displayName: String) { CORE("Core 4"), ALL("All") }
@@ -61,7 +62,15 @@ enum class AutoBetStake(val label: String, val kelly: Double?) {
  * Which bids go up (Tj, 2026-10-05). [ALL]: every bid the Bids rules allow. [QUICK_LIKELY]: only bids with a real chance to win (no longshots) that sit where
  * takers actually fill them, with a sharp book behind the price, best chance first (RESEARCH.md §88.4; the numbers are [com.tjshea.vigilant.data.novig.trading.maker.QuickLikely]).
  */
-enum class BidFocus(val displayName: String) { ALL("All bids"), QUICK_LIKELY("Quick & likely to win") }
+enum class BidFocus(val displayName: String) {
+    ALL("All bids"), QUICK_LIKELY("Quick & likely to win"),
+
+    /**
+     * Props only, in the next 6 hours, priced from 2-3 sharp prop books read at a slow pace (Tj, 2026-10-05; [LowUsageBids], RESEARCH.md §92): the fewest requests that
+     * keep bids priced, at least 2.5% under the fair, no longer than +130, the likeliest to fill first.
+     */
+    LOW_USAGE("Low API usage"),
+}
 
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
@@ -294,6 +303,20 @@ data class ScanSettings(
      * favorites and small underdogs … positive EV and the best chance at beating clv"): [BidFocus.ALL] (every bid the rules allow) or [BidFocus.QUICK_LIKELY].
      */
     val makerFocus: BidFocus = BidFocus.ALL,
+    /**
+     * Low API usage ([BidFocus.LOW_USAGE]): the 2-3 sharp prop books the fair is built from ([LowUsageBids.books] makes sure of two or three), how often Vigilant's own
+     * scan runs while it is on (minutes, [LowUsageBids.PACE_CHOICES]), and the margin each bid is posted under the fair (never under [LowUsageBids.MIN_MARGIN]).
+     */
+    val lowUsageBooks: Set<String> = LowUsageBids.DEFAULT_BOOKS,
+    val lowUsageMinutes: Int = LowUsageBids.DEFAULT_MINUTES,
+    val lowUsageMargin: Double = LowUsageBids.MIN_MARGIN,
+    /**
+     * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
+     * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
+     */
+    @Transient val lowUsageScan: Boolean = false,
+    /** Set only by [effective]: the fewest sharp books a sharp fair is built from ([com.tjshea.vigilant.engine.FairSettings.minSharp]). Never saved. */
+    @Transient val minSharpBooks: Int = 1,
     /**
      * With auto-make off, recommend bids to approve or deny (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"): the Bids
      * tab's list, and a notification for each new one (at most a few a cycle) with Approve and Deny.
@@ -636,11 +659,26 @@ data class ScanSettings(
      * enough, only Pinnacle's book is asked of the feeds that carry several, and the exchanges (Kalshi, Polymarket) and The Odds API are off. Your own choices of leagues,
      * markets, edge limits and Pinnacle keys stay. Applied at the scanner's door ([Scanner]) and where the feeds are picked, so nothing else can read another book.
      */
-    fun effective(): ScanSettings = if (!pinnacleOnly) this else copy(
-        scanner = ScannerMode.VIGILANT,
-        fairSource = FairSource.SHARP, devigMethod = DevigMethod.WORST_CASE, sharpBooks = PINNACLE_BOOKS, fallbackToAverage = false, minBooks = 1,
-        referenceBooks = listOf("pinnacle"), usePinnacle = true, usePolymarket = false, useKalshi = false, useOddsApi = false,
-    )
+    fun effective(forBets: Boolean = false): ScanSettings = when {
+        pinnacleOnly -> copy(
+            scanner = ScannerMode.VIGILANT,
+            fairSource = FairSource.SHARP, devigMethod = DevigMethod.WORST_CASE, sharpBooks = PINNACLE_BOOKS, fallbackToAverage = false, minBooks = 1,
+            referenceBooks = listOf("pinnacle"), usePinnacle = true, usePolymarket = false, useKalshi = false, useOddsApi = false,
+        )
+        // Low API usage (RESEARCH.md §92): Vigilant's own scan reads the picked sharp prop books' props for the next 6 hours and nothing else. A bets-only pass ([forBets]:
+        // Check odds now, pricing Tj's open bets of every kind) is not narrowed: it asks for the games he holds.
+        lowUsageNow && !forBets -> LowUsageBids.profile(this)
+        else -> this
+    }
+
+    /**
+     * Bids are on ([maker] or [makerRecommend]) and set to [BidFocus.LOW_USAGE], and Pinnacle only isn't (that mode already reads Novig and Pinnacle alone and wins): Vigilant's
+     * own scan is the low-usage scan ([effective]) and runs at the pace [lowUsageMinutes] says.
+     */
+    val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && !pinnacleOnly
+
+    /** The shortest gap between two background runs of Vigilant's own scan: the usual [AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the low-usage pace. */
+    val vigilantGapSeconds: Int get() = if (lowUsageNow) lowUsageMinutes.coerceAtLeast(LowUsageBids.MIN_MINUTES) * 60 else AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS
 
     /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
     val activeAutoScan: AutoScanMode get() = if (autoScansCno || autoScansVigilant) autoScan else AutoScanMode.OFF
@@ -688,6 +726,7 @@ data class ScanSettings(
         fallbackToAverage = fallbackToAverage,
         minBooks = minBooks.coerceAtLeast(1),
         outlierGuard = outlierGuard,
+        minSharp = minSharpBooks.coerceAtLeast(1),
     )
 
     /** Whether a price (cost per $1 payout) is within [maxOdds]. */

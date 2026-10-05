@@ -35,6 +35,8 @@ object LowUsageBids {
     /** The most Novig prices a mode scan reads at least: every prop the picked books quote in the window (a read per prop is a Novig call, never a credit). */
     const val MIN_NOVIG_READS = 1000
 
+    private const val KALSHI = "kalshi"
+
     // The ids of the feeds ([com.tjshea.vigilant.data.reference.ReferenceSource.id]) that carry the picked books.
     const val FEED_KALSHI = "kalshi"
     const val FEED_PINNACLE = "pinnacle"
@@ -129,7 +131,7 @@ object LowUsageBids {
             families = setOf(MarketFamily.PLAYER_PROPS),
             fairSource = FairSource.SHARP, devigMethod = DevigMethod.WORST_CASE, sharpBooks = picked, fallbackToAverage = false,
             minBooks = MIN_BOOKS, minSharpBooks = MIN_BOOKS,
-            referenceBooks = picked.filter { it != FEED_KALSHI }, usePinnacle = FEED_PINNACLE in carried, usePolymarket = false, useKalshi = FEED_KALSHI in carried,
+            referenceBooks = picked.filter { it != KALSHI }, usePinnacle = FEED_PINNACLE in carried, usePolymarket = false, useKalshi = FEED_KALSHI in carried,
             useOddsApi = false, useParlay = FEED_PARLAY in carried, usePropLine = FEED_PROPLINE in carried, useBookProps = true,
             includeLive = false,
             startsWithinHours = if (s.startsWithinHours in 1..WINDOW_HOURS) s.startsWithinHours else WINDOW_HOURS,
