@@ -58,17 +58,17 @@ class AutoBetDiagnosticsTest {
         fun withSources(vararg r: com.tjshea.vigilant.data.scanner.SourceReport) =
             state(f = on).let { it.copy(status = it.status.copy(scannedAtMs = now - 60_000, sources = r.toList())) }
         // Nothing from Pinnacle matched a Novig game: FAIL, naming the fix.
-        val none = pinnacleChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 0)))
+        val none = pinnacleChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 0, null)))
         assertEquals(listOf(HealthChecks.Level.FAIL), none.map { it.level })
         assertTrue(none.single().text(), none.single().text().contains("PinnWire or pinnapi key"))
         // Pinnacle answered and matched; nothing else was read: no finding.
-        assertTrue(pinnacleChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 3))).isEmpty())
+        assertTrue(pinnacleChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 3, null))).isEmpty())
         // Another source in the same scan: WARN (a scan from before the switch, or a bug).
-        val other = pinnacleChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 3), com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 1, 0, 2)))
+        val other = pinnacleChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 3, null), com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 1, 0, 2, null)))
         assertEquals(listOf(HealthChecks.Level.WARN), other.map { it.level })
         assertTrue(other.single().text(), other.single().text().contains("Kalshi"))
         // Re-reads failing more than working, and a pass that refused most bets for an old price.
-        val good = withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 3))
+        val good = withSources(com.tjshea.vigilant.data.scanner.SourceReport("pinnacle", "Pinnacle", 1, 0, 3, null))
         val bad = pinnacleChecks(good, extras.copy(counters = mapOf("pinnacle.refresh.ok" to 1L, "pinnacle.refresh.failed" to 4L)))
         assertTrue(bad.single().text(), bad.single().text().contains("1 read, 4 failed"))
         val old = pinnacleChecks(good, extras.copy(autoBet = AutoBettor.Status(lastRunMs = now - 5_000, last = AutoBettor.Report(looked = 4, skipped = mapOf("Pinnacle's price is older than your limit" to 3)))))
