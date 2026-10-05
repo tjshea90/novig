@@ -79,9 +79,21 @@ data class MakerRules(
     val requireSharp: Boolean = false,
     /** The margin is under the lower of the blended fair and the sharpest book's own fair, not the blend alone ([ScanSettings.makerAnchorSharp]). */
     val anchorSharp: Boolean = true,
+    /** "Quick & likely to win" ([QuickLikely]): the rules are already narrowed, and the bids that go up first are the ones most likely to fill and win. */
+    val quick: Boolean = false,
+    /**
+     * The most new bids one pass sends (Novig takes 8 orders a second; the rest wait for the next pass, a scan's own come every 20 s): with "unlimited" bids a busy
+     * slate could want hundreds at once, and a pass that long would hold the lock the Pause, the kill switch and the fills' checks wait for.
+     */
+    val postsPerPass: Int = POSTS_PER_PASS,
 ) {
     companion object {
-        fun of(s: ScanSettings) = MakerRules(
+        /** [postsPerPass]'s default. */
+        const val POSTS_PER_PASS = 60
+
+        fun of(s: ScanSettings): MakerRules = base(s).let { if (QuickLikely.on(s)) QuickLikely.narrow(it) else it }
+
+        private fun base(s: ScanSettings) = MakerRules(
             margin = s.makerMargin.coerceIn(0.005, 0.5),
             customStake = s.makerStake.coerceAtLeast(0.01),
             maxBids = s.makerMaxBids.coerceAtLeast(0),
@@ -571,6 +583,7 @@ object MakerPlan {
             val credit = freed[w.line.outcomeId] ?: 0.0
             when {
                 bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
+                places.size >= rules.postsPerPass -> wait(PASS_FULL.format(rules.postsPerPass))
                 dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
                 rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, onGames, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
                     wait(GAME_REACHED.format(money(rules.maxPerGame)))
@@ -600,9 +613,14 @@ object MakerPlan {
      * that kind a day; a kind never measured by how many books price the line), then the cheapest and the most EV as before. Never changes which bids qualify, only which
      * go up when the bids, the dollars or the wallet run out.
      */
-    fun priority(rules: MakerRules): Comparator<MakerDecision.Post> =
-        if (!rules.popularFirst) PRIORITY
-        else compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }.thenBy { it.price }.thenByDescending { it.evAtFair }
+    fun priority(rules: MakerRules): Comparator<MakerDecision.Post> = when {
+        // Quick & likely to win: leading their side first (takers reach them first), then the kinds takers trade most, then the likeliest fill (the price band's rate),
+        // then the most edge against the book that moves first. Not the cheapest: a longshot's bid fills sooner but is not what this is for.
+        rules.quick -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }
+            .thenByDescending { QuickLikely.fillChancePerHour(it.price) }.thenByDescending { it.evAtFair }
+        !rules.popularFirst -> PRIORITY
+        else -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }.thenBy { it.price }.thenByDescending { it.evAtFair }
+    }
 
     /** [MarketPopularity.tier] of the market a bid is on. */
     fun tierOf(p: MakerDecision.Post, rules: MakerRules): Int = MarketPopularity.tier(p.line.league, p.line.market.marketType, p.line.books, rules.popularBooks)
@@ -612,6 +630,7 @@ object MakerPlan {
     const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
     const val GAME_REACHED = "the most at risk on one game (%s) is reached"
+    const val PASS_FULL = "a pass sends at most %d new bids; the rest go up on the next pass"
 
     /** Why a bid that was up came down because the money behind it fell short (the bid's own reason in the Bids tab). */
     const val TRIMMED = "The wallet (or today's limit for API bets) no longer covers it beside the other bids up: taken down"
