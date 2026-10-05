@@ -42,10 +42,44 @@ object HealthChecks {
         accuracy(s, now)
         betting(s)
         autoBet(s, x, now)
+        pinnacleOnly(s, x, now)
         bids(s, x, now)
         sharp(s, x)
         memory(x)
     }.sortedBy { it.level.ordinal }
+
+    /**
+     * Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5): on, it must be pricing from Pinnacle and reading nothing else. Said when the last scan priced nothing from a Pinnacle
+     * source, when it read a source Pinnacle only never asks (a bug, or a scan from before the switch), when the re-reads before betting fail more than they work, and when
+     * the auto-bet's last pass refused most bets for an old Pinnacle price.
+     */
+    private fun MutableList<Check>.pinnacleOnly(s: UiState, x: Diagnostics.Extras, now: Long) {
+        val set = s.settings
+        if (!set.pinnacleOnly) return
+        if (set.vigilantOn && s.status.scannedAtMs != null) {
+            val reads = s.status.sources.filter { it.fetched + it.reused > 0 }
+            val pinnacleSources = setOf("pinnacle", "propline", "propline_props", "parlay", "parlay_1h", "parlay_props")
+            if (reads.none { it.id in pinnacleSources && it.matched > 0 }) {
+                add(Check(Level.FAIL, "Pinnacle only", "the last scan priced no Novig bet from Pinnacle", reads.joinToString(", ") { "${it.name} ${it.matched} matched" }.ifEmpty { "no source answered" }.take(160), "Settings › API keys: a PinnWire or pinnapi key (or PropLine / ParlayAPI as the backup)"))
+            }
+            val other = reads.filter { it.id !in pinnacleSources }
+            if (other.isNotEmpty()) {
+                add(Check(Level.WARN, "Pinnacle only", "the last scan read ${other.joinToString(", ") { it.name }}, which Pinnacle only never asks for (a scan from before the switch, or a bug)", look = "data/scanner/Scanner.kt (readable), app/VigilantApp.kt (pinnacleOnlySources)"))
+            }
+        }
+        val ok = x.counters["pinnacle.refresh.ok"] ?: 0L
+        val failed = x.counters["pinnacle.refresh.failed"] ?: 0L
+        if (failed >= 3 && failed > ok) {
+            add(Check(Level.WARN, "Pinnacle only", "the re-reads of Pinnacle's price before betting fail more than they work", "$ok read, $failed failed", "PinnWire / pinnapi daily limits (API usage), data/reference/PinnapiClient.kt"))
+        }
+        if (set.autoBet) {
+            val last = x.autoBet.last
+            val oldSkips = last.skipped["Pinnacle's price is older than your limit"] ?: 0
+            if (last.looked >= 3 && oldSkips * 2 >= last.looked) {
+                add(Check(Level.WARN, "Pinnacle only", "the last auto-bet pass refused $oldSkips of ${last.looked} bets for a Pinnacle price older than your limit", "re-reads failing, or the limit (${set.pinnacleMaxAgeSeconds} s) is tighter than the feeds can keep", "Settings › Scanning › Pinnacle only"))
+            }
+        }
+    }
 
     /**
      * The bids (Tj, 2026-10-05: "my bids right now are being taken fast and I'm worried they aren't true positive Ev"; RESEARCH.md §88.3): stopped by the picked-off
