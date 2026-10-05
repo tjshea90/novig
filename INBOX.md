@@ -3896,3 +3896,14 @@ See if this can help the vigilant app in any way:
 
 https://matchwire.win/docs/
 ```
+
+## 2026-10-05T17:22:38Z
+```
+Review the full docs on all the apis used in the app and :
+
+1) make sure the app is using them correctly, doing the right commands and requests, following limits and rules 
+2) see if any of the apis have features or better speed or abilities that vigilant currently doesn't take advantage of, and implement them
+3) make sure requests to the apis are efficient and not wasteful 
+4) consider if I should buy propline api which grades every single prop outcome
+5) if apis overlap on functions, consider which ones are best for vigilant in terms of accuracy, speed, and freshness of odds. Optimize vigilant to use the best apis for its functions first, then fallback to other apis if the best api is not responding or out of usage
+```
