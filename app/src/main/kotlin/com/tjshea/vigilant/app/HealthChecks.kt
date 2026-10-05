@@ -48,7 +48,8 @@ object HealthChecks {
 
     private fun MutableList<Check>.scanning(s: UiState, now: Long) {
         val set = s.settings
-        if (set.paused) add(Check(Level.WARN, "Scanning", "all scanning is paused", look = "Settings › Scanning › Pause (ScanSettings.paused)"))
+        if (set.killed) add(Check(Level.WARN, "Kill switch", "the STOP button is ON: nothing scans, bets or bids until RESUME on the red bar is tapped", look = "ScanSettings.killed (KillSwitch)"))
+        else if (set.paused) add(Check(Level.WARN, "Scanning", "all scanning is paused", look = "Settings › Scanning › Pause (ScanSettings.paused)"))
         if (!set.vigilantOn) {
             add(Check(Level.OK, "Vigilant scanner", "asleep: the scanner is on CNO only", look = "ScanSettings.scanner"))
             return

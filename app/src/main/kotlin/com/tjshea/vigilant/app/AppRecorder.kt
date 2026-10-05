@@ -54,7 +54,8 @@ class AppRecorder(private val events: EventLog, private val net: NetStats, priva
         flip("sharp books for auto-bet", before.sharpAutoBet, after.sharpAutoBet)
         flip("sharp books for alerts", before.sharpAlerts, after.sharpAlerts)
         flip("preset", before.presetName, after.presetName)
-        flip("paused", before.paused, after.paused)
+        flip("paused", before.pausedByHand, after.pausedByHand)
+        flip("kill switch", before.killed, after.killed)
         flip("scanner", before.scanner, after.scanner)
         flip("auto-bet halted", before.autoBetHalted != null, after.autoBetHalted != null)
     }

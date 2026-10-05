@@ -159,6 +159,10 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== Settings ==")
         o.appendLine("Scanner: ${set.scanner.displayName} · paused: ${if (set.paused) "YES" else "no"}")
+        // The kill switch (Tj, 2026-10-05): saved with the settings and in a second copy; what it stops and since when.
+        o.appendLine(
+            "Kill switch (STOP ALL): ${if (set.killed) "ON" + (set.killedAtMs?.let { " since ${at(it)}" } ?: "") + " · scanning, CNO, auto-bet, auto-lock, bids and the background scan are all held; only RESUME on the red bar lifts it" else "off"}",
+        )
         o.appendLine(
             "Background auto-scan: ${set.autoScan.displayName}" + (if (set.autoScan != AutoScanMode.OFF) " every ${ScanSettings.intervalLabel(set.autoScanSeconds)}" else "") +
                 " → actually runs: ${runsText(set)} · service ${if (x.autoScanServiceRunning) "running" else "not running"}",
