@@ -3889,3 +3889,10 @@ Then make sure:
 ```
 When I select novig only, the stats chart shows green profit, but when I deselect it, it shows red loss. Shouldn't the total profit and loss be the same number regardless of what scanner I select?
 ```
+
+## 2026-10-05T17:06:52Z
+```
+See if this can help the vigilant app in any way: 
+
+https://matchwire.win/docs/
+```
