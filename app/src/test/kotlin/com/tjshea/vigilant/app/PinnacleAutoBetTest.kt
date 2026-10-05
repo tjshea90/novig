@@ -179,7 +179,7 @@ class PinnacleAutoBetTest {
     @Test
     fun `a re-read that takes the edge away stops the bet`() = runBlocking {
         val novig = FakeNovig()
-        val report = bettor(novig).runPinnacle(settings(), result(opp(asOf = now - 60_000))) { result(opp(asOf = now - 1_000, cost = 0.495)) }
+        val report = bettor(novig).runPinnacle(settings(), result(opp(asOf = now - 60_000))) { result(opp(asOf = now - 1_000, cost = 0.49)) }
         assertEquals(0, report.placed.size)
         assertEquals(0, novig.orders.get())
         assertTrue(report.skipped.keys.toString(), report.skipped.keys.contains("its edge against Pinnacle is under your minimum"))
