@@ -255,63 +255,100 @@ class AutoBettor(
             val moveReason = novigMove(item, target, settings)
             if (moveReason != null) { cooldown[row.key] = clock() + AutoBet.COOLDOWN_MS; skip(moveReason); continue }
 
-            // The order is marked in flight BEFORE it can be sent (saved, and auto-bet stays stopped until it's cleared): if the process dies after
-            // Novig takes the order and before the Tracker has it (Tj's v0.38.0 report: the app crashed, out of memory), the next cycle would find
-            // the same bet again with nothing on record and place it twice. The marker survives that; a restart finds auto-bet stopped, with why.
-            val marker = inFlightNote(target, stake)
-            withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = marker) } } }
-            // Once an order may be on its way it is followed to its end and recorded, whatever happens to this coroutine.
-            val result = try {
-                withContext(Dispatchers.IO + NonCancellable) { placer.placeAuto(target.copy(auto = true, atBet = recordOf(item, state, settings, stake, now)), stake, limits, AutoBet.priceOf(item.shown.row)) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                PlaceResult.Unconfirmed("Something went wrong while placing it (${e.message ?: e.javaClass.simpleName}).")
-            }
-            // A definitive answer (placed, nothing filled, refused, Novig said no) clears the marker; a lost answer replaces it below.
-            if (result !is PlaceResult.Unconfirmed) {
-                withContext(NonCancellable) { runCatching { c.settingsStore.update { if (it.autoBetHalted == marker) it.copy(autoBetHalted = null) else it } } }
-            }
-            when (result) {
-                is PlaceResult.Placed -> {
-                    val bet = result.bet
+            // The order is sent and followed to its end ([sendOrder]), then what came of it is applied to this pass.
+            when (val sent = sendOrder(placer, target, stake, limits, AutoBet.priceOf(item.shown.row), recordOf(item, state, settings, stake, now), row.key, now)) {
+                is Sent.Placed -> {
+                    val bet = sent.bet
                     placed += bet
                     openMarkets += target.market.marketId
                     balance -= bet.stake
-                    withContext(NonCancellable) { markPlaced(c, target, result, clock()) }
+                    withContext(NonCancellable) { markPlaced(c, target, sent.result, clock()) }
                     notes.placed(app, target, bet, item.check, walletLeft = balance, sharp = sharpSaid[row.key]?.takeIf { it.confirmed }?.detail)
                 }
-                is PlaceResult.NotFilled -> { cooldown[row.key] = now + AutoBet.COOLDOWN_MS; skip("nobody was selling at that price") }
-                is PlaceResult.Refused -> {
-                    cooldown[row.key] = now + AutoBet.COOLDOWN_MS
-                    if (result.tooSmall) tooSmallBelow = maxOf(tooSmallBelow, stake)
-                    if (result.reason.contains("daily limit")) {
-                        stopped = "your daily limit of ${money(settings.apiMaxPerDay)} for API bets is reached"
-                        failure = "waiting: $stopped (checked again every ${failBackoffMs / 60_000L} minutes)"
-                        failedUntilMs = now + failBackoffMs
-                        break
-                    }
-                    if (result.gameLimit) { c.eventLog.info("AUTOBET", "held back: ${result.reason}"); skip(AutoBet.GAME_LIMIT_SKIP) } else skip(result.reason.take(REASON_CHARS))
-                }
-                is PlaceResult.Failed -> {
-                    stopped = "Novig refused: ${result.message}"
-                    failure = "waiting after Novig refused an order: ${result.message}"
-                    failedUntilMs = now + failBackoffMs
-                    break
-                }
-                is PlaceResult.Unconfirmed -> {
-                    // Nothing says whether it filled: never again until Tj has looked (Novig, then the Auto-bet tab › Resume).
-                    halted = true
-                    stopped = "an order's answer was lost, so auto-bet is stopped: ${result.message}"
-                    withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = result.message) } } }
-                    break
-                }
+                is Sent.Skipped -> skip(sent.reason)
+                is Sent.Stop -> { stopped = sent.why; halted = sent.halted; break }
             }
         }
         if (walletEmpty && !walletEmptyNoted) walletRanOut(balance)
         val report = Report(looked = all.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
         if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
         return finish(now, report, balance = balance)
+    }
+
+    /** What one order came to, for the pass that sent it. */
+    private sealed interface Sent {
+        data class Placed(val bet: TrackedBet, val result: PlaceResult.Placed) : Sent
+
+        /** Not placed, and the pass carries on with the next bet. */
+        data class Skipped(val reason: String) : Sent
+
+        /** Not placed, and the pass ends ([halted]: an order's answer was lost, so auto-bet stays stopped until Tj looks). */
+        data class Stop(val why: String, val halted: Boolean = false) : Sent
+    }
+
+    /**
+     * Sends one order for [target] and follows it to its end, for every kind of auto-bet ([run]: a CrazyNinjaOdds bet; [runPinnacle]: a bet on Pinnacle's price). [key] is the
+     * bet's cooldown key. The order is marked in flight BEFORE it can be sent (saved, and auto-bet stays stopped until it's cleared): if the process dies after Novig takes the
+     * order and before the Tracker has it (Tj's v0.38.0 report: the app crashed, out of memory), the next cycle would find the same bet again with nothing on record and
+     * place it twice. The marker survives that; a restart finds auto-bet stopped, with why. Once an order may be on its way it is followed to its end and recorded, whatever
+     * happens to the coroutine that sent it.
+     */
+    private suspend fun sendOrder(
+        placer: ApiBetPlacer,
+        target: BetTarget,
+        stake: Double,
+        limits: BetLimits,
+        expectedPrice: Double,
+        atBet: AtBet?,
+        key: String,
+        now: Long,
+    ): Sent {
+        val marker = inFlightNote(target, stake)
+        withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = marker) } } }
+        val result = try {
+            withContext(Dispatchers.IO + NonCancellable) { placer.placeAuto(target.copy(auto = true, atBet = atBet), stake, limits, expectedPrice) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            PlaceResult.Unconfirmed("Something went wrong while placing it (${e.message ?: e.javaClass.simpleName}).")
+        }
+        // A definitive answer (placed, nothing filled, refused, Novig said no) clears the marker; a lost answer replaces it below.
+        if (result !is PlaceResult.Unconfirmed) {
+            withContext(NonCancellable) { runCatching { c.settingsStore.update { if (it.autoBetHalted == marker) it.copy(autoBetHalted = null) else it } } }
+        }
+        return when (result) {
+            is PlaceResult.Placed -> Sent.Placed(result.bet, result)
+            is PlaceResult.NotFilled -> {
+                cooldown[key] = now + AutoBet.COOLDOWN_MS
+                Sent.Skipped("nobody was selling at that price")
+            }
+            is PlaceResult.Refused -> {
+                cooldown[key] = now + AutoBet.COOLDOWN_MS
+                if (result.tooSmall) tooSmallBelow = maxOf(tooSmallBelow, stake)
+                if (result.reason.contains("daily limit")) {
+                    val why = "your daily limit of ${money(limits.maxPerDay)} for API bets is reached"
+                    failure = "waiting: $why (checked again every ${failBackoffMs / 60_000L} minutes)"
+                    failedUntilMs = now + failBackoffMs
+                    return Sent.Stop(why)
+                }
+                if (result.gameLimit) {
+                    c.eventLog.info("AUTOBET", "held back: ${result.reason}")
+                    Sent.Skipped(AutoBet.GAME_LIMIT_SKIP)
+                } else {
+                    Sent.Skipped(result.reason.take(REASON_CHARS))
+                }
+            }
+            is PlaceResult.Failed -> {
+                failure = "waiting after Novig refused an order: ${result.message}"
+                failedUntilMs = now + failBackoffMs
+                Sent.Stop("Novig refused: ${result.message}")
+            }
+            is PlaceResult.Unconfirmed -> {
+                // Nothing says whether it filled: never again until Tj has looked (Novig, then the Auto-bet tab › Resume).
+                withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = result.message) } } }
+                Sent.Stop("an order's answer was lost, so auto-bet is stopped: ${result.message}", halted = true)
+            }
+        }
     }
 
     /**
