@@ -184,7 +184,13 @@ class AppContainer(private val app: Application) {
     /** Every call's usage, per provider and key, behind the meters and the key rotation. */
     val usage = UsageMeter(JsonFileStore(File(app.filesDir, "usage.json"), UsageBook.serializer(), { UsageBook() }, json))
 
-    val settingsStore = JsonFileStore(File(app.filesDir, "settings.json"), ScanSettings.serializer(), { ScanSettings() }, json)
+    /** The kill switch's second copy ([KillSwitch]): a settings file that is damaged, reset or restored from a backup can't start things running again. */
+    val killMarker = KillMarker(app.getSharedPreferences(KillMarker.PREFS, android.content.Context.MODE_PRIVATE))
+
+    val settingsStore = JsonFileStore(
+        File(app.filesDir, "settings.json"), ScanSettings.serializer(),
+        { KillSwitch.reconcile(ScanSettings(), killMarker) }, json,
+    )
     val tracker = BetTracker(File(app.filesDir, "bets.json"), ownBook = AppBook.name)
 
     /** When the last Tracker "Check odds now" began: its +EV / −EV counter counts the bets re-read since ([CheckOddsStats]). */
@@ -541,6 +547,11 @@ class AppContainer(private val app: Application) {
     )
 
     init {
+        // The kill switch outlives a settings file that lost it (a restored backup, a reset): put back from its second copy before anything reads the settings
+        // for long, and every part that stops for it (the bids, the services) sees it through the same flow. Never turns it off: only Resume does.
+        appScope.launch(Dispatchers.IO) {
+            if (killMarker.on) runCatching { settingsStore.update { KillSwitch.reconcile(it, killMarker) } }
+        }
         // The flight recorder: what earlier runs kept comes back first, then events and connection stats are written out every half minute.
         appScope.launch(Dispatchers.IO) {
             recorder.run(runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull(), FLUSH_EVERY_MS)
