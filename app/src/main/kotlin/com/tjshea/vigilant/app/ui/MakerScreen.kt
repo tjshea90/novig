@@ -413,6 +413,13 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
         } else if (!ui.vigilantOn && ui.mode == BidMode.OFF) {
             Muted(MakerText.NEEDS_VIGILANT + " Picking Recommend or Fully automatic turns it on.")
         }
+        // The picked-off guard stopped the bids (Tj, 2026-10-05; RESEARCH.md §88.3): said first, with the way back.
+        ui.settings.makerHalted?.takeIf { ui.settings.maker }?.let { why ->
+            Banner(
+                why, Modifier.padding(top = 10.dp).testTag("makerHalted"), color = MaterialTheme.colorScheme.error, action = "Resume bids",
+                onAction = { actions.onUpdate { it.copy(makerHalted = null, makerGuardFromMs = System.currentTimeMillis()) } },
+            )
+        }
         Text(MakerText.status(ui), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp).testTag("makerStatus"))
         ui.problem?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.negative, modifier = Modifier.padding(top = 4.dp)) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
@@ -433,9 +440,22 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
 
 /** The rules' words, free of Compose. */
 object MakerRulesText {
+    /** The chip for [ScanSettings.makerMaxBids]: a number, or "Unlimited". */
+    fun bidsLabel(n: Int): String = if (n >= ScanSettings.NO_LIMIT) "Unlimited" else n.toString()
+
+    /** The chip for [ScanSettings.makerMaxDollars]: dollars, or "No limit". */
+    fun dollarsLabel(d: Double): String = if (d >= ScanSettings.MAKER_NO_DOLLAR_LIMIT) "No limit" else Format.money(d)
+
+    const val UNLIMITED_NOTE =
+        "No cap on how many bids rest at once: the wallet, the dollars limit, the per-game limit and the day's limit still hold every one, and a pass sends at most " +
+            "60 new bids (Novig takes 8 orders a second); the rest go up on the next pass."
+
+    const val ALL_BIDS_NOTE = "Every bid the rules below allow. Quick & likely to win keeps only the ones most likely to fill soon and to win."
+
     /** "4% under the fair · $5 a bid · Props, 1st half / inning, Team totals · expire after 30 min". */
     fun summary(s: ScanSettings): String =
-        "${pct(s.makerMargin)} under the fair · ${stake(s)} · " +
+        "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
+            (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
             "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else ""
 
@@ -472,8 +492,16 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             RuleChips("My amount", ScanSettings.MAKER_STAKE_CHOICES, s.makerStake, Format::money) { v -> onUpdate { it.copy(makerStake = v) } }
         }
         RuleChips("Most one bid may cost (never over your ${Format.money(s.apiMaxStake)} per-bet limit)", ScanSettings.MAKER_STAKE_CHOICES, s.makerMaxStake, Format::money) { v -> onUpdate { it.copy(makerMaxStake = v) } }
-        RuleChips("Most bids up at once", ScanSettings.MAKER_MAX_BIDS_CHOICES, s.makerMaxBids, { it.toString() }) { v -> onUpdate { it.copy(makerMaxBids = v) } }
-        RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, Format::money) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
+        RuleChips("Most bids up at once", ScanSettings.MAKER_MAX_BIDS_CHOICES, s.makerMaxBids, MakerRulesText::bidsLabel) { v -> onUpdate { it.copy(makerMaxBids = v) } }
+        if (s.makerMaxBids == ScanSettings.NO_LIMIT) {
+            Text(MakerRulesText.UNLIMITED_NOTE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerUnlimitedNote"))
+        }
+        RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, MakerRulesText::dollarsLabel) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
+        RuleChips("Which bids go up", com.tjshea.vigilant.data.scanner.BidFocus.entries.toList(), s.makerFocus, { it.displayName }) { v -> onUpdate { it.copy(makerFocus = v) } }
+        Text(
+            if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.EXPLAINER else MakerRulesText.ALL_BIDS_NOTE,
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerFocusNote"),
+        )
         Text("Kinds of bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BetKind.entries.filter { it != BetKind.OTHER }.forEach { k ->
@@ -515,6 +543,16 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             }
             Switch(checked = s.makerBothSides, onCheckedChange = { on -> onUpdate { it.copy(makerBothSides = on) } }, modifier = Modifier.testTag("makerBothSides"))
         }
+        SwitchRow(
+            "Price under the sharp book's fair",
+            "A bid's margin is taken from the lower of Vigilant's blended fair and the sharpest book's own fair (Pinnacle, Circa, an exchange, devigged the worst way), so the margin is a real edge against the book that moves first. The blend is partly soft books that follow the sharp ones; a bid that fills is more likely one the sharp book disagrees with (RESEARCH.md §88.3). With no sharp book in the fair, nothing changes.",
+            s.makerAnchorSharp, "makerAnchorSharp",
+        ) { on -> onUpdate { it.copy(makerAnchorSharp = on) } }
+        SwitchRow(
+            "Stop bids when fills are picked off",
+            "Each fill is checked against the fair on the next scan. When half or more of the last ${ScanSettings.MAKER_GUARD_FILLS} fills were filled above the fair then (the market had already moved away), bids stop themselves and tell you, until you tap Resume bids (RESEARCH.md §88.3).",
+            s.makerGuard, "makerGuard",
+        ) { on -> onUpdate { it.copy(makerGuard = on) } }
         SwitchRow(
             "Sharp-book veto",
             "Skip a bid that a sharp book in the fair (Pinnacle, Circa, the exchanges) gives " +
