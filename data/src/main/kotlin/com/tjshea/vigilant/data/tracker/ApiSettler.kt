@@ -31,8 +31,8 @@ class ApiSettler(
     private val scoreGrade: suspend (TrackedBet) -> BetGrader.Grade? = { null },
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    /** [stopped]: Novig couldn't be read, so nothing was decided. */
-    data class Report(val asked: Int, val settled: Int, val waiting: Int, val manual: Int, val stopped: Boolean = false)
+    /** [stopped]: Novig couldn't be read, so nothing was decided. [reopened]: wrong grades taken back ([reopenBothLost]). */
+    data class Report(val asked: Int, val settled: Int, val waiting: Int, val manual: Int, val stopped: Boolean = false, val reopened: Int = 0)
 
     private val mutex = Mutex()
 
@@ -43,8 +43,13 @@ class ApiSettler(
 
     suspend fun run(): Report = mutex.withLock {
         val now = clock()
-        val todo = due(tracker.all(), now)
-        if (todo.isEmpty()) return@withLock Report(0, 0, 0, 0)
+        val reopened = reopenBothLost(now)
+        val all = tracker.all()
+        val todo = due(all, now)
+        if (todo.isEmpty()) return@withLock Report(0, 0, 0, 0, reopened = reopened)
+        // Markets held on both sides, equally: one side of each wins, so "both lost" is never an answer ([LockedBets]).
+        val locked = LockedBets.markets(all)
+        val lostNow = HashSet<String>()
         val payouts: List<LedgerRow>
         val positions: List<NovigPosition>
         try {
@@ -54,7 +59,7 @@ class ApiSettler(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            return@withLock Report(todo.size, 0, 0, 0, stopped = true)
+            return@withLock Report(todo.size, 0, 0, 0, stopped = true, reopened = reopened)
         }
         val changes = LinkedHashMap<String, (TrackedBet) -> TrackedBet>()
         var settled = 0
@@ -115,17 +120,28 @@ class ApiSettler(
                         if (late) manual++ else waiting++
                     }
                     else -> {
-                        val loss = "Novig paid nothing for it and no longer holds the position: a loss"
+                        val heldBoth = locked[bet.marketId]
                         when (val feed = scoreGrade(bet)) {
                             is BetGrader.Grade.Result ->
                                 if (feed.status == BetStatus.LOST) {
-                                    settle(changes, bet, BetStatus.LOST, null, "$loss (${feed.evidence})", now); settled++
+                                    // Both sides held: the other side already lost, so this one can't have (a feed misread one of them).
+                                    if (heldBoth != null && heldBoth.bets.any { it.id != bet.id && it.outcomeId != bet.outcomeId && (it.status == BetStatus.LOST || it.id in lostNow) }) {
+                                        note(changes, bet, OTHER_SIDE_LOST, now, manual = true); manual++
+                                    } else {
+                                        settle(changes, bet, BetStatus.LOST, null, "$SILENT_LOSS (${feed.evidence})", now); settled++; lostNow += bet.id
+                                    }
                                 } else {
                                     note(changes, bet, "Novig shows no payout, but the score feeds say ${feed.status.name.lowercase()} (${feed.evidence}): check Novig", now, manual = true); manual++
                                 }
                             else ->
                                 if (now - bet.startsTs >= INFER_LOSS_AFTER_MS) {
-                                    settle(changes, bet, BetStatus.LOST, null, loss, now); settled++
+                                    // Silence alone is never a loss when both sides are held (Tj, 2026-10-05: Ollie Gordon's Over 29.5 won with 100 yards and was
+                                    // graded lost, so the locked market read as losing both legs): left to the payout, the feeds or a tap.
+                                    if (heldBoth != null) {
+                                        note(changes, bet, BOTH_HELD_SILENT, now, manual = true); manual++
+                                    } else {
+                                        settle(changes, bet, BetStatus.LOST, null, SILENT_LOSS, now); settled++; lostNow += bet.id
+                                    }
                                 } else {
                                     note(changes, bet, "Novig hasn't paid this market yet", now); waiting++
                                 }
@@ -135,7 +151,25 @@ class ApiSettler(
             }
         }
         if (changes.isNotEmpty()) tracker.editMany(changes)
-        Report(todo.size, settled, waiting, manual)
+        Report(todo.size, settled, waiting, manual, reopened = reopened)
+    }
+
+    /**
+     * A market held on both sides, equally ([LockedBets.markets]), pays one side whichever wins, so every leg graded lost is a wrong grade. The ones
+     * worked out from Novig's silence alone ([SILENT_LOSS], no score feed behind them) are the doubtful ones: taken back, with a note to check, and
+     * the rule above keeps them from being graded lost again. A result Tj tapped is left. Returns how many were taken back.
+     */
+    private suspend fun reopenBothLost(now: Long): Int {
+        val ids = LockedBets.markets(tracker.all()).values
+            .filter { m -> m.bets.all { it.status == BetStatus.LOST } }
+            .flatMap { m -> m.bets.filter { it.settledBy == BetSettler.BY_NOVIG && it.gradeNote == SILENT_LOSS } }
+            .map { it.id }
+        if (ids.isEmpty()) return 0
+        tracker.editMany(ids.associateWith { { b: TrackedBet ->
+            if (b.status != BetStatus.LOST || b.settledBy != BetSettler.BY_NOVIG || b.gradeNote != SILENT_LOSS) b
+            else b.copy(status = BetStatus.PENDING, settledAtMs = null, settleValue = null, settledBy = null, gradeNote = BOTH_LOST_REOPENED, gradeAtMs = now, gradeManual = true)
+        } })
+        return ids.size
     }
 
     /**
@@ -189,6 +223,15 @@ class ApiSettler(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** The words of a loss taken from Novig's silence: no payout, no position left. */
+        const val SILENT_LOSS = "Novig paid nothing for it and no longer holds the position: a loss"
+
+        const val OTHER_SIDE_LOST = "You hold both sides of this market and the other side lost, so this one can't have: Novig shows no payout for it yet, check it in the Novig app"
+
+        const val BOTH_HELD_SILENT = "You hold both sides of this market, so one of them won: Novig shows no payout for either and the score feeds can't say which, check it in the Novig app"
+
+        const val BOTH_LOST_REOPENED = "Graded lost, but you hold both sides of this market and the other side lost too, which can't be: taken back, check it in the Novig app"
+
         /** How far either way of a bet's start the ledger is asked about. */
         const val START_SLACK_MS = 12 * 60 * 60_000L
 
