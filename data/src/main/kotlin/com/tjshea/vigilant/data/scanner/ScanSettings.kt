@@ -486,10 +486,23 @@ data class ScanSettings(
      * on screen, background auto-scan and the widget's rescans wait, and Scan, Recheck and Refresh say it's paused. The
      * scanner and auto-scan choices are kept for when it resumes. Opening a bet and settling tracked bets still work.
      */
-    val paused: Boolean = false,
+    @SerialName("paused") val pausedByHand: Boolean = false,
+    /**
+     * The kill switch (Tj, 2026-10-05: "a stop button kill switch in the app visible everywhere that immediately stops all scanning, all auto betting, all auto
+     * bidding, and all background scan. If I press this, everything remains off, even if I close the app and open it again, until I press resume"). Saved with
+     * the settings, so it outlives the app being closed, the phone restarting and an update; only Tj's Resume on the red bar clears it (no scan, refresh, Check
+     * odds now, wallet-empty note or settings fix does). It is [paused] too, so every scan, the CNO reads, auto-bet, auto-lock, bids and the background
+     * services that already stop for a pause stop for it; the switches Tj set (auto-bet, auto-make, auto-scan, the interval) are kept for when he resumes.
+     */
+    val killed: Boolean = false,
+    /** When [killed] was pressed (epoch ms), for the bar and Diagnostics; null when not killed. */
+    val killedAtMs: Long? = null,
     /** Settings format version, for one-time upgrades of a saved file ([migrate]). */
     val schema: Int = 0,
 ) {
+    /** Every scan, bet and bid is held: the Pause button ([pausedByHand]) or the kill switch ([killed]). Everything that waits for a pause reads this. */
+    val paused: Boolean get() = pausedByHand || killed
+
     /**
      * Brings settings saved by an older version up to date. v0.6.0 (schema 2) made Polymarket and
      * Kalshi sharp by default; a saved v0.5 file still says Pinnacle only, so they're added once.
