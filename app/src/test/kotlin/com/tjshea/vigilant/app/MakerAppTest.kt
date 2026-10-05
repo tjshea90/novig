@@ -21,6 +21,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -220,6 +221,22 @@ class MakerAppTest {
         assertTrue(text, text.contains("bids posted ${bids.size} (auto-make ${bids.size}, by hand 0) · rested 0 min at the median"))
         assertTrue(text, text.contains("led their side (no bid as high)"))
         assertEquals(ScanSettings().maker, false)
+    }
+
+    /** Tj, 2026-10-05: longest odds for bids, and a bid held back from trading with one of its own: Diagnostics says what the rule is and what a pass held back. */
+    @Test
+    fun `Diagnostics says the longest odds a bid may be posted at and what the last pass held back`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        val run = runner(novig)
+        run.run("test")
+        val limited = SampleScan.settings.copy(maker = true, makerMaxOdds = 140)
+        val status = run.status.value.let { st -> st.copy(lastReport = st.lastReport!!.copy(waiting = mapOf(com.tjshea.vigilant.data.novig.trading.maker.MakerPlan.WASH to 2))) }
+        val text = Diagnostics.report(SampleScan.fresh(limited), Diagnostics.Extras("t", 1, "d", makerBids = app.container.makerDesk()!!.bids(), maker = status), now)
+        assertTrue(text, text.contains("no bid longer than +140"))
+        assertTrue(text, text.contains("held back: 2 because it would trade with your own bid on the other side of that market"))
+        val free = Diagnostics.report(SampleScan.fresh(SampleScan.settings.copy(maker = true)), Diagnostics.Extras("t", 1, "d", makerBids = emptyList(), maker = run.status.value), now)
+        assertFalse(free, free.contains("no bid longer than"))
     }
 
     /** Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see how well my auto bids do". */
