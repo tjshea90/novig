@@ -3852,3 +3852,8 @@ I don't think the cno scanner is getting any tennis. Can it?
 ```
 If I'm only comparing prop bets to the same side on pinnacle, and I can get it at better odds than pinnacle, what are the chances it's a positive EV bet that beats clv
 ```
+
+## 2026-10-05T15:15:35Z
+```
+You just told me some very high clv and positive EV values, clarify how I can replicate these bets. What kind of bets were they, how long before each game ,etc
+```
