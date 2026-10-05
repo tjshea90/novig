@@ -365,4 +365,54 @@ class MakerUiTest {
         compose.onNodeWithTag("makerRequireSharp").performClick()
         assertTrue(s.makerRequireSharp)
     }
+
+    /** Tj, 2026-10-05: "an option for unlimited bids up at once" and "only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win". */
+    @Test
+    fun `the rules offer unlimited bids, a quick and likely focus, the sharp-anchored price and the picked-off guard`() {
+        assertEquals("Unlimited", MakerRulesText.bidsLabel(ScanSettings.NO_LIMIT))
+        assertEquals("40", MakerRulesText.bidsLabel(40))
+        assertEquals("No limit", MakerRulesText.dollarsLabel(ScanSettings.MAKER_NO_DOLLAR_LIMIT))
+        assertEquals("\$250.00", MakerRulesText.dollarsLabel(250.0))
+        var s = settings
+        compose.setContent { VigilantTheme { MakerScreen(ui(), MakerActions(onUpdate = { f -> s = f(s) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(settings)).performClick()
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasText("Unlimited"))
+        compose.onNodeWithText("Unlimited").performClick()
+        assertEquals(ScanSettings.NO_LIMIT, s.makerMaxBids)
+        compose.onNodeWithText("Quick & likely to win").performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY, s.makerFocus)
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerAnchorSharp"))
+        compose.onNodeWithTag("makerAnchorSharp").assertIsOn()
+        compose.onNodeWithTag("makerAnchorSharp").performClick()
+        assertFalse(s.makerAnchorSharp)
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerGuard"))
+        compose.onNodeWithTag("makerGuard").assertIsOn()
+        compose.onNodeWithTag("makerGuard").performClick()
+        assertFalse(s.makerGuard)
+    }
+
+    @Test
+    fun `with unlimited chosen the tab says what still limits the bids, and with quick and likely chosen it says what the focus keeps`() {
+        compose.setContent { VigilantTheme { MakerScreen(ui(settings.copy(makerMaxBids = ScanSettings.NO_LIMIT, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)), MakerActions()) } }
+        compose.onNodeWithText(MakerRulesText.summary(settings.copy(makerMaxBids = ScanSettings.NO_LIMIT, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY))).performClick()
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerUnlimitedNote"))
+        compose.onNodeWithTag("makerUnlimitedNote").assertTextContains("the wallet", substring = true)
+        compose.onNodeWithTag("makerFocusNote").assertTextContains("player props and team totals", substring = true)
+        assertTrue(MakerRulesText.summary(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)).contains("quick & likely to win: "))
+    }
+
+    @Test
+    fun `when the picked-off guard stopped the bids the tab says why, first, and Resume bids lifts it from the fills after that moment`() {
+        val why = com.tjshea.vigilant.data.novig.trading.maker.MakerGuard.haltedText(
+            com.tjshea.vigilant.data.novig.trading.maker.MakerGuard.Verdict(8, 5, -0.021, 0.042, true),
+        )
+        var s = settings.copy(makerHalted = why)
+        compose.setContent { VigilantTheme { MakerScreen(ui(s), MakerActions(onUpdate = { f -> s = f(s) })) } }
+        compose.onNodeWithTag("makerHalted").assertIsDisplayed()
+        compose.onNodeWithTag("makerHalted").assertTextContains("5 of the last 8 fills were picked off", substring = true)
+        val before = System.currentTimeMillis()
+        compose.onNodeWithText("Resume bids").performClick()
+        assertEquals(null, s.makerHalted)
+        assertTrue(s.makerGuardFromMs >= before)
+    }
 }
