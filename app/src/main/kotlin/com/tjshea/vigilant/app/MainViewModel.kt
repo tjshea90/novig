@@ -414,7 +414,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Settings written outside this screen (the auto-scan notification's Stop): shown at once.
             c.settingsStore.flow.filterNotNull().collect { saved ->
                 val s = _state.value
-                if (s.loaded && saved.autoScan != s.settings.autoScan) _state.update { it.copy(settings = it.settings.copy(autoScan = saved.autoScan)) }
+                if (s.loaded && (saved.autoScan != s.settings.autoScan || saved.killed != s.settings.killed || saved.pausedByHand != s.settings.pausedByHand)) {
+                    // The kill switch and the Pause, pressed from the notification or the widget, an empty wallet or Resume, show on every tab at once.
+                    _state.update { it.copy(settings = it.settings.copy(autoScan = saved.autoScan, killed = saved.killed, killedAtMs = saved.killedAtMs, pausedByHand = saved.pausedByHand)) }
+                }
             }
         }
         viewModelScope.launch {
@@ -1105,9 +1108,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * top bars' and the widget's button. Settings' switch is the same setting.
      */
     fun setPaused(paused: Boolean) {
+        // The kill switch is not a Pause: ▶ can't undo it (only its own Resume can).
+        if (!paused && _state.value.settings.killed) {
+            _toasts.tryEmit(KILLED_TOAST)
+            return
+        }
         viewModelScope.launch {
             applySettings { it.copy(pausedByHand = paused) }
             _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else RESUMED_TOAST)
+        }
+    }
+
+    /**
+     * The STOP button (Tj, 2026-10-05: "a stop button kill switch … immediately stops all scanning, all auto betting, all auto bidding, and all background
+     * scan … until I press resume"): [KillSwitch.engage] on the app's own scope, so it finishes (bids taken down) even if this screen goes away. The screen
+     * shows it stopped at once, before the bids are confirmed down.
+     */
+    fun killAll() {
+        val now = System.currentTimeMillis()
+        // On screen at once: the red bar, the paused look of every tab (the saved settings follow in a moment).
+        _state.update { if (it.settings.killed) it else it.copy(settings = it.settings.copy(killed = true, killedAtMs = now)) }
+        c.appScope.launch {
+            val result = KillSwitch.engage(getApplication(), c, "the Stop button", now)
+            _toasts.tryEmit(result.toast)
+        }
+    }
+
+    /** Resume after the kill switch: everything Tj had switched on runs again (his switches were kept). */
+    fun resumeAfterKill() {
+        c.appScope.launch {
+            val next = runCatching { KillSwitch.release(getApplication(), c, "the Resume button") }.getOrNull()
+            if (next == null) {
+                _toasts.tryEmit("Couldn't save the Resume: try again")
+                return@launch
+            }
+            _state.update { it.copy(settings = it.settings.copy(killed = false, killedAtMs = null)) }
+            rescheduleReprice()
+            _toasts.tryEmit("Resumed: ${KillBarText.resumedList(next)}")
         }
     }
 
@@ -1116,6 +1153,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * and the scanner is paused, automatically resume the scanner"). [then] runs after the setting is saved, so it sees the scanner on.
      */
     private fun resumeThen(then: () -> Unit) {
+        // A pull to refresh, Check odds now or a Scan never lifts the kill switch: only Resume on the red bar does (Tj, 2026-10-05).
+        if (_state.value.settings.killed) {
+            _toasts.tryEmit(KILLED_TOAST)
+            return
+        }
         viewModelScope.launch {
             applySettings { it.copy(pausedByHand = false) }
             _toasts.tryEmit(RESUMED_TOAST)
@@ -2026,6 +2068,9 @@ private const val GRADING_CHECK = "Grading check"
 internal const val PAUSED_TOAST = "Scanning is paused: tap ▶ Resume to scan again"
 
 internal const val RESUMED_TOAST = "Scanning resumed"
+
+/** What a Pause ▶, a pull to refresh, Scan or Check odds now says while the kill switch is on: they can't lift it. */
+internal const val KILLED_TOAST = "Everything is stopped by the STOP button: tap Resume on the red bar to start again"
 
 /** CNO's own reads (the list, its books, its teams) wait: nothing is loaded yet, scanning is paused, or Check odds now holds the focus ([FocusGate]). */
 internal fun cnoReadsHeld(s: UiState): Boolean = !s.loaded || s.settings.paused || s.checkingOdds
