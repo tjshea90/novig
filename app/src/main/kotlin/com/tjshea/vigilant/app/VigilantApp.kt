@@ -934,23 +934,26 @@ class AppContainer(private val app: Application) {
      * a switch on in Settings (Kalshi needs no key), each asked only for a league that has a game inside the window with a prop market on Novig ([LowUsageSource]). Never
      * The Odds API, Polymarket, a game-line board or ParlayAPI's odds, alternates and 1st-half calls.
      */
-    internal fun lowUsageSources(settings: ScanSettings, background: Boolean): List<ReferenceSource> {
+    internal fun lowUsageSources(settings: ScanSettings, background: Boolean): List<ReferenceSource> = lowUsagePlan(settings).feeds.map { feed ->
+        LowUsageSource(
+            when (feed) {
+                LowUsageBids.FEED_KALSHI -> kalshi
+                LowUsageBids.FEED_PINNACLE -> pinnacle
+                LowUsageBids.FEED_PROPLINE -> propLineProps
+                else -> if (background) parlayPropsBackground else parlayProps
+            },
+        )
+    }
+
+    /** The feeds low-usage bids would ask, and the picked books no feed with a key and a switch on can read (Diagnostics and the health checks say so). */
+    fun lowUsagePlan(settings: ScanSettings): LowUsageBids.Plan {
         val available = buildSet {
             if (settings.useKalshi) add(LowUsageBids.FEED_KALSHI)
             if (settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())) add(LowUsageBids.FEED_PINNACLE)
             if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) add(LowUsageBids.FEED_PROPLINE)
             if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) add(LowUsageBids.FEED_PARLAY)
         }
-        return LowUsageBids.feedsFor(LowUsageBids.books(settings), available).feeds.map { feed ->
-            LowUsageSource(
-                when (feed) {
-                    LowUsageBids.FEED_KALSHI -> kalshi
-                    LowUsageBids.FEED_PINNACLE -> pinnacle
-                    LowUsageBids.FEED_PROPLINE -> propLineProps
-                    else -> if (background) parlayPropsBackground else parlayProps
-                },
-            )
-        }
+        return LowUsageBids.feedsFor(LowUsageBids.books(settings), available)
     }
 
     /**

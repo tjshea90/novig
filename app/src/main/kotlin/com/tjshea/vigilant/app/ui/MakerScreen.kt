@@ -644,6 +644,15 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
 object LowUsageText {
     fun paceLabel(minutes: Int): String = "$minutes min"
 
+    /** A feed's name for the screens and Diagnostics. */
+    fun feedName(feed: String): String = when (feed) {
+        com.tjshea.vigilant.data.scanner.LowUsageBids.FEED_KALSHI -> "Kalshi (free)"
+        com.tjshea.vigilant.data.scanner.LowUsageBids.FEED_PINNACLE -> "PinnWire / pinnapi (Pinnacle)"
+        com.tjshea.vigilant.data.scanner.LowUsageBids.FEED_PROPLINE -> "PropLine props"
+        com.tjshea.vigilant.data.scanner.LowUsageBids.FEED_PARLAY -> "ParlayAPI props (3 credits a league)"
+        else -> feed
+    }
+
     /** What each picked book is read through, and what that costs. */
     fun booksNote(s: ScanSettings): String {
         val picked = com.tjshea.vigilant.data.scanner.LowUsageBids.books(s)

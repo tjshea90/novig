@@ -51,6 +51,8 @@ object Diagnostics {
         val keepAwakeHeld: Boolean = false,
         /** Sharp-book confirmation (Tj, 2026-10-02): the feeds that could confirm a bet now (in the order asked), calls made and failed since the app opened, and answers by feed. */
         val sharpFeeds: List<String> = emptyList(),
+        /** Low API usage bids (RESEARCH.md §92): the feeds the picked books need and the picked books nothing can read; null when that isn't the bids' choice. */
+        val lowUsagePlan: com.tjshea.vigilant.data.scanner.LowUsageBids.Plan? = null,
         val sharpCalls: Int = 0,
         val sharpFailures: Int = 0,
         val sharpAnswers: Map<String, Int> = emptyMap(),
@@ -198,6 +200,7 @@ object Diagnostics {
                 (x.maker.lastReport?.waiting?.takeIf { it.isNotEmpty() }?.let { w -> " · held back: " + w.entries.sortedByDescending { it.value }.joinToString("; ") { (why, k) -> "$k because $why" } } ?: "") +
                 (x.maker.problem?.let { " · problem: $it" } ?: ""),
         )
+        lowUsageLines(set, x.lowUsagePlan, now).forEach { o.appendLine(it) }
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
         MakerStats.recent(x.makerBids, now).forEach { o.appendLine("  $it") }
         x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)
@@ -534,6 +537,24 @@ object Diagnostics {
     }
 
     private val FUTURES_NOT = Regex(" @ | vs\\.? ", RegexOption.IGNORE_CASE)
+
+    /**
+     * Low API usage bids (Tj, 2026-10-05; RESEARCH.md §92) in a few lines: whether the scan is narrowed now, the books, the feeds really asked (and the books nothing can read),
+     * the pace, and the rules. Nothing when that isn't the bids' choice.
+     */
+    internal fun lowUsageLines(set: ScanSettings, plan: com.tjshea.vigilant.data.scanner.LowUsageBids.Plan?, now: Long): List<String> {
+        if (set.makerFocus != com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) return emptyList()
+        val books = com.tjshea.vigilant.data.scanner.LowUsageBids.books(set)
+        val titles = { keys: Collection<String> -> com.tjshea.vigilant.data.scanner.LowUsageBids.names(keys.toSet()) }
+        val feeds = plan?.feeds?.joinToString(", ") { com.tjshea.vigilant.app.ui.LowUsageText.feedName(it) }?.ifEmpty { "none" } ?: "not worked out"
+        val out = ArrayList<String>()
+        out += "  Low API usage bids (RESEARCH.md §92): ${if (set.lowUsageNow) "ON: Vigilant's scan reads player props only, the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h, from the picked books alone" else "chosen but bids are off: the scan is the usual one"} · " +
+            "books ${titles(books)} · scan at most every ${set.lowUsageMinutes} min (the usual gap is ${ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS / 60} min) · " +
+            "at least ${pct(set.lowUsageMargin.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN))} under the fair · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(com.tjshea.vigilant.app.ui.LowUsageText.lowUsageMaxOdds(set))}"
+        out += "    feeds asked: $feeds · a league with no game in the window and a prop market on Novig is not asked · what the last scan cost each API is under \"Last Vigilant scan\" above"
+        plan?.unreachable?.takeIf { it.isNotEmpty() }?.let { out += "    CANNOT BE READ: ${titles(it)} (no feed that carries it has a key and a switch on in Settings › Fair odds & sources): lines needing two of the picked books get no bid" }
+        return out
+    }
 
     /**
      * Pinnacle only's report (Tj, 2026-10-05: "make the diagnostics scan logging keep track of all betting information used with this Pinnacle only setting on so I can
