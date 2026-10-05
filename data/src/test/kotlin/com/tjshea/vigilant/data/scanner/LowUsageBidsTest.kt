@@ -1,0 +1,285 @@
+package com.tjshea.vigilant.data.scanner
+
+import com.tjshea.vigilant.data.Fixtures
+import com.tjshea.vigilant.data.novig.BidLevel
+import com.tjshea.vigilant.data.novig.NovigBook
+import com.tjshea.vigilant.data.novig.NovigEvent
+import com.tjshea.vigilant.data.novig.NovigMarket
+import com.tjshea.vigilant.data.novig.NovigOutcome
+import com.tjshea.vigilant.data.reference.LineKind
+import com.tjshea.vigilant.data.reference.RefBookMarket
+import com.tjshea.vigilant.data.reference.RefEvent
+import com.tjshea.vigilant.data.reference.RefQuote
+import com.tjshea.vigilant.data.reference.RefSnapshot
+import com.tjshea.vigilant.data.reference.Side
+import com.tjshea.vigilant.engine.DevigMethod
+import com.tjshea.vigilant.engine.FairSource
+import com.tjshea.vigilant.engine.MarketFee
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * Low-API-usage prop bids' settings half (Tj, 2026-10-05; RESEARCH.md §92): the picked books, the feeds that carry them, the scan as the mode narrows it, and what that scan
+ * prices a line from (two fresh two-sided picked books, nothing else).
+ */
+class LowUsageBidsTest {
+
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val on = ScanSettings(leagues = setOf("NFL"), makerFocus = BidFocus.LOW_USAGE, maker = true)
+
+    // ---- the books Tj picks -----------------------------------------------------------------------------------------------
+
+    @Test
+    fun `the default is the three sharpest prop books in the research's order, and Pinnacle is not one`() {
+        assertEquals(listOf("kalshi", "prophetx", "fanduel"), LowUsageBids.books(ScanSettings()).toList())
+        assertFalse("pinnacle" in LowUsageBids.DEFAULT_BOOKS)
+        assertEquals(listOf("kalshi", "prophetx", "fanduel", "williamhill_us", "draftkings", "pinnacle"), LowUsageBids.BOOKS.map { it.key })
+    }
+
+    @Test
+    fun `a pick is two or three known books, in the ranking's order`() {
+        assertEquals(listOf("kalshi", "fanduel"), LowUsageBids.books(ScanSettings(lowUsageBooks = setOf("fanduel", "kalshi"))).toList())
+        // Unknown names are ignored; fewer than two valid ones are topped up from the defaults, ranked.
+        assertEquals(listOf("kalshi", "prophetx"), LowUsageBids.books(ScanSettings(lowUsageBooks = setOf("kalshi", "nonsense"))).toList())
+        assertEquals(listOf("kalshi", "prophetx"), LowUsageBids.books(ScanSettings(lowUsageBooks = emptySet())).toList())
+        assertEquals(listOf("prophetx", "fanduel"), LowUsageBids.books(ScanSettings(lowUsageBooks = setOf("pinnacle", "prophetx", "fanduel", "draftkings"))).toList().take(2))
+        // Four valid picks (a hand-edited file) keep the three ranked highest.
+        assertEquals(listOf("kalshi", "prophetx", "fanduel"), LowUsageBids.books(ScanSettings(lowUsageBooks = setOf("pinnacle", "fanduel", "prophetx", "kalshi"))).toList())
+    }
+
+    @Test
+    fun `a tap adds up to three and removes down to two, and does nothing that would break either`() {
+        val two = ScanSettings(lowUsageBooks = setOf("kalshi", "prophetx"))
+        assertEquals(listOf("kalshi", "prophetx", "fanduel"), LowUsageBids.toggled(two, "fanduel").toList())
+        val three = ScanSettings()
+        assertEquals("a fourth is not added", three.lowUsageBooks.toList(), LowUsageBids.toggled(three, "pinnacle").toList())
+        assertEquals(listOf("kalshi", "fanduel"), LowUsageBids.toggled(three, "prophetx").toList())
+        assertEquals("a third can't go below two", listOf("kalshi", "prophetx"), LowUsageBids.toggled(two, "kalshi").toList())
+        assertEquals(two.lowUsageBooks.toList(), LowUsageBids.toggled(two, "unknown").toList())
+        // The ranking's order, not the tap order.
+        assertEquals(listOf("kalshi", "prophetx", "draftkings"), LowUsageBids.toggled(two, "draftkings").toList())
+    }
+
+    // ---- which feeds are asked --------------------------------------------------------------------------------------------
+
+    private val all = setOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PINNACLE, LowUsageBids.FEED_PROPLINE, LowUsageBids.FEED_PARLAY)
+
+    @Test
+    fun `ProphetX needs ParlayAPI, so FanDuel comes in the same call and PropLine is not asked`() {
+        val plan = LowUsageBids.feedsFor(LowUsageBids.DEFAULT_BOOKS, all)
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PARLAY), plan.feeds)
+        assertEquals(LowUsageBids.FEED_PARLAY, plan.assigned["fanduel"])
+        assertEquals(LowUsageBids.FEED_PARLAY, plan.assigned["prophetx"])
+        assertTrue(plan.unreachable.isEmpty())
+    }
+
+    @Test
+    fun `without a ParlayAPI key ProphetX can't be read, FanDuel comes from PropLine, and the plan says what is missing`() {
+        val plan = LowUsageBids.feedsFor(LowUsageBids.DEFAULT_BOOKS, all - LowUsageBids.FEED_PARLAY)
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PROPLINE), plan.feeds)
+        assertEquals(listOf("prophetx"), plan.unreachable)
+    }
+
+    @Test
+    fun `Pinnacle rides the paid call or PropLine when one is needed anyway, and PinnWire only when nothing else is`() {
+        val withPinnacle = setOf("kalshi", "fanduel", "pinnacle")
+        // FanDuel takes PropLine (free), and Pinnacle joins it there.
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PROPLINE), LowUsageBids.feedsFor(withPinnacle, all).feeds)
+        // No PropLine key: FanDuel and Pinnacle share ParlayAPI's call... but PinnWire is the cheapest carrier for Pinnacle alone.
+        val noPropLine = LowUsageBids.feedsFor(withPinnacle, all - LowUsageBids.FEED_PROPLINE)
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PARLAY), noPropLine.feeds)
+        val pinnacleAlone = LowUsageBids.feedsFor(setOf("kalshi", "pinnacle"), all)
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PINNACLE), pinnacleAlone.feeds)
+    }
+
+    @Test
+    fun `a book no available feed carries is unreachable, and no feed is asked for it`() {
+        val plan = LowUsageBids.feedsFor(setOf("kalshi", "williamhill_us"), setOf(LowUsageBids.FEED_KALSHI, LowUsageBids.FEED_PROPLINE))
+        assertEquals(listOf(LowUsageBids.FEED_KALSHI), plan.feeds)
+        assertEquals(listOf("williamhill_us"), plan.unreachable)
+        assertEquals(emptyList<String>(), LowUsageBids.feedsFor(LowUsageBids.DEFAULT_BOOKS, emptySet()).feeds)
+    }
+
+    @Test
+    fun `ParlayAPI is asked for the picked books it carries, by its own names, and never for Kalshi`() {
+        assertEquals(listOf("prophetx", "fanduel"), LowUsageBids.parlayBooks(on))
+        assertEquals(listOf("prophetx", "caesars"), LowUsageBids.parlayBooks(on.copy(lowUsageBooks = setOf("kalshi", "prophetx", "williamhill_us"))))
+    }
+
+    // ---- the scan the mode makes -------------------------------------------------------------------------------------------
+
+    @Test
+    fun `while on, the scan is props only, the next 6 hours, the picked books' fair, two of them at least, and nothing else`() {
+        val e = on.effective()
+        assertTrue(e.lowUsageScan)
+        assertEquals(setOf(MarketFamily.PLAYER_PROPS), e.families)
+        assertEquals(6, e.scanWindowHours)
+        assertEquals(6, e.bookPropWindowHours)
+        assertEquals(FairSource.SHARP, e.fairSource)
+        assertEquals(DevigMethod.WORST_CASE, e.devigMethod)
+        assertEquals(setOf("kalshi", "prophetx", "fanduel"), e.sharpBooks)
+        assertEquals(listOf("prophetx", "fanduel"), e.referenceBooks)
+        assertFalse(e.fallbackToAverage)
+        assertEquals(2, e.minSharpBooks)
+        assertEquals(2, e.fairSettings().minSharp)
+        assertFalse(e.useOddsApi)
+        assertFalse(e.usePolymarket)
+        assertFalse(e.usePinnacle)
+        assertTrue(e.useKalshi)
+        assertTrue(e.useParlay)
+        assertFalse("the picked books are on ParlayAPI; PropLine isn't needed for them", e.usePropLine)
+        assertFalse(e.includeLive)
+        // Only the sources that carry a picked book can be read at all.
+        assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props"), e.enabledSources)
+    }
+
+    @Test
+    fun `a shorter starts-within stays, a longer one is cut to 6 hours`() {
+        assertEquals(3, on.copy(startsWithinHours = 3).effective().scanWindowHours)
+        assertEquals(6, on.copy(startsWithinHours = 24).effective().scanWindowHours)
+        assertEquals(6, on.copy(startsWithinHours = 0, daysAhead = 10).effective().scanWindowHours)
+    }
+
+    @Test
+    fun `the scan is the mode's only while bids are on and Pinnacle only isn't, and a bets-only pass is never narrowed`() {
+        assertTrue(on.lowUsageNow)
+        assertFalse("bids off: the whole scan", on.copy(maker = false, makerRecommend = false).lowUsageNow)
+        assertTrue("recommending bids counts", on.copy(maker = false, makerRecommend = true).lowUsageNow)
+        assertFalse("another focus", on.copy(makerFocus = BidFocus.QUICK_LIKELY).lowUsageNow)
+        assertFalse("Pinnacle only wins", on.copy(pinnacleOnly = true).lowUsageNow)
+        assertEquals(on.copy(maker = false, makerRecommend = false), on.copy(maker = false, makerRecommend = false).effective())
+        // Check odds now prices Tj's open bets of every kind: the families and sources are his.
+        val bets = on.effective(forBets = true)
+        assertFalse(bets.lowUsageScan)
+        assertEquals(on, bets)
+        // Applying it twice changes nothing more.
+        assertEquals(on.effective(), on.effective().effective())
+    }
+
+    @Test
+    fun `the mode never saves its own scan flag, and an old file reads with the mode's defaults`() {
+        val text = json.encodeToString(ScanSettings.serializer(), on.effective())
+        assertFalse(text.contains("lowUsageScan"))
+        assertFalse(text.contains("minSharpBooks"))
+        assertFalse(json.decodeFromString(ScanSettings.serializer(), text).lowUsageScan)
+        val old = json.decodeFromString(ScanSettings.serializer(), """{"maker":true,"schema":12}""")
+        assertEquals(BidFocus.ALL, old.makerFocus)
+        assertEquals(LowUsageBids.DEFAULT_BOOKS, old.lowUsageBooks)
+        assertEquals(10, old.lowUsageMinutes)
+        assertEquals(0.025, old.lowUsageMargin, 0.0)
+        val picked = ScanSettings(makerFocus = BidFocus.LOW_USAGE, lowUsageBooks = setOf("kalshi", "draftkings"), lowUsageMinutes = 15, lowUsageMargin = 0.03)
+        assertEquals(picked, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)))
+    }
+
+    @Test
+    fun `Vigilant's scan runs at the pace Tj picked in the mode, and at the usual four minutes otherwise`() {
+        assertEquals(240, ScanSettings().vigilantGapSeconds)
+        assertEquals(600, on.vigilantGapSeconds)
+        assertEquals(300, on.copy(lowUsageMinutes = 5).vigilantGapSeconds)
+        assertEquals("never faster than the freshness limit allows", 300, on.copy(lowUsageMinutes = 1).vigilantGapSeconds)
+        assertEquals("bids off: the usual gap", 240, on.copy(maker = false, makerRecommend = false).vigilantGapSeconds)
+        assertTrue(LowUsageBids.PACE_CHOICES.all { it >= LowUsageBids.MIN_MINUTES })
+    }
+
+    // ---- what the low-usage scan prices a line from ------------------------------------------------------------------------
+
+    private val now = Fixtures.START_MS - 2 * 3_600_000L
+    private val event = NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", "NFL", "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", Fixtures.START_MS)
+    private val prop = NovigMarket(
+        "p1", Fixtures.EVENT_ID, "PASSING_YARDS", "OPEN", "Lamar Jackson 224.5 PASSING_YARDS", Fixtures.START_MS, MarketFee.GAME,
+        listOf(NovigOutcome("o1", "Over 224.5", "TBD"), NovigOutcome("u1", "Under 224.5", "TBD")),
+    )
+
+    private fun quote(key: String, over: Double, under: Double, seenAgoMs: Long?, oneSided: Boolean = false) = RefBookMarket(
+        key, key.replaceFirstChar { it.uppercase() }, LineKind.PLAYER_PROP,
+        listOfNotNull(RefQuote(Side.OVER, over, 224.5), if (oneSided) null else RefQuote(Side.UNDER, under, 224.5)),
+        seenAgoMs?.let { now - it }, 0, "Lamar Jackson", "PASSING_YARDS",
+    )
+
+    private fun price(settings: ScanSettings, vararg quotes: RefBookMarket): Opportunity {
+        val e = settings.effective()
+        val refs = listOf(RefSnapshot("americanfootball_nfl", listOf(RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, "Dallas Cowboys", "Baltimore Ravens", quotes.toList())), now))
+        val plan = Planner.plan(listOf(event), listOf(prop), refs, e, now)
+        val book = NovigBook("p1", 1, mapOf("o1" to listOf(BidLevel(470, 10_000)), "u1" to listOf(BidLevel(500, 10_000))), now)
+        return Pricing.price(plan, mapOf("p1" to book), e, now).opportunities.first { it.outcome.outcomeId == "o1" }
+    }
+
+    private val fresh = 60_000L
+    private val stale = 6 * 60_000L
+
+    @Test
+    fun `two fresh two-sided picked books make the fair, devigged the worst way and averaged`() {
+        val o = price(on, quote("kalshi", 1.95, 1.95, fresh), quote("prophetx", 1.90, 2.00, fresh))
+        assertNotNull(o.fairProbability)
+        assertEquals(setOf("Kalshi", "Prophetx"), o.fair!!.booksUsed.toSet())
+        assertEquals(FairSource.SHARP, o.fair!!.sourceUsed)
+        // The lowest of the four devigs per book, then the mean of the two books.
+        val perBook = o.fair!!.perBook.map { it.fairProbabilities[0] }
+        assertEquals(perBook.average(), o.fairProbability!!, 1e-12)
+        assertEquals("the oldest quote dates the line", now - fresh, o.fairAsOfMs)
+    }
+
+    @Test
+    fun `one picked book is not a fair, and neither is a picked book plus a soft one`() {
+        assertNull(price(on, quote("kalshi", 1.95, 1.95, fresh)).fairProbability)
+        // DraftKings isn't picked (Kalshi, ProphetX, FanDuel are): it can't stand in for a second sharp book, and nothing averages.
+        assertNull(price(on, quote("kalshi", 1.95, 1.95, fresh), quote("draftkings", 1.90, 2.00, fresh)).fairProbability)
+        // A sharp book that isn't one of the picks (Pinnacle) doesn't count either.
+        assertNull(price(on, quote("kalshi", 1.95, 1.95, fresh), quote("pinnacle", 1.90, 2.00, fresh)).fairProbability)
+    }
+
+    @Test
+    fun `a stale book is dropped before the devig - two fresh books still price the line, one fresh book does not`() {
+        val three = price(on, quote("kalshi", 1.95, 1.95, fresh), quote("prophetx", 1.90, 2.00, fresh), quote("fanduel", 1.70, 2.30, stale))
+        assertEquals("the stale FanDuel price is not in the fair", setOf("Kalshi", "Prophetx"), three.fair!!.booksUsed.toSet())
+        assertEquals(now - fresh, three.fairAsOfMs)
+        assertNull("one fresh book is not enough", price(on, quote("kalshi", 1.95, 1.95, fresh), quote("prophetx", 1.90, 2.00, stale)).fairProbability)
+        // A quote with no time on it isn't known to be current.
+        assertNull(price(on, quote("kalshi", 1.95, 1.95, fresh), quote("prophetx", 1.90, 2.00, null)).fairProbability)
+    }
+
+    @Test
+    fun `the freshness limit is the app's own - 5 minutes inside 3 hours of the start, 10 beyond`() {
+        // 2 h before the start: 4 min old passes, 6 min old does not (the stale case above).
+        assertNotNull(price(on, quote("kalshi", 1.95, 1.95, 4 * 60_000L), quote("prophetx", 1.90, 2.00, 4 * 60_000L)).fairProbability)
+        // 4 h before the start the limit is 10 minutes.
+        val far = now - 2 * 3_600_000L
+        val e = on.effective()
+        val refs = listOf(
+            RefSnapshot(
+                "americanfootball_nfl",
+                listOf(
+                    RefEvent(
+                        "r", "americanfootball_nfl", Fixtures.START_MS, "Dallas Cowboys", "Baltimore Ravens",
+                        listOf(quote("kalshi", 1.95, 1.95, 0).copy(lastUpdateMs = far - 8 * 60_000L), quote("prophetx", 1.90, 2.00, 0).copy(lastUpdateMs = far - 8 * 60_000L)),
+                    ),
+                ),
+                far,
+            ),
+        )
+        val plan = Planner.plan(listOf(event), listOf(prop), refs, e, far)
+        val book = NovigBook("p1", 1, mapOf("o1" to listOf(BidLevel(470, 10_000)), "u1" to listOf(BidLevel(500, 10_000))), far)
+        val o = Pricing.price(plan, mapOf("p1" to book), e, far).opportunities.first { it.outcome.outcomeId == "o1" }
+        assertNotNull("8 minutes old is current for a game 4 hours out", o.fairProbability)
+    }
+
+    @Test
+    fun `a book that quotes only one side proves nothing - it is not counted`() {
+        val o = price(on, quote("kalshi", 1.95, 1.95, fresh), quote("prophetx", 1.90, 2.00, fresh, oneSided = true), quote("fanduel", 1.92, 1.98, fresh))
+        assertEquals(setOf("Kalshi", "Fanduel"), o.fair!!.booksUsed.toSet())
+        assertNull(price(on, quote("kalshi", 1.95, 1.95, fresh), quote("prophetx", 1.90, 2.00, fresh, oneSided = true)).fairProbability)
+    }
+
+    @Test
+    fun `outside the mode nothing is dropped and one sharp book still prices the line`() {
+        val plain = ScanSettings(leagues = setOf("NFL"), fairSource = FairSource.SHARP, sharpBooks = setOf("kalshi"), fallbackToAverage = false, devigMethod = DevigMethod.MULTIPLICATIVE)
+        val o = price(plain, quote("kalshi", 1.95, 1.95, stale))
+        assertNotNull(o.fairProbability)
+        assertEquals(now - stale, o.fairAsOfMs)
+    }
+}
