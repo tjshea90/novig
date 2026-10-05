@@ -3884,3 +3884,8 @@ Then make sure:
 
 4) make a stop button kill switch in the app visible everywhere that immediately stops all scanning, all auto betting, all auto bidding, and all background scan. If I press this, everything remains off, even if I close the app and open it again, until I press resume.
 ```
+
+## 2026-10-05T16:29:18Z
+```
+When I select novig only, the stats chart shows green profit, but when I deselect it, it shows red loss. Shouldn't the total profit and loss be the same number regardless of what scanner I select?
+```
