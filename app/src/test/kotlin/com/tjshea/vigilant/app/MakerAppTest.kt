@@ -222,6 +222,30 @@ class MakerAppTest {
         assertEquals(ScanSettings().maker, false)
     }
 
+    /** Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see how well my auto bids do". */
+    @Test
+    fun `Diagnostics lists the newest fills with how fast they were taken and whether they were picked off, and what the guard says`() {
+        fun bid(n: Int, delayMs: Long, fairAfter: Double) = com.tjshea.vigilant.data.novig.trading.maker.MakerBid(
+            clientId = "c$n", orderId = "o$n", marketId = "m$n", eventId = "e$n", outcomeId = "x$n", league = "NFL", eventName = "A @ B", startsTs = now + 3_600_000L,
+            marketLabel = "Receiving Yards", selection = "Player $n Over 50.5", kind = BetKind.PROP, price = 0.45, contracts = 1_000, fair = 0.468, evAtFair = 0.04, margin = 0.04, books = 4,
+            postedAtMs = now - 20 * 60_000L, status = MakerStatus.FILLED, filled = 1_000, paid = 4.5, endedAtMs = now - 10 * 60_000L,
+            bestBidAtPost = 0.44, offerAtPost = 0.50, bookAtMs = now - 22 * 60_000L, blendFair = 0.48, sharpFairAtPost = 0.468,
+            firstFillAtMs = now - 20 * 60_000L + delayMs, fairAtFill = fairAfter, sharpFairAtFill = null,
+        )
+        val bids = (1..8).map { bid(it, delayMs = 20_000L * it, fairAfter = if (it <= 6) 0.43 else 0.50) }
+        val state = SampleScan.fresh(SampleScan.settings.copy(maker = true))
+        val text = Diagnostics.report(state, Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now)
+        assertTrue(text, text.contains("picked-off guard: on · price under the sharp book's fair: on · focus: All bids · most bids 20"))
+        assertTrue(text, text.contains("6 of the last 8 fills were picked off") && text.contains("(would stop the bids)"))
+        assertTrue(text, text.contains("ALL FILLS: 8 fills"))
+        assertTrue(text, text.contains("-- fills by how fast they were taken --") && text.contains("-- fills by bid price (about the chance the side wins) --"))
+        assertTrue(text, text.contains("the newest fills (when"))
+        assertTrue(text, text.lines().count { it.contains("PICKED OFF") } == 6)
+        // The guard having stopped the bids is said in capitals, with its words.
+        val stopped = Diagnostics.report(state.copy(settings = state.settings.copy(makerHalted = "6 of the last 8 fills were picked off")), Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now)
+        assertTrue(stopped, stopped.contains("BIDS STOPPED BY THE GUARD: 6 of the last 8 fills were picked off"))
+    }
+
     @Test
     fun `the bids' line counts hand and auto bids, their lives, and the book they were posted against`() {
         val base = com.tjshea.vigilant.data.novig.trading.maker.MakerBid(
