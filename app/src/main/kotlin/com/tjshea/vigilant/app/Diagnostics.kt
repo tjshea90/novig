@@ -178,7 +178,7 @@ object Diagnostics {
         o.appendLine(
             "Auto-bet (Tj, 2026-10-01): " + if (!set.autoBet) "off" else {
                 "ON · ${if (set.pinnacleOnly) "Pinnacle only: beats Pinnacle's devigged price by ${com.tjshea.vigilant.app.ui.AutoBetText.evLabel(com.tjshea.vigilant.data.novig.trading.AutoBet.rules(set).minEv)} or more, Pinnacle's price within ${com.tjshea.vigilant.app.ui.PinnacleOnlyText.ageLabel(set.pinnacleMaxAgeSeconds)}" else com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · most on one game ${if (set.apiMaxPerGame > 0.0) "$%.0f".format(java.util.Locale.US, set.apiMaxPerGame) else "no limit"} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
-                    (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now)}"
+                    (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now, set.pinnacleOnly)}"
             },
         )
         o.appendLine(
@@ -551,7 +551,7 @@ object Diagnostics {
         out += if (set.pinnacleOnly) "On: age limit ${com.tjshea.vigilant.app.ui.PinnacleOnlyText.ageLabel(set.pinnacleMaxAgeSeconds)} · reads Novig and Pinnacle only (PinnWire, then pinnapi; PropLine or ParlayAPI for a league those can't answer) · devig: the lowest of four"
         else "Off (switch it on in Settings › Scanning or the Auto-bet tab)."
         if (set.pinnacleOnly) {
-            out += "Auto-bet's last pass: ${AutoBettor.line(autoBet, now)}"
+            out += "Auto-bet's last pass: ${AutoBettor.line(autoBet, now, true)}"
             out += "Pinnacle re-reads before betting: ${counters["pinnacle.refresh.ok"] ?: 0} read, ${counters["pinnacle.refresh.failed"] ?: 0} failed · bets placed this run: ${counters["pinnacle.autobet.placed"] ?: 0}"
         }
         val mine = bets.filter { it.atBet?.pinnacleOnly == true && it.status != BetStatus.VOID && it.atBet?.how != com.tjshea.vigilant.data.tracker.AtBet.HOW_STUDY }

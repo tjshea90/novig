@@ -176,7 +176,9 @@ fun AutoBetSection(
     val balance = state.betting.balance ?: state.autoBetStatus.balance
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
     Text(
-        "Places each CrazyNinjaOdds bet that passes your rules for you, through Novig's API from your Vigilant wallet, with nobody confirming: in the " +
+        (if (s.pinnacleOnly) "Places each Novig bet that beats Pinnacle's devigged price and passes your rules for you"
+        else "Places each CrazyNinjaOdds bet that passes your rules for you") +
+            ", through Novig's API from your Vigilant wallet, with nobody confirming: in the " +
             "background, with Vigilant open or closed. Pregame only. Once on, it stays on until you turn it off (only a phone restart turns it off by itself).",
         style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp),
     )
@@ -249,7 +251,7 @@ fun AutoBetSection(
     val status = state.autoBetStatus
     if (s.autoBet || status.lastRunMs != null) {
         val now = remember(status) { System.currentTimeMillis() }
-        Text(AutoBettor.line(status, now), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
+        Text(AutoBettor.line(status, now, s.pinnacleOnly), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
         // What the sharp-book check said, bet by bet (Tj, 2026-10-02 16:05Z: "Is it getting sharp book pricing?").
         if (s.sharpAutoBet != SharpMode.OFF) {
             AutoBettor.sharpLine(status, s.sharpConfirmBooks.displayName)?.let {
@@ -644,6 +646,12 @@ fun SharpVetoSection(state: UiState, forAlerts: Boolean, onUpdate: ((ScanSetting
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
     val mode = if (forAlerts) s.sharpAlerts else s.sharpAutoBet
     SectionTitle(if (forAlerts) "Sharp-book veto for alerts" else "Sharp-book veto")
+    if (s.pinnacleOnly && !forAlerts) {
+        Text(
+            "Pinnacle only is on: the auto-bet doesn't ask this veto, because every bet is already judged on Pinnacle's own price. It still applies to CrazyNinjaOdds' alerts and the bids.",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(vertical = 4.dp).testTag("pinnacleVetoNote"),
+        )
+    }
     Text(SharpConfirmText.sharpIntro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
     Chips(SharpMode.entries.toList(), mode, { it.displayName }, modifier = Modifier.testTag(if (forAlerts) "sharpAlerts" else "sharpAutoBet")) { v ->
         onUpdate { if (forAlerts) it.copy(sharpAlerts = v) else it.copy(sharpAutoBet = v) }
