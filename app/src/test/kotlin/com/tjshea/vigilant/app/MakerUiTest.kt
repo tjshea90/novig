@@ -427,6 +427,55 @@ class MakerUiTest {
         compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("No limit", substring = true)
     }
 
+    /** Tj, 2026-10-05: "make an option for a low API usage auto bid feature". */
+    @Test
+    fun `low API usage is a choice under which bids go up - it picks the books, the pace and the margin, hides what it overrides, and says what it does`() {
+        val low = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE
+        assertEquals("off until picked: nothing changes", com.tjshea.vigilant.data.scanner.BidFocus.ALL, settings.makerFocus)
+        val st = androidx.compose.runtime.mutableStateOf(settings)
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(settings)).performClick()
+        compose.onAllNodesWithTag("lowUsagePanel").assertCountEquals(0)
+        compose.onAllNodesWithTag("makerKind-PROP").assertCountEquals(1)
+        compose.onNodeWithText("Low API usage").performScrollTo().performClick()
+        assertEquals(low, st.value.makerFocus)
+        // Its panel is there; the controls it overrides (the usual margin, the kinds, the sharp switches) are not.
+        compose.onNodeWithTag("lowUsagePanel").assertExists()
+        compose.onAllNodesWithTag("makerKind-PROP").assertCountEquals(0)
+        compose.onAllNodesWithTag("makerAnchorSharp").assertCountEquals(0)
+        compose.onAllNodesWithTag("makerRequireSharp").assertCountEquals(0)
+        compose.onNodeWithTag("makerFocusNote").assertTextContains("player props", substring = true)
+        compose.onNodeWithTag("lowUsagePriceNote").assertTextContains("+130", substring = true)
+        // The books: two or three, never fewer or more.
+        compose.onNodeWithTag("lowUsageBook-fanduel").performScrollTo().performClick()
+        assertEquals(setOf("kalshi", "prophetx"), st.value.lowUsageBooks)
+        compose.onNodeWithTag("lowUsageBook-kalshi").performClick()
+        assertEquals("a third pick can't go under two", setOf("kalshi", "prophetx"), st.value.lowUsageBooks)
+        compose.onNodeWithTag("lowUsageBook-pinnacle").performClick()
+        assertEquals(setOf("kalshi", "prophetx", "pinnacle"), st.value.lowUsageBooks)
+        compose.onNodeWithTag("lowUsageBook-draftkings").performClick()
+        assertEquals("a fourth isn't added", setOf("kalshi", "prophetx", "pinnacle"), st.value.lowUsageBooks)
+        compose.onNodeWithTag("lowUsageBooksNote").assertTextContains("Pinnacle", substring = true)
+        // The pace and the margin.
+        compose.onNodeWithTag("lowUsagePace-5").performScrollTo().performClick()
+        assertEquals(5, st.value.lowUsageMinutes)
+        compose.onNodeWithTag("lowUsagePaceNote").assertTextContains("every 5 min", substring = true)
+        compose.onNodeWithTag("lowUsagePace-15").performClick()
+        assertEquals(15, st.value.lowUsageMinutes)
+        compose.onNodeWithTag("lowUsageMargin-35").performScrollTo().performClick()
+        assertEquals(0.035, st.value.lowUsageMargin, 1e-12)
+        compose.onNodeWithTag("lowUsageMargin-25").performClick()
+        assertEquals(0.025, st.value.lowUsageMargin, 1e-12)
+        // The summary says it.
+        val summary = MakerRulesText.summary(st.value)
+        assertTrue(summary, summary.startsWith("low API usage: Kalshi, ProphetX, Pinnacle · scan every 15 min · props in the next 6 h · 2.5% or more under the fair · no bid longer than +130"))
+        // Going back to All bids brings the usual controls back.
+        compose.onNodeWithText("All bids").performScrollTo().performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.BidFocus.ALL, st.value.makerFocus)
+        compose.onAllNodesWithTag("lowUsagePanel").assertCountEquals(0)
+        compose.onAllNodesWithTag("makerKind-PROP").assertCountEquals(1)
+    }
+
     @Test
     fun `with unlimited chosen the tab says what still limits the bids, and with quick and likely chosen it says what the focus keeps`() {
         compose.setContent { VigilantTheme { MakerScreen(ui(settings.copy(makerMaxBids = ScanSettings.NO_LIMIT, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)), MakerActions()) } }

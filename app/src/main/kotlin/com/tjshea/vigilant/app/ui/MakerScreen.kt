@@ -632,10 +632,18 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
             }
         }
         Text(LowUsageText.booksNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsageBooksNote"))
-        RuleChips("Vigilant's scan runs at most every", com.tjshea.vigilant.data.scanner.LowUsageBids.PACE_CHOICES, s.lowUsageMinutes, LowUsageText::paceLabel) { v -> onUpdate { it.copy(lowUsageMinutes = v) } }
+        Text("Vigilant's scan runs at most every", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            com.tjshea.vigilant.data.scanner.LowUsageBids.PACE_CHOICES.forEach { m ->
+                FilterChip(selected = m == s.lowUsageMinutes, onClick = { onUpdate { it.copy(lowUsageMinutes = m) } }, label = { Text(LowUsageText.paceLabel(m)) }, modifier = Modifier.testTag("lowUsagePace-$m"))
+            }
+        }
         Text(LowUsageText.paceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsagePaceNote"))
-        RuleChips("Under the fair (at least 2.5%): more fills at 2.5%, more per fill higher", com.tjshea.vigilant.data.scanner.LowUsageBids.MARGIN_CHOICES, s.lowUsageMargin, MakerRulesText::pct) { v ->
-            onUpdate { it.copy(lowUsageMargin = v) }
+        Text("Under the fair (at least 2.5%): more fills at 2.5%, more per fill higher", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            com.tjshea.vigilant.data.scanner.LowUsageBids.MARGIN_CHOICES.forEach { m ->
+                FilterChip(selected = m == s.lowUsageMargin, onClick = { onUpdate { it.copy(lowUsageMargin = m) } }, label = { Text(MakerRulesText.pct(m)) }, modifier = Modifier.testTag("lowUsageMargin-${Math.round(m * 1000)}"))
+            }
         }
     }
 }
