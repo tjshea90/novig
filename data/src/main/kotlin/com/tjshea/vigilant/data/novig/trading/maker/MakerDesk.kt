@@ -106,8 +106,6 @@ data class MakerBid(
     val fairAtFill: Double? = null,
     val sharpFairAtFill: Double? = null,
     val fairAtFillAsOfMs: Long? = null,
-    /** The scan's blend and sharp fair when the bid was REPOSTED the last time it moved (reserved: repricing is a cancel and a new bid, each its own record). */
-    val repricedFromBidId: String? = null,
     /**
      * Seen in Novig's open orders at least once. Once it has been, an order missing from that list is off the book and its record isn't read (Novig
      * answers 404 by then); one never seen there may have been refused (post-only, `REJECTED`), which only its record says.
@@ -242,6 +240,8 @@ class MakerDesk(
     ): Report = lock.withLock {
         val problems = ArrayList<String>()
         val fills = ArrayList(settle(problems))
+        lineRefs = lines.associateBy { it.outcomeId }
+        judgeFills()
         val now = clock()
         val bids = store.all()
         val active = bids.filter { it.resting && it.orderId != null }
@@ -308,6 +308,34 @@ class MakerDesk(
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
         Report(0, cancelled, fills, problems, store.all().count { it.active }, null, emptyList(), emptyMap(), true, actions.trimmed)
+    }
+
+    /** The latest pass's lines by side: what a fill is judged against ([judgeFills]). Only read and written inside [lock]. */
+    private var lineRefs: Map<String, MakerLine> = emptyMap()
+
+    /**
+     * Gives every filled bid not yet judged the fair the first scan after its fill has for that side (RESEARCH.md §88.3): the blend and the sharpest book's own,
+     * when some book price behind it was seen after the fill (a fair that all predates the fill says nothing about it). A fill with no such scan within
+     * [JUDGE_WITHIN_MS] stays unjudged for good. Run at the start of every pass, so a fill found one pass is judged on the scan that follows it.
+     */
+    private suspend fun judgeFills() {
+        val now = clock()
+        val pending = store.all().filter { it.filled > 0 && it.firstFillAtMs != null && it.fairAtFill == null && now - it.firstFillAtMs < JUDGE_WITHIN_MS }
+        if (pending.isEmpty() || lineRefs.isEmpty()) return
+        val judged = HashMap<String, MakerLine>()
+        for (b in pending) {
+            val line = lineRefs[b.outcomeId] ?: continue
+            val newest = line.fairNewestMs ?: continue
+            if (line.fair == null || newest < b.firstFillAtMs!!) continue
+            judged[b.clientId] = line
+        }
+        if (judged.isEmpty()) return
+        store.update { list ->
+            list.map { b ->
+                val line = judged[b.clientId] ?: return@map b
+                b.copy(fairAtFill = line.fair, sharpFairAtFill = line.sharpFairs.minOrNull(), fairAtFillAsOfMs = line.fairAsOfMs)
+            }
+        }
     }
 
     /** The bids resting on Novig as the plan sees them (a bid with no order id yet isn't one: it's in the budget as up, but nothing can cancel it). */
@@ -675,10 +703,11 @@ class MakerDesk(
         val known = store.all().firstOrNull { it.orderId == orderId }?.filled ?: bid.filled
         val bet = tracker.logMakerFills(bid.target(), orderId, fills) ?: return null
         val paid = fills.distinctBy { it.fillId }.sumOf { it.cost }
+        val firstFill = fills.map { it.ts }.filter { it > 0 }.minOrNull()
         store.update { l ->
             l.map {
                 if (it.orderId != orderId) it
-                else it.copy(filled = filled, paid = paid, betId = bet.id, status = if (order?.status == "FILLED" || filled >= it.contracts) MakerStatus.FILLED else it.status, endedAtMs = if (filled >= it.contracts) clock() else it.endedAtMs)
+                else it.copy(filled = filled, paid = paid, betId = bet.id, firstFillAtMs = it.firstFillAtMs ?: firstFill ?: clock(), status = if (order?.status == "FILLED" || filled >= it.contracts) MakerStatus.FILLED else it.status, endedAtMs = if (filled >= it.contracts) clock() else it.endedAtMs)
             }
         }
         // Only a bet that's new or grew is news (a notification each).
@@ -717,6 +746,9 @@ class MakerDesk(
         /** After cancels, Novig's open orders are read this long later for their confirmation (Cancel all: up to [CANCEL_LOOKS] times). */
         const val CANCEL_LOOKS = 4
         const val CANCEL_LOOK_MS = 400L
+
+        /** A fill is judged against the fair of a scan that priced the side within this long after it ([judgeFills]). */
+        const val JUDGE_WITHIN_MS = 45 * 60_000L
 
         /** A fills read reaches back this far before the earliest start of the bids it's for ([readFills]). */
         const val FILLS_LOOKBACK_MS = 24 * 3_600_000L

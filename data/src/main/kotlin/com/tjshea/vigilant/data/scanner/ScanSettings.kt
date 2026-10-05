@@ -629,8 +629,8 @@ data class ScanSettings(
     /** A background cycle locks profits ([autoLock]): on, with the background scan running (any scanner) and not paused. */
     val autoLocksNow: Boolean get() = autoLock && !paused && autoScan != AutoScanMode.OFF
 
-    /** Make orders post and re-price by themselves: on and not paused (the Pause button and an empty wallet cancel every bid). */
-    val makerNow: Boolean get() = maker && !paused
+    /** Make orders post and re-price by themselves: on, not paused (the Pause button, the kill switch and an empty wallet cancel every bid) and not stopped by the picked-off guard. */
+    val makerNow: Boolean get() = maker && !paused && makerHalted == null
 
     /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
     val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn

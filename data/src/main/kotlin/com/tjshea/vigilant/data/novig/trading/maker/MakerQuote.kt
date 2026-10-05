@@ -137,6 +137,8 @@ data class MakerLine(
     val fair: Double?,
     /** When the oldest book price behind [fair] was seen. */
     val fairAsOfMs: Long?,
+    /** When the newest one was: a fair with a price seen after a bid filled has at least some news of the fill ([MakerDesk]'s fill check). */
+    val fairNewestMs: Long? = null,
     /** The fair is too old to bet on now (the app's freshness rule for this game). */
     val fairOld: Boolean,
     /** Books behind [fair]. */
@@ -189,9 +191,10 @@ object MakerLines {
      * [result]'s priced sides in [settings]' leagues at [now], pregame, as [MakerLine]s: on a scan still running, the leagues whose fair-odds sources
      * have all answered (as the feed holds them back), each with the newest Novig book read in the last [MAX_BOOK_AGE_MS]. Each book's own fair
      * ([bookFairs], a devig per book) is worked out only for the lines that pass [MakerQuote.precheck] (a busy slate prices 13,000 sides, and a pass
-     * runs every 20 s while a scan does).
+     * runs every 20 s while a scan does). [always]: sides whose books' fairs are worked out whatever precheck says (the ones Vigilant has a bid or a fill on, so a
+     * fill is judged against the sharp books too).
      */
-    fun from(result: com.tjshea.vigilant.data.scanner.ScanResult?, settings: ScanSettings, now: Long): List<MakerLine> {
+    fun from(result: com.tjshea.vigilant.data.scanner.ScanResult?, settings: ScanSettings, now: Long, always: Set<String> = emptySet()): List<MakerLine> {
         result ?: return emptyList()
         val rules = MakerRules.of(settings)
         return result.opportunities.filter { o ->
@@ -202,12 +205,12 @@ object MakerLines {
             val line = MakerLine(
                 market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
                 eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
-                fairAsOfMs = o.fairAsOfMs, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
+                fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
                 basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels,
             )
             // Each book's own fair only where a bid could follow: every other line is skipped before [MakerQuote.decide] asks for them.
-            if (MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line
+            if (line.outcomeId !in always && MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line
             else line.copy(bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true))
         }
     }
