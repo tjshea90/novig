@@ -162,4 +162,42 @@ class NovigNowTest {
         val stats = BetTracker.stats(v.values.toList(), now)
         assertEquals(0.44 / 0.40 - 1.0, stats.averageClv!!, 1e-12)
     }
+
+    /**
+     * Tj, 2026-10-05: "when I click novig only … it shows a green chart with profit, but when I uncheck novig only, it shows a red chart and I lost money.
+     * Shouldn't my profit be the same?" The lens rewrites a bet's EV when bet to about 0, so none of its bets was an outlier; with it off the +EV bets over 6%
+     * were left out of Profit and the line. Money is every settled bet now, and the lens judges outliers on the EV the bet was listed at.
+     */
+    @Test
+    fun `Profit and the profit line are the same with the Novig only lens on or off, and so are the outliers left out of the record`() {
+        fun settled(id: String, ev: Double, st: BetStatus, startsAt: Long) =
+            bet(id, "m-$id", cost = 0.50, status = st, starts = startsAt).copy(evPercentAtBet = ev, stake = 10.0)
+        val bets = listOf(
+            settled("a", 0.03, BetStatus.LOST, now - 5 * 3_600_000L),
+            settled("big win 1", 0.12, BetStatus.WON, now - 4 * 3_600_000L),
+            settled("big win 2", 0.09, BetStatus.WON, now - 3 * 3_600_000L),
+            settled("b", 0.02, BetStatus.LOST, now - 2 * 3_600_000L),
+            settled("short", -0.08, BetStatus.LOST, now - 1 * 3_600_000L),
+        )
+        val off = BetTracker.stats(bets, now)
+        val lens = NovigNow.view(bets)
+        val on = BetTracker.stats(lens, now)
+        // Two +10 wins at 0.50, three -10 losses: +20 - 30 = -10 on 50 staked, in both views.
+        assertEquals(-10.0, off.profitAll, 1e-9)
+        assertEquals(off.profitAll, on.profitAll, 1e-9)
+        assertEquals(off.stakedAll, on.stakedAll, 1e-9)
+        assertEquals(50.0, on.stakedAll, 1e-9)
+        assertEquals(off.roiAll!!, on.roiAll!!, 1e-12)
+        // The same three bets (+12%, +9% and -8% when listed) are outliers either way, so the record and the counts agree too.
+        assertEquals(listOf(false, true, true, false, true), bets.map { it.isOutlier })
+        assertEquals(bets.map { it.isOutlier }, lens.map { it.isOutlier })
+        assertEquals(3, off.outliers)
+        assertEquals(off.outliers, on.outliers)
+        assertEquals(off.won, on.won)
+        assertEquals(off.lost, on.lost)
+        // The running-profit line is the same steps and ends at the Profit.
+        assertEquals(listOf(0.0, -10.0, 0.0, 10.0, 0.0, -10.0), BetTracker.profitLine(bets))
+        assertEquals(BetTracker.profitLine(bets), BetTracker.profitLine(lens))
+        assertEquals(off.profitAll, BetTracker.profitLine(lens).last(), 1e-9)
+    }
 }

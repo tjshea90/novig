@@ -250,9 +250,11 @@ class BetTrackerTest {
             b("negative", -0.07, BetStatus.WON), b("open", 0.40, BetStatus.PENDING, BetTracker.SOURCE_VIGILANT),
         )
         val s = BetTracker.stats(normal + outliers)
-        assertEquals(BetTracker.stats(normal).copy(outliers = 4, profitAll = s.profitAll), s)
-        // The bankroll's real result counts the outliers too: +1 -1 +1 on top of the normal bets' +1.
+        assertEquals(BetTracker.stats(normal).copy(outliers = 4, profitAll = s.profitAll, stakedAll = s.stakedAll), s)
+        // The bankroll's real result counts the outliers too: +1 -1 +1 on top of the normal bets' +1, on the 3 normal and 3 settled outlier stakes.
         assertEquals(2.0, s.profitAll, 1e-12)
+        assertEquals(6.0, s.stakedAll, 1e-12)
+        assertEquals(2.0 / 6.0, s.roiAll!!, 1e-12)
         assertEquals(4, s.bets)
         assertEquals(2, s.won) // "4" (no EV on record) counts; the 25% and −7% wins don't
         assertEquals(1, s.lost)
@@ -264,6 +266,20 @@ class BetTrackerTest {
         assertEquals(0, BetTracker.stats(listOf(b("a", 0.06, BetStatus.WON), b("b", -0.06, BetStatus.LOST))).outliers)
         assertTrue(b("c", 0.0601, BetStatus.WON).isOutlier)
         assertTrue(!b("d", null, BetStatus.WON).isOutlier)
+    }
+
+    @Test
+    fun `the profit line has every settled bet, outliers and locks too, in game order, and needs two bets`() {
+        fun b(id: String, ev: Double?, st: BetStatus, startsTs: Long, lockFor: String? = null) = TrackedBet(
+            id, 0, "NFL", "A @ B", startsTs, "Moneyline", "A", "m", "o", 0.5, 0.5, ev?.let { 0.5 * (1 + it) }, ev, 1.0, st, lockFor = lockFor,
+        )
+        val bets = listOf(
+            b("late win", 0.30, BetStatus.WON, 300), b("early loss", 0.02, BetStatus.LOST, 100), b("open", 0.02, BetStatus.PENDING, 150),
+            b("voided", 0.02, BetStatus.VOID, 160), b("lock leg", null, BetStatus.WON, 200, lockFor = "early loss"),
+        )
+        assertEquals(listOf(0.0, -1.0, 0.0, 1.0), BetTracker.profitLine(bets))
+        assertEquals(BetTracker.stats(bets).profitAll, BetTracker.profitLine(bets).last(), 1e-12)
+        assertEquals(emptyList<Double>(), BetTracker.profitLine(listOf(bets[0])))
     }
 
     @Test
