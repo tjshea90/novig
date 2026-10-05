@@ -466,6 +466,7 @@ object MakerRulesText {
 
     /** "4% under the fair · $5 a bid · Props, 1st half / inning, Team totals · expire after 30 min". */
     fun summary(s: ScanSettings): String =
+        if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) LowUsageText.summary(s) else
         "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
             (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
@@ -495,8 +496,9 @@ object MakerRulesText {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val lowUsage = s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE
     Column(Modifier.testTag("makerRules")) {
-        RuleChips("Under the fair (the EV each bid is posted at): more fills at 3%, more per fill at 6-8%", ScanSettings.MAKER_MARGIN_CHOICES, s.makerMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerMargin = v) } }
+        if (!lowUsage) RuleChips("Under the fair (the EV each bid is posted at): more fills at 3%, more per fill at 6-8%", ScanSettings.MAKER_MARGIN_CHOICES, s.makerMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerMargin = v) } }
         RuleChips(
             "Size of each bid (a filled bid is a bet): fractional Kelly on your ${Format.money(s.bankroll)} bankroll, like auto-bet and the pros (RESEARCH.md §69)",
             com.tjshea.vigilant.data.scanner.AutoBetStake.entries.toList(), s.makerStakeMode, { it.label },
@@ -512,24 +514,31 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, MakerRulesText::dollarsLabel) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
         RuleChips("Which bids go up", com.tjshea.vigilant.data.scanner.BidFocus.entries.toList(), s.makerFocus, { it.displayName }) { v -> onUpdate { it.copy(makerFocus = v) } }
         Text(
-            if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.EXPLAINER else MakerRulesText.ALL_BIDS_NOTE,
+            when (s.makerFocus) {
+                com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY -> com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.EXPLAINER
+                com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE -> com.tjshea.vigilant.data.novig.trading.maker.LowUsage.EXPLAINER
+                else -> MakerRulesText.ALL_BIDS_NOTE
+            },
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerFocusNote"),
         )
-        Text("Kinds of bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BetKind.entries.filter { it != BetKind.OTHER }.forEach { k ->
-                FilterChip(
-                    selected = k in s.makerKinds,
-                    onClick = { onUpdate { st -> st.copy(makerKinds = if (k in st.makerKinds) st.makerKinds - k else st.makerKinds + k) } },
-                    label = { Text(MakerText.kindLabel(k)) },
-                    modifier = Modifier.testTag("makerKind-${k.name}"),
-                )
+        if (lowUsage) LowUsagePanel(s, onUpdate)
+        if (!lowUsage) {
+            Text("Kinds of bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BetKind.entries.filter { it != BetKind.OTHER }.forEach { k ->
+                    FilterChip(
+                        selected = k in s.makerKinds,
+                        onClick = { onUpdate { st -> st.copy(makerKinds = if (k in st.makerKinds) st.makerKinds - k else st.makerKinds + k) } },
+                        label = { Text(MakerText.kindLabel(k)) },
+                        modifier = Modifier.testTag("makerKind-${k.name}"),
+                    )
+                }
             }
+            Text(
+                "Game lines (moneylines, spreads, totals) only pay with a fair that leads Novig: the research's bids on them lost to the close with Novig's own price as the fair.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            "Game lines (moneylines, spreads, totals) only pay with a fair that leads Novig: the research's bids on them lost to the close with Novig's own price as the fair.",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         MakerMaxOdds(s, onUpdate)
         RuleChips("Each bid expires after (re-posted while it's still good)", ScanSettings.MAKER_TTL_CHOICES, s.makerTtlMinutes, { if (it < 60) "$it min" else "${it / 60} h" }) { v -> onUpdate { it.copy(makerTtlMinutes = v) } }
         RuleChips("No bids this close to the start", ScanSettings.MAKER_STOP_CHOICES, s.makerStopMinutes, { "$it min" }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
