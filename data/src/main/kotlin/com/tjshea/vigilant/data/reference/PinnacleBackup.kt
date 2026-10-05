@@ -1,7 +1,6 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.scanner.League
-import com.tjshea.vigilant.data.scanner.ScanContext
 import com.tjshea.vigilant.data.scanner.ScanSettings
 
 /**
