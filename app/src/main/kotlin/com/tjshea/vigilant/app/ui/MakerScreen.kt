@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -18,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -31,17 +33,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.data.novig.trading.maker.BidMode
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDecision
+import com.tjshea.vigilant.data.novig.trading.maker.MakerRules as BidRules
 import com.tjshea.vigilant.data.novig.trading.maker.MakerSetup
 import com.tjshea.vigilant.data.novig.trading.maker.MakerStatus
 import com.tjshea.vigilant.data.scanner.BetKind
@@ -450,6 +455,13 @@ object MakerRulesText {
         "No cap on how many bids rest at once: the wallet, the dollars limit, the per-game limit and the day's limit still hold every one, and a pass sends at most " +
             "60 new bids (Novig takes 8 orders a second); the rest go up on the next pass."
 
+    /** What the longest-odds setting does, for the line under its chips ([ScanSettings.makerMaxOdds], 0 = no limit). */
+    fun maxOddsNote(maxOdds: Int): String =
+        if (maxOdds <= 0) "No limit: any bid the price window below allows is posted, however long its odds."
+        else "No bid is posted at longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(maxOdds)} (a price under " +
+            "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(maxOdds) * 100)}¢), however good its edge; a bid already up at such a price comes down at the next pass. " +
+            "Favorites always pass. The odds are the bid's own price, a margin under the fair, so a fair of +157 with a 4% margin posts near +170."
+
     const val ALL_BIDS_NOTE = "Every bid the rules below allow. Quick & likely to win keeps only the ones most likely to fill soon and to win."
 
     /** "4% under the fair · $5 a bid · Props, 1st half / inning, Team totals · expire after 30 min". */
@@ -457,7 +469,8 @@ object MakerRulesText {
         "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
             (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
-            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else ""
+            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else "" +
+                if (s.makerMaxOdds > 0) " · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else ""
 
     /** "¼ Kelly, up to $10 a bid" / "$5 a bid". */
     fun stake(s: ScanSettings): String {
@@ -517,6 +530,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             "Game lines (moneylines, spreads, totals) only pay with a fair that leads Novig: the research's bids on them lost to the close with Novig's own price as the fair.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        MakerMaxOdds(s, onUpdate)
         RuleChips("Each bid expires after (re-posted while it's still good)", ScanSettings.MAKER_TTL_CHOICES, s.makerTtlMinutes, { if (it < 60) "$it min" else "${it / 60} h" }) { v -> onUpdate { it.copy(makerTtlMinutes = v) } }
         RuleChips("No bids this close to the start", ScanSettings.MAKER_STOP_CHOICES, s.makerStopMinutes, { "$it min" }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
         RuleChips(
@@ -575,12 +589,44 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             s.makerRecommend, "makerRecommend",
         ) { on -> onUpdate { it.copy(makerRecommend = on) } }
         Text(
-            "Bids are priced between ${Format.american(s.makerMinPrice)} and ${Format.american(s.makerMaxPrice)} (favorites shorter than that almost never fill), with at least " +
+            "Bids are priced between ${Format.american(s.makerMinPrice)} and ${Format.american(s.makerMaxPrice)}" +
+                (if (s.makerMaxOdds > 0) ", and never at longer odds than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else "") +
+                " (favorites shorter than that almost never fill), with at least " +
                 "${s.makerMinBooks} books each pricing the bid +EV on their own, game lines only with a sharp book in the fair" +
                 (if (s.trapNovigMove) " and not on a line Novig just moved" else "") + ", pregame only.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
         )
     }
+}
+
+/**
+ * The longest odds a bid may be posted at, a preset or typed (Tj, 2026-10-05: "do not post bids longer than +140 odds"): chips as the Auto-bet tab's longest
+ * odds, and a field for any other amount from +100 up. "No limit" (the default) leaves the price window as the only limit.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MakerMaxOdds(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    RuleChips("Longest odds a bid may be posted at", ScanSettings.MAKER_MAX_ODDS_CHOICES, s.makerMaxOdds, AutoBetText::oddsLabel) { v -> onUpdate { it.copy(makerMaxOdds = v) } }
+    var oddsText by remember(s.makerMaxOdds) { mutableStateOf(if (s.makerMaxOdds > 0) "${s.makerMaxOdds}" else "") }
+    val typed = oddsText.toIntOrNull()
+    val bad = oddsText.isNotEmpty() && (typed == null || typed < BidRules.MIN_MAX_ODDS)
+    OutlinedTextField(
+        value = oddsText,
+        onValueChange = { t ->
+            oddsText = t.filter { it.isDigit() }.take(5)
+            oddsText.toIntOrNull()?.takeIf { it >= BidRules.MIN_MAX_ODDS }?.let { v -> onUpdate { it.copy(makerMaxOdds = v) } }
+        },
+        label = { Text("Or type your own longest odds (+)") },
+        isError = bad,
+        supportingText = { if (bad) Text("+${BidRules.MIN_MAX_ODDS} (even money) or more; pick No limit for none") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth().testTag("makerMaxOddsField"),
+    )
+    Text(
+        MakerRulesText.maxOddsNote(s.makerMaxOdds), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.testTag("makerMaxOddsNote"),
+    )
 }
 
 @Composable
