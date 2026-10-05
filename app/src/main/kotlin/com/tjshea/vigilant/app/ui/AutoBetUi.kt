@@ -95,7 +95,9 @@ object AutoBetText {
     /** The confirm's whole text. */
     fun confirm(s: ScanSettings, balance: Double?): String =
         "Vigilant will place REAL bets from your Vigilant wallet" + (balance?.let { " (${Format.money(it)})" } ?: "") + " with nobody asking you, " +
-            "each time CrazyNinjaOdds' background scan finds a bet with ${criteria(s)}. It never bets a game that has started, never more than " +
+            (if (s.pinnacleOnly) "each time a Vigilant scan finds a bet at Novig that beats Pinnacle's devigged price by ${evLabel(AutoBet.rules(s).minEv)} or more, on a Pinnacle price read within " +
+                "${PinnacleOnlyText.ageLabel(s.pinnacleMaxAgeSeconds)} of the order (Pinnacle only is on)"
+            else "each time CrazyNinjaOdds' background scan finds a bet with ${criteria(s)}") + ". It never bets a game that has started, never more than " +
             "${Format.money(s.apiMaxPerDay)} in a day across API bets${if (s.apiMaxPerGame > 0.0) " and never more than ${Format.money(s.apiMaxPerGame)} at risk on one game" else ""}, and stops when the wallet is empty (under a cent) or if an order's answer is lost. " +
             "Every bet is tracked like one you placed yourself, and you get a notification for each."
 
@@ -108,7 +110,7 @@ object AutoBetText {
             s.autoBetHalted != null -> "Stopped: ${s.autoBetHalted}"
             s.killed -> "Everything is stopped by the STOP button: auto-bet waits for Resume (the red bar at the bottom)."
             s.paused -> "Scanning is paused (the ⏸ button): auto-bet waits for it."
-            s.scanner == ScannerMode.VIGILANT -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read."
+            s.scanner == ScannerMode.VIGILANT && !s.pinnacleOnly -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read."
             s.autoScan == AutoScanMode.OFF -> "The background scan is off, and auto-bet runs inside it."
             else -> null
         }
@@ -126,7 +128,7 @@ object AutoBetText {
             // The kill switch has its own Resume on the red bar; ▶ here can't lift it.
             s.killed -> null
             s.paused -> Fix.RESUME_SCANNING
-            s.scanner == ScannerMode.VIGILANT -> Fix.SCANNER
+            s.scanner == ScannerMode.VIGILANT && !s.pinnacleOnly -> Fix.SCANNER
             s.autoScan == AutoScanMode.OFF -> Fix.BACKGROUND_SCAN
             else -> null
         }
@@ -134,6 +136,11 @@ object AutoBetText {
 
     /** What it does at these settings, when it's running. */
     fun running(s: ScanSettings): String =
+        if (s.pinnacleOnly) {
+            "Running in Pinnacle only with the background scan, every ${ScanSettings.intervalLabel(s.autoScanSeconds)}: after each Vigilant scan, each bet that beats Pinnacle's devigged price by " +
+                "${evLabel(AutoBet.rules(s).minEv)} or more at Novig's price now is placed, best edge first, up to ${AutoBet.MAX_PER_CYCLE} a pass, on a Pinnacle price no older than " +
+                "${PinnacleOnlyText.ageLabel(s.pinnacleMaxAgeSeconds)}."
+        } else
         "Running with the background CNO scan, every ${ScanSettings.intervalLabel(s.autoScanSeconds)}: each bet that passes is placed best edge first, up to ${AutoBet.MAX_PER_CYCLE} a check."
 
     /** The Kelly sizing note, when a Kelly stake is chosen. */
@@ -173,6 +180,7 @@ fun AutoBetSection(
             "background, with Vigilant open or closed. Pregame only. Once on, it stays on until you turn it off (only a phone restart turns it off by itself).",
         style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp),
     )
+    PinnacleOnlyRows(s, onUpdate)
     Row(
         Modifier.fillMaxWidth().toggleable(
             value = s.autoBet, role = Role.Switch, enabled = state.betting.enabled || s.autoBet,
