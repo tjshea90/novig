@@ -4961,7 +4961,7 @@ Method: the v0.60.0 diagnostics' bets (Tj's placed ones) and the scan study's be
 
   Rule of thumb that falls out: under about 2.5 pts cheaper than Pinnacle's price is not +EV against it; 3 pts is marginal; 4+ pts is +EV in all 71 cases.
 - **Beat the close: 49 of 61 (80%, Wilson 69–88%) and 28 of 34 (82%, Wilson 66–92%).** Mean CLV +1.1% (median +3.2%) and +2.1% (median +2.1%). Among the +EV ones: 47 of 59 and 27 of 32 (80%, 84%).
-- **Time to start decides it** (Tj's, first-listed to start): under 6 h 17 closes, 88% beat, CLV +3.4%; 6–24 h 23 closes, 96% beat, +2.7%; **24 h or more 21 closes, 57% beat, CLV −2.6%**. The study has none above 24 h with a close (its lists were already inside Tj's window): under 6 h 13 closes 85% beat, +2.1%; 6–24 h 21 closes 81% beat, +2.1%. The cheap price is the same at any lead time; whether it survives to the close is not.
+- **Time to start matters, but less than the first draft said** (Tj's, bet-placed to start): under 6 h 17 closes, 88% beat, CLV +3.4%; 6–24 h 23 closes, 96% beat, +2.7%; **24 h or more 21 closes, 57% beat, mean CLV −2.6%**. The −2.6% is two news moves (§86.5: Michael Mayer Under 21.5, −36%, and Tory Horton Over 11.5, −42%, both 38–40 h out); without them the 24 h+ bets are 12 of 19 (63%) at +1.2% (median +2.2% either way), still the weakest group, but it is 19 bets. The study has none above 24 h with a close (its lists were already inside Tj's window): under 6 h 13 closes 85% beat, +2.1%; 6–24 h 21 closes 81% beat, +2.1%. The cheap price is the same at any lead time; whether it survives to the close is not.
 - **How much of the edge shows up as CLV: little of it.** The EV against Pinnacle's fair vs realised CLV: correlation 0.08 (n=61) and 0.22 (n=34), slope 0.28 / 0.24; neither is distinguishable from zero. EV bins 2–4%, 4–6%, 6%+ on Tj's bets give mean CLV +1.4%, +0.4%, +3.1% — not monotone. Realised CLV is roughly a quarter of the EV against Pinnacle's fair, consistent with the shrinkage in §82 (listed EV is ~0.1× pooled, ~0.85× inside 6 h).
 - **Profit says nothing yet**: Tj's 59 graded props lost $12.52 on $99.14 staked (−12.6%); the study's graded props are 40 won / 41 lost. At 4–5% EV on prop prices near 50%, one standard deviation of ROI over 59 bets is about 13 points; the sign of the ROI is not informative.
 
@@ -4975,3 +4975,31 @@ Method: the v0.60.0 diagnostics' bets (Tj's placed ones) and the scan study's be
 - If the question is "what does cheaper than Pinnacle have to be": compare to Pinnacle's **devigged fair, not its quoted price**, and require **at least 3 points of probability** (≈ 3–4% EV against its fair) for the bet to be +EV with margin; under 2.5 points it is the dead zone.
 - Inside **24 h** (already inside 6 h for the auto-bet/alerts/bids via the trap guard); the 24 h+ props at the same price beat the close only 57% of the time with −2.6% CLV.
 - Treat the result as unproven until Pinnacle's own prop closes confirm it: the next diagnostics + study after a full NFL week at "Starts within 6h" should carry Pinnacle closes for these props (BX5).
+
+### 86.5 What the bets were, and what replicates them (Tj, 2026-10-05: "how I can replicate these bets. What kind of bets were they, how long before each game")
+List of every bet (one row each): the scratchpad file `pinnacle-prop-bets.md` of the 2026-10-05 session (not in the repo).
+
+**One slate, not a season.** Pinnacle's price for both sides is on a bet's book page only in the newest records: the 61 (Tj) and 35 (study) closes are **21 and 16 games, almost all of one day** (Sunday Oct 4: 23 bets in the 1:00 pm ET NFL games, 18 in the 4:05/4:25 pm games, 13 in Sunday night's Chiefs-style late game and Monday-eve start, plus Friday-Saturday NHL). 41 of the same props sit in both lists.
+
+**What they are.**
+- **Sport and market**: NFL player props 51 of 61 (Tj) and 30 of 35 (study): receiving yards 16, receptions 12, passing yards/attempts/completions/TDs/interceptions 15, rushing yards/attempts 7, anytime/player TD 1; NHL **shots on goal** 8 and 5; one MLB hits allowed, one WNBA points. Both sides: Over 29 / Under 32 (Tj), 18 / 17 (study); Over beat the close 86% and 89%, Under 75% and 71%, not a gap this sample can call.
+- **Price**: coin-flip props. Taker cost 0.415–0.605, median **0.475 (about +110)**, 38 of 61 at 0.45–0.50, American +100 to +141 on almost all (a few −102 to −153 at 0.55–0.60 that did as well). Pinnacle's price for the same side was about **4.8 points** higher (median; 3.9 in the study), i.e. **+2% to +9% EV against Pinnacle's fair, median +4%**, mean +4.4% (Tj) and +2.9% (study).
+- **Time to start**: median 12–15 h before the start for Tj's; the early NFL games (Sun 1:00 pm ET) were bet at a median 14 h (the night before), the late games (4:05/4:25 pm) at 29–33 h, the night game at 3 h, NHL shots at 0.2–18 h (median 2.4 h). By lead: under 30 min 5 bets, 30 min–2 h 4, 2–6 h 8, 6–12 h 8, 12–24 h 15 (**15 of 15 beat, +3.6%**), 24 h+ 21.
+- **Who placed them**: Tj's 61 = 38 auto-bets (74% beat, +0.9%, median lead 15 h, up to 49 h: they predate the 6 h trap guard) and 23 by hand (91% beat, +1.3%, median 12 h). All from CNO.
+- **Games**: 16 of the 21 games had a positive mean CLV; the worst were LAC@SEA (4 bets, −7.7%) and KC@LV (6 bets, −4.4%), each carried by one news move (Horton, Mayer).
+
+**Replicating rule that falls out** (checked on both lists):
+
+| rule on the props with a close | Tj's (n; beat; mean / median CLV) | study |
+| :- | :- | :- |
+| Pinnacle same-side price 3+ points above Novig's cost, bet **under 24 h** before the start | 38; 92%; +3.1% / +3.8% | 29; 86%; +2.4% / +2.2% |
+| + under 12 h | 24; 88%; +2.8% / +3.6% | 16; 81%; +2.0% / +2.4% |
+| + under 6 h | 17; 88%; +3.4% / +3.8% | 13; 85%; +2.1% / +2.0% |
+| 4+ points cheaper, under 24 h | 29; 93%; +3.6% / +3.8% | 19; 84%; +2.8% / +3.3% |
+| 3+ points cheaper, **24 h or more** | 21; 57%; −2.6% / +2.2% | none |
+
+With the two news moves left out (|CLV| above 6%, Tj's own outlier rule) the 38 become 33: 94%, +3.1%. Of the same 38-ish, Tj staked $59.27 on 35 graded and made **−$0.02**: the CLV has not turned into money yet, and one standard deviation of ROI over 35 bets is about 17 points.
+
+**What in today's app already selects these**: CNO only; "only bets the books agree on"; Starts within 6 h (the 3 h / 6 h chips since v0.61.0); the trap guard (auto-bet, alerts and bids only inside 6 h); the auto-bet's "≥ 3 books agreeing it's +EV", "2 pricing both sides", edge ≥ 2.5% at Novig's price now, odds +130 to −200 (the +131 to +141 bets were by hand), props allowed; **the sharp-book veto at 1.0%** (auto-bet drops a bet whose sharpest book, Pinnacle where it prices it, gives it under +1%). What is NOT there: a bar against **Pinnacle's own price on the same side** (the veto is on EV against its fair, 1%, not a 3-point price edge), and nothing in the CNO list shows "points cheaper than Pinnacle's price" as a column.
+
+**What it can't say**: one slate (a Sunday NFL card plus hockey); the close is CNO's consensus, not Pinnacle's; the 3-point threshold is a first-principles dead-zone figure (§86.1) the data is consistent with but cannot pin (the study's 2–3 point bin is n=14, 79% +EV); 3 of the 38 under-24 h bets did not beat the close; no 24 h+ study bets to test the lead cut, and the 24 h+ weakness is two bets plus noise. A week of NFL at "Starts within 6h" with Pinnacle's prop closes (BX5) is what would test it.
