@@ -514,8 +514,12 @@ class MakerTest {
         val agree = line().copy(bookFairs = listOf(0.53, 0.505, 0.49))
         assertTrue(MakerQuote.decide(agree, rules, now) is MakerDecision.Post)
         assertEquals("Only 2 books price this bid +EV on their own (fewest: 3)", (MakerQuote.decide(agree, rules.copy(minBooks = 3), now) as MakerDecision.Skip).why)
-        assertEquals("A sharp book's own price says this bid isn't +EV", (MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules, now) as MakerDecision.Skip).why)
-        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules.copy(sharpVeto = false), now) is MakerDecision.Post)
+        // The veto itself (the blend alone prices the bid, as before RESEARCH.md §88.3): a sharp fair of 0.495 says the 0.500 bid isn't +EV.
+        val blendOnly = rules.copy(anchorSharp = false)
+        assertEquals("A sharp book's own price says this bid isn't +EV", (MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), blendOnly, now) as MakerDecision.Skip).why)
+        assertTrue(MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), blendOnly.copy(sharpVeto = false), now) is MakerDecision.Post)
+        // Anchored (the default), the same sharp book doesn't veto the bid: the bid is posted under THAT book's fair, 4% under 0.495 (0.475).
+        assertEquals(0.475, (MakerQuote.decide(line().copy(sharpFairs = listOf(0.495)), rules, now) as MakerDecision.Post).price, 1e-9)
     }
 
     /**
@@ -558,6 +562,8 @@ class MakerTest {
     /** RESEARCH.md §72: a filled bid keeps about the sharp book's own edge, so the auto-bet's veto bar applies to a bid's own price too. */
     @Test
     fun `the sharp veto's bar applies at the bid's price - every sharp book must give the bid the set edge, 1% by default`() {
+        // The veto's own bar, with the bid priced from the blend alone (anchored bids are priced under the sharp book and clear it by construction: RESEARCH.md §88.3).
+        val rules = this.rules.copy(anchorSharp = false)
         assertEquals(0.01, rules.sharpMinEv, 0.0)
         // Bid 0.500 (fair 0.52). A sharp fair of 0.504 gives it +0.8%: under 1%, skipped; 0.505 gives exactly 1%: posted (the bar is inclusive).
         assertEquals(
@@ -1304,8 +1310,8 @@ class MakerTest {
         assertTrue(why(noSharp, required).contains("a sharp book must agree"))
         // With one that agrees (its own fair 0.55 > the 0.50 bid), the bid goes up.
         assertTrue(MakerQuote.decide(noSharp.copy(sharpFairs = listOf(0.55)), required, now) is MakerDecision.Post)
-        // The veto is the veto it was: a sharp book at 0.49 says the 0.50 bid isn't +EV.
-        assertTrue(why(noSharp.copy(sharpFairs = listOf(0.49)), required).contains("A sharp book's own price says this bid isn't +EV"))
+        // The veto is the veto it was (the blend alone prices the bid): a sharp book at 0.49 says the 0.50 bid isn't +EV.
+        assertTrue(why(noSharp.copy(sharpFairs = listOf(0.49)), required.copy(anchorSharp = false)).contains("A sharp book's own price says this bid isn't +EV"))
         // Game lines asked for one before this setting existed, and say so in their own words.
         assertTrue(why(line(kind = BetKind.MONEYLINE), rules.copy(kinds = rules.kinds + BetKind.MONEYLINE)).startsWith("Game lines need a sharp book"))
         // The settings carry both new switches: popular first on, a sharp book required off.
@@ -1367,13 +1373,11 @@ class MakerTest {
                 assertEquals(anchor, d.anchorFair!!, 1e-12)
                 assertTrue("EV vs the anchor ${d.evAtFair} >= margin", d.evAtFair >= rules.margin - 1e-9)
                 assertTrue("sharp ${sharp} gives the bid ${d.price} at least the margin", sharp / d.price - 1.0 >= rules.margin - 1e-9)
-                assertTrue(d.price <= PriceGridCeil(blend / (1.0 + rules.margin)) + 1e-12)
+                assertTrue("never above the blend's own bid", d.price <= blend / (1.0 + rules.margin) + 1e-12)
             }
         }
         assertTrue("some bids were posted: $posted", posted > 500)
     }
-
-    private fun PriceGridCeil(p: Double) = p
 
     @Test
     fun `a Kelly bid is sized on the anchor, not on a blend a sharp book disagrees with`() {
