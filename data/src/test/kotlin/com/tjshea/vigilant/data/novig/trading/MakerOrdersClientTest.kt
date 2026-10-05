@@ -77,6 +77,70 @@ class MakerOrdersClientTest {
     }
 
     @Test
+    fun `a batch of bids is one signed POST, answered by client id, and a batch Novig refuses places none`() = runBlocking {
+        val a = NovigTradingClient.newClientId()
+        val b = NovigTradingClient.newClientId()
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"accepted":[{"orderId":"o-1","clientId":"$b"},{"orderId":"o-2","clientId":"$a"}]}"""))
+        val placed = client().placeOrders(
+            listOf(
+                NovigTradingClient.NewOrder("out-1", 0.485, 1_030, "PO", a, ttlMs = 1_800_000),
+                NovigTradingClient.NewOrder("out-2", 0.45, 200, "PO", b, ttlMs = 600_000),
+            ),
+        )
+        // The answer is read by client id, not by position.
+        assertEquals(mapOf(a to "o-2", b to "o-1"), placed)
+        val req = server.takeRequest()
+        assertEquals("POST", req.method)
+        assertEquals("/v3/orders/batch", req.path)
+        assertTrue(req.getHeader("Content-Type")!!.startsWith("application/json"))
+        val sent = json.parseToJsonElement(req.body.readUtf8()).jsonObject["orders"]!!.let { it as kotlinx.serialization.json.JsonArray }
+        assertEquals(2, sent.size)
+        assertEquals("0.485", sent[0].jsonObject["price"]!!.jsonPrimitive.content)
+        assertEquals(1_800_000L, sent[0].jsonObject["ttl"]!!.jsonPrimitive.content.toLong())
+        assertEquals(b, sent[1].jsonObject["clientId"]!!.jsonPrimitive.content)
+        // A reply that echoes no client ids is read in the order sent.
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"accepted":[{"orderId":"p-1"},{"orderId":"p-2"}]}"""))
+        assertEquals(
+            mapOf(a to "p-1", b to "p-2"),
+            client().placeOrders(listOf(NovigTradingClient.NewOrder("out-1", 0.5, 10, "PO", a, 60_000), NovigTradingClient.NewOrder("out-2", 0.5, 10, "PO", b, 60_000))),
+        )
+        server.takeRequest()
+        // All or nothing: a refusal is Novig's own code, and the caller knows none of them is resting.
+        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"code":"INSUFFICIENT_FUNDS","message":"not enough balance","rejected":[{"index":1}]}"""))
+        val refused = runCatching { client().placeOrders(listOf(NovigTradingClient.NewOrder("out-1", 0.5, 10, "PO", a, 60_000))) }.exceptionOrNull()
+        assertTrue(refused.toString(), refused is com.tjshea.vigilant.data.novig.signing.NovigApiException && (refused as com.tjshea.vigilant.data.novig.signing.NovigApiException).status == 422)
+    }
+
+    @Test
+    fun `a batch is refused before sending when empty, over 256, or built wrongly`() = runBlocking {
+        val c = client()
+        val ok = NovigTradingClient.NewOrder("o", 0.5, 10, "PO", NovigTradingClient.newClientId(), 60_000)
+        assertTrue(runCatching { c.placeOrders(emptyList()) }.isFailure)
+        assertTrue(runCatching { c.placeOrders(List(257) { ok.copy(clientId = NovigTradingClient.newClientId()) }) }.isFailure)
+        assertTrue(runCatching { c.placeOrders(listOf(ok.copy(clientId = "not-a-uuid"))) }.isFailure)
+        assertTrue(runCatching { c.placeOrders(listOf(ok.copy(tif = "IOC"))) }.isFailure)
+        assertTrue(runCatching { c.cancelOrdersBatch(emptyList()) }.isFailure)
+        assertTrue(runCatching { c.cancelOrdersBatch(List(257) { "o$it" }) }.isFailure)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun `a batch cancel sends the ids in a DELETE body and reads both the 200 and the 207`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"canceled":["o-1","o-2"],"notCanceled":[]}"""))
+        server.enqueue(MockResponse().setResponseCode(207).setBody("""{"canceled":["o-1"],"notCanceled":[{"orderId":"o-2","reason":"FILLED"},{"orderId":"o-3","reason":"NOT_FOUND"}]}"""))
+        val c = client()
+        assertEquals(NovigTradingClient.BatchCancel(setOf("o-1", "o-2"), emptyMap()), c.cancelOrdersBatch(listOf("o-1", "o-2")))
+        val req = server.takeRequest()
+        assertEquals("DELETE", req.method)
+        assertEquals("/v3/orders/batch", req.path)
+        assertEquals(listOf("o-1", "o-2"), json.parseToJsonElement(req.body.readUtf8()).jsonObject["orderIds"]!!.let { it as kotlinx.serialization.json.JsonArray }.map { it.jsonPrimitive.content })
+        assertEquals(
+            NovigTradingClient.BatchCancel(setOf("o-1"), mapOf("o-2" to "FILLED", "o-3" to "NOT_FOUND")),
+            c.cancelOrdersBatch(listOf("o-1", "o-2", "o-3")),
+        )
+    }
+
+    @Test
     fun `a listed order's expiry is read`() = runBlocking {
         server.enqueue(
             MockResponse().setBody(
