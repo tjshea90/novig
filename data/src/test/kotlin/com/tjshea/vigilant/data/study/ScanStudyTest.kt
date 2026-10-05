@@ -592,4 +592,46 @@ class ScanStudyTest {
         assertTrue(out.toString().contains("1 older day(s) are on the phone but left out"))
         assertEquals(2, StudyExport.write(StringWriter(), j, emptyList(), meta, now, File(tmp.root, "export.tmp")))
     }
+
+    /** Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see how well my auto bids do". */
+    @Test
+    fun `the export carries the bids - the summary, every filled bid and the newest unfilled ones as JSON lines - and the read me says how to judge them`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline))
+        s.flush()
+        fun bid(n: Int, filledDelayMs: Long?, status: com.tjshea.vigilant.data.novig.trading.maker.MakerStatus) = com.tjshea.vigilant.data.novig.trading.maker.MakerBid(
+            clientId = "c$n", orderId = "o$n", marketId = "m$n", eventId = "e$n", outcomeId = "x$n", league = "NFL", eventName = "A @ B", startsTs = start,
+            marketLabel = "Receiving Yards", selection = "Player $n Over 50.5", kind = BetKind.PROP, price = 0.45, contracts = 1_000, fair = 0.468, evAtFair = 0.04, margin = 0.04, books = 4,
+            postedAtMs = start - 3_600_000L, expiresAtMs = start - 3_000_000L, status = status, filled = if (filledDelayMs != null) 1_000 else 0, paid = if (filledDelayMs != null) 4.5 else 0.0,
+            endedAtMs = start - 3_000_000L, bestBidAtPost = 0.44, offerAtPost = 0.50, bookAtMs = start - 3_700_000L, blendFair = 0.48, sharpFairAtPost = 0.468,
+            firstFillAtMs = filledDelayMs?.let { start - 3_600_000L + it }, fairAtFill = 0.44.takeIf { filledDelayMs != null }, sharpFairAtFill = 0.43.takeIf { filledDelayMs != null },
+        )
+        val out = StringWriter()
+        val meta = StudyExport.Meta("0.64.0", 111, "moto g", "rules")
+        val bids = listOf(
+            bid(1, 45_000L, com.tjshea.vigilant.data.novig.trading.maker.MakerStatus.FILLED),
+            bid(2, null, com.tjshea.vigilant.data.novig.trading.maker.MakerStatus.EXPIRED).copy(why = "expired"),
+        )
+        StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"), bids = bids)
+        val text = out.toString()
+        assertTrue(text, text.contains("== BIDS (Vigilant's make orders"))
+        assertTrue(text, text.contains("bids: 2 posted · 1 filled (50%)"))
+        assertTrue(text, text.contains("evAtFill") && text.contains("picked off"))
+        assertTrue(text, text.contains("-- bids that ended without a fill, by why --") && text.contains("×1 expired"))
+        val filled = text.substringAfter("<<<BIDJSONL\n").substringBefore("\n>>>").lines().filter { it.isNotBlank() }
+        assertEquals(1, filled.size)
+        val row = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString(com.tjshea.vigilant.data.novig.trading.maker.BidReport.Row.serializer(), filled.single())
+        assertEquals(45L, row.fillDelaySec)
+        assertEquals(true, row.pickedOff)
+        assertEquals(0.43 / 0.45 - 1.0, row.evAtFill!!, 1e-9)
+        assertEquals(true, row.led)
+        val unfilled = text.substringAfter("<<<UNFILLEDJSONL\n").substringBefore("\n>>>").lines().filter { it.isNotBlank() }
+        assertEquals(1, unfilled.size)
+        assertTrue(text.contains("BIDS: when Vigilant has posted bids"))
+        // No bids: no section.
+        val none = StringWriter()
+        StudyExport.write(none, j, emptyList(), meta, now, File(tmp.root, "export.tmp"))
+        assertFalse(none.toString().contains("== BIDS"))
+    }
 }
