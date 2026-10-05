@@ -279,6 +279,17 @@ data class ScanSettings(
     /** Fills before this time (epoch ms) aren't looked at by the guard: set to the moment Tj resumed, so the same fills can't stop the bids twice. */
     val makerGuardFromMs: Long = 0L,
     /**
+     * Pinnacle only (Tj, 2026-10-05: "an option … for only comparing current novig odds on any market and any sport to the current pinnacle devigged odds for the same
+     * bet. Make sure it only scans novig and pinnacle when this option is on so as not to waste usage of other apis. Make sure the Pinnacle odds are as current as
+     * possible"; RESEARCH.md §88.5). Vigilant's own scan prices every Novig market against Pinnacle's two-sided price for the same bet and nothing else
+     * ([effective]): the fair is Pinnacle's, devigged the worst way, no Kalshi, Polymarket, The Odds API or other book is read, CrazyNinjaOdds is asleep, and ParlayAPI
+     * and PropLine are asked (for Pinnacle's book alone) only for a league Pinnacle's own feeds (PinnWire, pinnapi) couldn't answer. The auto-bet then bets what that
+     * scan finds, on Pinnacle's price re-read within [pinnacleMaxAgeSeconds] of the order. Off by default.
+     */
+    val pinnacleOnly: Boolean = false,
+    /** The oldest a Pinnacle quote may be and still be bet on in [pinnacleOnly] ([PINNACLE_MAX_AGE_CHOICES]; never over the app's 5-minute limit, [Freshness.MAX_QUOTE_AGE_MS]). */
+    val pinnacleMaxAgeSeconds: Int = 90,
+    /**
      * Which bids go up (Tj, 2026-10-05: "only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win the bet …
      * favorites and small underdogs … positive EV and the best chance at beating clv"): [BidFocus.ALL] (every bid the rules allow) or [BidFocus.QUICK_LIKELY].
      */
@@ -604,11 +615,26 @@ data class ScanSettings(
     /** The dollars a bet's Novig slip opens with, for a bet whose Kelly stake is [kelly]; null = none. */
     fun slipStakeFor(kelly: Double?): Double? = NovigLinks.stake(slipStake, slipCustomStake, kelly)
 
-    /** CrazyNinjaOdds' list is read (both scanners, or CNO only). */
-    val cnoOn: Boolean get() = scanner != ScannerMode.VIGILANT
+    /** CrazyNinjaOdds' list is read (both scanners, or CNO only); never in [pinnacleOnly], which reads Novig and Pinnacle alone. */
+    val cnoOn: Boolean get() = scanner != ScannerMode.VIGILANT && !pinnacleOnly
 
-    /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only). */
-    val vigilantOn: Boolean get() = scanner != ScannerMode.CNO
+    /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only, or [pinnacleOnly], which is Vigilant's scan on Pinnacle alone). */
+    val vigilantOn: Boolean get() = scanner != ScannerMode.CNO || pinnacleOnly
+
+    /** The scanner choice as it runs: [pinnacleOnly] is Vigilant's own scan alone, whatever [scanner] says. */
+    val scannerNow: ScannerMode get() = if (pinnacleOnly) ScannerMode.VIGILANT else scanner
+
+    /**
+     * These settings as the scan reads them (RESEARCH.md §88.5). Unchanged unless [pinnacleOnly]; then the fair is Pinnacle's two-sided price devigged the worst way (the
+     * most conservative of the four methods, as the sharp confirm judges it: [com.tjshea.vigilant.data.cno.CnoBooks.fairFor]) with no fall-back to an average, one book is
+     * enough, only Pinnacle's book is asked of the feeds that carry several, and the exchanges (Kalshi, Polymarket) and The Odds API are off. Your own choices of leagues,
+     * markets, edge limits and Pinnacle keys stay. Applied at the scanner's door ([Scanner]) and where the feeds are picked, so nothing else can read another book.
+     */
+    fun effective(): ScanSettings = if (!pinnacleOnly) this else copy(
+        scanner = ScannerMode.VIGILANT,
+        fairSource = FairSource.SHARP, devigMethod = DevigMethod.WORST_CASE, sharpBooks = PINNACLE_BOOKS, fallbackToAverage = false, minBooks = 1,
+        referenceBooks = listOf("pinnacle"), usePinnacle = true, usePolymarket = false, useKalshi = false, useOddsApi = false,
+    )
 
     /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
     val activeAutoScan: AutoScanMode get() = if (autoScansCno || autoScansVigilant) autoScan else AutoScanMode.OFF
@@ -624,7 +650,7 @@ data class ScanSettings(
      * A background cycle places bets: auto-bet is on, not halted, and the CNO scanner runs in the background ([autoScansCno]: CNO on, auto-scan on
      * CNO or Both, not paused). Whether betting through the API is set up is the app's to know ([com.tjshea.vigilant.app.AutoBettor]).
      */
-    val autoBetsNow: Boolean get() = autoBet && autoBetHalted == null && autoScansCno
+    val autoBetsNow: Boolean get() = autoBet && autoBetHalted == null && (autoScansCno || (pinnacleOnly && autoScansVigilant))
 
     /** A background cycle locks profits ([autoLock]): on, with the background scan running (any scanner) and not paused. */
     val autoLocksNow: Boolean get() = autoLock && !paused && autoScan != AutoScanMode.OFF
@@ -633,7 +659,7 @@ data class ScanSettings(
     val makerNow: Boolean get() = maker && !paused && makerHalted == null
 
     /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
-    val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn
+    val autoScansVigilant: Boolean get() = !paused && (autoScan.vigilant || (pinnacleOnly && autoScan != AutoScanMode.OFF)) && vigilantOn
 
     /**
      * How far ahead Vigilant's scan reads, in hours: [daysAhead], or [startsWithinHours] when that's shorter (Tj,
@@ -808,6 +834,12 @@ data class ScanSettings(
 
         /** [makerKinds]' default: where a bid earns even with no edge on Novig's own price (RESEARCH.md §70.2). */
         val MAKER_DEFAULT_KINDS = setOf(BetKind.PROP, BetKind.PERIOD, BetKind.TEAM_TOTAL)
+
+        /** [pinnacleMaxAgeSeconds]' choices. */
+        val PINNACLE_MAX_AGE_CHOICES = listOf(30, 60, 90, 120, 180)
+
+        /** The one book [pinnacleOnly] prices from (The Odds API's key for it). */
+        val PINNACLE_BOOKS: Set<String> = setOf("pinnacle")
 
         /** [sharpConfirmMaxAgeSeconds]' choices. */
         val SHARP_MAX_AGE_CHOICES = listOf(60, 120, 180, 300)
