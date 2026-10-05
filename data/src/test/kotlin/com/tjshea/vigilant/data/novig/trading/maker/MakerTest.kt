@@ -1328,4 +1328,99 @@ class MakerTest {
         // Fair 0.45: 4% and 3.5% both at 0.430 (4.65% EV at the fair), only 3.25% moves up a step, to 0.435.
         assertEquals(listOf(0.430, 0.430, 0.435), listOf(0.04, 0.035, 0.0325).map { price(0.45, it) })
     }
+
+    // ---- RESEARCH.md §88.3 (Tj, 2026-10-05: "make sure the math for the auto bid feature is sound … my bids right now are being taken fast") --------------------
+
+    @Test
+    fun `the margin is taken from the lower of the blend and the sharpest book's fair, never from above the blend, and the EV is stated against it`() {
+        // Blend 0.52, Pinnacle's worst-case devig 0.50: the bid is 4% under 0.50 (0.480), not under 0.52 (0.500).
+        val anchored = MakerQuote.decide(line(fair = 0.52, offer = 0.56).copy(sharpFairs = listOf(0.50)), rules, now) as MakerDecision.Post
+        assertEquals(0.480, anchored.price, 1e-9)
+        assertEquals(0.50, anchored.anchorFair!!, 1e-12)
+        assertTrue("EV against the sharp book is at least the margin: ${anchored.evAtFair}", anchored.evAtFair >= rules.margin - 1e-12)
+        // The old way (the blend alone) would have posted at 0.500, only 0% against that sharp book: which the 1% veto would then have skipped.
+        val old = MakerQuote.decide(line(fair = 0.52, offer = 0.56).copy(sharpFairs = listOf(0.50)), rules.copy(anchorSharp = false), now)
+        assertTrue(old is MakerDecision.Skip)
+        // A sharp book above the blend changes nothing; no sharp book changes nothing; the lowest of several sharp books is the anchor.
+        assertEquals(0.500, (MakerQuote.decide(line(fair = 0.52).copy(sharpFairs = listOf(0.54)), rules, now) as MakerDecision.Post).price, 1e-9)
+        assertEquals(0.500, (MakerQuote.decide(line(fair = 0.52), rules, now) as MakerDecision.Post).price, 1e-9)
+        assertEquals(0.470, (MakerQuote.decide(line(fair = 0.52, offer = 0.56).copy(sharpFairs = listOf(0.52, 0.49)), rules, now) as MakerDecision.Post).price, 1e-9)
+        // A sharp fair that drops the bid out of the price window is skipped with the window's words.
+        val low = rules.copy(minPrice = 0.49)
+        assertTrue((MakerQuote.decide(line(fair = 0.52, offer = 0.56).copy(sharpFairs = listOf(0.50)), low, now) as MakerDecision.Skip).why.contains("outside the price window"))
+        // Off: the blend, as before. The setting reaches the rules.
+        assertTrue(MakerRules.of(ScanSettings()).anchorSharp)
+        assertFalse(MakerRules.of(ScanSettings(makerAnchorSharp = false)).anchorSharp)
+    }
+
+    @Test
+    fun `whatever the fairs, a posted bid has at least the margin of EV against its anchor, and a sharp book never sees less than the veto's bar`() {
+        val rng = java.util.Random(88)
+        var posted = 0
+        repeat(4_000) {
+            val blend = 0.12 + rng.nextDouble() * 0.5
+            val sharp = (blend + (rng.nextDouble() - 0.6) * 0.08).coerceIn(0.05, 0.8)
+            val d = MakerQuote.decide(line(fair = blend, offer = 0.95).copy(sharpFairs = listOf(sharp), bookFairs = listOf(blend, blend)), rules, now)
+            if (d is MakerDecision.Post) {
+                posted++
+                val anchor = minOf(blend, sharp)
+                assertEquals(anchor, d.anchorFair!!, 1e-12)
+                assertTrue("EV vs the anchor ${d.evAtFair} >= margin", d.evAtFair >= rules.margin - 1e-9)
+                assertTrue("sharp ${sharp} gives the bid ${d.price} at least the margin", sharp / d.price - 1.0 >= rules.margin - 1e-9)
+                assertTrue(d.price <= PriceGridCeil(blend / (1.0 + rules.margin)) + 1e-12)
+            }
+        }
+        assertTrue("some bids were posted: $posted", posted > 500)
+    }
+
+    private fun PriceGridCeil(p: Double) = p
+
+    @Test
+    fun `a Kelly bid is sized on the anchor, not on a blend a sharp book disagrees with`() {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.QUARTER_KELLY, bankroll = 1_000.0, maxStake = 25.0)
+        // Blend 0.55, sharp 0.50: the bid posts at 0.480 and is sized on 0.50: ¼ x (0.50 - 0.48) / (1 - 0.48) x 1000 = $9.615..., not on 0.55 ($33, capped $25).
+        val d = MakerQuote.decide(line(fair = 0.55, offer = 0.60).copy(sharpFairs = listOf(0.50)), kelly, now) as MakerDecision.Post
+        assertEquals(0.480, d.price, 1e-9)
+        val stake = 0.25 * (0.50 - 0.48) / (1.0 - 0.48) * 1_000.0
+        assertEquals(Math.floor(stake / (0.48 * 0.01) + 1e-9).toLong(), d.contracts)
+    }
+
+    @Test
+    fun `a fill is judged against the fair of the first scan with a price seen after it - a fair that all predates the fill says nothing`() = runBlocking {
+        val novig = FakeNovig()
+        val t = tracker()
+        val d = desk(novig, t)
+        // Posted at fair 0.52 (blend), sharp 0.51: anchor 0.51, so the bid is 0.485 (4% under 0.51 = 0.4904 -> 0.490? floor to the grid).
+        val first = line("m1-over", fair = 0.52, offer = 0.60).copy(sharpFairs = listOf(0.51), fairNewestMs = now - 10_000)
+        d.cycle(listOf(first), rules, null, 50.0, 100.0)
+        val bid = d.bids().single()
+        assertEquals(0.51, bid.fair, 1e-12)
+        assertEquals(0.52, bid.blendFair!!, 1e-12)
+        assertEquals(0.51, bid.sharpFairAtPost!!, 1e-12)
+        // A taker fills it 90 s later; the next pass's scan still has only old quotes (newest 5 min old): not judged yet.
+        now += 90_000
+        novig.fill("o1", 1_000)
+        val filledAt = now
+        now += 30_000
+        val stale = line("m1-over", fair = 0.49, offer = 0.60).copy(sharpFairs = listOf(0.49), fairNewestMs = filledAt - 300_000)
+        d.cycle(listOf(stale), rules, null, 50.0, 100.0)
+        var b = d.bids().first { it.orderId == "o1" }
+        assertEquals(filledAt, b.firstFillAtMs)
+        assertEquals(90_000L, b.fillDelayMs)
+        assertNull(b.fairAtFill)
+        assertNull(b.fillEv())
+        // The scan after it prices the side with a quote seen after the fill: the fair had fallen to 0.47 (sharp 0.46): picked off.
+        now += 60_000
+        val fresh = line("m1-over", fair = 0.47, offer = 0.60).copy(sharpFairs = listOf(0.46), fairNewestMs = now - 5_000)
+        d.cycle(listOf(fresh), rules, null, 50.0, 100.0)
+        b = d.bids().first { it.orderId == "o1" }
+        assertEquals(0.47, b.fairAtFill!!, 1e-12)
+        assertEquals(0.46, b.sharpFairAtFill!!, 1e-12)
+        // EV at the fill: the anchor (0.46) against the price paid: negative (about -6%).
+        assertTrue("picked off: ${b.fillEv()}", b.fillEv()!! < -0.04)
+        // Judged once: a later scan with a higher fair doesn't change it.
+        now += 60_000
+        d.cycle(listOf(line("m1-over", fair = 0.60).copy(fairNewestMs = now - 1_000)), rules, null, 50.0, 100.0)
+        assertEquals(0.47, d.bids().first { it.orderId == "o1" }.fairAtFill!!, 1e-12)
+    }
 }
