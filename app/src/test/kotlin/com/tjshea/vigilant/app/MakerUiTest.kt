@@ -209,15 +209,6 @@ class MakerUiTest {
     }
 
     @Test
-    fun `scratch screenshot - longest odds rules`() {
-        val s = settings.copy(makerMaxOdds = 140)
-        compose.setContent { VigilantTheme { MakerScreen(ui(s), MakerActions()) } }
-        compose.onNodeWithText(MakerRulesText.summary(s)).performClick()
-        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerMaxOddsField"))
-        compose.onRoot().captureRoboImage("/tmp/claude-0/-home-user-novig/e6ce2f51-2e1c-53e5-b8a9-e6dc36090b93/scratchpad/maxodds.png")
-    }
-
-    @Test
     fun `Approve and Deny on a recommendation, Undo on a denied side, and switching auto-make on asks first`() {
         var posted: String? = null
         var denied: String? = null
