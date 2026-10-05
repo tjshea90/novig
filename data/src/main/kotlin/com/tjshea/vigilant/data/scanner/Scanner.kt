@@ -118,7 +118,8 @@ class Scanner(
     private data class Catalog(
         val leagues: Set<String>,
         val includeLive: Boolean,
-        val daysAhead: Int,
+        /** How many hours past now the markets were read for ([catalogHours]). */
+        val hours: Int,
         val types: Set<String>,
         val events: List<NovigEvent>,
         val markets: List<NovigMarket>,
@@ -809,11 +810,17 @@ class Scanner(
         return settings.novigMarketTypes.toSet() - (PropStats.BOOK_ONLY_TYPES - priced)
     }
 
+    /**
+     * How far ahead Novig's markets are read: "Days ahead" (a day's slack is added), or in low-usage bids only the window ([ScanSettings.scanWindowHours]): the scan prices
+     * nothing past it, so the prop markets of the next week are not read for it (RESEARCH.md §92).
+     */
+    private fun catalogHours(settings: ScanSettings): Int = if (settings.lowUsageScan) settings.scanWindowHours else settings.daysAhead.coerceAtLeast(1) * 24
+
     private suspend fun refreshCatalog(settings: ScanSettings, types: Set<String>, now: Long, errors: MutableList<String>) {
         val c = catalog
         // A bets-only catalog is cut to this pass's bets, so it's never re-used for another.
         val fresh = !betsOnly && c != null && c.leagues == settings.leagues && c.includeLive == settings.includeLive &&
-            c.daysAhead == settings.daysAhead && c.types.containsAll(types) && now - c.fetchedAtMs < catalogTtlMs
+            c.hours == catalogHours(settings) && c.types.containsAll(types) && now - c.fetchedAtMs < catalogTtlMs
         if (fresh) return
         try {
             // DELAYED is tradable too (docs: api/concepts/event-lifecycle): a game held before its start.
@@ -824,7 +831,7 @@ class Scanner(
             }
             val leagues = settings.leagues.toList()
             // One extra day of slack past the horizon; Planner applies the exact cut.
-            val before = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
+            val before = now + (catalogHours(settings) + 24) * 3_600_000L
             // Every event, not just the window: one small request, and the scan can then say how many games
             // start past "Days ahead" (Tj, 2026-09-28: "There are way more than 7 total games"). Their
             // markets (the big part) are only read inside the window.
@@ -838,7 +845,7 @@ class Scanner(
                 val games = markets.mapTo(HashSet()) { it.eventId }
                 events = events.filter { it.eventId in games }
             }
-            catalog = Catalog(settings.leagues, settings.includeLive, settings.daysAhead, wanted, events, markets, now)
+            catalog = Catalog(settings.leagues, settings.includeLive, catalogHours(settings), wanted, events, markets, now)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
