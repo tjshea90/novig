@@ -3889,5 +3889,6 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
 
 - [x] CH1 Investigate why Novig's ledger had no payout for the Ollie Gordon Over leg and whether it happened elsewhere (taken as: the open question of CG): every API bet graded by the 6-hour silence rule, checked against ESPN's finals and box scores. Done (RESEARCH.md §87.1): 8 such grades in the Oct 4 file, 7 correct (NCAAF), 1 wrong (Tuten Over 53.5, 73 yards, a 1-contract imported leg opposite a 232-contract Under); the guard of v0.62.0 missed it because it required equal holdings.
 - [x] CH2 Widen the guard and the repair to any two-outcome holding, put the grading note of a silent/needs-a-tap API bet into the diagnostics' bet lines, tests + mutation check. Done: `ApiSettler.bothSidesHeld`, `BetLedger.Row.gradeNote`; `ApiSettlerTest` (+1), `BetLedgerTest` (+1).
-- [ ] CH3 Ship v0.63.0 (ship.sh, CI green, release.yml, record-release.sh) and send Tj the link.
+- [x] CH3 Ship v0.63.0 (ship.sh, CI green, release.yml, record-release.sh) and send Tj the link.
 - [ ] CH4 FOR TJ: Settings › Diagnostics › Grading check › Copy and paste it (or send the next diagnostics) so the ledger rows for the Gordon and Tuten markets show why no payout was found.
+  Done CH3: v0.63.0 released (CI 37338177164 green, 2,085 tests); https://github.com/tjshea90/novig/releases/tag/v0.63.0
