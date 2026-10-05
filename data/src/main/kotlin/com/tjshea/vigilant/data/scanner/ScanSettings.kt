@@ -312,6 +312,12 @@ data class ScanSettings(
     /** The bid's price window (probability; 0.10 = +900, 0.65 = −186): favorites over 0.65 almost never fill (§70.2). */
     val makerMinPrice: Double = 0.10,
     val makerMaxPrice: Double = 0.65,
+    /**
+     * The longest odds a bid may be posted at, American (Tj, 2026-10-05: "do not post bids longer than +140 odds"): 140 = no bid priced under 41.7¢ (a bid at +141 or longer
+     * is skipped, and one already up at such a price comes down at the next pass); favorites always pass; 0 = no limit (the price window above is all there is). The
+     * auto-bet's [autoBetMaxOdds] is the same idea for bets taken. [MAKER_MAX_ODDS_CHOICES], or typed.
+     */
+    val makerMaxOdds: Int = 0,
     /** Bid both sides of a market (both filling locks in the two margins) or only the side with the better EV per bid. */
     val makerBothSides: Boolean = true,
     /** The fewest books behind the fair price for a bid to be posted. */
@@ -858,6 +864,9 @@ data class ScanSettings(
 
         /** [autoBetMinOdds]' choices (0 = no limit). */
         val AUTO_BET_MIN_ODDS_CHOICES = listOf(0, -150, -200, -250, -300)
+
+        /** [makerMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
+        val MAKER_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 140, 150, 175, 200, 250, 300, 0)
 
         /** [autoBetMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
         val AUTO_BET_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 150, 200, 300, 0)

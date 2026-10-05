@@ -8,6 +8,7 @@ import com.tjshea.vigilant.data.tracker.FairBasis
 import com.tjshea.vigilant.data.tracker.GameExposure
 import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.engine.EvMath
+import com.tjshea.vigilant.engine.Odds
 import com.tjshea.vigilant.engine.PriceGrid
 import java.util.Locale
 import kotlin.math.floor
@@ -31,6 +32,11 @@ data class MakerRules(
     val stopMs: Long,
     val minPrice: Double,
     val maxPrice: Double,
+    /**
+     * The longest American odds a bid may be posted at ([ScanSettings.makerMaxOdds]; 0 = no limit): a bid priced under [priceAtOdds] of it is skipped, however good its EV
+     * (Tj, 2026-10-05: "do not post bids longer than +140 odds"). Applied through [lowestPrice] wherever the price window is.
+     */
+    val maxOdds: Int = 0,
     val bothSides: Boolean,
     val minBooks: Int,
     val stakeMode: com.tjshea.vigilant.data.scanner.AutoBetStake = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM,
@@ -86,10 +92,18 @@ data class MakerRules(
      * slate could want hundreds at once, and a pass that long would hold the lock the Pause, the kill switch and the fills' checks wait for.
      */
     val postsPerPass: Int = POSTS_PER_PASS,
-) {
+    /** The lowest price a bid may rest at: the window's floor, or the price [maxOdds] works out to when that is higher (+140 is 41.7¢). */
+    val lowestPrice: Double get() = maxOf(minPrice, priceAtOdds(maxOdds))
+
     companion object {
         /** [postsPerPass]'s default. */
         const val POSTS_PER_PASS = 60
+
+        /** The shortest a longest-odds limit can be: +100 is even money; under it would mean "favorites only", which isn't what the option is for (as [com.tjshea.vigilant.data.novig.trading.AutoBet.MIN_MAX_ODDS]). */
+        const val MIN_MAX_ODDS = com.tjshea.vigilant.data.novig.trading.AutoBet.MIN_MAX_ODDS
+
+        /** The price (cost of a $1 payout) at which a bid pays American odds of [odds]: +140 pays $1.40 on $1, so $1 / $2.40 = 0.4167. 0 (no limit) = no floor. */
+        fun priceAtOdds(odds: Int): Double = if (odds <= 0) 0.0 else 100.0 / (100.0 + odds)
 
         fun of(s: ScanSettings): MakerRules = base(s).let { if (QuickLikely.on(s)) QuickLikely.narrow(it) else it }
 
@@ -103,6 +117,7 @@ data class MakerRules(
             stopMs = s.makerStopMinutes.coerceAtLeast(0) * 60_000L,
             minPrice = s.makerMinPrice.coerceIn(0.001, 0.999),
             maxPrice = s.makerMaxPrice.coerceIn(0.001, 0.999),
+            maxOdds = s.makerMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
             bothSides = s.makerBothSides,
             minBooks = s.makerMinBooks.coerceAtLeast(1),
             stakeMode = s.makerStakeMode,
@@ -347,7 +362,7 @@ object MakerQuote {
         // The margin is under the lower of the blend and the sharpest book's own fair (only lines with their books' fairs worked out get here: [MakerLines.from]).
         val fair = MakerRules.anchorOf(blend, line.sharpFairs, rules.anchorSharp)
         val price = if (fair < blend - 1e-12) PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
-        if (price < rules.minPrice - 1e-9) return skip("A bid at ${percent(price)} is outside the price window (${percent(rules.minPrice)}-${percent(rules.maxPrice)})")
+        outsideWindow(price, rules)?.let { return skip(it) }
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
@@ -364,6 +379,18 @@ object MakerQuote {
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
         return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until, anchorFair = fair)
+    }
+
+    /**
+     * Why a bid at [price] is outside what Tj allows, or null: longer odds than his limit ([MakerRules.maxOdds]; said without the price, so the reports count it as one
+     * reason), or outside the price window.
+     */
+    fun outsideWindow(price: Double, rules: MakerRules): String? = when {
+        rules.maxOdds > 0 && price < MakerRules.priceAtOdds(rules.maxOdds) - 1e-9 ->
+            "A bid at that price would be at longer odds than your ${Odds.formatAmerican(rules.maxOdds)} limit for bids"
+        price < rules.minPrice - 1e-9 || price > rules.maxPrice + 1e-9 ->
+            "A bid at ${percent(price)} is outside the price window (${percent(rules.minPrice)}-${percent(rules.maxPrice)})"
+        else -> null
     }
 
     /** What [precheck] made of a line before the books are asked: no bid (why), or the bid's price and how long it may rest. */
@@ -395,9 +422,7 @@ object MakerQuote {
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
         val price = PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The fair price is too small to bid under")
-        if (price < rules.minPrice - 1e-9 || price > rules.maxPrice + 1e-9) {
-            return skip("A bid at ${percent(price)} is outside the price window (${percent(rules.minPrice)}-${percent(rules.maxPrice)})")
-        }
+        outsideWindow(price, rules)?.let { return skip(it) }
         val offer = line.offer
         if (offer != null && price >= offer - 1e-9) return skip("Novig already offers it at ${percent(offer)}, at or under this bid: take it instead")
         return Pre.Price(price, until)
