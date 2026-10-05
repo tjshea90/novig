@@ -3869,3 +3869,8 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
 
 - [x] CE1 Answer from the data (the diagnostics' and the study's bets with Pinnacle's two-sided price on the book page, props first): of the prop bets where Novig's price beats Pinnacle's price for the same side, how many are +EV against Pinnacle's devigged fair, how many beat the close, and how that changes with how much better the price is, how far from the start, and which close; what Pinnacle's own vig on props does to "better odds than Pinnacle"; say plainly what the sample can't settle.
 - [x] CE2 If a rule falls out of it (and isn't a safety limit), say what to set; build only what Tj asks.
+
+
+## Tj, 2026-10-05 (after CE): "You just told me some very high clv and positive EV values, clarify how I can replicate these bets. What kind of bets were they, how long before each game ,etc"
+
+- [ ] CF1 Profile the prop bets behind §86's numbers (the 61 of Tj's and 35 of the study's with a close and Pinnacle's two-sided price): sport, market, over/under, price, how much cheaper than Pinnacle, time to start, which scanner, how many games; which of today's app settings already select them; what a replicating rule would be and what it would have caught; what the sample can't say. Record in RESEARCH §86.5; list the bets in a file Tj can open.
