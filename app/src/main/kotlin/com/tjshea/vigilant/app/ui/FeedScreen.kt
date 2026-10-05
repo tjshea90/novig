@@ -524,7 +524,11 @@ fun OpportunityCard(
 /** A card says how old its odds are past this: the other books' prices are on their way to [Freshness.maxAgeMs]. */
 private const val FAIR_AGING_MS = 3 * 60_000L
 
-/** "Starts within: Any time · 12h · 24h · 48h": the start-time window every list obeys (the +EV and CNO tabs). */
+/**
+ * "Starts within: Any time · 3h · 6h · 12h · 24h · 48h": the start-time window every list obeys (the +EV and CNO tabs). Six choices since v0.61.0 (RESEARCH.md §82):
+ * a text button is 58 dp wide at least, six of them left the label no room on a 393 dp phone (it stacked a letter to a line), so the choices share what the label
+ * leaves, "Any time" taking a share and a half, and no label wraps.
+ */
 @Composable
 internal fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -532,13 +536,19 @@ internal fun StartsWithinRow(hours: Int, onPick: (Int) -> Unit) {
             "Starts within",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.padding(end = 4.dp),
         )
         ScanSettings.STARTS_WITHIN_CHOICES.forEach { h ->
             val on = hours == h
-            TextButton(onClick = { onPick(h) }, modifier = Modifier.semantics { selected = on }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            TextButton(
+                onClick = { onPick(h) },
+                modifier = Modifier.weight(if (h == 0) 1.5f else 1f).semantics { selected = on },
+                contentPadding = PaddingValues(horizontal = 2.dp),
+            ) {
                 Text(startsWithinLabel(h), style = MaterialTheme.typography.labelMedium, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
-                    color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    maxLines = 1, softWrap = false, color = if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
