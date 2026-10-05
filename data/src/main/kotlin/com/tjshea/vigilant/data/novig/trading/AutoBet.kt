@@ -158,6 +158,11 @@ object AutoBet {
             AutoBetStake.CUSTOM -> rules.customStake
             else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction"), sharpFair) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
         }
+        return cap(rules, wanted, balance)
+    }
+
+    /** [wanted] dollars held to Tj's per-bet maximum and to the wallet ([balance]), floored to the cent; a skip with why when nothing fundable is left. */
+    fun cap(rules: Rules, wanted: Double, balance: Double): Stake {
         if (!(wanted > 0.0)) return Stake.Skip("the amount to stake is $0")
         val capped = floorCents(minOf(wanted, rules.maxStake, balance))
         if (capped < MIN_STAKE - 1e-9) {
