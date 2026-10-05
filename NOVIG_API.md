@@ -598,6 +598,7 @@ What is new here is the account/execution half of the API, which Vigilant has ne
   the outcome id from CNO's Novig link names its market directly) before every Novig-only read and Check odds now, 10 min between misses. What's
   truly not offered says why on the bet (`TrackedBet.novigWhy`): game not listed, exact line not offered, market no longer listed (§ "settled markets
   leave the catalog"), nothing bid or offered, or Novig didn't answer.
+- **A locked market never loses both legs** (2026-10-05, RESEARCH.md §87): one of two held outcomes wins, so "no SETTLEMENT row and no position" is never a loss there; Tj's Ollie Gordon lock (Over 29.5, 100 yards) had no row found by the ledger query and was wrongly graded lost 6 h after the start. Why the row was missing is not known.
 - **Locked markets in the Tracker** (`LockedBets`): API bets holding both outcomes with equal contracts (from the bets' own fills, settled ones too) are
   "locked": hidden from the Tracker's lists and stats while "Hide locked bets" is on (default), counted on their own card (bets locked and their
   share, profit locked = contracts × $0.01 − everything spent on both sides, its % of that).
