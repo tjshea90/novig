@@ -45,7 +45,7 @@ class KalshiClient(
     private val baseUrl: String = "https://api.elections.kalshi.com/trade-api/v2",
     /**
      * Kalshi's docs now name this host as the production one (docs.kalshi.com market-data quickstart, read 2026-10-05; RESEARCH.md §90.2) while [baseUrl] still answers.
-     * If [baseUrl] stops (a retired host: 404 / 410 or no connection), reads switch to this one for the life of the app instead of failing every scan. Null: none
+     * If [baseUrl] stops (a retired host: 404 / 410 or a name that no longer resolves), reads switch to this one for the life of the app instead of failing every scan. Null: none
      * (the tests'; the app passes [ALT_URL]).
      */
     private val altBaseUrl: String? = null,
@@ -198,8 +198,8 @@ class KalshiClient(
                             else -> json.decodeFromString(PageDto.serializer(), body).also { gate.success() }
                         }
                     }
-                } catch (e: java.io.IOException) {
-                    // No connection to the host (it no longer resolves): the other one, once; else the failure stands.
+                } catch (e: java.net.UnknownHostException) {
+                    // The host no longer resolves (not a timeout or a dropped connection, which say nothing about the host): the other one, once; else the failure stands.
                     if (!switchHost()) throw e
                     null
                 }
