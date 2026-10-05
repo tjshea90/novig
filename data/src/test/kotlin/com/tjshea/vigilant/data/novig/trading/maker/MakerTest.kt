@@ -1796,4 +1796,28 @@ class MakerTest {
         d.cycle(emptyList(), rules, stop = "Scanning is paused", maxPerDay = 50.0, wallet = 100.0)
         assertEquals(3, novig.cancelled.size)
     }
+
+    // ---- low API usage bids are written down (RESEARCH.md §92) ------------------------------------------------------------
+
+    @Test
+    fun `a bid records which choice posted it, the books behind its fair and how old their prices were`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val l = line("m1-over", fair = 0.52).copy(fairBooks = listOf("Kalshi", "ProphetX"), fairAsOfMs = now - 90_000L, fairNewestMs = now - 20_000L)
+        val low = MakerRules.of(ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE)).copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0)
+        assertEquals(1, d.cycle(listOf(l.copy(books = 2, sharpFairs = listOf(0.52, 0.53), bookFairs = listOf(0.52, 0.53))), low, stop = null, maxPerDay = 50.0, wallet = 100.0).placed)
+        val b = d.bids().single()
+        assertEquals("LOW_USAGE", b.focus)
+        assertEquals(listOf("Kalshi", "ProphetX"), b.fairBooks)
+        assertEquals(90, b.fairAgeSec)
+        assertEquals(20, b.fairNewestAgeSec)
+        assertTrue(b.margin >= 0.025)
+        // The usual bids are tagged with their own choice, and a record saved before the tag existed reads with none.
+        assertEquals("ALL", rules.focus)
+        assertEquals("QUICK_LIKELY", MakerRules.of(ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)).focus)
+        val json = Json { ignoreUnknownKeys = true }
+        val old = json.decodeFromString(MakerBid.serializer(), json.encodeToString(MakerBid.serializer(), b).replace(Regex(""","focus":"LOW_USAGE""""), "").replace(Regex(""","fairBooks":\[[^\]]*\]"""), ""))
+        assertNull(old.focus)
+        assertTrue(old.fairBooks.isEmpty())
+    }
 }
