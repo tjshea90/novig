@@ -10,8 +10,8 @@ game does; at a cost of 1 + P(margin between) it is a fair bet. After a play tha
 other, and for a second or less one of two neighbouring lines is stale. This script records that and measures it.
 
   record   poll the PUBLIC routes (no key; keep under ~4 requests a second, which it enforces) for every live game of one league: each near-the-money
-           moneyline / spread / total market's recent trades (engine timestamps in ms, newest first, de-duplicated by trade id) and its top of book
-           (local clock). One NDJSON tape per run.
+           moneyline / spread / total market's recent trades (engine timestamps in ms, de-duplicated by trade id; a pass over ~25 markets takes about
+           9 s, so every trade is kept but the book, every 4th pass, is only a coarse picture) and its top of book (local clock). One NDJSON tape per run.
   analyze  read tapes: the bursts (pairs of executed trades on two lines of one ladder within WINDOW_MS that cost under $1 after fees), how long
            each lasted, what it paid (the guaranteed floor and, adding the chance the margin lands between the lines, the expected value) and
            what a reaction time of L ms would have kept; plus the moneyline jumps (>= 4 cents) and which of them made a burst.
@@ -71,6 +71,7 @@ def record(a):
     markets = {}      # marketId -> dict(event, type, strike, outs)
     chosen = []
     chosen_at = 0
+    npass = 0
     print('recording', a.league, 'until', time.strftime('%H:%M:%S', time.localtime(end)), file=sys.stderr, flush=True)
     while time.time() < end:
         if time.time() - chosen_at > 90:
@@ -104,14 +105,15 @@ def record(a):
                     out.write(json.dumps(dict(k='meta', m=mid, **markets[mid])) + '\n'); meta_done.add(mid)
             out.flush()
             print(time.strftime('%H:%M:%S'), len(events), 'live events,', len(chosen), 'near-the-money markets', file=sys.stderr, flush=True)
+        npass += 1
         for mid in chosen:
-            tr = paced(f'{API}/catalog/markets/{mid}/trades?limit=100')
+            tr = paced(f'{API}/catalog/markets/{mid}/trades?limit=300')   # a 3 s burst is ~25 prints; 300 survives a slow pass
             for t in reversed((tr or {}).get('items', [])):
                 if t['tradeId'] in seen:
                     continue
                 seen.add(t['tradeId'])
                 out.write(json.dumps(dict(k='t', m=mid, o=t['outcomeId'], p=float(t['price']), q=float(t['qty']), ts=t['ts'], id=t['tradeId'])) + '\n')
-            b = paced(f'{API}/catalog/markets/{mid}/book')
+            b = paced(f'{API}/catalog/markets/{mid}/book') if npass % 4 == 0 else None   # books every 4th pass: the tape is the point
             if b:
                 ids = [x[0] for x in markets[mid]['outs']]
                 top = lambda l: [[float(x['price']), float(x['qty'])] for x in l[:3]]
