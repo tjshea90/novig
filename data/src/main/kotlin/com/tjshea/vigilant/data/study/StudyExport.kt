@@ -505,7 +505,7 @@ object StudyExport {
         out.appendLine("Rules in force when this file was made (they decided which bets the scanners listed; they may have changed during the period): ${meta.rules}")
         out.appendLine("  Which part decides what: the app's CNO list (screen = none, src c) follows the 'CNO:' part (edge, odds, books, rows); the leading 'edge ≥', books and odds parts are the auto-bet's and Vigilant's own scan's (src v). Check atBet.preset and atBet.version: they changed during one evening.")
         out.appendLine()
-        out.appendLine("== SUMMARY (added up on the phone; ROI is at the first-listed price with one unit a bet; CLV is against the close found, see closeVia) ==")
+        out.appendLine("== SUMMARY (added up on the phone; ROI is at the first-listed price with one unit a bet; CLV is against the close found, see closeVia; ± is a 95% interval that counts GAMES, not bets, so two groups whose intervals overlap are not shown to differ) ==")
         out.appendLine(overall.line("ALL BETS"))
         out.appendLine(shown.line("shown by the app's lists (screen = none)"))
         out.appendLine(hidden.line("hidden from the app's lists (screen set: the wide read's extra finds)"))
@@ -636,4 +636,7 @@ object StudyExport {
     private const val HIDDEN_SHARE = 0.65
 
     private const val MAX_SPLIT_GROUPS = 25
+
+    /** A ± needs this many games behind it: fewer say nothing ([Agg.halfWidth]). */
+    private const val MIN_GAMES = 5
 }
