@@ -305,7 +305,7 @@ class ApiSettlerTest {
     }
 
     @Test
-    fun `a pick with a small hedge on the other side is guarded the same way (Tj's Bhayshul Tuten 53.5: 232 contracts of the Under, 1 of the Over)`() = runBlocking {
+    fun `a pick with a small hedge on the other side is guarded the same way - Tj's Tuten rushing market, 232 contracts of the Under and 1 of the Over`() = runBlocking {
         novig()
         fun held(t: BetTracker) = runBlocking {
             t.logApi(target("a"), "o1", listOf(NovigFill("f-o1", "o1", null, "mkt", "A", 232, 1.0788, true, 0.0, start - hour)))
