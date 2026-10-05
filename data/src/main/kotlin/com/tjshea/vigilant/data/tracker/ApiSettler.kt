@@ -20,7 +20,8 @@ import java.util.Locale
  *  - nothing paid and the position still held: the market hasn't settled yet (a note, nothing changes);
  *  - nothing paid and the position gone: a **loss** (a loss moves no money, so it leaves no row), but only when the score feeds don't say
  *    otherwise: a feed that says won/pushed against Novig's silence is left to a tap ("check Novig"), and with no readable feed a loss is taken
- *    only [INFER_LOSS_AFTER_MS] after the start.
+ *    only [INFER_LOSS_AFTER_MS] after the start. **Never for a market held on both sides** ([LockedBets.markets]): one side of it won, so silence
+ *    alone isn't a loss there, and neither is a second "lost" for a market whose other side already lost ([reopenBothLost] takes such a grade back).
  * A ledger payout always wins over the feeds (Novig is the authority); a disagreement is noted. A result Tj tapped is never overwritten.
  */
 class ApiSettler(
