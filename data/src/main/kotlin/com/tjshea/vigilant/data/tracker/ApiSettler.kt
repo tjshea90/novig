@@ -20,7 +20,7 @@ import java.util.Locale
  *  - nothing paid and the position still held: the market hasn't settled yet (a note, nothing changes);
  *  - nothing paid and the position gone: a **loss** (a loss moves no money, so it leaves no row), but only when the score feeds don't say
  *    otherwise: a feed that says won/pushed against Novig's silence is left to a tap ("check Novig"), and with no readable feed a loss is taken
- *    only [INFER_LOSS_AFTER_MS] after the start. **Never for a market held on both sides** ([LockedBets.markets]): one side of it won, so silence
+ *    only [INFER_LOSS_AFTER_MS] after the start. **Never for a market held on both sides** ([bothSidesHeld]): one side of it won, so silence
  *    alone isn't a loss there, and neither is a second "lost" for a market whose other side already lost ([reopenBothLost] takes such a grade back).
  * A ledger payout always wins over the feeds (Novig is the authority); a disagreement is noted. A result Tj tapped is never overwritten.
  */
@@ -48,8 +48,8 @@ class ApiSettler(
         val all = tracker.all()
         val todo = due(all, now)
         if (todo.isEmpty()) return@withLock Report(0, 0, 0, 0, reopened = reopened)
-        // Markets held on both sides, equally: one side of each wins, so "both lost" is never an answer ([LockedBets]).
-        val locked = LockedBets.markets(all)
+        // Markets held on both sides: one side of each wins, so "both lost" is never an answer ([bothSidesHeld]).
+        val bothHeld = bothSidesHeld(all)
         val lostNow = HashSet<String>()
         val payouts: List<LedgerRow>
         val positions: List<NovigPosition>
@@ -121,12 +121,12 @@ class ApiSettler(
                         if (late) manual++ else waiting++
                     }
                     else -> {
-                        val heldBoth = locked[bet.marketId]
+                        val heldBoth = bothHeld[bet.marketId]
                         when (val feed = scoreGrade(bet)) {
                             is BetGrader.Grade.Result ->
                                 if (feed.status == BetStatus.LOST) {
                                     // Both sides held: the other side already lost, so this one can't have (a feed misread one of them).
-                                    if (heldBoth != null && heldBoth.bets.any { it.id != bet.id && it.outcomeId != bet.outcomeId && (it.status == BetStatus.LOST || it.id in lostNow) }) {
+                                    if (heldBoth != null && heldBoth.any { it.id != bet.id && it.outcomeId != bet.outcomeId && (it.status == BetStatus.LOST || it.id in lostNow) }) {
                                         note(changes, bet, OTHER_SIDE_LOST, now, manual = true); manual++
                                     } else {
                                         settle(changes, bet, BetStatus.LOST, null, "$SILENT_LOSS (${feed.evidence})", now); settled++; lostNow += bet.id
@@ -156,14 +156,14 @@ class ApiSettler(
     }
 
     /**
-     * A market held on both sides, equally ([LockedBets.markets]), pays one side whichever wins, so every leg graded lost is a wrong grade. The ones
-     * worked out from Novig's silence alone ([SILENT_LOSS], no score feed behind them) are the doubtful ones: taken back, with a note to check, and
-     * the rule above keeps them from being graded lost again. A result Tj tapped is left. Returns how many were taken back.
+     * A market held on both sides ([bothSidesHeld]) pays one side whichever wins, so every leg graded lost is a wrong grade. The ones worked out
+     * from Novig's silence alone ([SILENT_LOSS], no score feed behind them) are the doubtful ones: taken back, with a note to check, and the rule
+     * above keeps them from being graded lost again. A result Tj tapped is left. Returns how many were taken back.
      */
     private suspend fun reopenBothLost(now: Long): Int {
-        val ids = LockedBets.markets(tracker.all()).values
-            .filter { m -> m.bets.all { it.status == BetStatus.LOST } }
-            .flatMap { m -> m.bets.filter { it.settledBy == BetSettler.BY_NOVIG && it.gradeNote == SILENT_LOSS } }
+        val ids = bothSidesHeld(tracker.all()).values
+            .filter { legs -> legs.all { it.status == BetStatus.LOST } }
+            .flatMap { legs -> legs.filter { it.settledBy == BetSettler.BY_NOVIG && it.gradeNote == SILENT_LOSS } }
             .map { it.id }
         if (ids.isEmpty()) return 0
         tracker.editMany(ids.associateWith { { b: TrackedBet ->
@@ -224,6 +224,18 @@ class ApiSettler(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /**
+         * The API bets of each market where exactly two outcomes are held, in any amounts (a lock's equal holdings, or a pick with a small hedge on
+         * the other side, as Tj's Bhayshul Tuten 53.5: 232 contracts of the Under and 1 of the Over). Such a market is binary, so one side won. A market
+         * with a "Draw" or "Tie" side is three-way (two sides can both lose) and is left out; so is a void.
+         */
+        fun bothSidesHeld(bets: List<TrackedBet>): Map<String, List<TrackedBet>> = bets
+            .filter { it.orderId != null && (it.contracts ?: 0L) > 0L && it.marketId.isNotBlank() && it.outcomeId.isNotBlank() && it.status != BetStatus.VOID }
+            .groupBy { it.marketId }
+            .filterValues { legs -> legs.map { it.outcomeId }.distinct().size == 2 && legs.none { threeWay(it.selection) } }
+
+        private fun threeWay(selection: String): Boolean = Regex("\\b(draw|tie)\\b", RegexOption.IGNORE_CASE).containsMatchIn(selection)
+
         /** The words of a loss taken from Novig's silence: no payout, no position left. */
         const val SILENT_LOSS = "Novig paid nothing for it and no longer holds the position: a loss"
 
