@@ -449,6 +449,10 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== Bets by what made their fair odds (recorded from v0.36.0) ==")
         basisLines(kept, now).forEach { o.appendLine(it) }
+        // Pinnacle only (Tj, 2026-10-05): EV, CLV and profit of the bets found and judged against Pinnacle's devigged price alone.
+        o.appendLine()
+        o.appendLine("== Pinnacle only: bets made against Pinnacle's devigged price alone (RESEARCH.md §88.5) ==")
+        pinnacleOnlyLines(bets, s.settings, x.autoBet, now, x.counters).forEach { o.appendLine(it) }
         o.appendLine()
         o.appendLine("== Vigilant's own bets against the close (newest ${MAX_CLOSE_ROWS}) ==")
         closeRows(kept, now, zone).forEach { o.appendLine(it) }
@@ -529,6 +533,53 @@ object Diagnostics {
     }
 
     private val FUTURES_NOT = Regex(" @ | vs\\.? ", RegexOption.IGNORE_CASE)
+
+    /**
+     * Pinnacle only's report (Tj, 2026-10-05: "make the diagnostics scan logging keep track of all betting information used with this Pinnacle only setting on so I can
+     * track how well bets do clv and EV and profit when only compared to Pinnacle"): whether it is on and how its auto-bet pass went, then every bet made with it on
+     * ([com.tjshea.vigilant.data.tracker.AtBet.pinnacleOnly]) as a group: results and profit (outliers included, like the Tracker's Profit), EV when bet against Pinnacle, CLV
+     * and the share that beat the close, then the same split by the age of Pinnacle's price at the bet, by kind of market, and where the closes came from.
+     */
+    internal fun pinnacleOnlyLines(
+        bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>,
+        set: com.tjshea.vigilant.data.scanner.ScanSettings,
+        autoBet: AutoBettor.Status,
+        now: Long,
+        counters: Map<String, Long> = emptyMap(),
+    ): List<String> {
+        val out = ArrayList<String>()
+        out += if (set.pinnacleOnly) "On: age limit ${com.tjshea.vigilant.app.ui.PinnacleOnlyText.ageLabel(set.pinnacleMaxAgeSeconds)} · reads Novig and Pinnacle only (PinnWire, then pinnapi; PropLine or ParlayAPI for a league those can't answer) · devig: the lowest of four"
+        else "Off (switch it on in Settings › Scanning or the Auto-bet tab)."
+        if (set.pinnacleOnly) {
+            out += "Auto-bet's last pass: ${AutoBettor.line(autoBet, now)}"
+            out += "Pinnacle re-reads before betting: ${counters["pinnacle.refresh.ok"] ?: 0} read, ${counters["pinnacle.refresh.failed"] ?: 0} failed · bets placed this run: ${counters["pinnacle.autobet.placed"] ?: 0}"
+        }
+        val mine = bets.filter { it.atBet?.pinnacleOnly == true && it.status != BetStatus.VOID && it.atBet?.how != com.tjshea.vigilant.data.tracker.AtBet.HOW_STUDY }
+        if (mine.isEmpty()) return out + "No bet made with it on yet: the first ones appear here with their EV against Pinnacle, CLV and profit."
+        val st = BetTracker.stats(mine)
+        out += "Bets: ${mine.size} (${st.pending} open) · " + breakdownText(st, closedCount(mine.filterNot { it.isOutlier }, now))
+        out += String.format(Locale.US, "Profit (every settled bet): %+.2f on %.2f staked", st.profitAll, st.stakedAll) + (st.roiAll?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "")
+        val kept = mine.filterNot { it.isOutlier }
+        fun band(b: com.tjshea.vigilant.data.tracker.TrackedBet): String = when (val age = b.atBet?.pinnacleAgeSec) {
+            null -> "age not recorded"
+            in 0..30 -> "Pinnacle's price ≤30 s old"
+            in 31..60 -> "Pinnacle's price 31–60 s old"
+            in 61..90 -> "Pinnacle's price 61–90 s old"
+            else -> "Pinnacle's price over 90 s old"
+        }
+        kept.groupBy(::band).toSortedMap().forEach { (label, g) -> out += "$label: ${breakdownText(BetTracker.stats(g), closedCount(g, now))}" }
+        com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(kept, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET).forEach { row ->
+            val g = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET) == row.label }
+            out += "Market ${row.label}: ${breakdownText(row.stats, closedCount(g, now))}"
+        }
+        com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(kept, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.LEAD).forEach { row ->
+            val g = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.LEAD) == row.label }
+            out += "Time to start ${row.label}: ${breakdownText(row.stats, closedCount(g, now))}"
+        }
+        val closes = kept.mapNotNull { b -> com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(b, now)?.second }
+        if (closes.isNotEmpty()) out += "Closes came from: " + closes.groupingBy { com.tjshea.vigilant.data.tracker.ClosingLine.sourceLabel(it) }.eachCount().entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value}" }
+        return out
+    }
 
     /** Closing-line value by what made each bet's fair odds ([com.tjshea.vigilant.data.tracker.FairBasis]); bets from before it was kept are counted apart. */
     internal fun basisLines(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): List<String> {
