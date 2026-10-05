@@ -89,7 +89,7 @@ class AutoBetDiagnosticsTest {
         val none = lowChecks(state(f = low), extras.copy(lowUsagePlan = plan()))
         assertEquals(listOf(HealthChecks.Level.FAIL), none.map { it.level })
         // A book no feed with a key carries: WARN, naming it.
-        val missing = lowChecks(state(f = low), extras.copy(lowUsagePlan = plan("kalshi", "propline_props")))
+        val missing = lowChecks(withSources(ok), extras.copy(lowUsagePlan = plan("kalshi", "propline_props")))
         assertEquals(listOf(HealthChecks.Level.WARN), missing.map { it.level })
         assertTrue(missing.single().text(), missing.single().text().contains("ProphetX can't be read"))
         // All readable and the last scan priced from a picked feed: nothing to say.
