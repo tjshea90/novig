@@ -3883,3 +3883,11 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
 - [x] CG3 Ship it as a version if the app changes (ship.sh, release.yml, record-release.sh) and send Tj the link.
   Done CG1/CG2 (RESEARCH.md §87): a WRONG GRADE, not a lock at a loss. The Ollie Gordon II 29.5 rushing yards market (pick Under 29.5 + lock Over 29.5, $2.9952 on both sides, locked +$0.12) was graded lost on BOTH legs: Gordon ran 100 yards, Over won; the lock leg (imported, unreadable by the feeds) was taken as a loss from Novig's silence 6 h after the start. +$0.507 − $2.9952 = −$2.488 = the card's −$2.49 to the cent. No lock is ever planned below its minimum (LockIn.plan). Fix (ApiSettler): silence alone is never a loss for a market held on both sides; a second "lost" there is refused; a locked market with every leg lost is taken back (silent leg only; Tj's taps untouched). Tests: ApiSettlerTest (3 new), mutation-checked. Ships as v0.62.0 (CG3).
   Done CG3: v0.62.0 released (release.yml run 37335857344 green, CI 37334719470 green, 2,083 tests); https://github.com/tjshea90/novig/releases/tag/v0.62.0
+
+
+## Tj, 2026-10-05 (after CG): "Investigate"
+
+- [x] CH1 Investigate why Novig's ledger had no payout for the Ollie Gordon Over leg and whether it happened elsewhere (taken as: the open question of CG): every API bet graded by the 6-hour silence rule, checked against ESPN's finals and box scores. Done (RESEARCH.md §87.1): 8 such grades in the Oct 4 file, 7 correct (NCAAF), 1 wrong (Tuten Over 53.5, 73 yards, a 1-contract imported leg opposite a 232-contract Under); the guard of v0.62.0 missed it because it required equal holdings.
+- [x] CH2 Widen the guard and the repair to any two-outcome holding, put the grading note of a silent/needs-a-tap API bet into the diagnostics' bet lines, tests + mutation check. Done: `ApiSettler.bothSidesHeld`, `BetLedger.Row.gradeNote`; `ApiSettlerTest` (+1), `BetLedgerTest` (+1).
+- [ ] CH3 Ship v0.63.0 (ship.sh, CI green, release.yml, record-release.sh) and send Tj the link.
+- [ ] CH4 FOR TJ: Settings › Diagnostics › Grading check › Copy and paste it (or send the next diagnostics) so the ledger rows for the Gordon and Tuten markets show why no payout was found.
