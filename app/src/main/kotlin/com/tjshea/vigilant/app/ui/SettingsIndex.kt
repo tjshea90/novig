@@ -34,6 +34,7 @@ object SettingsIndex {
         // Scanning
         Entry("Pause all scanning", SettingsPage.SCANNING, "Stop every read until you switch it back on", "stop pause"),
         Entry("Which scanner", SettingsPage.SCANNING, "CrazyNinjaOdds' list, Vigilant's own scan, or both", "cno vigilant scanner mode both"),
+        Entry("Pinnacle only", SettingsPage.SCANNING, "Compare Novig with Pinnacle's devigged price alone; read nothing else", "pinnacle only sharp devig compare auto-bet fresh age", novig),
         Entry("Games starting within", SettingsPage.SCANNING, "Only games starting within a few hours", "window hours time start soon", novig),
         Entry("Keep scanning in the background", SettingsPage.SCANNING, "Scan with Vigilant closed: what sends alerts and runs auto-bet", "auto-scan autoscan background interval every closed", novig),
         Entry("Keep awake (screen stays off)", SettingsPage.SCANNING, "Keeps background scans on time while the phone sleeps", "battery doze sleep", { AppBook.isNovig && BackgroundScan.on(it) }),
@@ -56,7 +57,7 @@ object SettingsIndex {
         // Widget
         Entry("Floating widget you can touch", SettingsPage.WIDGET, "A small window over other apps with your best bets", "widget floating overlay bubble pip"),
         Entry("Also open it when I leave Vigilant", SettingsPage.WIDGET, "Open the widget by itself when you switch apps", "mini window leave open"),
-        Entry("Vigilant's scan again while the widget is open", SettingsPage.WIDGET, "Rescan Vigilant's own bets while the widget is up", "rescan widget", { it.scanner == ScannerMode.BOTH }),
+        Entry("Vigilant's scan again while the widget is open", SettingsPage.WIDGET, "Rescan Vigilant's own bets while the widget is up", "rescan widget", { it.scannerNow == ScannerMode.BOTH }),
         // +EV feed & scan size
         Entry("Smallest edge (EV) shown", SettingsPage.FEED, "The smallest edge Vigilant's +EV feed shows", "min ev minimum feed"),
         Entry("Longest odds shown", SettingsPage.FEED, "No long shots past this in Vigilant's feed", "max odds longshot"),
