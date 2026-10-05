@@ -67,4 +67,19 @@ class TrackerBreakdownTest {
         val rows = TrackerBreakdown.of(listOf(bet("1"), bet("2", source = BetTracker.SOURCE_VIGILANT), bet("3", source = BetTracker.SOURCE_VIGILANT)), By.SCANNER)
         assertEquals(listOf("Vigilant", "CNO"), rows.map { it.label })
     }
+
+    @Test
+    fun `bets split by how long before the start they were placed, nearest to the start first whatever the counts (RESEARCH 82)`() {
+        val start = 1_000_000_000_000L
+        fun at(id: String, hoursBefore: Double, status: BetStatus = BetStatus.WON) =
+            bet(id, status = status).copy(createdAtMs = start - (hoursBefore * 3_600_000).toLong(), startsTs = start)
+        val rows = TrackerBreakdown.of(
+            listOf(at("a", 30.0), at("b", 30.0), at("c", 1.0, BetStatus.LOST), at("d", 10.0), at("e", 0.1), at("f", 3.0)),
+            By.LEAD,
+        )
+        // 24 h or more has the most settled bets (2) and still comes last.
+        assertEquals(listOf("under 30 min", "30 min-2 h", "2-6 h", "6-24 h", "24 h or more"), rows.map { it.label })
+        assertEquals(2, rows.last().stats.won)
+        assertEquals("Time to start", By.LEAD.label)
+    }
 }
