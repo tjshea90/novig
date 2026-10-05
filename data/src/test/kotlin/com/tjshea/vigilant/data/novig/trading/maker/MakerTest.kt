@@ -195,7 +195,7 @@ class MakerTest {
 
     // ---- the desk against a fake Novig ----------------------------------------------------------------------------------
 
-    private inner class FakeNovig : NovigTradingClient(
+    private open inner class FakeNovig : NovigTradingClient(
         NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
             override val keyId = "kid"
             override val algorithm = NovigKeyAlgorithm.P256
@@ -282,6 +282,45 @@ class MakerTest {
             val left = o.remaining - qty
             orders[orderId] = o.copy(remaining = left, status = if (left <= 0) "FILLED" else "OPEN")
             fillsBy.getOrPut(orderId) { ArrayList() } += NovigFill("f-$orderId-${fillsBy[orderId]?.size ?: 0}", orderId, o.clientId, o.marketId, o.outcomeId, qty, qty * o.price * 0.01, false, 0.0, now)
+        }
+    }
+
+    /** Novig with the batch routes: counts the requests, can refuse a batch whole, lose its answer, or fill an order before its cancel. */
+    private inner class BatchNovig : FakeNovig() {
+        override val batchOrders = true
+        val batches = ArrayList<List<NewOrder>>()
+        val cancelBatches = ArrayList<List<String>>()
+        var refuseBatch: NovigApiException? = null
+        var loseBatchAnswer = false
+        /** Orders that fill the moment a cancel batch names them. */
+        val fillOnCancel = HashSet<String>()
+
+        override suspend fun placeOrders(orders: List<NewOrder>): Map<String, String> {
+            batches += orders
+            refuseBatch?.let { throw it }
+            val ids = orders.associate { o ->
+                val id = "b${batches.size}-${o.clientId.take(4)}"
+                this.orders[id] = NovigOrder(id, o.clientId, o.outcomeId.substringBefore('-'), o.outcomeId, o.price, o.qty, o.qty, o.tif, "OPEN", now, o.ttlMs?.let { now + it })
+                o.clientId to id
+            }
+            if (loseBatchAnswer) throw java.io.IOException("timeout")
+            return ids
+        }
+
+        override suspend fun cancelOrdersBatch(orderIds: List<String>): BatchCancel {
+            cancelBatches += orderIds
+            val canceled = HashSet<String>()
+            val not = HashMap<String, String>()
+            for (id in orderIds) {
+                val o = orders[id]
+                when {
+                    o == null -> not[id] = "NOT_FOUND"
+                    id in fillOnCancel -> { fill(id, o.remaining); not[id] = "FILLED" }
+                    o.status != "OPEN" -> not[id] = "CANCELED"
+                    else -> { orders[id] = o.copy(status = "CANCELED"); canceled += id }
+                }
+            }
+            return BatchCancel(canceled, not)
         }
     }
 
@@ -1507,5 +1546,85 @@ class MakerTest {
         assertTrue(QuickLikely.fillChancePerHour(0.60) > QuickLikely.fillChancePerHour(0.75))
         assertTrue(QuickLikely.fillChancePerHour(0.95) < 0.01)
         assertEquals(0.105, QuickLikely.fillChancePerHour(0.35), 1e-12)
+    }
+
+    // ---- the batch routes (RESEARCH.md §90.5): many bids in one request ---------------------------------------------------------------------
+
+    @Test
+    fun `new bids go up in one batch request when there are two or more, and a single bid still goes alone`() = runBlocking {
+        val novig = BatchNovig()
+        val d = desk(novig, tracker())
+        val r = d.cycle(oneGame("a-over", "b-over", "c-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(3, r.placed)
+        assertEquals("one request, not three", 1, novig.batches.size)
+        assertEquals(3, novig.batches.single().size)
+        assertTrue("and none one by one", novig.placed.isEmpty())
+        val bids = d.bids()
+        assertEquals(3, bids.count { it.status == MakerStatus.RESTING && it.orderId != null })
+        // Each is a post-only order with its own expiry, the same as when it goes alone.
+        assertTrue(novig.batches.single().all { it.tif == "PO" && it.ttlMs != null && it.ttlMs!! > 0 })
+        // A pass with one new bid does not use a batch.
+        val novig2 = BatchNovig()
+        assertEquals(1, desk(novig2, tracker()).cycle(oneGame("a-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0).placed)
+        assertEquals(0, novig2.batches.size)
+        assertEquals(1, novig2.placed.size)
+    }
+
+    @Test
+    fun `a batch Novig refuses places none of them - no record is left behind, and each bid is then tried alone`() = runBlocking {
+        val novig = BatchNovig().also { it.refuseBatch = NovigApiException(422, "INSUFFICIENT_FUNDS", "not enough balance") }
+        val d = desk(novig, tracker())
+        val r = d.cycle(oneGame("a-over", "b-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(1, novig.batches.size)
+        assertEquals("both went on alone after the refusal", 2, novig.placed.size)
+        assertEquals(2, r.placed)
+        assertTrue(r.problems.toString(), r.problems.any { it.contains("batch of 2 bids was refused") })
+        // Two bids on the books, not four: the refused batch's records were taken out.
+        assertEquals(2, d.bids().size)
+        assertTrue(d.bids().all { it.status == MakerStatus.RESTING && it.orderId != null })
+    }
+
+    @Test
+    fun `a batch whose answer is lost stops the pass, and the next look finds the bids by their client ids`() = runBlocking {
+        val novig = BatchNovig().also { it.loseBatchAnswer = true }
+        val d = desk(novig, tracker())
+        val r = d.cycle(oneGame("a-over", "b-over", "c-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(0, r.placed)
+        assertTrue(r.problems.toString(), r.problems.any { it.contains("didn't answer a batch of 3 bids") })
+        assertTrue("nothing is sent again", novig.placed.isEmpty() && novig.batches.size == 1)
+        assertEquals(3, d.bids().count { it.status == MakerStatus.SENT && it.orderId == null })
+        // Novig had placed them: the next pass reads the open orders and gives each bid its id.
+        d.cycle(emptyList(), rules, stop = null, maxPerDay = 50.0, wallet = 100.0, partial = true)
+        assertEquals(3, d.bids().count { it.orderId != null && it.status == MakerStatus.RESTING })
+        assertEquals(1, novig.batches.size)
+    }
+
+    @Test
+    fun `taking several bids down is one batch cancel, a bid that filled first is a bet, and one already gone is just gone`() = runBlocking {
+        val novig = BatchNovig()
+        val t = tracker()
+        val d = desk(novig, t)
+        d.cycle(oneGame("a-over", "b-over", "c-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        val ids = d.bids().map { it.orderId!! }
+        // One fills in the instant before the cancel; one is off the book already.
+        novig.fillOnCancel += ids[0]
+        novig.orders[ids[1]] = novig.orders.getValue(ids[1]).copy(status = "CANCELED")
+        val r = d.cycle(emptyList(), rules, stop = "Scanning is paused", maxPerDay = 50.0, wallet = 100.0)
+        assertEquals("one cancel request", 1, novig.cancelBatches.size)
+        assertEquals(ids.toSet(), novig.cancelBatches.single().toSet())
+        assertTrue("and none one by one", novig.cancelled.isEmpty())
+        assertEquals("the one that filled first is a Tracker bet", 1, t.all().size)
+        assertTrue(d.bids().none { it.status == MakerStatus.RESTING })
+        assertTrue(r.problems.toString(), r.problems.isEmpty())
+    }
+
+    @Test
+    fun `a doubles - without the batch routes (the client says so) a pass posts and cancels one by one as ever`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        assertEquals(3, d.cycle(oneGame("a-over", "b-over", "c-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0).placed)
+        assertEquals(3, novig.placed.size)
+        d.cycle(emptyList(), rules, stop = "Scanning is paused", maxPerDay = 50.0, wallet = 100.0)
+        assertEquals(3, novig.cancelled.size)
     }
 }
