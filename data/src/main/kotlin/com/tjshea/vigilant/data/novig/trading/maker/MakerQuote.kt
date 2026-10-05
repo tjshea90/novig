@@ -92,6 +92,7 @@ data class MakerRules(
      * slate could want hundreds at once, and a pass that long would hold the lock the Pause, the kill switch and the fills' checks wait for.
      */
     val postsPerPass: Int = POSTS_PER_PASS,
+) {
     /** The lowest price a bid may rest at: the window's floor, or the price [maxOdds] works out to when that is higher (+140 is 41.7¢). */
     val lowestPrice: Double get() = maxOf(minPrice, priceAtOdds(maxOdds))
 
