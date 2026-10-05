@@ -677,11 +677,13 @@ class AppContainer(private val app: Application) {
         }
         appScope.launch {
             // Paused (the Pause button, or the wallet ran out): every bid down. Auto-make switched off: the bids it posted down; the ones Tj approved stay.
-            settingsStore.flow.filterNotNull().map { it.paused to (it.maker && it.makerHalted == null) }.distinctUntilChanged().collect { (paused, on) ->
+            settingsStore.flow.filterNotNull().map { Triple(it.paused, it.maker, it.makerHalted != null) }.distinctUntilChanged().collect { (paused, on, guarded) ->
                 runCatching {
                     when {
                         paused -> maker.cancelAll("Scanning is paused")
-                        !on -> maker.cancelAuto("Auto-make switched off, or stopped by the picked-off guard")
+                        !on -> maker.cancelAuto("Auto-make switched off")
+                        // Stopped by the picked-off guard (Tj, 2026-10-05): the bids it posted come down, the ones Tj approved by hand stay.
+                        guarded -> maker.cancelAuto("Stopped by the picked-off guard")
                         else -> null
                     }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }

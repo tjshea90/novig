@@ -409,7 +409,7 @@ class MakerUiTest {
         var s = settings.copy(makerHalted = why)
         compose.setContent { VigilantTheme { MakerScreen(ui(s), MakerActions(onUpdate = { f -> s = f(s) })) } }
         compose.onNodeWithTag("makerHalted").assertIsDisplayed()
-        compose.onNodeWithTag("makerHalted").assertTextContains("5 of the last 8 fills were picked off", substring = true)
+        compose.onNodeWithText("5 of the last 8 fills were picked off", substring = true).assertIsDisplayed()
         val before = System.currentTimeMillis()
         compose.onNodeWithText("Resume bids").performClick()
         assertEquals(null, s.makerHalted)
