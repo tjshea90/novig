@@ -28,10 +28,12 @@ class StartsWithinTest {
     private fun UiState.within(h: Int) = copy(settings = settings.copy(startsWithinHours = h))
 
     @Test
-    fun `the choices are any time, 12, 24 and 48 hours, any by default`() {
-        assertEquals(listOf(0, 12, 24, 48), ScanSettings.STARTS_WITHIN_CHOICES)
+    fun `the choices are any time, 3, 6, 12, 24 and 48 hours, any by default, and 6 h is one so the lists can match the trap guard`() {
+        assertEquals(listOf(0, 3, 6, 12, 24, 48), ScanSettings.STARTS_WITHIN_CHOICES)
         assertEquals(0, ScanSettings().startsWithinHours)
-        assertEquals(listOf("Any time", "12h", "24h", "48h"), ScanSettings.STARTS_WITHIN_CHOICES.map(::startsWithinLabel))
+        assertEquals(listOf("Any time", "3h", "6h", "12h", "24h", "48h"), ScanSettings.STARTS_WITHIN_CHOICES.map(::startsWithinLabel))
+        // The trap guard's own window is a choice here: the lists can show exactly what the auto-bet would bet (RESEARCH.md §82).
+        assertTrue(com.tjshea.vigilant.data.scanner.TrapGuard.DEFAULT_EARLY_HOURS in ScanSettings.STARTS_WITHIN_CHOICES)
     }
 
     @Test
@@ -100,10 +102,10 @@ class StartsWithinTest {
     }
 
     @Test
-    fun `the widget's switch cycles any time, 12h, 24h, 48h`() {
-        assertEquals(listOf(12, 24, 48, 0), listOf(0, 12, 24, 48).map(::nextStartsWithin))
+    fun `the widget's switch cycles any time, 3h, 6h, 12h, 24h, 48h`() {
+        assertEquals(listOf(3, 6, 12, 24, 48, 0), listOf(0, 3, 6, 12, 24, 48).map(::nextStartsWithin))
         // A saved value that isn't a choice any more starts the cycle over.
-        assertEquals(12, nextStartsWithin(6))
+        assertEquals(3, nextStartsWithin(5))
     }
 
     @Test

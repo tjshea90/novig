@@ -451,8 +451,8 @@ private fun ScannerSwitch(mode: com.tjshea.vigilant.data.scanner.ScannerMode, on
 
 /**
  * The start-time window, flipped right there (Tj, 2026-09-27: "select the time periods 12h 24h 48h and
- * anytime for the cno scanner and cno widget as well"): each tap moves to the next of Any time → 12h →
- * 24h → 48h. The same setting as the +EV and CNO tabs' "Starts within" row.
+ * anytime for the cno scanner and cno widget as well"): each tap moves to the next of Any time → 3h → 6h →
+ * 12h → 24h → 48h. The same setting as the +EV and CNO tabs' "Starts within" row.
  */
 @Composable
 private fun StartsWithinSwitch(hours: Int, onPick: (Int) -> Unit) {
