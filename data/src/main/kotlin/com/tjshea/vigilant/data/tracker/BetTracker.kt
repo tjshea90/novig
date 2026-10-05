@@ -958,8 +958,18 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         }
 
         /**
+         * The running-profit line's points: 0, then the profit after each settled bet in the order the games were played, every bet counted (outliers and
+         * locks too) so the last point is [TrackerStats.profitAll] (Tj, 2026-10-05: the line read red with the "Novig only" filter off and green with it on).
+         * Empty with fewer than two settled bets.
+         */
+        fun profitLine(all: List<TrackedBet>): List<Double> {
+            val settled = all.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID }.sortedBy { it.startsTs }
+            return if (settled.size < 2) emptyList() else settled.runningFold(0.0) { acc, b -> acc + (b.profit ?: 0.0) }
+        }
+
+        /**
          * The Tracker's numbers for [all]: outliers ([TrackedBet.isOutlier]) left out of everything but
-         * [TrackerStats.profitAll]; voided bets counted only as voided. "Profit" and "Expected" are over the
+         * [TrackerStats.profitAll] and [TrackerStats.stakedAll]; voided bets counted only as voided. "Profit" and "Expected" are over the
          * same settled bets, so they can be compared (the edge is real when they run together).
          */
         fun stats(all: List<TrackedBet>, now: Long = System.currentTimeMillis()): TrackerStats {

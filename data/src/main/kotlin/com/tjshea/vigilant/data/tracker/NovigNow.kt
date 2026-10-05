@@ -67,6 +67,8 @@ object NovigNow {
         val open = b.status == BetStatus.PENDING
         val fair = b.novigFair?.let { asBet(b, it) }
         b.copy(
+            // The lens makes the EV when bet 0 by definition; which bets are outliers is still judged on the EV they were listed at, so both views count the same bets.
+            outlierListed = b.isOutlier,
             fairAtBet = b.price, evPercentAtBet = b.price / b.cost - 1.0,
             nowFair = if (open) fair else b.nowFair,
             nowEv = if (open) fair?.let { it / b.cost - 1.0 } else b.nowEv,
