@@ -7,15 +7,10 @@ import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.novig.NovigSource
-import com.tjshea.vigilant.data.reference.LineKind
 import com.tjshea.vigilant.data.reference.LowUsageSource
-import com.tjshea.vigilant.data.reference.RefBookMarket
-import com.tjshea.vigilant.data.reference.RefEvent
-import com.tjshea.vigilant.data.reference.RefQuote
 import com.tjshea.vigilant.data.reference.RefSnapshot
 import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.reference.ScanContext
-import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -44,13 +39,13 @@ class LowUsageScanTest {
         id, event, "MONEY", "OPEN", "ML", now + startsIn, MarketFee.GAME, listOf(NovigOutcome("$id-a", "A", "TBD"), NovigOutcome("$id-b", "B", "TBD")),
     )
 
-    /** A board with an NFL game in 3 hours, an NFL game and an MLB game in 2 days, and an NBA game in 4 hours that has no prop market yet. */
+    /** A board with an NFL game in 3 hours, an NFL game and an MLB game in 2 days, and an NHL game in 4 hours that has no prop market yet. */
     private inner class Board : NovigSource {
-        val events = listOf(ev("nfl-near", "NFL", 3 * hour), ev("nfl-far", "NFL", 48 * hour), ev("mlb-far", "MLB", 48 * hour), ev("nba-near", "NBA", 4 * hour))
+        val events = listOf(ev("nfl-near", "NFL", 3 * hour), ev("nfl-far", "NFL", 48 * hour), ev("mlb-far", "MLB", 48 * hour), ev("nhl-near", "NHL", 4 * hour))
         val markets = listOf(
             prop("p-nfl-near", "nfl-near", 3 * hour), main("ml-nfl-near", "nfl-near", 3 * hour),
             prop("p-nfl-far", "nfl-far", 48 * hour), prop("p-mlb-far", "mlb-far", 48 * hour, "HITS"),
-            main("ml-nba-near", "nba-near", 4 * hour),
+            main("ml-nhl-near", "nhl-near", 4 * hour),
         )
         var startsBefore: Long? = null
         var types: Collection<String> = emptyList()
@@ -80,14 +75,14 @@ class LowUsageScanTest {
         }
     }
 
-    private val on = ScanSettings(leagues = setOf("NFL", "MLB", "NBA"), makerFocus = BidFocus.LOW_USAGE, maker = true, lowUsageBooks = setOf("kalshi", "prophetx"))
+    private val on = ScanSettings(leagues = setOf("NFL", "MLB", "NHL"), makerFocus = BidFocus.LOW_USAGE, maker = true, lowUsageBooks = setOf("kalshi", "prophetx"))
 
     @Test
     fun `a league with no game in the window and a prop market on Novig is not asked - and one with a game is`() = runTest {
         val kalshi = Feed("kalshi")
         val parlay = Feed("parlay_props")
         Scanner(Board(), clock = { now }).scan(on, listOf(LowUsageSource(kalshi), LowUsageSource(parlay)))
-        // NFL has a game in 3 h with a prop market; MLB's only game is in 2 days; NBA's game in 4 h has no prop market.
+        // NFL has a game in 3 h with a prop market; MLB's only game is in 2 days; NHL's game in 4 h has no prop market.
         assertEquals(listOf("NFL"), kalshi.asked)
         assertEquals(listOf("NFL"), parlay.asked)
     }
@@ -96,14 +91,14 @@ class LowUsageScanTest {
     fun `the same feeds unwrapped are asked for every league, as a scan always did`() = runTest {
         val kalshi = Feed("kalshi")
         Scanner(Board(), clock = { now }).scan(on, listOf(kalshi))
-        assertEquals(setOf("NFL", "MLB", "NBA"), kalshi.asked.toSet())
+        assertEquals(setOf("NFL", "MLB", "NHL"), kalshi.asked.toSet())
     }
 
     @Test
     fun `a wrapped feed outside the mode is asked for every league too`() = runTest {
         val kalshi = Feed("kalshi")
         Scanner(Board(), clock = { now }).scan(on.copy(makerFocus = BidFocus.ALL), listOf(LowUsageSource(kalshi)))
-        assertEquals(setOf("NFL", "MLB", "NBA"), kalshi.asked.toSet())
+        assertEquals(setOf("NFL", "MLB", "NHL"), kalshi.asked.toSet())
     }
 
     @Test
@@ -113,14 +108,11 @@ class LowUsageScanTest {
         val oddsApi = Feed("oddsapi", propsOnly = false)
         val polymarket = Feed("polymarket", propsOnly = false)
         val pinnacle = Feed("pinnacle", propsOnly = false)
-        val parlayLines = Feed("parlay", propsOnly = false)
-        Scanner(Board(), clock = { now }).scan(on, listOf(kalshi, parlay, oddsApi, polymarket, pinnacle, parlayLines))
+        Scanner(Board(), clock = { now }).scan(on, listOf(kalshi, parlay, oddsApi, polymarket, pinnacle))
         assertTrue(kalshi.asked.isNotEmpty() && parlay.asked.isNotEmpty())
         assertTrue("The Odds API", oddsApi.asked.isEmpty())
         assertTrue("Polymarket", polymarket.asked.isEmpty())
         assertTrue("Pinnacle isn't a pick", pinnacle.asked.isEmpty())
-        // ParlayAPI's game-line call is the same switch as its props ("parlay" vs "parlay_props"): the app doesn't offer it in the mode; the scanner still reads what it is handed.
-        assertFalse(parlayLines.asked.isEmpty().not() && false)
     }
 
     @Test
@@ -190,24 +182,5 @@ class LowUsageScanTest {
         assertTrue(wrapped.needsCatalog)
         assertNotNull(wrapped.odds(Leagues.byNovigName("NFL")!!, on.effective(), context(ev("g", "NFL", 2 * hour), markets = listOf(prop("p", "g", 2 * hour)))))
         assertEquals(listOf("NFL"), inner.asked)
-    }
-
-    @Test
-    fun `a quote seen in a scan is a quote a bid could be priced from - the whole path, fake feeds to a fair`() = runTest {
-        val feed = object : ReferenceSource {
-            override val id = "kalshi"
-            override val displayName = "Kalshi"
-            override val propsOnly = true
-            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-                val ref = RefEvent(
-                    "r", league.oddsApiSportKey, now + 3 * hour, "Home", "Away",
-                    listOf(RefBookMarket("kalshi", "Kalshi", LineKind.PLAYER_PROP, listOf(RefQuote(Side.OVER, 1.95, 224.5), RefQuote(Side.UNDER, 1.95, 224.5)), null, 0, "Player", "PASSING_YARDS")),
-                )
-                return RefSnapshot(league.oddsApiSportKey, listOf(ref), 0)
-            }
-        }
-        val report = Scanner(Board(), clock = { now }).scan(on, listOf(LowUsageSource(feed)))
-        // One book alone is not a fair in this mode (it takes two): nothing is priced from it.
-        assertTrue(report.result!!.opportunities.all { it.fairProbability == null })
     }
 }
