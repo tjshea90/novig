@@ -1,22 +1,22 @@
-# CHECKPOINT 2575 — read me first, then TASKS.md
+# CHECKPOINT 2576 — read me first, then TASKS.md
 
-**Written:** 2026-10-05T20:10:38Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-cb9fb4b3-95tfr2` · **builds on:** `698180c1` (this checkpoint is the commit after it)
+**Written:** 2026-10-05T20:17:38Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-cb9fb4b3-95tfr2` · **builds on:** `687617ea` (this checkpoint is the commit after it)
 
 ## Just done
-CP3: longest-odds bid limit: rules + settings field + Bids settings chips/typed field + notes (not yet tested)
+CP3 built+tested: makerMaxOdds in MakerRules/outsideWindow (all bid paths), chips+typed field on the Bids rules, settings-search entry, MakerTest +6, MakerUiTest +1
 
 ## Do this next
-CP3: Diagnostics line, tests (MakerTest boundary/negative/favorites/quick/plan cancel; MakerUiTest chips+field), then CP1 research text + CP2 wash guard
+CP1/CP2: finish the both-sides research (RESEARCH §91) and the wash guard in MakerPlan (never two bids of ours that could trade with each other) + tests; CP4 sweep + full floor + ship v0.67.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/MakerScreen.kt
 
 ## Last ten checkpoints
 ```
+  d39aa899 ckpt 2575: CP3: longest-odds bid limit: rules + settings field + Bids settings chips/ty
   119cb5c1 ckpt 2574: TASKS.md: CP1-CP4 written from Tj's 19:53Z message (both sides of a prop gua
   d53f88d3 ckpt 2573: v0.66.0 released and recorded (CO1-CO7 done)
   dcaaa801 ckpt 2572: pre-release: v0.66.0: API audit against the providers' own docs (RESEARCH §
@@ -26,8 +26,7 @@ CP3: Diagnostics line, tests (MakerTest boundary/negative/favorites/quick/plan c
   b9293edb ckpt 2568: Novig batch place/cancel in the bid desk (client flag, fallback to singles, 
   42f8cff7 ckpt 2567: RESEARCH §90 written: API audit (docs vs code, ranking, PropLine buy answer
   46e07514 ckpt 2566: pre-release: v0.65.0: Pinnacle only (Settings › Scanning and the Auto-bet 
-  b3a705c9 ckpt 2565: pre-ship: v0.65.0: Pinnacle only (Settings › Scanning and the Auto-bet tab
 ```
 
-(5 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
