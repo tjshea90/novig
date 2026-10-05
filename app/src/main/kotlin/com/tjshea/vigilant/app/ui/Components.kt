@@ -223,6 +223,15 @@ fun PausedBanner(onResume: () -> Unit, modifier: Modifier = Modifier) {
     Banner(PAUSED_TEXT, modifier, action = "Resume", onAction = onResume)
 }
 
+/** What the +EV and CNO tabs say while the kill switch is on (Tj, 2026-10-05): the way back is the red bar, not a Pause ▶. */
+@Composable
+fun KilledBanner(modifier: Modifier = Modifier) {
+    Banner(KILLED_TEXT, modifier, color = MaterialTheme.colorScheme.error)
+}
+
+/** [KilledBanner]'s words. */
+const val KILLED_TEXT = "Everything is stopped by the STOP button: no scanning, auto-betting, bidding or background scan, and it stays off, even if you close the app, until you tap RESUME on the red bar below."
+
 /** [PausedBanner]'s words. */
 const val PAUSED_TEXT = "Scanning is paused: nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) until you resume."
 

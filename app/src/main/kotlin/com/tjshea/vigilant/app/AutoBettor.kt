@@ -215,6 +215,8 @@ class AutoBettor(
         val ordered = passing.sortedByDescending { AutoBet.credibleEv(it.shown.ev, vetoSaid[it.pick.row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.ev) }
         for (item in ordered) {
             currentCoroutineContext().ensureActive()
+            // Stop pressed (or scanning paused) since this cycle began: no further order, whatever the settings this pass started with said (Tj, 2026-10-05).
+            if (c.settingsStore.flow.value?.paused == true) { stopped = "scanning was paused or the STOP button pressed while this pass ran"; break }
             if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
             val row = item.pick.row
             // A Kelly stake is never sized on more edge than the sharpest book backs (its own fair, where its veto priced the bet: RESEARCH.md §72).

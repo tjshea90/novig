@@ -245,7 +245,7 @@ fun CnoScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        if (state.settings.paused) PausedBanner({ onPause(false) })
+                        if (state.settings.killed) KilledBanner() else if (state.settings.paused) PausedBanner({ onPause(false) })
                         if (snap != null && CnoChecks.stuck(snap, now)) {
                             Banner("CrazyNinjaOdds hasn't updated its odds in ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} (it may be down). These prices are likely gone.")
                         }

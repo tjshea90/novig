@@ -106,6 +106,7 @@ object AutoBetText {
             !AppBook.isNovig -> "Auto-bet is for Novig."
             !state.betting.enabled -> "Betting through Novig's API isn't set up yet: connect your Novig key and turn on betting first (the wallet is where auto-bets come from)."
             s.autoBetHalted != null -> "Stopped: ${s.autoBetHalted}"
+            s.killed -> "Everything is stopped by the STOP button: auto-bet waits for Resume (the red bar at the bottom)."
             s.paused -> "Scanning is paused (the ⏸ button): auto-bet waits for it."
             s.scanner == ScannerMode.VIGILANT -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read."
             s.autoScan == AutoScanMode.OFF -> "The background scan is off, and auto-bet runs inside it."
@@ -122,6 +123,8 @@ object AutoBetText {
             !AppBook.isNovig -> null
             !state.betting.enabled -> Fix.SET_UP_BETTING
             s.autoBetHalted != null -> null
+            // The kill switch has its own Resume on the red bar; ▶ here can't lift it.
+            s.killed -> null
             s.paused -> Fix.RESUME_SCANNING
             s.scanner == ScannerMode.VIGILANT -> Fix.SCANNER
             s.autoScan == AutoScanMode.OFF -> Fix.BACKGROUND_SCAN
