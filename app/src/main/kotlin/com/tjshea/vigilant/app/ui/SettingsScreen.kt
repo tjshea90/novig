@@ -140,7 +140,7 @@ object SettingsSummary {
         val s = state.settings
         return when (page) {
             SettingsPage.SCANNING -> listOfNotNull(
-                if (s.paused) "Paused" else s.scanner.displayName,
+                if (s.killed) "STOPPED" else if (s.paused) "Paused" else s.scanner.displayName,
                 if (!AppBook.isNovig) null else if (s.startsWithinHours <= 0) "any start time" else "games within ${s.startsWithinHours}h",
                 if (!AppBook.isNovig) null else if (BackgroundScan.on(s)) "background every ${ScanSettings.intervalLabel(s.autoScanSeconds)}" else "background off",
             ).joinToString(" · ")
@@ -370,9 +370,15 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
         "Pause all scanning",
         "Stops every read (Vigilant's scans, CrazyNinjaOdds' list, the background scan and auto-bet) until you switch it off. Also the ⏸ button on the " +
             "+EV and CNO tabs and the widget. Opening bets and grading tracked ones still work. A pull to refresh, or the Tracker's Check odds now, resumes.",
-        s.paused,
+        s.pausedByHand,
         tag = "pauseSwitch",
     ) { v -> onUpdate { it.copy(pausedByHand = v) } }
+    // The kill switch (Tj, 2026-10-05) is the red bar above the tab bar on every screen, not a setting here: a switch in a page would be one more screen away.
+    Hint(
+        "The red STOP ALL bar above the tab bar (on every screen, the widget and the auto-scan notification) stops everything at once: scans, CrazyNinjaOdds, " +
+            "auto-bet, auto-lock, bids (every resting bid is taken down) and the background scan. It stays off, even after you close the app, until you tap RESUME there." +
+            if (s.killed) " It is ON now." else "",
+    )
     Text("Which scanner", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
     Hint(
@@ -1221,6 +1227,7 @@ fun autoScanHint(s: ScanSettings): String {
         s.autoScansCno -> "Every $every, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work.$fast" +
             if (s.autoScan.vigilant) " Vigilant's scan is skipped, because the scanner above is on CNO only: no API credits are spent in the background." else ""
         s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $vigilantPart.$notification CrazyNinjaOdds isn't read, because the scanner above is on Vigilant only.$fast"
+        s.killed -> "Everything is stopped by the STOP button: tap RESUME on the red bar to run again."
         s.paused -> "Paused with everything else: resume scanning (the ⏸ button) to run again."
         else -> "Nothing runs in the background: the scanner above is on ${s.scanner.displayName}, which leaves nothing for this choice to read. Pick a scanner that is on."
     }
