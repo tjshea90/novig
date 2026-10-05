@@ -71,7 +71,7 @@ class TheOddsApiClient(
     override val metered = true
 
     /** The books asked for: the feed's own list (ParlayAPI), else the reference books picked in Settings (their keys are The Odds API's). */
-    fun booksFor(settings: ScanSettings): List<String> = feed.books ?: settings.referenceBooks
+    fun booksFor(settings: ScanSettings): List<String> = if (settings.pinnacleOnly) ScanSettings.PINNACLE_BOOKS.toList() else feed.books ?: settings.referenceBooks
 
     /**
      * Tennis is keyed per tournament on The Odds API, never by the league key the app groups it under; ParlayAPI keys a whole tour
