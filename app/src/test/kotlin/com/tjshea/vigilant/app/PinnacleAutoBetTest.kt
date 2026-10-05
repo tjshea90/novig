@@ -71,7 +71,7 @@ class PinnacleAutoBetTest {
         }
     }
 
-    private class FakeNovig(val orders: AtomicInteger = AtomicInteger()) :
+    private class FakeNovig(val orders: AtomicInteger = AtomicInteger(), val afterOrder: suspend () -> Unit = {}) :
         NovigTradingClient(NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
             override val keyId = "kid"
             override val algorithm = NovigKeyAlgorithm.P256
@@ -81,6 +81,7 @@ class PinnacleAutoBetTest {
         override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             orders.incrementAndGet()
             last = Triple(outcomeId, price, qty)
+            afterOrder()
             return "order-${orders.get()}"
         }
         override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", "FILLED", 1)
@@ -97,8 +98,12 @@ class PinnacleAutoBetTest {
         listOf(NovigOutcome("out-over", "Over 69.5", "TBD"), NovigOutcome("out-under", "Under 69.5", "TBD")),
     )
 
+    private val market2 = market.copy(marketId = "mkt2", eventId = "ev2", outcomes = listOf(NovigOutcome("out2-over", "Over 40.5", "TBD"), NovigOutcome("out2-under", "Under 40.5", "TBD")))
+
     /** A bid of 0.539 on the other side makes the Over's ask 0.461. */
-    private fun book() = NovigBook("mkt", 1, mapOf("out-under" to listOf(BidLevel(539, 5_000)), "out-over" to listOf(BidLevel(400, 50))), now)
+    private fun book(id: String = "mkt") =
+        if (id == "mkt2") NovigBook("mkt2", 1, mapOf("out2-under" to listOf(BidLevel(539, 5_000)), "out2-over" to listOf(BidLevel(400, 50))), now)
+        else NovigBook("mkt", 1, mapOf("out-under" to listOf(BidLevel(539, 5_000)), "out-over" to listOf(BidLevel(400, 50))), now)
 
     private fun fair(vararg books: String, asOf: Long) = FairLine(
         listOf(0.5, 0.5), FairSource.SHARP, FairSource.SHARP, DevigMethod.WORST_CASE,
@@ -106,17 +111,17 @@ class PinnacleAutoBetTest {
     )
 
     /** Over 69.5 at Novig's 0.461 against Pinnacle's 0.50: +8.5%, with Pinnacle's quote [asOf] ms. */
-    private fun opp(asOf: Long, books: Array<String> = arrayOf("Pinnacle"), cost: Double = 0.461) = Opportunity(
-        league = Leagues.byNovigName("NFL")!!, event = event, market = market, outcome = market.outcomes.first(), marketLabel = "Player Receiving Yards", kind = LineKind.PLAYER_PROP,
+    private fun opp(asOf: Long, books: Array<String> = arrayOf("Pinnacle"), cost: Double = 0.461, second: Boolean = false) = (if (second) market2 else market).let { m -> Opportunity(
+        league = Leagues.byNovigName("NFL")!!, event = if (second) event.copy(eventId = "ev2") else event, market = m, outcome = m.outcomes.first(), marketLabel = "Player Receiving Yards", kind = LineKind.PLAYER_PROP,
         selection = "Player Over 69.5", fair = fair(*books, asOf = asOf), fairProbability = 0.5, quote = EvQuote(0.5, cost, 0.0), ladder = emptyList(),
         depth = PositiveDepth(1000, 200.0, 5.0, cost), suggestedStake = null, novigWidth = null, bookFetchedAtMs = now - 5_000, fairUpdatedMs = asOf,
         refEvent = null, lineKey = LineKey("pin-1", LineKind.PLAYER_PROP, 69.5, 0, "Player", "RECEIVING_YARDS"), target = OutcomeTarget.Is(Side.OVER), fairAsOfMs = asOf,
-    )
+    ) }
 
     private fun result(vararg o: Opportunity) = ScanResult(emptyList(), o.toList(), ScanStats(0, 0, 0, 0, 0), now)
 
     private fun placer(novig: FakeNovig) =
-        ApiBetPlacer(novig, app.container.tracker, books = { book() }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
+        ApiBetPlacer(novig, app.container.tracker, books = { id -> book(id) }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
 
     private fun bettor(novig: FakeNovig, wallet: Double? = 25.0) =
         AutoBettor(app, app.container, clock = { now }, placer = { placer(novig) }, wallet = { wallet }, recentTrades = { emptyList() })
@@ -207,6 +212,16 @@ class PinnacleAutoBetTest {
         assertTrue(stale.placed.isEmpty())
         assertEquals(0, novig.orders.get())
         assertFalse(notifications().any { it.extras.getString("android.title")!!.startsWith("Auto-bet \$") })
+    }
+
+    @Test
+    fun `a STOP pressed while a pass is placing its bets stops the rest - nothing more is sent after the order that was in flight`() = runBlocking {
+        val novig = FakeNovig(afterOrder = { app.container.settingsStore.update { it.copy(killed = true) } })
+        // Two bets that both pass, in two markets of two games; the first is sent, the STOP lands during it, the second must not be sent.
+        val report = bettor(novig).runPinnacle(settings(), result(opp(asOf = now - 5_000), opp(asOf = now - 5_000, second = true))) { null }
+        assertEquals(1, novig.orders.get())
+        assertEquals(1, report.placed.size)
+        assertEquals("the STOP button was pressed while this pass ran", report.stopped)
     }
 
     @Test
