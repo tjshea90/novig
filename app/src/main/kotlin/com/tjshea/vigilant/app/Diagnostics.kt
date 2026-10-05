@@ -195,6 +195,7 @@ object Diagnostics {
                 "${x.makerBids.count { it.filled > 0 }} filled of ${x.makerBids.size} on record (14 days)" +
                 (x.maker.lastAtMs?.let { " · last pass ${com.tjshea.vigilant.app.ui.Format.age(it, now)}" } ?: "") +
                 (x.maker.lastReport?.let { r -> " (${r.placed} posted, ${r.cancelled} cancelled${r.stopped?.let { s -> ", $s" } ?: ""})" } ?: "") +
+                (x.maker.lastReport?.waiting?.takeIf { it.isNotEmpty() }?.let { w -> " · held back: " + w.entries.sortedByDescending { it.value }.joinToString("; ") { (why, k) -> "$k because $why" } } ?: "") +
                 (x.maker.problem?.let { " · problem: $it" } ?: ""),
         )
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
