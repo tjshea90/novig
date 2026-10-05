@@ -201,6 +201,22 @@ object Diagnostics {
         MakerStats.recent(x.makerBids, now).forEach { o.appendLine("  $it") }
         x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)
             .forEach { o.appendLine("  bids ended ×${it.value}: ${it.key}") }
+        // How well the bids do (Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked … so I can see how well my auto bids do"): every fill,
+        // how fast it was taken, whether the fair had already moved under it, its close and its result; then the same split the ways that explain a fill.
+        val bidRows = com.tjshea.vigilant.data.novig.trading.maker.BidReport.rows(x.makerBids, s.bets, now, set.makerAnchorSharp)
+        if (bidRows.isNotEmpty()) {
+            val guard = com.tjshea.vigilant.data.novig.trading.maker.MakerGuard.check(x.makerBids, set.makerGuardFromMs, set.makerAnchorSharp)
+            o.appendLine(
+                "  picked-off guard: ${if (set.makerGuard) "on" else "off"} · price under the sharp book's fair: ${if (set.makerAnchorSharp) "on" else "off"} · focus: ${set.makerFocus.displayName} · most bids ${if (set.makerMaxBids >= ScanSettings.NO_LIMIT) "unlimited" else set.makerMaxBids} · ${guard.text}" +
+                    (if (guard.tripped && set.makerHalted == null) " · (would stop the bids)" else "") + (set.makerHalted?.let { " · BIDS STOPPED BY THE GUARD: $it" } ?: ""),
+            )
+            com.tjshea.vigilant.data.novig.trading.maker.BidReport.summary(bidRows, now).forEach { o.appendLine("  $it") }
+            val fillLines = com.tjshea.vigilant.data.novig.trading.maker.BidReport.fillLines(bidRows, now, zone = time.timeZone)
+            if (fillLines.isNotEmpty()) {
+                o.appendLine("  the newest fills (when · bid · price · how fast it was taken · the fair and EV claimed · the fair and EV on the next scan after the fill · the book · CLV · result):")
+                fillLines.forEach { o.appendLine(it) }
+            }
+        }
         o.appendLine(
             "Sharp books (Tj, 2026-10-02: veto by default): auto-bet ${set.sharpAutoBet} · alerts ${set.sharpAlerts}" +
                 if (set.sharpAutoBet != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM && set.sharpAlerts != com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) "" else {
