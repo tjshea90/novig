@@ -3856,3 +3856,9 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
 - [x] CC2 HOW Vigilant could replicate it: the detector (book channel, ladder math), the executor (batch IOC, sizing, fees, leg risk), the latency a phone can reach against the windows measured in CC1, what a replay of the tape says it would have caught, and the exact build plan and its risks, in RESEARCH.md §84 (and NOVIG_API.md where a fact was learned). Say what is still unknown and the cheapest next measurement.
   Done CC2 (RESEARCH.md §84.4-84.7, `tools/research/novig_ladder_tape.py` record + analyze, tested on tonight's tape and a live NHL game): detector on `NovigStream`/`StreamBooks` (all pairs of thresholds, microseconds), executor = a new `placeBatch` (two IOC orders, fills independent; leg risk is a fee because the stale leg alone is +EV), latency replay: 0.1 s keeps 64% of the floor, 0.3 s 47%, 0.5 s 23%, 1.5 s 0%; at Tj's size a few dollars a game on one measured game; recommend measuring before building.
 - [ ] CC3 FOR TJ TO DECIDE (not started): (a) run the public tape recorder on the next NFL games (Monday night Falcons @ Saints, 00:15Z Oct 6) and send the tapes, or say "build the in-app book recorder" (a foreground service logging every ladder cross, no orders); both are research, neither bets. See RESEARCH.md §84.7.
+
+
+## Tj, 2026-10-05 (after CC): "I don't think the cno scanner is getting any tennis. Can it?"
+
+- [ ] CD1 Find out whether CNO's list/scan carries tennis today (ATP/WTA, which markets, how many rows in the diagnostics + study), why or why not (the app's league filter, CNO's own sport/league form, the Shared View link, CnoChecks' screens, the market-type matching, the start-time window), and what it would take to carry it.
+- [ ] CD2 If it can: make it so (TASKS first, tests, mutants, floor, ship), else say exactly why not.
