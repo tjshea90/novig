@@ -298,9 +298,8 @@ class ApiSettlerTest {
         assertEquals(0.15, t.all().sumOf { it.profit!! }, 1e-9)
 
         // A single bet (no other side held) still takes the loss from silence after six hours.
+        novig()
         val t2 = tracker(); bet(t2)
-        settler(t2).run()
-        now = start + 7 * hour
         settler(t2).run()
         assertEquals(BetStatus.LOST, t2.all().single().status)
     }
@@ -330,13 +329,14 @@ class ApiSettlerTest {
             },
         ))
         assertEquals(-3.85, t.all().sumOf { it.profit!! }, 1e-9)
+        now = start + 7 * hour
         val r = settler(t) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.LOST, "Final") else null }.run()
         assertEquals(1, r.reopened)
         assertEquals(BetStatus.LOST, t.all().single { it.orderId == "o1" }.status)
         val lock = t.all().single { it.orderId == "o2" }
         assertEquals(BetStatus.PENDING, lock.status)
         assertNull(lock.settledAtMs)
-        assertTrue(lock.gradeManual)
+        assertTrue(lock.gradeManual && lock.gradeNote == ApiSettler.BOTH_HELD_SILENT)
         // The card reads the lock's worth, not the double loss.
         assertEquals(0.15, LockedBets.stats(t.all()).profit, 1e-9)
 
