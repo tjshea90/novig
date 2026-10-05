@@ -3847,3 +3847,8 @@ Do research on how this happened and how vigilant can replicate it
 ```
 I don't think the cno scanner is getting any tennis. Can it?
 ```
+
+## 2026-10-05T04:51:05Z
+```
+If I'm only comparing prop bets to the same side on pinnacle, and I can get it at better odds than pinnacle, what are the chances it's a positive EV bet that beats clv
+```
