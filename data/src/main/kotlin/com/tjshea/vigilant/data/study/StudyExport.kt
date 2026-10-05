@@ -621,6 +621,8 @@ object StudyExport {
         "THE GOAL IS PROFIT: find which bets, bought when, beat the closing line (CLV) and make money. CLV is the leading indicator (it needs far fewer bets than results do); results confirm it slowly.",
         "Tj bets on Novig only, as a taker at the listed price (pregame Novig takers pay no fee) and, with the Bids tab, as a maker posting bids under its fair price.",
         "BIDS: when Vigilant has posted bids (make orders) there is a BIDS section after the splits with every bid added up and split, then every filled bid and the newest unfilled ones as JSON lines. Judge bids by CLV, by how fast they were taken, and by whether the fair on the next scan was still above the price they filled at (evAtFill): a fast fill is a symptom of a stale bid, not a success.",
+        "PINNACLE ONLY: when Tj switches it on (Settings › Scanning), Vigilant's scan prices every Novig bet against Pinnacle's devigged two-sided price ALONE (no other book, the lowest of four devigs) and the auto-bet bets what beats it on a Pinnacle price read within seconds of the order.",
+        "Those bets carry atBet.pinnacleOnly = true, atBet.pinnacleAgeSec (how old Pinnacle's price was) and Pinnacle's own two-sided price in atBet.books; two splits (\"Pinnacle only\") separate them. Judge them apart from every other bet: their EV, CLV and profit are against Pinnacle alone.",
         "",
         "YOUR TASK — be thorough, and analyze ALL of the data for patterns and for profitable bet strategies:",
         " 1. Check the data first: counts by status and by close source, bets with no close and why, duplicates, odd values. Say what you can and can't trust. Parse the JSON lines with code (python/pandas); do not read them by eye.",
