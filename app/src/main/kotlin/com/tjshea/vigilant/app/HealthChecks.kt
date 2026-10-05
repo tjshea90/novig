@@ -42,9 +42,43 @@ object HealthChecks {
         accuracy(s, now)
         betting(s)
         autoBet(s, x, now)
+        bids(s, x, now)
         sharp(s, x)
         memory(x)
     }.sortedBy { it.level.ordinal }
+
+    /**
+     * The bids (Tj, 2026-10-05: "my bids right now are being taken fast and I'm worried they aren't true positive Ev"; RESEARCH.md §88.3): stopped by the picked-off
+     * guard; fills being picked off short of the guard's line; fills that lose to the close once enough have one; and a rush of fills inside two minutes.
+     */
+    private fun MutableList<Check>.bids(s: UiState, x: Diagnostics.Extras, now: Long) {
+        val set = s.settings
+        if (!set.maker && x.makerBids.none { it.filled > 0 }) return
+        val rows = com.tjshea.vigilant.data.novig.trading.maker.BidReport.rows(x.makerBids, s.bets, now, set.makerAnchorSharp)
+        val fills = rows.filter { it.filled > 0 }
+        set.makerHalted?.let { add(Check(Level.WARN, "Bids", "stopped by the picked-off guard", it, "Bids tab › Resume bids (MakerRunner.guard)")) }
+        if (fills.isEmpty()) return
+        val guard = com.tjshea.vigilant.data.novig.trading.maker.MakerGuard.check(x.makerBids, set.makerGuardFromMs, set.makerAnchorSharp)
+        if (guard.judged >= 4 && guard.pickedOff * 3 >= guard.judged && set.makerHalted == null) {
+            add(Check(Level.WARN, "Bids", "fills are being picked off", guard.text + if (set.makerGuard) "" else " (the guard is off)", "Settings › Bids › Stop bids when fills are picked off"))
+        }
+        val closed = fills.mapNotNull { it.clv }
+        if (closed.size >= 20) {
+            val avg = closed.average()
+            add(
+                Check(
+                    if (avg < -0.01) Level.FAIL else if (avg < 0.0) Level.WARN else Level.OK, "Bids",
+                    if (avg < 0.0) "bid fills lose to the close" else "bid fills beat the close",
+                    "${closed.size} fills with a close: CLV ${String.format(Locale.US, "%+.1f%%", avg * 100)}, ${Math.round(100.0 * closed.count { it > 0 } / closed.size)}% beat it",
+                    "Diagnostics › Bids (BidReport)",
+                ),
+            )
+        }
+        val fast = fills.mapNotNull { it.fillDelaySec }
+        if (fast.size >= 6 && fast.count { it < 120 } * 2 >= fast.size) {
+            add(Check(Level.WARN, "Bids", "most fills came within 2 minutes of posting", "${fast.count { it < 120 }} of ${fast.size}: a bid taken that fast is often one the market was already moving away from", "Diagnostics › Bids › fills by how fast they were taken"))
+        }
+    }
 
     private fun MutableList<Check>.scanning(s: UiState, now: Long) {
         val set = s.settings
