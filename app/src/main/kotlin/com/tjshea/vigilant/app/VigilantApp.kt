@@ -40,6 +40,7 @@ import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.stream.NovigStream
 import com.tjshea.vigilant.data.reference.KalshiClient
+import com.tjshea.vigilant.data.reference.PinnacleBackup
 import com.tjshea.vigilant.data.reference.PinnapiClient
 import com.tjshea.vigilant.data.reference.PolymarketClient
 import com.tjshea.vigilant.data.reference.PropLineClient
@@ -904,7 +905,31 @@ class AppContainer(private val app: Application) {
      * this phone. Clients live for the whole process; the key pools read the current keys on
      * every call, so adding or removing a key takes effect on the next scan.
      */
-    fun referenceSources(settings: ScanSettings, background: Boolean = false): List<ReferenceSource> = buildList {
+    fun referenceSources(settings: ScanSettings, background: Boolean = false): List<ReferenceSource> =
+        if (settings.pinnacleOnly) pinnacleOnlySources(settings, background) else allReferenceSources(settings, background)
+
+    /**
+     * Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5): Pinnacle's own feeds first (PinnWire, then pinnapi), and ONE backup for the leagues they don't answer: PropLine
+     * (a free daily allowance of requests, Pinnacle's book alone asked) if it has a key and is switched on, else ParlayAPI (credits, paced) if it does. Never The Odds
+     * API, Kalshi or Polymarket, and not both backups: [PinnacleBackup] says when each is asked at all.
+     */
+    private fun pinnacleOnlySources(settings: ScanSettings, background: Boolean): List<ReferenceSource> = buildList {
+        val pinnacleOn = keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty()
+        if (pinnacleOn) add(pinnacle)
+        parlayOdds.alternates = !pinnacleOn
+        parlayOddsBackground.alternates = !pinnacleOn
+        parlayHalves.pinnacleFeedOn = pinnacleOn
+        parlayHalvesBackground.pinnacleFeedOn = pinnacleOn
+        when {
+            settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty() -> {
+                add(PinnacleBackup(propLine))
+                if (settings.useBookProps) add(PinnacleBackup(propLineProps))
+            }
+            settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty() -> add(PinnacleBackup(if (background) parlayOddsBackground else parlayOdds))
+        }
+    }
+
+    private fun allReferenceSources(settings: ScanSettings, background: Boolean): List<ReferenceSource> = buildList {
         val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).
