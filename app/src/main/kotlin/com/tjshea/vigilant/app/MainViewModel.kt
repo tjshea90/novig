@@ -1793,8 +1793,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         wide = StudyText.wideNote(c.cno.wide.value, c.cno.state.value.snapshot, _state.value.settings.scanStudyHidden, now).takeIf { _state.value.settings.scanStudyHidden },
                     )
                     val tracked = runCatching { c.tracker.all() }.getOrDefault(emptyList())
+                    val bids = runCatching { c.makerStore.all() }.getOrDefault(emptyList())
                     val file = DiagnosticsShare.writeStudy(app, com.tjshea.vigilant.data.study.StudyExport.fileName(meta.versionName, now)) { w ->
-                        com.tjshea.vigilant.data.study.StudyExport.write(w, c.study.journal, tracked, meta, now, java.io.File(app.cacheDir, "study-export.tmp"), bids = runCatching { c.makerStore.all() }.getOrDefault(emptyList()))
+                        com.tjshea.vigilant.data.study.StudyExport.write(w, c.study.journal, tracked, meta, now, java.io.File(app.cacheDir, "study-export.tmp"), bids = bids)
                     }
                     runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
                         .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
