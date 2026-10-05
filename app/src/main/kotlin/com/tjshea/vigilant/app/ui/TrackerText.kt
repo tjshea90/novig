@@ -14,6 +14,12 @@ import kotlin.math.abs
 /** The Tracker's sentences, free of Compose so they're testable: what an open bet is waiting for, what a result means. */
 object TrackerText {
 
+    /** What the outlier rule leaves out (Tj, 2026-09-27) and what it doesn't (Tj, 2026-10-05): money is every bet. */
+    fun outlierNote(outliers: Int): String =
+        "$outliers outlier bet${if (outliers == 1) "" else "s"} (over ±${Format.percent(com.tjshea.vigilant.data.tracker.BetTracker.OUTLIER_EV, 0)} EV when bet) " +
+            "left out of the record, the edge and closing-line numbers, so one odd bet can't skew them. Profit counts ${if (outliers == 1) "it" else "them"}: it's real money. " +
+            "${if (outliers == 1) "It's" else "They're"} under Bets."
+
     /**
      * What the "Novig only" filter is showing: EV and closing lines from Novig's own prices, and how fresh they are (Tj, 2026-10-02 ~18:50Z: "show the
      * percent EV compared only from novig odds, filtering out other sports books").

@@ -527,20 +527,17 @@ private fun StatsCards(
     val stats = remember(bets, now / 60_000L) { BetTracker.stats(bets, now) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (stats.outliers > 0) {
-            Caption(
-                "${stats.outliers} outlier bet${if (stats.outliers == 1) "" else "s"} (over ±${Format.percent(BetTracker.OUTLIER_EV, 0)} EV when bet) " +
-                    "left out of every number here, so one odd bet can't skew them. ${if (stats.outliers == 1) "It's" else "They're"} still under Bets.",
-            )
+            Caption(TrackerText.outlierNote(stats.outliers))
         }
         StatsCard {
+            // Money is every settled bet, outliers too, so it reads the same with the "Novig only" filter on or off (Tj, 2026-10-05).
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                LabeledValue("Profit", Format.signedMoney(stats.profit), valueColor = moneyColor(stats.profit))
-                LabeledValue("Profit %", stats.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(stats.roi ?: 0.0))
-                LabeledValue("Staked", Format.money(stats.staked))
+                LabeledValue("Profit", Format.signedMoney(stats.profitAll), valueColor = moneyColor(stats.profitAll))
+                LabeledValue("Profit %", stats.roiAll?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(stats.roiAll ?: 0.0))
+                LabeledValue("Staked", Format.money(stats.stakedAll))
             }
             ProfitLine(bets)
-            Caption("Profit % is profit over money staked on settled bets (ROI): it runs with every result.")
-            if (stats.outliers > 0) Caption("With the outliers counted too, your bankroll's result is ${Format.signedMoney(stats.profitAll)}.")
+            Caption("Profit % is profit over money staked on settled bets (ROI): it runs with every result. Profit, Staked and the line count every settled bet, the same whichever way the Tracker is filtered.")
         }
         clv()
         StatsCard {
@@ -604,17 +601,14 @@ private fun BreakdownCard(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBy:
                 )
             }
         }
-        Caption("Profit and profit % (ROI) per group. A group of a few bets says little: look at the big ones, and at CLV, which needs far fewer bets than profit.")
+        Caption("Profit and profit % (ROI) per group, outliers aside (so the rows can add up to less or more than Profit above, which counts every bet). A group of a few bets says little: look at the big ones, and at CLV, which needs far fewer bets than profit.")
     }
 }
 
-/** Running profit, one step per settled bet in the order the games were played (outliers left out): green above zero, red below. */
+/** Running profit, one step per settled bet in the order the games were played (every bet, outliers too: it ends at Profit): green above zero, red below. */
 @Composable
 private fun ProfitLine(bets: List<TrackedBet>) {
-    val points = remember(bets) {
-        val settled = bets.filter { it.status != BetStatus.PENDING && it.status != BetStatus.VOID && !it.isOutlier }.sortedBy { it.startsTs }
-        if (settled.size < 2) emptyList() else settled.runningFold(0.0) { acc, b -> acc + (b.profit ?: 0.0) }
-    }
+    val points = remember(bets) { BetTracker.profitLine(bets) }
     if (points.isEmpty()) return
     val color = if (points.last() >= 0) Edge.colors.positive else Edge.colors.negative
     val axis = MaterialTheme.colorScheme.outlineVariant
