@@ -755,7 +755,7 @@ class AppContainer(private val app: Application) {
         val before = usage.flow.value
         // ParlayAPI's own figure for what's left, read for free (at most every few minutes): the pace decides from the key's word.
         if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh() } }
-        return runner.start(settings, referenceSources(settings, background), pinned) { report ->
+        return runner.start(settings, referenceSources(settings, background, scan = true), pinned) { report ->
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
             if (!onScreen) novig.stream?.close()
@@ -920,8 +920,36 @@ class AppContainer(private val app: Application) {
      * this phone. Clients live for the whole process; the key pools read the current keys on
      * every call, so adding or removing a key takes effect on the next scan.
      */
-    fun referenceSources(settings: ScanSettings, background: Boolean = false): List<ReferenceSource> =
-        if (settings.pinnacleOnly) pinnacleOnlySources(settings, background) else allReferenceSources(settings, background)
+    fun referenceSources(settings: ScanSettings, background: Boolean = false, scan: Boolean = false): List<ReferenceSource> = when {
+        settings.pinnacleOnly -> pinnacleOnlySources(settings, background)
+        // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds.
+        scan && settings.lowUsageNow -> lowUsageSources(settings, background)
+        else -> allReferenceSources(settings, background)
+    }
+
+    /**
+     * Low API usage bids (Tj, 2026-10-05; RESEARCH.md §92): the fewest feeds that carry the picked sharp prop books ([LowUsageBids.feedsFor]) among the ones with a key and
+     * a switch on in Settings (Kalshi needs no key), each asked only for a league that has a game inside the window with a prop market on Novig ([LowUsageSource]). Never
+     * The Odds API, Polymarket, a game-line board or ParlayAPI's odds, alternates and 1st-half calls.
+     */
+    internal fun lowUsageSources(settings: ScanSettings, background: Boolean): List<ReferenceSource> {
+        val available = buildSet {
+            if (settings.useKalshi) add(LowUsageBids.FEED_KALSHI)
+            if (settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())) add(LowUsageBids.FEED_PINNACLE)
+            if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) add(LowUsageBids.FEED_PROPLINE)
+            if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) add(LowUsageBids.FEED_PARLAY)
+        }
+        return LowUsageBids.feedsFor(LowUsageBids.books(settings), available).feeds.map { feed ->
+            LowUsageSource(
+                when (feed) {
+                    LowUsageBids.FEED_KALSHI -> kalshi
+                    LowUsageBids.FEED_PINNACLE -> pinnacle
+                    LowUsageBids.FEED_PROPLINE -> propLineProps
+                    else -> if (background) parlayPropsBackground else parlayProps
+                },
+            )
+        }
+    }
 
     /**
      * Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5): Pinnacle's own feeds first (PinnWire, then pinnapi), and ONE backup for the leagues they don't answer: PropLine
