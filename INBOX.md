@@ -3934,3 +3934,12 @@ Trigger the apk build
 ```
 The APK is out. Log it
 ```
+
+## 2026-10-05T21:51:33Z
+```
+make an option for a low API usage auto bid feature. this will only scan for current odds on all prop bets available in the games for the next six hours from 2 to 3 sharp books for props only. scan current odds from only the sharpest books for props. it will then devig these odds to find fair odds and place bids at least 2.5% below (positive EV) The Fair odds.
+it should not waste api usage on scanning too frequently or scanning books other than the sharp prop books. the longest odds it should place bids at is +130 (no long shots), and make it place the types of bets most likely to be matched and filled. 
+the goal is positive ev and beating clv on props by offering them under what sharp books offer. 
+at least two sharp books should be used to determine the fair odds. the sharp books odds must be current and not stale.
+the sharp books must prove both sides of the prop bet for accurate odds.
+```
