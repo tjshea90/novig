@@ -715,6 +715,8 @@ private fun VigilantRoot(
     Scaffold(
         bottomBar = {
             androidx.compose.foundation.layout.Column {
+            // The kill switch on every tab (Tj, 2026-10-05): one tap stops everything and keeps it stopped until Resume, even after the app is closed.
+            com.tjshea.vigilant.app.ui.KillBar(state.settings, onKill = vm::killAll, onResume = vm::resumeAfterKill)
             // The wallet on every tab (Tj, 2026-10-03: "show it somewhere in the app at all times"), once betting through the API is set up.
             if (AppBook.isNovig && state.betting.enabled) WalletBar(vm)
             NavigationBar {
