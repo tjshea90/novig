@@ -96,6 +96,13 @@ data class AtBet(
      * them, and CNO's game page is read for the top ones a little later ([com.tjshea.vigilant.data.study.ScanStudy]). Null: made at [atMs] (a placed bet's).
      */
     val checkAtMs: Long? = null,
+    /**
+     * Pinnacle only was on (Tj, 2026-10-05; RESEARCH.md §88.5): the bet was found and judged against Pinnacle's devigged price alone ([fairMethod] says the devig, [books] holds
+     * Pinnacle's own two-sided price, [fair] and [ev] are against it, [fairAgeSec] / [pinnacleAgeSec] how old that price was). Diagnostics and the scan study split by it.
+     */
+    val pinnacleOnly: Boolean = false,
+    /** Pinnacle only: how old Pinnacle's quote was when the bet was made (seconds). */
+    val pinnacleAgeSec: Long? = null,
 ) {
     companion object {
         /** Not a placed bet: a bet a scan listed, logged for the scan study (Tj, 2026-10-03), to see which kinds beat the close. */
@@ -205,6 +212,22 @@ object AtBets {
             fairMethod = f?.let { "${it.sourceUsed}/${it.method}" }, fairBooks = f?.booksUsed.orEmpty(), fairSharp = f?.sharpBooksUsed.orEmpty(),
             fairAgeSec = secs(oldest ?: newest ?: o.fairUpdatedMs, now),
             fullKelly = q?.kellyFraction, stake = stake, bankroll = s.bankroll, wallet = wallet,
+            pinnacleOnly = s.pinnacleOnly, pinnacleAgeSec = if (s.pinnacleOnly) secs(o.fairAsOfMs ?: oldest, now) else null,
+            books = if (s.pinnacleOnly) pinnacleBook(o) else emptyList(),
+        )
+    }
+
+    /** Pinnacle's own two-sided price for [o]'s outcome, its devigged fair and the EV Novig's price gives against it (Pinnacle only's record of the price it was judged on). */
+    private fun pinnacleBook(o: Opportunity): List<AtBetBook> {
+        val i = o.referenceIndex ?: return emptyList()
+        val pin = o.fair?.perBook?.firstOrNull { it.book.bookKey.equals("pinnacle", ignoreCase = true) } ?: return emptyList()
+        val odds = pin.book.decimalOdds
+        val mine = odds.getOrNull(i) ?: return emptyList()
+        val other = odds.filterIndexed { j, _ -> j != i }.singleOrNull()
+        val fair = pin.fairProbabilities.getOrNull(i)
+        val cost = o.quote?.cost
+        return listOf(
+            AtBetBook("Pinnacle", Odds.decimalToAmerican(mine), other?.let { Odds.decimalToAmerican(it) }, fair, if (fair != null && cost != null && cost > 0.0) fair / cost - 1.0 else null),
         )
     }
 
