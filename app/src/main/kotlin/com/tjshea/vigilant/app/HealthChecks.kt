@@ -433,7 +433,7 @@ object HealthChecks {
                             Level.OK -> "its bets beat the close"
                         },
                         "CLV ${pctSigned(clv)} on ${group.size} bets, beat the close ${pct0(beat)}, EV when bet ${ev?.let(::pctSigned) ?: "?"}" +
-                            (if (group !== all) " (placed within $windowH h; ${all.size - group.size} earlier left out)" else ""),
+                            (if (group.size < all.size) " (placed within $windowH h; ${all.size - group.size} earlier left out)" else ""),
                         if (level == Level.OK) null else when (scanner) {
                             "Vigilant" -> "its fair odds (engine/FairValue.kt; ScanSettings.fairSource, sharpBooks, minBooks); by market and by what made the fair below"
                             else -> "that list's filters (minimum EV, fewest books, devig)"
