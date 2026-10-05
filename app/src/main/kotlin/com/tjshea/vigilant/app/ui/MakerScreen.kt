@@ -654,12 +654,11 @@ object LowUsageText {
     fun paceNote(s: ScanSettings): String {
         val minutes = s.lowUsageMinutes.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
         val coverage = when {
-            minutes <= 4 -> "bids stay up all the time"
             minutes <= 5 -> "bids on games inside 3 hours of the start stay up all the time"
             minutes <= 10 -> "games 3-6 hours out keep their bids up all the time; inside 3 hours a bid is up about ${(5 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
             else -> "bids are up part of the time (they end when the books' prices are 5 minutes old, 10 for a game over 3 hours away)"
         }
-        return "At most one scan every $minutes min (${60 / minutes} an hour or fewer), and a league with no game in the next 6 hours with a prop market on Novig isn't read at all. $coverage."
+        return "At most one scan every $minutes min, and a league with no game in the next 6 hours with a prop market on Novig isn't read at all. $coverage."
     }
 
     /** One line for the rules' summary. */
