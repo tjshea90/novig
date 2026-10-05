@@ -206,22 +206,43 @@ object StudyExport {
         var evN = 0
         var evSum = 0.0
 
+        /** One game's share of [profit], [staked] and the closes, for the interval that counts games and not bets. */
+        private class GameSum { var profit = 0.0; var staked = 0.0; var clvN = 0; var clvSum = 0.0 }
+        private val games = HashMap<String, GameSum>()
+
         fun add(r: StudyRow) {
+            val g = games.getOrPut("${r.league}|${r.event}|${r.startsAtMs}") { GameSum() }
             n++
             when (r.status) {
-                BetStatus.WON.name -> { won++; staked += 1.0; profit += r.profit ?: 0.0 }
-                BetStatus.LOST.name -> { lost++; staked += 1.0; profit += r.profit ?: 0.0 }
+                BetStatus.WON.name -> { won++; staked += 1.0; profit += r.profit ?: 0.0; g.staked += 1.0; g.profit += r.profit ?: 0.0 }
+                BetStatus.LOST.name -> { lost++; staked += 1.0; profit += r.profit ?: 0.0; g.staked += 1.0; g.profit += r.profit ?: 0.0 }
                 BetStatus.PUSH.name, BetStatus.FMV.name -> pushed++
                 BetStatus.VOID.name -> voided++
                 else -> open++
             }
-            r.clv?.let { clvN++; clvSum += it; if (it > 0) clvBeat++ }
+            r.clv?.let { clvN++; clvSum += it; if (it > 0) clvBeat++; g.clvN++; g.clvSum += it }
             r.ev?.let { evN++; evSum += it }
         }
 
+        /**
+         * The half-width of a 95% interval for a ratio of sums ([num] over [den] per game) that counts GAMES, not bets: bets of one game win and lose together (the
+         * game results' variance was 1.5 where independent bets give 1.0, RESEARCH.md §81.2), so the interval of an independent-bets formula is too narrow. The
+         * ratio estimator's robust variance, G/(G−1) · Σ(num_g − R·den_g)² / (Σden)²; null with fewer than [MIN_GAMES] games (it would say nothing).
+         */
+        private fun halfWidth(num: (GameSum) -> Double, den: (GameSum) -> Double): Pair<Double, Int>? {
+            val gs = games.values.filter { den(it) > 0 }
+            val d = gs.sumOf(den)
+            if (gs.size < MIN_GAMES || d <= 0) return null
+            val ratio = gs.sumOf(num) / d
+            val variance = gs.size / (gs.size - 1.0) * gs.sumOf { (num(it) - ratio * den(it)).let { e -> e * e } } / (d * d)
+            return 1.96 * Math.sqrt(variance) to gs.size
+        }
+
         fun line(label: String): String {
-            val roi = if (staked > 0) "ROI ${pct(profit / staked)} (${"%+.1f".format(Locale.US, profit)}u on ${staked.toInt()}u)" else "no result yet"
-            val clv = if (clvN > 0) "CLV ${pct(clvSum / clvN)} on $clvN closes, beat the close ${Math.round(100.0 * clvBeat / clvN)}%" else "no close yet"
+            val roiBand = halfWidth({ it.profit }, { it.staked })?.let { (h, g) -> ", ±${"%.1f".format(Locale.US, h * 100)} points over $g games" } ?: ""
+            val clvBand = halfWidth({ it.clvSum }, { it.clvN.toDouble() })?.let { (h, g) -> " ±${"%.2f".format(Locale.US, h * 100)} over $g games" } ?: ""
+            val roi = if (staked > 0) "ROI ${pct(profit / staked)} (${"%+.1f".format(Locale.US, profit)}u on ${staked.toInt()}u$roiBand)" else "no result yet"
+            val clv = if (clvN > 0) "CLV ${pct(clvSum / clvN)}$clvBand on $clvN closes, beat the close ${Math.round(100.0 * clvBeat / clvN)}%" else "no close yet"
             val ev = if (evN > 0) "EV listed ${pct(evSum / evN)}" else "no EV"
             return "$label · $n bets · $won-$lost-$pushed (W-L-P)${if (open > 0) " · $open open" else ""} · $roi · $clv · $ev"
         }
