@@ -231,7 +231,7 @@ class MakerTest {
     }
 
     @Test
-    fun `a stale bid this pass cancels, or one already on its way down, still counts: a cancel can lag or fail, so the new bid waits for it`() {
+    fun `a stale bid this pass cancels, or one already on its way down, still counts - a cancel can lag or fail, so the new bid waits for it`() {
         // The Over fell to 0.40 (re-posted lower; its 0.60 comes down first); a new Under at 0.55 would meet the 0.60 until Novig confirms it gone.
         val fell = MakerPlan.plan(listOf(post("m1-over", 0.400), post("m1-under", 0.550)), listOf(resting("m1-over", 0.600)), rules, now)
         assertEquals("The fair price fell: re-posted lower", fell.cancels.single().second)
@@ -246,7 +246,7 @@ class MakerTest {
     }
 
     @Test
-    fun `the wash guard is about the two sides of ONE market: another market's bid, and the same side's own, never hold a bid back`() {
+    fun `the wash guard is about the two sides of ONE market - another market's bid, and the same side's own, never hold a bid back`() {
         // Over rests at 0.60 on m1; an Under at 0.45 on m2 (another line of the same team total) can't meet it, nor can a new Over on m1's own side.
         val other = MakerPlan.plan(listOf(post("m1-over", 0.600), post("m2-under", 0.450)), listOf(resting("m1-over", 0.600)), rules, now)
         assertEquals(listOf("m2-under"), other.places.map { it.line.outcomeId })
