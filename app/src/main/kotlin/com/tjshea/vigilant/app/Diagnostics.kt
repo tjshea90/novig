@@ -656,6 +656,8 @@ object MakerStats {
         val verdict = when {
             expected < 3.0 -> "too few bid-hours to judge: ${if (filled == 0) "no fill" else "this many"} is the likely outcome"
             filled < expected / 3 -> "well under the research's rate: look at the book position (led their side) and the margin"
+            // Tj, 2026-10-05: "my bids right now are being taken fast". Many more fills than lives like these should get is a symptom of stale bids, not of luck.
+            filled >= 5 && filled > expected * 2 -> "MORE than twice the research's rate: bids taken this fast are often ones the market was already moving away from (picked off): compare the fills' EV at post with their EV at the fill below, and watch the CLV"
             else -> "in line with the research"
         }
         val reasons = posted.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries
