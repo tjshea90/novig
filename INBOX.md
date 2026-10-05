@@ -3953,3 +3953,8 @@ Is it ready for GitHub actions yet
 ```
 Review the attached screenshot. Does this scan every 15 seconds setting make the vigilant scan every 15 seconds or just cno
 ```
+
+## 2026-10-05T23:06:21Z
+```
+I tried the new low api usage auto bid and it seems like the bids only stay up a couple minutes then they are cancelled and no new bids go up. Is this correct
+```
