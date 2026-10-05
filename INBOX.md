@@ -3857,3 +3857,8 @@ If I'm only comparing prop bets to the same side on pinnacle, and I can get it a
 ```
 You just told me some very high clv and positive EV values, clarify how I can replicate these bets. What kind of bets were they, how long before each game ,etc
 ```
+
+## 2026-10-05T15:24:41Z
+```
+Notice the app locked in negative profit. Either this is an error in stats or the app allowed lock in at negative return. Immediate
+```
