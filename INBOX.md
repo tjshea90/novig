@@ -3835,3 +3835,10 @@ Analyze my clv and EV bets. Am I beating the clv? Why am I losing money? Can I a
 ```
 After you are finished with the analysis, consider whether it would be plausible to make a live betting arbitrage system for the app. The system would track rapidly moving live odds across live events on novig, which I think is possible with the novig API key. It would then do rapid math to find when to place bets on one side of a live event and then when to place bets on the other side based on the odds, resulting in guaranteed profit. It can utilize both make and take bets. Don't make the feature yet, just investigate and research if it is plausible. The feature would have to auto bet using the novig API so it can catch rapidly moving odds
 ```
+
+## 2026-10-05T03:15:08Z
+```
+Short bursts after scores. In tonight's NFL game there were 9 bursts, each 1 to 2 seconds long. The 76 profitable trade pairs made 0 to 2¢ net per $1, worth about $6.56 in total over 2.4 hours if every one had been caught.
+
+Do research on how this happened and how vigilant can replicate it
+```
