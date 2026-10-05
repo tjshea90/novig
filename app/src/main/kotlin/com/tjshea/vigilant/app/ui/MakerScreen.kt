@@ -469,8 +469,8 @@ object MakerRulesText {
         "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
             (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
-            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else "" +
-                if (s.makerMaxOdds > 0) " · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else ""
+            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + (if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else "") +
+                (if (s.makerMaxOdds > 0) " · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else "")
 
     /** "¼ Kelly, up to $10 a bid" / "$5 a bid". */
     fun stake(s: ScanSettings): String {

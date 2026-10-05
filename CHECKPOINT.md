@@ -1,22 +1,23 @@
-# CHECKPOINT 2574 — read me first, then TASKS.md
+# CHECKPOINT 2575 — read me first, then TASKS.md
 
-**Written:** 2026-10-05T19:54:39Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-fef46304-swa9m4` · **builds on:** `b945670a` (this checkpoint is the commit after it)
+**Written:** 2026-10-05T20:10:38Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-cb9fb4b3-95tfr2` · **builds on:** `698180c1` (this checkpoint is the commit after it)
 
 ## Just done
-TASKS.md: CP1-CP4 written from Tj's 19:53Z message (both sides of a prop guard; longest-odds bid setting)
+CP3: longest-odds bid limit: rules + settings field + Bids settings chips/typed field + notes (not yet tested)
 
 ## Do this next
-CP1: read the maker code (MakerQuote/MakerPlan/GameExposure) and do the math; then CP2/CP3
+CP3: Diagnostics line, tests (MakerTest boundary/negative/favorites/quick/plan cancel; MakerUiTest chips+field), then CP1 research text + CP2 wash guard
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/MakerScreen.kt
 
 ## Last ten checkpoints
 ```
+  119cb5c1 ckpt 2574: TASKS.md: CP1-CP4 written from Tj's 19:53Z message (both sides of a prop gua
   d53f88d3 ckpt 2573: v0.66.0 released and recorded (CO1-CO7 done)
   dcaaa801 ckpt 2572: pre-release: v0.66.0: API audit against the providers' own docs (RESEARCH §
   e8e00ce0 ckpt 2571: pre-ship: v0.66.0: API audit against the providers' own docs (RESEARCH §90)
@@ -26,8 +27,7 @@ CP1: read the maker code (MakerQuote/MakerPlan/GameExposure) and do the math; th
   42f8cff7 ckpt 2567: RESEARCH §90 written: API audit (docs vs code, ranking, PropLine buy answer
   46e07514 ckpt 2566: pre-release: v0.65.0: Pinnacle only (Settings › Scanning and the Auto-bet 
   b3a705c9 ckpt 2565: pre-ship: v0.65.0: Pinnacle only (Settings › Scanning and the Auto-bet tab
-  235f67db ckpt 2564: Pinnacle only: +EV feed banner, health checks, mid-pass STOP test (kills the
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
