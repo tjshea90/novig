@@ -1,0 +1,257 @@
+29 days, 2026-09-06 .. 2026-10-04
+5,782 markets with a close; simulating ...
+154,972 simulated bids at 4% under the fair (bids that would have taken are left out)
+fill = a taker traded THROUGH the bid within the time shown; wins = share of filled bids whose side won (where known);
+EV@close / CLV¢ per FILLED bid (intervals resample markets); "per posted bid" = fill share x EV@close.
+
+######## fair stand-in w=0.0
+
+== posted 1 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    652  fill  15%  wins nan%  EV@close% +2.81 [+1.46, +4.14]  CLV¢ +0.34 [+0.19, +0.49]  per posted bid +0.41%
+  bid 0.00-0.20  until the close     posted    652  fill  36%  wins  17%  EV@close% +2.26 [+1.26, +3.38]  CLV¢ +0.25 [+0.14, +0.36]  per posted bid +0.80%
+  bid 0.20-0.30  within 30 min       posted    369  fill   9%  wins nan%  EV@close% +1.89 [+0.19, +3.24]  CLV¢ +0.45 [+0.07, +0.78]  per posted bid +0.18%
+  bid 0.20-0.30  until the close     posted    369  fill  22%  wins nan%  EV@close% +1.53 [+0.40, +2.50]  CLV¢ +0.38 [+0.13, +0.61]  per posted bid +0.33%
+  bid 0.30-0.40  within 30 min       posted    952  fill   3%  wins nan%  EV@close% -0.07 [-2.45, +1.63]  CLV¢ -0.03 [-0.86, +0.60]  per posted bid -0.00%
+  bid 0.30-0.40  until the close     posted    952  fill  14%  wins  33%  EV@close% +0.90 [+0.08, +1.68]  CLV¢ +0.32 [+0.02, +0.59]  per posted bid +0.12%
+  bid 0.40-0.50  within 30 min       posted  4,141  fill   3%  wins nan%  EV@close% +0.07 [-0.82, +0.94]  CLV¢ +0.02 [-0.35, +0.40]  per posted bid +0.00%
+  bid 0.40-0.50  until the close     posted  4,141  fill  11%  wins  37%  EV@close% +0.15 [-0.23, +0.51]  CLV¢ +0.07 [-0.11, +0.23]  per posted bid +0.02%
+  bid 0.50-0.60  within 30 min       posted  2,834  fill   3%  wins nan%  EV@close% -0.28 [-2.81, +1.49]  CLV¢ -0.18 [-1.60, +0.78]  per posted bid -0.01%
+  bid 0.50-0.60  until the close     posted  2,834  fill  10%  wins nan%  EV@close% +0.31 [-0.59, +0.93]  CLV¢ +0.15 [-0.34, +0.48]  per posted bid +0.03%
+  bid 0.60-0.70  within 30 min       posted    566  fill   1%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    566  fill   6%  wins nan%  EV@close% -1.35 [-2.45, -0.38]  CLV¢ -0.84 [-1.52, -0.24]  per posted bid -0.08%
+  bid 0.70-1.00  within 30 min       posted    933  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    933  fill   2%  (under 20 fills)
+
+== posted 3 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    584  fill  13%  wins nan%  EV@close% +3.80 [+2.00, +5.69]  CLV¢ +0.43 [+0.20, +0.67]  per posted bid +0.48%
+  bid 0.00-0.20  until the close     posted    584  fill  47%  wins  23%  EV@close% +2.29 [+0.93, +3.45]  CLV¢ +0.24 [+0.10, +0.39]  per posted bid +1.08%
+  bid 0.20-0.30  within 30 min       posted    356  fill   5%  (under 20 fills)
+  bid 0.20-0.30  until the close     posted    356  fill  35%  wins  27%  EV@close% +1.50 [+0.63, +2.33]  CLV¢ +0.36 [+0.15, +0.56]  per posted bid +0.52%
+  bid 0.30-0.40  within 30 min       posted    873  fill   3%  wins nan%  EV@close% +0.02 [-3.47, +3.87]  CLV¢ +0.01 [-1.29, +1.37]  per posted bid +0.00%
+  bid 0.30-0.40  until the close     posted    873  fill  21%  wins  39%  EV@close% +0.87 [+0.08, +1.53]  CLV¢ +0.30 [+0.01, +0.54]  per posted bid +0.18%
+  bid 0.40-0.50  within 30 min       posted  3,896  fill   2%  wins nan%  EV@close% -0.03 [-1.33, +1.08]  CLV¢ -0.02 [-0.62, +0.47]  per posted bid -0.00%
+  bid 0.40-0.50  until the close     posted  3,896  fill  17%  wins  40%  EV@close% +0.28 [-0.05, +0.60]  CLV¢ +0.12 [-0.03, +0.26]  per posted bid +0.05%
+  bid 0.50-0.60  within 30 min       posted  2,642  fill   3%  wins nan%  EV@close% +1.84 [+0.52, +3.23]  CLV¢ +0.99 [+0.28, +1.73]  per posted bid +0.05%
+  bid 0.50-0.60  until the close     posted  2,642  fill  16%  wins  67%  EV@close% +0.04 [-0.58, +0.66]  CLV¢ +0.01 [-0.34, +0.34]  per posted bid +0.01%
+  bid 0.60-0.70  within 30 min       posted    504  fill   2%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    504  fill   8%  wins nan%  EV@close% -1.33 [-2.99, +0.30]  CLV¢ -0.85 [-1.93, +0.18]  per posted bid -0.10%
+  bid 0.70-1.00  within 30 min       posted    856  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    856  fill   2%  wins nan%  EV@close% +1.88 [+0.94, +2.77]  CLV¢ +1.47 [+0.76, +2.14]  per posted bid +0.05%
+
+== posted 6 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    477  fill   8%  wins nan%  EV@close% +4.20 [+1.22, +6.75]  CLV¢ +0.56 [+0.23, +0.85]  per posted bid +0.33%
+  bid 0.00-0.20  until the close     posted    477  fill  56%  wins  18%  EV@close% +3.26 [+1.95, +4.42]  CLV¢ +0.36 [+0.22, +0.50]  per posted bid +1.81%
+  bid 0.20-0.30  within 30 min       posted    323  fill   4%  (under 20 fills)
+  bid 0.20-0.30  until the close     posted    323  fill  42%  wins  20%  EV@close% +0.98 [-0.02, +1.84]  CLV¢ +0.25 [-0.00, +0.47]  per posted bid +0.41%
+  bid 0.30-0.40  within 30 min       posted    766  fill   2%  (under 20 fills)
+  bid 0.30-0.40  until the close     posted    766  fill  25%  wins  32%  EV@close% +0.70 [-0.12, +1.54]  CLV¢ +0.23 [-0.07, +0.53]  per posted bid +0.17%
+  bid 0.40-0.50  within 30 min       posted  3,601  fill   2%  wins nan%  EV@close% +0.51 [-0.84, +1.81]  CLV¢ +0.23 [-0.40, +0.82]  per posted bid +0.01%
+  bid 0.40-0.50  until the close     posted  3,601  fill  22%  wins  40%  EV@close% +0.23 [-0.09, +0.60]  CLV¢ +0.10 [-0.04, +0.26]  per posted bid +0.05%
+  bid 0.50-0.60  within 30 min       posted  2,377  fill   2%  wins nan%  EV@close% -0.26 [-2.85, +1.81]  CLV¢ -0.19 [-1.56, +0.92]  per posted bid -0.01%
+  bid 0.50-0.60  until the close     posted  2,377  fill  20%  wins  52%  EV@close% -0.48 [-1.02, +0.05]  CLV¢ -0.27 [-0.56, +0.02]  per posted bid -0.10%
+  bid 0.60-0.70  within 30 min       posted    456  fill   2%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    456  fill  10%  wins nan%  EV@close% -2.86 [-4.52, -1.30]  CLV¢ -1.80 [-2.84, -0.83]  per posted bid -0.30%
+  bid 0.70-1.00  within 30 min       posted    723  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    723  fill   4%  wins nan%  EV@close% +1.19 [+0.39, +2.21]  CLV¢ +0.89 [+0.29, +1.65]  per posted bid +0.04%
+
+== by kind of market (posted 3 h before), fills within 1 h, by price band
+  player prop 0.00-0.20              posted    476  fill  23%  wins nan%  EV@close% +2.88 [+1.18, +4.50]  CLV¢ +0.35 [+0.17, +0.53]  per posted bid +0.66%
+  player prop 0.20-0.30              posted    184  fill  18%  wins nan%  EV@close% +1.96 [+0.81, +3.15]  CLV¢ +0.46 [+0.20, +0.71]  per posted bid +0.36%
+  player prop 0.30-0.40              posted    267  fill  11%  wins nan%  EV@close% +0.33 [-2.80, +2.34]  CLV¢ +0.09 [-1.10, +0.85]  per posted bid +0.04%
+  player prop 0.40-0.50              posted  1,167  fill  11%  wins nan%  EV@close% +0.75 [-0.21, +1.75]  CLV¢ +0.33 [-0.10, +0.79]  per posted bid +0.08%
+  player prop 0.50-0.60              posted    808  fill   9%  wins nan%  EV@close% +1.19 [-0.14, +2.69]  CLV¢ +0.63 [-0.07, +1.41]  per posted bid +0.11%
+  player prop 0.60-0.70              posted    155  fill   5%  (under 20 fills)
+  player prop 0.70-1.00              posted    649  fill   1%  (under 20 fills)
+  period line 0.20-0.30              posted      1  fill   0%  (under 20 fills)
+  period line 0.30-0.40              posted     23  fill   4%  (under 20 fills)
+  period line 0.40-0.50              posted    263  fill   5%  (under 20 fills)
+  period line 0.50-0.60              posted    161  fill   5%  (under 20 fills)
+  period line 0.60-0.70              posted      2  fill  50%  (under 20 fills)
+  team total 0.20-0.30               posted      1  fill   0%  (under 20 fills)
+  team total 0.30-0.40               posted      1  fill   0%  (under 20 fills)
+  team total 0.40-0.50               posted     31  fill  19%  (under 20 fills)
+  team total 0.50-0.60               posted     24  fill  17%  (under 20 fills)
+  team total 0.60-0.70               posted      1  fill   0%  (under 20 fills)
+  game line 0.00-0.20                posted    108  fill   7%  (under 20 fills)
+  game line 0.20-0.30                posted    170  fill   5%  (under 20 fills)
+  game line 0.30-0.40                posted    575  fill   2%  (under 20 fills)
+  game line 0.40-0.50                posted  2,426  fill   2%  wins nan%  EV@close% -1.47 [-2.88, +0.06]  CLV¢ -0.68 [-1.31, +0.02]  per posted bid -0.03%
+  game line 0.50-0.60                posted  1,640  fill   1%  wins nan%  EV@close% -0.80 [-2.38, +0.99]  CLV¢ -0.42 [-1.23, +0.52]  per posted bid -0.01%
+  game line 0.60-0.70                posted    343  fill   1%  (under 20 fills)
+  game line 0.70-1.00                posted    207  fill   0%  (under 20 fills)
+
+== candidate rules (posted 3 h before, fills within 1 h)
+  everything                         posted  9,711  fill   5%  wins  40%  EV@close% +1.19 [+0.56, +1.82]  CLV¢ +0.28 [+0.05, +0.47]  per posted bid +0.06%
+  bid 0.30-0.65 (no longshots, no heavy favorites) posted  7,758  fill   5%  wins  47%  EV@close% +0.42 [-0.24, +1.01]  CLV¢ +0.18 [-0.12, +0.47]  per posted bid +0.02%
+  bid 0.35-0.65                      posted  7,482  fill   5%  wins nan%  EV@close% +0.46 [-0.23, +1.06]  CLV¢ +0.20 [-0.12, +0.49]  per posted bid +0.02%
+  bid 0.40-0.65                      posted  6,885  fill   5%  wins nan%  EV@close% +0.39 [-0.29, +1.06]  CLV¢ +0.18 [-0.15, +0.53]  per posted bid +0.02%
+  bid 0.25-0.50 (small underdogs, pick-ems) posted  4,929  fill   5%  wins nan%  EV@close% +0.42 [-0.32, +1.22]  CLV¢ +0.14 [-0.19, +0.47]  per posted bid +0.02%
+  props+team totals, 0.30-0.65       posted  2,399  fill  10%  wins nan%  EV@close% +0.85 [+0.04, +1.63]  CLV¢ +0.39 [+0.02, +0.78]  per posted bid +0.09%
+  props+period+team totals, 0.30-0.65 posted  2,847  fill   9%  wins nan%  EV@close% +0.89 [+0.20, +1.57]  CLV¢ +0.41 [+0.08, +0.73]  per posted bid +0.08%
+
+######## fair stand-in w=0.25
+
+== posted 1 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    655  fill  15%  wins nan%  EV@close% +4.13 [+2.80, +5.37]  CLV¢ +0.49 [+0.37, +0.61]  per posted bid +0.61%
+  bid 0.00-0.20  until the close     posted    655  fill  35%  wins  18%  EV@close% +3.27 [+2.41, +4.15]  CLV¢ +0.39 [+0.28, +0.49]  per posted bid +1.15%
+  bid 0.20-0.30  within 30 min       posted    364  fill   9%  wins nan%  EV@close% +3.41 [+1.92, +4.71]  CLV¢ +0.82 [+0.49, +1.12]  per posted bid +0.30%
+  bid 0.20-0.30  until the close     posted    364  fill  20%  wins nan%  EV@close% +3.11 [+2.00, +4.04]  CLV¢ +0.74 [+0.50, +0.96]  per posted bid +0.62%
+  bid 0.30-0.40  within 30 min       posted    929  fill   3%  wins nan%  EV@close% +1.44 [-1.10, +4.03]  CLV¢ +0.52 [-0.35, +1.41]  per posted bid +0.05%
+  bid 0.30-0.40  until the close     posted    929  fill  12%  wins  37%  EV@close% +1.81 [+1.09, +2.89]  CLV¢ +0.64 [+0.38, +1.03]  per posted bid +0.22%
+  bid 0.40-0.50  within 30 min       posted  4,280  fill   2%  wins nan%  EV@close% +1.25 [-0.31, +2.69]  CLV¢ +0.57 [-0.15, +1.20]  per posted bid +0.03%
+  bid 0.40-0.50  until the close     posted  4,280  fill   9%  wins  38%  EV@close% +1.25 [+0.70, +1.68]  CLV¢ +0.57 [+0.33, +0.76]  per posted bid +0.12%
+  bid 0.50-0.60  within 30 min       posted  2,739  fill   2%  wins nan%  EV@close% +3.56 [+2.51, +4.71]  CLV¢ +1.89 [+1.34, +2.50]  per posted bid +0.08%
+  bid 0.50-0.60  until the close     posted  2,739  fill   8%  wins nan%  EV@close% +2.16 [+1.69, +2.67]  CLV¢ +1.15 [+0.90, +1.42]  per posted bid +0.18%
+  bid 0.60-0.70  within 30 min       posted    553  fill   0%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    553  fill   2%  (under 20 fills)
+  bid 0.70-1.00  within 30 min       posted    932  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    932  fill   1%  (under 20 fills)
+
+== posted 3 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    587  fill  12%  wins nan%  EV@close% +4.51 [+3.27, +5.82]  CLV¢ +0.54 [+0.37, +0.71]  per posted bid +0.54%
+  bid 0.00-0.20  until the close     posted    587  fill  48%  wins  22%  EV@close% +2.99 [+2.20, +3.76]  CLV¢ +0.38 [+0.29, +0.48]  per posted bid +1.44%
+  bid 0.20-0.30  within 30 min       posted    346  fill   5%  (under 20 fills)
+  bid 0.20-0.30  until the close     posted    346  fill  33%  wins  21%  EV@close% +2.69 [+1.91, +3.38]  CLV¢ +0.63 [+0.45, +0.79]  per posted bid +0.89%
+  bid 0.30-0.40  within 30 min       posted    859  fill   2%  wins nan%  EV@close% +6.74 [+2.62, +11.25]  CLV¢ +2.36 [+0.96, +3.80]  per posted bid +0.16%
+  bid 0.30-0.40  until the close     posted    859  fill  18%  wins  42%  EV@close% +2.58 [+1.53, +3.51]  CLV¢ +0.90 [+0.53, +1.24]  per posted bid +0.46%
+  bid 0.40-0.50  within 30 min       posted  4,023  fill   2%  wins nan%  EV@close% +2.59 [+1.32, +3.90]  CLV¢ +1.17 [+0.61, +1.77]  per posted bid +0.05%
+  bid 0.40-0.50  until the close     posted  4,023  fill  15%  wins  35%  EV@close% +1.37 [+0.94, +1.75]  CLV¢ +0.62 [+0.43, +0.79]  per posted bid +0.20%
+  bid 0.50-0.60  within 30 min       posted  2,549  fill   2%  wins nan%  EV@close% +3.90 [+2.69, +5.32]  CLV¢ +2.08 [+1.43, +2.83]  per posted bid +0.09%
+  bid 0.50-0.60  until the close     posted  2,549  fill  12%  wins  61%  EV@close% +1.87 [+1.47, +2.29]  CLV¢ +0.99 [+0.78, +1.22]  per posted bid +0.23%
+  bid 0.60-0.70  within 30 min       posted    493  fill   2%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    493  fill   5%  wins nan%  EV@close% -0.23 [-1.72, +1.34]  CLV¢ -0.12 [-1.07, +0.86]  per posted bid -0.01%
+  bid 0.70-1.00  within 30 min       posted    853  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    853  fill   2%  (under 20 fills)
+
+== posted 6 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    484  fill   7%  wins nan%  EV@close% +5.96 [+3.28, +8.81]  CLV¢ +0.75 [+0.44, +1.04]  per posted bid +0.43%
+  bid 0.00-0.20  until the close     posted    484  fill  58%  wins  18%  EV@close% +3.79 [+2.81, +4.69]  CLV¢ +0.48 [+0.38, +0.59]  per posted bid +2.22%
+  bid 0.20-0.30  within 30 min       posted    307  fill   4%  (under 20 fills)
+  bid 0.20-0.30  until the close     posted    307  fill  39%  wins  21%  EV@close% +2.40 [+1.51, +3.33]  CLV¢ +0.57 [+0.37, +0.79]  per posted bid +0.95%
+  bid 0.30-0.40  within 30 min       posted    749  fill   2%  (under 20 fills)
+  bid 0.30-0.40  until the close     posted    749  fill  23%  wins  34%  EV@close% +1.48 [+0.53, +2.34]  CLV¢ +0.49 [+0.15, +0.79]  per posted bid +0.34%
+  bid 0.40-0.50  within 30 min       posted  3,691  fill   2%  wins nan%  EV@close% +4.49 [+2.74, +6.15]  CLV¢ +2.02 [+1.25, +2.78]  per posted bid +0.09%
+  bid 0.40-0.50  until the close     posted  3,691  fill  19%  wins  35%  EV@close% +1.40 [+1.01, +1.74]  CLV¢ +0.63 [+0.46, +0.78]  per posted bid +0.27%
+  bid 0.50-0.60  within 30 min       posted  2,311  fill   2%  wins nan%  EV@close% +4.37 [+3.16, +5.59]  CLV¢ +2.29 [+1.65, +2.94]  per posted bid +0.08%
+  bid 0.50-0.60  until the close     posted  2,311  fill  17%  wins  61%  EV@close% +1.63 [+1.16, +2.11]  CLV¢ +0.86 [+0.61, +1.11]  per posted bid +0.28%
+  bid 0.60-0.70  within 30 min       posted    441  fill   0%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    441  fill   6%  wins nan%  EV@close% -1.05 [-2.60, +0.51]  CLV¢ -0.66 [-1.63, +0.34]  per posted bid -0.06%
+  bid 0.70-1.00  within 30 min       posted    722  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    722  fill   2%  (under 20 fills)
+
+== by kind of market (posted 3 h before), fills within 1 h, by price band
+  player prop 0.00-0.20              posted    481  fill  22%  wins nan%  EV@close% +4.11 [+2.91, +5.31]  CLV¢ +0.51 [+0.37, +0.64]  per posted bid +0.91%
+  player prop 0.20-0.30              posted    178  fill  19%  wins nan%  EV@close% +3.25 [+2.03, +4.45]  CLV¢ +0.74 [+0.47, +1.00]  per posted bid +0.60%
+  player prop 0.30-0.40              posted    266  fill  11%  wins nan%  EV@close% +6.36 [+3.45, +9.47]  CLV¢ +2.27 [+1.29, +3.33]  per posted bid +0.67%
+  player prop 0.40-0.50              posted  1,199  fill  10%  wins nan%  EV@close% +2.48 [+1.44, +3.45]  CLV¢ +1.12 [+0.66, +1.54]  per posted bid +0.25%
+  player prop 0.50-0.60              posted    784  fill   9%  wins nan%  EV@close% +3.44 [+2.30, +4.61]  CLV¢ +1.82 [+1.20, +2.46]  per posted bid +0.31%
+  player prop 0.60-0.70              posted    151  fill   5%  (under 20 fills)
+  player prop 0.70-1.00              posted    647  fill   0%  (under 20 fills)
+  period line 0.20-0.30              posted      1  fill   0%  (under 20 fills)
+  period line 0.30-0.40              posted     22  fill   5%  (under 20 fills)
+  period line 0.40-0.50              posted    267  fill   3%  (under 20 fills)
+  period line 0.50-0.60              posted    157  fill   5%  (under 20 fills)
+  period line 0.60-0.70              posted      2  fill  50%  (under 20 fills)
+  team total 0.30-0.40               posted      2  fill  50%  (under 20 fills)
+  team total 0.40-0.50               posted     34  fill  21%  (under 20 fills)
+  team total 0.50-0.60               posted     21  fill  10%  (under 20 fills)
+  team total 0.60-0.70               posted      1  fill   0%  (under 20 fills)
+  game line 0.00-0.20                posted    106  fill   8%  (under 20 fills)
+  game line 0.20-0.30                posted    167  fill   4%  (under 20 fills)
+  game line 0.30-0.40                posted    563  fill   2%  (under 20 fills)
+  game line 0.40-0.50                posted  2,513  fill   2%  wins nan%  EV@close% +2.04 [+0.40, +3.84]  CLV¢ +0.93 [+0.16, +1.78]  per posted bid +0.03%
+  game line 0.50-0.60                posted  1,578  fill   1%  (under 20 fills)
+  game line 0.60-0.70                posted    336  fill   1%  (under 20 fills)
+  game line 0.70-1.00                posted    206  fill   0%  (under 20 fills)
+
+== candidate rules (posted 3 h before, fills within 1 h)
+  everything                         posted  9,710  fill   5%  wins  29%  EV@close% +3.31 [+2.83, +3.84]  CLV¢ +1.12 [+0.94, +1.31]  per posted bid +0.16%
+  bid 0.30-0.65 (no longshots, no heavy favorites) posted  7,757  fill   4%  wins nan%  EV@close% +2.98 [+2.42, +3.54]  CLV¢ +1.35 [+1.08, +1.60]  per posted bid +0.12%
+  bid 0.35-0.65                      posted  7,468  fill   4%  wins nan%  EV@close% +2.79 [+2.26, +3.24]  CLV¢ +1.31 [+1.06, +1.52]  per posted bid +0.11%
+  bid 0.40-0.65                      posted  6,898  fill   4%  wins nan%  EV@close% +2.59 [+2.01, +3.10]  CLV¢ +1.25 [+0.97, +1.52]  per posted bid +0.10%
+  bid 0.25-0.50 (small underdogs, pick-ems) posted  5,032  fill   4%  wins nan%  EV@close% +3.07 [+2.30, +3.90]  CLV¢ +1.26 [+0.94, +1.59]  per posted bid +0.14%
+  props+team totals, 0.30-0.65       posted  2,399  fill  10%  wins nan%  EV@close% +3.40 [+2.73, +4.15]  CLV¢ +1.53 [+1.22, +1.84]  per posted bid +0.33%
+  props+period+team totals, 0.30-0.65 posted  2,846  fill   9%  wins nan%  EV@close% +3.36 [+2.70, +4.09]  CLV¢ +1.52 [+1.25, +1.85]  per posted bid +0.30%
+
+######## fair stand-in w=0.5
+
+== posted 1 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    649  fill  13%  wins nan%  EV@close% +4.53 [+3.70, +5.44]  CLV¢ +0.55 [+0.45, +0.66]  per posted bid +0.59%
+  bid 0.00-0.20  until the close     posted    649  fill  33%  wins  16%  EV@close% +4.19 [+3.57, +4.94]  CLV¢ +0.51 [+0.44, +0.60]  per posted bid +1.40%
+  bid 0.20-0.30  within 30 min       posted    349  fill   8%  wins nan%  EV@close% +4.58 [+4.14, +5.06]  CLV¢ +1.10 [+0.99, +1.20]  per posted bid +0.35%
+  bid 0.20-0.30  until the close     posted    349  fill  17%  wins nan%  EV@close% +4.18 [+3.61, +4.77]  CLV¢ +1.00 [+0.88, +1.13]  per posted bid +0.71%
+  bid 0.30-0.40  within 30 min       posted    944  fill   3%  wins nan%  EV@close% +3.76 [+1.57, +5.76]  CLV¢ +1.33 [+0.53, +1.98]  per posted bid +0.12%
+  bid 0.30-0.40  until the close     posted    944  fill  11%  wins nan%  EV@close% +2.50 [+0.93, +3.71]  CLV¢ +0.90 [+0.35, +1.31]  per posted bid +0.28%
+  bid 0.40-0.50  within 30 min       posted  4,235  fill   2%  wins nan%  EV@close% +4.04 [+3.26, +4.77]  CLV¢ +1.82 [+1.47, +2.16]  per posted bid +0.08%
+  bid 0.40-0.50  until the close     posted  4,235  fill   8%  wins nan%  EV@close% +2.87 [+2.56, +3.15]  CLV¢ +1.30 [+1.17, +1.44]  per posted bid +0.23%
+  bid 0.50-0.60  within 30 min       posted  2,736  fill   2%  wins nan%  EV@close% +4.81 [+4.23, +5.56]  CLV¢ +2.55 [+2.25, +2.95]  per posted bid +0.08%
+  bid 0.50-0.60  until the close     posted  2,736  fill   6%  wins nan%  EV@close% +3.89 [+3.44, +4.30]  CLV¢ +2.06 [+1.81, +2.29]  per posted bid +0.24%
+  bid 0.60-0.70  within 30 min       posted    554  fill   0%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    554  fill   1%  (under 20 fills)
+  bid 0.70-1.00  within 30 min       posted    932  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    932  fill   1%  (under 20 fills)
+
+== posted 3 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    586  fill  11%  wins nan%  EV@close% +5.15 [+4.23, +5.96]  CLV¢ +0.64 [+0.52, +0.76]  per posted bid +0.58%
+  bid 0.00-0.20  until the close     posted    586  fill  46%  wins  19%  EV@close% +4.07 [+3.48, +4.63]  CLV¢ +0.52 [+0.45, +0.60]  per posted bid +1.87%
+  bid 0.20-0.30  within 30 min       posted    329  fill   5%  (under 20 fills)
+  bid 0.20-0.30  until the close     posted    329  fill  30%  wins  21%  EV@close% +4.23 [+3.73, +4.87]  CLV¢ +0.99 [+0.87, +1.15]  per posted bid +1.27%
+  bid 0.30-0.40  within 30 min       posted    863  fill   3%  wins nan%  EV@close% +6.47 [+3.51, +9.50]  CLV¢ +2.28 [+1.21, +3.38]  per posted bid +0.16%
+  bid 0.30-0.40  until the close     posted    863  fill  16%  wins  35%  EV@close% +3.01 [+1.59, +4.18]  CLV¢ +1.08 [+0.59, +1.50]  per posted bid +0.47%
+  bid 0.40-0.50  within 30 min       posted  3,978  fill   2%  wins nan%  EV@close% +4.99 [+4.28, +5.71]  CLV¢ +2.26 [+1.95, +2.59]  per posted bid +0.11%
+  bid 0.40-0.50  until the close     posted  3,978  fill  13%  wins  41%  EV@close% +3.10 [+2.84, +3.38]  CLV¢ +1.41 [+1.30, +1.53]  per posted bid +0.41%
+  bid 0.50-0.60  within 30 min       posted  2,542  fill   2%  wins nan%  EV@close% +6.28 [+5.50, +7.11]  CLV¢ +3.34 [+2.92, +3.80]  per posted bid +0.15%
+  bid 0.50-0.60  until the close     posted  2,542  fill  10%  wins nan%  EV@close% +4.08 [+3.70, +4.52]  CLV¢ +2.16 [+1.95, +2.39]  per posted bid +0.42%
+  bid 0.60-0.70  within 30 min       posted    495  fill   1%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    495  fill   3%  (under 20 fills)
+  bid 0.70-1.00  within 30 min       posted    856  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    856  fill   1%  (under 20 fills)
+
+== posted 6 h before the close, by the bid's price (= roughly the chance the side wins), fills within 30 min / until the close
+  bid 0.00-0.20  within 30 min       posted    475  fill   6%  wins nan%  EV@close% +6.84 [+5.52, +8.10]  CLV¢ +0.81 [+0.64, +1.01]  per posted bid +0.43%
+  bid 0.00-0.20  until the close     posted    475  fill  57%  wins  19%  EV@close% +4.25 [+3.57, +4.92]  CLV¢ +0.53 [+0.45, +0.60]  per posted bid +2.43%
+  bid 0.20-0.30  within 30 min       posted    287  fill   5%  (under 20 fills)
+  bid 0.20-0.30  until the close     posted    287  fill  36%  wins  23%  EV@close% +3.89 [+3.26, +4.37]  CLV¢ +0.92 [+0.76, +1.03]  per posted bid +1.40%
+  bid 0.30-0.40  within 30 min       posted    755  fill   3%  wins nan%  EV@close% +6.47 [+3.66, +9.21]  CLV¢ +2.22 [+1.28, +3.18]  per posted bid +0.19%
+  bid 0.30-0.40  until the close     posted    755  fill  21%  wins  35%  EV@close% +2.50 [+1.26, +3.48]  CLV¢ +0.90 [+0.47, +1.24]  per posted bid +0.51%
+  bid 0.40-0.50  within 30 min       posted  3,629  fill   2%  wins nan%  EV@close% +6.06 [+5.14, +6.86]  CLV¢ +2.78 [+2.36, +3.16]  per posted bid +0.12%
+  bid 0.40-0.50  until the close     posted  3,629  fill  18%  wins  40%  EV@close% +2.88 [+2.60, +3.19]  CLV¢ +1.32 [+1.19, +1.46]  per posted bid +0.53%
+  bid 0.50-0.60  within 30 min       posted  2,297  fill   2%  wins nan%  EV@close% +6.35 [+5.57, +7.14]  CLV¢ +3.33 [+2.92, +3.75]  per posted bid +0.15%
+  bid 0.50-0.60  until the close     posted  2,297  fill  14%  wins  49%  EV@close% +3.95 [+3.57, +4.32]  CLV¢ +2.09 [+1.89, +2.28]  per posted bid +0.57%
+  bid 0.60-0.70  within 30 min       posted    446  fill   0%  (under 20 fills)
+  bid 0.60-0.70  until the close     posted    446  fill   5%  wins nan%  EV@close% +2.97 [+0.91, +5.01]  CLV¢ +1.85 [+0.60, +3.09]  per posted bid +0.14%
+  bid 0.70-1.00  within 30 min       posted    727  fill   0%  (under 20 fills)
+  bid 0.70-1.00  until the close     posted    727  fill   2%  (under 20 fills)
+
+== by kind of market (posted 3 h before), fills within 1 h, by price band
+  player prop 0.00-0.20              posted    480  fill  22%  wins nan%  EV@close% +4.74 [+4.04, +5.51]  CLV¢ +0.61 [+0.52, +0.72]  per posted bid +1.03%
+  player prop 0.20-0.30              posted    167  fill  16%  wins nan%  EV@close% +5.00 [+4.17, +5.80]  CLV¢ +1.12 [+0.94, +1.32]  per posted bid +0.78%
+  player prop 0.30-0.40              posted    271  fill  10%  wins nan%  EV@close% +6.50 [+4.16, +8.59]  CLV¢ +2.35 [+1.48, +3.13]  per posted bid +0.67%
+  player prop 0.40-0.50              posted  1,178  fill  10%  wins nan%  EV@close% +4.30 [+3.64, +4.99]  CLV¢ +1.95 [+1.66, +2.24]  per posted bid +0.41%
+  player prop 0.50-0.60              posted    779  fill   8%  wins nan%  EV@close% +5.80 [+4.97, +6.73]  CLV¢ +3.09 [+2.65, +3.60]  per posted bid +0.48%
+  player prop 0.60-0.70              posted    147  fill   4%  (under 20 fills)
+  player prop 0.70-1.00              posted    649  fill   0%  (under 20 fills)
+  period line 0.30-0.40              posted     22  fill   0%  (under 20 fills)
+  period line 0.40-0.50              posted    266  fill   5%  (under 20 fills)
+  period line 0.50-0.60              posted    157  fill   4%  (under 20 fills)
+  period line 0.60-0.70              posted      3  fill  33%  (under 20 fills)
+  team total 0.30-0.40               posted      2  fill  50%  (under 20 fills)
+  team total 0.40-0.50               posted     33  fill  24%  (under 20 fills)
+  team total 0.50-0.60               posted     22  fill   9%  (under 20 fills)
+  team total 0.60-0.70               posted      1  fill   0%  (under 20 fills)
+  game line 0.00-0.20                posted    106  fill   8%  (under 20 fills)
+  game line 0.20-0.30                posted    162  fill   4%  (under 20 fills)
+  game line 0.30-0.40                posted    562  fill   2%  (under 20 fills)
+  game line 0.40-0.50                posted  2,490  fill   2%  wins nan%  EV@close% +4.74 [+3.40, +5.90]  CLV¢ +2.17 [+1.55, +2.69]  per posted bid +0.08%
+  game line 0.50-0.60                posted  1,576  fill   1%  wins nan%  EV@close% +6.52 [+5.09, +7.89]  CLV¢ +3.44 [+2.67, +4.14]  per posted bid +0.08%
+  game line 0.60-0.70                posted    341  fill   1%  (under 20 fills)
+  game line 0.70-1.00                posted    207  fill   0%  (under 20 fills)
+
+== candidate rules (posted 3 h before, fills within 1 h)
+  everything                         posted  9,649  fill   5%  wins  29%  EV@close% +5.07 [+4.68, +5.41]  CLV¢ +1.89 [+1.73, +2.02]  per posted bid +0.25%
+  bid 0.30-0.65 (no longshots, no heavy favorites) posted  7,713  fill   4%  wins  44%  EV@close% +5.13 [+4.76, +5.58]  CLV¢ +2.40 [+2.23, +2.59]  per posted bid +0.21%
+  bid 0.35-0.65                      posted  7,427  fill   4%  wins nan%  EV@close% +5.09 [+4.69, +5.50]  CLV¢ +2.43 [+2.23, +2.64]  per posted bid +0.20%
+  bid 0.40-0.65                      posted  6,850  fill   4%  wins nan%  EV@close% +4.97 [+4.53, +5.45]  CLV¢ +2.43 [+2.20, +2.66]  per posted bid +0.20%
+  bid 0.25-0.50 (small underdogs, pick-ems) posted  4,990  fill   4%  wins nan%  EV@close% +4.86 [+4.29, +5.47]  CLV¢ +2.06 [+1.82, +2.31]  per posted bid +0.22%
+  props+team totals, 0.30-0.65       posted  2,376  fill   9%  wins nan%  EV@close% +5.13 [+4.59, +5.66]  CLV¢ +2.39 [+2.15, +2.63]  per posted bid +0.47%
+  props+period+team totals, 0.30-0.65 posted  2,823  fill   8%  wins nan%  EV@close% +5.12 [+4.64, +5.59]  CLV¢ +2.39 [+2.16, +2.60]  per posted bid +0.43%
