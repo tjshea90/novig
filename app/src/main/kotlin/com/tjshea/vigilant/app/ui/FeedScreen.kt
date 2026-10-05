@@ -174,6 +174,14 @@ fun FeedScreen(
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now)
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
+                // Pinnacle only (Tj, 2026-10-05): every EV below is Novig's price against Pinnacle's devigged price alone; the words are on the list, not in a menu.
+                if (state.settings.pinnacleOnly) item(key = "pinnacleOnly") {
+                    Text(
+                        "Pinnacle only: each edge is Novig's price against Pinnacle's devigged price for the same bet, and nothing else is read.",
+                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp).testTag("pinnacleOnlyBanner"),
+                    )
+                }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
                 if (removed.isNotEmpty() && state.settings.leagues.isNotEmpty()) {
                     item(key = "removed") {
