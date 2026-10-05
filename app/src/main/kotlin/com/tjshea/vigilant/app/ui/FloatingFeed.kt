@@ -479,7 +479,7 @@ private fun StartsWithinSwitch(hours: Int, onPick: (Int) -> Unit) {
     }
 }
 
-/** The widget's start-time switch order: Any time → 12h → 24h → 48h → Any time. */
+/** The widget's start-time switch order: Any time → 3h → 6h → 12h → 24h → 48h → Any time. */
 internal fun nextStartsWithin(hours: Int): Int {
     val choices = com.tjshea.vigilant.data.scanner.ScanSettings.STARTS_WITHIN_CHOICES
     return choices[(choices.indexOf(hours).coerceAtLeast(0) + 1) % choices.size]

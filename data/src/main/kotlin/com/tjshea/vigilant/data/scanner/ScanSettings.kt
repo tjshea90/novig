@@ -698,8 +698,12 @@ data class ScanSettings(
         /** [widgetRescanMinutes]' choices (0 = off). */
         val WIDGET_RESCAN_CHOICES = listOf(0, 5, 10, 15, 30)
 
-        /** [startsWithinHours]' choices (0 = any time). */
-        val STARTS_WITHIN_CHOICES = listOf(0, 12, 24, 48)
+        /**
+         * [startsWithinHours]' choices (0 = any time). 3 h and 6 h were added in v0.61.0 (RESEARCH.md §82): Tj's bets placed within 6 h of the start beat the
+         * close by +3.0% (96 closes, 81%), those placed earlier by −0.5% (322), and the trap guard's own window ([TrapGuard.DEFAULT_EARLY_HOURS]) is 6 h, so
+         * a list that can be set to 6 h shows what the guard would bet; before, the shortest choice was 12 h.
+         */
+        val STARTS_WITHIN_CHOICES = listOf(0, 3, 6, 12, 24, 48)
 
         /** [daysAhead]'s choices. */
         val DAYS_AHEAD_CHOICES = listOf(1, 2, 3, 5, 7, 10)
