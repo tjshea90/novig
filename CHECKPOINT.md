@@ -1,13 +1,13 @@
-# CHECKPOINT 2594 — read me first, then TASKS.md
+# CHECKPOINT 2595 — read me first, then TASKS.md
 
-**Written:** 2026-10-05T22:49:43Z · **tests:** all 3 fast checks green
-**Branch:** `claude/low-api-auto-bid-x67nzl` · **builds on:** `4bdb63f9` (this checkpoint is the commit after it)
+**Written:** 2026-10-05T22:56:06Z · **tests:** all 3 fast checks green
+**Branch:** `claude/low-api-auto-bid-x67nzl` · **builds on:** `61b9c3f0` (this checkpoint is the commit after it)
 
 ## Just done
-v0.68.0 released and recorded: CI 37383599447 green on 51b2462c, release.yml run 37384312355 green, Release published with vigilant-v0.68.0.apk
+Scanning page: Vigilant's scan pace follows the low API usage pace (was always 4 min), says the mode narrows it; test AutoScanTest (answering Tj's 15 sec screenshot question)
 
 ## Do this next
-nothing pending; next is whatever Tj asks (suggest: send the next Diagnostics + scan study so the BIDS section can show how Low API usage bids fill vs the close)
+not released yet: ships with the next version (text-only fix); nothing pending
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ nothing pending; next is whatever Tj asks (suggest: send the next Diagnostics + 
 
 ## Last ten checkpoints
 ```
+  3360711f ckpt 2594: v0.68.0 released and recorded: CI 37383599447 green on 51b2462c, release.yml
   51b2462c ckpt 2593: pre-release: v0.68.0: Low API usage bids (Bids › Rules › Which bids go u
   dd8697f2 ckpt 2592: CQ4/CQ5 prep: RESEARCH 92.4 written, TASKS CQ1-CQ4 ticked, version 0.68.0 co
   eab22bd9 ckpt 2591: CQ4: bids tagged (focus, fairBooks, ages), BidReport splits, Diagnostics low
@@ -25,8 +26,7 @@ nothing pending; next is whatever Tj asks (suggest: send the next Diagnostics + 
   b5011203 ckpt 2587: CQ1: design written (RESEARCH §92: LOW_USAGE focus, sharp prop books, feeds
   600f21d5 ckpt 2586: CQ0: wrote Tj's low-API prop auto-bid request + plan CQ1-CQ5 into TASKS.md
   c4c39ddd ckpt 2585: v0.67.0 logged: BUILDLOG row (c52c2818) confirmed on main; TASKS CP4 notes C
-  957367cf ckpt 2584: v0.67.0 released and recorded (CP1-CP4 done): run 37375200456 green, Release
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
