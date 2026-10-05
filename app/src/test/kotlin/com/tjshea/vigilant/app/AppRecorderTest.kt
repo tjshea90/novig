@@ -157,7 +157,7 @@ class AppRecorderTest {
             before,
             before.copy(
                 autoBet = !before.autoBet, autoScan = AutoScanMode.BOTH, autoScanSeconds = 5, autoScanKeepAwake = !before.autoScanKeepAwake, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM,
-                sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.OFF, presetName = "Mine", paused = !before.paused, scanner = ScannerMode.CNO, autoBetHalted = "a bet failed",
+                sharpAlerts = com.tjshea.vigilant.data.scanner.SharpMode.OFF, presetName = "Mine", pausedByHand = !before.pausedByHand, scanner = ScannerMode.CNO, autoBetHalted = "a bet failed",
             ),
         )
         val msgs = events.events().map { it.msg }

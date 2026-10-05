@@ -16,7 +16,7 @@ class CnoOnlyAsleepTest {
 
     @Test
     fun `what a background cycle reads follows the scanner choice, never more than it allows`() {
-        fun s(scanner: ScannerMode, auto: AutoScanMode, paused: Boolean = false) = ScanSettings(scanner = scanner, autoScan = auto, paused = paused)
+        fun s(scanner: ScannerMode, auto: AutoScanMode, paused: Boolean = false) = ScanSettings(scanner = scanner, autoScan = auto, pausedByHand = paused)
         // Both scanners on: auto-scan does what it says.
         assertTrue(s(ScannerMode.BOTH, AutoScanMode.CNO).autoScansCno)
         assertFalse(s(ScannerMode.BOTH, AutoScanMode.CNO).autoScansVigilant)

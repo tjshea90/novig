@@ -47,7 +47,7 @@ class AutoResumeAppTest {
     private fun pausedApp(mode: ScannerMode, toasts: MutableList<String>, listen: CoroutineScope): MainViewModel {
         runBlocking {
             app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
-            app.container.settingsStore.update { ScanSettings(scanner = mode, paused = true) }
+            app.container.settingsStore.update { ScanSettings(scanner = mode, pausedByHand = true) }
         }
         val vm = MainViewModel(app)
         listen.launch { vm.toasts.collect { toasts += it } }

@@ -181,7 +181,7 @@ class SettingsFixesTest {
     fun `each reason auto-bet can't run has its own one-tap fix`() {
         assertNull(AutoBetText.fixFor(ready()))
         assertEquals(AutoBetText.Fix.SET_UP_BETTING, AutoBetText.fixFor(ready().copy(betting = BettingUi())))
-        assertEquals(AutoBetText.Fix.RESUME_SCANNING, AutoBetText.fixFor(ready(base.copy(autoBet = true, autoScan = AutoScanMode.CNO, paused = true))))
+        assertEquals(AutoBetText.Fix.RESUME_SCANNING, AutoBetText.fixFor(ready(base.copy(autoBet = true, autoScan = AutoScanMode.CNO, pausedByHand = true))))
         assertEquals(AutoBetText.Fix.SCANNER, AutoBetText.fixFor(ready(base.copy(autoBet = true, autoScan = AutoScanMode.CNO, scanner = ScannerMode.VIGILANT))))
         assertEquals(AutoBetText.Fix.BACKGROUND_SCAN, AutoBetText.fixFor(ready(base.copy(autoBet = true, autoScan = AutoScanMode.OFF))))
         // A halt has its own Resume: no second button.

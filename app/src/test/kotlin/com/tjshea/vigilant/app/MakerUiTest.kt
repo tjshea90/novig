@@ -243,7 +243,7 @@ class MakerUiTest {
     fun `the Bids tab is there whatever the scanner, and picking a mode that bids turns on what bids need and says so`() {
         ScannerMode.entries.forEach { assertTrue(it.name, Tab.BIDS.shownIn(it)) }
         // CNO only, no background scan, paused: Recommend turns on Vigilant's scanner, the background scan with Vigilant every minute, and scanning.
-        var s = settings.copy(maker = false, makerRecommend = false, scanner = ScannerMode.CNO, autoScan = AutoScanMode.OFF, autoScanSeconds = 600, paused = true, autoBet = false)
+        var s = settings.copy(maker = false, makerRecommend = false, scanner = ScannerMode.CNO, autoScan = AutoScanMode.OFF, autoScanSeconds = 600, pausedByHand = true, autoBet = false)
         compose.setContent {
             VigilantTheme { MakerScreen(ui(s = s, vigilantOn = false, bids = emptyList()), MakerActions(onUpdate = { f -> s = f(s) })) }
         }

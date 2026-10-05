@@ -987,7 +987,7 @@ class MakerTest {
     fun `a mode that bids turns on Vigilant's scanner, the background scan with Vigilant at least once a minute and scanning, says so, and Off touches nothing else`() {
         val cnoOnly = ScanSettings(
             scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.OFF, autoScanSeconds = 600,
-            paused = true, maker = false, makerRecommend = false,
+            pausedByHand = true, maker = false, makerRecommend = false,
         )
         val rec = MakerSetup.set(cnoOnly, BidMode.RECOMMEND)
         assertEquals(BidMode.RECOMMEND, BidMode.of(rec.settings))
