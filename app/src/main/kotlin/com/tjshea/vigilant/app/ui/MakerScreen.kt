@@ -566,7 +566,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             }
             Switch(checked = s.makerBothSides, onCheckedChange = { on -> onUpdate { it.copy(makerBothSides = on) } }, modifier = Modifier.testTag("makerBothSides"))
         }
-        SwitchRow(
+        if (!lowUsage) SwitchRow(
             "Price under the sharp book's fair",
             "A bid's margin is taken from the lower of Vigilant's blended fair and the sharpest book's own fair (Pinnacle, Circa, an exchange, devigged the worst way), so the margin is a real edge against the book that moves first. The blend is partly soft books that follow the sharp ones; a bid that fills is more likely one the sharp book disagrees with (RESEARCH.md §88.3). With no sharp book in the fair, nothing changes.",
             s.makerAnchorSharp, "makerAnchorSharp",
@@ -576,19 +576,19 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             "Each fill is checked against the fair on the next scan. When half or more of the last ${ScanSettings.MAKER_GUARD_FILLS} fills were filled above the fair then (the market had already moved away), bids stop themselves and tell you, until you tap Resume bids (RESEARCH.md §88.3).",
             s.makerGuard, "makerGuard",
         ) { on -> onUpdate { it.copy(makerGuard = on) } }
-        SwitchRow(
+        if (!lowUsage) SwitchRow(
             "Sharp-book veto",
             "Skip a bid that a sharp book in the fair (Pinnacle, Circa, the exchanges) gives " +
                 (if (s.sharpVetoMinEv <= 0.0) "no edge" else "under ${AutoBetText.evLabel(s.sharpVetoMinEv)}") +
                 " on its own price (the Auto-bet tab's veto bar: a filled bid keeps about the sharp book's edge).",
             s.makerSharpVeto, "makerSharpVeto",
         ) { on -> onUpdate { it.copy(makerSharpVeto = on) } }
-        SwitchRow(
+        if (!lowUsage) SwitchRow(
             "Popular markets first",
             "When the wallet or the most bids can't take every bid, the ones on the kinds of market Novig's takers trade most (touchdowns, rushing attempts, receptions, pitcher outs, shots on goal) go up before the obscure ones (longest reception, hits, assists), after the ones that lead their side. Measured on Novig's own volume (RESEARCH.md §81.4).",
             s.makerPopularFirst, "makerPopularFirst",
         ) { on -> onUpdate { it.copy(makerPopularFirst = on) } }
-        SwitchRow(
+        if (!lowUsage) SwitchRow(
             "Require a sharp book to agree",
             "No bid unless a sharp book (Pinnacle, Circa, an exchange) prices the line both ways and agrees it is +EV. Off: a bid on a prop no sharp book prices is allowed (the veto still stops one a sharp book says no to). Too little data yet to say it pays (RESEARCH.md §81.4).",
             s.makerRequireSharp, "makerRequireSharp",
@@ -597,7 +597,10 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             "Recommend bids when auto-make is off", "A notification for each new bid worth posting, with Approve and Deny (a few a cycle at most).",
             s.makerRecommend, "makerRecommend",
         ) { on -> onUpdate { it.copy(makerRecommend = on) } }
-        Text(
+        if (lowUsage) Text(
+            LowUsageText.priceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp).testTag("lowUsagePriceNote"),
+        ) else Text(
             "Bids are priced between ${Format.american(s.makerMinPrice)} and ${Format.american(s.makerMaxPrice)}" +
                 (if (s.makerMaxOdds > 0) ", and never at longer odds than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else "") +
                 " (favorites shorter than that almost never fill), with at least " +
@@ -606,6 +609,73 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
         )
     }
+}
+
+/**
+ * The low-usage bids' controls (Tj, 2026-10-05; RESEARCH.md §92): the 2-3 sharp prop books the fair is built from, how often Vigilant's own scan runs while it is on, and
+ * how far under the fair each bid goes (never under 2.5%). Chips are the same look as every other rule here.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val picked = com.tjshea.vigilant.data.scanner.LowUsageBids.books(s)
+    Column(Modifier.testTag("lowUsagePanel")) {
+        Text("Sharp prop books (pick 2 or 3)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            com.tjshea.vigilant.data.scanner.LowUsageBids.BOOKS.forEach { b ->
+                FilterChip(
+                    selected = b.key in picked,
+                    onClick = { onUpdate { st -> st.copy(lowUsageBooks = com.tjshea.vigilant.data.scanner.LowUsageBids.toggled(st, b.key)) } },
+                    label = { Text(b.title) },
+                    modifier = Modifier.testTag("lowUsageBook-${b.key}"),
+                )
+            }
+        }
+        Text(LowUsageText.booksNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsageBooksNote"))
+        RuleChips("Vigilant's scan runs at most every", com.tjshea.vigilant.data.scanner.LowUsageBids.PACE_CHOICES, s.lowUsageMinutes, LowUsageText::paceLabel) { v -> onUpdate { it.copy(lowUsageMinutes = v) } }
+        Text(LowUsageText.paceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsagePaceNote"))
+        RuleChips("Under the fair (at least 2.5%): more fills at 2.5%, more per fill higher", com.tjshea.vigilant.data.scanner.LowUsageBids.MARGIN_CHOICES, s.lowUsageMargin, MakerRulesText::pct) { v ->
+            onUpdate { it.copy(lowUsageMargin = v) }
+        }
+    }
+}
+
+/** The low-usage bids' words, free of Compose. */
+object LowUsageText {
+    fun paceLabel(minutes: Int): String = "$minutes min"
+
+    /** What each picked book is read through, and what that costs. */
+    fun booksNote(s: ScanSettings): String {
+        val picked = com.tjshea.vigilant.data.scanner.LowUsageBids.books(s)
+        return com.tjshea.vigilant.data.scanner.LowUsageBids.BOOKS.filter { it.key in picked }.joinToString("\n") { "${it.title}: ${it.note}" }
+    }
+
+    /** How the pace trades against bids being up, in the app's own freshness rule. */
+    fun paceNote(s: ScanSettings): String {
+        val minutes = s.lowUsageMinutes.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
+        val coverage = when {
+            minutes <= 4 -> "bids stay up all the time"
+            minutes <= 5 -> "bids on games inside 3 hours of the start stay up all the time"
+            minutes <= 10 -> "games 3-6 hours out keep their bids up all the time; inside 3 hours a bid is up about ${(5 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
+            else -> "bids are up part of the time (they end when the books' prices are 5 minutes old, 10 for a game over 3 hours away)"
+        }
+        return "At most one scan every $minutes min (${60 / minutes} an hour or fewer), and a league with no game in the next 6 hours with a prop market on Novig isn't read at all. $coverage."
+    }
+
+    /** One line for the rules' summary. */
+    fun summary(s: ScanSettings): String =
+        "low API usage: ${com.tjshea.vigilant.data.scanner.LowUsageBids.names(com.tjshea.vigilant.data.scanner.LowUsageBids.books(s))} · scan every ${s.lowUsageMinutes} min · " +
+            "props in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h · ${MakerRulesText.pct(s.lowUsageMargin.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN))} or more under the fair · " +
+            "no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(lowUsageMaxOdds(s))} · ${MakerRulesText.stake(s)}"
+
+    /** The longest odds the mode posts at: +130, or a tighter limit of Tj's. */
+    fun lowUsageMaxOdds(s: ScanSettings): Int =
+        if (s.makerMaxOdds in BidRules.MIN_MAX_ODDS until com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS) s.makerMaxOdds else com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS
+
+    /** The line at the foot of the rules in the mode: what the price window is. */
+    fun priceNote(s: ScanSettings): String =
+        "Bids are priced between ${Format.american(0.6)} and ${Format.american(BidRules.priceAtOdds(lowUsageMaxOdds(s)))} (no longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(lowUsageMaxOdds(s))}; " +
+            "favorites shorter than -150 almost never fill), player props only, with at least 2 of the picked books each pricing the bid +EV on their own, pregame only."
 }
 
 /**
