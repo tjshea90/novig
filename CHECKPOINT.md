@@ -1,22 +1,22 @@
-# CHECKPOINT 2587 — read me first, then TASKS.md
+# CHECKPOINT 2588 — read me first, then TASKS.md
 
-**Written:** 2026-10-05T22:01:14Z · **tests:** all 3 fast checks green
-**Branch:** `claude/low-api-auto-bid-x67nzl` · **builds on:** `600f21d5` (this checkpoint is the commit after it)
+**Written:** 2026-10-05T22:10:10Z · **tests:** all 3 fast checks green
+**Branch:** `claude/low-api-auto-bid-x67nzl` · **builds on:** `62f1f06d` (this checkpoint is the commit after it)
 
 ## Just done
-CQ1: design written (RESEARCH §92: LOW_USAGE focus, sharp prop books, feeds, pace, freshness trade-off, rules)
+CQ2 (1/3): engine minSharp + tests; LowUsageBids (books/feeds/profile), ScanSettings fields+effective, Scanner/Pricing/ParlayProps wiring, LowUsageSource, AutoScan pace, app lowUsageSources; compiles
 
 ## Do this next
-CQ2: build in order: FairSettings.minSharp -> ScanSettings fields+effective() -> LowUsage object -> Pricing stale-drop -> LowUsageSource + app sources -> AutoScan pace -> MakerRules narrow -> UI
+CQ2 (2/3): maker side: LowUsage.narrow + MakerRules lowUsage/skipObscure + MakerLine.fairBooks + precheck; then UI chips; then tests CQ3; then tagging CQ4
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
 
 ## Last ten checkpoints
 ```
+  b5011203 ckpt 2587: CQ1: design written (RESEARCH §92: LOW_USAGE focus, sharp prop books, feeds
   600f21d5 ckpt 2586: CQ0: wrote Tj's low-API prop auto-bid request + plan CQ1-CQ5 into TASKS.md
   c4c39ddd ckpt 2585: v0.67.0 logged: BUILDLOG row (c52c2818) confirmed on main; TASKS CP4 notes C
   957367cf ckpt 2584: v0.67.0 released and recorded (CP1-CP4 done): run 37375200456 green, Release
@@ -26,5 +26,7 @@ CQ2: build in order: FairSettings.minSharp -> ScanSettings fields+effective() ->
   337e8cb1 ckpt 2580: pre-release: v0.67.0: longest odds a bid may be posted at (Bids rules: +140 
   6e77053e ckpt 2579: CP1-CP3 ticked; scratch screenshot test removed; version 0.67.0 code 114
   1f364251 ckpt 2578: CP1: RESEARCH §91 written (both sides fine; the pair = one bet 'not 3 runs'
-  7fa3bd5f ckpt 2577: CP2: wash guard in MakerPlan (never two bids of ours on the two sides of a m
 ```
+
+(10 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
