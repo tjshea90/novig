@@ -15,6 +15,8 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -81,6 +83,13 @@ class PinnacleOnlyUiTest {
         assertFalse(settings.pinnacleOnly)
         compose.onNodeWithTag("pinnacleOnlyAge").assertDoesNotExist()
         assertEquals(AutoScanMode.BOTH, settings.autoScan)
+    }
+
+    @Test
+    fun `the Auto-bet tab with Pinnacle only on, as a picture`() {
+        showAutoBet { it.copy(pinnacleOnly = true, scanner = ScannerMode.VIGILANT, autoBet = true, autoScan = AutoScanMode.BOTH) }
+        compose.onNodeWithTag("pinnacleOnlySwitch").assertIsOn()
+        compose.onRoot().captureRoboImage("screenshots/5m_auto_bet_pinnacle_only.png")
     }
 
     @Test
