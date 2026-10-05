@@ -111,6 +111,15 @@ data class MakerBid(
      * answers 404 by then); one never seen there may have been refused (post-only, `REJECTED`), which only its record says.
      */
     val seenOpen: Boolean = false,
+    /**
+     * Which "Which bids go up" choice posted it ([com.tjshea.vigilant.data.scanner.BidFocus] name; null = posted before v0.68.0), the books its fair was made from (names
+     * as the fair line gives them) and how old the oldest and newest of their prices were when it was posted, in seconds: what Diagnostics and the scan study split
+     * low-usage bids by (RESEARCH.md §92).
+     */
+    val focus: String? = null,
+    val fairBooks: List<String> = emptyList(),
+    val fairAgeSec: Int? = null,
+    val fairNewestAgeSec: Int? = null,
 ) {
     val active: Boolean get() = !status.ended
 
@@ -485,6 +494,8 @@ class MakerDesk(
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
             bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,
+            focus = rules.focus, fairBooks = line.fairBooks,
+            fairAgeSec = line.fairAsOfMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, fairNewestAgeSec = line.fairNewestMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
         )
         val ttl = bid.expiresAtMs!! - now
         // Worked out a moment ago: if that window has closed since, nothing is sent.

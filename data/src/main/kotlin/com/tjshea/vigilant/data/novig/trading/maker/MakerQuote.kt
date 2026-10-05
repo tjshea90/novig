@@ -101,6 +101,8 @@ data class MakerRules(
     val lowUsageBooks: Set<String> = emptySet(),
     /** Skip the kinds of prop Novig's takers were measured to trade rarely ([MarketPopularity.measuredObscure]): the least likely to be filled. */
     val skipObscure: Boolean = false,
+    /** Which "Which bids go up" choice these rules are ([com.tjshea.vigilant.data.scanner.BidFocus] name): written on every bid, so Diagnostics can split the bids by it. */
+    val focus: String = com.tjshea.vigilant.data.scanner.BidFocus.ALL.name,
 ) {
     companion object {
         /** [postsPerPass]'s default. */
@@ -114,9 +116,9 @@ data class MakerRules(
 
         fun of(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
-                LowUsage.on(s) -> LowUsage.narrow(r, s)
-                QuickLikely.on(s) -> QuickLikely.narrow(r)
-                else -> r
+                LowUsage.on(s) -> LowUsage.narrow(r, s).copy(focus = s.makerFocus.name)
+                QuickLikely.on(s) -> QuickLikely.narrow(r).copy(focus = s.makerFocus.name)
+                else -> r.copy(focus = s.makerFocus.name)
             }
         }
 

@@ -51,6 +51,11 @@ object BidReport {
         /** How long it was set to rest at most (expiry minus posting), minutes. */
         val lifeMin: Long? = null,
         val basis: String? = null,
+        /** Which "Which bids go up" choice posted it, the books its fair was made from, and how old the oldest and newest of their prices were then (seconds). */
+        val focus: String? = null,
+        val fairBooks: List<String> = emptyList(),
+        val fairAgeSec: Int? = null,
+        val fairNewestAgeSec: Int? = null,
         // ---- what became of it
         val status: String,
         val why: String? = null,
@@ -92,6 +97,7 @@ object BidReport {
                 bestBid = b.bestBidAtPost, offer = b.offerAtPost, bookAgeSec = b.bookAtMs?.let { ((b.postedAtMs - it) / 1000L).coerceAtLeast(0L) },
                 lifeMin = b.expiresAtMs?.let { ((it - b.postedAtMs) / 60_000L).coerceAtLeast(0L) },
                 basis = b.fairBasis?.group,
+                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec,
                 status = b.status.name, why = b.why.takeIf { b.status.ended }, endedAtMs = b.endedAtMs,
                 restedMin = ((b.endedAtMs ?: now) - b.postedAtMs).coerceAtLeast(0L) / 60_000.0,
                 filled = b.filled, paid = b.paid.takeIf { b.filled > 0 }, firstFillAtMs = fillAt, fillDelaySec = b.fillDelayMs?.let { it / 1000L },
@@ -179,6 +185,12 @@ object BidReport {
         split("time to the start when posted", null) { BetLedger.leadBand(it.minToStartAtPost) }
         split("picked off or not (the fair on the next scan against the price filled at)", null) { it.pickedOff?.let { p -> if (p) "picked off (fair under the price)" else "still above the price" } }
         split("who posted it", null) { if (it.auto) "auto-make" else "by hand" }
+        // Low API usage bids (RESEARCH.md §92): shown once any bid was posted by that mode (or by another one, so the two can be set side by side).
+        if (rows.any { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name }) {
+            split("which bids go up (Settings › Bids)", null) { focusLabel(it.focus) }
+            split("the books behind the fair, low API usage bids", null) { r -> r.takeIf { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name && it.fairBooks.isNotEmpty() }?.fairBooks?.sorted()?.joinToString(" + ") }
+            split("age of the oldest sharp price when posted, low API usage bids", AGE_ORDER) { r -> r.takeIf { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name }?.fairAgeSec?.let(::ageBand) }
+        }
         split("league", null) { it.league }
         return out
     }
@@ -199,6 +211,18 @@ object BidReport {
             r.betStatus?.takeIf { it != BetStatus.PENDING.name }?.let { parts += "$it ${money(r.profit ?: 0.0)}" }
             "  " + parts.joinToString(" · ")
         }
+    }
+
+    /** "Low API usage", "Quick & likely to win", "All bids"; a bid posted before the tag existed has none. */
+    fun focusLabel(focus: String?): String? = focus?.let { f -> com.tjshea.vigilant.data.scanner.BidFocus.entries.firstOrNull { it.name == f }?.displayName ?: f }
+
+    private val AGE_ORDER = listOf("under 1 min", "1 to 3 min", "3 to 5 min", "5 min or more")
+
+    fun ageBand(sec: Int): String = when {
+        sec < 60 -> "under 1 min"
+        sec < 180 -> "1 to 3 min"
+        sec < 300 -> "3 to 5 min"
+        else -> "5 min or more"
     }
 
     private val DELAY_ORDER = listOf("under 30 s", "30 s to 2 min", "2 to 10 min", "10 to 60 min", "an hour or more")
