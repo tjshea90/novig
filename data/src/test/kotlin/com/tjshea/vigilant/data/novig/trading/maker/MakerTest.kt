@@ -135,8 +135,8 @@ class MakerTest {
 
     @Test
     fun `a bid longer than the limit is skipped at the boundary, a bid at or shorter than it goes up, favorites always pass`() {
-        fun why(fair: Double) = (MakerQuote.decide(line(fair = fair, offer = 0.60), limit140, now) as? MakerDecision.Skip)?.why
-        fun price(fair: Double) = (MakerQuote.decide(line(fair = fair, offer = 0.60), limit140, now) as? MakerDecision.Post)?.price
+        fun why(fair: Double) = (MakerQuote.decide(line(fair = fair, offer = 0.70), limit140, now) as? MakerDecision.Skip)?.why
+        fun price(fair: Double) = (MakerQuote.decide(line(fair = fair, offer = 0.70), limit140, now) as? MakerDecision.Post)?.price
         // +140 is a price of 100 / 240 = 0.41667; the grid has 0.415 (+140.96: longer than +140, skipped) and 0.420 (+138.1: allowed).
         assertEquals(100.0 / 240.0, MakerRules.priceAtOdds(140), 1e-12)
         assertEquals("a fair of 0.434 bids 0.415 = +141", "A bid at that price would be at longer odds than your +140 limit for bids", why(0.434))
@@ -149,8 +149,8 @@ class MakerTest {
         assertEquals(0.600, price(0.627)!!, 1e-9)
         // The limit is the same number, signed: +100 stops everything under even money's 0.50.
         val even = rules.copy(maxOdds = 100)
-        assertTrue(MakerQuote.decide(line(fair = 0.50, offer = 0.60), even, now) is MakerDecision.Skip)
-        assertTrue(MakerQuote.decide(line(fair = 0.53, offer = 0.60), even, now) is MakerDecision.Post)
+        assertTrue(MakerQuote.decide(line(fair = 0.50, offer = 0.70), even, now) is MakerDecision.Skip)
+        assertTrue(MakerQuote.decide(line(fair = 0.53, offer = 0.70), even, now) is MakerDecision.Post)
     }
 
     @Test
@@ -161,8 +161,8 @@ class MakerTest {
         assertEquals(0.400, free.price, 1e-9)
         assertTrue((MakerQuote.decide(sharp, limit140, now) as MakerDecision.Skip).why.contains("longer odds than your +140 limit"))
         assertTrue(MakerQuote.decide(sharp, rules.copy(maxOdds = 150), now) is MakerDecision.Post)
-        // With the sharp-book anchor off the blend alone prices it: +108.
-        assertTrue(MakerQuote.decide(sharp, limit140.copy(anchorSharp = false), now) is MakerDecision.Post)
+        // With the sharp-book anchor (and the veto, which a 0.42 sharp fair would trip at 0.48) off, the blend alone prices it: +108.
+        assertTrue(MakerQuote.decide(sharp, limit140.copy(anchorSharp = false, sharpVeto = false), now) is MakerDecision.Post)
     }
 
     @Test
