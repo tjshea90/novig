@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.keys.RunwayLevel
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.KeepAwake
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.ClosingLine
@@ -347,54 +348,92 @@ object HealthChecks {
     private fun MutableList<Check>.accuracy(s: UiState, now: Long) {
         val bets = s.bets
         val withClv = bets.filter { it.status != BetStatus.VOID && !it.isOutlier }.mapNotNull { b -> ClosingLine.clv(b, now)?.let { b to it } }
-        if (withClv.size >= 20) {
-            val clv = withClv.map { it.second }.average()
-            val ev = withClv.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average()
-            val beat = withClv.count { it.second > 0 }.toDouble() / withClv.size
+        // The trap guard's window (Tj's v0.60.0 file, RESEARCH.md §82): his bets placed within 6 h of the start kept most of their shown EV at the close (+3.0% on
+        // +3.3%, 96 closes, 81% beat it), those placed earlier none of it (−0.5% on 322; all 37 that lost over 10% to the close were among them). The auto-bet, the
+        // alerts and the bids only make the first kind, so that is what "do the edges hold up" is asked of; pooled, the check called the edges "overstated".
+        val windowH = s.settings.trapEarlyHours.takeIf { it > 0 } ?: TrapGuard.DEFAULT_EARLY_HOURS
+        val (inside, earlier) = withClv.partition { leadMs(it.first) <= windowH * HOUR }
+        val judged = if (inside.size >= MIN_WINDOW_CLV) inside else withClv
+        val inWindow = judged === inside
+        if (judged.size >= 20) {
+            val clv = judged.map { it.second }.average()
+            val ev = judged.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average()
+            val beat = judged.count { it.second > 0 }.toDouble() / judged.size
             val gap = ev?.let { it - clv }
             val level = when {
                 clv < 0 -> Level.FAIL
                 gap != null && gap > 0.02 -> Level.WARN
                 else -> Level.OK
             }
+            val who = if (inWindow) "bets placed within $windowH h of the start" else "bets"
             add(
                 Check(
                     level, "Edge accuracy (CLV)",
                     when (level) {
-                        Level.FAIL -> "bets lose to the close on average: the edges shown aren't real"
-                        Level.WARN -> "the EV shown when bet runs ${pts(gap!!)} above what the close says: edges are overstated"
-                        Level.OK -> "bets beat the close: the edges hold up"
+                        Level.FAIL -> "$who lose to the close on average: the edges shown aren't real"
+                        Level.WARN -> "the EV shown when bet runs ${pts(gap!!)} above what the close says: edges are overstated" + if (inWindow) " ($who)" else ""
+                        Level.OK -> "$who beat the close: the edges hold up"
                     },
-                    "average CLV ${pctSigned(clv)}, EV when bet ${ev?.let(::pctSigned) ?: "?"}, beat the close ${pct0(beat)}, ${withClv.size} bets",
+                    "average CLV ${pctSigned(clv)}, EV when bet ${ev?.let(::pctSigned) ?: "?"}, beat the close ${pct0(beat)}, ${judged.size} bets" +
+                        (if (inWindow) " placed within $windowH h of the start" else "") +
+                        (if (inWindow && earlier.isNotEmpty()) "; placed earlier: CLV ${pctSigned(earlier.map { it.second }.average())} on ${earlier.size} bets (see Early bets)" else ""),
                     if (level != Level.OK) "fair odds (engine/FairValue.kt, ScanSettings.fairSource/devigMethod/minBooks); Accuracy by scanner below" else null,
                 ),
             )
         } else if (withClv.isNotEmpty()) {
             add(Check(Level.OK, "Edge accuracy (CLV)", "${withClv.size} bets with a true close so far: 20 needed to judge"))
         }
+        // The bets the guard keeps the app out of, which the lists and a hand bet still allow: judged on their own so they cannot hide inside the pooled number.
+        if (inWindow && earlier.size >= MIN_SCANNER_CLV) {
+            val clv = earlier.map { it.second }.average()
+            val beat = earlier.count { it.second > 0 }.toDouble() / earlier.size
+            val deep = earlier.count { it.second < -0.10 }
+            val recent = bets.count { it.status != BetStatus.VOID && !it.isLock && it.startsTs > 0 && leadMs(it) > windowH * HOUR && it.createdAtMs >= now - 3 * 24 * HOUR }
+            val level = if (clv < 0 && recent > 0) Level.WARN else Level.OK
+            add(
+                Check(
+                    level, "Early bets (CLV)",
+                    when {
+                        clv >= 0 -> "bets placed more than $windowH h before the start beat the close"
+                        recent > 0 -> "bets placed more than $windowH h before the start lose to the close, and $recent ${if (recent == 1) "was" else "were"} placed that early in the last 3 days"
+                        else -> "bets placed more than $windowH h before the start lose to the close; none were placed that early in the last 3 days"
+                    },
+                    "CLV ${pctSigned(clv)} on ${earlier.size} bets, beat the close ${pct0(beat)}, $deep closed over 10% worse than their price; within $windowH h: CLV " +
+                        "${pctSigned(inside.map { it.second }.average())} on ${inside.size}",
+                    if (level == Level.WARN) "Settings › Scanning › Starts within: ${windowH}h keeps them out of the lists (the trap guard already keeps the auto-bet, alerts and bids out of them)" else null,
+                ),
+            )
+        }
         // Each scanner judged on its own (Tj's diagnostics 2026-09-30: CNO's bets beat the close, Vigilant's own lost to it, and the
-        // overall number hid that).
+        // overall number hid that), on the bets placed inside the guard's window when it has enough of them.
         withClv.groupBy { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it.first, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER) }
             .filter { it.value.size >= MIN_SCANNER_CLV }
             .toSortedMap()
-            .forEach { (scanner, group) ->
+            .forEach { (scanner, all) ->
+                val near = all.filter { leadMs(it.first) <= windowH * HOUR }
+                val group = if (near.size >= MIN_SCANNER_CLV) near else all
                 val clv = group.map { it.second }.average()
                 val beat = group.count { it.second > 0 }.toDouble() / group.size
                 val ev = group.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average()
-                val level = when {
+                // A scanner that is switched off isn't failing now: its old bets (and the closes they are held to) are history, not a thing to fix today.
+                val asleep = scanner == "Vigilant" && !s.settings.vigilantOn
+                val raw = when {
                     clv < 0 -> Level.FAIL
                     ev != null && ev - clv > 0.02 -> Level.WARN
                     else -> Level.OK
                 }
+                val level = if (asleep && raw == Level.FAIL) Level.WARN else raw
                 add(
                     Check(
                         level, "$scanner's edges (CLV)",
                         when (level) {
                             Level.FAIL -> "its bets lose to the close on average: the edges it shows aren't real"
-                            Level.WARN -> "the EV it shows runs ${pts(ev!! - clv)} above what the close says"
+                            Level.WARN -> if (raw == Level.FAIL) "its old bets lose to the close, and its scanner is asleep now (CNO only), so there is nothing running to fix"
+                            else "the EV it shows runs ${pts(ev!! - clv)} above what the close says"
                             Level.OK -> "its bets beat the close"
                         },
-                        "CLV ${pctSigned(clv)} on ${group.size} bets, beat the close ${pct0(beat)}, EV when bet ${ev?.let(::pctSigned) ?: "?"}",
+                        "CLV ${pctSigned(clv)} on ${group.size} bets, beat the close ${pct0(beat)}, EV when bet ${ev?.let(::pctSigned) ?: "?"}" +
+                            (if (group !== all) " (placed within $windowH h; ${all.size - group.size} earlier left out)" else ""),
                         if (level == Level.OK) null else when (scanner) {
                             "Vigilant" -> "its fair odds (engine/FairValue.kt; ScanSettings.fairSource, sharpBooks, minBooks); by market and by what made the fair below"
                             else -> "that list's filters (minimum EV, fewest books, devig)"
@@ -508,6 +547,12 @@ object HealthChecks {
 
     /** A scanner is judged on its own closes once it has this many. */
     const val MIN_SCANNER_CLV = 15
+
+    /** Edge accuracy is judged on the bets placed inside the trap guard's window once there are this many with a close; fewer, all bets are judged together. */
+    const val MIN_WINDOW_CLV = 20
+
+    /** How long before its start a bet was placed. */
+    private fun leadMs(b: TrackedBet) = b.startsTs - b.createdAtMs
 
     /** "Novig refused" words in a scan error: a 403/429/451 from Novig is the scan's own reads failing, not a source's. */
     private val NOVIG_REFUSED = Regex("(?i)novig.*(403|429|451|refused|blocked)")
