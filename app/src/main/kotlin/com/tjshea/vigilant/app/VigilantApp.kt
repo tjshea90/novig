@@ -706,9 +706,9 @@ class AppContainer(private val app: Application) {
                 seen = st.finished
                 val s = currentSettings()
                 val result = st.result
-                if (!AppBook.isNovig || !s.pinnacleOnly || !s.autoBetsNow || result == null || result.partial) return@collect
+                if (!AppBook.isNovig || !com.tjshea.vigilant.data.novig.trading.PinnacleBet.passDue(s, result)) return@collect
                 runCatching {
-                    autoBet.runPinnacle(s, result) { leagues -> scanner.refreshFair(s, referenceSources(s, background = true), leagues) }
+                    autoBet.runPinnacle(s, result!!) { leagues -> scanner.refreshFair(s, referenceSources(s, background = true), leagues) }
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Auto-bet (Pinnacle only)", e.message ?: e.javaClass.simpleName) } }
             }
         }

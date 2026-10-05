@@ -130,6 +130,21 @@ class PinnacleBetTest {
     }
 
     @Test
+    fun `a finished scan is followed by a pass only with Pinnacle only, auto-bet and the background scan on, and not while stopped or paused`() {
+        val on = ScanSettings(pinnacleOnly = true, autoBet = true, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH)
+        val done = ScanResult(emptyList(), emptyList(), ScanStats(0, 0, 0, 0, 0), now)
+        assertTrue(PinnacleBet.passDue(on, done))
+        assertTrue(!PinnacleBet.passDue(on, null))
+        assertTrue("a partial result is a scan still reading", !PinnacleBet.passDue(on, done.copy(freshSinceMs = now - 1)))
+        assertTrue(!PinnacleBet.passDue(on.copy(pinnacleOnly = false), done))
+        assertTrue(!PinnacleBet.passDue(on.copy(autoBet = false), done))
+        assertTrue("auto-scan off: no background cycle, so no auto-bet", !PinnacleBet.passDue(on.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.OFF), done))
+        assertTrue(!PinnacleBet.passDue(on.copy(killed = true), done))
+        assertTrue(!PinnacleBet.passDue(on.copy(pausedByHand = true), done))
+        assertTrue(!PinnacleBet.passDue(on.copy(autoBetHalted = "lost"), done))
+    }
+
+    @Test
     fun `the age limits are held between 10 seconds and 5 minutes, and a quote is read again once it passes a third of the limit`() {
         assertEquals(90_000L, PinnacleBet.maxAgeMs(ScanSettings(pinnacleMaxAgeSeconds = 90)))
         assertEquals(10_000L, PinnacleBet.maxAgeMs(ScanSettings(pinnacleMaxAgeSeconds = 1)))

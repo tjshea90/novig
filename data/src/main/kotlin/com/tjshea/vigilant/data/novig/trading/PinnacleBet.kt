@@ -28,6 +28,9 @@ object PinnacleBet {
     const val MIN_AGE_SECONDS = 10
     const val MAX_AGE_SECONDS = 300
 
+    /** A scan that just ended with [result] is followed by a pass: Pinnacle only and auto-bet are on (not paused, not stopped, auto-scan running) and the result is a finished one. */
+    fun passDue(s: ScanSettings, result: ScanResult?): Boolean = s.pinnacleOnly && s.autoBetsNow && result != null && !result.partial
+
     /** Pinnacle's quote may be this old (ms) at the order. */
     fun maxAgeMs(s: ScanSettings): Long = s.pinnacleMaxAgeSeconds.coerceIn(MIN_AGE_SECONDS, MAX_AGE_SECONDS) * 1_000L
 
