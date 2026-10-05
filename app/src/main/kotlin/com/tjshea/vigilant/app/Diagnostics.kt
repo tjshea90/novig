@@ -372,6 +372,8 @@ object Diagnostics {
             stillLooking.groupingBy { it.closeNote ?: "not looked for yet" }.eachCount().entries.sortedByDescending { it.value }.take(5).forEach { o.appendLine("    ×${it.value}: ${it.key}") }
         }
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
+        // What the Tracker's Profit shows (every settled bet, the same with its "Novig only" filter on or off): the line above leaves the outliers out.
+        if (stats.outliers > 0) o.appendLine("Every settled bet, outliers too (the Tracker's Profit): profit ${String.format(Locale.US, "%+.2f", stats.profitAll)} on ${String.format(Locale.US, "%.2f", stats.stakedAll)} staked" + (stats.roiAll?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + " · ${stats.outliers} outlier bet${if (stats.outliers == 1) "" else "s"} (over ±${(BetTracker.OUTLIER_EV * 100).toInt()}% EV when bet)")
         stats.luck?.let { o.appendLine(String.format(Locale.US, "Expected %+.2f vs actual %+.2f over %d settled bets with an EV: %+.1f standard deviations", stats.expectedProfit, stats.profitWithEv, stats.settledWithEv, it)) }
         // Locks (Tj, 2026-10-02 20:06Z): the numbers above count every bet; the Tracker hides locked ones when its switch is on.
         val locks = com.tjshea.vigilant.data.tracker.LockedBets.stats(bets)
