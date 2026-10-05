@@ -1427,4 +1427,85 @@ class MakerTest {
         d.cycle(listOf(line("m1-over", fair = 0.60).copy(fairNewestMs = now - 1_000)), rules, null, 50.0, 100.0)
         assertEquals(0.47, d.bids().first { it.orderId == "o1" }.fairAtFill!!, 1e-12)
     }
+
+    // ---- RESEARCH.md §88.4: unlimited bids up at once, and "quick & likely to win" -----------------------------------------------------------------------------
+
+    @Test
+    fun `unlimited bids up at once is a choice - no cap on the count, the wallet and the dollars still bind, and a pass sends at most sixty new ones`() {
+        assertTrue(ScanSettings.MAKER_MAX_BIDS_CHOICES.contains(ScanSettings.NO_LIMIT))
+        assertEquals(ScanSettings.NO_LIMIT, MakerRules.of(ScanSettings(makerMaxBids = ScanSettings.NO_LIMIT)).maxBids)
+        val unlimited = rules.copy(maxBids = ScanSettings.NO_LIMIT, maxDollars = ScanSettings.MAKER_NO_DOLLAR_LIMIT)
+        val wanted = (1..100).map { post("m$it-over", 0.45, 100) }
+        // A hundred wanted, 45 cents x 100 contracts x 1¢ = $0.45 each: the wallet ($1,000) isn't the limit, the pass is.
+        val a = MakerPlan.plan(wanted, emptyList(), unlimited, now, budget = 1_000.0)
+        assertEquals(MakerRules.POSTS_PER_PASS, a.places.size)
+        assertEquals(40, a.waiting[MakerPlan.PASS_FULL.format(MakerRules.POSTS_PER_PASS)])
+        assertFalse(a.waiting.keys.any { it.startsWith("the most bids up at once") })
+        // The next pass, with those 60 resting, sends the other 40.
+        val up = a.places.map { resting(it.line.outcomeId, it.price) }
+        val b = MakerPlan.plan(wanted, up, unlimited, now, budget = 1_000.0)
+        assertEquals(40, b.places.size)
+        assertTrue(b.waiting.isEmpty())
+        // The wallet still binds: $10 holds 22 bids of $0.45.
+        val poor = MakerPlan.plan(wanted, emptyList(), unlimited, now, budget = 10.0)
+        assertEquals(22, poor.places.size)
+        assertTrue(poor.waiting.keys.any { it == MakerPlan.BUDGET_REACHED })
+        // And a finite cap still caps: 20 by default.
+        assertEquals(20, MakerPlan.plan(wanted, emptyList(), rules, now, budget = 1_000.0).places.size)
+    }
+
+    @Test
+    fun `quick and likely to win keeps only props and team totals priced 30 to 60 percent with a sharp book behind them - and never loosens anything Tj set`() {
+        val quick = MakerRules.of(ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY, makerKinds = BetKind.entries.toSet()))
+        assertTrue(quick.quick && quick.requireSharp && quick.popularFirst)
+        assertEquals(setOf(BetKind.PROP, BetKind.TEAM_TOTAL), quick.kinds)
+        assertEquals(0.30, quick.minPrice, 1e-12)
+        assertEquals(0.60, quick.maxPrice, 1e-12)
+        // A narrower window of Tj's own stays; the focus only narrows.
+        val own = MakerRules.of(ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY, makerMinPrice = 0.40, makerMaxPrice = 0.50))
+        assertEquals(0.40, own.minPrice, 1e-12)
+        assertEquals(0.50, own.maxPrice, 1e-12)
+        // Props he turned off stay off (the intersection can be empty: nothing is bid, and the tab says why).
+        assertTrue(MakerRules.of(ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY, makerKinds = setOf(BetKind.MONEYLINE))).kinds.isEmpty())
+        // All bids: the rules are the rules.
+        val all = MakerRules.of(ScanSettings())
+        assertFalse(all.quick)
+        assertFalse(all.requireSharp)
+        // The decisions, at the quick rules with the margin 4% under a sharp fair of 0.50 (the bid is 0.480):
+        fun why(l: MakerLine) = (MakerQuote.decide(l, quick, now) as MakerDecision.Skip).why
+        val sharp = line(fair = 0.50, offer = 0.56).copy(sharpFairs = listOf(0.50))
+        assertEquals(0.480, (MakerQuote.decide(sharp, quick, now) as MakerDecision.Post).price, 1e-9)
+        // A longshot (bid 0.2) and a heavy favorite (bid 0.7) are outside the window.
+        assertTrue(why(line(fair = 0.21, offer = 0.30).copy(sharpFairs = listOf(0.21))).contains("outside the price window"))
+        assertTrue(why(line(fair = 0.73, offer = 0.80).copy(sharpFairs = listOf(0.73))).contains("outside the price window"))
+        // No sharp book: no bid, in the sharp-required words.
+        assertTrue(why(line(fair = 0.50, offer = 0.56)).contains("a sharp book must agree"))
+        // A game line or a period line isn't a quick bid.
+        assertTrue(why(sharp.copy(kind = BetKind.MONEYLINE)).contains("are off for bids"))
+        assertTrue(why(sharp.copy(kind = BetKind.PERIOD)).contains("are off for bids"))
+        assertTrue(MakerQuote.decide(sharp.copy(kind = BetKind.TEAM_TOTAL), quick, now) is MakerDecision.Post)
+    }
+
+    @Test
+    fun `quick bids go up leading-first, then the kinds takers trade, then the likeliest fill, then the most edge - not the cheapest`() {
+        val quick = rules.copy(quick = true)
+        fun p(id: String, price: Double, leads: Boolean, ev: Double = 0.04) =
+            MakerDecision.Post(line(id, fair = price * 1.04, offer = price + 0.1).copy(bestBid = if (leads) null else price + 0.005), price, 100, ev)
+        val a = p("m1-over", 0.55, leads = true)
+        val b = p("m2-over", 0.35, leads = true)
+        val c = p("m3-over", 0.45, leads = false)
+        val d = p("m4-over", 0.45, leads = true, ev = 0.07)
+        val order = listOf(a, b, c, d).sortedWith(MakerPlan.priority(quick)).map { it.line.outcomeId }
+        // Leading ones first; among them the likeliest fill (0.45 > 0.55 > 0.35 by the band rates, 10% / 8.5% / 10.5%: 0.35 is the likeliest, then 0.45, then 0.55).
+        assertEquals(listOf("m2-over", "m4-over", "m1-over", "m3-over"), order)
+        // The old order (cheapest first) is not used in quick mode: all bids, cheapest of the leaders first.
+        val old = listOf(a, b, c, d).sortedWith(MakerPlan.priority(rules)).map { it.line.outcomeId }
+        assertEquals(listOf("m2-over", "m4-over", "m1-over", "m3-over"), old)
+        // The fill-rate yardstick: highest for longshots, flat across the middle, nearly nothing for heavy favorites.
+        assertTrue(QuickLikely.fillChancePerHour(0.10) > QuickLikely.fillChancePerHour(0.35))
+        assertTrue(QuickLikely.fillChancePerHour(0.35) > QuickLikely.fillChancePerHour(0.60))
+        assertTrue(QuickLikely.fillChancePerHour(0.60) > QuickLikely.fillChancePerHour(0.75))
+        assertTrue(QuickLikely.fillChancePerHour(0.95) < 0.01)
+        assertEquals(0.105, QuickLikely.fillChancePerHour(0.35), 1e-12)
+    }
 }
