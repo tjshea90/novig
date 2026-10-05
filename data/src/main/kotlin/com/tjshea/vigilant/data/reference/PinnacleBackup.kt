@@ -25,6 +25,4 @@ class PinnacleBackup(private val inner: ReferenceSource) : ReferenceSource by in
             .any { e -> context.covered[e.eventId].orEmpty().any { it.startsWith("PROP:") } }
         return if (inner.propsOnly) !pricedProps else league.novigName !in context.firstAnswered
     }
-
-    override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot = inner.odds(league, settings, context)
 }
