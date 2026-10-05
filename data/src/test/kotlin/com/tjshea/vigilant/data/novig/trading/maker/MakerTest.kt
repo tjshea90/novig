@@ -210,6 +210,56 @@ class MakerTest {
     private fun resting(outcome: String, price: Double, expires: Long? = now + 20 * 60_000, filled: Long = 0) =
         RestingBid("o-$outcome", outcome.substringBefore('-'), outcome, price, 1_000 - filled, filled, expires)
 
+    // ---- never two bids of ours that trade with each other (a wash) -------------------------------------------------------
+
+    @Test
+    fun `a new bid that would trade with a bid of ours on the other side of its market waits - the two prices add up to a dollar or more`() {
+        fun plan(over: Double, under: Double, restingOver: Boolean = true) = MakerPlan.plan(
+            wanted = listOf(post("m1-over", over)) + post("m1-under", under), resting = if (restingOver) listOf(resting("m1-over", over)) else emptyList(), rules = rules, now = now,
+        )
+        // Over rests at 0.60 (its fair still holds it); an Under at 0.45 would meet it (1.05), at 0.40 exactly $1.00 would too, at 0.39 it would not.
+        val meets = plan(0.600, 0.450)
+        assertEquals(emptyList<String>(), meets.places.map { it.line.outcomeId })
+        assertEquals(mapOf(MakerPlan.WASH to 1), meets.waiting)
+        assertEquals(emptyList<String>(), plan(0.600, 0.400).places.map { it.line.outcomeId })
+        assertEquals(listOf("m1-under"), plan(0.600, 0.390).places.map { it.line.outcomeId })
+        // Both new in one pass at 0.55 and 0.46 (1.01): one goes up, the other waits for the next pass.
+        val both = plan(0.550, 0.460, restingOver = false)
+        assertEquals(1, both.places.size)
+        assertEquals(mapOf(MakerPlan.WASH to 1), both.waiting)
+        assertTrue(MakerPlan.WASH.contains("wash"))
+    }
+
+    @Test
+    fun `a stale bid this pass cancels, or one already on its way down, still counts: a cancel can lag or fail, so the new bid waits for it`() {
+        // The Over fell to 0.40 (re-posted lower; its 0.60 comes down first); a new Under at 0.55 would meet the 0.60 until Novig confirms it gone.
+        val fell = MakerPlan.plan(listOf(post("m1-over", 0.400), post("m1-under", 0.550)), listOf(resting("m1-over", 0.600)), rules, now)
+        assertEquals("The fair price fell: re-posted lower", fell.cancels.single().second)
+        assertEquals(listOf("m1-over"), fell.places.map { it.line.outcomeId })
+        assertEquals(mapOf(MakerPlan.WASH to 1), fell.waiting)
+        // A bid whose cancel is in flight (not in `resting`) is still on the book.
+        val down = RestingBid("o-x", "m1", "m1-over", 0.600, 1_000, 0, null)
+        val way = MakerPlan.plan(listOf(post("m1-under", 0.450)), emptyList(), rules, now, onTheWay = listOf(down))
+        assertTrue(way.places.isEmpty())
+        assertEquals(mapOf(MakerPlan.WASH to 1), way.waiting)
+        assertEquals(listOf("m1-under"), MakerPlan.plan(listOf(post("m1-under", 0.390)), emptyList(), rules, now, onTheWay = listOf(down)).places.map { it.line.outcomeId })
+    }
+
+    @Test
+    fun `the wash guard is about the two sides of ONE market: another market's bid, and the same side's own, never hold a bid back`() {
+        // Over rests at 0.60 on m1; an Under at 0.45 on m2 (another line of the same team total) can't meet it, nor can a new Over on m1's own side.
+        val other = MakerPlan.plan(listOf(post("m1-over", 0.600), post("m2-under", 0.450)), listOf(resting("m1-over", 0.600)), rules, now)
+        assertEquals(listOf("m2-under"), other.places.map { it.line.outcomeId })
+        assertTrue(other.waiting.isEmpty())
+        // The pair the screenshot showed: Over 3.5 at +170 (0.370) and Under 2.5 at +141 (0.415): different markets, both go up.
+        val pair = MakerPlan.plan(listOf(post("m1-over", 0.370), post("m2-under", 0.415)), emptyList(), rules, now)
+        assertEquals(setOf("m1-over", "m2-under"), pair.places.map { it.line.outcomeId }.toSet())
+        // A real two-sided bid (the fairs add up to 1, so the bids add up to under 1/1.04): both go up, as before.
+        val two = MakerPlan.plan(listOf(post("m1-over", 0.500), post("m1-under", 0.460)), emptyList(), rules, now)
+        assertEquals(2, two.places.size)
+        assertTrue(two.waiting.isEmpty())
+    }
+
     @Test
     fun `a resting bid moves down at once when the fair falls, up only by two steps, and is re-posted before it expires`() {
         val fell = MakerPlan.plan(listOf(post("m1-over", 0.495)), listOf(resting("m1-over", 0.500)), rules, now)
