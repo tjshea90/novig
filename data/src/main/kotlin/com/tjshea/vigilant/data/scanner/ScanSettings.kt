@@ -57,6 +57,12 @@ enum class AutoBetStake(val label: String, val kelly: Double?) {
     EIGHTH_KELLY("⅛ Kelly", 0.125), QUARTER_KELLY("¼ Kelly", 0.25), HALF_KELLY("½ Kelly", 0.5), ONE_DOLLAR("$1", null), CUSTOM("My amount", null)
 }
 
+/**
+ * Which bids go up (Tj, 2026-10-05). [ALL]: every bid the Bids rules allow. [QUICK_LIKELY]: only bids with a real chance to win (no longshots) that sit where
+ * takers actually fill them, with a sharp book behind the price, best chance first (RESEARCH.md §88.4; the numbers are [com.tjshea.vigilant.data.novig.trading.maker.QuickLikely]).
+ */
+enum class BidFocus(val displayName: String) { ALL("All bids"), QUICK_LIKELY("Quick & likely to win") }
+
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
@@ -255,6 +261,28 @@ data class ScanSettings(
      * other way on 6 closes; too thin to switch a rule (RESEARCH.md §81.4).
      */
     val makerRequireSharp: Boolean = false,
+    /**
+     * Tj, 2026-10-05: "make sure the math for the auto bid feature is sound and is getting me true positive EV bids placed because my bids right now are being taken
+     * fast". A bid is priced the margin under the LOWER of Vigilant's blended fair and the sharpest book's own fair (each sharp book devigged the worst way),
+     * not under the blend alone: the blend is 30% soft books that follow the sharp ones, and a fill is more likely exactly when a sharp book disagrees with it.
+     * So the margin is a real edge against the book that moves first (RESEARCH.md §88.3). On by default; with no sharp book in the fair, nothing changes.
+     */
+    val makerAnchorSharp: Boolean = true,
+    /**
+     * The picked-off guard (RESEARCH.md §88.3): a bid that fills while the fair has already moved under its price is a bet the market was walking away from.
+     * Each fill is judged against the fair on the next scan after it ([com.tjshea.vigilant.data.novig.trading.maker.MakerBid.fairAtFill]); when half or more of
+     * the last [MAKER_GUARD_FILLS] fills were that, bids stop themselves ([makerHalted]) until Tj resumes them. On by default.
+     */
+    val makerGuard: Boolean = true,
+    /** Why the picked-off guard stopped the bids (null = running). Set by the app, cleared by Tj's Resume on the Bids tab; not a setting he picks. */
+    val makerHalted: String? = null,
+    /** Fills before this time (epoch ms) aren't looked at by the guard: set to the moment Tj resumed, so the same fills can't stop the bids twice. */
+    val makerGuardFromMs: Long = 0L,
+    /**
+     * Which bids go up (Tj, 2026-10-05: "only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win the bet …
+     * favorites and small underdogs … positive EV and the best chance at beating clv"): [BidFocus.ALL] (every bid the rules allow) or [BidFocus.QUICK_LIKELY].
+     */
+    val makerFocus: BidFocus = BidFocus.ALL,
     /**
      * With auto-make off, recommend bids to approve or deny (Tj, 2026-10-03: "recommend bets to make and I manually approve or deny them"): the Bids
      * tab's list, and a notification for each new one (at most a few a cycle) with Approve and Deny.
@@ -760,11 +788,17 @@ data class ScanSettings(
         /** [makerStake]'s and [makerMaxStake]'s choices, dollars. */
         val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
 
-        /** [makerMaxBids]' choices. */
-        val MAKER_MAX_BIDS_CHOICES = listOf(5, 10, 20, 40)
+        /** [makerMaxBids]' choices; [NO_LIMIT] = unlimited (Tj, 2026-10-05: "an option for unlimited bids up at once"): the wallet, the dollars and the per-game limit still bind. */
+        val MAKER_MAX_BIDS_CHOICES = listOf(5, 10, 20, 40, NO_LIMIT)
 
-        /** [makerMaxDollars]' choices. */
-        val MAKER_MAX_DOLLARS_CHOICES = listOf(25.0, 50.0, 100.0, 250.0)
+        /** [makerMaxDollars]' choices; [MAKER_NO_DOLLAR_LIMIT] = no limit of its own (the wallet and the day's limit still hold every bid). */
+        val MAKER_MAX_DOLLARS_CHOICES = listOf(25.0, 50.0, 100.0, 250.0, 1_000.0, MAKER_NO_DOLLAR_LIMIT)
+
+        /** "No limit" for the dollars up at once. */
+        const val MAKER_NO_DOLLAR_LIMIT = 1_000_000.0
+
+        /** The picked-off guard looks at this many of the newest fills ([makerGuard]). */
+        const val MAKER_GUARD_FILLS = 8
 
         /** [makerTtlMinutes]' choices. */
         val MAKER_TTL_CHOICES = listOf(10, 30, 60, 120)
