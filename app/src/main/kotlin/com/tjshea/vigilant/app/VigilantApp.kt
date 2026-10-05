@@ -697,6 +697,21 @@ class AppContainer(private val app: Application) {
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
             }
         }
+        // Pinnacle only (RESEARCH.md §88.5): when a Vigilant scan ends, the auto-bet bets what it found against Pinnacle's devigged price, on a Pinnacle price read again first
+        // if the scan's is past a third of Settings' age limit. One pass at a time, after every scan whoever started it; nothing here runs unless Pinnacle only and auto-bet are on.
+        appScope.launch {
+            var seen = runner.state.value.finished
+            runner.state.collect { st ->
+                if (st.scanning || st.finished <= seen) return@collect
+                seen = st.finished
+                val s = currentSettings()
+                val result = st.result
+                if (!AppBook.isNovig || !s.pinnacleOnly || !s.autoBetsNow || result == null || result.partial) return@collect
+                runCatching {
+                    autoBet.runPinnacle(s, result) { leagues -> scanner.refreshFair(s, referenceSources(s, background = true), leagues) }
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Auto-bet (Pinnacle only)", e.message ?: e.javaClass.simpleName) } }
+            }
+        }
         // A crash saved as the last process went down ([AppExits.install]): into Recent problems at the time it happened.
         appScope.launch(Dispatchers.IO) {
             AppExits.takeSavedCrash(app)?.let { (at, text) -> runCatching { problems.add("App crash", text, atMs = at, maxLength = problems.crashLength) } }
