@@ -677,10 +677,12 @@ class AppContainer(private val app: Application) {
         }
         appScope.launch {
             // Paused (the Pause button, or the wallet ran out): every bid down. Auto-make switched off: the bids it posted down; the ones Tj approved stay.
-            settingsStore.flow.filterNotNull().map { Triple(it.paused, it.maker, it.makerHalted != null) }.distinctUntilChanged().collect { (paused, on, guarded) ->
+            settingsStore.flow.filterNotNull().map { Triple(if (it.killed) KILLED else if (it.paused) PAUSED else NEITHER, it.maker, it.makerHalted != null) }.distinctUntilChanged().collect { (stop, on, guarded) ->
                 runCatching {
                     when {
-                        paused -> maker.cancelAll("Scanning is paused")
+                        // The kill switch's own words on the bids, whichever of this watcher and the button takes them down first.
+                        stop == KILLED -> maker.cancelAll(KillSwitch.CANCEL_WHY)
+                        stop == PAUSED -> maker.cancelAll("Scanning is paused")
                         !on -> maker.cancelAuto("Auto-make switched off")
                         // Stopped by the picked-off guard (Tj, 2026-10-05): the bids it posted come down, the ones Tj approved by hand stay.
                         guarded -> maker.cancelAuto("Stopped by the picked-off guard")
