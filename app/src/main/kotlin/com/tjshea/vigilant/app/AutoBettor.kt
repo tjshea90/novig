@@ -146,6 +146,8 @@ class AutoBettor(
         val rules = AutoBet.rules(settings)
         // Whoever calls, a halted or switched-off auto-bet places nothing.
         if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
+        // The kill switch (Tj, 2026-10-05): whoever calls, and whatever the settings passed in say, a stopped app places nothing.
+        if (settings.killed || c.settingsStore.flow.value?.killed == true) return finish(now, Report(), blocker = "Stopped by the STOP button: tap RESUME on the red bar to run again")
         settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
         failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
         val placer = placer()
