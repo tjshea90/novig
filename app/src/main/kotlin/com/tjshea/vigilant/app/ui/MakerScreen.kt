@@ -456,8 +456,11 @@ object MakerRulesText {
             "60 new bids (Novig takes 8 orders a second); the rest go up on the next pass."
 
     /** What the longest-odds setting does, for the line under its chips ([ScanSettings.makerMaxOdds], 0 = no limit). */
-    fun maxOddsNote(maxOdds: Int): String =
-        if (maxOdds <= 0) "No limit: any bid the price window below allows is posted, however long its odds."
+    fun maxOddsNote(maxOdds: Int, lowUsage: Boolean = false): String =
+        if (lowUsage && (maxOdds <= 0 || maxOdds >= com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS)) {
+            "Low API usage bids never go longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS)} (a price under " +
+                "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS) * 100)}¢), whatever is picked here; pick a shorter limit to go tighter."
+        } else if (maxOdds <= 0) "No limit: any bid the price window below allows is posted, however long its odds."
         else "No bid is posted at longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(maxOdds)} (a price under " +
             "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(maxOdds) * 100)}¢), however good its edge; a bid already up at such a price comes down at the next pass. " +
             "Favorites always pass. The odds are the bid's own price, a margin under the fair, so a fair of +157 with a 4% margin posts near +170."
@@ -671,9 +674,9 @@ object LowUsageText {
     fun paceNote(s: ScanSettings): String {
         val minutes = s.lowUsageMinutes.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
         val coverage = when {
-            minutes <= 5 -> "bids on games inside 3 hours of the start stay up all the time"
-            minutes <= 10 -> "games 3-6 hours out keep their bids up all the time; inside 3 hours a bid is up about ${(5 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
-            else -> "bids are up part of the time (they end when the books' prices are 5 minutes old, 10 for a game over 3 hours away)"
+            minutes <= 5 -> "Bids on games inside 3 hours of the start stay up all the time"
+            minutes <= 10 -> "Games 3-6 hours out keep their bids up all the time; inside 3 hours a bid is up about ${(5 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
+            else -> "Bids are up part of the time (they end when the books' prices are 5 minutes old, 10 for a game over 3 hours away)"
         }
         return "At most one scan every $minutes min, and a league with no game in the next 6 hours with a prop market on Novig isn't read at all. $coverage."
     }
@@ -719,7 +722,7 @@ private fun MakerMaxOdds(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetti
         modifier = Modifier.fillMaxWidth().testTag("makerMaxOddsField"),
     )
     Text(
-        MakerRulesText.maxOddsNote(s.makerMaxOdds), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        MakerRulesText.maxOddsNote(s.makerMaxOdds, s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.testTag("makerMaxOddsNote"),
     )
 }

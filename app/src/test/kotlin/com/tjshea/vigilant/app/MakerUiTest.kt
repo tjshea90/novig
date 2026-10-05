@@ -446,6 +446,8 @@ class MakerUiTest {
         compose.onAllNodesWithTag("makerRequireSharp").assertCountEquals(0)
         compose.onNodeWithTag("makerFocusNote").assertTextContains("player props", substring = true)
         compose.onNodeWithTag("lowUsagePriceNote").assertTextContains("+130", substring = true)
+        // The usual longest-odds control stays (a tighter limit is kept), and its note says the mode's cap.
+        compose.onNodeWithTag("makerMaxOddsNote").performScrollTo().assertTextContains("never go longer than +130", substring = true)
         // The books: two or three, never fewer or more.
         compose.onNodeWithTag("lowUsageBook-fanduel").performScrollTo().performClick()
         assertEquals(setOf("kalshi", "prophetx"), st.value.lowUsageBooks)
