@@ -4937,3 +4937,41 @@ Not shown by the tape (it holds only what traded): when the quotes went stale, w
 - **What the tennis there looks like**: 16 bets in the study at EV +1.0% to +8.7%, fair from "market average, worst case" on all but two (not a sharp book), 6 graded (3-3 at unit stake); Tj placed 2 (Lois Boisson moneyline won, Vendula Valdmannova lost, CLV −1.1% on 1 close). **There is no CLV evidence for tennis yet**, and Vigilant's own bets as a whole closed −1.5% against Novig's own trades (58 closes; §81.2, §82.2); CNO's +0.6%.
 - **How to get it today**: it takes Vigilant's scan, not CNO's. The league list (ATP, WTA are already on) only matters to Vigilant's scan: CNO's rows are filtered by Tj's link and the start window, never by the league chips (`UiState.cnoCandidates`). So **Scanner: Both with the league chips set to ATP and WTA only** gives CNO for everything it carries plus a tennis-only Vigilant scan (small: the last all-league scan priced 20 lines of 54 games; tennis uses Pinnacle's one tour-wide request and Kalshi, not The Odds API). The chips live on the +EV and Games tabs, which "CNO only" hides, so the league list can't be changed in that mode. Limits: the **auto-bet only reads CNO's rows** (`AlertPicks.cnoChecked`), so tennis would be hand bets and Vigilant's alerts, not auto-bets.
 - **Not changed**: nothing in the app. Options for Tj (TASKS.md CD2): (a) a "CNO + tennis" scanner mode (Vigilant asleep except ATP and WTA, one tap, no league chips to find); (b) a line on the CNO tab and in Settings saying CNO has no tennis; (c) letting the auto-bet bet Vigilant's tennis picks, which needs a sharp fair for tennis and some CLV evidence first (turn it on for a week and send the files).
+
+
+## 86. "Cheaper than Pinnacle on the same prop side": how often is it +EV, and how often does it beat the close? (2026-10-05; Tj: "If I'm only comparing prop bets to the same side on pinnacle, and I can get it at better odds than pinnacle, what are the chances it's a positive EV bet that beats clv")
+
+Method: the v0.60.0 diagnostics' bets (Tj's placed ones) and the scan study's bets, kept when the book page carried Pinnacle's price for both sides (82 and 126 bets; **73 and 98 props**). "Better than Pinnacle" = Novig's taker cost below Pinnacle's implied probability for the same side. "+EV against Pinnacle" = cost below Pinnacle's no-vig fair (multiplicative; the power method gives the same counts within one bet). Scripts were scratch (`/tmp/claude-0/pin/`), figures below are the final run.
+
+### 86.1 What Pinnacle's own vig does to "better odds than Pinnacle"
+- Pinnacle's two-way prop overround is **5.6% (Tj's bets) / 4.8% (study)** at the median. A side near 50% therefore has a **dead zone of 2.5–2.7 probability points** between Pinnacle's quoted price and its no-vig fair (median gap 2.73 / 2.46 points). A Novig price inside it is better than Pinnacle's odds and still a **negative-EV** bet against Pinnacle's own fair, about 5% of EV at the edge of the zone.
+- So "better odds than Pinnacle" is a necessary test, not a sufficient one. The bar is Pinnacle's devigged fair, and a real margin above it.
+
+### 86.2 The data (props that were better than Pinnacle's raw price: 73 of 73, and 96 of 98 — CNO's list already requires a plus)
+- **+EV against Pinnacle's fair: 71 of 73 (97%, Wilson 91–99%); 83 of 96 (86%, Wilson 78–92%).** Mean EV against Pinnacle's fair +4.4% (median +4.2%) and +2.9% (median +2.8%). The 13 study bets that fell in the dead zone were all listed at CNO EV +0.2% to +2.3%: small listed EVs are where "better than Pinnacle" fails.
+- **By how much cheaper than Pinnacle's price** (probability points; share +EV against its fair; beat the close; mean CLV):
+
+  | edge vs Pinnacle's raw price | Tj's bets | study |
+  | :- | :- | :- |
+  | under 2 pts | n=1, 0% +EV | n=9, **0% +EV** (mean EV −1.8%) |
+  | 2–3 pts | n=1, 0% | n=14, 79% +EV (mean EV +0.4%) |
+  | 3–4 pts | 15, 100%; 14 closes, 79% beat, CLV −1.18% | 28, 96%; 10 closes, 90% beat, +1.49% |
+  | 4–5 pts | 30, 100%; 25 closes, 84% beat, +2.83% | 30, 100%; 14 closes, 79% beat, +2.96% |
+  | 5+ pts | 26, 100%; 20 closes, 75% beat, +0.47% | 15, 100%; 5 closes, 100% beat, +2.39% |
+
+  Rule of thumb that falls out: under about 2.5 pts cheaper than Pinnacle's price is not +EV against it; 3 pts is marginal; 4+ pts is +EV in all 71 cases.
+- **Beat the close: 49 of 61 (80%, Wilson 69–88%) and 28 of 34 (82%, Wilson 66–92%).** Mean CLV +1.1% (median +3.2%) and +2.1% (median +2.1%). Among the +EV ones: 47 of 59 and 27 of 32 (80%, 84%).
+- **Time to start decides it** (Tj's, first-listed to start): under 6 h 17 closes, 88% beat, CLV +3.4%; 6–24 h 23 closes, 96% beat, +2.7%; **24 h or more 21 closes, 57% beat, CLV −2.6%**. The study has none above 24 h with a close (its lists were already inside Tj's window): under 6 h 13 closes 85% beat, +2.1%; 6–24 h 21 closes 81% beat, +2.1%. The cheap price is the same at any lead time; whether it survives to the close is not.
+- **How much of the edge shows up as CLV: little of it.** The EV against Pinnacle's fair vs realised CLV: correlation 0.08 (n=61) and 0.22 (n=34), slope 0.28 / 0.24; neither is distinguishable from zero. EV bins 2–4%, 4–6%, 6%+ on Tj's bets give mean CLV +1.4%, +0.4%, +3.1% — not monotone. Realised CLV is roughly a quarter of the EV against Pinnacle's fair, consistent with the shrinkage in §82 (listed EV is ~0.1× pooled, ~0.85× inside 6 h).
+- **Profit says nothing yet**: Tj's 59 graded props lost $12.52 on $99.14 staked (−12.6%); the study's graded props are 40 won / 41 lost. At 4–5% EV on prop prices near 50%, one standard deviation of ROI over 59 bets is about 13 points; the sign of the ROI is not informative.
+
+### 86.3 What this cannot settle
+1. **The yardstick is not Pinnacle.** 60 of the 61 and 34 of the 35 closes are Tracker reads of CNO's consensus (no Pinnacle close in either subset; ParlayAPI's Pinnacle closes cover 11 bets in the diagnostics, none of these props). "Beat the close" here means the edge held against the same consensus that listed it, a lower bar than beating Pinnacle's own closing no-vig price. The direct test (Pinnacle prop closes from ParlayAPI) is not in these files.
+2. **Selection.** Every bet here was already on CNO's +EV list. This is the chance given that CNO flagged it, not the chance for any prop that happens to be cheaper than Pinnacle. The base rate over unfiltered Novig props is not in the data.
+3. **Size and overlap.** 61 and 34 closes, with Tj's and the study's bets overlapping and several bets per game; the Wilson intervals above are for independent bets, so they are tighter than the truth.
+4. **Pinnacle's props are not its sharpest product.** Props carry low limits, are often posted early and stale, and are the least efficient market Pinnacle makes; "fair" there is itself uncertain by a point or two.
+
+### 86.4 What to set (nothing built; Tj asks first)
+- If the question is "what does cheaper than Pinnacle have to be": compare to Pinnacle's **devigged fair, not its quoted price**, and require **at least 3 points of probability** (≈ 3–4% EV against its fair) for the bet to be +EV with margin; under 2.5 points it is the dead zone.
+- Inside **24 h** (already inside 6 h for the auto-bet/alerts/bids via the trap guard); the 24 h+ props at the same price beat the close only 57% of the time with −2.6% CLV.
+- Treat the result as unproven until Pinnacle's own prop closes confirm it: the next diagnostics + study after a full NFL week at "Starts within 6h" should carry Pinnacle closes for these props (BX5).
