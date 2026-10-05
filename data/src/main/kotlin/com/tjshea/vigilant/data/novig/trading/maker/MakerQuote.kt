@@ -93,6 +93,14 @@ data class MakerRules(
      * slate could want hundreds at once, and a pass that long would hold the lock the Pause, the kill switch and the fills' checks wait for.
      */
     val postsPerPass: Int = POSTS_PER_PASS,
+    /**
+     * Low API usage bids ([LowUsage], RESEARCH.md §92): the fair must be built from [lowUsageBooks] alone (their names as the fair line gives them: "Kalshi", "ProphetX"),
+     * at least two of them, which is what the low-usage scan prices ([com.tjshea.vigilant.data.scanner.LowUsageBids.profile]); a line priced by an older full scan, with
+     * a soft book or a sharp book that wasn't picked in it, waits for the next scan. Empty = the rule is off.
+     */
+    val lowUsageBooks: Set<String> = emptySet(),
+    /** Skip the kinds of prop Novig's takers were measured to trade rarely ([MarketPopularity.measuredObscure]): the least likely to be filled. */
+    val skipObscure: Boolean = false,
 ) {
     companion object {
         /** [postsPerPass]'s default. */
@@ -104,7 +112,13 @@ data class MakerRules(
         /** The price (cost of a $1 payout) at which a bid pays American odds of [odds]: +140 pays $1.40 on $1, so $1 / $2.40 = 0.4167. 0 (no limit) = no floor. */
         fun priceAtOdds(odds: Int): Double = if (odds <= 0) 0.0 else 100.0 / (100.0 + odds)
 
-        fun of(s: ScanSettings): MakerRules = base(s).let { if (QuickLikely.on(s)) QuickLikely.narrow(it) else it }
+        fun of(s: ScanSettings): MakerRules = base(s).let { r ->
+            when {
+                LowUsage.on(s) -> LowUsage.narrow(r, s)
+                QuickLikely.on(s) -> QuickLikely.narrow(r)
+                else -> r
+            }
+        }
 
         private fun base(s: ScanSettings) = MakerRules(
             margin = s.makerMargin.coerceIn(0.005, 0.5),
@@ -169,6 +183,8 @@ data class MakerLine(
     val fairOld: Boolean,
     /** Books behind [fair]. */
     val books: Int,
+    /** Their names as the fair line gives them ("Kalshi", "FanDuel"): what low-usage bids check against the books Tj picked ([MakerRules.lowUsageBooks]). Empty = not known. */
+    val fairBooks: List<String> = emptyList(),
     /** Each book's own fair for this side, devigged worst case (one per book): what "books agree" counts. Empty = not known. */
     val bookFairs: List<Double> = emptyList(),
     /** The same for the sharp books in the fair (Pinnacle, Circa, the exchanges Settings calls sharp). */
@@ -231,7 +247,8 @@ object MakerLines {
             val line = MakerLine(
                 market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
                 eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
-                fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0, offer = o.quote?.price,
+                fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0,
+                fairBooks = o.fair?.booksUsed.orEmpty(), offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
                 basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels,
             )
@@ -412,6 +429,12 @@ object MakerQuote {
         }
         if (line.market.status != "OPEN") return skip("Novig isn't taking orders on this market")
         if (line.kind !in rules.kinds) return skip("${line.kind.label} are off for bids")
+        if (rules.skipObscure && MarketPopularity.measuredObscure(line.league, line.market.marketType)) {
+            return skip("Takers rarely trade this kind of prop on Novig: a bid on it is unlikely to be filled")
+        }
+        if (rules.lowUsageBooks.isNotEmpty() && (line.fairBooks.size < LowUsage.MIN_BOOKS || line.fairBooks.any { it !in rules.lowUsageBooks })) {
+            return skip(LowUsage.NOT_PRICED)
+        }
         val fair = line.fair ?: return skip("No fair price")
         if (fair <= 0.0 || fair >= 1.0) return skip("No fair price")
         if (line.fairOld) return skip("The fair price is too old to bid on")

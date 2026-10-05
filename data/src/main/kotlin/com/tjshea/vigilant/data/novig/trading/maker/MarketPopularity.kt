@@ -100,6 +100,12 @@ object MarketPopularity {
     fun dollars(league: String, marketType: String): Double? = DAILY_DOLLARS["${league.uppercase()}|$marketType"]
 
     /**
+     * Whether takers were MEASURED to trade this kind of market rarely (under [POPULAR] a listed market a day): a bid on it is the least likely to be filled. A kind the study
+     * never measured is not obscure here: low-usage bids ([LowUsage]) price from two or three books, so the "how many books price it" guess [tier] makes would call it obscure.
+     */
+    fun measuredObscure(league: String, marketType: String): Boolean = dollars(league, marketType)?.let { it < POPULAR } ?: false
+
+    /**
      * 0 = hot, 1 = popular, 2 = obscure. A kind the study didn't measure is judged by how many books price it: [popularBooks] or more is popular, fewer obscure
      * (a line many books quote is one many bettors want).
      */
