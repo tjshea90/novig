@@ -263,6 +263,97 @@ class ApiSettlerTest {
         assertEquals(BetStatus.LOST, t3.all().single().status)
     }
 
+    /** The locked pair of Tj's Ollie Gordon market: 400 contracts of A ($1.85) and the lock, 400 of B ($2.00); $4.00 pays whichever wins, so +$0.15. */
+    private fun lockedPair(t: BetTracker) = runBlocking {
+        t.logApi(target("a"), "o1", listOf(fill("o1")))
+        t.logApi(target("b").copy(outcomeId = "B", selection = "Team B", lockFor = "pick"), "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 400, 2.0, true, 0.0, start - hour)))
+    }
+
+    @Test
+    fun `a market held on both sides is never graded lost from Novig's silence alone - the winning leg stays open for the payout or a tap`() = runBlocking {
+        // Tj, 2026-10-05: Over 29.5 won (100 yards), Novig's ledger showed nothing for it, and six hours after the start it was graded lost, so the locked
+        // market read as losing both legs (-$3.00 on a lock worth +$0.12). The feeds read the pick (Team A lost: B won) but not the lock's own wording.
+        novig()
+        val t = tracker(); lockedPair(t)
+        val feed: suspend (TrackedBet) -> BetGrader.Grade? = { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.LOST, "Final: Team B 24, Team A 17") else null }
+        settler(t, feed).run()
+        // Three hours after the start the lock is waiting, the pick is graded.
+        assertEquals(BetStatus.LOST, t.all().single { it.orderId == "o1" }.status)
+        assertEquals(BetStatus.PENDING, t.all().single { it.orderId == "o2" }.status)
+        now = start + 7 * hour
+        val r = settler(t, feed).run()
+        assertEquals(1, r.manual)
+        val lock = t.all().single { it.orderId == "o2" }
+        assertEquals(BetStatus.PENDING, lock.status)
+        assertTrue(lock.gradeManual && lock.gradeNote == ApiSettler.BOTH_HELD_SILENT)
+        // The Locked card: nothing graded yet, so it reads what the lock is worth, never a double loss.
+        val stats = LockedBets.stats(t.all())
+        assertEquals(0.15, stats.profit, 1e-9)
+        assertEquals(0, stats.graded)
+
+        // The payout turns up in the ledger later: the lock is graded won by it, and the market made +$0.15.
+        novig(ledger = listOf("mkt" to "4.00000"))
+        settler(t, feed).run()
+        assertEquals(BetStatus.WON, t.all().single { it.orderId == "o2" }.status)
+        assertEquals(0.15, t.all().sumOf { it.profit!! }, 1e-9)
+
+        // A single bet (no other side held) still takes the loss from silence after six hours.
+        val t2 = tracker(); bet(t2)
+        settler(t2).run()
+        now = start + 7 * hour
+        settler(t2).run()
+        assertEquals(BetStatus.LOST, t2.all().single().status)
+    }
+
+    @Test
+    fun `a feed that says lost for both sides of a locked market grades only the first`() = runBlocking {
+        novig()
+        val t = tracker(); lockedPair(t)
+        val r = settler(t) { BetGrader.Grade.Result(BetStatus.LOST, "Final: misread") }.run()
+        assertEquals(1, r.settled)
+        assertEquals(1, r.manual)
+        assertEquals(1, t.all().count { it.status == BetStatus.LOST })
+        assertTrue(t.all().single { it.status == BetStatus.PENDING }.gradeNote == ApiSettler.OTHER_SIDE_LOST)
+    }
+
+    @Test
+    fun `both legs of a locked market graded lost are taken back (the silent one), and a result Tj tapped is left`() = runBlocking {
+        novig()
+        val t = tracker(); lockedPair(t)
+        // What Tj's phone holds: the pick lost with the feeds' evidence, the lock lost from silence alone.
+        t.editMany(mapOf(
+            t.all().single { it.orderId == "o1" }.id to { b: TrackedBet ->
+                b.copy(status = BetStatus.LOST, settledAtMs = now, settledBy = BetSettler.BY_NOVIG, gradeNote = "${ApiSettler.SILENT_LOSS} (Final: Team B 24, Team A 17)")
+            },
+            t.all().single { it.orderId == "o2" }.id to { b: TrackedBet ->
+                b.copy(status = BetStatus.LOST, settledAtMs = now, settledBy = BetSettler.BY_NOVIG, gradeNote = ApiSettler.SILENT_LOSS)
+            },
+        ))
+        assertEquals(-3.85, t.all().sumOf { it.profit!! }, 1e-9)
+        val r = settler(t) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.LOST, "Final") else null }.run()
+        assertEquals(1, r.reopened)
+        assertEquals(BetStatus.LOST, t.all().single { it.orderId == "o1" }.status)
+        val lock = t.all().single { it.orderId == "o2" }
+        assertEquals(BetStatus.PENDING, lock.status)
+        assertNull(lock.settledAtMs)
+        assertTrue(lock.gradeManual)
+        // The card reads the lock's worth, not the double loss.
+        assertEquals(0.15, LockedBets.stats(t.all()).profit, 1e-9)
+
+        // Tj tapped the lock's loss himself: his result stands.
+        val t2 = tracker(); lockedPair(t2)
+        t2.editMany(t2.all().associate { b -> b.id to { x: TrackedBet -> x.copy(status = BetStatus.LOST, settledAtMs = now, settledBy = BetSettler.BY_YOU, gradeNote = "Marked lost by you") } })
+        assertEquals(0, settler(t2).run().reopened)
+        assertTrue(t2.all().all { it.status == BetStatus.LOST })
+
+        // One leg lost and one won (the normal lock): nothing is touched.
+        val t3 = tracker(); lockedPair(t3)
+        novig(ledger = listOf("mkt" to "4.00000"))
+        settler(t3) { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.LOST, "Final") else null }.run()
+        assertEquals(0, settler(t3).run().reopened)
+        assertEquals(0.15, t3.all().sumOf { it.profit!! }, 1e-9)
+    }
+
     @Test
     fun `when Novig can't be read nothing changes`() = runBlocking {
         novig(down = true)
