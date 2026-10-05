@@ -422,7 +422,11 @@ object StudyExport {
      * a day of wide-read finds can't push out the ones the app showed); every bet is in the summary all the same. [tracked]: Tj's own Tracker bets, to mark the ones he
      * placed. Returns the bets written.
      */
-    fun write(out: java.io.Writer, journal: StudyJournal, tracked: List<TrackedBet>, meta: Meta, now: Long, tmp: File, maxBytes: Long = MAX_BYTES): Int {
+    fun write(
+        out: java.io.Writer, journal: StudyJournal, tracked: List<TrackedBet>, meta: Meta, now: Long, tmp: File, maxBytes: Long = MAX_BYTES,
+        /** Vigilant's own bids (Make orders, files/maker.json): every one posted in the last 14 days, for the BIDS section. */
+        bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid> = emptyList(),
+    ): Int {
         val ownIndex = tracked.filter { !it.isLock && it.createdAtMs < it.startsTs }.groupBy { PlacedIndex.identity(it.eventName, it.marketLabel, it.selection) ?: "" }
             .filterKeys { it.isNotEmpty() }
         val all = journal.days().reversed()
@@ -540,6 +544,7 @@ object StudyExport {
                 out.appendLine("   " + unjudged.line("NOT JUDGED"))
             }
         }
+        bidSection(out, bids, tracked, now, meta.zone)
         out.appendLine()
         out.appendLine("== EVERY BET (JSON lines, newest first; $rows bets" + (if (cut > 0) ", $cut more left out of these lines but counted above" else "") + ") ==")
         out.appendLine("<<<JSONL")
@@ -549,6 +554,41 @@ object StudyExport {
         tmp.delete()
         return overall.n
     }
+
+    /**
+     * The BIDS section (Tj, 2026-10-05: "make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see
+     * how well my auto bids do"): Vigilant's make orders over the last 14 days, added up and split ([com.tjshea.vigilant.data.novig.trading.maker.BidReport.summary]), then every
+     * FILLED bid as a JSON line ([BidReport.Row]) and the newest [MAX_UNFILLED_BID_ROWS] bids that never filled, so a reader can ask what separates the two.
+     */
+    private fun bidSection(out: java.io.Writer, bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>, tracked: List<TrackedBet>, now: Long, zone: TimeZone) {
+        val rows = com.tjshea.vigilant.data.novig.trading.maker.BidReport.rows(bids, tracked, now)
+        if (rows.isEmpty()) return
+        out.appendLine()
+        out.appendLine("== BIDS (Vigilant's make orders: standing offers under its fair price that takers fill; the last 14 days, ${rows.size} posted). A bid is judged by CLV and results like any bet, but ALSO by how fast it was taken: a bid taken in seconds is usually one the market was already walking away from (the fair on the next scan is under the price: evAtFill < 0, \"picked off\"). Compare evAtPost (the edge claimed) with evAtFill (the edge the next scan still saw) and clv (the close). Price band ~ the chance the side wins. ==")
+        com.tjshea.vigilant.data.novig.trading.maker.BidReport.summary(rows, now).forEach { out.appendLine(it) }
+        val ended = rows.filter { it.filled == 0L && it.why != null }.groupingBy { it.why!!.take(80) }.eachCount().entries.sortedByDescending { it.value }.take(8)
+        if (ended.isNotEmpty()) {
+            out.appendLine("-- bids that ended without a fill, by why --")
+            ended.forEach { out.appendLine("    ×${it.value} ${it.key}") }
+        }
+        val filled = rows.filter { it.filled > 0 }.sortedByDescending { it.firstFillAtMs ?: it.postedAtMs }
+        val unfilled = rows.filter { it.filled == 0L }.sortedByDescending { it.postedAtMs }.take(MAX_UNFILLED_BID_ROWS)
+        out.appendLine("== EVERY FILLED BID (JSON lines, newest first; ${filled.size} bids) — fields: ${BID_FIELDS} ==")
+        out.appendLine("<<<BIDJSONL")
+        filled.forEach { out.appendLine(json.encodeToString(com.tjshea.vigilant.data.novig.trading.maker.BidReport.Row.serializer(), it)) }
+        out.appendLine(">>>")
+        out.appendLine("== THE NEWEST ${unfilled.size} BIDS THAT NEVER FILLED (JSON lines, same fields; for comparing with the filled ones) ==")
+        out.appendLine("<<<UNFILLEDJSONL")
+        unfilled.forEach { out.appendLine(json.encodeToString(com.tjshea.vigilant.data.novig.trading.maker.BidReport.Row.serializer(), it)) }
+        out.appendLine(">>>")
+    }
+
+    private const val MAX_UNFILLED_BID_ROWS = 300
+
+    private const val BID_FIELDS =
+        "id, auto, league, kind, market, selection, event, startsTs · as posted: postedAtMs, minToStartAtPost, price, american, contracts, fair (the one its margin is under: the lower of blend and sharpAtPost), " +
+            "blend, sharpAtPost, evAtPost, margin, books, led (no bid as high on Novig's book), bestBid, offer, bookAgeSec, lifeMin, basis · ended: status, why, endedAtMs, restedMin · " +
+            "fill: filled, paid, firstFillAtMs, fillDelaySec, minToStartAtFill, fairAtFill / sharpAtFill (the fair on the first scan after the fill), evAtFill, pickedOff · bet: betStatus, profit, stake, closeFair, clv, closeVia"
 
     // ---- the words -----------------------------------------------------------------------------------------------------
 
@@ -567,6 +607,7 @@ object StudyExport {
         "",
         "THE GOAL IS PROFIT: find which bets, bought when, beat the closing line (CLV) and make money. CLV is the leading indicator (it needs far fewer bets than results do); results confirm it slowly.",
         "Tj bets on Novig only, as a taker at the listed price (pregame Novig takers pay no fee) and, with the Bids tab, as a maker posting bids under its fair price.",
+        "BIDS: when Vigilant has posted bids (make orders) there is a BIDS section after the splits with every bid added up and split, then every filled bid and the newest unfilled ones as JSON lines. Judge bids by CLV, by how fast they were taken, and by whether the fair on the next scan was still above the price they filled at (evAtFill): a fast fill is a symptom of a stale bid, not a success.",
         "",
         "YOUR TASK — be thorough, and analyze ALL of the data for patterns and for profitable bet strategies:",
         " 1. Check the data first: counts by status and by close source, bets with no close and why, duplicates, odd values. Say what you can and can't trust. Parse the JSON lines with code (python/pandas); do not read them by eye.",

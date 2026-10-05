@@ -1794,7 +1794,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                     val tracked = runCatching { c.tracker.all() }.getOrDefault(emptyList())
                     val file = DiagnosticsShare.writeStudy(app, com.tjshea.vigilant.data.study.StudyExport.fileName(meta.versionName, now)) { w ->
-                        com.tjshea.vigilant.data.study.StudyExport.write(w, c.study.journal, tracked, meta, now, java.io.File(app.cacheDir, "study-export.tmp"))
+                        com.tjshea.vigilant.data.study.StudyExport.write(w, c.study.journal, tracked, meta, now, java.io.File(app.cacheDir, "study-export.tmp"), bids = runCatching { c.makerStore.all() }.getOrDefault(emptyList()))
                     }
                     runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
                         .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
